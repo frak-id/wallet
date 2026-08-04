@@ -111,8 +111,12 @@ block. Now user-visible since `sdkConfig` is public, but fixing it is a decoding
 behaviour change out of scope here and tracked separately — see the disabled test in
 `ResolvedConfigDecoderTests`.
 
-`example/native-ios` still talks to a type-only stub. Wiring it to this package
-is the next step.
+`example/native-ios` now builds against the real package, not a stub —
+`example/native-ios/Package.swift` takes `sdk/ios` as a local path dependency
+(`.package(path: "../../sdk/ios")`), and `FrakExampleApp.swift` imports `FrakSDK`
+and `FrakSDKUI` and calls `Frak.initialize`, `Frak.client.appLink`,
+`.config.resolve`, `.tracking` and `.rewards.best` through it — a source
+checkout, not a binary release, but the real public API rather than a stub.
 
 Design docs: [`docs/plans/native-sdk/`](../../docs/plans/native-sdk/) —
 `01-platform-changes.md`, `02-sdk-design.md`,
@@ -203,6 +207,44 @@ several were folded together or renamed on the way in. The tree above is the inv
 | `Tracking/` | `InteractionTracker`, `PurchaseTracker`, durable offline JSONL queue |
 | `Sharing/` | `FrakContextCodec` (V2 binary), `AttributionMerger`, `LinkBuilder` — the `Presenter` lives in `FrakSDKUI` |
 | `AppLink/` | `DeepLinkBuilder`, `InstallRedirector`, `AppInstalledProbe` |
+
+## The event queue
+
+Tracked events are durable before they are sent, not after. An event recorded only on a
+successful response is lost to every tunnel, every airplane-mode moment and every process
+kill — and iOS will suspend a host app while the OS share sheet is up, which is exactly when a
+`sharing` event is in flight. So `track`/`trackPurchase` return once the event is on disk;
+delivery happens behind them, oldest first.
+
+The store is an append-only JSONL file under `Application Support/id.frak.sdk/`, excluded from
+backup (`isExcludedFromBackup`) so queued events are never replayed onto a restored device that
+is no longer the same user — the same intent as Android's `noBackupFilesDir` exclusion, by a
+different API.
+
+**`EventQueue` is an `actor` doing its file I/O synchronously, not off-thread — a genuine
+platform divergence from Kotlin, not a port omission.** The Kotlin twin gets off-thread I/O for
+free from `withContext(ioDispatcher)`; making these methods `async` on iOS would reopen the
+interleaving window 2.7 closed, where an event appended mid-`reconcile` is read by neither half
+and erased by the write, since an `await` inside `reconcile`/`read` is an actor suspension point
+and `InteractionTracker` calls `append` from a separate task. What actually blocks is bounded
+and short — one `Data(contentsOf:)` of at most `maxEvents + maxEventsSlack` short lines, and a
+write only when something changed — a latency cost, not a liveness hazard (see `EventQueue`'s
+doc comment).
+
+What is pinned, because JSONL is weakest exactly here:
+
+| Concern | Behaviour |
+| --- | --- |
+| Idempotency | stamped once at capture (`QueuedEvent.idempotencyKey`), written into the body on the shapes whose schema carries one — `sharing` and `custom`. Never re-stamped per retry. `arrival` has no such field, and `trackPurchase` reconciles on `(orderId, token)` server-side instead — both rely on the backend's own reconciliation, same as Kotlin's `arrival`/`purchase`. |
+| Timestamps | capture time (`capturedAt`), not flush time, so an event sent hours later still lands in the right attribution window. |
+| Ordering | strict FIFO. A failure stops the drain rather than skipping past it — the loop over `pending` `break`s on the first non-success. |
+| Torn tail | a kill mid-write leaves a partial last line; `compactMap { try? decoder.decode(...) }` drops the unreadable row and keeps the rest. |
+| Compaction | `replace` rewrites the whole file via `Data.write(to:options:.atomic)` rather than editing in place. Implementation differs from Kotlin here: Android hand-rolls a temp file plus `renameTo`, while iOS leans on Foundation's atomic-write option, which writes to an auxiliary file and renames it under the hood without this code managing a `.tmp` path itself — same net effect, no explicit temp-file dance in the Swift source. |
+| Bounds | count (`maxEvents` = 1000) and age (`maxAge` = 14 days), oldest dropped first — identical constants to Kotlin. Both bounds are applied by one pass (`readWithOutcome`), reached from two places: every `read`, and an `append` that has taken the file `maxEventsSlack` (`maxEvents / 10` = 100) rows past the cap — the append-side trigger is what keeps the file bounded while a drain is backing off and therefore never reading. The on-disk ceiling is therefore 1100 rows, not exactly 1000. The age bound needs no append-side trigger of its own: a freshly captured event cannot be too old, so appending can only ever violate the count bound. |
+| File protection | `append` (on first write) and `replace` set `FileProtectionType.completeUntilFirstUserAuthentication` on the queue file (`applyProtection`, a no-op on macOS behind `#if canImport(UIKit)`) — readable only once the device has been unlocked at least once since boot, then stays readable. That keeps the file writable behind a share sheet on a locked screen while denying it to a stolen, powered-off device. **Android has no equivalent per-file protection-class API**; its confidentiality story is the backup/device-transfer exclusion alone. |
+| Poison | evicted after `maxFailures` = 3 permanent 4xx (`InteractionTracker`), so one rejected event cannot block the queue forever — identical threshold to Kotlin. |
+| Backoff | the shared `Backoff` type — exponential, jittered, `Retry-After`-aware. 429 and 5xx (`serverError` and above) back off without dropping. |
+| `resetAnonymousId` | purges the queue unconditionally, not gated on success the way Android's is: `AnonymousIdStore.reset()` cannot itself fail on this platform (deletion is a non-throwing `UserDefaults` removal, never Keychain or Secure Enclave), so `DefaultFrakClient.resetAnonymousId()` always fires `Task { await tracker.purge() }`. The drain still independently drops any event whose captured `clientId` no longer matches the current one — the same backstop Android relies on for a purge that races a flush. |
 
 ## Logging
 

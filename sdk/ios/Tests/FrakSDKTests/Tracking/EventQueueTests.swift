@@ -77,6 +77,32 @@ struct EventQueueTests {
         #expect(read.map(\.idempotencyKey) == ["a"])
     }
 
+    @Test("sweeps a torn tail off disk instead of re-reading it forever")
+    func sweepsATornTail() async throws {
+        let (queue, fileURL) = makeQueue()
+        await queue.append(event("a"))
+        let handle = try FileHandle(forWritingTo: fileURL)
+        try handle.seekToEnd()
+        try handle.write(contentsOf: Data(#"{"k":"b","p":"/user/tra"#.utf8))
+        try handle.close()
+
+        // The partial line is dropped from the parsed result on every read, but it also has to
+        // leave the FILE. reconcile used to sweep it as a side effect of rewriting on every flush;
+        // now that the rewrite is skipped when nothing changed, the read owns the sweep. Without it
+        // the on-disk ceiling would bound only the valid rows and torn tails would accumulate past
+        // it, one per mid-write kill.
+        _ = await queue.read(now: Self.now)
+
+        let lines =
+            try String(contentsOf: fileURL, encoding: .utf8)
+            .split(separator: "\n")
+            .filter { !$0.allSatisfy(\.isWhitespace) }
+        #expect(lines.count == 1)
+        // Self-healing: having swept it, a second read finds nothing left to do.
+        let second = await queue.read(now: Self.now)
+        #expect(second.map(\.idempotencyKey) == ["a"])
+    }
+
     @Test("drops events past the age bound")
     func dropsExpiredEvents() async {
         let (queue, _) = makeQueue()
@@ -310,6 +336,85 @@ struct EventQueueTests {
         // rowId lives only in QueuedEvent's own Codable envelope (the on-disk JSONL line) and
         // never in .body, which is exactly what InteractionTracker.flush sends as the POST payload.
         #expect(!stored.body.contains("\"r\":"))
+    }
+
+    @Test("bounds the file from append alone, without a read ever running (2.6)")
+    func boundsTheFileFromAppendAlone() async throws {
+        let (queue, fileURL) = makeQueue()
+        // The cap used to be enforced only inside read(), and a drain that is backing off returns
+        // before it reads. Appending is therefore the one path that must bound itself, or the file
+        // grows without limit exactly while it cannot drain. No read() in this test.
+        let overflow = EventQueue.maxEvents + EventQueue.maxEventsSlack + 1
+        for index in 0..<overflow {
+            await queue.append(event("e\(index)"))
+        }
+
+        let onDisk =
+            try String(contentsOf: fileURL, encoding: .utf8)
+            .split(separator: "\n")
+            .count
+        #expect(onDisk <= EventQueue.maxEvents + EventQueue.maxEventsSlack)
+    }
+
+    @Test("the trim keeps the newest events and their id order")
+    func trimKeepsTheNewestEvents() async throws {
+        let (queue, _) = makeQueue()
+        let overflow = EventQueue.maxEvents + EventQueue.maxEventsSlack + 1
+        for index in 0..<overflow {
+            await queue.append(event("e\(index)"))
+        }
+
+        let kept = await queue.read(now: Self.now)
+        // Oldest dropped first: a fresh event is likelier to still matter.
+        #expect(kept.last?.idempotencyKey == "e\(overflow - 1)")
+        #expect(kept.count == EventQueue.maxEvents)
+        // And the append-time trim must not disturb the invariant 2.7 bought: ids ascend with
+        // capture order, so reconcile can key deletions on them.
+        let ids = kept.compactMap(\.rowId)
+        #expect(ids == ids.sorted())
+    }
+
+    @Test("reconcile leaves the file untouched when nothing was delivered or retried (4.4)")
+    func reconcileSkipsTheWriteWhenNothingChanged() async throws {
+        let (queue, fileURL) = makeQueue()
+        await queue.append(event("a"))
+        await queue.append(event("b"))
+        let before = try Data(contentsOf: fileURL)
+        // Backdated deliberately. A skipped rewrite and a performed one produce byte-identical
+        // content here, so the modification date is the only thing that can tell them apart — and
+        // comparing it against `now` makes the assertion a race with filesystem timestamp
+        // granularity, which silently stopped failing once the surrounding suite got slower. An
+        // hour in the past cannot be reached by a rewrite that would stamp it with `now`.
+        let backdated = Date(timeIntervalSinceNow: -3600)
+        try FileManager.default.setAttributes([.modificationDate: backdated], ofItemAtPath: fileURL.path)
+
+        // The whole-file rewrite is the expensive half of a flush, and an offline pass delivers
+        // nothing and retries nothing. Skipping it is safe only because read() has already
+        // persisted anything it changed, so the reconciled list is byte-identical to disk.
+        await queue.reconcile(delivered: [], retried: [:], now: Self.now)
+
+        #expect(try Data(contentsOf: fileURL) == before)
+        let stamped =
+            try FileManager.default
+            .attributesOfItem(atPath: fileURL.path)[.modificationDate] as? Date
+        #expect(stamped?.timeIntervalSince1970 == backdated.timeIntervalSince1970)
+        let kept = await queue.read(now: Self.now)
+        #expect(kept.map(\.idempotencyKey) == ["a", "b"])
+    }
+
+    @Test("reconcile still rewrites when a row was retried in place")
+    func reconcileWritesWhenARowWasRetried() async throws {
+        let (queue, _) = makeQueue()
+        await queue.append(event("a"))
+        let queued = try #require(await queue.read(now: Self.now).first)
+        let rowId = try #require(queued.rowId)
+
+        // A retry replaces a row without changing the row count, so the write-skip cannot key on
+        // count alone.
+        await queue.reconcile(delivered: [], retried: [rowId: queued.withFailure()], now: Self.now)
+
+        let kept = await queue.read(now: Self.now)
+        #expect(kept.first?.failures == 1)
     }
 
     // `.protectionKey`/`FileProtectionType` are `API_UNAVAILABLE(macos)`, and this test target

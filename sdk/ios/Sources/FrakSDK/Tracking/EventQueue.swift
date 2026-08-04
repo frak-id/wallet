@@ -115,11 +115,46 @@ struct QueuedEvent: Codable, Sendable, Hashable {
 /// assigns fresh ids in on-disk (oldest-first) order and rewrites the file through `replace` so
 /// the assignment is durable immediately, not deferred to the next flush. No row and no event is
 /// ever dropped for predating this field.
+///
+/// **The file I/O here is deliberately synchronous inside the actor (4.2).** It therefore runs on a
+/// cooperative thread rather than being handed to a dedicated queue, which is a recorded, accepted
+/// cost rather than an oversight:
+///
+/// - Making these methods `async` is not an option. An `await` anywhere inside `reconcile` or
+///   `readWithOutcome` is an actor suspension point, and `InteractionTracker` calls `append` from a
+///   separate task — that reopens byte-for-byte the interleaving window 2.7 closed, where an event
+///   appended mid-reconcile is read by neither half and erased by the write.
+/// - A `DispatchQueue`-backed `SerialExecutor` does compile at this package's iOS 15 floor, but only
+///   through the *deprecated* `enqueue(_: UnownedJob)` requirement: `ExecutorJob` is iOS 17+. Taking
+///   a deprecated concurrency-runtime conformance into a package that no CI builds, to remove a few
+///   milliseconds of bounded I/O, is the worse trade.
+/// - What is actually blocked is bounded and short: one `Data(contentsOf:)` of at most
+///   `maxEvents + maxEventsSlack` short lines, and a write only when something changed. No lock, no
+///   socket, no unbounded wait — a latency cost, not a liveness hazard.
+///
+/// When the deployment floor reaches iOS 17 this becomes three lines (`nonisolated var
+/// unownedExecutor` over a `DispatchSerialQueue`) with no ABI impact, so deferring costs nothing.
+///
+/// Android does not share this trade-off: Kotlin's twin gets off-thread I/O for free from
+/// `withContext(ioDispatcher)`. This is a genuine platform divergence, not a port omission.
 actor EventQueue {
     /// Past this, an event is too old to attribute anything.
     static let maxAge: TimeInterval = 14 * 24 * 60 * 60
-    /// A cap on the file, enforced on read. The oldest go first.
+    /// A cap on the file. The oldest go first.
+    ///
+    /// Applied by one pass (`readWithOutcome`), reached from two places: every `read`, and an
+    /// `append` that has taken the file `maxEventsSlack` rows past this. The append-side trigger is
+    /// what keeps the file bounded while a drain is backing off and therefore never reading (2.6).
     static let maxEvents = 1000
+
+    /// How far past `maxEvents` the file may run before `append` trims it back (2.6).
+    ///
+    /// The amortisation knob: one O(N) pass per `maxEventsSlack` appends, so an average append does
+    /// about `maxEvents / maxEventsSlack` rows of work. It scales with the cap rather than being a
+    /// small constant on purpose — a slack of, say, 16 would make roughly every sixteenth append pay
+    /// a full read-and-rewrite of a thousand rows. The price is the on-disk ceiling:
+    /// `maxEvents + maxEventsSlack` rows, not `maxEvents` exactly.
+    static let maxEventsSlack = maxEvents / 10
 
     static let fileName = "frak-events.jsonl"
 
@@ -150,6 +185,22 @@ actor EventQueue {
     /// reservation go unused and hand every migrated row an id ABOVE a row appended before the
     /// file was ever read, inverting "the newest row carries the highest id".
     private var nextMigrationRowId: Int64?
+
+    /// Rows currently ON DISK — not rows `read` would return. Seeded alongside the id counters in
+    /// `seedRowIdIfNeeded` (from the same snapshot: a count taken from a different read than the one
+    /// that seeded the ids could trim against a file it never saw), then maintained at every site
+    /// that changes the file: `append`, `replace`, `delete` and `readWithOutcome`'s tail.
+    ///
+    /// Exists so `append` can enforce `maxEvents` without reading the file on every call (2.6/4.4).
+    /// If it ever drifts the cost is a mistimed trim, never a lost row — every consumer of it only
+    /// decides *when* to run the trim pass, never *what* the pass keeps.
+    private var liveRowCount: Int?
+
+    /// Row count at which `append` runs a trim pass. Re-armed after every pass from the count that
+    /// pass actually left on disk, so a trim whose rewrite failed to persist does not re-attempt the
+    /// same failing O(N) write on every subsequent append — it backs off by one `maxEventsSlack`
+    /// each time instead. No separate "trim failed" flag: the count is the state.
+    private var nextTrimAt = maxEvents + maxEventsSlack
 
     init(fileURL: URL, logger: FrakLogger) {
         self.fileURL = fileURL
@@ -197,20 +248,40 @@ actor EventQueue {
         readWithOutcome(now: now).events
     }
 
+    /// `read`'s body, also reached from `append` when the file has grown past `nextTrimAt`.
+    ///
+    /// This is the ONE place that trims. `append`'s bound reaches it rather than reimplementing the
+    /// rules, so seeding, migration, the age bound, the count bound, the single rewrite and the
+    /// migration-counter rollback all stay in a single implementation — an append-time trim cannot
+    /// drift from a read-time one because there is only one of them.
     private func readWithOutcome(now: Date) -> ReadOutcome {
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            liveRowCount = 0
             return ReadOutcome(events: [], durable: true)
         }
         guard let data = try? Data(contentsOf: fileURL) else {
             // Present but unreadable. Left alone it would make tracking permanently and
             // silently inert, since every later read returns the same nothing.
+            //
+            // A successful delete zeroes the count; a failed one deliberately leaves it alone. The
+            // file is still there and still unreadable, so its true row count is unknowable here —
+            // but `trimIfOverflowing` keeps incrementing from whatever the last known value was, so
+            // the drift is bounded and a trim still fires, just later. That is the documented
+            // tolerance for this counter: a mistimed trim, never a lost row.
             logger.warn("Could not read the event queue; dropping it.")
             delete()
             return ReadOutcome(events: [], durable: true)
         }
-        let decoded =
+        // `split` already omits empty subsequences but keeps whitespace-only ones; the explicit
+        // filter matches the Kotlin twin's `isNotBlank()`. This count decides both the trim trigger
+        // and the sweep condition below, so a divergence here would make the two platforms bound
+        // the same file differently.
+        let present =
             String(decoding: data, as: UTF8.self)
             .split(separator: "\n")
+            .filter { !$0.allSatisfy(\.isWhitespace) }
+        let decoded =
+            present
             // A truncated last line is expected after a kill, not a corruption to report.
             .compactMap { try? Self.decoder.decode(QueuedEvent.self, from: Data($0.utf8)) }
         seedRowIdIfNeeded(from: decoded)
@@ -231,10 +302,18 @@ actor EventQueue {
         let events = migrated.filter { now.timeIntervalSince($0.capturedAt) <= Self.maxAge }
         let bounded = events.count > Self.maxEvents ? Array(events.suffix(Self.maxEvents)) : events
 
-        // Migration and the age/count bound both want a rewrite; do it once. A file with no
-        // migrated rows and nothing to trim is left untouched, so a steady-state flush that
-        // calls read() without a following replace() still costs only the one read.
-        if migratedAny || bounded.count != decoded.count {
+        // Migration, the age/count bound and unparseable rows all want a rewrite; do it once. A
+        // file with no migrated rows, nothing to trim and nothing unparseable is left untouched, so
+        // a steady-state flush that calls read() without a following replace() still costs only the
+        // one read.
+        //
+        // `decoded.count != present.count` is the sweep: a torn tail from a mid-write kill is
+        // dropped from `decoded` at parse time but stays on disk, and without this it would be
+        // re-read and re-discarded on every read forever. It matters more since `reconcile` stopped
+        // rewriting unconditionally — that write used to sweep the garbage as a side effect, so the
+        // on-disk ceiling would otherwise bound only the VALID rows and let torn tails accumulate
+        // past it. Self-healing: the rewrite removes them, so the next read finds the counts equal.
+        if migratedAny || bounded.count != decoded.count || decoded.count != present.count {
             // A migration id is only real once it is durable. If the rewrite fails, the ids just
             // assigned exist nowhere but this call — a later read (after a process restart, or a
             // second read winning a race) will never reproduce them, since seedRowIdIfNeeded is
@@ -250,13 +329,35 @@ actor EventQueue {
             // bad than the bug it replaces.
             let durable = replace(bounded)
             if !durable { nextMigrationRowId = migrationStart }
+            // `replace` already set the count on success; on failure the file still holds every
+            // line that was on it, valid or not, so the count must describe THAT rather than the
+            // trim we failed to persist.
+            if !durable { liveRowCount = present.count }
             return ReadOutcome(events: bounded, durable: durable)
         }
 
+        // Nothing was rewritten, so the file still holds exactly the lines we just read. On this
+        // path `present.count == decoded.count == bounded.count` — the branch above owns every case
+        // where they differ — but count the lines rather than the returned events, so the counter
+        // stays a description of the FILE even if that branch's condition is ever narrowed.
+        liveRowCount = present.count
         return ReadOutcome(events: bounded, durable: true)
     }
 
     /// A failed append is a lost event, never a crash: nothing a merchant called is failing.
+    ///
+    /// Appends one line. O(1) in the common case; roughly one row in `maxEventsSlack` also pays a
+    /// trim pass (2.6).
+    ///
+    /// The bound lives here rather than in the caller because `maxEvents` is the queue's own
+    /// invariant: enforcing it only on `read` left the file growing without limit exactly while
+    /// backoff was armed, since a backing-off drain returns before it reads. A caller that only ever
+    /// appends must not be able to grow the file forever, whoever that caller turns out to be.
+    ///
+    /// The trim pass uses the event's own `capturedAt` as its `now`. `append` has no clock of its
+    /// own, and that value is the caller's clock stamped moments ago — close enough for an age bound
+    /// measured in days, and it avoids handing this actor a second time source that could disagree
+    /// with the one `InteractionTracker` already uses.
     func append(_ event: QueuedEvent) {
         do {
             if nextRowId == nil { seedRowIdIfNeeded(from: readExistingForSeed()) }
@@ -273,9 +374,25 @@ actor EventQueue {
                 try handle.write(contentsOf: line)
             }
             if isNewFile { applyProtection() }
+            trimIfOverflowing(now: stamped.capturedAt)
         } catch {
             logger.warn("Could not enqueue an event", error)
         }
+    }
+
+    /// Runs a trim pass once the file has grown `maxEventsSlack` rows past `maxEvents`, then re-arms
+    /// from what that pass actually left behind.
+    ///
+    /// Re-arming from `liveRowCount` rather than from `maxEvents` is what makes a failed trim
+    /// self-limiting: a pass whose rewrite did not persist leaves the count high, so the next attempt
+    /// is one slack later instead of on the very next append. A durable pass leaves the count at
+    /// `maxEvents` and the next trim is a full slack away, which is the amortisation.
+    private func trimIfOverflowing(now: Date) {
+        let count = (liveRowCount ?? 0) + 1
+        liveRowCount = count
+        guard count > nextTrimAt else { return }
+        _ = readWithOutcome(now: now)
+        nextTrimAt = max(Self.maxEvents, liveRowCount ?? Self.maxEvents) + Self.maxEventsSlack
     }
 
     /// Best-effort peek at the file for seeding `nextRowId` from `append`, without `read`'s bounds/migration logic.
@@ -306,6 +423,9 @@ actor EventQueue {
         let unmigrated = existing.filter { $0.rowId == nil }.count
         nextMigrationRowId = highest + 1
         nextRowId = highest + 1 + Int64(unmigrated)
+        // Seeded from the SAME snapshot as the ids, deliberately: a count taken from a different
+        // read could arm the append-time trim against a file this instance never saw.
+        if liveRowCount == nil { liveRowCount = existing.count }
     }
 
     /// `seedRowIdIfNeeded` must always run first on any path that reaches here; every caller does.
@@ -344,6 +464,7 @@ actor EventQueue {
             }
             try out.write(to: fileURL, options: .atomic)
             applyProtection()
+            liveRowCount = events.count
             return true
         } catch {
             logger.warn("Could not compact the event queue", error)
@@ -373,20 +494,34 @@ actor EventQueue {
     /// ids never made it to disk, or — the data-loss case this exists to prevent — write an
     /// empty file when the true queue is not empty at all, just unreadable-with-durable-ids this
     /// pass.
+    ///
+    /// Skips the write entirely when nothing changed (4.4) — the whole-file rewrite is the expensive
+    /// half of a flush, and the commonest backlog pass is the one where every send failed, so
+    /// nothing was delivered and nothing was marked for retry.
+    ///
+    /// That shortcut is safe ONLY because `readWithOutcome` has already persisted anything it
+    /// changed (migration ids, age/count trims) before returning: when `changed` is false, `next` is
+    /// byte-for-byte what is on disk right now. If a future edit ever lets the read return rows it
+    /// did not persist, this skip silently drops them — keep the two in step.
     func reconcile(delivered: Set<Int64>, retried: [Int64: QueuedEvent], now: Date) {
         let outcome = readWithOutcome(now: now)
         guard outcome.durable else { return }
-        replace(
+        let next =
             outcome.events
-                .filter { event in
-                    guard let rowId = event.rowId else { return true }
-                    return !delivered.contains(rowId)
-                }
-                .map { event in
-                    guard let rowId = event.rowId else { return event }
-                    return retried[rowId] ?? event
-                }
-        )
+            .filter { event in
+                guard let rowId = event.rowId else { return true }
+                return !delivered.contains(rowId)
+            }
+            .map { event in
+                guard let rowId = event.rowId else { return event }
+                return retried[rowId] ?? event
+            }
+        // `retried` is checked separately from the count: a retry replaces a row in place, so it
+        // changes the file's contents without changing its row count. Erring towards writing is the
+        // safe direction — a retried id that matched no row costs one redundant rewrite.
+        let changed = !retried.isEmpty || next.count != outcome.events.count
+        guard changed else { return }
+        replace(next)
     }
 
     /// Returns whether the file is gone afterwards, so callers relying on delete's durability
@@ -395,6 +530,7 @@ actor EventQueue {
     private func delete() -> Bool {
         do {
             try FileManager.default.removeItem(at: fileURL)
+            liveRowCount = 0
             return true
         } catch {
             return !FileManager.default.fileExists(atPath: fileURL.path)

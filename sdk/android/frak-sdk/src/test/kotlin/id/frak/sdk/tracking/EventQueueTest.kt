@@ -6,6 +6,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -84,6 +85,25 @@ class EventQueueTest {
             // correct outcome; losing the whole queue is not.
             file.appendText("""{"k":"b","p":"/user/tra""")
 
+            assertEquals(listOf("a"), queue.read(NOW).map { it.idempotencyKey })
+        }
+
+    @Test
+    fun `sweeps a torn tail off disk instead of re-reading it forever`() =
+        runTest {
+            open()
+            queue.append(event("a"))
+            file.appendText("""{"k":"b","p":"/user/tra""")
+
+            // The partial line is dropped from the parsed result on every read, but it also has to
+            // leave the FILE. reconcile used to sweep it as a side effect of rewriting on every
+            // flush; now that the rewrite is skipped when nothing changed, the read owns the sweep.
+            // Without it the on-disk ceiling would bound only the valid rows and torn tails would
+            // accumulate past it, one per mid-write kill.
+            queue.read(NOW)
+
+            assertEquals(1, file.readLines().count { it.isNotBlank() })
+            // Self-healing: having swept it, a second read finds nothing left to do.
             assertEquals(listOf("a"), queue.read(NOW).map { it.idempotencyKey })
         }
 
@@ -299,6 +319,82 @@ class EventQueueTest {
             // .body, which is exactly what InteractionTracker.flush sends as the POST payload.
             assertFalse(stored.body.toString().contains("\"r\""))
             assertFalse(stored.body.has("r"))
+        }
+
+    @Test
+    fun `bounds the file from append alone, without a read ever running`() =
+        runTest {
+            open()
+            // 2.6: the cap used to be enforced only inside read(), and a drain that is backing off
+            // returns before it reads. Appending is therefore the one path that must bound itself,
+            // or the file grows without limit exactly while it cannot drain. No read() in this test.
+            val overflow = EventQueue.MAX_EVENTS + EventQueue.MAX_EVENTS_SLACK + 1
+            repeat(overflow) { queue.append(event("e$it")) }
+
+            val onDisk = file.readLines().count { it.isNotBlank() }
+            assertTrue(
+                "appending $overflow events left $onDisk rows on disk",
+                onDisk <= EventQueue.MAX_EVENTS + EventQueue.MAX_EVENTS_SLACK,
+            )
+        }
+
+    @Test
+    fun `the trim keeps the newest events and their id order`() =
+        runTest {
+            open()
+            val overflow = EventQueue.MAX_EVENTS + EventQueue.MAX_EVENTS_SLACK + 1
+            repeat(overflow) { queue.append(event("e$it")) }
+
+            val kept = queue.read(NOW)
+            // Oldest dropped first: a fresh event is likelier to still matter.
+            assertEquals("e${overflow - 1}", kept.last().idempotencyKey)
+            assertEquals(EventQueue.MAX_EVENTS, kept.size)
+            // And the append-time trim must not disturb the invariant 2.7 bought: ids ascend with
+            // capture order, so reconcile can key deletions on them.
+            assertEquals(kept.map { it.rowId }.sorted(), kept.map { it.rowId })
+        }
+
+    @Test
+    fun `reconcile leaves the file untouched when nothing was delivered or retried`() =
+        runTest {
+            open()
+            queue.append(event("a"))
+            queue.append(event("b"))
+            val before = file.readBytes()
+            // Backdated deliberately. A skipped rewrite and a performed one produce byte-identical
+            // content here, so the modification time is the only thing that can tell them apart —
+            // and comparing it against `now` makes the assertion a race with filesystem timestamp
+            // granularity, which silently stopped failing once the surrounding suite got slower.
+            // An hour in the past cannot be reached by a rewrite that would stamp it with `now`.
+            val backdated = System.currentTimeMillis() - 3_600_000
+            assertTrue("could not backdate the fixture", file.setLastModified(backdated))
+
+            // 4.4: the whole-file rewrite is the expensive half of a flush, and an offline pass
+            // delivers nothing and retries nothing. Skipping it is safe only because read() has
+            // already persisted anything it changed, so `next` is byte-identical to disk.
+            val result = queue.reconcile(delivered = emptySet(), retried = emptyMap(), now = NOW)
+
+            assertEquals(listOf("a", "b"), result.map { it.idempotencyKey })
+            assertArrayEquals(before, file.readBytes())
+            assertEquals(backdated, file.lastModified())
+        }
+
+    @Test
+    fun `reconcile still rewrites when a row was retried in place`() =
+        runTest {
+            open()
+            queue.append(event("a"))
+            val queued = queue.read(NOW).single()
+
+            // A retry replaces a row without changing the row count, so the write-skip cannot key
+            // on size alone.
+            queue.reconcile(
+                delivered = emptySet(),
+                retried = mapOf(queued.rowId to queued.withFailure()),
+                now = NOW,
+            )
+
+            assertEquals(1, queue.read(NOW).single().failures)
         }
 
     private companion object {

@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 /** One event waiting to be sent. Request body built at capture time, so its timestamp is when the user acted. */
@@ -71,8 +72,14 @@ internal class QueuedEvent(
  * Durable event queue: append-only JSONL file, compacted on flush. Unparseable rows (torn tail
  * from a mid-write kill) are discarded on read rather than failing the whole file. [replace]
  * writes a temp file and renames over the original, so a kill mid-compaction can't lose the
- * queue. Capped by count and age, oldest dropped first. Single writer only: not safe across
- * processes.
+ * queue. Single writer only: not safe across processes.
+ *
+ * Capped by count and age, oldest dropped first. Both bounds are applied by one pass ([readLocked]),
+ * reached from two places: every [read], and an [append] that has taken the file [MAX_EVENTS_SLACK]
+ * rows past [MAX_EVENTS]. The append-side trigger is what keeps the file bounded while a drain is
+ * backing off and therefore never reading (2.6) — see [liveRowCount] and [trimIfOverflowing]. The
+ * age bound needs no append-side trigger of its own: a freshly captured event cannot be too old, so
+ * appending can only ever violate the count bound.
  *
  * `rowId` (2.7): every row gets an SDK-owned, monotonically increasing id, assigned here, never
  * by [InteractionTracker]. [nextRowId] is seeded lazily from the highest `rowId` this file has
@@ -107,6 +114,26 @@ internal class EventQueue(
      */
     private val nextMigrationRowId = AtomicLong(UNSEEDED)
 
+    /**
+     * Rows currently ON DISK — not rows [read] would return. Seeded alongside the id counters in
+     * [seedRowIdIfNeeded] (from the same snapshot: a count taken from a different read than the one
+     * that seeded the ids could trim against a file it never saw), then maintained at every site
+     * that changes the file: [append], [replaceLocked], [deleteFile] and [readLocked]'s tail.
+     *
+     * Exists so [append] can enforce [MAX_EVENTS] without reading the file on every call (2.6/4.4).
+     * If it ever drifts the cost is a mistimed trim, never a lost row — every consumer of it only
+     * decides *when* to run the trim pass, never *what* the pass keeps.
+     */
+    private val liveRowCount = AtomicInteger(UNSEEDED_COUNT)
+
+    /**
+     * Row count at which [append] runs a trim pass. Re-armed after every pass from the count that
+     * pass actually left on disk, so a trim whose rewrite failed to persist does not re-attempt the
+     * same failing O(N) write on every subsequent append — it backs off by one [MAX_EVENTS_SLACK]
+     * each time instead. No separate "trim failed" flag: the count is the state.
+     */
+    private val nextTrimAt = AtomicInteger(MAX_EVENTS + MAX_EVENTS_SLACK)
+
     /** Oldest first. Rows that are unreadable, expired, or beyond the cap are dropped. */
     suspend fun read(now: Long): List<QueuedEvent> = withContext(ioDispatcher) { readLocked(now).events }
 
@@ -121,20 +148,40 @@ internal class EventQueue(
         val durable: Boolean,
     )
 
-    /** [read]'s body, without the [withContext] hop — for callers already on [ioDispatcher], namely [reconcile]. */
+    /**
+     * [read]'s body, without the [withContext] hop — for callers already on [ioDispatcher]: [reconcile],
+     * and [append] when the file has grown past [nextTrimAt].
+     *
+     * This is the ONE place that trims. [append]'s bound reaches it rather than reimplementing the
+     * rules, so seeding, migration, the age bound, the count bound, the single rewrite and the
+     * migration-counter rollback all stay in a single implementation — an append-time trim cannot
+     * drift from a read-time one because there is only one of them.
+     */
     private fun readLocked(now: Long): ReadOutcome {
-        if (!file.isFile) return ReadOutcome(emptyList(), durable = true)
+        if (!file.isFile) {
+            liveRowCount.set(0)
+            return ReadOutcome(emptyList(), durable = true)
+        }
 
         val rows =
             try {
                 file.readLines()
             } catch (failure: Exception) {
                 logger.warn("Could not read the event queue; dropping it.", failure)
+                // A successful delete zeroes the count; a failed one deliberately leaves it alone.
+                // The file is still there and still unreadable, so its true row count is unknowable
+                // here — but [trimIfOverflowing] keeps incrementing from whatever the last known
+                // value was, so the drift is bounded and a trim still fires, just later. That is the
+                // documented tolerance for this counter: a mistimed trim, never a lost row.
                 deleteFile()
                 return ReadOutcome(emptyList(), durable = true)
             }
 
-        val decoded = rows.filter { it.isNotBlank() }.mapNotNull(QueuedEvent::fromJson)
+        // Blank-line filtering must match the iOS twin's, which drops empty AND whitespace-only
+        // lines: this count decides both the trim trigger and the sweep condition below, so a
+        // divergence here would make the two platforms bound the same file differently.
+        val present = rows.filter { it.isNotBlank() }
+        val decoded = present.mapNotNull(QueuedEvent::fromJson)
         seedRowIdIfNeeded(decoded)
 
         // Captured before the migration map runs: if the rewrite below fails to persist, the
@@ -158,10 +205,18 @@ internal class EventQueue(
         // takeLast: oldest dropped first, a fresh event is more likely to still matter.
         val bounded = if (events.size > MAX_EVENTS) events.takeLast(MAX_EVENTS) else events
 
-        // Migration and the age/count bound both want a rewrite; do it once. A file with no
-        // migrated rows and nothing to trim is left untouched, so a steady-state flush that
-        // calls read() without a following replace() still costs only the one read.
-        if (migratedAny || bounded.size != decoded.size) {
+        // Migration, the age/count bound and unparseable rows all want a rewrite; do it once. A
+        // file with no migrated rows, nothing to trim and nothing unparseable is left untouched, so
+        // a steady-state flush that calls read() without a following replace() still costs only the
+        // one read.
+        //
+        // `decoded.size != present.size` is the sweep: a torn tail from a mid-write kill is dropped
+        // from `decoded` at parse time but stays on disk, and without this it would be re-read and
+        // re-discarded on every read forever. It matters more since `reconcile` stopped rewriting
+        // unconditionally — that write used to sweep the garbage as a side effect, so the on-disk
+        // ceiling would otherwise bound only the VALID rows and let torn tails accumulate past it.
+        // Self-healing: the rewrite removes them, so the next read finds the two counts equal.
+        if (migratedAny || bounded.size != decoded.size || decoded.size != present.size) {
             // A migration id is only real once it is durable. If the rewrite fails, the ids
             // just assigned exist nowhere but this call stack: a later read (after this
             // process dies, or after a second read wins a race) will never reproduce them,
@@ -178,12 +233,35 @@ internal class EventQueue(
             // failure must be strictly less bad than the bug it replaces.
             val durable = replaceLocked(bounded)
             if (!durable) nextMigrationRowId.set(migrationStart)
+            // replaceLocked already set the count on success; on failure the file still holds every
+            // line that was on it, valid or not, so the count must describe THAT rather than the
+            // trim we failed to persist.
+            if (!durable) liveRowCount.set(present.size)
             return ReadOutcome(bounded, durable)
         }
 
+        // Nothing was rewritten, so the file still holds exactly the lines we just read. On this
+        // path `present.size == decoded.size == bounded.size` — the branch above owns every case
+        // where they differ — but count the lines rather than the returned events, so the counter
+        // stays a description of the FILE even if that branch's condition is ever narrowed.
+        liveRowCount.set(present.size)
         return ReadOutcome(bounded, durable = true)
     }
 
+    /**
+     * Appends one line. O(1) in the common case; roughly one row in [MAX_EVENTS_SLACK] also pays a
+     * trim pass (2.6).
+     *
+     * The bound lives here rather than in the caller because [MAX_EVENTS] is the queue's own
+     * invariant: enforcing it only on [read] left the file growing without limit exactly while
+     * backoff was armed, since a backing-off drain returns before it reads. A caller that only ever
+     * appends must not be able to grow the file forever, whoever that caller turns out to be.
+     *
+     * The trim pass uses the event's own [QueuedEvent.capturedAtMillis] as its `now`. [append] has
+     * no clock of its own, and that value is the caller's clock stamped moments ago — close enough
+     * for an age bound measured in days, and it avoids handing this class a second time source that
+     * could disagree with the one [InteractionTracker] already uses.
+     */
     suspend fun append(event: QueuedEvent) {
         withContext(ioDispatcher) {
             try {
@@ -191,10 +269,26 @@ internal class EventQueue(
                 val stamped = event.withRowId(nextRowId.getAndIncrement())
                 file.parentFile?.mkdirs()
                 file.appendText(stamped.toJson().toString() + "\n")
+                trimIfOverflowing(stamped.capturedAtMillis)
             } catch (failure: Exception) {
                 logger.warn("Could not enqueue an event", failure)
             }
         }
+    }
+
+    /**
+     * Runs a trim pass once the file has grown [MAX_EVENTS_SLACK] rows past [MAX_EVENTS], then
+     * re-arms from what that pass actually left behind.
+     *
+     * Re-arming from [liveRowCount] rather than from [MAX_EVENTS] is what makes a failed trim
+     * self-limiting: a pass whose rewrite did not persist leaves the count high, so the next attempt
+     * is one slack later instead of on the very next append. A durable pass leaves the count at
+     * [MAX_EVENTS] and the next trim is a full slack away, which is the amortisation.
+     */
+    private fun trimIfOverflowing(now: Long) {
+        if (liveRowCount.incrementAndGet() <= nextTrimAt.get()) return
+        readLocked(now)
+        nextTrimAt.set(maxOf(MAX_EVENTS, liveRowCount.get()) + MAX_EVENTS_SLACK)
     }
 
     /** Best-effort peek at the file for seeding [nextRowId] from [append], without [read]'s bounds/migration logic. */
@@ -226,6 +320,9 @@ internal class EventQueue(
         val unmigrated = existing.count { it.rowId == MISSING_ROW_ID }
         nextMigrationRowId.compareAndSet(UNSEEDED, highest + 1)
         nextRowId.compareAndSet(UNSEEDED, highest + 1 + unmigrated)
+        // Seeded from the SAME snapshot as the ids, deliberately: a count taken from a different
+        // read could arm the append-time trim against a file this instance never saw.
+        liveRowCount.compareAndSet(UNSEEDED_COUNT, existing.size)
     }
 
     /**
@@ -247,6 +344,7 @@ internal class EventQueue(
             file.parentFile?.mkdirs()
             temp.writeText(events.joinToString(separator = "") { it.toJson().toString() + "\n" })
             if (temp.renameTo(file)) {
+                liveRowCount.set(events.size)
                 true
             } else {
                 logger.warn("Could not compact the event queue; leaving it as it was.")
@@ -284,6 +382,15 @@ internal class EventQueue(
      * this pass. Returns the in-memory list either way, so the caller (InteractionTracker)
      * still gets a correct picture of what is queued for logging/backoff purposes; only the
      * disk write is skipped.
+     *
+     * Skips the write entirely when nothing changed (4.4) — the whole-file rewrite is the
+     * expensive half of a flush, and the commonest backlog pass is the one where every send
+     * failed, so nothing was delivered and nothing was marked for retry.
+     *
+     * That shortcut is safe ONLY because [readLocked] has already persisted anything it changed
+     * (migration ids, age/count trims) before returning: when `changed` is false, `next` is
+     * byte-for-byte what is on disk right now. If a future edit ever lets the read return rows it
+     * did not persist, this skip silently drops them — keep the two in step.
      */
     suspend fun reconcile(
         delivered: Set<Long>,
@@ -293,7 +400,11 @@ internal class EventQueue(
         withContext(ioDispatcher) {
             val outcome = readLocked(now)
             val next = outcome.events.filterNot { it.rowId in delivered }.map { retried[it.rowId] ?: it }
-            if (outcome.durable) replaceLocked(next)
+            // `retried` is checked separately from the size: a retry replaces a row in place, so it
+            // changes the file's contents without changing its row count. Erring towards writing is
+            // the safe direction — a retried id that matched no row costs one redundant rewrite.
+            val changed = retried.isNotEmpty() || next.size != outcome.events.size
+            if (outcome.durable && changed) replaceLocked(next)
             next
         }
 
@@ -302,15 +413,29 @@ internal class EventQueue(
     }
 
     /** Unhopped delete, for callers already on [ioDispatcher]. Returns whether it landed. */
-    private fun deleteFile(): Boolean = runCatching { file.delete() }.getOrDefault(false)
+    private fun deleteFile(): Boolean =
+        runCatching { file.delete() }.getOrDefault(false).also { if (it) liveRowCount.set(0) }
 
     companion object {
         const val MAX_AGE_MILLIS: Long = 14L * 24 * 60 * 60 * 1000
         const val MAX_EVENTS: Int = 1000
 
+        /**
+         * How far past [MAX_EVENTS] the file may run before [append] trims it back (2.6).
+         *
+         * This is the amortisation knob: one O(N) pass per [MAX_EVENTS_SLACK] appends, so the work
+         * an append does on average is about `MAX_EVENTS / MAX_EVENTS_SLACK` rows. It scales with
+         * the cap rather than being a small constant on purpose — a slack of, say, 16 would make
+         * roughly every sixteenth append pay a full read-and-rewrite of a thousand rows. The price
+         * of the slack is the on-disk ceiling: `MAX_EVENTS + MAX_EVENTS_SLACK` rows, not
+         * [MAX_EVENTS] exactly.
+         */
+        const val MAX_EVENTS_SLACK: Int = MAX_EVENTS / 10
+
         /** [QueuedEvent.rowId] placeholder for a row an old-format file wrote before this field existed. */
         const val MISSING_ROW_ID: Long = -1L
         private const val FIRST_ROW_ID: Long = 0L
         private const val UNSEEDED: Long = Long.MIN_VALUE
+        private const val UNSEEDED_COUNT: Int = -1
     }
 }

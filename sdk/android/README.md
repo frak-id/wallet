@@ -68,8 +68,15 @@ needs a device or an emulator.
 > evolvable (a `Builder`, or an internal constructor plus additive factory
 > functions) is an open decision, not yet implemented.
 >
-> `example/native-android` still talks to a type-only stub. Wiring it to these
-> artifacts through `mavenLocal()` is the next step.
+> `example/native-android` now builds against the real artifacts, not a stub —
+> `example/native-android/settings.gradle.kts` uses `includeBuild("../../sdk/android")`
+> with an explicit `dependencySubstitution` for `id.frak:frak-sdk` /
+> `id.frak:frak-sdk-ui` (Gradle's automatic composite substitution matches on
+> `project.group`, which defaults to `frak-android-sdk` here, not `id.frak`, so it
+> has to be declared rather than inferred). `MainActivity.kt` calls
+> `Frak.initialize`, `Frak.client.appLink`, `.config.resolve`, `.tracking.purchase`
+> and `.rewards.best` through that composite build — a source checkout, not a
+> published `mavenLocal()` artifact, but the real public API rather than a stub.
 
 ## Artifacts
 
@@ -384,7 +391,7 @@ What is pinned, because JSONL is weakest exactly here:
 | Ordering | strict FIFO. A failure stops the drain rather than skipping past it. |
 | Torn tail | a kill mid-write leaves a partial last line; unreadable rows are discarded, the rest survive. |
 | Compaction | temp file plus rename, never in place. |
-| Bounds | 1000 events / 14 days, oldest dropped first — but enforced on **read**, so the file still grows unbounded while backoff is armed and nothing drains it. See `06-open-findings.md` §3.2. |
+| Bounds | count (`MAX_EVENTS` = 1000) and age (`MAX_AGE_MILLIS` = 14 days), oldest dropped first. Both bounds are applied by one pass (`readLocked`), reached from two places: every read, and an `append` that has taken the file `MAX_EVENTS_SLACK` (`MAX_EVENTS / 10` = 100) rows past the cap — the append-side trigger is what keeps the file bounded while a drain is backing off and therefore never reading, which used to leave the file growing without limit exactly then. The on-disk ceiling is therefore 1100 rows, not exactly 1000. The age bound needs no append-side trigger of its own: a freshly captured event cannot be too old, so appending can only ever violate the count bound. |
 | Poison | evicted after 3 permanent 4xx, so one rejected event cannot block the queue forever. |
 | Backoff | the shared `Backoff` — exponential, jittered, `Retry-After`-aware. 429 and 5xx back off without dropping. |
 | `resetAnonymousId` | purges the queue **only when the keystore delete actually succeeded** — a throwing `deleteEntry` leaves the old identity in place and the queue untouched, rather than purging on the assumption a rotation happened that did not. When it does purge, the drain independently drops any event whose captured id is no longer the current one — the purge can race a flush, so the guarantee cannot rest on it alone. |
