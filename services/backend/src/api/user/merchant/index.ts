@@ -1,13 +1,13 @@
 import { log, rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
-import {
-    decompressJsonFromB64,
-    sanitizeProductDetailsList,
-} from "@frak-labs/core-sdk";
 import type {
     InteractionTypeKey,
     MerchantReward,
     ProductDetails,
+} from "@frak-labs/core-sdk";
+import {
+    decompressJsonFromB64,
+    sanitizeProductDetailsList,
 } from "@frak-labs/core-sdk";
 import { selectBestReward } from "@frak-labs/core-sdk/rewards";
 import { Elysia, status } from "elysia";

@@ -116,9 +116,7 @@ describe("estimated-rewards formatted=1 mapping", () => {
             name: "Shoe-only campaign",
             interactionTypeKey: "purchase",
             conditions: [],
-            productScope: [
-                { field: "sku", operator: "eq", value: "SHOE-42" },
-            ],
+            productScope: [{ field: "sku", operator: "eq", value: "SHOE-42" }],
             referrer: {
                 payoutType: "fixed",
                 amount: {
@@ -188,9 +186,9 @@ describe("estimated-rewards formatted=1 mapping", () => {
 // run from `sdk/core/`.
 describe("decodeProductsQueryParam", () => {
     it("decodes a single sparse product (golden vector)", () => {
-        expect(
-            decodeProductsQueryParam("W3sic2t1IjoiU0hPRS00MiJ9XQ")
-        ).toEqual([{ sku: "SHOE-42" }]);
+        expect(decodeProductsQueryParam("W3sic2t1IjoiU0hPRS00MiJ9XQ")).toEqual([
+            { sku: "SHOE-42" },
+        ]);
     });
 
     it("decodes two products, preserving order (golden vector)", () => {
@@ -266,7 +264,9 @@ describe("estimated-rewards `products` query contract", () => {
     it("a products value at the size budget still clears query validation", async () => {
         // 8192: `decodeProductsQueryParam`'s guard, deliberately NOT a schema `maxLength` —
         // see index.ts.
-        const res = await estimatedRewards(`&formatted=1&products=${"a".repeat(8192)}`);
+        const res = await estimatedRewards(
+            `&formatted=1&products=${"a".repeat(8192)}`
+        );
         expect(res.status).not.toBe(422);
     });
 
