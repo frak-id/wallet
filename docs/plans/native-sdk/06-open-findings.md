@@ -1,120 +1,6 @@
 # Native SDK — open findings
 
-Merged register of the two full audits of `sdk/android` and `sdk/ios` (round 1 over the
-first tree, round 2 at `51d923ded`), re-verified against the current code. **Only what is
-still open or partial is listed.** Closed findings are summarised in §4 and not itemised —
-git history has them.
-
-Both audits were static: no toolchain ran. So was the re-verification. Ids are kept from
-the original documents (`B*/S*/C*/N*/A*/D*/T*` from round 1, `2.x/3.x/4.x/5.x/8.x` from
-round 2) so older commit messages and review notes still resolve.
-
-**Scorecard:** 119 findings tracked historically across both audits. §1–§3 row counts, mechanically counted with `awk` over the table rows and cross-checked against the section breakdown: **44 rows total** = **9 partial** + **31 fully open** + **4 recorded in-table as closed or decided** (S6a, S6b, S6c, S9). The 31 open split **4 in §1** (A1, A3, A4, B4), **3 in §2**, **24 in §3** (4+2+7+2+3+6 across §3.1–§3.6). Per section, rows: §1 6, §2 3, §3.1 9, §3.2 3, §3.3 8, §3.4 3, §3.5 4, §3.6 8. *A revision of this line said 43/25/4 and did not add up — which is exactly what it accused an earlier revision of, so the arithmetic is shown from here on.* The S6/C7 pass took §1 from 5 open blockers to 4: one row closed into two, and split off three rows it had been hiding — S10 and S11, genuinely open, and S6c, which turned out on inspection to be a **process decision rather than code** and is recorded as such in §3.1. See §0 lesson 7. §4 lists ids as closed in prose rather than a table, so an exact closed-count is still not derivable from this document without re-parsing every bolded id in §4's prose against §1–§3's rows; at least one (**S5**) is a cross-reference to a row that is still *Partial* in §3.1, and another (**B3/1.2**) to an open §2 deferral. 119 is the historical denominator only.
-
-**This revision (S6/C7) closes one §1 blocker into two rows, S6a and S6b, and separates three
-things it was concealing** — S10 (consent durability, a different defect per platform) and S11 (the
-sharing WebView URL is identity-gated, not consent-gated), both genuinely open; and S6c, the
-server-side erasure the original row invoked, which on inspection is **already handled and not by
-code**: data-subject requests go through the published `frak.id/account-deletion` route and the
-privacy policy's contact address. No `clientId`-keyed DSR API is planned. It is recorded in §3.1 as
-a decision rather than deleted, so it stops being re-filed by the next audit. This revision also
-lands S9, ungating config and rewards. See §0 lesson 7.
-
-The revision before it closed six: **4.5** (`anonymousId` async + eager generation, which also
-closes the unnamed `resetAnonymousId(): Boolean` row), **C3** (background revalidation reaches
-`configUpdates`), **C4** (monotonic sequence guard), **2.7** (SDK-owned row id, upgraded from
-partial — the read/compact lock window was already closed; reconciliation now also keys on it
-instead of the caller-suppliable `idempotencyKey`), and **5.5** (the `kotlin {}` block is no
-longer duplicated per module: `explicitApi`/`jvmTarget`/language version/`jvmDefault` are
-configured once by the convention plugin, `buildSrc/src/main/kotlin/frak-publish.gradle.kts`,
-with each module's build file reduced to a comment pointing there — Android-only build plumbing,
-no iOS counterpart needed). **S5 stays partial** — an iOS streaming rewrite was attempted and
-reverted this pass; see §4's note. **D3 moves from no-logging-at-all to partial** — request
-logging (method/host/path/status/duration, never the query string or a header value) now runs on
-both platforms; the transport-injection seam it also named is still missing.
-
-## 0. The structural lessons
-
-Worth more than any individual row.
-
-1. **The same bug is almost always on both platforms.** The port is faithful; the holes
-   are in the *shared design* and got copied twice — backoff bypassed on a cold cache,
-   `configUpdates` never firing from revalidation, the queue growing exactly while it
-   cannot drain, identity minted on the main thread. Per-platform review does not find
-   these. A shared spec plus shared fixtures does. Fix them **both platforms, one PR** —
-   and when the platform APIs genuinely differ (a Swift `enum` cannot carry a stack trace
-   the way a Kotlin exception class can; `UserDefaults` and `SharedPreferences` fail
-   differently), "fix both" becomes "fix one and **name the other platform's status in the
-   same row**". A row that says *Fixed* without saying what happened on the other platform
-   is the same failure mode as not fixing it there at all — the Tier 0/1 pass produced
-   several (S3, S5, N1, A8), all corrected to say so explicitly.
-2. **Docs drift away from the code faster than anyone expects, in both directions.**
-   Round 2's third headline was a list of doc claims that had silently become true fixes
-   left undocumented (N2, this pass) or become false the moment the fix landed (six stale
-   evidence line-refs in this same document, introduced by the commits that fixed the
-   underlying findings). Correct prose when the code moves, not in a batch — and re-read
-   the evidence column, not just the verdict, every time a row is touched.
-
-A third, learned while remediating: a passing suite can prove nothing. Android's tracker
-tests run the detached drain inline under `UnconfinedTestDispatcher`, so they pass
-identically against the *unfixed* code.
-
-A fourth, from the 4.5/C3/C4/2.7 remediation pass: **a fix's own regression test can be the
-bug.** Multiple review rounds over the same diff found compile blockers introduced by a fix's
-test (an unimported extension, a hanging `AsyncStream` iterator attached after the value it
-needed to see had already been replayed), and a *second*-order defect where the mitigation for
-one corruption bug (a failed on-disk rewrite silently deleting the queue) introduced another
-(the id-reservation counter used to make that mitigation safe was never rolled back on the
-failure path it exists to handle, so a second failed rewrite could hand out a duplicate row id
-and delete an undelivered event instead of a delivered one). Neither was caught by the round
-that wrote the fix — both needed an independent pass reading the new code as if it might be
-wrong, not confirming that it matched the design.
-
-A fifth, from the same pass: **a guard can be right for a reason other than the one it was
-filed for.** C4 was filed against a background revalidation racing a foreground `forceRefresh`
-for the same key. That race is structurally *unreachable* — `SingleFlight` collapses both
-callers onto one in-flight fetch before either reaches the publish site
-(`config/ConfigStore.kt:33-38`). The sequence guard is still correct and still wanted, but for
-a different case: two *different* query keys landing out of order into the single shared
-`memory`/`updates`/disk slot — which no production path can currently produce, so the guard is
-exercised only by tests that construct a second key by hand. Closing a finding is not the same
-as confirming the mechanism it named. A fix whose rationale is never re-derived ships a comment
-that lies about why the code exists, and the next reader deletes it as dead weight.
-
-A sixth, about commits rather than code: **a remediation commit changes things its message does
-not list.** `3c64c4c1f`, whose subject is "async identity, live config revalidation, durable
-reconciliation", also moved iOS's session timeouts from 8 s to a 60 s backstop and inverted
-which mechanism is authoritative (5.7) — a change to a shipped timeout budget, named in no
-commit message and caught only by re-reading the file. `895c86d2d` had earlier moved the same
-values 15/20 → 8/8, also unannounced. Diff the whole commit against this register, not just the
-files its message names.
-
-A seventh, from the S6/C7 pass: **a row that bundles four things overstates one and hides three.**
-S6/C7 read as a single publish blocker — "consent withdrawal and GDPR erasure are unimplementable".
-One quarter of that was true (no runtime setter). One quarter was **false when written**: a merchant
-could already ship a fully inert SDK with `FrakConfig(trackingEnabled = false)`, and
-`resetAnonymousId(): Boolean` already implemented local erasure — a previous pass had closed that
-half without anyone updating this row. And the two remaining quarters, once separated, turned out
-not to be engineering work at all: `shutdown()` is test infrastructure, not a legal requirement, and
-the erasure obligation the row invoked was **already discharged, by a published account-deletion
-route and a privacy-policy contact address rather than by an API** — a fact that lived in
-`apps/wallet` and in a legal page, i.e. nowhere this register was looking. Splitting the row is what
-surfaced both; six revisions of leaving it fused is what hid them.
-
-Two rules out of that. **Before implementing a row, re-derive each clause against the code
-separately** — and expect the count of open rows to move in either direction, because a bundled row
-hides closures as readily as it hides work. And **a compliance obligation is not automatically a
-code obligation**: this register is written by people reading `sdk/`, which is exactly the vantage
-point from which a lawful manual process is invisible and looks like a missing endpoint. Ask what
-the product already does before filing the SDK a ticket.
-
-An eighth, from the same pass, about *what a privacy control has to reach*: **stopping a producer is
-not stopping the pipe.** The first implementation of `setTrackingEnabled(false)` recorded the denial
-and purged the queue — and still uploaded every event a drain already in flight had read, because
-the drain posts outside the queue lock. Worse, the one guard that could have caught it (drop events
-whose captured `clientId` no longer matches the current one) is *disabled* by withdrawal, since the
-current id becomes null. Three independent reviewers found this and none of the tests did. A consent
-gate has to be read at the point of egress, not only at the point of capture.
+Register of open findings from two audits of `sdk/android`/`sdk/ios` (round 1 over the first tree, round 2 at `51d923ded`), re-verified against the current code. Only what is still open or partial is listed; closed findings are one line each in §4. Ids are kept from the original documents (`B*/S*/C*/N*/A*/D*/T*` from round 1, `2.x/3.x/4.x/5.x/8.x` from round 2) so commit messages and review notes still resolve. Both audits were static — no toolchain ran, and neither did the re-verification.
 
 ## 1. Blocking the first publish
 
@@ -122,12 +8,12 @@ ABI-irreversible or verification-blocking. Everything else can ship late.
 
 | Id | Finding | Evidence |
 |---|---|---|
-| A1 / 1.6 | **No binary-compatibility gate, no committed `.api` dump.** BCV was wired then removed on purpose while the shape is unfrozen (`buildSrc/…/frak-publish.gradle.kts:14`). `FrakConfig` and `FrakClient` have gained members since, each a silent ABI change. Blocked on the Q1–Q7 decisions in `05-build-and-release.md` §5 | `find sdk/android -name '*.api' -not -path '*/build/*'` → nothing |
-| A3 / D7 | **`FrakConfig` is a 9-parameter constructor with defaults and no builder.** The synthetic `$default` bridge encodes the parameter count, so adding a field is a `NoSuchMethodError` for an already-shipped merchant binary. Three parameters have been added since the finding | `core/FrakConfig.kt:74-89` |
-| A4 / A5 | **Error taxonomy.** Every internal bug surfaces as `FrakError.Decoding`; there is no `Internal` arm, `FrakError` is not `Equatable`/`equals`, and a backoff refusal arrives as `Network(ISE("backing off"))` | `DefaultFrakClient.kt:404`, `Core/FrakError.swift:4` |
-| ~~S6a / C7~~ | *Closed this revision, both platforms.* `setTrackingEnabled`/`isTrackingEnabled` on `FrakClient` (never a 10th `FrakConfig` parameter — that would be A3/D7's `NoSuchMethodError`), backed by a persisted tri-state `TrackingConsent` in the identity store. **The row's original claim that "consent withdrawal and GDPR erasure are unimplementable" was wrong when written**: `FrakConfig(trackingEnabled = false)` already produced a fully inert SDK, and `resetAnonymousId(): Boolean` already implemented local erasure. What was genuinely missing was flipping the flag after a CMP resolves. A compile-time `false` is a hard floor a runtime grant cannot lift; withdrawal stops enqueueing, purges the queue **and aborts an in-flight drain per event** (the purge alone could not — the drain posts outside the queue lock, and a null `currentClientId` *disables* the stale-id guard rather than tightening it). Erasure stays a second call, `resetAnonymousId()` — cited in source as **4fp**, which is this row — because it can fail on Android and because rotation kills a live 30-day install proof. **The two platforms are not identical and that is deliberate**, per §0 lesson 1: Android distinguishes a *throwing* preferences read from an absent key and answers `false` without memoising, iOS has no throwing read to distinguish; Android hops to an IO dispatcher for the first read, iOS does not (`UserDefaults` is already in memory); Android has one consent gate in `AnonymousIdStore` and iOS two, because only iOS's `startEagerGeneration` has to make the cross-actor read itself; and only iOS needed a `stopped` flag on the tracker, since Android's drains are children of the one scope `shutdown()` cancels. Each of the four is stated in the code at the site it applies to | `core/TrackingConsent.kt`, `Core/TrackingConsent.swift`, `FrakClient.{kt,swift}`, `tracking/InteractionTracker.{kt,swift}` |
-| ~~S6b / C7~~ | *Closed this revision, both platforms, asymmetrically and it is documented as such.* `Frak.shutdown()` on the facade only — deliberately **not** on `FrakClient`, which would kill a client `Frak.client` keeps handing out. Android cancels and **joins** the one `SupervisorJob` scope every background coroutine is a child of, and unregisters the `ActivityLifecycleCallbacks` (without which an initialize/shutdown/initialize cycle double-tracks every inbound deep link, i.e. double-pays a referral). iOS has no such scope: it cancels the startup drain (whose body now checks `Task.isCancelled`, or cancelling a `Task<Void, Never>` would be a no-op) and stops the tracker one-way, and **cannot** reach `ConfigStore`/`RewardRepository`/the detached identity mint. Not a legal requirement and should stop being filed as one — engineering hygiene plus test teardown | `Frak.kt:126-162`, `Frak.swift:143-165`, `DefaultFrakClient.kt:151-155`, `.swift:151-155`, `Tracking/InteractionTracker.swift:112-137` |
-| B4 / B5 / 1.5 | **iOS declares `swift-tools-version: 5.9` but uses Swift 6-only syntax** (`isolated (any Actor)? = #isolation`), and no target sets `swiftSettings`. Consumers compile in Swift 5 mode, which hides real errors — e.g. `HTTPClient: Sendable` holding a non-`Sendable` `NoRedirectDelegate`. Swift 6 is verified only by `scripts/run.sh` | `Package.swift:1`, `Core/FrakCall.swift:6`, `Net/HTTPClient.swift:5,24,82` |
+| A1 / 1.6 | No binary-compatibility gate, no committed `.api` dump. `FrakConfig` and `FrakClient` have gained members since. Blocked on the Q1–Q7 decisions in `05-build-and-release.md` §5 | `buildSrc/…/frak-publish.gradle.kts:14` |
+| A3 / D7 | `FrakConfig` is a 9-parameter constructor with defaults and no builder — the synthetic `$default` bridge makes adding a field a `NoSuchMethodError` for an already-shipped merchant binary. Three parameters added since filing | `core/FrakConfig.kt:74-89` |
+| A4 / A5 | Error taxonomy: every internal bug surfaces as `FrakError.Decoding`; no `Internal` arm, not `Equatable`/`equals`, a backoff refusal arrives as `Network(ISE("backing off"))` | `DefaultFrakClient.kt:404`, `Core/FrakError.swift:4` |
+| B4 / B5 / 1.5 | iOS declares `swift-tools-version: 5.9` but uses Swift 6-only syntax; no target sets `swiftSettings`. Consumers compile in Swift 5 mode, hiding real errors. Verified only via `scripts/run.sh` | `Package.swift:1`, `Core/FrakCall.swift:6` |
+
+Closed this pass, both platforms: S6a (tracking-consent kill switch on `FrakClient`, backed by a persisted `TrackingConsent`) and S6b (`Frak.shutdown()` on the facade only). See §4.
 
 ## 2. Deliberate deferrals
 
@@ -135,225 +21,94 @@ Open, tracked, and knowingly not being worked.
 
 | Id | Finding | Why deferred |
 |---|---|---|
-| B3 / 1.1 | No publish path on either platform — `publishToMavenLocal` only; `do_xcframework()` prints "NOT IMPLEMENTED" | Publishing lands once the SDKs have run on a device (`05-build-and-release.md` §6) |
-| B3 / 1.2 | No CI job builds, tests or lints either SDK. Android Lint has never executed once | Same gate. Consequence: **every green claim in this folder is a human running a command once** |
-| T3 | No automated device/simulator coverage; no `androidTest` source set. One manual Android device run (config + rewards) is the only on-device evidence that exists, and iOS has none | Same gate |
+| B3 / 1.1 | No publish path on either platform — `publishToMavenLocal` only; `do_xcframework()` prints "NOT IMPLEMENTED" | Gated on a device run, `05-build-and-release.md` §6 |
+| B3 / 1.2 | No CI job builds, tests or lints either SDK; Android Lint has never executed once | Same gate. Every green claim in this folder is a human running a command once |
+| T3 | No automated device/simulator coverage, no `androidTest` source set. One manual Android device run is the only on-device evidence; iOS has none | Same gate |
 
 ## 3. Open by area
 
 ### 3.1 Security & privacy
 
-Only S1/S2/S7 among the round-1 security ids closed outright; they are recorded in §4, not here.
-
 | Id | Finding | Evidence |
 |---|---|---|
-| S3 / 3.6 | *Partial.* iOS: *fixed* — `EventQueue` now sets `.completeUntilFirstUserAuthentication` on the queue file at creation (`append`, when `isNewFile`) and after every compaction (`replace`); `applyProtection()` itself is a no-op on macOS, guarded by `#if canImport(UIKit)`, since the API is unavailable there. Android: **still inert** — a `frak_full_backup_content.xml` was added for API 24–30, but a library cannot wire either rules file into its own `<application>` (singular attribute, merger raises a **build error** on a differing merchant value, not a silent drop — `02-sdk-design.md` §3 corrected to say so). The required merchant integration step is now documented in `sdk/android/README.md` ("Backup and device-transfer exclusion"), but nothing changes for a merchant who hasn't taken it | `AndroidManifest.xml`, `Tracking/EventQueue.swift:266-267,275,346,425-429` |
-| S4 | iOS keeps the resolve cache in Preferences rather than Caches and sets no `NSURLIsExcludedFromBackupKey`. **A per-read xattr-on-the-backing-plist mitigation was attempted and reverted**: `cfprefsd` persists a suite by atomic replace, which allocates a new inode on every flush, so the flag does not survive the first write after it is set — the retry-on-every-read design in the reverted diff was compensating for that and still left the just-flushed window uncovered. It also called `FileManager.urls(for: .libraryDirectory...)` on macOS, a platform this package's `Package.swift` declares as a real shipping target, which resolves to the *user's* real `~/Library`, not an app container. The durable fix is the same shape as the S3/iOS fix above — an SDK-owned, backup-excluded directory set once at creation — applied to `KeyValueStore` instead of ad hoc per-call exclusion; not attempted here, and `Caches` is the wrong destination for the identity suite specifically (eviction under disk pressure would silently rotate the anonymous id, reopening the closed **2.8**) | `Config/KeyValueStore.swift` |
-| S5 / 3.7 | *Partial.* Unbounded response-body read on both platforms — no size cap, no `Content-Length` check. On Android the body is then persisted verbatim into `SharedPreferences`. **Android: fixed**, a genuine streaming abort — `readBytesUpTo` aborts incrementally once the running total exceeds 1 MiB, never buffering past the cap; the pooled connection is `disconnect()`-ed on both the pre-check and the mid-read abort so it isn't left poisoned. **iOS: partial, and a streaming rewrite was tried and reverted this pass** — `session.bytes(for:)` iterated the body one byte per `await` (~100,000 suspensions for a typical response), a real production regression judged too risky to land without a compiler to check it. iOS stays on `session.data(for:)` with a pre-check plus a post-buffer cap: an oversized body is never returned to a caller that would persist it, but peak memory during the read is not bounded the way Android's abort is. A real fix needs a `URLSessionDataDelegate`-based accumulate-and-cancel, not `session.bytes(for:)` | `net/HttpClient.kt:239-260` (Android's cap is enforced by `readBytesUpTo`, not the range alone), `Net/HTTPClient.swift:233-258` |
-| 3.2 | *Partial.* Android did not check an inbound `fCtx`'s `merchantId` against the SDK's own before tracking an arrival. **V2 fixed on both platforms** (case-insensitive, whitespace-trimmed compare, primarily against the merchant's own `FrakConfig.merchantId`, falling back to the cached config's `merchantId` only when the merchant didn't set one; fails open — lets the arrival through untouched — only when neither is available yet, since fire-and-forget arrival handling must not block on a fresh network resolve). Because most integrations set `FrakConfig.merchantId`, the fail-open path rarely fires in practice. **The V1 half is unchanged and cannot be fixed the same way**: a V1 context carries no `merchantId` field at all, so a V1 link from any merchant is still tracked as this merchant's arrival | `applink/ReferralArrival.kt:28-43`, `AppLink/ReferralArrival.swift:23-39` |
-| 3.3 | iOS software-key fallback writes the **raw P-256 private scalar** into a backed-up plist, behind a class comment claiming it "stores a key reference, not the key itself". No simulator-only guard | `Identity/DeviceKey.swift:88` |
-| S6c / C7 | *Not a finding — a recorded decision, kept so it stops being re-filed.* The SDK's erasure calls stop at the device: nothing in `sdk/*` deletes what the backend already holds under a `clientId`. **There is deliberately no `clientId`-keyed DSR API and none is planned.** Data-subject requests are handled through the existing published route — `https://frak.id/account-deletion`, linked from wallet settings (`apps/wallet/.../LegalLinks`), plus `hello@frak-labs.com` in the privacy policy — which is a lawful way to satisfy Arts 15/17 and does not require an endpoint. Two consequences a reader should not have to rediscover: fulfilment is **manual against the one-month Art-12(3) clock**, and a user cannot quote their `clientId` (it is never shown to them), so a request is keyed on what they *can* give — wallet address or email — and resolves through the identity graph. Revisit only if request volume makes the manual path miss the clock. Was filed as a §1 publish blocker, which it never was: this is process, not code | decision, not code; `apps/wallet/app/module/settings/component/LegalLinks` |
-| S9 | *Closed on landing, recorded because the code cites it.* **`trackingEnabled` was mis-scoped as a whole-SDK kill switch.** `requireTrackingEnabled()` gated `resolveConfig`, and therefore `campaigns`/`bestReward` — none of which transmit any user identifier (`x-frak-client-id` is set only in `InteractionTracker`). With tracking off, merchant config and reward copy died for no privacy gain. Now ungated on both platforms; tracking entry points stay gated. Sharing still fails closed (`buildSharingLink` returns null on a null `anonymousId`) and that is **correct and documented, not a bug** — a share link *is* the identity. Residual, and honestly a decision rather than an absence of cost: a build that compiled `trackingEnabled = false` still reaches Frak's backend on every launch for config and rewards, disclosing device IP and app-install existence | `DefaultFrakClient.kt:178-186`, `.swift:173-182` |
-| S10 | **The consent decision is only as durable as the store under it, and its fate on a new device is currently undefined on Android.** (a) Android writes it with `SharedPreferences.apply()` — asynchronous, reports nothing — so a withdrawal lost to a process kill in the same instant reverts to enabled on the next launch. A committing write is needed and `KeyValueStore` exposes none. (b) The decision lives in the identity prefs file, which `frak_data_extraction_rules.xml` and `frak_full_backup_content.xml` exclude from Auto Backup **and** device transfer — but per **S3 those files are inert unless the merchant wires them into their own `<application>`**, so what actually happens depends on an integration step most merchants have not taken: wired, a *denial* does not follow the user to a new phone; unwired, it does, along with the config cache. **Both outcomes are defensible and neither was chosen** — a transfer arguably reads as a fresh install where the CMP re-prompts, but that argument is written nowhere. iOS has no such fork: its identity suite is not backup-excluded at all (S4), so the denial always survives a restore. Documented in both READMEs; no test pins any of it | `config/KeyValueStore.kt:34-43`, `res/xml/frak_data_extraction_rules.xml`, `Config/KeyValueStore.swift` |
-| S11 | **The sharing WebView URL is identity-gated, not consent-gated — by luck of composition.** `SharingPageUrl.kt`/`SharingPageURL.swift` put `clientId` in a query string, and nothing in `frak-sdk-ui`/`FrakSDKUI` reads `TrackingConsent`. It fails closed today only because `anonymousId()` returns null. Two consequences: loosening the identity gate would leak the id into a URL with no second guard, and opening the sheet with consent withdrawn still issues `buildSharingLink` → `resolveConfig` network traffic before failing | `frak-sdk-ui`, `FrakSDKUI` |
+| S3 / 3.6 | Partial. iOS fixed — `EventQueue` sets `.completeUntilFirstUserAuthentication` on creation and after every compaction. Android still inert — backup-exclusion XML files exist, but a library can't wire itself into a merchant's `<application>`; documented in `sdk/android/README.md`, does nothing until a merchant applies it | `AndroidManifest.xml`, `Tracking/EventQueue.swift:266-267` |
+| S4 | iOS keeps the resolve cache in Preferences, not Caches, with no backup exclusion. A per-read xattr mitigation was tried and reverted — `cfprefsd` reallocates the inode on every flush, so the exclusion doesn't survive the next write. Needs an SDK-owned, backup-excluded directory set at creation, the same shape as S3's iOS fix | `Config/KeyValueStore.swift` |
+| S5 / 3.7 | Partial. Unbounded response-body read, no size cap. Android fixed — `readBytesUpTo` aborts incrementally past 1 MiB. iOS: a streaming rewrite was tried and reverted (`session.bytes(for:)` is ~100k suspensions per response) — stays on a pre-check plus post-buffer cap, so peak memory during the read is unbounded | `net/HttpClient.kt:239-260`, `Net/HTTPClient.swift:233-258` |
+| 3.2 | Partial. V2 `fCtx` merchantId check fixed on both platforms (case-insensitive, fails open only when no config is available yet). V1 contexts carry no `merchantId` field at all — unfixable the same way; a V1 link from any merchant still tracks as this merchant's arrival | `applink/ReferralArrival.kt:28-43` |
+| 3.3 | iOS software-key fallback writes the raw P-256 private scalar into a backed-up plist, behind a class comment claiming it stores a key reference. No simulator-only guard | `Identity/DeviceKey.swift:88` |
+| S10 | Consent-decision durability is undefined on Android: `SharedPreferences.apply()` is async, so a withdrawal lost to a process kill reverts to enabled on next launch. Its survival across a device transfer depends on the S3 integration step most merchants haven't taken. iOS has no such fork — no backup exclusion at all (S4), so a denial always survives a restore. No test pins either | `config/KeyValueStore.kt:34-43` |
+| S11 | Sharing WebView URL puts `clientId` in a query string; nothing in `frak-sdk-ui`/`FrakSDKUI` reads `TrackingConsent`. Fails closed today only because `anonymousId()` returns null once consent is withdrawn — no second guard | `frak-sdk-ui`, `FrakSDKUI` |
+
+Closed/decided: S1, S2, S7 (round-1 security — §4). S6c is recorded as a process decision, not a code gap: backend-held data erasure goes through the published `frak.id/account-deletion` route; no `clientId`-keyed DSR API is planned. S9 — `trackingEnabled` no longer gates config/rewards reads, which carry no identifier; tracking entry points stay gated.
+
 ### 3.2 Correctness
 
 | Id | Finding | Evidence |
 |---|---|---|
-| ~~2.6~~ | **Closed, both platforms.** The cap is no longer read-only: both bounds are applied by one pass (`readLocked` / `readWithOutcome`), now reached from `append` too once the file has run `MAX_EVENTS_SLACK` (= `MAX_EVENTS / 10` = 100) rows past the cap. `append` stays O(1) in the common case — one trim per 100 appends, amortised — via an in-memory `liveRowCount` seeded from the same snapshot that seeds the row ids, and a `nextTrimAt` re-armed from what each pass actually left on disk, so a trim whose rewrite fails backs off by a slack instead of retrying an O(N) failing write on every append. The on-disk ceiling is now 1100 rows rather than unbounded. The age bound needs no append-side trigger: a freshly captured event cannot be too old. **The pass also now sweeps unparseable rows** (`decoded != present`), which closes the old F5 — a torn tail used to be re-read and re-discarded on every read forever — and is what keeps the ceiling a bound on BYTES rather than only on valid rows now that 4.4 stopped `reconcile` rewriting unconditionally: that write had been sweeping the garbage as a side effect. Pinned on both platforms by a test that appends past the ceiling without ever calling `read`, and one that asserts a torn tail leaves the file | `EventQueue.kt` (`trimIfOverflowing`, `MAX_EVENTS_SLACK`), `EventQueue.swift` (`trimIfOverflowing`, `maxEventsSlack`) |
-| N4 / 5.7 | *Partial, closer to closed than previously recorded.* Timeouts contradicted each other: connect 10 s + read 15 s = 25 s against a 20 s overall deadline (Android); three overlapping mechanisms on iOS. **Android budget fixed**: connect/read are now 3 s/5 s (two attempts + jitter fit inside the 20 s deadline with slack). **iOS collapsed to one authoritative mechanism instead of budgeting three**: `Deadline.run` alone bounds a request at 20 s; `timeoutIntervalForRequest`/`timeoutIntervalForResource` were raised to a deliberate 60 s backstop that cannot fire first (`HTTPClient.swift:68,72-73`), not tightened to 8 s as an earlier revision of this row said. Three mechanisms still exist, but they no longer compete for a budget and the code documents which one is authoritative — the remaining gap is that the count is still three, not one | `net/HttpClient.kt:295-310`, `Net/HTTPClient.swift:47-73` |
-| — | **The load deadline is not cancelled on a manual share/copy.** Tap Copy while the page is still loading and the 1.5 s tier-3 deadline later raises a second OS chooser; on iOS it also closes the sheet. Both platforms | found post-audit, unfixed |
+| N4 / 5.7 | Partial, closer to closed. Android budget fixed (connect/read 3s/5s inside a 20s deadline). iOS collapsed to one authoritative mechanism (`Deadline.run`, 20s), with `timeoutIntervalForRequest`/`Resource` raised to a 60s backstop that can't fire first. Three mechanisms still exist, but they no longer compete for a budget | `net/HttpClient.kt:295-310`, `Net/HTTPClient.swift:47-73` |
+| — | Load deadline isn't cancelled on a manual share/copy — tapping Copy while the page is still loading later raises a second OS chooser (also closes the sheet on iOS). Both platforms, found post-audit, unfixed | — |
+
+2.6 and 4.4 closed (§4).
 
 ### 3.3 Public API / DX
 
 | Id | Finding | Evidence |
 |---|---|---|
-| A2 | Sealed/enum hierarchies make an exhaustive `when`/`switch` a consumer break | `FrakError`, `FrakEnvironment`, `RewardTier`, … |
-| A7 | The Android surface is Java-hostile — everything `suspend`, no `@JvmOverloads`, no callback bridge. The namespace split made a targeted fix *possible*, not delivered | `FrakClient.kt` |
-| D2b | *Was D2, now residue.* Both harnesses compile against the real SDK and one has run on a device, but **neither has exercised the sharing sheet, the install handoff or an inbound deep link** — so nothing proves the sheet renders or that the intent filter fires | `example/native-{android,ios}` |
-| D3 | *Partial.* Request logging now lands on both platforms — method, host, path, status and duration at DEBUG, deliberately never the query string or a header value, wired to the real logger in production (`net/HttpClient.kt:154-163`, `Net/HTTPClient.swift:218-231`). What remains open is the seam: the only transport-injection points (Android's `open: (URL) -> HttpURLConnection`, iOS's `session:`) are `internal`, so a merchant still cannot substitute a fake transport — overlaps D4 | `net/HttpClient.kt:39,154-163`, `Net/HTTPClient.swift:91,218-231` |
-| D4 | No merchant test seam beyond `FrakEnvironment.Custom`; all injection points are `internal` | both platforms |
-| D5 | A typo in `targetInteraction` fails silently — free `String`, no constants, no validation | `RewardsApi.kt:35` |
-| A7b | **Parity: `bestReward` is seeded into the iOS sheet and not the Android one, and Android tracks `Interaction.Sharing()` where iOS does not.** Pre-existing, surfaced while cataloguing the UI's use of the client | `frak-sdk-ui` vs `FrakSDKUI` |
-| Q4 | `FrakLogSink` diverges deliberately: a throwing sink is swallowed on Android and **brings down the host process** on iOS. Cheaper to change before publication | decision recorded in `05-build-and-release.md` §5 Q4 |
+| A2 | Sealed/enum hierarchies make an exhaustive `when`/`switch` a consumer break | `FrakError`, `FrakEnvironment`, `RewardTier` |
+| A7 | Android surface is Java-hostile — everything `suspend`, no `@JvmOverloads`, no callback bridge. The namespace split made a targeted fix possible, not delivered | `FrakClient.kt` |
+| D2b | Both harnesses compile against the real SDK and one has run on a device, but neither has exercised the sharing sheet, the install handoff or an inbound deep link | `example/native-{android,ios}` |
+| D3 | Partial. Request logging lands on both platforms (method/host/path/status/duration, never the query string or a header value). Transport-injection points remain `internal`, so a merchant can't substitute a fake transport — overlaps D4 | `net/HttpClient.kt:39,154-163` |
+| D4 | No merchant test seam beyond `FrakEnvironment.Custom`; all injection points `internal` | both platforms |
+| D5 | Typo in `targetInteraction` fails silently — free `String`, no constants, no validation | `RewardsApi.kt:35` |
+| A7b | Parity: `bestReward` is seeded into the iOS sheet, not Android's; Android tracks `Interaction.Sharing()`, iOS doesn't | `frak-sdk-ui` vs `FrakSDKUI` |
+| Q4 | `FrakLogSink` diverges deliberately — a throwing sink is swallowed on Android and brings down the host process on iOS. Cheaper to change before publication | decision recorded in `05-build-and-release.md` §5 Q4 |
 
 ### 3.4 Performance
 
 | Id | Finding | Evidence |
 |---|---|---|
-| 4.2 | **Accepted with rationale, not fixed — iOS only.** iOS `EventQueue` is a plain `actor` doing synchronous file I/O on the cooperative pool. Making the methods `async` is disqualified on correctness, not taste: an `await` inside `reconcile`/`readWithOutcome` is a suspension point, and `InteractionTracker` calls `append` from a separate task, which reopens byte-for-byte the interleaving window 2.7 closed. A `DispatchQueue`-backed `SerialExecutor` does compile at the iOS 15 floor, but only through the **deprecated** `enqueue(_: UnownedJob)` requirement (`ExecutorJob` is iOS 17+) — rejected as the worse trade in a package no CI builds. What is blocked is bounded and short: one read of ≤ 1100 short lines, and a write only when something changed. At an iOS 17 floor this becomes three lines with no ABI impact, so deferring costs nothing. **Android is not affected**: Kotlin gets off-thread I/O free from `withContext(ioDispatcher)` — a genuine platform divergence, not a port omission. Rationale recorded on the `actor` declaration | `Tracking/EventQueue.swift` (`actor EventQueue` doc-block) |
-| ~~4.4~~ | **Closed — and the filed mechanism was wrong.** The row claimed one O(N) flush *per tracked event*. It is not: `Backoff` arms on the **first** failure, so every subsequent `flush` returns before it reads, and the true cost was ~3N per backoff window (1 s → 60 s cap) with N unbounded. The severity was therefore almost entirely derivative of 2.6 — bound N and the worst case becomes 3 × 1100 short rows per window. Fixed at both ends: 2.6 bounds N, and `reconcile` now **skips the whole-file rewrite when nothing changed** (`retried` empty and the row count unchanged), which is the commonest backlog pass — every send failed, so nothing was delivered and nothing was retried. That skip is safe only because the read has already persisted anything it changed, so the reconciled list is byte-identical to disk; the invariant is written next to the code and pinned by a byte-comparison test on both platforms. Note iOS coalesces drains (`drainTask`/`drainAgain`) where Android launches one per event — an unrelated parity gap, still open | `EventQueue.kt`/`EventQueue.swift` (`reconcile`), `Backoff.kt:37-45` |
-| 4.6 | *Partial — the original "never evict" wording was wrong at filing.* Both caches evict opportunistically: the rewards map sweeps entries past their TTL on every insert, and `Backoff.state` drops a key on expiry-read and on success, so neither grows without bound. What remains is that eviction is **insert-triggered only** — a process that stops calling `bestReward`, or a key that fails once and is never dialled again, retains its last entries for the process lifetime. No periodic sweep, no size cap | `RewardRepository.kt:141`, `.swift:136-137`, `Backoff.kt:30,51`, `Backoff.swift:42,67` |
+| 4.2 | Accepted with rationale, not fixed — iOS only. `EventQueue` actor does synchronous file I/O on the cooperative pool; making it `async` reopens the interleaving window 2.7 closed, and the alternative (`SerialExecutor`) needs a deprecated iOS-15-floor API. What's blocked is bounded and short (≤1100 lines). Android unaffected — off-thread I/O free from `withContext` | `Tracking/EventQueue.swift` |
+| 4.6 | Partial. Both caches evict opportunistically (on insert/read), not on a schedule — a process that stops calling in, or a key that fails once and is never retried, keeps its last entries for the process lifetime. No periodic sweep, no size cap | `RewardRepository.kt:141`, `Backoff.kt:30,51` |
 
 ### 3.5 Simplification — mostly deletion
 
 | Id | Finding |
 |---|---|
 | 5.1 | `ConfigStore` is a per-key state machine (4 maps + a sub-flight) with exactly one key |
-| 5.2 | iOS `SingleFlight` is still a ~120-line actor with a `Waiter` class where a struct on the owning actor would do |
-| 5.3 | *Partial.* iOS dropped `runOrRecordFailure`; Android still passes a non-reentrant `Mutex` as a parameter (**C6**) |
+| 5.2 | iOS `SingleFlight` is a ~120-line actor with a `Waiter` class where a struct would do |
+| 5.3 | Partial. iOS dropped `runOrRecordFailure`; Android still passes a non-reentrant `Mutex` as a parameter (C6) |
 | 5.4 | `ConfigStore` and `RewardRepository` are the same 40 lines twice, per platform — no `CachedEndpoint<T>` |
 
-**5.8 withdrawn.** Was flagged as leftover dead code; re-verified and found stale —
-`resetForTesting()` is `internal`-only (never public API) and is genuinely exercised by four
-tests in `FrakTests.swift`. Not a gap; removing it would delete working test infrastructure.
+5.8 withdrawn — `resetForTesting()` is `internal`-only and genuinely exercised by four tests; not dead code.
 
-Smaller open items from the round-2 best-practice pass that are worth doing in the same passes:
-`FrakEnvironment.Custom`/`.custom` inheriting **dev** wallet package id and scheme defaults —
-*partial*: overriding was added (`walletPackageId`/`walletScheme` constructor params on Android,
-a 3-arg `.custom(wallet:backend:walletScheme:)` case on iOS), but the no-argument defaults are
-unchanged (`DEV_WALLET_PACKAGE_ID`/`DEV_WALLET_SCHEME` on Android, `"frakwallet-dev"` on iOS's
-2-arg convenience `custom(wallet:backend:)`), so a merchant who doesn't override still probes for,
-and deep-links into, Frak's internal dev app;
-iOS `SharingSheetModel.release()` not cancelling the prepare task (a naive
-fix here is wrong — `.onDisappear` also fires when `UIActivityViewController` covers the
-sheet, so it reports a successful share as `.dismissed`; the real fix needs a device); a
-fixed 480 pt iOS sheet with no `presentationDetents`; `NativeShare.share()` can still hang
-if a presentation is accepted then torn down.
+Smaller open items: `FrakEnvironment.Custom`/`.custom` still default to Frak's internal dev wallet package id/scheme when a merchant doesn't override (overriding was added, the no-arg default wasn't changed); iOS `SharingSheetModel.release()` doesn't cancel the prepare task (needs a device to fix safely — `.onDisappear` also fires when the OS share sheet merely covers the view); a fixed 480pt iOS sheet with no `presentationDetents`; `NativeShare.share()` can still hang if a presentation is accepted then torn down.
 
 ### 3.6 Tests
 
 | Id | Finding |
 |---|---|
-| **T8** | **NEW, and the sharpest evidence yet for B3/1.2. Neither test suite compiled on `3bf9bcf4d`.** Android: `HttpClientTest`'s `newClient(open:logger:)` gained `logger` as the LAST parameter, so Kotlin silently rebound all nine `newClient { ... }` trailing lambdas from `open` onto `logger` — 9 compile errors. iOS: `ConfigStoreTests.swift:436` carried a literal `\u2014` in a Swift string, which is not a valid escape — the whole test target failed to parse. Both were introduced by the same commit and sat undetected, because "green" here has only ever meant a human running a command once. Both fixed (`open` moved last with a note; real em-dash). **This is what B3/1.2 costs in practice, not in principle** |
-| **T9** | **NEW. Two tests were passing vacuously; one still is.** (a) `InteractionTrackerTests`' 2.7 fixture wrote `"b"` as a nested JSON object where `QueuedEvent.body` is a `String`, so every fixture row failed to decode and the test asserted against an already-empty queue — fixed. (b) `ConfigStoreTests`' C3 non-publish assertion incremented its counter after a bare `_ = await iterator.next()`; a cancelled `AsyncStream` iterator resolves with `nil` rather than hanging, so the counter fired on every run and the assertion could never fail for its stated reason — fixed. (c) **Still vacuous**: even with (a) fixed, `"flush survives a failed migration rewrite"` cannot fail — the read-only parent directory it uses to force the write failure also blocks the deletion it is checking for, so the file survives by OS permission rather than by the code under test. Verified by reintroducing the original 2.7 bug and watching it still pass. The invariant IS genuinely pinned, but by `EventQueueTests` (Android 2 tests, iOS 1), not by this one. Either give it a real failure-injection seam or delete it as false comfort |
+| T8 | Neither test suite compiled on `3bf9bcf4d`. Android: a parameter reorder silently rebound 9 trailing lambdas onto the wrong parameter. iOS: a literal `\u2014` in a string broke the whole target's parse. Both introduced by the same commit, both fixed — direct evidence for B3/1.2, since "green" here has only ever meant a human running a command once |
+| T9 | Two tests were passing vacuously; one still is. (a), (b) fixed — a fixture-decode mismatch and a stale-assertion ordering. (c) still vacuous: `"flush survives a failed migration rewrite"` can't fail — its read-only-parent-directory setup blocks the deletion it's checking for, so it passes by OS permission, not by the code under test. The invariant is genuinely pinned, but by `EventQueueTests`, not this one |
 | T2 / 8.8 | Android's `Frak` facade is entirely untested (iOS has `FrakTests.swift`) |
 | T5 | iOS asserts "some `FrakError`" where Android asserts the case |
-| T6 / 8.4 | Real sleeps: **21** `Task.sleep` calls sequence the iOS concurrency tests (8 in `SingleFlightTests`, 4 in `FrakClientTests`, 3 each in `ConfigStoreTests`/`DeadlineTests`, 2 in `TestSupport`, 1 in `HTTPClientTests`); `HttpClientTest.kt:166` parks an IO thread for 10 s |
-| T7 | Parity divergences: iOS backoff clock ignores the injected `now()`; persisted `fetchedAt` is millis on Android and a `Date` on iOS |
-| 8.2 | *Partial.* `SharingSheetLogic` is extracted and tested; the 287-line `SharingSheetModel` and all of `SharingWebView` have zero executed coverage |
-| 8.5 | *Partial.* iOS has `PersistedDeviceKeyStoreTests`; the real Android keystore is untestable on the JVM and untested |
+| T6 / 8.4 | 21 real `Task.sleep` calls sequence the iOS concurrency tests; `HttpClientTest.kt:166` parks an IO thread for 10s |
+| T7 | Parity: iOS backoff clock ignores the injected `now()`; persisted `fetchedAt` is millis on Android and a `Date` on iOS |
+| 8.2 | Partial. `SharingSheetLogic` is extracted and tested; the 287-line `SharingSheetModel` and all of `SharingWebView` have zero executed coverage |
+| 8.5 | Partial. iOS has `PersistedDeviceKeyStoreTests`; the real Android keystore is untestable on the JVM and untested |
 | 8.3, 8.6, 8.7, 8.9, 8.10 | A guard that cannot fail (`FrakContextCodecTest.kt:42-46`); no iOS redirect/cache/`Accept-Encoding` assertions; `Base64URL`/`Hex` used as an oracle with no tests of their own; no concurrent-queue-writer test on either platform; housekeeping |
+
+2.7 closed (§4).
 
 ### 3.7 The largest un-pinned surface
 
-Not a bug — the highest-leverage structural gap. **There is no golden corpus for URL query
-editing, gap-fill and attribution merge**: ~230 lines hand-ported three ways
-(`queryParams.ts` / `UrlQuery.kt` / `URLQuery.swift`, plus `mergeAttribution` /
-`AttributionParams.kt` / `SharingLinkBuilder.swift`) encoding case-insensitive `fCtx`
-lookup, tolerant percent-decoding, "never re-encode the merchant's URL", empty-value
-skipping and a seven-field precedence rule. Drift there silently mis-attributes revenue and
-no test on any platform would notice. `golden-sharing-links.json` would close it the way
-`golden-context.json` closed the codec. The resolve-response decoder is the second
-candidate — it has already produced two real divergences (2.10, and block-level
-forgiveness).
+Not a bug — the highest-leverage structural gap. No golden corpus for URL query editing, gap-fill and attribution merge: ~230 lines hand-ported three ways (`queryParams.ts`/`UrlQuery.kt`/`URLQuery.swift`, `mergeAttribution`/`AttributionParams.kt`/`SharingLinkBuilder.swift`), encoding a case-insensitive `fCtx` lookup, tolerant percent-decoding, "never re-encode the merchant's URL", empty-value skipping and a seven-field precedence rule. Drift there silently mis-attributes revenue and no test on any platform would notice. `golden-sharing-links.json` would close it the way `golden-context.json` closed the codec. The resolve-response decoder is the second candidate — it has already produced two real divergences (2.10, and block-level forgiveness).
 
 ## 4. Closed, for the record
 
-Fixed and verified in the current tree: Android `SingleFlight` re-entrancy (**B1**) and
-blocking I/O on the caller's thread (**B2**); the licence, now Apache-2.0 (**B6/1.3**); the
-iOS privacy manifests on both targets (**1.4**); iOS `SingleFlight` cancellation and
-join-after-completion (**C1/C2**); the `revalidating` cancellation leak (**C5/2.4b**); the
-shared 2-slot dispatcher, now split 2 disk / 4 network (**C8/4.1**); the config tree being
-invisible to the UI module (**D1**) and un-round-trippable through equality (**A10**);
-both sharing sheets misreading a failed load as ready (**2.1/2.2**); backoff bypassed on a
-cold cache (**2.3**); the startup drain ignoring `trackingEnabled` (**2.5**); an iCloud
-restore bricking identity (**2.8**); iOS dropping a rewards response over an absent `tiers`
-(**2.9**); the WebView starting arbitrary activities (**3.1**); `signProof` having no
-production caller (**3.4**); `track()` awaiting the whole backlog (**4.3**); the doc-claim
-corrections (**T8/7**); and the first concurrency tests for `SingleFlight` (**T1**). Closed by rewiring the example apps: **D2** (both harnesses were stubs of an API shape that never shipped), plus four defects only a real integrator found — Kotlin's `handleReferral` able to throw where Swift structurally cannot, the invisible throwing tier (`@Throws`), four KDoc links pointing at members the reseal deleted, and a `frak-publish` `groupId` set only inside the publication so composite substitution silently failed.
+Fixed and verified in the current tree: Android `SingleFlight` re-entrancy (B1) and blocking I/O on the caller's thread (B2); the licence, now Apache-2.0 (B6/1.3); iOS privacy manifests on both targets (1.4); iOS `SingleFlight` cancellation and join-after-completion (C1/C2); the `revalidating` cancellation leak (C5/2.4b); the shared 2-slot dispatcher, now split 2 disk/4 network (C8/4.1); the config tree being invisible to the UI module (D1) and un-round-trippable through equality (A10); both sharing sheets misreading a failed load as ready (2.1/2.2); backoff bypassed on a cold cache (2.3); the startup drain ignoring `trackingEnabled` (2.5); an iCloud restore bricking identity (2.8); iOS dropping a rewards response over an absent `tiers` (2.9); the WebView starting arbitrary activities (3.1); `signProof` having no production caller (3.4); `track()` awaiting the whole backlog (4.3); the doc-claim corrections (T8/7); the first concurrency tests for `SingleFlight` (T1); and, closed by rewiring the example apps, D2 (both harnesses were stubs of an API shape that never shipped) plus four defects only a real integrator found (a throw where Swift structurally can't, the invisible `@Throws` tier, dead KDoc links, and `frak-publish`'s `groupId` set only inside the publication).
 
-From the Tier 0/1 remediation pass, both platforms unless noted: iOS log-privacy widening, all
-four `os.Logger` call sites moved from `privacy: .public` to `.private` (**S1**); raw backend
-response bodies logged at ERROR, now only the body's length/byte count (**S2**,
-`config/ConfigStore.kt:224-225`, `Config/ConfigStore.swift:227-228`); `FrakEnvironment.Custom`
-accepting cleartext and `file:`, now an `https`-or-loopback-`http` allowlist with the rejection
-logged at `Frak.initialize` (**S7** — Android parses with `java.net.URI` and iOS with
-`URLComponents`, two parsers whose accept sets had to be reconciled twice: bracketed IPv6, and
-underscore hosts, where `URI.getHost()` returns null for a registry-based authority and needs an
-authority fallback. Both cases are now pinned by the same fixture list on each platform);
-`URLComponents` onto the same RFC-3986 `PercentEncoding` Android already used, byte-for-byte
-identical unreserved-character sets on both platforms now (**N2**); iOS's `URLSession` switched
-to an ephemeral configuration, so cookies are no longer accepted or replayed for the process
-lifetime (**N8**); unbounded response reads on Android, which is now a genuine streaming abort
-(**S5**, Android half — iOS is a post-buffer check, see §3.1); a 204/205/304 misread as a
-transport failure and retried (**N5**); retries that were too broad and immediate — narrowed to a
-transient allowlist (`SocketException`/`EOFException`/`InterruptedIOException`/`UnknownHostException`
-on Android, matching `URLError` cases on iOS) plus 100–300 ms jitter (**N6**); clock skew pinning
-the config cache fresh forever, now clamped to a non-negative age (**N7**); empty optional strings
-decoding inconsistently between platforms, now normalised to absent on both (**2.10**); a
-non-finite (`NaN`/`Infinity`) money amount surviving decode — every numeric reward and
-`ProductDetails` field now goes through a finiteness guard on Android (`TokenAmount`,
-`RewardTier.minValue`/`maxValue`, `EstimatedReward.Percentage.percent`,
-`BestReward.minPurchaseValue`/`lockupDurationDays`, all `ProductDetails` fields), where `org.json`
-accepts those as bare literals — iOS's `JSONDecoder` already rejects them by default, so this arm
-of the finding was always Android-only (**N1**); `objectArray`/`ForgivingArray` re-verified to
-already behave identically on both platforms — **N3** as filed described a gap that no longer
-exists, corrected rather than left stale; `forceRefresh` not reaching the config resolve inside
-`fetchRewards` on either platform, so a forced rewards refresh could still read a stale merchant
-id/currency (**D6**); `clientOrNull` added to both platforms (**A6**); `NotInitialized`/
-`TrackingDisabled`/`AlreadyPresenting` converted from singleton `object`s to plain classes on
-Android so each throw captures its own stack trace — iOS has no equivalent gap, since Swift enum
-errors never carry one regardless of how they're declared (**A8**, Android-only); `equals`/
-`hashCode`/`toString` added to every public Android reward model plus `ProductDetails`, which the
-same gap also applied to (**A9**); `trackingCall` now routes through `frakCall`'s normalisation on
-Android, so an unexpected `Throwable` from the tracker can no longer escape uncaught — iOS's
-equivalent closure is structurally non-throwing, so it never had the gap (**2.11**); the UUID
-regex, hex encode/decode and UUID-to-bytes round trip de-duplicated on Android via new
-`core/Hex.kt`/`core/Uuid.kt` helpers shared between `ProofCodec` and `FrakContextCodec`, mirroring
-the dependency shape of iOS's existing `Hex.swift` (**5.6**); and `resourcePrefix` set on
-`frak-sdk-ui` (not on `frak-sdk`, which ships no prefixable resources today) so an unprefixed
-resource *would* fail Android Lint — moot until **B3/1.2** gives lint somewhere to run, see §2.
+Tier 0/1 remediation pass, both platforms unless noted: log-privacy widening, all four `os.Logger` call sites moved to `.private` (S1); raw response bodies now logged only by length (S2); `FrakEnvironment.Custom` restricted to an https-or-loopback-http allowlist (S7); `PercentEncoding` unified to the same RFC-3986 set on both platforms (N2); iOS `URLSession` switched to an ephemeral configuration (N8); unbounded response reads on Android, now a genuine streaming abort — the Android half of S5, iOS stays partial (§3.1); a 204/205/304 no longer misread as a transport failure (N5); retries narrowed to a transient allowlist plus jitter (N6); clock skew clamped to a non-negative cache age (N7); empty optional strings normalised to absent on both platforms (2.10); non-finite (`NaN`/`Infinity`) money amounts rejected on Android — iOS's `JSONDecoder` already rejected them, so this arm was Android-only (N1); `objectArray`/`ForgivingArray` re-verified already identical on both platforms — N3 as filed described a gap that no longer exists; `forceRefresh` now reaching the config resolve inside `fetchRewards` on either platform (D6); `clientOrNull` added to both platforms (A6); Android's `NotInitialized`/`TrackingDisabled`/`AlreadyPresenting` converted from singleton `object`s to plain classes so each throw captures its own stack trace — iOS has no equivalent gap, Swift enum errors never carry one (A8, Android-only); `equals`/`hashCode`/`toString` added to every public Android reward model plus `ProductDetails` (A9); Android's tracker exceptions now routed through `frakCall`'s normalisation — iOS's equivalent is structurally non-throwing (2.11); UUID/hex helpers de-duplicated on Android via `core/Hex.kt`/`core/Uuid.kt`, mirroring iOS's existing `Hex.swift` (5.6); `resourcePrefix` set on `frak-sdk-ui` (5.5's Lint prerequisite, moot until B3/1.2 gives Lint somewhere to run).
 
-From this pass: `anonymousId` is now `suspend`/`async` on both platforms (**4.5**), minted eagerly
-by a `Deferred`/detached `Task` started as soon as the client exists rather than lazily on first
-read, so a caller racing the warm-up awaits the SAME in-flight generation instead of blocking a
-thread or getting a spurious `null`; a refusal (locked device, transient keystore/Secure Enclave
-hiccup) is never cached, so one bad read cannot turn into a permanently inert install — pinned by
-a dedicated recovery test on both platforms. `resetAnonymousId()` now returns `Bool`/`Boolean` (closing the last of the previously-partial
-`resetAnonymousId` row: Android's internal `AnonymousIdStore.reset()` already reported success
-faithfully, but the public `FrakClient.resetAnonymousId(): Unit` had nowhere to put that
-information until this ABI change): Android's keystore delete can genuinely fail and the caller
-needs to know whether the id actually rotated before purging queued events under the old one;
-iOS's equivalent cannot fail by construction (deletion only ever drops the stored key *reference*,
-never touches the Secure Enclave) and returns `true` unconditionally — a deliberate platform
-asymmetry kept for the sake of one shared cross-platform erasure contract, not an oversight. `configUpdates`/`updates` now fires
-from background revalidation, not just a caller's own direct fetch (**C3**): `ConfigStore`, not
-`DefaultFrakClient`, owns the stream, since `fetch` is the one choke point every resolved config
-passes through on either path. A monotonic sequence number minted at the START of each fetch (not
-at completion) and compared under the same lock/actor isolation that publishes closes the lost-
-update race across two different merchant/query keys racing to publish into the single cache slot
-(**C4**) — the specific case the finding named, a background revalidation racing a foreground
-`forceRefresh` for the SAME key, turns out to be structurally unreachable, since `SingleFlight`
-already collapses both onto one in-flight fetch; the guard's proven value is the cross-key case,
-named honestly in both platforms' source comments rather than left to imply it does something it
-doesn't. Reconciliation now has an SDK-owned monotonic row id, not just a closed lock window
-(**2.7** upgraded from partial to closed): `idempotencyKey` is caller-suppliable and not
-guaranteed unique, so two colliding rows could reconcile the wrong one, or both. A migration
-rewrite that fails to persist is now treated as non-durable, reported **out of band** via
-`ReadOutcome.durable` — `read()` still returns the trimmed rows regardless, and it is `reconcile`
-that refuses to compact against a non-durable read. Emptiness deliberately does NOT encode
-non-durability: overloading it that way would make any routine trim whose rewrite fails destroy
-every row on the next flush. The hazard being closed is a caller reconciling delivery against
-unpersisted ids, which would match nothing and silently re-upload every already-delivered event
-(worst case the un-keyed `arrival` event, which the backend cannot dedupe either); and a row
-appended before an
-old-format file is ever read now reserves id-space for the rows still awaiting migration, so the
-newest row keeps the highest id instead of the invariant silently inverting. Android's
-read-then-replace reconcile moved inside `EventQueue` as one dispatcher hop, matching the iOS
-actor twin, so a future caller reaching `EventQueue` outside the tracker's mutex can't reopen the
-window the doc already warned about.
+This pass: `anonymousId` is now `suspend`/`async` on both platforms, minted eagerly by a detached task with a cached-refusal guard so one bad read can't permanently disable the SDK (4.5); `resetAnonymousId()` now returns `Bool`/`Boolean` so a caller knows whether rotation actually happened before purging queued events (closes the rest of that row); `configUpdates`/`updates` now fires from background revalidation, not just a caller's own direct fetch, since `ConfigStore` owns the stream (C3); a monotonic sequence number minted at fetch-start closes the cross-key lost-update race (C4) — the originally-named same-key race turns out structurally unreachable, since `SingleFlight` already collapses it; reconciliation now uses an SDK-owned monotonic row id instead of the caller-suppliable, non-unique `idempotencyKey` (2.7, upgraded from partial); the event queue is capped (~1100 rows) and now sweeps unparseable rows on every read, closing the old F5 (2.6); Android's build plumbing (`explicitApi`/`jvmTarget`/language version/`jvmDefault`) is configured once by the `frak-publish` convention plugin instead of per module (5.5, upgraded from partial — iOS never had the duplication, `Package.swift` has one `swiftSettings` site).
 
-Android's build plumbing is no longer duplicated per module (**5.5**, upgraded from partial to
-closed): `explicitApi`/`jvmTarget`/language version/`jvmDefault` are configured once by the
-`frak-publish` convention plugin (`buildSrc/src/main/kotlin/frak-publish.gradle.kts:55-58`)
-instead of in each module's own `kotlin {}` block, and both module build files now carry only a
-comment pointing there. Android-only by construction — `Package.swift` has a single
-`swiftSettings` site, so iOS never had the duplication.
-
-S5's iOS half was attempted as a genuine streaming abort (`session.bytes(for:)`, batched into an
-`AsyncBytes` iterator) during this pass and reverted: draining `AsyncBytes` is one `await` per
-**byte**, replacing a single `data(for:)` call with roughly 100,000 suspension points for a
-rewards-sized response — a real regression on the production path, not a theoretical one — and the
-abort path's claim that letting the stream fall out of scope tears down the underlying task was
-unverifiable without a compiler and is contradicted by `AsyncBytes` publicly exposing its
-`URLSessionDataTask`. iOS stays on `data(for:)` with a pre-check plus a post-buffer cap; §3.1's row
-is unchanged.
-
-Two regressions that the remediation itself introduced are worth remembering, because both
-looked local: making `ResolvedPlacement.translations` non-optional on a *synthesized*
-`Decodable` type made the backend's routine omission drop **every** placement; and
-detaching the tracking drain (4.3) widened 2.7's window and silently deleted iOS's drain
-coalescing.
-
-One lesson from the rewiring belongs with those: **three review passes missed the dead KDoc links because they swept `docs/` and the READMEs, not doc comments inside `src/main`** — the surface merchants actually read in autocomplete.
+Two regressions the remediation itself introduced, both fixed: making `ResolvedPlacement.translations` non-optional on a synthesized `Decodable` type dropped every placement on a routine backend omission; detaching the tracking drain (4.3) widened 2.7's window and silently deleted iOS's drain coalescing.

@@ -34,7 +34,7 @@ Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **str
 - **Action pattern**: `client.request({ method, params })` — never call transports directly.
 - **Hook pattern**: `useFrakClient()` + `useQuery`/`useMutation` — never recreate clients.
 - **Legacy is Knip-ignored** — do not add new exports there.
-- **`bun run build:sdk` means "build the JS SDKs"** and must keep meaning that. Native builds are separate scripts (05 §4) — there is no Turborepo here to hang them off, only sequential Bun `--filter` calls.
+- **`bun run build:sdk` means "build the JS SDKs"** and must keep meaning that. Native builds are separate scripts — there is no Turborepo here to hang them off, only sequential Bun `--filter` calls.
 
 ## Quick Commands
 
@@ -46,9 +46,8 @@ bun run test --project react-sdk-unit
 
 ## Native SDKs (`android/`, `ios/`) — pre-release
 
-**Licensed Apache-2.0, not the monorepo's GPL-3.0** (`sdk/{android,ios}/LICENSE`). Merchants
-statically link these into closed-source store binaries, and the patent grant covers the identity
-proof-of-possession scheme. The rest of the repo is unaffected.
+Apache-2.0, not the monorepo's GPL-3.0 (`sdk/{android,ios}/LICENSE`): merchants statically link these
+into closed-source store binaries, and the patent grant covers the identity proof-of-possession scheme.
 
 Two artifacts per platform so a merchant taking only tracking never pulls in a web view:
 
@@ -58,19 +57,19 @@ Two artifacts per platform so a merchant taking only tracking never pulls in a w
 | UI (web view) | `id.frak:frak-sdk-ui` (`:frak-sdk-ui`) | `FrakSDKUI` |
 | Build | Gradle 9.5.0, AGP 9.1.1, Kotlin 2.4.10 → language/API level 2.2, JVM target 17, `compileSdk 36` | SwiftPM, tools-version 5.9 |
 | Minimum | `minSdk 24`, `explicitApi()` on | iOS 15 |
-| Registry | Maven Central **Portal** (not OSSRH — decommissioned) — *target, not yet wired* | SPM only (**no CocoaPods**) |
+| Registry | Maven Central Portal (not OSSRH — decommissioned), not yet wired | SPM only, no CocoaPods |
 
-- **Both platforms now implement the MVP surface.** Android: `core/`, `net/`, `config/`, `rewards/`, `identity/`, `sharing/`, `tracking/`, `applink/`, and the Compose sharing sheet in `frak-sdk-ui`. iOS: the same folders, plus the SwiftUI `.frakSharingSheet` in `FrakSDKUI`. **One Android device pass** (SM-G998B / Android 15) has run initialize → wallet probe → `config.resolve` → `rewards.best`; the sharing sheet, the install handoff and inbound deep links have run nowhere, and iOS has had no device or simulator pass at all. No CI job builds either. See `sdk/{android,ios}/README.md` for what is actually implemented and tested.
-- **Publishing and CI are deliberately deferred.** There is no Maven Central Portal repository wired in `frak-publish.gradle.kts` (only `publishToMavenLocal`), no XCFramework path (`bun run --cwd sdk/ios xcframework` exits 1), and no CI job that builds, tests or lints either SDK. That is a sequencing decision, not an oversight: both come once the first local and dev-environment tests have actually exercised the SDKs on a device. Until then every `build`/`test`/`check` result is a local run by hand.
-- **Three deliberate iOS divergences**, each forced by the platform rather than chosen: the anonymous id is held in `UserDefaults` (`02` §3 rejects Keychain, which survives uninstall), in its own `id.frak.sdk.identity` suite so a corrupt write to the config cache cannot take it with it, with the Secure Enclave's wrapped key blob alongside it; `DeepLinkHandling` has no `.automatic` case, because a library cannot observe a host's `Scene`/`AppDelegate` URL callbacks the way it can Android's `ActivityLifecycleCallbacks`; and the install fallback is a plain App Store URL, because iOS has no counterpart to Play's install referrer — the identity handoff only completes when the wallet is already installed, until the install-code flow of `03` §4 exists.
+- **MVP surface implemented on both platforms**, one Android device pass only — the sharing sheet, the install handoff and inbound deep links have run nowhere, iOS nowhere at all. See `sdk/{android,ios}/README.md`.
+- **No publish path and no CI**, deliberately: `publishToMavenLocal` only, `bun run --cwd sdk/ios xcframework` exits 1, no job builds/tests/lints either SDK. Every green result is a human running a command once.
+- **Three iOS divergences, each forced by the platform**: the anonymous id lives in `UserDefaults` (Keychain survives uninstall) in its own `id.frak.sdk.identity` suite, alongside the Secure Enclave's wrapped key blob; `DeepLinkHandling` has no `.automatic` case, because a library cannot observe a host's `Scene`/`AppDelegate` URL callbacks the way it can Android's `ActivityLifecycleCallbacks`; the install fallback is a plain App Store URL, so the identity handoff only completes when the wallet is already installed.
 - **The two wire formats are pinned to golden fixtures, not to each other.** The identity proof layout and the FrakContext v2 codec are asserted against `sdk/core/src/{identity,context}/fixtures/` on every platform. A port that does not assert against the corpus has not been ported.
-- **The Android dex budget is 256 KB per artifact** (`02` §2), raised from 150 KB deliberately once the MVP surface landed (212 KB over 179 classes); see the note in `sdk/android/gradle.properties`. Still an open product decision. Note the check only measures each module's own `classes.jar`, so it is currently meaningful for `:frak-sdk` and vacuous for `:frak-sdk-ui`.
-- **`:frak-sdk` has zero third-party runtime deps.** `kotlinx-coroutines-core` is the single exception, and it is `api` because `suspend`/`StateFlow` are in the public surface. **`:frak-sdk-ui` does not have this property** — it ships Compose (`compose-bom`, `ui`, `foundation`, `material3`), which is the price of the sheet and the reason the two artifacts are split. On iOS both targets are genuinely dependency-free: `Package.swift` declares no `dependencies` at all.
+- **Android dex budget: 256 KB per artifact** (`sdk/android/gradle.properties`). The check measures each module's own `classes.jar`, so it is meaningful for `:frak-sdk` and vacuous for `:frak-sdk-ui`.
+- **`:frak-sdk` has zero third-party runtime deps** bar `kotlinx-coroutines-core`, which is `api` because `suspend`/`StateFlow` are in the public surface. `:frak-sdk-ui` ships Compose — that is the reason the two artifacts are split. Both iOS targets are genuinely dependency-free.
 - **`explicitApi()` on Android is deliberate**: a merchant's binary freezes at store submission, so an accidentally-public helper is one we are stuck supporting forever.
 - **`Presenter` lives in the UI artifact, not `sharing/`** — `client.sharing.buildLink()` is 100% local and must stay callable without the web view.
-- **`FrakClient` is a sealed concrete class with five namespaces** (`config`, `rewards`, `sharing`, `tracking`, `appLink`), not an interface/protocol — see `docs/plans/native-sdk/02-sdk-design.md`. Adding a member to it is additive on both platforms; there is no supported way to substitute a fake for it, so `frak-sdk-ui`'s tests inject narrow functions instead of a client abstraction, and merchant tests should point `FrakEnvironment.Custom`/`.custom` at a stub server.
-- **No exported activity, no intent filter in the SDK manifest** (02 §5.5): inbound `fCtx` is wired through `FrakConfig.deepLink`, so the merchant's own router keeps owning their links.
-- **`PrivacyInfo.xcprivacy` is a hard gate**: ITMS-91053 lands on the *merchant's* upload, not ours. **Both iOS targets ship one** — `FrakSDKUI` is a separately consumable `.library`, so an absent manifest there would be a hole in the merchant's privacy report rather than an inheritance from `FrakSDK`. Declared: `DeviceID`, `PurchaseHistory`, `ProductInteraction`, `UserID` on the core; `DeviceID` + `ProductInteraction` on the UI; `UserDefaults`/`CA92.1` as the only required-reason API, on the core only.
+- **`FrakClient` is a sealed concrete class with five namespaces** (`config`, `rewards`, `sharing`, `tracking`, `appLink`), not an interface/protocol. Adding a member is additive on both platforms; nothing can substitute a fake for it, so `frak-sdk-ui`'s tests inject narrow functions and merchant tests should point `FrakEnvironment.Custom`/`.custom` at a stub server.
+- **No exported activity, no intent filter in the SDK manifest**: inbound `fCtx` is wired through `FrakConfig.deepLink`, so the merchant's own router keeps owning their links.
+- **`PrivacyInfo.xcprivacy` is a hard gate**: ITMS-91053 lands on the merchant's upload, not ours, and `FrakSDKUI` ships its own because it is separately consumable. Declared: `DeviceID`, `PurchaseHistory`, `ProductInteraction`, `UserID` on the core; `DeviceID` + `ProductInteraction` on the UI; `UserDefaults`/`CA92.1` as the only required-reason API, core only.
 
 ```bash
 bun run --cwd sdk/android build   # assembleRelease — no device, this is a library
@@ -81,10 +80,9 @@ bun run --cwd sdk/ios test        # two stages: compile at the iOS triple, then 
 bun run --filter '*/native-*' lint   # ktlint + swift-format across SDKs and harnesses
 ```
 
-There is **no `apiCheck`/`apiDump`**: binary-compatibility-validator was wired and then deliberately
-removed while the public shape is unfrozen (`05-build-and-release.md`), and no `.api` dump is committed.
-It returns before the first publish — `explicitApi()` catches a newly-public symbol but not a
-breaking change to an existing one.
+No `apiCheck`/`apiDump`: binary-compatibility-validator was wired then removed while the public shape is
+unfrozen, and no `.api` dump is committed. It returns before the first publish — `explicitApi()` catches a
+newly-public symbol but not a breaking change to an existing one.
 
 ## See Also
 
