@@ -12,14 +12,16 @@ const installCodeGenerateRoute = new Elysia()
         async ({ body }) => {
             const { merchantId, anonymousId, proof } = body;
 
-            // Verify and log when a proof is present, never require one.
-            // Stays permissive indefinitely: this route is also reachable
-            // from the wallet's own sharing page, whose install link has no
-            // keypair to sign with (see `apps/wallet/app/routes/sharing.tsx`).
-            // The install flow's real protection is the ticket `resolve`
-            // mints below, not this proof.
+            // Verify when present, never require one: this route is also
+            // reachable from the wallet's own sharing page, whose install link
+            // has no keypair to sign with. The install flow's real protection
+            // is the ticket `resolve` mints below.
+            //
+            // The code path's later ensure carries a ticket and no proof, so
+            // this is its only chance to latch. Gated on success —
+            // `markProofSeen` never clears.
             if (proof) {
-                await verifyProofUnenforced({
+                const proofVerified = await verifyProofUnenforced({
                     op: "frak-install-v1",
                     proof,
                     merchantId,
@@ -27,6 +29,13 @@ const installCodeGenerateRoute = new Elysia()
                     identityProofService:
                         IdentityContext.services.identityProof,
                 });
+                if (proofVerified) {
+                    await IdentityContext.repositories.identity.markProofSeen({
+                        type: "anonymous_fingerprint",
+                        value: anonymousId,
+                        merchantId,
+                    });
+                }
             }
 
             const result = await IdentityContext.services.installCode.generate({

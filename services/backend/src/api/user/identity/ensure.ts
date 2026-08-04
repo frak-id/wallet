@@ -92,20 +92,31 @@ async function resolveWalletEnsureAnonymousId(params: {
     // signing key, so it can never produce an ensure proof. This is the
     // install-v1 proof carried via the `#p=` fragment / Play referrer /
     // pending action, binding merchantId+anonymousId with an empty binding.
-    // Verified and logged when present, never required.
+    // Verified when present, never required.
+    //
+    // Latched on success: this is where the deep-link and Play-referrer
+    // installs prove themselves, since both reach ensure directly and never
+    // touch `install-code/generate` (see `apps/wallet/app/routes/install.tsx`).
     //
     // ROLLOUT-STEP-3: once the bare `anonymousId` arm above is deleted,
     // this proof becomes a SUFFICIENT credential and its leak surface (URL
     // fragment, Play referrer) starts to matter — revisit whether it should
     // still be accepted directly or must be exchanged for an install ticket.
     if (proof) {
-        await verifyProofUnenforced({
+        const proofVerified = await verifyProofUnenforced({
             op: "frak-install-v1",
             proof,
             merchantId,
             anonymousId: bodyAnonymousId,
             identityProofService: IdentityContext.services.identityProof,
         });
+        if (proofVerified) {
+            await IdentityContext.repositories.identity.markProofSeen({
+                type: "anonymous_fingerprint",
+                value: bodyAnonymousId,
+                merchantId,
+            });
+        }
     }
 
     return bodyAnonymousId;

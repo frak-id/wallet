@@ -74,13 +74,15 @@ export async function enforceLatchedProof(params: {
 }
 
 /**
- * Verify a proof for evidence only: log when it is invalid, never reject, and
- * never require one in the first place.
+ * Verify a proof without enforcing it: log when it is invalid, never reject,
+ * and never require one in the first place.
  *
  * The permissive arms that stay open until ROLLOUT-STEP-3 (`/identity/ensure`'s
- * wallet arm, `install-code/generate`) all need exactly this shape, and a proof
- * can only add evidence there — it can never remove any, since the same arms
- * accept a bare `anonymousId`.
+ * wallet arm, `install-code/generate`) all need exactly this shape: neither may
+ * refuse a request over a proof, since both also accept a bare `anonymousId`.
+ * Both do latch on a `true` return, which makes later ensure/merge calls for
+ * that id require a proof — verification stays side-effect free, the latch is
+ * the caller's decision.
  *
  * Returns whether a valid proof was presented. As with `enforceLatchedProof`,
  * callers MUST NOT latch an id on a `false` return.

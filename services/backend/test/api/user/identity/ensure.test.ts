@@ -210,6 +210,7 @@ describe("POST /identity/ensure — resolution order", () => {
             }
         });
         mockResolveAndAssociate.mockReset();
+        mockMarkProofSeen.mockReset();
         mockWalletVerify.mockReset();
         mockResolveAndAssociate.mockResolvedValue({
             finalGroupId: "group-1",
@@ -266,6 +267,8 @@ describe("POST /identity/ensure — resolution order", () => {
             })
         );
         expect(mockResolveAndAssociate).toHaveBeenCalled();
+        // Never latch on a failed proof — `markProofSeen` never clears.
+        expect(mockMarkProofSeen).not.toHaveBeenCalled();
     });
 
     it("proof + anonymousId arm: accepts a valid frak-install-v1 proof", async () => {
@@ -286,6 +289,13 @@ describe("POST /identity/ensure — resolution order", () => {
             })
         );
         expect(mockResolveAndAssociate).toHaveBeenCalled();
+        // The deep-link / Play-referrer install latches here: it reaches
+        // ensure directly and never touches `install-code/generate`.
+        expect(mockMarkProofSeen).toHaveBeenCalledWith({
+            type: "anonymous_fingerprint",
+            value: "anon-2",
+            merchantId: MERCHANT_ID,
+        });
     });
 
     it("ticket arm takes priority: authenticates anonymousId from the ticket, skips the proof arm", async () => {

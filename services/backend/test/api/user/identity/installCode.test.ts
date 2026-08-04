@@ -6,6 +6,7 @@ const {
     mockResolve,
     mockMintTicket,
     mockProofVerify,
+    mockMarkProofSeen,
     mockFindGroupByIdentity,
     mockGetWalletForGroup,
     mockFindMerchantById,
@@ -14,6 +15,7 @@ const {
     mockResolve: vi.fn(),
     mockMintTicket: vi.fn(),
     mockProofVerify: vi.fn(),
+    mockMarkProofSeen: vi.fn(),
     mockFindGroupByIdentity: vi.fn(),
     mockGetWalletForGroup: vi.fn(),
     mockFindMerchantById: vi.fn(),
@@ -35,6 +37,7 @@ vi.mock("../../../../src/domain/identity/context", () => ({
             identity: {
                 findGroupByIdentity: mockFindGroupByIdentity,
                 getWalletForGroup: mockGetWalletForGroup,
+                markProofSeen: mockMarkProofSeen,
             },
         },
     },
@@ -60,6 +63,7 @@ describe("Install Code Routes API", () => {
         mockResolve.mockReset();
         mockMintTicket.mockReset();
         mockProofVerify.mockReset();
+        mockMarkProofSeen.mockReset();
         mockFindGroupByIdentity.mockReset();
         mockGetWalletForGroup.mockReset();
         mockFindMerchantById.mockReset();
@@ -83,6 +87,7 @@ describe("Install Code Routes API", () => {
 
             expect(response.status).toBe(200);
             expect(mockProofVerify).not.toHaveBeenCalled();
+            expect(mockMarkProofSeen).not.toHaveBeenCalled();
             expect(mockGenerate).toHaveBeenCalledWith({
                 merchantId: MERCHANT_ID,
                 anonymousId: "anon-1",
@@ -123,6 +128,35 @@ describe("Install Code Routes API", () => {
             expect(mockGenerate).toHaveBeenCalledWith({
                 merchantId: MERCHANT_ID,
                 anonymousId: "anon-1",
+            });
+            // Never latch on a failed proof — `markProofSeen` never clears.
+            expect(mockMarkProofSeen).not.toHaveBeenCalled();
+        });
+
+        it("latches proof_seen_at on the identity node for a valid proof", async () => {
+            const expiresAt = new Date(Date.now() + 60_000);
+            mockGenerate.mockResolvedValue({ code: "ABC123", expiresAt });
+            mockProofVerify.mockResolvedValue({ valid: true });
+
+            const response = await installCodeRoutes.handle(
+                new Request("http://localhost/install-code/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        merchantId: MERCHANT_ID,
+                        anonymousId: "anon-1",
+                        proof: "some-proof",
+                    }),
+                })
+            );
+
+            expect(response.status).toBe(200);
+            // The code path's only latch point: its later ensure carries a
+            // ticket and no proof.
+            expect(mockMarkProofSeen).toHaveBeenCalledWith({
+                type: "anonymous_fingerprint",
+                value: "anon-1",
+                merchantId: MERCHANT_ID,
             });
         });
     });
