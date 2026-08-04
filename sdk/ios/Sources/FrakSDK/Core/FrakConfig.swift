@@ -70,7 +70,16 @@ public struct FrakConfig: Sendable, Hashable {
     // Merchants never set this; for Frak's own dev/local builds.
     public let env: FrakEnvironment
     public let deepLink: DeepLinkHandling
-    // When false, generates no anonymous id and issues no network request.
+    /// Whether **tracking** may run. `false` means no anonymous id is ever minted and no tracking
+    /// request is issued, and it is a hard floor that `FrakClient.setTrackingEnabled(_:)` cannot
+    /// lift at runtime (S6a/C7).
+    ///
+    /// It is not a whole-SDK off switch: merchant config and reward resolution still run, because
+    /// they carry no identifier for the user (S9). Sharing does stop, since a share link is the
+    /// anonymous id.
+    ///
+    /// Leave it `true` and drive consent through `FrakClient.setTrackingEnabled(_:)` instead unless
+    /// you want a build that can never track.
     public let trackingEnabled: Bool
     public let logLevel: FrakLogLevel
     // Nil (default) keeps diagnostics in os.Logger.

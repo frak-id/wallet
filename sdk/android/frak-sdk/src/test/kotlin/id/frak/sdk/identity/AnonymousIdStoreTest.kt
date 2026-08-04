@@ -3,6 +3,7 @@ package id.frak.sdk.identity
 import id.frak.sdk.config.InMemoryKeyValueStore
 import id.frak.sdk.core.FrakLogLevel
 import id.frak.sdk.core.FrakLogger
+import id.frak.sdk.core.TrackingConsent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -30,13 +31,16 @@ class AnonymousIdStoreTest {
         trackingEnabled: Boolean = true,
     ): AnonymousIdStore {
         val dispatcher = UnconfinedTestDispatcher()
+        val logger = FrakLogger(FrakLogLevel.NONE, null)
         val subject =
             AnonymousIdStore(
                 keyStore,
                 values,
-                FrakLogger(FrakLogLevel.NONE, null),
+                logger,
                 merchantMarker,
-                trackingEnabled,
+                // The consent gate this store now reads. Built over the SAME `values` store the
+                // identity uses, exactly as `Frak.initialize` wires it.
+                TrackingConsent(values, trackingEnabled, logger, dispatcher),
                 dispatcher,
             )
         subject.startEagerGeneration(CoroutineScope(dispatcher))
@@ -188,13 +192,15 @@ class AnonymousIdStoreTest {
         runTest {
             val keyStore = FakeDeviceKeyStore()
             val dispatcher = UnconfinedTestDispatcher(testScheduler)
+            val values = InMemoryKeyValueStore()
+            val logger = FrakLogger(FrakLogLevel.NONE, null)
             val subject =
                 AnonymousIdStore(
                     keyStore,
-                    InMemoryKeyValueStore(),
-                    FrakLogger(FrakLogLevel.NONE, null),
+                    values,
+                    logger,
                     MERCHANT_ID,
-                    trackingEnabled = true,
+                    TrackingConsent(values, configDefault = true, logger = logger, ioDispatcher = dispatcher),
                     dispatcher,
                 )
             val scope = CoroutineScope(dispatcher)

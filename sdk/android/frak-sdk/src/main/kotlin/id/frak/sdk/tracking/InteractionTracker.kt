@@ -30,6 +30,19 @@ internal class InteractionTracker(
      * read from inside itself.
      */
     private val currentClientId: suspend () -> String?,
+    /**
+     * S6a/C7: whether tracking is still permitted, read fresh inside the drain loop.
+     *
+     * A [purge] alone cannot stop a drain: [flush] reads the whole backlog under [queueMutex] and
+     * then posts it **outside** that lock, so an event already in `pending` would still be
+     * uploaded after the user withdrew consent — and the stale-id guard below cannot catch it,
+     * because withdrawing consent makes [currentClientId] null, which disables that guard rather
+     * than tightening it. Re-reading this per event is what actually stops the upload.
+     *
+     * Defaults to always-allowed so the tracker's own tests, which have no consent store, are
+     * unaffected; the real gate is wired in [id.frak.sdk.core.DefaultFrakClient].
+     */
+    private val trackingAllowed: suspend () -> Boolean = { true },
     private val now: () -> Long = System::currentTimeMillis,
     private val newKey: () -> String = { UUID.randomUUID().toString() },
     private val backoff: Backoff = Backoff(now),
@@ -69,6 +82,12 @@ internal class InteractionTracker(
         scope.launch { flush() }
     }
 
+    // Deliberately no `shutdown()` here, unlike the Swift twin (S6b/C7). Every drain is a
+    // `scope.launch` on the client's single `SupervisorJob` scope, which
+    // `DefaultFrakClient.shutdown()` cancels and joins — a launch into a cancelled scope never runs
+    // its body, so there is nothing left for a `stopped` flag to refuse. iOS needs both because its
+    // `scheduleDrain` uses `Task.init`, which does not inherit cancellation.
+
     /** Called on anonymous id reset: an event captured under the dead id must never be emitted. */
     suspend fun purge() {
         queueMutex.withLock { queue.clear() }
@@ -82,6 +101,10 @@ internal class InteractionTracker(
      */
     suspend fun flush() {
         flushMutex.withLock {
+            // S6a/C7: before the read, so a drain started by a `track()` that raced a consent
+            // withdrawal never even loads the backlog. The per-event re-read below is what closes
+            // the withdrawal-lands-mid-drain window; this one just avoids the pointless work.
+            if (!trackingAllowed()) return
             if (backoff.isBackingOff(BACKOFF_KEY)) return
 
             val pending = queueMutex.withLock { queue.read(now()) }
@@ -102,6 +125,19 @@ internal class InteractionTracker(
             val retried = mutableMapOf<Long, QueuedEvent>()
 
             for (event in pending) {
+                // S6a/C7. `break`, not `return`: the caller that flipped consent is about to
+                // `purge()` the whole file, so it is tempting to leave the file alone — but
+                // `EventQueue.clear()` swallows a failed `File.delete()`, and if that delete does
+                // not land, every event this drain ALREADY uploaded is still on disk with no
+                // record that it went. The next flush re-sends all of them, and an
+                // `Interaction.Arrival` carries no idempotency key: that is a duplicated referral
+                // payout. Falling through to `reconcile` costs nothing when the purge does work
+                // (it re-reads the file, so a purge that already ran wins) and prevents that when
+                // it does not.
+                if (!trackingAllowed()) {
+                    logger.info("Tracking was disabled mid-drain; stopping without sending the rest.")
+                    break
+                }
                 // Dropped even if purge and this drain raced: event carries the id it was captured under.
                 if (event.clientId != null && currentClientId != null && event.clientId != currentClientId) {
                     delivered += event.rowId

@@ -282,6 +282,96 @@ spellings of the same thing would be frozen forever by the same source-compat gu
 as the sealed `FrakClient` namespace, and an `async` `Frak.client` would break symmetry
 with the synchronous Kotlin equivalent. Write the three lines above per call site instead.
 
+## Consent, withdrawal and erasure
+
+`FrakConfig.trackingEnabled` is the compile-time switch. `setTrackingEnabled(_:)` is the
+runtime one, and the two are not independent:
+
+```swift
+await client()?.setTrackingEnabled(true)   // from your CMP, whenever the user decides
+let on = await client()?.isTrackingEnabled()  // the effective state, for a consent screen
+```
+
+| persisted decision | `FrakConfig.trackingEnabled` | effective |
+|---|---|---|
+| absent (never called) | `true` | **on** — unchanged from before this API existed |
+| absent | `false` | off |
+| granted | `true` | on |
+| granted | `false` | **off** — the compile-time flag is a hard floor |
+| denied | either | off |
+
+**A build that compiled `trackingEnabled: false` can never be switched on at runtime.**
+The grant is still recorded, so a later build with the flag on honours it without
+re-prompting, but a staged rollout or a market you have not cleared legally cannot be
+turned on by a stray call. The decision is persisted in the identity `UserDefaults` suite
+(`id.frak.sdk.identity`), deliberately not the config suite: the two are already separated
+so a corrupt write to the hot one cannot take identity with it, and a consent decision
+belongs on the side that is not disposable.
+
+That suite is **not** backup-excluded (open finding S4), so a recorded denial does follow
+the user through an iCloud restore — unconditionally, with nothing for an integrator to
+get wrong. Android's equivalent is conditional: its identity file *declares* a backup and
+device-transfer exclusion, but a library cannot apply it, so whether a denial survives a
+new phone there depends on whether the merchant wired the rules files in. Do not assume
+either platform behaves like the other.
+
+**Withdrawal is two calls, in this order:**
+
+```swift
+await client()?.setTrackingEnabled(false)  // stop, and drop anything still queued
+await client()?.resetAnonymousId()         // then sever the device from the id
+```
+
+They are separate because they mean different things and, on Android, can fail separately.
+`setTrackingEnabled(false)` is a *pause* — the identity survives, so an opt-in later
+resumes the same attribution. `resetAnonymousId()` destroys the keypair; it returns `Bool`
+for cross-platform parity even though this platform's delete cannot fail (see its doc).
+
+**`setTrackingEnabled(false)` purges the event queue.** Events captured under a decision
+that no longer holds must not be sent — but that queue can hold `trackPurchase` events
+which have not reached the backend, so this can discard purchase records that were
+mid-reconciliation. Correct privacy behaviour, real revenue consequence.
+
+**What is *not* gated.** `config.resolve`, `rewards.campaigns` and `rewards.best` keep
+working with tracking off: none of them sends `x-frak-client-id` or any other user
+identifier, so refusing them bought no privacy and cost the merchant their own config and
+reward copy. Sharing does fail closed, because a share link *is* the identity —
+`buildSharingLink` returns nil with no `anonymousId` to embed. `Frak.parseReferralLink` is
+pure and static and keeps decoding inbound links either way, so your routing does not break.
+
+**Erasure stops at the device.** Nothing here deletes what the backend already holds under
+the old `clientId`; that needs a server-side request, not an SDK call.
+
+## Shutting the SDK down
+
+```swift
+await Frak.shutdown()   // cancels the background work it owns, and lets initialize() run again
+```
+
+**Not a privacy control** — it records no decision and erases nothing. Use
+`setTrackingEnabled(false)` for consent. `shutdown()` exists so a host can release the SDK,
+and so the `Frak` facade is testable at all.
+
+There is deliberately no `shutdown()` on `FrakClient` itself — that would kill a client
+`Frak.client` would carry on handing out, and `Frak.initialize` would no-op against. Same
+on Android.
+
+It is **weaker than the Kotlin twin, deliberately and visibly.** Android cancels one
+`SupervisorJob` scope that every background coroutine is structured under and joins it.
+This platform has no such scope, so the guarantee is assembled by hand:
+
+- the startup drain is cancelled, and its body checks `Task.isCancelled` before scheduling
+  a flush — without that check, cancelling a `Task<Void, Never>` would be a no-op;
+- `InteractionTracker.shutdown()` cancels the in-flight drain **and refuses to start
+  another**, so a later `track()` cannot revive one. That refusal is one-way: you get a
+  live SDK by calling `Frak.initialize` again, which builds a new tracker;
+- **not covered**: `ConfigStore`'s background revalidation, `RewardRepository`,
+  `resetAnonymousId`'s purge, and the eager identity mint, all of which are unstructured
+  `Task`s nothing retains. None of them sends a tracked event, but they can still touch
+  the network and the config suite after `shutdown()` returns, and nothing waits for them.
+
+Giving iOS a single owned task group is the real fix and has not been attempted.
+
 ## Building, testing, linting
 
 From the repo root, or `cd sdk/ios` and drop the `--cwd`:

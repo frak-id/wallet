@@ -29,7 +29,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 
 /** The real [FrakClient]. Every public entry point lets only [FrakError]/`CancellationException` escape, see [frakCall]. */
@@ -38,6 +40,13 @@ internal class DefaultFrakClient(
     store: KeyValueStore,
     queue: EventQueue,
     private val identity: AnonymousIdStore,
+    /**
+     * S6a/C7. Must be the SAME instance [identity] holds: two [TrackingConsent] objects over the
+     * same store would each memoise independently, so a `setTrackingEnabled(false)` here would
+     * stop the network calls while the identity store carried on minting keypairs from its own
+     * stale memo.
+     */
+    private val consent: TrackingConsent,
     private val launcher: AppLauncher,
     private val logger: FrakLogger,
     private val ioDispatcher: CoroutineDispatcher = defaultIoDispatcher(),
@@ -61,7 +70,16 @@ internal class DefaultFrakClient(
     private val configStore = ConfigStore(http, store, logger, scope, ioDispatcher)
     private val rewards = RewardRepository(http, logger, scope)
     private val tracker =
-        InteractionTracker(queue, http, logger, scope, currentClientId = { identity.anonymousId() })
+        InteractionTracker(
+            queue,
+            http,
+            logger,
+            scope,
+            currentClientId = { identity.anonymousId() },
+            // S6a/C7: read per event inside the drain, so a withdrawal that lands mid-drain stops
+            // the upload rather than only emptying a file the drain has already read.
+            trackingAllowed = { consent.isEnabled() },
+        )
 
     /** C3: [ConfigStore] owns the stream now — [fetch][ConfigStore] is its one publish point, foreground or background alike. This forwards it unchanged. */
     val configUpdates: StateFlow<FrakResolvedConfig?> = configStore.updates
@@ -96,13 +114,57 @@ internal class DefaultFrakClient(
         return erased
     }
 
+    /**
+     * S6a/C7: the runtime half of [FrakConfig.trackingEnabled]. `false` stops the SDK talking to
+     * the backend for the rest of this install, not just this process — the decision is persisted.
+     *
+     * Deliberately does NOT touch the keypair. Withdrawal and erasure are two calls, not one:
+     * [resetAnonymousId] can fail (the keystore refuses), and a consent setter whose return value
+     * meant "your consent change may not have applied" would be a worse API than either half. It
+     * also lets a merchant express a *pause* — a session-scoped opt-out, an ATT refusal, a
+     * minor-mode screen — without burning attribution that a later opt-in would want back. The
+     * documented withdrawal recipe is both, in that order.
+     *
+     * The queue IS purged, because those events were captured under a decision that has just been
+     * revoked. That deletes merchant-owned purchase events which may be mid-reconciliation; it is
+     * the correct privacy behaviour and it has a real revenue consequence, so it is stated here
+     * and in the README rather than left to be discovered.
+     */
+    suspend fun setTrackingEnabled(enabled: Boolean) {
+        consent.setEnabled(enabled)
+        if (!enabled) tracker.purge()
+    }
+
+    /** The effective state: [FrakConfig.trackingEnabled] AND the persisted decision. See [TrackingConsent]. */
+    suspend fun isTrackingEnabled(): Boolean = consent.isEnabled()
+
+    /**
+     * S6b/C7. Cancels every background coroutine this client owns — the queue drain, config
+     * revalidation, the eager identity mint — and waits for them to finish.
+     *
+     * Idempotent, and there is **no restart contract**: get a live client from
+     * [id.frak.sdk.Frak.initialize] after [id.frak.sdk.Frak.shutdown]. "Dead" means no background
+     * work, not that every member throws — `track` in particular still returns
+     * [FrakResult.Success], because the enqueue runs on the caller's context and is genuinely
+     * durable; only the drain behind it is gone, so the event ships on the next launch instead. Not a privacy control — [setTrackingEnabled] is the
+     * privacy control; this exists so a host process can tear the SDK down deterministically, which
+     * is also the only way the `Frak` facade becomes testable (T2/8.8).
+     */
+    suspend fun shutdown() {
+        // cancelAndJoin, not cancel: a test that returns while a drain is still unwinding sees it
+        // touch files the next test already deleted. Join is the whole point of this being suspend.
+        scope.coroutineContext.job.cancelAndJoin()
+    }
+
     init {
         // 4.5: mints the keypair now, off whichever thread happens to call anonymousId() first.
         // Must run before anything below can reach identity.anonymousId()/signProof()/reset().
+        // Gated inside AnonymousIdStore.current(), which reads `consent` — so this is a no-op
+        // that touches no key material when consent is absent or withdrawn.
         identity.startEagerGeneration(scope)
         scope.launch {
-            if (!settings.trackingEnabled) {
-                // Events captured before the merchant turned tracking off must not be sent now.
+            if (!consent.isEnabled()) {
+                // Events captured before tracking was turned off must not be sent now.
                 tracker.purge()
                 return@launch
             }
@@ -114,9 +176,14 @@ internal class DefaultFrakClient(
     // withContext(ioDispatcher): tried and reverted, since it moved dispatch outside frakCall's
     // error boundary. The pool-starvation half of that reasoning is now handled by giving
     // HttpClient its own dispatcher; this half still stands on its own.
+    //
+    // S9: deliberately NOT gated on consent, unlike every tracking entry point. This request
+    // carries no user identifier at all — `x-frak-client-id` is set only by InteractionTracker —
+    // so refusing it with tracking off bought no privacy and cost the merchant their own config,
+    // their campaign list and their reward copy. `campaigns`/`bestReward` inherit that through
+    // `fetchRewards`, which resolves the merchant first.
     suspend fun resolveConfig(forceRefresh: Boolean = false): FrakResolvedConfig =
         frakCall {
-            requireTrackingEnabled()
             configStore.resolve(MerchantQuery.from(settings), forceRefresh)
         }
 
@@ -371,8 +438,14 @@ internal class DefaultFrakClient(
         products = products,
     )
 
-    private fun requireTrackingEnabled() {
-        if (!settings.trackingEnabled) throw FrakError.TrackingDisabled()
+    /**
+     * Suspend since S6a/C7: the answer now comes from [TrackingConsent], which reads the merchant's
+     * compile-time flag AND the persisted runtime decision, and whose first read is disk I/O.
+     * Called only from [trackingCall] — the config/rewards path is deliberately ungated, see
+     * [resolveConfig].
+     */
+    private suspend fun requireTrackingEnabled() {
+        if (!consent.isEnabled()) throw FrakError.TrackingDisabled()
     }
 }
 

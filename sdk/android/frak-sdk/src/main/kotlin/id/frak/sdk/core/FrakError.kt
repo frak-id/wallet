@@ -50,12 +50,16 @@ public sealed class FrakError(
     ) : FrakError("Frak could not decode a backend response: $message", cause)
 
     /**
-     * Network call made while [FrakConfig.trackingEnabled] is false. See [NotInitialized]'s doc:
-     * not an `object`, for the same stack-trace reason (A8).
+     * A **tracking** call was made while tracking is not permitted — either because this build
+     * ships `FrakConfig(trackingEnabled = false)` or because
+     * [id.frak.sdk.FrakClient.setTrackingEnabled]`(false)` was called at runtime (S6a/C7). Not
+     * raised by config or reward resolution, which are deliberately ungated (S9).
+     *
+     * See [NotInitialized]'s doc: not an `object`, for the same stack-trace reason (A8).
      */
     public class TrackingDisabled :
         FrakError(
-            "Frak tracking is disabled by configuration; no network request was issued.",
+            "Frak tracking is disabled; no network request was issued.",
         )
 
     /**

@@ -10,7 +10,10 @@ public enum FrakError: Error, Sendable {
     case server(status: Int, code: String?, retryAfterSeconds: Int?)
     /// A 2xx response arrived but could not be read as the shape we expect.
     case decoding(message: String)
-    /// A call needing the network was made while `FrakConfig.trackingEnabled` is false.
+    /// A **tracking** call was made while tracking is not permitted — either because this build
+    /// ships `FrakConfig(trackingEnabled: false)` or because `FrakClient.setTrackingEnabled(false)`
+    /// was called at runtime (S6a/C7). Not raised by config or reward resolution, which are
+    /// deliberately ungated (S9).
     case trackingDisabled
     /// No merchant could be identified for this app.
     case merchantResolutionFailed(reason: String)
@@ -37,7 +40,7 @@ extension FrakError: LocalizedError {
         case .decoding(let message):
             return "Frak could not decode a backend response: \(message)"
         case .trackingDisabled:
-            return "Frak tracking is disabled by configuration; no network request was issued."
+            return "Frak tracking is disabled; no network request was issued."
         case .merchantResolutionFailed(let reason):
             return "Frak could not resolve a merchant: \(reason)"
         case .alreadyPresenting:

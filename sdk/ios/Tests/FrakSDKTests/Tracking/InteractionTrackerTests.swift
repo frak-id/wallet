@@ -54,6 +54,10 @@ struct InteractionTrackerTests {
         let tracker: InteractionTracker
         private let keys = Counter()
         private let currentId: Box<String?>
+        /// S6a/C7's egress gate, expressed as "consent is withdrawn once N events have reached the
+        /// wire". Keyed off the backend rather than a call counter so a test says what it means and
+        /// does not depend on how many times the drain happens to consult the gate.
+        let denyTrackingAfterRequests = Box(Int.max)
 
         init(clientId: String? = InteractionTrackerTests.clientId) {
             let (session, host) = StubURLProtocol.makeSession()
@@ -72,11 +76,13 @@ struct InteractionTrackerTests {
             let clock = self.clock
             let keys = self.keys
             let currentId = self.currentId
+            let deny = self.denyTrackingAfterRequests
             self.tracker = InteractionTracker(
                 queue: queue,
                 http: HTTPClient(baseURL: "https://\(host)", session: session),
                 logger: logger,
                 currentClientId: { currentId.value },
+                trackingAllowed: { backend.requests.count < deny.value },
                 now: { clock.current },
                 newKey: { "key-\(keys.increment() - 1)" },
                 // Deterministic jitter: the top of the range, so a test advancing the clock
@@ -377,5 +383,50 @@ struct InteractionTrackerTests {
         // that in truth still holds two events. Both must survive.
         let survivors = await fixture.pending()
         #expect(survivors.map(\.idempotencyKey) == ["old-a", "old-b"])
+    }
+
+    /// S6a/C7, and the direct test for `06-open-findings.md` §0 lesson 8: **stopping a producer is
+    /// not stopping the pipe.** A drain reads the whole backlog and then POSTs it one event at a
+    /// time with `await`s in between, so a consent withdrawal landing mid-drain has to be caught at
+    /// the point of egress. Purging the file cannot do it — the drain is already holding the events
+    /// in memory. Worse, withdrawal makes `currentClientId` nil, which DISABLES the stale-id guard
+    /// rather than tightening it.
+    ///
+    /// The queue is seeded directly rather than through `track`, because `track` schedules a drain
+    /// per call: routed through it, each drain would hold exactly one event and the mid-drain
+    /// window would not exist to test.
+    ///
+    /// Fails against the pre-change tracker, which had no gate and posted both. Fails against a
+    /// `purge()`-only fix, which does not touch a drain already in flight.
+    ///
+    /// Android twin: `stops mid-drain when consent is withdrawn, and keeps the unsent events`.
+    @Test("stops mid-drain when consent is withdrawn, and keeps the unsent events")
+    func stopsMidDrainOnWithdrawal() async throws {
+        let fixture = Fixture()
+        fixture.backend.respond(StubResponse(status: 200, body: "{}"))
+        await fixture.queue.append(Self.seeded("key-first", type: "first", at: fixture.clock.current))
+        await fixture.queue.append(Self.seeded("key-second", type: "second", at: fixture.clock.current))
+        // Withdrawn the instant the first event lands on the wire, i.e. between the two POSTs.
+        fixture.denyTrackingAfterRequests.value = 1
+
+        await fixture.tracker.flush()
+
+        #expect(fixture.backend.requests.count == 1)
+        // Reconciled, not abandoned: the delivered event is removed even though the drain stopped
+        // early, so a purge that silently fails cannot make the SDK re-send it — and an
+        // `Interaction.arrival` carries no idempotency key, so a re-send is a duplicated referral
+        // payout. The undelivered one survives, because withdrawal is a pause, not an erasure.
+        let survivors = await fixture.pending()
+        #expect(survivors.map(\.idempotencyKey) == ["key-second"])
+    }
+
+    private static func seeded(_ key: String, type: String, at capturedAt: Date) -> QueuedEvent {
+        QueuedEvent(
+            idempotencyKey: key,
+            path: "/user/track/interaction",
+            body: #"{"type":"custom","interactionType":"\#(type)"}"#,
+            clientId: InteractionTrackerTests.clientId,
+            capturedAt: capturedAt
+        )
     }
 }

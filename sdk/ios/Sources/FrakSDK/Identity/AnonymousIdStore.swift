@@ -30,7 +30,15 @@ actor AnonymousIdStore {
     private let store: KeyValueStore
     private let logger: FrakLogger
     private let merchantMarker: String
-    private let trackingEnabled: Bool
+    /// S6a/C7: the runtime consent handle, not the build-time `FrakConfig.trackingEnabled` bool
+    /// this used to be. Read fresh at both gate sites below rather than captured once, so a
+    /// `setTrackingEnabled(false)` mid-session actually stops the next mint instead of taking
+    /// effect only after the merchant's app is relaunched.
+    ///
+    /// Two gates here, one on Android: `startEagerGeneration()` has to make the cross-actor read
+    /// itself before it can decide whether to start a `Task` at all, whereas the Kotlin twin's
+    /// equivalent only launches into a scope and can defer the whole decision to `current()`.
+    private let consent: TrackingConsent
 
     private var generation: Task<Identity?, Never>?
 
@@ -44,19 +52,24 @@ actor AnonymousIdStore {
         store: KeyValueStore,
         logger: FrakLogger,
         merchantMarker: String,
-        trackingEnabled: Bool
+        consent: TrackingConsent
     ) {
         self.keyStore = keyStore
         self.store = store
         self.logger = logger
         self.merchantMarker = merchantMarker
-        self.trackingEnabled = trackingEnabled
+        self.consent = consent
     }
 
     /// Starts the keystore mint now, off whichever thread calls this. Called once by
     /// `DefaultFrakClient.init`, so a later `anonymousId()` read usually awaits an
     /// already-completed `Task` rather than starting the round-trip itself.
-    func startEagerGeneration() {
+    ///
+    /// `async` since S6a/C7: the consent read is a cross-actor hop. It still does not await the
+    /// mint itself — only the decision of whether to start one — so this stays the fire-and-forget
+    /// warm-up its caller expects.
+    func startEagerGeneration() async {
+        guard await consent.isEnabled() else { return }
         _ = generationTask()
     }
 
@@ -149,7 +162,25 @@ actor AnonymousIdStore {
     /// which `awaitAndDropIfFailed` maps to null. This mirrors that outcome without a real
     /// cancellation point to rely on.
     private func identity() async -> Identity? {
-        guard let task = generationTask() else { return nil }
+        // The load-bearing gate (`startEagerGeneration` has the other, but only a caller reaching
+        // here can mint on demand). Checked before `generation` is read, so a DENIED consent
+        // short-circuits ahead of any keystore work — including on the first launch of a build that
+        // reads a denial already on disk, which is what makes "denied consent, no key material"
+        // true rather than merely claimed.
+        //
+        // Note what that does NOT say. The shipped default is `trackingEnabled: true` with no
+        // recorded decision, which this treats as permitted (see `TrackingConsent`'s table), so the
+        // keypair IS minted on first launch before any CMP has spoken.
+        //
+        // This `await` is a new suspension point ahead of every actor-isolated read below, so this
+        // call can now be re-entered before it touches `generation`. That is safe for the token
+        // invariant — `generationTask()` and `generationToken` are read on the next two lines with
+        // no suspension between them, so `token` still names the task it was read beside. What it
+        // does NOT prevent is a withdrawal landing inside this very `await`: that mint completes.
+        // `reset()` cancels an in-flight generation; `setTrackingEnabled(false)` deliberately does
+        // not, because it is a pause, not an erasure.
+        guard await consent.isEnabled() else { return nil }
+        let task = generationTask()
         let token = generationToken
         let value = await task.value
         // Checked AFTER awaiting, not before: the race is `reset()` running WHILE this call is
@@ -165,8 +196,10 @@ actor AnonymousIdStore {
         return value
     }
 
-    private func generationTask() -> Task<Identity?, Never>? {
-        guard trackingEnabled else { return nil }
+    /// Non-optional since S6a/C7: the consent gate moved to the two callers, which are `async`
+    /// and can therefore make the cross-actor read this function cannot. Nothing else could ever
+    /// make it return nil.
+    private func generationTask() -> Task<Identity?, Never> {
         if let generation { return generation }
         // Task.detached, not Task { }: a non-detached Task inside an actor inherits the actor's
         // executor, so the keystore/Secure Enclave work would run ON the actor and serialise

@@ -80,7 +80,18 @@ public class FrakConfig(
     /** Merchants never set this; exists for Frak's own dev/local builds. */
     public val env: FrakEnvironment = FrakEnvironment.Production,
     public val deepLink: DeepLinkHandling = DeepLinkHandling.Automatic,
-    /** Master switch; false means no anonymous id and no network requests. */
+    /**
+     * Whether **tracking** may run. `false` means no anonymous id is ever minted and no tracking
+     * request is issued, and it is a hard floor that [id.frak.sdk.FrakClient.setTrackingEnabled]
+     * cannot lift at runtime (S6a/C7).
+     *
+     * It is not a whole-SDK off switch: merchant config and reward resolution still run, because
+     * they carry no identifier for the user (S9). Sharing does stop, since a share link is the
+     * anonymous id.
+     *
+     * Leave it `true` and drive consent through [id.frak.sdk.FrakClient.setTrackingEnabled]
+     * instead unless you want a build that can never track.
+     */
     public val trackingEnabled: Boolean = true,
     public val logLevel: FrakLogLevel = FrakLogLevel.NONE,
     public val logSink: FrakLogSink? = null,

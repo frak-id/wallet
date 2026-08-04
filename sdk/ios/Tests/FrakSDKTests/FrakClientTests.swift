@@ -15,27 +15,36 @@ struct FrakClientTests {
     private func makeClient(
         config: FrakConfig = FrakConfig(merchantId: FrakClientTests.merchantId),
         launcher: FakeAppLauncher = FakeAppLauncher(),
+        /// Supply this to inspect the durable queue afterwards; defaults to a throwaway path.
+        queueURL: URL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+            .appendingPathComponent(EventQueue.fileName),
         respond: @escaping @Sendable (URLRequest) throws -> StubResponse
     ) -> DefaultFrakClient {
         let (session, host) = StubURLProtocol.makeSession()
         StubURLProtocol.handle(host: host, respond)
         let logger = FrakLogger(level: .none)
+        let identityStore = InMemoryKeyValueStore()
+        // ONE instance shared by the client and the identity store, as `Frak.initialize` wires it:
+        // two would memoise the persisted decision independently and drift on setTrackingEnabled.
+        // Built from the config, so `trackingEnabled: false` stays testable through the client.
+        let consent = TrackingConsent(
+            store: identityStore,
+            configDefault: config.trackingEnabled,
+            logger: logger
+        )
         return DefaultFrakClient(
             settings: config,
             store: InMemoryKeyValueStore(),
             identity: AnonymousIdStore(
                 keyStore: FakeDeviceKeyStore(),
-                store: InMemoryKeyValueStore(),
+                store: identityStore,
                 logger: logger,
                 merchantMarker: config.merchantId ?? "",
-                trackingEnabled: config.trackingEnabled
+                consent: consent
             ),
-            queue: EventQueue(
-                fileURL: FileManager.default.temporaryDirectory
-                    .appendingPathComponent(UUID().uuidString, isDirectory: true)
-                    .appendingPathComponent(EventQueue.fileName),
-                logger: logger
-            ),
+            consent: consent,
+            queue: EventQueue(fileURL: queueURL, logger: logger),
             launcher: launcher,
             logger: logger,
             session: session,
@@ -205,8 +214,13 @@ struct FrakClientTests {
         )
     }
 
-    @Test("trackingEnabled false throws trackingDisabled without a network call")
-    func trackingDisabledThrowsWithoutNetworkCall() async throws {
+    /// S9. This test used to assert the opposite — that `resolveConfig` threw `trackingDisabled`
+    /// — and the inversion is the finding, not a regression: the resolve request carries no user
+    /// identifier at all (`x-frak-client-id` is set only by `InteractionTracker`), so refusing it
+    /// bought no privacy and cost the merchant their own config, campaigns and reward copy.
+    /// Tracking stays gated; see `trackRefusesWhenTrackingIsDisabled`.
+    @Test("resolveConfig still works with tracking off, and sends no client id")
+    func resolveConfigIsNotGatedOnConsent() async throws {
         let log = RequestLog()
         let config = FrakConfig(merchantId: Self.merchantId, trackingEnabled: false)
         let client = makeClient(config: config) { request in
@@ -214,10 +228,132 @@ struct FrakClientTests {
             return StubResponse(status: 200, body: Self.resolveBody)
         }
 
-        await #expect(throws: FrakError.self) {
-            _ = try await client.resolveConfig(forceRefresh: false)
+        let resolved = try await client.resolveConfig(forceRefresh: false)
+
+        #expect(resolved.merchantId == Self.merchantId)
+        #expect(log.all.count == 1)
+        // The whole justification for ungating it: nothing about the user is on the wire.
+        #expect(log.all.first?.value(forHTTPHeaderField: "x-frak-client-id") == nil)
+    }
+
+    @Test("setTrackingEnabled flips tracking at runtime, both ways")
+    func setTrackingEnabledFlipsAtRuntime() async throws {
+        let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
+
+        #expect(await client.isTrackingEnabled())
+
+        await client.setTrackingEnabled(false)
+        #expect(await client.isTrackingEnabled() == false)
+        guard case .failure(.trackingDisabled) = await client.track(.sharing()) else {
+            Issue.record("expected a trackingDisabled failure once consent was withdrawn")
+            return
         }
-        #expect(log.all.isEmpty)
+
+        await client.setTrackingEnabled(true)
+        #expect(await client.isTrackingEnabled())
+    }
+
+    /// The hard floor: a build that compiled tracking off must never be switched on at runtime.
+    /// Pinned because the obvious "simplification" — letting the persisted value win outright —
+    /// silently turns the SDK on inside a merchant's staged-rollout build.
+    @Test("setTrackingEnabled(true) cannot lift a compile-time trackingEnabled: false")
+    func compileTimeDisableIsAHardFloor() async throws {
+        let config = FrakConfig(merchantId: Self.merchantId, trackingEnabled: false)
+        let client = makeClient(config: config) { _ in StubResponse(status: 200, body: Self.resolveBody) }
+
+        await client.setTrackingEnabled(true)
+
+        #expect(await client.isTrackingEnabled() == false)
+        #expect(await client.anonymousId == nil)
+    }
+
+    /// The one-instance rule: `DefaultFrakClient` and `AnonymousIdStore` must read the SAME
+    /// `TrackingConsent`, or a withdrawal stops the network calls while the identity store carries
+    /// on minting from its own memo. Fails against the pre-change code, where `AnonymousIdStore`
+    /// captured a `Bool` at construction and could not see a runtime flip at all.
+    ///
+    /// Android twin: `a runtime withdrawal reaches the identity store, not only the network gate`.
+    @Test("a runtime withdrawal reaches the identity store, not only the network gate")
+    func withdrawalReachesTheIdentityStore() async throws {
+        let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
+        #expect(await client.anonymousId != nil)
+
+        await client.setTrackingEnabled(false)
+
+        #expect(await client.anonymousId == nil)
+    }
+
+    /// The withdrawal recipe's first half, and the reason it is documented as two calls: the id is
+    /// still there afterwards, so a merchant who wanted a pause got a pause. Erasure is
+    /// `resetAnonymousId()`, deliberately separate.
+    ///
+    /// Android twin: `setTrackingEnabled false does not destroy the identity`.
+    @Test("setTrackingEnabled(false) does not destroy the identity")
+    func withdrawalIsAPauseNotAnErasure() async throws {
+        let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
+        let before = await client.anonymousId
+        #expect(before != nil)
+
+        await client.setTrackingEnabled(false)
+        #expect(await client.anonymousId == nil)
+
+        await client.setTrackingEnabled(true)
+        #expect(await client.anonymousId == before)
+    }
+
+    /// The withdrawal recipe end to end, and the README claim that had no coverage: the queue is
+    /// emptied.
+    ///
+    /// The event must still BE queued when consent is withdrawn, or the purge has nothing to purge
+    /// and this test proves nothing (§0 lesson 4) — the first version of it waited for delivery
+    /// first and would have passed against a `setTrackingEnabled` that never purged. A failing
+    /// transport is what keeps the event on disk: the drain stops at the first failure.
+    ///
+    /// Asserted against the queue file, not a request count: a request count cannot tell "the queue
+    /// was emptied" apart from "nothing happened to drain it".
+    ///
+    /// Android twin: `the documented withdrawal recipe stops tracking and drops what was queued`.
+    @Test("the documented withdrawal recipe stops tracking and drops what was queued")
+    func withdrawalRecipeDropsTheQueue() async throws {
+        let queueURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+            .appendingPathComponent(EventQueue.fileName)
+        let client = makeClient(queueURL: queueURL) { _ in throw URLError(.notConnectedToInternet) }
+
+        _ = await client.track(.custom("before-withdrawal"))
+        try #require(FileManager.default.fileExists(atPath: queueURL.path), "precondition: event on disk")
+
+        await client.setTrackingEnabled(false)
+
+        let remaining = (try? Data(contentsOf: queueURL)) ?? Data()
+        #expect(remaining.isEmpty, "withdrawal must leave nothing captured under the old decision")
+
+        // Second half of the recipe. The iOS delete cannot fail, so this always reports true; the
+        // value exists for one cross-platform erasure contract (4fp).
+        #expect(await client.resetAnonymousId())
+    }
+
+    @Test("shutdown is idempotent and stops the background work")
+    func shutdownIsIdempotent() async throws {
+        let log = RequestLog()
+        let client = makeClient { request in
+            log.record(request)
+            return StubResponse(status: 200, body: Self.resolveBody)
+        }
+
+        await client.shutdown()
+        await client.shutdown()
+
+        // `track` still enqueues — the write is on the caller's task — so the observable difference
+        // is that no drain follows it. This is the assertion that fails if `shutdown()` only
+        // cancels: `scheduleDrain` uses `Task.init`, which does not inherit cancellation, so
+        // without the tracker's one-way `stopped` flag this `track` would start a fresh drain.
+        let before = log.count
+        _ = await client.track(.custom("after-shutdown"))
+
+        // Negative assertion, so give a drain every chance to happen before ruling it out.
+        _ = await log.wait(forCount: before + 1, timeoutSeconds: 0.3)
+        #expect(log.count == before)
     }
 
     @Test("resolveConfig, campaigns and bestReward have usable defaults")

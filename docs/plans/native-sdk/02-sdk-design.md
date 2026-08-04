@@ -291,6 +291,9 @@ domain namespaces. It was an interface until the surface grew enough to prove th
 
 ```
 root       environment · anonymousId · resetAnonymousId
+           setTrackingEnabled · isTrackingEnabled          (S6a/C7)
+           — and NOT shutdown: teardown is Frak.shutdown() on the facade, because a
+             shutdown here would kill a client Frak.client keeps handing out (S6b/C7)
 .config    resolve · updates · current (iOS)
 .rewards   campaigns · best
 .sharing   buildLink
@@ -418,13 +421,16 @@ network error — are `06-open-findings.md` §1.
 | Member | Nullable | Thread | Network |
 |---|---|---|---|
 | `initialize` | non-null | any | no |
-| `anonymousId` / `resetAnonymousId` | null when disabled | any | no |
-| `config.resolve` | throws | any | yes (cached) |
+| `anonymousId` | null when tracking is off | any | no |
+| `resetAnonymousId` | `Boolean` — false when the keystore refused (4fp) | any | no |
+| `setTrackingEnabled` / `isTrackingEnabled` | non-null | any | no (disk on first read) |
+| `Frak.shutdown` | non-null | any | no |
+| `config.resolve` | throws | any | yes (cached), **ungated** — S9 |
 | `rewards.campaigns` | non-null, may be empty | any | yes (30 s cache) |
 | `rewards.best` | **nullable** | any | yes (cached) |
-| `tracking.*` | `FrakResult` | any | yes (queued) |
-| `sharing.buildLink` | **nullable** | any | **no** |
-| `appLink.handleReferral` | `Bool` (consumed) | any | yes (queued) |
+| `tracking.*` | `FrakResult` | any | yes (queued), **consent-gated** |
+| `sharing.buildLink` | **nullable** | any | **no** — null with tracking off, since the link *is* the id |
+| `appLink.handleReferral` | `Bool` (consumed) | any | yes (queued), tracking half consent-gated |
 
 Two real platform divergences, not doc slips: `isFrakAppInstalled()` is `async` on Swift and
 synchronous on Kotlin, and neither is `@MainActor`.

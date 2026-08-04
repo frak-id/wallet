@@ -32,6 +32,18 @@ class InteractionTrackerTest {
     private var keys = 0
     private var currentClientId: String? = CLIENT_ID
 
+    /**
+     * S6a/C7's egress gate, expressed as "consent is withdrawn once N events have reached the
+     * wire". Keyed off the transport rather than a call counter so the test says what it means and
+     * does not depend on how many times the drain happens to consult the gate.
+     *
+     * The mid-drain window is the one the finding is about, and it is not reachable from
+     * `DefaultFrakClientTest`, where the drain only ever holds the single event that started it.
+     */
+    private var denyTrackingAfterRequests = Int.MAX_VALUE
+
+    private suspend fun trackingAllowed(): Boolean = transport.requests.size < denyTrackingAfterRequests
+
     private lateinit var file: File
     private lateinit var queue: EventQueue
 
@@ -50,6 +62,7 @@ class InteractionTrackerTest {
             // of a test instead of leaking it; Unconfined so the drain runs before track returns.
             scope = CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler)),
             currentClientId = { currentClientId },
+            trackingAllowed = { trackingAllowed() },
             now = { now },
             newKey = { "key-${keys++}" },
             // Seeded, so the jitter cannot make a test flaky.
@@ -268,6 +281,61 @@ class InteractionTrackerTest {
             assertEquals(CLIENT_ID, body.getString("referrerClientId"))
             assertTrue("an absent wallet must not reach the wire", body.isNull("referrerWallet"))
         }
+
+    /**
+     * S6a/C7, and the direct test for `06-open-findings.md` §0 lesson 8: **stopping a producer is
+     * not stopping the pipe.** A drain reads the whole backlog under [EventQueue]'s lock and then
+     * POSTs it one event at a time OUTSIDE that lock, so a consent withdrawal landing mid-drain has
+     * to be caught at the point of egress. Purging the file cannot do it — the drain is already
+     * holding the events in memory. Worse, withdrawal makes `currentClientId` null, which DISABLES
+     * the stale-id guard rather than tightening it.
+     *
+     * The queue is seeded directly rather than through [InteractionTracker.track], because `track`
+     * drains eagerly under `UnconfinedTestDispatcher`: routed through it, each drain would hold
+     * exactly one event and the mid-drain window would not exist to test.
+     *
+     * Fails against the pre-change tracker, which had no gate and posted both. Fails against a
+     * `purge()`-only fix, which does not touch a drain already in flight.
+     */
+    @Test
+    fun `stops mid-drain when consent is withdrawn, and keeps the unsent events`() =
+        runTest {
+            transport.respond(200, "{}")
+            val tracker = tracker()
+            queue.append(seeded("key-first", "first"))
+            queue.append(seeded("key-second", "second"))
+            // Withdrawn the instant the first event lands on the wire, i.e. between the two POSTs.
+            denyTrackingAfterRequests = 1
+
+            tracker.flush()
+
+            assertEquals("only the event before the withdrawal may reach the wire", 1, transport.requests.size)
+            assertEquals("first", bodyOf(0).getString("interactionType"))
+            // Reconciled, not abandoned: the delivered event is removed even though the drain
+            // stopped early, so a purge that silently fails to delete the file cannot make the SDK
+            // re-send it — and an `Interaction.Arrival` carries no idempotency key, so a re-send is
+            // a duplicated referral payout. The undelivered one survives, because withdrawal is a
+            // pause, not an erasure.
+            val remaining = queue.read(now)
+            assertEquals(1, remaining.size)
+            assertTrue("the undelivered event must survive", remaining.single().body.toString().contains("second"))
+        }
+
+    private fun seeded(
+        key: String,
+        interactionType: String,
+    ) = QueuedEvent(
+        idempotencyKey = key,
+        path = "/user/track/interaction",
+        body =
+            JSONObject()
+                .put("type", "custom")
+                .put("interactionType", interactionType)
+                .put("merchantId", MERCHANT_ID),
+        clientId = CLIENT_ID,
+        capturedAtMillis = now,
+        rowId = EventQueue.MISSING_ROW_ID,
+    )
 
     private companion object {
         const val MERCHANT_ID = "550e8400-e29b-41d4-a716-446655440000"

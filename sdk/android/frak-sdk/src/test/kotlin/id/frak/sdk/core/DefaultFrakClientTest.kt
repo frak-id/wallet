@@ -20,6 +20,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -335,6 +337,176 @@ class DefaultFrakClientTest {
             assertEquals("no request should have been made", 0, transport.requests.size)
         }
 
+    /**
+     * S9. There was never a test asserting the opposite — that `resolveConfig` threw
+     * `TrackingDisabled` — but the behaviour existed and this pins its removal: the resolve
+     * request carries no user identifier at all (`x-frak-client-id` is set only by
+     * [id.frak.sdk.tracking.InteractionTracker]), so refusing it bought no privacy and cost the
+     * merchant their own config, campaigns and reward copy. Tracking itself stays gated, see the
+     * test above.
+     */
+    @Test
+    fun `resolveConfig still works with tracking off, and sends no client id`() =
+        runTest {
+            transport.respond(200, BODY)
+            val client =
+                newClient(
+                    testScheduler,
+                    config = FrakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                )
+
+            val resolved = client.resolveConfig()
+            advanceUntilIdle()
+
+            assertEquals(MERCHANT_ID, resolved.merchantId)
+            assertEquals(1, transport.requests.size)
+            // The whole justification for ungating it: nothing about the user is on the wire.
+            assertNull(transport.requests.first().headers["x-frak-client-id"])
+        }
+
+    @Test
+    fun `setTrackingEnabled flips tracking at runtime, both ways`() =
+        runTest {
+            val client = newClient(testScheduler)
+            advanceUntilIdle()
+
+            assertTrue(client.isTrackingEnabled())
+
+            client.setTrackingEnabled(false)
+            advanceUntilIdle()
+            assertFalse(client.isTrackingEnabled())
+            val refused = client.track(Interaction.Custom("after-withdrawal"))
+            assertTrue(
+                "expected TrackingDisabled once consent was withdrawn, got $refused",
+                (refused as FrakResult.Failure).error is FrakError.TrackingDisabled,
+            )
+
+            client.setTrackingEnabled(true)
+            advanceUntilIdle()
+            assertTrue(client.isTrackingEnabled())
+        }
+
+    /**
+     * The hard floor, through the client rather than through [TrackingConsent] directly: a build
+     * that compiled tracking off must never be switched on at runtime, and must still mint no key
+     * material afterwards.
+     */
+    @Test
+    fun `setTrackingEnabled true cannot lift a compile-time trackingEnabled false`() =
+        runTest {
+            val client =
+                newClient(
+                    testScheduler,
+                    config = FrakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                )
+
+            client.setTrackingEnabled(true)
+            advanceUntilIdle()
+
+            assertFalse(client.isTrackingEnabled())
+            assertNull(client.anonymousId())
+        }
+
+    /**
+     * The withdrawal recipe's first half, and the reason it is documented as two calls: the id is
+     * still there afterwards, so a merchant who wanted a pause got a pause. Erasure is
+     * `resetAnonymousId()`, deliberately separate.
+     */
+    @Test
+    fun `setTrackingEnabled false does not destroy the identity`() =
+        runTest {
+            val client = newClient(testScheduler)
+            advanceUntilIdle()
+            val before = client.anonymousId()
+
+            client.setTrackingEnabled(false)
+            advanceUntilIdle()
+            assertNull("tracking off must report no id", client.anonymousId())
+
+            client.setTrackingEnabled(true)
+            advanceUntilIdle()
+            assertEquals("the same identity must come back on re-consent", before, client.anonymousId())
+        }
+
+    /**
+     * The withdrawal recipe end to end, and the two headline README claims that had no coverage:
+     * the queue is emptied, and nothing queued under the old decision reaches the wire afterwards.
+     */
+    @Test
+    fun `the documented withdrawal recipe stops tracking and drops what was queued`() =
+        runTest {
+            // The event must still BE queued when consent is withdrawn, or the purge has nothing to
+            // purge and this test proves nothing (§0 lesson 4). A failing transport is what keeps it
+            // there: the drain stops at the first failure and leaves the row on disk.
+            transport.fail(java.io.IOException("offline"))
+            val client = newClient(testScheduler)
+            advanceUntilIdle()
+            client.track(Interaction.Custom("before-withdrawal"))
+            advanceUntilIdle()
+
+            val queueFile = File(temporaryFolder.root, "events.jsonl")
+            assertTrue("precondition: the event must still be on disk", queueFile.length() > 0)
+
+            client.setTrackingEnabled(false)
+            advanceUntilIdle()
+
+            // Asserted against the file, not against a request count: a request count cannot tell
+            // "the queue was emptied" apart from "nothing happened to drain it", which is how the
+            // first version of this test passed against a `setTrackingEnabled` that never purged.
+            assertEquals(
+                "withdrawal must leave nothing captured under the old decision on disk",
+                0L,
+                if (queueFile.exists()) queueFile.length() else 0L,
+            )
+
+            // Second half of the recipe. FakeDeviceKeyStore erases without throwing, so the
+            // Boolean must be true here; a false would mean the id never rotated (4fp).
+            assertTrue(
+                "the recipe's second half must report a real erasure",
+                client.resetAnonymousId(),
+            )
+            advanceUntilIdle()
+        }
+
+    /**
+     * The one instance rule: [DefaultFrakClient] and [AnonymousIdStore] must read the SAME
+     * [TrackingConsent], or a withdrawal stops the network calls while the identity store carries
+     * on minting from its own memo. Fails against the pre-change code, where `AnonymousIdStore`
+     * captured a `Boolean` at construction and could not see a runtime flip at all.
+     */
+    @Test
+    fun `a runtime withdrawal reaches the identity store, not only the network gate`() =
+        runTest {
+            val client = newClient(testScheduler)
+            advanceUntilIdle()
+            assertNotNull("the fixture must start with a real identity", client.anonymousId())
+
+            client.setTrackingEnabled(false)
+            advanceUntilIdle()
+
+            assertNull("a captured Boolean would still report the old identity here", client.anonymousId())
+        }
+
+    @Test
+    fun `shutdown is idempotent and stops the background scope`() =
+        runTest {
+            transport.respond(200, BODY)
+            val client = newClient(testScheduler)
+            advanceUntilIdle()
+
+            client.shutdown()
+            client.shutdown()
+
+            // The scope is cancelled, so the detached drain `track` launches never runs. `track`
+            // itself still returns — the enqueue is on the caller's context — which is what makes
+            // the request count the observable difference.
+            val before = transport.requests.size
+            client.track(Interaction.Custom("after-shutdown"))
+            advanceUntilIdle()
+
+            assertEquals("a shut-down client must run no background work", before, transport.requests.size)
+        }
+
     @Test
     fun `reports failure when nothing will handle either install url`() =
         runTest {
@@ -370,32 +542,39 @@ class DefaultFrakClientTest {
     private fun newClient(
         testScheduler: kotlinx.coroutines.test.TestCoroutineScheduler,
         config: FrakConfig = FrakConfig(merchantId = MERCHANT_ID),
-    ): DefaultFrakClient =
-        DefaultFrakClient(
+        identityStore: InMemoryKeyValueStore = InMemoryKeyValueStore(),
+    ): DefaultFrakClient {
+        val logger = FrakLogger(FrakLogLevel.NONE)
+        val ioDispatcher = kotlinx.coroutines.test.StandardTestDispatcher(testScheduler)
+        // ONE instance shared by the client and the identity store, as `Frak.initialize` wires it:
+        // two would memoise the persisted decision independently and drift on setTrackingEnabled.
+        // Built from the config, so `trackingEnabled = false` stays testable through the client.
+        val consent = TrackingConsent(identityStore, config.trackingEnabled, logger, ioDispatcher)
+        return DefaultFrakClient(
             settings = config,
             store = store,
             queue =
                 EventQueue(
                     File(temporaryFolder.root, "events.jsonl"),
-                    FrakLogger(FrakLogLevel.NONE),
+                    logger,
                     UnconfinedTestDispatcher(),
                 ),
             identity =
                 AnonymousIdStore(
                     keyStore = FakeDeviceKeyStore(),
-                    store = InMemoryKeyValueStore(),
-                    logger = FrakLogger(FrakLogLevel.NONE),
+                    store = identityStore,
+                    logger = logger,
                     merchantMarker = MERCHANT_ID,
-                    // Wired from the config, as `Frak.initialize` does: a hardcoded `true` here
-                    // makes `trackingEnabled = false` untestable through the client.
-                    trackingEnabled = config.trackingEnabled,
-                    ioDispatcher = kotlinx.coroutines.test.StandardTestDispatcher(testScheduler),
+                    consent = consent,
+                    ioDispatcher = ioDispatcher,
                 ),
+            consent = consent,
             launcher = launcher,
-            logger = FrakLogger(FrakLogLevel.NONE),
-            ioDispatcher = kotlinx.coroutines.test.StandardTestDispatcher(testScheduler),
+            logger = logger,
+            ioDispatcher = ioDispatcher,
             http = HttpClient(FAKE_BASE_URL, UnconfinedTestDispatcher(testScheduler), transport::open),
         )
+    }
 
     private companion object {
         const val MERCHANT_ID = "b3d5e5b8-9b1a-4c0e-8f5a-1a2b3c4d5e6f"

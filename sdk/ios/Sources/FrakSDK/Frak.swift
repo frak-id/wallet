@@ -42,6 +42,14 @@ public enum Frak {
                 return .missingStore
             }
 
+            // ONE instance, shared by the client and the identity store. Two would memoise the
+            // persisted decision independently and drift the moment setTrackingEnabled is called.
+            // It lives in the identity suite, not the disposable config cache.
+            let consent = TrackingConsent(
+                store: identityStore,
+                configDefault: effective.trackingEnabled,
+                logger: logger
+            )
             let newCore = DefaultFrakClient(
                 settings: effective,
                 store: store,
@@ -51,8 +59,9 @@ public enum Frak {
                     logger: logger,
                     // App scope == merchant scope; regenerated if this ever changes.
                     merchantMarker: effective.merchantId ?? effective.bundleId ?? "",
-                    trackingEnabled: effective.trackingEnabled
+                    consent: consent
                 ),
+                consent: consent,
                 queue: EventQueue(fileURL: EventQueue.defaultFileURL(logger: logger), logger: logger),
                 launcher: SystemAppLauncher(),
                 logger: logger
@@ -130,6 +139,31 @@ public enum Frak {
         return instance != nil
     }
 
+    /// Tears the SDK down: cancels the background work it owns and drops the client so
+    /// `initialize(_:)` can run again with a different `FrakConfig`.
+    ///
+    /// S6b/C7. **Not a privacy control** — use `FrakClient.setTrackingEnabled(_:)` for that;
+    /// shutting the SDK down neither records a consent decision nor erases anything, so a merchant
+    /// who calls only this has stopped tracking for exactly as long as their process lives. This
+    /// exists so a host can deterministically release the SDK, and so the facade is testable at
+    /// all (T2/8.8).
+    ///
+    /// Idempotent and safe before `initialize(_:)`.
+    public static func shutdown() async {
+        // Read and cleared under the lock, acted on outside it: this is an async function and the
+        // lock must never span a suspension point.
+        let dying: DefaultFrakClient?
+        lock.lock()
+        dying = core
+        core = nil
+        instance = nil
+        configuration = nil
+        lock.unlock()
+        await dying?.shutdown()
+    }
+
+    /// Synchronous teardown for tests that cannot await. Drops the singletons WITHOUT cancelling
+    /// the client's background work — prefer `shutdown()`, which does both.
     static func resetForTesting() {
         lock.lock()
         defer { lock.unlock() }

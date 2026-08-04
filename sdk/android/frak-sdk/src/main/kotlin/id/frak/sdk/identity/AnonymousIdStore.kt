@@ -2,6 +2,7 @@ package id.frak.sdk.identity
 
 import id.frak.sdk.config.KeyValueStore
 import id.frak.sdk.core.FrakLogger
+import id.frak.sdk.core.TrackingConsent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -36,7 +37,18 @@ internal class AnonymousIdStore(
     private val logger: FrakLogger,
     /** Whatever identifies this merchant in `FrakConfig` — its id when set, its package id otherwise. */
     private val merchantMarker: String,
-    private val trackingEnabled: Boolean,
+    /**
+     * S6a/C7: the runtime consent handle, not the build-time `FrakConfig.trackingEnabled` boolean
+     * this parameter used to be. Read fresh at the single gate site ([current]) rather than
+     * captured once, so a `setTrackingEnabled(false)` mid-session actually stops the next mint
+     * instead of taking effect only after the merchant's app is relaunched.
+     *
+     * One gate here, two on iOS: `startEagerGeneration` is `suspend`-free on this platform (it only
+     * launches into a scope), so it can defer the whole decision to [current]; the Swift twin's
+     * equivalent has to make the cross-actor read itself before it can decide whether to start a
+     * `Task` at all.
+     */
+    private val consent: TrackingConsent,
     private val ioDispatcher: CoroutineDispatcher,
 ) {
     private class Identity(
@@ -68,7 +80,9 @@ internal class AnonymousIdStore(
      */
     fun startEagerGeneration(scope: CoroutineScope) {
         eagerScope = scope
-        if (!trackingEnabled) return
+        // No consent pre-check here: [current] makes the same call and is the single gate. A
+        // check here as well would be a second read of a suspend value from a non-suspend
+        // function, which is exactly how the two gates drift apart.
         scope.launch { current() }
     }
 
@@ -152,7 +166,21 @@ internal class AnonymousIdStore(
      * failure it observed.
      */
     private suspend fun current(): Identity? {
-        if (!trackingEnabled) return null
+        // The one gate. Checked before `generation` is read, so a DENIED consent short-circuits
+        // ahead of any keystore work — including on the first launch of a build that reads a denial
+        // already on disk, which is what makes "denied consent, no key material" true rather than
+        // merely claimed.
+        //
+        // Note what that does NOT say. The shipped default is `trackingEnabled = true` with no
+        // recorded decision, which this treats as permitted (see TrackingConsent's table), so the
+        // keypair IS minted on first launch before any CMP has spoken. A merchant who needs
+        // consent-before-anything ships `FrakConfig(trackingEnabled = false)` and lifts nothing
+        // — or, more usefully, calls setTrackingEnabled(false) before the first tracked event.
+        //
+        // Nor is this a barrier: a withdrawal landing AFTER this returns but before `load()`
+        // finishes still completes that mint. `reset()` cancels an in-flight generation;
+        // `setTrackingEnabled(false)` deliberately does not, because it is a pause, not an erasure.
+        if (!consent.isEnabled()) return null
         val existing = mutex.withLock { generation }
         if (existing != null) return awaitAndDropIfFailed(existing)
         val started =

@@ -23,6 +23,17 @@ actor InteractionTracker {
     /// `AnonymousIdStore.anonymousId()` awaits eager generation rather than blocking, so this
     /// drain loop no longer calls a blocking keystore read from inside itself.
     private let currentClientId: @Sendable () async -> String?
+    /// S6a/C7: whether tracking is still permitted, read fresh inside the drain loop.
+    ///
+    /// A `purge()` alone cannot stop a drain: `drain()` reads the whole backlog, then posts it one
+    /// event at a time with `await`s in between, so an event already in `pending` would still be
+    /// uploaded after the user withdrew consent — and the stale-id guard below cannot catch it,
+    /// because withdrawing consent makes `currentClientId` nil, which disables that guard rather
+    /// than tightening it. Re-reading this per event is what actually stops the upload.
+    ///
+    /// Defaults to always-allowed so the tracker's own tests, which have no consent store, are
+    /// unaffected; the real gate is wired in `DefaultFrakClient`.
+    private let trackingAllowed: @Sendable () async -> Bool
     private let now: @Sendable () -> Date
     private let newKey: @Sendable () -> String
 
@@ -30,12 +41,19 @@ actor InteractionTracker {
     private var drainTask: Task<Void, Never>?
     /// Set when the queue changes under a running drain, so it loops once more.
     private var drainAgain = false
+    /// Bumped every time `drainTask` is replaced or cleared, so a finishing drain can tell whether
+    /// the slot still holds it before nilling it out. See `scheduleDrain` for what goes wrong
+    /// without it.
+    private var drainToken = 0
+    /// Set once by `shutdown()`, never cleared: a torn-down tracker starts no further drains.
+    private var stopped = false
 
     init(
         queue: EventQueue,
         http: HTTPClient,
         logger: FrakLogger,
         currentClientId: @escaping @Sendable () async -> String?,
+        trackingAllowed: @escaping @Sendable () async -> Bool = { true },
         now: @escaping @Sendable () -> Date = { Date() },
         newKey: @escaping @Sendable () -> String = { UUID().uuidString.lowercased() },
         backoff: Backoff = Backoff()
@@ -44,6 +62,7 @@ actor InteractionTracker {
         self.http = http
         self.logger = logger
         self.currentClientId = currentClientId
+        self.trackingAllowed = trackingAllowed
         self.now = now
         self.newKey = newKey
         self.backoff = backoff
@@ -92,27 +111,70 @@ actor InteractionTracker {
         await scheduleDrain().value
     }
 
+    /// S6b/C7. Cancels an in-flight drain and refuses to start another, so
+    /// `DefaultFrakClient.shutdown()` leaves nothing running and nothing able to start.
+    ///
+    /// The refusal is the load-bearing half. Cancelling alone would not do it: `scheduleDrain`
+    /// uses `Task.init`, which does **not** inherit cancellation, so the very next `track()` would
+    /// start a fresh, uncancelled drain and "shut down" would have meant "paused until the next
+    /// event". Android gets this for free — every drain is a child of the one scope
+    /// `DefaultFrakClient.shutdown()` cancels — and this flag is how the same guarantee is bought
+    /// here. It is one-way: a torn-down tracker is not restartable, matching `Frak.shutdown()`'s
+    /// contract that you get a live SDK by calling `Frak.initialize` again, which builds a new one.
+    ///
+    /// Does NOT await the cancelled task: `drain()` writes the queue file back after each batch,
+    /// and awaiting a task we have just cancelled would block shutdown on a network round-trip
+    /// that is already doomed. Queued events survive on disk — shutdown is not erasure, `purge()`
+    /// is. The token is bumped too, so the drain being cancelled cannot clear a `drainTask` that a
+    /// `track()` racing this call installed while it was still unwinding.
+    func shutdown() {
+        stopped = true
+        drainToken += 1
+        drainTask?.cancel()
+        drainTask = nil
+        drainAgain = false
+    }
+
     /// Returns the drain covering everything enqueued so far. A drain already under way is
     /// reused rather than followed by a second full pass: it re-reads the file, so noting that
     /// the queue changed is enough. Awaiting the returned task therefore awaits a pass that
     /// includes the caller's own event.
     private func scheduleDrain() -> Task<Void, Never> {
+        // Returns an already-finished task rather than nil, so `flush()`'s `await …value` still
+        // has something to await and every caller keeps one shape. See `shutdown()`.
+        guard !stopped else { return Task {} }
         if let inFlight = drainTask {
             drainAgain = true
             return inFlight
         }
+        // Same shape, and the same reason, as `AnonymousIdStore.generationToken` (S6b/C7): the tail
+        // below has to know whether the `drainTask` slot still holds THIS task before clearing it.
+        // It cannot compare against `task` itself — a closure may not capture the `let` it is being
+        // assigned to. A token bumped on every install and by `shutdown()` answers the same
+        // question with an immutable capture.
+        //
+        // Without it: `shutdown()` clears `drainTask` while this task is still unwinding, a
+        // `track()` immediately after installs a new one, this tail then erases that newer task,
+        // and the next `track()` starts a SECOND concurrent drain over the same queue file — two
+        // writers, which `EventQueue` explicitly does not serialise (02 §5.3).
+        drainToken += 1
+        let token = drainToken
         let task = Task {
             repeat {
                 self.drainAgain = false
                 await self.drain()
-            } while self.drainAgain
-            self.drainTask = nil
+            } while self.drainAgain && !Task.isCancelled
+            if self.drainToken == token { self.drainTask = nil }
         }
         drainTask = task
         return task
     }
 
     private func drain() async {
+        // S6a/C7: before the read, so a drain started by a `track()` that raced a consent
+        // withdrawal never even loads the backlog. The per-event re-read below is what closes the
+        // withdrawal-lands-mid-drain window; this one just avoids the pointless work.
+        guard await trackingAllowed() else { return }
         guard !backoff.isBackingOff(Self.backoffKey) else { return }
 
         let pending = await queue.read(now: now())
@@ -129,6 +191,19 @@ actor InteractionTracker {
         var retried: [Int64: QueuedEvent] = [:]
 
         for event in pending {
+            // S6a/C7. `break`, not `return`: the caller that flipped consent is about to `purge()`
+            // the whole file, so it is tempting to leave the file alone — but if that purge does not
+            // land, every event this drain ALREADY uploaded is still on disk with no record that it
+            // went, and the next flush re-sends all of them. An `Interaction.arrival` carries no
+            // idempotency key: that is a duplicated referral payout. Falling through to `reconcile`
+            // costs nothing when the purge does work (it re-reads the file, so a purge that already
+            // ran wins) and prevents that when it does not. Unlike the cancellation path further
+            // down, which must `return` — there the queue file must be left exactly as found.
+            guard await trackingAllowed() else {
+                logger.info("Tracking was disabled mid-drain; stopping without sending the rest.")
+                break
+            }
+
             // Every event `queue.read` returns has already been migrated to a non-nil `rowId`;
             // this guard exists so a future caller of `drain()` with a hand-built list can't
             // silently reconcile the wrong row instead of crashing loudly in debug.

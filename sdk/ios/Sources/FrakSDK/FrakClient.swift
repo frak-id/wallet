@@ -40,6 +40,38 @@ public final class FrakClient: Sendable {
     @discardableResult
     public func resetAnonymousId() async -> Bool { await core.resetAnonymousId() }
 
+    /// Turns tracking on or off at runtime, and persists the decision for this install. Call it
+    /// from your consent-management flow; call it as often as the user changes their mind.
+    ///
+    /// `false` stops all tracking immediately and purges anything still queued. `true` re-enables
+    /// it **unless** this build ships `FrakConfig(trackingEnabled: false)`, which is a hard floor
+    /// a runtime call cannot lift.
+    ///
+    /// This does **not** destroy the identity: a user who opts back in is still the same
+    /// `anonymousId`, which is what makes a temporary opt-out a pause rather than an amputation.
+    /// For a genuine withdrawal of consent, the recipe is both calls in this order:
+    ///
+    /// ```swift
+    /// await client.setTrackingEnabled(false)   // stop, and drop what is queued
+    /// await client.resetAnonymousId()          // then sever the device from the id
+    /// ```
+    ///
+    /// Purging the queue can discard purchase events that have not reached the backend yet. That
+    /// is deliberate — they were captured under a consent decision that no longer holds — but it
+    /// is a revenue consequence, not only a privacy one.
+    public func setTrackingEnabled(_ enabled: Bool) async { await core.setTrackingEnabled(enabled) }
+
+    /// Whether tracking is currently allowed: `FrakConfig.trackingEnabled` AND the persisted
+    /// runtime decision. For a consent screen that has to render the current state, and for the
+    /// accountability record a data-protection authority asks for.
+    public func isTrackingEnabled() async -> Bool { await core.isTrackingEnabled() }
+
+    // Deliberately NO `shutdown()` here — teardown is `Frak.shutdown()` only (S6b/C7). A shutdown
+    // on this class would leave `Frak.instance` pointing at the client it just killed, so
+    // `Frak.client` would keep handing out a corpse and `Frak.initialize` would no-op: a public
+    // method whose only documented use is "do not call this, call the other one". The Kotlin twin
+    // omits it for the same reason.
+
     /// Config resolution and its live stream.
     public let config: ConfigAPI
 

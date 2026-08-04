@@ -452,6 +452,112 @@ used to escape `loadOrCreate`, leaving the install with no identity for its
 lifetime. `load` now answers null for it so `create` mints a replacement. That
 path has no executed coverage on any machine short of a device.
 
+## Consent, withdrawal and erasure
+
+`FrakConfig.trackingEnabled` is the compile-time switch. `setTrackingEnabled` is
+the runtime one, and the two are not independent:
+
+```kotlin
+// Both are `suspend`; call them from a coroutine, e.g. your Activity's lifecycleScope.
+lifecycleScope.launch {
+    Frak.client.setTrackingEnabled(true)   // from your CMP, whenever the user decides
+    val on = Frak.client.isTrackingEnabled()  // the effective state, for a consent screen
+}
+```
+
+| persisted decision | `FrakConfig.trackingEnabled` | effective |
+|---|---|---|
+| absent (never called) | `true` | **on** — unchanged from before this API existed |
+| absent | `false` | off |
+| granted | `true` | on |
+| granted | `false` | **off** — the compile-time flag is a hard floor |
+| denied | either | off |
+
+**A build that compiled `trackingEnabled = false` can never be switched on at
+runtime.** The grant is still recorded, so a later build with the flag on honours
+it without re-prompting, but a staged rollout or a market you have not cleared
+legally cannot be turned on by a stray call. The decision is persisted in the
+identity `SharedPreferences` file (`id.frak.sdk`), deliberately not the config
+cache: the two are already separated so a corrupt write to the hot one cannot
+take identity with it, and a consent decision belongs on the side that is not
+disposable.
+
+**Two limits of that persistence, stated because neither is obvious:**
+
+- The write is `SharedPreferences.apply()` — asynchronous, and it reports
+  nothing. A withdrawal is effective immediately in-process, but one lost to a
+  process kill in the same instant reverts on the next launch. A committing write
+  would fix it; the store does not expose one today.
+- **Whether a denial survives a new phone depends on you.** The decision lives
+  in `id.frak.sdk`, which `frak_data_extraction_rules.xml` excludes from Auto
+  Backup *and* device transfer — but only if you wired those files into your
+  `<application>`, which a library cannot do on your behalf (see "Backup and
+  device-transfer exclusion" below). **Wired**, a denial does not follow the user
+  to the new device, which reads as a fresh install where your CMP asks again.
+  **Unwired**, it does follow, along with the config cache and — more
+  importantly — nothing else, because the keypair lives in `AndroidKeyStore` and
+  is never backed up either way. iOS has no such fork: its identity suite is not
+  backup-excluded at all (open finding S4), so a denial always survives a
+  restore there. Decide deliberately; do not assume.
+
+**Withdrawal is two calls, in this order:**
+
+```kotlin
+lifecycleScope.launch {
+    Frak.client.setTrackingEnabled(false)  // stop, and drop anything still queued
+    Frak.client.resetAnonymousId()         // then sever the device from the id
+}
+```
+
+They are separate because they can fail separately and because they mean
+different things. `setTrackingEnabled(false)` is a *pause* — the identity
+survives, so an opt-in later resumes the same attribution. `resetAnonymousId()`
+destroys the keypair and **returns `false` when the keystore refused**, in which
+case the id did not rotate and you have not erased anything; a caller with a
+legal erasure obligation must check it. Fusing them into one boolean-returning
+call would make "your consent change may not have applied" a possible outcome of
+a consent setter, which is worse than either half.
+
+**`setTrackingEnabled(false)` purges the event queue.** Events captured under a
+decision that no longer holds must not be sent — but that queue can hold
+`trackPurchase` events which have not reached the backend, so this can discard
+purchase records that were mid-reconciliation. That is the correct privacy
+behaviour and a real revenue consequence, and it is stated here rather than left
+to be discovered.
+
+**What is *not* gated.** `config.resolve`, `rewards.campaigns` and
+`rewards.best` keep working with tracking off: none of them sends
+`x-frak-client-id` or any other user identifier, so refusing them bought no
+privacy and cost the merchant their own config and reward copy. Sharing does
+fail closed, because a share link *is* the identity — `buildSharingLink` returns
+null with no `anonymousId` to embed. `Frak.parseReferralLink` is pure and static
+and keeps decoding inbound links either way, so your routing does not break.
+
+**Erasure stops at the device.** Both calls above affect this install only.
+Nothing here deletes what the backend already holds under the old `clientId`;
+that needs a server-side request, not an SDK call.
+
+## Shutting the SDK down
+
+```kotlin
+lifecycleScope.launch {
+    Frak.shutdown()      // cancels background work, unregisters the deep-link
+                         // observer, and lets initialize() run again
+}
+```
+
+**Not a privacy control** — it records no decision and erases nothing, so an app
+that only calls this has stopped tracking for exactly as long as its process
+lives. Use `setTrackingEnabled(false)` for consent. `shutdown()` exists so a host
+can release the SDK deterministically, and so the `Frak` facade is testable at
+all: before it, `initialize` was once-per-process with no teardown.
+
+It is `suspend` because it *joins*: every background coroutine is a child of one
+`SupervisorJob` scope, and this cancels that scope and waits. There is
+deliberately no `shutdown()` on `FrakClient` itself — that would kill a client
+`Frak.client` would carry on handing out, and `Frak.initialize` would no-op
+against. The iOS twin is weaker here and says so in its own README.
+
 ## Backup and device-transfer exclusion
 
 **This is a required integration step, not optional hardening.** Without it, the

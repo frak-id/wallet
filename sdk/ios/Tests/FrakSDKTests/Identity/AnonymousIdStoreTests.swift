@@ -13,12 +13,15 @@ struct AnonymousIdStoreTests {
         merchantMarker: String = AnonymousIdStoreTests.merchantId,
         trackingEnabled: Bool = true
     ) -> AnonymousIdStore {
-        AnonymousIdStore(
+        let logger = FrakLogger(level: .none)
+        return AnonymousIdStore(
             keyStore: keyStore,
             store: values,
-            logger: FrakLogger(level: .none),
+            logger: logger,
             merchantMarker: merchantMarker,
-            trackingEnabled: trackingEnabled
+            // The consent gate this store now reads. Built over the SAME `values` store the
+            // identity uses, exactly as `Frak.initialize` wires it.
+            consent: TrackingConsent(store: values, configDefault: trackingEnabled, logger: logger)
         )
     }
 
