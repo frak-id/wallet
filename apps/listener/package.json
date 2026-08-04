@@ -31,7 +31,7 @@
     "@frak-labs/design-system": "workspace:*",
     "@frak-labs/frame-connector": "workspace:*",
     "@frak-labs/wallet-shared": "workspace:*",
-    "@radix-ui/react-alert-dialog": "^1.1.23",
+    "@radix-ui/react-alert-dialog": "catalog:",
     "@tanstack/query-async-storage-persister": "catalog:",
     "@tanstack/query-core": "catalog:",
     "@tanstack/query-persist-client-core": "catalog:",
@@ -67,7 +67,7 @@
     "sst": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vite-plugin-mkcert": "^2.1.0",
+    "vite-plugin-mkcert": "catalog:",
     "vite-plugin-remove-console": "catalog:",
     "vitest": "catalog:"
   }

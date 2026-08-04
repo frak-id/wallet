@@ -2,6 +2,7 @@ import { db, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { type Address, isAddressEqual } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
+import type { IdentityProofService } from "../../domain/identity/services/IdentityProofService";
 import type { IdentityMergeService } from "./IdentityMergeService";
 import type { IdentityWeightService } from "./IdentityWeightService";
 import type { AssociateResult, IdentityNode, ResolveResult } from "./types";
@@ -10,7 +11,8 @@ export class IdentityOrchestrator {
     constructor(
         private readonly identityRepository: IdentityRepository,
         private readonly weightService: IdentityWeightService,
-        private readonly mergeService: IdentityMergeService
+        private readonly mergeService: IdentityMergeService,
+        private readonly identityProofService: IdentityProofService
     ) {}
 
     async resolve(node: IdentityNode): Promise<ResolveResult> {
@@ -99,6 +101,11 @@ export class IdentityOrchestrator {
             mergingGroupIds: [mergingGroupId],
         });
 
+        // The anchor is invalidated too: it just absorbed the loser's assets,
+        // referrals and interactions, so its cached weight is now understated
+        // for the rest of the 30s TTL — long enough to skew a follow-up merge's
+        // tie-break.
+        this.weightService.invalidateWeight(anchorGroupId);
         this.weightService.invalidateWeight(mergingGroupId);
         this.identityRepository.invalidateCachesForGroup(mergingGroupId);
 
@@ -144,6 +151,8 @@ export class IdentityOrchestrator {
             mergingGroupIds,
         });
 
+        // See `associate` — the anchor's own weight changed as well.
+        this.weightService.invalidateWeight(anchorGroupId);
         for (const groupId of mergingGroupIds) {
             this.weightService.invalidateWeight(groupId);
             this.identityRepository.invalidateCachesForGroup(groupId);
@@ -152,39 +161,102 @@ export class IdentityOrchestrator {
         return { finalGroupId: anchorGroupId, merged: true };
     }
 
+    /**
+     * Resolve nodes to a single attribution group WITHOUT merging.
+     *
+     * Precedence: the authenticated wallet's group when a wallet node is
+     * present, else the anonymous fingerprint's. A forged `x-frak-client-id`
+     * can then only mis-attribute into the forger's own group, never move
+     * anyone else's group — `mergeGroups` is never called from this path.
+     *
+     * Only the anchor node is resolved. Resolving the others would create
+     * identity groups for identities we are not attributing to — pure write
+     * amplification on every `track/*` request for no benefit.
+     */
+    async resolveForAttribution(
+        nodes: IdentityNode[]
+    ): Promise<{ groupId: string }> {
+        if (nodes.length === 0) {
+            throw new Error("At least one identity node is required");
+        }
+
+        const anchor = nodes.find((node) => node.type === "wallet") ?? nodes[0];
+        const { groupId } = await this.resolve(anchor);
+        return { groupId };
+    }
+
     async getWalletForGroup(groupId: string): Promise<Address | null> {
         return this.identityRepository.getWalletForGroup(groupId);
     }
 
     /**
      * Anchor a wallet to its anonymous fingerprint (when both are known) and
-     * swallow any failure. Used by the auth routes after a successful login or
-     * registration so an identity-graph hiccup never blocks the auth response.
+     * swallow any failure — an identity-graph hiccup must never block login
+     * or register.
      *
-     * When `email` is provided, attach it to the resolved wallet group as a
-     * dedicated email identity node — unless that email already belongs to a
-     * different group, in which case we log + skip (collisions are owned by
-     * the explicit wallet-merge flow, not by silent registration writes).
+     * `clientId` arrives via the UNVERIFIED `x-frak-client-id` header, so the
+     * merge is gated on a `frak-sso-v1` proof: a valid proof merges as
+     * before, an absent/invalid one just skips it (login/register still
+     * succeed — `/identity/ensure` covers the proof-gated link later for
+     * legacy callers).
+     *
+     * When `email` is provided, attach it to the resolved wallet group
+     * unless it already belongs to a different group, in which case log +
+     * skip (collisions belong to the explicit wallet-merge flow).
      */
     async linkWalletToFingerprint(params: {
         walletAddress: Address;
         clientId?: string;
         merchantId?: string;
         email?: string;
+        proof?: string;
     }): Promise<void> {
-        const { walletAddress, clientId, merchantId, email } = params;
+        const { walletAddress, clientId, merchantId, email, proof } = params;
         try {
             const nodes: IdentityNode[] = [
                 { type: "wallet", value: walletAddress },
             ];
-            if (clientId && merchantId) {
-                nodes.push({
+
+            let proofVerified = false;
+            if (clientId && merchantId && proof) {
+                const verification = await this.identityProofService.verify({
+                    op: "frak-sso-v1",
+                    proof,
+                    merchantId,
+                    anonymousId: clientId,
+                    binding: new Uint8Array(0),
+                });
+                proofVerified = verification.valid;
+                if (verification.valid) {
+                    nodes.push({
+                        type: "anonymous_fingerprint",
+                        value: clientId,
+                        merchantId,
+                    });
+                } else {
+                    log.warn(
+                        {
+                            merchantId,
+                            clientId,
+                            reason: verification.reason,
+                        },
+                        "Rejected SSO identity proof; skipping anonymous fingerprint merge at login"
+                    );
+                }
+            }
+
+            const result = await this.resolveAndAssociate(nodes);
+
+            if (proofVerified && clientId && merchantId) {
+                // Gated on `proofVerified`, not unconditional: `markProofSeen`
+                // never clears, so latching an unverified id would lock it
+                // out of ever proving itself (see latchedProof.ts).
+                await this.identityRepository.markProofSeen({
                     type: "anonymous_fingerprint",
                     value: clientId,
                     merchantId,
                 });
             }
-            const result = await this.resolveAndAssociate(nodes);
 
             if (email) {
                 const existing =

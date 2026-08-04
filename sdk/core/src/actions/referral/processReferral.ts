@@ -1,4 +1,4 @@
-import { getClientId } from "../../config/clientId";
+import { getClientIdAsync } from "../../config/clientId";
 import { FrakContextManager } from "../../context";
 import { areAddressesEqual } from "../../context/address";
 import type {
@@ -91,9 +91,9 @@ function trackArrivalIfValid(
  */
 function buildCurrentUserContext(
     merchantId: string,
+    clientId: string | undefined,
     wallet?: WalletStatusReturnType["wallet"]
 ): FrakContextV2 | null {
-    const clientId = getClientId();
     if (!clientId && !wallet) return null;
     return {
         v: 2,
@@ -110,6 +110,7 @@ function buildCurrentUserContext(
  */
 function isSelfReferral(
     frakContext: FrakContext,
+    clientId: string | undefined,
     walletStatus?: WalletStatusReturnType
 ): boolean {
     if (isV2Context(frakContext)) {
@@ -118,7 +119,7 @@ function isSelfReferral(
             return areAddressesEqual(frakContext.w, walletStatus.wallet);
         }
         if (frakContext.c) {
-            return getClientId() === frakContext.c;
+            return clientId === frakContext.c;
         }
         return false;
     }
@@ -146,7 +147,7 @@ function isSelfReferral(
  *
  * @see {@link @frak-labs/core-sdk!ModalStepTypes} for modal step types
  */
-export function processReferral(
+export async function processReferral(
     client: FrakClient,
     {
         walletStatus,
@@ -157,12 +158,17 @@ export function processReferral(
         frakContext?: FrakContext | null;
         options?: ProcessReferralOptions;
     }
-): ReferralState {
+): Promise<ReferralState> {
     if (!frakContext) {
         return "no-referrer";
     }
 
-    if (isSelfReferral(frakContext, walletStatus)) {
+    // Resolved once and threaded through: both the self-referral check and
+    // the URL-replacement context need it, and awaiting here means neither
+    // depends on derivation having already completed elsewhere.
+    const clientId = await getClientIdAsync().catch(() => undefined);
+
+    if (isSelfReferral(frakContext, clientId, walletStatus)) {
         return "self-referral";
     }
 
@@ -177,7 +183,11 @@ export function processReferral(
 
     const replaceContext =
         options?.alwaysAppendUrl && contextMerchantId
-            ? buildCurrentUserContext(contextMerchantId, walletStatus?.wallet)
+            ? buildCurrentUserContext(
+                  contextMerchantId,
+                  clientId,
+                  walletStatus?.wallet
+              )
             : null;
 
     FrakContextManager.replaceUrl({

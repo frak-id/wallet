@@ -25,6 +25,7 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                         sourceAnonymousId: body.sourceAnonymousId,
                         sourceWalletAddress: walletSession?.address,
                         merchantId: body.merchantId,
+                        proof: body.proof,
                     }
                 );
 
@@ -40,6 +41,12 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
             body: t.Object({
                 sourceAnonymousId: t.Optional(t.String()),
                 merchantId: t.String({ format: "uuid" }),
+                // frak-merge-v1 proof binding sourceAnonymousId. Latch-gated
+                // whenever sourceAnonymousId is supplied — legacy ids, which
+                // can never sign, keep working as merge sources until they
+                // first latch. The wallet-session arm (no sourceAnonymousId)
+                // is untouched.
+                proof: t.Optional(t.String()),
             }),
             response: {
                 200: t.Object({
@@ -47,6 +54,9 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                     expiresAt: t.String(),
                 }),
                 400: t.ErrorResponse,
+                // PROOF_REQUIRED (sourceAnonymousId supplied with no proof) or
+                // PROOF_INVALID (proof present but fails verification).
+                403: t.ErrorResponse,
             },
         }
     )
@@ -59,6 +69,7 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                         mergeToken: body.mergeToken,
                         targetAnonymousId: body.targetAnonymousId,
                         merchantId: body.merchantId,
+                        proof: body.proof,
                     }
                 );
 
@@ -72,6 +83,11 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                 mergeToken: t.String(),
                 targetAnonymousId: t.String(),
                 merchantId: t.String({ format: "uuid" }),
+                // frak-merge-v1 proof binding targetAnonymousId and
+                // SHA-256(mergeToken). Required only once targetAnonymousId
+                // has previously proven itself (latch); unlatched/legacy ids
+                // keep working without one.
+                proof: t.Optional(t.String()),
             }),
             response: {
                 200: t.Object({
@@ -80,6 +96,9 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                 }),
                 400: t.ErrorResponse,
                 401: t.ErrorResponse,
+                // PROOF_REQUIRED (latched targetAnonymousId with no proof) or
+                // PROOF_INVALID (proof present but fails verification).
+                403: t.ErrorResponse,
             },
         }
     );

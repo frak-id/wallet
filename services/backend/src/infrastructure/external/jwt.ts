@@ -1,8 +1,10 @@
 import { t } from "@backend-utils";
+import { INSTALL_TICKET_TTL_MS } from "@frak-labs/app-essentials/constants/installTicket";
 import { getSchemaValidator, type Static, type TSchema } from "elysia";
 import {
     type JWSHeaderParameters,
     type JWTPayload,
+    type JWTVerifyOptions,
     jwtVerify,
     SignJWT,
 } from "jose";
@@ -13,6 +15,7 @@ import {
 } from "../../domain/auth/models/WalletSessionDto";
 import { BusinessInvitationTokenDto } from "../../domain/business-auth/models/BusinessInvitationTokenDto";
 import { AnonymousMergeTokenDto } from "../../domain/identity/models/AnonymousMergeTokenDto";
+import { InstallTicketDto } from "../../domain/identity/models/InstallTicketDto";
 import { OriginResumeTokenDto } from "../../domain/pairing/models/OriginResumeTokenDto";
 
 export namespace JwtContext {
@@ -43,6 +46,21 @@ export namespace JwtContext {
         schema: AnonymousMergeTokenDto,
         // 60 minutes - user may browse before leaving in-app browser
         expirationDelayInSecond: 60 * 60,
+        iss: "frak-identity",
+    });
+    /**
+     * Install ticket (docs/plans/identity-proof-of-possession/README.md §5, "Ticket design") — minted unconditionally
+     * by `install-code/resolve`, consumed by `/identity/ensure`. TTL is tied
+     * to `INSTALL_TICKET_TTL_MS`, the single constant also imported by the
+     * wallet's `pendingActionsStore.ts` (`DEFAULT_ENSURE_TTL_MS`), so the two
+     * can never drift apart. Not single-use — see the README's "Not
+     * single-use" rule; a burn-set would deadlock the wallet's retry loop.
+     */
+    export const installTicket = buildJwtContext({
+        secret: process.env.JWT_SDK_SECRET as string,
+        schema: InstallTicketDto,
+        aud: "install-ticket",
+        expirationDelayInSecond: INSTALL_TICKET_TTL_MS / 1000,
         iss: "frak-identity",
     });
     /**
@@ -169,6 +187,14 @@ function buildJwtContext<const Schema extends TSchema | undefined = undefined>({
     type JwtPayload = UnwrapSchema<Schema, Record<string, string | number>> &
         JWTPayloadSpec;
 
+    // When a context declares an audience, enforce it on verify (below).
+    // Relying on the payload schema alone is not enough: the JWT-spec claims
+    // are merged in as `aud: optional string`, which widens any `t.Literal` a
+    // schema declares — so a token minted under a different audience, with
+    // the same secret and payload shape, would otherwise verify.
+    const audience = payload.aud as string | string[] | undefined;
+    const verifyOptions: JWTVerifyOptions = audience ? { audience } : {};
+
     return {
         /**
          * Sign a JWT token
@@ -211,7 +237,9 @@ function buildJwtContext<const Schema extends TSchema | undefined = undefined>({
             if (!jwt) return false;
 
             try {
-                const data = (await jwtVerify<JwtPayload>(jwt, key)).payload;
+                const data = (
+                    await jwtVerify<JwtPayload>(jwt, key, verifyOptions)
+                ).payload;
 
                 // Validate payload against schema if present
                 if (validator && !validator.Check(data)) return false;

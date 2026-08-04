@@ -22,6 +22,7 @@ export type {
     ClientLifecycleEvent,
     IFrameLifecycleEvent,
 } from "./lifecycle";
+export type { ProductDetails } from "./product";
 export type {
     MerchantConfigResponse,
     ResolvedPlacement,
@@ -77,8 +78,10 @@ export type {
     SiweAuthenticationParams,
 } from "./rpc/modal";
 export type {
+    OpenSsoArgsType,
     OpenSsoParamsType,
     OpenSsoReturnType,
+    OpenSsoUrlParamsType,
     PrepareSsoParamsType,
     PrepareSsoReturnType,
     SsoMetadata,

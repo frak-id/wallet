@@ -35,7 +35,7 @@ export async function referralInteraction(
     const currentWalletStatus = await watchWalletStatus(client);
 
     try {
-        return processReferral(client, {
+        return await processReferral(client, {
             walletStatus: currentWalletStatus,
             frakContext,
             options,

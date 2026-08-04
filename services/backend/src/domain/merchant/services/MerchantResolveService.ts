@@ -7,10 +7,24 @@ import type {
     LocalizableString,
     MerchantResolveResponse,
     Placement,
+    Platform,
     ResolvedPlacement,
     ResolvedSdkConfig,
     SdkConfig,
 } from "../schemas";
+
+/**
+ * Lowercased on both write and read: package ids are case-sensitive in
+ * principle, but admins typo case and the failure mode is a 404 that looks
+ * exactly like a broken SDK. Unrelated to `getNormalizedDomain`, which must
+ * not change because setup codes are keccak'd from it.
+ */
+export function normalizePackageId(
+    packageId: string,
+    platform: Platform
+): string {
+    return `${platform}:${packageId.trim().toLowerCase()}`;
+}
 
 function processRawCss(rawCss: string | null | undefined): string | undefined {
     if (rawCss) return processCss(rawCss);
@@ -105,28 +119,58 @@ export class MerchantResolveService {
         return undefined;
     }
 
+    private buildCacheKey(
+        lookup: { id?: string; domain?: string; packageKey?: string },
+        safeLang: "en" | "fr" | undefined
+    ): string {
+        if (lookup.id) return `id:${lookup.id}:${safeLang ?? ""}`;
+        if (lookup.packageKey)
+            return `pkg:${lookup.packageKey}:${safeLang ?? ""}`;
+        return `domain:${lookup.domain}:${safeLang ?? ""}`;
+    }
+
+    private async findMerchant(lookup: {
+        id?: string;
+        domain?: string;
+        packageKey?: string;
+    }) {
+        if (lookup.id) return this.merchantRepository.findById(lookup.id);
+        if (lookup.packageKey)
+            return this.merchantRepository.findByAllowedPackageId(
+                lookup.packageKey
+            );
+        if (lookup.domain)
+            return (
+                (await this.merchantRepository.findByDomain(lookup.domain)) ??
+                this.merchantRepository.findByAllowedDomain(lookup.domain)
+            );
+        return null;
+    }
+
     async resolve({
         id,
         domain,
+        packageId,
+        platform,
         lang,
     }: {
         id?: string;
         domain?: string;
+        packageId?: string;
+        platform?: Platform;
         lang?: string;
     }): Promise<MerchantResolveResponse | null> {
         const safeLang = this.normalizeQueryLang(lang);
-        const cacheKey = id
-            ? `${id}:${safeLang ?? ""}`
-            : `${domain}:${safeLang ?? ""}`;
+        const packageKey =
+            packageId && platform
+                ? normalizePackageId(packageId, platform)
+                : undefined;
+        const lookup = { id, domain, packageKey };
+        const cacheKey = this.buildCacheKey(lookup, safeLang);
         const cached = this.responseCache.get(cacheKey);
         if (cached) return cached.value;
 
-        const merchant = id
-            ? await this.merchantRepository.findById(id)
-            : domain
-              ? ((await this.merchantRepository.findByDomain(domain)) ??
-                (await this.merchantRepository.findByAllowedDomain(domain)))
-              : null;
+        const merchant = await this.findMerchant(lookup);
         if (!merchant) return null;
 
         const productId =
@@ -157,16 +201,22 @@ export class MerchantResolveService {
         id: string;
         domain: string;
         allowedDomains?: string[] | null;
+        allowedPackageIds?: string[] | null;
     }): void {
         const langs = ["", "fr", "en"] as const;
         const domains = [merchant.domain, ...(merchant.allowedDomains ?? [])];
         for (const domain of domains) {
             for (const lang of langs) {
-                this.responseCache.delete(`${domain}:${lang}`);
+                this.responseCache.delete(`domain:${domain}:${lang}`);
+            }
+        }
+        for (const packageKey of merchant.allowedPackageIds ?? []) {
+            for (const lang of langs) {
+                this.responseCache.delete(`pkg:${packageKey}:${lang}`);
             }
         }
         for (const lang of langs) {
-            this.responseCache.delete(`${merchant.id}:${lang}`);
+            this.responseCache.delete(`id:${merchant.id}:${lang}`);
         }
     }
 

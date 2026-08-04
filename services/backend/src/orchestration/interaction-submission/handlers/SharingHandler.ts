@@ -9,6 +9,7 @@ export type SharingInput = {
     merchantId: string;
     sharingTimestamp?: number;
     purchaseId?: string;
+    idempotencyKey?: string;
 };
 
 export type SharingExtra = Record<string, unknown>;
@@ -30,7 +31,7 @@ export class SharingHandler
         _payload: CreateReferralLinkPayload,
         context: HandlerContext
     ): string {
-        const key = input.purchaseId ?? Date.now();
+        const key = input.idempotencyKey ?? input.purchaseId ?? Date.now();
         return `create_referral_link:${context.identity.identityGroupId}:${input.merchantId}:${key}`;
     }
 

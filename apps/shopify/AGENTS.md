@@ -1,6 +1,6 @@
 # apps/shopify — Compass
 
-Embedded Shopify merchant app. React Router v7 (NOT Remix). Polaris v13. Drizzle + Postgres. SST v3 on AWS. Arbitrum. The only app with relative imports and 4-space Biome indent diverging from root `@/*` convention.
+Embedded Shopify merchant app. React Router v7 (NOT Remix). Polaris v13. Drizzle + Postgres. SST v3 on AWS. Arbitrum. The only app with relative imports, diverging from the root `@/*` convention.
 
 ## Quick Commands
 
@@ -13,7 +13,7 @@ bun run db:generate      # Drizzle migration (requires SST context)
 bun run db:migrate       # Apply migrations
 bun run deploy / deploy:prod          # SST stages: dev / production (NEVER "prod")
 bun run shopify:deploy / :deploy:prod # Shopify app + extensions
-bun run test             # Vitest (10 test files)
+bun run test             # Vitest (17 test files)
 ```
 
 ## Key Files
@@ -41,7 +41,7 @@ bun run test             # Vitest (10 test files)
 - **Services never throw**: return `null` on error. Named exports only.
 - **LRU cache tiers**: shop 1min · theme 30s · merchant 5min · onchain/campaigns 5s. React Query: stale 1min, gc infinity, localStorage persist.
 - **Onboarding = 6-step wizard** (`utils/onboarding.ts`): merchant, pixel, webhooks, Frak webhook, theme blocks, buttons. Use `stepValidations` + `stepDataFetchers`.
-- **Biome cognitive complexity 17** (higher than root's 16).
+- **No Biome divergence**: there is no `apps/shopify/biome.json` and no root override — shopify inherits root's settings, cognitive complexity 16 included.
 - **Web Components**: `frak-button-wallet` (shadow DOM), `frak-button-share` / `frak-open-in-app` (light DOM — inherit theme CSS).
 
 ## Anti-Patterns

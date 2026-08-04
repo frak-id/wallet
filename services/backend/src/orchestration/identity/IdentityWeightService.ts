@@ -24,13 +24,15 @@ import type { GroupWeight } from "./types";
  */
 const MERCHANT_ROLE_WEIGHT = 10;
 
-export function computeTotalWeight(w: {
+export type WeightDimensions = {
     assetsCount: number;
     referralsCount: number;
     interactionsCount: number;
     merchantOwnershipsCount: number;
     merchantAdminshipsCount: number;
-}): number {
+};
+
+export function computeTotalWeight(w: WeightDimensions): number {
     return (
         (w.merchantOwnershipsCount + w.merchantAdminshipsCount) *
             MERCHANT_ROLE_WEIGHT +
@@ -38,6 +40,45 @@ export function computeTotalWeight(w: {
         w.referralsCount +
         w.interactionsCount
     );
+}
+
+/**
+ * The shared merge tie-break rule (single source of truth): weighted total
+ * first (merchant roles count {@link MERCHANT_ROLE_WEIGHT}x), then a
+ * per-dimension comparison in priority order — merchant ownerships,
+ * merchant adminships, assets, referrals, interactions — so the result
+ * stays deterministic when totals collide. `weight1` wins any full tie.
+ *
+ * Generic over {@link WeightDimensions} rather than {@link GroupWeight} so
+ * callers that don't have a `groupId`/`wallet` (e.g. `WalletMergeOrchestrator`,
+ * which already knows its winner/loser wallets from the credential-consent
+ * flow) can use the exact same comparison without fabricating one.
+ */
+export function pickHeavierWeight<T extends WeightDimensions>(
+    weight1: T,
+    weight2: T
+): T {
+    const total1 = computeTotalWeight(weight1);
+    const total2 = computeTotalWeight(weight2);
+    if (total1 !== total2) {
+        return total1 > total2 ? weight1 : weight2;
+    }
+
+    const comparisons: [number, number][] = [
+        [weight1.merchantOwnershipsCount, weight2.merchantOwnershipsCount],
+        [weight1.merchantAdminshipsCount, weight2.merchantAdminshipsCount],
+        [weight1.assetsCount, weight2.assetsCount],
+        [weight1.referralsCount, weight2.referralsCount],
+        [weight1.interactionsCount, weight2.interactionsCount],
+    ];
+
+    for (const [val1, val2] of comparisons) {
+        if (val1 !== val2) {
+            return val1 > val2 ? weight1 : weight2;
+        }
+    }
+
+    return weight1;
 }
 
 export class IdentityWeightService {
@@ -262,29 +303,6 @@ export class IdentityWeightService {
         weight1: GroupWeight,
         weight2: GroupWeight
     ): GroupWeight {
-        // Primary signal: weighted total (merchant roles count 10x).
-        const total1 = computeTotalWeight(weight1);
-        const total2 = computeTotalWeight(weight2);
-        if (total1 !== total2) {
-            return total1 > total2 ? weight1 : weight2;
-        }
-
-        // Tiebreaker: per-dimension comparison in priority order so the
-        // result stays deterministic when totals collide.
-        const comparisons: [number, number][] = [
-            [weight1.merchantOwnershipsCount, weight2.merchantOwnershipsCount],
-            [weight1.merchantAdminshipsCount, weight2.merchantAdminshipsCount],
-            [weight1.assetsCount, weight2.assetsCount],
-            [weight1.referralsCount, weight2.referralsCount],
-            [weight1.interactionsCount, weight2.interactionsCount],
-        ];
-
-        for (const [val1, val2] of comparisons) {
-            if (val1 !== val2) {
-                return val1 > val2 ? weight1 : weight2;
-            }
-        }
-
-        return weight1;
+        return pickHeavierWeight(weight1, weight2);
     }
 }

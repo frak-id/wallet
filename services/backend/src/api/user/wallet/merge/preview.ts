@@ -14,7 +14,7 @@ import { MergePreviewQuerySchema, MergePreviewSchema } from "../../../schemas";
  *  - render the recap UI ("you'll gain N referrals…"),
  *  - know which credential needs to sign the `addPassKey` userOp on-chain,
  *  - decide whether the local fast-path applies (loser passkey is locally
- *    usable) or the user must use their other device (Phase 2).
+ *    usable) or the user must use their other device.
  *
  * No side effects — settle() is responsible for repointing the binding and
  * collapsing the identity graphs.

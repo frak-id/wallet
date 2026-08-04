@@ -96,9 +96,16 @@ jobs:
       - uses: gacts/purge-jsdelivr-cache@v1
         if: steps.mode.outputs.will_publish == 'true' && steps.sdk_tags.outputs.created_any == 'true'
         with:
+          # Only unhashed, version-aliased URLs belong here. Purge maps 1:1 to
+          # the exact path submitted — no directory or wildcard expansion — so a
+          # trailing-slash path would only purge jsDelivr's HTML file listing.
+          # The hashed chunks (ButtonShare.<hash>.js) need no purge: new content
+          # yields a new filename, so old URLs stay valid and new ones are cache
+          # misses on first request.
           url: |
             https://cdn.jsdelivr.net/npm/@frak-labs/nexus-sdk@latest/dist/bundle/bundle.js
             https://cdn.jsdelivr.net/npm/@frak-labs/core-sdk@latest/cdn/bundle.js
+            https://cdn.jsdelivr.net/npm/@frak-labs/components
             https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/components.js
             https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/loader.js
             https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/loader.css

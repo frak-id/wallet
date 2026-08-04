@@ -13,6 +13,7 @@ export type {
     RewardChaining,
     RewardDefinition,
     RuleCondition,
+    RuleConditions,
     TieredRewardDefinition,
 } from "../schemas";
 
@@ -23,7 +24,7 @@ type BudgetUsedItem = {
 
 export type BudgetUsed = Record<string, BudgetUsedItem>;
 
-type PurchaseItem = {
+export type PurchaseItem = {
     productId?: string;
     name?: string;
     quantity: number;
@@ -48,6 +49,13 @@ export type PurchaseContext = {
     discountCodes?: string[];
     shippingCost?: number;
     taxAmount?: number;
+    /**
+     * Sum of `totalPrice` over the `productScope`-matched items (same
+     * `currency` as `amount`). Only set when the evaluated rule is scoped.
+     */
+    matchedAmount?: number;
+    /** Sum of `quantity` over the `productScope`-matched items. */
+    matchedQuantity?: number;
 };
 
 type AttributionContext = {

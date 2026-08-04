@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { managementRoutes } from "../../../src/api/user/wallet/pairing/management";
+import { PairingOrchestrator } from "../../../src/orchestration/pairing/PairingOrchestrator";
 import { dbMock, JwtContextMock } from "../../mock/common";
 
 describe("Wallet Pairing Management Routes API", () => {
@@ -584,5 +585,129 @@ describe("Wallet Pairing Management Routes API", () => {
             expect(dbMock.delete).toHaveBeenCalled();
             expect(deleteWhereMock).toHaveBeenCalled();
         });
+    });
+});
+
+/**
+ * `originNode` (the anonymous_fingerprint / wallet identity blob an origin
+ * device could plant on `action=initiate` without any auth) used to be
+ * merged onto the joiner's wallet via `identityOrchestrator.resolveAndAssociate`
+ * in `handleJoin`. That merge path has been deleted end-to-end: the
+ * orchestrator no longer takes an `IdentityOrchestrator` dependency at all,
+ * so a row that still has `originNode` set can no longer trigger a merge.
+ * The column has since been dropped too, so this now guards the pre-migration
+ * window and any environment whose drop migration has not landed yet.
+ */
+describe("PairingOrchestrator handleJoin — no identity merge", () => {
+    const joinerWallet = "0x1111111111111111111111111111111111111111";
+    const victimFingerprintNode = {
+        type: "anonymous_fingerprint",
+        value: "victim-fingerprint",
+        merchantId: "merchant-1",
+    };
+
+    function buildOrchestrator() {
+        const pairingRepository = {
+            getByPairingId: vi.fn(),
+            markResolved: vi.fn(() => Promise.resolve()),
+            getByWallet: vi.fn(() => Promise.resolve([])),
+            touchLastActiveBatched: vi.fn(),
+            touchLastActiveNow: vi.fn(() => Promise.resolve()),
+            create: vi.fn(() => Promise.resolve()),
+        };
+        const pairingSignatureRepository = {
+            getPendingForPairings: vi.fn(() => Promise.resolve([])),
+        };
+        const authenticatorRepository = {
+            getByCredentialId: vi.fn(),
+        };
+        const walletBindingRepository = {
+            getActiveBinding: vi.fn(),
+        };
+        const walletSdkSessionService = {
+            generateSdkJwt: vi.fn(() =>
+                Promise.resolve({ token: "mock-sdk-jwt", expires: 9999 })
+            ),
+        };
+
+        const orchestrator = new PairingOrchestrator(
+            pairingRepository as any,
+            pairingSignatureRepository as any,
+            authenticatorRepository as any,
+            walletBindingRepository as any,
+            walletSdkSessionService as any
+        );
+
+        return { orchestrator, pairingRepository };
+    }
+
+    beforeEach(() => {
+        JwtContextMock.wallet.sign.mockClear();
+    });
+
+    it("does not accept an IdentityOrchestrator dependency", () => {
+        const { orchestrator } = buildOrchestrator();
+        expect((orchestrator as any).identityOrchestrator).toBeUndefined();
+    });
+
+    it("joining a pairing whose row still carries a legacy originNode does not merge identities", async () => {
+        const { orchestrator, pairingRepository } = buildOrchestrator();
+
+        pairingRepository.getByPairingId.mockResolvedValue({
+            pairingId: "pairing-1",
+            pairingCode: "123456",
+            resolvedAt: null,
+            authenticatorHints: null,
+            // A row shape only reachable before the drop migration lands;
+            // nothing should read or act on it either way.
+            originNode: victimFingerprintNode,
+        } as never);
+
+        const ws = {
+            close: vi.fn(),
+            subscribe: vi.fn(),
+            publish: vi.fn(),
+            send: vi.fn(),
+        };
+
+        await orchestrator.handleOpen({
+            query: {
+                action: "join",
+                id: "pairing-1",
+                pairingCode: "123456",
+            },
+            wallet: {
+                type: "webauthn",
+                address: joinerWallet,
+                authenticatorId: "credential-abc",
+                publicKey: { x: "0xaaaa", y: "0xbbbb" },
+            } as never,
+            ws: ws as never,
+        });
+
+        // Resolved against the joiner's own wallet — never the origin's
+        // planted identity node.
+        expect(pairingRepository.markResolved).toHaveBeenCalledWith(
+            expect.objectContaining({
+                pairingId: "pairing-1",
+                wallet: joinerWallet,
+                authenticatorId: "credential-abc",
+            })
+        );
+
+        // The minted wallet token is for the joiner only.
+        expect(JwtContextMock.wallet.sign).toHaveBeenCalledWith(
+            expect.objectContaining({ address: joinerWallet })
+        );
+        expect(JwtContextMock.wallet.sign).not.toHaveBeenCalledWith(
+            expect.objectContaining({ address: victimFingerprintNode.value })
+        );
+
+        // The `authenticated` broadcast carries the joiner's wallet only.
+        const publishedMessage = ws.publish.mock.calls.find(
+            (call) => (call[1] as { type?: string })?.type === "authenticated"
+        )?.[1] as { payload: { wallet: { address: string } } };
+        expect(publishedMessage).toBeDefined();
+        expect(publishedMessage.payload.wallet.address).toBe(joinerWallet);
     });
 });

@@ -7,16 +7,9 @@ import type {
     WsSignatureResponse,
     WsTopicSignatureRequest,
 } from "@frak-labs/backend-elysia/domain/pairing";
-import type { Address, Hex } from "viem";
+import type { Hex } from "viem";
 import type { DistantWebAuthnWallet } from "../../types/Session";
 import type { SignatureRejectReason } from "./errors";
-
-/**
- * Identity node for origin device, used for identity resolution when pairing completes
- */
-export type OriginIdentityNode =
-    | { type: "anonymous_fingerprint"; value: string; merchantId: string }
-    | { type: "wallet"; value: Address };
 
 /**
  * All the messages that could be received by the target.

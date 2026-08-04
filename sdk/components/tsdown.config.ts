@@ -1,3 +1,4 @@
+import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import nodePolyfills from "@rolldown/plugin-node-polyfills";
 import {
@@ -9,6 +10,10 @@ import {
 } from "@vanilla-extract/integration";
 import type { Plugin } from "rolldown";
 import { defineConfig } from "tsdown";
+import {
+    extractExpectedTags,
+    findMissingRegistrations,
+} from "./src/buildGuards/componentRegistrations.ts";
 
 /**
  * Vanilla Extract inline plugin for Web Components.
@@ -129,6 +134,68 @@ function vanillaExtractInlinePlugin(): Plugin {
     };
 }
 
+/**
+ * Fail the build when a component's `customElements.define` is missing from the
+ * emitted output.
+ *
+ * The registration lives in a side-effect-only module, so a bundler that
+ * believes the package is side-effect-free drops it — and the failure is
+ * invisible, since undefined elements are hidden by the loader's own FOUCE
+ * rule. The unit suite runs against `src`, where the call is intact, so only a
+ * check on the artifact catches it. See
+ * `src/buildGuards/componentRegistrations.ts`.
+ */
+function assertComponentRegistrations(): Plugin {
+    return {
+        name: "frak:assert-component-registrations",
+        async writeBundle(
+            outputOptions: { dir?: string },
+            bundle: Record<string, { type: string; code?: string }>
+        ) {
+            const componentIndexes = await readdir(
+                new URL("./src/components", import.meta.url),
+                { withFileTypes: true }
+            );
+
+            const expectedTags: string[] = [];
+            for (const entry of componentIndexes) {
+                if (!entry.isDirectory()) continue;
+                const indexPath = new URL(
+                    `./src/components/${entry.name}/index.ts`,
+                    import.meta.url
+                );
+                const source = await readFile(indexPath, "utf-8").catch(
+                    () => ""
+                );
+                expectedTags.push(...extractExpectedTags(source));
+            }
+
+            if (expectedTags.length === 0) {
+                throw new Error(
+                    "[assert-component-registrations] No registerWebComponent() call found in src/components/*/index.ts — the guard cannot verify the bundle."
+                );
+            }
+
+            const chunks = Object.values(bundle)
+                .filter((output) => output.type === "chunk")
+                .map((output) => output.code ?? "");
+
+            const missing = findMissingRegistrations(expectedTags, chunks);
+            if (missing.length > 0) {
+                throw new Error(
+                    `[assert-component-registrations] ${missing.length} component(s) are never registered in ${outputOptions.dir}: ${missing.join(", ")}.\n` +
+                        "customElements.define will never run for them, and the loader's FOUCE rule hides undefined elements, so they will silently render nothing.\n" +
+                        "Most likely cause: a `sideEffects` entry in package.json no longer covers the component entrypoints."
+                );
+            }
+
+            console.log(
+                `[assert-component-registrations] ${expectedTags.length} component registrations present in ${outputOptions.dir}`
+            );
+        },
+    };
+}
+
 function emptyLoaderCssPlugin() {
     return {
         name: "empty-loader-css",
@@ -186,7 +253,11 @@ export default defineConfig([
         outDir: "./dist",
         alias: preactCompatAlias,
         deps: { alwaysBundle: [/design-system/, /rewards/] },
-        plugins: [vanillaExtractInlinePlugin(), nodePolyfills()],
+        plugins: [
+            vanillaExtractInlinePlugin(),
+            nodePolyfills(),
+            assertComponentRegistrations(),
+        ],
     },
     {
         entry: {
@@ -205,9 +276,12 @@ export default defineConfig([
         outDir: "./cdn",
         deps: { alwaysBundle: [/.*/] },
         alias: { ...preactCompatAlias, rrweb: rrwebStub },
-        treeshake: {
-            moduleSideEffects: true,
-        },
+        // NOTE: no `treeshake.moduleSideEffects` override here. The package
+        // manifest's `sideEffects` allowlist is the single authority for what
+        // may be shaken, and a blanket override would silently mask a manifest
+        // that no longer covers the component entrypoints — which is exactly
+        // how the registration calls were dropped from this bundle before.
+        // `assertComponentRegistrations` fails the build if that regresses.
         define: {
             "process.env.BACKEND_URL": JSON.stringify(
                 process.env.BACKEND_URL || "https://backend.frak.id"
@@ -228,6 +302,7 @@ export default defineConfig([
             vanillaExtractInlinePlugin(),
             nodePolyfills(),
             emptyLoaderCssPlugin(),
+            assertComponentRegistrations(),
         ],
     },
 ]);

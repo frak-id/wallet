@@ -8,6 +8,20 @@ type PendingEnsureAction = {
     anonymousId: string;
     /** Optional merchant metadata for UI display */
     merchant?: { name: string; domain: string };
+    /**
+     * Install ticket minted by `install-code/resolve`. When present the
+     * backend prefers it over `anonymousId`; absent on old-shape actions
+     * written by a pre-ticket binary.
+     */
+    ticket?: string;
+    /**
+     * `frak-install-v1` proof, read from the `#p=` install-link fragment or
+     * the Play referrer's `proof=` key. Sent alongside
+     * `merchantId`/`anonymousId` on `/identity/ensure`, binding exactly
+     * those two fields.
+     * ROLLOUT-STEP-3: revisit once the bare `anonymousId` arm is deleted.
+     */
+    proof?: string;
 };
 
 /**

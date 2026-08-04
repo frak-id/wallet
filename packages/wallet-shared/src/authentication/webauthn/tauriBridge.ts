@@ -17,6 +17,10 @@ import {
 } from "@frak-labs/app-essentials/utils/platform";
 import type { WebAuthnP256 } from "ox";
 import { getInvoke } from "../../common/tauri";
+import {
+    base64URLStringToBuffer,
+    bufferToBase64URLString,
+} from "../../common/utils/base64url";
 import { parseNativeWebauthnError } from "./errors";
 
 // ============================================================================
@@ -63,37 +67,21 @@ type OxGetFn = WebAuthnP256.sign.Options["getFn"];
 export function toBase64Url(
     buffer: ArrayBuffer | ArrayBufferView | Uint8Array
 ): string {
-    let bytes: Uint8Array;
-    if (buffer instanceof Uint8Array) {
-        bytes = buffer;
-    } else if (buffer instanceof ArrayBuffer) {
-        bytes = new Uint8Array(buffer);
-    } else {
-        bytes = new Uint8Array(
-            buffer.buffer,
-            buffer.byteOffset,
-            buffer.byteLength
-        );
-    }
-    let binary = "";
-    for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary)
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "");
+    const bytes =
+        buffer instanceof Uint8Array
+            ? buffer
+            : buffer instanceof ArrayBuffer
+              ? new Uint8Array(buffer)
+              : new Uint8Array(
+                    buffer.buffer,
+                    buffer.byteOffset,
+                    buffer.byteLength
+                );
+    return bufferToBase64URLString(bytes);
 }
 
 export function fromBase64Url(base64url: string): ArrayBuffer {
-    const padded = base64url + "=".repeat((4 - (base64url.length % 4)) % 4);
-    const base64 = padded.replace(/-/g, "+").replace(/_/g, "/");
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes.buffer;
+    return base64URLStringToBuffer(base64url);
 }
 
 // ============================================================================

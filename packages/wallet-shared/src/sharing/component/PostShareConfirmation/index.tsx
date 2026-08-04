@@ -10,9 +10,10 @@ import {
     ShieldIcon,
     WalletIcon,
 } from "@frak-labs/design-system/icons";
+import { clsx } from "clsx";
 import type { ReactNode } from "react";
 import { MerchantLogo } from "../MerchantLogo";
-import { overlay } from "../shared.css";
+import { containerChromeless, overlay } from "../shared.css";
 import * as styles from "./postShareConfirmation.css";
 
 export type PostShareConfirmationProps = {
@@ -20,6 +21,13 @@ export type PostShareConfirmationProps = {
     appName: string;
     logoUrl?: string;
     t: (key: string, options?: Record<string, unknown>) => string;
+    /**
+     * Suppress this screen's own header, so a host presenting it inside its
+     * own chrome does not stack two logos and two close controls. The footer
+     * stays: its install / share-again CTAs are this screen's whole point and
+     * have no equivalent in a host's share sheet.
+     */
+    chromeless?: boolean;
     onDismiss: () => void;
     onShareAgain: () => void;
     onInstall: () => void;
@@ -36,6 +44,7 @@ export function PostShareConfirmation({
     appName,
     logoUrl,
     t,
+    chromeless = false,
     onDismiss,
     onShareAgain,
     onInstall,
@@ -43,33 +52,38 @@ export function PostShareConfirmation({
     return (
         <div
             className={overlay}
-            onClick={onDismiss}
+            onClick={chromeless ? undefined : onDismiss}
             onKeyDown={(e) => {
-                if (e.key === "Escape") onDismiss();
+                if (!chromeless && e.key === "Escape") onDismiss();
             }}
         >
             <div
-                className={styles.container}
+                className={clsx(
+                    styles.container,
+                    chromeless && containerChromeless
+                )}
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
             >
-                <header className={styles.header}>
-                    <Box display="flex" alignItems="center" gap="m">
-                        <MerchantLogo
-                            src={logoUrl}
-                            alt={appName}
-                            className={styles.merchantLogo}
-                        />
-                        <LogoFrakWithName className={styles.logo} />
-                    </Box>
-                    <button
-                        type="button"
-                        className={styles.dismissButton}
-                        onClick={onDismiss}
-                    >
-                        <CloseIcon width={24} height={24} />
-                    </button>
-                </header>
+                {!chromeless && (
+                    <header className={styles.header}>
+                        <Box display="flex" alignItems="center" gap="m">
+                            <MerchantLogo
+                                src={logoUrl}
+                                alt={appName}
+                                className={styles.merchantLogo}
+                            />
+                            <LogoFrakWithName className={styles.logo} />
+                        </Box>
+                        <button
+                            type="button"
+                            className={styles.dismissButton}
+                            onClick={onDismiss}
+                        >
+                            <CloseIcon width={24} height={24} />
+                        </button>
+                    </header>
+                )}
 
                 <main className={styles.main}>
                     <section className={styles.phoneVisual}>

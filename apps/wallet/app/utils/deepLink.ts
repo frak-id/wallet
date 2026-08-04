@@ -17,6 +17,8 @@ type DeepLinkParams = {
     state?: string;
     m?: string;
     a?: string;
+    /** `frak-install-v1` proof. Search param, not a fragment: see `routeResolvers.install`. */
+    p?: string;
 };
 
 function extractSearchParams(
@@ -31,6 +33,7 @@ function extractSearchParams(
         state: searchParams.get("state") ?? undefined,
         m: searchParams.get("m") ?? undefined,
         a: searchParams.get("a") ?? undefined,
+        p: searchParams.get("p") ?? undefined,
     };
 }
 
@@ -68,7 +71,12 @@ function parseDeepLink(url: string): DeepLinkParams | null {
             // For frakwallet://<host>/<rest>, the id is pathSegments[0];
             // for frakwallet:///<action>/<id> (no host), it's pathSegments[1].
             const pathId = parsed.hostname ? pathSegments[0] : pathSegments[1];
-            return buildParams(action, pathId, parsed.searchParams);
+            return buildParams(
+                action,
+                pathId,
+                parsed.searchParams,
+                parsed.hash
+            );
         }
 
         // https://wallet.frak.id/pair?id=... (Android App Links)
@@ -83,7 +91,12 @@ function parseDeepLink(url: string): DeepLinkParams | null {
                 .filter(Boolean);
             const action = pathSegments[0] || "home";
             const pathId = pathSegments[1];
-            return buildParams(action, pathId, parsed.searchParams);
+            return buildParams(
+                action,
+                pathId,
+                parsed.searchParams,
+                parsed.hash
+            );
         }
 
         return null;
@@ -101,15 +114,46 @@ function parseDeepLink(url: string): DeepLinkParams | null {
 const pathIdActions = new Set(["p", "explorer"]);
 
 /**
+ * Read the `frak-install-v1` proof out of a `#p=` fragment.
+ *
+ * Must never throw — a malformed or absent fragment degrades to "no proof",
+ * since attribution has to survive a lost one.
+ */
+function extractProofFragment(hash: string): string | undefined {
+    const raw = hash.startsWith("#") ? hash.slice(1) : hash;
+    if (!raw) return undefined;
+    try {
+        return new URLSearchParams(raw).get("p") ?? undefined;
+    } catch {
+        return undefined;
+    }
+}
+
+/**
  * Build deep-link params, folding a path-segment id into `params.id` for
  * path-id actions (`/p/<id>`, `/explorer/<merchantId>`). The id is lowercased
  * so backend lookups (byte-exact on a `varchar`/`uuid` column) always see the
  * canonical form.
+ *
+ * The install proof is accepted from EITHER carrier, because which one arrives
+ * is a property of who minted the link, not of this hop:
+ *
+ *  - `?p=` — native SDK custom-scheme links (`frakwallet://install?…&p=…`).
+ *    Handed straight to the OS, so it never reaches a server or a log.
+ *  - `#p=` — every hosted `/install` link, including the one the web listener's
+ *    sharing page builds via `buildInstallUrl`. On Android those are verified
+ *    App Links, so tapping one with the app installed lands here rather than in
+ *    a browser, fragment and all.
+ *
+ * Search param wins on the rare link carrying both: a fragment can be left over
+ * from an earlier hop, whereas `?p=` is only ever set deliberately by the
+ * minting SDK.
  */
 function buildParams(
     action: string,
     pathId: string | undefined,
-    searchParams: URLSearchParams
+    searchParams: URLSearchParams,
+    hash = ""
 ): DeepLinkParams {
     // Action lookup is case-sensitive (object key match), but URL paths are
     // not normalized by browsers/OS deep-link plumbing — fold to lowercase so
@@ -120,7 +164,8 @@ function buildParams(
         pathIdActions.has(normalizedAction) && !params.id && pathId
             ? pathId.toLowerCase()
             : params.id;
-    return { action: normalizedAction, ...params, id };
+    const p = params.p ?? extractProofFragment(hash);
+    return { action: normalizedAction, ...params, id, p };
 }
 
 type NavigateFn = (options: {
@@ -217,10 +262,15 @@ const routeResolvers: Record<string, (params: DeepLinkParams) => Route> = {
     p: resolvePairRoute,
     pair: resolvePairRoute,
     pairing: resolvePairRoute,
+    // `p` is forwarded as a search param, not a fragment. `/install` prefers the fragment
+    // when it has one, but a fragment cannot survive this hop: the router navigates
+    // in-app, so `window.location.hash` is empty by the time the route renders. Without
+    // this the proof is silently dropped on every app-installed deep link.
     install: (params) => {
         const search: Record<string, string> = {};
         if (params.m) search.m = params.m;
         if (params.a) search.a = params.a;
+        if (params.p) search.p = params.p;
         return { to: "/install", search };
     },
     send: (params) => ({

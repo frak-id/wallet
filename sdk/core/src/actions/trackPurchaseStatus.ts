@@ -1,5 +1,5 @@
 import { getBackendUrl } from "../config/backendUrl";
-import { getClientId } from "../config/clientId";
+import { getClientIdAsync } from "../config/clientId";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 
 /**
@@ -46,7 +46,7 @@ export async function trackPurchaseStatus(args: {
         "frak-wallet-interaction-token"
     );
 
-    const clientId = getClientId();
+    const clientId = await getClientIdAsync().catch(() => undefined);
     if (!interactionToken && !clientId) {
         console.warn("[Frak] No identity found, skipping purchase check");
         return;

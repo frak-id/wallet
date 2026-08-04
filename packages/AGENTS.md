@@ -17,7 +17,7 @@ bun run typecheck                           # runs across all packages from root
 | `rpc` (published as `@frak-labs/frame-connector`) | Iframe/postMessage RPC | all SDKs, listener |
 | `client` | Elysia Eden Treaty client | wallet, business, shopify |
 | `dev-tooling` | Centralised Vite + Lightning CSS configs | business, listener, sdk/legacy |
-| `test-foundation` | Vitest shared config + mocks + fixtures | all 10 Vitest projects |
+| `test-foundation` | Vitest shared config + mocks + fixtures | 12 of 13 Vitest projects (shopify is standalone) |
 | `ui-preview` | Embedded preview widgets | business, shopify |
 
 ## Non-Obvious Patterns

@@ -28,7 +28,18 @@
     "web-components"
   ],
   "license": "GNU GPL 3.0",
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css",
+    "**/*.css.ts",
+    "**/components/*/index.ts",
+    "**/bootstrap/loader.ts",
+    "**/components.ts",
+    "./dist/buttonShare.js",
+    "./dist/buttonWallet.js",
+    "./dist/openInApp.js",
+    "./dist/postPurchase.js",
+    "./dist/banner.js"
+  ],
   "private": false,
   "publishConfig": {
     "access": "public"
@@ -116,6 +127,7 @@
     "@vitest/coverage-v8": "catalog:",
     "@vitest/ui": "catalog:",
     "jsdom": "catalog:",
+    "rolldown": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

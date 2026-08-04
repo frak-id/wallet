@@ -31,6 +31,7 @@ function campaign(opts: {
     referrer?: EstimatedReward;
     referee?: EstimatedReward;
     conditions?: RuleConditions;
+    productScope?: RuleConditions;
     expiresAt?: string | null;
     defaultLockupSeconds?: number;
 }): MerchantReward {
@@ -39,6 +40,7 @@ function campaign(opts: {
         name: opts.id,
         interactionTypeKey: opts.interactionTypeKey ?? "purchase",
         conditions: opts.conditions ?? [],
+        productScope: opts.productScope,
         referrer: opts.referrer,
         referee: opts.referee,
         expiresAt: opts.expiresAt,
@@ -156,6 +158,246 @@ describe("selectDisplayCampaign", () => {
             selectDisplayCampaign(rewards, { now: NOW, audience: "referee" })
                 ?.campaign.campaignId
         ).toBe("rich-referee");
+    });
+
+    describe("with a `products` option", () => {
+        it("does not change the winner when products is omitted", () => {
+            const rewards = [
+                campaign({
+                    id: "scoped",
+                    referrer: fixedReward(9),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+                campaign({ id: "unscoped", referrer: fixedReward(3) }),
+            ];
+            expect(
+                selectDisplayCampaign(rewards, { now: NOW })?.campaign
+                    .campaignId
+            ).toBe("scoped");
+        });
+
+        it("does not change the winner when products is an empty array", () => {
+            const rewards = [
+                campaign({
+                    id: "scoped",
+                    referrer: fixedReward(9),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+                campaign({ id: "unscoped", referrer: fixedReward(3) }),
+            ];
+            const result = selectDisplayCampaign(rewards, {
+                now: NOW,
+                products: [],
+            });
+            expect(result?.campaign.campaignId).toBe("scoped");
+            expect(result?.matchedProducts).toBeUndefined();
+        });
+
+        it("prefers a matching-scope campaign over a richer non-matching one (single-product array)", () => {
+            const rewards = [
+                campaign({
+                    id: "rich-nonmatching",
+                    referrer: fixedReward(50),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "OTHER-SKU" },
+                    ],
+                }),
+                campaign({
+                    id: "poor-matching",
+                    referrer: fixedReward(5),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+            ];
+            const result = selectDisplayCampaign(rewards, {
+                now: NOW,
+                products: [{ sku: "SHOE-42" }],
+            });
+            expect(result?.campaign.campaignId).toBe("poor-matching");
+            expect(result?.matchedProducts).toEqual([{ sku: "SHOE-42" }]);
+        });
+
+        it("treats an unscoped campaign as always matching", () => {
+            const rewards = [
+                campaign({
+                    id: "scoped-nonmatching",
+                    referrer: fixedReward(50),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "OTHER-SKU" },
+                    ],
+                }),
+                campaign({ id: "unscoped", referrer: fixedReward(5) }),
+            ];
+            const result = selectDisplayCampaign(rewards, {
+                now: NOW,
+                products: [{ sku: "SHOE-42" }],
+            });
+            expect(result?.campaign.campaignId).toBe("unscoped");
+            // Unscoped winner: no single product "drove" the reward.
+            expect(result?.matchedProducts).toBeUndefined();
+        });
+
+        it("still ranks normally by reward value among matching campaigns", () => {
+            const rewards = [
+                campaign({
+                    id: "matching-poor",
+                    referrer: fixedReward(3),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+                campaign({
+                    id: "matching-rich",
+                    referrer: fixedReward(9),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+            ];
+            const result = selectDisplayCampaign(rewards, {
+                now: NOW,
+                products: [{ sku: "SHOE-42" }],
+            });
+            expect(result?.campaign.campaignId).toBe("matching-rich");
+        });
+
+        it("any-match: a campaign matches when at least one of several products matches its scope", () => {
+            const rewards = [
+                campaign({
+                    id: "matches-second-product",
+                    referrer: fixedReward(20),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+                campaign({ id: "unscoped", referrer: fixedReward(15) }),
+            ];
+            const result = selectDisplayCampaign(rewards, {
+                now: NOW,
+                products: [{ sku: "SHIRT-1" }, { sku: "SHOE-42" }],
+            });
+            expect(result?.campaign.campaignId).toBe("matches-second-product");
+        });
+
+        it("a campaign matching none of several products is deprioritized below one that matches", () => {
+            const rewards = [
+                campaign({
+                    id: "rich-nonmatching",
+                    referrer: fixedReward(50),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "OTHER-SKU" },
+                    ],
+                }),
+                campaign({
+                    id: "poor-matching",
+                    referrer: fixedReward(5),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+            ];
+            const result = selectDisplayCampaign(rewards, {
+                now: NOW,
+                products: [{ sku: "SHIRT-1" }, { sku: "SHOE-42" }],
+            });
+            expect(result?.campaign.campaignId).toBe("poor-matching");
+        });
+
+        it("matchedProducts contains exactly the matching subset, not the whole input", () => {
+            const rewards = [
+                campaign({
+                    id: "scoped",
+                    referrer: fixedReward(9),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+            ];
+            const result = selectDisplayCampaign(rewards, {
+                now: NOW,
+                products: [
+                    { sku: "SHIRT-1" },
+                    { sku: "SHOE-42" },
+                    { sku: "HAT-9" },
+                ],
+            });
+            expect(result?.matchedProducts).toEqual([{ sku: "SHOE-42" }]);
+        });
+
+        it("matchedProducts is undefined for an unscoped winner even with products supplied", () => {
+            const rewards = [
+                campaign({ id: "unscoped", referrer: fixedReward(9) }),
+            ];
+            const result = selectDisplayCampaign(rewards, {
+                now: NOW,
+                products: [{ sku: "SHOE-42" }],
+            });
+            expect(result?.matchedProducts).toBeUndefined();
+        });
+
+        it("matchedProducts is undefined when no products are passed", () => {
+            const rewards = [
+                campaign({
+                    id: "scoped",
+                    referrer: fixedReward(9),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+            ];
+            const result = selectDisplayCampaign(rewards, { now: NOW });
+            expect(result?.matchedProducts).toBeUndefined();
+        });
+
+        it("upcoming path: prefers a matching upcoming campaign over a sooner-starting non-matching one", () => {
+            const rewards = [
+                campaign({
+                    id: "sooner-nonmatching",
+                    referrer: fixedReward(50),
+                    conditions: startsAtCondition("2025-02-01T00:00:00Z"),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "OTHER-SKU" },
+                    ],
+                }),
+                campaign({
+                    id: "later-matching",
+                    referrer: fixedReward(5),
+                    conditions: startsAtCondition("2025-03-01T00:00:00Z"),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+            ];
+            const result = selectDisplayCampaign(rewards, {
+                now: NOW,
+                products: [{ sku: "SHOE-42" }],
+            });
+            expect(result?.status).toBe("upcoming");
+            expect(result?.campaign.campaignId).toBe("later-matching");
+            expect(result?.matchedProducts).toEqual([{ sku: "SHOE-42" }]);
+        });
+
+        it("upcoming path: does not change the winner when products is omitted", () => {
+            const rewards = [
+                campaign({
+                    id: "later",
+                    referrer: fixedReward(50),
+                    conditions: startsAtCondition("2025-04-01T00:00:00Z"),
+                }),
+                campaign({
+                    id: "sooner",
+                    referrer: fixedReward(5),
+                    conditions: startsAtCondition("2025-02-01T00:00:00Z"),
+                }),
+            ];
+            const result = selectDisplayCampaign(rewards, { now: NOW });
+            expect(result?.campaign.campaignId).toBe("sooner");
+        });
     });
 });
 
@@ -325,5 +567,66 @@ describe("selectBestReward", () => {
             { now: NOW }
         );
         expect(best?.minPurchaseValue).toBeUndefined();
+    });
+
+    it("isProductScoped is false when the campaign has no productScope", () => {
+        const best = selectBestReward(
+            [campaign({ id: "c", referrer: fixedReward(50) })],
+            { now: NOW }
+        );
+        expect(best?.isProductScoped).toBe(false);
+    });
+
+    it("isProductScoped is true when the campaign carries a productScope", () => {
+        // The flag is the gate, not the basis: this campaign's percentage is
+        // still `percentOf: "purchase_amount"`. See `isMatchedItemsBasis`.
+        const best = selectBestReward(
+            [
+                campaign({
+                    id: "c",
+                    referrer: uncappedPercentage(10),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+            ],
+            { now: NOW }
+        );
+        expect(best?.isProductScoped).toBe(true);
+    });
+
+    it("surfaces matchedProducts for a scoped campaign matching one of several products", () => {
+        const best = selectBestReward(
+            [
+                campaign({
+                    id: "c",
+                    referrer: fixedReward(50),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+            ],
+            {
+                now: NOW,
+                products: [{ sku: "SHIRT-1" }, { sku: "SHOE-42" }],
+            }
+        );
+        expect(best?.matchedProducts).toEqual([{ sku: "SHOE-42" }]);
+    });
+
+    it("leaves matchedProducts undefined when no products are passed", () => {
+        const best = selectBestReward(
+            [
+                campaign({
+                    id: "c",
+                    referrer: fixedReward(50),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+            ],
+            { now: NOW }
+        );
+        expect(best?.matchedProducts).toBeUndefined();
     });
 });

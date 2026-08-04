@@ -88,6 +88,7 @@
     "@vitejs/plugin-react": "^6.0.4",
     "tsdown": "^0.22.14",
     "@rolldown/plugin-node-polyfills": "^1.0.3",
+    "rolldown": "~1.2.0",
     "@openpanel/web": "^1.4.1",
     "sst": "4.14.3",
     "@typescript/native": "npm:typescript@^7.0.2",
@@ -127,18 +128,22 @@
     "@arethetypeswrong/cli": "^0.18.5",
     "@biomejs/biome": "2.5.5",
     "elysia": "1.4.29",
-    "nanoid": "^6.0.0"
+    "nanoid": "^6.0.0",
+    "@tanstack/react-table": "^8.21.3",
+    "@radix-ui/react-alert-dialog": "^1.1.23",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
+    "react-hook-form": "^7.83.0",
+    "remix-utils": "^9.3.1",
+    "vite-plugin-mkcert": "^2.1.0",
+    "@noble/curves": "^2.2.0"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.11.1",
-    "@tinymomentum/liquid-glass-react": "^1.0.6",
     "caniuse-lite": "^1.0.30001806",
     "vite": "catalog:"
   },
   "resolutions": {
-    "@testing-library/dom": "^10.4.1",
-    "caniuse-lite": "^1.0.30001806",
-    "parse5": "^7.3.0"
+    "@testing-library/dom": "^10.4.1"
   },
   "trustedDependencies": []
 }

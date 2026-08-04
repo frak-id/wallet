@@ -110,7 +110,10 @@
   // Immediate attempt for returning visitors (clientId already in localStorage).
   syncFrakCartAttributes();
   // Re-sync once SDK is ready (handles first-time visitors + guarantees correct ID).
-  window.addEventListener('frakClientReady', syncFrakCartAttributes, { once: true });
+  // Event name must match `dispatchClientReadyEvent` in
+  // sdk/components/src/utils/clientReady.ts — renamed from `frakClientReady`
+  // to `frak:client` in 6e9006605, which missed this listener.
+  window.addEventListener('frak:client', syncFrakCartAttributes, { once: true });
 
   // Inject custom JavaScript
   try {

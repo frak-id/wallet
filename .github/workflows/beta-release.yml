@@ -134,6 +134,12 @@ jobs:
 
       - uses: gacts/purge-jsdelivr-cache@v1
         with:
+          # Only unhashed, version-aliased URLs belong here. Purge maps 1:1 to
+          # the exact path submitted — no directory or wildcard expansion — so a
+          # trailing-slash path would only purge jsDelivr's HTML file listing.
+          # The hashed chunks (ButtonShare.<hash>.js) need no purge: new content
+          # yields a new filename, so old URLs stay valid and new ones are cache
+          # misses on first request.
           url: |
             https://cdn.jsdelivr.net/npm/@frak-labs/nexus-sdk@beta/dist/bundle/bundle.js
             https://cdn.jsdelivr.net/npm/@frak-labs/core-sdk@beta/cdn/bundle.js

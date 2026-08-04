@@ -13,6 +13,7 @@ const SAFE_SECTIONS = [
     "/merchant",
     "/merchant/funding",
     "/merchant/customize",
+    "/merchant/explorer",
     "/merchant/team",
     "/merchant/setup-status",
     // `/push/*` is intentionally *not* listed: the push composition lives

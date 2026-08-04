@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { CodeInput } from "../../../common/component/CodeInput";
 import type { OnPairingSuccessCallback } from "../../clients/origin";
 import { useOriginPairingFlow } from "../../hook/useOriginPairingFlow";
-import type { OriginIdentityNode } from "../../types";
 import { PairingQrCode } from "../PairingQrCode";
 import { PairingStatus } from "../PairingStatus";
 import * as styles from "./index.css";
@@ -18,15 +17,12 @@ import * as styles from "./index.css";
  */
 export function LaunchPairing({
     onSuccess,
-    originNode,
 }: {
     onSuccess?: OnPairingSuccessCallback;
-    originNode?: OriginIdentityNode;
 }) {
     const { t } = useTranslation();
     const { clientState, handleRetry } = useOriginPairingFlow({
         onSuccess,
-        originNode,
     });
     const pairingInfo = clientState.pairing;
     const isError =

@@ -68,17 +68,12 @@ export type PostPurchaseProps = {
      */
     imageUrl?: string;
     /**
-     * Optional product cards forwarded to the sharing page when the user
-     * clicks the CTA. Accepts either a real {@link SharingPageProduct}
-     * array (when set imperatively via the JS property,
-     * `el.products = [...]`) or a JSON-stringified array (when set as an
-     * HTML attribute, `<frak-post-purchase products='[...]'>`). The HTML
-     * attribute path is required for server-rendered surfaces — e.g.
-     * WooCommerce / Magento plugins — because `preact-custom-element`
-     * delivers attribute values as raw strings.
+     * Order line items, forwarded to the sharing page as product cards on CTA
+     * click, and used to prefer a campaign whose `productScope` matches one of
+     * the purchased items when picking the reward to advertise.
      *
-     * Empty arrays / unparseable strings are treated as "no products" so
-     * the sharing page renders without the product card section.
+     * Accepts a {@link SharingPageProduct} array (JS property) or a
+     * JSON-stringified array (HTML attribute, used by server-rendered plugins).
      */
     products?: SharingPageProduct[] | string;
     /**

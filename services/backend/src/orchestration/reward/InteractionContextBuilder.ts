@@ -107,6 +107,7 @@ export class InteractionContextBuilder {
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
                 totalPrice: item.totalPrice,
+                sku: item.sku,
             })),
         };
     }

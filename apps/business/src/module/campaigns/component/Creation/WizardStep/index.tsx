@@ -7,14 +7,15 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import { WizardLayout } from "@/module/common/component/WizardLayout";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { campaignStore, isPurchaseCampaign } from "@/stores/campaignStore";
 import { ButtonCancel } from "../NewCampaign/ButtonCancel";
 import {
     isLastStep,
     previousStep,
     stepI18n,
     stepIndexOf,
-    WIZARD_STEPS,
     type WizardStepKey,
+    wizardStepsFor,
 } from "../wizardSteps";
 
 type WizardStepProps = {
@@ -55,12 +56,18 @@ export function WizardStep({
         campaignId?: string;
     };
 
-    const activeStep = stepIndexOf(stepKey);
-    const previous = previousStep(activeStep);
-    const lastStep = isLastStep(activeStep);
+    // A non-purchase campaign has no product-scope step. The step itself is
+    // still reachable by URL, so keep it in the rail when it's the one being
+    // rendered rather than leave the wizard without a current step.
+    const isPurchase = campaignStore((s) => isPurchaseCampaign(s.draft.rule));
+    const wizardSteps = wizardStepsFor(isPurchase || stepKey === "products");
+
+    const activeStep = stepIndexOf(stepKey, wizardSteps);
+    const previous = previousStep(activeStep, wizardSteps);
+    const lastStep = isLastStep(activeStep, wizardSteps);
 
     // Resolve the rail labels/hints from i18n.
-    const steps: StepperStep[] = WIZARD_STEPS.map((s) => {
+    const steps: StepperStep[] = wizardSteps.map((s) => {
         const keys = stepI18n(s.key);
         return { title: t(keys.label), description: t(keys.hint) };
     });

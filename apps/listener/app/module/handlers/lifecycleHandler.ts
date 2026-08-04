@@ -77,7 +77,6 @@ export const clientLifecycleHandler: LifecycleHandler<
         }
 
         case "sso-redirect-complete": {
-            // Handle SSO redirect completion from SDK
             await handleSsoRedirectComplete(data);
             return;
         }
@@ -112,12 +111,9 @@ const MODAL_CSS_LINK_ID = "frak-modal-css";
 
 /**
  * Validate a merchant-supplied stylesheet URL before injecting it as a
- * `<link rel="stylesheet">`. The link is attacker-influenceable (it rides in
- * on an unauthenticated `modal-css` lifecycle message), so we constrain it to
- * an absolute `https:` URL whose path ends in `.css` — matching the SDK
- * `customizations.css` contract (`${string}.css`). This rejects `javascript:`,
- * `data:`, `http:`, and protocol-relative (`//host`) vectors while still
- * letting merchants host their own CSS on any https origin.
+ * `<link>`. The link rides in on an unauthenticated `modal-css` message, so
+ * it's constrained to an absolute `https:` URL ending in `.css` — rejects
+ * `javascript:`, `data:`, `http:`, and protocol-relative vectors.
  */
 function isSafeCssLink(cssLink: unknown): cssLink is string {
     if (typeof cssLink !== "string") return false;
@@ -168,6 +164,7 @@ function isValidResolvedConfigPayload(data: unknown): data is {
     sourceUrl: string;
     pendingMergeToken?: string;
     sdkAnonymousId?: string;
+    sdkIdentity?: unknown;
     sdkConfig?: ResolvedSdkConfig;
 } {
     if (!data || typeof data !== "object") return false;
@@ -181,6 +178,61 @@ function isValidResolvedConfigPayload(data: unknown): data is {
     );
 }
 
+/**
+ * Safely pull a named proof off the untrusted `sdkIdentity` payload.
+ * `sdkIdentity` arrives as `unknown` on purpose — a malformed or partial
+ * value must degrade to "no proof" rather than throw.
+ */
+function extractSdkProof(
+    sdkIdentity: unknown,
+    key: "merge" | "install"
+): string | undefined {
+    if (!sdkIdentity || typeof sdkIdentity !== "object") return undefined;
+    const proofs = (sdkIdentity as Record<string, unknown>).proofs;
+    if (!proofs || typeof proofs !== "object") return undefined;
+    const proof = (proofs as Record<string, unknown>)[key];
+    return typeof proof === "string" ? proof : undefined;
+}
+
+/**
+ * The anonymous id `sdkIdentity`'s proofs are signed over. Read from
+ * `sdkIdentity` itself, NOT from the sibling top-level `sdkAnonymousId`
+ * field — they are separate keys on the same untrusted payload and a
+ * tampered message can set them to different values.
+ */
+function extractSdkProvenId(sdkIdentity: unknown): string | undefined {
+    if (!sdkIdentity || typeof sdkIdentity !== "object") return undefined;
+    const id = (sdkIdentity as Record<string, unknown>).anonymousId;
+    return typeof id === "string" ? id : undefined;
+}
+
+/**
+ * Pick the merge target and the proof that covers it.
+ *
+ * A proof only verifies against the exact id it was signed over, so the
+ * target must be that id. When they can't be reconciled the merge still
+ * goes out unproven — the backend accepts an unproven target as long as it
+ * has never latched, and 403s only once that id has proven itself before.
+ *
+ * ROLLOUT-STEP-3: delete the `fallbackId ?? undefined` fallback below once
+ * `minVersion` excludes every binary that can still reach this path
+ * unproven; legacy clients depend on it for in-app-browser attribution.
+ */
+function resolveMergeTarget(
+    sdkIdentity: unknown,
+    fallbackId: string | null | undefined
+): { targetAnonymousId?: string; proof?: string } {
+    const provenId = extractSdkProvenId(sdkIdentity);
+    if (provenId) {
+        return {
+            targetAnonymousId: provenId,
+            proof: extractSdkProof(sdkIdentity, "merge"),
+        };
+    }
+    // ROLLOUT-STEP-3: unproven fallback — see the function doc above.
+    return { targetAnonymousId: fallbackId ?? undefined };
+}
+
 async function handleResolvedConfig(
     data: {
         merchantId: string;
@@ -189,6 +241,7 @@ async function handleResolvedConfig(
         sourceUrl: string;
         pendingMergeToken?: string;
         sdkAnonymousId?: string;
+        sdkIdentity?: unknown;
         sdkConfig?: ResolvedSdkConfig;
     },
     context: RpcRequestContext
@@ -228,11 +281,13 @@ async function handleResolvedConfig(
         );
     }
 
+    const installProof = extractSdkProof(data.sdkIdentity, "install");
     store.setContext({
         merchantId: data.merchantId,
         origin: parsedOrigin,
         sourceUrl: data.sourceUrl,
         ...(iframeClientId && { clientId: iframeClientId }),
+        ...(installProof && { installProof }),
     });
 
     // Stitch SDK ↔ listener funnels: if the SDK propagated its persistent
@@ -252,8 +307,10 @@ async function handleResolvedConfig(
         data.merchantId &&
         currentTrust === "verified"
     ) {
-        const targetAnonymousId =
-            iframeClientId ?? clientIdStore.getState().clientId;
+        const { targetAnonymousId, proof: mergeProof } = resolveMergeTarget(
+            data.sdkIdentity,
+            iframeClientId ?? clientIdStore.getState().clientId
+        );
         if (targetAnonymousId) {
             // `fmt` token is produced by the in-app-browser escape flow
             // (see `InAppBrowserToast`). Tagging the merge outcome with
@@ -268,6 +325,7 @@ async function handleResolvedConfig(
                     mergeToken: data.pendingMergeToken,
                     targetAnonymousId,
                     merchantId: data.merchantId,
+                    proof: mergeProof,
                 })
                 .then(({ error }) => {
                     if (error) {
@@ -330,7 +388,6 @@ async function handleSsoRedirectComplete(data: {
             return;
         }
 
-        // Parse the SSO result
         const [session, sdkSession] = compressedParam;
         await processSsoCompletion(session, sdkSession);
     } catch (error) {

@@ -59,7 +59,7 @@ export const MergeSettleBodySchema = t.Object({
      */
     loserConsentSignature: t.String({ minLength: 1 }),
     /**
-     * Set by the cross-device (Phase 2) merge flow. When present, the
+     * Set by the cross-device merge flow. When present, the
      * orchestrator publishes a `merge-completed` event on both pairing
      * topics once settlement succeeds — the loser-side payload carries a
      * freshly-minted webauthn session so the loser device can swap its
@@ -84,7 +84,7 @@ export const MergeSettleResponseSchema = t.Object({
      *
      * Omitted when the requester is the winner (their existing JWT already
      * resolves correctly) or when the merge was triggered by an out-of-band
-     * caller with no session to rebind (Phase 2 reconciler retries).
+     * caller with no session to rebind (reconciler retries).
      */
     session: t.Optional(WalletAuthResponseDto),
 });

@@ -103,6 +103,7 @@ export { InAppBrowserToast } from "./component/InAppBrowserToast";
 export { Markdown } from "./component/Markdown";
 export { OfflineBanner } from "./component/OfflineBanner";
 export { PaginationDots } from "./component/PaginationDots";
+export { rewardProductsForSelection } from "./hook/rewardProductsForSelection";
 // Hooks
 export { useCopyToClipboardWithState } from "./hook/useCopyToClipboardWithState";
 export {

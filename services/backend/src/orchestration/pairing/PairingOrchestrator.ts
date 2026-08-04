@@ -17,8 +17,6 @@ import type { WsTopicMessage } from "../../domain/pairing/dto/WebsocketTopicMess
 import type { PairingRepository } from "../../domain/pairing/repositories/PairingRepository";
 import type { PairingSignatureRepository } from "../../domain/pairing/repositories/PairingSignatureRepository";
 import { originTopic, targetTopic } from "../../domain/pairing/topics";
-import type { IdentityOrchestrator } from "../identity/IdentityOrchestrator";
-import type { IdentityNode } from "../identity/types";
 import { sendTopic } from "./wsHelpers";
 
 /**
@@ -29,9 +27,9 @@ import { sendTopic } from "./wsHelpers";
  *
  * The pairing domain only knows about its own DB rows
  * (`PairingRepository`, `PairingSignatureRepository`). All other
- * dependencies — auth, identity, webauthn binding, identity
- * orchestration — flow through this orchestrator's constructor so
- * there's no cross-domain reach below the orchestration layer.
+ * dependencies — auth, webauthn binding — flow through this
+ * orchestrator's constructor so there's no cross-domain reach below the
+ * orchestration layer.
  */
 export class PairingOrchestrator {
     constructor(
@@ -39,8 +37,7 @@ export class PairingOrchestrator {
         private readonly pairingSignatureRepository: PairingSignatureRepository,
         private readonly authenticatorRepository: AuthenticatorRepository,
         private readonly walletBindingRepository: WalletBindingRepository,
-        private readonly walletSdkSessionService: WalletSdkSessionService,
-        private readonly identityOrchestrator: IdentityOrchestrator
+        private readonly walletSdkSessionService: WalletSdkSessionService
     ) {}
 
     async handleOpen({
@@ -59,7 +56,6 @@ export class PairingOrchestrator {
             pairingCode,
             id,
             originResumeToken,
-            originNode: originNodeRaw,
             authenticatorHints: authenticatorHintsRaw,
         } = query;
 
@@ -72,7 +68,6 @@ export class PairingOrchestrator {
             return;
         }
 
-        const originNode = this.parseOriginNode(originNodeRaw);
         const authenticatorHints = this.parseAuthenticatorHints(
             authenticatorHintsRaw
         );
@@ -81,7 +76,6 @@ export class PairingOrchestrator {
             await this.handleInitiate({
                 userAgent,
                 ws,
-                originNode,
                 authenticatorHints,
             });
             return;
@@ -116,17 +110,6 @@ export class PairingOrchestrator {
         ws.close(WsCloseCode.UNAUTHORIZED, "Missing action or wallet token");
     }
 
-    private parseOriginNode(b64?: string): IdentityNode | undefined {
-        if (!b64) return undefined;
-        try {
-            const json = Buffer.from(b64, "base64").toString("utf-8");
-            return JSON.parse(json) as IdentityNode;
-        } catch {
-            log.warn({ b64 }, "Failed to parse originNode");
-            return undefined;
-        }
-    }
-
     private parseAuthenticatorHints(raw?: string): string[] | null {
         if (!raw) return null;
         const ids = raw
@@ -139,12 +122,10 @@ export class PairingOrchestrator {
     private async handleInitiate({
         userAgent,
         ws,
-        originNode,
         authenticatorHints,
     }: {
         userAgent?: string;
         ws: ElysiaWS;
-        originNode?: IdentityNode;
         authenticatorHints?: string[] | null;
     }) {
         const deviceName = this.uaToDeviceName(userAgent);
@@ -160,7 +141,6 @@ export class PairingOrchestrator {
             pairingCode,
             originUserAgent: userAgent ?? "Unknown",
             originName: deviceName,
-            originNode,
             authenticatorHints: authenticatorHints ?? null,
         });
 
@@ -449,24 +429,6 @@ export class PairingOrchestrator {
             "origin",
             { skipLastActiveUpdate: true }
         );
-
-        if (pairing.originNode) {
-            try {
-                await this.identityOrchestrator.resolveAndAssociate([
-                    { type: "wallet", value: wallet.address },
-                    pairing.originNode,
-                ]);
-            } catch (err: unknown) {
-                log.error(
-                    {
-                        err,
-                        wallet: wallet.address,
-                        originNode: pairing.originNode,
-                    },
-                    "Failed to associate identity after pairing"
-                );
-            }
-        }
     }
 
     private async handleReconnection({

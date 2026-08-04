@@ -18,7 +18,8 @@ import {
     useAddAllowedDomain,
     useRemoveAllowedDomain,
 } from "@/module/merchant/hook/useAllowedDomains";
-import * as styles from "./allowed-domains-sheet.css";
+import { AllowedListErrorMessage } from "../AllowedListError";
+import * as styles from "../allowed-list-sheet.css";
 
 const domainRegex =
     /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
@@ -44,9 +45,12 @@ export function AllowedDomainsSheet({
     const [open, setOpen] = useState(false);
     const [rawInput, setRawInput] = useState("");
 
-    const { mutate: addDomain, isPending: isAdding } = useAddAllowedDomain({
-        merchantId,
-    });
+    const {
+        mutate: addDomain,
+        isPending: isAdding,
+        error: addError,
+        reset: resetAddError,
+    } = useAddAllowedDomain({ merchantId });
     const { mutate: removeDomain, isPending: isRemoving } =
         useRemoveAllowedDomain({ merchantId });
 
@@ -109,16 +113,8 @@ export function AllowedDomainsSheet({
 
                 <Stack space="l" padding="l">
                     {allowedDomains.length > 0 && (
-                        <Stack
-                            space="m"
-                            padding="m"
-                            className={styles.domainCard}
-                        >
-                            <Stack
-                                as="ul"
-                                space="none"
-                                className={styles.domainList}
-                            >
+                        <Stack space="m" padding="m" className={styles.card}>
+                            <Stack as="ul" space="none" className={styles.list}>
                                 {allowedDomains.map((domain) => (
                                     <Inline
                                         as="li"
@@ -126,9 +122,9 @@ export function AllowedDomainsSheet({
                                         space="s"
                                         alignY="center"
                                         key={domain}
-                                        className={styles.domainItem}
+                                        className={styles.item}
                                     >
-                                        <span className={styles.domainText}>
+                                        <span className={styles.itemText}>
                                             {domain}
                                         </span>
                                         <Button
@@ -146,7 +142,7 @@ export function AllowedDomainsSheet({
                         </Stack>
                     )}
 
-                    <Stack space="m" padding="m" className={styles.domainCard}>
+                    <Stack space="m" padding="m" className={styles.card}>
                         <Stack space="xs">
                             <Text
                                 variant="bodySmall"
@@ -161,7 +157,10 @@ export function AllowedDomainsSheet({
                                 tone="muted"
                                 length="big"
                                 value={rawInput}
-                                onChange={(e) => setRawInput(e.target.value)}
+                                onChange={(e) => {
+                                    setRawInput(e.target.value);
+                                    resetAddError();
+                                }}
                                 placeholder={t(
                                     "merchantEdit.domains.placeholder"
                                 )}
@@ -173,6 +172,14 @@ export function AllowedDomainsSheet({
                                 <Text variant="caption" color="error">
                                     {t("merchantEdit.domains.invalid")}
                                 </Text>
+                            )}
+                            {addError && (
+                                <AllowedListErrorMessage
+                                    error={addError}
+                                    claimedCode="DOMAIN_ALREADY_CLAIMED"
+                                    claimedKey="merchantEdit.domains.claimed"
+                                    fallbackKey="merchantEdit.domains.addError"
+                                />
                             )}
                         </Stack>
 

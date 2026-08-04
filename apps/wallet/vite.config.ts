@@ -14,6 +14,7 @@ import {
     inlineFontFaces,
     lightningCssConfig,
     onwarn,
+    preconnectOrigins,
     stripAbiInternalType,
 } from "../../packages/dev-tooling";
 import walletPackage from "./package.json";
@@ -327,11 +328,24 @@ export default defineConfig(
     async ({ mode, command }: ConfigEnv): Promise<UserConfig> => {
         const isSW = mode === "sw";
 
+        const define = await getDefineProps();
         const baseConfig: UserConfig = {
             clearScreen: false,
             envPrefix: ["VITE_", "TAURI_"],
-            define: await getDefineProps(),
+            define,
         };
+
+        // Read back from the defines rather than resolving these a second
+        // time, so a preconnect can never point somewhere the app does not.
+        // `JSON.stringify` yields the value `undefined` for an unset resource,
+        // not a JSON string, so parsing is guarded for the optional ones.
+        const readDefine = (key: keyof typeof define): string | undefined => {
+            const raw = define[key];
+            return typeof raw === "string" ? JSON.parse(raw) : undefined;
+        };
+        const backendUrl = readDefine("process.env.BACKEND_URL");
+        const erpcUrl = readDefine("process.env.ERPC_URL");
+        const nexusRpcSecret = readDefine("process.env.NEXUS_RPC_SECRET");
 
         // Service worker configuration
         if (isSW) {
@@ -404,6 +418,35 @@ export default defineConfig(
                         "public/fonts/inter-tight.css",
                     ],
                     preload: ["/fonts/inter-latin.woff2"],
+                }),
+                // The first backend call is issued from a React component, so
+                // nothing reaches this origin until the entry chunk and every
+                // vendor chunk above have downloaded and parsed. Opening the
+                // connection from `<head>` moves the DNS, TCP and TLS cost
+                // into that window. `use-credentials` matches the eventual
+                // request: the backend is cross-origin and `backendClient`
+                // sends `credentials: "include"`.
+                preconnectOrigins({
+                    origins: [
+                        {
+                            url: backendUrl,
+                            crossorigin: "use-credentials",
+                        },
+                        // The smart-account provider is built during boot
+                        // and its first RPC call goes out on the same early
+                        // path. viem's `http` transport leaves `credentials`
+                        // at the default, so this one is anonymous.
+                        //
+                        // Gated on the secret because `getErpcTransport`
+                        // returns undefined without it and the provider falls
+                        // back to dRPC, leaving this origin uncalled. An
+                        // unused hint holds a socket open and earns a console
+                        // warning.
+                        {
+                            url: nexusRpcSecret ? erpcUrl : undefined,
+                            crossorigin: "anonymous",
+                        },
+                    ],
                 }),
             ],
             resolve: {

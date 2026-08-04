@@ -1,0 +1,44 @@
+# XcodeGen spec for the runnable iOS app target.
+#
+# SwiftPM cannot produce an app bundle — it has no notion of one — so
+# `Package.swift` only typechecks the sources and never applies `Info.plist`
+# (URL schemes, LSApplicationQueriesSchemes). This spec wraps the same sources
+# in a real app target so the harness can actually run on a simulator.
+#
+# The `.xcodeproj` is generated, not committed: regenerate with `xcodegen` (see
+# README). Keeping the spec instead of the project avoids a 1000-line .pbxproj
+# in review and the merge conflicts that come with it.
+name: FrakExampleiOSApp
+options:
+  bundleIdPrefix: id.frak.example
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+
+targets:
+  FrakExampleiOSApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources/FrakExampleiOSApp
+        excludes:
+          - Info.plist
+    settings:
+      base:
+        # Point at the checked-in plist rather than XcodeGen's `info:` block,
+        # which synthesizes a fresh file and would silently drop
+        # CFBundleURLTypes / LSApplicationQueriesSchemes — the two keys the
+        # deep-link and wallet-detection paths depend on.
+        INFOPLIST_FILE: Sources/FrakExampleiOSApp/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: id.frak.example.ios
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        # Ad-hoc signing: the harness runs on a simulator, which does not
+        # require a provisioning profile or a development team.
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGNING_REQUIRED: "NO"
+        CODE_SIGNING_ALLOWED: "NO"
+        # The real SDK must be Swift 6 strict-concurrency clean; hold the
+        # example app to the same bar.
+        SWIFT_VERSION: "6.0"
+        ENABLE_USER_SCRIPT_SANDBOXING: "YES"

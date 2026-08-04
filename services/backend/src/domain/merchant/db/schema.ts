@@ -26,6 +26,13 @@ export const merchantsTable = pgTable(
         productId: customHex("product_id").unique(),
         domain: text("domain").unique().notNull(),
         allowedDomains: text("allowed_domains").array().default([]).notNull(),
+        // Entries are `platform:packageId`, see `normalizePackageId`. Separate
+        // from `allowedDomains` because that one is echoed to web clients and
+        // feeds the listener's hostname-based origin trust check.
+        allowedPackageIds: text("allowed_package_ids")
+            .array()
+            .default([])
+            .notNull(),
         name: text("name").notNull(),
         // Owner identity — at least one of the two must be set (CHECK below).
         // `ownerWallet` powers onchain bank-role management; `ownerAccountId`
@@ -50,6 +57,10 @@ export const merchantsTable = pgTable(
     (table) => [
         index("merchants_owner_wallet_idx").on(table.ownerWallet),
         index("merchants_owner_account_idx").on(table.ownerAccountId),
+        index("merchants_allowed_package_ids_idx").using(
+            "gin",
+            table.allowedPackageIds
+        ),
         check(
             "merchants_owner_check",
             sql`${table.ownerWallet} IS NOT NULL OR ${table.ownerAccountId} IS NOT NULL`

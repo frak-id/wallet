@@ -2,11 +2,7 @@ import type { Address } from "viem";
 import { describe, expect, it } from "../../tests/vitest-fixtures";
 import type { FrakContextV2 } from "../types";
 import { base64urlEncode } from "../utils/compression/b64";
-import {
-    decodeFrakContextV2,
-    encodeFrakContextV2,
-    isV2BinaryLength,
-} from "./frakContextV2Codec";
+import { decodeFrakContextV2, encodeFrakContextV2 } from "./frakContextV2Codec";
 
 const MERCHANT = "550e8400-e29b-41d4-a716-446655440000";
 const CLIENT = "550e8400-e29b-41d4-a716-446655440001";
@@ -221,21 +217,6 @@ describe("frakContextV2Codec", () => {
 
         it("returns null on an empty buffer", () => {
             expect(decodeFrakContextV2(new Uint8Array(0))).toBeNull();
-        });
-    });
-
-    describe("isV2BinaryLength", () => {
-        it("matches exactly the three valid V2 sizes", () => {
-            expect(isV2BinaryLength(37)).toBe(true);
-            expect(isV2BinaryLength(41)).toBe(true);
-            expect(isV2BinaryLength(57)).toBe(true);
-        });
-
-        it("rejects V1 size and everything else", () => {
-            expect(isV2BinaryLength(20)).toBe(false);
-            expect(isV2BinaryLength(0)).toBe(false);
-            expect(isV2BinaryLength(36)).toBe(false);
-            expect(isV2BinaryLength(58)).toBe(false);
         });
     });
 });

@@ -1,11 +1,5 @@
-import { getClientId } from "../config/clientId";
-import { sdkConfigStore } from "../config/sdkConfigStore";
-import type {
-    FrakClient,
-    OpenSsoParamsType,
-    OpenSsoReturnType,
-} from "../types";
-import { generateSsoUrl } from "../utils/sso/sso";
+import type { FrakClient, OpenSsoArgsType, OpenSsoReturnType } from "../types";
+import { prepareSsoUrl, withDirectExitDefault } from "./prepareSsoUrl";
 
 // SSO popup configuration
 export const ssoPopupFeatures =
@@ -25,8 +19,11 @@ export const ssoPopupName = "frak-sso";
  *
  * **Popup Mode** (openInSameWindow: false/omitted):
  * - SDK generates URL client-side (or uses provided ssoPopupUrl)
- * - Opens popup synchronously (prevents popup blockers)
- * - Waits for SSO completion via postMessage
+ * - Opens the popup, then waits for SSO completion via postMessage
+ *
+ * Pass `{ ssoUrl }` from
+ * {@link @frak-labs/core-sdk!actions.prepareSsoUrl | `prepareSsoUrl()`} to open
+ * the popup without awaiting anything first — see the popup-blocker note below.
  *
  * @example
  * First we build the sso metadata
@@ -55,6 +52,12 @@ export const ssoPopupName = "frak-sso";
  *     openInSameWindow: true,
  * });
  * ```
+ * ```ts [Pre-built URL]
+ * // Prepared ahead of the click, so the popup opens synchronously
+ * const { ssoUrl } = await prepareSsoUrl(frakConfig, { metadata });
+ * // ...later, directly in the click handler:
+ * await openSso(frakConfig, { ssoUrl });
+ * ```
  * ```ts [Custom popup URL]
  * // Advanced: provide custom SSO URL
  * const { ssoUrl } = await prepareSso(frakConfig, { metadata });
@@ -67,17 +70,23 @@ export const ssoPopupName = "frak-sso";
  */
 export async function openSso(
     client: FrakClient,
-    inputArgs: OpenSsoParamsType
+    inputArgs: OpenSsoArgsType
 ): Promise<OpenSsoReturnType> {
-    const { metadata, customizations, walletUrl } = client.config;
+    const { metadata, customizations } = client.config;
 
-    // Apply default: when no redirectUrl is provided we want the SSO popup
-    // to close itself after completion. Without this default the popup
-    // sticks on the success screen and the "Redirect now" button is a no-op.
-    const args: OpenSsoParamsType = {
-        ...inputArgs,
-        directExit: inputArgs.directExit ?? !inputArgs.redirectUrl,
-    };
+    // Pre-built URL: open first, resolve nothing. This is the whole point of
+    // the `prepareSsoUrl()` form — every await below runs after the popup is
+    // already on screen, so no blocker heuristic can fire.
+    if ("ssoUrl" in inputArgs) {
+        openSsoPopup(inputArgs.ssoUrl);
+        const result = await client.request({
+            method: "frak_openSso",
+            params: [{}, metadata.name, customizations?.css],
+        });
+        return result ?? {};
+    }
+
+    const args = withDirectExitDefault(inputArgs);
 
     // Check if redirect mode (default to true if redirectUrl present)
     const isRedirectMode = args.openInSameWindow ?? !!args.redirectUrl;
@@ -90,31 +99,20 @@ export async function openSso(
         });
     }
 
-    // Popup flow: Generate URL on SDK side and open synchronously
-    // This ensures window.open() is called in same tick as user gesture (no popup blocker)
-
-    // Step 1: Generate or use provided SSO URL
+    // Popup flow: build the URL, then open.
+    //
+    // window.open() does NOT run in the same tick as the user gesture here —
+    // resolving the ids and signing the proof are all awaits. They are cache
+    // hits in the common case, so the popup usually opens fast enough, and a
+    // blocked first click generally succeeds on the second (the ids are cached
+    // by then). To remove the risk entirely rather than shrink it, prepare the
+    // URL ahead of the gesture with `prepareSsoUrl()` and pass `{ ssoUrl }`.
     const ssoUrl =
-        args.ssoPopupUrl ??
-        generateSsoUrl(
-            walletUrl ?? "https://wallet.frak.id",
-            args,
-            (await sdkConfigStore.resolveMerchantId()) ?? "",
-            metadata.name,
-            getClientId(),
-            customizations?.css
-        );
+        args.ssoPopupUrl ?? (await prepareSsoUrl(client, args)).ssoUrl;
 
-    // Step 2: Open popup synchronously (critical for popup blocker prevention)
-    const popup = window.open(ssoUrl, ssoPopupName, ssoPopupFeatures);
-    if (!popup) {
-        throw new Error(
-            "Popup was blocked. Please allow popups for this site."
-        );
-    }
-    popup.focus();
+    openSsoPopup(ssoUrl);
 
-    // Step 3: Wait for SSO completion via RPC
+    // Wait for SSO completion via RPC
     // The wallet iframe will resolve this when SSO page sends sso_complete message
     const result = await client.request({
         method: "frak_openSso",
@@ -122,4 +120,17 @@ export async function openSso(
     });
 
     return result ?? {};
+}
+
+/**
+ * Open the SSO popup, throwing the blocker error the callers expect.
+ */
+function openSsoPopup(ssoUrl: string) {
+    const popup = window.open(ssoUrl, ssoPopupName, ssoPopupFeatures);
+    if (!popup) {
+        throw new Error(
+            "Popup was blocked. Please allow popups for this site."
+        );
+    }
+    popup.focus();
 }

@@ -68,6 +68,6 @@ export function buildFrakSnippet({
     } catch (e) {}
   }
   syncFrakCartAttributes();
-  window.addEventListener('frakClientReady', syncFrakCartAttributes, { once: true });
+  window.addEventListener('frak:client', syncFrakCartAttributes, { once: true });
 </script>`;
 }

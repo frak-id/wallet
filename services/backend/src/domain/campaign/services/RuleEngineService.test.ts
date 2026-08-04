@@ -2,9 +2,9 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { AssetLogRepository } from "../../rewards/repositories/AssetLogRepository";
 import type { CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
-import type { CalculatedReward, RuleContext } from "../types";
+import type { CalculatedReward, PurchaseContext, RuleContext } from "../types";
 import type { RewardCalculator } from "./RewardCalculator";
-import type { RuleConditionEvaluator } from "./RuleConditionEvaluator";
+import { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 import { buildTimeContext, RuleEngineService } from "./RuleEngineService";
 
 vi.mock("@backend-infrastructure", () => ({
@@ -685,6 +685,362 @@ describe("RuleEngineService", () => {
             expect(context).toHaveProperty("date");
             expect(context).toHaveProperty("timestamp");
             expect(typeof context.timestamp).toBe("number");
+        });
+    });
+
+    describe("productScope", () => {
+        // Not mocked, so the item-level matched-set logic is exercised.
+        const realConditionEvaluator = new RuleConditionEvaluator();
+
+        const purchaseContext = (
+            items: PurchaseContext["items"]
+        ): Omit<RuleContext, "time"> => ({
+            user: { identityGroupId: "test-user-group", walletAddress: null },
+            purchase: {
+                orderId: "order-1",
+                amount: items.reduce((sum, i) => sum + i.totalPrice, 0),
+                currency: "usd",
+                items,
+            },
+        });
+
+        const scopedCampaign = (
+            productScope: NonNullable<
+                CampaignRuleSelect["rule"]["productScope"]
+            >
+        ): CampaignRuleSelect =>
+            createMockCampaign({
+                rule: {
+                    trigger: "purchase",
+                    conditions: [],
+                    productScope,
+                    rewards: [
+                        {
+                            recipient: "referee",
+                            type: "token",
+                            amountType: "fixed",
+                            amount: 100,
+                        },
+                    ],
+                },
+            });
+
+        it("matches and rewards when a line item satisfies productScope", async () => {
+            const mockRepository = createMockRepository();
+            const mockRewardCalculator = createMockRewardCalculator();
+            const mockAssetLogRepository = createMockAssetLogRepository();
+
+            const campaign = scopedCampaign([
+                { field: "productId", operator: "eq", value: "A" },
+            ]);
+
+            vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
+                campaign,
+            ]);
+            const calculatedReward = createMockCalculatedReward();
+            vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
+                calculated: [calculatedReward],
+                errors: [],
+                deferForUnpriceableReward: false,
+            });
+            vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
+                success: true,
+                remaining: {},
+            });
+
+            const service = new RuleEngineService(
+                mockRepository,
+                realConditionEvaluator,
+                mockRewardCalculator,
+                mockAssetLogRepository
+            );
+
+            const result = await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "purchase",
+                context: purchaseContext([
+                    {
+                        productId: "A",
+                        name: "Widget",
+                        quantity: 1,
+                        unitPrice: 10,
+                        totalPrice: 10,
+                    },
+                ]),
+            });
+
+            expect(result.rewards).toEqual([calculatedReward]);
+            expect(mockRewardCalculator.calculateAll).toHaveBeenCalled();
+        });
+
+        it("skips the campaign (no budget consumed) when no line item matches", async () => {
+            const mockRepository = createMockRepository();
+            const mockRewardCalculator = createMockRewardCalculator();
+            const mockAssetLogRepository = createMockAssetLogRepository();
+
+            const campaign = scopedCampaign([
+                { field: "productId", operator: "eq", value: "A" },
+            ]);
+
+            vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
+                campaign,
+            ]);
+
+            const service = new RuleEngineService(
+                mockRepository,
+                realConditionEvaluator,
+                mockRewardCalculator,
+                mockAssetLogRepository
+            );
+
+            const result = await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "purchase",
+                context: purchaseContext([
+                    {
+                        productId: "B",
+                        name: "Gadget",
+                        quantity: 1,
+                        unitPrice: 10,
+                        totalPrice: 10,
+                    },
+                ]),
+            });
+
+            expect(result.rewards).toEqual([]);
+            expect(mockRewardCalculator.calculateAll).not.toHaveBeenCalled();
+            expect(mockRepository.consumeBudget).not.toHaveBeenCalled();
+        });
+
+        it("skips a productScope campaign when there is no purchase context", async () => {
+            const mockRepository = createMockRepository();
+            const mockRewardCalculator = createMockRewardCalculator();
+            const mockAssetLogRepository = createMockAssetLogRepository();
+
+            const campaign = scopedCampaign([
+                { field: "productId", operator: "eq", value: "A" },
+            ]);
+
+            vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
+                campaign,
+            ]);
+
+            const service = new RuleEngineService(
+                mockRepository,
+                realConditionEvaluator,
+                mockRewardCalculator,
+                mockAssetLogRepository
+            );
+
+            const result = await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "purchase",
+                context: createMockContext(),
+            });
+
+            expect(result.rewards).toEqual([]);
+            expect(mockRewardCalculator.calculateAll).not.toHaveBeenCalled();
+        });
+
+        it("additivity: two product-scoped campaigns matching different items both reward", async () => {
+            const mockRepository = createMockRepository();
+            const mockRewardCalculator = createMockRewardCalculator();
+            const mockAssetLogRepository = createMockAssetLogRepository();
+
+            const campaignA = {
+                ...scopedCampaign([
+                    { field: "productId", operator: "eq", value: "A" },
+                ]),
+                id: "campaign-a",
+            };
+            const campaignB = {
+                ...scopedCampaign([
+                    { field: "productId", operator: "eq", value: "B" },
+                ]),
+                id: "campaign-b",
+            };
+
+            vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
+                campaignA,
+                campaignB,
+            ]);
+            vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
+                calculated: [createMockCalculatedReward()],
+                errors: [],
+                deferForUnpriceableReward: false,
+            });
+            vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
+                success: true,
+                remaining: {},
+            });
+
+            const service = new RuleEngineService(
+                mockRepository,
+                realConditionEvaluator,
+                mockRewardCalculator,
+                mockAssetLogRepository
+            );
+
+            const result = await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "purchase",
+                context: purchaseContext([
+                    {
+                        productId: "A",
+                        name: "Widget",
+                        quantity: 1,
+                        unitPrice: 10,
+                        totalPrice: 10,
+                    },
+                    {
+                        productId: "B",
+                        name: "Gadget",
+                        quantity: 1,
+                        unitPrice: 25,
+                        totalPrice: 25,
+                    },
+                ]),
+            });
+
+            expect(result.rewards).toHaveLength(2);
+            expect(mockRewardCalculator.calculateAll).toHaveBeenCalledTimes(2);
+        });
+
+        it("computes matchedAmount/matchedQuantity from matched items only", async () => {
+            const mockRepository = createMockRepository();
+            const mockRewardCalculator = createMockRewardCalculator();
+            const mockAssetLogRepository = createMockAssetLogRepository();
+
+            const campaign = scopedCampaign([
+                { field: "productId", operator: "eq", value: "A" },
+            ]);
+
+            vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
+                campaign,
+            ]);
+            vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
+                calculated: [createMockCalculatedReward()],
+                errors: [],
+                deferForUnpriceableReward: false,
+            });
+            vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
+                success: true,
+                remaining: {},
+            });
+
+            const service = new RuleEngineService(
+                mockRepository,
+                realConditionEvaluator,
+                mockRewardCalculator,
+                mockAssetLogRepository
+            );
+
+            await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "purchase",
+                context: purchaseContext([
+                    {
+                        productId: "A",
+                        name: "Widget",
+                        quantity: 2,
+                        unitPrice: 10,
+                        totalPrice: 20,
+                    },
+                    {
+                        productId: "B",
+                        name: "Gadget",
+                        quantity: 3,
+                        unitPrice: 5,
+                        totalPrice: 15,
+                    },
+                ]),
+            });
+
+            const [, calledContext] = vi.mocked(
+                mockRewardCalculator.calculateAll
+            ).mock.calls[0];
+            expect(calledContext.purchase?.matchedAmount).toBe(20);
+            expect(calledContext.purchase?.matchedQuantity).toBe(2);
+        });
+
+        it("negation margin case: not_in excludes the cheap SKU from both trigger and basis", async () => {
+            const mockRepository = createMockRepository();
+            const mockRewardCalculator = createMockRewardCalculator();
+            const mockAssetLogRepository = createMockAssetLogRepository();
+
+            const campaign = scopedCampaign([
+                { field: "sku", operator: "not_in", value: ["CHEAP"] },
+            ]);
+
+            vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
+                campaign,
+            ]);
+            vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
+                calculated: [createMockCalculatedReward()],
+                errors: [],
+                deferForUnpriceableReward: false,
+            });
+            vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
+                success: true,
+                remaining: {},
+            });
+
+            const service = new RuleEngineService(
+                mockRepository,
+                realConditionEvaluator,
+                mockRewardCalculator,
+                mockAssetLogRepository
+            );
+
+            const mixedResult = await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "purchase",
+                context: purchaseContext([
+                    {
+                        productId: "cheap-1",
+                        sku: "CHEAP",
+                        name: "Loss leader",
+                        quantity: 1,
+                        unitPrice: 1,
+                        totalPrice: 1,
+                    },
+                    {
+                        productId: "normal-1",
+                        sku: "NORMAL",
+                        name: "Regular",
+                        quantity: 1,
+                        unitPrice: 50,
+                        totalPrice: 50,
+                    },
+                ]),
+            });
+
+            expect(mixedResult.rewards).toHaveLength(1);
+            const [, mixedContext] = vi.mocked(
+                mockRewardCalculator.calculateAll
+            ).mock.calls[0];
+            expect(mixedContext.purchase?.matchedAmount).toBe(50);
+
+            vi.mocked(mockRewardCalculator.calculateAll).mockClear();
+            vi.mocked(mockRepository.consumeBudget).mockClear();
+
+            const cheapOnlyResult = await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "purchase",
+                context: purchaseContext([
+                    {
+                        productId: "cheap-1",
+                        sku: "CHEAP",
+                        name: "Loss leader",
+                        quantity: 1,
+                        unitPrice: 1,
+                        totalPrice: 1,
+                    },
+                ]),
+            });
+
+            expect(cheapOnlyResult.rewards).toEqual([]);
+            expect(mockRewardCalculator.calculateAll).not.toHaveBeenCalled();
         });
     });
 });

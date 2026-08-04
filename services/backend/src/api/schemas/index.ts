@@ -124,12 +124,15 @@ export {
 export {
     type AffiliateBrandInfo,
     AffiliateBrandInfoSchema,
+    type AllowedPackageId,
+    AllowedPackageIdSchema,
     type MerchantDetailResponse,
     MerchantDetailResponseSchema,
     type MerchantResolveResponse,
     MerchantResolveResponseSchema,
     type MyMerchantsResponse,
     MyMerchantsResponseSchema,
+    PackageIdBodySchema,
     type ResolvedPlacement,
     type ResolvedSdkConfig,
 } from "./merchantApiSchemas";

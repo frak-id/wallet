@@ -19,10 +19,6 @@ export function SsoActions({
         authenticationStore,
         (state) => state.lastAuthenticator
     );
-    const merchantId = useStore(
-        authenticationStore,
-        (state) => state.ssoContext?.merchantId
-    );
     const privateKey = useStore(sessionStore, (state) => state.demoPrivateKey);
     const { login, isLoginInProgress } = useLoginDemo({
         onSuccess: () => onSuccess(),
@@ -56,7 +52,6 @@ export function SsoActions({
                     onSuccess={onSuccess}
                     onError={onError}
                     isPrimary={true}
-                    merchantId={merchantId}
                     lastAuthentication={{
                         wallet: lastAuthenticator.address,
                         authenticatorId: lastAuthenticator.authenticatorId,
@@ -67,7 +62,6 @@ export function SsoActions({
                     onSuccess={onSuccess}
                     onError={onError}
                     isPrimary={false}
-                    merchantId={merchantId}
                 />
             </>
         );
@@ -80,13 +74,11 @@ export function SsoActions({
                 onSuccess={onSuccess}
                 onError={onError}
                 isPrimary={true}
-                merchantId={merchantId}
             />
             <SsoLoginComponent
                 onSuccess={onSuccess}
                 onError={onError}
                 isPrimary={false}
-                merchantId={merchantId}
             />
         </>
     );

@@ -1,4 +1,4 @@
-import type { InteractionTypeKey } from "@frak-labs/core-sdk";
+import type { InteractionTypeKey, ProductDetails } from "@frak-labs/core-sdk";
 
 /**
  * The props type for {@link Banner}.
@@ -18,6 +18,14 @@ export type BannerProps = {
      * When omitted, the best reward across all interaction types is shown.
      */
     interaction?: InteractionTypeKey;
+    /**
+     * Products currently in view, used to prefer a campaign whose
+     * `productScope` matches one of them when picking the reward to advertise.
+     *
+     * Accepts a {@link ProductDetails} array (JS property) or a
+     * JSON-stringified array (HTML attribute).
+     */
+    products?: ProductDetails[] | string;
     /**
      * Override the referral banner title.
      */

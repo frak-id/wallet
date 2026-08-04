@@ -8,7 +8,6 @@ import { useTranslation } from "react-i18next";
 import { CodeInput } from "../../../common/component/CodeInput";
 import type { OnPairingSuccessCallback } from "../../clients/origin";
 import { useOriginPairingFlow } from "../../hook/useOriginPairingFlow";
-import type { OriginIdentityNode } from "../../types";
 import { PairingQrCode } from "../PairingQrCode";
 import { PairingStatus } from "../PairingStatus";
 import * as styles from "./index.css";
@@ -20,8 +19,6 @@ type PairingViewProps = {
     description: ReactNode;
     /** Callback fired when pairing completes */
     onSuccess?: OnPairingSuccessCallback;
-    /** Optional origin identity (for onboarding / merchant-bound pairings) */
-    originNode?: OriginIdentityNode;
     /**
      * Optional back-button slot rendered above the title.
      * Typically a `<Back onClick={...} />` element from the host app —
@@ -49,13 +46,12 @@ export function PairingView({
     title,
     description,
     onSuccess,
-    originNode,
     back,
     authenticatorHints,
 }: PairingViewProps) {
     const { t } = useTranslation();
     const { clientState, pairingInfo, isError, handleRetry } =
-        useOriginPairingFlow({ onSuccess, originNode, authenticatorHints });
+        useOriginPairingFlow({ onSuccess, authenticatorHints });
 
     return (
         <div className={styles.pairingView}>

@@ -28,6 +28,7 @@ The Core SDK exports 111 functions, types, and utilities organized into four cat
 | `getMerchantInformation` | Fetch merchant data including rewards and tiers |
 | `openSso` | Trigger single sign-on flow in popup window |
 | `prepareSso` | Prepare SSO parameters before opening popup |
+| `prepareSsoUrl` | Build the SSO URL ahead of the click, to dodge popup blockers |
 | `processReferral` | Handle referral code processing and validation |
 | `referralInteraction` | Track referral-related user interactions |
 | `sendInteraction` | Send user interaction events to wallet |

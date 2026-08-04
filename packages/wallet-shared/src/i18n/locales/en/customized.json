@@ -65,13 +65,16 @@
                 "upTo": "Up to",
                 "tagline1": "Earn {{ estimatedReward }},",
                 "tagline1_tiered": "Earn up to {{ estimatedReward }},",
-                "tagline2": "on every purchase!"
+                "tagline2": "on every purchase!",
+                "tagline2_product": "on selected products!"
             },
             "steps": {
                 "title": "",
                 "1": "Share in 1 click. A personal link is automatically generated with each share.",
                 "2": "Earn on every purchase. Every order placed through your link earns you cash.",
                 "2_min": "Earn on every purchase. Every order of at least {{ minAmount }} placed through your link earns you cash.",
+                "2_product": "Earn on every purchase of selected products. Every qualifying order placed through your link earns you cash.",
+                "2_min_product": "Earn on every purchase of selected products of at least {{ minAmount }}. Every qualifying order placed through your link earns you cash.",
                 "3": "Collect your earnings in the app. Install FRAK to collect your earnings.",
                 "3_lockup": "Your earnings will be available {{ lockupInDay }} days after the purchase is confirmed."
             },
@@ -93,6 +96,7 @@
                     "referrerLabel": "Reward as an ambassador",
                     "refereeLabel": "Reward for your referee",
                     "percentOfBasket": "{{percent}}% of basket",
+                    "percentOfEligible": "{{percent}}% of eligible products",
                     "percentExample": "e.g. {{reward}} for a {{basket}} order",
                     "tierAndAbove": "{{min}} and above"
                 }

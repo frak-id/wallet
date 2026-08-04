@@ -40,13 +40,15 @@ import { Trans, useTranslation } from "react-i18next";
 import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Button } from "@/module/common/component/Button";
+import { Tooltip } from "@/module/common/component/Tooltip";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { InputNumber } from "@/module/forms/InputNumber";
-import { campaignStore } from "@/stores/campaignStore";
+import { campaignStore, isPurchaseCampaign } from "@/stores/campaignStore";
 import { DistributionBar } from "../DistributionBar";
 import { InfoBanner } from "../InfoBanner";
 import { WizardFieldCard } from "../WizardFieldCard";
 import { WizardStep } from "../WizardStep";
+import * as rows from "../wizardRows.css";
 import * as styles from "./reward.css";
 import {
     type CpaTierRow,
@@ -58,8 +60,10 @@ import {
     recalcCpaFromSplit,
     recalcSplitOnCpaChange,
     recommendedSplit,
+    requiresMatchedBasis,
     rewardFormToDraft,
     splitTargetCpa,
+    supportsMatchedBasis,
     tieredRangesOverlap,
 } from "./utils";
 
@@ -1206,6 +1210,69 @@ export function EligibilityField({
     );
 }
 
+/**
+ * Basis toggle for a product-scoped campaign: pay on the whole basket, or on
+ * the scoped items only. Locked to "eligible products" when the scope is
+ * negated — the backend requires it, so the choice isn't the merchant's.
+ * Exported for unit testing.
+ */
+export function RewardBasisField({
+    control,
+    locked,
+}: {
+    control: Control<RewardFormValues>;
+    locked: boolean;
+}) {
+    const { t } = useTranslation();
+    return (
+        <Stack space="m">
+            {locked && (
+                <InfoBanner>
+                    {t("campaigns.create.reward.basis.lockedNote")}
+                </InfoBanner>
+            )}
+            <Controller
+                control={control}
+                name="rewardBasis"
+                render={({ field }) => (
+                    <RadioGroup
+                        value={locked ? "matchedItems" : field.value}
+                        onValueChange={field.onChange}
+                        disabled={locked}
+                    >
+                        {(["basket", "matchedItems"] as const).map((basis) => (
+                            <label
+                                key={basis}
+                                htmlFor={`reward-basis-${basis}`}
+                                className={rows.optionRow}
+                            >
+                                <RadioGroupItem
+                                    id={`reward-basis-${basis}`}
+                                    value={basis}
+                                    size="l"
+                                    disabled={locked}
+                                />
+                                <span className={rows.optionMain}>
+                                    <Text variant="body" weight="medium">
+                                        {t(
+                                            `campaigns.create.reward.basis.${basis}.title`
+                                        )}
+                                    </Text>
+                                    <Text variant="bodySmall" color="secondary">
+                                        {t(
+                                            `campaigns.create.reward.basis.${basis}.description`
+                                        )}
+                                    </Text>
+                                </span>
+                            </label>
+                        ))}
+                    </RadioGroup>
+                )}
+            />
+        </Stack>
+    );
+}
+
 // Exported for unit testing.
 export function LockupField({
     control,
@@ -1249,7 +1316,14 @@ export function RewardCampaign() {
     const saveCampaign = useSaveCampaign();
     const currencyGlyph = useCampaignCurrencyGlyph();
 
-    const defaultValues = useMemo(() => draftToRewardForm(draft), [draft]);
+    // Off a purchase there is no basket to compute on, so the fixed model is
+    // the only one that can pay out — preselect it and lock the choice.
+    const isPurchase = isPurchaseCampaign(draft.rule);
+
+    const defaultValues = useMemo(() => {
+        const values = draftToRewardForm(draft);
+        return isPurchase ? values : { ...values, model: "fixed" as const };
+    }, [draft, isPurchase]);
 
     const form = useForm<RewardFormValues>({
         values: defaultValues,
@@ -1258,11 +1332,18 @@ export function RewardCampaign() {
 
     const model = useWatch({ control: form.control, name: "model" });
 
+    // A scoped campaign can pay on the matched items; a negated scope must.
+    const isScoped = supportsMatchedBasis(draft);
+    const basisLocked = requiresMatchedBasis(draft);
+
     const watched = useWatch({ control: form.control });
-    const isValid = isRewardFormValid({
-        ...DEFAULT_REWARD_FORM,
-        ...watched,
-    } as RewardFormValues);
+    const isValid = isRewardFormValid(
+        {
+            ...DEFAULT_REWARD_FORM,
+            ...watched,
+        } as RewardFormValues,
+        { requiresMatchedBasis: basisLocked }
+    );
 
     async function persist(values: RewardFormValues) {
         const updated = rewardFormToDraft(values, { ...draft, merchantId });
@@ -1293,6 +1374,11 @@ export function RewardCampaign() {
             >
                 <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
                     <Stack space="l">
+                        {saveCampaign.isError && (
+                            <InfoBanner tone="error">
+                                {t("campaigns.create.reward.saveError")}
+                            </InfoBanner>
+                        )}
                         <WizardFieldCard
                             space="xs"
                             label={t(
@@ -1322,39 +1408,56 @@ export function RewardCampaign() {
                                             value={field.value}
                                             onValueChange={field.onChange}
                                         >
-                                            {MODELS.map((m) => (
-                                                <label
-                                                    key={m.value}
-                                                    htmlFor={`model-${m.value}`}
-                                                    className={
-                                                        styles.modelOption
-                                                    }
-                                                >
-                                                    <RadioGroupItem
-                                                        id={`model-${m.value}`}
-                                                        value={m.value}
-                                                        size="l"
-                                                    />
-                                                    <span
-                                                        className={
-                                                            styles.modelMain
-                                                        }
+                                            {MODELS.map((m) => {
+                                                const disabled =
+                                                    !isPurchase &&
+                                                    m.value !== "fixed";
+                                                return (
+                                                    <Tooltip
+                                                        key={m.value}
+                                                        hidden={!disabled}
+                                                        content={t(
+                                                            "campaigns.create.reward.model.salesOnly"
+                                                        )}
                                                     >
-                                                        <Text
-                                                            variant="body"
-                                                            weight="medium"
+                                                        <label
+                                                            htmlFor={`model-${m.value}`}
+                                                            className={`${styles.modelOption}${disabled ? ` ${styles.modelOptionDisabled}` : ""}`}
                                                         >
-                                                            {t(m.titleKey)}
-                                                        </Text>
-                                                        <Text
-                                                            variant="bodySmall"
-                                                            color="secondary"
-                                                        >
-                                                            {t(m.descKey)}
-                                                        </Text>
-                                                    </span>
-                                                </label>
-                                            ))}
+                                                            <RadioGroupItem
+                                                                id={`model-${m.value}`}
+                                                                value={m.value}
+                                                                size="l"
+                                                                disabled={
+                                                                    disabled
+                                                                }
+                                                            />
+                                                            <span
+                                                                className={
+                                                                    styles.modelMain
+                                                                }
+                                                            >
+                                                                <Text
+                                                                    variant="body"
+                                                                    weight="medium"
+                                                                >
+                                                                    {t(
+                                                                        m.titleKey
+                                                                    )}
+                                                                </Text>
+                                                                <Text
+                                                                    variant="bodySmall"
+                                                                    color="secondary"
+                                                                >
+                                                                    {t(
+                                                                        m.descKey
+                                                                    )}
+                                                                </Text>
+                                                            </span>
+                                                        </label>
+                                                    </Tooltip>
+                                                );
+                                            })}
                                         </RadioGroup>
                                     )}
                                 />
@@ -1381,7 +1484,32 @@ export function RewardCampaign() {
                             </Stack>
                         </WizardFieldCard>
 
-                        {model !== "tiered" && (
+                        {isScoped && model && model !== "fixed" && (
+                            <WizardFieldCard
+                                space="xs"
+                                label={t("campaigns.create.reward.basis.label")}
+                                description={t(
+                                    "campaigns.create.reward.basis.description"
+                                )}
+                            >
+                                <RewardBasisField
+                                    control={form.control}
+                                    locked={basisLocked}
+                                />
+                            </WizardFieldCard>
+                        )}
+
+                        {basisLocked && model === "fixed" && (
+                            <InfoBanner tone="error">
+                                {t(
+                                    "campaigns.create.reward.basis.fixedNotAllowed"
+                                )}
+                            </InfoBanner>
+                        )}
+
+                        {/* Minimum purchase and lockup both describe a
+                            purchase; neither has a meaning off that trigger. */}
+                        {isPurchase && model !== "tiered" && (
                             <WizardFieldCard
                                 space="xs"
                                 label={t(
@@ -1395,15 +1523,19 @@ export function RewardCampaign() {
                             </WizardFieldCard>
                         )}
 
-                        <WizardFieldCard
-                            space="xs"
-                            label={t("campaigns.create.reward.lockup.label")}
-                            description={t(
-                                "campaigns.create.reward.lockup.description"
-                            )}
-                        >
-                            <LockupField control={form.control} />
-                        </WizardFieldCard>
+                        {isPurchase && (
+                            <WizardFieldCard
+                                space="xs"
+                                label={t(
+                                    "campaigns.create.reward.lockup.label"
+                                )}
+                                description={t(
+                                    "campaigns.create.reward.lockup.description"
+                                )}
+                            >
+                                <LockupField control={form.control} />
+                            </WizardFieldCard>
+                        )}
                     </Stack>
                 </form>
             </WizardStep>

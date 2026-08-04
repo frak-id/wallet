@@ -6,9 +6,10 @@ import {
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
 import { OpenPanel } from "@openpanel/web";
-import { getClientId } from "../config/clientId";
+import { getClientIdAsync } from "../config/clientId";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { BACKUP_KEY } from "../constants";
+import { signProof } from "../identity/sign";
 import type { FrakLifecycleEvent } from "../types";
 import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
@@ -42,13 +43,13 @@ type MerchantConfigResult = Awaited<ReturnType<typeof sdkConfigStore.resolve>>;
  * const iframe = await createIframe({ config: frakConfig });
  * const client = createIFrameFrakClient({ config: frakConfig, iframe });
  */
-export function createIFrameFrakClient({
+export async function createIFrameFrakClient({
     config,
     iframe,
 }: {
     config: FrakWalletSdkConfig;
     iframe: HTMLIFrameElement;
-}): FrakClient {
+}): Promise<FrakClient> {
     const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
 
     // Precedence: explicit `metadata.lang` → page `<html lang>` → browser
@@ -65,6 +66,12 @@ export function createIFrameFrakClient({
     const configPromise = sdkConfigStore.isCacheFresh
         ? undefined
         : sdkConfigStore.resolve(config.domain, config.walletUrl, detectedLang);
+
+    // Resolved once, here, rather than inside OpenPanel's `filter` callback
+    // below (a sync predicate that can't await). Awaited after `configPromise`
+    // is kicked off, so derivation overlaps the merchant-config fetch instead
+    // of delaying it. Analytics must never block client creation, hence the catch.
+    const resolvedClientId = await getClientIdAsync().catch(() => undefined);
 
     // Create lifecycle manager
     const lifecycleManager = createIFrameLifecycleManager({
@@ -153,7 +160,9 @@ export function createIFrameFrakClient({
                     payload.properties = {
                         ...payload.properties,
                         sdk_version: process.env.SDK_VERSION,
-                        user_anonymous_client_id: getClientId(),
+                        ...(resolvedClientId && {
+                            user_anonymous_client_id: resolvedClientId,
+                        }),
                     };
                 }
 
@@ -162,7 +171,9 @@ export function createIFrameFrakClient({
         });
         openPanel.setGlobalProperties({
             sdk_version: process.env.SDK_VERSION,
-            user_anonymous_client_id: getClientId(),
+            ...(resolvedClientId && {
+                user_anonymous_client_id: resolvedClientId,
+            }),
         });
         openPanel.init();
         openPanel.track("sdk_initialized", {
@@ -207,6 +218,7 @@ export function createIFrameFrakClient({
         configPromise,
         contextSent,
         openPanel,
+        clientId: resolvedClientId,
     })
         .then(() => {})
         .catch((err) => {
@@ -278,6 +290,117 @@ function setupHeartbeat(
     return stopHeartbeat;
 }
 
+/** Extracted from `sendLifecycleConfig` to keep its cognitive complexity in budget. */
+function buildResolvedSdkConfig(resolved: SdkResolvedConfig) {
+    if (resolved.hasRawSdkConfig) {
+        return {
+            name: resolved.name,
+            logoUrl: resolved.logoUrl,
+            homepageLink: resolved.homepageLink,
+            lang: resolved.lang,
+            currency: resolved.currency,
+            hidden: resolved.hidden,
+            css: resolved.css,
+            translations: resolved.translations,
+            placements: resolved.placements,
+            attribution: resolved.attribution,
+        };
+    }
+    return resolved.attribution
+        ? { attribution: resolved.attribution }
+        : undefined;
+}
+
+/** Extracted from `sendLifecycleConfig` to keep its cognitive complexity in budget. */
+function updateOpenPanelMerchantProps(
+    openPanel: OpenPanel | undefined,
+    resolved: SdkResolvedConfig
+): void {
+    if (!openPanel) return;
+    const current = openPanel.global ?? {};
+    openPanel.setGlobalProperties({
+        ...current,
+        merchant_id: resolved.merchantId,
+        domain: resolved.domain ?? "",
+    });
+}
+
+async function hashMergeToken(token: string): Promise<Uint8Array | undefined> {
+    if (typeof crypto === "undefined" || !crypto.subtle) return undefined;
+    try {
+        const digest = await crypto.subtle.digest(
+            "SHA-256",
+            new TextEncoder().encode(token) as BufferSource
+        );
+        return new Uint8Array(digest);
+    } catch {
+        return undefined;
+    }
+}
+
+/**
+ * Produce the two named, domain-separated proofs carried on `resolved-config`.
+ * Never throws and never blocks the handshake: `signProof` resolves to
+ * `null` (never rejects) when no key is available.
+ *
+ * `merge` is only produced when a pending merge token exists, bound to
+ * `SHA-256(mergeToken)`, signed after the token is known.
+ *
+ * ROLLOUT-STEP-1: `proofs.install` travels on `resolved-config` and the
+ * listener forwards it into the `/install` URL as a `#p=` fragment — the
+ * wallet's install route still needs to read it and send it to the backend.
+ * See ROLLOUT.md.
+ */
+async function buildSdkIdentity({
+    merchantId,
+    anonymousId,
+    pendingMergeToken,
+}: {
+    merchantId: string;
+    anonymousId: string;
+    pendingMergeToken?: string;
+}): Promise<
+    | { anonymousId: string; proofs: { merge?: string; install?: string } }
+    | undefined
+> {
+    const mergeBinding = pendingMergeToken
+        ? await hashMergeToken(pendingMergeToken)
+        : undefined;
+    // No binding could be produced (e.g. no WebCrypto on an HTTP merchant
+    // page) but a token is pending — omit the merge proof rather than sign
+    // over the wrong binding.
+    if (pendingMergeToken && !mergeBinding) {
+        const install = await signProof({
+            op: "frak-install-v1",
+            merchantId,
+            anonymousId,
+        });
+        return install ? { anonymousId, proofs: { install } } : undefined;
+    }
+
+    const [merge, install] = await Promise.all([
+        mergeBinding
+            ? signProof({
+                  op: "frak-merge-v1",
+                  merchantId,
+                  anonymousId,
+                  binding: mergeBinding,
+              })
+            : Promise.resolve(null),
+        signProof({ op: "frak-install-v1", merchantId, anonymousId }),
+    ]);
+
+    if (!merge && !install) return undefined;
+
+    return {
+        anonymousId,
+        proofs: {
+            ...(merge && { merge }),
+            ...(install && { install }),
+        },
+    };
+}
+
 /**
  * Perform the post connection setup
  * @param config - SDK configuration
@@ -291,6 +414,7 @@ async function postConnectionSetup({
     configPromise,
     contextSent,
     openPanel,
+    clientId,
 }: {
     config: FrakWalletSdkConfig;
     rpcClient: SdkRpcClient;
@@ -298,6 +422,8 @@ async function postConnectionSetup({
     configPromise: Promise<MerchantConfigResult> | undefined;
     contextSent: Deferred<void>;
     openPanel: OpenPanel | undefined;
+    /** Resolved once by the caller — see `createIFrameFrakClient`. */
+    clientId: string | undefined;
 }): Promise<void> {
     await lifecycleManager.isConnected;
 
@@ -367,64 +493,77 @@ async function postConnectionSetup({
     // subsequent SDK event is merchant-attributed. We pass
     // `sdkAnonymousId` through so the listener can join SDK funnels.
     let mergeTokenConsumed = false;
+    // Sends are chained onto this so postMessage order always matches call
+    // order: `buildSdkIdentity`'s signing duration varies, so the two
+    // fire-and-forget sends (cached, then fresh) could otherwise race and
+    // land out of order, and the listener's last-write-wins would let a
+    // reordered cached send silently revert the fresh one.
+    let sendChain: Promise<void> = Promise.resolve();
     const sendLifecycleConfig = (resolved: SdkResolvedConfig) => {
+        // Token capture stays synchronous at call time so the first call
+        // still consumes it, regardless of how long a previous send's
+        // signing takes.
         const token = mergeTokenConsumed ? undefined : pendingMergeToken;
         mergeTokenConsumed = true;
 
-        const sdkConfig = resolved.hasRawSdkConfig
-            ? {
-                  name: resolved.name,
-                  logoUrl: resolved.logoUrl,
-                  homepageLink: resolved.homepageLink,
-                  lang: resolved.lang,
-                  currency: resolved.currency,
-                  hidden: resolved.hidden,
-                  css: resolved.css,
-                  translations: resolved.translations,
-                  placements: resolved.placements,
-                  attribution: resolved.attribution,
-              }
-            : resolved.attribution
-              ? { attribution: resolved.attribution }
-              : undefined;
+        const sdkConfig = buildResolvedSdkConfig(resolved);
+        // Reuses the id resolved once at client construction rather than
+        // re-reading the sync accessor: this runs inside a sync callback, so
+        // a cold read here could only ever yield `undefined`.
+        const sdkAnonymousId = clientId;
+        const sourceUrl = window.location.href;
 
-        const sdkAnonymousId = getClientId();
+        updateOpenPanelMerchantProps(openPanel, resolved);
 
-        if (openPanel) {
-            const current = openPanel.global ?? {};
-            openPanel.setGlobalProperties({
-                ...current,
-                merchant_id: resolved.merchantId,
-                domain: resolved.domain ?? "",
+        sendChain = sendChain
+            .then(async () => {
+                rpcClient.sendLifecycle({
+                    clientLifecycle: "resolved-config",
+                    data: {
+                        merchantId: resolved.merchantId,
+                        domain: resolved.domain ?? "",
+                        allowedDomains: resolved.allowedDomains ?? [],
+                        sourceUrl,
+                        ...(sdkAnonymousId && { sdkAnonymousId }),
+                        ...(token && { pendingMergeToken: token }),
+                        ...(sdkConfig && { sdkConfig }),
+                        ...(sdkAnonymousId && {
+                            sdkIdentity: await buildSdkIdentity({
+                                merchantId: resolved.merchantId,
+                                anonymousId: sdkAnonymousId,
+                                pendingMergeToken: token,
+                            }),
+                        }),
+                    },
+                });
+            })
+            .catch((error) => {
+                // Swallow here (not just re-throw) so a failed send doesn't
+                // permanently stall the chain for later, unrelated sends.
+                console.error("Failed to send lifecycle config", error);
             });
-        }
-
-        rpcClient.sendLifecycle({
-            clientLifecycle: "resolved-config",
-            data: {
-                merchantId: resolved.merchantId,
-                domain: resolved.domain ?? "",
-                allowedDomains: resolved.allowedDomains ?? [],
-                sourceUrl: window.location.href,
-                ...(sdkAnonymousId && { sdkAnonymousId }),
-                ...(token && { pendingMergeToken: token }),
-                ...(sdkConfig && { sdkConfig }),
-            },
-        });
+        return sendChain;
     };
 
-    // SWR: if we have cached data, send it to the iframe immediately
+    // SWR: if we have cached data, send it to the iframe immediately.
+    // Not awaited — signing must stay off the connection-establishment
+    // critical path. `contextSent` resolves from the send's completion, NOT
+    // synchronously after firing it: resolving early would release RPC
+    // requests that then beat `resolved-config` to the listener, which
+    // rejects them with "No resolving context available".
     if (sdkConfigStore.isResolved) {
-        sendLifecycleConfig(sdkConfigStore.getConfig());
-        contextSent.resolve();
+        void sendLifecycleConfig(sdkConfigStore.getConfig()).then(
+            contextSent.resolve
+        );
     }
 
     // If a fetch is running (stale/missing cache), wait for fresh data and update
     if (configPromise) {
         const merchantConfig = await configPromise;
         mergeAndSetConfig(merchantConfig);
-        sendLifecycleConfig(sdkConfigStore.getConfig());
-        contextSent.resolve();
+        void sendLifecycleConfig(sdkConfigStore.getConfig()).then(
+            contextSent.resolve
+        );
     }
 
     // Push raw CSS if needed

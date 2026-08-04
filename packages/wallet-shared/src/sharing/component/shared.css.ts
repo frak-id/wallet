@@ -18,6 +18,24 @@ export const tabletContainerMedia: StyleRule["@media"] = {
 };
 
 /**
+ * Container variant for a host that paints its own surface.
+ *
+ * Drops the opaque background so the host's surface shows through, and cancels
+ * the `tabletContainerMedia` card treatment above — inside a host sheet that
+ * would render a card within a card.
+ */
+export const containerChromeless = style({
+    backgroundColor: "transparent",
+    "@media": {
+        [`screen and (min-width: ${tablet}px)`]: {
+            maxWidth: "none",
+            borderRadius: 0,
+            boxShadow: "none",
+        },
+    },
+});
+
+/**
  * Footer bottom border-radius for tablet+ to match the container corners.
  */
 export const tabletFooterMedia: StyleRule["@media"] = {

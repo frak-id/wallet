@@ -122,7 +122,6 @@ describe("LaunchPairing", () => {
 
             expect(mockInitiatePairing).toHaveBeenCalledWith({
                 onSuccess,
-                originNode: undefined,
             });
         });
     });
@@ -166,7 +165,6 @@ describe("LaunchPairing", () => {
             expect(mockReset).toHaveBeenCalledTimes(1);
             expect(mockInitiatePairing).toHaveBeenCalledWith({
                 onSuccess,
-                originNode: undefined,
             });
             expect(mockReconnect).not.toHaveBeenCalled();
         });

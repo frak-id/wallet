@@ -43,6 +43,9 @@ export type CampaignView = {
     pendingDays?: number;
     minPurchaseAmount?: number;
     minPurchaseDisplay?: string;
+    /** Whether the campaign is gated to a `productScope`. This is a gate, not
+     * the reward's basis: use `isMatchedItemsBasis` for basis-dependent copy. */
+    hasProductScope: boolean;
 };
 
 function buildCampaignView(
@@ -75,6 +78,7 @@ function buildCampaignView(
             minPurchaseAmount != null && minPurchaseAmount > 0
                 ? formatAmount(minPurchaseAmount)
                 : undefined,
+        hasProductScope: campaign.productScope != null,
     };
 }
 

@@ -68,6 +68,7 @@ export const registerRoutes = new Elysia()
                 previousWallet,
                 merchantId,
                 email,
+                proof,
             },
         }) => {
             const registrationResponse =
@@ -157,6 +158,7 @@ export const registerRoutes = new Elysia()
                         clientId: headers["x-frak-client-id"],
                         merchantId: cleanMerchantId,
                         email: cleanEmail,
+                        proof,
                     }
                 );
             }
@@ -177,6 +179,9 @@ export const registerRoutes = new Elysia()
                 setSessionCookie: t.Optional(t.Boolean()),
                 merchantId: t.Optional(t.String()),
                 email: t.Optional(t.String()),
+                // `frak-sso-v1` identity proof (see IdentityOrchestrator);
+                // gates the anonymous_fingerprint merge, never required.
+                proof: t.Optional(t.String()),
             }),
             response: {
                 400: t.String(),

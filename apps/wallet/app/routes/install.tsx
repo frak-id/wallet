@@ -10,6 +10,7 @@ import { CloseIcon, CopyIcon } from "@frak-labs/design-system/icons";
 import {
     APP_STORE_URL,
     authenticatedBackendApi,
+    buildPlayStoreInstallUrl,
     CodeInput,
     ExternalLink,
     getSafeSession,
@@ -34,15 +35,57 @@ import * as styles from "./install.css";
 type InstallSearch = {
     m?: string;
     a?: string;
+    /** `frak-install-v1` proof, when a fragment could not carry it. See `resolveInstallProof`. */
+    p?: string;
 };
 
 export const Route = createFileRoute("/install")({
     validateSearch: (search: Record<string, unknown>): InstallSearch => ({
         m: typeof search.m === "string" ? search.m : undefined,
         a: typeof search.a === "string" ? search.a : undefined,
+        p: typeof search.p === "string" ? search.p : undefined,
     }),
     component: InstallPage,
 });
+
+/**
+ * Parses the `frak-install-v1` proof from the URL fragment (`#p=...`).
+ *
+ * A fragment, not a search param, deliberately: never sent to the server,
+ * never logged, never in a `Referer` header. `validateSearch` only covers
+ * search params, so this is a separate read off `window.location.hash`.
+ * Must never throw — any malformed/missing fragment degrades silently to
+ * "no proof".
+ */
+export function parseInstallProofFragment(hash: string): string | undefined {
+    const raw = hash.startsWith("#") ? hash.slice(1) : hash;
+    if (!raw) return undefined;
+    try {
+        return new URLSearchParams(raw).get("p") ?? undefined;
+    } catch {
+        return undefined;
+    }
+}
+
+/**
+ * The `frak-install-v1` proof for this visit, from whichever carrier could hold it.
+ *
+ * The fragment is preferred and is the only carrier for anything a user might copy or
+ * share: fragments are never sent to a server, never logged, never in a `Referer`. But a
+ * fragment cannot survive an in-app navigation — the deep-link router calls `navigate`, so
+ * `window.location.hash` is empty by the time this route renders — and the Play referrer is
+ * a referrer string with no fragment at all. Those handoffs use `?p=` instead.
+ *
+ * Fragment first rather than search first: it keeps today's behaviour byte-identical for
+ * every existing link, and if a URL ever carries both, the one that could not have leaked
+ * through a redirect or an access log wins.
+ */
+export function resolveInstallProof(
+    hash: string,
+    searchProof?: string
+): string | undefined {
+    return parseInstallProofFragment(hash) ?? searchProof;
+}
 
 /**
  * Install page — unified entry point for the install/ensure flow.
@@ -52,7 +95,14 @@ export const Route = createFileRoute("/install")({
  *   Everything else      → Processing screen (fire ensure or store for post-auth)
  */
 function InstallPage() {
-    const search = Route.useSearch();
+    const { m, a, p } = Route.useSearch();
+    // frak-install-v1 proof, read once. Forwarded to both InstallCodeView and
+    // InstallProcessing — whether a proof is present is a property of the input,
+    // not of which shell (web/Tauri) is running.
+    const proof = useMemo(
+        () => resolveInstallProof(window.location.hash, p),
+        [p]
+    );
 
     // Web + not logged in → show install code + store download links
     // Otherwise → use the web processing flow (ensure + register/login)
@@ -60,18 +110,21 @@ function InstallPage() {
 
     useEffect(() => {
         trackEvent("install_page_viewed", {
-            merchant_id: search.m,
-            has_anonymous_id: Boolean(search.a),
+            merchant_id: m,
+            has_anonymous_id: Boolean(a),
+            // Whether a proof reached this page by either carrier; purely
+            // diagnostic, attribution is preserved either way.
+            has_install_proof: Boolean(proof),
             view: shouldShowCodeView ? "code" : "processing",
         });
-    }, [search.m, search.a, shouldShowCodeView]);
+    }, [m, a, proof, shouldShowCodeView]);
 
     if (shouldShowCodeView) {
-        return <InstallCodeView {...search} />;
+        return <InstallCodeView m={m} a={a} proof={proof} />;
     }
 
     // Tauri (any auth) or web + logged in → processing
-    return <InstallProcessing {...search} />;
+    return <InstallProcessing m={m} a={a} proof={proof} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -85,6 +138,36 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Builds the ensure action for the direct-link / Tauri processing path.
+ * Exported for direct testing, mirroring `parseInstallProofFragment`.
+ *
+ * With merchantId/anonymousId but no proof, this is byte-identical to the
+ * pre-existing bare action — a missing fragment degrades silently, never
+ * blocks.
+ */
+export function buildInstallProcessingEnsureAction(params: {
+    merchantId?: string;
+    anonymousId?: string;
+    proof?: string;
+}):
+    | {
+          type: "ensure";
+          merchantId: string;
+          anonymousId: string;
+          proof?: string;
+      }
+    | undefined {
+    const { merchantId, anonymousId, proof } = params;
+    if (!merchantId || !anonymousId) return undefined;
+    return {
+        type: "ensure",
+        merchantId,
+        anonymousId,
+        ...(proof && { proof }),
+    };
+}
+
+/**
  * Brief processing screen that handles the ensure call.
  *
  *   Logged in     → store ensure action + drain all pending actions + navigate /wallet
@@ -92,26 +175,27 @@ function sleep(ms: number): Promise<void> {
  *
  * Always shows for at least MIN_PROCESSING_MS to avoid a flash.
  */
-function InstallProcessing({ m: merchantId, a: anonymousId }: InstallSearch) {
+function InstallProcessing({
+    m: merchantId,
+    a: anonymousId,
+    proof,
+}: InstallSearch & { proof?: string }) {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { executePendingActions } = useExecutePendingActions();
 
     useEffect(() => {
-        // Build ensure action from install referral params
-        const ensureAction =
-            merchantId && anonymousId
-                ? ({
-                      type: "ensure",
-                      merchantId,
-                      anonymousId,
-                  } as const)
-                : undefined;
+        const ensureAction = buildInstallProcessingEnsureAction({
+            merchantId,
+            anonymousId,
+            proof,
+        });
 
         const isLoggedIn = !!getSafeSession()?.token;
         trackEvent("install_processing_triggered", {
             is_logged_in: isLoggedIn,
             has_ensure_action: Boolean(ensureAction),
+            has_install_proof: Boolean(proof),
         });
 
         if (isLoggedIn) {
@@ -133,7 +217,7 @@ function InstallProcessing({ m: merchantId, a: anonymousId }: InstallSearch) {
                 navigate({ to: "/register", replace: true });
             });
         }
-    }, [merchantId, anonymousId, navigate, executePendingActions]);
+    }, [merchantId, anonymousId, proof, navigate, executePendingActions]);
 
     return (
         <PageLayout>
@@ -171,7 +255,11 @@ function merchantInfoQueryOptions(merchantId?: string) {
     });
 }
 
-function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
+function InstallCodeView({
+    m: merchantId,
+    a: anonymousId,
+    proof,
+}: InstallSearch & { proof?: string }) {
     const { t: rawT } = useTranslation();
     const [copied, setCopied] = useState(false);
 
@@ -199,6 +287,7 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
     } = useGenerateInstallCode({
         merchantId,
         anonymousId,
+        proof,
     });
 
     // `install_code_displayed` fires once per successful generation,
@@ -227,9 +316,12 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
     const downloadUrl = useMemo(() => {
         if (!isAndroid) return APP_STORE_URL;
         if (!merchantId || !anonymousId) return PLAY_STORE_URL;
-        const referrerData = `merchantId=${merchantId}&anonymousId=${anonymousId}`;
-        return `${PLAY_STORE_URL}&referrer=${encodeURIComponent(referrerData)}`;
-    }, [merchantId, anonymousId, isAndroid]);
+        return buildPlayStoreInstallUrl({
+            merchantId,
+            anonymousId,
+            installProof: proof,
+        });
+    }, [merchantId, anonymousId, proof, isAndroid]);
 
     const handleCopy = useCallback(async () => {
         if (!data?.code) return;
@@ -347,6 +439,7 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
                             store: isAndroid ? "play_store" : "app_store",
                             has_referrer:
                                 isAndroid && Boolean(merchantId && anonymousId),
+                            has_referrer_proof: isAndroid && Boolean(proof),
                             merchant_id: merchantId,
                         });
                     }}

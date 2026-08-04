@@ -21,7 +21,7 @@ export {
     redirectToExternalBrowser,
 } from "./browser/inAppBrowser";
 // Cache
-export { clearAllCache, getCache, withCache } from "./cache";
+export { clearAllCache, withCache } from "./cache";
 // Compression / encoding
 export { base64urlDecode, base64urlEncode } from "./compression/b64";
 export { compressJsonToB64 } from "./compression/compress";
@@ -35,13 +35,22 @@ export { getSupportedLocale } from "./format/getSupportedLocale";
 
 // Language detection
 export { detectPageLanguage } from "./i18n/detectPageLanguage";
-
 // Iframe DOM helpers
 export {
     baseIframeProps,
+    buildListenerUrl,
     createIframe,
     findIframeInOpener,
 } from "./iframe/iframeHelper";
+// Product list sanitization
+export {
+    coerceProductCandidates,
+    decodeProductsParam,
+    normalizeProductDetails,
+    normalizeSharingProduct,
+    sanitizeProductDetailsList,
+    sanitizeSharingProducts,
+} from "./product/sanitizeProducts";
 
 // SSO URL builder
 export {

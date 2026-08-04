@@ -11,6 +11,10 @@ type ResolveResult = {
     merchantId: string;
     anonymousId: string;
     merchant: { name: string; domain: string };
+    /** Install ticket. Optional here defensively — old backends or a
+     * rollback never send it, and the pending action must still be built
+     * from `anonymousId` alone in that case. */
+    ticket?: string;
 };
 
 /**
@@ -48,12 +52,19 @@ export function useResolveInstallCode(
             });
             setInstallSource("install_code");
 
-            // Add ensure action for post-auth identity merge
+            // Add ensure action for post-auth identity merge. `ticket` is
+            // carried when present; `anonymousId` stays populated so the
+            // store remains readable by a rolled-back build.
+            //
+            // No `proof` here: `install-code/resolve` never returns a
+            // `frak-install-v1` proof — the ticket, minted unconditionally
+            // from the code's row, is this path's credential.
             pendingActionsStore.getState().addAction({
                 type: "ensure",
                 merchantId: data.merchantId,
                 anonymousId: data.anonymousId,
                 merchant: data.merchant,
+                ticket: data.ticket,
             });
 
             return data;

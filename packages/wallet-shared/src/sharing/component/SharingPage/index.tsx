@@ -18,12 +18,13 @@ import {
     LogoFrakWithName,
     ShareIcon,
 } from "@frak-labs/design-system/icons";
+import { clsx } from "clsx";
 import { Minus, Plus } from "lucide-react";
 import { Toaster } from "sonner";
 import { ExternalLink } from "../../../common/component/ExternalLink";
 import { MerchantLogo } from "../MerchantLogo";
 import { PostShareConfirmation } from "../PostShareConfirmation";
-import { overlay } from "../shared.css";
+import { containerChromeless, overlay } from "../shared.css";
 import { RewardBreakdown } from "./RewardBreakdown";
 import * as styles from "./sharingPage.css";
 
@@ -79,6 +80,12 @@ export type SharingPageProps = {
      */
     minPurchaseAmount?: string;
     /**
+     * Whether the selected campaign carries a `productScope`. When true, step 2
+     * and the credit-card tagline mention "selected products" instead of
+     * implying every purchase qualifies.
+     */
+    isProductScoped?: boolean;
+    /**
      * Whole-day lockup applied before a reward settles. When set, step 3 adds a
      * line stating when earnings become available.
      */
@@ -102,6 +109,17 @@ export type SharingPageProps = {
      * Whether to show the post-share confirmation screen.
      */
     showConfirmation: boolean;
+    /**
+     * Suppress the page's own header and footer CTAs.
+     *
+     * For hosts that present this page inside their own chrome (a native
+     * bottom sheet with its own logo, close control and share buttons) and
+     * drive sharing through the OS share sheet instead of `onShare`/`onCopy`.
+     * Everything else — reward card, product cards, stepper, FAQ, legal — is
+     * unchanged, and the confirmation screen still renders, with its own
+     * chrome suppressed the same way.
+     */
+    chromeless?: boolean;
     /**
      * Called when the user clicks the "Share" button.
      */
@@ -139,6 +157,161 @@ export type SharingPageProps = {
     onProductSelect?: (index: number) => void;
 };
 
+function PageHeader({
+    hidden,
+    appName,
+    logoUrl,
+    t,
+    onDismiss,
+}: {
+    hidden: boolean;
+    appName: string;
+    logoUrl?: string;
+    t: SharingPageProps["t"];
+    onDismiss: () => void;
+}) {
+    if (hidden) return null;
+    return (
+        <header className={styles.header}>
+            <Box display="flex" alignItems="center" gap="m">
+                <MerchantLogo
+                    src={logoUrl}
+                    alt={appName}
+                    className={styles.merchantLogo}
+                />
+                <LogoFrakWithName className={styles.logo} />
+            </Box>
+            <Button
+                variant="ghost"
+                size="none"
+                width="auto"
+                className={styles.dismissButton}
+                onClick={onDismiss}
+            >
+                {t("sdk.sharingPage.dismiss")}
+            </Button>
+        </header>
+    );
+}
+
+/** Split a step string at the first period into title + description */
+function splitStep(text: string) {
+    const dotIndex = text.indexOf(".");
+    if (dotIndex === -1) return { title: text, description: undefined };
+    return {
+        title: text.slice(0, dotIndex + 1),
+        description: text.slice(dotIndex + 1).trim() || undefined,
+    };
+}
+
+/**
+ * Step 2's i18next context key. Contexts don't compose, so the four
+ * combinations are enumerated as distinct keys.
+ */
+export function getStep2Context(
+    isProductScoped: boolean,
+    minPurchaseAmount: string | undefined
+): "min" | "product" | "min_product" | undefined {
+    if (isProductScoped) {
+        return minPurchaseAmount ? "min_product" : "product";
+    }
+    return minPurchaseAmount ? "min" : undefined;
+}
+
+/**
+ * The hero "credit card" showing the headline reward, its tagline, and the
+ * merchant logo. Owns the reward-loading skeletons and the tiered /
+ * product-scoped copy variants.
+ */
+function RewardCard({
+    appName,
+    logoUrl,
+    t,
+    isRewardLoading,
+    isTiered,
+    isProductScoped,
+}: {
+    appName: string;
+    logoUrl?: string;
+    t: SharingPageProps["t"];
+    isRewardLoading: boolean;
+    isTiered: boolean;
+    isProductScoped: boolean;
+}) {
+    return (
+        <section className={styles.creditCard}>
+            <CardBackground className={styles.creditCardBg} />
+            <div className={styles.creditCardContent}>
+                <div className={styles.creditCardTop}>
+                    <div className={styles.creditCardAmountColumn}>
+                        {isTiered && !isRewardLoading && (
+                            <span className={styles.creditCardUpTo}>
+                                {t("sdk.sharingPage.card.upTo")}
+                            </span>
+                        )}
+                        <span className={styles.creditCardAmount}>
+                            {isRewardLoading ? (
+                                <Skeleton
+                                    variant="rect"
+                                    width={90}
+                                    height={36}
+                                />
+                            ) : (
+                                <CreditCardAmount
+                                    amount={t("sdk.sharingPage.card.amount")}
+                                />
+                            )}
+                        </span>
+                    </div>
+                    <span className={styles.creditCardLabel}>
+                        {t("sdk.sharingPage.card.label")}
+                    </span>
+                </div>
+                <div className={styles.creditCardBottom}>
+                    <span className={styles.creditCardBottomText}>
+                        <CardTagline
+                            isRewardLoading={isRewardLoading}
+                            text={t(
+                                "sdk.sharingPage.card.tagline1",
+                                isTiered ? { context: "tiered" } : undefined
+                            )}
+                        />
+                        <br />
+                        <CardTagline
+                            isRewardLoading={isRewardLoading}
+                            text={t(
+                                "sdk.sharingPage.card.tagline2",
+                                isProductScoped
+                                    ? { context: "product" }
+                                    : undefined
+                            )}
+                        />
+                    </span>
+                    <MerchantLogo
+                        src={logoUrl}
+                        alt={appName}
+                        className={styles.creditCardLogo}
+                    />
+                </div>
+            </div>
+        </section>
+    );
+}
+
+/** A single credit-card tagline line, skeletonized while the reward loads. */
+function CardTagline({
+    isRewardLoading,
+    text,
+}: {
+    isRewardLoading: boolean;
+    text: string;
+}) {
+    if (isRewardLoading) {
+        return <Skeleton variant="text" width={70} height={14} />;
+    }
+    return <>{text}</>;
+}
+
 export function SharingPage({
     appName,
     logoUrl,
@@ -152,10 +325,12 @@ export function SharingPage({
     isRewardLoading = false,
     rewardType,
     minPurchaseAmount,
+    isProductScoped = false,
     lockupDurationDays,
     rewardBreakdown,
     canShare = true,
     showConfirmation,
+    chromeless = false,
     onShare,
     onCopy,
     onDismiss,
@@ -173,6 +348,7 @@ export function SharingPage({
                 appName={appName}
                 logoUrl={logoUrl}
                 t={t}
+                chromeless={chromeless}
                 onDismiss={onConfirmationDismiss}
                 onShareAgain={onShareAgain}
                 onInstall={onInstall}
@@ -180,23 +356,13 @@ export function SharingPage({
         );
     }
 
-    /** Split a step string at the first period into title + description */
-    const splitStep = (text: string) => {
-        const dotIndex = text.indexOf(".");
-        if (dotIndex === -1) return { title: text, description: undefined };
-        return {
-            title: text.slice(0, dotIndex + 1),
-            description: text.slice(dotIndex + 1).trim() || undefined,
-        };
-    };
-
     const step1 = splitStep(t("sdk.sharingPage.steps.1"));
-    // Mention the minimum order value in step 2 when the campaign gates on one.
+    const step2Context = getStep2Context(isProductScoped, minPurchaseAmount);
     const step2 = splitStep(
         t(
             "sdk.sharingPage.steps.2",
-            minPurchaseAmount
-                ? { context: "min", minAmount: minPurchaseAmount }
+            step2Context
+                ? { context: step2Context, minAmount: minPurchaseAmount }
                 : undefined
         )
     );
@@ -209,99 +375,46 @@ export function SharingPage({
               })
             : undefined;
 
+    // A host that owns the sheet owns dismissal too: an in-page backdrop
+    // dismiss it cannot observe would empty the sheet while the host keeps it
+    // open.
+    const backdropDismiss = chromeless ? undefined : onDismiss;
+
     return (
         <div
             className={overlay}
-            onClick={onDismiss}
+            onClick={backdropDismiss}
             onKeyDown={(e) => {
-                if (e.key === "Escape") onDismiss();
+                if (e.key === "Escape") backdropDismiss?.();
             }}
         >
             <div
-                className={styles.container}
+                className={clsx(
+                    styles.container,
+                    chromeless && containerChromeless
+                )}
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
             >
                 <Toaster position="top-center" />
 
-                <header className={styles.header}>
-                    <Box display="flex" alignItems="center" gap="m">
-                        <MerchantLogo
-                            src={logoUrl}
-                            alt={appName}
-                            className={styles.merchantLogo}
-                        />
-                        <LogoFrakWithName className={styles.logo} />
-                    </Box>
-                    <Button
-                        variant="ghost"
-                        size="none"
-                        width="auto"
-                        className={styles.dismissButton}
-                        onClick={onDismiss}
-                    >
-                        {t("sdk.sharingPage.dismiss")}
-                    </Button>
-                </header>
+                <PageHeader
+                    hidden={chromeless}
+                    appName={appName}
+                    logoUrl={logoUrl}
+                    t={t}
+                    onDismiss={onDismiss}
+                />
 
                 <main className={styles.main}>
-                    <section className={styles.creditCard}>
-                        <CardBackground className={styles.creditCardBg} />
-                        <div className={styles.creditCardContent}>
-                            <div className={styles.creditCardTop}>
-                                <div className={styles.creditCardAmountColumn}>
-                                    {isTiered && !isRewardLoading && (
-                                        <span className={styles.creditCardUpTo}>
-                                            {t("sdk.sharingPage.card.upTo")}
-                                        </span>
-                                    )}
-                                    <span className={styles.creditCardAmount}>
-                                        {isRewardLoading ? (
-                                            <Skeleton
-                                                variant="rect"
-                                                width={90}
-                                                height={36}
-                                            />
-                                        ) : (
-                                            <CreditCardAmount
-                                                amount={t(
-                                                    "sdk.sharingPage.card.amount"
-                                                )}
-                                            />
-                                        )}
-                                    </span>
-                                </div>
-                                <span className={styles.creditCardLabel}>
-                                    {t("sdk.sharingPage.card.label")}
-                                </span>
-                            </div>
-                            <div className={styles.creditCardBottom}>
-                                <span className={styles.creditCardBottomText}>
-                                    {isRewardLoading ? (
-                                        <Skeleton
-                                            variant="text"
-                                            width={70}
-                                            height={14}
-                                        />
-                                    ) : (
-                                        t(
-                                            "sdk.sharingPage.card.tagline1",
-                                            isTiered
-                                                ? { context: "tiered" }
-                                                : undefined
-                                        )
-                                    )}
-                                    <br />
-                                    {t("sdk.sharingPage.card.tagline2")}
-                                </span>
-                                <MerchantLogo
-                                    src={logoUrl}
-                                    alt={appName}
-                                    className={styles.creditCardLogo}
-                                />
-                            </div>
-                        </div>
-                    </section>
+                    <RewardCard
+                        appName={appName}
+                        logoUrl={logoUrl}
+                        t={t}
+                        isRewardLoading={isRewardLoading}
+                        isTiered={isTiered}
+                        isProductScoped={isProductScoped}
+                    />
 
                     <section className={styles.rewardCard}>
                         <Text as="h2" variant="heading2">
@@ -434,32 +547,34 @@ export function SharingPage({
                     </nav>
                 </main>
 
-                <footer className={styles.footer}>
-                    {canShare && (
+                {!chromeless && (
+                    <footer className={styles.footer}>
+                        {canShare && (
+                            <Button
+                                variant="primary"
+                                size="large"
+                                fontSize="s"
+                                onClick={onShare}
+                                disabled={isSharing || !sharingLink}
+                                className={styles.shareButton}
+                            >
+                                {t("sharing.btn.share")}
+                                <ShareIcon width={16} height={16} />
+                            </Button>
+                        )}
                         <Button
-                            variant="primary"
+                            variant="secondary"
                             size="large"
                             fontSize="s"
-                            onClick={onShare}
-                            disabled={isSharing || !sharingLink}
-                            className={styles.shareButton}
+                            onClick={onCopy}
+                            disabled={!sharingLink}
+                            className={styles.copyButton}
                         >
-                            {t("sharing.btn.share")}
-                            <ShareIcon width={16} height={16} />
+                            {t("sharing.btn.copy")}
+                            <CopyIcon width={16} height={16} />
                         </Button>
-                    )}
-                    <Button
-                        variant="secondary"
-                        size="large"
-                        fontSize="s"
-                        onClick={onCopy}
-                        disabled={!sharingLink}
-                        className={styles.copyButton}
-                    >
-                        {t("sharing.btn.copy")}
-                        <CopyIcon width={16} height={16} />
-                    </Button>
-                </footer>
+                    </footer>
+                )}
             </div>
         </div>
     );

@@ -1,12 +1,7 @@
 import { ua } from "@frak-labs/wallet-shared/common";
-import type {
-    OnPairingSuccessCallback,
-    OriginIdentityNode,
-} from "@frak-labs/wallet-shared/pairing";
+import type { OnPairingSuccessCallback } from "@frak-labs/wallet-shared/pairing";
 import { LaunchPairing } from "@frak-labs/wallet-shared/pairing";
-import { type ElementType, type ReactNode, useMemo, useState } from "react";
-import { useStore } from "zustand/react";
-import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { type ElementType, type ReactNode, useState } from "react";
 import * as styles from "./index.css";
 
 type AuthenticateWithPhoneProps = {
@@ -31,18 +26,6 @@ export function AuthenticateWithPhone({
     onSuccess,
 }: AuthenticateWithPhoneProps) {
     const [isPhoneAuthenticated, setIsPhoneAuthenticated] = useState(false);
-    const resolvingContext = useStore(resolvingContextStore, (s) => s.context);
-
-    const originNode = useMemo((): OriginIdentityNode | undefined => {
-        if (!resolvingContext?.clientId || !resolvingContext?.merchantId) {
-            return undefined;
-        }
-        return {
-            type: "anonymous_fingerprint",
-            value: resolvingContext.clientId,
-            merchantId: resolvingContext.merchantId,
-        };
-    }, [resolvingContext?.clientId, resolvingContext?.merchantId]);
 
     if (ua.isMobile) {
         return null;
@@ -62,10 +45,7 @@ export function AuthenticateWithPhone({
             </Component>
             {isPhoneAuthenticated && (
                 <div className={styles.authenticateWithPhone__fadeIn}>
-                    <LaunchPairing
-                        onSuccess={onSuccess}
-                        originNode={originNode}
-                    />
+                    <LaunchPairing onSuccess={onSuccess} />
                 </div>
             )}
         </div>

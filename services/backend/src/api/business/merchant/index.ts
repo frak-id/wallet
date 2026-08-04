@@ -2,7 +2,7 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AffiliateContext } from "../../../domain/affiliate";
 import { BusinessAuthContext } from "../../../domain/business-auth";
-import { MerchantContext } from "../../../domain/merchant";
+import { MerchantContext, type Platform } from "../../../domain/merchant";
 import {
     MerchantDetailResponseSchema,
     MerchantIdParamSchema,
@@ -15,6 +15,7 @@ import {
 import { merchantAdminsRoutes } from "./admins";
 import { merchantAffiliateReportingRoutes } from "./affiliateReporting";
 import { merchantAllowedDomainsRoutes } from "./allowedDomains";
+import { merchantAllowedPackageIdsRoutes } from "./allowedPackageIds";
 import { merchantBankRoutes } from "./bank";
 import { merchantBillingRoutes } from "./billingRoutes";
 import { merchantCampaignDetailsRoutes } from "./campaignDetails";
@@ -88,6 +89,17 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 id: merchant.id,
                 domain: merchant.domain,
                 allowedDomains: merchant.allowedDomains ?? [],
+                // Split the stored `platform:packageId` keys back apart so the
+                // dashboard never has to know the storage encoding.
+                allowedPackageIds: (merchant.allowedPackageIds ?? []).map(
+                    (key) => {
+                        const separator = key.indexOf(":");
+                        return {
+                            platform: key.slice(0, separator) as Platform,
+                            packageId: key.slice(separator + 1),
+                        };
+                    }
+                ),
                 name: merchant.name,
                 ownerWallet: merchant.ownerWallet,
                 bankAddress: merchant.bankAddress,
@@ -284,5 +296,6 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
     .use(merchantWebhooksRoutes)
     .use(merchantMediaRoutes)
     .use(merchantAllowedDomainsRoutes)
+    .use(merchantAllowedPackageIdsRoutes)
     .use(merchantAffiliateReportingRoutes)
     .use(merchantBillingRoutes);

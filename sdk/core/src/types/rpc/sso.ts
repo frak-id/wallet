@@ -82,3 +82,28 @@ export type OpenSsoParamsType = PrepareSsoParamsType & {
      */
     ssoPopupUrl?: string;
 };
+
+/**
+ * A pre-built SSO URL, as returned by
+ * {@link @frak-labs/core-sdk!actions.prepareSsoUrl | `prepareSsoUrl()`}.
+ *
+ * Passing this to `openSso()` skips every await before `window.open`, so the
+ * popup opens in the same tick as the user's click and survives popup
+ * blockers.
+ */
+export type OpenSsoUrlParamsType = {
+    /**
+     * A URL from `prepareSsoUrl()`. Opened as-is: the ids and the
+     * proof-of-possession are already baked in, so none of the other
+     * parameters apply.
+     */
+    ssoUrl: string;
+};
+
+/**
+ * Arguments accepted by
+ * {@link @frak-labs/core-sdk!actions.openSso | `openSso()`}: either the full
+ * parameters (built and opened in one call) or a URL already built by
+ * `prepareSsoUrl()`.
+ */
+export type OpenSsoArgsType = OpenSsoParamsType | OpenSsoUrlParamsType;

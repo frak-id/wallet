@@ -69,16 +69,12 @@ export const identityNodesTable = pgTable(
         validationData:
             jsonb("validation_data").$type<PendingPurchaseValidation>(),
         createdAt: timestamp("created_at").defaultNow(),
-        // Soft-unlink marker. Stamped on the loser wallet identity node
-        // during a wallet merge so `getWalletForGroup` can deterministically
-        // resolve to the winner while keeping the loser->group mapping
-        // available for `findGroupByIdentity` (prevents stray references to
-        // the loser wallet from accidentally creating a new identity group).
+        // Soft-unlink marker on the loser wallet node after a merge; keeps the loser->group mapping resolvable by findGroupByIdentity.
         unlinkedAt: timestamp("unlinked_at"),
-        // Verification stamp for email nodes (`null` for unverified + every
-        // non-email type). With `unlinked_at` it encodes the email lifecycle:
-        // pending (both null) -> verified (set, null) -> legacy (unlinked set).
+        // Verification stamp for email nodes; with unlinked_at encodes pending -> verified -> legacy.
         verifiedAt: timestamp("verified_at"),
+        // One-way proof-of-possession latch: once set (valid signature seen over its own id), this id always requires a proof; NULL means not latched, fail-open to match pre-proof behaviour. Timestamp (not boolean) so a conflicting-migration race is investigable.
+        proofSeenAt: timestamp("proof_seen_at"),
     },
     (table) => [
         unique("identity_nodes_unique_identity")
@@ -94,8 +90,8 @@ export const identityNodesTable = pgTable(
  *  - `merged`    — written by the wallet-merge flow when the previous active
  *                  binding for `(authenticator, chain)` gets repointed to a
  *                  winner wallet.
- *  - `recovery`  — reserved for the recovery flow refactor (Phase 3+); never
- *                  written by Phase 1 code paths.
+ *  - `recovery`  — reserved for the recovery flow refactor; not yet written
+ *                  by any current code path.
  */
 export type BindingReason = "initial" | "merged" | "recovery";
 
@@ -149,6 +145,8 @@ export const installCodesTable = pgTable(
         anonymousId: text("anonymous_id").notNull(),
         createdAt: timestamp("created_at").notNull().defaultNow(),
         expiresAt: timestamp("expires_at").notNull(),
+        // Durable per-code attempt counter; caps hammering of a minted code across pod replicas, unlike in-memory rateLimitMiddleware. Does not cap keyspace enumeration, still bounded by the IP rate limit + 72h TTL.
+        attempts: integer("attempts").notNull().default(0),
     },
     (table) => [
         uniqueIndex("install_codes_code_idx").on(table.code),

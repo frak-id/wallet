@@ -5,11 +5,13 @@ import type {
 } from "@frak-labs/core-sdk";
 import {
     authenticatedBackendApi,
+    buildInstallUrl,
     buildSharingLink,
     clearConfirmation,
     clientIdStore,
     getSavedConfirmation,
     openExternalUrl,
+    rewardProductsForSelection,
     SharingPage,
     saveConfirmation,
     sessionStore,
@@ -26,7 +28,13 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useStore } from "zustand";
 import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
+import {
+    type HostResultAction,
+    sendHostResult,
+} from "@/module/common/utils/buildHostResultUrl";
 import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
+import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme";
+import { sanitizeSeededReward } from "@/module/common/utils/sanitizeSeededReward";
 
 /**
  * Build AttributionParams from search params.
@@ -72,7 +80,59 @@ type SharingSearch = {
     redirectUrl?: string;
     /** Attribution overrides for the outbound sharing URL (UTMs, ref, via). */
     attribution?: AttributionParams | null;
+    /**
+     * Set by a native host embedding this page in its own sheet. Makes
+     * `clientId` mandatory (the host owns the caller identity) and renders
+     * the page without its own chrome.
+     */
+    native?: boolean;
+    /**
+     * Open directly on the post-share confirmation screen. Under `native`
+     * this is how the host signals its own share sheet already completed.
+     */
+    confirmed?: boolean;
+    /**
+     * Custom scheme a native host listens on for outcomes, since it has no
+     * JS bridge: outcomes navigate to `<scheme>://result?action=…`, which
+     * the host intercepts in its own web view.
+     */
+    returnScheme?: string;
+    /**
+     * Opaque single-use token minted by the host, echoed back on every
+     * outcome so it can drop callbacks not belonging to the active session.
+     */
+    sid?: string;
+    /**
+     * Version of the native SDK that opened this page. Read only for
+     * telemetry today.
+     */
+    sdkv?: string;
+    /**
+     * Already-formatted reward headline from a host's local cache, painted
+     * on the first frame and replaced once the real query resolves.
+     * Display-only: never reaches the sharing link or any identity decision.
+     */
+    r?: string;
 };
+
+/**
+ * Read a flag param regardless of how the router typed it: the router parses
+ * search values as JSON, so `?native=1` arrives as the number `1`, not the
+ * string `"1"`.
+ */
+function readFlag(value: unknown): boolean {
+    return value === 1 || value === "1" || value === true || value === "true";
+}
+
+/**
+ * Same JSON parsing as `readFlag`: a host that mints `sid` from a counter
+ * sends digits, which would otherwise arrive as a number and be dropped.
+ */
+function readString(value: unknown): string | undefined {
+    if (typeof value === "string") return value;
+    if (typeof value === "number") return String(value);
+    return undefined;
+}
 
 export const Route = createFileRoute("/sharing")({
     validateSearch: (search: Record<string, unknown>): SharingSearch => ({
@@ -97,7 +157,34 @@ export const Route = createFileRoute("/sharing")({
                 : undefined,
         redirectUrl: sanitizeRedirectUrl(search.redirectUrl),
         attribution: parseAttributionFromSearch(search),
+        native: readFlag(search.native),
+        confirmed: readFlag(search.confirmed),
+        returnScheme: sanitizeReturnScheme(search.returnScheme),
+        sid: readString(search.sid),
+        sdkv: readString(search.sdkv),
+        r: sanitizeSeededReward(search.r),
     }),
+    beforeLoad: ({ search }) => {
+        // A native host owns the caller identity, so a missing `clientId` is
+        // a host integration bug, not a state to render.
+        if (!(search.native && !search.clientId)) return;
+
+        // Tell the host, so its sheet closes instead of hanging on a
+        // wallet-branded error page it cannot interpret.
+        if (
+            sendHostResult({
+                scheme: search.returnScheme,
+                action: "error",
+                sid: search.sid,
+            })
+        ) {
+            return;
+        }
+
+        throw new Error(
+            "sharing: `clientId` is required when `native` is set. The host owns the caller identity; the wallet's own stored id must not stand in for it."
+        );
+    },
     component: WalletSharingPage,
 });
 
@@ -112,6 +199,12 @@ function WalletSharingPage() {
         checkoutToken,
         redirectUrl,
         attribution,
+        native,
+        confirmed,
+        returnScheme,
+        sid,
+        sdkv,
+        r: seededReward,
     } = Route.useSearch();
     const { t: rawT } = useTranslation();
     const navigate = useNavigate();
@@ -122,17 +215,33 @@ function WalletSharingPage() {
     // Product selection state — default to first product
     const [selectedProductIndex, setSelectedProductIndex] = useState(0);
 
+    // Memoised so the query's `select` isn't re-run on every render.
+    const rewardProducts = useMemo(
+        () => rewardProductsForSelection(products, selectedProductIndex),
+        [products, selectedProductIndex]
+    );
+
     const { data: reward, isLoading: isRewardLoading } =
         useFormattedEstimatedReward({
             merchantId,
+            products: rewardProducts,
         });
-    const estimatedReward = reward?.formatted;
+    // Paint the host's cached headline until the real one arrives, so the page
+    // opens on content instead of a skeleton. The query still runs and takes
+    // over the moment it resolves.
+    const estimatedReward = reward?.formatted ?? seededReward;
 
     // Fire `sharing_page_viewed` once per mount, independent of whether we end up
     // rendering the confirmation screen. Denominator for the sharing funnel.
     useEffect(() => {
-        trackEvent("sharing_page_viewed", { merchant_id: merchantId });
-    }, [merchantId]);
+        trackEvent("sharing_page_viewed", {
+            merchant_id: merchantId,
+            // Which SDK versions are still in the field, so a change here can
+            // be weighed against what it would break.
+            sdk_version: sdkv,
+            native,
+        });
+    }, [merchantId, sdkv, native]);
 
     // Fetch backend-driven merchant config to source attribution defaults
     const { data: defaultAttribution } = useMerchantResolvedConfig({
@@ -151,8 +260,14 @@ function WalletSharingPage() {
         [rawT, estimatedReward, appName]
     );
 
-    // Immediate clientId from params or store
-    const immediateClientId = paramClientId ?? storeClientId;
+    // A native host states the identity outright; `clientIdStore` (global,
+    // not merchant-keyed) and `checkoutToken` must not substitute for it, or
+    // `installUrl`/`ensure` would silently target the wrong identity.
+    const mayResolveIdentity = !native;
+
+    const immediateClientId = mayResolveIdentity
+        ? (paramClientId ?? storeClientId)
+        : paramClientId;
 
     // Fallback: resolve clientId from the backend via checkout token when not directly provided
     const { data: resolvedClientId } = useQuery({
@@ -170,22 +285,34 @@ function WalletSharingPage() {
             if (error) throw error;
             return data.clientId;
         },
-        enabled: !immediateClientId && !!merchantId && !!checkoutToken,
+        enabled:
+            mayResolveIdentity &&
+            !immediateClientId &&
+            !!merchantId &&
+            !!checkoutToken,
         retry: 5,
         retryDelay: 300,
     });
 
     const clientId = immediateClientId ?? resolvedClientId ?? undefined;
 
-    // Compute the install URL pointing to the /install route
+    // Compute the install URL pointing to the /install route.
+    //
+    // No `#p=` proof here, unlike the listener's builder: this page's
+    // `clientId` arrives from a URL param, the wallet's own store, or a
+    // backend lookup by checkout token — never from the SDK keypair that
+    // could sign for it. Nothing to sign with, so this arm stays a bare id.
     const installUrl = useMemo(() => {
         if (!(merchantId && clientId)) return null;
-        return `/install?m=${encodeURIComponent(merchantId)}&a=${encodeURIComponent(clientId)}`;
+        return buildInstallUrl({ merchantId, clientId });
     }, [merchantId, clientId]);
 
-    // Check sessionStorage for a recent confirmation
-    const [showConfirmation, setShowConfirmation] = useState(() =>
-        merchantId ? getSavedConfirmation(merchantId) : false
+    // Check sessionStorage for a recent confirmation. A host that completed a
+    // share in its own sheet says so via the URL, since the in-page buttons
+    // that would otherwise set this are hidden.
+    const [showConfirmation, setShowConfirmation] = useState(
+        () =>
+            confirmed || (merchantId ? getSavedConfirmation(merchantId) : false)
     );
 
     // Build the final sharing link with Frak context via shared helper.
@@ -259,7 +386,18 @@ function WalletSharingPage() {
         setShowConfirmation(true);
     };
 
+    // Hand an outcome back to the native host, which intercepts the navigation
+    // inside its own web view.
+    const returnToHost = useCallback(
+        (action: HostResultAction) =>
+            sendHostResult({ scheme: returnScheme, action, sid }),
+        [returnScheme, sid]
+    );
+
     const handleDismiss = async () => {
+        // A native host owns the outcome: `redirectUrl` is a web-only concern
+        // and is not sent in native mode.
+        if (returnToHost("dismiss")) return;
         if (redirectUrl) {
             if (IS_TAURI) {
                 // In Tauri, open the redirect URL in the external browser
@@ -276,17 +414,25 @@ function WalletSharingPage() {
     };
 
     const handleShareAgain = () => {
+        // Clear first either way: the host may re-present this same URL, and a
+        // stale flag would drop the user straight back on the confirmation
+        // screen they just left.
         clearConfirmation();
         setShowConfirmation(false);
+        returnToHost("shareAgain");
     };
 
     const handleInstall = useCallback(() => {
+        // The SDK owns the whole install step: parts of the iOS path (a
+        // timed pasteboard entry, the in-app App Store sheet) cannot run in
+        // a web view, so hand back control instead of navigating directly.
+        if (returnToHost("install")) return;
         if (!installUrl) return;
         navigate({
             to: "/install",
             search: { m: merchantId, a: clientId ?? undefined },
         });
-    }, [installUrl, merchantId, clientId, navigate]);
+    }, [returnToHost, installUrl, merchantId, clientId, navigate]);
 
     return (
         <SharingPage
@@ -299,9 +445,10 @@ function WalletSharingPage() {
             installUrl={installUrl}
             t={t}
             isSharing={isSharing}
-            isRewardLoading={isRewardLoading}
+            isRewardLoading={isRewardLoading && !seededReward}
             rewardType={reward?.payoutType}
             minPurchaseAmount={reward?.minPurchaseAmount}
+            isProductScoped={reward?.isProductScoped}
             lockupDurationDays={reward?.lockupDurationDays}
             rewardBreakdown={{
                 referrer: reward?.referrerReward,
@@ -309,6 +456,7 @@ function WalletSharingPage() {
                 minPurchaseValue: reward?.minPurchaseValue,
             }}
             canShare={canShare}
+            chromeless={native}
             showConfirmation={showConfirmation}
             onShare={handleShare}
             onCopy={handleCopy}

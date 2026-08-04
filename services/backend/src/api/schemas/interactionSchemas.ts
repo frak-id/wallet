@@ -2,6 +2,8 @@ import { t } from "@backend-utils";
 import type { Static } from "elysia";
 import { isAddress } from "viem";
 
+// No idempotencyKey here: arrival keys on the upstream `referralLinkId` and
+// only logs when a new referral edge is registered, so it is already idempotent.
 const ArrivalSubmissionSchema = t.Object({
     type: t.Literal("arrival"),
     merchantId: t.String({ format: "uuid" }),
@@ -16,6 +18,7 @@ const SharingSubmissionSchema = t.Object({
     merchantId: t.String({ format: "uuid" }),
     sharingTimestamp: t.Optional(t.Number()),
     purchaseId: t.Optional(t.String({ minLength: 1, maxLength: 255 })),
+    idempotencyKey: t.Optional(t.String({ minLength: 1, maxLength: 255 })),
 });
 
 const CustomSubmissionSchema = t.Object({

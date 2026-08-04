@@ -2,10 +2,11 @@ import type {
     Currency,
     EstimatedReward,
     GetMerchantInformationReturnType,
+    ProductDetails,
     SharingPageProduct,
     UserReferralStatusType,
 } from "@frak-labs/core-sdk";
-import { trackEvent } from "@frak-labs/core-sdk";
+import { sanitizeSharingProducts, trackEvent } from "@frak-labs/core-sdk";
 import {
     getMerchantInformation,
     getUserReferralStatus,
@@ -36,7 +37,6 @@ import {
     applyRewardPlaceholder,
     formatRewardOrHide,
 } from "@/utils/format/formatReward";
-import { sanitizeProductList } from "@/utils/sharingPageProducts";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
     badge,
@@ -71,17 +71,17 @@ type ResolvedPostPurchaseContext = {
 function resolvePostPurchaseContext(
     referralStatus: UserReferralStatusType | null,
     merchantInfo: GetMerchantInformationReturnType,
-    currency: Currency | undefined
+    currency: Currency | undefined,
+    products: ProductDetails[] | undefined
 ): ResolvedPostPurchaseContext | null {
     const audience: RewardAudience = referralStatus?.isReferred
         ? "referee"
         : "referrer";
-    // Shared selector: the best live "purchase" campaign for the viewer's side,
-    // time-gated so an expired campaign is never advertised.
     const selected = selectDisplayCampaign(merchantInfo.rewards, {
         targetInteraction: "purchase",
         currency,
         audience,
+        products,
     });
     if (!selected) return null;
 
@@ -150,6 +150,13 @@ export function PostPurchase({
     const placement = usePlacement(placementId);
     const lang = useLang();
 
+    // Sanitized once (untrusted public-API input), shared by reward selection
+    // and the sharing-page click handler below.
+    const parsedProducts = useMemo<SharingPageProduct[] | undefined>(
+        () => sanitizeSharingProducts(products),
+        [products]
+    );
+
     useLightDomStyles(
         "frak-post-purchase",
         placementId,
@@ -158,9 +165,12 @@ export function PostPurchase({
         sharedBaseCss
     );
 
-    const [context, setContext] = useState<ResolvedPostPurchaseContext | null>(
-        null
-    );
+    // Kept separate from the resolved context so campaign selection can
+    // re-derive from `parsedProducts` without re-issuing the network calls.
+    const [fetched, setFetched] = useState<{
+        referralStatus: UserReferralStatusType | null;
+        merchantInfo: GetMerchantInformationReturnType;
+    } | null>(null);
     const [hasFetched, setHasFetched] = useState(false);
 
     // Fire-and-forget purchase tracking (fallback for Shopify pixel)
@@ -190,13 +200,7 @@ export function PostPurchase({
         ])
             .then(([referralStatus, merchantInfo]) => {
                 setHasFetched(true);
-                setContext(
-                    resolvePostPurchaseContext(
-                        referralStatus,
-                        merchantInfo,
-                        client.config.metadata?.currency
-                    )
-                );
+                setFetched({ referralStatus, merchantInfo });
             })
             .catch((e: unknown) => {
                 // Config errors are expected when SDK is not configured — stay hidden
@@ -211,6 +215,18 @@ export function PostPurchase({
                 console.warn("[Frak] Post-purchase context error", e);
             });
     }, [isPreview, isClientReady, hasFetched]);
+
+    // Derived, not fetched: a `products` prop landing after the one-shot fetch
+    // still re-picks the campaign.
+    const context = useMemo(() => {
+        if (!fetched) return null;
+        return resolvePostPurchaseContext(
+            fetched.referralStatus,
+            fetched.merchantInfo,
+            window.FrakSetup?.client?.config?.metadata?.currency,
+            parsedProducts
+        );
+    }, [fetched, parsedProducts]);
 
     // Impression tracking fires once per (mount, variant) pair after the
     // variant is resolved — so preview-mode views, referrer, and referee
@@ -316,22 +332,6 @@ export function PostPurchase({
         placementId,
         context?.reward,
     ]);
-
-    // Parse + sanitize the `products` prop. Surfaces that set the prop via
-    // the JS property (`el.products = [...]`) deliver a real array; surfaces
-    // that bind it as an HTML attribute (WP / Magento server-render) deliver
-    // a JSON-stringified array. We treat both as untrusted public-API input:
-    // each entry is normalised to a {@link SharingPageProduct} with a
-    // non-empty string `title`, and `imageUrl` / `link` are kept only when
-    // they parse as `http(s)://` URLs — otherwise downstream
-    // `new URL(...)` calls in the sharing-page builder would crash, and a
-    // `javascript:` link would be a XSS sink in any consumer that binds the
-    // value to an `href`. Unparseable / empty payloads are silently dropped
-    // so the share still works without the product card section.
-    const parsedProducts = useMemo<SharingPageProduct[] | undefined>(
-        () => sanitizeProductList(products),
-        [products]
-    );
 
     // Click handler — opens the full-page sharing UI. The sharing page
     // already renders a product card section when `products` is provided

@@ -92,7 +92,6 @@ export type PendingRegistration = {
     publicKey: { x: Hex; y: Hex; prefix: number };
     rawEncoded: string;
     email?: string;
-    merchantId?: string;
     userAgent: string;
     createdAt: number;
 };
@@ -103,6 +102,8 @@ type SsoContext = {
     directExit?: boolean;
     metadata?: AppSpecificSsoMetadata;
     id?: Hex;
+    /** Proof-of-possession for `clientId`, single-use — cleared once consumed by login/register. */
+    proof?: string;
 };
 
 type AppSpecificSsoMetadata = SsoMetadata & {

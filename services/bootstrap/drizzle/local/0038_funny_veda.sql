@@ -1,0 +1,2 @@
+ALTER TABLE "merchants" ADD COLUMN "allowed_package_ids" text[] DEFAULT '{}' NOT NULL;--> statement-breakpoint
+CREATE INDEX "merchants_allowed_package_ids_idx" ON "merchants" USING gin ("allowed_package_ids");

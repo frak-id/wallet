@@ -3,6 +3,7 @@ import { formatAmount } from "@frak-labs/core-sdk";
 import {
     buildPercentageExample,
     buildTierExample,
+    isMatchedItemsBasis,
     type RewardExample,
 } from "@frak-labs/core-sdk/rewards";
 import * as styles from "./sharingPage.css";
@@ -74,17 +75,24 @@ function RewardBlock({
     minPurchaseValue?: number;
     t: Translate;
 }) {
+    const matchedItemsBasis = isMatchedItemsBasis(reward);
     return (
         <div className={styles.rewardBlock}>
             <span className={styles.rewardBlockLabel}>{label}</span>
             {reward.payoutType === "tiered"
                 ? reward.tiers.map((tier) => (
-                      <TierRow key={tierKey(tier)} tier={tier} t={t} />
+                      <TierRow
+                          key={tierKey(tier)}
+                          tier={tier}
+                          isMatchedItemsBasis={matchedItemsBasis}
+                          t={t}
+                      />
                   ))
                 : reward.payoutType === "percentage" && (
                       <PercentageRow
                           reward={reward}
                           minPurchaseValue={minPurchaseValue}
+                          isMatchedItemsBasis={matchedItemsBasis}
                           t={t}
                       />
                   )}
@@ -92,7 +100,15 @@ function RewardBlock({
     );
 }
 
-function TierRow({ tier, t }: { tier: RewardTier; t: Translate }) {
+function TierRow({
+    tier,
+    isMatchedItemsBasis,
+    t,
+}: {
+    tier: RewardTier;
+    isMatchedItemsBasis: boolean;
+    t: Translate;
+}) {
     const range =
         tier.maxValue == null
             ? t("sdk.sharingPage.faq.reward.tierAndAbove", {
@@ -111,18 +127,21 @@ function TierRow({ tier, t }: { tier: RewardTier; t: Translate }) {
         );
     }
 
-    const example = buildTierExample(
-        tier.percent,
-        tier.minValue,
-        tier.maxValue
-    );
+    // `buildTierExample` assumes a whole-basket reference, wrong for a percent
+    // applied only to matched items.
+    const example = isMatchedItemsBasis
+        ? undefined
+        : buildTierExample(tier.percent, tier.minValue, tier.maxValue);
     return (
         <div className={styles.rewardRow}>
             <span>{range}</span>
             <span className={styles.rewardRowValue}>
-                {t("sdk.sharingPage.faq.reward.percentOfBasket", {
-                    percent: tier.percent,
-                })}
+                {t(
+                    isMatchedItemsBasis
+                        ? "sdk.sharingPage.faq.reward.percentOfEligible"
+                        : "sdk.sharingPage.faq.reward.percentOfBasket",
+                    { percent: tier.percent }
+                )}
                 {example && <ExampleText example={example} t={t} />}
             </span>
         </div>
@@ -132,19 +151,28 @@ function TierRow({ tier, t }: { tier: RewardTier; t: Translate }) {
 function PercentageRow({
     reward,
     minPurchaseValue,
+    isMatchedItemsBasis,
     t,
 }: {
     reward: Extract<EstimatedReward, { payoutType: "percentage" }>;
     minPurchaseValue?: number;
+    isMatchedItemsBasis: boolean;
     t: Translate;
 }) {
-    const example = buildPercentageExample(reward, minPurchaseValue);
+    // `buildPercentageExample` assumes a whole-basket reference, wrong for a
+    // percent applied only to matched items.
+    const example = isMatchedItemsBasis
+        ? undefined
+        : buildPercentageExample(reward, minPurchaseValue);
     return (
         <div className={styles.rewardRow}>
             <span>
-                {t("sdk.sharingPage.faq.reward.percentOfBasket", {
-                    percent: reward.percent,
-                })}
+                {t(
+                    isMatchedItemsBasis
+                        ? "sdk.sharingPage.faq.reward.percentOfEligible"
+                        : "sdk.sharingPage.faq.reward.percentOfBasket",
+                    { percent: reward.percent }
+                )}
             </span>
             {example && (
                 <span className={styles.rewardRowValue}>

@@ -10,15 +10,20 @@ import { PurchasesContext } from "../../../domain/purchases/context";
  *
  * Used by the Shopify post-purchase flow as a fallback when the
  * `_frak-client-id` cart attribute is missing.
+ *
+ * A second unauthenticated anonymousId oracle (narrower than
+ * install-code/resolve since it also requires a valid checkoutToken, but
+ * the same class of leak). Tightened from 30/min to 10/min — the
+ * legitimate fallback fires once per real order, so this still leaves
+ * headroom while cutting scan/enumeration throughput 3x.
  */
 export const orderClientRoute = new Elysia()
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 30 }))
+    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
     .get(
         "/order-client",
         async ({ query }) => {
             const { merchantId, checkoutToken } = query;
 
-            // Resolve webhookId from merchantId
             const webhook =
                 await PurchasesContext.repositories.purchase.getWebhookByMerchantId(
                     merchantId
@@ -27,7 +32,6 @@ export const orderClientRoute = new Elysia()
                 return status(404, "Merchant not found");
             }
 
-            // Find the purchase by checkout token
             const purchase =
                 await PurchasesContext.repositories.purchase.findByMerchantAndCheckoutToken(
                     {
@@ -39,7 +43,6 @@ export const orderClientRoute = new Elysia()
                 return status(404, "Purchase not found");
             }
 
-            // Resolve the anonymous fingerprint (clientId) from the identity group
             const clientId =
                 await IdentityContext.repositories.identity.findAnonymousFingerprint(
                     {

@@ -118,6 +118,7 @@ export {
     recordError,
     recoveryHintStorage,
     resolveApiErrorKey,
+    rewardProductsForSelection,
     rewardsKey,
     SDK_RENEW_BEFORE_MS,
     type SharingEventMap,
@@ -165,7 +166,6 @@ export {
     isPairingSignatureError,
     LaunchPairing,
     type OnPairingSuccessCallback,
-    type OriginIdentityNode,
     type OriginPairingClient,
     OriginPairingState,
     PairingNotFoundError,
@@ -210,6 +210,8 @@ export {
     useUnredeemReferralCode,
 } from "./referral";
 export {
+    buildInstallUrl,
+    buildPlayStoreInstallUrl,
     buildSharingLink,
     CopyIcon,
     clearConfirmation,

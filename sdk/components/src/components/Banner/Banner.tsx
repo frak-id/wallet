@@ -1,6 +1,8 @@
 import {
     isInAppBrowser,
+    type ProductDetails,
     redirectToExternalBrowser,
+    sanitizeProductDetailsList,
     trackEvent,
 } from "@frak-labs/core-sdk";
 import {
@@ -76,6 +78,7 @@ export function Banner({
     placement: placementId,
     classname = "",
     interaction,
+    products,
     referralTitle: propReferralTitle,
     referralDescription: propReferralDescription,
     referralCta: propReferralCta,
@@ -128,10 +131,16 @@ export function Banner({
     // Fetch reward text the same way ButtonShare does — but for the *referee*
     // side: the referral banner is shown to a freshly-referred user, so it must
     // advertise what they earn on their purchases, not the sharer's reward.
+    // Banner never renders a product card, so only the scope fields are kept.
+    const parsedProducts = useMemo<ProductDetails[] | undefined>(
+        () => sanitizeProductDetailsList(products),
+        [products]
+    );
     const { reward } = useReward(
         mode === "referral" && isClientReady,
         interaction,
-        "referee"
+        "referee",
+        parsedProducts
     );
 
     // Pre-fetch merge token when in inapp mode so the click is instant

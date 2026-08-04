@@ -978,4 +978,146 @@ describe("useLogin", () => {
         expect(addLastAuthentication).not.toHaveBeenCalled();
         expect(identifyAuthenticatedUser).not.toHaveBeenCalled();
     });
+
+    test("sends the ssoContext proof in the login body and clears it on success", async ({
+        queryWrapper,
+        mockAddress,
+        mockSession,
+        mockSdkSession,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        const { authenticatedWalletApi } = await import(
+            "../../common/api/backendClient"
+        );
+        const { authenticationStore } = await import(
+            "../../stores/authenticationStore"
+        );
+        const { sessionStore } = await import("../../stores/sessionStore");
+
+        const mockSessionData = {
+            ...mockSession,
+            address: mockAddress,
+            token: "session-token",
+            sdkJwt: { ...mockSdkSession, token: "sdk-token" },
+        };
+
+        const setSsoContext = vi.fn();
+        const ssoContext = {
+            merchantId: "merchant-1",
+            proof: "frak-sso-v1.deadbeef",
+        };
+
+        vi.mocked(WebAuthnP256.sign).mockResolvedValue({
+            metadata: {
+                credentialId: mockAuthResponse.id,
+                authenticatorData: mockAuthResponse.response
+                    .authenticatorData as any,
+                clientDataJSON: mockAuthResponse.response.clientDataJSON as any,
+                challengeIndex: 23,
+            },
+            signature: { r: 123n, s: 456n },
+            raw: { id: mockAuthResponse.id },
+        } as any);
+        vi.mocked(authenticatedWalletApi.auth.login.post).mockResolvedValue({
+            data: mockSessionData,
+            error: null,
+        } as any);
+        vi.mocked(authenticationStore.getState).mockReturnValue({
+            ssoContext,
+            setSsoContext,
+        } as any);
+        vi.mocked(sessionStore.getState).mockReturnValue({
+            setSession: vi.fn(),
+            setSdkSession: vi.fn(),
+        } as any);
+
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await result.current.login(undefined);
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        // Both come from `ssoContext`, with nothing passed to `login()` —
+        // the SSO merge on the backend needs the pair, so a regression that
+        // dropped either one would silently disable it.
+        expect(authenticatedWalletApi.auth.login.post).toHaveBeenCalledWith(
+            expect.objectContaining({
+                merchantId: "merchant-1",
+                proof: "frak-sso-v1.deadbeef",
+            })
+        );
+        expect(setSsoContext).toHaveBeenCalledWith({
+            ...ssoContext,
+            proof: undefined,
+        });
+    });
+
+    test("omits the proof and skips clearing when ssoContext has none (old-binary / non-SSO path)", async ({
+        queryWrapper,
+        mockAddress,
+        mockSession,
+        mockSdkSession,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        const { authenticatedWalletApi } = await import(
+            "../../common/api/backendClient"
+        );
+        const { authenticationStore } = await import(
+            "../../stores/authenticationStore"
+        );
+        const { sessionStore } = await import("../../stores/sessionStore");
+
+        const mockSessionData = {
+            ...mockSession,
+            address: mockAddress,
+            token: "session-token",
+            sdkJwt: { ...mockSdkSession, token: "sdk-token" },
+        };
+
+        const setSsoContext = vi.fn();
+
+        vi.mocked(WebAuthnP256.sign).mockResolvedValue({
+            metadata: {
+                credentialId: mockAuthResponse.id,
+                authenticatorData: mockAuthResponse.response
+                    .authenticatorData as any,
+                clientDataJSON: mockAuthResponse.response.clientDataJSON as any,
+                challengeIndex: 23,
+            },
+            signature: { r: 123n, s: 456n },
+            raw: { id: mockAuthResponse.id },
+        } as any);
+        vi.mocked(authenticatedWalletApi.auth.login.post).mockResolvedValue({
+            data: mockSessionData,
+            error: null,
+        } as any);
+        // No ssoContext at all — mirrors a non-SSO login or an old Tauri
+        // binary that never wrote one.
+        vi.mocked(authenticationStore.getState).mockReturnValue({
+            setSsoContext,
+        } as any);
+        vi.mocked(sessionStore.getState).mockReturnValue({
+            setSession: vi.fn(),
+            setSdkSession: vi.fn(),
+        } as any);
+
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await result.current.login(undefined);
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(authenticatedWalletApi.auth.login.post).toHaveBeenCalledWith(
+            expect.objectContaining({ proof: undefined })
+        );
+        expect(setSsoContext).not.toHaveBeenCalled();
+    });
 });

@@ -377,6 +377,162 @@ describe("initDeepLinks", () => {
             replace: true,
         });
     });
+
+    test("should forward the install proof so a fragment is not needed", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler([
+            "frakwallet://install?m=merchant-123&a=anonymous-456&p=proof-abc",
+        ]);
+
+        // `p` as a search param, not a fragment: this hop is an in-app `navigate`,
+        // so a fragment would be gone by the time /install renders.
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/install",
+            search: {
+                m: "merchant-123",
+                a: "anonymous-456",
+                p: "proof-abc",
+            },
+            replace: true,
+        });
+    });
+
+    // The hosted install link — the one `buildInstallUrl` mints for the web
+    // listener's sharing page — carries the proof in a fragment. On Android that
+    // URL is a verified App Link, so tapping it with the app installed delivers it
+    // here instead of to a browser. Reading search params alone drops the proof on
+    // exactly the flow the sharing page exists to serve.
+    test("should recover the proof from a #p= fragment on an https app link", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler([
+            "https://wallet.frak.id/install?m=merchant-123&a=anonymous-456#p=proof-abc",
+        ]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/install",
+            search: {
+                m: "merchant-123",
+                a: "anonymous-456",
+                p: "proof-abc",
+            },
+            replace: true,
+        });
+    });
+
+    test("should recover the proof from a #p= fragment on a custom scheme link", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler([
+            "frakwallet://install?m=merchant-123&a=anonymous-456#p=proof-abc",
+        ]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/install",
+            search: {
+                m: "merchant-123",
+                a: "anonymous-456",
+                p: "proof-abc",
+            },
+            replace: true,
+        });
+    });
+
+    // Proofs are base64url and can carry `=` padding, so the fragment has to be
+    // parsed as a query string rather than split on `=`.
+    test("should round-trip a percent-encoded proof out of the fragment", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+        const proof = "a+b/c=d";
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler([
+            `https://wallet.frak.id/install?m=merchant-123&a=anonymous-456#p=${encodeURIComponent(proof)}`,
+        ]);
+
+        const { search } = navigate.mock.calls[0][0] as {
+            search: Record<string, string>;
+        };
+        expect(search.p).toBe(proof);
+    });
+
+    test("should prefer the search param when a link carries both carriers", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler([
+            "frakwallet://install?m=merchant-123&a=anonymous-456&p=from-search#p=from-fragment",
+        ]);
+
+        const { search } = navigate.mock.calls[0][0] as {
+            search: Record<string, string>;
+        };
+        expect(search.p).toBe("from-search");
+    });
+
+    test("omits the proof entirely when the link carries none", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://install?m=merchant-123"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/install",
+            search: { m: "merchant-123" },
+            replace: true,
+        });
+        // Asserted on the keys, not via the object above: `toHaveBeenCalledWith` uses
+        // `toEqual`, which treats an explicit `p: undefined` as absent. The search object
+        // becomes the URL, so the difference is real.
+        expect(
+            Object.keys(
+                (
+                    navigate.mock.calls[0][0] as {
+                        search: Record<string, string>;
+                    }
+                ).search
+            )
+        ).toEqual(["m"]);
+    });
 });
 
 describe("deep link auth gate", () => {

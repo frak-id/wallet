@@ -5,6 +5,7 @@ import { RecoveryRepository } from "./repositories/RecoveryRepository";
 import { WalletBindingRepository } from "./repositories/WalletBindingRepository";
 import { AnonymousMergeService } from "./services/AnonymousMergeService";
 import { EmailVerificationService } from "./services/EmailVerificationService";
+import { IdentityProofService } from "./services/IdentityProofService";
 import { InstallCodeService } from "./services/InstallCodeService";
 import { RecoveryEmailService } from "./services/RecoveryEmailService";
 
@@ -23,6 +24,7 @@ const recoveryEmailService = new RecoveryEmailService(
     identityRepository,
     recoveryRepository
 );
+const identityProofService = new IdentityProofService();
 
 export namespace IdentityContext {
     export const repositories = {
@@ -37,5 +39,6 @@ export namespace IdentityContext {
         installCode: installCodeService,
         emailVerification: emailVerificationService,
         recoveryEmail: recoveryEmailService,
+        identityProof: identityProofService,
     };
 }

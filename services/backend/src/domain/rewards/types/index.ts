@@ -89,6 +89,7 @@ export type PurchasePayload = {
         quantity: number;
         unitPrice: number;
         totalPrice: number;
+        sku?: string;
     }[];
     purchaseId: string;
 };

@@ -20,16 +20,31 @@
         "@vanilla-extract/css": "catalog:"
     },
     "devDependencies": {
+        "@frak-labs/test-foundation": "workspace:*",
+        "@testing-library/jest-dom": "catalog:",
+        "@testing-library/react": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@typescript/native": "catalog:",
-        "typescript": "catalog:"
+        "@vanilla-extract/vite-plugin": "catalog:",
+        "@vitejs/plugin-react": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "@vitest/ui": "catalog:",
+        "jsdom": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "peerDependencies": {
         "react": ">=19.0.0",
         "react-dom": ">=19.0.0"
     },
     "scripts": {
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "test": "vitest",
+        "test:ui": "vitest --ui",
+        "test:coverage": "vitest --coverage",
+        "test:watch": "vitest --watch"
     }
 }

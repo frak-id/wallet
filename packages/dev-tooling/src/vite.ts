@@ -206,6 +206,16 @@ export type AssertEagerBundleBudgetOptions = {
     /** Hard ceiling on the gzipped eager boot JS, in bytes. */
     budgetGzip: number;
     /**
+     * Whether going over `budgetGzip` fails the build. Defaults to `true`.
+     *
+     * Set to `false` for apps where an eager-size regression is a perf smell
+     * rather than an incident: the size and over-budget breakdown are still
+     * logged, but the build proceeds. Keeps the signal without turning every
+     * login-path feature into a blocked deploy that gets unblocked by raising
+     * the number (which makes the budget a moving line, not a ratchet).
+     */
+    enforce?: boolean;
+    /**
      * Optional hook run with the final boot `index.html` source before the
      * budget check, e.g. to assert no lazy-chunk CSS/JS leaked into the eager
      * HTML. Throw from this hook to fail the build with a custom message.
@@ -214,19 +224,20 @@ export type AssertEagerBundleBudgetOptions = {
 };
 
 /**
- * Build-time plugin factory: fail the build if the eager boot JS (the
- * transitive static-import closure from the entry, walked by
- * {@link collectEagerClosure}) exceeds `budgetGzip`.
+ * Build-time plugin factory: report the eager boot JS (the transitive
+ * static-import closure from the entry, walked by
+ * {@link collectEagerClosure}) against `budgetGzip`, failing the build when
+ * it goes over unless `enforce: false`.
  *
- * Shared between apps that gate their eager boot bundle in CI — each app
- * passes its own measured-plus-headroom budget. Extracted from the
- * listener's original inline `assert-eager-bundle-budget` plugin so the
- * closure-walk logic has one implementation.
+ * Shared between apps that watch their eager boot bundle — each app passes
+ * its own measured-plus-headroom budget. Extracted from the listener's
+ * original inline `assert-eager-bundle-budget` plugin so the closure-walk
+ * logic has one implementation.
  */
 export function assertEagerBundleBudget(
     options: AssertEagerBundleBudgetOptions
 ): Plugin {
-    const { budgetGzip, assertHtml } = options;
+    const { budgetGzip, assertHtml, enforce = true } = options;
     const scriptRe = /<script\b[^>]*\bsrc="[^"]*?(assets\/[^"]+\.js)"/g;
 
     return {
@@ -265,16 +276,107 @@ export function assertEagerBundleBudget(
             }
 
             const totalKb = (totalGzip / 1024).toFixed(2);
+            const overBudget = totalGzip > budgetGzip;
             console.log(
-                `\n[eager-budget] boot JS: ${totalKb} KB gz across ${eager.size} chunks (limit ${budgetGzip / 1024} KB)`
+                `\n[eager-budget] boot JS: ${totalKb} KB gz across ${eager.size} chunks (limit ${budgetGzip / 1024} KB)${
+                    overBudget && !enforce ? " — OVER BUDGET (warn-only)" : ""
+                }`
             );
-            if (totalGzip > budgetGzip) {
-                throw new Error(
-                    `Eager boot JS budget exceeded: ${totalKb} KB gz > ${budgetGzip / 1024} KB.\n${breakdown
-                        .sort()
-                        .join("\n")}`
-                );
+            if (!overBudget) return;
+
+            const detail = `Eager boot JS budget exceeded: ${totalKb} KB gz > ${budgetGzip / 1024} KB.\n${breakdown
+                .sort()
+                .join("\n")}`;
+            if (!enforce) {
+                console.warn(`[eager-budget] ${detail}`);
+                return;
             }
+            throw new Error(detail);
+        },
+    };
+}
+
+export type PreconnectOrigin = {
+    /** Absolute URL; only its origin is used. */
+    url: string | undefined;
+    /**
+     * CORS mode of the requests that will follow, which the hint has to match:
+     * a connection opened under the wrong mode cannot be reused, leaving only
+     * the DNS lookup shared, since resolution is unaffected by CORS.
+     *
+     * Omitting this is not the same as `"anonymous"` — a bare hint matches
+     * `no-cors`, while `crossorigin=""` matches anonymous CORS. So omit it for
+     * `no-cors` (a document navigation, or an image without `crossorigin`),
+     * `"anonymous"` for CORS without credentials, `"use-credentials"` for CORS
+     * that sends them. An origin fetched under more than one mode needs one
+     * entry per mode.
+     */
+    crossorigin?: "anonymous" | "use-credentials";
+};
+
+export type PreconnectOriginsOptions = {
+    /**
+     * Origins to open a connection to. Anything unparseable, or pointing
+     * somewhere other than http(s), is dropped rather than emitted as a broken
+     * hint.
+     */
+    origins: PreconnectOrigin[];
+};
+
+/**
+ * Emit `<link rel="preconnect">` into the HTML for origins the app is certain
+ * to call.
+ *
+ * This has to be a build-time tag rather than a runtime one. The entry module
+ * cannot hint at its own behalf: by the time its first line executes the
+ * browser has already downloaded and parsed it and every vendor chunk the HTML
+ * lists as `modulepreload`, which is the exact window a preconnect exists to
+ * use. Only a tag the preload scanner finds while parsing `<head>` lands early
+ * enough to matter.
+ *
+ * Each entry states the CORS mode of the requests that will follow, because a
+ * connection opened under a different mode cannot be reused for them.
+ */
+export function preconnectOrigins(options: PreconnectOriginsOptions): Plugin {
+    const seen = new Set<string>();
+    const hints: { origin: string; crossorigin?: string }[] = [];
+
+    for (const { url, crossorigin } of options.origins) {
+        if (!url) continue;
+        let origin: string;
+        try {
+            const parsed = new URL(url);
+            if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+                continue;
+            }
+            origin = parsed.origin;
+        } catch {
+            continue;
+        }
+
+        // Keyed by mode too: the same origin legitimately needs one connection
+        // per mode when it is fetched both ways.
+        const key = `${origin}|${crossorigin ?? ""}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        hints.push({ origin, crossorigin });
+    }
+
+    return {
+        name: "frak:preconnect-origins",
+        transformIndexHtml() {
+            return hints.map(({ origin, crossorigin }) => ({
+                tag: "link",
+                attrs: {
+                    rel: "preconnect",
+                    href: origin,
+                    ...(crossorigin ? { crossorigin } : {}),
+                },
+                // Prepend: `head` appends after the injected module scripts
+                // and their `modulepreload` links, which puts the hint behind
+                // the very downloads it is meant to run alongside.
+                injectTo: "head-prepend" as const,
+            }));
         },
     };
 }

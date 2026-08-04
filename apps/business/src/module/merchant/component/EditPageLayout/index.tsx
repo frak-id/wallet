@@ -14,19 +14,25 @@ import { useTranslation } from "react-i18next";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import * as styles from "./edit-page-layout.css";
 
-export type EditPage = "customize" | "affiliate" | "details" | "team";
+export type EditPage =
+    | "customize"
+    | "affiliate"
+    | "explorer"
+    | "integration"
+    | "team";
 
 const PAGE_ROUTES = {
     customize: "/m/$merchantId/merchant/customize",
     affiliate: "/m/$merchantId/merchant/affiliate",
-    details: "/m/$merchantId/merchant",
+    explorer: "/m/$merchantId/merchant/explorer",
+    integration: "/m/$merchantId/merchant",
     team: "/m/$merchantId/merchant/team",
 } as const;
 
 /**
  * Full-viewport chrome for the merchant Edit pages (no app shell): sticky
  * toolbar with a close button and the page title, then the tab bar switching
- * between the three Edit sections.
+ * between the Edit sections.
  */
 export function EditPageLayout({
     merchantId,
@@ -107,9 +113,15 @@ export function EditPageLayout({
                                 )}
                                 <TabsTrigger
                                     variant="navigation"
-                                    value="details"
+                                    value="explorer"
                                 >
                                     {t("merchantEdit.tabs.explorer")}
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    variant="navigation"
+                                    value="integration"
+                                >
+                                    {t("merchantEdit.tabs.integration")}
                                 </TabsTrigger>
                                 <TabsTrigger variant="navigation" value="team">
                                     {t("merchantEdit.tabs.team")}

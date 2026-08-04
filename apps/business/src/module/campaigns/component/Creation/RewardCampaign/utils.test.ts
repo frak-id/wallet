@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
-import type { CampaignDraft } from "@/stores/campaignStore";
+import {
+    type CampaignDraft,
+    getMinPurchaseAmount,
+} from "@/stores/campaignStore";
 import {
     DEFAULT_REWARD_FORM,
     draftToRewardForm,
     isRewardFormValid,
     type RewardFormValues,
     recalcCpaFromSplit,
+    requiresMatchedBasis,
     rewardFormToDraft,
+    supportsMatchedBasis,
     tieredRangesOverlap,
 } from "./utils";
 
@@ -201,5 +206,189 @@ describe("tieredRangesOverlap", () => {
                 { from: 0, to: 100, cpa: 10, unit: "amount" },
             ])
         ).toBe(false);
+    });
+});
+
+/* ------------------------------------------------------------------ */
+/*  Product scope <-> reward basis                                     */
+/* ------------------------------------------------------------------ */
+
+const scopedDraft = (
+    productScope: CampaignDraft["rule"]["productScope"]
+): CampaignDraft => ({
+    ...baseDraft,
+    rule: { ...baseDraft.rule, productScope },
+});
+
+describe("reward basis", () => {
+    it("offers a basis choice only on a scoped campaign", () => {
+        expect(supportsMatchedBasis(baseDraft)).toBe(false);
+        expect(
+            supportsMatchedBasis(
+                scopedDraft([{ field: "sku", operator: "in", value: ["A"] }])
+            )
+        ).toBe(true);
+    });
+
+    it("forces a matched basis only for a negated scope", () => {
+        expect(
+            requiresMatchedBasis(
+                scopedDraft([{ field: "sku", operator: "in", value: ["A"] }])
+            )
+        ).toBe(false);
+        expect(
+            requiresMatchedBasis(
+                scopedDraft([
+                    { field: "sku", operator: "not_in", value: ["CHEAP"] },
+                ])
+            )
+        ).toBe(true);
+    });
+
+    it("treats a `none` group as negated, like the backend does", () => {
+        expect(
+            requiresMatchedBasis(
+                scopedDraft({
+                    logic: "none",
+                    conditions: [
+                        { field: "sku", operator: "eq", value: "CHEAP" },
+                    ],
+                })
+            )
+        ).toBe(true);
+    });
+
+    it("writes matched_items_amount for a scoped percentage reward", () => {
+        const draft = scopedDraft([
+            { field: "sku", operator: "in", value: ["A"] },
+        ]);
+        const { rule } = rewardFormToDraft(
+            {
+                ...DEFAULT_REWARD_FORM,
+                model: "percentage",
+                rewardBasis: "matchedItems",
+                targetCpaPercent: 10,
+                ambassadorPercent: 6,
+                refereePercent: 2,
+            },
+            draft
+        );
+        for (const reward of rule.rewards) {
+            expect(reward).toMatchObject({
+                percentOf: "matched_items_amount",
+            });
+        }
+    });
+
+    it("writes purchase.matchedAmount for a scoped tiered reward", () => {
+        const draft = scopedDraft([
+            { field: "sku", operator: "in", value: ["A"] },
+        ]);
+        const { rule } = rewardFormToDraft(
+            { ...tieredValues, rewardBasis: "matchedItems" },
+            draft
+        );
+        for (const reward of rule.rewards) {
+            expect(reward).toMatchObject({
+                tierField: "purchase.matchedAmount",
+            });
+        }
+    });
+
+    it("downgrades a matched basis to the basket when the scope is gone", () => {
+        const { rule } = rewardFormToDraft(
+            {
+                ...DEFAULT_REWARD_FORM,
+                model: "percentage",
+                rewardBasis: "matchedItems",
+                targetCpaPercent: 10,
+                ambassadorPercent: 6,
+                refereePercent: 2,
+            },
+            baseDraft
+        );
+        for (const reward of rule.rewards) {
+            expect(reward).toMatchObject({ percentOf: "purchase_amount" });
+        }
+    });
+
+    it("upgrades to a matched basis when the scope is negated", () => {
+        const draft = scopedDraft([
+            { field: "sku", operator: "not_in", value: ["CHEAP"] },
+        ]);
+        const { rule } = rewardFormToDraft(
+            {
+                ...DEFAULT_REWARD_FORM,
+                model: "percentage",
+                rewardBasis: "basket",
+                targetCpaPercent: 10,
+                ambassadorPercent: 6,
+                refereePercent: 2,
+            },
+            draft
+        );
+        for (const reward of rule.rewards) {
+            expect(reward).toMatchObject({
+                percentOf: "matched_items_amount",
+            });
+        }
+    });
+
+    it("reads the persisted basis back off the rule", () => {
+        const draft: CampaignDraft = {
+            ...baseDraft,
+            rule: {
+                ...baseDraft.rule,
+                productScope: [{ field: "sku", operator: "in", value: ["A"] }],
+                rewards: [
+                    {
+                        recipient: "referrer",
+                        type: "token",
+                        amountType: "percentage",
+                        percent: 6,
+                        percentOf: "matched_items_amount",
+                    },
+                ],
+            },
+        };
+        expect(draftToRewardForm(draft).rewardBasis).toBe("matchedItems");
+    });
+
+    it("rejects a fixed reward when the scope forces a matched basis", () => {
+        const fixed: RewardFormValues = {
+            ...DEFAULT_REWARD_FORM,
+            model: "fixed",
+            targetCpa: 10,
+            ambassadorAmount: 6,
+            refereeAmount: 2,
+        };
+        expect(isRewardFormValid(fixed)).toBe(true);
+        expect(isRewardFormValid(fixed, { requiresMatchedBasis: true })).toBe(
+            false
+        );
+    });
+});
+
+describe("non-purchase campaign", () => {
+    const referralDraft: CampaignDraft = {
+        ...baseDraft,
+        rule: { ...baseDraft.rule, trigger: "referral" },
+    };
+
+    // Both fields read a purchase; the step hides them off that trigger, so a
+    // stale form value must not sneak back into the rule.
+    it("saves no minimum purchase nor lockup", () => {
+        const values: RewardFormValues = {
+            ...DEFAULT_REWARD_FORM,
+            model: "fixed",
+            targetCpa: 10,
+            ambassadorAmount: 6,
+            refereeAmount: 2,
+            minPurchaseAmount: 50,
+            lockupDays: 7,
+        };
+        const draft = rewardFormToDraft(values, referralDraft);
+        expect(draft.rule.defaultLockupSeconds).toBe(0);
+        expect(getMinPurchaseAmount(draft.rule)).toBe(0);
     });
 });

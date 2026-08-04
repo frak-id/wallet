@@ -806,6 +806,9 @@
         "download": "Download the app",
         "processing": "Setting up your wallet..."
     },
+    "pendingActions": {
+        "walletAlreadyLinked": "This referral link is already linked to another wallet."
+    },
     "onboarding": {
         "start": "Get started",
         "continue": "Continue",
@@ -1126,7 +1129,9 @@
             "pendingDays": "{{count}} day",
             "pendingDays_other": "{{count}} days",
             "minPurchase": "Minimum purchase",
+            "productScopeNote": "On selected products only",
             "percentOfBasket": "{{percent}}% of basket",
+            "percentOfEligible": "{{percent}}% of eligible products",
             "percentExample": "e.g. {{reward}} for a {{basket}} order",
             "tierAndAbove": "{{min}} and above",
             "startingOn": "Starting on {{date}}",

@@ -76,7 +76,7 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
         }
 
         // Convert compressed params to full params
-        const { merchantId, redirectUrl, directExit, lang, metadata } =
+        const { merchantId, redirectUrl, directExit, lang, metadata, proof } =
             compressedSsoToParams(compressedParam);
 
         // Apply default for directExit: close the popup after completion
@@ -90,6 +90,7 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
             redirectUrl: redirectUrl ?? undefined,
             directExit: resolvedDirectExit,
             metadata: metadata ?? undefined,
+            proof,
         });
 
         // Save the client id if provided

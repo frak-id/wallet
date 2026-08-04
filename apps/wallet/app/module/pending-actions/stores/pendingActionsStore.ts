@@ -1,3 +1,4 @@
+import { INSTALL_TICKET_TTL_MS } from "@frak-labs/app-essentials/constants/installTicket";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
@@ -6,7 +7,9 @@ import type {
 } from "@/module/pending-actions/types";
 
 const DEFAULT_NAV_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const DEFAULT_ENSURE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // One week
+// Shared with the install-ticket JWT the ensure action carries, so the two
+// can never expire out of step.
+const DEFAULT_ENSURE_TTL_MS = INSTALL_TICKET_TTL_MS;
 
 type PendingActionsState = {
     actions: PendingAction[];
@@ -26,12 +29,21 @@ const initialState: PendingActionsState = {
 };
 
 /**
- * Deduplication key for an action — prevents duplicate entries
- * of the same type with the same parameters.
+ * Dedup key for an action. Prefers the ticket when present: a ticket is
+ * per-`resolve` call, not per-identity, so two resolves for the same
+ * `anonymousId` are distinct pending actions rather than overwriting each
+ * other. Falls back to the legacy `anonymousId`-keyed form.
+ *
+ * ROLLOUT-STEP-3: once the bare `anonymousId` arm is deleted this branch
+ * has no more actions to key.
  */
 function dedupeKey(action: PendingActionInput): string {
     switch (action.type) {
         case "ensure":
+            if (action.ticket) {
+                return `ensure:${action.merchantId}:${action.ticket}`;
+            }
+            // ROLLOUT-STEP-3: legacy anonymousId-keyed dedupe.
             return `ensure:${action.merchantId}:${action.anonymousId}`;
         case "navigation":
             return "navigation";
@@ -53,16 +65,9 @@ function defaultTtl(action: PendingActionInput): number {
 }
 
 /**
- * Unified store for all deferred post-auth actions.
- *
- * Replaces:
- *   - installCodeStore (pending install codes → ensure actions)
- *   - pendingDeepLink variable (volatile deep link → navigation actions)
- *   - pairingStore.pendingPairingId (pending pairing → removed, now query param)
- *
- * Persisted in localStorage so actions survive page refreshes.
- * Auto-deduplicates by type + key fields.
- * Auto-prunes expired actions on read.
+ * Unified store for all deferred post-auth actions. Persisted in
+ * localStorage, deduplicated by type + key fields, auto-prunes expired
+ * actions on read.
  */
 export const pendingActionsStore = create<PendingActionsStore>()(
     persist(
@@ -114,9 +119,26 @@ export const pendingActionsStore = create<PendingActionsStore>()(
         }),
         {
             name: "frak_pending_actions_store",
+            version: 1,
             partialize: (state) => ({
                 actions: state.actions,
             }),
+            /**
+             * MUST NOT THROW: an unversioned persisted store is treated as
+             * version `0` by zustand's `persist`, which always calls
+             * `migrate` — including for the `navigation` actions this same
+             * store backs. A malformed or unrecognised `persistedState`
+             * degrades to `initialState` instead of throwing.
+             */
+            migrate: (persistedState) => {
+                const state = persistedState as
+                    | Partial<PendingActionsState>
+                    | undefined;
+                if (!state || !Array.isArray(state.actions)) {
+                    return { actions: [] };
+                }
+                return { actions: state.actions };
+            },
         }
     )
 );

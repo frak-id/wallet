@@ -62,11 +62,12 @@
     "react-i18next": "catalog:",
     "react-router": "^7.18.1",
     "remix-i18next": "^7.5.0",
-    "remix-utils": "^9.3.1",
+    "remix-utils": "catalog:",
     "viem": "catalog:"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:",
+    "@frak-labs/test-foundation": "workspace:*",
     "@pulumi/aws": "^6.83.4",
     "@react-router/dev": "^7.18.1",
     "@react-router/fs-routes": "^7.18.1",

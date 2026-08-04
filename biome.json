@@ -18,8 +18,13 @@
             "!**/package.json",
             "!example/vanilla-js/index.html",
             "!**/routeTree.gen.ts",
+            "!services/backend/user-openapi.json",
             "!**/types/i18n/resources.d.ts",
             "!**/src-tauri/gen",
+            "!sdk/android",
+            "!sdk/ios",
+            "!example/native-android",
+            "!example/native-ios",
             "!**/src-tauri/plugins/**/schema.json",
             "!plugins",
             "!apps/shopify/**/shopify.d.ts"
@@ -144,6 +149,35 @@
                 "rules": {
                     "complexity": {
                         "noExcessiveCognitiveComplexity": "off"
+                    }
+                }
+            }
+        },
+        {
+            "includes": [
+                "**",
+                "!apps/wallet/**",
+                "!apps/listener/**",
+                "!packages/wallet-shared/**",
+                "!sdk/react/tests/**"
+            ],
+            "linter": {
+                "rules": {
+                    "style": {
+                        "noRestrictedImports": {
+                            "level": "error",
+                            "options": {
+                                "patterns": [
+                                    {
+                                        "group": [
+                                            "@frak-labs/wallet-shared",
+                                            "@frak-labs/wallet-shared/**"
+                                        ],
+                                        "message": "@frak-labs/wallet-shared is scoped to the wallet and listener apps (apps/wallet, apps/listener), plus the package itself and sdk/react/tests for shared fixtures. No other workspace may import it — extract the shared logic into a package with a broader audience (@frak-labs/design-system, @frak-labs/core-sdk, ...) instead of widening this allowlist."
+                                    }
+                                ]
+                            }
+                        }
                     }
                 }
             }

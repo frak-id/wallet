@@ -1,6 +1,9 @@
 import { t } from "@backend-utils";
 import type { Static } from "elysia";
-import { ExplorerConfigSchema } from "../../domain/merchant/schemas";
+import {
+    ExplorerConfigSchema,
+    PlatformSchema,
+} from "../../domain/merchant/schemas";
 
 export {
     type MerchantResolveResponse,
@@ -17,10 +20,27 @@ export const AffiliateBrandInfoSchema = t.Object({
 });
 export type AffiliateBrandInfo = Static<typeof AffiliateBrandInfoSchema>;
 
+/**
+ * A merchant-claimed app, split back out of the stored `platform:packageId`
+ * key so clients never have to know the storage encoding.
+ */
+export const AllowedPackageIdSchema = t.Object({
+    platform: PlatformSchema,
+    packageId: t.String(),
+});
+export type AllowedPackageId = Static<typeof AllowedPackageIdSchema>;
+
+/** Request body for the allowed-package-ids add/remove routes. */
+export const PackageIdBodySchema = t.Object({
+    packageId: t.String({ minLength: 1 }),
+    platform: PlatformSchema,
+});
+
 export const MerchantDetailResponseSchema = t.Object({
     id: t.String(),
     domain: t.String(),
     allowedDomains: t.Array(t.String()),
+    allowedPackageIds: t.Array(AllowedPackageIdSchema),
     name: t.String(),
     // Null for walletless-owned merchants (owner is a business account).
     ownerWallet: t.Union([t.Hex(), t.Null()]),

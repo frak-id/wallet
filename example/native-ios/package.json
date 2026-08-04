@@ -1,0 +1,12 @@
+{
+    "name": "@frak-labs-example/native-ios",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+        "start": "./scripts/run.sh run",
+        "build": "./scripts/run.sh build",
+        "xcode": "./scripts/run.sh xcode",
+        "lint": "./scripts/run.sh lint",
+        "format": "./scripts/run.sh format"
+    }
+}

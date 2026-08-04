@@ -26,6 +26,7 @@ import {
     type CampaignDraft,
     campaignStore,
     getStartDate,
+    isPurchaseCampaign,
     setStartDate,
 } from "@/stores/campaignStore";
 import { DistributionBar } from "../DistributionBar";
@@ -510,8 +511,11 @@ export function BudgetCampaign() {
 
     async function onSubmit(values: BudgetFormValues) {
         const saved = await persist(values);
+        // Product scoping only exists on a purchase campaign.
         navigate({
-            to: "/m/$merchantId/campaigns/draft/$campaignId/reward",
+            to: isPurchaseCampaign(draft.rule)
+                ? "/m/$merchantId/campaigns/draft/$campaignId/products"
+                : "/m/$merchantId/campaigns/draft/$campaignId/reward",
             params: { merchantId, campaignId: saved.id },
         });
     }

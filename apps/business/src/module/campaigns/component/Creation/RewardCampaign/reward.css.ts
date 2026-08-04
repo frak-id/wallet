@@ -102,6 +102,12 @@ export const modelOption = style({
     textAlign: "left",
 });
 
+/** A model the campaign's trigger can't use: greyed, but still readable. */
+export const modelOptionDisabled = style({
+    opacity: 0.5,
+    cursor: "not-allowed",
+});
+
 export const modelMain = style({
     display: "flex",
     flexDirection: "column",

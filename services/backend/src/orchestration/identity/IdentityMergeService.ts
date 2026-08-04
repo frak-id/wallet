@@ -507,8 +507,8 @@ export class IdentityMergeService {
             return { movedPushTokens: 0, deletedPushTokens: 0 };
         }
 
-        // First anchor wallet is the deterministic destination. Phase 1
-        // groups carry exactly one wallet, so this is unambiguous; once
+        // First anchor wallet is the deterministic destination. Groups
+        // currently carry exactly one wallet, so this is unambiguous; once
         // multi-wallet groups land the policy may want revisiting.
         const primaryWallet = anchorWallets[0];
 
@@ -610,8 +610,7 @@ export class IdentityMergeService {
             };
         }
 
-        // First anchor wallet is the deterministic destination. Phase 1
-        // groups carry exactly one wallet, so this is unambiguous; mirrors
+        // First anchor wallet is the deterministic destination, mirroring
         // the push-token migration choice above.
         const primaryWallet = anchorWallets[0];
 

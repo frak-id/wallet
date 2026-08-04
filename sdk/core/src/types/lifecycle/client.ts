@@ -66,6 +66,24 @@ type ResolvedConfigEvent = {
          * with listener events in the same funnel.
          */
         sdkAnonymousId?: string;
+        /**
+         * Proof of possession for `sdkAnonymousId`, produced on the
+         * merchant origin. Opaque to the listener — forwarded verbatim to
+         * the backend, never interpreted here.
+         *
+         * Two named, domain-separated proofs, not one blob: collapsing them
+         * would let a proof harvested from a leakier channel (the install
+         * URL) be replayed against a more sensitive one (merge).
+         */
+        sdkIdentity?: {
+            anonymousId: string;
+            proofs: {
+                /** `frak-merge-v1` — binds SHA-256(mergeToken). */
+                merge?: string;
+                /** `frak-install-v1` — binds merchantId only. */
+                install?: string;
+            };
+        };
         sdkConfig?: ResolvedSdkConfig;
     };
 };

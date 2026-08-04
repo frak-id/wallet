@@ -10,7 +10,12 @@ const ERPC_URL = "https://erpc.gcp.frak.id/nexus-rpc/evm/";
  * @param chainId
  */
 export function getErpcTransport({ chain }: { chain: Chain }) {
-    // Ensure we got the nexus api key setuo
+    // Ensure we got the nexus api key setup.
+    //
+    // The wallet mirrors this condition to decide whether to preconnect this
+    // origin (`apps/wallet/vite.config.ts`, `preconnectOrigins`). Changing what
+    // gates the transport without changing that entry desyncs the two
+    // silently: nothing fails, the page just opens a connection nothing uses.
     const nexusRpcSecret = process.env.NEXUS_RPC_SECRET;
     if (!nexusRpcSecret) {
         return undefined;

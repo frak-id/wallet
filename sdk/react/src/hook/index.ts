@@ -8,6 +8,7 @@ export { useGetMergeToken } from "./useGetMergeToken";
 export { useGetUserReferralStatus } from "./useGetUserReferralStatus";
 export { useOpenSso } from "./useOpenSso";
 export { usePrepareSso } from "./usePrepareSso";
+export { usePrepareSsoUrl } from "./usePrepareSsoUrl";
 export { useSendTransactionAction } from "./useSendTransaction";
 export { useSetupReferral } from "./useSetupReferral";
 export { useSiweAuthenticate } from "./useSiweAuthenticate";

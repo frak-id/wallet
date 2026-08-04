@@ -190,10 +190,15 @@ export type IFrameRpcSchema = [
      * when switching from a WebView to the system browser.
      * Returns the merge token string, or null if unavailable.
      * This is a one-shot request.
+     *
+     * `proof` is a `frak-merge-v1` proof-of-possession binding
+     * `sourceAnonymousId`, produced on the merchant origin. Optional and
+     * additive: an old listener reading `Parameters?: undefined` still
+     * works, since a missing param arrives as `undefined` either way.
      */
     {
         Method: "frak_getMergeToken";
-        Parameters?: undefined;
+        Parameters?: [proof?: string];
         ReturnType: string | null;
     },
 ];

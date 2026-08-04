@@ -41,6 +41,23 @@ const domainEventsEmittedTotal = register(
     })
 );
 
+/**
+ * Identity proof-of-possession verification outcomes.
+ *
+ * Only calls that actually presented a proof reach
+ * `IdentityProofService.verify()`, so `valid`/`invalid` are the only
+ * outcomes recorded — deliberately no `absent` label. That count is
+ * already derivable from the route's request-count metric minus this
+ * counter's total, so it isn't tracked here separately.
+ */
+const identityProofCheckedTotal = register(
+    new Counter({
+        name: "identity_proof_checked_total",
+        help: "Identity proof-of-possession verifications by op and outcome (valid/invalid only — absence is derived from the route's request count)",
+        labelNames: ["op", "outcome"] as const,
+    })
+);
+
 export const infraMetrics = {
     advisoryLockAcquired(lock: string) {
         advisoryLockTotal.inc({ lock, outcome: "acquired" });
@@ -56,5 +73,8 @@ export const infraMetrics = {
     },
     domainEventEmitted(event: string) {
         domainEventsEmittedTotal.inc({ event });
+    },
+    identityProofChecked(op: string, outcome: "valid" | "invalid") {
+        identityProofCheckedTotal.inc({ op, outcome });
     },
 };
