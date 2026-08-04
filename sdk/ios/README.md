@@ -339,8 +339,16 @@ reward copy. Sharing does fail closed, because a share link *is* the identity �
 `buildSharingLink` returns nil with no `anonymousId` to embed. `Frak.parseReferralLink` is
 pure and static and keeps decoding inbound links either way, so your routing does not break.
 
-**Erasure stops at the device.** Nothing here deletes what the backend already holds under
-the old `clientId`; that needs a server-side request, not an SDK call.
+**Erasure stops at the device — by design, and the rest is already covered.** Neither call
+deletes what Frak's backend already holds under the old `clientId`. **There is deliberately no
+SDK call for that and none is planned.** Data-subject requests go through Frak's published
+route — <https://frak.id/account-deletion>, also linked from the Frak wallet's settings, and
+`hello@frak-labs.com` in the privacy policy. Point your users there; you do not need to build
+or call anything.
+
+A user cannot quote their `clientId` (the SDK never shows it to them), so a request is keyed on
+what they can give — their wallet address or email — and resolved from there. If you need the
+id for your own support flow, `client()?.anonymousId` returns it.
 
 ## Shutting the SDK down
 
