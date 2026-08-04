@@ -318,7 +318,14 @@ class InteractionTrackerTest {
             // pause, not an erasure.
             val remaining = queue.read(now)
             assertEquals(1, remaining.size)
-            assertTrue("the undelivered event must survive", remaining.single().body.toString().contains("second"))
+            assertTrue(
+                "the undelivered event must survive",
+                remaining
+                    .single()
+                    .body
+                    .toString()
+                    .contains("second"),
+            )
         }
 
     private fun seeded(

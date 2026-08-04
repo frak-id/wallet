@@ -410,9 +410,15 @@ class HttpClientTest {
         }
     }
 
+    /**
+     * [open] is deliberately LAST: most call sites here pass it as a trailing lambda, and Kotlin
+     * binds a trailing lambda to the final parameter. When `logger` was added after `open` the
+     * whole suite silently retargeted every `newClient { ... }` onto `logger` and stopped
+     * compiling. Add future parameters ahead of [open], not after it.
+     */
     private fun kotlinx.coroutines.test.TestScope.newClient(
-        open: (URL) -> HttpURLConnection = transport::open,
         logger: FrakLogger? = null,
+        open: (URL) -> HttpURLConnection = transport::open,
     ) = HttpClient(FAKE_BASE_URL, UnconfinedTestDispatcher(testScheduler), open, logger)
 
     private companion object {

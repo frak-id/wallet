@@ -114,7 +114,7 @@ struct ConfigStoreTests {
         #expect(first?.name == "Acme")
 
         clock.current.addTimeInterval(ConfigStore.freshTTL + 1)
-        _ = try await store.resolve(query(), forceRefresh: false) // stale: served from cache, revalidates behind it
+        _ = try await store.resolve(query(), forceRefresh: false)  // stale: served from cache, revalidates behind it
 
         let second = await iterator.next()
         #expect(
@@ -412,8 +412,8 @@ struct ConfigStoreTests {
         // replays `lastPublished`, and nothing has published on this store instance — only
         // fetch() publishes (C3). If currentConfig's disk hydration wrongly published, this would
         // instead see "Acme" arrive immediately instead of timing out. `received` (the existing
-        // lock-protected `Counter` from `TestSupport.swift`) is incremented from the iterator
-        // branch only, so a timeout win leaves it at zero; racing avoids ever awaiting an
+        // lock-protected `Counter` from `TestSupport.swift`) is incremented only when a value
+        // genuinely ARRIVES, so a timeout win leaves it at zero; racing avoids ever awaiting an
         // iterator that could otherwise suspend forever. The (Sendable) stream is hoisted out of
         // the closure and iterated INSIDE the child task: a non-Sendable AsyncIterator captured
         // and mutated by a @Sendable addTask closure does not compile under -swift-version 6.
@@ -422,8 +422,13 @@ struct ConfigStoreTests {
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
                 var iterator = stream.makeAsyncIterator()
-                _ = await iterator.next()
-                received.increment()
+                // `if let`, not a bare `_ = await`: once the timeout branch wins and cancels the
+                // group, a cancelled AsyncStream iterator RESOLVES WITH nil rather than hanging.
+                // Incrementing unconditionally therefore counted that cancellation as a publish,
+                // and this assertion could never fail for the reason it claims to test.
+                if await iterator.next() != nil {
+                    received.increment()
+                }
             }
             group.addTask {
                 try? await Task.sleep(nanoseconds: 200_000_000)
@@ -433,7 +438,7 @@ struct ConfigStoreTests {
         }
         #expect(
             received.value == 0,
-            "currentConfig's disk hydration must not publish to the stream \u2014 only fetch() does (C3)"
+            "currentConfig's disk hydration must not publish to the stream — only fetch() does (C3)"
         )
     }
 

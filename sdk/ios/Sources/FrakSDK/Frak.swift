@@ -150,16 +150,27 @@ public enum Frak {
     ///
     /// Idempotent and safe before `initialize(_:)`.
     public static func shutdown() async {
-        // Read and cleared under the lock, acted on outside it: this is an async function and the
-        // lock must never span a suspension point.
-        let dying: DefaultFrakClient?
+        await takeForShutdown()?.shutdown()
+    }
+
+    /// Clears every singleton and hands back the client that was live, for `shutdown()` to await
+    /// outside the lock.
+    ///
+    /// Deliberately a separate SYNCHRONOUS function rather than a `lock()`/`unlock()` pair inside
+    /// `shutdown()` itself: `NSLock.lock()`/`unlock()` are unavailable from an async context under
+    /// Swift 6 (`-swift-version 6`, which is the flag `scripts/run.sh` builds the real iOS triple
+    /// with), so the inline version compiled on the host toolchain in Swift 5 mode and failed the
+    /// simulator build. Hoisting the critical section out also makes the rule it was upholding
+    /// — the lock must never span a suspension point — structural rather than a comment: there is
+    /// no `await` this function could reach.
+    private static func takeForShutdown() -> DefaultFrakClient? {
         lock.lock()
-        dying = core
+        defer { lock.unlock() }
+        let dying = core
         core = nil
         instance = nil
         configuration = nil
-        lock.unlock()
-        await dying?.shutdown()
+        return dying
     }
 
     /// Synchronous teardown for tests that cannot await. Drops the singletons WITHOUT cancelling

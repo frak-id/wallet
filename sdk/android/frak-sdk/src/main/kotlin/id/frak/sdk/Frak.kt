@@ -136,10 +136,11 @@ public object Frak {
      *
      * Idempotent and safe before [initialize]. Suspends until the background work has actually
      * stopped, rather than merely being asked to.
+     *
+     * Deliberately no `@JvmStatic`, unlike every other member here: a `suspend fun` compiles to a
+     * method taking a `Continuation`, which no Java caller can supply. Annotating it as if it were
+     * Java-callable would be a promise the signature cannot keep (A7).
      */
-    // Deliberately no @JvmStatic, unlike every other member here: a `suspend fun` compiles to a
-    // method taking a `Continuation`, which no Java caller can supply. Annotating it as if it were
-    // Java-callable would be a promise the signature cannot keep (A7).
     public suspend fun shutdown() {
         // Everything mutable is read and cleared under the lock, then acted on outside it: this is
         // a suspend function, and `synchronized` must never span a suspension point. The state is

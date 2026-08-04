@@ -445,7 +445,8 @@ struct FrakClientTests {
             let isResolve = request.url?.path == "/user/merchant/resolve"
             return StubResponse(status: 200, body: isResolve ? Self.resolveBody : "{}")
         }
-        _ = try? await client.resolveConfig()  // populates the config store's cache, mirroring the Android fixture's settled state
+        // populates the config store's cache, mirroring the Android fixture's settled state
+        _ = try? await client.resolveConfig()
         let before = requests.count
 
         let foreignMerchantId = "550e8400-e29b-41d4-a716-446655440002"

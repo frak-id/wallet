@@ -350,7 +350,11 @@ struct InteractionTrackerTests {
             let object: [String: Any] = [
                 "k": key,
                 "p": "/user/track/interaction",
-                "b": ["type": "sharing", "merchantId": Self.merchantId] as [String: Any],
+                // A JSON *string*, not a nested object: QueuedEvent.body is typed String (the
+                // request body is pre-serialised at capture time). Writing an object here made
+                // every fixture row fail to decode, so this test spent its life asserting against
+                // an already-empty queue and could never have caught the regression it names.
+                "b": #"{"type":"sharing","merchantId":"\#(Self.merchantId)"}"#,
                 "c": Self.clientId,
                 "t": Int64((capturedAt * 1000).rounded()),
                 "f": 0,
