@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.0.9] - 2026-08-04
+
 ### Added
 
 - **Order webhooks now forward each line item's product Reference as `sku`.** `FrakOrderResolver::getWebhookPayload()` adds an optional `sku` key to every item in the `POST /ext/merchant/{id}/webhook/custom` payload, sourced from `order_detail.product_reference` (stable at purchase time, unaffected by later edits to the product's Reference) and only included when non-empty. Enables the Frak backend's product-scoped campaigns to match rewards on SKU.
@@ -219,7 +221,9 @@ version on dispatch.
 - New `views/templates/hook/post-purchase.tpl` Smarty partial: theme-overridable wrapper for the post-purchase markup. Override path: `themes/<theme>/modules/frakintegration/views/templates/hook/post-purchase.tpl`.
 - New `FrakOrderResolver` class: single-pass extraction of customer/order/token context plus product line items from a resolved `Order`, fail-soft on missing images / deleted products. Sibling of the WordPress `Frak_WooCommerce::get_post_purchase_data()` helper.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.8...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.9...HEAD
+
+[1.0.9]: https://github.com/frak-id/wallet/compare/prestashop-1.0.8...prestashop-1.0.9
 
 [1.0.8]: https://github.com/frak-id/wallet/compare/prestashop-1.0.7...prestashop-1.0.8
 

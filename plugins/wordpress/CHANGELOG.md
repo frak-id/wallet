@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.1.10] - 2026-08-04
+
 ### Added
 
 - **WooCommerce order webhooks now forward each line item's product SKU.** `Frak_WC_Webhook_Registrar::strip_line_items()` previously dropped the `sku` field that WooCommerce's REST v3 serializer already attaches to every line item before the `woocommerce_webhook_payload` filter runs. The field is now forwarded conditionally (only when WooCommerce reports a non-empty SKU for the item), keeping the payload sparse and matching the Frak backend's optional `sku` field, so product-scoped campaigns can match purchases by SKU.
@@ -197,7 +199,9 @@ version on dispatch.
 
 - Initial release of the Frak WordPress plugin.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.9...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.10...HEAD
+
+[1.1.10]: https://github.com/frak-id/wallet/compare/wordpress-1.1.9...wordpress-1.1.10
 
 [1.1.9]: https://github.com/frak-id/wallet/compare/wordpress-1.1.8...wordpress-1.1.9
 
