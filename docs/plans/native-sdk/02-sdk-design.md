@@ -432,8 +432,19 @@ network error — are `06-open-findings.md` §1.
 | `sharing.buildLink` | **nullable** | any | **no** — null with tracking off, since the link *is* the id |
 | `appLink.handleReferral` | `Bool` (consumed) | any | yes (queued), tracking half consent-gated |
 
-Two real platform divergences, not doc slips: `isFrakAppInstalled()` is `async` on Swift and
-synchronous on Kotlin, and neither is `@MainActor`.
+Three real platform divergences, not doc slips: `isFrakAppInstalled()` is `async` on Swift and
+synchronous on Kotlin, and neither is `@MainActor`; and Swift alone overloads
+`parseReferralLink`/`handleReferral` on `URL` beside `String` (`Frak.swift`, `AppLinkAPI.swift`)
+while Kotlin's `Frak.parseReferralLink`/`AppLinkApi.handleReferral` (`Frak.kt`,
+`AppLinkApi.kt`) stay `String`-only. The gap is cosmetic, not deferred: `onOpenURL`/
+`SceneDelegate` hand iOS a `URL`, while Android's merchant already holds a `String` from
+`Intent.dataString` — the SDK's own `DeepLinkObserver.kt` only calls `intent.data?.toString()`
+because it holds the `Uri` for other reasons. A `Uri` overload could not be unit-tested anyway:
+the JVM suite runs against a stubbed `android.jar` that throws on every real framework call,
+and there is no androidTest source set. It would also put an Android-framework type on
+`Frak.parseReferralLink`, whose KDoc advertises it as pure and static, callable before
+`initialize`. Nothing is frozen by waiting — a Kotlin method overload is binary-compatible to
+add later, unlike a `$default` constructor bridge or an interface member.
 
 `sdk/android/README.md` and `sdk/ios/README.md` are the shipped contract; this section is
 the design intent behind it.
