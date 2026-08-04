@@ -35,12 +35,15 @@ import * as styles from "./install.css";
 type InstallSearch = {
     m?: string;
     a?: string;
+    /** `frak-install-v1` proof, when a fragment could not carry it. See `resolveInstallProof`. */
+    p?: string;
 };
 
 export const Route = createFileRoute("/install")({
     validateSearch: (search: Record<string, unknown>): InstallSearch => ({
         m: typeof search.m === "string" ? search.m : undefined,
         a: typeof search.a === "string" ? search.a : undefined,
+        p: typeof search.p === "string" ? search.p : undefined,
     }),
     component: InstallPage,
 });
@@ -65,6 +68,26 @@ export function parseInstallProofFragment(hash: string): string | undefined {
 }
 
 /**
+ * The `frak-install-v1` proof for this visit, from whichever carrier could hold it.
+ *
+ * The fragment is preferred and is the only carrier for anything a user might copy or
+ * share: fragments are never sent to a server, never logged, never in a `Referer`. But a
+ * fragment cannot survive an in-app navigation — the deep-link router calls `navigate`, so
+ * `window.location.hash` is empty by the time this route renders — and the Play referrer is
+ * a referrer string with no fragment at all. Those handoffs use `?p=` instead.
+ *
+ * Fragment first rather than search first: it keeps today's behaviour byte-identical for
+ * every existing link, and if a URL ever carries both, the one that could not have leaked
+ * through a redirect or an access log wins.
+ */
+export function resolveInstallProof(
+    hash: string,
+    searchProof?: string
+): string | undefined {
+    return parseInstallProofFragment(hash) ?? searchProof;
+}
+
+/**
  * Install page — unified entry point for the install/ensure flow.
  *
  * Decision matrix:
@@ -72,14 +95,13 @@ export function parseInstallProofFragment(hash: string): string | undefined {
  *   Everything else      → Processing screen (fire ensure or store for post-auth)
  */
 function InstallPage() {
-    const search = Route.useSearch();
-    // frak-install-v1 proof, read once from the fragment (not a search
-    // param, never sent to the server). Forwarded to both InstallCodeView
-    // and InstallProcessing — whether a proof is present is a property of
-    // the input, not of which shell (web/Tauri) is running.
+    const { m, a, p } = Route.useSearch();
+    // frak-install-v1 proof, read once. Forwarded to both InstallCodeView and
+    // InstallProcessing — whether a proof is present is a property of the input,
+    // not of which shell (web/Tauri) is running.
     const proof = useMemo(
-        () => parseInstallProofFragment(window.location.hash),
-        []
+        () => resolveInstallProof(window.location.hash, p),
+        [p]
     );
 
     // Web + not logged in → show install code + store download links
@@ -88,21 +110,21 @@ function InstallPage() {
 
     useEffect(() => {
         trackEvent("install_page_viewed", {
-            merchant_id: search.m,
-            has_anonymous_id: Boolean(search.a),
-            // Whether the `#p=` fragment survived the redirect chain;
-            // purely diagnostic, attribution is preserved either way.
+            merchant_id: m,
+            has_anonymous_id: Boolean(a),
+            // Whether a proof reached this page by either carrier; purely
+            // diagnostic, attribution is preserved either way.
             has_install_proof: Boolean(proof),
             view: shouldShowCodeView ? "code" : "processing",
         });
-    }, [search.m, search.a, proof, shouldShowCodeView]);
+    }, [m, a, proof, shouldShowCodeView]);
 
     if (shouldShowCodeView) {
-        return <InstallCodeView {...search} proof={proof} />;
+        return <InstallCodeView m={m} a={a} proof={proof} />;
     }
 
     // Tauri (any auth) or web + logged in → processing
-    return <InstallProcessing {...search} proof={proof} />;
+    return <InstallProcessing m={m} a={a} proof={proof} />;
 }
 
 // ---------------------------------------------------------------------------

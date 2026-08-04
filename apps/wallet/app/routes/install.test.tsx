@@ -2,6 +2,7 @@ import { describe, expect, test } from "@/tests/vitest-fixtures";
 import {
     buildInstallProcessingEnsureAction,
     parseInstallProofFragment,
+    resolveInstallProof,
 } from "./install";
 
 describe("parseInstallProofFragment", () => {
@@ -38,6 +39,37 @@ describe("parseInstallProofFragment", () => {
     test("never throws on pathological input", () => {
         expect(() => parseInstallProofFragment("#%%%invalid%%%")).not.toThrow();
         expect(() => parseInstallProofFragment("#=====")).not.toThrow();
+    });
+});
+
+describe("resolveInstallProof", () => {
+    test("uses the fragment when there is one, exactly as before", () => {
+        expect(resolveInstallProof("#p=from-fragment")).toBe("from-fragment");
+    });
+
+    test("falls back to the search param, which is how a deep link carries it", () => {
+        // The router navigates in-app, so the fragment is gone by the time the
+        // route renders. Without this arm the proof is silently dropped.
+        expect(resolveInstallProof("", "from-search")).toBe("from-search");
+    });
+
+    test("prefers the fragment when a URL somehow carries both", () => {
+        // The fragment cannot have leaked through a redirect or an access log,
+        // so it wins.
+        expect(resolveInstallProof("#p=from-fragment", "from-search")).toBe(
+            "from-fragment"
+        );
+    });
+
+    test("is undefined when neither carrier has one", () => {
+        expect(resolveInstallProof("")).toBeUndefined();
+        expect(resolveInstallProof("#other=1")).toBeUndefined();
+    });
+
+    test("a malformed fragment still falls through to the search param", () => {
+        expect(resolveInstallProof("#%%%invalid%%%", "from-search")).toBe(
+            "from-search"
+        );
     });
 });
 
