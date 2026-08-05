@@ -1,4 +1,4 @@
-/** Outcomes a native host is told about. `share`/`copy` are asks, not reports: `navigator.share` doesn't exist in an Android WebView, and the reward-bearing share must be signed by the SDK's keypair, which this page can't access. `error` lets the host close its sheet; `code` hands over the install code for the SDK to pasteboard. */
+/** Outcomes a native host is told about. `share`/`copy` are asks, not reports: `navigator.share` doesn't exist in an Android WebView, and the reward-bearing share must be signed by the SDK's keypair, which this page can't access. `error` lets the host close its sheet; `code` hands over the install code for the SDK to pasteboard; `ready` says the page has painted, so the host can drop its loading skeleton on a fact instead of a timer. */
 export type HostResultAction =
     | "install"
     | "dismiss"
@@ -6,7 +6,8 @@ export type HostResultAction =
     | "share"
     | "copy"
     | "error"
-    | "code";
+    | "code"
+    | "ready";
 
 /**
  * Build the URL that hands an outcome back to a native host.
@@ -43,10 +44,11 @@ export function buildHostResultUrl({
 /** Outcomes already handed to the host, so none is sent twice. Keyed by action and value: the install code can change across a remount, so a different code still reaches the host even though a repeat of the same one is suppressed. */
 const sentActions = new Set<string>();
 
-/** Actions the dedupe above skips: both are direct button-press results, not route-guard re-entrancy, and suppressing a repeat here would be wrong — e.g. copying then sharing, or retrying a share the user backed out of. */
+/** Actions the dedupe above skips. `share`/`copy` are direct button-press results, not route-guard re-entrancy, and suppressing a repeat would be wrong — e.g. copying then sharing, or retrying a share the user backed out of. `ready` is per-presentation: a host reuses one warmed page across many sheets, and every one of them has its own skeleton waiting to be dropped. */
 const REPEATABLE_ACTIONS: ReadonlySet<HostResultAction> = new Set([
     "share",
     "copy",
+    "ready",
 ]);
 
 /**

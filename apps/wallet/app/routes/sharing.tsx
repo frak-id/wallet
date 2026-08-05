@@ -113,6 +113,13 @@ type SharingSearch = {
      * Display-only: never reaches the sharing link or any identity decision.
      */
     r?: string;
+    /**
+     * The page is being warmed by a host, not shown to anyone. Suppresses
+     * `sharing_page_viewed` — the sharing funnel's denominator, which warming every
+     * merchant surface would otherwise inflate with sheets nobody opened — and reports
+     * `sharing_page_preloaded` instead. Cleared by the activation fragment at tap.
+     */
+    preload?: boolean;
 };
 
 /**
@@ -132,6 +139,116 @@ function readString(value: unknown): string | undefined {
     if (typeof value === "string") return value;
     if (typeof value === "number") return String(value);
     return undefined;
+}
+
+/** The per-tap half of the params, which a host may deliver after load. See [useActivationParams]. */
+type ActivationSearch = Partial<
+    Pick<
+        SharingSearch,
+        "link" | "products" | "logoUrl" | "r" | "sid" | "preload" | "confirmed"
+    >
+>;
+
+/**
+ * Read the per-tap params out of a location fragment.
+ *
+ * Only keys the fragment actually carries are returned. That is load-bearing: the result is
+ * spread over the query-string params, so a key set to `undefined` would erase the warmed
+ * value underneath it rather than leave it alone — `logoUrl` and `appName` come from the
+ * merchant config on the warm URL and most activations have nothing to say about them.
+ *
+ * Returns null for an empty fragment so callers can tell "no activation" from "an
+ * activation that happens to carry nothing".
+ */
+export function parseActivationHash(hash: string): ActivationSearch | null {
+    const raw = hash.startsWith("#") ? hash.slice(1) : hash;
+    if (!raw) return null;
+
+    const params = new URLSearchParams(raw);
+    const activation: ActivationSearch = {};
+
+    const link = params.get("link");
+    if (link !== null) activation.link = link;
+
+    const logoUrl = params.get("logoUrl");
+    if (logoUrl !== null) activation.logoUrl = logoUrl;
+
+    const sid = params.get("sid");
+    if (sid !== null) activation.sid = sid;
+
+    // Sanitised exactly as the query string sanitises it: `r` is painted on the first frame,
+    // before any query resolves, so the fragment must not be a way around that filter.
+    //
+    // Assigned only if it survives sanitising. Setting the key to `undefined` would erase the
+    // warm URL's own headline underneath it, which is the exact failure this function's
+    // omit-absent-keys contract exists to prevent.
+    const seeded = params.get("r");
+    if (seeded !== null) {
+        const sanitised = sanitizeSeededReward(seeded);
+        if (sanitised !== undefined) activation.r = sanitised;
+    }
+
+    // `products` is the one structured param. A host that garbles it should cost us the
+    // product list, not the whole activation — the sheet is still usable without it.
+    const rawProducts = params.get("products");
+    if (rawProducts !== null) {
+        try {
+            const parsed = JSON.parse(rawProducts);
+            if (Array.isArray(parsed)) {
+                activation.products = parsed as SharingPageProduct[];
+            }
+        } catch {
+            // leave it unset, so the warm URL's own value (if any) still stands
+        }
+    }
+
+    if (params.has("confirmed")) {
+        activation.confirmed = readFlag(params.get("confirmed"));
+    }
+
+    // An activation fragment means a user opened this page, so it clears `preload` by
+    // default. Only an explicit value can keep the page warm — otherwise a host that forgot
+    // the flag would warm forever and never report a single view.
+    activation.preload = params.has("preload")
+        ? readFlag(params.get("preload"))
+        : false;
+
+    return activation;
+}
+
+/**
+ * The params a warmed page is still missing, delivered by fragment rather than by loading
+ * the page again.
+ *
+ * A native host warms this page against the real merchant so the bundle, React, i18n and the
+ * merchant-keyed queries are all done before the user taps. Everything left is per-tap — the
+ * link, the products, the seeded headline, the session token — and putting those in the
+ * query string would mean a second document load, which is the ~300ms this exists to avoid.
+ * A fragment change is same-document: no request, no remount, no React boot.
+ *
+ * Each activation replaces the previous one rather than merging into it. The pooled page
+ * outlives any one sheet, so a merge would let a stale `products` from the last sheet ride
+ * along into the next; hosts send the complete per-tap set every time.
+ *
+ * Note for hosts: two identical fragments in a row fire no `hashchange`. `sid` is minted per
+ * session, so in practice they always differ — but a host reusing one must vary something.
+ */
+function useActivationParams(enabled: boolean): ActivationSearch | null {
+    const [params, setParams] = useState<ActivationSearch | null>(() =>
+        enabled && typeof window !== "undefined"
+            ? parseActivationHash(window.location.hash)
+            : null
+    );
+
+    useEffect(() => {
+        if (!enabled) return;
+        const onHashChange = () =>
+            setParams(parseActivationHash(window.location.hash));
+        window.addEventListener("hashchange", onHashChange);
+        return () => window.removeEventListener("hashchange", onHashChange);
+    }, [enabled]);
+
+    return params;
 }
 
 export const Route = createFileRoute("/sharing")({
@@ -163,6 +280,7 @@ export const Route = createFileRoute("/sharing")({
         sid: readString(search.sid),
         sdkv: readString(search.sdkv),
         r: sanitizeSeededReward(search.r),
+        preload: readFlag(search.preload),
     }),
     beforeLoad: ({ search }) => {
         // A native host owns the caller identity, so a missing `clientId` is
@@ -189,6 +307,11 @@ export const Route = createFileRoute("/sharing")({
 });
 
 function WalletSharingPage() {
+    const search = Route.useSearch();
+    // A warmed page is activated by fragment, so the per-tap params can arrive after mount.
+    // Reading them here means every consumer below sees one merged view and none of them has
+    // to know which half of the URL its value came from.
+    const activation = useActivationParams(search.native ?? false);
     const {
         merchantId,
         clientId: paramClientId,
@@ -205,7 +328,8 @@ function WalletSharingPage() {
         sid,
         sdkv,
         r: seededReward,
-    } = Route.useSearch();
+        preload,
+    } = { ...search, ...activation };
     const { t: rawT } = useTranslation();
     const navigate = useNavigate();
     const storeClientId = useStore(clientIdStore, (s) => s.clientId);
@@ -231,17 +355,39 @@ function WalletSharingPage() {
     // over the moment it resolves.
     const estimatedReward = reward?.formatted ?? seededReward;
 
-    // Fire `sharing_page_viewed` once per mount, independent of whether we end up
-    // rendering the confirmation screen. Denominator for the sharing funnel.
+    // Report the page once, independent of whether we end up rendering the confirmation
+    // screen. A warmed page has not been seen by anyone yet, so it reports itself as a
+    // preload and reports the view when its activation fragment lands — `preload` is in the
+    // dep list precisely so the flip fires the second event.
     useEffect(() => {
-        trackEvent("sharing_page_viewed", {
+        trackEvent(preload ? "sharing_page_preloaded" : "sharing_page_viewed", {
             merchant_id: merchantId,
             // Which SDK versions are still in the field, so a change here can
             // be weighed against what it would break.
             sdk_version: sdkv,
             native,
         });
-    }, [merchantId, sdkv, native]);
+    }, [merchantId, sdkv, native, preload]);
+
+    // Tell the host the page has actually painted, so it can drop its loading skeleton on a
+    // fact rather than a timer. Two frames: the first is scheduled before this render is
+    // committed, the second cannot run until after it has been painted.
+    //
+    // Skipped while warming — nothing is on screen for a user to be waiting on, and the
+    // host has no sheet up to uncover.
+    useEffect(() => {
+        if (preload || !returnScheme) return;
+        let inner = 0;
+        const outer = requestAnimationFrame(() => {
+            inner = requestAnimationFrame(() => {
+                sendHostResult({ scheme: returnScheme, action: "ready", sid });
+            });
+        });
+        return () => {
+            cancelAnimationFrame(outer);
+            cancelAnimationFrame(inner);
+        };
+    }, [preload, returnScheme, sid]);
 
     // Fetch backend-driven merchant config to source attribution defaults
     const { data: defaultAttribution } = useMerchantResolvedConfig({
@@ -314,6 +460,15 @@ function WalletSharingPage() {
         () =>
             confirmed || (merchantId ? getSavedConfirmation(merchantId) : false)
     );
+
+    // A native host used to deliver `confirmed=1` by loading the page again, which remounted
+    // this component and re-ran the initialiser above. It now delivers it as a fragment on the
+    // already-loaded page, and a `useState` initialiser does not run twice — so without this the
+    // post-share confirmation screen never appears on exactly the warmed, activated path that is
+    // now the fast one.
+    useEffect(() => {
+        if (confirmed) setShowConfirmation(true);
+    }, [confirmed]);
 
     // Build the final sharing link with Frak context via shared helper.
     // Use the selected product's link if available, otherwise fall back to default.

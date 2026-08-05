@@ -61,9 +61,17 @@ the `AndroidView`, which the web view therefore never sees. Dragging translates 
 (the container is transparent, so that *is* the sheet) and releases past a distance or
 velocity threshold into a dismiss.
 
-If the page ever moves to document scroll in native mode, delete all of this: `AndroidViewHolder`
-is a `NestedScrollingParent3` and `WebView` a `NestedScrollingChild`, so the correct
-at-top-drags-the-sheet behaviour comes for free.
+This has been tried the other way and it does not work. The theory was that moving the page to
+document scroll would let the two sides arbitrate by themselves — `AndroidViewHolder` is a
+`NestedScrollingParent3` — and the strip could go. Document scroll was implemented, the strip
+deleted, and on device the sheet took every downward drag and the page could not be scrolled back
+up at all. The wallet-side change was reverted.
+
+The reason is that **`android.webkit.WebView` does not implement `NestedScrollingChild`**. There is
+no flag for it; `View.isNestedScrollingEnabled` gates a dispatch the WebView never makes. Making
+that route work needs a `WebView` subclass implementing `NestedScrollingChild3` over
+`NestedScrollingChildHelper` and dispatching from `onTouchEvent`. Until someone writes and
+device-tests that, the grab strip is the mechanism, not a workaround for a missing CSS change.
 
 **The warm web view is the real one.** `preloadSharing` used to warm a throwaway view for
 DNS/TLS/engine only; the sheet still booted a fresh WebView at tap time and — worse — did not
@@ -94,13 +102,49 @@ once that was fixed the *navigation* lost 230-427ms in the same place. Two traps
 - Nothing may acquire the view or start the build from inside a `remember` block. A discarded
   composition attempt would strand a lent view for the life of the process.
 
-Device numbers, one session, warm document 1780ms: tap-to-first-paint 555/672/757ms after the
-first open, against 716-1119ms before. The session build is now 3-5ms of it. What remains is the
-document load and React boot contending with the sheet's own composition — both consequences of
-navigating a second time, and neither reachable from the native side.
+Device numbers before fragment activation, one session, warm document 1780ms: tap-to-first-paint
+555/672/757ms after the first open, against 716-1119ms before. The session build is 3-5ms of it.
+What remained was the document load and React boot contending with the sheet's own composition —
+both consequences of navigating a second time.
+
+**The second navigation is now a fragment.** The pool warms the *real* merchant page
+(`SharingPageUrl.warm`: real `merchantId` and `clientId`, plus `preload=1`), so the bundle,
+i18n and both merchant-keyed queries are done before the tap. What is left is per-tap — link,
+products, seeded headline, session id — and that arrives as a location fragment
+(`SharingPageUrl.activationFragment`), which the browser resolves same-document: no request, no
+remount, no React boot. The page merges it over its query params in `useActivationParams`.
+
+Four things hold this together, and each one is a bug if dropped:
+
+- `preload=1` makes the warm page report `sharing_page_preloaded` instead of
+  `sharing_page_viewed`. That event is the sharing funnel's denominator; warming every merchant
+  surface into it would silently deflate every downstream rate. The activation fragment clears
+  the flag, and clearing it is what emits the real view.
+- Activation only happens on a *finished* warm document (`SharingWebViewHandle.documentReady`).
+  A fragment change starts no request, so hanging one off a half-loaded page strands it forever.
+  Warming is usually still in flight at tap, so this is the common case, not the edge.
+- `SharingSession.warmBaseUrl` is rebuilt from the same resolved config as `pageUrl` and compared
+  against what the view actually shows. A pool warmed for another merchant must not be activated
+  on top of.
+- `action=ready` settles the tier-3 deadline, not just the skeleton. A same-document navigation
+  is not guaranteed to produce an `onPageFinished`, which is otherwise the only thing that
+  settles it — without this the *fastest* path is the one that times out at 1.5s and falls back
+  to the native chooser over a perfectly good page.
+- The fragment is hung off `WebView.getUrl()`, **not** off the URL we warmed with. The page's
+  router normalises its own search params on load (`native=1` becomes `native=true`, an absent
+  `confirmed` becomes `confirmed=false`), so the document has moved before anyone taps. The
+  first device trace of this read `ACTIVATING` and then spent 695ms on `document finished`,
+  because a fragment on a URL that is not the committed one is a full cross-document navigation.
+  That mismatch is also the long-standing second `document finished` in every trace since
+  preloading landed.
+
+Only keys the fragment actually carries are parsed, on both sides. The result is spread over the
+warm URL's params, so a key present-and-undefined would erase the merchant config value beneath
+it rather than leave it alone.
 
 `SharingTrace` records these milestones. It is off unless the tag is enabled:
-`adb shell setprop log.tag.FrakSharing DEBUG` then `adb logcat -s FrakSharing`.
+`adb shell setprop log.tag.FrakSharing DEBUG` then `adb logcat -s FrakSharing`. `launch (warm
+view, ACTIVATING)` is the line that says the fast path was taken.
 
 iOS has none of these changes yet.
 

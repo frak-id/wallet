@@ -40,6 +40,18 @@ internal sealed interface SharingPageAction {
 
     data object Error : SharingPageAction
 
+    /**
+     * The page has painted. Not an outcome — the only action here that reports progress rather
+     * than a user's decision.
+     *
+     * Better than the [SharingWebViewBinding.onPageVisible] heuristic it supersedes: that one
+     * is `postVisualStateCallback` on document load, which answers "the web view has drawn a
+     * frame", not "the frame has the sharing page in it". The page knows the difference and
+     * this is it saying so. The heuristic stays as the fallback for wallet builds too old to
+     * send this.
+     */
+    data object Ready : SharingPageAction
+
     data class Code(
         val value: String,
         /** Epoch seconds, or null when the page sent none. */
@@ -68,6 +80,8 @@ internal sealed interface SharingPageAction {
                 "copy" -> Copy
 
                 "error" -> Error
+
+                "ready" -> Ready
 
                 // A code action with no code is not one; treat it as unknown.
                 "code" -> value?.takeIf { it.isNotEmpty() }?.let { Code(it, exp?.toLongOrNull()) }
@@ -120,13 +134,47 @@ internal class SharingWebViewHandle(
     val view: WebView,
     private val client: SharingWebViewClient,
 ) {
+    /**
+     * The document [load] last pointed the view at, or null if it has never been pointed
+     * anywhere. What makes a same-document activation decidable: hanging a fragment off a URL is
+     * only free if that URL is the one already loaded.
+     *
+     * Tracked here rather than read back from `WebView.getUrl`, which reports the *committed*
+     * URL and so still answers with the previous page for the whole of a load in flight —
+     * exactly the window this is consulted in.
+     */
+    var loadedBaseUrl: String? = null
+        private set
+
+    /**
+     * Whether [loadedBaseUrl] actually finished loading.
+     *
+     * Load-bearing, not diagnostic. Warming is usually still in flight when the user taps, and
+     * hanging a fragment off a half-loaded document would leave the page stuck exactly where it
+     * got to — a fragment change starts no request, so nothing would ever finish it. A session
+     * that cannot activate must do a full load instead.
+     *
+     * Only meaningful while the pool owns the handle. Once lent, the session drives the view
+     * directly and this stops tracking it; the pool reloads from scratch on release anyway.
+     */
+    var documentReady: Boolean = false
+        private set
+
     /** Points the view at a session. Resets per-load state; see [SharingWebViewBinding]. */
     fun bind(binding: SharingWebViewBinding) {
         client.binding = binding
     }
 
+    /** A full navigation. Fragment activations do not come through here — see [documentReady]. */
     fun load(url: String) {
+        loadedBaseUrl = url.substringBefore('#')
+        documentReady = false
         view.loadUrl(url)
+    }
+
+    /** Called by the owner when this handle's document reports itself finished. */
+    fun onDocumentReady() {
+        documentReady = true
     }
 
     fun destroy() {

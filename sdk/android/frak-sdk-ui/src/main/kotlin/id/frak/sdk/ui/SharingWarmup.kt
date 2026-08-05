@@ -2,11 +2,12 @@ package id.frak.sdk.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import id.frak.sdk.Frak
 import id.frak.sdk.core.FrakError
 
 /**
- * Warms the data the sheet needs before it can build a URL at all.
+ * Warms the data the sheet needs before it can build a URL at all, then the page itself.
  *
  * The web view is only half of the tap-to-paint cost; the other half is `SharingSheetState.build`,
  * which cannot start the page load until `buildSharingLink`, `anonymousId` and `resolveConfig`
@@ -18,30 +19,56 @@ import id.frak.sdk.core.FrakError
  * [id.frak.sdk.core.FrakConfig.preloadSharing] flag as the view pool: doing work ahead of an
  * intent the user has not expressed yet is exactly what that flag opts into.
  *
- * The reward is deliberately not warmed here. `RewardRepository`'s cache is keyed on the encoded
+ * Resolving the config is also what unlocks warming the *real* page rather than a neutral one —
+ * the merchantId is the thing the page needs before it can boot its queries, and it does not
+ * exist any earlier. That is why the pool is warmed from here rather than from its own
+ * composition.
+ *
+ * The reward is deliberately not warmed. `RewardRepository`'s cache is keyed on the encoded
  * product list, so a warm-up without the request's products mints a different key and buys the
  * sheet nothing.
  */
 @Composable
-internal fun WarmSharingData() {
+internal fun WarmSharingData(pool: SharingWebViewPool?) {
     if (!Frak.isInitialized) return
     if (!Frak.preloadSharing) return
 
-    LaunchedEffect(Unit) {
+    val packageId = LocalContext.current.packageName
+    val walletOrigin = Frak.client.environment.wallet
+
+    LaunchedEffect(pool, packageId, walletOrigin) {
         val trace = SharingTrace()
         val client = Frak.client
 
         // The keystore mint is already eager at initialize; awaiting it here only guarantees the
         // sheet's own read lands on a completed Deferred rather than joining one in flight.
-        client.anonymousId()
+        val clientId = client.anonymousId()
         trace.mark("warm identity ready")
 
-        try {
-            client.config.resolve()
-        } catch (unavailable: FrakError) {
-            // A warm-up that fails is not a failure: the sheet re-resolves and carries its own
-            // tier-3 fallback for the case where that fails too.
-        }
+        val config =
+            try {
+                client.config.resolve()
+            } catch (unavailable: FrakError) {
+                // A warm-up that fails is not a failure: the sheet re-resolves and carries its own
+                // tier-3 fallback for the case where that fails too.
+                null
+            }
         trace.mark("warm config ready")
+
+        // Without both halves of the identity the page would render nothing, and warming a page
+        // that renders nothing banks only DNS/TLS/bundle — not the queries, which are the
+        // expensive part. Better to leave the view cold and let the sheet do a full load.
+        if (config == null || clientId == null) return@LaunchedEffect
+
+        pool?.warm(
+            SharingPageUrl.warm(
+                walletOrigin = walletOrigin,
+                merchantId = config.merchantId,
+                clientId = clientId,
+                packageId = packageId,
+                appName = config.sdkConfig?.name ?: config.name,
+                logoUrl = config.sdkConfig?.logoUrl,
+            ),
+        )
     }
 }

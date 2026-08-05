@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -53,6 +54,8 @@ class SharingSheetStateTest {
 
     private fun TestScope.newState(
         client: FakeSharingClient,
+        // Before `onFinished` so a trailing lambda still binds to it, as most tests here rely on.
+        activationBaseUrl: String? = null,
         onFinished: (SharingResult) -> Unit = {},
     ) = SharingSheetState(
         scope = this,
@@ -62,6 +65,7 @@ class SharingSheetStateTest {
         // Keeps build() on the TestScope's scheduler; the production default (Dispatchers.Default)
         // would run it on a real thread pool and make advanceUntilIdle meaningless.
         workContext = EmptyCoroutineContext,
+        activationBaseUrl = activationBaseUrl,
         buildSharingLink = client::buildSharingLink,
         anonymousId = { client.anonymousId },
         environment = { client.environment },
@@ -778,11 +782,161 @@ class SharingSheetStateTest {
             assertEquals("no chooser, and no premature outcome", 0, finishedCount)
         }
 
+    @Test
+    fun `the page reporting ready uncovers it, without ending the session`() =
+        runTest {
+            val client = FakeSharingClient()
+            var finishedCount = 0
+            val state = newState(client, onFinished = { finishedCount++ })
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            assertFalse("covered until the page says otherwise", state.pageVisible)
+
+            state.onPageAction(SharingPageAction.Ready)
+
+            assertTrue("ready is what drops the skeleton", state.pageVisible)
+            assertTrue("and settles the load, since a fragment nav may never finish a document", state.pageLoaded)
+            // Every other page action settles the sheet; this one is progress, and a sheet that
+            // closed the moment the page finished painting would be unusable.
+            assertEquals("ready must not finish the session", 0, finishedCount)
+        }
+
+    /**
+     * Fragment activation: the difference between reusing a warmed page and loading it twice.
+     * These pin both halves, because getting it wrong is silent — a mismatched base just costs
+     * ~300ms of React boot, and a wrongly-matched one shows the user a page that never activates.
+     */
+    @Test
+    fun `a session on a matching warm page navigates by fragment only`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            val warmBase = requireNotNull(state.session?.warmBaseUrl)
+
+            val activated = newState(client, activationBaseUrl = warmBase)
+            activated.prepare(SharingRequest(link = "https://acme.example/kettle"))
+            advanceUntilIdle()
+            val view = WebView(context)
+            // The warm document, as the page left it: the router rewrites its own search params
+            // on load, so the committed URL is NOT the string we warmed with. Activation has to
+            // hang the fragment off this, which is the bug the first device trace exposed.
+            view.loadUrl(NORMALISED_WARM_URL)
+            activated.attach(view)
+            shadowOf(getMainLooper()).idle()
+
+            val loaded = requireNotNull(shadowOf(view).lastLoadedUrl)
+            assertTrue(
+                "must hang off the URL the document actually settled on, not ours: $loaded",
+                loaded.startsWith("$NORMALISED_WARM_URL#"),
+            )
+            assertTrue("the per-tap link still has to arrive", loaded.contains("link="))
+            assertTrue("and the flag that turns a preload into a view", loaded.contains("preload=0"))
+        }
+
+    @Test
+    fun `a session whose warm page is not the one loaded does a full navigation`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state =
+                newState(
+                    client,
+                    activationBaseUrl = "https://wallet.frak.id/sharing?native=1&preload=1&merchantId=other",
+                )
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            val view = WebView(context)
+            state.attach(view)
+            shadowOf(getMainLooper()).idle()
+
+            val loaded = requireNotNull(shadowOf(view).lastLoadedUrl)
+            // A pool warmed for a different merchant must not be activated on top of: the page
+            // would keep the wrong merchant's queries and never fetch the right ones.
+            assertFalse("must not activate on a page it was not warmed against", loaded.contains("#"))
+            assertEquals(state.session?.url(confirmed = false), loaded)
+        }
+
+    @Test
+    fun `the confirmation step stays same-document once activated`() =
+        runTest {
+            val client = FakeSharingClient()
+            val probe = newState(client)
+            probe.prepare(SharingRequest())
+            advanceUntilIdle()
+            val warmBase = requireNotNull(probe.session?.warmBaseUrl)
+
+            val state = newState(client, activationBaseUrl = warmBase)
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            val view = WebView(context)
+            view.loadUrl(NORMALISED_WARM_URL)
+            state.attach(view)
+            shadowOf(getMainLooper()).idle()
+
+            // share(), not copy(): copy deliberately records without reloading, so it is share
+            // that drives the page to its confirmation screen.
+            state.share()
+            advanceUntilIdle()
+
+            val loaded = requireNotNull(shadowOf(view).lastLoadedUrl)
+            // Routing only the first load through the activation path would make every later
+            // step the expensive one instead — which is the bug this ordering exists to avoid.
+            assertTrue(
+                "confirmation must stay on the same document: $loaded",
+                loaded.startsWith("$NORMALISED_WARM_URL#"),
+            )
+            assertTrue(loaded.contains("confirmed=1"))
+        }
+
+    @Test
+    fun `a page that reports ready is not overtaken by the tier-3 deadline`() =
+        runTest {
+            val client = FakeSharingClient()
+            var finished: SharingResult? = null
+            val state = newState(client, onFinished = { finished = it })
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            launchDeadline(state)
+
+            state.onPageAction(SharingPageAction.Ready)
+            advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
+            advanceUntilIdle()
+
+            // The activation path is same-document, so `onPageFinished` may never arrive for it.
+            // If `ready` did not settle the budget, the fastest open would be the one that gave
+            // up on its own page and raised the native chooser instead.
+            assertNull("a painted page must not be abandoned", finished)
+        }
+
+    @Test
+    fun `an activated sheet shows the warm page instead of covering it`() =
+        runTest {
+            val client = FakeSharingClient()
+
+            // The skeleton exists to hide a blank web view. An activated one is not blank: it is
+            // already showing the merchant's page, painted before the user tapped.
+            val activated = newState(client, activationBaseUrl = NORMALISED_WARM_URL)
+            assertTrue("nothing to cover", activated.pageVisible)
+
+            val cold = newState(client)
+            assertFalse("a cold view really is blank, and must stay covered", cold.pageVisible)
+        }
+
     private fun TestScope.launchDeadline(state: SharingSheetState) =
         launch { state.awaitLoadDeadline(SHEET_LOAD_DEADLINE_MILLIS) }
 
     private companion object {
         const val MARKER_URL = "https://acme.example/marker"
+
+        /**
+         * What a warmed sharing page's URL actually looks like once loaded. The router
+         * normalises its own search params (`native=1` -> `native=true`, and `confirmed`
+         * appears even when absent), so this is deliberately not the string we warm with.
+         */
+        const val NORMALISED_WARM_URL =
+            "https://wallet.frak.id/sharing?native=true&preload=true&confirmed=false"
 
         /** Mirrors `SharingPresentation`'s own constant. */
         const val SHEET_LOAD_DEADLINE_MILLIS = 1_500L

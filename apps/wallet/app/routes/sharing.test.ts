@@ -1,6 +1,6 @@
 import { parseSearchWith } from "@tanstack/react-router";
 import { describe, expect, it } from "vitest";
-import { Route } from "./sharing";
+import { parseActivationHash, Route } from "./sharing";
 
 // `validateSearch` is the whole native-facing param contract, and a shipped
 // SDK binary can never be updated to match a change here.
@@ -135,5 +135,95 @@ describe("/sharing params as a host writes them", () => {
         expect(() =>
             beforeLoad({ search: fromUrl("?native=1&merchantId=m1") })
         ).toThrow(/clientId/);
+    });
+});
+
+describe("/sharing activation fragment", () => {
+    it("reads the per-tap params a warmed page is still missing", () => {
+        const activation = parseActivationHash(
+            "#link=https%3A%2F%2Facme.example%2Fkettle&r=12%20%E2%82%AC&sid=s1&preload=0"
+        );
+        expect(activation).toMatchObject({
+            link: "https://acme.example/kettle",
+            r: "12 €",
+            sid: "s1",
+            preload: false,
+        });
+    });
+
+    it("clears preload, which is what makes the view event fire", () => {
+        // The warm load carries `preload=1`; activation is the only thing that
+        // turns this page into something a user is actually looking at.
+        expect(parseActivationHash("#preload=0&sid=s1")?.preload).toBe(false);
+        expect(parseActivationHash("#preload=1")?.preload).toBe(true);
+    });
+
+    it("clears preload even when the host forgot to say so", () => {
+        // A fragment only ever arrives because someone tapped. Defaulting the
+        // other way would leave the page warm forever and never report a view.
+        expect(parseActivationHash("#sid=s1")?.preload).toBe(false);
+    });
+
+    it("omits keys the fragment does not carry", () => {
+        // The result is spread over the warm URL's params, so a key present and
+        // undefined would erase the merchant config value underneath it.
+        const activation = parseActivationHash("#sid=s1");
+        expect(activation).not.toHaveProperty("logoUrl");
+        expect(activation).not.toHaveProperty("link");
+        expect(activation).not.toHaveProperty("products");
+    });
+
+    it("carries a per-request logo override", () => {
+        // SharingRequest.logoUrl beats the merchant config, and the warm URL was
+        // built from the config before any request existed.
+        expect(
+            parseActivationHash("#logoUrl=https%3A%2F%2Facme.example%2Fl.png")
+                ?.logoUrl
+        ).toBe("https://acme.example/l.png");
+    });
+
+    it("parses the product list", () => {
+        const products = [{ title: "Kettle", link: "https://acme.example/k" }];
+        const activation = parseActivationHash(
+            `#products=${encodeURIComponent(JSON.stringify(products))}`
+        );
+        expect(activation?.products).toEqual(products);
+    });
+
+    it("drops a garbled product list without losing the activation", () => {
+        // The sheet is still usable without products; it is not usable without
+        // the link and sid that came in the same fragment.
+        const activation = parseActivationHash("#products=not-json&sid=s1");
+        expect(activation?.products).toBeUndefined();
+        expect(activation?.sid).toBe("s1");
+    });
+
+    it("sanitizes the seeded headline exactly as the query string does", () => {
+        // `r` is painted on the first frame, so it reaches the DOM before any
+        // query resolves — the fragment must not be a way around that filter.
+        const viaHash = parseActivationHash("#r=%3Cimg%20src%3Dx%3E");
+        expect(viaHash?.r).toBe(fromUrl("?r=%3Cimg%20src%3Dx%3E").r);
+    });
+
+    it("treats an empty fragment as no activation at all", () => {
+        // Distinguishable from an activation carrying nothing: the page must
+        // not clear `preload` just because it was loaded without a fragment.
+        expect(parseActivationHash("")).toBeNull();
+        expect(parseActivationHash("#")).toBeNull();
+    });
+});
+
+describe("/sharing activation fragment hardening", () => {
+    it("omits a seeded headline that fails sanitising, rather than nulling it", () => {
+        // The result is spread over the warm URL's params. A key present-and-undefined would
+        // erase the headline the warm page already painted — the exact failure the
+        // omit-absent-keys contract exists to prevent.
+        const activation = parseActivationHash("#r=%3Cimg%20src%3Dx%3E&sid=s1");
+        expect(activation).not.toHaveProperty("r");
+        expect(activation?.sid).toBe("s1");
+    });
+
+    it("keeps a seeded headline that does survive sanitising", () => {
+        expect(parseActivationHash("#r=12%20%E2%82%AC")?.r).toBe("12 €");
     });
 });

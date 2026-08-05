@@ -74,7 +74,7 @@ public fun rememberFrakSharingLauncher(
     // honest moment to start warming: the web view against the wallet origin, and the
     // identity/config reads the sheet cannot build a URL without.
     val pool = rememberSharingWebViewPool()
-    WarmSharingData()
+    WarmSharingData(pool)
 
     val context = LocalContext.current
     // Deliberately this composable's scope, not the sheet's — it outlives any one sheet, so a

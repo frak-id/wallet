@@ -41,11 +41,74 @@ internal class SharingSession(
     val link: String,
     val shareTitle: String?,
     private val pageUrl: String?,
+    /**
+     * The warm URL this session's params can be hung off, when one exists. Compared against what
+     * the view is actually showing before any fragment is used — a pool warmed for a different
+     * merchant, or not warmed at all, must not be activated on top of.
+     */
+    val warmBaseUrl: String? = null,
+    /** The per-tap params as a fragment, for the [warmBaseUrl] case. See [SharingPageUrl.activationFragment]. */
+    private val activationFragment: String? = null,
 ) {
     val hasPage: Boolean get() = pageUrl != null
 
-    /** Null when [hasPage] is false. Never call this without checking it first. */
-    fun url(confirmed: Boolean): String? = pageUrl?.let { if (confirmed) "$it&confirmed=1" else it }
+    /**
+     * How the view should get to this session's page, given what it is already showing.
+     *
+     * [SharingNavigation.Activate] when [currentBaseUrl] is the page this session was warmed
+     * against — no request, no remount, no React boot. Otherwise a full [SharingNavigation.Load],
+     * which is also the answer whenever preloading is off, the warm-up never finished, or the
+     * sheet has since navigated somewhere else entirely (the install page).
+     *
+     * Null when [hasPage] is false. Never call this without checking it first.
+     */
+    fun navigation(
+        confirmed: Boolean,
+        currentBaseUrl: String? = null,
+    ): SharingNavigation? {
+        val warm = warmBaseUrl
+        val fragment = activationFragment
+        if (warm != null && fragment != null && currentBaseUrl == warm) {
+            return SharingNavigation.Activate(
+                fragment = if (confirmed) "$fragment&confirmed=1" else fragment,
+                fullUrl = pageUrl?.let { if (confirmed) "$it&confirmed=1" else it },
+            )
+        }
+        return pageUrl?.let {
+            SharingNavigation.Load(if (confirmed) "$it&confirmed=1" else it)
+        }
+    }
+
+    /** Test/diagnostic view of [navigation]'s full-load answer. */
+    fun url(confirmed: Boolean): String? = (navigation(confirmed) as? SharingNavigation.Load)?.url
+}
+
+/**
+ * How to get the page in front of the user.
+ *
+ * The distinction is not cosmetic. A warmed document's URL is *not* the URL we warmed it on:
+ * the page's router normalises its own search params on load (`native=1` becomes `native=true`,
+ * an absent `confirmed` becomes `confirmed=false`), so the address bar has moved before the user
+ * ever taps. `loadUrl(warmUrl + fragment)` therefore compares against the wrong string, misses,
+ * and does a full cross-document navigation — which is exactly what the first device trace of
+ * this showed: `ACTIVATING` followed by a 695ms `document finished`. It is also why every trace
+ * since preloading landed has carried a second `document finished` a few ms after the first.
+ */
+internal sealed interface SharingNavigation {
+    /** A full navigation, for a view that is not already on this session's warm page. */
+    data class Load(
+        val url: String,
+    ) : SharingNavigation
+
+    /**
+     * A fragment set on whatever document is loaded, which is the only way to stay same-document
+     * without knowing the URL the page rewrote itself to.
+     */
+    data class Activate(
+        val fragment: String,
+        /** Used only if the view turns out to have no committed URL to hang [fragment] off. */
+        val fullUrl: String?,
+    ) : SharingNavigation
 }
 
 /** The sheet's behaviour, kept out of the composable since the ordering rules here are sequencing-sensitive. */
@@ -69,6 +132,14 @@ internal class SharingSheetState(
      * Tests override this with `EmptyCoroutineContext` so work stays on their `TestScope`.
      */
     private val workContext: CoroutineContext = Dispatchers.Default,
+    /**
+     * The document the view handed to this sheet is already showing, if it is a finished warm
+     * page. Lets the session activate by fragment instead of loading the page a second time.
+     *
+     * Decided once, at the tap, by [SharingPresentation]: whether the warm-up had finished by
+     * then is exactly the question, and re-asking it later would race the answer.
+     */
+    private val activationBaseUrl: String? = null,
     // Individually injected and resolved lazily, since Frak.initialize may not have run yet
     // when this is constructed.
     private val buildSharingLink: suspend (SharingRequest) -> String? = { Frak.client.sharing.buildLink(it) },
@@ -97,8 +168,13 @@ internal class SharingSheetState(
      * Latches: once the page has been seen, a later same-session navigation (the `confirmed=1`
      * reload, the install page) must not put the skeleton back — the user is looking at real
      * content and a reappearing placeholder reads as a fault.
+     *
+     * Starts true when this sheet was handed a finished warm page. The skeleton exists to hide a
+     * blank web view, and an activated view is not blank — it is already showing the merchant's
+     * own page, painted before the user tapped. Covering that with a placeholder and then
+     * cross-fading to it is strictly worse than showing it, and on device it read as a flash.
      */
-    var pageVisible: Boolean by mutableStateOf(false)
+    var pageVisible: Boolean by mutableStateOf(activationBaseUrl != null)
         private set
 
     private var best: SharingResult? = null
@@ -234,7 +310,7 @@ internal class SharingSheetState(
     private fun loadSessionUrl() {
         if (sessionLoaded) return
         val view = webView ?: return
-        val url = session?.url(confirmed = false) ?: return
+        val navigation = pageNavigation(confirmed = false) ?: return
         sessionLoaded = true
         // A WebView must be driven from the thread that created it, and build() runs off Main
         // ([workContext]) — so a hop is needed, but only from there.
@@ -245,11 +321,27 @@ internal class SharingSheetState(
         // window. That would put the navigation back behind the sheet composition this whole
         // split exists to get ahead of.
         if (Looper.myLooper() == Looper.getMainLooper()) {
-            view.loadUrl(url)
+            view.navigate(navigation)
         } else {
-            mainHandler.post { view.loadUrl(url) }
+            mainHandler.post { view.navigate(navigation) }
         }
     }
+
+    /**
+     * How the page should get where it is going next, preferring a same-document activation over
+     * loading the whole page again.
+     *
+     * Every navigation this sheet makes goes through here, not just the first: once the view is
+     * on the warm document, the confirmation and share-again steps are fragment changes too, and
+     * routing only the initial load through it would make those the expensive ones instead.
+     */
+    private fun pageNavigation(confirmed: Boolean): SharingNavigation? =
+        session?.navigation(
+            confirmed = confirmed,
+            // Not the handle's tracked value: once the sheet owns the view it navigates the
+            // view itself (install page, and back), and only this sheet knows where it went.
+            currentBaseUrl = if (showingInstallPage) null else activationBaseUrl,
+        )
 
     /**
      * Drops this state's reference to the view.
@@ -359,13 +451,13 @@ internal class SharingSheetState(
             }
 
             SharingPageAction.ShareAgain -> {
-                session?.url(confirmed = false)?.let {
+                pageNavigation(confirmed = false)?.let {
                     // Reopens the guards share()/copy() left set.
                     shareInFlight = false
                     copyInFlight = false
                     // Back on the sharing page — a later load failure belongs to it again.
                     showingInstallPage = false
-                    webView?.loadUrl(it)
+                    webView?.navigate(it)
                 }
             }
 
@@ -393,6 +485,19 @@ internal class SharingSheetState(
             SharingPageAction.Error -> {
                 finish(SharingResult.Failed(FrakError.Decoding("the sharing page refused to render")))
             }
+
+            SharingPageAction.Ready -> {
+                // Progress, not an outcome: the page says it has painted. Everything else in
+                // this `when` finishes the session.
+                trace.mark("page reported ready")
+                // Settles the tier-3 deadline as well as the skeleton, and that is not belt-and-
+                // braces. A fragment activation is a same-document navigation, which is not
+                // guaranteed to produce an `onPageFinished` — the only other thing that settles
+                // it. Without this, the fast path would be the one that times out at 1.5s and
+                // fell back to the native chooser with a perfectly good page already on screen.
+                onPageReady()
+                onPageVisible()
+            }
         }
     }
 
@@ -401,8 +506,13 @@ internal class SharingSheetState(
         // A failed install page: tier-3 fallback is wrong here (already shared), so reload the
         // confirmation screen instead — it has its own share-again/install controls.
         if (showingInstallPage) {
+            // Navigation computed *before* clearing the flag. pageNavigation() reads it to decide
+            // whether the view is still on the activated document, and the view is emphatically
+            // not: it is on an install page that just failed. Clearing first made this recover
+            // by hanging a fragment off the failed page's own URL, leaving the user nowhere.
+            val recovery = pageNavigation(confirmed = true)
             showingInstallPage = false
-            session?.url(confirmed = true)?.let { webView?.loadUrl(it) }
+            recovery?.let { webView?.navigate(it) }
             return
         }
         // A renderer crash after paint also lands here. Falling back would raise an unwanted
@@ -475,8 +585,8 @@ internal class SharingSheetState(
      */
     private fun confirm(result: SharingResult) {
         record(result)
-        val confirmedUrl = session?.url(confirmed = true) ?: return // null under tier 3 (no page)
-        webView?.loadUrl(confirmedUrl)
+        val confirmed = pageNavigation(confirmed = true) ?: return // null under tier 3 (no page)
+        webView?.navigate(confirmed)
     }
 
     private fun record(result: SharingResult) {
@@ -542,11 +652,13 @@ internal class SharingSheetState(
             }
         trace.mark("  reward seeded")
 
+        val appName = config.sdkConfig?.name ?: config.name
+        val requestLogoUrl = request.logoUrl
         return SharingSession(
             walletOrigin = walletOrigin,
             returnScheme = SharingPageUrl.returnScheme(packageId),
             link = link,
-            shareTitle = config.sdkConfig?.name ?: config.name,
+            shareTitle = appName,
             pageUrl =
                 SharingPageUrl.build(
                     walletOrigin = walletOrigin,
@@ -554,10 +666,33 @@ internal class SharingSheetState(
                     clientId = clientId,
                     packageId = packageId,
                     sessionId = sessionId,
-                    appName = config.sdkConfig?.name ?: config.name,
-                    logoUrl = request.logoUrl ?: config.sdkConfig?.logoUrl,
+                    appName = appName,
+                    logoUrl = requestLogoUrl ?: config.sdkConfig?.logoUrl,
                     link = request.link ?: request.products.firstOrNull()?.link,
                     products = productsJson(request),
+                    seededReward = seededReward,
+                ),
+            // Rebuilt here rather than passed in from the pool, so it is derived from the same
+            // resolved config as pageUrl. If the pool warmed against anything else — a stale
+            // merchant, a config that changed under us — the strings differ and the session
+            // falls back to a full load rather than activating on top of the wrong page.
+            warmBaseUrl =
+                SharingPageUrl.warm(
+                    walletOrigin = walletOrigin,
+                    merchantId = config.merchantId,
+                    clientId = clientId,
+                    packageId = packageId,
+                    appName = appName,
+                    logoUrl = config.sdkConfig?.logoUrl,
+                ),
+            activationFragment =
+                SharingPageUrl.activationFragment(
+                    sessionId = sessionId,
+                    link = request.link ?: request.products.firstOrNull()?.link,
+                    products = productsJson(request),
+                    // Only when the request overrides the config: the warm URL already carries
+                    // the config's own logo, and re-sending it would be noise.
+                    logoUrl = requestLogoUrl,
                     seededReward = seededReward,
                 ),
         )
@@ -606,5 +741,38 @@ internal class SharingSheetState(
 
         /** Host of the store listing the install page links to. */
         const val PLAY_STORE_HOST = "play.google.com"
+    }
+}
+
+/**
+ * Performs a [SharingNavigation].
+ *
+ * The activation case reads [android.webkit.WebView.getUrl] rather than using the URL we warmed
+ * the view with, and that is the whole fix: the sharing page's router normalises its own search
+ * params on load (`native=1` becomes `native=true`, an absent `confirmed` becomes
+ * `confirmed=false`), so by the time anyone taps, the document has moved somewhere we never
+ * named. Hanging the fragment off our string missed by exactly that much and reloaded the entire
+ * page — `ACTIVATING` followed by a 695ms `document finished` in the first device trace of this.
+ *
+ * Against the committed URL it is a fragment-only change, which Blink resolves same-document: no
+ * request, no remount, no React boot, and a `hashchange` for the page to read.
+ */
+private fun WebView.navigate(navigation: SharingNavigation) {
+    when (navigation) {
+        is SharingNavigation.Load -> {
+            loadUrl(navigation.url)
+        }
+
+        is SharingNavigation.Activate -> {
+            val committed = url?.substringBefore('#')
+            if (committed != null) {
+                loadUrl(committed + navigation.fragment)
+            } else {
+                // No committed URL means nothing is loaded to hang a fragment off. The caller's
+                // documentReady guard should make this unreachable; load the page rather than
+                // leave the sheet on a skeleton if it ever is not.
+                navigation.fullUrl?.let(::loadUrl)
+            }
+        }
     }
 }

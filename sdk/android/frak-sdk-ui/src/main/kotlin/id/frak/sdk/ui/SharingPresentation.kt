@@ -19,7 +19,6 @@ import java.util.UUID
  * then renders a session that is already underway rather than starting one.
  */
 internal class SharingPresentation(
-    val request: SharingRequest,
     val state: SharingSheetState,
     val handle: SharingWebViewHandle,
     private val pool: SharingWebViewPool,
@@ -63,9 +62,26 @@ internal class SharingPresentation(
             onFinished: (SharingResult) -> Unit,
         ): SharingPresentation {
             val trace = SharingTrace()
-            trace.mark(if (pool.hasWarmView) "launch (warm view)" else "launch (COLD view)")
-
             val sessionId = UUID.randomUUID().toString()
+
+            // Taken before the state exists, because whether this view is a finished warm page
+            // decides how the session navigates — and the state needs that answer at
+            // construction. Bound here only by session id, which is already enough to make the
+            // client reject a late callback from the sheet that closed before this one.
+            val handle = pool.acquire(SharingWebViewBinding(sessionId = sessionId))
+
+            // A fragment activation is only same-document if the document is actually there.
+            // Warming is usually still in flight at tap, and hanging a fragment off a half-
+            // loaded page would strand it: nothing would ever finish the load.
+            val activationBaseUrl = handle.loadedBaseUrl?.takeIf { handle.documentReady }
+            trace.mark(
+                when {
+                    activationBaseUrl != null -> "launch (warm view, ACTIVATING)"
+                    pool.hasWarmView -> "launch (warm view, still loading)"
+                    else -> "launch (COLD view)"
+                },
+            )
+
             val state =
                 SharingSheetState(
                     // The launcher's scope, not the sheet's: an in-flight track() or share()
@@ -76,28 +92,28 @@ internal class SharingPresentation(
                     sessionId = sessionId,
                     onFinished = onFinished,
                     trace = trace,
+                    activationBaseUrl = activationBaseUrl,
                 )
 
-            val handle =
-                pool.acquire(
-                    SharingWebViewBinding(
-                        sessionId = sessionId,
-                        onAction = state::onPageAction,
-                        onPageReady = {
-                            trace.mark("document finished")
-                            state.onPageReady()
-                        },
-                        onPageVisible = {
-                            trace.mark("first paint")
-                            state.onPageVisible()
-                        },
-                        onLoadFailed = {
-                            trace.mark("load FAILED")
-                            state.onPageUnavailable()
-                        },
-                        onOpenExternal = state::openExternally,
-                    ),
-                )
+            handle.bind(
+                SharingWebViewBinding(
+                    sessionId = sessionId,
+                    onAction = state::onPageAction,
+                    onPageReady = {
+                        trace.mark("document finished")
+                        state.onPageReady()
+                    },
+                    onPageVisible = {
+                        trace.mark("first paint")
+                        state.onPageVisible()
+                    },
+                    onLoadFailed = {
+                        trace.mark("load FAILED")
+                        state.onPageUnavailable()
+                    },
+                    onOpenExternal = state::openExternally,
+                ),
+            )
 
             // Attach before prepare: whichever finishes second issues the navigation, and the
             // view is ready long before the build can be.
@@ -106,7 +122,7 @@ internal class SharingPresentation(
             // Budget starts at the tap, which is what it was always meant to bound.
             state.startLoadDeadline(PAGE_LOAD_DEADLINE_MILLIS)
 
-            return SharingPresentation(request = request, state = state, handle = handle, pool = pool)
+            return SharingPresentation(state = state, handle = handle, pool = pool)
         }
     }
 }

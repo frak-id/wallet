@@ -38,7 +38,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import id.frak.sdk.sharing.SharingRequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.UUID
 import kotlin.math.roundToInt
 
 /**
@@ -190,9 +189,6 @@ private fun SharingSheetGrabStrip(
         BottomSheetDefaults.DragHandle()
     }
 }
-
-/** Fallback threshold: past this, skip the page and fire the native share sheet directly. */
-private const val PAGE_LOAD_DEADLINE_MILLIS = 1_500L
 
 /** Longest the skeleton may cover a page whose document hasn't even finished. Above the tier-3 deadline by design. */
 private const val SKELETON_MAX_HOLD_MILLIS = 2_500L

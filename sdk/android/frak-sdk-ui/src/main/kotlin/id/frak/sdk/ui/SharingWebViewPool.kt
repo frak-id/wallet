@@ -31,37 +31,59 @@ internal class SharingWebViewPool(
     /** True while [pooled] is inside a sheet, so [destroy] knows not to pull it out from under one. */
     private var lent = false
 
+    /**
+     * The view [acquire] would hand out, or null when the next sheet gets a cold one.
+     *
+     * Exposed so a caller can ask what state the warm-up reached — [SharingWebViewHandle.documentReady]
+     * is what decides whether a session may activate on top of it rather than load the page again.
+     */
+    val warmHandle: SharingWebViewHandle? get() = pooled?.takeIf { !lent }
+
     /** Whether the next [acquire] will get the warm view rather than a cold one. Diagnostic; see [SharingTrace]. */
-    val hasWarmView: Boolean get() = pooled != null && !lent
+    val hasWarmView: Boolean get() = warmHandle != null
+
+    /** The URL [warm] last booted the pooled view on, so a session can tell whether it may activate on top of it. */
+    private var warmUrl: String? = null
+
+    /** Set by [destroy]. A pool whose surface has gone must not warm again, and must destroy on release. */
+    private var destroyed = false
 
     /**
-     * Boots the pooled view. Cheap to call repeatedly; only the first does work.
+     * Boots the pooled view against [url]. Cheap to call repeatedly; only a change of URL does
+     * work.
      *
-     * The warm load carries `native=1` so the page takes its chromeless path and skips wallet
-     * identity resolution — a warm-up must not mint client-side state for a session that may
-     * never happen. It carries no merchantId, so the page itself won't render; the point is the
-     * document, bundle, CSS and fonts landing in the HTTP cache with V8 already warm.
+     * [url] is the *real* merchant page (see [SharingPageUrl.warm]), not a neutral one: the
+     * bundle, i18n and both merchant-keyed queries are the expensive part, and none of them can
+     * start without a merchantId. `preload=1` in that URL is what keeps the page from reporting
+     * itself as viewed while it sits here unseen.
+     *
+     * Called once the merchant config resolves rather than at composition, which is why this
+     * takes a URL instead of building one — the identity simply is not known any earlier.
      */
-    fun warm() {
+    fun warm(url: String) {
         if (!preload) return
-        if (pooled != null) return
+        if (destroyed) return
+        if (warmUrl == url) return
+        warmUrl = url
         val trace = SharingTrace()
         trace.mark("warm load starting")
-        pooled =
-            newHandle().also { handle ->
-                // Bound rather than left on the shared default so the warm load's own
-                // milestones are traceable: whether it even finished before the user tapped
-                // is the difference between preloading working and preloading being a no-op.
-                handle.bind(
-                    SharingWebViewBinding(
-                        sessionId = SharingWebViewBinding.WARM_SESSION_ID,
-                        onPageReady = { trace.mark("warm document finished") },
-                        onPageVisible = { trace.mark("warm first paint") },
-                        onLoadFailed = { trace.mark("warm load FAILED") },
-                    ),
-                )
-                handle.load(warmUrl)
-            }
+        val handle = pooled ?: newHandle().also { pooled = it }
+        // Bound rather than left on the shared default so the warm load's own milestones are
+        // traceable: whether it even finished before the user tapped is the difference between
+        // preloading working and preloading being a no-op.
+        handle.bind(
+            SharingWebViewBinding(
+                sessionId = SharingWebViewBinding.WARM_SESSION_ID,
+                onPageReady = {
+                    // Gates fragment activation — see SharingWebViewHandle.documentReady.
+                    handle.onDocumentReady()
+                    trace.mark("warm document finished")
+                },
+                onPageVisible = { trace.mark("warm first paint") },
+                onLoadFailed = { trace.mark("warm load FAILED") },
+            ),
+        )
+        handle.load(url)
     }
 
     /**
@@ -76,10 +98,12 @@ internal class SharingWebViewPool(
         if (reused == null || lent) return newHandle().also { it.bind(binding) }
         lent = true
         reused.view.removeFromParent()
-        // The warm load is usually still in flight at tap time. Stopping it keeps it from
-        // racing the session's own navigation for the network; the client ignores its
-        // callbacks either way (see SharingWebViewClient.navigationOwnedByBinding).
-        reused.view.stopLoading()
+        // Only stop a load that cannot be salvaged. A finished warm document is what the
+        // session activates on top of, and stopLoading() on a finished page is a no-op anyway;
+        // an unfinished one is going to be replaced by a full load, and stopping it keeps it
+        // from racing that for the network. The client ignores its callbacks either way (see
+        // SharingWebViewClient.navigationOwnedByBinding).
+        if (!reused.documentReady) reused.view.stopLoading()
         reused.bind(binding)
         return reused
     }
@@ -91,32 +115,60 @@ internal class SharingWebViewPool(
      * a late navigation from the closed session reports nowhere, and sent back to the warm URL
      * so the next sheet neither inherits the last one's confirmation screen nor pays for a cold
      * bundle. The sheet's skeleton covers the stale frame either way.
+     *
+     * Reloading the warm URL is a full navigation on purpose, even though the session that just
+     * ended reached it by fragment. The page it leaves behind is mid-flow — a confirmation
+     * screen, an install page, a toast — and only a fresh document reliably undoes all of that.
      */
     fun release(handle: SharingWebViewHandle) {
-        if (handle !== pooled) {
+        // Not ours, or ours but the surface has gone away underneath it — either way this view has
+        // no future, and [destroy] deliberately left it to the sheet that was still driving it.
+        if (handle !== pooled || destroyed) {
+            if (handle === pooled) {
+                pooled = null
+                warmUrl = null
+            }
+            lent = false
             handle.view.removeFromParent()
             handle.destroy()
             return
         }
         lent = false
         handle.view.removeFromParent()
-        handle.bind(SharingWebViewBinding.Warm)
         handle.view.stopLoading()
-        handle.load(warmUrl)
+        val url = warmUrl
+        // Re-warm rather than just reload: `warm` is what rebinds the readiness callback, and
+        // without it `documentReady` would never come back and every later sheet would decide
+        // it cannot activate. Cleared first so `warm` does not short-circuit on an unchanged URL.
+        warmUrl = null
+        if (url != null) {
+            warm(url)
+        } else {
+            // Never warmed (preload off, or config never resolved): nothing to return it to,
+            // so just make sure a late navigation from the closed session reports nowhere.
+            handle.bind(SharingWebViewBinding.Warm)
+        }
     }
 
-    /** Drops the pooled view when the share surface leaves the screen; its timers and context go with it. */
+    /**
+     * Drops the pooled view when the share surface leaves the screen; its timers and context go
+     * with it.
+     *
+     * Will not pull the view out of a sheet that is still using it. Compose disposes inner effects
+     * first, so the sheet normally hands it back before this runs — but "normally" is not an
+     * invariant, and destroying a WebView a live sheet is still driving crashes it. In that case
+     * the pool marks itself dead and [release] does the destroying, so the view is never leaked
+     * either.
+     */
     fun destroy() {
+        destroyed = true
+        if (lent) return
         val handle = pooled ?: return
         pooled = null
-        lent = false
+        warmUrl = null
         handle.view.removeFromParent()
         handle.destroy()
     }
-
-    /** The URL a view sits on while nobody is looking at it. */
-    private val warmUrl: String
-        get() = "$walletOrigin/sharing?native=1&sid=${SharingWebViewBinding.WARM_SESSION_ID}"
 
     private fun newHandle(): SharingWebViewHandle =
         createSharingWebView(
@@ -137,6 +189,10 @@ private fun android.view.View.removeFromParent() {
  * Deliberately holds the *activity* context, not the application one: the pooled view is scoped
  * to this composition and dies with it, and a WebView needs a themed, windowed context for its
  * own popups (select dropdowns, text selection handles) to place themselves correctly.
+ *
+ * Warming is not started here. The URL worth warming carries the real merchantId, which does not
+ * exist until the config resolves — [WarmSharingData] owns that and calls [SharingWebViewPool.warm]
+ * when it lands.
  */
 @Composable
 internal fun rememberSharingWebViewPool(): SharingWebViewPool? {
@@ -146,9 +202,6 @@ internal fun rememberSharingWebViewPool(): SharingWebViewPool? {
     val context = LocalContext.current
 
     val pool = remember(context, walletOrigin, preload) { SharingWebViewPool(context, walletOrigin, preload) }
-    DisposableEffect(pool) {
-        pool.warm()
-        onDispose(pool::destroy)
-    }
+    DisposableEffect(pool) { onDispose(pool::destroy) }
     return pool
 }
