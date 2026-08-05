@@ -756,6 +756,29 @@
         "openLogin": {
             "login": "Connect with biometrics",
             "webauthnNotSupported": "WebAuthn is not supported on this device"
+        },
+        "modal": {
+            "explorerDetail": {
+                "ariaLabel": "Merchant details"
+            },
+            "welcomeDetail": {
+                "ariaLabel": "Welcome to Frak"
+            },
+            "moneriumBankFlow": {
+                "ariaLabel": "Bank transfer"
+            },
+            "rewardDetail": {
+                "ariaLabel": "Reward details"
+            },
+            "moneriumOrderDetail": {
+                "ariaLabel": "Transfer details"
+            },
+            "editReferralCode": {
+                "ariaLabel": "Edit your referral code"
+            },
+            "moneriumCallback": {
+                "ariaLabel": "Connecting your bank account"
+            }
         }
     },
     "biometrics": {

@@ -151,6 +151,7 @@ export {
     mergeTokenQueryOptions,
 } from "./identity";
 export {
+    activePairingsQueryOptions,
     BasePairingClient,
     type BasePairingState,
     getOriginPairingClient,
@@ -245,7 +246,7 @@ export {
     selectWebauthnSession,
     sessionStore,
 } from "./stores/sessionStore";
-export { useGetUserBalance } from "./tokens";
+export { useGetUserBalance, userBalanceQueryOptions } from "./tokens";
 export type {
     AssetStatus,
     BalanceItem,

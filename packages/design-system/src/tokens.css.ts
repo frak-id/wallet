@@ -81,7 +81,6 @@ export const brand = {
     typography: {
         fontFamily: {
             inter: '"Inter", "Inter Fallback", sans-serif',
-            interTight: '"Inter Tight", sans-serif',
         },
         fontWeight: {
             regular: 400,
