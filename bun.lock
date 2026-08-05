@@ -551,6 +551,10 @@
         "vitest": "catalog:",
       },
     },
+    "sdk/android": {
+      "name": "@frak-labs-sdk/native-android",
+      "version": "0.0.1",
+    },
     "sdk/components": {
       "name": "@frak-labs/components",
       "version": "1.1.0",
@@ -612,6 +616,10 @@
       "peerDependencies": {
         "viem": "^2.x",
       },
+    },
+    "sdk/ios": {
+      "name": "@frak-labs-sdk/native-ios",
+      "version": "0.0.1",
     },
     "sdk/legacy": {
       "name": "@frak-labs/nexus-sdk",
@@ -1118,6 +1126,10 @@
     "@frak-labs-example/vanilla-js": ["@frak-labs-example/vanilla-js@workspace:example/vanilla-js"],
 
     "@frak-labs-example/wallet-ethcc": ["@frak-labs-example/wallet-ethcc@workspace:example/wallet-ethcc"],
+
+    "@frak-labs-sdk/native-android": ["@frak-labs-sdk/native-android@workspace:sdk/android"],
+
+    "@frak-labs-sdk/native-ios": ["@frak-labs-sdk/native-ios@workspace:sdk/ios"],
 
     "@frak-labs/app-essentials": ["@frak-labs/app-essentials@workspace:packages/app-essentials"],
 
