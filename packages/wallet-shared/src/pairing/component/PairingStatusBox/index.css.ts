@@ -6,15 +6,13 @@ export const statusBox = style({
     gap: "5px",
 });
 
-const statusBoxContainerBase = style({
+export const statusBoxModalContainer = style({
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-start",
     gap: "5px",
     marginLeft: "8px",
 });
-
-export const statusBoxModalContainer = style([statusBoxContainerBase, {}]);
 
 export const statusBox__indicator = style({
     marginTop: "4px",

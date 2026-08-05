@@ -221,7 +221,7 @@ function ListenerModalInner({
                     onLogoError={() => setLogoFailed(true)}
                 />
                 <CurrentModalStepComponent />
-                <OriginPairingState type="modal" />
+                <OriginPairingState />
             </Stack>
         </ModalComponent>
     );

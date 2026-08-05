@@ -27,7 +27,9 @@ export type SdkComponentEventMap = {
         error?: string;
     };
 
-    // Wallet button (floating) — opens the sharing page. No tracking.
+    // Wallet button (floating) — opens the sharing page and reports
+    // `share_button_clicked` like the share button, since both tags now
+    // land on the same surface.
 
     // Open in app — path lets us compare deep-link destinations once we add more.
     open_in_app_clicked: {

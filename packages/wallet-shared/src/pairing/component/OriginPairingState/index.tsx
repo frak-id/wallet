@@ -10,20 +10,16 @@ import { getOriginPairingClient } from "../../clients/store";
 import type { OriginPairingState as OriginPairingStateType } from "../../types";
 import { StatusBoxModal } from "../PairingStatusBox";
 
-type OriginPairingStateProps = {
-    type: "modal";
-};
-
 /**
  * Component displaying the live origin pairing state
  *  - Only visible if the session is a distant-webauthn one (if not we don't need to display anything)
  *
  * Visible on the listener modal and the wallet
  */
-export function OriginPairingState({ type }: OriginPairingStateProps) {
+export function OriginPairingState() {
     const session = useStore(sessionStore, selectDistantWebauthnSession);
     if (!session) return null;
-    return <InnerOriginPairingState type={type} />;
+    return <InnerOriginPairingState />;
 }
 
 /**
@@ -31,21 +27,14 @@ export function OriginPairingState({ type }: OriginPairingStateProps) {
  *  -> Should be a smmall box with an indicator a right doti ndicator
  *  -> dot: red "idle", orange "connecting", green "paired"
  */
-function InnerOriginPairingState({ type }: OriginPairingStateProps) {
+function InnerOriginPairingState() {
     const client = useMemo(() => getOriginPairingClient(), []);
     const state = useStore(client.store);
     const { t } = useTranslation();
 
     const { status, text } = getStatusDetails(t, state);
-    const components = {
-        modal: StatusBoxModal,
-    };
-    const Component = components[type];
-    if (!Component) {
-        throw new Error(`Invalid type: ${type}`);
-    }
 
-    return <Component status={status} title={text} client={client} />;
+    return <StatusBoxModal status={status} title={text} client={client} />;
 }
 
 function getStatusDetails(

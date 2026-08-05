@@ -1,3 +1,4 @@
+import * as coreSdk from "@frak-labs/core-sdk";
 import { fireEvent, render, screen } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as useClientReadyHook from "@/hooks/useClientReady";
@@ -85,6 +86,27 @@ describe.sequential("ButtonWallet", () => {
         fireEvent.click(button);
 
         expect(buttonWalletUtils.openWalletModal).toHaveBeenCalledTimes(1);
+    });
+
+    it("should report share_button_clicked on click", () => {
+        // Both tags open the sharing page now, so the wallet button must
+        // report the click too or the sharing funnel loses its origin.
+        render(<ButtonWallet placement="hero" />);
+
+        fireEvent.click(
+            screen.getByRole("button", { name: "Share and earn rewards" })
+        );
+
+        expect(coreSdk.trackEvent).toHaveBeenCalledWith(
+            expect.anything(),
+            "share_button_clicked",
+            {
+                placement: "hero",
+                target_interaction: undefined,
+                has_reward: false,
+                click_action: "sharing-page",
+            }
+        );
     });
 
     it("should display reward when useReward is true and reward is available", () => {

@@ -454,7 +454,7 @@ export default defineConfig(async () => {
 
                             // `vendor` keeps Ring-0-eager runtime libs:
                             // zustand stores, idb-keyval, elysia client,
-                            // clsx, nanoid, and the headless @tanstack/query-*
+                            // nanoid, and the headless @tanstack/query-*
                             // libs that the eager `queryClient.ts` needs.
                             {
                                 name: "vendor",
@@ -462,7 +462,7 @@ export default defineConfig(async () => {
                                 // makes Rolldown reject shared-with-lazy modules
                                 // (verified: @tanstack/query-core, zustand, etc.
                                 // would otherwise fall through to ui-runtime).
-                                test: /node_modules[\\/](?:zustand|idb-keyval|nanoid|@elysiajs|clsx|@tanstack[\\/](?:query-core|query-async-storage-persister|query-persist-client-core))[\\/]/,
+                                test: /node_modules[\\/](?:zustand|idb-keyval|nanoid|@elysiajs|@tanstack[\\/](?:query-core|query-async-storage-persister|query-persist-client-core))[\\/]/,
                                 priority: 40,
                                 // CRITICAL: must be 1, otherwise the global
                                 // `minShareCount: 2` keeps single-entry node_modules
@@ -490,9 +490,18 @@ export default defineConfig(async () => {
                             //   `minShareCount: 1` ensures it materialises
                             //   even when only one boundary uses a given file.
                             //
-                            // SharingPage skips `blockchain-vendor` and the
-                            // heavy `ui-vendor` — only `lazy-shared` is fetched
-                            // on first display.
+                            // NOTE: SharingPage does NOT get a chunk of its
+                            // own — `lazy-shared`'s regex claims it. And
+                            // `lazy-shared` statically imports BOTH
+                            // `ui-vendor` and `blockchain-vendor`, because it
+                            // also hosts Modal-only code (SsoButton,
+                            // ToastLoading, Markdown, the pairing UI). So a
+                            // first sharing-page display currently costs
+                            // ~226 KB gz, not the ~76 KB this grouping
+                            // implies. Narrowing the `lazy-shared` regex to
+                            // the genuinely sharing-reachable set is the open
+                            // win here; measure with
+                            // `node scripts/chunk-closure.mjs` before/after.
                             {
                                 name: "blockchain-vendor",
                                 test: /(?:node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox|abitype|radash|mipd|eventemitter3)[\\/])|(?:packages[\\/]app-essentials[\\/]src[\\/](?:blockchain|webauthn))|(?:wallet-shared[\\/]src[\\/](?:providers[\\/]BaseProvider|wallet[\\/]|blockchain[\\/]|authentication[\\/]webauthn[\\/]tauriBridge))/,
@@ -506,15 +515,17 @@ export default defineConfig(async () => {
                                 name: "ui-vendor",
                                 test: /node_modules[\\/](?:@radix-ui|micromark|qr)[\\/]/,
                                 priority: 30,
-                                // CRITICAL: must be 1. Since the embedded
-                                // wallet was removed, radix/micromark/qr are
-                                // reachable from the Modal boundary ONLY. On
-                                // the default minShareCount this group stops
-                                // materialising and they get absorbed into
-                                // `lazy-shared` — which SharingPage loads,
-                                // adding ~35 KB gz of markdown parser + QR to
-                                // the sharing page for nothing.
-                                minShareCount: 1,
+                                // No explicit minShareCount: `@radix-ui` is
+                                // reached from BOTH boundaries (Modal via
+                                // alert-dialog, SharingPage via design-system
+                                // Accordion in the FAQ), so the group
+                                // materialises on the default. Leave it that
+                                // way — forcing 1 additionally hoists
+                                // micromark/qr (single-consumer, Modal-only)
+                                // out of `lazy-shared` into this chunk, and
+                                // since `lazy-shared` statically imports
+                                // `ui-vendor` anyway that moves ~8 KB gz ONTO
+                                // the sharing page. Measured, don't guess.
                             },
                             {
                                 name: "lazy-shared",

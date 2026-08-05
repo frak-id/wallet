@@ -316,20 +316,6 @@ export default interface Resources {
             "title": "Collect your earnings in the app."
           }
         }
-      },
-      "wallet": {
-        "loggedIn": {
-          "onboarding": {
-            "share": "🚀 Let's go! Share this product and receive your rewards directly.",
-            "share_referred": "🚀 Share your turn to win more!",
-            "welcome": "🥳 Congratulations! Your wallet is created."
-          }
-        },
-        "login": {
-          "primaryAction": "I create my wallet",
-          "text": "Create your wallet and receive up to **{{estimatedReward}}** per referred friend",
-          "text_referred": "Welcome! Receive up to **{{estimatedReward}}** in case of purchase on the site.\n\nCreate your wallet in 1 click"
-        }
       }
     }
   },

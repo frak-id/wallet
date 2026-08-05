@@ -1,7 +1,6 @@
 export function gapianne() {
     setConfig();
     replaceNexusShareButton();
-    // addWalletButton();
 }
 
 /**
@@ -48,23 +47,4 @@ function replaceNexusShareButton() {
         buttonShare.setAttribute("classname", "button w-full");
         button.replaceWith(buttonShare);
     }
-}
-
-/**
- * Add frak-button-wallet to the body
- */
-function _addWalletButton() {
-    // Inject only if the cookie button is disabled (has the disabled html tag) (since it's also on the bottom left of the page)
-    const id = "axeptio_main_button";
-    const cookieButton = document.getElementById(id);
-
-    // If we didn't find it, consider it's not present
-    const isDisabled = cookieButton
-        ? cookieButton.hasAttribute("disabled")
-        : true;
-    if (!isDisabled) return;
-
-    const buttonWallet = document.createElement("frak-button-wallet");
-    buttonWallet.setAttribute("use-reward", "true");
-    document.body.appendChild(buttonWallet);
 }
