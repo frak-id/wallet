@@ -34,6 +34,11 @@ import id.frak.sdk.sharing.SharingRequest
  * Note the Compose form: `remember { Builder(...) }.build()`, because it is `build()` that is
  * `@Composable`, not the `Builder`'s construction.
  *
+ * A sheet that is up survives a configuration change: the web view, its DOM, its JS heap and the
+ * in-flight session are retained on the Activity's `ViewModelStore` and re-attached to a fresh
+ * dialog. Nothing is reported for the rotation itself. Process death is a different matter and is
+ * not survivable here — the warm view is gone with the process, so there is nothing to restore.
+ *
  * Two instances on one Activity share a warm web view and a single "one sheet at a time" guard —
  * so building one per list row is wasteful but not harmful, and a second [present] while a sheet
  * is up reports [id.frak.sdk.core.FrakError.AlreadyPresenting] no matter which instance it came
@@ -99,13 +104,16 @@ public class FrakSharing internal constructor(
         /**
          * The Activity that will host the sheet's window.
          *
-         * Call from `onCreate`. Nothing here touches the network or boots a web view — that is
-         * [warm]'s job, and it is separate precisely so a single-Activity app does not pay for a
-         * share surface the user may never reach.
+         * Call from `onCreate`, unconditionally and on every creation — including the one that
+         * follows a rotation, which is where a sheet that was up before it gets picked back up.
+         *
+         * Nothing here touches the network or boots a web view; that is [warm]'s job, and it is
+         * separate precisely so a single-Activity app does not pay for a share surface the user may
+         * never reach.
          */
         @MainThread
         public fun build(activity: ComponentActivity): FrakSharing =
-            FrakSharing(SharingHost.of(activity), heightFraction, callback)
+            FrakSharing(SharingHost.of(activity, callback), heightFraction, callback)
 
         /**
          * The Compose build site. Warms on composition-enter, so a Compose caller never sees
@@ -119,7 +127,7 @@ public class FrakSharing internal constructor(
             val activity = LocalContext.current.findComponentActivity()
             val sharing =
                 remember(activity, heightFraction) {
-                    FrakSharing(SharingHost.of(activity), heightFraction, callback)
+                    FrakSharing(SharingHost.of(activity, callback), heightFraction, callback)
                 }
             LaunchedEffect(sharing) { sharing.warm() }
             return sharing

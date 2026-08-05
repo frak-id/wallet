@@ -537,7 +537,7 @@ What replaced the missing coverage, all inside `sdk/android/**` so CI does run i
 | `frak-sdk-ui/src/test/java/…/JavaCallSiteFixture.java` | That the public API stays callable from Java: SAM lambda for `ResultCallback`, a chained `heightFraction`, `build(activity)`, every `SharingResult` arm, `FrakSharingDefaults.getHEIGHT_FRACTION()`. Compiled by `:frak-sdk-ui:test`, never executed |
 | `SharingPresentDecisionTest` | The `present()` guards Compose used to make unreachable |
 | `FrakSharingBuilderTest` | `heightFraction`'s `require`, including NaN |
-| `SharingWebViewPoolContextTest` (A2) | That the `MutableContextWrapper` base is swapped back to the application context on release, and that a rotation re-attaches **the same** `WebView` |
+| `SharingWebViewContextTest` (A2) | That the pooled `WebView` holds the `MutableContextWrapper` itself rather than resolving through it once, that swapping its base is visible through the retained view, and that a release/re-acquire cycle hands back **the same** `WebView` instance |
 
 ### 9.2 The dialog is built per `present()`, not at `build()` (§3)
 
@@ -632,7 +632,28 @@ With the old Activity's callback detached and the new one not yet attached, that
 to go, and `finish()`'s compare-and-set means it is dropped rather than re-delivered. A2 buffers a
 result that lands with no callback attached and replays it on the next `build()`.
 
-### 9.9 `clampSharingHeightFraction` stays
+### 9.9 What A2 leaves untested
+
+Deliberately not written: a `WeakReference` + `System.gc()` collectability assertion. Robolectric's
+`ActivityController` retains Activities for the test's duration by design, so it would be asserting
+against the harness rather than the code, `System.gc()` is advisory, and the result would be a
+flaky red in the first CI job this package has ever had — on a machine that cannot run it once to
+find out. `SharingWebViewContextTest` pins the load-bearing line instead: that the swap is
+*possible*, i.e. that the view holds the wrapper.
+
+Not covered by anything, and the first thing a device pass should look at:
+
+- the `onDestroy(isChangingConfigurations)` / `onCleared()` split actually reporting once on a
+  finish and not at all on a rotation,
+- a sheet re-attaching to the recreated Activity's dialog with the session live,
+- the buffered-result replay (§9.8),
+- LeakCanary over a rotate-with-sheet-up loop, per §7.1.
+
+Reaching those from a JVM test would mean composing a `ComposeView` inside a real `ComponentDialog`
+under Robolectric, which depends on enough internal Compose window machinery that a green result
+would not have meant much anyway.
+
+### 9.10 `clampSharingHeightFraction` stays
 
 §4.3 replaces the silent clamp with `require(...)` at the build site, and that landed. The internal
 clamp stays as well: `fillMaxHeight` *throws* on a non-finite fraction, and a crash inside the

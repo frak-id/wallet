@@ -44,7 +44,18 @@ internal class SharingPresentation(
         if (!presented) dispose()
     }
 
-    /** Idempotent — the sheet's `onDispose` and [disposeIfUnpresented] can both reach it. */
+    /**
+     * Takes the web view out of the view tree without ending the session.
+     *
+     * What a configuration change needs and [dispose] would over-serve: the dialog dies with the
+     * Activity, so the view has to leave its parent before it can be added to the next one, but the
+     * session, the document and the JS heap all carry on. Adding a still-parented child throws.
+     */
+    fun detachView() {
+        (handle.view.parent as? android.view.ViewGroup)?.removeView(handle.view)
+    }
+
+    /** Idempotent — [SharingHost] and [disposeIfUnpresented] can both reach it. */
     fun dispose() {
         if (disposed) return
         disposed = true

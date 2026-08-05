@@ -4,7 +4,8 @@ import android.content.Context
 import android.view.ViewGroup
 
 /**
- * Holds one sharing `WebView` for as long as its hosting Activity is alive.
+ * Holds one sharing `WebView` for as long as its hosting screen is alive — across that screen's
+ * configuration changes included, since [SharingHost] is retained on a `ViewModelStore`.
  *
  * Gated behind [id.frak.sdk.core.FrakConfig.preloadSharing]. With it off this is a plain
  * factory — a fresh view per sheet, destroyed with it, which is what the SDK has always done.
@@ -12,7 +13,12 @@ import android.view.ViewGroup
  * then handed to the sheet itself, so presenting costs a navigation rather than engine startup,
  * TLS, the React bundle and a V8 warm-up.
  *
- * One view per pool and one pool per Activity ([SharingHost]), which is what dissolves the old
+ * [context] is a `MutableContextWrapper` supplied by [SharingHost], not a raw Activity. A
+ * `WebView` keeps a hard reference to its construction context, and this pool now outlives the
+ * Activity that was current when the view was built; the wrapper is what lets the view have a
+ * themed, windowed context while one exists and hold nothing dead when it does not.
+ *
+ * One view per pool and one pool per screen ([SharingHost]), which is what dissolves the old
  * "hoist per screen, not per row" footgun: several [FrakSharing] instances on one screen share
  * this, and the host refuses a second concurrent sheet, so the single view can never be wanted
  * twice at once.
@@ -157,7 +163,8 @@ internal class SharingWebViewPool(
     }
 
     /**
-     * Drops the pooled view when the hosting Activity is destroyed; its timers and context go
+     * Drops the pooled view when the hosting screen is really gone — the `ViewModelStore` being
+     * cleared, not merely an Activity being destroyed by a rotation; its timers and context go
      * with it.
      *
      * Will not pull the view out of a sheet that is still using it. [SharingHost] dismisses the
@@ -177,9 +184,14 @@ internal class SharingWebViewPool(
     }
 
     /**
-     * Builds a view against [context], which [SharingHost] supplies as the hosting **Activity**
-     * rather than the application — a WebView needs a themed, windowed context for its own popups
-     * (select dropdowns, text-selection handles) to place themselves correctly.
+     * Builds a view against [context] — a `MutableContextWrapper` whose base [SharingHost] keeps
+     * pointed at the current Activity, because a WebView needs a themed, windowed context for its
+     * own popups (select dropdowns, text-selection handles) to place themselves correctly, and
+     * because it must not be the one holding a destroyed one.
+     *
+     * Called first from [warm], not from [acquire]. That is the reason the base has to be right
+     * from the moment the host attaches rather than at lend time: a `WebView` resolves its theme,
+     * its `LayoutInflater` and its popup host at construction, and no later swap undoes that.
      */
     private fun newHandle(): SharingWebViewHandle =
         createSharingWebView(

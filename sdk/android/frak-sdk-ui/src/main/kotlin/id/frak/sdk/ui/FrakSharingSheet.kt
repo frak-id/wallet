@@ -68,6 +68,9 @@ import kotlinx.coroutines.launch
  * @param exitSignal bumped by [SharingHost] to ask the sheet to animate out and then report. The
  *   sheet reports on its own once the animation lands, so the composition survives long enough to
  *   play it.
+ * @param animateIn false when this composition is replacing one a configuration change destroyed.
+ *   The sheet was already on screen before the rotation, so sliding it up again would announce an
+ *   arrival that did not happen.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,6 +78,7 @@ internal fun FrakSharingSheet(
     presentation: SharingPresentation,
     heightFraction: Float,
     exitSignal: Int,
+    animateIn: Boolean,
 ) {
     val scope = rememberCoroutineScope()
     val state = presentation.state
@@ -95,9 +99,13 @@ internal fun FrakSharingSheet(
     }
 
     DisposableEffect(presentation) {
-        // From here the sheet owns the session's teardown; before this frame the host did.
         presentation.onPresented()
-        onDispose(presentation::dispose)
+        // Deliberately nothing on dispose. [SharingHost] owns the session's teardown, and this
+        // composition is destroyed by a configuration change as well as by a real dismissal — the
+        // two are indistinguishable from in here, and disposing on the first would end a session
+        // the host is about to re-attach to a new dialog. The host disposes from `finish` and from
+        // `onOwnerCleared`, which between them cover every way a session can end.
+        onDispose { }
     }
 
     /**
@@ -108,10 +116,12 @@ internal fun FrakSharingSheet(
      * ever been measured — at the first frame there is no height to translate by yet, and
      * `graphicsLayer` reads the real one at draw time.
      */
-    val offset = remember { Animatable(1f) }
+    val offset = remember { Animatable(if (animateIn) 1f else 0f) }
     var sheetHeightPx by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(Unit) { offset.animateTo(0f, tween(ENTER_MILLIS)) }
+    LaunchedEffect(Unit) {
+        if (animateIn) offset.animateTo(0f, tween(ENTER_MILLIS))
+    }
 
     // 0 is "no exit requested" — the host resets it to 0 between sessions, and a fresh
     // composition starts there too.
