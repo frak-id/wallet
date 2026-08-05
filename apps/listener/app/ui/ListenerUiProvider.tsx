@@ -325,15 +325,22 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
         populateI18nResources,
     ]);
 
+    // Memoised so the context identity only changes when a member actually
+    // changes. `setRequest`/`clearRequest` are already `useCallback([])` and
+    // `translation` is memoised above, so an inline literal here was the sole
+    // reason all 17 consumer sites re-rendered on every provider render.
+    const contextValue = useMemo(
+        () => ({
+            currentRequest,
+            setRequest,
+            clearRequest,
+            translation,
+        }),
+        [currentRequest, setRequest, clearRequest, translation]
+    );
+
     return (
-        <ListenerUiContext.Provider
-            value={{
-                currentRequest,
-                setRequest,
-                clearRequest,
-                translation,
-            }}
-        >
+        <ListenerUiContext.Provider value={contextValue}>
             {children}
         </ListenerUiContext.Provider>
     );

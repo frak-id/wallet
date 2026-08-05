@@ -11,14 +11,7 @@ import { getSafeSession } from "@frak-labs/wallet-shared/common/utils/safeSessio
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import type { WalletRpcContext } from "@/module/types/context";
 import { pushBackupData } from "@/module/utils/backup";
-
-function extractDomainFromUrl(url: string): string {
-    try {
-        return new URL(url).host.replace("www.", "");
-    } catch {
-        return url;
-    }
-}
+import { extractDomain } from "@/module/utils/extractDomain";
 
 type OnListenToWallet = RpcStreamHandler<
     IFrameRpcSchema,
@@ -97,7 +90,8 @@ export function createWalletStatusHandler(): OnListenToWallet {
         activeUnsubscribe = null;
 
         let abortController = new AbortController();
-        const domain = extractDomainFromUrl(context.sourceUrl);
+        // Best-effort: a non-URL sourceUrl is still usable as a lookup key here.
+        const domain = extractDomain(context.sourceUrl) ?? context.sourceUrl;
 
         await emitCurrentStatus(emitter, domain, abortController.signal);
 
