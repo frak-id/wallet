@@ -12,6 +12,7 @@ the sharing surface of `apps/listener`.
 | [`05-build-and-release.md`](./05-build-and-release.md) | Distribution, RN, monorepo/CI, and the ABI decisions blocking the first publish |
 | [`06-open-findings.md`](./06-open-findings.md) | Merged audit register — only what is still open |
 | [`07-sharing-sheet-audit.md`](./07-sharing-sheet-audit.md) | Android sharing sheet: why it janks (verified against Compose M3 1.4.0 and the WebView draw-functor ABI), four correctness defects, and the Stripe-shaped API surface that replaces the Compose-only entry point |
+| [`08-sharing-sheet-api.md`](./08-sharing-sheet-api.md) | Replacing the Compose-only sheet entry point with a Stripe-`PaymentSheet`-shaped `Builder`: why we take Stripe's API but not its Activity, dropping `ModalBottomSheet` for a `ComponentDialog`, rotation survival, and the sequence to XML/Java/UIKit support |
 
 ## Scope
 

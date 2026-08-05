@@ -149,6 +149,11 @@ is where it is tracked alongside §1.3.
 
 ### 1.3 `ModalBottomSheet`'s own animation re-lays-out the web view every frame — not fixable from outside
 
+> **Update.** §1.2 and §1.3 are both `ModalBottomSheet`'s, and both close in
+> `08-sharing-sheet-api.md` step A, which drops `ModalBottomSheet` entirely: a `ComponentDialog`
+> host cannot contain it without stacking two platform windows. "Not fixable" was true of the call
+> site and false of the sheet.
+
 ```kotlin
 // material3 1.4.0 — internal/AnchoredDraggable.kt:838, DraggableAnchorsNode.measure
 withMotionFrameOfReferencePlacement {
@@ -424,8 +429,8 @@ rendering and reporting are already right rather than drag the current defects i
 | Finding | Status | Where |
 |---|---|---|
 | §1.1 double rounded clip | **Fixed.** `shape = RectangleShape`, inner `.clip()` gone, web view `setBackgroundColor(TRANSPARENT)`, new `cornerRadius` param on `SharingPageUrl.build`/`.warm`, page rounds itself | `FrakSharingSheet`, `SharingWebView`, `SharingPageUrl`, `SharingSheetState`, `SharingWarmup`, `apps/wallet` `/sharing`, `SharingPage`, `PostShareConfirmation` |
-| §1.2 scale during entry | **Not fixable.** Every lever is `internal` in M3 1.4.0. Mitigated by the default scheme being `standard()`. Tracked with §1.3 | — |
-| §1.3 placement per frame from `draggableAnchors` | **Not fixable from outside.** Goes with `ModalBottomSheet` in §3.3 step B | — |
+| §1.2 scale during entry | **Not fixable from the call site**, but closed by deleting the call site: `08-sharing-sheet-api.md` §3 drops `ModalBottomSheet` in its step A, and `verticalScaleUp`/`Down` go with it | — |
+| §1.3 placement per frame from `draggableAnchors` | Same — `AnchoredDraggable` is `ModalBottomSheet`'s, and goes with it in `08` step A. Sooner than §3.3 assumed, because hosting the sheet in a `ComponentDialog` *requires* dropping it rather than merely benefiting from it | — |
 | §1.4 `offset {}` re-runs placement | **Fixed.** `graphicsLayer { translationY }` | `FrakSharingSheet` |
 | §1.5 warm view never paused | **Fixed.** `SharingWebViewHandle.pause`/`resume`, applied on warm document-finished and undone in `acquire` | `SharingWebView`, `SharingWebViewPool` |
 | §2.1 teardown never reports | **Fixed.** `SharingSheetState.abandon()`, called unconditionally from `SharingPresentation.dispose()` | `SharingSheetState`, `SharingPresentation` |
