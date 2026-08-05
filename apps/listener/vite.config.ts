@@ -61,7 +61,6 @@ const LAZY_CHUNK_NAMES = [
     "blockchain-vendor",
     "BaseProvider",
     "Modal",
-    "Wallet",
     "SharingPage",
     "ccip",
     "secp256k1",
@@ -364,12 +363,12 @@ export default defineConfig(async () => {
             // Vite eagerly emits `<link rel="modulepreload">` tags for every
             // chunk reachable from the entry — including those reached only
             // via dynamic imports. That defeats the lazy-loading effort:
-            // the modal/embedded-wallet bundles (and the heavy blockchain
+            // the modal/sharing bundles (and the heavy blockchain
             // graph they pull) end up downloaded on iframe boot just to be
             // ready when the user eventually opens a modal. Restrict the
             // HTML preload list to the chunks the iframe actually needs
             // before any user interaction. Runtime preloading via
-            // `__vitePreload` (used when modal/wallet actually mounts) is
+            // `__vitePreload` (used when the modal actually mounts) is
             // unaffected.
             modulePreload: {
                 resolveDependencies: (_filename, deps, { hostType }) => {
@@ -477,12 +476,12 @@ export default defineConfig(async () => {
                             //
                             // • `blockchain-vendor` → viem + wagmi +
                             //   permissionless + BaseProvider + provider glue.
-                            //   Modal/Wallet only.
+                            //   Modal only.
                             // • `ui-vendor` → heavy lazy UI libs (@radix-ui,
                             //   qr, micromark). radix + alert-dialog are
                             //   Modal-only; qr + micromark land here through
-                            //   wallet-shared pairing/Markdown which Modal+Wallet
-                            //   share. SharingPage pulls @radix-ui/react-accordion
+                            //   wallet-shared pairing/Markdown, reachable from
+                            //   the Modal. SharingPage pulls @radix-ui/react-accordion
                             //   via design-system Accordion (FAQ section).
                             // • `lazy-shared` → design-system + sonner +
                             //   lucide + listener shared components +
@@ -507,6 +506,15 @@ export default defineConfig(async () => {
                                 name: "ui-vendor",
                                 test: /node_modules[\\/](?:@radix-ui|micromark|qr)[\\/]/,
                                 priority: 30,
+                                // CRITICAL: must be 1. Since the embedded
+                                // wallet was removed, radix/micromark/qr are
+                                // reachable from the Modal boundary ONLY. On
+                                // the default minShareCount this group stops
+                                // materialising and they get absorbed into
+                                // `lazy-shared` — which SharingPage loads,
+                                // adding ~35 KB gz of markdown parser + QR to
+                                // the sharing page for nothing.
+                                minShareCount: 1,
                             },
                             {
                                 name: "lazy-shared",
@@ -514,12 +522,11 @@ export default defineConfig(async () => {
                                 priority: 25,
                                 minShareCount: 1,
                             },
-                            // No explicit Modal/Wallet group: default chunking
+                            // No explicit Modal group: default chunking
                             // emits a single chunk per dynamic-import boundary
-                            // (Modal/index.tsx and Wallet/index.tsx). Each
-                            // boundary now re-exports its lazy handler body
-                            // (handleDisplayModal / handleDisplayEmbeddedWallet)
-                            // from useDisplay*.impl so the impl modules land in
+                            // (Modal/index.tsx). Each boundary re-exports its
+                            // lazy handler body (handleDisplayModal) from
+                            // useDisplay*.impl so the impl modules land in
                             // the same default chunk as their parent component
                             // tree — collapsing the previous 1-2 KB shim chunks.
                             // (i18n locale chunking is implicit — the per-language
@@ -564,7 +571,7 @@ export default defineConfig(async () => {
                                 // hook .impl chunks) out of this chunk — they
                                 // belong in `lazy-shared` / their boundary chunk.
                                 tags: ["$initial"],
-                                test: /(?:vite[\\/](?:dist[\\/])?preload-helper)|(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|types|pairing[\\/]types|common[\\/](?:analytics|api|lib|utils|storage|tauri|queryKeys)|common[\\/]hook[\\/](?:useEstimatedReward|useGetSafeSdkSession)))|(?:packages[\\/]app-essentials[\\/])|(?:packages[\\/]rpc[\\/](?:dist|src)[\\/])|(?:sdk[\\/]core[\\/]src[\\/])|(?:apps[\\/]listener[\\/]app[\\/](?:uiBus|queryClient|i18nOverrideQueue)\.ts)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|providers|types|common|queryKeys|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)|hooks[\\/](?:useDisplayEmbeddedWallet(?!\.impl)|useDisplayModalListener(?!\.impl)|useDisplaySharingPageListener(?!\.impl)|useOnGet|useSendInteraction(?!Listener\.)|useSendInteractionListener|useUserReferralStatus|useWalletStatusListener|useSsoLink)))/,
+                                test: /(?:vite[\\/](?:dist[\\/])?preload-helper)|(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|types|pairing[\\/]types|common[\\/](?:analytics|api|lib|utils|storage|tauri|queryKeys)|common[\\/]hook[\\/](?:useEstimatedReward|useGetSafeSdkSession)))|(?:packages[\\/]app-essentials[\\/])|(?:packages[\\/]rpc[\\/](?:dist|src)[\\/])|(?:sdk[\\/]core[\\/]src[\\/])|(?:apps[\\/]listener[\\/]app[\\/](?:uiBus|queryClient|i18nOverrideQueue)\.ts)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|providers|types|queryKeys|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)|hooks[\\/](?:useDisplayModalListener(?!\.impl)|useDisplaySharingPageListener(?!\.impl)|useOnGet|useSendInteraction(?!Listener\.)|useSendInteractionListener|useUserReferralStatus|useWalletStatusListener|useSsoLink)))/,
                                 priority: 50,
                                 // Single-importer modules must still land here
                                 // (e.g. wallet-shared/common/api/backendClient.ts

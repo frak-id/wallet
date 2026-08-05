@@ -39,7 +39,6 @@ vi.mock("@frak-labs/core-sdk", async () => {
         ...actual,
         // Modal actions
         displayModal: vi.fn(),
-        displayEmbeddedWallet: vi.fn(),
 
         // SSO actions
         openSso: vi.fn(),

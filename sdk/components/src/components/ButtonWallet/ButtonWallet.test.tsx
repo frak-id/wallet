@@ -42,7 +42,9 @@ describe.sequential("ButtonWallet", () => {
 
     it("should render with default props", () => {
         render(<ButtonWallet />);
-        const button = screen.getByRole("button", { name: "Open wallet" });
+        const button = screen.getByRole("button", {
+            name: "Share and earn rewards",
+        });
         expect(button).toBeInTheDocument();
     });
 
@@ -76,7 +78,9 @@ describe.sequential("ButtonWallet", () => {
 
     it("should call openWalletModal on click", () => {
         render(<ButtonWallet />);
-        const button = screen.getByRole("button", { name: "Open wallet" });
+        const button = screen.getByRole("button", {
+            name: "Share and earn rewards",
+        });
 
         fireEvent.click(button);
 
@@ -89,7 +93,9 @@ describe.sequential("ButtonWallet", () => {
         });
 
         render(<ButtonWallet useReward />);
-        const button = screen.getByRole("button", { name: "Open wallet" });
+        const button = screen.getByRole("button", {
+            name: "Share and earn rewards",
+        });
         expect(button).toHaveTextContent("10 eur");
     });
 
@@ -101,7 +107,9 @@ describe.sequential("ButtonWallet", () => {
             reward: undefined,
         });
         render(<ButtonWallet useReward={false} />);
-        const button = screen.getByRole("button", { name: "Open wallet" });
+        const button = screen.getByRole("button", {
+            name: "Share and earn rewards",
+        });
         expect(button.textContent).not.toContain("eur");
     });
 

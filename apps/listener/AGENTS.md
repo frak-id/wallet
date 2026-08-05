@@ -15,7 +15,7 @@ bun run test         # listener-unit Vitest project
 - `app/views/listener.tsx` — RPC setup (single view, no routing)
 - `app/module/hooks/` — **14 RPC message handlers** (core logic, add new handlers here)
 - `app/module/handlers/` — handler wrappers · `app/module/middleware/` — request/response middleware
-- `app/module/{modal,embedded}/` — wallet UI rendered over partner site
+- `app/module/{modal,sharing}/` — wallet UI rendered over partner site
 - `app/module/stores/` — Zustand (modal + context state) · `app/module/providers/` — RootProvider (Wagmi, QueryClient)
 
 ## Non-Obvious Patterns

@@ -1,5 +1,4 @@
 import type {
-    DisplayEmbeddedWalletParamsType,
     ModalRpcMetadata,
     ModalRpcStepsInput,
     ModalStepMetadata,
@@ -14,46 +13,10 @@ const replaceReward = (text: string) =>
  * Map legacy modal metadata to i18n resources
  */
 export function mapDeprecatedModalMetadata(request?: UIRequest) {
-    if (request?.type === "embedded") {
-        return mapEmbeddedModalMetadata(request.params);
-    }
     if (request?.type === "modal") {
         return mapModalMetadata(request.steps, request.metadata);
     }
     return {};
-}
-
-/**
- * Map the embedded modal metadata to i18n resources
- */
-function mapEmbeddedModalMetadata(request: DisplayEmbeddedWalletParamsType) {
-    const resultMap = new Map<string, string>();
-    if (!request.loggedIn || !request.loggedOut) {
-        return {};
-    }
-
-    // Add the sharing translations
-    const loggedInAction = request.loggedIn.action;
-    if (loggedInAction?.key === "sharing") {
-        const { popupTitle, text } = loggedInAction.options ?? {};
-        if (popupTitle) {
-            resultMap.set("sharing.title", popupTitle);
-        }
-        if (text) {
-            resultMap.set("sharing.text", text);
-        }
-    }
-
-    // Add the logged out translations
-    const { text, buttonText } = request.loggedOut.metadata ?? {};
-    if (text) {
-        resultMap.set("sdk.wallet.login.text", text);
-    }
-    if (buttonText) {
-        resultMap.set("sdk.wallet.login.primaryAction", buttonText);
-    }
-
-    return Object.fromEntries(resultMap);
 }
 
 /**

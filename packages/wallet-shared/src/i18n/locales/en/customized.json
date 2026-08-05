@@ -39,20 +39,6 @@
                 "title": "Authentication"
             }
         },
-        "wallet": {
-            "login": {
-                "text": "Create your wallet and receive up to **{{ estimatedReward }}** per referred friend",
-                "text_referred": "Welcome! Receive up to **{{ estimatedReward }}** in case of purchase on the site.\n\nCreate your wallet in 1 click",
-                "primaryAction": "I create my wallet"
-            },
-            "loggedIn": {
-                "onboarding": {
-                    "welcome": "🥳 Congratulations! Your wallet is created.",
-                    "share": "🚀 Let's go! Share this product and receive your rewards directly.",
-                    "share_referred": "🚀 Share your turn to win more!"
-                }
-            }
-        },
         "sharingPage": {
             "dismiss": "Later",
             "reward": {

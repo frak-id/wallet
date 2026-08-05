@@ -44,11 +44,6 @@ vi.mock("../PairingStatusBox", () => ({
             {title}
         </div>
     ),
-    StatusBoxWalletEmbedded: ({ status, title }: any) => (
-        <div data-testid="status-box-embedded" data-status={status}>
-            {title}
-        </div>
-    ),
 }));
 
 vi.mock("../../clients/store", async () => {
@@ -140,14 +135,6 @@ describe("OriginPairingState", () => {
             render(<OriginPairingState type="modal" />);
 
             expect(screen.getByTestId("status-box-modal")).toBeInTheDocument();
-        });
-
-        it("should render embedded variant", () => {
-            render(<OriginPairingState type="embedded" />);
-
-            expect(
-                screen.getByTestId("status-box-embedded")
-            ).toBeInTheDocument();
         });
 
         it("should throw error for invalid type", () => {

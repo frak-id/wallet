@@ -52,7 +52,12 @@ const componentCss = `
 `;
 
 /**
- * Button to open wallet modal
+ * Floating circular button that opens the Frak sharing page.
+ *
+ * Historically this opened the embedded wallet drawer; that surface was
+ * retired, so the button now routes to the full-page sharing UI like every
+ * other share CTA. The `frak-button-wallet` tag name is kept because it is
+ * public API (merchant markup, Magento template).
  *
  * @param args
  * @returns The wallet button with `<button>` tag
@@ -89,7 +94,7 @@ const componentCss = `
  * <frak-button-wallet placement="hero-wallet"></frak-button-wallet>
  * ```
  *
- * @see {@link @frak-labs/core-sdk!actions.modalBuilder | `modalBuilder()`} for more info about the modal display
+ * @see {@link @frak-labs/core-sdk!actions.displaySharingPage | `displaySharingPage()`} for more info about the sharing page
  * @see {@link @frak-labs/core-sdk!actions.getMerchantInformation | `getMerchantInformation()`} for more info about the estimated reward fetching
  */
 export function ButtonWallet({
@@ -122,6 +127,9 @@ export function ButtonWallet({
 
     useEffect(() => {
         const placementPosition = placement?.components?.buttonWallet?.position;
+        // `modalWalletConfig` is the retired embedded-wallet config; only its
+        // position hint is still honoured, for integrations (Magento) that
+        // keep injecting it.
         const configPosition =
             window.FrakSetup?.modalWalletConfig?.metadata?.position;
         setPosition(placementPosition ?? configPosition ?? "right");

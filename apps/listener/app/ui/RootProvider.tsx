@@ -13,12 +13,12 @@ import { queryClient } from "@/queryClient";
  *
  * Notes:
  *  - `WagmiProviderWithDynamicConfig` is intentionally NOT mounted here.
- *    It is moved into the lazy-loaded modal + embedded-wallet boundaries
+ *    It is moved into the lazy-loaded modal boundary
  *    via `BlockchainProvider`, so the wagmi/viem/permissionless graph
  *    stays out of the eager iframe bundle.
  *  - `usePersistentPairingClient` is also NOT mounted here. Pairing is
- *    only consumed by the Modal + Embedded Wallet UI trees (signature
- *    requests, smart-wallet ops). Mounting it inside those trees instead
+ *    only consumed by the Modal UI tree (signature requests, smart-wallet
+ *    ops). Mounting it inside that tree instead
  *    of eagerly here keeps the WebSocket dormant until a partner site
  *    triggers UI — reducing idle backend WS load.
  */

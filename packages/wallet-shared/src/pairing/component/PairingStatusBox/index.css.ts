@@ -16,13 +16,6 @@ const statusBoxContainerBase = style({
 
 export const statusBoxModalContainer = style([statusBoxContainerBase, {}]);
 
-export const statusBoxWalletEmbeddedContainer = style([
-    statusBoxContainerBase,
-    {
-        color: "#fff",
-    },
-]);
-
 export const statusBox__indicator = style({
     marginTop: "4px",
     width: "10px",

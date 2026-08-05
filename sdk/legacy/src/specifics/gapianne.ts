@@ -23,8 +23,6 @@ function setConfig() {
             i18n: {
                 "sharing.title": "Prêt(e) à révéler un secret bien-être ?",
                 "sharing.text": "Découvre ce produit chez Gapianne",
-                "sdk.wallet.login.text":
-                    "Créez votre porte-monnaie avec **{{ productName }}** et recevez **{{ estimatedReward }}** par ami(e) parrainé(e)",
             },
         },
         domain: window.location.host,

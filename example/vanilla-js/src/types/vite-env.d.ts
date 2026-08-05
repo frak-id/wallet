@@ -8,7 +8,6 @@ declare global {
             client?: FrakClient;
             config?: FrakWalletSdkConfig;
             core?: typeof import("@frak-labs/core-sdk/bundle");
-            modalWalletConfig?: unknown;
         };
         frakSetupInProgress?: boolean;
     }

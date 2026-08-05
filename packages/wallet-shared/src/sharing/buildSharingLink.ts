@@ -10,7 +10,7 @@ import type { Address } from "viem";
  *
  * Centralises the `FrakContextManager.update` + `mergeAttribution` boilerplate
  * that used to be duplicated across every sharing entry point (wallet sharing
- * page, listener sharing page, listener modal, embedded wallet, explorer).
+ * page, listener sharing page, listener modal, explorer).
  *
  * The V2 context requires `merchantId` and a sharer identifier. Callers should
  * pass `wallet` whenever an authenticated session is available — it's the

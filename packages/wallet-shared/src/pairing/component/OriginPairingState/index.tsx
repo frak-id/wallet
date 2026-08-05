@@ -8,17 +8,17 @@ import {
 } from "../../../stores/sessionStore";
 import { getOriginPairingClient } from "../../clients/store";
 import type { OriginPairingState as OriginPairingStateType } from "../../types";
-import { StatusBoxModal, StatusBoxWalletEmbedded } from "../PairingStatusBox";
+import { StatusBoxModal } from "../PairingStatusBox";
 
 type OriginPairingStateProps = {
-    type: "embedded" | "modal";
+    type: "modal";
 };
 
 /**
  * Component displaying the live origin pairing state
  *  - Only visible if the session is a distant-webauthn one (if not we don't need to display anything)
  *
- * Visible on listener, embedded wallet, and wallet
+ * Visible on the listener modal and the wallet
  */
 export function OriginPairingState({ type }: OriginPairingStateProps) {
     const session = useStore(sessionStore, selectDistantWebauthnSession);
@@ -38,7 +38,6 @@ function InnerOriginPairingState({ type }: OriginPairingStateProps) {
 
     const { status, text } = getStatusDetails(t, state);
     const components = {
-        embedded: StatusBoxWalletEmbedded,
         modal: StatusBoxModal,
     };
     const Component = components[type];

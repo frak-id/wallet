@@ -27,7 +27,6 @@ import {
     handlePrepareSso,
     handleSsoComplete,
 } from "@/module/handlers/ssoHandler";
-import { createDisplayEmbeddedWalletHandler } from "@/module/hooks/useDisplayEmbeddedWallet";
 import { createDisplayModalHandler } from "@/module/hooks/useDisplayModalListener";
 import { createDisplaySharingPageHandler } from "@/module/hooks/useDisplaySharingPageListener";
 import { createGetMerchantInformationHandler } from "@/module/hooks/useOnGetMerchantInformation";
@@ -64,9 +63,9 @@ function runWhenIdle(callback: () => void): void {
 }
 
 /**
- * Reads `?preload=modal,sharing,wallet` from the iframe URL hash and
+ * Reads `?preload=modal,sharing` from the iframe URL hash and
  * idle-warms the matching Ring 1 + Ring 2 chunks. Each display chunk
- * (Modal / Wallet / SharingPage's content via lazy-shared) bundles its
+ * (Modal / SharingPage's content via lazy-shared) bundles its
  * own `useDisplay*.impl` handler body, so a single `import()` warms
  * both the component and its handler. Used by partner sites that know
  * they will trigger UI within a few hundred ms — eliminates the
@@ -83,9 +82,8 @@ function setupPreloadHints(): void {
     const preloads = preloadRaw.split(",");
     const wantsModal = preloads.includes("modal");
     const wantsSharing = preloads.includes("sharing");
-    const wantsWallet = preloads.includes("wallet");
 
-    if (!wantsModal && !wantsSharing && !wantsWallet) return;
+    if (!wantsModal && !wantsSharing) return;
 
     // Kick off the i18n locale fetch immediately — no need to wait for
     // requestIdleCallback. Translations gate the first paint of any UI, so
@@ -98,16 +96,13 @@ function setupPreloadHints(): void {
 
         // Preload the matching display chunk(s). Each chunk co-hosts the
         // component tree AND its lazy handler body (useDisplay*.impl) via
-        // the `Modal` / `Wallet` / `lazy-shared` chunk groups in
+        // the `Modal` / `lazy-shared` chunk groups in
         // vite.config.ts, so a single import warms both files.
         if (wantsModal) {
             promises.push(import("@/module/modal/component/Modal"));
         }
         if (wantsSharing) {
             promises.push(import("@/module/sharing/component/SharingPage"));
-        }
-        if (wantsWallet) {
-            promises.push(import("@/module/embedded/component/Wallet"));
         }
 
         await Promise.all(promises);
@@ -154,7 +149,6 @@ export function bootstrap(): { cleanup: () => void } {
     const onGetUserReferralStatus = createGetUserReferralStatusHandler();
     const onGetMergeToken = createGetMergeTokenHandler();
     const onDisplayModalRequest = createDisplayModalHandler();
-    const onDisplayEmbeddedWallet = createDisplayEmbeddedWalletHandler();
     const onDisplaySharingPage = createDisplaySharingPageHandler();
 
     // Create the listener with combined schema (IFrame + SSO).
@@ -183,7 +177,6 @@ export function bootstrap(): { cleanup: () => void } {
     listener.handle("frak_prepareSso", handlePrepareSso);
     listener.handle("frak_openSso", handleOpenSso);
     listener.handle("frak_getMerchantInformation", onGetMerchantInformation);
-    listener.handle("frak_displayEmbeddedWallet", onDisplayEmbeddedWallet);
     listener.handle("frak_sendInteraction", onSendInteraction);
     listener.handle("frak_getUserReferralStatus", onGetUserReferralStatus);
     listener.handle("frak_displaySharingPage", onDisplaySharingPage);

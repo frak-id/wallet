@@ -1,12 +1,12 @@
 import * as coreSdk from "@frak-labs/core-sdk";
 import { fireEvent, render, screen, waitFor } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import * as embeddedWalletUtils from "@/actions/embeddedWallet";
 import * as sharingPageUtils from "@/actions/sharingPage";
 import * as useClientReadyHook from "@/hooks/useClientReady";
 import * as useLangHook from "@/hooks/useLang";
 import * as useRewardHook from "@/hooks/useReward";
 import { ButtonShare } from "./ButtonShare";
+import type { ButtonShareProps } from "./types";
 
 // Mock the hooks
 vi.mock("@/hooks/useClientReady", () => ({
@@ -23,10 +23,6 @@ vi.mock("@/hooks/useReward", () => ({
 
 vi.mock("@/hooks/useLang", () => ({
     useLang: vi.fn(() => "en"),
-}));
-
-vi.mock("@/actions/embeddedWallet", () => ({
-    openEmbeddedWallet: vi.fn(),
 }));
 
 vi.mock("@/actions/sharingPage", () => ({
@@ -168,43 +164,33 @@ describe.sequential("ButtonShare", () => {
         });
     });
 
-    it("should call openEmbeddedWallet when clickAction is embedded-wallet", async () => {
-        render(<ButtonShare clickAction="embedded-wallet" />);
-        const button = screen.getByRole("button");
-
-        fireEvent.click(button);
-
-        await waitFor(() => {
-            expect(embeddedWalletUtils.openEmbeddedWallet).toHaveBeenCalledWith(
-                undefined,
-                undefined
+    it.each(["share-modal", "embedded-wallet"])(
+        "should route legacy %s clickAction to openSharingPage",
+        async (legacyClickAction) => {
+            // Both values were retired in favour of `displaySharingPage`;
+            // existing merchant configs still ship those strings so the
+            // component must gracefully fall through to the sharing-page UI.
+            render(
+                <ButtonShare
+                    // string value that is no longer in the typed union.
+                    clickAction={
+                        legacyClickAction as ButtonShareProps["clickAction"]
+                    }
+                />
             );
-        });
-    });
+            const button = screen.getByRole("button");
 
-    it("should route legacy share-modal clickAction to openSharingPage", async () => {
-        // The `share-modal` value was retired in favour of `displaySharingPage`;
-        // existing merchant configs still ship with that string so the
-        // component must gracefully fall through to the sharing-page UI.
-        render(
-            <ButtonShare
-                // string value that is no longer in the typed union.
-                clickAction={"share-modal" as any}
-            />
-        );
-        const button = screen.getByRole("button");
+            fireEvent.click(button);
 
-        fireEvent.click(button);
-
-        await waitFor(() => {
-            expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
-                undefined,
-                undefined,
-                { products: undefined }
-            );
-        });
-        expect(embeddedWalletUtils.openEmbeddedWallet).not.toHaveBeenCalled();
-    });
+            await waitFor(() => {
+                expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                    undefined,
+                    undefined,
+                    { products: undefined }
+                );
+            });
+        }
+    );
 
     it("should track event on click", () => {
         render(<ButtonShare />);

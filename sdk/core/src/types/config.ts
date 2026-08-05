@@ -128,7 +128,6 @@ export type FrakWalletSdkConfig = {
  *
  * Context of the translation [see i18n context](https://www.i18next.com/translation-function/context)
  *  - For modal display, the key of the final action (`sharing`, `reward`, or undefined)
- *  - For embedded wallet display, the key of the logged in action (`sharing` or undefined)
  *
  * @example
  * ```ts

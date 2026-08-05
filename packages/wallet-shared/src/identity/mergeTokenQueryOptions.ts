@@ -41,8 +41,8 @@ export const mergeTokenKeys = {
  * arm is made unconditionally mandatory (ROLLOUT-STEP-3), or the listener's
  * in-app-browser escape 403s outright.
  *
- * Deferred deliberately, not overlooked: the only consumers (listener modal,
- * embedded wallet) have no production merchant today, and the wallet-app
+ * Deferred deliberately, not overlooked: the only consumer (the listener
+ * modal) has no production merchant today, and the wallet-app
  * explorer arm is unaffected since it's authenticated by session instead.
  *
  * Two real constraints when this is picked up:

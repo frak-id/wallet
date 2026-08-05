@@ -22,10 +22,10 @@ export type AnyModalKey = ModalStepTypes["key"];
  * - `"pending"` — Config not yet received; no trust established.
  * - `"verified"` — Origin matches a registered `allowedDomains` entry. Full access.
  * - `"dev-override"` — MerchantId present but origin not in `allowedDomains`.
- *   Read-only access: modals, embedded wallet, and merchant info are allowed.
+ *   Read-only access: modals, sharing page, and merchant info are allowed.
  *   Write operations (sendInteraction) are blocked to prevent fraudulent tracking.
  * - `"unverified"` — Domain proof failed and no merchantId available (e.g. backend down).
- *   Display-only access: modals, embedded wallet, and wallet status are allowed.
+ *   Display-only access: modals, sharing page, and wallet status are allowed.
  *   All write operations and merchant-specific queries are blocked.
  */
 export type TrustLevel = "pending" | "verified" | "dev-override" | "unverified";

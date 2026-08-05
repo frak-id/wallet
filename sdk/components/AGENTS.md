@@ -5,7 +5,7 @@ Preact-based Web Components (Custom Elements). Hybrid Light DOM / Shadow DOM. CD
 ## Component Matrix
 | Element | DOM | Reason |
 |---------|-----|--------|
-| `<frak-button-wallet>` | **Shadow DOM** | Floating overlay must NOT inherit merchant styles |
+| `<frak-button-wallet>` | **Shadow DOM** | Floating overlay must NOT inherit merchant styles. Legacy name: opens the sharing page |
 | `<frak-button-share>` | Light DOM | MUST inherit merchant theme `.button` styles |
 | `<frak-open-in-app>` | Light DOM | MUST inherit merchant theme styles (mobile-only renderer) |
 

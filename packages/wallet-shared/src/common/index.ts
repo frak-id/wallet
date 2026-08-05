@@ -22,7 +22,6 @@ export type {
     DeepLinkEventMap,
     DeepLinkSource,
     DiagnosticsEventMap,
-    EmbeddedWalletEventMap,
     EventMap,
     Flow,
     FlowEndExtras,

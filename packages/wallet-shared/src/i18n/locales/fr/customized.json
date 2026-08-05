@@ -40,20 +40,6 @@
                 "title": "Authentification"
             }
         },
-        "wallet": {
-            "login": {
-                "text": "Créez votre porte-monnaie et recevez jusqu’à **{{ estimatedReward }}** par ami(e) parrainé(e)",
-                "text_referred": "Bienvenue ! Recevez jusqu'à **{{ estimatedReward }}** en cas d’achat sur le site.\n\nCréez votre porte-monnaie en 1 clic",
-                "primaryAction": "Je crée mon porte-monnaie"
-            },
-            "loggedIn": {
-                "onboarding": {
-                    "welcome": "🥳 Bravo ! Votre porte-monnaie est créé.",
-                    "share": "🚀 C'est parti ! Partagez ce produit et recevez des récompenses",
-                    "share_referred": "🚀 Partagez a votre tour pour gagner plus!"
-                }
-            }
-        },
         "sharingPage": {
             "dismiss": "Plus tard",
             "reward": {
