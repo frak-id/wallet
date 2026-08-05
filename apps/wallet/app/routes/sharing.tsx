@@ -14,7 +14,6 @@ import { useStore } from "zustand";
 import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
 import { sendHostResult } from "@/module/sharing/host/bridge";
 import { useHostBridge } from "@/module/sharing/host/useHostBridge";
-import { useHostCornerRadius } from "@/module/sharing/host/useHostCornerRadius";
 import { useActivationParams } from "@/module/sharing/params/fragment";
 import { parseSharingSearch } from "@/module/sharing/params/search";
 import type { SharingSearch } from "@/module/sharing/params/table";
@@ -84,7 +83,6 @@ function WalletSharingPage() {
         returnScheme,
         sid,
         sdkVersion,
-        cornerRadius,
         seedReward,
         state,
         view,
@@ -97,7 +95,6 @@ function WalletSharingPage() {
     const embedded = embed === "native";
     const warm = state === "warm";
 
-    useHostCornerRadius(cornerRadius);
     const { returnToHost, canHandOff } = useHostBridge({
         returnScheme,
         sid,
@@ -140,7 +137,7 @@ function WalletSharingPage() {
         seedReward,
         source: "sharing_page_wallet",
         installUrl,
-        chrome: embedded ? { mode: "none", cornerRadius } : { mode: "full" },
+        chrome: embedded ? { mode: "none" } : { mode: "full" },
         confirmed: view === "confirmation",
         warm,
         sdkVersion,

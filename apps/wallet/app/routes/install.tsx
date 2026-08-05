@@ -27,6 +27,11 @@ import { Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
+import {
+    decodeHostEmbed,
+    type HostEmbed,
+    isHostEmbedded,
+} from "@/module/common/utils/hostEmbed";
 import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
@@ -39,6 +44,17 @@ type InstallSearch = {
     a?: string;
     /** `frak-install-v1` proof, when a fragment could not carry it. See `resolveInstallProof`. */
     p?: string;
+    /**
+     * How this page is being presented. `native` means a host has embedded it
+     * in its own sheet, so this page draws no chrome of its own.
+     *
+     * Read from the same param, through the same decoder, as `/sharing`. The
+     * two used to disagree: `/sharing` read `embed`, this route inferred a host
+     * from the presence of `returnScheme`. Since the sharing sheet navigates
+     * its one web view from `/sharing` to here, that meant the same sheet could
+     * render one page host-embedded and the next one not.
+     */
+    embed?: HostEmbed;
     /** Native host's result scheme. Present only when the SDK's web view loaded this page. */
     returnScheme?: string;
     /** The host's correlation token, echoed back with any result. */
@@ -50,6 +66,7 @@ export const Route = createFileRoute("/install")({
         m: typeof search.m === "string" ? search.m : undefined,
         a: typeof search.a === "string" ? search.a : undefined,
         p: typeof search.p === "string" ? search.p : undefined,
+        embed: decodeHostEmbed(search.embed),
         // Sanitised, not just read: the page navigates to whatever scheme this carries, so an
         // unvalidated value turns a wallet-origin page into an arbitrary scheme launcher.
         returnScheme: sanitizeReturnScheme(search.returnScheme),
@@ -105,7 +122,7 @@ export function resolveInstallProof(
  *   Everything else      → Processing screen (fire ensure or store for post-auth)
  */
 function InstallPage() {
-    const { m, a, p, returnScheme, sid } = Route.useSearch();
+    const { m, a, p, embed, returnScheme, sid } = Route.useSearch();
     // frak-install-v1 proof, read once. Forwarded to both InstallCodeView and
     // InstallProcessing — whether a proof is present is a property of the input,
     // not of which shell (web/Tauri) is running.
@@ -135,6 +152,7 @@ function InstallPage() {
                 m={m}
                 a={a}
                 proof={proof}
+                embed={embed}
                 returnScheme={returnScheme}
                 sid={sid}
             />
@@ -277,6 +295,7 @@ function InstallCodeView({
     m: merchantId,
     a: anonymousId,
     proof,
+    embed,
     returnScheme,
     sid,
 }: InstallSearch & { proof?: string }) {
@@ -360,9 +379,18 @@ function InstallCodeView({
     // A native host presents this page inside its own sheet, which already carries a title, a
     // drag handle and a scrim to dismiss with. The page's own header would be a second set of
     // chrome inside the first, and its close button calls `window.close()`, which a web view
-    // does not honour — so it would read as a dead control. `returnScheme` is the only marker
-    // of a host: it is what the host mints for the page to answer on.
-    const chromeless = Boolean(returnScheme);
+    // does not honour — so it would read as a dead control.
+    //
+    // `embed`, not `returnScheme`: the two answer different questions, and reading the wrong
+    // one is what let this route drift out of step with `/sharing`. `returnScheme` says whether
+    // outcomes can be reported back; `embed` says who draws the chrome.
+    //
+    // Spoofable, and safe to be: any visitor can type `?embed=native`, and all it buys them is a
+    // page without its own header. Nothing downstream treats it as authorisation — `handOverCode`
+    // goes through `sendHostResult`, which still requires a `returnScheme` that survived
+    // `sanitizeReturnScheme` and no-ops without one. Hiding the header cannot trap anyone either:
+    // its close button calls `window.close()`, which a browser tab it did not open ignores.
+    const chromeless = isHostEmbedded(embed);
 
     const isAndroid = useMemo(() => /android/i.test(navigator.userAgent), []);
     const downloadUrl = useMemo(() => {
@@ -387,7 +415,13 @@ function InstallCodeView({
     }, [data?.code, merchantId, handOverCode]);
 
     return (
-        <div className={styles.container}>
+        <div
+            className={
+                chromeless
+                    ? `${styles.container} ${styles.containerChromeless}`
+                    : styles.container
+            }
+        >
             {!chromeless && (
                 <header className={styles.header}>
                     <Box display="flex" alignItems="center" gap="m">

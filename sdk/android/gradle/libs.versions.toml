@@ -24,6 +24,15 @@ coroutines = "1.11.0"
 # versions below and can never drift apart.
 compose-bom = "2026.06.01"
 
+# The stable AndroidX wrapper over the WebView APIs that ship with the WebView package rather
+# than with the platform. Only one is used: `addDocumentStartJavaScript`, which is how the sheet
+# hands the hosted page its corner radius without a query parameter (see `SharingHostStyle`).
+#
+# Same first-party argument as Compose above — this is AndroidX, not a third party. It is also
+# the only way to reach the API at all: the underlying support code lives in the updatable
+# WebView APK, so there is no platform-version floor to raise instead.
+androidx-webkit = "1.16.0"
+
 junit = "4.13.2"
 # Test-only. Parses the golden fixture corpus in `sdk/core` from the Kotlin test suite.
 #
@@ -59,6 +68,8 @@ compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
+
+androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "androidx-webkit" }
 
 junit = { module = "junit:junit", version.ref = "junit" }
 json = { module = "org.json:json", version.ref = "json" }

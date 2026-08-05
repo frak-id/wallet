@@ -33,15 +33,10 @@ internal object SharingPageUrl {
         products: String? = null,
         seededReward: String? = null,
         confirmed: Boolean = false,
-        /**
-         * Radius, in CSS px, the page should round its own top corners with. See
-         * [SHEET_CORNER_RADIUS_DP] for why the native side stopped doing it.
-         *
-         * Null on any host that does not want it, which is every host but Android: a SwiftUI
-         * `.sheet` already clips to the system radius, and a second arc inside that one reads as
-         * a double corner. Absent means the page keeps whatever it does today.
-         */
-        cornerRadius: Int? = null,
+        // No presentation params here. How the sheet looks is injected once per web view by
+        // [SharingHostStyle], which is scoped to the wallet origin rather than to this route — so
+        // the `/install` page the install CTA navigates to gets the same treatment for free, and
+        // there is nothing for [warm] to keep byte-identical.
     ): String =
         buildString {
             append(walletOrigin).append("/sharing?embed=native")
@@ -60,7 +55,6 @@ internal object SharingPageUrl {
             link?.let { append("&link=").append(PercentEncoding.encode(it)) }
             products?.let { append("&products=").append(PercentEncoding.encode(it)) }
             seededReward?.let { append("&seedReward=").append(PercentEncoding.encode(it)) }
-            cornerRadius?.let { append("&cornerRadius=").append(it) }
             if (confirmed) append("&view=confirmation")
         }
 
@@ -82,8 +76,6 @@ internal object SharingPageUrl {
         packageId: String,
         appName: String? = null,
         logoUrl: String? = null,
-        /** See [build]'s own `cornerRadius`. Must match it, or a warmed page cannot be activated. */
-        cornerRadius: Int? = null,
     ): String =
         buildString {
             append(walletOrigin).append("/sharing?embed=native&state=warm")
@@ -97,7 +89,6 @@ internal object SharingPageUrl {
                 .append(PercentEncoding.encode(FrakSdkVersion.CURRENT))
             appName?.let { append("&appName=").append(PercentEncoding.encode(it)) }
             logoUrl?.let { append("&logoUrl=").append(PercentEncoding.encode(it)) }
-            cornerRadius?.let { append("&cornerRadius=").append(it) }
         }
 
     /**

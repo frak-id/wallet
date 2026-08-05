@@ -3,6 +3,7 @@ import {
     decodeProductsParam,
     sanitizeSharingProducts,
 } from "@frak-labs/core-sdk";
+import { decodeHostEmbed } from "@/module/common/utils/hostEmbed";
 import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
 import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme";
 import { sanitizeSeededReward } from "@/module/common/utils/sanitizeSeededReward";
@@ -21,11 +22,6 @@ export type ParamCodec<T> = {
     /** Returns `undefined` for anything the param cannot legally be. */
     decode: (raw: unknown) => T | undefined;
     transport: ParamTransport;
-    /**
-     * Only honoured once `embed` is confirmed. A plain web visitor must not be
-     * able to reach a host-only capability by typing the param into the URL.
-     */
-    nativeOnly?: boolean;
     /**
      * Value written when a fragment arrives WITHOUT this key.
      *
@@ -61,26 +57,6 @@ const oneOf =
         return value !== undefined && allowed.includes(value as T)
             ? (value as T)
             : undefined;
-    };
-
-/**
- * A whole number inside `[min, max]`, where `min` also reads as "absent".
- *
- * Same JSON-parsed-value handling as the rest: `?cornerRadius=28` arrives as
- * the number 28, but a host sending it as a string is accepted too.
- */
-const clampedInt =
-    (min: number, max: number) =>
-    (raw: unknown): number | undefined => {
-        const numeric =
-            typeof raw === "number"
-                ? raw
-                : typeof raw === "string"
-                  ? Number(raw)
-                  : Number.NaN;
-        if (!Number.isFinite(numeric)) return undefined;
-        const clamped = Math.min(Math.max(Math.floor(numeric), min), max);
-        return clamped === min ? undefined : clamped;
     };
 
 /**
@@ -145,10 +121,12 @@ export const SHARING_PARAMS = {
      * in its own sheet, which makes `clientId` mandatory (the host owns the
      * caller identity) and renders the page without its own chrome.
      *
-     * An enum rather than the boolean it replaced: a second embedding vehicle
-     * costs a value here instead of another flag to cross-check.
+     * Decoded by `decodeHostEmbed` rather than this table's own `oneOf`,
+     * because `/install` — which the sheet navigates the same web view to —
+     * has to reach the identical answer from the identical param. See
+     * `@/module/common/utils/hostEmbed`.
      */
-    embed: { decode: oneOf("native"), transport: "query" },
+    embed: { decode: decodeHostEmbed, transport: "query" },
 
     /**
      * Custom scheme a native host listens on for outcomes, since it has no JS
@@ -165,25 +143,6 @@ export const SHARING_PARAMS = {
 
     /** Version of the native SDK that opened this page. Telemetry only. */
     sdkVersion: { decode: looseStr, transport: "query" },
-
-    /**
-     * Top corner radius (CSS px) for the sheet a native host presents this page
-     * in. The Android host stopped clipping the WebView natively — its
-     * `AwDrawFn` GPU functor only carries a rectangular clip, so a Compose
-     * `RoundedCornerShape` around it forced an offscreen/stencil pass on every
-     * frame — and now rounds the corners in-page instead. iOS omits this param
-     * on purpose: a SwiftUI `.sheet` already clips to the system radius, and a
-     * second arc drawn inside would read as a double corner.
-     *
-     * `query`, because a host sets it once at load and never per tap.
-     * `nativeOnly`, because `?cornerRadius=200` from a web visitor must not
-     * reach into this page's geometry.
-     */
-    cornerRadius: {
-        decode: clampedInt(0, 48),
-        transport: "query",
-        nativeOnly: true,
-    },
 
     /**
      * Already-formatted reward headline from a host's local cache, painted on
@@ -240,10 +199,9 @@ export type SharingActivation = {
  *
  * `as const satisfies` narrows each entry to exactly the properties it
  * declares, which is what gives `SharingSearch` its per-key value types — but
- * it also means `fragmentDefault` and `nativeOnly` are missing from the
- * entries that omit them, and so unreadable across the union. Widening here
- * keeps the precise types where they are useful and the optional flags
- * readable where they are needed.
+ * it also means `fragmentDefault` is missing from the entries that omit it,
+ * and so unreadable across the union. Widening here keeps the precise types
+ * where they are useful and the optional flags readable where they are needed.
  */
 export function paramCodec(key: SharingParamKey): ParamCodec<unknown> {
     return SHARING_PARAMS[key];

@@ -849,7 +849,6 @@ internal class SharingSheetState(
                     link = request.link ?: request.products.firstOrNull()?.link,
                     products = productsJson(request),
                     seededReward = seededReward,
-                    cornerRadius = SHEET_CORNER_RADIUS_DP,
                 ),
             // Rebuilt here rather than passed in from the pool, so it is derived from the same
             // resolved config as pageUrl. If the pool warmed against anything else — a stale
@@ -863,7 +862,6 @@ internal class SharingSheetState(
                     packageId = packageId,
                     appName = appName,
                     logoUrl = config.sdkConfig?.logoUrl,
-                    cornerRadius = SHEET_CORNER_RADIUS_DP,
                 ),
             activationFragment =
                 SharingPageUrl.activationFragment(

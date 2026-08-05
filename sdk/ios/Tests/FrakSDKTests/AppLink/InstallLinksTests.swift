@@ -38,6 +38,30 @@ struct InstallLinksTests {
         )
     }
 
+    /// `embed=native` is the one marker of a host-embedded page, and it is the same spelling
+    /// `/sharing` uses. The sharing sheet navigates its one web view from `/sharing` to here, so a
+    /// route that read the marker differently rendered differently mid-flow — which is exactly what
+    /// happened while `/install` inferred a host from the presence of `returnScheme` instead.
+    @Test("marks the hosted install page as host-embedded, the same way the sharing url does")
+    func marksTheInstallPageAsHostEmbedded() {
+        let url = InstallLinks.installPage(
+            walletOrigin: "https://wallet.frak.id",
+            merchantId: Self.merchantId,
+            anonymousId: Self.clientId,
+            returnScheme: "frak-com.acme.app",
+            sessionId: "session-1",
+            proof: nil
+        )
+
+        #expect(
+            url == "https://wallet.frak.id/install?embed=native&m=\(Self.merchantId)"
+                + "&a=\(Self.clientId)&returnScheme=frak-com.acme.app&sid=session-1"
+        )
+        // No corner radius, and nothing else about how the sheet looks. iOS injects none at all:
+        // a SwiftUI `.sheet` already clips to the system radius.
+        #expect(!url.contains("cornerRadius"))
+    }
+
     @Test("points at the wallet's App Store listing")
     func pointsAtTheAppStoreListing() {
         #expect(InstallLinks.appStore() == "https://apps.apple.com/app/id6740261164")

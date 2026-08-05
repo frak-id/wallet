@@ -44,6 +44,13 @@ enum InstallLinks {
     /// `returnScheme`/`sessionId` are what let the page hand the install code back, which the
     /// SDK needs in order to put it on the pasteboard with an expiry and `localOnly`. Both are
     /// query params and the proof stays in the fragment, so the fragment remains last.
+    ///
+    /// `embed=native` is the single marker that says "a host is presenting this page inside its
+    /// own sheet", and it is the same spelling `/sharing` uses. The two routes used to disagree —
+    /// `/sharing` read `embed`, `/install` inferred it from the presence of `returnScheme` — which
+    /// meant one page could render host-embedded while the other did not, in the same web view,
+    /// one navigation apart. It carries no corner radius: iOS deliberately injects none, since a
+    /// SwiftUI `.sheet` already clips to the system radius.
     static func installPage(
         walletOrigin: String,
         merchantId: String,
@@ -53,7 +60,8 @@ enum InstallLinks {
         proof: String?
     ) -> String {
         let url =
-            "\(walletOrigin)/install?m=\(PercentEncoding.encode(merchantId))"
+            "\(walletOrigin)/install?embed=native"
+            + "&m=\(PercentEncoding.encode(merchantId))"
             + "&a=\(PercentEncoding.encode(anonymousId))"
             + "&returnScheme=\(PercentEncoding.encode(returnScheme))"
             + "&sid=\(PercentEncoding.encode(sessionId))"

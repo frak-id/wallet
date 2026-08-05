@@ -24,10 +24,10 @@ public object FrakSharingDefaults {
  *
  * Pinned rather than read from `BottomSheetDefaults.ExpandedShape` (which resolves through
  * `MaterialTheme.shapes.extraLarge`) because two places that cannot see each other's theme have to
- * agree on it: the skeleton's own clip, and the `cornerRadius` query parameter the hosted page
- * rounds itself with. A merchant reshaping `extraLarge` would desynchronise them for no visible
- * gain — the page paints every pixel of this sheet, so its own radius is the only one that is ever
- * on screen once it has loaded.
+ * agree on it: the skeleton's own clip, and the `--frak-host-top-radius` custom property
+ * [SharingHostStyle] injects for the hosted page to round itself with. A merchant reshaping
+ * `extraLarge` would desynchronise them for no visible gain — the page paints every pixel of this
+ * sheet, so its own radius is the only one that is ever on screen once it has loaded.
  *
  * 28dp is M3's own `CornerExtraLargeTop`, i.e. what the sheet looked like before the rounding
  * moved off the web view. 1 CSS px == 1 dp inside a WebView at `width=device-width`, so the same

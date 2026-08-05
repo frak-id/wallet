@@ -14,13 +14,12 @@ import { clsx } from "clsx";
 import { type ReactNode, useRef } from "react";
 import { MerchantLogo } from "../MerchantLogo";
 import {
-    chromeRadiusStyle,
     isChromeless,
     type SharingChrome,
     type SharingMerchant,
     type SharingT,
 } from "../SharingPage/types";
-import { containerChromeless, overlay } from "../shared.css";
+import { containerChromeless, overlay, overlayChromeless } from "../shared.css";
 import { useOverlayBehaviour } from "../useOverlayBehaviour";
 import * as styles from "./postShareConfirmation.css";
 
@@ -71,7 +70,10 @@ export function PostShareConfirmation({
 
     return (
         // biome-ignore lint/a11y/useKeyWithClickEvents: dismissal has a keyboard equivalent in `useOverlayBehaviour`'s document-level Escape listener, not a per-element handler — the backdrop is never focusable.
-        <div className={overlay} onClick={chromeless ? undefined : onDismiss}>
+        <div
+            className={clsx(overlay, chromeless && overlayChromeless)}
+            onClick={chromeless ? undefined : onDismiss}
+        >
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: onClick only stops the backdrop's dismiss-on-click from firing; same rationale as the backdrop above. */}
             <div
                 ref={containerRef}
@@ -79,7 +81,6 @@ export function PostShareConfirmation({
                     styles.container,
                     chromeless && containerChromeless
                 )}
-                style={chromeRadiusStyle(chrome)}
                 role="dialog"
                 aria-modal="true"
                 tabIndex={-1}

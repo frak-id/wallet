@@ -53,6 +53,12 @@ internal object InstallLinks {
      * `Referer`), matching the wallet's own `buildInstallUrl`. [returnScheme]/[sessionId] let the
      * page hand the install code back to the SDK; both are query params, so the fragment stays
      * last.
+     *
+     * `embed=native` is the single marker that says "a host is presenting this page inside its own
+     * sheet", and it is the same spelling `/sharing` uses. The two routes used to disagree —
+     * `/sharing` read `embed`, `/install` inferred it from the presence of `returnScheme` — which
+     * meant one page could render host-embedded while the other did not, in the same web view, one
+     * navigation apart.
      */
     fun installPage(
         walletOrigin: String,
@@ -63,7 +69,8 @@ internal object InstallLinks {
         proof: String?,
     ): String {
         val url =
-            "$walletOrigin/install?m=${PercentEncoding.encode(merchantId)}" +
+            "$walletOrigin/install?embed=native" +
+                "&m=${PercentEncoding.encode(merchantId)}" +
                 "&a=${PercentEncoding.encode(anonymousId)}" +
                 "&returnScheme=${PercentEncoding.encode(returnScheme)}" +
                 "&sid=${PercentEncoding.encode(sessionId)}"

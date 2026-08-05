@@ -80,31 +80,19 @@ export type SharingReward =
 /**
  * How much of its own chrome the page draws.
  *
- * A union rather than a `chromeless` boolean beside a `hostCornerRadius`
- * number, because the radius is only meaningful in one of the two modes. As
- * two flat props that invariant was a comment plus a guard duplicated into
- * every component that rendered a container; here `mode: "full"` simply cannot
- * carry a radius.
- *
  * `none` is for a host presenting this page inside its own chrome — a native
  * bottom sheet with its own drag handle and close affordance. Footer CTAs stay
  * either way; the header and the backdrop dismiss do not, since a host that
  * owns the sheet owns dismissal too and an in-page dismiss it cannot observe
  * would empty the sheet while the host keeps it open.
+ *
+ * A `mode` union rather than a boolean because the set is open: a second
+ * embedding vehicle with different chrome is a value here, not another flag to
+ * cross-check. It briefly also carried the host's corner radius, which is now a
+ * CSS custom property the host injects into its own web view — nothing about
+ * how the sheet looks reaches this page through props any more.
  */
-export type SharingChrome =
-    | { mode: "full" }
-    | {
-          mode: "none";
-          /**
-           * Top corner radius (px) the container draws itself, because the
-           * host has deliberately stopped clipping it natively (an Android
-           * WebView's GPU functor only carries a rectangular clip, so a
-           * round-rect clip around it forced an offscreen/stencil pass every
-           * frame).
-           */
-          cornerRadius?: number;
-      };
+export type SharingChrome = { mode: "full" } | { mode: "none" };
 
 /** The product picker, absent entirely when there is nothing to pick. */
 export type SharingProducts = {
@@ -161,21 +149,4 @@ export type SharingPageProps = {
 /** Whether the host, rather than this page, draws the surrounding chrome. */
 export function isChromeless(chrome: SharingChrome): boolean {
     return chrome.mode === "none";
-}
-
-/**
- * Inline style rounding the container's top corners, or `undefined`.
- *
- * Lives here so the two screens that render a container cannot disagree about
- * it. `container` already sets `overflowY: "auto"` in both stylesheets, which
- * establishes a clip on both axes per the CSS overflow spec (an axis left at
- * its `visible` default resolves to `auto` once the other axis is
- * non-visible), so no extra `overflow` is needed alongside it.
- */
-export function chromeRadiusStyle(chrome: SharingChrome) {
-    if (chrome.mode !== "none" || !chrome.cornerRadius) return undefined;
-    return {
-        borderTopLeftRadius: `${chrome.cornerRadius}px`,
-        borderTopRightRadius: `${chrome.cornerRadius}px`,
-    };
 }

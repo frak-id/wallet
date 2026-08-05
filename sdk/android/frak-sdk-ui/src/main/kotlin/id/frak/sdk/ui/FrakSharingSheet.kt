@@ -105,8 +105,8 @@ internal fun FrakSharingSheet(
         //
         // The rounding did not go away, it moved to where it is free: the skeleton clips itself
         // (it is Compose-drawn, not a functor), and the page rounds its own top corners in CSS —
-        // see `cornerRadius` in `SharingPageUrl`. The web view is transparent so those corners
-        // cut through to the scrim.
+        // see [SharingHostStyle], which injects the radius by origin. The web view is transparent
+        // so those corners cut through to the scrim.
         shape = RectangleShape,
         // Drawn by hand inside the content so it floats over the page instead of reserving a
         // strip above it — in its own row it would render as a band of scrim, since the

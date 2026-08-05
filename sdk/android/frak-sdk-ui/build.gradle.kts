@@ -42,6 +42,12 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
 
+    // One API: `addDocumentStartJavaScript`. It is what lets the sheet style the hosted page by
+    // origin instead of by route — see `SharingHostStyle`. `implementation`, not `api`: no type
+    // from it appears on this module's public surface, so it stays off merchants' compile
+    // classpath and cannot conflict with a webkit version they pull in themselves.
+    implementation(libs.androidx.webkit)
+
     // Chrome Custom Tabs deliberately absent: can't embed in a bottom sheet or intercept the
     // page's own Share/Copy. Transport is an embedded WebView instead.
 

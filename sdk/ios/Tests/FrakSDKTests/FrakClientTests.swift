@@ -552,7 +552,7 @@ struct FrakClientTests {
         let anonymousId = try #require(await client.anonymousId)
 
         let expected =
-            "https://wallet.frak.id/install?m=\(Self.merchantId)&a=\(anonymousId)"
+            "https://wallet.frak.id/install?embed=native&m=\(Self.merchantId)&a=\(anonymousId)"
             + "&returnScheme=frak-com.acme.app&sid=session-1"
         #expect(page.hasPrefix(expected))
 

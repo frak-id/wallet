@@ -3,7 +3,7 @@ import { clsx } from "clsx";
 import { useRef } from "react";
 import { ExternalLink } from "../../../common/component/ExternalLink";
 import { PostShareConfirmation } from "../PostShareConfirmation";
-import { containerChromeless, overlay } from "../shared.css";
+import { containerChromeless, overlay, overlayChromeless } from "../shared.css";
 import { useOverlayBehaviour } from "../useOverlayBehaviour";
 import { Faq } from "./Faq";
 import { Footer } from "./Footer";
@@ -12,11 +12,7 @@ import { ProductList } from "./ProductCard";
 import { RewardCard } from "./RewardCard";
 import { Steps } from "./Steps";
 import * as styles from "./sharingPage.css";
-import {
-    chromeRadiusStyle,
-    isChromeless,
-    type SharingPageProps,
-} from "./types";
+import { isChromeless, type SharingPageProps } from "./types";
 
 export { getStep2Context } from "./Steps";
 export type {
@@ -81,7 +77,10 @@ export function SharingPage({
 
     return (
         // biome-ignore lint/a11y/useKeyWithClickEvents: dismissal has a keyboard equivalent in `useOverlayBehaviour`'s document-level Escape listener, not a per-element handler — the backdrop is never focusable.
-        <div className={overlay} onClick={backdropDismiss}>
+        <div
+            className={clsx(overlay, chromeless && overlayChromeless)}
+            onClick={backdropDismiss}
+        >
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: onClick only stops the backdrop's dismiss-on-click from firing; same rationale as the backdrop above. */}
             <div
                 ref={containerRef}
@@ -89,7 +88,6 @@ export function SharingPage({
                     styles.container,
                     chromeless && containerChromeless
                 )}
-                style={chromeRadiusStyle(chrome)}
                 role="dialog"
                 aria-modal="true"
                 tabIndex={-1}

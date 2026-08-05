@@ -39,29 +39,17 @@ describe("PostShareConfirmation chromeless mode", () => {
         expect(surface).toHaveClass(containerChromeless);
     });
 
-    it("puts the top corner radii on the container when a host supplies one", () => {
-        const { surface } = renderConfirmation({
-            chrome: { mode: "none", cornerRadius: 28 },
-        });
+    it("never inlines a radius, whatever the chrome mode", () => {
+        // The host's corner radius reaches this container as a CSS custom
+        // property injected into the web view, not as a prop — so there is
+        // nothing left to put in `style`, and `containerChromeless` above is
+        // the whole of the wiring.
+        for (const chrome of [{ mode: "none" }, { mode: "full" }] as const) {
+            const { surface } = renderConfirmation({ chrome });
 
-        expect(surface.style.borderTopLeftRadius).toBe("28px");
-        expect(surface.style.borderTopRightRadius).toBe("28px");
-    });
-
-    it("leaves no inline radius when the host supplies none", () => {
-        const { surface } = renderConfirmation({ chrome: { mode: "none" } });
-
-        expect(surface.style.borderTopLeftRadius).toBe("");
-        expect(surface.style.borderTopRightRadius).toBe("");
-    });
-
-    it("cannot express a radius in full-chrome mode at all", () => {
-        const { surface } = renderConfirmation({
-            chrome: { mode: "full" },
-        });
-
-        expect(surface.style.borderTopLeftRadius).toBe("");
-        expect(surface.style.borderTopRightRadius).toBe("");
+            expect(surface.style.borderTopLeftRadius).toBe("");
+            expect(surface.style.borderTopRightRadius).toBe("");
+        }
     });
 
     it("dismisses on Escape (§3.3 — previously unreachable, same bug as SharingPage)", () => {

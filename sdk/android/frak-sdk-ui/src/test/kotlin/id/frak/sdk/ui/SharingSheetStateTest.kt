@@ -915,12 +915,15 @@ class SharingSheetStateTest {
         }
 
     /**
-     * The sheet stopped clipping its web view — a round-rect clip cannot be handed to the WebView
-     * draw functor, so HWUI paid for an offscreen pass on every frame that redrew. The page rounds
-     * itself instead, which only works if the radius actually reaches it.
+     * Neither URL carries presentation.
+     *
+     * The radius used to ride both, and had to match across them or `navigation` decided the warm
+     * page was a different document and paid for a full load instead of a fragment activation.
+     * That invariant no longer exists to break: `SharingHostStyle` injects the radius into the web
+     * view by origin, so it reaches `/sharing`, `/install` and anything else that view loads.
      */
     @Test
-    fun `the session and warm urls both carry the sheet's corner radius`() =
+    fun `the session and warm urls carry no presentation params`() =
         runTest {
             val client = FakeSharingClient()
             val state = newState(client)
@@ -929,11 +932,9 @@ class SharingSheetStateTest {
 
             val session = requireNotNull(state.session)
             val page = requireNotNull(session.url(confirmed = false))
-            assertTrue("the page has to know what to round itself to: $page", page.contains("&cornerRadius=28"))
-            // Both or neither: `navigation` compares the rebuilt warm URL against what the pool
-            // loaded, so a radius on one side only turns every activation into a full load.
             val warm = requireNotNull(session.warmBaseUrl)
-            assertTrue("was: $warm", warm.contains("&cornerRadius=28"))
+            assertFalse("presentation must not ride the URL: $page", page.contains("cornerRadius"))
+            assertFalse("presentation must not ride the URL: $warm", warm.contains("cornerRadius"))
         }
 
     /**

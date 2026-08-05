@@ -78,16 +78,19 @@ class SharingPageUrlTest {
         assertFalse(url.contains("&seedReward="))
         assertFalse(url.contains("products"))
         assertFalse(url.contains("confirmed"))
-        assertFalse("absent means the page keeps doing what it does today", url.contains("cornerRadius"))
     }
 
     /**
-     * The sheet stopped clipping the web view (a round-rect clip cannot be handed to the WebView
-     * draw functor, so HWUI paid for an offscreen pass every frame) and asks the page to round
-     * itself instead. Absent on iOS, whose system sheet already clips.
+     * How the sheet looks is not addressed to a route.
+     *
+     * It was, briefly: a `cornerRadius` query param on this URL, which the `/install` page the
+     * install CTA navigates the same web view to never received — so the corners squared off
+     * halfway through the flow. It also had to be copied byte-identically into [SharingPageUrl.warm]
+     * or activation silently fell back to a full load. Both problems are gone because presentation
+     * now travels by origin, through `SharingHostStyle`, and not through here at all.
      */
     @Test
-    fun `carries the host corner radius when one is asked for`() {
+    fun `carries no presentation params`() {
         val url =
             SharingPageUrl.build(
                 walletOrigin = "https://wallet.frak.id",
@@ -95,36 +98,18 @@ class SharingPageUrlTest {
                 clientId = CLIENT_ID,
                 packageId = "com.acme.app",
                 sessionId = "1",
-                cornerRadius = 28,
             )
-        assertTrue(url.contains("&cornerRadius=28"))
-    }
-
-    /**
-     * Both halves or neither: `SharingSheetState.build` rebuilds the warm URL to compare against
-     * what the pool actually loaded, and a radius on one side only makes every session decide the
-     * warm page is a different document and pay for a full load instead of a fragment activation.
-     */
-    @Test
-    fun `the warm url carries the same corner radius as the session url`() {
         val warm =
             SharingPageUrl.warm(
                 walletOrigin = "https://wallet.frak.id",
                 merchantId = MERCHANT_ID,
                 clientId = CLIENT_ID,
                 packageId = "com.acme.app",
-                cornerRadius = 28,
             )
-        assertTrue(warm.contains("&cornerRadius=28"))
-
-        val cold =
-            SharingPageUrl.warm(
-                walletOrigin = "https://wallet.frak.id",
-                merchantId = MERCHANT_ID,
-                clientId = CLIENT_ID,
-                packageId = "com.acme.app",
-            )
-        assertFalse(cold.contains("cornerRadius"))
+        for (candidate in listOf(url, warm)) {
+            assertFalse("presentation must not ride the URL: $candidate", candidate.contains("cornerRadius"))
+            assertFalse("presentation must not ride the URL: $candidate", candidate.contains("radius"))
+        }
     }
 
     @Test

@@ -6,8 +6,8 @@ import { parseSharingSearch } from "./search";
 
 // A host writes a URL string, not an object. Going through the router's own
 // parser is the only way to see the types the codecs are really handed: it
-// runs values through JSON, so `?cornerRadius=28` arrives as a number and
-// `?sid=1738147200000` does too.
+// runs values through JSON, so `?sid=1738147200000` arrives as a number
+// rather than the string the host wrote.
 const parseSearch = parseSearchWith(JSON.parse);
 const fromUrl = (query: string) =>
     parseSharingSearch(parseSearch(query) as Record<string, unknown>);
@@ -101,27 +101,25 @@ describe("query params", () => {
     });
 });
 
-describe("cornerRadius is native-only", () => {
-    it("is honoured for an embedded host", () => {
-        expect(fromUrl("?embed=native&cornerRadius=28").cornerRadius).toBe(28);
+describe("embed", () => {
+    it("is the one marker of a host-embedded page", () => {
+        expect(fromUrl("?embed=native").embed).toBe("native");
     });
 
-    it("is ignored without embed, whatever a web visitor types", () => {
-        expect(fromUrl("?cornerRadius=28").cornerRadius).toBeUndefined();
-        expect(fromUrl("?cornerRadius=200").cornerRadius).toBeUndefined();
+    it("rejects any other value rather than guessing", () => {
+        expect(fromUrl("?embed=iframe").embed).toBeUndefined();
+        expect(fromUrl("?embed=1").embed).toBeUndefined();
+        expect(fromUrl("?embed=NATIVE").embed).toBeUndefined();
+        expect(fromUrl("?merchantId=m1").embed).toBeUndefined();
     });
 
-    it("clamps and treats 0 as absent", () => {
-        expect(fromUrl("?embed=native&cornerRadius=200").cornerRadius).toBe(48);
-        expect(fromUrl("?embed=native&cornerRadius=0").cornerRadius).toBe(
-            undefined
-        );
-        expect(fromUrl("?embed=native&cornerRadius=-5").cornerRadius).toBe(
-            undefined
-        );
-        expect(
-            fromUrl("?embed=native&cornerRadius=abc").cornerRadius
-        ).toBeUndefined();
+    it("is not implied by returnScheme", () => {
+        // The two answer different questions, and `/install` conflating them is
+        // what let it drift out of step with this route. `returnScheme` says
+        // outcomes can be reported back; `embed` says who draws the chrome.
+        const result = fromUrl("?returnScheme=frak-com.acme.app");
+        expect(result.returnScheme).toBe("frak-com.acme.app");
+        expect(result.embed).toBeUndefined();
     });
 });
 
@@ -200,10 +198,12 @@ describe("activation fragment", () => {
     });
 
     it("refuses query-only params, whatever the fragment claims", () => {
-        // `cornerRadius` is set once at load, not per tap. Accepting it here
-        // would let one sheet's geometry leak into the next.
-        const activation = parseSharingFragment("#cornerRadius=48&sid=s1");
-        expect(activation).not.toHaveProperty("cornerRadius");
+        // `embed` is settled at load: it decides whether `clientId` is
+        // mandatory, and `beforeLoad` has already run by the time a fragment
+        // arrives. Letting a tap change it would move that guard after its
+        // own check.
+        const activation = parseSharingFragment("#embed=native&sid=s1");
+        expect(activation).not.toHaveProperty("embed");
         expect(activation?.sid).toBe("s1");
     });
 

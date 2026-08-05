@@ -32,6 +32,34 @@ class InstallLinksTest {
         )
     }
 
+    /**
+     * `embed=native` is the one marker of a host-embedded page, and it is the same spelling
+     * `/sharing` uses. The sharing sheet navigates its one web view from `/sharing` to here, so a
+     * route that read the marker differently rendered differently mid-flow — which is exactly what
+     * happened while `/install` inferred a host from the presence of `returnScheme` instead.
+     */
+    @Test
+    fun `marks the hosted install page as host-embedded, the same way the sharing url does`() {
+        val url =
+            InstallLinks.installPage(
+                walletOrigin = "https://wallet.frak.id",
+                merchantId = MERCHANT_ID,
+                anonymousId = CLIENT_ID,
+                returnScheme = "frak-com.acme.app",
+                sessionId = "session-1",
+                proof = null,
+            )
+
+        assertEquals(
+            "https://wallet.frak.id/install?embed=native&m=$MERCHANT_ID&a=$CLIENT_ID" +
+                "&returnScheme=frak-com.acme.app&sid=session-1",
+            url,
+        )
+        // No corner radius, and nothing else about how the sheet looks: presentation reaches the
+        // page as CSS custom properties injected by origin, so every route gets it at once.
+        assertEquals(false, url.contains("cornerRadius"))
+    }
+
     @Test
     fun `nests the play install referrer as one encoded value`() {
         val url = InstallLinks.playStore("id.frak.wallet", MERCHANT_ID, CLIENT_ID)

@@ -262,8 +262,9 @@ internal fun createSharingWebView(
             // rectangularly on purpose — a rounded clip cannot be handed to the WebView draw
             // functor, whose ABI carries a rect clip only, so HWUI would route every frame
             // through an offscreen pass to honour it. The page rounds its own top corners
-            // instead (`cornerRadius` in [SharingPageUrl]), and those corners can only cut
-            // through to the scrim if this view is not painting a background behind them.
+            // instead, from the custom properties [SharingHostStyle] injects, and those corners
+            // can only cut through to the scrim if this view is not painting a background behind
+            // them.
             //
             // Costs some of Blink's opaque-surface fast paths. That is a fixed cost against a
             // per-frame, full-surface stencil pass.
@@ -282,6 +283,12 @@ internal fun createSharingWebView(
 
             webViewClient = client
         }
+
+    // Registered on the view, not per load: it applies to every wallet-origin document this view
+    // ever shows, so `/sharing` and the `/install` page the install CTA navigates to are styled
+    // by the same rule with nothing to keep in step. See [SharingHostStyle].
+    SharingHostStyle.install(view = view, walletOrigin = walletOrigin, topRadiusDp = SHEET_CORNER_RADIUS_DP)
+
     return SharingWebViewHandle(view = view, client = client)
 }
 

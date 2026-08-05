@@ -189,29 +189,18 @@ describe("SharingPage chromeless mode", () => {
         expect(surface).not.toHaveClass(containerChromeless);
     });
 
-    it("puts the top corner radii on the container when chromeless with a hostCornerRadius", () => {
-        const { surface } = renderPage({
-            chrome: { mode: "none", cornerRadius: 28 },
-        });
+    it("never inlines a radius, whatever the chrome mode", () => {
+        // The host's corner radius reaches this container as a CSS custom
+        // property injected into the web view, not as a prop — so there is
+        // nothing left to put in `style`, and `containerChromeless` above is
+        // the whole of the wiring. That is what lets `/install`, which the
+        // host navigates the same web view to, round itself identically
+        // without this component knowing anything about it.
+        for (const chrome of [{ mode: "none" }, { mode: "full" }] as const) {
+            const { surface } = renderPage({ chrome });
 
-        expect(surface.style.borderTopLeftRadius).toBe("28px");
-        expect(surface.style.borderTopRightRadius).toBe("28px");
-    });
-
-    it("leaves no inline radius when chromeless without a hostCornerRadius", () => {
-        const { surface } = renderPage({ chrome: { mode: "none" } });
-
-        expect(surface.style.borderTopLeftRadius).toBe("");
-        expect(surface.style.borderTopRightRadius).toBe("");
-    });
-
-    it("cannot express a radius in full-chrome mode at all", () => {
-        // `chrome` is a union: `mode: "full"` has nowhere to put a radius, so
-        // the invariant that used to be a comment plus a duplicated runtime
-        // guard is now a type error instead.
-        const { surface } = renderPage({ chrome: { mode: "full" } });
-
-        expect(surface.style.borderTopLeftRadius).toBe("");
-        expect(surface.style.borderTopRightRadius).toBe("");
+            expect(surface.style.borderTopLeftRadius).toBe("");
+            expect(surface.style.borderTopRightRadius).toBe("");
+        }
     });
 });

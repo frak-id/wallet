@@ -75,10 +75,38 @@ int clip_bottom;   // "current clip rect in surface coordinates … updated duri
 ```
 
 There is no round-rect and no path field. When the canvas clip at draw time is not a plain rect,
-HWUI cannot pass it down, and has to route the functor's output through a stencil/offscreen pass
-instead — the mechanism behind the AOSP fix *"Bind correct FBO when drawing a WebView into a
-layer"* (bugs 79619253 / 80443556 / 80477645). The sheet pays that twice, at full sheet size,
-on every frame that redraws.
+HWUI cannot pass it down. `GLFunctorDrawable::onDraw` shows exactly what it does instead — the
+clip is read back as an `SkRegion`, and a complex one takes the stencil branch:
+
+```cpp
+// libs/hwui/pipeline/skia/GLFunctorDrawable.cpp
+canvas->temporary_internal_getRgnClip(&clipRegion);
+…
+// apply a simple clip with a scissor or a complex clip with a stencil
+if (CC_UNLIKELY(clipRegion.isComplex())) {
+    glClear(GL_STENCIL_BUFFER_BIT);
+    directContext->resetContext(kStencil_GrGLBackendState | kRenderTarget_GrGLBackendState);
+    SkAndroidFrameworkUtils::clipWithStencil(tmpCanvas);
+    directContext->flushAndSubmit();   // a full flush, per functor draw
+    glEnable(GL_STENCIL_TEST);
+} else {
+    glEnable(GL_SCISSOR_TEST);         // the rect case: free
+    setScissor(info.height, clipRegion.getBounds());
+}
+```
+
+plus a second `glClear(GL_STENCIL_BUFFER_BIT)` after the functor returns. The sheet pays that
+twice, at full sheet size, on every frame that redraws. (The related AOSP fix *"Bind correct FBO
+when drawing a WebView into a layer"* — bugs 79619253 / 80443556 / 80477645 — is the offscreen half
+of the same story.)
+
+**This is the whole answer to "is there a native way, like on iOS?": there is not.**
+`View.setClipToOutline` with a round-rect `Outline`, `Modifier.clip(RoundedCornerShape)`,
+`CardView`, a `BlendMode.Clear` punch-out — every one of them ends at a non-rect `SkRegion` around
+the same functor and takes the same branch. `clipToOutline` in particular is *not* a fast path; it
+is the same clip spelled differently. The asymmetry with iOS is structural rather than an API gap:
+a `WKWebView` is a real `CALayer` in the system compositor, so `layer.cornerRadius` +
+`maskedCorners` is composited for free, while an Android `WebView` is not a layer at all.
 
 The existing comment in `FrakSharingSheet` is the tell:
 
@@ -95,16 +123,66 @@ the web view transparent, and let Blink paint its own rounded top corners:
 |---|---|
 | `FrakSharingSheet` | `shape = RectangleShape` on `ModalBottomSheet`, drop the inner `.clip(…)` |
 | `createSharingWebView` | `setBackgroundColor(TRANSPARENT)` so the corners cut through to the scrim |
-| `SharingPageUrl` | new `cornerRadius` query param, in px |
-| `apps/wallet` `/sharing` | read it, apply `border-radius` + transparent `html`/`body` when `native` |
-
-The parameter is explicit rather than implied by `native=1` because **iOS must not get it**: a
-SwiftUI `.sheet` already clips to the system corner radius, and a second 28px arc inside it reads
-as a double corner. Android sends `cornerRadius=28` (matching `BottomSheetDefaults.ExpandedShape`);
-iOS and the web send nothing and are byte-for-byte unaffected.
+| `SharingHostStyle` | inject the radius as CSS custom properties, scoped to the wallet origin |
+| `apps/wallet` / `wallet-shared` | consume them from `containerChromeless` and the `body` rule |
 
 Trade-off accepted: a non-opaque web view forfeits some of Blink's opaque-surface optimisations.
 That is a fixed, small cost against a per-frame full-surface stencil pass.
+
+#### 1.1a How the radius reaches the page — a query param was the wrong transport
+
+The first implementation sent `?cornerRadius=28` on the `/sharing` URL. **That was wrong, and it
+shipped with a live regression.** A query parameter is addressed to a *route*, and the sheet has
+more than one: pressing the page's install CTA navigates the same web view to `/install`, which
+never received the parameter and squared its corners off halfway through the flow. The same commit
+also had to copy the value byte-identically into `SharingPageUrl.warm`, because the warm URL is
+compared against the session URL to decide whether a fragment activation is legal — so a cosmetic
+value silently gained the power to force a full page load.
+
+Worse, `/sharing` and `/install` did not even agree on what "a native host" *was*: `/sharing` read
+`embed`, `/install` inferred one from the mere presence of `returnScheme`. Two markers, two routes,
+one web view.
+
+A document-start script is addressed to an *origin*:
+
+```kotlin
+WebViewCompat.addDocumentStartJavaScript(view, script, setOf(walletOrigin))
+```
+
+Registered once in `createSharingWebView`, it runs before any page script on every wallet-origin
+document that view ever loads. The contract is two CSS custom properties, declared in
+`SharingHostStyle` and consumed in `packages/design-system/src/hostSheet.ts`:
+
+| Property | Consumer | Fallback (= the web appearance) |
+|---|---|---|
+| `--frak-host-top-radius` | `containerChromeless`, in `wallet-shared` and in `install.css.ts` | `0px` |
+| `--frak-host-surface` | the `body` rule in `defaults.css.ts` | the normal surface colour |
+
+Both are needed together: a `body` background propagates to the document canvas, which no
+`border-radius` clips, so a radius without a transparent surface rounds nothing.
+
+What this removed, beyond the `/install` regression:
+
+- the `cornerRadius` param, its `clampedInt(0, 48)` codec, and the whole `nativeOnly` gate in
+  `parseSharingSearch` — a URL cannot forge a CSS custom property, so there is nothing left to
+  gate;
+- `useHostCornerRadius`, a route hook that assigned `document.documentElement.style` and
+  `document.body.style` at runtime purely to outrank `defaults.css.ts`. The `body` rule now names
+  the host's property as its own fallback, so the host never enters a specificity fight;
+- `cornerRadius` from `SharingPageUrl.build`/`.warm`, and with it the "must match or activation
+  falls back to a full load" invariant;
+- `SharingChrome.cornerRadius` and `chromeRadiusStyle` — no part of how the sheet looks reaches
+  the page through props any more.
+
+And `/install` now reads `embed=native`, decoded by the same `decodeHostEmbed` as `/sharing`, so
+the two cannot drift again. Both native SDKs append it to the hosted install page URL.
+
+**Cost, stated honestly.** A new `androidx.webkit` dependency on `:frak-sdk-ui` (AndroidX, so
+inside the module's stated dependency policy, and `implementation` so it stays off merchants'
+compile classpath). The feature needs WebView ≥ M96 and degrades to square corners on an opaque
+surface below it. And the sheet's rendered state is no longer reproducible by pasting its URL into
+a desktop browser — the corners are now invisible in the URL, which is a real debugging loss the
+param did not have.
 
 ### 1.2 M3 1.4.0 scales the sheet — and therefore the functor — during the open animation, and there is no way to stop it
 
@@ -428,7 +506,7 @@ rendering and reporting are already right rather than drag the current defects i
 
 | Finding | Status | Where |
 |---|---|---|
-| §1.1 double rounded clip | **Fixed.** `shape = RectangleShape`, inner `.clip()` gone, web view `setBackgroundColor(TRANSPARENT)`, new `cornerRadius` param on `SharingPageUrl.build`/`.warm`, page rounds itself | `FrakSharingSheet`, `SharingWebView`, `SharingPageUrl`, `SharingSheetState`, `SharingWarmup`, `apps/wallet` `/sharing`, `SharingPage`, `PostShareConfirmation` |
+| §1.1 double rounded clip | **Fixed.** `shape = RectangleShape`, inner `.clip()` gone, web view `setBackgroundColor(TRANSPARENT)`, page rounds itself from CSS custom properties injected by `SharingHostStyle` at document start (§1.1a; the `cornerRadius` query param it replaced regressed `/install`) | `FrakSharingSheet`, `SharingWebView`, `SharingPageUrl`, `SharingSheetState`, `SharingWarmup`, `apps/wallet` `/sharing`, `SharingPage`, `PostShareConfirmation` |
 | §1.2 scale during entry | **Not fixable from the call site**, but closed by deleting the call site: `08-sharing-sheet-api.md` §3 drops `ModalBottomSheet` in its step A, and `verticalScaleUp`/`Down` go with it | — |
 | §1.3 placement per frame from `draggableAnchors` | Same — `AnchoredDraggable` is `ModalBottomSheet`'s, and goes with it in `08` step A. Sooner than §3.3 assumed, because hosting the sheet in a `ComponentDialog` *requires* dropping it rather than merely benefiting from it | — |
 | §1.4 `offset {}` re-runs placement | **Fixed.** `graphicsLayer { translationY }` | `FrakSharingSheet` |
