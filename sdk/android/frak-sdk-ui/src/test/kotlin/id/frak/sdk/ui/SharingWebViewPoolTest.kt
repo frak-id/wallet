@@ -244,6 +244,44 @@ class SharingWebViewPoolTest {
         assertEquals(WARM_URL, handle.loadedBaseUrl)
     }
 
+    /**
+     * A warm view is a fully booted React app nobody is looking at, and it keeps its timers and
+     * animation frames running for as long as the merchant's share surface is composed. `onPause`
+     * is the per-instance way to stop that — `pauseTimers` is process-global and would reach the
+     * merchant's own web views.
+     *
+     * Applied only once the document finishes, never mid-load: the whole point of warming is that
+     * the load completes before the tap.
+     */
+    @Test
+    fun `a warm view is paused once its document finishes, and resumed when a sheet takes it`() {
+        val pool = pool(preload = true)
+        pool.warm(WARM_URL)
+        val warm = requireNotNull(pool.warmHandle)
+
+        assertFalse("a load in flight must not be paused", warm.paused)
+
+        pool.finishWarmLoad()
+        assertTrue("nothing is looking at this document", warm.paused)
+
+        val handle = pool.acquire(binding())
+        assertFalse("the sheet is about to navigate it; it has to be awake", handle.paused)
+    }
+
+    @Test
+    fun `a re-warmed view is awake for its own load and paused again after it`() {
+        val pool = pool(preload = true)
+        pool.warm(WARM_URL)
+        pool.finishWarmLoad()
+        val handle = pool.acquire(binding())
+
+        pool.release(handle)
+
+        assertFalse("the re-warm load needs an awake view", handle.paused)
+        pool.finishWarmLoad()
+        assertTrue("and it goes back to sleep on the same terms", handle.paused)
+    }
+
     @Test
     fun `a returned view is re-warmed, not left on the session's page`() {
         val pool = pool(preload = true)

@@ -28,6 +28,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.IOException
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -184,27 +188,63 @@ internal class SharingSheetState(
     var pageVisible: Boolean by mutableStateOf(activationBaseUrl != null)
         private set
 
-    private var best: SharingResult? = null
+    /**
+     * The page is gone and is not coming back, on a sheet that has to stay up anyway.
+     *
+     * Exactly one path sets this: a renderer crash *after* the page had painted. [onPageUnavailable]
+     * deliberately does nothing there — raising the tier-3 chooser over a sheet the user is looking
+     * at would be worse than the crash — so the sheet is left for the user to dismiss.
+     *
+     * It needs saying out loud now that the web view is transparent. "Left blank" used to mean an
+     * opaque white rectangle; with a transparent view, a rectangular RectangleShape sheet and a
+     * transparent container, it would mean a see-through hole with a grab pill floating in it. The
+     * sheet paints an opaque surface when this is set.
+     */
+    var contentLost: Boolean by mutableStateOf(false)
+        private set
+
+    /**
+     * Every latch below is an atomic, and that is load-bearing rather than defensive.
+     *
+     * [workContext] is `Dispatchers.Default` in production while [share], [copy], [onPageAction]
+     * and [dismiss] arrive on `Main.immediate`, so each of these is read and written from two
+     * threads. As plain `var`s their "fires once" guarantees were comments, not properties — a
+     * `if (flag) return; flag = true` check-then-act has a real interleaving where both callers
+     * pass. `compareAndSet` is what actually makes it once.
+     *
+     * The tests cannot reach this: they inject `EmptyCoroutineContext` for [workContext], which
+     * puts everything on one virtual scheduler.
+     *
+     * [session], [failure], [pageLoaded] and [pageVisible] deliberately stay Compose snapshot
+     * state — the snapshot system is cross-thread safe by design and publishes to observers on
+     * the right scheduler.
+     */
+    private val best = AtomicReference<SharingResult?>(null)
+
+    @Volatile
     private var webView: WebView? = null
-    private var finished = false
+
+    /** Set by the one caller that gets to report; see [finish]. */
+    private val finished = AtomicBoolean(false)
 
     /** Document-finished. Observable so the sheet can bound how long its skeleton waits for a paint signal. */
     var pageLoaded: Boolean by mutableStateOf(false)
         private set
 
     /** True between the page's share press and its outcome. */
-    private var shareInFlight = false
+    private val shareInFlight = AtomicBoolean(false)
 
     /** The [copy] half of [shareInFlight]: two taps would bill two interactions for one copy. */
-    private var copyInFlight = false
+    private val copyInFlight = AtomicBoolean(false)
 
     /**
      * True once the sheet has left the sharing page for the wallet's install page.
      *
-     * A plain field, not `mutableStateOf`: nothing renders off it. It survives because
-     * [onPageUnavailable] has to tell a failed install page apart from a failed sharing page —
-     * both reach it identically but need opposite answers.
+     * Not `mutableStateOf`: nothing renders off it. It survives because [onPageUnavailable] has to
+     * tell a failed install page apart from a failed sharing page — both reach it identically but
+     * need opposite answers.
      */
+    @Volatile
     private var showingInstallPage = false
 
     /**
@@ -212,10 +252,7 @@ internal class SharingSheetState(
      * chooser has been raised and the share attributed, so two fallbacks racing that window
      * both pass it. The deadline and a main-frame error can genuinely race (both fire offline).
      */
-    private var fallbackFired = false
-
-    /** Completes once [session] is known: built, or un-buildable ([failure] set instead). Not what [awaitLoadDeadline] races — see [contentSettled]. */
-    private val resolved = CompletableDeferred<Unit>()
+    private val fallbackFired = AtomicBoolean(false)
 
     /**
      * Completes when the page paints ([onPageReady]) or a terminal outcome hits ([finish]).
@@ -226,43 +263,64 @@ internal class SharingSheetState(
     private val contentSettled = CompletableDeferred<Unit>()
 
     /** Set once the load-deadline budget passes; [prepare] checks it so a merely-slow build still lands on tier 3. */
+    @Volatile
     private var deadlineExpired = false
 
     /** Guards [prepare], which is started from composition rather than an effect. */
-    private var prepareStarted = false
+    private val prepareStarted = AtomicBoolean(false)
 
     /** Guards [loadSessionUrl] so the session's page is navigated to exactly once. */
-    private var sessionLoaded = false
+    private val sessionLoaded = AtomicBoolean(false)
+
+    /**
+     * How many outcome-deciding coroutines are still running. See [launchAttribution].
+     *
+     * These run on [scope], which is the launcher's rather than the sheet's, deliberately: a
+     * chooser the user is still looking at, or a `track()` still being written, has to outlive the
+     * sheet that started it. That is exactly what makes [abandon] dangerous — without this counter
+     * it would report a dismissal over a share that had not finished resolving yet.
+     */
+    private val attributionsInFlight = AtomicInteger(0)
+
+    /** Set by [abandon] when it had to defer to [attributionsInFlight]. */
+    private val abandonRequested = AtomicBoolean(false)
 
     /** The hop back to the web view's own thread from [workContext]. See [loadSessionUrl]. */
     private val mainHandler = Handler(Looper.getMainLooper())
 
     /** Idempotent: the sheet starts this during composition, so a recomposition must not re-enter it. */
     fun prepare(request: SharingRequest) {
-        if (prepareStarted) return
-        prepareStarted = true
+        if (!prepareStarted.compareAndSet(false, true)) return
         scope.launch(workContext) {
             // Distance from "sheet opened" is scheduling overhead, not work. See [workContext].
             trace.mark("  prepare running")
             if (!Frak.isInitialized) {
-                failure = FrakError.NotInitialized()
-                resolved.complete(Unit)
+                fail(FrakError.NotInitialized())
                 return@launch
             }
-            // Catch-all: an unexpected throw from build() still records a failure instead of
-            // leaving a spinner forever. CancellationException rethrows untouched.
+            // Catch-all: an unexpected throw from build() reports rather than propagating.
+            //
+            // It used to rethrow, on the reasoning that `failure` had been recorded and the sheet's
+            // `LaunchedEffect(state.failure)` would pick it up. Two problems with that: this
+            // coroutine has no exception handler, so the rethrow reached the thread's default one
+            // and took the merchant's process with it — and a `FrakError` from `buildSharingLink`
+            // or `anonymousId` after `Frak.shutdown()` is an entirely reachable way to get here.
+            // Reporting directly also removes the dependency on a composable still being alive to
+            // observe the state change. CancellationException still rethrows untouched.
             val built =
                 try {
-                    build(request)
+                    buildWithinBudget(request)
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (unexpected: Throwable) {
-                    if (failure == null) {
-                        failure = FrakError.Decoding("the sharing sheet could not be prepared")
-                    }
-                    throw unexpected
-                } finally {
-                    resolved.complete(Unit)
+                    // A `FrakError` is reported as itself — `NotInitialized` from a mid-build
+                    // shutdown is far more actionable to a merchant than a generic decode failure.
+                    fail(
+                        failure
+                            ?: unexpected as? FrakError
+                            ?: FrakError.Decoding("the sharing sheet could not be prepared"),
+                    )
+                    return@launch
                 }
             when {
                 // Budget already expired while this was resolving; onLoadDeadline had no session yet to fall back with.
@@ -270,8 +328,13 @@ internal class SharingSheetState(
                     fallBackOrFail(built)
                 }
 
-                // build() already hit tier 3 itself (cold cache, no network) — no page will ever arrive.
-                built != null && !built.hasPage -> {
+                // build() already hit tier 3 itself (cold cache, no network) — no page will ever
+                // arrive. Null lands here too: `buildWithinBudget` answers null for a can't-share
+                // *and* for its own timeout, and both need reporting rather than a session set to
+                // null and a navigation that quietly no-ops. Unreachable today — the 1.5s page
+                // deadline always beats the 8s build ceiling, so `deadlineExpired` catches it
+                // first — but only by the ordering of two constants, which is not an invariant.
+                built == null || !built.hasPage -> {
                     fallBackOrFail(built)
                 }
 
@@ -286,6 +349,32 @@ internal class SharingSheetState(
                 }
             }
         }
+    }
+
+    /**
+     * [build] under a hard ceiling, so a hang always reports something.
+     *
+     * [awaitLoadDeadline] does not cover this. It races [contentSettled], which nothing completes
+     * while `build()` is still running — [onLoadDeadline] with no session only records
+     * [deadlineExpired] and waits for the build to come back. So a `resolveConfig()` or
+     * `anonymousId()` that never returns (as opposed to throwing) left the merchant's `onResult`
+     * uncalled forever and the sheet on a blank surface once the skeleton's own 2.5s hold expired.
+     *
+     * Deliberately far longer than the 1.5s page-load deadline: the user-facing budget is still
+     * 1.5s to content, enforced by the tier-3 fallback. This is a liveness backstop that should
+     * never fire on a working device, not a second UX budget.
+     */
+    private suspend fun buildWithinBudget(request: SharingRequest): SharingSession? {
+        val built = withTimeoutOrNull(BUILD_DEADLINE_MILLIS) { build(request) }
+        // build() sets `failure` itself when it has nothing to share. Still null here means the
+        // budget expired, and the caller needs something to report.
+        if (built == null && failure == null) {
+            failure =
+                FrakError.Network(
+                    IOException("the sharing sheet was not ready within ${BUILD_DEADLINE_MILLIS}ms"),
+                )
+        }
+        return built
     }
 
     /** Bounds tap-to-content: [prepare] start to page painted or terminal outcome. See [contentSettled]. */
@@ -315,10 +404,12 @@ internal class SharingSheetState(
      * a load already in flight.
      */
     private fun loadSessionUrl() {
-        if (sessionLoaded) return
         val view = webView ?: return
         val navigation = pageNavigation(confirmed = false) ?: return
-        sessionLoaded = true
+        // Claimed last, and atomically: `attach` (Main) and the tail of `prepare` (workContext)
+        // both reach here, so a plain check-then-act has an interleaving where both pass and the
+        // page is navigated to twice — the second restarting a load already in flight.
+        if (!sessionLoaded.compareAndSet(false, true)) return
         // A WebView must be driven from the thread that created it, and build() runs off Main
         // ([workContext]) — so a hop is needed, but only from there.
         //
@@ -394,15 +485,14 @@ internal class SharingSheetState(
         // The page's footer stays enabled through the round trip. Without this guard, a
         // second tap during the track() write below could stack a second chooser and bill a
         // second reward-bearing interaction for one share.
-        if (shareInFlight) return
-        shareInFlight = true
-        scope.launch {
+        if (!shareInFlight.compareAndSet(false, true)) return
+        launchAttribution {
             // Nothing took the intent.
             if (!NativeShare.share(context, active.link, active.shareTitle)) {
                 // Cleared here, unlike the success path: no chooser came up, so the user must
                 // be able to try again.
-                shareInFlight = false
-                return@launch
+                shareInFlight.set(false)
+                return@launchAttribution
             }
             // Tracked after the chooser opens, not after a share completes: this is the
             // reward-bearing interaction, and it pays out for anyone who opened the chooser
@@ -423,9 +513,8 @@ internal class SharingSheetState(
      */
     fun copy() {
         val active = session ?: return
-        if (copyInFlight) return
-        copyInFlight = true
-        scope.launch {
+        if (!copyInFlight.compareAndSet(false, true)) return
+        launchAttribution {
             // Tracked before the copy, unlike share(): there's no chooser or cancellation
             // window to guard against.
             track()
@@ -437,19 +526,22 @@ internal class SharingSheetState(
     fun onPageAction(action: SharingPageAction) {
         when (action) {
             SharingPageAction.Install -> {
-                scope.launch {
+                launchAttribution {
                     // Navigates to the wallet's install page in-sheet rather than to the
                     // store; that page owns install code / store link / installed-wallet
                     // routing.
-                    val current = session ?: return@launch
-                    val page = installPageUrl(current.returnScheme, sessionId)
+                    val current = session ?: return@launchAttribution
+                    // Guarded, like everything else that reaches `Frak.client` from this scope:
+                    // its getter throws once `Frak.shutdown()` has run, and this coroutine has no
+                    // exception handler between it and the merchant's process. See [guarded].
+                    val page = guarded { installPageUrl(current.returnScheme, sessionId) }
                     if (page == null) {
                         // No identity/merchant to hand the install page — falls back to the
                         // store. Reported only after the open, since finishing first could
                         // tear this scope down mid-call.
-                        openFrakApp()
+                        guarded { openFrakApp() }
                         finish(SharingResult.InstallStarted)
-                        return@launch
+                        return@launchAttribution
                     }
                     webView?.loadUrl(page)
                     showingInstallPage = true
@@ -460,8 +552,8 @@ internal class SharingSheetState(
             SharingPageAction.ShareAgain -> {
                 pageNavigation(confirmed = false)?.let {
                     // Reopens the guards share()/copy() left set.
-                    shareInFlight = false
-                    copyInFlight = false
+                    shareInFlight.set(false)
+                    copyInFlight.set(false)
                     // Back on the sharing page — a later load failure belongs to it again.
                     showingInstallPage = false
                     webView?.navigate(it)
@@ -523,24 +615,29 @@ internal class SharingSheetState(
             return
         }
         // A renderer crash after paint also lands here. Falling back would raise an unwanted
-        // chooser on top of a sheet in use; leave a dismissible blank sheet instead.
-        if (pageLoaded) return
+        // chooser on top of a sheet in use; leave a dismissible sheet instead — but an opaque one,
+        // since the web view that used to paint it is transparent and now paints nothing at all.
+        // See [contentLost].
+        if (pageLoaded) {
+            contentLost = true
+            return
+        }
         val active = session ?: return
         fallBackOrFail(active)
     }
 
     /** [active].link is 100% local; its presence, not the page's, decides whether this session can still share. */
     private fun fallBackOrFail(active: SharingSession?) {
-        if (fallbackFired) return // deadline and page failure are independent triggers that both fire offline
         // finish() no-ops once reported, but NativeShare would still raise a chooser for a
         // sheet the user has closed.
-        if (finished) return
-        fallbackFired = true
+        if (finished.get()) return
+        // deadline and page failure are independent triggers that both fire offline
+        if (!fallbackFired.compareAndSet(false, true)) return
         if (active == null) {
             failure?.let(::fail)
             return
         }
-        scope.launch {
+        launchAttribution {
             // Same rule as share(): pays out after the chooser, not before.
             val shared = NativeShare.share(context, active.link, active.shareTitle)
             if (shared) track()
@@ -562,7 +659,7 @@ internal class SharingSheetState(
         // Only http(s): intent: and vendor schemes could reach arbitrary installed activities.
         if (parsed.scheme != "https" && parsed.scheme != "http") return
         if (isWalletStoreListing(parsed)) {
-            scope.launch { openFrakApp() }
+            scope.launch { guarded { openFrakApp() } }
             return
         }
         val intent = Intent(Intent.ACTION_VIEW, parsed).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -577,12 +674,77 @@ internal class SharingSheetState(
     /** The user swiped or tapped away. Reports whatever the session achieved. */
     fun dismiss() = finish(SharingResult.Dismissed)
 
+    /**
+     * The sheet left composition without any explicit outcome.
+     *
+     * Reported as a dismissal, because from a merchant's side that is what it is: the sheet is
+     * gone and nothing was shared. Reached on a configuration change, a nav-graph pop, or any
+     * other disposal of the composable hosting the sheet — none of which route through [dismiss],
+     * so before this existed the merchant's `onResult` was simply never called for those sessions
+     * and any "sharing in progress" state they kept hung forever.
+     *
+     * Not a lie about a share that did happen, and this is the part that needs the counter rather
+     * than just [finish]'s significance ordering. [share], [copy], the install handoff and the
+     * tier-3 fallback all run on [scope] — the launcher's, not the sheet's — precisely so a chooser
+     * the user is still looking at outlives the sheet. Reporting a dismissal in that window would
+     * beat the share to [finish]'s compare-and-set and the real outcome would be dropped, not
+     * merely out-ranked. So this defers: if anything is still resolving, the last one out reports,
+     * by which time [record] has seen the truth.
+     */
+    fun abandon() {
+        abandonRequested.set(true)
+        if (attributionsInFlight.get() == 0) finish(SharingResult.Dismissed)
+    }
+
+    /**
+     * Launches work that decides or records this session's outcome, tracked so [abandon] can wait
+     * for it. Everything that ends in a [record] or a [finish] has to go through here.
+     */
+    private fun launchAttribution(block: suspend () -> Unit) {
+        // Incremented before the launch, not inside it: `abandon` can run between the two
+        // otherwise, see nothing in flight, and report over work that is about to start.
+        attributionsInFlight.incrementAndGet()
+        scope.launch {
+            try {
+                block()
+            } finally {
+                // `finish` no-ops if the block already reported one, so this only ever supplies the
+                // dismissal `abandon` deferred — and by now `best` holds whatever the block
+                // recorded, which is what actually reaches the merchant.
+                if (attributionsInFlight.decrementAndGet() == 0 && abandonRequested.get()) {
+                    finish(SharingResult.Dismissed)
+                }
+            }
+        }
+    }
+
     /** The sheet could not be built at all. Routed through [finish] so it cannot double-report. */
     fun fail(error: FrakError) = finish(SharingResult.Failed(error))
 
+    /**
+     * Runs a `Frak.client` call that must not be allowed to escape this sheet's scope.
+     *
+     * `Frak.client`'s getter throws [FrakError.NotInitialized] once [id.frak.sdk.Frak.shutdown]
+     * has run, which a host app may legitimately do while a sheet is open (logout, account
+     * switch). These calls run inside `scope.launch { }` with no `CoroutineExceptionHandler`
+     * between them and the merchant's process, so an uncaught one is a crash — in the middle of
+     * a share the user already completed.
+     *
+     * `CancellationException` is rethrown untouched: it is how the scope tears down.
+     */
+    private suspend fun <T> guarded(call: suspend () -> T): T? =
+        try {
+            call()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (unavailable: FrakError) {
+            trace.mark("client call refused: ${unavailable.message}")
+            null
+        }
+
     /** Suspends until the event is durable. See [share]. */
     private suspend fun track() {
-        track(Interaction.Sharing())
+        guarded { track(Interaction.Sharing()) }
     }
 
     /**
@@ -596,18 +758,27 @@ internal class SharingSheetState(
         webView?.navigate(confirmed)
     }
 
+    /**
+     * Keeps the most significant outcome seen so far.
+     *
+     * `updateAndGet`, not read-then-write: [copy] and [confirm] run on Main while the tier-3
+     * fallback runs on [workContext], and a lost update here is a share reported as a dismissal.
+     */
     private fun record(result: SharingResult) {
-        val current = best
-        if (current == null || result.significance > current.significance) best = result
+        best.updateAndGet { current ->
+            if (current == null || result.significance > current.significance) result else current
+        }
     }
 
     /** Reports once. A session can produce several outcomes; the caller gets the most significant. */
     private fun finish(result: SharingResult) {
-        if (finished) return
-        finished = true
+        // The one place the "exactly one callback" contract is enforced. Every terminal path funnels
+        // through here, from both threads, so the claim has to be a compare-and-set rather than a
+        // comment on a plain boolean.
+        if (!finished.compareAndSet(false, true)) return
         contentSettled.complete(Unit) // every terminal outcome funnels through here
         record(result)
-        onFinished(best ?: result)
+        onFinished(best.get() ?: result)
     }
 
     /** Null only when there's nothing to share (no identity/merchant); a later resolveConfig failure still returns a no-page session, never null. */
@@ -678,6 +849,7 @@ internal class SharingSheetState(
                     link = request.link ?: request.products.firstOrNull()?.link,
                     products = productsJson(request),
                     seededReward = seededReward,
+                    cornerRadius = SHEET_CORNER_RADIUS_DP,
                 ),
             // Rebuilt here rather than passed in from the pool, so it is derived from the same
             // resolved config as pageUrl. If the pool warmed against anything else — a stale
@@ -691,6 +863,7 @@ internal class SharingSheetState(
                     packageId = packageId,
                     appName = appName,
                     logoUrl = config.sdkConfig?.logoUrl,
+                    cornerRadius = SHEET_CORNER_RADIUS_DP,
                 ),
             activationFragment =
                 SharingPageUrl.activationFragment(
@@ -745,6 +918,12 @@ internal class SharingSheetState(
          * more — a miss needs the network, and the page fetches the same value itself anyway.
          */
         const val SEED_TIMEOUT_MILLIS = 40L
+
+        /**
+         * Hard ceiling on [build]. See [buildWithinBudget] — a liveness backstop, not a UX budget,
+         * so it is sized to never fire on a device that is merely slow.
+         */
+        const val BUILD_DEADLINE_MILLIS = 8_000L
 
         /** Host of the store listing the install page links to. */
         const val PLAY_STORE_HOST = "play.google.com"

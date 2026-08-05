@@ -3,6 +3,7 @@ package id.frak.sdk.ui
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.net.Uri
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -177,6 +178,44 @@ internal class SharingWebViewHandle(
         documentReady = true
     }
 
+    /** Whether [pause] has been called without a matching [resume]. */
+    var paused: Boolean = false
+        private set
+
+    /**
+     * Puts the pooled view into the background state while nobody is looking at it.
+     *
+     * A warm view sits on a fully booted React app for as long as the merchant's share surface is
+     * composed. `WebView.onPause` is the per-instance lever for that, and it is worth being precise
+     * about what it does buy, because it is less than it sounds: Android documents it as a
+     * "best-effort attempt to pause any processing that can be paused safely, such as animations and
+     * geolocation", and explicitly says **it does not pause JavaScript**. So the page's timers and
+     * its `requestAnimationFrame` loop keep running; what stops is native-side drawing and
+     * compositing work for a view nobody is showing.
+     *
+     * `pauseTimers` is the API that would stop the JS half, and it is deliberately not used: it is
+     * process-global and would reach the merchant's own web views.
+     *
+     * The size of the win is unmeasured — no device trace has been taken of this SDK's sheet at
+     * all. It is kept because it is free, it is what Shopify's checkout sheet does with its own
+     * preloaded view, and it cannot make anything worse.
+     *
+     * Applied only once the document has finished, never mid-load: the whole point of warming is
+     * that the load completes before the tap.
+     */
+    fun pause() {
+        if (paused) return
+        paused = true
+        view.onPause()
+    }
+
+    /** Undoes [pause]. Called before the view is handed to a sheet, and before any re-load. */
+    fun resume() {
+        if (!paused) return
+        paused = false
+        view.onResume()
+    }
+
     fun destroy() {
         view.destroy()
     }
@@ -218,6 +257,17 @@ internal fun createSharingWebView(
             // width on its own heuristics, which a responsive page laid out for a phone viewport
             // doesn't want.
             settings.layoutAlgorithm = WebSettings.LayoutAlgorithm.NORMAL
+
+            // Transparent, not the default opaque white. The sheet presents this view
+            // rectangularly on purpose — a rounded clip cannot be handed to the WebView draw
+            // functor, whose ABI carries a rect clip only, so HWUI would route every frame
+            // through an offscreen pass to honour it. The page rounds its own top corners
+            // instead (`cornerRadius` in [SharingPageUrl]), and those corners can only cut
+            // through to the scrim if this view is not painting a background behind them.
+            //
+            // Costs some of Blink's opaque-surface fast paths. That is a fixed cost against a
+            // per-frame, full-surface stencil pass.
+            setBackgroundColor(Color.TRANSPARENT)
 
             // No touch interception dance here any more. The sheet presents with
             // `sheetGesturesEnabled = false`, so nothing upstream competes for a vertical drag

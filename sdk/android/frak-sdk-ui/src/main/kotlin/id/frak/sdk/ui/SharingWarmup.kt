@@ -68,6 +68,9 @@ internal fun WarmSharingData(pool: SharingWebViewPool?) {
                 packageId = packageId,
                 appName = config.sdkConfig?.name ?: config.name,
                 logoUrl = config.sdkConfig?.logoUrl,
+                // Must match what `SharingSheetState.build` rebuilds, or the session decides the
+                // warm page is a different document and does a full load instead of activating.
+                cornerRadius = SHEET_CORNER_RADIUS_DP,
             ),
         )
     }

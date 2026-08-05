@@ -116,6 +116,15 @@ export type SharingPageProps = {
      */
     chromeless?: boolean;
     /**
+     * Top corner radius (px) for the container, only meaningful together
+     * with `chromeless`. Comes from a native host that presents this page
+     * inside its own sheet and has deliberately stopped clipping it
+     * natively (an Android WebView's GPU functor only carries a rectangular
+     * clip, so a round-rect clip around it forced an offscreen/stencil pass
+     * every frame) — the rounding is drawn in-page instead.
+     */
+    hostCornerRadius?: number;
+    /**
      * Called when the user clicks the "Share" button.
      */
     onShare: () => void;
@@ -326,6 +335,7 @@ export function SharingPage({
     canShare = true,
     showConfirmation,
     chromeless = false,
+    hostCornerRadius,
     onShare,
     onCopy,
     onDismiss,
@@ -344,6 +354,7 @@ export function SharingPage({
                 logoUrl={logoUrl}
                 t={t}
                 chromeless={chromeless}
+                hostCornerRadius={hostCornerRadius}
                 onDismiss={onConfirmationDismiss}
                 onShareAgain={onShareAgain}
                 onInstall={onInstall}
@@ -375,6 +386,22 @@ export function SharingPage({
     // open.
     const backdropDismiss = chromeless ? undefined : onDismiss;
 
+    // The host has stopped clipping the WebView, so this container draws the
+    // top corners itself. Only meaningful chromeless — a merchant-chromed
+    // page already gets its corners from `tabletContainerMedia`/the mobile
+    // full-bleed default. `container` already sets `overflowY: "auto"` in
+    // `sharingPage.css.ts`, which establishes a clip on both axes per the
+    // CSS overflow spec (an axis left at its `visible` default resolves to
+    // `auto` once the other axis is non-visible), so no extra `overflow`
+    // is needed here.
+    const containerRadiusStyle =
+        chromeless && hostCornerRadius && hostCornerRadius > 0
+            ? {
+                  borderTopLeftRadius: `${hostCornerRadius}px`,
+                  borderTopRightRadius: `${hostCornerRadius}px`,
+              }
+            : undefined;
+
     return (
         <div
             className={overlay}
@@ -388,6 +415,7 @@ export function SharingPage({
                     styles.container,
                     chromeless && containerChromeless
                 )}
+                style={containerRadiusStyle}
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
             >

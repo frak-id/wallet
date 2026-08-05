@@ -108,6 +108,17 @@ type SharingSearch = {
      */
     sdkv?: string;
     /**
+     * Top corner radius (CSS px) for the sheet a native host presents this
+     * page in. The Android host stopped clipping the WebView natively — its
+     * `AwDrawFn` GPU functor only carries a rectangular clip, so a Compose
+     * `RoundedCornerShape` around it forced an offscreen/stencil pass on
+     * every frame — and now rounds the corners in-page instead. iOS omits
+     * this param on purpose: a SwiftUI `.sheet` already clips to the system
+     * radius, and a second arc drawn inside would read as a double corner.
+     * Ignored unless `native` is also set.
+     */
+    cornerRadius?: number;
+    /**
      * Already-formatted reward headline from a host's local cache, painted
      * on the first frame and replaced once the real query resolves.
      * Display-only: never reaches the sharing link or any identity decision.
@@ -139,6 +150,28 @@ function readString(value: unknown): string | undefined {
     if (typeof value === "string") return value;
     if (typeof value === "number") return String(value);
     return undefined;
+}
+
+/**
+ * Corner radius (CSS px) sent only by a native host — a plain web visitor
+ * passing `?cornerRadius=200` must not be able to reach into this page's
+ * geometry, so callers only invoke this once `native` is confirmed. Same
+ * JSON-parsed-value handling as `readFlag`/`readString`: `?cornerRadius=28`
+ * arrives as the number 28, but a host sending it as a string is accepted
+ * too. Floors to an integer and clamps to `0..48` so a bad value cannot ask
+ * for more corner than the sheet has room for; `0` and anything unparsable
+ * read as "no radius", same as omitting the param.
+ */
+function readCornerRadius(value: unknown): number | undefined {
+    const numeric =
+        typeof value === "number"
+            ? value
+            : typeof value === "string"
+              ? Number(value)
+              : Number.NaN;
+    if (!Number.isFinite(numeric)) return undefined;
+    const clamped = Math.min(Math.max(Math.floor(numeric), 0), 48);
+    return clamped === 0 ? undefined : clamped;
 }
 
 /** The per-tap half of the params, which a host may deliver after load. See [useActivationParams]. */
@@ -252,36 +285,46 @@ function useActivationParams(enabled: boolean): ActivationSearch | null {
 }
 
 export const Route = createFileRoute("/sharing")({
-    validateSearch: (search: Record<string, unknown>): SharingSearch => ({
-        merchantId:
-            typeof search.merchantId === "string"
-                ? search.merchantId
+    validateSearch: (search: Record<string, unknown>): SharingSearch => {
+        const native = readFlag(search.native);
+        return {
+            merchantId:
+                typeof search.merchantId === "string"
+                    ? search.merchantId
+                    : undefined,
+            clientId:
+                typeof search.clientId === "string"
+                    ? search.clientId
+                    : undefined,
+            link: typeof search.link === "string" ? search.link : undefined,
+            appName:
+                typeof search.appName === "string" ? search.appName : undefined,
+            logoUrl:
+                typeof search.logoUrl === "string" ? search.logoUrl : undefined,
+            products:
+                typeof search.products === "object"
+                    ? (search.products as SharingPageProduct[])
+                    : undefined,
+            checkoutToken:
+                typeof search.checkoutToken === "string"
+                    ? search.checkoutToken
+                    : undefined,
+            redirectUrl: sanitizeRedirectUrl(search.redirectUrl),
+            attribution: parseAttributionFromSearch(search),
+            native,
+            confirmed: readFlag(search.confirmed),
+            returnScheme: sanitizeReturnScheme(search.returnScheme),
+            sid: readString(search.sid),
+            sdkv: readString(search.sdkv),
+            // Only a native host may round this page's corners — a plain
+            // web visitor passing `?cornerRadius=…` must change nothing.
+            cornerRadius: native
+                ? readCornerRadius(search.cornerRadius)
                 : undefined,
-        clientId:
-            typeof search.clientId === "string" ? search.clientId : undefined,
-        link: typeof search.link === "string" ? search.link : undefined,
-        appName:
-            typeof search.appName === "string" ? search.appName : undefined,
-        logoUrl:
-            typeof search.logoUrl === "string" ? search.logoUrl : undefined,
-        products:
-            typeof search.products === "object"
-                ? (search.products as SharingPageProduct[])
-                : undefined,
-        checkoutToken:
-            typeof search.checkoutToken === "string"
-                ? search.checkoutToken
-                : undefined,
-        redirectUrl: sanitizeRedirectUrl(search.redirectUrl),
-        attribution: parseAttributionFromSearch(search),
-        native: readFlag(search.native),
-        confirmed: readFlag(search.confirmed),
-        returnScheme: sanitizeReturnScheme(search.returnScheme),
-        sid: readString(search.sid),
-        sdkv: readString(search.sdkv),
-        r: sanitizeSeededReward(search.r),
-        preload: readFlag(search.preload),
-    }),
+            r: sanitizeSeededReward(search.r),
+            preload: readFlag(search.preload),
+        };
+    },
     beforeLoad: ({ search }) => {
         // A native host owns the caller identity, so a missing `clientId` is
         // a host integration bug, not a state to render.
@@ -327,6 +370,10 @@ function WalletSharingPage() {
         returnScheme,
         sid,
         sdkv,
+        // Not part of `ActivationSearch` — a native host sets this once, at
+        // load, not per tap — so it always comes from `search` regardless of
+        // the merge below.
+        cornerRadius,
         r: seededReward,
         preload,
     } = { ...search, ...activation };
@@ -335,6 +382,28 @@ function WalletSharingPage() {
     const storeClientId = useStore(clientIdStore, (s) => s.clientId);
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const { copy } = useCopyToClipboardWithState();
+
+    // A native host's sheet clips the WebView to a rectangle now (see
+    // `cornerRadius`'s doc above), so the rounding is drawn by this page
+    // instead. `defaults.css.ts` sets an opaque `body` background via
+    // `globalStyle` — root AGENTS.md forbids adding another `globalStyle`
+    // to carve out an exception, so the previous inline value is read and
+    // restored here instead, scoped to this route only. `document` always
+    // exists when this runs: apps/wallet has SSR disabled and boots through
+    // `react-dom/client`'s `createRoot` (see `app/main.tsx`), so this
+    // component never renders outside a browser.
+    useEffect(() => {
+        if (!cornerRadius) return;
+        const { documentElement, body } = document;
+        const previousHtmlBackground = documentElement.style.backgroundColor;
+        const previousBodyBackground = body.style.backgroundColor;
+        documentElement.style.backgroundColor = "transparent";
+        body.style.backgroundColor = "transparent";
+        return () => {
+            documentElement.style.backgroundColor = previousHtmlBackground;
+            body.style.backgroundColor = previousBodyBackground;
+        };
+    }, [cornerRadius]);
 
     // Product selection state — default to first product
     const [selectedProductIndex, setSelectedProductIndex] = useState(0);
@@ -637,6 +706,7 @@ function WalletSharingPage() {
             }}
             canShare={canShare || canHandOffShare}
             chromeless={native}
+            hostCornerRadius={cornerRadius}
             showConfirmation={showConfirmation}
             onShare={handleShare}
             onCopy={handleCopy}

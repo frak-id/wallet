@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -27,23 +27,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import id.frak.sdk.sharing.SharingRequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 /**
  * The sharing sheet: the hosted `/sharing` page, edge to edge in a bottom sheet. The sheet is
- * chrome only — a grab strip, a shape, a scrim. Share/Copy live in the page's own footer and
- * reach this sheet as page actions (see [SharingPageAction]).
+ * chrome only — a grab strip and a scrim. Share/Copy live in the page's own footer and reach this
+ * sheet as page actions (see [SharingPageAction]). Even the rounded top corners belong to the page
+ * now; see `shape` below for why.
  *
  * Presented through [rememberFrakSharingLauncher] rather than directly, so re-entrancy and
  * result aggregation have one owner.
@@ -97,6 +94,20 @@ internal fun FrakSharingSheet(
         // white at the corners and during scroll overshoot. The skeleton below paints its
         // own surface.
         containerColor = Color.Transparent,
+        // Rectangular on purpose, and this is a performance decision, not a cosmetic one.
+        //
+        // `Surface` ends its modifier chain with `.clip(shape)`, and a WebView does not draw
+        // through `View.onDraw` — it draws through the `AwDrawFn` GPU functor, whose ABI carries
+        // a rectangular clip and nothing else (`clip_left/top/right/bottom` in `draw_fn.h`).
+        // A round-rect clip cannot be handed down, so HWUI has to route the functor's output
+        // through an offscreen/stencil pass instead, at full sheet size, on every frame that
+        // redraws. That is what made dragging the sheet lag.
+        //
+        // The rounding did not go away, it moved to where it is free: the skeleton clips itself
+        // (it is Compose-drawn, not a functor), and the page rounds its own top corners in CSS —
+        // see `cornerRadius` in `SharingPageUrl`. The web view is transparent so those corners
+        // cut through to the scrim.
+        shape = RectangleShape,
         // Drawn by hand inside the content so it floats over the page instead of reserving a
         // strip above it — in its own row it would render as a band of scrim, since the
         // container is transparent.
@@ -112,15 +123,34 @@ internal fun FrakSharingSheet(
                     .fillMaxHeight(clampSharingHeightFraction(heightFraction))
                     .onSizeChanged { sheetHeightPx = it.height }
                     // The container is transparent, so translating the content *is* translating
-                    // the visible sheet. Before the clip, so the shape travels with it.
-                    .offset { IntOffset(0, dragOffset.value.roundToInt()) }
-                    // The WebView is a rectangle; without this it squares off the sheet's top corners.
-                    .clip(BottomSheetDefaults.ExpandedShape),
+                    // the visible sheet.
+                    //
+                    // `graphicsLayer`, not `Modifier.offset {}`: the offset lambda is read during
+                    // the *placement* phase, so every frame of a drag invalidates placement and
+                    // re-runs `AndroidViewHolder`'s `layoutAccordingTo` — i.e. a real
+                    // `WebView.layout()` per frame. `translationY` is read in the draw phase and
+                    // only updates the layer's transform matrix, so the layout phase is skipped
+                    // entirely. Compose hit-testing follows the layer transform, so the grab
+                    // strip stays grabbable where it is drawn.
+                    .graphicsLayer { translationY = dragOffset.value },
         ) {
             // Composed from the first frame rather than waiting on the session: a pooled view
             // is already warm, and attaching and laying it out at the real size now means the
             // session's own load lands into a settled viewport instead of resizing under it.
             AndroidView(modifier = Modifier.fillMaxSize(), factory = { handle.view })
+
+            // The renderer died after the page had painted. The sheet stays up on purpose — see
+            // SharingSheetState.onPageUnavailable — but the web view is transparent, the container
+            // is transparent and the sheet is rectangular, so "stays up" would otherwise mean a
+            // see-through hole with a grab pill floating in it. Opaque and correctly rounded, with
+            // no shimmer: nothing is loading, there is just nothing left to show.
+            if (state.contentLost) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    shape = SheetCornerShape,
+                    color = BottomSheetDefaults.ContainerColor,
+                ) {}
+            }
 
             // A cross-fade rather than a swap: the web view keeps painting underneath the
             // whole time, so the page is never revealed mid-layout. Dropped from composition

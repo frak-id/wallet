@@ -77,12 +77,18 @@ internal class SharingWebViewPool(
                 onPageReady = {
                     // Gates fragment activation — see SharingWebViewHandle.documentReady.
                     handle.onDocumentReady()
+                    // Nobody is looking at this document and nobody will until a tap. See
+                    // SharingWebViewHandle.pause for exactly how much that saves — less than the
+                    // name suggests, since it does not stop the page's JavaScript.
+                    handle.pause()
                     trace.mark("warm document finished")
                 },
                 onPageVisible = { trace.mark("warm first paint") },
                 onLoadFailed = { trace.mark("warm load FAILED") },
             ),
         )
+        // A re-warm after a sheet closed lands on a view this pool paused on its previous cycle.
+        handle.resume()
         handle.load(url)
     }
 
@@ -98,6 +104,10 @@ internal class SharingWebViewPool(
         if (reused == null || lent) return newHandle().also { it.bind(binding) }
         lent = true
         reused.view.removeFromParent()
+        // Undoes the pause `warm` applied when the document finished. Before the binding and
+        // before the caller navigates, so the session's own load or fragment activation runs on a
+        // view that is already awake.
+        reused.resume()
         // Only stop a load that cannot be salvaged. A finished warm document is what the
         // session activates on top of, and stopLoading() on a finished page is a no-op anyway;
         // an unfinished one is going to be replaced by a full load, and stopping it keeps it

@@ -28,6 +28,13 @@ export type PostShareConfirmationProps = {
      * have no equivalent in a host's share sheet.
      */
     chromeless?: boolean;
+    /**
+     * Top corner radius (px) for this screen's own container, only
+     * meaningful together with `chromeless`. This is the screen shown right
+     * after a share/copy inside the same native host sheet as `SharingPage`
+     * (see its `hostCornerRadius` doc), so it needs the identical corners.
+     */
+    hostCornerRadius?: number;
     onDismiss: () => void;
     onShareAgain: () => void;
     onInstall: () => void;
@@ -45,10 +52,23 @@ export function PostShareConfirmation({
     logoUrl,
     t,
     chromeless = false,
+    hostCornerRadius,
     onDismiss,
     onShareAgain,
     onInstall,
 }: PostShareConfirmationProps) {
+    // Same rationale as `SharingPage`'s identical computation: only applies
+    // chromeless, and `container` already sets `overflowY: "auto"` in
+    // `postShareConfirmation.css.ts`, which establishes a clip on both axes,
+    // so no extra `overflow` is needed here.
+    const containerRadiusStyle =
+        chromeless && hostCornerRadius && hostCornerRadius > 0
+            ? {
+                  borderTopLeftRadius: `${hostCornerRadius}px`,
+                  borderTopRightRadius: `${hostCornerRadius}px`,
+              }
+            : undefined;
+
     return (
         <div
             className={overlay}
@@ -62,6 +82,7 @@ export function PostShareConfirmation({
                     styles.container,
                     chromeless && containerChromeless
                 )}
+                style={containerRadiusStyle}
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
             >

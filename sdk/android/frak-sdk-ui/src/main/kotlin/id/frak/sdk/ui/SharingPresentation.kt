@@ -46,6 +46,13 @@ internal class SharingPresentation(
     fun dispose() {
         if (disposed) return
         disposed = true
+        // Before the view goes back to the pool, and unconditionally: this is the only place that
+        // catches a sheet leaving composition without an explicit outcome — a configuration change,
+        // a nav-graph pop, the merchant's screen being replaced. None of those route through
+        // `dismiss()`, so without this the merchant's `onResult` is never called for that session
+        // at all. `abandon()` no-ops once anything terminal has already been reported, and reports
+        // the most significant outcome the session reached when it has not.
+        state.abandon()
         state.release()
         pool.release(handle)
     }

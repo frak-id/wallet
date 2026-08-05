@@ -65,12 +65,30 @@ internal class FakeSharingClient {
 
     suspend fun buildSharingLink(request: SharingRequest): String? = link
 
+    /**
+     * Thrown by [track], [openFrakApp] and [installPageUrl] when set.
+     *
+     * Models what `Frak.client`'s getter does once `Frak.shutdown()` has run, which a host app may
+     * legitimately do while a sheet is open. These calls live inside `scope.launch { }` with no
+     * exception handler between them and the merchant's process.
+     */
+    var clientFailure: FrakError? = null
+
+    /**
+     * When set, [track] suspends on this instead of returning — models an attribution still in
+     * flight, which is the window `abandon()` has to defer to rather than report over.
+     */
+    var trackGate: CompletableDeferred<Unit>? = null
+
     suspend fun track(interaction: Interaction): FrakResult<Unit> {
+        trackGate?.await()
+        clientFailure?.let { throw it }
         trackCount++
         return FrakResult.Success(Unit)
     }
 
     suspend fun openFrakApp(): OpenAppResult {
+        clientFailure?.let { throw it }
         openFrakAppCount++
         return OpenAppResult.OpenedApp
     }
@@ -91,6 +109,7 @@ internal class FakeSharingClient {
         returnScheme: String,
         sessionId: String,
     ): String? {
+        clientFailure?.let { throw it }
         installPageUrlCount++
         installPageArgs = returnScheme to sessionId
         return installPage

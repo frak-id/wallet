@@ -335,7 +335,11 @@ class SharingSheetStateTest {
             assertNull(state.session)
             assertTrue(state.failure is FrakError.MerchantResolutionFailed)
             assertEquals(0, client.trackCount)
-            assertNull("the sheet reports this through `failure`, not `onFinished`", result)
+            // Reported here rather than left for the sheet's `LaunchedEffect(state.failure)` to
+            // notice. Same outcome, one frame earlier, and no longer conditional on a composable
+            // being alive to observe a state change — which a torn-down sheet is not.
+            assertTrue("was: $result", result is SharingResult.Failed)
+            assertTrue((result as SharingResult.Failed).error is FrakError.MerchantResolutionFailed)
         }
 
     /** Regression: budget must still fire when build was fast and the page itself hangs. */
@@ -910,6 +914,229 @@ class SharingSheetStateTest {
             assertNull("a painted page must not be abandoned", finished)
         }
 
+    /**
+     * The sheet stopped clipping its web view — a round-rect clip cannot be handed to the WebView
+     * draw functor, so HWUI paid for an offscreen pass on every frame that redrew. The page rounds
+     * itself instead, which only works if the radius actually reaches it.
+     */
+    @Test
+    fun `the session and warm urls both carry the sheet's corner radius`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            val session = requireNotNull(state.session)
+            val page = requireNotNull(session.url(confirmed = false))
+            assertTrue("the page has to know what to round itself to: $page", page.contains("&cornerRadius=28"))
+            // Both or neither: `navigation` compares the rebuilt warm URL against what the pool
+            // loaded, so a radius on one side only turns every activation into a full load.
+            val warm = requireNotNull(session.warmBaseUrl)
+            assertTrue("was: $warm", warm.contains("&cornerRadius=28"))
+        }
+
+    /**
+     * The sheet leaving composition with nothing reported — a configuration change, a nav-graph
+     * pop, the merchant's screen being replaced. None of those route through `dismiss()`, and
+     * before `abandon()` existed the merchant's callback was simply never called for them.
+     */
+    @Test
+    fun `abandoning an untouched sheet reports a dismissal`() =
+        runTest {
+            val client = FakeSharingClient()
+            val results = mutableListOf<SharingResult>()
+            val state = newState(client) { results += it }
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            state.abandon()
+            advanceUntilIdle()
+
+            assertEquals(1, results.size)
+            assertTrue("was: ${results.first()}", results.first() is SharingResult.Dismissed)
+        }
+
+    /** Abandonment must not overwrite what the session actually achieved. */
+    @Test
+    fun `abandoning after a share still reports the share`() =
+        runTest {
+            val client = FakeSharingClient()
+            val results = mutableListOf<SharingResult>()
+            val state = newState(client) { results += it }
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            state.copy()
+            advanceUntilIdle()
+            // Copy records but does not finish — the page owns its own confirmation toast.
+            assertTrue("copy must not report on its own", results.isEmpty())
+
+            state.abandon()
+            advanceUntilIdle()
+
+            assertEquals(1, results.size)
+            assertTrue("a copy outranks a dismissal: ${results.first()}", results.first() is SharingResult.Copied)
+        }
+
+    /** Both the sheet's disposal and an explicit dismissal reach [SharingSheetState]; only one may report. */
+    @Test
+    fun `abandoning an already dismissed sheet reports nothing further`() =
+        runTest {
+            val client = FakeSharingClient()
+            val results = mutableListOf<SharingResult>()
+            val state = newState(client) { results += it }
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            state.dismiss()
+            state.abandon()
+            advanceUntilIdle()
+
+            assertEquals("exactly one callback per session", 1, results.size)
+        }
+
+    /**
+     * The 1.5s budget only ever bounded the page load *given a build that finishes*: with no
+     * session yet, `onLoadDeadline` records the expiry and waits for `build()` to come back. A
+     * `resolveConfig()` that hangs rather than throwing therefore reported nothing at all, and left
+     * the sheet on a blank surface once the skeleton's own 2.5s hold expired.
+     */
+    @Test
+    fun `a build that never returns still reports, on its own budget`() =
+        runTest {
+            val client = FakeSharingClient()
+            // Never completed: a resolve that hangs rather than failing.
+            client.resolveGate = CompletableDeferred()
+            val results = mutableListOf<SharingResult>()
+            val state = newState(client) { results += it }
+
+            state.prepare(SharingRequest())
+            launchDeadline(state)
+            advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
+            runCurrent()
+            assertTrue("the page deadline alone cannot rescue a hung build", results.isEmpty())
+
+            advanceTimeBy(BUILD_DEADLINE_MILLIS)
+            advanceUntilIdle()
+
+            assertEquals("the merchant has to hear something", 1, results.size)
+            assertTrue("was: ${results.first()}", results.first() is SharingResult.Failed)
+        }
+
+    /**
+     * `Frak.client`'s getter throws once `Frak.shutdown()` has run, which a host app may do while a
+     * sheet is open. These calls run inside `scope.launch { }` with no exception handler between
+     * them and the merchant's process, so an uncaught one took the app down mid-share.
+     */
+    @Test
+    fun `a client call refused mid-share reports instead of propagating`() =
+        runTest {
+            val client = FakeSharingClient()
+            val results = mutableListOf<SharingResult>()
+            val state = newState(client) { results += it }
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            // Everything the sheet still reaches for after this point is gone.
+            client.clientFailure = FrakError.NotInitialized()
+            state.share()
+            advanceUntilIdle()
+
+            // share() records rather than finishing — the page moves to its confirmation screen and
+            // the sheet stays up — so the outcome surfaces when the sheet goes away.
+            state.abandon()
+            advanceUntilIdle()
+
+            assertEquals("the share still happened; only its attribution was refused", 1, results.size)
+            // Typed, not just counted: a `guarded` that reported the refusal instead of swallowing
+            // it would also produce exactly one result, and this test would pass on a real bug.
+            assertTrue("was: ${results.first()}", results.first() is SharingResult.Shared)
+        }
+
+    /**
+     * The sheet's teardown racing an outcome that has not landed yet.
+     *
+     * [SharingSheetState.share] and friends run on the launcher's scope, not the sheet's, so a
+     * chooser outlives the sheet that raised it by design. A dismissal reported into that window
+     * would beat the share to `finish`'s compare-and-set, and the real outcome would be dropped —
+     * not out-ranked by significance, dropped, because the losing `finish` returns before it can
+     * record anything.
+     */
+    @Test
+    fun `abandoning while an outcome is still resolving waits for it`() =
+        runTest {
+            val client = FakeSharingClient()
+            // Suspends `track()`, which share() awaits before it records anything.
+            val gate = CompletableDeferred<Unit>()
+            val results = mutableListOf<SharingResult>()
+            client.trackGate = gate
+            val state = newState(client) { results += it }
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            state.share()
+            runCurrent()
+
+            // The sheet goes away mid-share: rotation, a nav pop, the merchant's screen replaced.
+            state.abandon()
+            runCurrent()
+            assertTrue("nothing may be reported while the share is still resolving", results.isEmpty())
+
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals("exactly one, once the share has landed", 1, results.size)
+            assertTrue(
+                "a dismissal reported over a completed share is the bug: ${results.first()}",
+                results.first() is SharingResult.Shared,
+            )
+        }
+
+    /**
+     * A renderer crash after the page painted deliberately leaves the sheet up rather than raising
+     * a chooser over content the user is reading. That was fine while the web view painted opaque
+     * white; it is transparent now, so the sheet has to be told to paint something itself.
+     */
+    @Test
+    fun `a renderer crash after paint marks the content lost so the sheet stays opaque`() =
+        runTest {
+            val client = FakeSharingClient()
+            val results = mutableListOf<SharingResult>()
+            val state = newState(client) { results += it }
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            state.onPageReady()
+            state.onPageVisible()
+
+            assertFalse("nothing lost yet", state.contentLost)
+
+            state.onPageUnavailable()
+            advanceUntilIdle()
+
+            assertTrue("the sheet has to know to paint its own surface", state.contentLost)
+            assertTrue("and must not raise a chooser over a sheet in use", results.isEmpty())
+        }
+
+    @Test
+    fun `a client call refused during the install handoff reports instead of propagating`() =
+        runTest {
+            val client = FakeSharingClient()
+            val results = mutableListOf<SharingResult>()
+            val state = newState(client) { results += it }
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            client.clientFailure = FrakError.NotInitialized()
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            // No install page to route to, so the store handoff runs and reports — the point being
+            // that it reports at all rather than throwing out of the coroutine.
+            assertEquals(1, results.size)
+            assertTrue("was: ${results.first()}", results.first() is SharingResult.InstallStarted)
+        }
+
     @Test
     fun `an activated sheet shows the warm page instead of covering it`() =
         runTest {
@@ -940,5 +1167,8 @@ class SharingSheetStateTest {
 
         /** Mirrors `SharingPresentation`'s own constant. */
         const val SHEET_LOAD_DEADLINE_MILLIS = 1_500L
+
+        /** Mirrors `SharingSheetState`'s own private constant. */
+        const val BUILD_DEADLINE_MILLIS = 8_000L
     }
 }

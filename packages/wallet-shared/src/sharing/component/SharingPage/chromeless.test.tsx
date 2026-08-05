@@ -118,4 +118,31 @@ describe("SharingPage chromeless mode", () => {
 
         expect(surface).not.toHaveClass(containerChromeless);
     });
+
+    it("puts the top corner radii on the container when chromeless with a hostCornerRadius", () => {
+        const { surface } = renderPage({
+            chromeless: true,
+            hostCornerRadius: 28,
+        });
+
+        expect(surface.style.borderTopLeftRadius).toBe("28px");
+        expect(surface.style.borderTopRightRadius).toBe("28px");
+    });
+
+    it("leaves no inline radius when chromeless without a hostCornerRadius", () => {
+        const { surface } = renderPage({ chromeless: true });
+
+        expect(surface.style.borderTopLeftRadius).toBe("");
+        expect(surface.style.borderTopRightRadius).toBe("");
+    });
+
+    it("leaves no inline radius when hostCornerRadius is set but chromeless is false", () => {
+        const { surface } = renderPage({
+            chromeless: false,
+            hostCornerRadius: 28,
+        });
+
+        expect(surface.style.borderTopLeftRadius).toBe("");
+        expect(surface.style.borderTopRightRadius).toBe("");
+    });
 });

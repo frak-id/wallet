@@ -33,10 +33,11 @@ import androidx.compose.ui.unit.dp
  * What the sheet shows until the hosted page has actually painted.
  *
  * A silhouette rather than a spinner, and opaque rather than translucent, because it is stacked
- * *over* the web view for the whole load: a WebView paints white before it has content, and the
- * old spinner-then-swap sequence showed that white rectangle for the entire page load. Nothing
- * here is measured against the real page — a rough shape that fades out reads as content
- * arriving, where an exact one that lands a few pixels off reads as a jump.
+ * *over* the web view for the whole load: an unpainted web view shows nothing at all (it is
+ * transparent so the page can round its own top corners), and the old spinner-then-swap sequence
+ * showed that void for the entire page load. Nothing here is measured against the real page — a
+ * rough shape that fades out reads as content arriving, where an exact one that lands a few pixels
+ * off reads as a jump.
  */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -53,7 +54,15 @@ internal fun SharingSheetSkeleton(modifier: Modifier = Modifier) {
         label = "frak-sharing-skeleton-alpha",
     )
 
-    Surface(modifier = modifier.fillMaxSize(), color = BottomSheetDefaults.ContainerColor) {
+    Surface(
+        modifier = modifier.fillMaxSize(),
+        // The sheet itself is rectangular now — a rounded clip over the web view forces its draw
+        // functor through an offscreen pass every frame (see [FrakSharingSheet]). This is
+        // Compose-drawn, not a functor, so it carries the rounding for free until the page paints
+        // and takes over with the matching CSS radius.
+        shape = SheetCornerShape,
+        color = BottomSheetDefaults.ContainerColor,
+    ) {
         Column(
             modifier =
                 Modifier
