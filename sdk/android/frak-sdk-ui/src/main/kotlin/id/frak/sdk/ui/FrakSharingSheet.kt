@@ -10,10 +10,13 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
@@ -179,6 +182,23 @@ internal fun FrakSharingSheet(
                     // entirely. Compose hit-testing follows the layer transform, so the grab
                     // strip stays grabbable where it is drawn.
                     .graphicsLayer { translationY = offset.value * size.height }
+                    // Applied *after* `graphicsLayer`, so it insets this box's children rather
+                    // than the box, and that ordering is the whole trick. Outside the layer the
+                    // padding would shrink the height `translationY` multiplies, and a full-offset
+                    // exit would leave a nav-bar-tall sliver of the page parked over the nav bar
+                    // instead of clearing the screen.
+                    //
+                    // Needed at all because the sheet no longer composes inside the merchant's
+                    // window. That one fits system windows, so its content area already stopped
+                    // above the nav bar; this one is a dialog with `setDecorFitsSystemWindows(false)`
+                    // and spans the whole display, so without this the page's last ~48dp — its CTA
+                    // row — sits behind the nav bar. Not clipped, occluded.
+                    //
+                    // `navigationBars` rather than a bottom-only inset: the bar is on the side in
+                    // landscape, and this pads whichever edge it actually occupies. No `imePadding`
+                    // to go with it — the hosted page has no text input today, and adding an untested
+                    // resize path for a keyboard that never opens would be speculation.
+                    .windowInsetsPadding(WindowInsets.navigationBars)
                     // No string of our own: this module ships no resources, and TalkBack localises
                     // its own label for a dismiss action. That is the whole accessibility contract
                     // `ModalBottomSheet` used to supply here.

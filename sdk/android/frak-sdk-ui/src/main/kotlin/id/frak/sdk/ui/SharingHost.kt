@@ -499,6 +499,26 @@ internal class SharingHost private constructor(
             // itself is still sliding. The scrim is drawn in the composition instead, keyed to the
             // same offset as the sheet.
             window.setDimAmount(0f)
+            // System-bar *backgrounds* are a per-window property, and the platform theme chosen
+            // above never sets them, so both fall to `Theme`'s default of opaque black. The
+            // merchant's white bars would flip black for as long as the sheet is up and back on
+            // dismiss — a flash at both ends of every share. Transparent instead, so the scrim
+            // and the merchant's own Activity show through, which is what the sheet looked like
+            // when it composed inside their window.
+            //
+            // Deprecated since API 35, where an edge-to-edge window's bars are transparent by
+            // definition and the setter is ignored. Still the only lever for API 24..34, which is
+            // most of `minSdk 24`'s range, so it is suppressed rather than dropped.
+            //
+            // Bar *icon* appearance is deliberately left alone. A fresh window starts without
+            // `windowLightStatusBar`, i.e. light icons, and the scrim this sheet draws reaches
+            // behind the bars — so light icons are already the readable choice. Copying the
+            // merchant's dark-on-white flags across would make them unreadable against it.
+            @Suppress("DEPRECATION")
+            run {
+                window.statusBarColor = Color.TRANSPARENT
+                window.navigationBarColor = Color.TRANSPARENT
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 // A Dialog is a child window with no independent
                 // `windowOptOutEdgeToEdgeEnforcement`, so on Android 15+ it must cooperate with

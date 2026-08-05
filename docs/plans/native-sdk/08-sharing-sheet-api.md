@@ -706,9 +706,18 @@ Not covered by anything, and the first thing a device pass should look at:
   attribution still reports. All are plain state machines, and all of them need a real Activity and
   a real dialog to reach, which is the same wall as everything else in this list,
 - LeakCanary over a rotate-with-sheet-up loop, per §7.1,
-- insets, which nothing in the new window handles: `setDecorFitsSystemWindows(false)` on API 30+
-  and no `navigationBarsPadding`/`imePadding` anywhere. `ModalBottomSheet`'s default insets were
-  top-only, so the bottom edge behaves as before, but this has never been looked at.
+- ~~insets, which nothing in the new window handles~~ — **found on the first device pass, fixed.**
+  The reasoning here was wrong: it asked whether `ModalBottomSheet`'s own insets changed (they did
+  not, they were top-only either way) when what changed was the *window underneath it*. The sheet
+  used to compose in the merchant's window, which fits system windows, so its content area already
+  stopped above the nav bar; it now composes in a dialog with `setDecorFitsSystemWindows(false)`
+  spanning the whole display. Two visible regressions came out of that, both in `example/native-android`:
+  the page's bottom ~48dp sat behind the nav bar, and both system bars flipped black for the life of
+  the sheet because `Theme_Translucent_NoTitleBar` never sets `statusBarColor`/`navigationBarColor`
+  and `Theme`'s default for both is opaque black. Fixed by `windowInsetsPadding(navigationBars)`
+  inside the sheet's `graphicsLayer` (outside it, a full-offset exit strands a sliver over the nav
+  bar) and transparent bar colours on the dialog window. `imePadding` is still absent, deliberately:
+  the hosted page has no text input, so there is no keyboard path to get wrong yet.
 
 Also unverified by construction: whether disposing the composition from inside its own effect
 coroutine is safe. The exit chain runs `Animatable` frame callback → `state.dismiss()` →
