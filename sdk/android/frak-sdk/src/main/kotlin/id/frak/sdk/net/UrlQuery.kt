@@ -1,4 +1,11 @@
+// Opted in for `PercentEncoding`, which is `@InternalFrakApi`. Per file, not module-wide: a
+// `-opt-in` compiler flag would silence the marker everywhere, including in tests written to
+// prove what a merchant can actually reach.
+@file:OptIn(InternalFrakApi::class)
+
 package id.frak.sdk.net
+
+import id.frak.sdk.InternalFrakApi
 
 /**
  * Minimal query-string editing over a URL string.

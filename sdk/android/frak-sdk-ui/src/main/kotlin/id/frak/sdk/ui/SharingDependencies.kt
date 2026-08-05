@@ -11,6 +11,32 @@ import id.frak.sdk.sharing.SharingRequest
 import id.frak.sdk.tracking.Interaction
 
 /**
+ * The three merchant facts the sheet actually needs from a resolved config.
+ *
+ * The sheet used to take the whole [FrakResolvedConfig] — a fifty-one-property tree — and read five
+ * values out of it across two files, folding `sdkConfig?.name ?: name` itself at two of them. This
+ * carries the three it actually needs, already folded.
+ *
+ * Two consequences, both wanted. The tree's constructors can be `internal` (it is a read model a
+ * merchant is handed, never builds) because nothing in this module constructs one any more, tests
+ * included. And this module now names [FrakResolvedConfig] in exactly one place: the projection
+ * below.
+ *
+ * The cost is that [toSharingMerchant] itself is unreachable from this module's tests, since they
+ * cannot build a tree to project. The fold it delegates to is pinned in `:frak-sdk`.
+ */
+internal class SharingMerchant(
+    val merchantId: String,
+    /** [FrakResolvedConfig.displayName]: the `sdkConfig` override when the backend sent one. */
+    val displayName: String,
+    /** [FrakResolvedConfig.displayLogoUrl]. */
+    val logoUrl: String?,
+)
+
+internal fun FrakResolvedConfig.toSharingMerchant(): SharingMerchant =
+    SharingMerchant(merchantId = merchantId, displayName = displayName, logoUrl = displayLogoUrl)
+
+/**
  * Everything [SharingSheetState] needs from the SDK core, as one seam.
  *
  * Was eight individually injected suspend lambdas with eight default values, which meant every
@@ -27,7 +53,11 @@ internal interface SharingDependencies {
 
     fun environment(): FrakEnvironment
 
-    suspend fun resolveConfig(): FrakResolvedConfig
+    /**
+     * Throws [id.frak.sdk.core.FrakError] exactly as `ConfigApi.resolve` does; the sheet's tier-3
+     * fallback depends on that.
+     */
+    suspend fun resolveConfig(): SharingMerchant
 
     suspend fun bestReward(
         targetInteraction: String?,
@@ -60,7 +90,7 @@ internal object FrakClientDependencies : SharingDependencies {
 
     override fun environment(): FrakEnvironment = Frak.client.environment
 
-    override suspend fun resolveConfig(): FrakResolvedConfig = Frak.client.config.resolve()
+    override suspend fun resolveConfig(): SharingMerchant = Frak.client.config.resolve().toSharingMerchant()
 
     override suspend fun bestReward(
         targetInteraction: String?,

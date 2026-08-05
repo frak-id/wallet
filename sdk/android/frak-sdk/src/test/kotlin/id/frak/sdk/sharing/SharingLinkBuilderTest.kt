@@ -1,6 +1,6 @@
 package id.frak.sdk.sharing
 
-import id.frak.sdk.config.AttributionDefaults
+import id.frak.sdk.config.attributionDefaults
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -53,7 +53,7 @@ class SharingLinkBuilderTest {
                 baseUrl = "https://acme.example/p",
                 context = context,
                 attribution = AttributionParams(utmSource = "android-app"),
-                defaults = AttributionDefaults(utmSource = "web", utmMedium = "referral"),
+                defaults = attributionDefaults(utmSource = "web", utmMedium = "referral"),
             )
         assertTrue(link!!.contains("utm_source=android-app"))
         assertTrue(link.contains("utm_medium=referral"))
@@ -66,7 +66,7 @@ class SharingLinkBuilderTest {
                 baseUrl = "https://acme.example/p",
                 context = context,
                 attribution = AttributionParams(utmContent = "per-call"),
-                defaults = AttributionDefaults(utmSource = "web"),
+                defaults = attributionDefaults(utmSource = "web"),
                 productUtmContent = "sku-42",
             )
         assertTrue(link!!.contains("utm_content=sku-42"))

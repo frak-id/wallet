@@ -183,8 +183,8 @@
                         merchantId: config.merchantId,
                         clientId: clientId,
                         bundleId: bundleId,
-                        appName: config.sdkConfig?.name ?? config.name,
-                        logoURL: config.sdkConfig?.logoURL
+                        appName: config.displayName,
+                        logoURL: config.displayLogoURL
                     )
                 )
         }

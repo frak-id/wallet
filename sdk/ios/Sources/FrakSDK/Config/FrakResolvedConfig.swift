@@ -24,6 +24,21 @@ public struct FrakResolvedConfig: Sendable, Hashable {
     /// rather than decoded from a resolve response.
     public let sdkConfig: ResolvedSdkConfig?
 
+    /// Name to show a user: the `sdkConfig` override when the backend sent one, else ``name``.
+    ///
+    /// A derived property rather than a fold each reader writes for itself — the sharing sheet needs
+    /// exactly this, and so does an app rendering its own share affordance. Resolving the precedence
+    /// here makes it a rule rather than an implementation detail, and keeps `FrakSDKUI` off the deep
+    /// tree.
+    ///
+    /// `display`-prefixed on purpose, and mirrored on Android as `displayName`/`displayLogoUrl`: it
+    /// is derived, not a wire field, so the top level of the resolve response stays free to grow a
+    /// real field of its own name later.
+    public var displayName: String { sdkConfig?.name ?? name }
+
+    /// Logo to show alongside ``displayName``, or nil when the backend has none on file.
+    public var displayLogoURL: String? { sdkConfig?.logoURL }
+
     public init(
         merchantId: String,
         name: String,

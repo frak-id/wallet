@@ -1,7 +1,6 @@
 package id.frak.sdk.ui
 
 import id.frak.sdk.OpenAppResult
-import id.frak.sdk.config.FrakResolvedConfig
 import id.frak.sdk.core.FrakEnvironment
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakResult
@@ -47,14 +46,21 @@ internal class FakeSharingClient : SharingDependencies {
     var lastBestRewardProducts: List<ProductDetails>? = null
         private set
 
+    /**
+     * What `ConfigApi.resolve().toSharingMerchant()` would produce. Built directly rather than
+     * decoded: the config tree's constructors are `internal` to `:frak-sdk`, and KGP wires friend
+     * access from a module's `test` compilation to its own `main`, not to another module's — so
+     * there is no tree to project here. The fold from tree to these three values is pinned in
+     * `:frak-sdk`'s own `FrakResolvedConfigTest`, which does have that access.
+     */
     private val resolved =
-        FrakResolvedConfig(
+        SharingMerchant(
             merchantId = "b7c2e1a4-1111-4111-8111-111111111111",
-            name = "Acme",
-            domain = "acme.example",
+            displayName = "Acme",
+            logoUrl = null,
         )
 
-    override suspend fun resolveConfig(): FrakResolvedConfig {
+    override suspend fun resolveConfig(): SharingMerchant {
         resolveGate?.await()
         resolveFailure?.let { throw it }
         return resolved

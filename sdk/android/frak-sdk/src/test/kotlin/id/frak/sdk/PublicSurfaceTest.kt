@@ -1,15 +1,5 @@
 package id.frak.sdk
 
-import id.frak.sdk.config.AttributionDefaults
-import id.frak.sdk.config.BannerConfig
-import id.frak.sdk.config.ButtonShareConfig
-import id.frak.sdk.config.ButtonWalletConfig
-import id.frak.sdk.config.FrakResolvedConfig
-import id.frak.sdk.config.OpenInAppConfig
-import id.frak.sdk.config.PostPurchaseConfig
-import id.frak.sdk.config.ResolvedComponents
-import id.frak.sdk.config.ResolvedPlacement
-import id.frak.sdk.config.ResolvedSdkConfig
 import id.frak.sdk.core.FrakConfig
 import id.frak.sdk.core.FrakCurrency
 import id.frak.sdk.core.FrakEnvironment
@@ -26,71 +16,41 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Proves a merchant can construct every public reward/config model, matching this
- * package's model classes.
+ * Proves a merchant can construct every public reward model, and states what this file can and
+ * cannot prove.
  *
- * Deliberately references only public API. Unlike Swift's `@testable`, a same-module
- * Kotlin test source set has friend access to `internal` by default, so this file's
- * guarantee rests on not importing anything internal, not on the compiler refusing to
- * resolve one.
+ * **What it proves:** the reward models below are merchant-constructible — a merchant writing a
+ * preview screen, or a test double over `rewards.best`, needs to build one.
+ *
+ * **What it no longer covers, deliberately:** the resolved-config tree. Its constructors are
+ * `internal` now (see the note at the top of `config/FrakResolvedConfig.kt`): it is a read model the
+ * SDK hands you, and a public constructor on it would freeze an arity that the backend adds fields
+ * to. Merchants still *read* every field of it; they just do not build one. `FrakResolvedConfigTest`
+ * covers the tree from inside, with friend access.
+ *
+ * **What this file cannot prove, and never could:** that anything here is genuinely public. Unlike
+ * Swift's `@testable`, a same-module Kotlin test source set has friend access to `internal` by
+ * default, so the guarantee rests on this file not importing anything internal — a convention, not a
+ * compiler check. `ConfigTreeFixtures.kt` in this same source set builds the config tree through
+ * exactly that friend access, which is the clearest possible demonstration of the hole. The check
+ * that cannot be defeated this way is the committed `.api` dump; the compile-time check that cannot
+ * be defeated is a Java source file in the test source set — which `:frak-sdk-ui` has
+ * (`JavaCallSiteFixture.java`) and this module does not, yet. It arrives with the `*Async` twins;
+ * see `docs/plans/native-sdk/09-android-api-surface.md` §6.
  */
 class PublicSurfaceTest {
     @Test
-    fun `every public reward and config model is constructible`() {
+    fun `every public reward model is constructible`() {
         val amount = TokenAmount(amount = 1000.0, eurAmount = 10.0, usdAmount = 11.0, gbpAmount = 9.0)
         val tier = RewardTier.Amount(minValue = 0.0, maxValue = 100.0, amount = amount)
         val reward = EstimatedReward.Fixed(amount)
         val campaign = campaign(referrer = reward)
         val best = bestReward()
-        val config =
-            FrakResolvedConfig(
-                merchantId = "m1",
-                name = "Acme",
-                domain = "acme.example",
-                lang = FrakLanguage.EN,
-                currency = FrakCurrency.EUR,
-                sdkConfig = sdkConfig(),
-            )
 
         assertEquals(0.0, tier.minValue, 0.0)
         assertEquals(reward, campaign.referrer)
         assertEquals("fixed", best.payoutType)
-        assertEquals("m1", config.merchantId)
-        assertEquals(
-            "Share",
-            config.sdkConfig
-                ?.components
-                ?.buttonShare
-                ?.text,
-        )
-    }
-
-    @Test
-    fun `two independently merchant-built configs with the same nested sdkConfig values compare equal`() {
-        // The equality-asymmetry fix is pinned against the decoder in FrakResolvedConfigTest,
-        // which has friend access to it. This file references only public API, so it proves
-        // the same round-trip using two independently-built public instances instead.
-        val first =
-            FrakResolvedConfig(
-                merchantId = "m1",
-                name = "Acme",
-                domain = "acme.example",
-                lang = FrakLanguage.FR,
-                currency = FrakCurrency.EUR,
-                sdkConfig = sdkConfig(),
-            )
-        val second =
-            FrakResolvedConfig(
-                merchantId = "m1",
-                name = "Acme",
-                domain = "acme.example",
-                lang = FrakLanguage.FR,
-                currency = FrakCurrency.EUR,
-                sdkConfig = sdkConfig(),
-            )
-
-        assertEquals(first, second)
-        assertEquals(first.hashCode(), second.hashCode())
+        assertEquals(listOf(ProductDetails(sku = "SHOE-42")), best.matchedProducts)
     }
 
     @Test
@@ -121,6 +81,15 @@ class PublicSurfaceTest {
         assertEquals(listOf(FrakLogLevel.INFO to "merchant-routed"), received)
     }
 
+    @Test
+    fun `a merchant can name every closed enum on the surface`() {
+        // These are the enums a merchant supplies or matches on. Named here so a value added to one
+        // shows up as a diff in this file as well as in the `.api` dump.
+        assertEquals("eur", FrakCurrency.EUR.wireValue)
+        assertEquals("fr", FrakLanguage.FR.wireValue)
+        assertEquals(5, FrakLogLevel.entries.size)
+    }
+
     private fun campaign(referrer: EstimatedReward? = null): Campaign =
         Campaign(
             campaignId = "c1",
@@ -142,29 +111,5 @@ class PublicSurfaceTest {
             lockupDurationDays = null,
             isProductScoped = true,
             matchedProducts = listOf(ProductDetails(sku = "SHOE-42")),
-        )
-
-    private fun sdkConfig(): ResolvedSdkConfig =
-        ResolvedSdkConfig(
-            currency = FrakCurrency.EUR,
-            lang = FrakLanguage.FR,
-            translations = mapOf("sharing.title" to "Partager"),
-            components =
-                ResolvedComponents(
-                    buttonShare = ButtonShareConfig(text = "Share", noRewardText = "Try it", clickAction = "copy"),
-                    buttonWallet = ButtonWalletConfig(position = "bottom"),
-                    openInApp = OpenInAppConfig(text = "Open in app"),
-                    postPurchase = PostPurchaseConfig(badgeText = "New"),
-                    banner = BannerConfig(referralTitle = "Refer a friend"),
-                ),
-            placements =
-                mapOf(
-                    "product-page" to
-                        ResolvedPlacement(
-                            components =
-                                ResolvedComponents(buttonShare = ButtonShareConfig(text = "Share and earn")),
-                        ),
-                ),
-            attribution = AttributionDefaults(utmSource = "acme-web"),
         )
 }

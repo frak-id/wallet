@@ -68,6 +68,33 @@ struct ResolvedConfigDecoderTests {
         #expect(rebuilt == decoded)
     }
 
+    @Test("displayName and displayLogoURL resolve the sdkConfig-over-top-level precedence")
+    func derivedDisplayValuesFollowPrecedence() throws {
+        // Mirrors `FrakResolvedConfigTest` on Android. The two properties exist so the sharing sheet
+        // — and an app rendering its own share affordance — never writes the fold itself, which means
+        // the fold is a contract and needs pinning on both platforms.
+        let branded = try ResolvedConfigDecoder.decode(Data(Self.fullResponse.utf8))
+
+        #expect(branded.displayName == "Acme Shop")
+        #expect(branded.displayLogoURL == "https://acme.example/logo.png")
+
+        let unbranded = try ResolvedConfigDecoder.decode(Data(Self.minimalResponse.utf8))
+
+        #expect(unbranded.displayName == "Acme")
+        #expect(unbranded.displayLogoURL == nil)
+
+        // sdkConfig present but carrying neither field: falls back to the top-level name, still nil logo.
+        let bare = FrakResolvedConfig(
+            merchantId: "m",
+            name: "Acme",
+            domain: "acme.example",
+            sdkConfig: ResolvedSdkConfig(hidden: false)
+        )
+
+        #expect(bare.displayName == "Acme")
+        #expect(bare.displayLogoURL == nil)
+    }
+
     @Test("decodes a minimal response with no sdkConfig")
     func decodesMinimalResponse() throws {
         let config = try ResolvedConfigDecoder.decode(Data(Self.minimalResponse.utf8))

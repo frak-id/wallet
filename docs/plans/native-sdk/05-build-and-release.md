@@ -64,20 +64,20 @@ Codegen owns the mechanical boundary — OpenAPI generates Kotlin/Swift *models*
 
 These share one deadline — **the first publish of `id.frak:frak-sdk`**. After it, changing any of them is a breaking release for a binary already in the Play Store, not an edit.
 
-**State of play: no binary-compatibility gate, no committed dump.** BCV was wired, dumps were committed, then both were removed deliberately — committing a dump *ratifies* the public shape. The gate returns once Q1–Q3 are answered. `explicitApi()` only forces you to *write* `public`; it detects nothing. The last dump was 509 lines for `frak-sdk`.
+**State of play: no binary-compatibility gate, no committed dump.** BCV was wired, dumps were committed, then both were removed deliberately — committing a dump *ratifies* the public shape. The gate returns as the last of the five steps in [`09-android-api-surface.md`](./09-android-api-surface.md) — unconditionally, not gated on the remaining Q3–Q7, none of which touch the Android dump. `explicitApi()` only forces you to *write* `public`; it detects nothing. The last dump was 509 lines for `frak-sdk`; expect the next to be larger, since Builders and `*Async` twins both add declarations. The metric is frozen surface, not line count.
 
-**Q1 — accept the `$default` constructor freeze, or move to builders?** Converting the promoted types from `data class` to plain classes removed `copy()`/`componentN()` but not the synthetic default-argument bridge, which encodes parameter count and a bitmask. Fifteen public types carry one; adding a field to any of them changes the signature, and a merchant binary compiled against today's SDK hits `NoSuchMethodError` against tomorrow's — unfixable by the merchant recompiling, since it's their shipped app that breaks.
+**Q1 — accept the `$default` constructor freeze, or move to builders?** Converting the promoted types from `data class` to plain classes removed `copy()`/`componentN()` but not the synthetic default-argument bridge, which encodes parameter count and a bitmask. Twenty-four public types carried one when this was filed; step 1 of `09` took the ten resolved-config classes out of that count by making their constructors `internal` and removing their defaults, leaving fourteen. Adding a field to any of the fourteen changes the signature, and a merchant binary compiled against today's SDK hits `NoSuchMethodError` against tomorrow's — unfixable by the merchant recompiling, since it's their shipped app that breaks.
 
 | Option | Cost now | Cost later |
 |---|---|---|
-| A. Accept | zero | these 15 types can never gain a field |
-| B. Builders | rewrite 10 types + tests | additive forever |
+| A. Accept | zero | the affected types can never gain a field |
+| B. Builders | rewrite the merchant-constructed types + tests | additive forever |
 | C. Internal constructors + factories | smaller diff than B | additive, new overload per field |
 | D. Keep the tree `internal` | reverts the promotion | UI module can't read its own config |
 
-Recommendation: B for the config tree (most likely to grow); A is defensible for `FrakConfig`/`FrakMetadata` (merchant-authored, stable). Re-adding the dump without choosing silently picks A for everything.
+**Answered in [`09-android-api-surface.md`](./09-android-api-surface.md) §1/§3: C for read models, B for merchant-constructed input types.** The config tree (a read model) takes C in its strongest form — `internal` constructors and *no* default arguments, since a defaulted internal constructor still emits the `DefaultConstructorMarker` bridge into the dump — so a new backend field is a new getter and no factory overload is needed at all. `FrakConfig`/`FrakMetadata`/`SharingRequest`/`SharingProduct`/`ProductDetails`/`AttributionParams` take B, because a merchant does have to construct those; A was rejected for them because `FrakConfig` has already grown once (8→9 parameters) after the last dump. Re-adding the dump without choosing would have silently picked A for everything.
 
-**Q2 — was promoting ~51 properties ahead of a reader right?** Made public because `frak-sdk-ui`/`FrakSDKUI` is a separate module and can only see `public` API. Sound for what the sheet renders; not obviously true for all 51 (`PercentEncoding`, `environment`, `installPageUrl`). Alternative not taken: a `@RequiresOptIn` `@InternalFrakApi` marker excluded from the dump — weakens Q1 but is Kotlin-only, invisible to Java. Decide alongside Q1.
+**Q2 — was promoting ~51 properties ahead of a reader right?** Made public because `frak-sdk-ui`/`FrakSDKUI` is a separate module and can only see `public` API. **Answered in `09` §3.** `@InternalFrakApi` (`@RequiresOptIn` ERROR, `@Target(CLASS)`) exists and is applied — to `PercentEncoding`, and so far only there. It gates the Kotlin compiler today; the `nonPublicMarkers` half arrives with BCV, which is step 5. It is *not* applied to the config tree, because opt-in propagates through signatures: marking `FrakResolvedConfig` would force the marker onto `ConfigApi.resolve()`/`updates` and drop the one API path ever exercised on a device out of both the dump and every merchant's reach. The tree gets `internal` constructors instead, which is the stronger guarantee anyway since `@RequiresOptIn` is invisible to javac.
 
 **Q3 — iOS: `init(from:)` is public API.** `FrakResolvedConfig.swift:105,153` are `public init(from decoder:)`, a side effect of the promotion. The `Decodable` conformance can never be removed once public, and Swift has no ABI dump to catch it. Fix: move the conformance to an internal wire type before publication. One of the two inits is the hand-written forgiving one that fixed the `translations` regression — that one must stay, `internal`-or-better but not necessarily `public`.
 
@@ -92,8 +92,8 @@ Recommendation: B for the config tree (most likely to grow); A is defensible for
 | Q | State |
 |---|---|
 | `FrakClient` growth hazard | resolved — sealed concrete class, five namespaces |
-| Q1 `$default` freeze | open |
-| Q2 `@InternalFrakApi` vs promote | open |
+| Q1 `$default` freeze | answered — `09` §1/§3; landing in five steps, step 1 done |
+| Q2 `@InternalFrakApi` vs promote | answered — `09` §3; marker exists, applied to `PercentEncoding` only |
 | Q3 public `init(from:)` on iOS | open |
 | Q4 `FrakLogSink` divergence | open |
 | Q5 error-model rule | open |
@@ -113,7 +113,7 @@ unzip -p app-debug.apk classes3.dex | strings | grep -o "Lid/frak/sdk/[A-Za-z]*A
 
 **Next, in order:**
 
-1. Answer Q1–Q7, then re-wire BCV and commit the dumps — everything ABI-shaped is blocked on this.
+1. Q1/Q2 are answered (`09`); Q3–Q7 are not. Finish `09`'s five steps — BCV and the dumps are the last of them — since everything ABI-shaped is blocked on the dump, and committing a dump ratifies whatever shape is current.
 2. Swift 6 mode in `Package.swift`, run Android Lint (never executed once), an iOS device/simulator pass to match Android's.
 3. CI jobs and publish paths (§3, §4) — gated on both SDKs having run on a device. Android has, iOS has not.
 4. The correctness waves in `06-open-findings.md`, both platforms per PR.

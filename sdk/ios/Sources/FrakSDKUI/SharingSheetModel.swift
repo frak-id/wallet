@@ -486,7 +486,7 @@
             }
             trace.mark("  config resolved")
 
-            let name = config.sdkConfig?.name ?? config.name
+            let name = config.displayName
             let requestLogoURL = request.logoURL
             let productsJSON = sharingPageProductsJSON(request.products)
             let pageLink = request.link ?? request.products.first?.link
@@ -505,7 +505,7 @@
                     bundleId: bundleId,
                     sessionId: sessionId,
                     appName: name,
-                    logoURL: requestLogoURL ?? config.sdkConfig?.logoURL,
+                    logoURL: requestLogoURL ?? config.displayLogoURL,
                     link: pageLink,
                     products: productsJSON,
                     seededReward: seeded
@@ -521,7 +521,7 @@
                     clientId: clientId,
                     bundleId: bundleId,
                     appName: name,
-                    logoURL: config.sdkConfig?.logoURL
+                    logoURL: config.displayLogoURL
                 ),
                 activationFragment: SharingPageURL.activationFragment(
                     sessionId: sessionId,

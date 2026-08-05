@@ -22,7 +22,11 @@ internal object JsonReader {
     /** Never throws; called on error paths where the body may be `text/plain` or empty. */
     fun errorCodeOrNull(body: String): String? = runCatching { string(JSONObject(body), "code") }.getOrNull()
 
-    /** Non-empty string at [key], or null if absent, JSON null, blank, or not a string. */
+    /**
+     * Non-empty string at [key], or null if absent, JSON null, empty, or not a string.
+     *
+     * Empty, not blank: whitespace is not trimmed, so `"   "` reads as present.
+     */
     fun string(
         source: JSONObject,
         key: String,

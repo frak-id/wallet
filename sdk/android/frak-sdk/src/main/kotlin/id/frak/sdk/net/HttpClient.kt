@@ -1,6 +1,12 @@
+// Opted in for `PercentEncoding`, which is `@InternalFrakApi`. Per file, not module-wide: a
+// `-opt-in` compiler flag would silence the marker everywhere, including in tests written to
+// prove what a merchant can actually reach.
+@file:OptIn(InternalFrakApi::class)
+
 package id.frak.sdk.net
 
 import id.frak.sdk.FrakSdkVersion
+import id.frak.sdk.InternalFrakApi
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLogger
 import kotlinx.coroutines.CancellationException

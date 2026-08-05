@@ -799,7 +799,7 @@ internal class SharingSheetState(
 
         val walletOrigin = dependencies.environment().wallet
         val packageId = context.packageName
-        val config =
+        val merchant =
             try {
                 dependencies.resolveConfig()
             } catch (resolveFailed: FrakError) {
@@ -835,7 +835,7 @@ internal class SharingSheetState(
             }
         trace.mark("  reward seeded")
 
-        val appName = config.sdkConfig?.name ?: config.name
+        val appName = merchant.displayName
         val requestLogoUrl = request.logoUrl
         return SharingSession(
             walletOrigin = walletOrigin,
@@ -845,12 +845,12 @@ internal class SharingSheetState(
             pageUrl =
                 SharingPageUrl.build(
                     walletOrigin = walletOrigin,
-                    merchantId = config.merchantId,
+                    merchantId = merchant.merchantId,
                     clientId = clientId,
                     packageId = packageId,
                     sessionId = sessionId,
                     appName = appName,
-                    logoUrl = requestLogoUrl ?: config.sdkConfig?.logoUrl,
+                    logoUrl = requestLogoUrl ?: merchant.logoUrl,
                     link = request.link ?: request.products.firstOrNull()?.link,
                     products = productsJson(request),
                     seededReward = seededReward,
@@ -862,11 +862,11 @@ internal class SharingSheetState(
             warmBaseUrl =
                 SharingPageUrl.warm(
                     walletOrigin = walletOrigin,
-                    merchantId = config.merchantId,
+                    merchantId = merchant.merchantId,
                     clientId = clientId,
                     packageId = packageId,
                     appName = appName,
-                    logoUrl = config.sdkConfig?.logoUrl,
+                    logoUrl = merchant.logoUrl,
                 ),
             activationFragment =
                 SharingPageUrl.activationFragment(

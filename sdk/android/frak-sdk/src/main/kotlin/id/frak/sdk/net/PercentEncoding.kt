@@ -1,10 +1,19 @@
 package id.frak.sdk.net
 
+import id.frak.sdk.InternalFrakApi
+
 /**
  * RFC 3986 percent-encoding for a single query-string value. Not `java.net.URLEncoder` (form
  * encoding turns space into `+`), not `android.net.Uri.encode` (throws on the unit-test classpath).
- * Public only because `:frak-sdk-ui` needs it; not part of the merchant-facing surface.
+ *
+ * `public` only because `:frak-sdk-ui` builds the sharing/install URLs and `internal` does not
+ * cross a module boundary. [InternalFrakApi] says so in a form the compiler honours: a Kotlin
+ * merchant naming this gets an error. It is also what will keep it out of the `.api` dump once
+ * binary-compatibility-validator is wired in — see [InternalFrakApi] for what is and is not in
+ * force yet. There is nothing here a merchant would want anyway; this is the one type in the SDK
+ * that is purely a module-boundary artefact.
  */
+@InternalFrakApi
 public object PercentEncoding {
     /** Percent-encodes every byte outside RFC 3986's unreserved set. */
     public fun encode(value: String): String =

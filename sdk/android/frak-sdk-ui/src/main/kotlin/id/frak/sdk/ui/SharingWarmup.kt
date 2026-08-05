@@ -55,25 +55,25 @@ internal suspend fun resolveWarmUrl(packageId: String): String? {
             // the sheet's own read lands on a completed Deferred rather than joining one in flight.
             val clientId = client.anonymousId()
             trace.mark("warm identity ready")
-            clientId to client.config.resolve()
+            clientId to client.config.resolve().toSharingMerchant()
         } catch (unavailable: FrakError) {
             null
         }
     trace.mark("warm config ready")
     val clientId = identity?.first
-    val config = identity?.second
+    val merchant = identity?.second
 
     // Without both halves of the identity the page would render nothing, and warming a page
     // that renders nothing banks only DNS/TLS/bundle — not the queries, which are the
     // expensive part. Better to leave the view cold and let the sheet do a full load.
-    if (config == null || clientId == null) return null
+    if (merchant == null || clientId == null) return null
 
     return SharingPageUrl.warm(
         walletOrigin = walletOrigin,
-        merchantId = config.merchantId,
+        merchantId = merchant.merchantId,
         clientId = clientId,
         packageId = packageId,
-        appName = config.sdkConfig?.name ?: config.name,
-        logoUrl = config.sdkConfig?.logoUrl,
+        appName = merchant.displayName,
+        logoUrl = merchant.logoUrl,
     )
 }
