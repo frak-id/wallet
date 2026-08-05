@@ -5,7 +5,7 @@ import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLogLevel
 import id.frak.sdk.core.FrakLogSink
 import id.frak.sdk.core.FrakLogger
-import id.frak.sdk.core.ProductDetails
+import id.frak.sdk.core.productDetails
 import id.frak.sdk.net.FAKE_BASE_URL
 import id.frak.sdk.net.FakeHttpTransport
 import id.frak.sdk.net.HttpClient
@@ -172,7 +172,7 @@ class RewardRepositoryTest {
                 null,
                 null,
                 forceRefresh = false,
-                products = listOf(ProductDetails(sku = "SHOE-42")),
+                products = listOf(productDetails(sku = "SHOE-42")),
             )
             repository.fetch(
                 MERCHANT_ID,
@@ -180,7 +180,7 @@ class RewardRepositoryTest {
                 null,
                 null,
                 forceRefresh = false,
-                products = listOf(ProductDetails(sku = "SHIRT-1")),
+                products = listOf(productDetails(sku = "SHIRT-1")),
             )
 
             assertEquals(2, transport.requests.size)
@@ -198,7 +198,7 @@ class RewardRepositoryTest {
                 forceRefresh = false,
                 products =
                     listOf(
-                        ProductDetails(
+                        productDetails(
                             productId = "p1",
                             sku = "SHOE-42",
                             name = "Kettle",
@@ -235,7 +235,7 @@ class RewardRepositoryTest {
                 null,
                 null,
                 forceRefresh = false,
-                products = listOf(ProductDetails(name = "Babies camel cuir velours bout carré")),
+                products = listOf(productDetails(name = "Babies camel cuir velours bout carré")),
             )
 
             val url =
@@ -267,7 +267,7 @@ class RewardRepositoryTest {
                 null,
                 null,
                 forceRefresh = false,
-                products = listOf(ProductDetails(name = "Line1\nLine2\tEnd")),
+                products = listOf(productDetails(name = "Line1\nLine2\tEnd")),
             )
 
             val url =
@@ -295,7 +295,7 @@ class RewardRepositoryTest {
                 forceRefresh = false,
                 products =
                     listOf(
-                        ProductDetails(
+                        productDetails(
                             sku = "SHOE-42",
                             quantity = Double.NaN,
                             unitPrice = Double.POSITIVE_INFINITY,
@@ -323,7 +323,7 @@ class RewardRepositoryTest {
                 null,
                 null,
                 forceRefresh = false,
-                products = listOf(ProductDetails(quantity = -0.0)),
+                products = listOf(productDetails(quantity = -0.0)),
             )
 
             val url =
@@ -366,7 +366,7 @@ class RewardRepositoryTest {
                 null,
                 null,
                 forceRefresh = false,
-                products = listOf(ProductDetails()),
+                products = listOf(productDetails()),
             )
 
             val url =
@@ -394,7 +394,7 @@ class RewardRepositoryTest {
                 )
             // 400 distinct skus comfortably exceeds the 8192-character budget once JSON-encoded
             // and base64url-expanded (4/3 overhead).
-            val huge = (1..400).map { ProductDetails(sku = "SKU-$it-${"x".repeat(40)}") }
+            val huge = (1..400).map { productDetails(sku = "SKU-$it-${"x".repeat(40)}") }
 
             repository.fetch(MERCHANT_ID, FrakCurrency.EUR, null, null, forceRefresh = false, products = huge)
 
@@ -465,7 +465,7 @@ class RewardRepositoryTest {
                     null,
                     null,
                     forceRefresh = false,
-                    products = listOf(ProductDetails(sku = "SHOE-42")),
+                    products = listOf(productDetails(sku = "SHOE-42")),
                 )
             }
             val afterFirst = transport.requests.size
@@ -477,7 +477,7 @@ class RewardRepositoryTest {
                     null,
                     null,
                     forceRefresh = false,
-                    products = listOf(ProductDetails(sku = "SHIRT-1")),
+                    products = listOf(productDetails(sku = "SHIRT-1")),
                 )
             }
 
@@ -505,7 +505,7 @@ class RewardRepositoryTest {
                     null,
                     null,
                     forceRefresh = false,
-                    products = listOf(ProductDetails(sku = "SKU-$index")),
+                    products = listOf(productDetails(sku = "SKU-$index")),
                 )
                 // Past the 30s TTL, so every previous entry is dead by the next insert.
                 clock += RewardRepository.CACHE_TTL_MILLIS + 1

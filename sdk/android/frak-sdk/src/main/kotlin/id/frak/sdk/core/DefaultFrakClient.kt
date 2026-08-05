@@ -200,6 +200,9 @@ internal class DefaultFrakClient(
                         merchantId = merchantId,
                         timestamp = System.currentTimeMillis() / 1000,
                         clientId = clientId,
+                        // A link this SDK mints always carries the anonymous id, never a wallet
+                        // address; the field exists for the inbound direction.
+                        wallet = null,
                     ),
                 attribution = request.attribution,
                 defaults = resolved?.sdkConfig?.attribution,

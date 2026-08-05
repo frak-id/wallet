@@ -7,12 +7,8 @@ import android.os.Looper.getMainLooper
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import id.frak.sdk.Frak
-import id.frak.sdk.core.FrakConfig
 import id.frak.sdk.core.FrakError
-import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.rewards.BestReward
-import id.frak.sdk.sharing.SharingProduct
-import id.frak.sdk.sharing.SharingRequest
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -49,7 +45,7 @@ class SharingSheetStateTest {
     @Before
     fun initializeFrak() {
         // `prepare` guards on Frak.isInitialized; only that boolean is used, the real client isn't.
-        Frak.initialize(context, FrakConfig(merchantId = "b7c2e1a4-1111-4111-8111-111111111111"))
+        Frak.initialize(context, frakConfig(merchantId = "b7c2e1a4-1111-4111-8111-111111111111"))
     }
 
     private fun TestScope.newState(
@@ -75,7 +71,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val state = newState(client)
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             val session = state.session
@@ -96,7 +92,7 @@ class SharingSheetStateTest {
         runTest {
             val client = FakeSharingClient()
             val state = newState(client)
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             val view = WebView(context)
@@ -122,7 +118,7 @@ class SharingSheetStateTest {
             state.attach(view)
             assertNull("nothing to navigate to yet", shadowOf(view).lastLoadedUrl)
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             shadowOf(getMainLooper()).idle()
 
@@ -141,7 +137,7 @@ class SharingSheetStateTest {
             val view = WebView(context)
 
             state.attach(view)
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             shadowOf(getMainLooper()).idle()
 
@@ -165,14 +161,14 @@ class SharingSheetStateTest {
             val state = newState(client)
 
             state.prepare(
-                SharingRequest(
+                sharingRequest(
                     products =
                         listOf(
-                            SharingProduct(
+                            sharingProduct(
                                 title = "Kettle",
                                 link = "https://acme.example/kettle",
                                 details =
-                                    ProductDetails(
+                                    productDetails(
                                         sku = "SHOE-42",
                                         quantity = 2.0,
                                         unitPrice = 79.9,
@@ -201,8 +197,8 @@ class SharingSheetStateTest {
             val state = newState(client)
 
             state.prepare(
-                SharingRequest(
-                    products = listOf(SharingProduct(title = "Kettle", link = "https://acme.example/kettle")),
+                sharingRequest(
+                    products = listOf(sharingProduct(title = "Kettle", link = "https://acme.example/kettle")),
                 ),
             )
             advanceUntilIdle()
@@ -225,14 +221,14 @@ class SharingSheetStateTest {
             val state = newState(client)
 
             state.prepare(
-                SharingRequest(
+                sharingRequest(
                     products =
                         listOf(
-                            SharingProduct(
+                            sharingProduct(
                                 title = "Kettle",
                                 link = "https://acme.example/kettle",
                                 details =
-                                    ProductDetails(
+                                    productDetails(
                                         quantity = Double.NaN,
                                         unitPrice = Double.POSITIVE_INFINITY,
                                         totalPrice = 12.5,
@@ -255,20 +251,29 @@ class SharingSheetStateTest {
     fun `the seeded reward call is scoped to the request's product details`() =
         runTest {
             val client = FakeSharingClient()
-            client.bestReward = BestReward(formatted = "5\u00a0\u20ac", payoutType = "fixed", null, null, null)
+            client.bestReward =
+                BestReward(
+                    formatted = "5\u00a0\u20ac",
+                    payoutType = "fixed",
+                    minPurchaseAmount = null,
+                    minPurchaseValue = null,
+                    lockupDurationDays = null,
+                    isProductScoped = false,
+                    matchedProducts = null,
+                )
             val state = newState(client)
 
             state.prepare(
-                SharingRequest(
+                sharingRequest(
                     products =
                         listOf(
-                            SharingProduct(
+                            sharingProduct(
                                 title = "Kettle",
                                 link = "https://acme.example/kettle",
-                                details = ProductDetails(sku = "SHOE-42"),
+                                details = productDetails(sku = "SHOE-42"),
                             ),
                             // No details: the seed must drop this one, not pass a null entry through.
-                            SharingProduct(title = "Mug", link = "https://acme.example/mug"),
+                            sharingProduct(title = "Mug", link = "https://acme.example/mug"),
                         ),
                 ),
             )
@@ -286,8 +291,8 @@ class SharingSheetStateTest {
             val state = newState(client)
 
             state.prepare(
-                SharingRequest(
-                    products = listOf(SharingProduct(title = "Kettle", link = "https://acme.example/kettle")),
+                sharingRequest(
+                    products = listOf(sharingProduct(title = "Kettle", link = "https://acme.example/kettle")),
                 ),
             )
             advanceUntilIdle()
@@ -304,7 +309,7 @@ class SharingSheetStateTest {
             var result: SharingResult? = null
             val state = newState(client) { result = it }
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             assertNull("a resolve failure is not a sheet failure", state.failure)
@@ -322,7 +327,7 @@ class SharingSheetStateTest {
             var result: SharingResult? = null
             val state = newState(client) { result = it }
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             assertNull(state.session)
@@ -343,7 +348,7 @@ class SharingSheetStateTest {
             var result: SharingResult? = null
             val state = newState(client) { result = it }
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             assertTrue("precondition: build succeeded with a page", state.session?.hasPage == true)
 
@@ -365,7 +370,7 @@ class SharingSheetStateTest {
             var result: SharingResult? = null
             val state = newState(client) { result = it }
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             val gate = launchDeadline(state)
             advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS + 1)
 
@@ -389,7 +394,7 @@ class SharingSheetStateTest {
             var result: SharingResult? = null
             val state = newState(client) { result = it }
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             val gate = launchDeadline(state)
             // runCurrent, not advanceUntilIdle: the latter would also fire the deadline under test.
             runCurrent()
@@ -411,7 +416,7 @@ class SharingSheetStateTest {
             var finishedCount = 0
             val state = newState(client) { finishedCount++ }
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             state.onLoadDeadline()
@@ -430,7 +435,7 @@ class SharingSheetStateTest {
             val results = mutableListOf<SharingResult>()
             val state = newState(client) { results += it }
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             state.share()
@@ -451,7 +456,7 @@ class SharingSheetStateTest {
             var result: SharingResult? = null
             val state = newState(client) { result = it }
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             // Attached so the navigation itself is observable: without it the assertion below
@@ -484,7 +489,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val state = newState(client) {}
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             state.onPageAction(SharingPageAction.Code("ABC234", 1_700_000_000L))
@@ -507,7 +512,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val state = newState(client) {}
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             state.onPageAction(SharingPageAction.Install)
             advanceUntilIdle()
@@ -528,7 +533,7 @@ class SharingSheetStateTest {
             var result: SharingResult? = null
             val state = newState(client) { result = it }
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             state.onPageAction(SharingPageAction.Install)
@@ -546,7 +551,7 @@ class SharingSheetStateTest {
             var finishedCount = 0
             val state = newState(client) { finishedCount++ }
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             state.onPageReady()
 
@@ -610,7 +615,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val state = newState(client)
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             val view = WebView(context)
             state.attach(view)
@@ -644,7 +649,7 @@ class SharingSheetStateTest {
             val results = mutableListOf<SharingResult>()
             val state = newState(client) { results += it }
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             state.attach(WebView(context))
 
@@ -667,7 +672,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val state = newState(client)
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             state.attach(WebView(context))
 
@@ -693,7 +698,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val state = newState(client)
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             val view = WebView(context)
             state.attach(view)
@@ -718,7 +723,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val state = newState(client)
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             state.attach(WebView(context))
 
@@ -738,7 +743,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val state = newState(client)
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             state.attach(WebView(context))
 
@@ -757,7 +762,7 @@ class SharingSheetStateTest {
             var finishedCount = 0
             val state = newState(client) { finishedCount++ }
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             val view = WebView(context)
             state.attach(view)
@@ -785,7 +790,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             var finishedCount = 0
             val state = newState(client, onFinished = { finishedCount++ })
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             assertFalse("covered until the page says otherwise", state.pageVisible)
@@ -809,12 +814,12 @@ class SharingSheetStateTest {
         runTest {
             val client = FakeSharingClient()
             val state = newState(client)
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             val warmBase = requireNotNull(state.session?.warmBaseUrl)
 
             val activated = newState(client, activationBaseUrl = warmBase)
-            activated.prepare(SharingRequest(link = "https://acme.example/kettle"))
+            activated.prepare(sharingRequest(link = "https://acme.example/kettle"))
             advanceUntilIdle()
             val view = WebView(context)
             // The warm document, as the page left it: the router rewrites its own search params
@@ -842,7 +847,7 @@ class SharingSheetStateTest {
                     client,
                     activationBaseUrl = "https://wallet.frak.id/sharing?embed=native&state=warm&merchantId=other",
                 )
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             val view = WebView(context)
             state.attach(view)
@@ -860,12 +865,12 @@ class SharingSheetStateTest {
         runTest {
             val client = FakeSharingClient()
             val probe = newState(client)
-            probe.prepare(SharingRequest())
+            probe.prepare(sharingRequest())
             advanceUntilIdle()
             val warmBase = requireNotNull(probe.session?.warmBaseUrl)
 
             val state = newState(client, activationBaseUrl = warmBase)
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             val view = WebView(context)
             view.loadUrl(NORMALISED_WARM_URL)
@@ -893,7 +898,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             var finished: SharingResult? = null
             val state = newState(client, onFinished = { finished = it })
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             launchDeadline(state)
 
@@ -920,7 +925,7 @@ class SharingSheetStateTest {
         runTest {
             val client = FakeSharingClient()
             val state = newState(client)
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             val session = requireNotNull(state.session)
@@ -941,7 +946,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val results = mutableListOf<SharingResult>()
             val state = newState(client) { results += it }
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             state.abandon()
@@ -958,7 +963,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val results = mutableListOf<SharingResult>()
             val state = newState(client) { results += it }
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             state.copy()
@@ -980,7 +985,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val results = mutableListOf<SharingResult>()
             val state = newState(client) { results += it }
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             state.dismiss()
@@ -1005,7 +1010,7 @@ class SharingSheetStateTest {
             val results = mutableListOf<SharingResult>()
             val state = newState(client) { results += it }
 
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             launchDeadline(state)
             advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
             runCurrent()
@@ -1029,7 +1034,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val results = mutableListOf<SharingResult>()
             val state = newState(client) { results += it }
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             // Everything the sheet still reaches for after this point is gone.
@@ -1066,7 +1071,7 @@ class SharingSheetStateTest {
             val results = mutableListOf<SharingResult>()
             client.trackGate = gate
             val state = newState(client) { results += it }
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             state.share()
@@ -1098,7 +1103,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val results = mutableListOf<SharingResult>()
             val state = newState(client) { results += it }
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
             state.onPageReady()
             state.onPageVisible()
@@ -1118,7 +1123,7 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val results = mutableListOf<SharingResult>()
             val state = newState(client) { results += it }
-            state.prepare(SharingRequest())
+            state.prepare(sharingRequest())
             advanceUntilIdle()
 
             client.clientFailure = FrakError.NotInitialized()

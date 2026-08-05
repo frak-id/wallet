@@ -37,8 +37,12 @@ public sealed interface FrakEnvironment {
      * surfaces only as a generic [FrakError.Network] on first use. [Frak.initialize] logs the
      * rejection at `ERROR` with the offending origin and rule.
      *
-     * [walletPackageId] and [walletScheme] default to Frak's own dev wallet: override them for a
-     * merchant's stub server.
+     * Two public constructors, explicit rather than defaulted — the two-argument one keeps Frak's own
+     * dev wallet package id and scheme, the four-argument one overrides them for a merchant's stub
+     * server. No default arguments, per the note at the top of `sharing/SharingRequest.kt`: this type
+     * is on the public surface and a `$default` bridge there is an arity frozen forever. No `Builder`
+     * either, because unlike a merchant-facing input type this one is not expected to grow — it is a
+     * pair of origins, and if it ever does grow, a fifth-argument overload is still additive.
      */
     public class Custom private constructor(
         wallet: String,
@@ -48,11 +52,17 @@ public sealed interface FrakEnvironment {
         /** Null when neither raw origin was rejected; the rejection message otherwise. Logged by [id.frak.sdk.Frak.initialize] at `ERROR`. */
         internal val rejectionReason: String?,
     ) : FrakEnvironment {
+        /** Frak's own dev wallet package id and scheme. */
         public constructor(
             wallet: String,
             backend: String,
-            walletPackageId: String = DEV_WALLET_PACKAGE_ID,
-            walletScheme: String = DEV_WALLET_SCHEME,
+        ) : this(wallet, backend, DEV_WALLET_PACKAGE_ID, DEV_WALLET_SCHEME)
+
+        public constructor(
+            wallet: String,
+            backend: String,
+            walletPackageId: String,
+            walletScheme: String,
         ) : this(
             wallet = wallet,
             backend = backend,

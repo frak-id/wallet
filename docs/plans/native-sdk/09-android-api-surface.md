@@ -19,8 +19,9 @@ the five decisions turn on them.
 | Opt-in propagates through signatures: *"if the signature of an API element includes a type that requires opt-in, the signature itself must also require opt-in"*, and applying `@OptIn` at the declaration **does not** stop it — *"the opt-in requirement still propagates"* | An `@InternalFrakApi` on a type that any merchant-facing member returns makes that member uncallable. See §3 |
 | No same-module exemption exists. Module-wide `-opt-in=<marker>` is the sanctioned escape, per file `@OptIn` the narrow one | The SDK must opt in to its own marker, and *where* it does so is a real choice — a module-wide flag also silences the marker in the tests written to prove what a merchant can reach |
 | A marker on a constructor-`val` resolves `param → property → field` and, on either of the first two, never reaches the class file as a Java annotation — it lives in `@Metadata` plus a synthetic `getX$annotations()` holder, which BCV filters out | A property-level marker gates the Kotlin compiler and leaves the getter frozen in the dump: the worst of both. Hence `@Target(CLASS)` only |
+| A `sealed` class's constructor may be `protected` (the default) or `private`, and nothing else — `public` and `internal` are compile errors | `FrakError`'s base constructor cannot be hidden. Dropping its `cause` default is the whole of what is available, and it is enough: the default was the bridge |
 | BCV omits an `internal` constructor from the dump, but *keeps* the `DefaultConstructorMarker` bridge a defaulted internal constructor still emits. Evidence: [BCV issue 171](https://github.com/Kotlin/binary-compatibility-validator/issues/171), which shows the before/after dumps for exactly this — marking the constructor `internal` removes one `<init>` line and leaves `public synthetic fun <init> (…DefaultConstructorMarker;)V` | "Internal constructor" and "no default arguments" are one decision, not two. Re-verify against the first real `apiDump`: if BCV filters `ACC_SYNTHETIC` in the version we pin, the no-defaults half is unmotivated |
-| `@RequiresOptIn` has no javac enforcement; `internal` members are emitted in a form javac refuses to resolve | The marker is an honest-dump mechanism, not a Java-side guarantee. Where a hard block matters, `internal` is the tool |
+| `@RequiresOptIn` has no javac enforcement. `internal` is emitted `public` in bytecode; Kotlin name-mangles `internal` *functions* but cannot mangle a constructor, so an `internal` constructor stays javac-reachable | **Neither mechanism blocks Java.** What both buy is a Kotlin compile error plus absence from the `.api` dump — and the dump *is* the compatibility contract, so a Java caller who reaches past it is outside it by definition. Stated once here because three earlier drafts of this document claimed a javac block that does not exist |
 
 ## 1. Construction — Builder, with Kotlin sugar over it
 
@@ -42,15 +43,36 @@ val config = FrakConfig("merchant-id") {
 }
 ```
 
-The sugar is a scope class with `var`s that writes through to the Builder. Both are ABI-additive: a
-new option is one new setter plus one new `var`, never a changed constructor signature.
+The sugar is a top-level function taking `Builder.() -> Unit` — the "fake constructor" idiom Compose
+uses for `AnnotatedString`. Both entry points are ABI-additive: a new option is one new setter plus one
+new `var`, never a changed constructor signature.
 
-One thing the example above gets ahead of itself on, and step 2 has to settle: `merchantId` is
-**not** required today. `FrakConfig.merchantId` is `String?`, and its KDoc documents resolution from
-`packageId` instead when it is null. A `Builder(merchantId)` with a required positional argument
-would delete that path. The likely answer is two constructors — `Builder(merchantId: String)` and
-`Builder()` for the packageId path, explicit overloads rather than a nullable positional — but it is a
-decision, not a detail, and `SharingRequest` has the same shape (`link` falls back twice).
+**One deviation from the plan as written, and it removes surface rather than adding it.** The plan said
+"a scope class with `var`s that writes through to the Builder". There is no separate scope class: the
+Builder's own `var`s *are* the scope. A distinct scope class would mean a second public type per
+input type, a second home for every default (and therefore a way for the two to drift), and the same
+call syntax either way. Collapsing them keeps the plan's stated invariant literally — one new setter
+plus one new `var` — with one type instead of two.
+
+One thing the example above got ahead of itself on, settled in step 2: `merchantId` is **not**
+required. `FrakConfig.merchantId` is `String?` and resolution falls back to `packageId` when it is
+null, so a `Builder(merchantId)` with a required positional argument would have deleted that path.
+Answer: two constructors, `Builder(merchantId: String)` and `Builder()`. The empty one has to be the
+*primary* — a shared `private constructor(String?)` would erase to the same JVM descriptor as
+`constructor(String)`, since nullability is an annotation rather than part of a signature, and the two
+would collide. `merchantId` also keeps an ordinary setter, like every other option; the two
+constructors are ergonomics for the two shapes a call site takes, not an attempt to make the field
+unreachable any other way.
+
+A second rule fell out of the same question, and it is worth stating because it decides every future
+type: **the sugar mirrors the Builder's constructor overloads, and there is never a no-argument one.**
+`SharingProduct.Builder(title, link)` and `FrakConfig.Builder(merchantId)` exist, so
+`SharingProduct(title, link)` and `FrakConfig("merchant-id")` exist beside their lambda forms — in
+`FrakConfig`'s case not because `merchantId` is required (it is not; §1 above is explicit) but because
+it is the recommended way to name a merchant and the shortest working config. What deliberately does
+*not* exist is `SharingRequest()`/`FrakMetadata()`/`ProductDetails()`/`AttributionParams()`: for a type
+with nothing required, an empty call is indistinguishable from the all-defaults constructor this whole
+exercise removed, so the lambda is mandatory even when it is `{ }`.
 
 Never `@JvmOverloads`. It fixes Java and leaves Kotlin callers resolving through `$default` anyway.
 
@@ -59,8 +81,10 @@ Order of application:
 | Type | State |
 |---|---|
 | `FrakSharing` | done (`refactor/android-sharing-sheet-api`) |
-| `SharingRequest`, `SharingProduct`, `ProductDetails` | step 2 — the hot path, every share |
-| `FrakConfig`, `FrakMetadata`, `AttributionParams` | step 2 |
+| `SharingRequest`, `SharingProduct`, `ProductDetails` | done — step 2 |
+| `FrakConfig`, `FrakMetadata`, `AttributionParams` | done — step 2 |
+| `FrakEnvironment.Custom`, `FrakError.Server`/`.Decoding` | done — step 2, explicit overloads rather than Builders (§1a) |
+| `FrakContext.V1`/`.V2` | done — step 2, but as a read model: `internal` constructors, no Builder |
 | Resolved-config tree | not builders — §3 |
 
 `ProductDetails` is an addition to the original list, and belongs there on the same evidence: six
@@ -70,18 +94,22 @@ fully-defaulted parameters, merchant-constructed, reached from both `rewards.bes
 ### 1a. Where defaults still survive
 
 The rule covers all public API, not just the constructors. Auditing `:frak-sdk`'s whole main source
-set turns up eight more declarations the original plan did not list, and one of them is load-bearing
-for step 4. (`:frak-sdk-ui` is already clean: `FrakSharing.Builder`'s knobs are `private var`s and
-`FrakSharingDefaults.HEIGHT_FRACTION` is a `@JvmStatic val`.)
+set turns up twelve more declarations across the nine rows below that the original plan did not list,
+and one row is load-bearing for step 4. (`:frak-sdk-ui` is already clean: `FrakSharing.Builder`'s knobs
+are `private var`s and `FrakSharingDefaults.HEIGHT_FRACTION` is a `@JvmStatic val`.)
+
+After step 2 the surviving set is exactly two entries, both with a step: `Interaction`'s three
+constructors and the three `*Api` suspend functions. Everything else in the table is closed.
 
 | Declaration | Defaults | Step |
 |---|---|---|
 | `ConfigApi.resolve(forceRefresh = false)` | 1 | 4, with `resolveAsync` |
 | `RewardsApi.campaigns(forceRefresh = false)` | 1 | 4, with `campaignsAsync` |
 | `RewardsApi.best(targetInteraction, audience, forceRefresh, products)` | 4 | 4 — collapses into the `RewardRequest` parameter object §2's example already assumes |
-| `FrakEnvironment.Custom` secondary constructor | 2 | 2 |
-| `FrakError.Server(status, code, retryAfterSeconds)`, `FrakError.Decoding(message, cause)` | 3 | 2. `FrakError` is `sealed`, so a merchant cannot route around a frozen arity by subclassing |
-| `FrakContext.V2(merchantId, timestamp, clientId, wallet)` | 2 | 2. Merchant-constructible *and* merchant-received — `Frak.parseReferralLink` returns one |
+| `FrakEnvironment.Custom` secondary constructor | 2 | 2 — **done**: two explicit overloads, `(wallet, backend)` and `(wallet, backend, walletPackageId, walletScheme)` |
+| `FrakError.Server(status, code, retryAfterSeconds)`, `FrakError.Decoding(message, cause)` | 3 | 2 — **done**: one explicit overload each (`Server(status)`, `Decoding(message)`), and the `FrakError` base constructor lost its `cause` default. It could *not* also be hidden — see the sealed-constructor row in §0 — so it stays `protected` and in the dump, minus the bridge |
+| `BestReward(…, isProductScoped, matchedProducts)` (`rewards/Rewards.kt`) | 2 | 2 — **done**: defaults dropped. Not in the original audit and it should have been: a *read* model with a public constructor and a `DefaultConstructorMarker` bridge is the same hazard as an input type. `RewardsDecoder` always passed all seven arguments, so the defaults only ever served the decoder's own forward-compatibility, which is where that concern belongs. Whether the reward read models should follow the config tree to `internal` constructors is still open, below |
+| `FrakContext.V2(merchantId, timestamp, clientId, wallet)` | 2 | 2 — **done**, and not with a Builder. It is returned by `Frak.parseReferralLink` and never supplied by a merchant, so it took the read-model treatment: `internal` constructors on both `V1` and `V2` |
 | `Interaction.Arrival` (4), `Interaction.Sharing` (2), `Interaction.Custom` (2) | 8 | 3 — the collapse in §4 removes all three publicly-constructible classes, so the defaults go with them |
 | `mergeAttribution(...)` | 1 | none — `internal`, not on the surface |
 
@@ -173,8 +201,9 @@ half that was load-bearing all along.
 ### 3c. Internal constructors, and no default arguments
 
 All ten constructors are `internal`. None takes a default argument. Both halves, for the reasons in
-§0: `internal` keeps the constructor out of the dump and out of javac's reach, and dropping the
-defaults keeps the `DefaultConstructorMarker` bridge from landing in the dump anyway.
+§0: `internal` keeps the constructor out of the dump and out of a Kotlin merchant's reach (not out of
+javac's — see the third row of §0), and dropping the defaults keeps the `DefaultConstructorMarker`
+bridge from landing in the dump anyway.
 `ResolvedConfigDecoder`, the only production caller, already passed every argument, so nothing was
 lost. The defaults moved to `ConfigTreeFixtures.kt` in the test source set, where a new field is one
 new parameter on one helper and every test that does not care keeps compiling.
@@ -229,7 +258,10 @@ is that it references nothing internal.
 `@RequiresOptIn` is invisible to javac, so a Java merchant gets no diagnostic from
 `@InternalFrakApi`. That is a weaker guarantee than it looks now that Java is supported, and it is
 why the config tree relies on `internal` rather than on the marker. What the marker buys is the
-honest dump; what `internal` buys is the compile-time block. `PublicSurfaceTest`'s own KDoc now says
+honest dump plus a *Kotlin* compile error. Neither blocks javac: `internal` is emitted `public`, and
+Kotlin mangles `internal` functions but cannot mangle a constructor. What that costs is bounded — the
+dump is the compatibility contract, so a Java caller reaching past it is outside the contract by
+construction. `PublicSurfaceTest`'s own KDoc now says
 what it can and cannot prove, because friend access already voided the half about
 merchant-constructibility.
 
@@ -294,6 +326,46 @@ One convenient interaction: BCV's `nonPublicMarkers` historically mishandled fun
 parameters. Removing defaults (§1) makes that moot.
 
 ## Open, and to be answered before the dump is committed
+
+Added by the step-2 review, in the order they become unfixable:
+
+- **The Kotlin file-facade names are about to be frozen and there is no `@file:JvmName` anywhere.**
+  `SharingRequest { }` compiles to `SharingRequestKt.SharingRequest(Function1)`, `FrakMetadata { }` to
+  `FrakConfigKt.FrakMetadata(Function1)` — the facade is named after the *file*, not the type, and two
+  of the four files declare more than one. The nine sugar functions land like this:
+  `FrakConfigKt` gets `FrakMetadata(Function1)` plus all three `FrakConfig` overloads; `SharingRequestKt`
+  gets both `SharingProduct` overloads plus `SharingRequest(Function1)`; `ProductDetailsKt` and
+  `AttributionParamsKt` get one each. Once the dump records those names, renaming or splitting **any of
+  the four files** — `core/FrakConfig.kt`, `core/ProductDetails.kt`, `sharing/SharingRequest.kt`,
+  `sharing/AttributionParams.kt` — is a binary break. The decision taken for now is deliberate and
+  minimal: **keep the default facade names and do not rename or split those four files after step 5.**
+  A `@file:JvmName` would decouple the two, but picking a name badly is also permanent. Note that two of
+  the nine — `FrakConfig(String)` and `SharingProduct(String, String)` — take no `Function1` and are
+  ordinary Java-callable statics, so the facade name is not purely internal noise.
+- **`FrakMetadata.currency` is non-null with an EUR default, and there is no "unset".**
+  `RewardRepository` reads currency only from `FrakMetadata`, so a US merchant who never calls
+  `.currency(...)` prices every reward in EUR with no diagnostic — and the SDK cannot tell "unset" from
+  "explicitly EUR", so the backend has no route to correct it. Its sibling `lang` is nullable and
+  documented "null means let the backend decide". Pre-existing behaviour, not introduced here, but
+  making it `FrakCurrency?` after the freeze is a Kotlin source break. Either match `lang`, or keep
+  EUR and warn at `initialize` when it was never set (a `private var` on the Builder, no new surface).
+- **Equality is inconsistent across the input types.** `ProductDetails` and `AttributionParams` have
+  hand-written `equals`/`hashCode`; `FrakConfig`, `FrakMetadata`, `SharingProduct` and `SharingRequest`
+  do not. That asymmetry is inherited, and it has a visible cost: the Builder-versus-sugar comparison
+  in `PublicSurfaceTest` can only be an `assertEquals` for the two types that have equality, and has to
+  be written out field by field for the rest — which is a test that silently weakens every time a field
+  is added, since nothing forces the new one into the comparison. Adding `equals` after the dump is a
+  behaviour change with an unchanged descriptor, which no `.api` file catches. Decide before step 5.
+- **`FrakContext` joined the list of types a merchant cannot obtain for their own tests.** Both
+  constructors are `internal` and `FrakContextCodec` is `internal`, so a merchant testing their own
+  handling of a parsed referral link has to hardcode an opaque base64 `fCtx` captured from a running
+  SDK, and no sample appears in the README or the KDoc. Same class of gap as `FrakResolvedConfig`
+  below; cheapest fix is a documented known-good link rather than new API.
+- **`:frak-sdk-ui`'s `FrakSharing.Builder` is now the odd one out.** It uses `private var`s, a fluent
+  setter with `require()` validation, and has no Kotlin sugar; the six `:frak-sdk` Builders use public
+  `var`s, no validation, and a sugar function each. Both are about to be frozen side by side. Either
+  align them or write the rule down — the honest version is probably "`:frak-sdk-ui`'s builder has no
+  sugar because its `build()` is `@Composable`, which a top-level function cannot wrap".
 
 - **A merchant has no first-party way to obtain a `FrakResolvedConfig`.** All ten constructors are
   `internal`, `ResolvedConfigDecoder` is `internal`, and `ConfigApi`/`FrakClient` are final classes

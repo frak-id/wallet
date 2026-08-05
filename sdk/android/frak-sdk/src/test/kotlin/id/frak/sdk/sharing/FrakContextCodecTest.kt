@@ -108,13 +108,13 @@ class FrakContextCodecTest {
         val encoded =
             id.frak.sdk.core.Base64Url
                 .encode(hexToBytes(fixture.getString("inputHex")))
-        assertEquals(FrakContext.V1(wallet), FrakContextCodec.decompress(encoded))
+        assertEquals(frakContextV1(wallet), FrakContextCodec.decompress(encoded))
     }
 
     /** Encodes straight from a fixture's JSON input, so the codec is what is under test. */
     private fun encodeFrom(input: JSONObject): ByteArray? =
         FrakContextCodec.encode(
-            FrakContext.V2(
+            frakContextV2(
                 merchantId = input.getString("m"),
                 timestamp = input.getLong("t"),
                 clientId = input.optString("c").ifEmpty { null },
@@ -123,7 +123,7 @@ class FrakContextCodecTest {
         )
 
     private fun contextOf(json: JSONObject): FrakContext.V2 =
-        FrakContext.V2(
+        frakContextV2(
             merchantId = json.getString("m"),
             timestamp = json.getLong("t"),
             clientId = json.optString("c").ifEmpty { null },

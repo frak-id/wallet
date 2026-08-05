@@ -9,9 +9,9 @@ import id.frak.sdk.identity.FakeDeviceKeyStore
 import id.frak.sdk.net.FAKE_BASE_URL
 import id.frak.sdk.net.FakeHttpTransport
 import id.frak.sdk.net.HttpClient
-import id.frak.sdk.sharing.FrakContext
 import id.frak.sdk.sharing.SharingLinkBuilder
-import id.frak.sdk.sharing.SharingRequest
+import id.frak.sdk.sharing.frakContextV2
+import id.frak.sdk.sharing.sharingRequest
 import id.frak.sdk.tracking.EventQueue
 import id.frak.sdk.tracking.Interaction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -140,7 +140,7 @@ class DefaultFrakClientTest {
 
             val posts = { transport.requests.count { it.method == "POST" } }
 
-            val ownLink = client.buildSharingLink(SharingRequest(link = "https://acme.example/p"))!!
+            val ownLink = client.buildSharingLink(sharingRequest(link = "https://acme.example/p"))!!
             val before = posts()
             assertEquals("a link this device built is still one of ours", true, client.handleReferralLink(ownLink))
             advanceUntilIdle()
@@ -175,7 +175,7 @@ class DefaultFrakClientTest {
         runTest {
             // FrakContextCodec requires a canonical lowercase UUID merchantId, so only
             // FrakConfig.merchantId can carry mismatched case/whitespace here.
-            val client = newClient(testScheduler, config = FrakConfig(merchantId = " ${MERCHANT_ID.uppercase()} "))
+            val client = newClient(testScheduler, config = frakConfig(merchantId = " ${MERCHANT_ID.uppercase()} "))
             transport.respond(200, """{"success":true}""")
             advanceUntilIdle()
 
@@ -207,7 +207,7 @@ class DefaultFrakClientTest {
             // No merchantId configured, so the arrival's trackingCall resolves one over the
             // network; that resolve is made to fail below.
             val client =
-                newClient(testScheduler, config = FrakConfig(packageId = "com.acme.app"))
+                newClient(testScheduler, config = frakConfig(packageId = "com.acme.app"))
             transport.fail(java.io.IOException("network down"))
 
             assertEquals(
@@ -289,7 +289,7 @@ class DefaultFrakClientTest {
             val client =
                 newClient(
                     testScheduler,
-                    config = FrakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                    config = frakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
                 )
             advanceUntilIdle()
 
@@ -303,7 +303,7 @@ class DefaultFrakClientTest {
             val client =
                 newClient(
                     testScheduler,
-                    config = FrakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                    config = frakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
                 )
 
             val first = client.track(Interaction.Custom("first"))
@@ -333,7 +333,7 @@ class DefaultFrakClientTest {
             val client =
                 newClient(
                     testScheduler,
-                    config = FrakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                    config = frakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
                 )
 
             val resolved = client.resolveConfig()
@@ -377,7 +377,7 @@ class DefaultFrakClientTest {
             val client =
                 newClient(
                     testScheduler,
-                    config = FrakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                    config = frakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
                 )
 
             client.setTrackingEnabled(true)
@@ -497,7 +497,7 @@ class DefaultFrakClientTest {
             val off = newClient(testScheduler)
             assertEquals(false, off.preloadSharing)
 
-            val on = newClient(testScheduler, config = FrakConfig(merchantId = MERCHANT_ID, preloadSharing = true))
+            val on = newClient(testScheduler, config = frakConfig(merchantId = MERCHANT_ID, preloadSharing = true))
             assertEquals(true, on.preloadSharing)
         }
 
@@ -507,7 +507,7 @@ class DefaultFrakClientTest {
     // HttpClient's own dispatcher stays Unconfined, matching ConfigStoreTest.
     private fun newClient(
         testScheduler: kotlinx.coroutines.test.TestCoroutineScheduler,
-        config: FrakConfig = FrakConfig(merchantId = MERCHANT_ID),
+        config: FrakConfig = frakConfig(merchantId = MERCHANT_ID),
         identityStore: InMemoryKeyValueStore = InMemoryKeyValueStore(),
     ): DefaultFrakClient {
         val logger = FrakLogger(FrakLogLevel.NONE)
@@ -554,7 +554,7 @@ class DefaultFrakClientTest {
         fun foreignLink(): String =
             SharingLinkBuilder.build(
                 baseUrl = "https://acme.example/p",
-                context = FrakContext.V2(MERCHANT_ID, 1_709_654_400, clientId = FOREIGN_CLIENT_ID),
+                context = frakContextV2(MERCHANT_ID, 1_709_654_400, clientId = FOREIGN_CLIENT_ID),
                 attribution = null,
                 defaults = null,
             )!!
@@ -563,7 +563,7 @@ class DefaultFrakClientTest {
         fun foreignMerchantLink(): String =
             SharingLinkBuilder.build(
                 baseUrl = "https://acme.example/p",
-                context = FrakContext.V2(FOREIGN_MERCHANT_ID, 1_709_654_400, clientId = FOREIGN_CLIENT_ID),
+                context = frakContextV2(FOREIGN_MERCHANT_ID, 1_709_654_400, clientId = FOREIGN_CLIENT_ID),
                 attribution = null,
                 defaults = null,
             )!!

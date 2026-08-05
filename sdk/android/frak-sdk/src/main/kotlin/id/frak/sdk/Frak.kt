@@ -27,14 +27,25 @@ import java.io.File
  * // Application.onCreate
  * Frak.initialize(
  *     this,
- *     FrakConfig(
- *         merchantId = BuildConfig.FRAK_MERCHANT_ID,
- *         metadata = FrakMetadata(name = "Acme", currency = FrakCurrency.EUR),
- *     ),
+ *     FrakConfig(BuildConfig.FRAK_MERCHANT_ID) {
+ *         metadata = FrakMetadata {
+ *             name = "Acme"
+ *             currency = FrakCurrency.EUR
+ *         }
+ *     },
  * )
  *
  * // anywhere afterwards
  * val reward = Frak.client.rewards.best(targetInteraction = "purchase")
+ * ```
+ *
+ * ```java
+ * // Application.onCreate, from Java — the same Builder the Kotlin form above delegates to
+ * Frak.initialize(
+ *         this,
+ *         new FrakConfig.Builder(BuildConfig.FRAK_MERCHANT_ID)
+ *                 .metadata(new FrakMetadata.Builder().name("Acme").currency(FrakCurrency.EUR).build())
+ *                 .build());
  * ```
  */
 public object Frak {

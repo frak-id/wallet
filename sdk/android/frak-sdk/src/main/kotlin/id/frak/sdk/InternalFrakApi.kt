@@ -32,9 +32,11 @@ package id.frak.sdk
  *
  * **Kotlin-only, and that is a real hole now that Java is a supported consumer.** `@RequiresOptIn`
  * is a Kotlin-compiler concept with no javac enforcement: a Java merchant gets no diagnostic. The
- * guarantee this annotation actually buys is the honest dump. Where a hard block matters, use
- * `internal` — Kotlin emits `internal` constructors in a form javac refuses to resolve — and this
- * is why the resolved-config tree's constructors are `internal` rather than merely marked.
+ * guarantee this annotation actually buys is the honest dump, plus a Kotlin compile error. Nothing
+ * gives a Java merchant a diagnostic: `internal` is emitted `public` in bytecode, and while Kotlin
+ * name-mangles `internal` *functions*, it cannot mangle a constructor. So the resolved-config tree's
+ * `internal` constructors stop a Kotlin merchant outright and put nothing in the `.api` dump — which
+ * is the compatibility contract — while a Java caller who goes looking is simply outside it.
  */
 @RequiresOptIn(
     level = RequiresOptIn.Level.ERROR,

@@ -81,16 +81,43 @@ Not implemented: the 4-tier copy precedence (`FrakClient.copy`), `referralStatus
 ```kotlin
 Frak.initialize(
     context,
-    FrakConfig(
-        merchantId = BuildConfig.FRAK_MERCHANT_ID,
-        logLevel = FrakLogLevel.INFO,
-    ),
+    FrakConfig(BuildConfig.FRAK_MERCHANT_ID) {
+        logLevel = FrakLogLevel.INFO
+    },
 )
 
 lifecycleScope.launch {
     Frak.client.tracking.purchase(/* ... */)
 }
 ```
+
+```java
+// The same thing from Java. The Kotlin form above is sugar over this Builder, not a second
+// implementation, so a default has exactly one home.
+Frak.initialize(
+        context,
+        new FrakConfig.Builder(BuildConfig.FRAK_MERCHANT_ID)
+                .logLevel(FrakLogLevel.INFO)
+                .build());
+```
+
+### Construction
+
+Every merchant-constructed type with optional fields is a `Builder`, and no public API takes a Kotlin default argument — with one documented holdout, at the end of this section. Both halves are one decision, and the reason is `FrakConfig`: it went from 8 to 9 parameters after the last `.api` dump was taken. A Kotlin default compiles to the full-arity constructor *plus* a synthetic `<init>(..., int mask, DefaultConstructorMarker)`, and adding a field changes both descriptors — so that change would have been `NoSuchMethodError` on every already-shipped merchant binary, unfixable by the merchant, because it is their app in the store that breaks. `@JvmOverloads` is not the answer either: it fixes Java and leaves Kotlin callers resolving through `$default` anyway.
+
+So: `FrakConfig`, `FrakMetadata`, `SharingRequest`, `SharingProduct`, `ProductDetails` and `AttributionParams` each have a nested `Builder` with chained setters, plus a Kotlin function of the same name taking `Builder.() -> Unit`. The Builder's `var`s *are* the Kotlin scope — there is no second scope type and therefore no second home for a default. A new option is one new setter plus one new `var`: additive forever.
+
+Types that are public but not expected to grow took explicit constructor overloads instead of a Builder: `FrakEnvironment.Custom` (two origins, optionally a wallet package id and scheme) and `FrakError.Server`/`FrakError.Decoding`.
+
+Read models — the things the SDK hands *back* — split two ways, and the split is a live question rather than a settled rule:
+
+- The resolved-config tree and `FrakContext` have `internal` constructors and no Builder at all. A merchant reads them and never builds one.
+- The reward models (`BestReward`, `Campaign`, `TokenAmount`, `RewardTier`, `EstimatedReward`) keep **public** constructors, because a merchant does build one — for a `@Preview`, or a fake over `rewards.best`, which `PublicSurfaceTest` pins. They carry no default arguments (`BestReward`'s two were dropped in step 2), so no `DefaultConstructorMarker` bridge reaches the dump, but their arity is frozen the moment it is committed. Whether they should follow the config tree instead is open — see `docs/plans/native-sdk/09-android-api-surface.md`.
+
+Two things still carry default arguments, and each has a step in `docs/plans/native-sdk/09-android-api-surface.md`:
+
+- `Interaction.Arrival`/`Sharing`/`Custom` — eight defaults across three publicly-constructible classes, and the only *type* left. They are collapsing into an opaque type with static factories (step 3), which removes the constructors rather than rewriting them.
+- `ConfigApi.resolve`, `RewardsApi.campaigns` and `RewardsApi.best` — six defaults across three `suspend` functions, the only *functions* left. They change shape with the Java `*Async` twins (step 4), so they are fixed there rather than twice.
 
 `Frak.shutdown()` cancels background work and unregisters the deep-link observer; call it to release the SDK deterministically (`initialize` can then run again). It is not a consent control — it records no decision.
 
@@ -128,7 +155,7 @@ One Android device pass (SM-G998B, Android 15) has exercised `initialize`, the w
 - **AGP 9.1.1, Kotlin 2.4.10** compiling to Kotlin language/API level **2.2** (was 1.9 until the Kotlin 2.4 upgrade dropped `-language-version=1.9` and the K1 compiler). ktlint plugin 14.2.0, engine 1.8.0. Compose BOM 2026.06.01. Versions live in `gradle/libs.versions.toml`.
 - Kotlin is compiled by AGP's built-in Kotlin support, not the `org.jetbrains.kotlin.android` plugin — AGP 9.0 made that redundant and it now fails outright if applied alongside AGP's own support. Compiler settings live in `kotlin { compilerOptions {} }`. The Compose compiler plugin is still applied explicitly.
 - **`explicitApi()` is on for both modules.** Every public symbol needs an explicit visibility modifier and an explicit return type. It stops a helper from silently widening the API surface, but it does not by itself detect a breaking change to an already-public symbol — see "Binary compatibility" below.
-- **The config model types (`FrakResolvedConfig` and friends) are plain classes, not data classes, with `internal` constructors and no default arguments.** A published `copy()`/`componentN()` would enter the ABI and could never be removed, hence hand-written `equals`/`hashCode`/`toString`. But that alone was not additive: a public constructor with default arguments compiles to a full-arity `<init>` plus a synthetic `<init>(..., int mask, DefaultConstructorMarker)`, and adding a parameter changes both descriptors — an already-compiled merchant binary would get `NoSuchMethodError`. The fix is both halves at once. `internal` keeps the constructor out of javac's reach and out of the `.api` dump; dropping the defaults keeps the `DefaultConstructorMarker` bridge from landing in the dump anyway, which it does even for an `internal` constructor. A new backend field is now a new getter and nothing else. The old defaults live in `ConfigTreeFixtures.kt` in the test source set. Merchant-facing *input* types (`FrakConfig`, `SharingRequest`, `SharingProduct`, `ProductDetails`, `AttributionParams`, `FrakMetadata`) get a `Builder` instead, since a caller does have to construct those — tracked in `docs/plans/native-sdk/09-android-api-surface.md`.
+- **The config model types (`FrakResolvedConfig` and friends) are plain classes, not data classes, with `internal` constructors and no default arguments.** A published `copy()`/`componentN()` would enter the ABI and could never be removed, hence hand-written `equals`/`hashCode`/`toString`. But that alone was not additive: a public constructor with default arguments compiles to a full-arity `<init>` plus a synthetic `<init>(..., int mask, DefaultConstructorMarker)`, and adding a parameter changes both descriptors — an already-compiled merchant binary would get `NoSuchMethodError`. The fix is both halves at once. `internal` keeps the constructor out of Kotlin merchants' reach and out of the `.api` dump — not out of *javac's* reach, since Kotlin mangles `internal` functions but cannot mangle a constructor, so it is emitted `public`; a Java caller who reaches it is simply outside the compatibility contract; dropping the defaults keeps the `DefaultConstructorMarker` bridge from landing in the dump anyway, which it does even for an `internal` constructor. A new backend field is now a new getter and nothing else. The old defaults live in `ConfigTreeFixtures.kt` in the test source set. Merchant-facing *input* types (`FrakConfig`, `FrakMetadata`, `SharingRequest`, `SharingProduct`, `ProductDetails`, `AttributionParams`) have a `Builder` instead, since a caller does have to construct those — see "Construction" below.
 - `gradle.properties` turns off AGP build features this project has no use for (`buildConfig`, `aidl`, `renderscript`, `resValues`, `shaders`) — each costs a task per module per variant and can only grow the AAR. The SDK version is a reviewed Kotlin constant (`FrakSdkVersion`), not a generated `BuildConfig` field.
 - No `.gitignore` here — the root one covers `sdk/android/.gradle/` and `sdk/android/**/build/`.
 - **Versioning sits outside Changesets.** `id.frak:frak-sdk` and iOS's `FrakSDK` version independently of the JS packages and of each other — a merchant's binary freezes at store submission, so a JS-style patch cadence does not apply. `sdk/android/package.json` is `private` and listed in `.changeset/config.json`'s `ignore`; it exists only to dispatch to `scripts/run.sh`.
@@ -155,14 +182,14 @@ No gate right now. kotlinx-binary-compatibility-validator was wired into `frak-p
 
 The shape is now decided, and being applied in five reviewed steps — `docs/plans/native-sdk/09-android-api-surface.md` is the record. Both former open questions are answered there:
 
-- Read models (the config tree) get `internal` constructors and no default arguments; merchant-facing input types get a `Builder` with a Kotlin scope-function sugar over the same Builder. No public API carries a default argument, and `@JvmOverloads` is banned — it fixes Java and leaves Kotlin callers on `$default` anyway.
-- Types that are `public` only to cross the `:frak-sdk`/`:frak-sdk-ui` boundary carry `@InternalFrakApi`, which will drop them out of the dump via `nonPublicMarkers` once BCV is back. Today it is a Kotlin compile error and nothing more. `PercentEncoding` is the first and, so far, only one: the marker propagates through signatures, so putting it on the config tree would have taken `ConfigApi.resolve()` out of the dump and out of every merchant's reach along with it.
+- **Q1, the `$default` freeze.** Read models (the config tree, `FrakContext`) get `internal` constructors; merchant-constructed types get a `Builder` with a Kotlin scope-function sugar over the same Builder; everything else takes explicit overloads. `@JvmOverloads` is banned — it fixes Java and leaves Kotlin callers on `$default` anyway. Two holdouts remain, both with a step assigned: `Interaction`'s three constructors and `ConfigApi.resolve`/`RewardsApi.campaigns`/`RewardsApi.best`. See "Construction" above.
+- **Q2, promoting types ahead of a reader.** Types that are `public` only to cross the `:frak-sdk`/`:frak-sdk-ui` boundary carry `@InternalFrakApi`, which will drop them out of the dump via `nonPublicMarkers` once BCV is back. Today it is a Kotlin compile error and nothing more. `PercentEncoding` is the first and, so far, only one: the marker propagates through signatures, so putting it on the config tree would have taken `ConfigApi.resolve()` out of the dump and out of every merchant's reach along with it.
 
 BCV comes back — dumps included — as the last of the five steps, since committing a dump ratifies the shape. Until then `explicitApi()` is the only enforcement.
 
 ## Open decisions blocking first publish
 
-- Binary-compatibility gate and the two questions above.
+- Binary-compatibility gate: BCV plus a committed dump, the last of the five steps in `docs/plans/native-sdk/09-android-api-surface.md`, along with the handful of decisions that document lists as "to be answered before the dump is committed".
 - Claiming the `id.frak` namespace (TXT record on the `frak.id` apex), generating the real GPG key, wiring the Portal repository. None of these has started; Portal verification is automated and same-day once requested.
 - A device pass covering the sharing sheet, the install handoff and inbound deep links — publishing an artifact nothing has run is how you burn a version number.
 - A CI job that builds `example/native-android`. `.github/workflows/apps.yaml` already lints, builds and unit-tests the SDK itself (see "Testing" above); nothing compiles the harness, so a broken harness call site does not go red.

@@ -30,7 +30,7 @@ public class FrakClient internal constructor(
      * Turns tracking on or off at runtime and persists the decision for this install.
      *
      * `false` stops tracking immediately and purges anything still queued. `true` re-enables it
-     * unless this build ships `FrakConfig(trackingEnabled = false)`, a floor a runtime call
+     * unless this build ships a config with `trackingEnabled(false)`, a floor a runtime call
      * cannot lift.
      *
      * Does not destroy the identity — call [resetAnonymousId] too for a full withdrawal of

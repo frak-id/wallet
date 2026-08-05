@@ -14,10 +14,13 @@ import id.frak.sdk.core.FrakLanguage
  *    `<init>` plus a synthetic `<init>(…, int mask, DefaultConstructorMarker)` — and adding a
  *    field changes both descriptors, so an already-compiled merchant binary gets
  *    `NoSuchMethodError`. That is finding A3, and it has already fired once on `FrakConfig`.
- *  - An **internal** constructor is not a promise. Kotlin emits it in a form javac refuses to
- *    resolve and Kotlin merchants cannot see, and binary-compatibility-validator leaves it out of
- *    the `.api` dump. So a new backend field is a new getter and nothing else: additive forever,
- *    with no Builder to write and no wire-shaped defaults to restate.
+ *  - An **internal** constructor is not a promise. A Kotlin merchant cannot see it, and
+ *    binary-compatibility-validator leaves it out of the `.api` dump — which is what the
+ *    compatibility contract is. So a new backend field is a new getter and nothing else: additive
+ *    forever, with no Builder to write and no wire-shaped defaults to restate. (It is not a *hard*
+ *    block: Kotlin mangles `internal` functions but cannot mangle a constructor, so it is emitted
+ *    `public` and a Java caller could still reach it. Doing so puts them outside the contract, which
+ *    is the same deal `@InternalFrakApi` offers.)
  *  - **No defaults even so**, because a defaulted internal constructor still emits the
  *    `DefaultConstructorMarker` bridge as `public synthetic`, and that bridge *does* land in the
  *    dump. `ResolvedConfigDecoder` — the only production caller — already passes every argument,

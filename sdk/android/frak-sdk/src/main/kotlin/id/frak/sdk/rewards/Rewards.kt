@@ -206,6 +206,18 @@ public class Campaign(
 /**
  * The single reward worth advertising, formatted server-side. [formatted] contains a
  * non-breaking space (U+00A0) before the currency symbol; render as-is, do not reformat.
+ *
+ * Constructor takes no default arguments, like everything else on this surface: a default compiles
+ * to a synthetic `DefaultConstructorMarker` bridge alongside the real constructor, and that pair is
+ * an arity frozen forever (see the note at the top of `sharing/SharingRequest.kt`). `isProductScoped`
+ * and `matchedProducts` were defaulted so an older backend still decoded; that is the *decoder's*
+ * concern and it lives there now, in `RewardsDecoder`, which always passed all seven arguments
+ * anyway.
+ *
+ * The constructor is still `public`, unlike the resolved-config tree's: a merchant builds one for a
+ * `@Preview` or a fake over `rewards.best`, which `PublicSurfaceTest` pins. Whether the reward read
+ * models should follow the config tree to `internal` constructors instead is open — see
+ * `docs/plans/native-sdk/09-android-api-surface.md`.
  */
 public class BestReward(
     public val formatted: String,
@@ -214,10 +226,10 @@ public class BestReward(
     public val minPurchaseAmount: String?,
     public val minPurchaseValue: Double?,
     public val lockupDurationDays: Double?,
-    /** Whether the selected campaign is gated to a `productScope`. Not the reward's basis — a product-gated campaign can still pay a percentage of the whole basket. Defaults false so an older backend still decodes. */
-    public val isProductScoped: Boolean = false,
+    /** Whether the selected campaign is gated to a `productScope`. Not the reward's basis — a product-gated campaign can still pay a percentage of the whole basket. `false` when the backend omits it. */
+    public val isProductScoped: Boolean,
     /** The subset of the requested products matching the winning campaign's scope; null for an unscoped winner or when none were requested. */
-    public val matchedProducts: List<ProductDetails>? = null,
+    public val matchedProducts: List<ProductDetails>?,
 ) {
     override fun toString(): String =
         "BestReward(formatted=$formatted, payoutType=$payoutType, minPurchaseAmount=$minPurchaseAmount, " +

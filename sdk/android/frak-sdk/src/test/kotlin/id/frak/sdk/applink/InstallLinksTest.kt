@@ -1,6 +1,7 @@
 package id.frak.sdk.applink
 
-import id.frak.sdk.sharing.FrakContext
+import id.frak.sdk.sharing.frakContextV1
+import id.frak.sdk.sharing.frakContextV2
 import id.frak.sdk.tracking.Interaction
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -83,34 +84,34 @@ class InstallLinksTest {
 class ReferralArrivalTest {
     @Test
     fun `treats a link this device produced as a self-referral`() {
-        val own = FrakContext.V2(MERCHANT_ID, TIMESTAMP, clientId = CLIENT_ID)
+        val own = frakContextV2(MERCHANT_ID, TIMESTAMP, clientId = CLIENT_ID)
         assertTrue(ReferralArrival.shouldIgnoreArrival(own, CLIENT_ID))
     }
 
     @Test
     fun `treats someone else's link as a referral`() {
-        val other = FrakContext.V2(MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID)
+        val other = frakContextV2(MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID)
         assertFalse(ReferralArrival.shouldIgnoreArrival(other, CLIENT_ID))
     }
 
     @Test
     fun `cannot self-refer with no identity, or from a v1 link`() {
-        val context = FrakContext.V2(MERCHANT_ID, TIMESTAMP, clientId = CLIENT_ID)
+        val context = frakContextV2(MERCHANT_ID, TIMESTAMP, clientId = CLIENT_ID)
         assertFalse(ReferralArrival.shouldIgnoreArrival(context, null))
         // A native app has no wallet, so the wallet comparison the web makes has nothing to
         // compare against.
-        assertFalse(ReferralArrival.shouldIgnoreArrival(FrakContext.V1(WALLET), CLIENT_ID))
+        assertFalse(ReferralArrival.shouldIgnoreArrival(frakContextV1(WALLET), CLIENT_ID))
     }
 
     @Test
     fun `ignores a v2 link minted for a different merchant, even from another device`() {
-        val foreign = FrakContext.V2(OTHER_MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID)
+        val foreign = frakContextV2(OTHER_MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID)
         assertTrue(ReferralArrival.shouldIgnoreArrival(foreign, CLIENT_ID, ownMerchantId = MERCHANT_ID))
     }
 
     @Test
     fun `lets a v2 link through when this SDK instance has not resolved its own merchant yet`() {
-        val other = FrakContext.V2(OTHER_MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID)
+        val other = frakContextV2(OTHER_MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID)
         assertFalse(ReferralArrival.shouldIgnoreArrival(other, CLIENT_ID, ownMerchantId = null))
     }
 
@@ -118,7 +119,7 @@ class ReferralArrivalTest {
     fun `carries every field a v2 context knows into the arrival`() {
         val arrival =
             ReferralArrival.arrivalFrom(
-                FrakContext.V2(MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID, wallet = WALLET),
+                frakContextV2(MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID, wallet = WALLET),
             )
         assertEquals(OTHER_CLIENT_ID, arrival.referrerClientId)
         assertEquals(MERCHANT_ID, arrival.referrerMerchantId)
@@ -128,7 +129,7 @@ class ReferralArrivalTest {
 
     @Test
     fun `carries only the wallet from a v1 context`() {
-        val arrival: Interaction.Arrival = ReferralArrival.arrivalFrom(FrakContext.V1(WALLET))
+        val arrival: Interaction.Arrival = ReferralArrival.arrivalFrom(frakContextV1(WALLET))
         assertEquals(WALLET, arrival.referrerWallet)
         assertNull(arrival.referrerMerchantId)
         assertNull(arrival.referralTimestamp)

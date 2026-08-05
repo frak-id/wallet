@@ -44,8 +44,9 @@ wallet's `clientIdStore`, which inside a merchant web view may hold an unrelated
 would link the wrong identity at `/install`. `beforeLoad` fires `action=error` instead.
 
 **Trap 2 — `attribution=null` is not the same as omitting it.** Literal `null` disables
-backend attribution defaults; `undefined` still applies them. A native
-`AttributionParams()` with all-nil fields must map to omitted, not `null`.
+backend attribution defaults; `undefined` still applies them. A native empty attribution — every
+field nil — must therefore map to omitted, not `null`. On Android that is now `AttributionParams { }`,
+the Kotlin sugar over its `Builder`; Swift still writes `AttributionParams()`.
 
 **Trap 3 — the page does not track shares.** `sharing.tsx` wires only `onSuccess`;
 `handleCopy` only fires analytics. The route never emits `create_referral_link` — the

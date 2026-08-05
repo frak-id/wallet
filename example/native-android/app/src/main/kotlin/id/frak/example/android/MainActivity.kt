@@ -153,25 +153,27 @@ class MainActivity : ComponentActivity() {
 
         Frak.initialize(
             context = applicationContext,
+            // The Kotlin sugar over `FrakConfig.Builder`, which is the same Builder a Java or XML
+            // host would chain by hand. Assignment syntax, no default arguments anywhere on the way
+            // in — see `docs/plans/native-sdk/09-android-api-surface.md` §1.
             config =
-                FrakConfig(
-                    merchantId = "0a799880-ba54-4276-a734-db8721911bab",
-                    metadata = FrakMetadata(name = "Frak Android Harness"),
+                FrakConfig(merchantId = "0a799880-ba54-4276-a734-db8721911bab") {
+                    metadata = FrakMetadata { name = "Frak Android Harness" }
                     // Development points at wallet-dev.frak.id / backend.gcp-dev.frak.id and the
                     // dev wallet app (id.frak.wallet.dev, scheme frakwallet-dev). isFrakAppInstalled()
                     // below reports false without it.
-                    env = FrakEnvironment.Development,
+                    env = FrakEnvironment.Development
                     // Automatic exists only on Android (hooks ActivityLifecycleCallbacks). iOS uses
                     // .manual and routes .onOpenURL to appLink.handleReferral(_:) by hand.
-                    deepLink = DeepLinkHandling.Automatic,
-                    logLevel = FrakLogLevel.INFO,
+                    deepLink = DeepLinkHandling.Automatic
+                    logLevel = FrakLogLevel.INFO
                     // Boots a web view against the wallet origin as soon as a share surface is
                     // composed, and hands that same warm view to the sheet. Without it the sheet
                     // pays for engine startup, TLS and the React bundle at tap time — the
                     // 200-300ms of blank white this harness exists to catch. On by default here
                     // precisely because the harness is where that regression would show up.
-                    preloadSharing = true,
-                ),
+                    preloadSharing = true
+                },
         )
         addLog("Frak.initialize called for merchant 0a799880-ba54-4276-a734-db8721911bab (development)", LogType.INFO)
 
@@ -233,13 +235,13 @@ class MainActivity : ComponentActivity() {
     private fun shareProduct(product: ProductItem) {
         addLog("Triggering sharing sheet for '${product.title}'...", LogType.INFO)
         sharing.present(
-            SharingRequest(
-                products = listOf(SharingProduct(title = product.title, link = product.link)),
+            SharingRequest {
+                products = listOf(SharingProduct(title = product.title, link = product.link))
                 // Reward trigger is "purchase" — matches the rewards.best call below and iOS's
                 // SharingRequest.
-                targetInteraction = "purchase",
-                placement = "product-page",
-            ),
+                targetInteraction = "purchase"
+                placement = "product-page"
+            },
         )
     }
 
@@ -300,7 +302,13 @@ class MainActivity : ComponentActivity() {
                     Frak.client.rewards.best(
                         // Matches SharingRequest.targetInteraction used by shareProduct.
                         targetInteraction = "purchase",
-                        products = sampleProducts.map { ProductDetails(productId = it.id, name = it.title) },
+                        products =
+                            sampleProducts.map {
+                                ProductDetails {
+                                    productId = it.id
+                                    name = it.title
+                                }
+                            },
                     )
                 if (best != null) {
                     addLog("Catalog reward: ${best.formatted}", LogType.SUCCESS)

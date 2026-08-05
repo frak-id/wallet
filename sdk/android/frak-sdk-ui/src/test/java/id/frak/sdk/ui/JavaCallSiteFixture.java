@@ -2,8 +2,12 @@ package id.frak.sdk.ui;
 
 import androidx.activity.ComponentActivity;
 
-import java.util.Collections;
-
+import id.frak.sdk.core.FrakConfig;
+import id.frak.sdk.core.FrakCurrency;
+import id.frak.sdk.core.FrakLogLevel;
+import id.frak.sdk.core.FrakMetadata;
+import id.frak.sdk.core.ProductDetails;
+import id.frak.sdk.sharing.AttributionParams;
 import id.frak.sdk.sharing.SharingProduct;
 import id.frak.sdk.sharing.SharingRequest;
 
@@ -21,6 +25,12 @@ import id.frak.sdk.sharing.SharingRequest;
  *
  * <p>Deliberately <em>not</em> a JUnit test. There is nothing to assert at runtime -- the assertion
  * is that javac accepts this file.
+ *
+ * <p>Since every merchant-constructed type moved to a {@code Builder}, this file is also the only
+ * check that the Builders are genuinely Java-shaped: a {@code $default} bridge a Java caller cannot
+ * name, a setter that returns {@code Unit} instead of {@code Builder} and so breaks chaining, or a
+ * {@code var} whose generated setter collides with the fluent method of the same name would all fail
+ * here and nowhere else.
  */
 @SuppressWarnings("unused")
 final class JavaCallSiteFixture {
@@ -42,21 +52,47 @@ final class JavaCallSiteFixture {
         sharing.warm();
     }
 
+    /**
+     * The whole point of the Builder rewrite, from the Java side. Before it, this read
+     * {@code new SharingRequest(null, list, null, "purchase", "product-page", null)} -- six
+     * positional arguments of which four were noise, and an arity that could never grow.
+     */
     void onShareTapped() {
-        SharingProduct product = new SharingProduct(
-                "Babies camel cuir velours bout carre",
-                "https://example.com/product-1",
-                null,
-                null,
-                null);
-        SharingRequest request = new SharingRequest(
-                null,
-                Collections.singletonList(product),
-                null,
-                "purchase",
-                "product-page",
-                null);
+        SharingProduct product = new SharingProduct.Builder(
+                        "Babies camel cuir velours bout carre",
+                        "https://example.com/product-1")
+                .details(new ProductDetails.Builder().sku("SHOE-42").quantity(2.0).build())
+                .build();
+
+        SharingRequest request = new SharingRequest.Builder()
+                .addProduct(product)
+                .attribution(new AttributionParams.Builder().utmSource("android-app").build())
+                .targetInteraction("purchase")
+                .placement("product-page")
+                .build();
+
         sharing.present(request);
+    }
+
+    /**
+     * {@code FrakConfig}, the type that motivated the ban on default arguments: it grew from eight
+     * parameters to nine after the last {@code .api} dump was taken, which would have been a
+     * {@code NoSuchMethodError} on every shipped merchant binary.
+     */
+    static FrakConfig configWithMerchantId() {
+        return new FrakConfig.Builder("merchant-id")
+                .metadata(new FrakMetadata.Builder()
+                        .name("Acme")
+                        .currency(FrakCurrency.EUR)
+                        .build())
+                .trackingEnabled(false)
+                .logLevel(FrakLogLevel.DEBUG)
+                .build();
+    }
+
+    /** The no-merchant-id overload: the merchant is resolved from the package id instead. */
+    static FrakConfig configWithoutMerchantId() {
+        return new FrakConfig.Builder().packageId("com.acme.app").build();
     }
 
     /**

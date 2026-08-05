@@ -8,7 +8,7 @@ import org.junit.Test
 
 class SharingLinkBuilderTest {
     private val context =
-        FrakContext.V2(
+        frakContextV2(
             merchantId = "550e8400-e29b-41d4-a716-446655440000",
             timestamp = 1_709_654_400,
             clientId = "550e8400-e29b-41d4-a716-446655440001",
@@ -52,7 +52,7 @@ class SharingLinkBuilderTest {
             SharingLinkBuilder.build(
                 baseUrl = "https://acme.example/p",
                 context = context,
-                attribution = AttributionParams(utmSource = "android-app"),
+                attribution = attributionParams(utmSource = "android-app"),
                 defaults = attributionDefaults(utmSource = "web", utmMedium = "referral"),
             )
         assertTrue(link!!.contains("utm_source=android-app"))
@@ -65,7 +65,7 @@ class SharingLinkBuilderTest {
             SharingLinkBuilder.build(
                 baseUrl = "https://acme.example/p",
                 context = context,
-                attribution = AttributionParams(utmContent = "per-call"),
+                attribution = attributionParams(utmContent = "per-call"),
                 defaults = attributionDefaults(utmSource = "web"),
                 productUtmContent = "sku-42",
             )
@@ -78,7 +78,7 @@ class SharingLinkBuilderTest {
             SharingLinkBuilder.build(
                 baseUrl = "https://acme.example/p",
                 context = context,
-                attribution = AttributionParams(utmCampaign = "spring sale&more"),
+                attribution = attributionParams(utmCampaign = "spring sale&more"),
                 defaults = null,
             )
         // A space is %20, not `+`: this is a query string, not a form body.
@@ -116,5 +116,5 @@ class SharingLinkBuilderTest {
         assertNull(SharingLinkBuilder.parse("https://acme.example/p?fCtx=not-a-context"))
     }
 
-    private fun FrakContext.V2.withoutIdentity() = FrakContext.V2(merchantId, timestamp)
+    private fun FrakContext.V2.withoutIdentity() = frakContextV2(merchantId, timestamp)
 }

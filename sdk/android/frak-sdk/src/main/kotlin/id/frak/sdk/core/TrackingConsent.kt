@@ -99,7 +99,7 @@ internal class TrackingConsent(
         if (enabled && !configDefault) {
             logger.warn(
                 "setTrackingEnabled(true) was recorded but has no effect: this build ships " +
-                    "FrakConfig(trackingEnabled = false), which the SDK treats as a hard floor.",
+                    "FrakConfig.Builder(...).trackingEnabled(false), which the SDK treats as a hard floor.",
             )
         }
     }

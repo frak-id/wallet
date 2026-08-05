@@ -1,9 +1,11 @@
 package id.frak.sdk.config
 
-import id.frak.sdk.core.FrakConfig
 import id.frak.sdk.core.FrakError
+import id.frak.sdk.core.FrakLanguage
 import id.frak.sdk.core.FrakLogLevel
 import id.frak.sdk.core.FrakLogger
+import id.frak.sdk.core.frakConfig
+import id.frak.sdk.core.frakMetadata
 import id.frak.sdk.net.FAKE_BASE_URL
 import id.frak.sdk.net.FakeHttpTransport
 import id.frak.sdk.net.HttpClient
@@ -33,7 +35,7 @@ import java.io.IOException
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConfigStoreTest {
-    private val query = MerchantQuery.from(FrakConfig(merchantId = MERCHANT_ID))
+    private val query = MerchantQuery.from(frakConfig(merchantId = MERCHANT_ID))
     private var clock = 0L
     private val store = InMemoryKeyValueStore()
     private val transport = FakeHttpTransport()
@@ -140,8 +142,8 @@ class ConfigStoreTest {
     @Test
     fun `an older fetch that starts first but lands last does not overwrite a newer publish (C4)`() =
         runTest {
-            val firstQuery = MerchantQuery.from(FrakConfig(merchantId = MERCHANT_ID))
-            val secondQuery = MerchantQuery.from(FrakConfig(packageId = "com.example.second"))
+            val firstQuery = MerchantQuery.from(frakConfig(merchantId = MERCHANT_ID))
+            val secondQuery = MerchantQuery.from(frakConfig(packageId = "com.example.second"))
 
             val firstStarted = CompletableDeferred<Unit>()
             val secondPublished = CompletableDeferred<Unit>()
@@ -376,7 +378,7 @@ class ConfigStoreTest {
             newStore(this).resolve(query, forceRefresh = false)
 
             val warmStart = newStore(this)
-            val otherQuery = MerchantQuery.from(FrakConfig(packageId = "com.example.other"))
+            val otherQuery = MerchantQuery.from(frakConfig(packageId = "com.example.other"))
             transport.fail(IOException("currentConfig must not reach the network"))
 
             assertNull(warmStart.currentConfig(otherQuery))
@@ -388,7 +390,7 @@ class ConfigStoreTest {
             transport.respond(200, BODY)
             newStore(this).resolve(query, forceRefresh = false)
 
-            val otherQuery = MerchantQuery.from(FrakConfig(packageId = "com.example.other"))
+            val otherQuery = MerchantQuery.from(frakConfig(packageId = "com.example.other"))
             transport.fail(IOException("offline"))
             val failure =
                 runCatching {
@@ -407,11 +409,9 @@ class ConfigStoreTest {
 
             val frenchQuery =
                 MerchantQuery.from(
-                    FrakConfig(
+                    frakConfig(
                         merchantId = MERCHANT_ID,
-                        metadata =
-                            id.frak.sdk.core
-                                .FrakMetadata(lang = id.frak.sdk.core.FrakLanguage.FR),
+                        metadata = frakMetadata(lang = FrakLanguage.FR),
                     ),
                 )
             transport.respond(200, BODY.replace("Acme", "Acme FR"))
@@ -476,7 +476,7 @@ class ConfigStoreTest {
             val callsAfterFirstResolve = store.getStringCalls
 
             val configStore = newStore(this)
-            val otherQuery = MerchantQuery.from(FrakConfig(packageId = "com.example.other"))
+            val otherQuery = MerchantQuery.from(frakConfig(packageId = "com.example.other"))
             transport.fail(IOException("offline"))
 
             repeat(3) {
