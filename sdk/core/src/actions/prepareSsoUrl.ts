@@ -1,4 +1,5 @@
 import { getClientId, getClientIdAsync } from "../config/clientId";
+import { getWalletUrl } from "../config/environment";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { signProof } from "../identity/sign";
 import type {
@@ -64,19 +65,18 @@ export async function prepareSsoUrl(
     client: FrakClient,
     args: PrepareSsoParamsType
 ): Promise<PrepareSsoReturnType> {
-    const { metadata, customizations, walletUrl } = client.config;
+    const { metadata, customizations } = client.config;
 
-    // `getClientIdAsync` REJECTS when no provable id can be produced (no
-    // WebCrypto, no localStorage — e.g. Safari with all cookies blocked).
-    // SSO must still open in that case, minus the identity link, so this
-    // degrades like every other action rather than propagating.
+    // `getClientIdAsync` rejects when no provable id can be produced (no
+    // WebCrypto/localStorage). SSO must still open in that case, minus the
+    // identity link, so failure degrades instead of propagating.
     const clientId =
         getClientId() ?? (await getClientIdAsync().catch(() => undefined));
     const merchantId = (await sdkConfigStore.resolveMerchantId()) ?? "";
 
-    // Proof of possession for clientId, when a key exists. Never blocks or
-    // throws SSO on failure (see signProof docs) — legacy pre-derivation
-    // clients have no key and simply proceed without a proof.
+    // Proof of possession when a key exists. Never blocks or throws on
+    // failure — legacy pre-derivation clients have no key and proceed
+    // without a proof.
     const proof =
         clientId && merchantId
             ? await signProof({
@@ -88,7 +88,7 @@ export async function prepareSsoUrl(
 
     return {
         ssoUrl: generateSsoUrl(
-            walletUrl ?? "https://wallet.frak.id",
+            getWalletUrl(),
             withDirectExitDefault(args),
             merchantId,
             metadata.name,

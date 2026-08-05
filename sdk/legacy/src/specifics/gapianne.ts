@@ -12,7 +12,6 @@ function setConfig() {
         "https://gapianne.com/cdn/shop/files/logo-gapianne_7a65f4c4-54e8-4831-afa2-0849e4c5f8de.png";
 
     window.FrakSetup.config = {
-        walletUrl: "https://wallet.frak.id",
         metadata: {
             name: "Gapianne",
             lang: "fr",

@@ -73,5 +73,26 @@ export const trackPurchaseRoute = new Elysia().post(
     {
         headers: sdkIdentityHeaderSchema,
         body: purchaseBodySchema,
+        response: {
+            // Mirrors `ClaimPurchaseResult`: the two arms of `claimPurchase`
+            // return disjoint optional fields — `pendingWebhook` when only a
+            // claim row was written, `purchaseId` + `merged` when an existing
+            // purchase was reconciled.
+            200: t.Object({
+                success: t.Boolean(),
+                identityGroupId: t.String(),
+                purchaseId: t.Optional(t.String()),
+                pendingWebhook: t.Optional(t.Boolean()),
+                merged: t.Optional(t.Boolean()),
+            }),
+            // 400 covers both the `resolveSdkIdentityNodes` failure (client id
+            // without a merchantId) and the explicit guard below it: the body
+            // schema marks `merchantId` optional because a wallet-JWT caller
+            // need not send it, but the claim itself cannot proceed without
+            // one. 401 is the no-usable-identity case. Neither body carries a
+            // `code`, so `t.ErrorResponse` is narrowed to match exactly.
+            400: t.Omit(t.ErrorResponse, ["code"]),
+            401: t.Omit(t.ErrorResponse, ["code"]),
+        },
     }
 );

@@ -1,0 +1,14 @@
+{
+    "name": "@frak-labs-sdk/native-android",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+        "build": "./scripts/run.sh build",
+        "test": "./scripts/run.sh test",
+        "lint": "./scripts/run.sh lint",
+        "format": "./scripts/run.sh format",
+        "size": "./scripts/run.sh size",
+        "check": "./scripts/run.sh check",
+        "publishLocal": "./scripts/run.sh publishLocal"
+    }
+}

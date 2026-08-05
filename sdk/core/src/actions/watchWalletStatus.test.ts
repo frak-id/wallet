@@ -66,7 +66,7 @@ describe("watchWalletStatus", () => {
             };
 
             const mockClient = {
-                config: { walletUrl: "https://wallet.test" },
+                config: { metadata: { name: "Test" } },
                 request: vi.fn().mockResolvedValue(mockStatus),
                 openPanel: {
                     setGlobalProperties: vi.fn(),
@@ -89,7 +89,7 @@ describe("watchWalletStatus", () => {
             };
 
             const mockClient = {
-                config: { walletUrl: "https://wallet.test" },
+                config: { metadata: { name: "Test" } },
                 request: vi.fn().mockResolvedValue(mockStatus),
                 openPanel: {
                     setGlobalProperties: vi.fn(),
@@ -110,7 +110,7 @@ describe("watchWalletStatus", () => {
             };
 
             const mockClient = {
-                config: { walletUrl: "https://wallet.test" },
+                config: { metadata: { name: "Test" } },
                 request: vi.fn().mockResolvedValue(mockStatus),
                 openPanel: {
                     setGlobalProperties: vi.fn(),
@@ -131,7 +131,7 @@ describe("watchWalletStatus", () => {
             };
 
             const mockClient = {
-                config: { walletUrl: "https://wallet.test" },
+                config: { metadata: { name: "Test" } },
                 request: vi.fn().mockResolvedValue(mockStatus),
                 openPanel: {
                     setGlobalProperties: vi.fn(),
@@ -153,7 +153,7 @@ describe("watchWalletStatus", () => {
             };
 
             const mockClient = {
-                config: { walletUrl: "https://wallet.test" },
+                config: { metadata: { name: "Test" } },
                 request: vi.fn().mockResolvedValue(mockStatus),
                 openPanel: {
                     setGlobalProperties: vi.fn(),
@@ -176,7 +176,7 @@ describe("watchWalletStatus", () => {
             };
 
             const mockClient = {
-                config: { walletUrl: "https://wallet.test" },
+                config: { metadata: { name: "Test" } },
                 request: vi.fn().mockResolvedValue(mockStatus),
             } as unknown as FrakClient;
 
@@ -195,7 +195,7 @@ describe("watchWalletStatus", () => {
 
             const mockCallback = vi.fn();
             const mockClient = {
-                config: { walletUrl: "https://wallet.test" },
+                config: { metadata: { name: "Test" } },
                 listenerRequest: vi.fn((_params, callback) => {
                     // Simulate status update
                     setTimeout(() => callback(mockStatus), 0);
@@ -221,7 +221,7 @@ describe("watchWalletStatus", () => {
 
             const mockCallback = vi.fn();
             const mockClient = {
-                config: { walletUrl: "https://wallet.test" },
+                config: { metadata: { name: "Test" } },
                 listenerRequest: vi.fn((_params, callback) => {
                     setTimeout(() => callback(mockStatus), 0);
                 }),
@@ -248,7 +248,7 @@ describe("watchWalletStatus", () => {
 
             const mockCallback = vi.fn();
             const mockClient = {
-                config: { walletUrl: "https://wallet.test" },
+                config: { metadata: { name: "Test" } },
                 listenerRequest: vi.fn((_params, callback) => {
                     setTimeout(() => {
                         callback(firstStatus);
@@ -281,7 +281,7 @@ describe("watchWalletStatus", () => {
 
             const mockCallback = vi.fn();
             const mockClient = {
-                config: { walletUrl: "https://wallet.test" },
+                config: { metadata: { name: "Test" } },
                 listenerRequest: vi.fn((_params, callback) => {
                     setTimeout(() => {
                         callback(firstStatus);
@@ -319,7 +319,7 @@ describe("watchWalletStatus", () => {
 
             const mockCallback = vi.fn();
             const mockClient = {
-                config: { walletUrl: "https://wallet.test" },
+                config: { metadata: { name: "Test" } },
                 listenerRequest: vi.fn((_params, callback) => {
                     setTimeout(() => {
                         callback(connectedStatus);
@@ -355,7 +355,7 @@ describe("watchWalletStatus", () => {
 
             const mockCallback = vi.fn();
             const mockClient = {
-                config: { walletUrl: "https://wallet.test" },
+                config: { metadata: { name: "Test" } },
                 listenerRequest: vi.fn((_params, callback) => {
                     setTimeout(() => {
                         callback(firstStatus);

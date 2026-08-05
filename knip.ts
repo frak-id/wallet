@@ -148,11 +148,13 @@ const config: KnipConfig = {
         // Not built or released from this repo any more, so its dead code is
         // expected rather than actionable.
         "sdk/legacy",
-        // Gradle project: its package.json only dispatches to `scripts/run.sh`,
-        // so there is no JS/TS graph for knip to analyse.
+        // Gradle projects: their package.json only dispatches to
+        // `scripts/run.sh`, so there is no JS/TS graph for knip to analyse.
+        "sdk/android",
         "example/native-android",
-        // Xcode project: its package.json only dispatches to `scripts/run.sh`,
-        // so there is no JS/TS graph for knip to analyse.
+        // Xcode projects: their package.json only dispatches to
+        // `scripts/run.sh`, so there is no JS/TS graph for knip to analyse.
+        "sdk/ios",
         "example/native-ios",
     ],
 };

@@ -13,15 +13,38 @@ export type Currency = "eur" | "usd" | "gbp";
 export type Language = "fr" | "en";
 
 /**
+ * The environment the SDK talks to.
+ *
+ * Either a named stage, or an explicit origin pair for local development and
+ * one-off setups. Both origins are always stated together — the backend is
+ * never guessed from the wallet url.
+ *
+ * @example
+ * ```ts
+ * const env: FrakEnvironment = "dev";
+ * const local: FrakEnvironment = {
+ *     wallet: "https://localhost:3000",
+ *     backend: "https://localhost:3030",
+ * };
+ * ```
+ *
+ * @category Config
+ */
+export type FrakEnvironment =
+    | "prod"
+    | "dev"
+    | { wallet: string; backend: string };
+
+/**
  * Configuration for the Frak Wallet SDK
  * @category Config
  */
 export type FrakWalletSdkConfig = {
     /**
-     * The Frak wallet url
-     * @defaultValue "https://wallet.frak.id"
+     * The environment to run against.
+     * @defaultValue "prod"
      */
-    walletUrl?: string;
+    env?: FrakEnvironment;
     /**
      * Some metadata about your implementation of the Frak SDK
      */

@@ -34,5 +34,7 @@ export function useGenerateInstallCode({
             return data;
         },
         enabled: !!merchantId && !!anonymousId,
+        // Each generate mints a new row (no upsert on merchantId+anonymousId): a refetch would show a code the pasteboard doesn't hold, and burns rate-limit budget on refocus.
+        staleTime: Number.POSITIVE_INFINITY,
     });
 }

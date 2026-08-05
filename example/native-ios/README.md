@@ -1,67 +1,35 @@
 # Frak Native SDK — iOS Merchant Example App
 
-Minimal iOS test harness and merchant example app for the Frak Native SDK. A
-native SDK cannot be exercised without an app to host it — there is no equivalent
-of opening a page against `sdk/core` — so this app is how the SDK gets run at all.
+iOS test harness for the Frak Native SDK. Consumes the real SDK at `../../sdk/ios` (products `FrakSDK`, `FrakSDKUI`) as a local SwiftPM path dependency, wired in `Package.swift` and as an XcodeGen `packages:` entry in `project.yml`, through the SDK's public API only.
 
-> ⚠️ **Scaffolding — the real iOS SDK does not exist yet.**
-> `Sources/FrakExampleiOSApp/SDK/FrakSDK.swift` is a type-only stand-in: every call
-> logs and returns. Nothing is shared, tracked, or decoded. This app therefore
-> **cannot yet answer any of the POC questions** the native SDK plan poses. Once
-> `sdk/ios/` ships, delete that file and depend on the real artifact — the views
-> should not need changes.
->
-> The stub deliberately implements **nothing**. An earlier revision prototyped
-> anonymous-id persistence, `fCtx` parsing and the self-referral guard here; that
-> was removed because it is real SDK behaviour written twice in two languages with
-> nothing asserting the two agreed, and none of it survives into the real SDK —
-> which derives a keypair rather than persisting a UUID, and whose invariants are
-> pinned by the shared golden-fixture corpus.
+Configured with `env: .development` and a real merchant id (`0a799880-ba54-4276-a734-db8721911bab`) against the Frak dev backend (`backend.gcp-dev.frak.id`). That merchant must have this app's bundle id, `id.frak.example.ios`, on its allow list, or calls fail with `MerchantResolutionFailed`.
 
 ## Overview
 
-What this app shows, using SwiftUI:
+SwiftUI app that exercises:
 
-- **SDK Configuration**: Initializes `FrakClient` with `FrakConfig(merchantId: "...", deepLink: .automatic)`
-- **Product Screen**: Renders product information and a "Share & Earn {REWARD}" button triggering `presentSharing(...)`
-- **Order Confirmation**: Hands completed purchases to `trackPurchase(...)`
-- **Deep Link Handling**: `CFBundleURLTypes` registration delivers inbound URLs to `.onOpenURL`, which passes them to `handleReferralLink(_:)`
-- **Privacy Manifest**: Ships an empty `PrivacyInfo.xcprivacy` — the harness accesses no required-reason API and collects nothing, because there is no SDK behind it. Declared empty rather than omitted so the file is correct on the day the real SDK lands
-- **Info.plist Setup**: Declares `LSApplicationQueriesSchemes` containing `frakwallet` and `frakwallet-dev` for app detection
-- **Design tokens**: `UI/FrakTokens.swift` mirrors `packages/design-system/src/tokens.css.ts`, so the harness renders in Frak brand colours
+- SDK init via `Frak.initialize(FrakConfig(...))` in the `App`'s `init()`
+- `client.rewards.best(targetInteraction:products:)` for a single catalog-wide reward, and the `.frakSharingSheet(isPresented:request:onResult:)` view modifier from `FrakSDKUI` on each product row, logging every `SharingResult` case
+- `client.tracking.purchase(customerId:orderId:token:)` on order confirmation
+- inbound deep links via `CFBundleURLTypes` and `.onOpenURL`, routed to `client.appLink.handleReferral(_:)` — mandatory on iOS, since `DeepLinkHandling` here only has `.manual`/`.disabled`, with no `.automatic` counterpart to Android's `ActivityLifecycleCallbacks`
+- startup diagnostics: `appLink.isFrakAppInstalled()` and `config.resolve()`
+- ships its own `PrivacyInfo.xcprivacy`; `Info.plist` declares `LSApplicationQueriesSchemes` with `frakwallet` and `frakwallet-dev`
 
-The URL scheme registration and the `.onOpenURL` delivery path are real and are
-what this app usefully proves today. Everything behind `FrakClient` is not.
-
-The app consumes the SDK through its **public API only**, exactly as a merchant
-would — an example app reaching past the public surface stops being a test of the
-thing being shipped. Product fixtures and the order total are identical to the
-Android harness so a divergence between the two shows up in review.
+Product fixtures and order total match the Android harness so the two stay comparable.
 
 ## Running on a simulator
 
 Requires [XcodeGen](https://github.com/yonaskolb/XcodeGen) once: `brew install xcodegen`.
 
-From the repo root — boots a simulator if none is running, then generates the
-project, builds, installs, launches, and streams the SDK log:
-
 ```bash
-bun run --cwd example/native-ios start
-```
-
-Other commands:
-
-```bash
-bun run --cwd example/native-ios build    # compile-only typecheck (Swift 6 strict concurrency)
+bun run --cwd example/native-ios start    # generate project, boot/use a simulator, build, install, launch, stream logs
+bun run --cwd example/native-ios build    # compile-only typecheck (Swift 6 strict concurrency), no simulator
 bun run --cwd example/native-ios xcode    # regenerate the project and open it in Xcode
 bun run --cwd example/native-ios lint     # swift-format lint (strict), no simulator
 bun run --cwd example/native-ios format   # swift-format rewrite in place
 ```
 
-Or from inside this folder, where the scripts live — `cd example/native-ios`
-then `bun run start`, `bun run lint`, and so on. The commands are owned by this
-app's `package.json` rather than aliased at the repo root, matching how every
-other app in the monorepo declares its own `build` / `lint` / `format`.
+Or `cd example/native-ios` and drop the `--cwd` flag.
 
 Pick a specific simulator with `IOS_SIMULATOR` (default: `iPhone 17`):
 
@@ -69,65 +37,27 @@ Pick a specific simulator with `IOS_SIMULATOR` (default: `iPhone 17`):
 IOS_SIMULATOR="iPhone 17 Pro" bun run --cwd example/native-ios start
 ```
 
-The app target is generated from `project.yml`; the `.xcodeproj` is **not
-committed**, so regenerate it rather than editing it. The SDK's `print()` output
-streams to the terminal (via `--console-pty`) and to the on-screen event log — it
-does not reach the unified `log` system, so `log show` finds nothing.
-
-### Testing the inbound deep link
-
-```bash
-xcrun simctl openurl booted "merchantapp://product?fCtx=test_referral_token_ios_123"
-```
-
-iOS shows an *"Open in …?"* confirmation the first time a scheme is opened from
-outside the app — accept it, and the handler runs. The URL is logged verbatim —
-parsing `fCtx` is the SDK's job, and there is no SDK yet. What this confirms is
-that the scheme is registered and the URL reaches `.onOpenURL`.
+The `.xcodeproj` is generated from `project.yml` and not committed — regenerate rather than edit it.
 
 ## Formatting and linting
 
-`biome` cannot parse Swift, so `example/native-ios` is excluded from it in
-`biome.json`. **swift-format** fills that gap and is the equivalent of
-`bun run format` and `bun run lint` for this folder:
-
-```bash
-bun run --cwd example/native-ios lint     # fails on violations
-bun run --cwd example/native-ios format   # rewrites in place
-```
-
-Nothing to install: `swift format` ships inside the Xcode toolchain, so the
-version is pinned to whatever Xcode the machine already builds with. Rules live
-in `.swift-format`, scoped to this folder so it can never collide with biome.
-
-It is configured to 4-space indent to match the repo's biome settings rather than
-swift-format's own 2-space default, and runs with `--strict` so style findings
-fail rather than warn. `NeverForceUnwrap`, `NeverUseForceTry` and
-`NeverUseImplicitlyUnwrappedOptionals` are enabled on top of the defaults — they
-are the Swift analogue of the repo's ban on `as any` / `!` in TypeScript.
-
-The typecheck is separate and already exists — see below.
+`biome` cannot parse Swift, so this folder is excluded from it in `biome.json`. `swift format`, from the Xcode toolchain, fills that gap. Rules live in `.swift-format`, scoped to this folder: 4-space indent to match biome, and `--strict` so findings fail rather than warn.
 
 ## Compile-only checks
 
-`Package.swift` builds the same sources as a **library**, for a fast typecheck without
-Xcode. It cannot produce an app bundle — SwiftPM has no notion of one — so `Info.plist`
-(URL schemes, `LSApplicationQueriesSchemes`) does not apply to anything built this way.
-Use the Xcode path above to actually run the app.
+`Package.swift` builds the same sources as a library, for a fast typecheck without Xcode. It cannot produce an app bundle, so `Info.plist` settings (URL schemes, `LSApplicationQueriesSchemes`) do not apply to a build done this way.
 
 ```bash
 swift build --sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
   -Xswiftc -target -Xswiftc arm64-apple-ios15.0-simulator
 ```
 
-A bare `swift build` targets the host and would compile this as macOS — passing
-without ever exercising iOS.
+Add `-Xswiftc -swift-version -Xswiftc 6` to also verify Swift 6 strict concurrency.
 
-Verify Swift 6 strict concurrency, which the real SDK must be clean under — hold
-the example app to the same bar:
+## Testing the inbound deep link
 
 ```bash
-swift build --sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
-  -Xswiftc -target -Xswiftc arm64-apple-ios15.0-simulator \
-  -Xswiftc -swift-version -Xswiftc 6
+xcrun simctl openurl booted "merchantapp://product?fCtx=test_referral_token_ios_123"
 ```
+
+Accept the "Open in …?" confirmation on first use; the URL routes to `client.appLink.handleReferral(_:)`, which decodes `fCtx` and reports whether it carried a Frak referral context.

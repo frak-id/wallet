@@ -1,5 +1,6 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { setEnvironment } from "@frak-labs/core-sdk";
 import {
     defaultNS,
     fallbackLng,
@@ -26,6 +27,12 @@ import { initSafeAreaInsets } from "./utils/safeArea";
 
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
+
+// Core-SDK helpers (in-app-browser escape) reach the backend through the SDK's environment singleton; this app isn't an SDK integration, so publish this build's own origins here.
+setEnvironment({
+    wallet: window.location.origin,
+    backend: process.env.BACKEND_URL ?? "https://backend.frak.id",
+});
 
 // Initialise analytics (OpenPanel + crashlytics globals) once at bootstrap.
 // Side-effect was previously triggered by importing the analytics module;

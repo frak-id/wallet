@@ -7,6 +7,7 @@ import {
 } from "@frak-labs/frame-connector";
 import { OpenPanel } from "@openpanel/web";
 import { getClientIdAsync } from "../config/clientId";
+import { setEnvironment } from "../config/environment";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { BACKUP_KEY } from "../constants";
 import { signProof } from "../identity/sign";
@@ -50,7 +51,9 @@ export async function createIFrameFrakClient({
     config: FrakWalletSdkConfig;
     iframe: HTMLIFrameElement;
 }): Promise<FrakClient> {
-    const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
+    // Idempotent with `createIframe`'s own call: the client is also created
+    // directly (React provider, tests) with an iframe it didn't build.
+    const frakWalletUrl = setEnvironment(config?.env).wallet;
 
     // Precedence: explicit `metadata.lang` → page `<html lang>` → browser
     // language. Lets a page authored in a given language drive SDK copy even
@@ -65,7 +68,7 @@ export async function createIFrameFrakClient({
     // Skip fetch entirely if cache is fresh, otherwise fetch (SWR)
     const configPromise = sdkConfigStore.isCacheFresh
         ? undefined
-        : sdkConfigStore.resolve(config.domain, config.walletUrl, detectedLang);
+        : sdkConfigStore.resolve(config.domain, detectedLang);
 
     // Resolved once, here, rather than inside OpenPanel's `filter` callback
     // below (a sync predicate that can't await). Awaited after `configPromise`

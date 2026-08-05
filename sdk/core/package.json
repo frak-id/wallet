@@ -101,6 +101,18 @@
       "production": "./src/identity/fixtures/golden-proofs.json",
       "import": "./src/identity/fixtures/golden-proofs.json",
       "require": "./src/identity/fixtures/golden-proofs.json"
+    },
+    "./context/fixtures": {
+      "development": "./src/context/fixtures/golden-context.json",
+      "production": "./src/context/fixtures/golden-context.json",
+      "import": "./src/context/fixtures/golden-context.json",
+      "require": "./src/context/fixtures/golden-context.json"
+    },
+    "./rewards/fixtures": {
+      "development": "./src/rewards/fixtures/golden-rewards.json",
+      "production": "./src/rewards/fixtures/golden-rewards.json",
+      "import": "./src/rewards/fixtures/golden-rewards.json",
+      "require": "./src/rewards/fixtures/golden-rewards.json"
     }
   },
   "scripts": {
@@ -114,6 +126,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "fixtures:generate": "bun scripts/generate-golden-proofs.ts",
+    "fixtures:generate:context": "bun scripts/generate-golden-context.ts",
+    "fixtures:generate:rewards": "bun scripts/generate-golden-rewards.ts",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "prepublish": "bun run lint && bun run build",

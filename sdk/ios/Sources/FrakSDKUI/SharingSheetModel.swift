@@ -1,0 +1,493 @@
+#if canImport(UIKit)
+    import Foundation
+    import FrakSDK
+    import StoreKit
+    import SwiftUI
+    import UIKit
+
+    // `SharingSession` and `sharingDecision` live in SharingSheetLogic.swift, outside this
+    // file's `#if canImport(UIKit)`, so they stay reachable from a macOS test host.
+
+    /// The sheet's behaviour, kept out of the view. Ordering matters here — attribute the
+    /// share after the OS share sheet, reload with `&confirmed=1` after it, never fall back
+    /// twice — and sequencing inside a re-evaluating `body` is where that kind of flow breaks.
+    @MainActor
+    final class SharingSheetModel: ObservableObject {
+        /// Tap-to-content budget, timed from the sheet appearing rather than from the page
+        /// starting to load: it has to cover `buildSharingLink` and `resolveConfig` too.
+        static let pageLoadDeadline: TimeInterval = 1.5
+        /// How long the reward headline may delay the page URL. Past it the page fetches its
+        /// own, and the first frame simply has no headline.
+        static let seedTimeout: TimeInterval = 0.15
+        /// Host of the store link the install page renders, so it can be answered with an
+        /// in-app overlay instead of a trip to the App Store app.
+        private static let appStoreHost = "apps.apple.com"
+        /// The wallet's App Store id. Matches the listing in `InstallLinks`; `SKOverlay` wants
+        /// the bare numeric id, not a URL.
+        private static let walletAppStoreId = "6740261164"
+
+        @Published private(set) var webView: SharingWebView?
+
+        /// Every outcome as it happens; the caller keeps the most significant.
+        var onOutcome: ((SharingResult) -> Void)?
+        /// Asks the presenter to take the sheet down.
+        var onClose: (() -> Void)?
+
+        private let sessionId = UUID().uuidString.lowercased()
+        // Individually injected, not `() -> FrakClient`: the seam is the handful of members this
+        // sheet actually calls. Defaulted to `Frak.client`'s namespaces, resolved lazily since
+        // Frak.initialize may not have run when this is constructed.
+        private let buildSharingLink: @Sendable (SharingRequest) async -> String?
+        private let anonymousId: @Sendable () async -> String?
+        private let environment: @Sendable () -> FrakEnvironment
+        private let resolveConfig: @Sendable () async throws -> FrakResolvedConfig
+        private let bestReward: @Sendable (String?, [ProductDetails]) async -> BestReward?
+        private let track: @Sendable (Interaction) async -> Result<Void, FrakError>
+        private let installPageURL: @Sendable (String, String) async -> String?
+        private let openFrakApp: @Sendable () async -> OpenAppResult
+
+        private var session: SharingSession?
+        private var deadline: Task<Void, Never>?
+        private var started = false
+        private var closed = false
+        private var pageLoaded = false
+        /// The 1.5s budget and the page's own load failure are independent triggers on the same
+        /// session; without this, one share could queue two `sharing` interactions.
+        private var fellBack = false
+        private var deadlineExpired = false
+        /// A share is between its page-side press and its outcome. See `share()` for why the
+        /// page's own button cannot be trusted to have gone away in the meantime.
+        private var shareInFlight = false
+        /// The `copy()` half of `shareInFlight`: two taps would bill two interactions for one copy.
+        private var copyInFlight = false
+        /// The sheet has left the sharing page for the wallet's install page. Not `@Published`:
+        /// nothing renders off it. Survives only so `onPageUnavailable` can tell a failed install
+        /// page apart from a failed sharing page, which reach it identically and need opposite
+        /// answers.
+        private var showingInstallPage = false
+
+        init(
+            buildSharingLink: @escaping @Sendable (SharingRequest) async -> String? = {
+                await (try? Frak.client)?.sharing.buildLink($0)
+            },
+            anonymousId: @escaping @Sendable () async -> String? = { await (try? Frak.client)?.anonymousId },
+            // Only read from `build(_:)`, reached after `prepare` has confirmed `Frak.isInitialized`.
+            environment: @escaping @Sendable () -> FrakEnvironment = { (try? Frak.client)?.environment ?? .production },
+            resolveConfig: @escaping @Sendable () async throws -> FrakResolvedConfig = {
+                try await Frak.client.config.resolve()
+            },
+            bestReward: @escaping @Sendable (String?, [ProductDetails]) async -> BestReward? = {
+                targetInteraction,
+                products in
+                try? await (try? Frak.client)?.rewards.best(targetInteraction: targetInteraction, products: products)
+            },
+            track: @escaping @Sendable (Interaction) async -> Result<Void, FrakError> = {
+                await (try? Frak.client)?.tracking.track($0) ?? .failure(.notInitialized)
+            },
+            installPageURL: @escaping @Sendable (String, String) async -> String? = { returnScheme, sessionId in
+                await (try? Frak.client)?.appLink.installPageURL(returnScheme: returnScheme, sessionId: sessionId)
+            },
+            openFrakApp: @escaping @Sendable () async -> OpenAppResult = {
+                await (try? Frak.client)?.appLink.openFrakApp() ?? .failed
+            }
+        ) {
+            self.buildSharingLink = buildSharingLink
+            self.anonymousId = anonymousId
+            self.environment = environment
+            self.resolveConfig = resolveConfig
+            self.bestReward = bestReward
+            self.track = track
+            self.installPageURL = installPageURL
+            self.openFrakApp = openFrakApp
+        }
+
+        /// Idempotent: `onAppear` can fire more than once for the same presentation, and a
+        /// second preparation would double every event this one queues.
+        func start(_ request: SharingRequest) async {
+            guard !started else { return }
+            started = true
+            deadline = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(Self.pageLoadDeadline * 1_000_000_000))
+                guard !Task.isCancelled else { return }
+                self?.onDeadline()
+            }
+            await prepare(request)
+        }
+
+        func release() {
+            // Deliberately does NOT set `closed` and does not cancel `prepare`. `.onDisappear`
+            // also fires when `UIActivityViewController` covers the sheet, and both `share` and
+            // the tier-3 fallback suspend across exactly that window — suppressing outcomes here
+            // would report `.dismissed` for a share that succeeded. Distinguishing "covered" from
+            // "dismissed" needs a signal that cannot be settled without a device.
+            deadline?.cancel()
+            deadline = nil
+            webView?.stop()
+            webView = nil
+        }
+
+        /// The user tapped Share, in the page's own footer.
+        func share() async {
+            guard let session else { return }
+            // The page's footer stays enabled for the whole round trip — the web's `isSharing`
+            // guard belongs to `useShareLink`, which a handed-off press never reaches. Without
+            // `shareInFlight`, two taps across `trackSharing()` below would bill two interactions
+            // for one share, the same failure `fellBack` exists to stop for tier 3.
+            guard !shareInFlight else { return }
+            shareInFlight = true
+            // Tracked after the chooser, only on success: this is the reward-bearing interaction,
+            // not an analytics event. Recording it on intent would pay out for a chooser opened
+            // and cancelled. A share completed while the host is jettisoned is lost — the accepted
+            // cost of not counting cancellations.
+            guard await NativeShare.share(link: session.link, title: session.shareTitle) else {
+                // Cleared, unlike the success path: the user dismissed without sharing, so the
+                // page is still on its sharing screen and must be able to try again.
+                shareInFlight = false
+                return
+            }
+            await trackSharing()
+            confirm(.shared(link: session.link))
+            // Not cleared: `confirm` reloads onto the confirmation screen, which has no Share
+            // button. `.shareAgain` reopens the flow and clears it.
+        }
+
+        /// The user tapped Copy link, in the page's own footer. Reports the outcome rather than
+        /// `confirm`ing it: the page already moves to its confirmation screen and raises its own
+        /// toast on press, and a `confirmed=1` reload on top would tear down the document
+        /// mid-toast. `share()` still reloads because only this model learns whether a chooser
+        /// came up.
+        func copy() async {
+            guard let session else { return }
+            guard !copyInFlight else { return }
+            copyInFlight = true
+            // Before, unlike `share()`: a copy has no chooser and no completion to wait on, so
+            // there is no cancellation to avoid counting. Matches the web's `handleCopy`.
+            await trackSharing()
+            NativeShare.copy(session.link)
+            report(.copied(link: session.link))
+        }
+
+        func onPageReady() {
+            pageLoaded = true
+            settleContent()
+        }
+
+        /// The web view gave up, tier-2 retry included.
+        func onPageUnavailable() {
+            // A failed install page lands here first. Tier 3 is not the answer — the user has
+            // already shared — so this reloads the confirmation screen instead, which has its own
+            // share-again and install controls.
+            if showingInstallPage {
+                showingInstallPage = false
+                if let url = session?.url(confirmed: true) { webView?.load(url) }
+                return
+            }
+            // Same predicate as the deadline: `pageLoaded` matters because a content-process
+            // crash after the page painted arrives here too, and a chooser now would be a share
+            // the user never asked for. `deadlineExpired: true` because there's no page left to
+            // spend the budget on.
+            guard
+                case .nativeShare(let session) = sharingDecision(
+                    session: session,
+                    deadlineExpired: true,
+                    pageLoaded: pageLoaded,
+                    fellBack: fellBack,
+                    closed: closed
+                )
+            else { return }
+            Task { await fallBack(to: session) }
+        }
+
+        func onPageAction(_ action: SharingPageAction) {
+            switch action {
+            case .install:
+                Task {
+                    guard let session else { return }
+                    // The sheet stays open and navigates to the wallet's install page rather than
+                    // handing the user to the store: that page owns install code / store link /
+                    // installed-wallet routing, and it's the only route by which an iOS install
+                    // keeps attribution — there's no App Store equivalent of the Play referrer.
+                    guard
+                        let page = await installPageURL(session.returnScheme, sessionId),
+                        let url = URL(string: page)
+                    else {
+                        // No identity or no merchant to hand the install page; the store handoff
+                        // is the fallback, and it closes the sheet.
+                        _ = await openFrakApp()
+                        report(.installStarted)
+                        close()
+                        return
+                    }
+                    webView?.load(url)
+                    showingInstallPage = true
+                    report(.installStarted)
+                }
+            case .shareAgain:
+                if let url = session?.url(confirmed: false) {
+                    // Sharing again: reopen the guards `share()`/`copy()` left closed.
+                    shareInFlight = false
+                    copyInFlight = false
+                    showingInstallPage = false
+                    webView?.load(url)
+                }
+            // The page draws both buttons; this model performs them, since the interaction has
+            // to be signed by the SDK keypair the page cannot reach.
+            case .share:
+                Task { await share() }
+            case .copy:
+                Task { await copy() }
+            case .code(let value, let expiresAt):
+                // The SDK owns the pasteboard: `localOnly` and an expiry are options the page can't set.
+                NativeShare.copyInstallCode(value, expiresAt: expiresAt)
+            case .dismiss:
+                close()
+            case .error:
+                fail(.decoding(message: "the sharing page refused to render"))
+            }
+        }
+
+        func openExternally(_ url: URL) {
+            // Anything but http(s) is an app-to-app launch the merchant never sanctioned.
+            guard url.scheme == "https" || url.scheme == "http" else { return }
+            // The install page's download button is the one link worth keeping in-app:
+            // `SKOverlay` installs in place and needs no `LSApplicationQueriesSchemes` entry.
+            if isWalletAppStoreListing(url) {
+                if presentAppStoreOverlay() { return }
+                // No foreground-active scene to host the overlay. Falling through to
+                // `UIApplication.shared.open(url)` would send an already-installed wallet's
+                // owner to its own store page. `openFrakApp()` tries the wallet's scheme first
+                // and only reaches the store if that fails.
+                Task { _ = await openFrakApp() }
+                return
+            }
+            Task { _ = await UIApplication.shared.open(url) }
+        }
+
+        /// The wallet's own App Store listing, and nothing else on `apps.apple.com`. Matched on
+        /// the id path component, not the host, so a link to some other app can't match; scanning
+        /// components, not comparing paths, handles storefront-prefixed forms like `/us/app/name/id123`.
+        private func isWalletAppStoreListing(_ url: URL) -> Bool {
+            guard url.host?.caseInsensitiveCompare(Self.appStoreHost) == .orderedSame else {
+                return false
+            }
+            return url.pathComponents.contains("id" + Self.walletAppStoreId)
+        }
+
+        /// - Returns: whether the overlay was presented; false leaves the caller to open the
+        ///   URL normally, so a missing scene can never swallow the download.
+        private func presentAppStoreOverlay() -> Bool {
+            // `SKOverlay` is unavailable on Mac Catalyst, which `canImport(UIKit)` doesn't
+            // exclude; falling through opens the listing in the browser instead.
+            #if targetEnvironment(macCatalyst)
+                return false
+            #else
+                guard
+                    let scene = UIApplication.shared.connectedScenes
+                        .compactMap({ $0 as? UIWindowScene })
+                        .first(where: { $0.activationState == .foregroundActive })
+                else { return false }
+                let configuration = SKOverlay.AppConfiguration(
+                    appIdentifier: Self.walletAppStoreId,
+                    position: .bottom
+                )
+                SKOverlay(configuration: configuration).present(in: scene)
+                return true
+            #endif
+        }
+
+        private func prepare(_ request: SharingRequest) async {
+            guard Frak.isInitialized else {
+                fail(.notInitialized)
+                return
+            }
+
+            let built: SharingSession
+            do {
+                built = try await build(request)
+            } catch let error as FrakError {
+                fail(error)
+                return
+            } catch {
+                fail(.decoding(message: "unexpected failure: \(error.localizedDescription)"))
+                return
+            }
+
+            session = built
+            // `closed` matters here too: the sheet can reach a terminal outcome while `build`
+            // is still suspended, and a web view built after that would never be seen.
+            let url: URL
+            switch sharingDecision(
+                session: built,
+                deadlineExpired: deadlineExpired,
+                pageLoaded: pageLoaded,
+                fellBack: fellBack,
+                closed: closed
+            ) {
+            case .showPage(let pageURL):
+                url = pageURL
+            case .nativeShare(let session):
+                await fallBack(to: session)
+                return
+            case .doNothing:
+                return
+            }
+
+            let webView = SharingWebView(
+                walletOrigin: built.walletOrigin,
+                returnScheme: built.returnScheme,
+                sessionId: sessionId,
+                onAction: { [weak self] in self?.onPageAction($0) },
+                onPageReady: { [weak self] in self?.onPageReady() },
+                onLoadFailed: { [weak self] in self?.onPageUnavailable() },
+                onOpenExternal: { [weak self] in self?.openExternally($0) }
+            )
+            webView.load(url)
+            self.webView = webView
+        }
+
+        private func build(_ request: SharingRequest) async throws -> SharingSession {
+            guard let link = await buildSharingLink(request), let clientId = await anonymousId() else {
+                // The one failure the fallback cannot help with: there is no link to share.
+                throw FrakError.merchantResolutionFailed(
+                    reason: "no anonymous id or merchant to build a sharing link from"
+                )
+            }
+
+            let walletOrigin = environment().wallet
+            let bundleId = Bundle.main.bundleIdentifier ?? ""
+            let returnScheme = SharingPageURL.returnScheme(bundleId: bundleId)
+
+            let config: FrakResolvedConfig
+            do {
+                config = try await resolveConfig()
+            } catch is FrakError {
+                // No page, but the link is already built. Not a failure — this is the input
+                // the native-share fallback fires from, immediately.
+                return SharingSession(
+                    walletOrigin: walletOrigin,
+                    returnScheme: returnScheme,
+                    link: link,
+                    shareTitle: nil,
+                    pageURL: nil
+                )
+            }
+
+            let name = config.sdkConfig?.name ?? config.name
+            return SharingSession(
+                walletOrigin: walletOrigin,
+                returnScheme: returnScheme,
+                link: link,
+                shareTitle: name,
+                pageURL: SharingPageURL.build(
+                    walletOrigin: walletOrigin,
+                    merchantId: config.merchantId,
+                    clientId: clientId,
+                    bundleId: bundleId,
+                    sessionId: sessionId,
+                    appName: name,
+                    logoURL: request.logoURL ?? config.sdkConfig?.logoURL,
+                    link: request.link ?? request.products.first?.link,
+                    products: sharingPageProductsJSON(request.products),
+                    seededReward: await seededReward(request)
+                )
+            )
+        }
+
+        /// A cached headline for the first frame, or nothing. Bounded, because the page is
+        /// worth more than the headline on it.
+        private func seededReward(_ request: SharingRequest) async -> String? {
+            let timeout = Self.seedTimeout
+            let targetInteraction = request.targetInteraction
+            // Scoped the same way the page's own selection will be, so the seed the user sees
+            // for the first frame cannot show a different reward than the one the page settles on.
+            let products = request.products.compactMap(\.details)
+            return await withTaskGroup(of: String?.self) { group in
+                group.addTask {
+                    await self.bestReward(targetInteraction, products)?.formatted
+                }
+                group.addTask {
+                    try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+                    return nil
+                }
+                let first = await group.next() ?? nil
+                group.cancelAll()
+                return first
+            }
+        }
+
+        private func onDeadline() {
+            switch sharingDecision(
+                session: session,
+                deadlineExpired: true,
+                pageLoaded: pageLoaded,
+                fellBack: fellBack,
+                closed: closed
+            ) {
+            case .nativeShare(let session):
+                Task { await fallBack(to: session) }
+            case .doNothing:
+                // Includes "`prepare` has not built a session yet": it falls back itself when it
+                // returns and reads `deadlineExpired`, rather than racing this.
+                deadlineExpired = true
+            case .showPage:
+                // Unreachable: `deadlineExpired: true` above never yields a page.
+                return
+            }
+        }
+
+        /// Tier 3: skip the page entirely and open the OS share sheet on the local link.
+        private func fallBack(to session: SharingSession) async {
+            guard !fellBack else { return }
+            fellBack = true
+            settleContent()
+
+            // Same rule as `share()`: the interaction pays out, so it follows the chooser
+            // rather than announcing it.
+            let shared = await NativeShare.share(link: session.link, title: session.shareTitle)
+            if shared { await trackSharing() }
+            report(shared ? .shared(link: session.link) : .dismissed)
+            close()
+        }
+
+        private func trackSharing() async {
+            _ = await track(.sharing())
+        }
+
+        /// Records an outcome the sheet stays open after, and reloads the page onto its
+        /// post-share state.
+        ///
+        /// A reload with `confirmed=1` rather than letting the page confirm itself: only this
+        /// model learns whether a chooser actually came up, and the confirmation has to survive
+        /// the user leaving and coming back. Costs a page load at the moment the chooser
+        /// dismisses — the obvious next optimization, which the page would have to own.
+        private func confirm(_ result: SharingResult) {
+            report(result)
+            guard let url = session?.url(confirmed: true) else { return }
+            webView?.load(url)
+        }
+
+        private func report(_ result: SharingResult) {
+            onOutcome?(result)
+        }
+
+        private func fail(_ error: FrakError) {
+            report(.failed(error))
+            close()
+        }
+
+        private func close() {
+            guard !closed else { return }
+            closed = true
+            settleContent()
+            onClose?()
+        }
+
+        private func settleContent() {
+            deadline?.cancel()
+            deadline = nil
+        }
+
+        // `productsJSON` lives in SharingSheetLogic.swift, outside this file's
+        // `#if canImport(UIKit)`, so the macOS test host can pin what reaches the page.
+    }
+#endif

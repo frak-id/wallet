@@ -18,14 +18,12 @@ export const tabletContainerMedia: StyleRule["@media"] = {
 };
 
 /**
- * Container variant for a host that paints its own surface.
+ * Container variant for a host that presents this page inside its own sheet.
  *
- * Drops the opaque background so the host's surface shows through, and cancels
- * the `tabletContainerMedia` card treatment above — inside a host sheet that
- * would render a card within a card.
+ * Cancels the `tabletContainerMedia` card treatment; the opaque background
+ * from `container` stays so the page's surface fills the host sheet.
  */
 export const containerChromeless = style({
-    backgroundColor: "transparent",
     "@media": {
         [`screen and (min-width: ${tablet}px)`]: {
             maxWidth: "none",

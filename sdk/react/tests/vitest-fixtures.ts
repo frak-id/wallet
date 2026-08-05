@@ -94,7 +94,10 @@ export const test = baseTest.extend<ReactSdkTestFixtures>({
         const mockClient: FrakClient = {
             config: {
                 domain: "example.com",
-                walletUrl: "https://wallet-test.frak.id",
+                env: {
+                    wallet: "https://wallet-test.frak.id",
+                    backend: "https://backend-test.frak.id",
+                },
                 metadata: {
                     name: "Test App",
                 },
@@ -112,7 +115,10 @@ export const test = baseTest.extend<ReactSdkTestFixtures>({
     mockFrakConfig: async ({}, use) => {
         const config: FrakWalletSdkConfig = {
             domain: "example.com",
-            walletUrl: "https://wallet-test.frak.id",
+            env: {
+                wallet: "https://wallet-test.frak.id",
+                backend: "https://backend-test.frak.id",
+            },
             metadata: {
                 name: "Test App",
                 logoUrl: "https://example.com/logo.png",

@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { isRunningLocally } from "@frak-labs/app-essentials/utils/env";
 import { defineConfig } from "vite";
 import { createHtmlPlugin } from "vite-plugin-html";
-import { detectWalletUrl } from "../shared/detectWalletUrl";
+import { detectFrakEnv } from "../shared/detectFrakEnv";
 
 const DEBUG = false;
 const projectRootDir = resolve(__dirname);
@@ -32,10 +32,17 @@ export default defineConfig(({ mode }) => {
                 inject: {
                     data: {
                         useLocal,
-                        walletUrl:
-                            process.env.FRAK_WALLET_URL ??
-                            "https://wallet-dev.frak.id",
-                        detectWalletUrl: detectWalletUrl.toString(),
+                        remoteEnv: JSON.stringify(
+                            process.env.FRAK_WALLET_URL
+                                ? {
+                                      wallet: process.env.FRAK_WALLET_URL,
+                                      backend:
+                                          process.env.BACKEND_URL ??
+                                          "https://backend.gcp-dev.frak.id",
+                                  }
+                                : "dev"
+                        ),
+                        detectFrakEnv: detectFrakEnv.toString(),
                         sdkScriptSrc: scriptSrc,
                         injectReactScan: DEBUG
                             ? `<script src="//unpkg.com/react-scan/dist/auto.global.js"></script>`

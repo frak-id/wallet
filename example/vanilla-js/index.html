@@ -6,14 +6,14 @@
     <title>Example Vanilla JS</title>
     <link rel="icon" href="/favicon.ico" sizes="32x32"/>
     <script>
-        const detectWalletUrl = <%- detectWalletUrl %>;
+        const detectFrakEnv = <%- detectFrakEnv %>;
 
         (async () => {
-            const walletUrl = await detectWalletUrl(<%= useLocal %>, "<%= walletUrl %>");
+            const env = await detectFrakEnv(<%= useLocal %>, <%- remoteEnv %>);
 
             window.FrakSetup = {
                 config: {
-                    walletUrl,
+                    env,
                     metadata: {
                         name: "Vanilla JS",
                         lang: "fr",

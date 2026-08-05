@@ -237,7 +237,7 @@ function ThemeSection({
     const refresh = useRefreshData();
     const isThemeSupportedPromise = rootData?.isThemeSupportedPromise;
     const merchantId = rootData?.merchantId ?? null;
-    const walletUrl = rootData?.walletUrl ?? "";
+    const env = rootData?.env ?? "prod";
     const componentsUrl = rootData?.componentsUrl ?? "";
     const businessUrl = rootData?.businessUrl ?? "";
 
@@ -285,7 +285,7 @@ function ThemeSection({
                     ) : (
                         <LegacyInstall
                             merchantId={merchantId}
-                            walletUrl={walletUrl}
+                            env={env}
                             componentsUrl={componentsUrl}
                             businessUrl={businessUrl}
                             dismissed={theme.legacyInstallDismissed}

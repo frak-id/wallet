@@ -1,7 +1,20 @@
 {
-  "components": {
-    "schemas": {}
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Frak User API",
+    "version": "0.0.28",
+    "description": "User-facing Frak API consumed by the native SDKs (iOS and Android). Covers wallet sessions, interactions tracking, merchant information and reward estimation."
   },
+  "servers": [
+    {
+      "url": "https://backend.frak.id",
+      "description": "Production"
+    },
+    {
+      "url": "https://backend.gcp-dev.frak.id",
+      "description": "Development"
+    }
+  ],
   "paths": {
     "/user/identity/merge/initiate": {
       "post": {
@@ -1409,6 +1422,14 @@
                 "referee"
               ]
             }
+          },
+          {
+            "name": "products",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1961,7 +1982,7 @@
                                 }
                               },
                               {
-                                "$id": "ConditionGroup",
+                                "$id": "#/components/schemas/ConditionGroup",
                                 "type": "object",
                                 "required": [
                                   "logic",
@@ -2126,7 +2147,7 @@
                                           }
                                         },
                                         {
-                                          "$ref": "ConditionGroup"
+                                          "$ref": "#/components/schemas/ConditionGroup"
                                         }
                                       ]
                                     }
@@ -2278,7 +2299,7 @@
                                 }
                               },
                               {
-                                "$id": "ConditionGroup",
+                                "$id": "#/components/schemas/ConditionGroup",
                                 "type": "object",
                                 "required": [
                                   "logic",
@@ -2443,7 +2464,7 @@
                                           }
                                         },
                                         {
-                                          "$ref": "ConditionGroup"
+                                          "$ref": "#/components/schemas/ConditionGroup"
                                         }
                                       ]
                                     }
@@ -2481,7 +2502,8 @@
                       "type": "object",
                       "required": [
                         "formatted",
-                        "payoutType"
+                        "payoutType",
+                        "isProductScoped"
                       ],
                       "properties": {
                         "formatted": {
@@ -2875,6 +2897,35 @@
                         },
                         "minPurchaseValue": {
                           "type": "number"
+                        },
+                        "isProductScoped": {
+                          "type": "boolean"
+                        },
+                        "matchedProducts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "productId": {
+                                "type": "string"
+                              },
+                              "sku": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "quantity": {
+                                "type": "number"
+                              },
+                              "unitPrice": {
+                                "type": "number"
+                              },
+                              "totalPrice": {
+                                "type": "number"
+                              }
+                            }
+                          }
                         }
                       }
                     }
@@ -3076,6 +3127,72 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "isReferred"
+                  ],
+                  "properties": {
+                    "isReferred": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "operationId": "getUserMerchantReferral-status"
       }
     },
@@ -3577,6 +3694,97 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "identityGroupId",
+                    "interactionLogId",
+                    "isDuplicate"
+                  ],
+                  "properties": {
+                    "identityGroupId": {
+                      "type": "string"
+                    },
+                    "interactionLogId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "isDuplicate": {
+                      "type": "boolean"
+                    },
+                    "referralLinkId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "operationId": "postUserTrackInteraction"
       }
     },
@@ -3716,6 +3924,85 @@
                   "merchantId": {
                     "format": "uuid",
                     "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response for status 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "identityGroupId"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "identityGroupId": {
+                      "type": "string"
+                    },
+                    "purchaseId": {
+                      "type": "string"
+                    },
+                    "pendingWebhook": {
+                      "type": "boolean"
+                    },
+                    "merged": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -8528,6 +8815,195 @@
           }
         },
         "operationId": "postUserWalletMergeSettle"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ConditionGroup": {
+        "$id": "#/components/schemas/ConditionGroup",
+        "type": "object",
+        "required": [
+          "logic",
+          "conditions"
+        ],
+        "properties": {
+          "logic": {
+            "type": "string",
+            "enum": [
+              "all",
+              "any",
+              "none"
+            ]
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "field",
+                    "operator",
+                    "value"
+                  ],
+                  "properties": {
+                    "field": {
+                      "type": "string"
+                    },
+                    "operator": {
+                      "anyOf": [
+                        {
+                          "const": "eq",
+                          "type": "string"
+                        },
+                        {
+                          "const": "neq",
+                          "type": "string"
+                        },
+                        {
+                          "const": "gt",
+                          "type": "string"
+                        },
+                        {
+                          "const": "gte",
+                          "type": "string"
+                        },
+                        {
+                          "const": "lt",
+                          "type": "string"
+                        },
+                        {
+                          "const": "lte",
+                          "type": "string"
+                        },
+                        {
+                          "const": "in",
+                          "type": "string"
+                        },
+                        {
+                          "const": "not_in",
+                          "type": "string"
+                        },
+                        {
+                          "const": "contains",
+                          "type": "string"
+                        },
+                        {
+                          "const": "starts_with",
+                          "type": "string"
+                        },
+                        {
+                          "const": "ends_with",
+                          "type": "string"
+                        },
+                        {
+                          "const": "exists",
+                          "type": "string"
+                        },
+                        {
+                          "const": "not_exists",
+                          "type": "string"
+                        },
+                        {
+                          "const": "between",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "valueTo": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/components/schemas/ConditionGroup"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "frakClientId": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-frak-client-id",
+        "description": "Merchant/client identifier sent by the SDK on tracking calls."
+      },
+      "walletSdkAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-wallet-sdk-auth",
+        "description": "Signed SDK wallet session token, used to attribute a caller to a wallet."
+      },
+      "walletAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-wallet-auth",
+        "description": "Full wallet session token. Takes precedence over x-wallet-sdk-auth when it verifies."
       }
     }
   }

@@ -1,3 +1,4 @@
+import type { FrakEnvironment } from "@frak-labs/core-sdk";
 import { LegacyInstall } from "app/components/LegacyInstall";
 import { OptionalSetup } from "app/components/OptionalSetup";
 import { NewsletterShareLink } from "app/components/Sharing";
@@ -41,7 +42,7 @@ export default function Index() {
     const supportsAppEmbedPromise = rootData?.supportsAppEmbedPromise;
     const onboardingDataPromise = rootData?.onboardingDataPromise;
     const businessUrl = rootData?.businessUrl ?? "";
-    const walletUrl = rootData?.walletUrl ?? "";
+    const env = rootData?.env ?? "prod";
     const componentsUrl = rootData?.componentsUrl ?? "";
     const merchantId = rootData?.merchantId ?? null;
     const shopDomain = rootData?.shop?.myshopifyDomain;
@@ -90,7 +91,7 @@ export default function Index() {
                                                     supportsAppEmbed ?? true
                                                 }
                                                 merchantId={merchantId}
-                                                walletUrl={walletUrl}
+                                                env={env}
                                                 componentsUrl={componentsUrl}
                                                 businessUrl={businessUrl}
                                             />
@@ -117,7 +118,7 @@ function Dashboard({
     isThemeSupported,
     supportsAppEmbed,
     merchantId,
-    walletUrl,
+    env,
     componentsUrl,
     businessUrl,
 }: {
@@ -125,7 +126,7 @@ function Dashboard({
     isThemeSupported: boolean;
     supportsAppEmbed: boolean;
     merchantId: string | null;
-    walletUrl: string;
+    env: FrakEnvironment;
     componentsUrl: string;
     businessUrl: string;
 }) {
@@ -148,7 +149,7 @@ function Dashboard({
         !supportsAppEmbed && !legacyInstallDismissed ? (
             <LegacyInstall
                 merchantId={merchantId}
-                walletUrl={walletUrl}
+                env={env}
                 componentsUrl={componentsUrl}
                 businessUrl={businessUrl}
             />

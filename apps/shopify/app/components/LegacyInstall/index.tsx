@@ -1,3 +1,4 @@
+import type { FrakEnvironment } from "@frak-labs/core-sdk";
 import {
     CopyableSnippet,
     inlineCodeClass,
@@ -20,13 +21,13 @@ const BUTTON_TAG = '<frak-button-share classname="btn"></frak-button-share>';
 
 export function LegacyInstall({
     merchantId,
-    walletUrl,
+    env,
     componentsUrl,
     businessUrl,
     dismissed = false,
 }: {
     merchantId: string | null;
-    walletUrl: string;
+    env: FrakEnvironment;
     componentsUrl: string;
     businessUrl: string;
     // True once the merchant confirmed the manual install (shown as a done
@@ -55,7 +56,7 @@ export function LegacyInstall({
     const [copyError, setCopyError] = useState(false);
 
     const snippet = merchantId
-        ? buildFrakSnippet({ merchantId, walletUrl, componentsUrl })
+        ? buildFrakSnippet({ merchantId, env, componentsUrl })
         : null;
 
     function copy(text: string, key: string) {

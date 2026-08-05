@@ -3,7 +3,10 @@ import { buildFrakSnippet } from "./buildFrakSnippet";
 
 const BASE = {
     merchantId: "abc-123",
-    walletUrl: "https://wallet.frak.id",
+    env: {
+        wallet: "https://wallet.frak.id",
+        backend: "https://backend.frak.id",
+    },
     componentsUrl: "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest",
 };
 
@@ -20,9 +23,11 @@ describe("buildFrakSnippet", () => {
         expect(snippet).toContain(`merchantId: "${BASE.merchantId}"`);
     });
 
-    it("bakes the walletUrl into the config", () => {
+    it("bakes both env origins into the config", () => {
         const snippet = buildFrakSnippet(BASE);
-        expect(snippet).toContain(`walletUrl: "${BASE.walletUrl}"`);
+        expect(snippet).toContain(
+            `env: {"wallet":"${BASE.env.wallet}","backend":"${BASE.env.backend}"}`
+        );
     });
 
     it("escapes quotes and `<` so a value can't break out of the <script>", () => {

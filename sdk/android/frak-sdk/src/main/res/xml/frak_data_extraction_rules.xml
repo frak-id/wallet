@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Keeps the SDK's anonymous identity from surviving a device migration. The anonymous id is
+  derived from a device-held P-256 keypair scoped to one app installation; carrying it to a new
+  device resurrects a "fresh" user's identity.
+
+  Both blocks are required for both files: `<cloud-backup>` alone still lets a device-to-device
+  transfer clone them verbatim.
+
+  Two files: `id.frak.sdk.xml` holds the anonymous identity, `id.frak.sdk.config.xml` is the
+  resolved-config cache. Keeping them separate means a corrupt write to one cannot take the
+  other with it. The config cache is excluded too since a stale copy on a new device risks
+  serving config resolved under a different identity.
+
+  API 31+ only (`android:dataExtractionRules`). `frak_full_backup_content.xml` is the same
+  exclusion list for API 24-30 (`android:fullBackupContent`).
+
+  This file being present is not sufficient: `android:dataExtractionRules` is a singular
+  attribute on `<application>`, and Gradle's manifest merger does not union rules files, so a
+  library cannot wire this from its own manifest. See "Backup and device-transfer exclusion" in
+  the SDK's README for the required `<application>` snippet.
+
+  TODO: a debug-build runtime assertion that these exclusions are actually wired is not yet
+  implemented.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude
+            domain="sharedpref"
+            path="id.frak.sdk.xml" />
+        <exclude
+            domain="sharedpref"
+            path="id.frak.sdk.config.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude
+            domain="sharedpref"
+            path="id.frak.sdk.xml" />
+        <exclude
+            domain="sharedpref"
+            path="id.frak.sdk.config.xml" />
+    </device-transfer>
+</data-extraction-rules>

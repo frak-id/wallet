@@ -1,0 +1,76 @@
+# Version catalog for the Frak Android SDK — every coordinate the build resolves is declared
+# here, so a version bump is a one-line diff in one file.
+#
+# Zero third-party runtime dependencies. `kotlinx-coroutines` and AndroidX/Compose are
+# first-party to Kotlin and Google respectively and are the only things allowed near
+# `api`/`implementation`. Anything else belongs in `testImplementation` or nowhere.
+
+[versions]
+agp = "9.1.1"
+kotlin = "2.4.10"
+# Resolved by Gradle rather than requiring `brew install ktlint`, so
+# `bun run --cwd sdk/android lint` works on a clean checkout.
+ktlint-plugin = "14.2.0"
+# The ktlint engine itself, pinned separately from the plugin that runs it.
+# Named `ktlint-engine` rather than plain `ktlint`: a bare `ktlint` key would be
+# a prefix of `ktlint-plugin`, and Gradle then generates `libs.versions.ktlint`
+# as a group accessor with no `.get()`.
+ktlint-engine = "1.8.0"
+
+
+coroutines = "1.11.0"
+
+# The BOM pins every `androidx.compose.*` artifact, so those are declared without
+# versions below and can never drift apart.
+compose-bom = "2026.06.01"
+
+junit = "4.13.2"
+# Test-only. Parses the golden fixture corpus in `sdk/core` from the Kotlin test suite.
+#
+# Does not violate the zero-third-party-runtime-dependency rule: declared `testImplementation`,
+# so it never reaches `components["release"]` or the published POM.
+#
+# Must not be removed on the reasoning that "org.json ships with Android" — for local unit
+# tests the classpath is the stubbed `android.jar`, whose methods all throw `Method ... not
+# mocked`. The real artifact in test scope shadows the stub.
+#
+# Public domain, no transitive dependencies.
+json = "20260719"
+
+# Test-only. Runs the `:frak-sdk-ui` unit tests against a real Android runtime on the JVM,
+# instead of the stubbed `android.jar` whose every method throws `Method ... not mocked`.
+#
+# This is what makes `SharingSheetState` and the sharing `WebViewClient` testable at all: both
+# are built on framework types (`Context`, `Intent`, `WebView`, `WebResourceRequest`) that
+# cannot be exercised on the stub.
+#
+# Same zero-runtime-dependency argument as `json` above: `testImplementation` only. Not added
+# to `:frak-sdk`, which stays on plain JUnit and must remain provable without an Android
+# runtime.
+robolectric = "4.16.1"
+androidx-test-core = "1.7.0"
+
+[libraries]
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+
+
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-foundation = { module = "androidx.compose.foundation:foundation" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+
+junit = { module = "junit:junit", version.ref = "junit" }
+json = { module = "org.json:json", version.ref = "json" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test-core" }
+
+[plugins]
+android-library = { id = "com.android.library", version.ref = "agp" }
+# `org.jetbrains.kotlin.android` is deliberately absent: AGP 9.0 ships built-in Kotlin and
+# registers its own `kotlin` extension, so applying the JetBrains plugin alongside it fails
+# with "Cannot add extension with name 'kotlin'". The `kotlin` version above only feeds the
+# Compose compiler plugin below, which is bundled with Kotlin from 2.0 on and tracks its
+# version automatically.
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-plugin" }

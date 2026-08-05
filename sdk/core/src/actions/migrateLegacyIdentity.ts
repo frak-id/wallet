@@ -1,4 +1,4 @@
-import { getBackendUrl } from "../config/backendUrl";
+import { getBackendUrl } from "../config/environment";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { clearPendingLegacyId, signProof } from "../identity/sign";
 
@@ -22,11 +22,9 @@ import { clearPendingLegacyId, signProof } from "../identity/sign";
 export async function migrateLegacyIdentity({
     legacyId,
     derivedId,
-    walletUrl,
 }: {
     legacyId: string;
     derivedId: string;
-    walletUrl?: string;
 }): Promise<void> {
     if (typeof window === "undefined") return;
     // A derivation that produced the id it is replacing would merge a group
@@ -40,11 +38,9 @@ export async function migrateLegacyIdentity({
         const merchantId = await sdkConfigStore.resolveMerchantId();
         if (!merchantId) return;
 
-        // Proves possession of `derivedId` (the merge SOURCE) only —
-        // nothing about `legacyId`, since no key ever existed for it. That's
-        // accepted: an attacker can run the identical migration against any
-        // harvested legacy id. Still required by `/merge/initiate`, so a
-        // signing failure aborts rather than sending a request that 403s.
+        // Proves possession of `derivedId` only (no key ever existed for
+        // `legacyId`). Still required by `/merge/initiate`, so a signing
+        // failure aborts rather than sending a request that 403s.
         const proof = await signProof({
             op: "frak-merge-v1",
             merchantId,
@@ -52,7 +48,7 @@ export async function migrateLegacyIdentity({
         });
         if (!proof) return;
 
-        const backendUrl = getBackendUrl(walletUrl);
+        const backendUrl = getBackendUrl();
 
         const initiateResponse = await fetch(
             `${backendUrl}/user/identity/merge/initiate`,

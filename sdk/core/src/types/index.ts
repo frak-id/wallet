@@ -9,6 +9,7 @@ export type {
 } from "./compression";
 export type {
     Currency,
+    FrakEnvironment,
     FrakWalletSdkConfig,
     I18nConfig,
     Language,

@@ -1,0 +1,709 @@
+package id.frak.sdk.ui
+
+import android.app.Application
+import android.content.ClipboardManager
+import android.content.Context
+import android.webkit.WebView
+import androidx.test.core.app.ApplicationProvider
+import id.frak.sdk.Frak
+import id.frak.sdk.core.FrakConfig
+import id.frak.sdk.core.FrakError
+import id.frak.sdk.core.ProductDetails
+import id.frak.sdk.rewards.BestReward
+import id.frak.sdk.sharing.SharingProduct
+import id.frak.sdk.sharing.SharingRequest
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
+import java.io.IOException
+
+/**
+ * The sheet's sequencing rules. Robolectric because [SharingSheetState] reaches
+ * `Intent.createChooser`/`startActivity`, which throw on the plain `android.jar` stub.
+ * `TestScope` so the 1.5s budget is exercised via virtual time, not sleeping.
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
+@OptIn(ExperimentalCoroutinesApi::class)
+class SharingSheetStateTest {
+    private val context: Context get() = ApplicationProvider.getApplicationContext()
+
+    @Before
+    fun initializeFrak() {
+        // `prepare` guards on Frak.isInitialized; only that boolean is used, the real client isn't.
+        Frak.initialize(context, FrakConfig(merchantId = "b7c2e1a4-1111-4111-8111-111111111111"))
+    }
+
+    private fun TestScope.newState(
+        client: FakeSharingClient,
+        onFinished: (SharingResult) -> Unit = {},
+    ) = SharingSheetState(
+        scope = this,
+        context = context,
+        sessionId = "test-session",
+        onFinished = onFinished,
+        buildSharingLink = client::buildSharingLink,
+        anonymousId = { client.anonymousId },
+        environment = { client.environment },
+        resolveConfig = client::resolveConfig,
+        bestReward = client::bestReward,
+        track = client::track,
+        installPageUrl = client::installPageUrl,
+        openFrakApp = client::openFrakApp,
+    )
+
+    @Test
+    fun `a resolved config produces a session with a page to show`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            val session = state.session
+            assertNotNull("expected a session", session)
+            assertTrue("a resolved config must yield a page", session!!.hasPage)
+            assertNull(state.failure)
+        }
+
+    @Test
+    fun `product scope fields reach the page url alongside the display fields`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(
+                SharingRequest(
+                    products =
+                        listOf(
+                            SharingProduct(
+                                title = "Kettle",
+                                link = "https://acme.example/kettle",
+                                details =
+                                    ProductDetails(
+                                        sku = "SHOE-42",
+                                        quantity = 2.0,
+                                        unitPrice = 79.9,
+                                    ),
+                            ),
+                        ),
+                ),
+            )
+            advanceUntilIdle()
+
+            val url = requireNotNull(state.session?.url(confirmed = false))
+            // The wallet route forwards this same `products=` value straight into reward
+            // selection (rewardProductsForSelection -> selectBestReward): a product-scoped
+            // campaign is only ranked correctly if these fields actually reach the wire.
+            assertTrue("was: $url", url.contains("sku%22%3A%22SHOE-42%22"))
+            assertTrue("was: $url", url.contains("quantity%22%3A2"))
+            assertTrue("was: $url", url.contains("unitPrice%22%3A79.9"))
+            // Display fields must still be present alongside the scope fields.
+            assertTrue("was: $url", url.contains("title%22%3A%22Kettle%22"))
+        }
+
+    @Test
+    fun `a product with no scope details omits the six scope keys but keeps the display fields`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(
+                SharingRequest(
+                    products = listOf(SharingProduct(title = "Kettle", link = "https://acme.example/kettle")),
+                ),
+            )
+            advanceUntilIdle()
+
+            val url = requireNotNull(state.session?.url(confirmed = false))
+            assertTrue("was: $url", url.contains("title%22%3A%22Kettle%22"))
+            assertTrue("no scope details supplied, was: $url", !url.contains("sku"))
+            assertTrue("no scope details supplied, was: $url", !url.contains("quantity"))
+        }
+
+    /**
+     * `JSONObject.put` throws outright on a non-finite number ("JSON does not allow non-finite
+     * numbers"), and this runs inside the sheet's `launch`, so the throw would surface as a crash
+     * rather than a missing product card. A price that is not a number carries no scope meaning.
+     */
+    @Test
+    fun `a non-finite price is dropped instead of throwing out of the sheet`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(
+                SharingRequest(
+                    products =
+                        listOf(
+                            SharingProduct(
+                                title = "Kettle",
+                                link = "https://acme.example/kettle",
+                                details =
+                                    ProductDetails(
+                                        quantity = Double.NaN,
+                                        unitPrice = Double.POSITIVE_INFINITY,
+                                        totalPrice = 12.5,
+                                    ),
+                            ),
+                        ),
+                ),
+            )
+            advanceUntilIdle()
+
+            val url = requireNotNull(state.session?.url(confirmed = false))
+            assertTrue("was: $url", !url.contains("quantity"))
+            assertTrue("was: $url", !url.contains("unitPrice"))
+            // The usable field on the same product survives, as does the card itself.
+            assertTrue("was: $url", url.contains("totalPrice%22%3A12.5"))
+            assertTrue("was: $url", url.contains("title%22%3A%22Kettle%22"))
+        }
+
+    @Test
+    fun `the seeded reward call is scoped to the request's product details`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.bestReward = BestReward(formatted = "5\u00a0\u20ac", payoutType = "fixed", null, null, null)
+            val state = newState(client)
+
+            state.prepare(
+                SharingRequest(
+                    products =
+                        listOf(
+                            SharingProduct(
+                                title = "Kettle",
+                                link = "https://acme.example/kettle",
+                                details = ProductDetails(sku = "SHOE-42"),
+                            ),
+                            // No details: the seed must drop this one, not pass a null entry through.
+                            SharingProduct(title = "Mug", link = "https://acme.example/mug"),
+                        ),
+                ),
+            )
+            advanceUntilIdle()
+
+            val passed = requireNotNull(client.lastBestRewardProducts)
+            assertEquals(1, passed.size)
+            assertEquals("SHOE-42", passed.first().sku)
+        }
+
+    @Test
+    fun `the seeded reward call passes null products when nothing carries scope details`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(
+                SharingRequest(
+                    products = listOf(SharingProduct(title = "Kettle", link = "https://acme.example/kettle")),
+                ),
+            )
+            advanceUntilIdle()
+
+            assertNull(client.lastBestRewardProducts)
+        }
+
+    /** Regression: a failed config resolve must not discard the local link. */
+    @Test
+    fun `a failed config resolve still shares, from the local link`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.resolveFailure = FrakError.Network(IOException("offline"))
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            assertNull("a resolve failure is not a sheet failure", state.failure)
+            assertNull("a page-less session must not reach the composable", state.session)
+            assertTrue("expected the native share to have fired", result is SharingResult.Shared)
+            assertEquals("the share must be attributed exactly once", 1, client.trackCount)
+        }
+
+    /** The one case tier 3 genuinely cannot rescue: there was never a link. */
+    @Test
+    fun `no link means Failed, not a silent tier 3`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.link = null
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            assertNull(state.session)
+            assertTrue(state.failure is FrakError.MerchantResolutionFailed)
+            assertEquals(0, client.trackCount)
+            assertNull("the sheet reports this through `failure`, not `onFinished`", result)
+        }
+
+    /** Regression: budget must still fire when build was fast and the page itself hangs. */
+    @Test
+    fun `a fast build followed by a page that never loads still hits the deadline`() =
+        runTest {
+            val client = FakeSharingClient()
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            assertTrue("precondition: build succeeded with a page", state.session?.hasPage == true)
+
+            val gate = launchDeadline(state) // page is now "loading" and never calls onPageReady
+            advanceUntilIdle()
+
+            assertTrue("the budget must bound the page load too", result is SharingResult.Shared)
+            assertEquals(1, client.trackCount)
+            gate.join()
+        }
+
+    /** The other half: a build slow enough to blow the budget before a session exists. */
+    @Test
+    fun `a build slower than the budget falls back once it finally returns`() =
+        runTest {
+            val client = FakeSharingClient()
+            val resolveGate = CompletableDeferred<Unit>()
+            client.resolveGate = resolveGate
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
+
+            state.prepare(SharingRequest())
+            val gate = launchDeadline(state)
+            advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS + 1)
+
+            // Deadline passed with no session yet.
+            assertNull(state.session)
+            assertNull(result)
+
+            resolveGate.complete(Unit) // must not publish a session the deadline already gave up on
+            advanceUntilIdle()
+
+            assertTrue("a late build must land on tier 3", result is SharingResult.Shared)
+            assertEquals(1, client.trackCount)
+            gate.join()
+        }
+
+    /** A page that arrives inside the budget must not be pre-empted by it. */
+    @Test
+    fun `a page that loads in time is left alone`() =
+        runTest {
+            val client = FakeSharingClient()
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
+
+            state.prepare(SharingRequest())
+            val gate = launchDeadline(state)
+            // runCurrent, not advanceUntilIdle: the latter would also fire the deadline under test.
+            runCurrent()
+            state.onPageReady()
+
+            advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
+            advanceUntilIdle()
+
+            assertNull("the budget was met; nothing should have fired", result)
+            assertEquals("a page that loaded is not a share", 0, client.trackCount)
+            gate.join()
+        }
+
+    /** Offline, the deadline and the page's own main-frame error both fire; must fall back once. */
+    @Test
+    fun `the deadline and a page error together still fall back only once`() =
+        runTest {
+            val client = FakeSharingClient()
+            var finishedCount = 0
+            val state = newState(client) { finishedCount++ }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            state.onLoadDeadline()
+            state.onPageUnavailable()
+            advanceUntilIdle()
+
+            assertEquals("exactly one attribution per share", 1, client.trackCount)
+            assertEquals("exactly one outcome reported", 1, finishedCount)
+        }
+
+    /** `onFinished` is the merchant's callback: it fires once, with the best outcome. */
+    @Test
+    fun `only the most significant outcome is reported, once`() =
+        runTest {
+            val client = FakeSharingClient()
+            val results = mutableListOf<SharingResult>()
+            val state = newState(client) { results += it }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            state.share()
+            advanceUntilIdle()
+            state.dismiss()
+            state.dismiss()
+            advanceUntilIdle()
+
+            assertEquals(1, results.size)
+            assertTrue("a completed share outranks the dismissal that follows it", results[0] is SharingResult.Shared)
+        }
+
+    /** The install action is the SDK's own step; the merchant hears about it once it ran. */
+    @Test
+    fun `the install action keeps the sheet open on the wallet's install page`() =
+        runTest {
+            val client = FakeSharingClient()
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            // Attached so the navigation itself is observable: without it the assertion below
+            // passes for an implementation that asks for the URL and then drops it, which is
+            // the whole behaviour under test.
+            val view = WebView(context)
+            state.attach(view)
+
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            assertEquals(
+                "the sheet must land on the url the client minted",
+                client.installPage,
+                shadowOf(view).lastLoadedUrl,
+            )
+            // The store handoff is what this replaces: the install page owns that decision now.
+            assertEquals("the sheet must not hand off to the store", 0, client.openFrakAppCount)
+            assertEquals("the install page must be asked for", 1, client.installPageUrlCount)
+            assertEquals(
+                "the sheet stays open until the user leaves it",
+                null,
+                result,
+            )
+        }
+
+    @Test
+    fun `a code from the install page reaches the clipboard`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client) {}
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            state.onPageAction(SharingPageAction.Code("ABC234", 1_700_000_000L))
+            advanceUntilIdle()
+
+            val clipboard = context.getSystemService(ClipboardManager::class.java)
+            assertEquals(
+                "the SDK owns the clipboard write, because the page cannot mark it sensitive",
+                "ABC234",
+                clipboard.primaryClip
+                    ?.getItemAt(0)
+                    ?.text
+                    ?.toString(),
+            )
+        }
+
+    @Test
+    fun `the install page is asked for with this session's return channel`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client) {}
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            // Without these the page has nowhere to send the code back to, and the pasteboard
+            // write never happens.
+            val args = client.installPageArgs
+            assertNotNull("the return channel must reach the client", args)
+            assertEquals(SharingPageUrl.returnScheme(context.packageName), args?.first)
+            assertEquals("test-session", args?.second)
+        }
+
+    @Test
+    fun `an install with no identity still falls back to the store`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.installPage = null
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            // Nothing to hand the install page, so the old handoff is the honest answer.
+            assertEquals(1, client.openFrakAppCount)
+            assertEquals(SharingResult.InstallStarted, result)
+        }
+
+    @Test
+    fun `a renderer crash after the page loaded does not raise a chooser`() =
+        runTest {
+            val client = FakeSharingClient()
+            var finishedCount = 0
+            val state = newState(client) { finishedCount++ }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            state.onPageReady()
+
+            // The user is mid-interaction. A chooser now would be a share they never asked for.
+            state.onPageUnavailable()
+            advanceUntilIdle()
+
+            assertEquals("no attribution for a share the user did not make", 0, client.trackCount)
+            assertEquals("nothing reported", 0, finishedCount)
+        }
+
+    /** Paired deliberately: a guard that blocks everything would pass the negative case alone. */
+    @Test
+    fun `only http external urls leave the sheet`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val state = newState(FakeSharingClient())
+
+            state.openExternally("intent://scan/#Intent;scheme=zxing;end")
+            assertNull("a vendor scheme reaches whatever activity registered it", shadowOf(app).nextStartedActivity)
+
+            state.openExternally("https://merchant.example/product")
+            assertNotNull("an ordinary link still opens", shadowOf(app).nextStartedActivity)
+        }
+
+    /** Without this, a user who already has the wallet installed would land on its Play listing instead of in it. */
+    @Test
+    fun `the wallet's own store listing goes through the app handoff instead of Play`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.openExternally(
+                "https://play.google.com/store/apps/details?id=id.frak.wallet&referrer=merchantId%3Dm",
+            )
+            advanceUntilIdle()
+
+            assertEquals("the deep link must be tried first", 1, client.openFrakAppCount)
+            assertNull("Play must not be opened over the handoff", shadowOf(app).nextStartedActivity)
+        }
+
+    /** Paired with the above: the interception is for the wallet's listing, not for Play at large. */
+    @Test
+    fun `another app's store listing still opens Play`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.openExternally("https://play.google.com/store/apps/details?id=com.merchant.app")
+            advanceUntilIdle()
+
+            assertEquals("not the wallet, so no handoff", 0, client.openFrakAppCount)
+            assertNotNull("a merchant's own listing still opens", shadowOf(app).nextStartedActivity)
+        }
+
+    @Test
+    fun `a share moves the page to its confirmation screen`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            val view = WebView(context)
+            state.attach(view)
+
+            state.share()
+            advanceUntilIdle()
+
+            // `&confirmed=1` is what puts the page on its own post-share screen: under `native`
+            // it will not confirm itself, since only this sheet knows a chooser came up.
+            assertEquals(
+                "the share must land the page on its confirmation screen",
+                true,
+                shadowOf(view).lastLoadedUrl?.contains("confirmed=1"),
+            )
+
+            state.onPageAction(SharingPageAction.ShareAgain)
+            advanceUntilIdle()
+
+            assertEquals(
+                "share again must take the page back off it",
+                false,
+                shadowOf(view).lastLoadedUrl?.contains("confirmed=1"),
+            )
+        }
+
+    /** The page draws both buttons and this sheet performs them, over the same navigation channel as every other page action. */
+    @Test
+    fun `the page's own share button raises the chooser and pays out`() =
+        runTest {
+            val client = FakeSharingClient()
+            val results = mutableListOf<SharingResult>()
+            val state = newState(client) { results += it }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share)
+            advanceUntilIdle()
+            state.dismiss()
+            advanceUntilIdle()
+
+            assertEquals("the share must be attributed", 1, client.trackCount)
+            assertEquals(1, results.size)
+            assertTrue(
+                "a page-driven share is the same outcome as a native one",
+                results[0] is SharingResult.Shared,
+            )
+        }
+
+    @Test
+    fun `the page's own copy button writes the clipboard and pays out`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Copy)
+            advanceUntilIdle()
+
+            assertEquals("the copy must be attributed", 1, client.trackCount)
+            val clipboard = context.getSystemService(ClipboardManager::class.java)
+            assertEquals(
+                "the link must reach the clipboard",
+                client.link,
+                clipboard.primaryClip
+                    ?.getItemAt(0)
+                    ?.text
+                    ?.toString(),
+            )
+        }
+
+    /** The asymmetry with `share`: the page raises its own toast and moves to the confirmation screen on its own button press. A `confirmed=1` reload on top of that would tear the toast down mid-copy. */
+    @Test
+    fun `a copy does not reload the page out from under its own toast`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            val view = WebView(context)
+            state.attach(view)
+            val beforeCopy = shadowOf(view).lastLoadedUrl
+
+            state.onPageAction(SharingPageAction.Copy)
+            advanceUntilIdle()
+
+            assertEquals("the copy must be attributed", 1, client.trackCount)
+            assertEquals(
+                "a copy must not navigate the page at all",
+                beforeCopy,
+                shadowOf(view).lastLoadedUrl,
+            )
+        }
+
+    /** The page's footer stays enabled across the whole hand-off. The window that matters is `track()`, which the chooser's dismissal returns into with the page still live underneath. */
+    @Test
+    fun `two taps on the page's share button raise one chooser and bill one interaction`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share)
+            state.onPageAction(SharingPageAction.Share)
+            advanceUntilIdle()
+
+            assertEquals("one share must bill one interaction", 1, client.trackCount)
+            assertNotNull("the chooser must have been raised", shadowOf(app).nextStartedActivity)
+            assertNull("and only once", shadowOf(app).nextStartedActivity)
+        }
+
+    /** Same guard on the copy half: two taps would otherwise bill two interactions. */
+    @Test
+    fun `two taps on the page's copy button bill one interaction`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Copy)
+            state.onPageAction(SharingPageAction.Copy)
+            advanceUntilIdle()
+
+            assertEquals("one copy must bill one interaction", 1, client.trackCount)
+        }
+
+    /** The install page's failure is not tier 3's business — the user has already shared. The sheet must not just sit on an error page with nothing to press either. */
+    @Test
+    fun `a failed install page falls back to the confirmation screen, not a dead sheet`() =
+        runTest {
+            val client = FakeSharingClient()
+            var finishedCount = 0
+            val state = newState(client) { finishedCount++ }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            val view = WebView(context)
+            state.attach(view)
+            state.onPageReady()
+
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+            assertEquals(client.installPage, shadowOf(view).lastLoadedUrl)
+
+            state.onPageUnavailable()
+            advanceUntilIdle()
+
+            assertEquals(
+                "the user must land somewhere with controls on it",
+                true,
+                shadowOf(view).lastLoadedUrl?.contains("confirmed=1"),
+            )
+            // Tier 3 would raise a chooser for a share that already happened.
+            assertEquals("no chooser, and no premature outcome", 0, finishedCount)
+        }
+
+    private fun TestScope.launchDeadline(state: SharingSheetState) =
+        launch { state.awaitLoadDeadline(SHEET_LOAD_DEADLINE_MILLIS) }
+
+    private companion object {
+        /** Mirrors `FrakSharingSheet`'s own constant. */
+        const val SHEET_LOAD_DEADLINE_MILLIS = 1_500L
+    }
+}

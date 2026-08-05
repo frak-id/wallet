@@ -110,14 +110,9 @@ export type SharingPageProps = {
      */
     showConfirmation: boolean;
     /**
-     * Suppress the page's own header and footer CTAs.
-     *
-     * For hosts that present this page inside their own chrome (a native
-     * bottom sheet with its own logo, close control and share buttons) and
-     * drive sharing through the OS share sheet instead of `onShare`/`onCopy`.
-     * Everything else — reward card, product cards, stepper, FAQ, legal — is
-     * unchanged, and the confirmation screen still renders, with its own
-     * chrome suppressed the same way.
+     * Suppress the page's own header and hand dismissal to the host, for
+     * hosts that present this page inside their own chrome (a native bottom
+     * sheet with its own drag handle and close affordance). Footer CTAs stay.
      */
     chromeless?: boolean;
     /**
@@ -547,34 +542,32 @@ export function SharingPage({
                     </nav>
                 </main>
 
-                {!chromeless && (
-                    <footer className={styles.footer}>
-                        {canShare && (
-                            <Button
-                                variant="primary"
-                                size="large"
-                                fontSize="s"
-                                onClick={onShare}
-                                disabled={isSharing || !sharingLink}
-                                className={styles.shareButton}
-                            >
-                                {t("sharing.btn.share")}
-                                <ShareIcon width={16} height={16} />
-                            </Button>
-                        )}
+                <footer className={styles.footer}>
+                    {canShare && (
                         <Button
-                            variant="secondary"
+                            variant="primary"
                             size="large"
                             fontSize="s"
-                            onClick={onCopy}
-                            disabled={!sharingLink}
-                            className={styles.copyButton}
+                            onClick={onShare}
+                            disabled={isSharing || !sharingLink}
+                            className={styles.shareButton}
                         >
-                            {t("sharing.btn.copy")}
-                            <CopyIcon width={16} height={16} />
+                            {t("sharing.btn.share")}
+                            <ShareIcon width={16} height={16} />
                         </Button>
-                    </footer>
-                )}
+                    )}
+                    <Button
+                        variant="secondary"
+                        size="large"
+                        fontSize="s"
+                        onClick={onCopy}
+                        disabled={!sharingLink}
+                        className={styles.copyButton}
+                    >
+                        {t("sharing.btn.copy")}
+                        <CopyIcon width={16} height={16} />
+                    </Button>
+                </footer>
             </div>
         </div>
     );

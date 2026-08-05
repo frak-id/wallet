@@ -368,14 +368,47 @@ function WalletSharingPage() {
         }
     );
 
+    // Hand an outcome back to the native host, which intercepts the navigation
+    // inside its own web view.
+    const returnToHost = useCallback(
+        (action: HostResultAction) =>
+            sendHostResult({ scheme: returnScheme, action, sid }),
+        [returnScheme, sid]
+    );
+
+    // `useShareLink` reports `canShare: false` in an Android WebView, where
+    // `navigator.share` genuinely does not exist — without this the Share button
+    // would be hidden on exactly the platform that needs the hand-off most. The
+    // gate is the return scheme rather than `native`: a host that opened this
+    // page without one has no way to receive the ask, and a button that silently
+    // does nothing is worse than one that is not there.
+    const canHandOffShare = !!returnScheme;
+
+    // The SDK owns the share itself, for two reasons this page cannot work
+    // around: `navigator.share` does not exist in an Android WebView, and the
+    // interaction a share earns has to be signed by the SDK keypair. The host
+    // reloads this page with `confirmed=1` once its chooser is up, so there is
+    // nothing to set here — unlike `handleCopy`, whose host does not reload.
     const handleShare = () => {
+        if (returnToHost("share")) return;
         if (!finalSharingLink) return;
         triggerSharing();
     };
 
     const handleCopy = () => {
+        // Same hand-off as `handleShare`, and for the interaction half of the
+        // same reason — a WebView clipboard write would work, but the SDK still
+        // has to be the one to record the sharing interaction.
+        //
+        // Unlike `handleShare` this does NOT return early, and the difference is
+        // load-bearing: a host does not reload the page for a copy, precisely so
+        // that the toast and confirmation screen below survive. A host that did
+        // reload would tear down the document mid-toast and leave the copy with
+        // no feedback at all — the sheet stopped showing its own the moment this
+        // footer became the page's.
+        const handedOff = returnToHost("copy");
         if (!finalSharingLink) return;
-        copy(finalSharingLink);
+        if (!handedOff) copy(finalSharingLink);
         trackEvent("sharing_link_copied", {
             source: "sharing_page_wallet",
             merchant_id: merchantId,
@@ -385,14 +418,6 @@ function WalletSharingPage() {
         if (merchantId) saveConfirmation(merchantId);
         setShowConfirmation(true);
     };
-
-    // Hand an outcome back to the native host, which intercepts the navigation
-    // inside its own web view.
-    const returnToHost = useCallback(
-        (action: HostResultAction) =>
-            sendHostResult({ scheme: returnScheme, action, sid }),
-        [returnScheme, sid]
-    );
 
     const handleDismiss = async () => {
         // A native host owns the outcome: `redirectUrl` is a web-only concern
@@ -455,7 +480,7 @@ function WalletSharingPage() {
                 referee: reward?.refereeReward,
                 minPurchaseValue: reward?.minPurchaseValue,
             }}
-            canShare={canShare}
+            canShare={canShare || canHandOffShare}
             chromeless={native}
             showConfirmation={showConfirmation}
             onShare={handleShare}

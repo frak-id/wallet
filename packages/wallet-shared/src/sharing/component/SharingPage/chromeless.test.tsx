@@ -56,14 +56,31 @@ describe("SharingPage chromeless mode", () => {
         expect(screen.getByText("sharing.btn.copy")).toBeInTheDocument();
     });
 
-    it("hides the header and footer CTAs when chromeless", () => {
+    it("hides only the header when chromeless, keeping the footer CTAs", () => {
         renderPage({ chromeless: true });
 
         expect(
             screen.queryByText("sdk.sharingPage.dismiss")
         ).not.toBeInTheDocument();
+        expect(screen.getByText("sharing.btn.share")).toBeInTheDocument();
+        expect(screen.getByText("sharing.btn.copy")).toBeInTheDocument();
+    });
+
+    it("still hides the share CTA when the platform cannot share", () => {
+        renderPage({ chromeless: true, canShare: false });
+
         expect(screen.queryByText("sharing.btn.share")).not.toBeInTheDocument();
-        expect(screen.queryByText("sharing.btn.copy")).not.toBeInTheDocument();
+        expect(screen.getByText("sharing.btn.copy")).toBeInTheDocument();
+    });
+
+    it("reports chromeless footer presses through the same callbacks", () => {
+        const { onShare, onCopy } = renderPage({ chromeless: true });
+
+        fireEvent.click(screen.getByText("sharing.btn.share"));
+        fireEvent.click(screen.getByText("sharing.btn.copy"));
+
+        expect(onShare).toHaveBeenCalled();
+        expect(onCopy).toHaveBeenCalled();
     });
 
     it("keeps the page content when chromeless", () => {
@@ -90,13 +107,13 @@ describe("SharingPage chromeless mode", () => {
         expect(onDismiss).not.toHaveBeenCalled();
     });
 
-    it("drops its own surface when chromeless so the host's shows through", () => {
+    it("drops the tablet card treatment when chromeless", () => {
         const { surface } = renderPage({ chromeless: true });
 
         expect(surface).toHaveClass(containerChromeless);
     });
 
-    it("keeps its own surface by default", () => {
+    it("keeps the tablet card treatment by default", () => {
         const { surface } = renderPage();
 
         expect(surface).not.toHaveClass(containerChromeless);

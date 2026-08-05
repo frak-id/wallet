@@ -501,13 +501,17 @@ describe("matchesProductScope — numeric comparison with string operands", () =
         expect(
             matchesProductScope(
                 [{ field: "name", operator: "gt", value: "A" }],
-                { name: "B" }
+                {
+                    name: "B",
+                }
             )
         ).toBe(true);
         expect(
             matchesProductScope(
                 [{ field: "name", operator: "gt", value: "Z" }],
-                { name: "B" }
+                {
+                    name: "B",
+                }
             )
         ).toBe(false);
     });
