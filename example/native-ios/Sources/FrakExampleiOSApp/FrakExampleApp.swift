@@ -103,7 +103,14 @@ struct FrakExampleApp: App {
                 // reports false without it.
                 env: .development,
                 deepLink: .manual,
-                logLevel: .info
+                logLevel: .info,
+                // Boots a web view against the merchant's own sharing page as soon as a share
+                // surface appears, and hands that same warm view to the sheet. Without it the
+                // sheet pays for engine startup, TLS and the React bundle at tap time — the
+                // couple of hundred milliseconds of blank surface this harness exists to catch.
+                // On by default here precisely because the harness is where that regression
+                // would show up. Mirrors the Android harness.
+                preloadSharing: true
             )
         )
     }

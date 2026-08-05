@@ -146,33 +146,129 @@ it rather than leave it alone.
 `adb shell setprop log.tag.FrakSharing DEBUG` then `adb logcat -s FrakSharing`. `launch (warm
 view, ACTIVATING)` is the line that says the fast path was taken.
 
-iOS has none of these changes yet.
+### Presentation (iOS)
+
+The latency half of the Android section above is ported; the gesture half is not. What follows
+is only what differs, because the shapes are otherwise deliberately identical — `SharingPageURL.
+warm`/`activationFragment`, `SharingWebViewPool`, `SharingPresentation`, `SharingSheetSkeleton`
+and `SharingTrace` all exist on both platforms with the same names and the same milestone
+strings, so one set of eyes can read either trace.
+
+**"The tap" is the `isPresented` change.** A merchant flips a `Binding<Bool>` rather than calling
+a method, so `SharingPresenter.launch` runs from `.onChange(of: isPresented)` — the update that
+sets the flag, before SwiftUI has begun building the sheet's hosting controller. `launch` is
+idempotent and the sheet's own `onAppear` calls it too, so if that ordering ever fails the
+session still starts, one frame later, which is exactly the pre-change behaviour.
+
+**Disposal is not `.onDisappear`, and not the `isPresented` change either.** `.onDisappear` also
+fires when a `UIActivityViewController` covers the sheet, and handing the pooled view back
+mid-share would take the confirmation screen away from a live session and lend a view that session
+still drives to the next sheet. The pre-existing `release()` had the same hazard for the web view
+alone; this closes it. The `isPresented` change is no better for a sheet that *did* appear: it
+fires the moment the flag flips, which for an SDK-driven close is before the dismissal animation,
+and `SharingWebViewPool.release` immediately reloads the returned view to the warm URL — visibly,
+on a view still animating away. So a presented sheet is disposed from `onDismiss`, which SwiftUI
+calls after the animation; a session that reported a terminal outcome before any sheet appeared
+gets no `onDismiss` at all and is disposed from the `isPresented` change. `wasPresented` is what
+tells the two apart. Android reaches the same conclusion from the other end — its grab-strip
+dismiss animates off screen *before* reporting, for the same reason.
+
+**Disposal also severs the session.** `dispose` cancels the build task and clears the model's
+`onOutcome`/`onClose` before releasing anything. `release()` deliberately does not mark the model
+closed — an in-flight `share` outlives the sheet that started it — so a build still suspended for
+a dismissed sheet will run its failure path to completion; those closures write the presenter's
+`best` and flip its `isPresented`, which by then may belong to the *next* session. Without the
+severing, a slow build from a sheet the user already dismissed could report its failure as the
+next sheet's outcome, or dismiss that next sheet outright. Android is guarded differently and only
+partly, by `FrakSharingLauncher.finish`'s `active == null` check.
+
+**`action=ready` is the only paint signal.** WebKit exposes no public equivalent of
+`postVisualStateCallback`, so where Android has a heuristic plus the page's own `ready`, iOS has
+only `ready`, bounded by the same skeleton grace/max-hold timers. This makes `ready` load-bearing
+on iOS in a way it merely is on Android — without it the skeleton would lift on a timer over a
+blank web view.
+
+**The fragment activation is `WKWebView.load(URLRequest)`, same as Android's `loadUrl`.** A URL
+differing from the committed document only in its fragment takes WebKit's fragment-navigation
+branch (`FrameLoader::loadWithDocumentLoader` → `shouldPerformFragmentNavigation`), which is
+same-document and fires `hashchange`. It is emphatically *not* `evaluateJavaScript`: the SDK has
+no JavaScript channel in either direction and this does not open one. The consequence is that
+WebKit fires **no `didFinish`** for it — which is the same conclusion Android reached from the
+other side, and the reason `ready` settles the tier-3 deadline rather than only the skeleton.
+
+**The build is `nonisolated`, not on a chosen dispatcher.** Android's `Dispatchers.Default` was
+answering a Compose-specific pathology: `rememberCoroutineScope` dispatches on the frame clock,
+which at sheet-open is busy for 203-430ms. iOS's main-actor executor is drained by the run loop
+rather than by a frame callback, so that number has no iOS twin and is unmeasured here. The build
+is still kept off the main actor, because there is no reason to put network and keystore work on
+it to find out.
+
+**No device or simulator pass has run on any of this**, so every number in the Android section
+above is Android's. `swift build` at the iOS-simulator triple and the host-run suites are the
+only evidence; `SharingWebViewPool`, `SharingSheetModel` and `SharingWebView` are behind
+`#if canImport(UIKit)` and therefore compile-checked only, never executed. The logic that could
+be pulled out from under that wall — `SharingPageURL.warm`/`activationFragment` and
+`SharingSession.navigation` — is tested on the host.
+
+#### Gestures on iOS: not ported, and why
+
+Android's `sheetGesturesEnabled = false` plus grab strip is deliberately **not** mirrored. The
+provoking condition does transfer: the page is an `AppShell`, `height: 100dvh; overflow: hidden`
+around an inner `overflow-y: auto; overscroll-behavior-y: contain` scroller, so the `WKWebView`'s
+own `scrollView` never scrolls either. But the arbitration does not: WebKit gives that inner
+container a real nested `UIScrollView` in its scrolling tree, and `UISheetPresentationController`
+coordinates with scroll views in a way Compose's `ModalBottomSheet` does not. Whether iOS has the
+same fight is therefore an open question, not a known defect.
+
+Turning the system dismissal off in favour of a hand-rolled `DragGesture` on a platform with no
+device pass trades an unknown for a worse failure mode — a user stuck in a sheet whose only exit
+is a strip that was never tested. This is a device-pass item: drag the sheet by the page body and
+by the grabber, and scroll the page's inner container both ways. If the sheet wins drags that
+belong to the page, the Android mechanism (explicit ownership + a grab strip) is the answer, and
+it should be reached for then rather than now.
+
+`SharingTrace` records the iOS milestones through the unified log, which drops `.debug` unless
+the subsystem is turned up:
+
+```
+xcrun simctl spawn booted log config --mode "level:debug" --subsystem id.frak.sdk
+xcrun simctl spawn booted log stream --predicate 'subsystem == "id.frak.sdk"'
+```
+
 
 ## 2. The web view ↔ native channel
 
-Inbound is query parameters delivered by a full page load. `SharingPageURL.build` assembles
-`/sharing?native=1&…` with `merchantId`, `clientId`, `returnScheme`, `sid`, the SDK version
-and optional context (`appName`, `logoUrl`, `link`, `products`, `r`). Every state change
-after that is a fresh `loadUrl` of a rebuilt URL: `confirm()` reloads with `&confirmed=1`,
-`shareAgain` reloads without it, `copy` reloads nothing, and a failed install page reloads
-`&confirmed=1` instead.
+Inbound is query parameters. `SharingPageURL.build` assembles `/sharing?native=1&…` with
+`merchantId`, `clientId`, `returnScheme`, `sid`, the SDK version and optional context
+(`appName`, `logoUrl`, `link`, `products`, `r`), and `SharingPageURL.warm` assembles the
+merchant-keyed half of that plus `preload=1` for a view nobody has opened yet.
+
+How a state change is delivered depends on where the view already is, and both platforms decide
+it in one place (`SharingSession.navigation`). On a view that is not on this session's warm page
+— preloading off, the warm-up unfinished, or the sheet since moved to the install page — every
+change is a full navigation to a rebuilt URL: `confirm()` with `&confirmed=1`, `shareAgain`
+without it, `copy` nothing, and a failed install page recovers to `&confirmed=1`. On a view that
+*is* on its warm page, the same changes are a location fragment
+(`SharingPageURL.activationFragment`), which both engines resolve same-document: no request, no
+remount, no React boot. The page merges the fragment over its query params in
+`useActivationParams` and omits absent keys on both sides, so an activation cannot erase a
+merchant config value it has nothing to say about.
 
 Outbound is an intercepted navigation: the page calls
 `window.location.assign("<returnScheme>://result?action=…&sid=…")` and the SDK catches it in
 the navigation policy and stops it — `decisionHandler(.cancel)` on iOS, `return true` from
 `shouldOverrideUrlLoading` on Android. Actions: `install`, `dismiss`, `shareAgain`, `code`,
-`error`, `share`, `copy`. `share`/`copy` are asks, not reports — the page draws both buttons
-and the host performs them, since `navigator.share` does not exist in an Android WebView and
-a share's interaction has to be signed by the SDK keypair; both are repeatable within one
-page load, so `sendHostResult` exempts them from its dedupe.
+`error`, `share`, `copy`, `ready`. `share`/`copy` are asks, not reports — the page draws both
+buttons and the host performs them, since `navigator.share` does not exist in an Android WebView
+and a share's interaction has to be signed by the SDK keypair; both are repeatable within one
+page load, so `sendHostResult` exempts them from its dedupe. `ready` is progress rather than an
+outcome — the page saying it has painted — and is repeatable for a different reason: one warmed
+page is reused across many sheets, each with its own skeleton waiting to be dropped.
 
 There is no JavaScript bridge on either platform, deliberately.
 
 Known issues:
 
-- The inbound reload (`confirmed=1`) discards React state, re-runs route loaders and
-  re-fetches merchant config and the reward, right as the user is waiting for confirmation.
-  Fix: push state in with `evaluateJavaScript`, feature-detected, falling back to the reload.
 - `sentActions`, a module-global `Set` in `buildHostResultUrl.ts`, exists because outbound
   navigations are fire-and-forget and carry no correlation; keyed by `action + value` so a
   regenerated code still reaches the host. Cancelled navigations surface as
@@ -283,9 +379,12 @@ above; the router's `p` forwarding and fragment-first resolution; the in-sheet `
 navigation with `SKOverlay` on iOS and the referrer URL on Android; the `code` action with
 the pasteboard write.
 
-None of it has run on a device, and only the web half has test coverage. Two known defects —
-the uncancelled load deadline raising a second chooser, and iOS `release()` not cancelling the
-prepare task — are tracked in [`06-open-findings.md`](./06-open-findings.md).
+None of it has run on a device. Test coverage is the web half, Android's JVM suites, and — since
+the fragment-activation port — the iOS logic that could be lifted out from behind
+`#if canImport(UIKit)` (`SharingPageURL`, `SharingSession.navigation`, `sharingDecision`); the iOS
+sheet, pool and web view are still compile-checked only. Known defects, including the uncancelled
+load deadline raising a second chooser and the missing install in-flight guard, are tracked in
+[`06-open-findings.md`](./06-open-findings.md).
 
 Open questions:
 

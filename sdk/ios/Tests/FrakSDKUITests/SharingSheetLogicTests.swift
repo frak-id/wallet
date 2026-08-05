@@ -13,14 +13,28 @@ import Testing
 struct SharingSheetLogicTests {
     private static let pageURL = "https://wallet.frak.id/sharing?native=1"
 
-    private func session(pageURL: String? = SharingSheetLogicTests.pageURL) -> SharingSession {
+    private static let warmURL = "https://wallet.frak.id/sharing?native=1&preload=1"
+    private static let fragment = "#sid=session-1&preload=0"
+
+    private func session(
+        pageURL: String? = SharingSheetLogicTests.pageURL,
+        warmBaseURL: String? = nil,
+        activationFragment: String? = nil
+    ) -> SharingSession {
         SharingSession(
             walletOrigin: "https://wallet.frak.id",
             returnScheme: "frak-com.acme.app",
             link: "https://merchant.example/p?fCtx=abc",
             shareTitle: "Share and earn",
-            pageURL: pageURL
+            pageURL: pageURL,
+            warmBaseURL: warmBaseURL,
+            activationFragment: activationFragment
         )
+    }
+
+    /// A session whose pool was warmed for this merchant, as `build` assembles one.
+    private func warmedSession(pageURL: String? = SharingSheetLogicTests.pageURL) -> SharingSession {
+        session(pageURL: pageURL, warmBaseURL: Self.warmURL, activationFragment: Self.fragment)
     }
 
     @Test("a session with a page shows it")
@@ -33,7 +47,7 @@ struct SharingSheetLogicTests {
             fellBack: false,
             closed: false
         )
-        #expect(decision == .showPage(expected))
+        #expect(decision == .showPage(.load(expected)))
     }
 
     @Test("a session without a page falls back immediately")
@@ -128,6 +142,86 @@ struct SharingSheetLogicTests {
     func noPageHasNoURL() {
         #expect(session(pageURL: nil).url(confirmed: false) == nil)
         #expect(session(pageURL: nil).url(confirmed: true) == nil)
+    }
+
+    // MARK: - Fragment activation
+
+    @Test("a session on a matching warm page navigates by fragment only")
+    func activatesOnTheWarmPage() throws {
+        let expected = try #require(URL(string: Self.pageURL))
+        let navigation = warmedSession().navigation(confirmed: false, currentBaseURL: Self.warmURL)
+        // No request, no remount, no React boot: the whole point of warming the real page.
+        #expect(navigation == .activate(fragment: Self.fragment, fullURL: expected))
+    }
+
+    @Test("a session whose warm page is not the one loaded does a full navigation")
+    func fullLoadWhenTheWarmPageDiffers() throws {
+        let expected = try #require(URL(string: Self.pageURL))
+        // A pool warmed for another merchant, or one whose config moved under us. Activating on
+        // top of it would leave the user on someone else's page.
+        let other = warmedSession().navigation(
+            confirmed: false,
+            currentBaseURL: "https://wallet.frak.id/sharing?native=1&preload=1&merchantId=other"
+        )
+        #expect(other == .load(expected))
+        // And the ordinary case: nothing warmed at all.
+        #expect(warmedSession().navigation(confirmed: false, currentBaseURL: nil) == .load(expected))
+    }
+
+    @Test("a session with no warm half of its own never activates")
+    func neverActivatesWithoutBothHalves() throws {
+        let expected = try #require(URL(string: Self.pageURL))
+        // Preloading off: `build` leaves both nil, so even a coincidentally equal current URL
+        // cannot produce a fragment with nothing in it.
+        #expect(session().navigation(confirmed: false, currentBaseURL: Self.warmURL) == .load(expected))
+    }
+
+    @Test("the confirmation step stays same-document once activated")
+    func confirmationActivatesToo() throws {
+        let expected = try #require(URL(string: Self.pageURL + "&confirmed=1"))
+        let navigation = warmedSession().navigation(confirmed: true, currentBaseURL: Self.warmURL)
+        // Routing only the first navigation through the fragment would make the post-share
+        // confirmation the expensive one instead — a full page load the moment the chooser
+        // dismisses.
+        #expect(
+            navigation
+                == .activate(
+                    fragment: Self.fragment + "&confirmed=1",
+                    fullURL: expected
+                )
+        )
+    }
+
+    @Test("a warm session with no page still falls back rather than activating")
+    func noPageBeatsActivation() {
+        // Tier 3: `resolveConfig` failed, so there is no page to show and the local link is all
+        // there is. `hasPage` is what the decision reads.
+        let built = warmedSession(pageURL: nil)
+        #expect(!built.hasPage)
+        #expect(built.navigation(confirmed: false, currentBaseURL: Self.warmURL) == nil)
+        let decision = sharingDecision(
+            session: built,
+            deadlineExpired: false,
+            pageLoaded: false,
+            fellBack: false,
+            closed: false,
+            currentBaseURL: Self.warmURL
+        )
+        #expect(decision == .nativeShare(built))
+    }
+
+    @Test("the decision carries the activation through")
+    func decisionActivates() throws {
+        let expected = try #require(URL(string: Self.pageURL))
+        let decision = sharingDecision(
+            session: warmedSession(),
+            deadlineExpired: false,
+            pageLoaded: false,
+            fellBack: false,
+            closed: false,
+            currentBaseURL: Self.warmURL
+        )
+        #expect(decision == .showPage(.activate(fragment: Self.fragment, fullURL: expected)))
     }
 }
 

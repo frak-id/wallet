@@ -78,6 +78,100 @@ struct SharingPageURLTests {
         #expect(url.contains("&products=%5B%7B%22title%22%3A%22Kettle%22%7D%5D"))
         #expect(url.hasSuffix("&r=10%20%E2%82%AC"))
     }
+
+    @Test("the warm url is the real merchant page, flagged as a preload")
+    func buildsTheWarmURL() {
+        let url = SharingPageURL.warm(
+            walletOrigin: "https://wallet.frak.id",
+            merchantId: "550e8400-e29b-41d4-a716-446655440000",
+            clientId: "550e8400-e29b-41d4-a716-446655440001",
+            bundleId: "com.acme.app",
+            appName: "Acme Shop",
+            logoURL: "https://acme.example/logo.png"
+        )
+
+        #expect(
+            url == "https://wallet.frak.id/sharing?native=1&preload=1"
+                + "&merchantId=550e8400-e29b-41d4-a716-446655440000"
+                + "&clientId=550e8400-e29b-41d4-a716-446655440001"
+                + "&returnScheme=frak-com.acme.app"
+                + "&sid=warm"
+                + "&\(FrakSDKVersion.queryParameterName)=\(FrakSDKVersion.current)"
+                + "&appName=Acme%20Shop"
+                + "&logoUrl=https%3A%2F%2Facme.example%2Flogo.png"
+        )
+    }
+
+    /// `preload=1` is what keeps a warmed page reporting `sharing_page_preloaded` rather than
+    /// `sharing_page_viewed`, which is the sharing funnel's denominator. Warming every merchant
+    /// surface into that event would silently deflate every downstream rate.
+    @Test("the warm url carries no per-tap parameter")
+    func warmURLCarriesNothingPerTap() {
+        let url = SharingPageURL.warm(
+            walletOrigin: "https://wallet.frak.id",
+            merchantId: "m1",
+            clientId: "c1",
+            bundleId: "com.acme.app"
+        )
+
+        #expect(url.contains("&preload=1"))
+        #expect(url.contains("&sid=\(SharingPageURL.warmSessionId)"))
+        // No link, no products, no seeded headline, no confirmation — none of them is knowable
+        // before the tap, and the warm session id can never satisfy a real sheet's `sid` guard.
+        #expect(!url.contains("&link="))
+        #expect(!url.contains("&products="))
+        #expect(!url.contains("&r="))
+        #expect(!url.contains("&confirmed="))
+    }
+
+    @Test("the activation fragment carries the per-tap half, and clears the preload flag")
+    func buildsTheActivationFragment() {
+        let fragment = SharingPageURL.activationFragment(
+            sessionId: "session-1",
+            link: "https://acme.example/p?a=1",
+            products: #"[{"title":"Kettle"}]"#,
+            logoURL: "https://acme.example/override.png",
+            seededReward: "10 \u{20AC}",
+            confirmed: true
+        )
+
+        #expect(
+            fragment == "#sid=session-1"
+                + "&preload=0"
+                + "&link=https%3A%2F%2Facme.example%2Fp%3Fa%3D1"
+                + "&products=%5B%7B%22title%22%3A%22Kettle%22%7D%5D"
+                + "&logoUrl=https%3A%2F%2Facme.example%2Foverride.png"
+                + "&r=10%20%E2%82%AC"
+                + "&confirmed=1"
+        )
+    }
+
+    /// Load-bearing, not tidiness. The page spreads the fragment over the warm URL's own query
+    /// params, so a key written with an empty value would erase the merchant config value under
+    /// it — `logoUrl` comes from the config on the warm URL, and most activations have nothing
+    /// to say about it.
+    @Test("the activation fragment omits every key it was not given")
+    func activationFragmentOmitsAbsentKeys() {
+        let fragment = SharingPageURL.activationFragment(sessionId: "session-1")
+
+        #expect(fragment == "#sid=session-1&preload=0")
+        #expect(!fragment.contains("logoUrl"))
+        #expect(!fragment.contains("link"))
+        #expect(!fragment.contains("products"))
+        #expect(!fragment.contains("&r="))
+        // Absent, not `confirmed=0`: the page reads presence, and this is the pre-share step.
+        #expect(!fragment.contains("confirmed"))
+    }
+
+    /// The fragment is hung off the *committed* URL, never off the warm URL string, so this is
+    /// about the page's own parsing rather than about concatenation. Two identical fragments in
+    /// a row fire no `hashchange`, which a fresh `sid` per session is what prevents.
+    @Test("every activation fragment starts a new session")
+    func activationFragmentIsSessionScoped() {
+        let first = SharingPageURL.activationFragment(sessionId: "session-1")
+        let second = SharingPageURL.activationFragment(sessionId: "session-2")
+        #expect(first != second)
+    }
 }
 
 @Suite("SharingResult")

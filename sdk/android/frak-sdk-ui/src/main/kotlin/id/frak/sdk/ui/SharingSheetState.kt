@@ -66,17 +66,21 @@ internal class SharingSession(
         confirmed: Boolean,
         currentBaseUrl: String? = null,
     ): SharingNavigation? {
+        // Both answers derive from the same value, so "no page" cannot be expressed as an
+        // activation. [build] never assembles a warm half without a page — the tier-3 branch
+        // returns before either is known — but the caller gates tier 3 on this being null, and a
+        // session reporting an activation it has no page for would skip the fallback and leave
+        // the user on a fragment pointing at nothing.
+        val full = pageUrl?.let { if (confirmed) "$it&confirmed=1" else it } ?: return null
         val warm = warmBaseUrl
         val fragment = activationFragment
         if (warm != null && fragment != null && currentBaseUrl == warm) {
             return SharingNavigation.Activate(
                 fragment = if (confirmed) "$fragment&confirmed=1" else fragment,
-                fullUrl = pageUrl?.let { if (confirmed) "$it&confirmed=1" else it },
+                fullUrl = full,
             )
         }
-        return pageUrl?.let {
-            SharingNavigation.Load(if (confirmed) "$it&confirmed=1" else it)
-        }
+        return SharingNavigation.Load(full)
     }
 
     /** Test/diagnostic view of [navigation]'s full-load answer. */
@@ -106,8 +110,11 @@ internal sealed interface SharingNavigation {
      */
     data class Activate(
         val fragment: String,
-        /** Used only if the view turns out to have no committed URL to hang [fragment] off. */
-        val fullUrl: String?,
+        /**
+         * The same page a [Load] would have gone to. Used only if the view turns out to have no
+         * committed URL to hang [fragment] off.
+         */
+        val fullUrl: String,
     ) : SharingNavigation
 }
 
@@ -771,7 +778,7 @@ private fun WebView.navigate(navigation: SharingNavigation) {
                 // No committed URL means nothing is loaded to hang a fragment off. The caller's
                 // documentReady guard should make this unreachable; load the page rather than
                 // leave the sheet on a skeleton if it ever is not.
-                navigation.fullUrl?.let(::loadUrl)
+                loadUrl(navigation.fullUrl)
             }
         }
     }

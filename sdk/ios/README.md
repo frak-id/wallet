@@ -93,9 +93,11 @@ claim above rests on suites executed on the host toolchain (`swift test`), not o
   SDK (proves the suites compile under Swift 6 strict concurrency); stage 2 runs
   `swift test` on the host toolchain, which is what actually executes the suites.
   Everything in `FrakSDKUI` that touches UIKit sits behind `#if canImport(UIKit)`, so
-  on the macOS host that target reduces to `SharingPageURL` and `SharingResult` — the
-  sheet, the web view, and native share are type-checked by stage 1 and executed by
-  neither stage.
+  on the macOS host that target reduces to `SharingPageURL`, `SharingSheetLogic`
+  (`SharingSession.navigation`, `sharingDecision`, the products JSON) and `SharingResult`
+  — the sheet, the web view pool, the model and native share are type-checked by stage 1
+  and executed by neither stage. Logic worth asserting is deliberately kept out from
+  under that wall; anything left inside it has no executed coverage on any platform.
 - `Package.swift` also declares `platforms: [.iOS(.v15), .macOS(.v12)]`. The macOS
   entry exists only so stage 2 has a deployment target new enough for the APIs the SDK
   uses (`Logger`, `URLSession.data(for:delegate:)`) — it is not a second supported
