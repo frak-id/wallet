@@ -393,9 +393,10 @@ internal class SharingHost private constructor(
                 //
                 // The pool goes with it: `acquire` may have marked its view lent before the throw,
                 // and a pool that thinks a sheet is holding its view hands every later session a
-                // cold one forever.
-                pool?.destroy()
-                pool = null
+                // cold one forever. `this.pool`, not `pool`: the local above shadows the field,
+                // and it is the field a later `poolOrNull()` reads to decide whether to rebuild.
+                pool.destroy()
+                this.pool = null
                 finish(
                     SharingResult.Failed(
                         FrakError.Decoding("the sharing web view could not be created", unavailable),
