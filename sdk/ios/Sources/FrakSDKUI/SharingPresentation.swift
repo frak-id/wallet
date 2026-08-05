@@ -130,7 +130,7 @@
 
     /// Owns the share surface's warm view pool and whatever session is currently up.
     ///
-    /// The iOS twin of Android's `FrakSharingLauncher`, with one structural difference: a
+    /// The iOS twin of Android's `SharingHost`, with one structural difference: a
     /// merchant flips a `Binding<Bool>` rather than calling a method, so "the tap" is the update
     /// in which `isPresented` becomes true. `launch` is idempotent so the sheet's own `onAppear`
     /// can re-ask without risk if that update ever lands after the sheet is built.

@@ -104,9 +104,9 @@ internal class SharingPresentation(
 
             val state =
                 SharingSheetState(
-                    // The launcher's scope, not the sheet's: an in-flight track() or share()
+                    // The host's scope, not the sheet's: an in-flight track() or share()
                     // outlives the sheet that started it, and the build must survive the sheet
-                    // being recomposed.
+                    // being recomposed — or destroyed and rebuilt by a rotation.
                     scope = scope,
                     context = context,
                     sessionId = sessionId,

@@ -129,8 +129,21 @@ internal class SharingHost private constructor(
 
     private var pool: SharingWebViewPool? = null
 
-    /** Set once [warmSharingData] has been started, so repeated `warm()` calls are free. */
+    /**
+     * Whether [warm] has ever been asked for, as opposed to having run.
+     *
+     * The two differ because [warm] cannot do anything without an attached Activity, and the
+     * Compose build site's `LaunchedEffect` is not ordered against [attach] by anything stronger
+     * than composition order. Remembering the *request* means an early `warm()` is picked back up
+     * by the next attach rather than silently lost.
+     */
+    private var warmRequested = false
+
+    /** Set once [resolveWarmUrl] has been started, so repeated `warm()` calls are free. */
     private var warmStarted = false
+
+    /** What [resolveWarmUrl] answered, held until there is an Activity to boot a view against. */
+    private var warmUrl: String? = null
 
     private var dialog: ComponentDialog? = null
     private var composeView: ComposeView? = null
@@ -171,6 +184,15 @@ internal class SharingHost private constructor(
      */
     private var pendingResult: SharingResult? = null
 
+    /**
+     * The user asked the sheet to leave and the animation has not landed yet.
+     *
+     * Kept on the host rather than in the composition because that 180ms window is long enough to
+     * rotate in: the composition and its `Animatable` would die mid-exit, and [attach] would
+     * cheerfully put the sheet back on screen having reported nothing.
+     */
+    private var exitRequested = false
+
     /** Set by [onOwnerCleared]. The screen is really gone; refuse everything. */
     private var cleared = false
 
@@ -188,6 +210,10 @@ internal class SharingHost private constructor(
      * With two [FrakSharing] instances on one Activity a replayed result reaches whichever of them
      * built first. Delivering it to the wrong callback is a worse outcome than delivering it to the
      * right one and a much better outcome than dropping it.
+     *
+     * Must be called from `onCreate` or later. `ComponentActivity.getViewModelStore()` throws
+     * before the framework has attached the `Application`, which is the whole of the Activity's
+     * constructor — see [FrakSharing.Builder.build].
      */
     @MainThread
     fun attach(
@@ -210,10 +236,19 @@ internal class SharingHost private constructor(
             if (dialog == null) show(resumed, heightFraction, animateIn = false)
         }
 
+        // Posted, never inline. This runs from `build(...)`, which a Compose caller reaches from
+        // inside a composition — and merchant code that writes state it has already read this frame
+        // is exactly what a re-entrant call from there produces.
         pendingResult?.let { pending ->
             pendingResult = null
-            callback.onResult(pending)
+            // Re-checked inside the post: a fast rotate-rotate can destroy this Activity before the
+            // message runs, and reporting into a screen that is already gone is what the buffer
+            // exists to avoid.
+            mainHandler.post { if (!cleared && this.activity === activity) callback.onResult(pending) }
         }
+        // Either picks up a `warm()` that arrived before there was an Activity to build a view
+        // against, or boots the pool against a URL that resolved during the rotation gap.
+        if (warmRequested) warm()
     }
 
     /**
@@ -228,14 +263,59 @@ internal class SharingHost private constructor(
      *
      * Cheap to call repeatedly, and a no-op before `Frak.initialize` — a later call still warms.
      * Survives a rotation: the second Activity's `warm()` finds the work already done.
+     *
+     * The identity and config reads and the pool's own boot are separated ([resolveWarmUrl] answers
+     * a URL rather than warming). Those reads suspend on the network, so the continuation can land
+     * in the gap between one Activity's `onDestroy` and the next one's `attach` — and booting the
+     * pool there would construct the `WebView` against the application context, which is precisely
+     * the thing [webViewContext] exists to prevent. The URL is held and applied by [applyWarmUrl]
+     * once there is an Activity to build against.
      */
     @MainThread
     fun warm() {
         if (cleared) return
-        val pool = poolOrNull() ?: return
-        if (warmStarted) return
+        warmRequested = true
+        // Nothing to construct a themed, windowed web view against yet. [attach] re-drives this.
+        if (activity == null) return
+        if (warmStarted) {
+            applyWarmUrl()
+            return
+        }
         warmStarted = true
-        scope.launch { warmSharingData(pool, appContext.packageName) }
+        scope.launch {
+            val url = resolveWarmUrl(appContext.packageName)
+            if (url == null) {
+                // Preloading off, `Frak.initialize` not run yet, or the config/identity reads did
+                // not answer. Un-latched deliberately: `present()`'s own late `warm()` should get
+                // another go rather than inherit a failure the user never saw.
+                warmStarted = false
+                return@launch
+            }
+            warmUrl = url
+            applyWarmUrl()
+        }
+    }
+
+    /**
+     * Boots the pool against the resolved warm URL, if there is an Activity to build the view
+     * against. Re-driven from [attach], which is the other end of the gap described on [warm].
+     */
+    private fun applyWarmUrl() {
+        val url = warmUrl ?: return
+        if (cleared || activity == null) return
+        try {
+            poolOrNull()?.warm(url)
+        } catch (unavailable: Exception) {
+            // Constructing a `WebView` throws on a device whose WebView provider is missing,
+            // disabled or mid-update. Reachable here from `attach` — i.e. synchronously out of the
+            // merchant's `onCreate` — and from `warm`'s coroutine, which has no exception handler
+            // between it and the thread's default one. Neither is a place to take a process down
+            // for a preload nobody asked for. `present()` reports the same failure properly, if
+            // the user ever gets that far.
+            warmUrl = null
+            warmStarted = false
+            pool = null
+        }
     }
 
     /**
@@ -264,7 +344,8 @@ internal class SharingHost private constructor(
             sharingPresentDecision(
                 hostDestroyed = cleared || activity == null,
                 hostUnavailable = activity != null && (activity.isFinishing || activity.isDestroyed),
-                lifecycleStarted = activity != null && activity.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED),
+                lifecycleStarted =
+                    activity != null && activity.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED),
                 sessionActive = active != null,
             )
         when (decision) {
@@ -284,6 +365,7 @@ internal class SharingHost private constructor(
         this.callback = callback
         this.heightFraction = heightFraction
         active = request
+        exitRequested = false
 
         val pool = poolOrNull()
         if (pool == null) {
@@ -295,7 +377,32 @@ internal class SharingHost private constructor(
 
         // Before the window exists, which is the whole point of the split: the page load is in
         // flight by the time the dialog starts building its own. See [SharingPresentation].
-        val started = SharingPresentation.start(pool, appContext, scope, request, ::finish)
+        //
+        // Guarded, because the first thing this does is construct a `WebView`, and that throws on
+        // a device whose WebView provider is missing, disabled or mid-update. Unguarded it would
+        // propagate into the merchant's click handler with `active` already set, so every later
+        // `present()` on this screen would answer `AlreadyPresenting` for a sheet that never opened.
+        val started =
+            try {
+                SharingPresentation.start(pool, appContext, scope, request, ::finish)
+            } catch (unavailable: Exception) {
+                // Almost always a missing/disabled/updating WebView provider. `Decoding` is the
+                // least-wrong arm of the existing `FrakError` hierarchy — there is no
+                // `WebViewUnavailable`, and adding one is `05-build-and-release.md` Q1's business,
+                // not this change's. The cause is carried so the real class name survives.
+                //
+                // The pool goes with it: `acquire` may have marked its view lent before the throw,
+                // and a pool that thinks a sheet is holding its view hands every later session a
+                // cold one forever.
+                pool?.destroy()
+                pool = null
+                finish(
+                    SharingResult.Failed(
+                        FrakError.Decoding("the sharing web view could not be created", unavailable),
+                    ),
+                )
+                return
+            }
         // `start` can report terminally before it returns — `prepare`'s catch-all and the tier-3
         // fallback both can — in which case [finish] has already run and there is nothing to show.
         // Its pooled view would otherwise stay lent for the life of the process.
@@ -318,6 +425,10 @@ internal class SharingHost private constructor(
     @MainThread
     private fun requestExit() {
         if (active == null) return
+        // The sheet sets this too, from its own three dismissal routes (scrim tap, drag, the
+        // TalkBack dismiss action). Set here as well because a back press that arrives before the
+        // composition has read the signal would otherwise leave it unset.
+        exitRequested = true
         exitSignal.intValue++
     }
 
@@ -346,6 +457,7 @@ internal class SharingHost private constructor(
                             heightFraction = heightFraction,
                             exitSignal = exitSignal.intValue,
                             animateIn = animateIn,
+                            onExitStarted = { exitRequested = true },
                         )
                     }
                 }
@@ -354,7 +466,9 @@ internal class SharingHost private constructor(
         // ComponentDialog, not Dialog: `setContentView` runs `initializeViewTreeOwners()`, which
         // is what gives the ComposeView above the `ViewTreeLifecycleOwner` and
         // `ViewTreeSavedStateRegistryOwner` that `AbstractComposeView` requires. It also brings an
-        // `OnBackPressedDispatcher`, so predictive back works without a raw `onBackPressed`.
+        // `OnBackPressedDispatcher`, so back is routed the modern way rather than through a raw
+        // `onBackPressed`. Only `handleOnBackPressed` is implemented — there is no back *progress*
+        // animation on API 34+; the sheet plays its own exit at commit.
         //
         // A platform translucent theme, not the merchant's `android:dialogTheme`: every standard
         // dialog theme sets `windowIsFloating`, which shrink-wraps the decor and would defeat the
@@ -418,7 +532,8 @@ internal class SharingHost private constructor(
             callback = null
             val finished = presentation
             presentation = null
-            dismissDialog()
+            exitRequested = false
+            dismissDialog(finished)
             finished?.dispose()
             if (reported != null) {
                 reported.onResult(result)
@@ -438,7 +553,13 @@ internal class SharingHost private constructor(
         onMainThread { callback.onResult(result) }
     }
 
-    private fun dismissDialog() {
+    /**
+     * @param detaching the session whose web view has to leave the view tree, when there is one.
+     *   Passed rather than read off [presentation], because [finish] nulls that field before it
+     *   gets here — and the detach is only a no-op on that path by accident of
+     *   `SharingWebViewPool.release` also removing the view.
+     */
+    private fun dismissDialog(detaching: SharingPresentation? = presentation) {
         val current = dialog
         dialog = null
         val content = composeView
@@ -452,7 +573,7 @@ internal class SharingHost private constructor(
         // Compose removes the web view when the `AndroidView` leaves composition, but only via
         // that path. `WebView.destroy` and re-parenting both require it to be out of the tree, and
         // the next Activity re-attaches this very instance.
-        presentation?.detachView()
+        detaching?.detachView()
     }
 
     /**
@@ -471,13 +592,24 @@ internal class SharingHost private constructor(
     override fun onDestroy(owner: LifecycleOwner) {
         val current = activity
         val changingConfigurations = current?.isChangingConfigurations == true
-        dismissDialog()
+        // Dropped *before* the report below, not after. On a rotation the outgoing Activity is
+        // past `onSaveInstanceState`, so a result delivered to it lands in state that will never be
+        // persisted; buffering it instead means the recreated screen actually learns the outcome.
+        if (changingConfigurations) callback = null
+        if (exitRequested && active != null) {
+            // The user pressed back or flung the sheet away and the exit animation had not landed.
+            // The composition is about to die with it, so nothing would ever report — and [attach]
+            // would put the sheet back on screen for a session the user has already dismissed.
+            // `finish` dismisses the dialog itself; the teardown below still has to run.
+            finish(SharingResult.Dismissed)
+        } else {
+            dismissDialog()
+        }
         current?.lifecycle?.removeObserver(this)
         activity = null
         // The load-bearing line for the leak: a retained WebView must not keep a destroyed
         // Activity as its context.
         webViewContext.baseContext = appContext
-        if (changingConfigurations) callback = null
     }
 
     /**
@@ -494,19 +626,23 @@ internal class SharingHost private constructor(
         pool?.destroy()
         pool = null
         warmStarted = false
+        warmUrl = null
+        pendingResult = null
         // Reports whatever the session reached, or a dismissal, through `abandon()`.
         presentation?.dispose()
-        presentation = null
-        active = null
-        callback = null
-        pendingResult = null
         // After `dispose()`: `abandon()` defers to any attribution still in flight, and cancelling
-        // first would take the deferral with it.
+        // first would take the deferral with it. The cancellation itself then runs those
+        // coroutines' `finally` blocks, which is what finally reports.
         scope.cancel()
+        // `active`, `presentation` and `callback` are deliberately NOT cleared here. A deferred
+        // attribution reports through [finish], which early-returns on `active == null` — so
+        // clearing them would drop the outcome of a share the user actually completed, which is
+        // the exact failure `abandon()`'s counter exists to prevent. Nothing references this host
+        // after `SharingViewModel.onCleared` nulls it, so holding them costs nothing.
     }
 
     private fun onMainThread(block: () -> Unit) {
-        if (Looper.myLooper() == Looper.getMainLooper()) block() else mainHandler.post(block)
+        if (Looper.myLooper() == Looper.getMainLooper()) block() else mainHandler.post { block() }
     }
 
     companion object {
@@ -520,16 +656,13 @@ internal class SharingHost private constructor(
          * and clears exactly when the screen is really gone.
          */
         @MainThread
-        fun of(
-            activity: ComponentActivity,
-            callback: FrakSharing.ResultCallback,
-        ): SharingHost {
+        fun of(activity: ComponentActivity): SharingHost {
+            // Throws `IllegalStateException` if called before `onCreate` — an Activity has no
+            // `Application`, and therefore no `ViewModelStore`, until the framework attaches it.
+            // See [FrakSharing.Builder.build], which says so where a merchant will read it.
             val retained = ViewModelProvider(activity)[SharingViewModel::class.java]
-            val host =
-                retained.host
-                    ?: SharingHost(activity.applicationContext).also { retained.host = it }
-            host.attach(activity, callback)
-            return host
+            return retained.host
+                ?: SharingHost(activity.applicationContext).also { retained.host = it }
         }
     }
 }
@@ -581,6 +714,11 @@ internal fun sharingPresentDecision(
  * Always dispatches, never runs inline. That matches what `rememberCoroutineScope()` did here
  * before — its dispatcher drives work from the choreographer frame callback, so nothing launched
  * on it ever ran synchronously either.
+ *
+ * Implements neither `Delay` nor `MonotonicFrameClock`, which the dispatcher it replaced did carry.
+ * Nothing on this scope uses `delay`/`withTimeout` (the sheet's own budgets run on `workContext`,
+ * i.e. `Dispatchers.Default`) or `withFrameNanos`. Moving an `Animatable` onto this scope would
+ * hang; do not.
  */
 internal object MainThreadDispatcher : CoroutineDispatcher() {
     private val handler = Handler(Looper.getMainLooper())

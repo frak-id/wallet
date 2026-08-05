@@ -1051,7 +1051,7 @@ class SharingSheetStateTest {
     /**
      * The sheet's teardown racing an outcome that has not landed yet.
      *
-     * [SharingSheetState.share] and friends run on the launcher's scope, not the sheet's, so a
+     * [SharingSheetState.share] and friends run on the host's scope, not the sheet's, so a
      * chooser outlives the sheet that raised it by design. A dismissal reported into that window
      * would beat the share to `finish`'s compare-and-set, and the real outcome would be dropped —
      * not out-ranked by significance, dropped, because the losing `finish` returns before it can

@@ -5,8 +5,10 @@ import android.content.ContextWrapper
 import androidx.activity.ComponentActivity
 import androidx.annotation.MainThread
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import id.frak.sdk.sharing.SharingRequest
 
@@ -16,8 +18,13 @@ import id.frak.sdk.sharing.SharingRequest
  * Built once per screen and kept, not built per share:
  *
  * ```kotlin
- * // Activity / XML / Java — in onCreate
- * private val sharing = FrakSharing.Builder(::onShareResult).build(this)
+ * // Activity / XML / Java
+ * private lateinit var sharing: FrakSharing
+ *
+ * override fun onCreate(savedInstanceState: Bundle?) {
+ *     super.onCreate(savedInstanceState)
+ *     sharing = FrakSharing.Builder(::onShareResult).build(this)
+ * }
  *
  * // when a share affordance becomes visible
  * sharing.warm()
@@ -25,6 +32,11 @@ import id.frak.sdk.sharing.SharingRequest
  * // on the tap
  * sharing.present(request)
  * ```
+ *
+ * `build(activity)` genuinely has to be inside `onCreate`, not a property initialiser: an
+ * Activity has no `Application` — and therefore no `ViewModelStore`, which is where a sheet that
+ * survives a rotation lives — until the framework attaches one, which happens after the
+ * constructor has run.
  *
  * ```kotlin
  * // Compose — warms on composition-enter, so warm() never has to be called by hand
@@ -57,6 +69,16 @@ public class FrakSharing internal constructor(
      * Always invoked on the main thread: the session's own work runs off it (see
      * `SharingSheetState`'s `workContext`), and a callback that touched a View or Compose state
      * from there would crash. [SharingHost] hops before calling this.
+     *
+     * **Can arrive after the hosting Activity is destroyed, and after `onSaveInstanceState`.**
+     * A share the user completed outlives the sheet on purpose — the OS chooser is a different
+     * Activity and the user can leave from it — so this reports what happened even when there is
+     * no screen left to report it to. Write it defensively: no view access without a null/state
+     * check, and nothing that assumes a `FragmentManager` still accepts transactions.
+     *
+     * Should be a *stable* reference. When the `Builder` is `remember`ed (the documented Compose
+     * idiom) the callback is captured with it, so a method reference on a long-lived object is the
+     * right shape and a lambda closing over per-frame state is not.
      */
     public fun interface ResultCallback {
         @MainThread
@@ -104,16 +126,32 @@ public class FrakSharing internal constructor(
         /**
          * The Activity that will host the sheet's window.
          *
-         * Call from `onCreate`, unconditionally and on every creation — including the one that
-         * follows a rotation, which is where a sheet that was up before it gets picked back up.
+         * Call from `onCreate` — after `super.onCreate(...)` — unconditionally and on every
+         * creation, including the one that follows a rotation, which is where a sheet that was up
+         * before it gets picked back up.
+         *
+         * **Not** from a property initialiser. Those run in the Activity's constructor, before the
+         * framework has attached the `Application`, and `ComponentActivity.getViewModelStore()`
+         * throws there. The sheet's retained state lives on that store (it is what carries a live
+         * sheet across a rotation), so there is nowhere for this to put it that early.
          *
          * Nothing here touches the network or boots a web view; that is [warm]'s job, and it is
          * separate precisely so a single-Activity app does not pay for a share surface the user may
          * never reach.
+         *
+         * @throws IllegalStateException if called before the Activity reaches `onCreate`.
          */
         @MainThread
-        public fun build(activity: ComponentActivity): FrakSharing =
-            FrakSharing(SharingHost.of(activity, callback), heightFraction, callback)
+        public fun build(activity: ComponentActivity): FrakSharing {
+            check(activity.application != null) {
+                "FrakSharing.Builder.build(activity) must be called from onCreate or later, not " +
+                    "from a property initialiser: an Activity has no ViewModelStore until the " +
+                    "framework attaches its Application."
+            }
+            val host = SharingHost.of(activity)
+            host.attach(activity, callback)
+            return FrakSharing(host, heightFraction, callback)
+        }
 
         /**
          * The Compose build site. Warms on composition-enter, so a Compose caller never sees
@@ -121,14 +159,34 @@ public class FrakSharing internal constructor(
          * is the earliest honest moment to start warming.
          *
          * The hosting Activity is resolved from the composition's `LocalContext`.
+         *
+         * The callback is read through `rememberUpdatedState` rather than frozen at the first
+         * composition. That covers a caller who writes `FrakSharing.Builder { … }.build()` — a
+         * fresh `Builder` and a fresh lambda every composition — whose *first* lambda would
+         * otherwise be called, with all of its captures, for the life of the screen.
+         *
+         * It does **not** cover the documented `remember { Builder(cb) }` idiom, where the
+         * `Builder` and therefore the callback are pinned by the merchant's own `remember`. That is
+         * why the documentation shows a method reference there: see [ResultCallback], which asks
+         * for a stable one. The deleted `rememberFrakSharingLauncher` took the lambda as a direct
+         * composable parameter and so had no equivalent hole; this shape trades that for a callback
+         * that also works from Java and from `onCreate`.
          */
         @Composable
         public fun build(): FrakSharing {
             val activity = LocalContext.current.findComponentActivity()
-            val sharing =
-                remember(activity, heightFraction) {
-                    FrakSharing(SharingHost.of(activity, callback), heightFraction, callback)
-                }
+            val current = rememberUpdatedState(callback)
+            val stable = remember { ResultCallback { result -> current.value.onResult(result) } }
+            val host = remember(activity) { SharingHost.of(activity) }
+            // An effect, not the `remember` calculation above: `attach` registers a lifecycle
+            // observer, can show a dialog for a session resumed across a rotation, and can replay a
+            // buffered result into merchant code. A `remember` calculation runs during composition
+            // and is not rolled back when a composition is abandoned; none of that belongs there.
+            DisposableEffect(host, stable) {
+                host.attach(activity, stable)
+                onDispose { }
+            }
+            val sharing = remember(host, heightFraction, stable) { FrakSharing(host, heightFraction, stable) }
             LaunchedEffect(sharing) { sharing.warm() }
             return sharing
         }
@@ -166,9 +224,9 @@ public class FrakSharing internal constructor(
 /**
  * Walks the `ContextWrapper` chain to the hosting Activity.
  *
- * A `LocalContext` inside a Compose tree is usually the Activity itself, but it is wrapped by
- * anything that themes a subtree (`ContextThemeWrapper`) and by the SDK's own
- * `MutableContextWrapper` around the pooled web view.
+ * A `LocalContext` inside a Compose tree is usually the Activity itself, but anything that themes
+ * a subtree wraps it in a `ContextThemeWrapper` — `MaterialTheme`'s own dynamic-colour path and
+ * `androidx.appcompat`'s view inflation both do.
  */
 private fun Context.findComponentActivity(): ComponentActivity {
     var current: Context = this

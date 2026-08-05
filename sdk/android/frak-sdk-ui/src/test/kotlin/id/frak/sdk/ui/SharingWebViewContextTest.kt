@@ -66,9 +66,13 @@ class SharingWebViewContextTest {
     }
 
     /**
-     * The substantive half of the rotation promise: across a release and a re-acquire — which is
-     * what a configuration change does to the pooled view — the `WebView` instance is the same
-     * one. Its DOM, its JS heap and its in-flight session are therefore untouched.
+     * The pool never re-creates a view it still owns: a release and a re-acquire — what the *end
+     * of a session* does — hands back the same instance.
+     *
+     * Not the rotation path, which is different and untested: a configuration change goes through
+     * `SharingPresentation.detachView()` and leaves the handle lent, so the view never returns to
+     * the pool at all. This is the closest deterministic proxy for "the `WebView` instance is
+     * stable", which is what the rotation promise rests on.
      */
     @Test
     fun `the same web view instance survives a release and re-acquire`() {
@@ -80,7 +84,7 @@ class SharingWebViewContextTest {
         pool.release(first)
         val second = pool.acquire(binding())
 
-        assertSame("a rotation must never re-create the web view", first.view, second.view)
+        assertSame("the pool must never re-create a view it still owns", first.view, second.view)
     }
 
     private companion object {

@@ -127,11 +127,12 @@ class MainActivity : ComponentActivity() {
      * have used the `@Composable build()`, but the XML/Java path is the one nothing has ever
      * exercised. Driving the harness through it is the only pressure this repo puts on it.
      *
-     * A property initialiser, not `onCreate`. `SharingHost` is built to survive that (it resolves
-     * the application context lazily, because an Activity has none until the framework attaches
-     * its base context) and it is the idiom a merchant will reach for first.
+     * `lateinit` + `onCreate`, not a property initialiser. Property initialisers run in the
+     * Activity's constructor, before the framework has attached the `Application` — and
+     * `build(activity)` needs the `ViewModelStore`, which does not exist that early. It says so,
+     * and now throws a legible `IllegalStateException` if anyone tries.
      */
-    private val sharing = FrakSharing.Builder(::logSharingResult).build(this)
+    private lateinit var sharing: FrakSharing
 
     private val logs = mutableStateListOf<LogEntry>()
     private var catalogReward by mutableStateOf<CatalogRewardLookup>(CatalogRewardLookup.Loading)
@@ -147,6 +148,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        sharing = FrakSharing.Builder(::logSharingResult).build(this)
 
         Frak.initialize(
             context = applicationContext,

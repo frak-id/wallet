@@ -332,7 +332,7 @@ class SharingWebViewPoolTest {
 
         /**
          * The pool no longer builds this itself: the URL worth warming carries the real
-         * merchantId, which only exists once the config resolves. See `warmSharingData`.
+         * merchantId, which only exists once the config resolves. See `resolveWarmUrl`.
          */
         const val WARM_URL =
             "$WALLET_ORIGIN/sharing?embed=native&state=warm&merchantId=m1&clientId=c1&sid=warm"

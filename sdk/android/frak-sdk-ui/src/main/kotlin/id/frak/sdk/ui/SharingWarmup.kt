@@ -28,46 +28,52 @@ import id.frak.sdk.core.FrakError
  * Started by [FrakSharing.warm], not by construction — see that method for why the two are
  * separate. Was a `@Composable` whose `LaunchedEffect` tied warming to a *screen*; it is a plain
  * suspend function now so a merchant on XML or Java can reach it too.
+ *
+ * Answers a URL rather than warming the pool itself, and that separation is load-bearing. Both
+ * reads here suspend on the network, so this coroutine's continuation can land at any point —
+ * including the gap between an Activity being destroyed by a rotation and its replacement
+ * attaching. Booting the pool from in here would construct the `WebView` in that gap, against the
+ * application context, and a `WebView` resolves its theme, inflater and popup host at construction.
+ * [SharingHost] holds the answer until it has an Activity to build against.
  */
-internal suspend fun warmSharingData(
-    pool: SharingWebViewPool,
-    packageId: String,
-) {
-    if (!Frak.isInitialized) return
-    if (!Frak.preloadSharing) return
+internal suspend fun resolveWarmUrl(packageId: String): String? {
+    if (!Frak.isInitialized) return null
+    if (!Frak.preloadSharing) return null
 
     val trace = SharingTrace()
     val client = Frak.client
     val walletOrigin = client.environment.wallet
 
-    // The keystore mint is already eager at initialize; awaiting it here only guarantees the
-    // sheet's own read lands on a completed Deferred rather than joining one in flight.
-    val clientId = client.anonymousId()
-    trace.mark("warm identity ready")
-
-    val config =
+    // Both reads inside the same guard. A warm-up that fails is not a failure: the sheet
+    // re-resolves and carries its own tier-3 fallback for the case where that fails too. It is
+    // also not somewhere to throw from — this runs on a scope with no exception handler between it
+    // and the merchant's process, and `Frak.shutdown()` mid-warm reaches `anonymousId` as readily
+    // as it reaches the config resolve.
+    val identity =
         try {
-            client.config.resolve()
+            // The keystore mint is already eager at initialize; awaiting it here only guarantees
+            // the sheet's own read lands on a completed Deferred rather than joining one in flight.
+            val clientId = client.anonymousId()
+            trace.mark("warm identity ready")
+            clientId to client.config.resolve()
         } catch (unavailable: FrakError) {
-            // A warm-up that fails is not a failure: the sheet re-resolves and carries its own
-            // tier-3 fallback for the case where that fails too.
             null
         }
     trace.mark("warm config ready")
+    val clientId = identity?.first
+    val config = identity?.second
 
     // Without both halves of the identity the page would render nothing, and warming a page
     // that renders nothing banks only DNS/TLS/bundle — not the queries, which are the
     // expensive part. Better to leave the view cold and let the sheet do a full load.
-    if (config == null || clientId == null) return
+    if (config == null || clientId == null) return null
 
-    pool.warm(
-        SharingPageUrl.warm(
-            walletOrigin = walletOrigin,
-            merchantId = config.merchantId,
-            clientId = clientId,
-            packageId = packageId,
-            appName = config.sdkConfig?.name ?: config.name,
-            logoUrl = config.sdkConfig?.logoUrl,
-        ),
+    return SharingPageUrl.warm(
+        walletOrigin = walletOrigin,
+        merchantId = config.merchantId,
+        clientId = clientId,
+        packageId = packageId,
+        appName = config.sdkConfig?.name ?: config.name,
+        logoUrl = config.sdkConfig?.logoUrl,
     )
 }

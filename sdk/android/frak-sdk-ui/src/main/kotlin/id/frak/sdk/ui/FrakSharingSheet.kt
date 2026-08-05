@@ -71,6 +71,11 @@ import kotlinx.coroutines.launch
  * @param animateIn false when this composition is replacing one a configuration change destroyed.
  *   The sheet was already on screen before the rotation, so sliding it up again would announce an
  *   arrival that did not happen.
+ * @param onExitStarted called the moment any of the four dismissal routes begins its animation.
+ *   The animation runs for [DISMISS_MILLIS] before anything is reported, and that window is long
+ *   enough to rotate in — at which point this composition and its `Animatable` die mid-flight and
+ *   nothing would ever report. [SharingHost] holds the fact that an exit was asked for, so it can
+ *   finish the session itself rather than putting the sheet back on screen.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +84,7 @@ internal fun FrakSharingSheet(
     heightFraction: Float,
     exitSignal: Int,
     animateIn: Boolean,
+    onExitStarted: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val state = presentation.state
@@ -126,7 +132,7 @@ internal fun FrakSharingSheet(
     // 0 is "no exit requested" — the host resets it to 0 between sessions, and a fresh
     // composition starts there too.
     LaunchedEffect(exitSignal) {
-        if (exitSignal > 0) exit(offset, state)
+        if (exitSignal > 0) exit(offset, state, onExitStarted)
     }
 
     Box(
@@ -151,7 +157,7 @@ internal fun FrakSharingSheet(
                 Modifier
                     .matchParentSize()
                     .pointerInput(Unit) {
-                        detectTapGestures { scope.launch { exit(offset, state) } }
+                        detectTapGestures { scope.launch { exit(offset, state, onExitStarted) } }
                     }.clearAndSetSemantics { },
         )
 
@@ -178,7 +184,7 @@ internal fun FrakSharingSheet(
                     // `ModalBottomSheet` used to supply here.
                     .semantics {
                         dismiss {
-                            scope.launch { exit(offset, state) }
+                            scope.launch { exit(offset, state, onExitStarted) }
                             true
                         }
                     },
@@ -222,9 +228,11 @@ internal fun FrakSharingSheet(
                     }
                 },
                 onDragStopped = { velocity ->
-                    val flung = velocity > DISMISS_VELOCITY_PX_PER_SECOND
+                    // Guarded like onDrag: an unmeasured sheet has no distance to compare a fling
+                    // against, and dismissing one is not something a user can have asked for.
+                    val flung = sheetHeightPx > 0 && velocity > DISMISS_VELOCITY_PX_PER_SECOND
                     if (flung || offset.value > DISMISS_FRACTION) {
-                        exit(offset, state)
+                        exit(offset, state, onExitStarted)
                     } else {
                         offset.animateTo(0f, spring())
                     }
@@ -246,7 +254,11 @@ internal fun FrakSharingSheet(
 private suspend fun exit(
     offset: Animatable<Float, AnimationVector1D>,
     state: SharingSheetState,
+    onExitStarted: () -> Unit,
 ) {
+    // Before the animation, not after: the whole point is that the host knows an exit is in
+    // progress while it is still in progress.
+    onExitStarted()
     offset.animateTo(1f, tween(DISMISS_MILLIS))
     state.dismiss()
 }

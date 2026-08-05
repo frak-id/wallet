@@ -266,7 +266,7 @@ internal class SharingSheetState(
     @Volatile
     private var deadlineExpired = false
 
-    /** Guards [prepare], which is started from composition rather than an effect. */
+    /** Guards [prepare]; see it for why once-only is a property here rather than a convention. */
     private val prepareStarted = AtomicBoolean(false)
 
     /** Guards [loadSessionUrl] so the session's page is navigated to exactly once. */
@@ -288,7 +288,11 @@ internal class SharingSheetState(
     /** The hop back to the web view's own thread from [workContext]. See [loadSessionUrl]. */
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    /** Idempotent: the sheet starts this during composition, so a recomposition must not re-enter it. */
+    /**
+     * Idempotent. Started by [SharingPresentation.start] from the merchant's click handler, before
+     * any sheet exists — the whole point of the split — so nothing in the composition can re-enter
+     * it, and a rotation that rebuilds the composition must not restart the session's build.
+     */
     fun prepare(request: SharingRequest) {
         if (!prepareStarted.compareAndSet(false, true)) return
         scope.launch(workContext) {
