@@ -76,24 +76,8 @@
     waitForBackendConfig: false,
   };
 
-  // Base config for the modals (not rly used for client side stuff)
-  const baseModalConfig = {
-    login: {
-      allowSso: true,
-      ssoMetadata: {
-        logoUrl,
-        homepageLink: window.location.host,
-      },
-    },
-  };
-
-  // Sharing config
-  const sharingConfig = { link: window.location.href };
-
   window.FrakSetup = {
     config: frakConfig,
-    modalConfig: baseModalConfig,
-    modalShareConfig: sharingConfig,
   };
 
   // Store merchantId in sessionStorage for the checkout pixel fallback

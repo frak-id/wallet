@@ -60,7 +60,6 @@ export {
     type FreshSdkResult,
     formatCurrency,
     getErrorCode,
-    getErrorStatus,
     getFromLocalStorage,
     getInvoke,
     getOrCreateSessionId,
@@ -157,7 +156,6 @@ export {
     getOriginPairingClient,
     getTargetPairingClient,
     isPairingNotFoundError,
-    isPairingSignatureError,
     LaunchPairing,
     type OnPairingSuccessCallback,
     type OriginPairingClient,
@@ -198,7 +196,6 @@ export {
     useRedeemReferralCodeForm,
     useReferralStatus,
     useReplaceReferralCode,
-    useRevokeReferralCode,
     useSuggestReferralCodes,
     useUnredeemReferralCode,
 } from "./referral";
@@ -206,12 +203,10 @@ export {
     buildInstallUrl,
     buildPlayStoreInstallUrl,
     buildSharingLink,
-    CopyIcon,
     clearConfirmation,
     getSavedConfirmation,
     PostShareConfirmation,
     type PostShareConfirmationProps,
-    ShareIcon,
     type SharingActions,
     type SharingChrome,
     type SharingMerchant,
@@ -237,7 +232,6 @@ export {
     recordDistantAuthenticator,
     selectLastAuthenticationAt,
     selectLastAuthenticator,
-    selectLastRemoteAuthenticator,
 } from "./stores/authenticationStore";
 export { clientIdStore } from "./stores/clientIdStore";
 export { detachedPairingSessionStore } from "./stores/detachedPairingSessionStore";

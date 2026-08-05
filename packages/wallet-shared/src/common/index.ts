@@ -83,7 +83,6 @@ export {
     type ApiErrorKeyMap,
     asApiError,
     getErrorCode,
-    getErrorStatus,
     resolveApiErrorKey,
 } from "./api/errors";
 export {

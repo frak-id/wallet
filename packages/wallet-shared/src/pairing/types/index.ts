@@ -6,7 +6,6 @@ export type {
     SignatureRejectReason,
 } from "./errors";
 export {
-    isPairingSignatureError,
     PairingNotReadyError,
     PairingSignatureError,
 } from "./errors";

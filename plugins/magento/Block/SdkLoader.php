@@ -68,15 +68,6 @@ class SdkLoader extends Template
                     "i18n" => new \stdClass(),
                 ],
             ],
-            "modalConfig" => [
-                "login" => [
-                    "allowSso" => true,
-                    "ssoMetadata" => [
-                        "logoUrl" => $this->config->getLogoUrl(),
-                    ],
-                ],
-            ],
-            "modalShareConfig" => new \stdClass(),
             "modalWalletConfig" => [
                 "metadata" => [
                     "position" => $this->config->getWalletButtonPosition() ?? "right",

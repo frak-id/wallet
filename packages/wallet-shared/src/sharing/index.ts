@@ -26,8 +26,6 @@ export type {
 } from "./hooks/useSharingPageController";
 export { useSharingPageController } from "./hooks/useSharingPageController";
 // Icons
-export { Copy as CopyIcon } from "./icons/Copy";
-export { Share as ShareIcon } from "./icons/Share";
 // Query Keys
 export { sharingKey } from "./queryKeys";
 // Utils

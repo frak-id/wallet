@@ -42,7 +42,6 @@ export type {
 } from "./types/errors";
 // Errors
 export {
-    isPairingSignatureError,
     PairingNotReadyError,
     PairingSignatureError,
 } from "./types/errors";

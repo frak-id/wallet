@@ -59,8 +59,6 @@ class SdkLoaderTest extends TestCase
 
         self::assertIsArray($data);
         self::assertArrayHasKey("config", $data);
-        self::assertArrayHasKey("modalConfig", $data);
-        self::assertArrayHasKey("modalShareConfig", $data);
         self::assertArrayHasKey("modalWalletConfig", $data);
         self::assertSame("https://wallet.frak.id", $data["config"]["walletUrl"]);
         self::assertSame("Frak Demo Store", $data["config"]["metadata"]["name"]);

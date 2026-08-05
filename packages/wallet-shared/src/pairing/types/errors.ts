@@ -51,13 +51,6 @@ export class PairingSignatureError extends Error {
     }
 }
 
-/** Type guard — useful at the wagmi/dApp boundary. */
-export function isPairingSignatureError(
-    err: unknown
-): err is PairingSignatureError {
-    return err instanceof PairingSignatureError;
-}
-
 /**
  * Thrown by `OriginPairingClient.ensurePairing` when the client is in
  * a non-recoverable state (`error` after a fatal close, or `retry-error`
