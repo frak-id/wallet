@@ -1,6 +1,7 @@
 package id.frak.sdk.ui
 
 import android.net.Uri
+import android.util.Log
 import android.webkit.WebView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
@@ -88,30 +89,53 @@ internal object SharingHostStyle {
      * Registers [script] for every wallet-origin document this view loads, for the life of the
      * view.
      *
-     * Returns whether it took. False on a WebView older than the API (roughly M96, late 2021),
-     * where the page falls back to square corners on an opaque surface inside a rectangular
-     * sheet: visibly plainer, entirely functional, and not worth an `evaluateJavascript` in
-     * `onPageFinished` to half-fix — that lands after first paint, so it would trade square
-     * corners for a corner that visibly pops a frame late.
+     * Returns whether it took, and says so in the log either way it fails — the return value is a
+     * convenience for tests and for a caller that wants it, never the only signal. A sheet that
+     * quietly loses its corners on one device is exactly the report that arrives as "corners look
+     * wrong on the Samsung" with nothing to go on, so the failure has to be visible without anyone
+     * having thought to read a boolean.
      *
-     * `allowedOriginRules` is the wallet origin alone. The script is inert (it sets two custom
-     * properties), but the sheet's web view has no URL bar, so scoping what it can reach is the
-     * same discipline as [SharingWebViewClient]'s origin pinning.
+     * `Log.w` unconditionally, unlike [SharingTrace]'s tag-gated marks: this is a degradation that
+     * already happened, not a timing measurement someone opts into. It fires at most once per web
+     * view, only on failure.
+     *
+     * False on a WebView older than the API (roughly M96, late 2021), where the page falls back to
+     * square corners on an opaque surface inside a rectangular sheet: visibly plainer, entirely
+     * functional, and not worth an `evaluateJavascript` in `onPageFinished` to half-fix — that
+     * lands after first paint, so it would trade square corners for a corner that visibly pops a
+     * frame late.
+     *
+     * `allowedOriginRules` is the wallet origin alone, reduced by [originRule]. The script is inert
+     * (it sets two custom properties), but the sheet's web view has no URL bar, so scoping what it
+     * can reach is the same discipline as [SharingWebViewClient]'s origin pinning.
      */
     fun install(
         view: WebView,
         walletOrigin: String,
         topRadiusDp: Int,
     ): Boolean {
-        if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) return false
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            Log.w(
+                TAG,
+                "WebView does not support DOCUMENT_START_SCRIPT; the sharing sheet will render " +
+                    "square corners on an opaque surface. Update Android System WebView.",
+            )
+            return false
+        }
+        val rule = originRule(walletOrigin)
         // Translated to a boolean rather than propagated: `addDocumentStartJavaScript` throws
         // `IllegalArgumentException` on an origin rule it cannot parse, and `walletOrigin` is
         // merchant-supplied through `FrakConfig`. A sheet that renders square is a far better
         // answer than one that takes the host app down over a corner radius.
         return runCatching {
-            WebViewCompat.addDocumentStartJavaScript(view, script(topRadiusDp), setOf(originRule(walletOrigin)))
+            WebViewCompat.addDocumentStartJavaScript(view, script(topRadiusDp), setOf(rule))
+        }.onFailure {
+            Log.w(TAG, "Rejected origin rule \"$rule\"; the sharing sheet will render square corners.", it)
         }.isSuccess
     }
+
+    /** Shared with [SharingTrace] so one `adb logcat -s FrakSharing` catches both. */
+    private const val TAG: String = "FrakSharing"
 
     /**
      * [walletOrigin] reduced to what an origin rule may actually contain.

@@ -184,6 +184,42 @@ surface below it. And the sheet's rendered state is no longer reproducible by pa
 a desktop browser — the corners are now invisible in the URL, which is a real debugging loss the
 param did not have.
 
+#### 1.1b The web side had a latent cascade bug that made the radius land nowhere above 768px
+
+Found while landing §1.1a, and it would have made the whole change a no-op on an Android tablet.
+
+`containerChromeless` and `container` are two independent single-class selectors on the same
+element (`clsx(styles.container, chromeless && containerChromeless)`). At equal specificity the
+winner is whichever rule the bundler emitted last, and it emits `sharingPage.css`'s
+`tabletContainerMedia` block *after* `shared.css`'s. Confirmed by reading the emitted bundle rather
+than the source: `containerChromeless`'s tablet rule landed at byte 77989, `sharingPage.css`'s at
+80435. Above the breakpoint the card treatment won and the chromeless variant did nothing.
+
+**Provenance: `504c7e026`, the commit that introduced `containerChromeless` — not the corner-radius
+work, which never touched `shared.css.ts`** (`git show 77cf3e464 --stat -- .../shared.css.ts` is
+empty). It has been inert above 768px in every build since. That was invisible while the variant
+only cancelled things back to their defaults; it becomes fatal the moment the host's radius has to
+win, because a tablet-width sheet then paints a centred, drop-shadowed, all-four-corners card
+floating inside it.
+
+Two fixes, both in `shared.css.ts`:
+
+- `&&` on both `containerChromeless` and the new `overlayChromeless`, doubling the class so the
+  override does not depend on emission order.
+- The tablet block now cancels the **whole** card treatment. It previously cancelled three of
+  `tabletContainerMedia`'s six properties; `height: auto`, `maxHeight: 90dvh` and `margin: auto`
+  were left standing, so even with specificity fixed the sharing screen would float as a card
+  while `/install` — which has no tablet rule at all — stayed full-bleed. The same mid-flow jump
+  §1.1a exists to remove, one breakpoint up.
+
+`overlayChromeless` is new for a related reason: the tablet `overlay` backdrop is
+`rgba(0, 0, 0, 0.4)`, and with the container full-bleed and opaque it is visible *only* through the
+rounded corners — tinting them 40% black instead of showing the host's own scrim.
+
+**No test can catch a repeat.** jsdom does not evaluate custom properties or media queries from
+stylesheets, so nothing in the suite resolves a computed radius. This was found by building the
+wallet and reading the emitted CSS, and that is currently the only way to find it.
+
 ### 1.2 M3 1.4.0 scales the sheet — and therefore the functor — during the open animation, and there is no way to stop it
 
 The sheet's spring is under-damped, and Material3 compensates for the overshoot by scaling:

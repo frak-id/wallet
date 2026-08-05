@@ -51,6 +51,11 @@ export const tabletContainerMedia: StyleRule["@media"] = {
  * tablet's sheet paints a centred, drop-shadowed, all-four-corners card floating
  * inside it. `&&` doubles the class in the selector, which beats one class
  * whatever the emission order turns out to be.
+ *
+ * Inert this way since `504c7e026`, the commit that introduced it — not since the
+ * corner-radius work, which never touched this file. Anyone bisecting corner
+ * behaviour should start there, because every build in between rendered a
+ * chromeless page as a card above 768px.
  */
 export const containerChromeless = style({
     selectors: {

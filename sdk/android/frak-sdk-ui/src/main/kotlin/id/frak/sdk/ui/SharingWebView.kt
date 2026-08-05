@@ -287,6 +287,10 @@ internal fun createSharingWebView(
     // Registered on the view, not per load: it applies to every wallet-origin document this view
     // ever shows, so `/sharing` and the `/install` page the install CTA navigates to are styled
     // by the same rule with nothing to keep in step. See [SharingHostStyle].
+    //
+    // Result deliberately unused: there is nothing to do about a failure here — the page's own CSS
+    // fallbacks are the degraded rendering — and `install` logs it either way, so dropping the
+    // boolean costs no diagnostic.
     SharingHostStyle.install(view = view, walletOrigin = walletOrigin, topRadiusDp = SHEET_CORNER_RADIUS_DP)
 
     return SharingWebViewHandle(view = view, client = client)
