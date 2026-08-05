@@ -46,6 +46,64 @@ so going native later is a non-breaking internal change.
 | Rotation | Android: state survives via `SavedStateHandle`; never re-create the web view |
 | Process death | the continuation is gone. Android can kill the host while the OS chooser is up; tracking is best-effort |
 
+### Presentation (Android)
+
+Two rules, both learned from the device pass that followed the chromeless redesign.
+
+**Gesture ownership is explicit.** The sheet presents with `sheetGesturesEnabled = false`.
+M3 makes the whole sheet draggable, which put it in a permanent race with the web view for
+every vertical drag, and no heuristic on the native side can settle it: the hosted page
+scrolls an inner `height: 100dvh; overflow-y: auto; overscroll-behavior: contain` container,
+so the WebView's own scroll offset never moves, `canScrollVertically` is always false, and
+nested scroll never reaches Compose. So the page gets every gesture that lands on it, and the
+sheet is dragged only from `SharingSheetGrabStrip` — a 44dp Compose hit target stacked above
+the `AndroidView`, which the web view therefore never sees. Dragging translates the content
+(the container is transparent, so that *is* the sheet) and releases past a distance or
+velocity threshold into a dismiss.
+
+If the page ever moves to document scroll in native mode, delete all of this: `AndroidViewHolder`
+is a `NestedScrollingParent3` and `WebView` a `NestedScrollingChild`, so the correct
+at-top-drags-the-sheet behaviour comes for free.
+
+**The warm web view is the real one.** `preloadSharing` used to warm a throwaway view for
+DNS/TLS/engine only; the sheet still booted a fresh WebView at tap time and — worse — did not
+create it until `buildLink`/`resolveConfig` had resolved, then swapped the spinner for a blank
+white WebView for the whole page load. `SharingWebViewPool` now lends the warmed view to the
+sheet and takes it back on close, and `SharingSheetSkeleton` is stacked *over* the view until
+first paint (`postVisualStateCallback`, not `onPageFinished`, which for a React app is still a
+blank frame). A pooled view is bound to a session by `SharingWebViewHandle.bind`; the client
+ignores callbacks from a navigation started under a previous binding, which is what keeps a
+warm load completing after tap from cancelling the tier-3 deadline.
+
+**The session starts at the tap, not at the sheet.** `SharingPresentation.start` runs inside
+`FrakSharingLauncher.launch`, on the merchant's click handler, while Main is still idle: it takes
+the pooled view, attaches it, starts the build off-thread (`Dispatchers.Default`) and issues the
+navigation itself. Only then does `active` change and the sheet compose. `FrakSharingSheet` is
+purely presentational — it creates nothing and owns nothing but teardown.
+
+That shape is forced by measurement, not taste. Opening a `ModalBottomSheet` builds a real Dialog
+with its own Window and surface, and the pooled view attaches in the same frames, so Main is
+occupied for ~300ms. Anything sequenced inside that composition queues behind it: the session
+build lost 203-430ms waiting for a `LaunchedEffect` body to be dispatched on the frame clock, and
+once that was fixed the *navigation* lost 230-427ms in the same place. Two traps here:
+
+- `View.post` is wrong for the navigation. The pooled view is deliberately detached at that
+  moment, and `View.post` on a detached view parks the runnable in the view's own run queue until
+  it is attached to a window — which puts the load right back behind the sheet. Use
+  `Handler(Looper.getMainLooper())`.
+- Nothing may acquire the view or start the build from inside a `remember` block. A discarded
+  composition attempt would strand a lent view for the life of the process.
+
+Device numbers, one session, warm document 1780ms: tap-to-first-paint 555/672/757ms after the
+first open, against 716-1119ms before. The session build is now 3-5ms of it. What remains is the
+document load and React boot contending with the sheet's own composition — both consequences of
+navigating a second time, and neither reachable from the native side.
+
+`SharingTrace` records these milestones. It is off unless the tag is enabled:
+`adb shell setprop log.tag.FrakSharing DEBUG` then `adb logcat -s FrakSharing`.
+
+iOS has none of these changes yet.
+
 ## 2. The web view ↔ native channel
 
 Inbound is query parameters delivered by a full page load. `SharingPageURL.build` assembles

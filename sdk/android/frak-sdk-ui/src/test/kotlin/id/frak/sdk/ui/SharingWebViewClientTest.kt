@@ -40,23 +40,31 @@ class SharingWebViewClientTest {
         val actions = mutableListOf<SharingPageAction>()
         val externalUrls = mutableListOf<String>()
         var pageReadyCount = 0
+        var pageVisibleCount = 0
         var loadFailedCount = 0
     }
 
     private fun harness(): Pair<WebView, Harness> {
         val h = Harness()
-        val view =
+        val handle =
             createSharingWebView(
                 context = context,
                 walletOrigin = WALLET_ORIGIN,
                 returnScheme = RETURN_SCHEME,
+            )
+        // The view is created unbound and warmed before any session exists; binding is what
+        // makes it one sheet's. Every assertion below is about the bound state.
+        handle.bind(
+            SharingWebViewBinding(
                 sessionId = SESSION_ID,
                 onAction = { h.actions += it },
                 onPageReady = { h.pageReadyCount++ },
+                onPageVisible = { h.pageVisibleCount++ },
                 onLoadFailed = { h.loadFailedCount++ },
                 onOpenExternal = { h.externalUrls += it },
-            )
-        return view to h
+            ),
+        )
+        return handle.view to h
     }
 
     private val WebView.client: WebViewClient

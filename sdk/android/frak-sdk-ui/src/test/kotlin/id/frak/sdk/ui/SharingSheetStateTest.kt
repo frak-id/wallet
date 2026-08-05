@@ -3,6 +3,7 @@ package id.frak.sdk.ui
 import android.app.Application
 import android.content.ClipboardManager
 import android.content.Context
+import android.os.Looper.getMainLooper
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import id.frak.sdk.Frak
@@ -31,6 +32,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.io.IOException
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * The sheet's sequencing rules. Robolectric because [SharingSheetState] reaches
@@ -57,6 +59,9 @@ class SharingSheetStateTest {
         context = context,
         sessionId = "test-session",
         onFinished = onFinished,
+        // Keeps build() on the TestScope's scheduler; the production default (Dispatchers.Default)
+        // would run it on a real thread pool and make advanceUntilIdle meaningless.
+        workContext = EmptyCoroutineContext,
         buildSharingLink = client::buildSharingLink,
         anonymousId = { client.anonymousId },
         environment = { client.environment },
@@ -80,6 +85,80 @@ class SharingSheetStateTest {
             assertNotNull("expected a session", session)
             assertTrue("a resolved config must yield a page", session!!.hasPage)
             assertNull(state.failure)
+        }
+
+    /**
+     * The session's own navigation, which now leaves via `View.post` rather than a Compose
+     * effect — so it is invisible to a test that never idles the main looper. These three pin it:
+     * without them the sheet could navigate nowhere and the rest of this suite would stay green,
+     * since every other `lastLoadedUrl` assertion here is about a *later* load (`confirmed=1`,
+     * the install page) that still goes out directly.
+     */
+    @Test
+    fun `attaching after the session resolved navigates to its page`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            val view = WebView(context)
+            state.attach(view)
+            shadowOf(getMainLooper()).idle()
+
+            assertEquals(
+                "the sheet must land on the session's own page",
+                state.session?.url(confirmed = false),
+                shadowOf(view).lastLoadedUrl,
+            )
+        }
+
+    @Test
+    fun `attaching before the session resolves still navigates once it does`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            // Production order: SharingPresentation.start attaches the pooled view first, so the
+            // view is ready well before build() can be.
+            val view = WebView(context)
+            state.attach(view)
+            assertNull("nothing to navigate to yet", shadowOf(view).lastLoadedUrl)
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            shadowOf(getMainLooper()).idle()
+
+            assertEquals(
+                "the build completing must issue the navigation itself",
+                state.session?.url(confirmed = false),
+                shadowOf(view).lastLoadedUrl,
+            )
+        }
+
+    @Test
+    fun `the session page is navigated to once, not once per trigger`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+            val view = WebView(context)
+
+            state.attach(view)
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            shadowOf(getMainLooper()).idle()
+
+            // A marker stands in for the page having moved on under its own steam. Re-attaching
+            // the same view is what a recomposition looks like, and it must not rewind that.
+            view.loadUrl(MARKER_URL)
+            state.attach(view)
+            shadowOf(getMainLooper()).idle()
+
+            assertEquals(
+                "re-attaching must not restart a load already issued",
+                MARKER_URL,
+                shadowOf(view).lastLoadedUrl,
+            )
         }
 
     @Test
@@ -703,7 +782,9 @@ class SharingSheetStateTest {
         launch { state.awaitLoadDeadline(SHEET_LOAD_DEADLINE_MILLIS) }
 
     private companion object {
-        /** Mirrors `FrakSharingSheet`'s own constant. */
+        const val MARKER_URL = "https://acme.example/marker"
+
+        /** Mirrors `SharingPresentation`'s own constant. */
         const val SHEET_LOAD_DEADLINE_MILLIS = 1_500L
     }
 }

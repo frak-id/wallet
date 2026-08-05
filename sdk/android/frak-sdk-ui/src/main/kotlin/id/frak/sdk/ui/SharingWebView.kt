@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
-import android.view.MotionEvent
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.webkit.CookieManager
@@ -79,87 +78,148 @@ internal sealed interface SharingPageAction {
 }
 
 /**
+ * One sheet's worth of wiring for a [SharingWebViewHandle].
+ *
+ * Split from the view so a view can outlive a sheet: [SharingWebViewPool] boots one against the
+ * wallet origin long before any session exists, and the sheet binds its own session onto that
+ * already-warm view at present time. Rebinding also resets the client's per-load state, so a
+ * retry consumed by the warm load can't count against the real one.
+ */
+internal class SharingWebViewBinding(
+    val sessionId: String,
+    val onAction: (SharingPageAction) -> Unit = {},
+    val onPageReady: () -> Unit = {},
+    /**
+     * First paint, as opposed to [onPageReady]'s document-finished. Drives the skeleton, which
+     * must not lift onto a blank page — `onPageFinished` lands before React has rendered.
+     */
+    val onPageVisible: () -> Unit = {},
+    val onLoadFailed: () -> Unit = {},
+    val onOpenExternal: (String) -> Unit = {},
+) {
+    companion object {
+        /**
+         * What an unpresented, warm view carries. [WARM_SESSION_ID] can never satisfy a real
+         * sheet's `sid` guard, so a result navigation from the warm page is dropped rather than
+         * attributed to whichever session binds next.
+         */
+        val Warm: SharingWebViewBinding = SharingWebViewBinding(sessionId = WARM_SESSION_ID)
+
+        /** Never a real sheet's id, so a warm page's result navigation can never be attributed to one. */
+        const val WARM_SESSION_ID: String = "warm"
+    }
+}
+
+/**
+ * A sharing web view and the client that drives it.
+ *
+ * The client is held here rather than read back off the view: `WebView.getWebViewClient` is
+ * API 26 and this SDK's floor is 24.
+ */
+internal class SharingWebViewHandle(
+    val view: WebView,
+    private val client: SharingWebViewClient,
+) {
+    /** Points the view at a session. Resets per-load state; see [SharingWebViewBinding]. */
+    fun bind(binding: SharingWebViewBinding) {
+        client.binding = binding
+    }
+
+    fun load(url: String) {
+        view.loadUrl(url)
+    }
+
+    fun destroy() {
+        view.destroy()
+    }
+}
+
+/**
  * Builds the sheet's WebView. No visible URL bar, so a cross-origin navigation would be
  * indistinguishable from trusted content — hence the origin pinning and no JS bridge below. No
  * service-worker offline shell for a never-before-visited sheet; [SharingWebViewClient] covers
  * the previously-visited case via a cache-only retry.
+ *
+ * Returns unbound: nothing is reported until [SharingWebViewHandle.bind] names a session.
  */
-@SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
-@Suppress("LongParameterList")
+@SuppressLint("SetJavaScriptEnabled")
 internal fun createSharingWebView(
     context: Context,
     walletOrigin: String,
     returnScheme: String,
-    sessionId: String,
-    onAction: (SharingPageAction) -> Unit,
-    onPageReady: () -> Unit,
-    onLoadFailed: () -> Unit,
-    onOpenExternal: (String) -> Unit,
-): WebView =
-    WebView(context).apply {
-        // MATCH_PARENT, explicit: a wrap-content WebView reports a 0 viewport height to Blink
-        // (vh/dvh/svh/lvh all resolve to 0 while clientHeight reads the real height), which
-        // collapsed the page's `height: 100dvh` scroll container to zero.
-        layoutParams = ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+): SharingWebViewHandle {
+    val client = SharingWebViewClient(walletOrigin = walletOrigin, returnScheme = returnScheme)
+    val view =
+        WebView(context).apply {
+            // MATCH_PARENT, explicit: a wrap-content WebView reports a 0 viewport height to Blink
+            // (vh/dvh/svh/lvh all resolve to 0 while clientHeight reads the real height), which
+            // collapsed the page's `height: 100dvh` scroll container to zero.
+            layoutParams = ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT)
 
-        settings.javaScriptEnabled = true // page is a React app; rest of this bounds what it can reach
-        settings.domStorageEnabled = true
-        settings.allowFileAccess = false
-        settings.allowContentAccess = false
-        settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-        settings.setSupportMultipleWindows(false)
-        settings.javaScriptCanOpenWindowsAutomatically = false
-        settings.setGeolocationEnabled(false)
-        settings.cacheMode = WebSettings.LOAD_DEFAULT // explicit default: revalidate cached responses
+            settings.javaScriptEnabled = true // page is a React app; rest of this bounds what it can reach
+            settings.domStorageEnabled = true
+            settings.allowFileAccess = false
+            settings.allowContentAccess = false
+            settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+            settings.setSupportMultipleWindows(false)
+            settings.javaScriptCanOpenWindowsAutomatically = false
+            settings.setGeolocationEnabled(false)
+            settings.cacheMode = WebSettings.LOAD_DEFAULT // explicit default: revalidate cached responses
 
-        // NORMAL, not the inherited NARROW_COLUMNS default: that reflows content to the view
-        // width on its own heuristics, which a responsive page laid out for a phone viewport
-        // doesn't want.
-        settings.layoutAlgorithm = WebSettings.LayoutAlgorithm.NORMAL
+            // NORMAL, not the inherited NARROW_COLUMNS default: that reflows content to the view
+            // width on its own heuristics, which a responsive page laid out for a phone viewport
+            // doesn't want.
+            settings.layoutAlgorithm = WebSettings.LayoutAlgorithm.NORMAL
 
-        // The page scrolls itself but lives inside a ModalBottomSheet whose drag gesture would
-        // otherwise swallow every vertical drag before the web content sees it. Claiming the
-        // gesture only when the content can actually scroll leaves swipe-to-dismiss working on
-        // a page short enough not to.
-        setOnTouchListener { view, event ->
-            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                val scrollable = view.canScrollVertically(-1) || view.canScrollVertically(1)
-                view.parent?.requestDisallowInterceptTouchEvent(scrollable)
-            }
-            false // the WebView still handles the event itself
+            // No touch interception dance here any more. The sheet presents with
+            // `sheetGesturesEnabled = false`, so nothing upstream competes for a vertical drag
+            // and the page's own scroll container gets every gesture that lands on it. The
+            // sheet is dragged from `SharingSheetGrabStrip`, which is a Compose hit target
+            // above this view and therefore never reaches it.
+
+            // Third-party cookies off. Android has no per-WebView data store, so first-party wallet
+            // cookies outlive the sheet regardless; clearing on dismiss isn't an option either,
+            // since that API is app-global.
+            CookieManager.getInstance().setAcceptThirdPartyCookies(this, false)
+
+            webViewClient = client
         }
-        // Third-party cookies off. Android has no per-WebView data store, so first-party wallet
-        // cookies outlive the sheet regardless; clearing on dismiss isn't an option either,
-        // since that API is app-global.
-        CookieManager.getInstance().setAcceptThirdPartyCookies(this, false)
+    return SharingWebViewHandle(view = view, client = client)
+}
 
-        webViewClient =
-            SharingWebViewClient(
-                walletOrigin = walletOrigin,
-                returnScheme = returnScheme,
-                sessionId = sessionId,
-                onAction = onAction,
-                onPageReady = onPageReady,
-                onLoadFailed = onLoadFailed,
-                onOpenExternal = onOpenExternal,
-            )
-    }
-
-private class SharingWebViewClient(
+internal class SharingWebViewClient(
     private val walletOrigin: String,
     private val returnScheme: String,
-    private val sessionId: String,
-    private val onAction: (SharingPageAction) -> Unit,
-    private val onPageReady: () -> Unit,
-    private val onLoadFailed: () -> Unit,
-    private val onOpenExternal: (String) -> Unit,
 ) : WebViewClient() {
     private val origin: Uri = Uri.parse(walletOrigin)
+
+    /** Whose session this view is currently serving. Rebinding clears every field below. */
+    var binding: SharingWebViewBinding = SharingWebViewBinding.Warm
+        set(value) {
+            field = value
+            pendingMainFrameUrl = null
+            retried = false
+            retryPending = false
+            settled = false
+            navigationFailed = false
+            navigationOwnedByBinding = false
+        }
+
+    /**
+     * Whether the navigation in flight was started under the current binding.
+     *
+     * A pooled view is bound mid-flight — the warm load is usually still running when the user
+     * taps. Its `onPageFinished` would otherwise read as the *session's* page settling, which
+     * cancels the tier-3 deadline and lifts the skeleton onto the warm page; its
+     * `onReceivedError` would read as the session's page failing and fire the native share
+     * fallback. Cleared on bind, set by the next [onPageStarted].
+     */
+    private var navigationOwnedByBinding = false
 
     /** Main-frame URL currently in flight, captured in [onPageStarted]; null once resolved. */
     private var pendingMainFrameUrl: String? = null
 
-    /** At most one cache-only retry per client (one client per sheet instance). */
+    /** At most one cache-only retry per binding. */
     private var retried = false
 
     /**
@@ -169,7 +229,7 @@ private class SharingWebViewClient(
      */
     private var retryPending = false
 
-    /** Set once [onLoadFailed] fires, so it fires at most once per client instance. */
+    /** Set once [SharingWebViewBinding.onLoadFailed] fires, so it fires at most once per binding. */
     private var settled = false
 
     /**
@@ -178,6 +238,9 @@ private class SharingWebViewClient(
      * successful load and cancel the tier-3 deadline.
      */
     private var navigationFailed = false
+
+    /** Distinguishes one [WebView.postVisualStateCallback] request from a stale earlier one. */
+    private var visualStateRequest = 0L
 
     override fun shouldOverrideUrlLoading(
         view: WebView,
@@ -197,14 +260,15 @@ private class SharingWebViewClient(
         val url = request.url
 
         if (url.scheme == returnScheme && url.host == SharingPageUrl.RESULT_HOST) {
-            // `sid` guards against a result from a sheet the user already closed.
-            if (url.getQueryParameter("sid") == sessionId) {
+            // `sid` guards against a result from a sheet the user already closed, and against
+            // one from the warm page, whose session id no sheet can ever hold.
+            if (url.getQueryParameter("sid") == binding.sessionId) {
                 SharingPageAction
                     .fromWire(
                         action = url.getQueryParameter("action"),
                         value = url.getQueryParameter("value"),
                         exp = url.getQueryParameter("exp"),
-                    )?.let(onAction)
+                    )?.let(binding.onAction)
             }
             return true
         }
@@ -212,7 +276,7 @@ private class SharingWebViewClient(
         // Component-by-component compare: a prefix match would accept
         // `https://wallet.frak.id.attacker.example/`.
         if (isSameOrigin(url)) return false
-        onOpenExternal(url.toString())
+        binding.onOpenExternal(url.toString())
         return true
     }
 
@@ -229,19 +293,40 @@ private class SharingWebViewClient(
         pendingMainFrameUrl = url
         retryPending = false
         navigationFailed = false
+        navigationOwnedByBinding = true
     }
 
     override fun onPageFinished(
         view: WebView,
         url: String,
     ) {
+        // The warm load landing after this view was lent to a sheet. Not this session's page.
+        if (!navigationOwnedByBinding) return
         // Android delivers this for its own error page too, in the same load cycle as the
         // failure. Reporting readiness here would kill the tier-3 fallback.
         if (navigationFailed) return
-        // `retried` is NOT reset: one retry per client for the sheet's whole lifetime.
+        // `retried` is NOT reset: one retry per binding for the sheet's whole lifetime.
         pendingMainFrameUrl = null
         view.settings.cacheMode = WebSettings.LOAD_DEFAULT // undo handleMainFrameFailure's cache-only mode
-        onPageReady()
+        val settledBinding = binding
+        settledBinding.onPageReady()
+
+        // Document-finished is not painted: React renders after `load`, and lifting the
+        // skeleton here would expose a blank white rectangle — the flash this exists to close.
+        // postVisualStateCallback fires once the DOM as of this moment is actually drawable.
+        val request = ++visualStateRequest
+        view.postVisualStateCallback(
+            request,
+            object : WebView.VisualStateCallback() {
+                override fun onComplete(requestId: Long) {
+                    // A newer navigation (a `confirmed=1` reload, the install page) already
+                    // superseded this one; its own callback owns visibility.
+                    if (requestId != visualStateRequest) return
+                    if (settledBinding !== binding) return
+                    settledBinding.onPageVisible()
+                }
+            },
+        )
     }
 
     override fun onReceivedError(
@@ -263,6 +348,9 @@ private class SharingWebViewClient(
 
     /** One cache-only retry so a live-but-erroring or offline-but-visited-before load can still paint. */
     private fun handleMainFrameFailure(view: WebView) {
+        // The warm load failing after this view was lent to a sheet. Falling back here would
+        // raise a native chooser over a sheet whose own page hasn't been tried yet.
+        if (!navigationOwnedByBinding) return
         // Before the `settled` guard: a reload that fails after tier 3 has already fired still
         // gets an error page, whose onPageFinished must not report readiness.
         navigationFailed = true
@@ -275,12 +363,12 @@ private class SharingWebViewClient(
         if (retried) {
             view.settings.cacheMode = WebSettings.LOAD_DEFAULT
             settled = true
-            onLoadFailed()
+            binding.onLoadFailed()
             return
         }
         if (url == null) {
             settled = true
-            onLoadFailed()
+            binding.onLoadFailed()
             return
         }
         retried = true
@@ -298,7 +386,7 @@ private class SharingWebViewClient(
         // has a working locally-built link.
         if (!settled) {
             settled = true
-            onLoadFailed()
+            binding.onLoadFailed()
         }
         return true
     }

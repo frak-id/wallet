@@ -3,6 +3,8 @@ package id.frak.sdk.ui
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.webkit.WebView
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -21,10 +23,12 @@ import id.frak.sdk.tracking.Interaction
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Resolved once before anything can be shown. [link] is local and always usable; [pageUrl]
@@ -51,6 +55,20 @@ internal class SharingSheetState(
     private val context: Context,
     private val sessionId: String,
     private val onFinished: (SharingResult) -> Unit,
+    /** Milestones inside [build], which device traces showed to be the largest share of tap-to-paint. */
+    private val trace: SharingTrace = SharingTrace(),
+    /**
+     * Where [build] runs.
+     *
+     * Off the composition's Main scope deliberately. [scope] is `rememberCoroutineScope()`, whose
+     * dispatcher drives work from the choreographer frame callback — so on Main this coroutine
+     * queued behind the sheet's entry animation and the web view's first layout and did not start
+     * for 203-430ms on device. Everything it calls does its own IO dispatching; the Compose state
+     * it writes ([session], [failure]) is snapshot state and safe to write from any thread.
+     *
+     * Tests override this with `EmptyCoroutineContext` so work stays on their `TestScope`.
+     */
+    private val workContext: CoroutineContext = Dispatchers.Default,
     // Individually injected and resolved lazily, since Frak.initialize may not have run yet
     // when this is constructed.
     private val buildSharingLink: suspend (SharingRequest) -> String? = { Frak.client.sharing.buildLink(it) },
@@ -72,10 +90,24 @@ internal class SharingSheetState(
     var failure: FrakError? by mutableStateOf(null)
         private set
 
+    /**
+     * Whether the hosted page has actually painted. Drives the skeleton that covers the web
+     * view until then.
+     *
+     * Latches: once the page has been seen, a later same-session navigation (the `confirmed=1`
+     * reload, the install page) must not put the skeleton back — the user is looking at real
+     * content and a reappearing placeholder reads as a fault.
+     */
+    var pageVisible: Boolean by mutableStateOf(false)
+        private set
+
     private var best: SharingResult? = null
     private var webView: WebView? = null
     private var finished = false
-    private var pageLoaded = false
+
+    /** Document-finished. Observable so the sheet can bound how long its skeleton waits for a paint signal. */
+    var pageLoaded: Boolean by mutableStateOf(false)
+        private set
 
     /** True between the page's share press and its outcome. */
     private var shareInFlight = false
@@ -113,8 +145,22 @@ internal class SharingSheetState(
     /** Set once the load-deadline budget passes; [prepare] checks it so a merely-slow build still lands on tier 3. */
     private var deadlineExpired = false
 
+    /** Guards [prepare], which is started from composition rather than an effect. */
+    private var prepareStarted = false
+
+    /** Guards [loadSessionUrl] so the session's page is navigated to exactly once. */
+    private var sessionLoaded = false
+
+    /** The hop back to the web view's own thread from [workContext]. See [loadSessionUrl]. */
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    /** Idempotent: the sheet starts this during composition, so a recomposition must not re-enter it. */
     fun prepare(request: SharingRequest) {
-        scope.launch {
+        if (prepareStarted) return
+        prepareStarted = true
+        scope.launch(workContext) {
+            // Distance from "sheet opened" is scheduling overhead, not work. See [workContext].
+            trace.mark("  prepare running")
             if (!Frak.isInitialized) {
                 failure = FrakError.NotInitialized()
                 resolved.complete(Unit)
@@ -137,12 +183,24 @@ internal class SharingSheetState(
                 }
             when {
                 // Budget already expired while this was resolving; onLoadDeadline had no session yet to fall back with.
-                deadlineExpired -> fallBackOrFail(built)
+                deadlineExpired -> {
+                    fallBackOrFail(built)
+                }
 
                 // build() already hit tier 3 itself (cold cache, no network) — no page will ever arrive.
-                built != null && !built.hasPage -> fallBackOrFail(built)
+                built != null && !built.hasPage -> {
+                    fallBackOrFail(built)
+                }
 
-                else -> session = built
+                else -> {
+                    session = built
+                    // Straight into the view, without waiting for the sheet to notice. This used
+                    // to be a LaunchedEffect keyed on `session`, whose body is dispatched on the
+                    // composition's frame clock — which at sheet-open is busy building the
+                    // sheet's Dialog window and attaching the web view, and delayed the
+                    // navigation by 230-427ms on device.
+                    loadSessionUrl()
+                }
             }
         }
     }
@@ -153,20 +211,67 @@ internal class SharingSheetState(
         if (arrivedInTime == null) onLoadDeadline()
     }
 
-    fun attach(view: WebView) {
-        webView = view
-        session?.url(confirmed = false)?.let { view.loadUrl(it) }
+    /** Starts [awaitLoadDeadline] off the caller's thread, so the budget is not measured by a congested Main. */
+    fun startLoadDeadline(deadlineMillis: Long) {
+        scope.launch(workContext) { awaitLoadDeadline(deadlineMillis) }
     }
 
-    /** Drops the web view when the sheet leaves composition; its timers and context reference go with it. */
+    /**
+     * Gives this state the view it will drive. Called before the sheet composes, so the page can
+     * start loading while the sheet is still animating in.
+     */
+    fun attach(view: WebView) {
+        if (webView === view) return
+        webView = view
+        loadSessionUrl()
+    }
+
+    /**
+     * Navigates to the session's page, once both halves exist. Fires from whichever of
+     * [attach]/[prepare] completes second, and at most once — a second navigation would restart
+     * a load already in flight.
+     */
+    private fun loadSessionUrl() {
+        if (sessionLoaded) return
+        val view = webView ?: return
+        val url = session?.url(confirmed = false) ?: return
+        sessionLoaded = true
+        // A WebView must be driven from the thread that created it, and build() runs off Main
+        // ([workContext]) — so a hop is needed, but only from there.
+        //
+        // Handler(mainLooper), emphatically NOT View.post: at this point the pooled view is
+        // still detached (the sheet attaches it a frame or two later), and View.post on a
+        // detached view parks the runnable in the view's own run queue until it is attached to a
+        // window. That would put the navigation back behind the sheet composition this whole
+        // split exists to get ahead of.
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            view.loadUrl(url)
+        } else {
+            mainHandler.post { view.loadUrl(url) }
+        }
+    }
+
+    /**
+     * Drops this state's reference to the view.
+     *
+     * Deliberately does NOT destroy it: the sheet acquired the view from [SharingWebViewPool]
+     * and hands it back there, since a pooled view is lent for one sheet and reused by the next.
+     */
     fun release() {
-        webView?.destroy()
         webView = null
     }
 
     fun onPageReady() {
         pageLoaded = true
         contentSettled.complete(Unit)
+    }
+
+    /**
+     * The page has painted, so the skeleton covering it can lift. Distinct from [onPageReady]:
+     * that fires at document-finished, which for a React app is still a blank frame.
+     */
+    fun onPageVisible() {
+        pageVisible = true
     }
 
     /**
@@ -391,7 +496,9 @@ internal class SharingSheetState(
     /** Null only when there's nothing to share (no identity/merchant); a later resolveConfig failure still returns a no-page session, never null. */
     private suspend fun build(request: SharingRequest): SharingSession? {
         val link = buildSharingLink(request)
+        trace.mark("  link built")
         val clientId = anonymousId()
+        trace.mark("  identity ready")
         if (link == null || clientId == null) {
             failure = FrakError.MerchantResolutionFailed("no anonymous id or merchant to build a sharing link from")
             return null
@@ -413,11 +520,17 @@ internal class SharingSheetState(
                     pageUrl = null,
                 )
             }
+        trace.mark("  config resolved")
 
-        // Seeds the page's headline on first frame from the reward cache, bounded so a cold
-        // cache can't turn it into a delay. catch(FrakError), not runCatching, to avoid
-        // swallowing this composition's own CancellationException on mid-seed teardown. Scoped
-        // like the page's own selection so the two never disagree on a product-gated campaign.
+        // Seeds the page's headline on first frame so it opens on content rather than its own
+        // skeleton. Opportunistic, not awaited: RewardRepository's cache is keyed on the encoded
+        // product list, so the first share of any given product is always a cache miss, and the
+        // old 150ms budget bought a cosmetic headline by delaying the navigation behind it on
+        // every one of those. At this timeout a hit still lands (a cache read is a mutex and a
+        // map lookup) and a miss costs nothing — the page fetches the same value itself either
+        // way. catch(FrakError), not runCatching, to avoid swallowing this composition's own
+        // CancellationException on mid-seed teardown. Scoped like the page's own selection so
+        // the two never disagree on a product-gated campaign.
         val scopedProducts = request.products.mapNotNull { it.details }.ifEmpty { null }
         val seededReward =
             withTimeoutOrNull(SEED_TIMEOUT_MILLIS) {
@@ -427,6 +540,7 @@ internal class SharingSheetState(
                     null
                 }
             }
+        trace.mark("  reward seeded")
 
         return SharingSession(
             walletOrigin = walletOrigin,
@@ -484,8 +598,11 @@ internal class SharingSheetState(
     private fun Double?.finiteOrNull(): Double? = this?.takeIf { it.isFinite() }
 
     private companion object {
-        /** How long the reward seed may delay the sheet. Past this the page fetches it itself. */
-        const val SEED_TIMEOUT_MILLIS = 150L
+        /**
+         * How long the reward seed may delay the navigation. Sized for a cache hit and nothing
+         * more — a miss needs the network, and the page fetches the same value itself anyway.
+         */
+        const val SEED_TIMEOUT_MILLIS = 40L
 
         /** Host of the store listing the install page links to. */
         const val PLAY_STORE_HOST = "play.google.com"

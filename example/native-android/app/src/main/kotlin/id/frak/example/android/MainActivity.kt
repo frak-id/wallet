@@ -152,6 +152,12 @@ class MainActivity : ComponentActivity() {
                     // .manual and routes .onOpenURL to appLink.handleReferral(_:) by hand.
                     deepLink = DeepLinkHandling.Automatic,
                     logLevel = FrakLogLevel.INFO,
+                    // Boots a web view against the wallet origin as soon as a share surface is
+                    // composed, and hands that same warm view to the sheet. Without it the sheet
+                    // pays for engine startup, TLS and the React bundle at tap time — the
+                    // 200-300ms of blank white this harness exists to catch. On by default here
+                    // precisely because the harness is where that regression would show up.
+                    preloadSharing = true,
                 ),
         )
         addLog("Frak.initialize called for merchant 0a799880-ba54-4276-a734-db8721911bab (development)", LogType.INFO)
