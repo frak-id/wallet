@@ -106,7 +106,7 @@ claim above rests on suites executed on the host toolchain (`swift test`), not o
   `private` and listed in `.changeset/config.json` `ignore`; it exists only to make
   this folder a workspace member and dispatch `build`/`test`/`lint`/`format` to
   `scripts/run.sh`. The real version is `Sources/FrakSDK/FrakSDKVersion.swift`, which
-  feeds the `x-frak-sdk-version` header and the `?sdkv=` query parameter, and must not
+  feeds the `x-frak-sdk-version` header and the `?sdkVersion=` query parameter, and must not
   move because a web package bumped.
 - `Sources/FrakSDK/PrivacyInfo.xcprivacy` (and `FrakSDKUI`'s own copy) must stay
   current with what the code does. Since 1 May 2024, an SDK using a required-reason

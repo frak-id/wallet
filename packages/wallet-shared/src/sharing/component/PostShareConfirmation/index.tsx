@@ -11,30 +11,35 @@ import {
     WalletIcon,
 } from "@frak-labs/design-system/icons";
 import { clsx } from "clsx";
-import type { ReactNode } from "react";
+import { type ReactNode, useRef } from "react";
 import { MerchantLogo } from "../MerchantLogo";
+import {
+    chromeRadiusStyle,
+    isChromeless,
+    type SharingChrome,
+    type SharingMerchant,
+    type SharingT,
+} from "../SharingPage/types";
 import { containerChromeless, overlay } from "../shared.css";
+import { useOverlayBehaviour } from "../useOverlayBehaviour";
 import * as styles from "./postShareConfirmation.css";
 
 export type PostShareConfirmationProps = {
     installUrl: string | null;
-    appName: string;
-    logoUrl?: string;
-    t: (key: string, options?: Record<string, unknown>) => string;
+    merchant: SharingMerchant;
+    t: SharingT;
     /**
-     * Suppress this screen's own header, so a host presenting it inside its
-     * own chrome does not stack two logos and two close controls. The footer
-     * stays: its install / share-again CTAs are this screen's whole point and
-     * have no equivalent in a host's share sheet.
+     * The same chrome the share screen uses — this is the screen shown right
+     * after a share/copy inside the very same host sheet, so it must round its
+     * corners identically and suppress its own header on exactly the same
+     * condition. Sharing the type is what stops the two drifting apart.
+     *
+     * Under `mode: "none"` the header goes (a host presenting this inside its
+     * own chrome would otherwise stack two logos and two close controls) but
+     * the footer stays: its install / share-again CTAs are this screen's whole
+     * point and have no equivalent in a host's share sheet.
      */
-    chromeless?: boolean;
-    /**
-     * Top corner radius (px) for this screen's own container, only
-     * meaningful together with `chromeless`. This is the screen shown right
-     * after a share/copy inside the same native host sheet as `SharingPage`
-     * (see its `hostCornerRadius` doc), so it needs the identical corners.
-     */
-    hostCornerRadius?: number;
+    chrome: SharingChrome;
     onDismiss: () => void;
     onShareAgain: () => void;
     onInstall: () => void;
@@ -48,50 +53,44 @@ const benefits = [
 
 export function PostShareConfirmation({
     installUrl,
-    appName,
-    logoUrl,
+    merchant,
     t,
-    chromeless = false,
-    hostCornerRadius,
+    chrome,
     onDismiss,
     onShareAgain,
     onInstall,
 }: PostShareConfirmationProps) {
-    // Same rationale as `SharingPage`'s identical computation: only applies
-    // chromeless, and `container` already sets `overflowY: "auto"` in
-    // `postShareConfirmation.css.ts`, which establishes a clip on both axes,
-    // so no extra `overflow` is needed here.
-    const containerRadiusStyle =
-        chromeless && hostCornerRadius && hostCornerRadius > 0
-            ? {
-                  borderTopLeftRadius: `${hostCornerRadius}px`,
-                  borderTopRightRadius: `${hostCornerRadius}px`,
-              }
-            : undefined;
+    const containerRef = useRef<HTMLDivElement>(null);
+    const chromeless = isChromeless(chrome);
+
+    useOverlayBehaviour({
+        enabled: !chromeless,
+        onDismiss,
+        containerRef,
+    });
 
     return (
-        <div
-            className={overlay}
-            onClick={chromeless ? undefined : onDismiss}
-            onKeyDown={(e) => {
-                if (!chromeless && e.key === "Escape") onDismiss();
-            }}
-        >
+        // biome-ignore lint/a11y/useKeyWithClickEvents: dismissal has a keyboard equivalent in `useOverlayBehaviour`'s document-level Escape listener, not a per-element handler — the backdrop is never focusable.
+        <div className={overlay} onClick={chromeless ? undefined : onDismiss}>
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: onClick only stops the backdrop's dismiss-on-click from firing; same rationale as the backdrop above. */}
             <div
+                ref={containerRef}
                 className={clsx(
                     styles.container,
                     chromeless && containerChromeless
                 )}
-                style={containerRadiusStyle}
+                style={chromeRadiusStyle(chrome)}
+                role="dialog"
+                aria-modal="true"
+                tabIndex={-1}
                 onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
             >
                 {!chromeless && (
                     <header className={styles.header}>
                         <Box display="flex" alignItems="center" gap="m">
                             <MerchantLogo
-                                src={logoUrl}
-                                alt={appName}
+                                src={merchant.logoUrl}
+                                alt={merchant.name}
                                 className={styles.merchantLogo}
                             />
                             <LogoFrakWithName className={styles.logo} />
@@ -129,8 +128,8 @@ export function PostShareConfirmation({
                                     )}
                                 </Text>
                                 <MerchantLogo
-                                    src={logoUrl}
-                                    alt={appName}
+                                    src={merchant.logoUrl}
+                                    alt={merchant.name}
                                     className={styles.phonePopupMerchantLogo}
                                 />
                             </div>

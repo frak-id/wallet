@@ -1,5 +1,10 @@
 import type { Currency, EstimatedReward } from "../types";
 import { formatAmount } from "../utils/format/formatAmount";
+import {
+    formatAmountParts,
+    percentAmountParts,
+    type RewardAmountParts,
+} from "../utils/format/formatAmountParts";
 import { getCurrencyAmountKey } from "../utils/format/getCurrencyAmountKey";
 import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
 import { getRewardRank, getRewardValue, maxRewardPercent } from "./value";
@@ -43,6 +48,49 @@ export function formatEstimatedReward(
                 return `${maxPercent} %`;
             }
             return formatAmount(0, supportedCurrency);
+        }
+    }
+}
+
+/**
+ * The same selection {@link formatEstimatedReward} makes, expressed as display
+ * parts instead of a string.
+ *
+ * Kept as a sibling switch rather than folded into the string version because
+ * `formatted` is load-bearing prose: four surfaces interpolate it into i18next
+ * and one embeds it mid-sentence, so it must stay a plain string produced
+ * exactly as it is today. Parts are strictly additive.
+ */
+export function formatEstimatedRewardParts(
+    reward: EstimatedReward,
+    currency?: Currency
+): RewardAmountParts {
+    const supportedCurrency = getSupportedCurrency(currency);
+    const key = getCurrencyAmountKey(supportedCurrency);
+
+    switch (reward.payoutType) {
+        case "fixed":
+            return formatAmountParts(
+                Math.round(reward.amount[key]),
+                supportedCurrency
+            );
+
+        case "percentage":
+            return percentAmountParts(reward.percent);
+
+        case "tiered": {
+            const maxAmount = getRewardValue(reward, key);
+            if (maxAmount > 0) {
+                return formatAmountParts(
+                    Math.round(maxAmount),
+                    supportedCurrency
+                );
+            }
+            const maxPercent = maxRewardPercent(reward);
+            if (maxPercent > 0) {
+                return percentAmountParts(maxPercent);
+            }
+            return formatAmountParts(0, supportedCurrency);
         }
     }
 }

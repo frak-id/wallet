@@ -4,5 +4,5 @@ public enum FrakSDKVersion {
 
     public static let headerName: String = "x-frak-sdk-version"
 
-    public static let queryParameterName: String = "sdkv"
+    public static let queryParameterName: String = "sdkVersion"
 }

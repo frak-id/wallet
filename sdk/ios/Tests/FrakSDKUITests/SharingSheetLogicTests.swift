@@ -11,10 +11,10 @@ import Testing
 /// evidence for that logic.
 @Suite("SharingDecision")
 struct SharingSheetLogicTests {
-    private static let pageURL = "https://wallet.frak.id/sharing?native=1"
+    private static let pageURL = "https://wallet.frak.id/sharing?embed=native"
 
-    private static let warmURL = "https://wallet.frak.id/sharing?native=1&preload=1"
-    private static let fragment = "#sid=session-1&preload=0"
+    private static let warmURL = "https://wallet.frak.id/sharing?embed=native&state=warm"
+    private static let fragment = "#sid=session-1&state=live"
 
     private func session(
         pageURL: String? = SharingSheetLogicTests.pageURL,
@@ -134,8 +134,8 @@ struct SharingSheetLogicTests {
     @Test("the confirmed url appends the flag")
     func confirmedAppendsFlag() throws {
         let url = try #require(session().url(confirmed: true))
-        // Without this the page sits there: under `native=1` it hides its own share controls.
-        #expect(url.absoluteString.hasSuffix("&confirmed=1"))
+        // Without this the page sits there: under `embed=native` it hides its own share controls.
+        #expect(url.absoluteString.hasSuffix("&view=confirmation"))
     }
 
     @Test("a session with no page has no url either way")
@@ -161,7 +161,7 @@ struct SharingSheetLogicTests {
         // top of it would leave the user on someone else's page.
         let other = warmedSession().navigation(
             confirmed: false,
-            currentBaseURL: "https://wallet.frak.id/sharing?native=1&preload=1&merchantId=other"
+            currentBaseURL: "https://wallet.frak.id/sharing?embed=native&state=warm&merchantId=other"
         )
         #expect(other == .load(expected))
         // And the ordinary case: nothing warmed at all.
@@ -178,7 +178,7 @@ struct SharingSheetLogicTests {
 
     @Test("the confirmation step stays same-document once activated")
     func confirmationActivatesToo() throws {
-        let expected = try #require(URL(string: Self.pageURL + "&confirmed=1"))
+        let expected = try #require(URL(string: Self.pageURL + "&view=confirmation"))
         let navigation = warmedSession().navigation(confirmed: true, currentBaseURL: Self.warmURL)
         // Routing only the first navigation through the fragment would make the post-share
         // confirmation the expensive one instead — a full page load the moment the chooser
@@ -186,7 +186,7 @@ struct SharingSheetLogicTests {
         #expect(
             navigation
                 == .activate(
-                    fragment: Self.fragment + "&confirmed=1",
+                    fragment: Self.fragment + "&view=confirmation",
                     fullURL: expected
                 )
         )

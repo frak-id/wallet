@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-    buildHostResultUrl,
-    resetHostResults,
-    sendHostResult,
-} from "./buildHostResultUrl";
+import { buildHostResultUrl, resetHostResults, sendHostResult } from "./bridge";
 
 // A shipped SDK binary parses these URLs and can never be updated to match a
 // change here, so the exact shape is the contract.

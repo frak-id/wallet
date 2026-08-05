@@ -62,7 +62,7 @@ struct SharingSession: Equatable {
         guard let full = url(confirmed: confirmed) else { return nil }
         if let warmBaseURL, let activationFragment, currentBaseURL == warmBaseURL {
             return .activate(
-                fragment: confirmed ? activationFragment + "&confirmed=1" : activationFragment,
+                fragment: confirmed ? activationFragment + "&view=confirmation" : activationFragment,
                 fullURL: full
             )
         }
@@ -72,16 +72,15 @@ struct SharingSession: Equatable {
     /// Nil when the hosted page could not be resolved — see the type's doc. Also the
     /// full-load answer `navigation(confirmed:currentBaseURL:)` falls back to.
     func url(confirmed: Bool) -> URL? {
-        pageURL.flatMap { URL(string: confirmed ? $0 + "&confirmed=1" : $0) }
+        pageURL.flatMap { URL(string: confirmed ? $0 + "&view=confirmation" : $0) }
     }
 }
 
 /// How to get the page in front of the user.
 ///
 /// The distinction is not cosmetic. A warmed document's URL is *not* the URL we warmed it on:
-/// the page's router normalises its own search params on load (`native=1` becomes
-/// `native=true`, an absent `confirmed` becomes `confirmed=false`), so the address bar has
-/// moved before the user ever taps. Loading `warmURL + fragment` therefore compares against
+/// the page's router normalises its own search params on load (an absent `view` is filled
+/// in as `view=share`, and so on), so the address bar has moved before the user ever taps. Loading `warmURL + fragment` therefore compares against
 /// the wrong string, misses, and does a full cross-document navigation — which on Android was
 /// a 695ms `document finished` immediately after the trace said it was activating.
 enum SharingNavigation: Equatable {

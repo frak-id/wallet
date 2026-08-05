@@ -27,7 +27,7 @@ enum SharingPageURL {
         return "frak-" + (sanitised.isEmpty ? "app" : sanitised)
     }
 
-    // `&confirmed=1` is appended separately by SharingSession.url(confirmed:).
+    // `&view=confirmation` is appended separately by SharingSession.url(confirmed:).
     static func build(
         walletOrigin: String,
         merchantId: String,
@@ -40,14 +40,15 @@ enum SharingPageURL {
         products: String? = nil,
         seededReward: String? = nil
     ) -> String {
-        var url = "\(walletOrigin)/sharing?native=1"
+        var url = "\(walletOrigin)/sharing?embed=native"
         url += "&merchantId=" + PercentEncoding.encode(merchantId)
         url += "&clientId=" + PercentEncoding.encode(clientId)
         url += "&returnScheme=" + PercentEncoding.encode(returnScheme(bundleId: bundleId))
         url += "&sid=" + PercentEncoding.encode(sessionId)
         url += "&\(FrakSDKVersion.queryParameterName)=" + PercentEncoding.encode(FrakSDKVersion.current)
         for (key, value) in [
-            ("appName", appName), ("logoUrl", logoURL), ("link", link), ("products", products), ("r", seededReward),
+            ("appName", appName), ("logoUrl", logoURL), ("link", link),
+            ("products", products), ("seedReward", seededReward),
         ] {
             if let value {
                 url += "&\(key)=" + PercentEncoding.encode(value)
@@ -60,7 +61,7 @@ enum SharingPageURL {
     ///
     /// Unlike a neutral warm-up this carries the real `merchantId` and `clientId`, so the page
     /// boots its bundle, i18n and both merchant-keyed queries while the user is still looking
-    /// at the merchant's own screen. `preload=1` is what makes that safe — the page reports
+    /// at the merchant's own screen. `state=warm` is what makes that safe — the page reports
     /// itself as `sharing_page_preloaded` instead of `sharing_page_viewed`, so warming surfaces
     /// nobody opens cannot inflate the sharing funnel's denominator.
     ///
@@ -73,7 +74,7 @@ enum SharingPageURL {
         appName: String? = nil,
         logoURL: String? = nil
     ) -> String {
-        var url = "\(walletOrigin)/sharing?native=1&preload=1"
+        var url = "\(walletOrigin)/sharing?embed=native&state=warm"
         url += "&merchantId=" + PercentEncoding.encode(merchantId)
         url += "&clientId=" + PercentEncoding.encode(clientId)
         url += "&returnScheme=" + PercentEncoding.encode(returnScheme(bundleId: bundleId))
@@ -107,17 +108,17 @@ enum SharingPageURL {
         var fragment = "#sid=" + PercentEncoding.encode(sessionId)
         // Explicit, not implied: this is what turns the page from a warm-up into a view, and
         // the event it reports depends on it.
-        fragment += "&preload=0"
+        fragment += "&state=live"
         for (key, value) in [
             // `logoUrl` only when the request overrode it; otherwise the warm URL's config
             // value stands.
-            ("link", link), ("products", products), ("logoUrl", logoURL), ("r", seededReward),
+            ("link", link), ("products", products), ("logoUrl", logoURL), ("seedReward", seededReward),
         ] {
             if let value {
                 fragment += "&\(key)=" + PercentEncoding.encode(value)
             }
         }
-        if confirmed { fragment += "&confirmed=1" }
+        if confirmed { fragment += "&view=confirmation" }
         return fragment
     }
 }

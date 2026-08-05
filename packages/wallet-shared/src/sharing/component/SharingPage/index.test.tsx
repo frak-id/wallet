@@ -12,7 +12,7 @@ const t = (key: string, opts?: Record<string, unknown>): string => {
             return opts?.context === "product"
                 ? "on selected products!"
                 : "on every purchase!";
-        case "sdk.sharingPage.steps.2":
+        case "sdk.sharingPage.steps.2.description":
             return opts?.context
                 ? `Step2-${opts.context}-${opts.minAmount ?? ""}`
                 : "Step2-default";
@@ -24,20 +24,31 @@ const t = (key: string, opts?: Record<string, unknown>): string => {
 };
 
 const baseProps: SharingPageProps = {
-    appName: "Test Merchant",
-    products: [],
+    merchant: { name: "Test Merchant" },
+    view: "share",
+    chrome: { mode: "full" },
     sharingLink: null,
     installUrl: null,
+    reward: { status: "ready" },
+    share: { canShare: true, isSharing: false },
     t,
-    isSharing: false,
-    showConfirmation: false,
-    onShare: () => {},
-    onCopy: () => {},
-    onDismiss: () => {},
-    onShareAgain: () => {},
-    onInstall: () => {},
-    onConfirmationDismiss: () => {},
+    actions: {
+        onShare: () => {},
+        onCopy: () => {},
+        onDismiss: () => {},
+        onShareAgain: () => {},
+        onInstall: () => {},
+        onConfirmationDismiss: () => {},
+    },
 };
+
+/** `baseProps` with a ready reward carrying `overrides`. */
+const withReward = (
+    overrides: Partial<Extract<SharingPageProps["reward"], { status: "ready" }>>
+): SharingPageProps => ({
+    ...baseProps,
+    reward: { status: "ready", ...overrides },
+});
 
 describe("getStep2Context", () => {
     it("returns undefined when neither gate applies", () => {
@@ -60,7 +71,7 @@ describe("getStep2Context", () => {
 describe("SharingPage — tagline2 / step2 copy", () => {
     it("uses the default tagline2 copy for an unscoped campaign", () => {
         const { container } = render(
-            <SharingPage {...baseProps} isProductScoped={false} />
+            <SharingPage {...withReward({ isProductScoped: false })} />
         );
         expect(container.textContent).toContain("on every purchase!");
         expect(container.textContent).not.toContain("on selected products!");
@@ -68,51 +79,47 @@ describe("SharingPage — tagline2 / step2 copy", () => {
 
     it("switches to the product-scoped tagline2 copy when isProductScoped is true", () => {
         const { container } = render(
-            <SharingPage {...baseProps} isProductScoped={true} />
+            <SharingPage {...withReward({ isProductScoped: true })} />
         );
         expect(container.textContent).toContain("on selected products!");
     });
 
     it("resolves the plain step2 copy when neither gate applies", () => {
-        render(<SharingPage {...baseProps} isProductScoped={false} />);
+        render(<SharingPage {...withReward({ isProductScoped: false })} />);
         expect(screen.getByText("Step2-default")).toBeInTheDocument();
     });
 
     it("resolves the 'min' step2 context when only a minimum purchase gates the reward", () => {
         render(
             <SharingPage
-                {...baseProps}
-                isProductScoped={false}
-                minPurchaseAmount="10 €"
+                {...withReward({
+                    isProductScoped: false,
+                    minPurchaseAmount: "10 €",
+                })}
             />
         );
         expect(screen.getByText("Step2-min-10 €")).toBeInTheDocument();
     });
 
     it("resolves the 'product' step2 context when only a productScope gates the reward", () => {
-        render(<SharingPage {...baseProps} isProductScoped={true} />);
+        render(<SharingPage {...withReward({ isProductScoped: true })} />);
         expect(screen.getByText("Step2-product-")).toBeInTheDocument();
     });
 
     it("resolves the 'min_product' step2 context when both gates apply", () => {
         render(
             <SharingPage
-                {...baseProps}
-                isProductScoped={true}
-                minPurchaseAmount="10 €"
+                {...withReward({
+                    isProductScoped: true,
+                    minPurchaseAmount: "10 €",
+                })}
             />
         );
         expect(screen.getByText("Step2-min_product-10 €")).toBeInTheDocument();
     });
 
     it("skeleton-gates tagline2 while the reward is loading, instead of flashing the unscoped copy", () => {
-        render(
-            <SharingPage
-                {...baseProps}
-                isProductScoped={true}
-                isRewardLoading={true}
-            />
-        );
+        render(<SharingPage {...baseProps} reward={{ status: "loading" }} />);
         expect(
             screen.queryByText("on every purchase!")
         ).not.toBeInTheDocument();

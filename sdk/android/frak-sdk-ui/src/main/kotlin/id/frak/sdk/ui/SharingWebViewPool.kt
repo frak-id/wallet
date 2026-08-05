@@ -54,7 +54,7 @@ internal class SharingWebViewPool(
      *
      * [url] is the *real* merchant page (see [SharingPageUrl.warm]), not a neutral one: the
      * bundle, i18n and both merchant-keyed queries are the expensive part, and none of them can
-     * start without a merchantId. `preload=1` in that URL is what keeps the page from reporting
+     * start without a merchantId. `state=warm` in that URL is what keeps the page from reporting
      * itself as viewed while it sits here unseen.
      *
      * Called once the merchant config resolves rather than at composition, which is why this

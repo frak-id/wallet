@@ -29,6 +29,11 @@ export { decompressJsonFromB64 } from "./compression/decompress";
 
 // Formatting / i18n
 export { formatAmount } from "./format/formatAmount";
+export {
+    formatAmountParts,
+    percentAmountParts,
+    type RewardAmountParts,
+} from "./format/formatAmountParts";
 export { getCurrencyAmountKey } from "./format/getCurrencyAmountKey";
 export { getSupportedCurrency } from "./format/getSupportedCurrency";
 export { getSupportedLocale } from "./format/getSupportedLocale";

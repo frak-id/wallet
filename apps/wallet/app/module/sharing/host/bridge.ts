@@ -44,7 +44,7 @@ export function buildHostResultUrl({
 /** Outcomes already handed to the host, so none is sent twice. Keyed by action and value: the install code can change across a remount, so a different code still reaches the host even though a repeat of the same one is suppressed. */
 const sentActions = new Set<string>();
 
-/** Actions the dedupe above skips. `share`/`copy` are direct button-press results, not route-guard re-entrancy, and suppressing a repeat would be wrong — e.g. copying then sharing, or retrying a share the user backed out of. `ready` is per-presentation: a host reuses one warmed page across many sheets, and every one of them has its own skeleton waiting to be dropped. */
+/** Actions the dedupe above skips. `share`/`copy` are direct button-press results and suppressing a repeat would be wrong — e.g. copying then sharing, or retrying a share the user backed out of. `ready` is per-presentation: a host reuses one warmed page across many sheets, and every one of them has its own skeleton waiting to be dropped. */
 const REPEATABLE_ACTIONS: ReadonlySet<HostResultAction> = new Set([
     "share",
     "copy",
@@ -54,11 +54,19 @@ const REPEATABLE_ACTIONS: ReadonlySet<HostResultAction> = new Set([
 /**
  * Hand an outcome to the host, at most once per page bar [REPEATABLE_ACTIONS].
  *
- * Route guards are not navigations: the router re-runs `beforeLoad` whenever
- * it resolves the location again, and it does so on load because
- * `validateSearch` fills in absent flags, which rewrites the URL. A guard that
- * navigated on every run therefore fired the same outcome twice, and the host
- * cannot tell the copies apart since both carry the session's own `sid`.
+ * What the dedupe protects has changed. It was written because route guards are
+ * not navigations: the router re-runs `beforeLoad` whenever it resolves the
+ * location again, and it does so on load because `validateSearch` fills in
+ * absent params, which rewrites the URL. A guard that navigated on every run
+ * fired the same outcome twice, and the host cannot tell the copies apart since
+ * both carry the session's own `sid`.
+ *
+ * No outcome is sent from a guard any more — the `clientId` error moved to the
+ * route's `errorComponent`, which renders once. What remains is the terminal
+ * outcomes (`install`, `dismiss`, `shareAgain`, `code`), which navigate away via
+ * `window.location.assign`. The document stays alive while the host intercepts
+ * that navigation, so a second tap on a button whose page has not gone away yet
+ * would otherwise send a duplicate. That is what this now guards.
  *
  * Returns whether the navigation was issued, so callers can fall through to
  * their web behaviour when there is no host to hand off to.

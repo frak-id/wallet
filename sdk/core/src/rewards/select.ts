@@ -7,10 +7,11 @@ import type {
     TokenAmountType,
 } from "../types";
 import { formatAmount } from "../utils/format/formatAmount";
+import type { RewardAmountParts } from "../utils/format/formatAmountParts";
 import { getCurrencyAmountKey } from "../utils/format/getCurrencyAmountKey";
 import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
 import { extractMinPurchaseAmount, extractStartDate } from "./conditions";
-import { formatRewardOrHide } from "./format";
+import { formatEstimatedRewardParts, formatRewardOrHide } from "./format";
 import { matchesProductScope } from "./matchesProductScope";
 import { getRewardRank } from "./value";
 
@@ -180,6 +181,16 @@ export function selectDisplayCampaign(
 export type BestReward = {
     /** Display-ready reward string (e.g. `"5 €"`, `"10 %"`). */
     formatted: string;
+    /**
+     * {@link formatted}, pre-split into integer / decimals / unit for surfaces
+     * that style those differently.
+     *
+     * Additive: `formatted` stays the canonical value and is what every i18n
+     * interpolation uses. A surface takes `parts` only to avoid re-parsing the
+     * string, and must still cope with it being absent — a host-seeded
+     * headline arrives as a bare string with no parts behind it.
+     */
+    parts?: RewardAmountParts;
     /** Payout type of the selected reward. */
     payoutType: EstimatedReward["payoutType"];
     /**
@@ -253,6 +264,7 @@ export function selectBestReward(
 
     return {
         formatted,
+        parts: formatEstimatedRewardParts(reward, options.currency),
         payoutType: reward.payoutType,
         minPurchaseAmount,
         lockupDurationDays,

@@ -112,7 +112,7 @@ One Android device pass (SM-G998B, Android 15) has exercised `initialize`, the w
 - `gradle.properties` turns off AGP build features this project has no use for (`buildConfig`, `aidl`, `renderscript`, `resValues`, `shaders`) — each costs a task per module per variant and can only grow the AAR. The SDK version is a reviewed Kotlin constant (`FrakSdkVersion`), not a generated `BuildConfig` field.
 - No `.gitignore` here — the root one covers `sdk/android/.gradle/` and `sdk/android/**/build/`.
 - **Versioning sits outside Changesets.** `id.frak:frak-sdk` and iOS's `FrakSDK` version independently of the JS packages and of each other — a merchant's binary freezes at store submission, so a JS-style patch cadence does not apply. `sdk/android/package.json` is `private` and listed in `.changeset/config.json`'s `ignore`; it exists only to dispatch to `scripts/run.sh`.
-- `FrakSdkVersion.CURRENT` feeds the `x-frak-sdk-version` header and the `?sdkv=` param on `/sharing` URLs. Keep it in step with `version` in each `build.gradle.kts` — neither can be retrofitted into a build already on users' phones.
+- `FrakSdkVersion.CURRENT` feeds the `x-frak-sdk-version` header and the `?sdkVersion=` param on `/sharing` URLs. Keep it in step with `version` in each `build.gradle.kts` — neither can be retrofitted into a build already on users' phones.
 
 ## Publishing
 

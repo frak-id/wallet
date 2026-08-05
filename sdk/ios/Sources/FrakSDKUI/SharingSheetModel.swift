@@ -9,7 +9,7 @@
     // outside this file's `#if canImport(UIKit)`, so they stay reachable from a macOS test host.
 
     /// The sheet's behaviour, kept out of the view. Ordering matters here — attribute the
-    /// share after the OS share sheet, reload with `&confirmed=1` after it, never fall back
+    /// share after the OS share sheet, reload with `&view=confirmation` after it, never fall back
     /// twice — and sequencing inside a re-evaluating `body` is where that kind of flow breaks.
     ///
     /// Constructed by `SharingPresentation.start` at the tap, not by the sheet: the session is
@@ -40,7 +40,7 @@
         /// view until then.
         ///
         /// Latches: once the page has been seen, a later same-session navigation (the
-        /// `confirmed=1` step, the install page) must not put the skeleton back — the user is
+        /// `view=confirmation` step, the install page) must not put the skeleton back — the user is
         /// looking at real content and a reappearing placeholder reads as a fault.
         ///
         /// Starts true when this sheet was handed a finished warm page. The skeleton exists to
@@ -207,7 +207,7 @@
 
         /// The user tapped Copy link, in the page's own footer. Reports the outcome rather than
         /// `confirm`ing it: the page already moves to its confirmation screen and raises its own
-        /// toast on press, and a `confirmed=1` navigation on top would tear down the document
+        /// toast on press, and a `view=confirmation` navigation on top would tear down the document
         /// mid-toast. `share()` still confirms because only this model learns whether a chooser
         /// came up.
         func copy() async {
@@ -598,7 +598,7 @@
         /// Records an outcome the sheet stays open after, and moves the page onto its
         /// post-share state.
         ///
-        /// A `confirmed=1` navigation rather than letting the page confirm itself: only this
+        /// A `view=confirmation` navigation rather than letting the page confirm itself: only this
         /// model learns whether a chooser actually came up, and the confirmation has to survive
         /// the user leaving and coming back. On the warm path this is a fragment change, so it
         /// costs nothing; the page syncs its confirmation state by effect precisely because a

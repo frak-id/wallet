@@ -70,14 +70,24 @@
                 "tagline2_product": "sur une sélection de produits !"
             },
             "steps": {
-                "title": "",
-                "1": "Partagez en 1 clic. Un lien personnel est généré automatiquement à chaque partage.",
-                "2": "Gagnez à chaque achat. Chaque commande réalisée grâce à vous est récompensée en cash.",
-                "2_min": "Gagnez à chaque achat. Chaque commande de {{ minAmount }} minimum réalisée grâce à vous est récompensée en cash.",
-                "2_product": "Gagnez sur chaque achat d'une sélection de produits. Chaque commande éligible réalisée grâce à vous est récompensée en cash.",
-                "2_min_product": "Gagnez sur chaque achat d'une sélection de produits de {{ minAmount }} minimum. Chaque commande éligible réalisée grâce à vous est récompensée en cash.",
-                "3": "Encaissez vos gains dans l'app. Installez FRAK pour récupérer vos gains.",
-                "3_lockup": "Vos gains seront disponibles {{ lockupInDay }} jours après la validation de l'achat."
+                "1": {
+                    "title": "Partagez en 1 clic.",
+                    "description": "Un lien personnel est généré automatiquement à chaque partage."
+                },
+                "2": {
+                    "title": "Gagnez à chaque achat.",
+                    "title_product": "Gagnez sur chaque achat d'une sélection de produits.",
+                    "title_min_product": "Gagnez sur chaque achat d'une sélection de produits de {{ minAmount }} minimum.",
+                    "description": "Chaque commande réalisée grâce à vous est récompensée en cash.",
+                    "description_min": "Chaque commande de {{ minAmount }} minimum réalisée grâce à vous est récompensée en cash.",
+                    "description_product": "Chaque commande éligible réalisée grâce à vous est récompensée en cash.",
+                    "description_min_product": "Chaque commande éligible réalisée grâce à vous est récompensée en cash."
+                },
+                "3": {
+                    "title": "Encaissez vos gains dans l'app.",
+                    "description": "Installez FRAK pour récupérer vos gains.",
+                    "lockup": "Vos gains seront disponibles {{ lockupInDay }} jours après la validation de l'achat."
+                }
             },
             "faq": {
                 "title": "Questions fréquentes",

@@ -297,14 +297,24 @@ export default interface Resources {
           "title": "Share with your friends"
         },
         "steps": {
-          "1": "Share in 1 click. A personal link is automatically generated with each share.",
-          "2": "Earn on every purchase. Every order placed through your link earns you cash.",
-          "2_min": "Earn on every purchase. Every order of at least {{minAmount}} placed through your link earns you cash.",
-          "2_min_product": "Earn on every purchase of selected products of at least {{minAmount}}. Every qualifying order placed through your link earns you cash.",
-          "2_product": "Earn on every purchase of selected products. Every qualifying order placed through your link earns you cash.",
-          "3": "Collect your earnings in the app. Install FRAK to collect your earnings.",
-          "3_lockup": "Your earnings will be available {{lockupInDay}} days after the purchase is confirmed.",
-          "title": ""
+          "1": {
+            "description": "A personal link is automatically generated with each share.",
+            "title": "Share in 1 click."
+          },
+          "2": {
+            "description": "Every order placed through your link earns you cash.",
+            "description_min": "Every order of at least {{minAmount}} placed through your link earns you cash.",
+            "description_min_product": "Every qualifying order placed through your link earns you cash.",
+            "description_product": "Every qualifying order placed through your link earns you cash.",
+            "title": "Earn on every purchase.",
+            "title_min_product": "Earn on every purchase of selected products of at least {{minAmount}}.",
+            "title_product": "Earn on every purchase of selected products."
+          },
+          "3": {
+            "description": "Install FRAK to collect your earnings.",
+            "lockup": "Your earnings will be available {{lockupInDay}} days after the purchase is confirmed.",
+            "title": "Collect your earnings in the app."
+          }
         }
       },
       "wallet": {

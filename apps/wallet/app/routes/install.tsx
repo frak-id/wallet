@@ -27,11 +27,11 @@ import { Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
-import { sendHostResult } from "@/module/common/utils/buildHostResultUrl";
 import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import { useGenerateInstallCode } from "@/module/recovery-code/hook/useGenerateInstallCode";
+import { sendHostResult } from "@/module/sharing/host/bridge";
 import * as styles from "./install.css";
 
 type InstallSearch = {

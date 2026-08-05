@@ -5,6 +5,9 @@
 // lets core-sdk consume its own reward logic without a dependency cycle.
 
 export type { ProductDetails } from "../types/product";
+// Re-exported here because `BestReward.parts` is typed with it, so every
+// consumer of that field needs it from the same entry point.
+export type { RewardAmountParts } from "../utils/format/formatAmountParts";
 export { extractMinPurchaseAmount, extractStartDate } from "./conditions";
 export {
     buildPercentageExample,
@@ -16,6 +19,7 @@ export {
 export {
     applyRewardPlaceholder,
     formatEstimatedReward,
+    formatEstimatedRewardParts,
     formatRewardOrHide,
 } from "./format";
 export { matchesProductScope } from "./matchesProductScope";

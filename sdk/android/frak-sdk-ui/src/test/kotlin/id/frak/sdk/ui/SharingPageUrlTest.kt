@@ -44,12 +44,12 @@ class SharingPageUrlTest {
                 link = "https://acme.example/p?a=1",
             )
 
-        assertTrue(url.startsWith("https://wallet.frak.id/sharing?native=1"))
+        assertTrue(url.startsWith("https://wallet.frak.id/sharing?embed=native"))
         assertTrue(url.contains("&merchantId=$MERCHANT_ID"))
         assertTrue(url.contains("&clientId=$CLIENT_ID"))
         assertTrue(url.contains("&returnScheme=frak-com.acme.app"))
         assertTrue(url.contains("&sid=42"))
-        assertTrue(url.contains("&sdkv="))
+        assertTrue(url.contains("&sdkVersion="))
         assertTrue(url.contains("&appName=Acme%20Store"))
         // The merchant's link is a value here, so its separators must be
         // encoded or they become separators of the page's own query.
@@ -75,7 +75,7 @@ class SharingPageUrlTest {
         val url = SharingPageUrl.build("https://wallet.frak.id", MERCHANT_ID, CLIENT_ID, "com.acme.app", "1")
         assertFalse(url.contains("appName"))
         assertFalse(url.contains("logoUrl"))
-        assertFalse(url.contains("&r="))
+        assertFalse(url.contains("&seedReward="))
         assertFalse(url.contains("products"))
         assertFalse(url.contains("confirmed"))
         assertFalse("absent means the page keeps doing what it does today", url.contains("cornerRadius"))
@@ -138,7 +138,7 @@ class SharingPageUrlTest {
                 sessionId = "1",
                 confirmed = true,
             )
-        assertTrue(url.endsWith("&confirmed=1"))
+        assertTrue(url.endsWith("&view=confirmation"))
     }
 
     private companion object {

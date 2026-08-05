@@ -44,7 +44,7 @@ internal object SharingPageUrl {
         cornerRadius: Int? = null,
     ): String =
         buildString {
-            append(walletOrigin).append("/sharing?native=1")
+            append(walletOrigin).append("/sharing?embed=native")
             append("&merchantId=").append(PercentEncoding.encode(merchantId))
             append("&clientId=").append(PercentEncoding.encode(clientId))
             append("&returnScheme=").append(PercentEncoding.encode(returnScheme(packageId)))
@@ -59,9 +59,9 @@ internal object SharingPageUrl {
             logoUrl?.let { append("&logoUrl=").append(PercentEncoding.encode(it)) }
             link?.let { append("&link=").append(PercentEncoding.encode(it)) }
             products?.let { append("&products=").append(PercentEncoding.encode(it)) }
-            seededReward?.let { append("&r=").append(PercentEncoding.encode(it)) }
+            seededReward?.let { append("&seedReward=").append(PercentEncoding.encode(it)) }
             cornerRadius?.let { append("&cornerRadius=").append(it) }
-            if (confirmed) append("&confirmed=1")
+            if (confirmed) append("&view=confirmation")
         }
 
     /**
@@ -69,7 +69,7 @@ internal object SharingPageUrl {
      *
      * Unlike a neutral warm-up this carries the real `merchantId` and `clientId`, so the page
      * boots its bundle, i18n and both merchant-keyed queries while the user is still looking at
-     * the merchant's own screen. `preload=1` is what makes that safe — the page reports itself
+     * the merchant's own screen. `state=warm` is what makes that safe — the page reports itself
      * as `sharing_page_preloaded` instead of `sharing_page_viewed`, so warming surfaces nobody
      * opens cannot inflate the sharing funnel's denominator.
      *
@@ -86,7 +86,7 @@ internal object SharingPageUrl {
         cornerRadius: Int? = null,
     ): String =
         buildString {
-            append(walletOrigin).append("/sharing?native=1&preload=1")
+            append(walletOrigin).append("/sharing?embed=native&state=warm")
             append("&merchantId=").append(PercentEncoding.encode(merchantId))
             append("&clientId=").append(PercentEncoding.encode(clientId))
             append("&returnScheme=").append(PercentEncoding.encode(returnScheme(packageId)))
@@ -123,13 +123,13 @@ internal object SharingPageUrl {
             append("#sid=").append(PercentEncoding.encode(sessionId))
             // Explicit, not implied: this is what turns the page from a warm-up into a view,
             // and the event it reports depends on it.
-            append("&preload=0")
+            append("&state=live")
             link?.let { append("&link=").append(PercentEncoding.encode(it)) }
             products?.let { append("&products=").append(PercentEncoding.encode(it)) }
             // Only when the request overrode it; otherwise the warm URL's config value stands.
             logoUrl?.let { append("&logoUrl=").append(PercentEncoding.encode(it)) }
-            seededReward?.let { append("&r=").append(PercentEncoding.encode(it)) }
-            if (confirmed) append("&confirmed=1")
+            seededReward?.let { append("&seedReward=").append(PercentEncoding.encode(it)) }
+            if (confirmed) append("&view=confirmation")
         }
 
     /** What the page navigates to when it has something to report. */

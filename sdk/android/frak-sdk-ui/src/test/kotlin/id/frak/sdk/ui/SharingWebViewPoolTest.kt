@@ -63,7 +63,7 @@ class SharingWebViewPoolTest {
         val handle = pool.acquire(binding())
 
         assertEquals(
-            "the warm load must carry native=1 so the page skips wallet identity resolution",
+            "the warm load must carry embed=native so the page skips wallet identity resolution",
             WARM_URL,
             shadowOf(handle.view).lastLoadedUrl,
         )
@@ -100,7 +100,7 @@ class SharingWebViewPoolTest {
         val pool = pool(preload = true)
         pool.warm(WARM_URL)
         val handle = pool.acquire(binding())
-        handle.load("$WALLET_ORIGIN/sharing?native=1&merchantId=m&sid=$SESSION_ID")
+        handle.load("$WALLET_ORIGIN/sharing?embed=native&merchantId=m&sid=$SESSION_ID")
 
         pool.release(handle)
 
@@ -167,7 +167,7 @@ class SharingWebViewPoolTest {
         pool.warm(WARM_URL)
         var ready = 0
         val handle = pool.acquire(SharingWebViewBinding(sessionId = SESSION_ID, onPageReady = { ready++ }))
-        val sessionUrl = "$WALLET_ORIGIN/sharing?native=1&merchantId=m&sid=$SESSION_ID"
+        val sessionUrl = "$WALLET_ORIGIN/sharing?embed=native&merchantId=m&sid=$SESSION_ID"
 
         handle.client().onPageStarted(handle.view, sessionUrl, null)
         handle.client().onPageFinished(handle.view, sessionUrl)
@@ -288,7 +288,7 @@ class SharingWebViewPoolTest {
         pool.warm(WARM_URL)
         pool.finishWarmLoad()
         val handle = pool.acquire(binding())
-        handle.load("$WALLET_ORIGIN/sharing?native=1&merchantId=m&sid=$SESSION_ID")
+        handle.load("$WALLET_ORIGIN/sharing?embed=native&merchantId=m&sid=$SESSION_ID")
 
         pool.release(handle)
 
@@ -335,6 +335,6 @@ class SharingWebViewPoolTest {
          * merchantId, which only exists once the config resolves. See `WarmSharingData`.
          */
         const val WARM_URL =
-            "$WALLET_ORIGIN/sharing?native=1&preload=1&merchantId=m1&clientId=c1&sid=warm"
+            "$WALLET_ORIGIN/sharing?embed=native&state=warm&merchantId=m1&clientId=c1&sid=warm"
     }
 }

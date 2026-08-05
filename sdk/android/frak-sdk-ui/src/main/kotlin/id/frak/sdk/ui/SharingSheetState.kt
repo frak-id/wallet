@@ -75,12 +75,12 @@ internal class SharingSession(
         // returns before either is known — but the caller gates tier 3 on this being null, and a
         // session reporting an activation it has no page for would skip the fallback and leave
         // the user on a fragment pointing at nothing.
-        val full = pageUrl?.let { if (confirmed) "$it&confirmed=1" else it } ?: return null
+        val full = pageUrl?.let { if (confirmed) "$it&view=confirmation" else it } ?: return null
         val warm = warmBaseUrl
         val fragment = activationFragment
         if (warm != null && fragment != null && currentBaseUrl == warm) {
             return SharingNavigation.Activate(
-                fragment = if (confirmed) "$fragment&confirmed=1" else fragment,
+                fragment = if (confirmed) "$fragment&view=confirmation" else fragment,
                 fullUrl = full,
             )
         }
@@ -95,8 +95,8 @@ internal class SharingSession(
  * How to get the page in front of the user.
  *
  * The distinction is not cosmetic. A warmed document's URL is *not* the URL we warmed it on:
- * the page's router normalises its own search params on load (`native=1` becomes `native=true`,
- * an absent `confirmed` becomes `confirmed=false`), so the address bar has moved before the user
+ * the page's router normalises its own search params on load (absent params are filled in,
+ * so e.g. an absent `view` becomes `view=share`), so the address bar has moved before the user
  * ever taps. `loadUrl(warmUrl + fragment)` therefore compares against the wrong string, misses,
  * and does a full cross-document navigation — which is exactly what the first device trace of
  * this showed: `ACTIVATING` followed by a 695ms `document finished`. It is also why every trace
@@ -176,7 +176,7 @@ internal class SharingSheetState(
      * Whether the hosted page has actually painted. Drives the skeleton that covers the web
      * view until then.
      *
-     * Latches: once the page has been seen, a later same-session navigation (the `confirmed=1`
+     * Latches: once the page has been seen, a later same-session navigation (the `view=confirmation`
      * reload, the install page) must not put the skeleton back — the user is looking at real
      * content and a reappearing placeholder reads as a fault.
      *
@@ -508,7 +508,7 @@ internal class SharingSheetState(
      * Copies the link and attributes it. The page owns the feedback.
      *
      * Records the outcome rather than [confirm]ing it — unlike [share], the page already moves
-     * itself to its confirmation toast on its own button press, and a `confirmed=1` reload here
+     * itself to its confirmation toast on its own button press, and a `view=confirmation` reload here
      * would tear that down mid-toast.
      */
     fun copy() {
@@ -748,7 +748,7 @@ internal class SharingSheetState(
     }
 
     /**
-     * Moves the page to its post-share confirmation screen via a `confirmed=1` reload — only
+     * Moves the page to its post-share confirmation screen via a `view=confirmation` reload — only
      * this sheet learns whether a chooser actually came up, and the page's own confirmation
      * state has to survive the user leaving and coming back.
      */
@@ -935,8 +935,8 @@ internal class SharingSheetState(
  *
  * The activation case reads [android.webkit.WebView.getUrl] rather than using the URL we warmed
  * the view with, and that is the whole fix: the sharing page's router normalises its own search
- * params on load (`native=1` becomes `native=true`, an absent `confirmed` becomes
- * `confirmed=false`), so by the time anyone taps, the document has moved somewhere we never
+ * params on load (absent params are filled in, so e.g. an absent `view` becomes
+ * `view=share`), so by the time anyone taps, the document has moved somewhere we never
  * named. Hanging the fragment off our string missed by exactly that much and reloaded the entire
  * page — `ACTIVATING` followed by a 695ms `document finished` in the first device trace of this.
  *

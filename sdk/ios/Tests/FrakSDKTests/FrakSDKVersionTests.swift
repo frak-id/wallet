@@ -9,7 +9,7 @@ struct FrakSDKVersionTests {
         #expect(!FrakSDKVersion.current.isEmpty)
     }
 
-    /// `?sdkv=` and `x-frak-sdk-version` carry this value verbatim, so a stray space or
+    /// `?sdkVersion=` and `x-frak-sdk-version` carry this value verbatim, so a stray space or
     /// `v` prefix would reach the backend and the hosted page as-is.
     @Test("version is dotted numeric, safe to put in a URL and a header")
     func versionIsDottedNumeric() {
@@ -24,6 +24,6 @@ struct FrakSDKVersionTests {
     @Test("transport names are stable")
     func transportNamesAreStable() {
         #expect(FrakSDKVersion.headerName == "x-frak-sdk-version")
-        #expect(FrakSDKVersion.queryParameterName == "sdkv")
+        #expect(FrakSDKVersion.queryParameterName == "sdkVersion")
     }
 }

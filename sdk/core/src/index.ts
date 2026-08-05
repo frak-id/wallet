@@ -130,6 +130,7 @@ export {
     type FullSsoParams,
     findIframeInOpener,
     formatAmount,
+    formatAmountParts,
     generateSsoUrl,
     getCurrencyAmountKey,
     getQueryParamCaseInsensitive,

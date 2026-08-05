@@ -211,8 +211,8 @@
         ///
         /// The activation case reads `WKWebView.url` rather than using the URL we warmed the
         /// view with, and that is the whole point: the sharing page's router normalises its own
-        /// search params on load (`native=1` becomes `native=true`, an absent `confirmed`
-        /// becomes `confirmed=false`), so by the time anyone taps, the document has moved
+        /// search params on load (absent params are filled in, an absent `confirmed`
+        /// becomes `view=share`), so by the time anyone taps, the document has moved
         /// somewhere we never named. Hanging the fragment off our string misses by exactly that
         /// much and reloads the whole page.
         ///

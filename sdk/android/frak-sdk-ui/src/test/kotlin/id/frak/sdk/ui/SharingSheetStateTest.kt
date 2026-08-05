@@ -95,7 +95,7 @@ class SharingSheetStateTest {
      * The session's own navigation, which now leaves via `View.post` rather than a Compose
      * effect — so it is invisible to a test that never idles the main looper. These three pin it:
      * without them the sheet could navigate nowhere and the rest of this suite would stay green,
-     * since every other `lastLoadedUrl` assertion here is about a *later* load (`confirmed=1`,
+     * since every other `lastLoadedUrl` assertion here is about a *later* load (`view=confirmation`,
      * the install page) that still goes out directly.
      */
     @Test
@@ -625,12 +625,12 @@ class SharingSheetStateTest {
             state.share()
             advanceUntilIdle()
 
-            // `&confirmed=1` is what puts the page on its own post-share screen: under `native`
+            // `&view=confirmation` is what puts the page on its own post-share screen: under `native`
             // it will not confirm itself, since only this sheet knows a chooser came up.
             assertEquals(
                 "the share must land the page on its confirmation screen",
                 true,
-                shadowOf(view).lastLoadedUrl?.contains("confirmed=1"),
+                shadowOf(view).lastLoadedUrl?.contains("view=confirmation"),
             )
 
             state.onPageAction(SharingPageAction.ShareAgain)
@@ -639,7 +639,7 @@ class SharingSheetStateTest {
             assertEquals(
                 "share again must take the page back off it",
                 false,
-                shadowOf(view).lastLoadedUrl?.contains("confirmed=1"),
+                shadowOf(view).lastLoadedUrl?.contains("view=confirmation"),
             )
         }
 
@@ -693,7 +693,7 @@ class SharingSheetStateTest {
             )
         }
 
-    /** The asymmetry with `share`: the page raises its own toast and moves to the confirmation screen on its own button press. A `confirmed=1` reload on top of that would tear the toast down mid-copy. */
+    /** The asymmetry with `share`: the page raises its own toast and moves to the confirmation screen on its own button press. A `view=confirmation` reload on top of that would tear the toast down mid-copy. */
     @Test
     fun `a copy does not reload the page out from under its own toast`() =
         runTest {
@@ -780,7 +780,7 @@ class SharingSheetStateTest {
             assertEquals(
                 "the user must land somewhere with controls on it",
                 true,
-                shadowOf(view).lastLoadedUrl?.contains("confirmed=1"),
+                shadowOf(view).lastLoadedUrl?.contains("view=confirmation"),
             )
             // Tier 3 would raise a chooser for a share that already happened.
             assertEquals("no chooser, and no premature outcome", 0, finishedCount)
@@ -837,7 +837,7 @@ class SharingSheetStateTest {
                 loaded.startsWith("$NORMALISED_WARM_URL#"),
             )
             assertTrue("the per-tap link still has to arrive", loaded.contains("link="))
-            assertTrue("and the flag that turns a preload into a view", loaded.contains("preload=0"))
+            assertTrue("and the flag that turns a preload into a view", loaded.contains("state=live"))
         }
 
     @Test
@@ -847,7 +847,7 @@ class SharingSheetStateTest {
             val state =
                 newState(
                     client,
-                    activationBaseUrl = "https://wallet.frak.id/sharing?native=1&preload=1&merchantId=other",
+                    activationBaseUrl = "https://wallet.frak.id/sharing?embed=native&state=warm&merchantId=other",
                 )
             state.prepare(SharingRequest())
             advanceUntilIdle()
@@ -891,7 +891,7 @@ class SharingSheetStateTest {
                 "confirmation must stay on the same document: $loaded",
                 loaded.startsWith("$NORMALISED_WARM_URL#"),
             )
-            assertTrue(loaded.contains("confirmed=1"))
+            assertTrue(loaded.contains("view=confirmation"))
         }
 
     @Test
@@ -1159,11 +1159,11 @@ class SharingSheetStateTest {
 
         /**
          * What a warmed sharing page's URL actually looks like once loaded. The router
-         * normalises its own search params (`native=1` -> `native=true`, and `confirmed`
-         * appears even when absent), so this is deliberately not the string we warm with.
+         * fills in and reorders its own search params, so this is deliberately not the
+         * string we warm with — the point of the constant is that it differs.
          */
         const val NORMALISED_WARM_URL =
-            "https://wallet.frak.id/sharing?native=true&preload=true&confirmed=false"
+            "https://wallet.frak.id/sharing?embed=native&state=warm&view=share"
 
         /** Mirrors `SharingPresentation`'s own constant. */
         const val SHEET_LOAD_DEADLINE_MILLIS = 1_500L

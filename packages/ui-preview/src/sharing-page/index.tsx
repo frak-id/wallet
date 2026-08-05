@@ -31,16 +31,6 @@ export type SharingPreviewProps = {
  * Mirrors the layout of wallet-shared SharingPage (no FAQ, no description, no products).
  */
 export function SharingPreview({ t, logoUrl, appName }: SharingPreviewProps) {
-    /** Split a step string at the first period into title + description */
-    const splitStep = (text: string) => {
-        const dotIndex = text.indexOf(".");
-        if (dotIndex === -1) return { title: text, description: undefined };
-        return {
-            title: text.slice(0, dotIndex + 1),
-            description: text.slice(dotIndex + 1).trim() || undefined,
-        };
-    };
-
     return (
         <div className={styles.previewFrame}>
             {/* Header */}
@@ -133,24 +123,14 @@ export function SharingPreview({ t, logoUrl, appName }: SharingPreviewProps) {
                             <span className={styles.stepConnectorDark} />
                             <Stack space="xxs">
                                 <Text variant="bodySmall" weight="semiBold">
-                                    {
-                                        splitStep(t("sdk.sharingPage.steps.1"))
-                                            .title
-                                    }
+                                    {t("sdk.sharingPage.steps.1.title")}
                                 </Text>
-                                {splitStep(t("sdk.sharingPage.steps.1"))
-                                    .description && (
-                                    <Text
-                                        variant="bodySmall"
-                                        className={styles.stepDescription}
-                                    >
-                                        {
-                                            splitStep(
-                                                t("sdk.sharingPage.steps.1")
-                                            ).description
-                                        }
-                                    </Text>
-                                )}
+                                <Text
+                                    variant="bodySmall"
+                                    className={styles.stepDescription}
+                                >
+                                    {t("sdk.sharingPage.steps.1.description")}
+                                </Text>
                             </Stack>
                         </li>
                         <li className={styles.stepItem}>
@@ -158,48 +138,28 @@ export function SharingPreview({ t, logoUrl, appName }: SharingPreviewProps) {
                             <span className={styles.stepConnector} />
                             <Stack space="xxs">
                                 <Text variant="bodySmall" weight="semiBold">
-                                    {
-                                        splitStep(t("sdk.sharingPage.steps.2"))
-                                            .title
-                                    }
+                                    {t("sdk.sharingPage.steps.2.title")}
                                 </Text>
-                                {splitStep(t("sdk.sharingPage.steps.2"))
-                                    .description && (
-                                    <Text
-                                        variant="bodySmall"
-                                        className={styles.stepDescription}
-                                    >
-                                        {
-                                            splitStep(
-                                                t("sdk.sharingPage.steps.2")
-                                            ).description
-                                        }
-                                    </Text>
-                                )}
+                                <Text
+                                    variant="bodySmall"
+                                    className={styles.stepDescription}
+                                >
+                                    {t("sdk.sharingPage.steps.2.description")}
+                                </Text>
                             </Stack>
                         </li>
                         <li className={styles.stepItem}>
                             <NumberedCircle number={3} color="filled" />
                             <Stack space="xxs">
                                 <Text variant="bodySmall" weight="semiBold">
-                                    {
-                                        splitStep(t("sdk.sharingPage.steps.3"))
-                                            .title
-                                    }
+                                    {t("sdk.sharingPage.steps.3.title")}
                                 </Text>
-                                {splitStep(t("sdk.sharingPage.steps.3"))
-                                    .description && (
-                                    <Text
-                                        variant="bodySmall"
-                                        className={styles.stepDescription}
-                                    >
-                                        {
-                                            splitStep(
-                                                t("sdk.sharingPage.steps.3")
-                                            ).description
-                                        }
-                                    </Text>
-                                )}
+                                <Text
+                                    variant="bodySmall"
+                                    className={styles.stepDescription}
+                                >
+                                    {t("sdk.sharingPage.steps.3.description")}
+                                </Text>
                             </Stack>
                         </li>
                     </ol>

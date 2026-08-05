@@ -48,7 +48,7 @@ struct SharingPageURLTests {
         )
 
         #expect(
-            url == "https://wallet.frak.id/sharing?native=1"
+            url == "https://wallet.frak.id/sharing?embed=native"
                 + "&merchantId=550e8400-e29b-41d4-a716-446655440000"
                 + "&clientId=550e8400-e29b-41d4-a716-446655440001"
                 + "&returnScheme=frak-com.acme.app"
@@ -76,7 +76,7 @@ struct SharingPageURLTests {
         #expect(url.contains("&logoUrl=https%3A%2F%2Facme.example%2Flogo.png"))
         #expect(url.contains("&link=https%3A%2F%2Facme.example%2Fp%3Fa%3D1"))
         #expect(url.contains("&products=%5B%7B%22title%22%3A%22Kettle%22%7D%5D"))
-        #expect(url.hasSuffix("&r=10%20%E2%82%AC"))
+        #expect(url.hasSuffix("&seedReward=10%20%E2%82%AC"))
     }
 
     @Test("the warm url is the real merchant page, flagged as a preload")
@@ -91,7 +91,7 @@ struct SharingPageURLTests {
         )
 
         #expect(
-            url == "https://wallet.frak.id/sharing?native=1&preload=1"
+            url == "https://wallet.frak.id/sharing?embed=native&state=warm"
                 + "&merchantId=550e8400-e29b-41d4-a716-446655440000"
                 + "&clientId=550e8400-e29b-41d4-a716-446655440001"
                 + "&returnScheme=frak-com.acme.app"
@@ -102,7 +102,7 @@ struct SharingPageURLTests {
         )
     }
 
-    /// `preload=1` is what keeps a warmed page reporting `sharing_page_preloaded` rather than
+    /// `state=warm` is what keeps a warmed page reporting `sharing_page_preloaded` rather than
     /// `sharing_page_viewed`, which is the sharing funnel's denominator. Warming every merchant
     /// surface into that event would silently deflate every downstream rate.
     @Test("the warm url carries no per-tap parameter")
@@ -114,13 +114,13 @@ struct SharingPageURLTests {
             bundleId: "com.acme.app"
         )
 
-        #expect(url.contains("&preload=1"))
+        #expect(url.contains("&state=warm"))
         #expect(url.contains("&sid=\(SharingPageURL.warmSessionId)"))
         // No link, no products, no seeded headline, no confirmation — none of them is knowable
         // before the tap, and the warm session id can never satisfy a real sheet's `sid` guard.
         #expect(!url.contains("&link="))
         #expect(!url.contains("&products="))
-        #expect(!url.contains("&r="))
+        #expect(!url.contains("&seedReward="))
         #expect(!url.contains("&confirmed="))
     }
 
@@ -137,12 +137,12 @@ struct SharingPageURLTests {
 
         #expect(
             fragment == "#sid=session-1"
-                + "&preload=0"
+                + "&state=live"
                 + "&link=https%3A%2F%2Facme.example%2Fp%3Fa%3D1"
                 + "&products=%5B%7B%22title%22%3A%22Kettle%22%7D%5D"
                 + "&logoUrl=https%3A%2F%2Facme.example%2Foverride.png"
-                + "&r=10%20%E2%82%AC"
-                + "&confirmed=1"
+                + "&seedReward=10%20%E2%82%AC"
+                + "&view=confirmation"
         )
     }
 
@@ -154,11 +154,11 @@ struct SharingPageURLTests {
     func activationFragmentOmitsAbsentKeys() {
         let fragment = SharingPageURL.activationFragment(sessionId: "session-1")
 
-        #expect(fragment == "#sid=session-1&preload=0")
+        #expect(fragment == "#sid=session-1&state=live")
         #expect(!fragment.contains("logoUrl"))
         #expect(!fragment.contains("link"))
         #expect(!fragment.contains("products"))
-        #expect(!fragment.contains("&r="))
+        #expect(!fragment.contains("&seedReward="))
         // Absent, not `confirmed=0`: the page reads presence, and this is the pre-share step.
         #expect(!fragment.contains("confirmed"))
     }

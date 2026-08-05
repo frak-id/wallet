@@ -417,7 +417,7 @@ internal class SharingWebViewClient(
             request,
             object : WebView.VisualStateCallback() {
                 override fun onComplete(requestId: Long) {
-                    // A newer navigation (a `confirmed=1` reload, the install page) already
+                    // A newer navigation (a `view=confirmation` reload, the install page) already
                     // superseded this one; its own callback owns visibility.
                     if (requestId != visualStateRequest) return
                     if (settledBinding !== binding) return
