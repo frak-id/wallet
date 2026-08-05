@@ -1,10 +1,12 @@
 package id.frak.sdk.ui
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
@@ -14,9 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -27,29 +27,54 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.dismiss
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * The sharing sheet: the hosted `/sharing` page, edge to edge in a bottom sheet. The sheet is
- * chrome only — a grab strip and a scrim. Share/Copy live in the page's own footer and reach this
- * sheet as page actions (see [SharingPageAction]). Even the rounded top corners belong to the page
- * now; see `shape` below for why.
+ * The sharing sheet: the hosted `/sharing` page, edge to edge, filling the bottom of a window of
+ * its own. The sheet is chrome only — a grab strip and a scrim. Share/Copy live in the page's own
+ * footer and reach this sheet as page actions (see [SharingPageAction]). Even the rounded top
+ * corners belong to the page now; see [SHEET_CORNER_RADIUS_DP].
  *
- * Presented through [rememberFrakSharingLauncher] rather than directly, so re-entrancy and
- * result aggregation have one owner.
+ * **Not a `ModalBottomSheet`, deliberately.** This composes inside a `ComponentDialog` that
+ * [SharingHost] owns, and `ModalBottomSheet` would build a second Dialog with a second Window
+ * inside that one: two scrims, two back-press dispatchers, two IME contracts, and two windows
+ * competing for TalkBack's notion of the active window. It was also providing almost nothing —
+ * every one of its capabilities was already switched off here (`sheetGesturesEnabled = false`,
+ * `dragHandle = null`, `containerColor = Transparent`, `shape = RectangleShape`), leaving three
+ * things, each replaced directly:
+ *
+ * | Was | Now |
+ * |---|---|
+ * | A Dialog and a Window | The host's `ComponentDialog` |
+ * | The scrim | [drawBehind] on the root, keyed to the same offset as the sheet |
+ * | Slide in / slide out | The [Animatable] below, which was already driving the drag |
+ *
+ * Two M3 bugs go with it, both of which `07-sharing-sheet-audit.md` closed as unfixable from
+ * outside: the entry overshoot's `verticalScaleUp`/`verticalScaleDown` scaling the WebView's draw
+ * functor, and `DraggableAnchorsNode.measure` placing without a layer so the show/hide animation
+ * re-ran `WebView.layout()` every frame.
+ *
+ * @param exitSignal bumped by [SharingHost] to ask the sheet to animate out and then report. The
+ *   sheet reports on its own once the animation lands, so the composition survives long enough to
+ *   play it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun FrakSharingSheet(
     presentation: SharingPresentation,
     heightFraction: Float,
+    exitSignal: Int,
 ) {
     val scope = rememberCoroutineScope()
     val state = presentation.state
@@ -70,61 +95,66 @@ internal fun FrakSharingSheet(
     }
 
     DisposableEffect(presentation) {
-        // From here the sheet owns the session's teardown; before this frame the launcher did.
+        // From here the sheet owns the session's teardown; before this frame the host did.
         presentation.onPresented()
         onDispose(presentation::dispose)
     }
 
-    // How far the user has dragged the sheet down by its grab strip. The sheet's own drag is
-    // off (see sheetGesturesEnabled below), so this is the only thing that moves it.
-    val dragOffset = remember { Animatable(0f) }
+    /**
+     * How far down the sheet sits, as a fraction of its own height: `1f` fully off-screen below,
+     * `0f` at rest. Drives the entry, the drag and the exit.
+     *
+     * A fraction rather than pixels because the entry animation has to start before the sheet has
+     * ever been measured — at the first frame there is no height to translate by yet, and
+     * `graphicsLayer` reads the real one at draw time.
+     */
+    val offset = remember { Animatable(1f) }
     var sheetHeightPx by remember { mutableIntStateOf(0) }
 
-    ModalBottomSheet(
-        onDismissRequest = state::dismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        // The whole sheet is draggable by default, which put it in a permanent race with the
-        // web view for every vertical gesture — the page scrolls an inner `height: 100dvh`
-        // container, so the WebView's own scroll offset never moves and no heuristic on this
-        // side can tell "the page wants this" from "the sheet does". Ownership is explicit
-        // instead: the page gets every gesture that lands on it, the grab strip gets the rest.
-        sheetGesturesEnabled = false,
-        // The page paints the only surface here, so the sheet must not paint one behind it.
-        // M3's default (surfaceContainerLow) showed as a grey mismatch against the page's
-        // white at the corners and during scroll overshoot. The skeleton below paints its
-        // own surface.
-        containerColor = Color.Transparent,
-        // Rectangular on purpose, and this is a performance decision, not a cosmetic one.
-        //
-        // `Surface` ends its modifier chain with `.clip(shape)`, and a WebView does not draw
-        // through `View.onDraw` — it draws through the `AwDrawFn` GPU functor, whose ABI carries
-        // a rectangular clip and nothing else (`clip_left/top/right/bottom` in `draw_fn.h`).
-        // A round-rect clip cannot be handed down, so HWUI has to route the functor's output
-        // through an offscreen/stencil pass instead, at full sheet size, on every frame that
-        // redraws. That is what made dragging the sheet lag.
-        //
-        // The rounding did not go away, it moved to where it is free: the skeleton clips itself
-        // (it is Compose-drawn, not a functor), and the page rounds its own top corners in CSS —
-        // see [SharingHostStyle], which injects the radius by origin. The web view is transparent
-        // so those corners cut through to the scrim.
-        shape = RectangleShape,
-        // Drawn by hand inside the content so it floats over the page instead of reserving a
-        // strip above it — in its own row it would render as a band of scrim, since the
-        // container is transparent.
-        dragHandle = null,
+    LaunchedEffect(Unit) { offset.animateTo(0f, tween(ENTER_MILLIS)) }
+
+    // 0 is "no exit requested" — the host resets it to 0 between sessions, and a fresh
+    // composition starts there too.
+    LaunchedEffect(exitSignal) {
+        if (exitSignal > 0) exit(offset, state)
+    }
+
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                // Drawn rather than dimmed by the window: `FLAG_DIM_BEHIND` is constant for as
+                // long as the window is up, so it would pop in and out while the sheet is still
+                // sliding. Read in the draw phase, so a drag only redraws it.
+                .drawBehind {
+                    drawRect(
+                        color = Color.Black,
+                        alpha = SCRIM_ALPHA * (1f - offset.value).coerceIn(0f, 1f),
+                    )
+                },
     ) {
+        // Tapping outside the sheet dismisses it. `setCanceledOnTouchOutside` cannot do this: the
+        // window is full-screen, so every touch is inside it. No ripple and no semantics — the
+        // dismiss affordance TalkBack offers is on the sheet itself, below.
+        Box(
+            modifier =
+                Modifier
+                    .matchParentSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures { scope.launch { exit(offset, state) } }
+                    }.clearAndSetSemantics { },
+        )
+
         // A fraction, not a fixed dp: the hosted page's first screenful (reward card, product
         // cards, stepper, FAQ) needs the whole height, and there's no native chrome left to
         // subtract from it.
         Box(
             modifier =
                 Modifier
+                    .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .fillMaxHeight(clampSharingHeightFraction(heightFraction))
                     .onSizeChanged { sheetHeightPx = it.height }
-                    // The container is transparent, so translating the content *is* translating
-                    // the visible sheet.
-                    //
                     // `graphicsLayer`, not `Modifier.offset {}`: the offset lambda is read during
                     // the *placement* phase, so every frame of a drag invalidates placement and
                     // re-runs `AndroidViewHolder`'s `layoutAccordingTo` — i.e. a real
@@ -132,7 +162,16 @@ internal fun FrakSharingSheet(
                     // only updates the layer's transform matrix, so the layout phase is skipped
                     // entirely. Compose hit-testing follows the layer transform, so the grab
                     // strip stays grabbable where it is drawn.
-                    .graphicsLayer { translationY = dragOffset.value },
+                    .graphicsLayer { translationY = offset.value * size.height }
+                    // No string of our own: this module ships no resources, and TalkBack localises
+                    // its own label for a dismiss action. That is the whole accessibility contract
+                    // `ModalBottomSheet` used to supply here.
+                    .semantics {
+                        dismiss {
+                            scope.launch { exit(offset, state) }
+                            true
+                        }
+                    },
         ) {
             // Composed from the first frame rather than waiting on the session: a pooled view
             // is already warm, and attaching and laying it out at the real size now means the
@@ -140,10 +179,10 @@ internal fun FrakSharingSheet(
             AndroidView(modifier = Modifier.fillMaxSize(), factory = { handle.view })
 
             // The renderer died after the page had painted. The sheet stays up on purpose — see
-            // SharingSheetState.onPageUnavailable — but the web view is transparent, the container
-            // is transparent and the sheet is rectangular, so "stays up" would otherwise mean a
-            // see-through hole with a grab pill floating in it. Opaque and correctly rounded, with
-            // no shimmer: nothing is loading, there is just nothing left to show.
+            // SharingSheetState.onPageUnavailable — but the web view is transparent and the sheet
+            // paints no surface of its own, so "stays up" would otherwise mean a see-through hole
+            // with a grab pill floating in it. Opaque and correctly rounded, with no shimmer:
+            // nothing is loading, there is just nothing left to show.
             if (state.contentLost) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -167,18 +206,17 @@ internal fun FrakSharingSheet(
             SharingSheetGrabStrip(
                 modifier = Modifier.align(Alignment.TopCenter),
                 onDrag = { delta ->
-                    scope.launch { dragOffset.snapTo((dragOffset.value + delta).coerceAtLeast(0f)) }
+                    val height = sheetHeightPx.toFloat()
+                    if (height > 0f) {
+                        scope.launch { offset.snapTo((offset.value + delta / height).coerceAtLeast(0f)) }
+                    }
                 },
                 onDragStopped = { velocity ->
-                    val height = sheetHeightPx.toFloat()
                     val flung = velocity > DISMISS_VELOCITY_PX_PER_SECOND
-                    if (flung || dragOffset.value > height * DISMISS_FRACTION) {
-                        // Off-screen first, then report: state.dismiss() drops this composable
-                        // outright, so reporting first would cut the animation.
-                        dragOffset.animateTo(height, tween(DISMISS_MILLIS))
-                        state.dismiss()
+                    if (flung || offset.value > DISMISS_FRACTION) {
+                        exit(offset, state)
                     } else {
-                        dragOffset.animateTo(0f, spring())
+                        offset.animateTo(0f, spring())
                     }
                 },
             )
@@ -187,12 +225,29 @@ internal fun FrakSharingSheet(
 }
 
 /**
+ * Animates the sheet off-screen, then reports.
+ *
+ * That order matters: `state.dismiss()` reaches [SharingHost.finish], which dismisses the dialog
+ * and tears this composition down outright — reporting first would cut the animation mid-flight.
+ *
+ * A top-level function rather than a local one inside the composable, so nothing about it depends
+ * on how the Compose compiler treats declarations nested in a `@Composable`.
+ */
+private suspend fun exit(
+    offset: Animatable<Float, AnimationVector1D>,
+    state: SharingSheetState,
+) {
+    offset.animateTo(1f, tween(DISMISS_MILLIS))
+    state.dismiss()
+}
+
+/**
  * The sheet's only drag surface.
  *
  * A Compose hit target stacked above the `AndroidView`, so the web view never sees these
- * touches and there is nothing to arbitrate — the reason the sheet's own gesture is off. Much
- * taller than the pill it draws: the visible handle is a 4dp bar, and a 4dp target is exactly
- * what made this hard to grab.
+ * touches and there is nothing to arbitrate — the page gets every gesture that lands on it, the
+ * grab strip gets the rest. Much taller than the pill it draws: the visible handle is a 4dp bar,
+ * and a 4dp target is exactly what made this hard to grab.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -238,3 +293,9 @@ private const val DISMISS_FRACTION = 0.35f
 private const val DISMISS_VELOCITY_PX_PER_SECOND = 1_200f
 
 private const val DISMISS_MILLIS = 180
+
+/** Slower than the exit on purpose: entering wants to read as arriving, leaving as getting out of the way. */
+private const val ENTER_MILLIS = 250
+
+/** M3's own scrim opacity, which this replaces. */
+private const val SCRIM_ALPHA = 0.32f

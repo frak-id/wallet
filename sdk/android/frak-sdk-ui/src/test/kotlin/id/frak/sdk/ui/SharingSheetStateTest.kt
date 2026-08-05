@@ -66,14 +66,7 @@ class SharingSheetStateTest {
         // would run it on a real thread pool and make advanceUntilIdle meaningless.
         workContext = EmptyCoroutineContext,
         activationBaseUrl = activationBaseUrl,
-        buildSharingLink = client::buildSharingLink,
-        anonymousId = { client.anonymousId },
-        environment = { client.environment },
-        resolveConfig = client::resolveConfig,
-        bestReward = client::bestReward,
-        track = client::track,
-        installPageUrl = client::installPageUrl,
-        openFrakApp = client::openFrakApp,
+        dependencies = client,
     )
 
     @Test

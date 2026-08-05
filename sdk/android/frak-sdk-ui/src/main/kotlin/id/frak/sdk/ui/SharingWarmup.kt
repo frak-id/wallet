@@ -1,8 +1,5 @@
 package id.frak.sdk.ui
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
 import id.frak.sdk.Frak
 import id.frak.sdk.core.FrakError
 
@@ -22,53 +19,55 @@ import id.frak.sdk.core.FrakError
  * Resolving the config is also what unlocks warming the *real* page rather than a neutral one —
  * the merchantId is the thing the page needs before it can boot its queries, and it does not
  * exist any earlier. That is why the pool is warmed from here rather than from its own
- * composition.
+ * construction.
  *
  * The reward is deliberately not warmed. `RewardRepository`'s cache is keyed on the encoded
  * product list, so a warm-up without the request's products mints a different key and buys the
  * sheet nothing.
+ *
+ * Started by [FrakSharing.warm], not by construction — see that method for why the two are
+ * separate. Was a `@Composable` whose `LaunchedEffect` tied warming to a *screen*; it is a plain
+ * suspend function now so a merchant on XML or Java can reach it too.
  */
-@Composable
-internal fun WarmSharingData(pool: SharingWebViewPool?) {
+internal suspend fun warmSharingData(
+    pool: SharingWebViewPool,
+    packageId: String,
+) {
     if (!Frak.isInitialized) return
     if (!Frak.preloadSharing) return
 
-    val packageId = LocalContext.current.packageName
-    val walletOrigin = Frak.client.environment.wallet
+    val trace = SharingTrace()
+    val client = Frak.client
+    val walletOrigin = client.environment.wallet
 
-    LaunchedEffect(pool, packageId, walletOrigin) {
-        val trace = SharingTrace()
-        val client = Frak.client
+    // The keystore mint is already eager at initialize; awaiting it here only guarantees the
+    // sheet's own read lands on a completed Deferred rather than joining one in flight.
+    val clientId = client.anonymousId()
+    trace.mark("warm identity ready")
 
-        // The keystore mint is already eager at initialize; awaiting it here only guarantees the
-        // sheet's own read lands on a completed Deferred rather than joining one in flight.
-        val clientId = client.anonymousId()
-        trace.mark("warm identity ready")
+    val config =
+        try {
+            client.config.resolve()
+        } catch (unavailable: FrakError) {
+            // A warm-up that fails is not a failure: the sheet re-resolves and carries its own
+            // tier-3 fallback for the case where that fails too.
+            null
+        }
+    trace.mark("warm config ready")
 
-        val config =
-            try {
-                client.config.resolve()
-            } catch (unavailable: FrakError) {
-                // A warm-up that fails is not a failure: the sheet re-resolves and carries its own
-                // tier-3 fallback for the case where that fails too.
-                null
-            }
-        trace.mark("warm config ready")
+    // Without both halves of the identity the page would render nothing, and warming a page
+    // that renders nothing banks only DNS/TLS/bundle — not the queries, which are the
+    // expensive part. Better to leave the view cold and let the sheet do a full load.
+    if (config == null || clientId == null) return
 
-        // Without both halves of the identity the page would render nothing, and warming a page
-        // that renders nothing banks only DNS/TLS/bundle — not the queries, which are the
-        // expensive part. Better to leave the view cold and let the sheet do a full load.
-        if (config == null || clientId == null) return@LaunchedEffect
-
-        pool?.warm(
-            SharingPageUrl.warm(
-                walletOrigin = walletOrigin,
-                merchantId = config.merchantId,
-                clientId = clientId,
-                packageId = packageId,
-                appName = config.sdkConfig?.name ?: config.name,
-                logoUrl = config.sdkConfig?.logoUrl,
-            ),
-        )
-    }
+    pool.warm(
+        SharingPageUrl.warm(
+            walletOrigin = walletOrigin,
+            merchantId = config.merchantId,
+            clientId = clientId,
+            packageId = packageId,
+            appName = config.sdkConfig?.name ?: config.name,
+            logoUrl = config.sdkConfig?.logoUrl,
+        ),
+    )
 }

@@ -186,7 +186,7 @@ internal class SharingWebViewHandle(
      * Puts the pooled view into the background state while nobody is looking at it.
      *
      * A warm view sits on a fully booted React app for as long as the merchant's share surface is
-     * composed. `WebView.onPause` is the per-instance lever for that, and it is worth being precise
+     * alive. `WebView.onPause` is the per-instance lever for that, and it is worth being precise
      * about what it does buy, because it is less than it sounds: Android documents it as a
      * "best-effort attempt to pause any processing that can be paused safely, such as animations and
      * geolocation", and explicitly says **it does not pause JavaScript**. So the page's timers and

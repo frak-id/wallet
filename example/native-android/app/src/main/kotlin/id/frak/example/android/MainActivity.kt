@@ -54,9 +54,8 @@ import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.sharing.SharingProduct
 import id.frak.sdk.sharing.SharingRequest
-import id.frak.sdk.ui.FrakSharingLauncher
+import id.frak.sdk.ui.FrakSharing
 import id.frak.sdk.ui.SharingResult
-import id.frak.sdk.ui.rememberFrakSharingLauncher
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -123,6 +122,17 @@ private sealed interface CatalogRewardLookup {
 }
 
 class MainActivity : ComponentActivity() {
+    /**
+     * The plain-Activity build site, on purpose: this harness is Compose top to bottom and could
+     * have used the `@Composable build()`, but the XML/Java path is the one nothing has ever
+     * exercised. Driving the harness through it is the only pressure this repo puts on it.
+     *
+     * A property initialiser, not `onCreate`. `SharingHost` is built to survive that (it resolves
+     * the application context lazily, because an Activity has none until the framework attaches
+     * its base context) and it is the idiom a merchant will reach for first.
+     */
+    private val sharing = FrakSharing.Builder(::logSharingResult).build(this)
+
     private val logs = mutableStateListOf<LogEntry>()
     private var catalogReward by mutableStateOf<CatalogRewardLookup>(CatalogRewardLookup.Loading)
 
@@ -162,6 +172,15 @@ class MainActivity : ComponentActivity() {
         )
         addLog("Frak.initialize called for merchant 0a799880-ba54-4276-a734-db8721911bab (development)", LogType.INFO)
 
+        // Explicit, because this is not the Compose build site: the `@Composable build()` warms on
+        // composition-enter, a plain-Activity one cannot know when a share affordance appears. Here
+        // it is honest at onCreate — the first screen this harness shows is the catalog, and every
+        // row on it has a Share button. A merchant whose share surface is three taps in should call
+        // this when that surface appears, not here; warming boots a WebView and does two round
+        // trips, and doing it on every cold start for a share nobody asked for is the regression
+        // the warm/build split exists to prevent.
+        sharing.warm()
+
         intent?.dataString?.let { url -> logInboundIntent(url) }
 
         lifecycleScope.launch {
@@ -182,14 +201,11 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     val scope = rememberCoroutineScope()
-                    // FrakSharingLauncher must be obtained inside the composable tree; its sheet is
-                    // hosted as a composable.
-                    val sharingLauncher = rememberFrakSharingLauncher { result -> logSharingResult(result) }
 
                     MerchantAppScreen(
                         logs = logs,
                         catalogRewardLabel = catalogRewardLabel,
-                        onShareProduct = { product -> shareProduct(product, sharingLauncher) },
+                        onShareProduct = ::shareProduct,
                         onSimulateDeepLink = { scope.launch { simulateDeepLink() } },
                         onOrderCompleted = { scope.launch { completeOrder() } },
                     )
@@ -211,12 +227,9 @@ class MainActivity : ComponentActivity() {
         addLog("Inbound link reached the activity (SDK auto-handles it): $url", LogType.SUCCESS)
     }
 
-    private fun shareProduct(
-        product: ProductItem,
-        launcher: FrakSharingLauncher,
-    ) {
+    private fun shareProduct(product: ProductItem) {
         addLog("Triggering sharing sheet for '${product.title}'...", LogType.INFO)
-        launcher.launch(
+        sharing.present(
             SharingRequest(
                 products = listOf(SharingProduct(title = product.title, link = product.link)),
                 // Reward trigger is "purchase" — matches the rewards.best call below and iOS's

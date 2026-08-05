@@ -2,24 +2,20 @@ package id.frak.sdk.ui
 
 import android.content.Context
 import android.view.ViewGroup
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
-import id.frak.sdk.Frak
 
 /**
- * Holds one sharing `WebView` for as long as a share surface is on screen.
+ * Holds one sharing `WebView` for as long as its hosting Activity is alive.
  *
  * Gated behind [id.frak.sdk.core.FrakConfig.preloadSharing]. With it off this is a plain
  * factory — a fresh view per sheet, destroyed with it, which is what the SDK has always done.
- * With it on, one view is booted against the wallet origin the moment the surface appears and
+ * With it on, one view is booted against the wallet origin the moment a share surface warms and
  * then handed to the sheet itself, so presenting costs a navigation rather than engine startup,
  * TLS, the React bundle and a V8 warm-up.
  *
- * One view per pool, so hoist [rememberFrakSharingLauncher] per screen, not per row.
- * [FrakSharingLauncher] already refuses a second concurrent sheet, so the single view can never
- * be wanted twice at once.
+ * One view per pool and one pool per Activity ([SharingHost]), which is what dissolves the old
+ * "hoist per screen, not per row" footgun: several [FrakSharing] instances on one screen share
+ * this, and the host refuses a second concurrent sheet, so the single view can never be wanted
+ * twice at once.
  */
 internal class SharingWebViewPool(
     private val context: Context,
@@ -57,7 +53,7 @@ internal class SharingWebViewPool(
      * start without a merchantId. `state=warm` in that URL is what keeps the page from reporting
      * itself as viewed while it sits here unseen.
      *
-     * Called once the merchant config resolves rather than at composition, which is why this
+     * Called once the merchant config resolves rather than at construction, which is why this
      * takes a URL instead of building one — the identity simply is not known any earlier.
      */
     fun warm(url: String) {
@@ -95,9 +91,9 @@ internal class SharingWebViewPool(
     /**
      * The view the sheet should present, already bound to [binding].
      *
-     * Detaches from any previous parent first: Compose removes the view when an `AndroidView`
-     * leaves composition, but a torn-down-and-immediately-reopened sheet can race that, and
-     * adding a still-parented child throws.
+     * Detaches from any previous parent first: Compose removes the view when the sheet's
+     * `AndroidView` leaves composition, but a torn-down-and-immediately-reopened sheet can race
+     * that, and adding a still-parented child throws.
      */
     fun acquire(binding: SharingWebViewBinding): SharingWebViewHandle {
         val reused = if (preload) pooled else null
@@ -161,11 +157,11 @@ internal class SharingWebViewPool(
     }
 
     /**
-     * Drops the pooled view when the share surface leaves the screen; its timers and context go
+     * Drops the pooled view when the hosting Activity is destroyed; its timers and context go
      * with it.
      *
-     * Will not pull the view out of a sheet that is still using it. Compose disposes inner effects
-     * first, so the sheet normally hands it back before this runs — but "normally" is not an
+     * Will not pull the view out of a sheet that is still using it. [SharingHost] dismisses the
+     * dialog before it reaches here, so the sheet normally hands it back first — but "normally" is not an
      * invariant, and destroying a WebView a live sheet is still driving crashes it. In that case
      * the pool marks itself dead and [release] does the destroying, so the view is never leaked
      * either.
@@ -180,6 +176,11 @@ internal class SharingWebViewPool(
         handle.destroy()
     }
 
+    /**
+     * Builds a view against [context], which [SharingHost] supplies as the hosting **Activity**
+     * rather than the application — a WebView needs a themed, windowed context for its own popups
+     * (select dropdowns, text-selection handles) to place themselves correctly.
+     */
     private fun newHandle(): SharingWebViewHandle =
         createSharingWebView(
             context = context,
@@ -191,27 +192,4 @@ internal class SharingWebViewPool(
 /** `WebView.destroy` and any re-parenting both require the view to be out of the tree first. */
 private fun android.view.View.removeFromParent() {
     (parent as? ViewGroup)?.removeView(this)
-}
-
-/**
- * Remembers the share surface's [SharingWebViewPool], or null before [id.frak.sdk.Frak.initialize].
- *
- * Deliberately holds the *activity* context, not the application one: the pooled view is scoped
- * to this composition and dies with it, and a WebView needs a themed, windowed context for its
- * own popups (select dropdowns, text selection handles) to place themselves correctly.
- *
- * Warming is not started here. The URL worth warming carries the real merchantId, which does not
- * exist until the config resolves — [WarmSharingData] owns that and calls [SharingWebViewPool.warm]
- * when it lands.
- */
-@Composable
-internal fun rememberSharingWebViewPool(): SharingWebViewPool? {
-    if (!Frak.isInitialized) return null
-    val walletOrigin = Frak.client.environment.wallet
-    val preload = Frak.preloadSharing
-    val context = LocalContext.current
-
-    val pool = remember(context, walletOrigin, preload) { SharingWebViewPool(context, walletOrigin, preload) }
-    DisposableEffect(pool) { onDispose(pool::destroy) }
-    return pool
 }

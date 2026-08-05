@@ -8,12 +8,14 @@ import java.util.UUID
 /**
  * One sharing session, started at the tap rather than at the sheet's first composition.
  *
- * This exists because of what the sheet's composition costs. `ModalBottomSheet` builds a real
- * Dialog with its own Window and surface, and the pooled web view is attached and laid out in the
- * same frames — Main is occupied for ~300ms. Anything sequenced *inside* that composition queues
- * behind it, which is where the session build and then the navigation each lost their turn.
+ * This exists because of what presenting the sheet costs. Showing the dialog builds a real Window
+ * and surface, and the pooled web view is attached and laid out in the same frames — Main is
+ * occupied for ~300ms. Anything sequenced *inside* that queues behind it, which is where the
+ * session build and then the navigation each lost their turn. (Measured when the sheet was a
+ * `ModalBottomSheet`, i.e. against two stacked Windows rather than the one it has now; the
+ * ordering argument survives the reduction, the number has not been re-taken.)
  *
- * [start] is called from [FrakSharingLauncher.launch], i.e. on the merchant's click handler, while
+ * [start] is called from [SharingHost.present], i.e. on the merchant's click handler, while
  * Main is still idle. The build runs off-thread and the page load goes out as an ordinary main-loop
  * message, so the document is already in flight while the sheet is still animating in. The sheet
  * then renders a session that is already underway rather than starting one.
@@ -47,8 +49,8 @@ internal class SharingPresentation(
         if (disposed) return
         disposed = true
         // Before the view goes back to the pool, and unconditionally: this is the only place that
-        // catches a sheet leaving composition without an explicit outcome — a configuration change,
-        // a nav-graph pop, the merchant's screen being replaced. None of those route through
+        // catches a sheet going away without an explicit outcome — the Activity being destroyed,
+        // a configuration change, the merchant's screen being replaced. None of those route through
         // `dismiss()`, so without this the merchant's `onResult` is never called for that session
         // at all. `abandon()` no-ops once anything terminal has already been reported, and reports
         // the most significant outcome the session reached when it has not.

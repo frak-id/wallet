@@ -33,7 +33,7 @@ biome does not touch `sdk/android` (excluded in `biome.json`, it cannot parse Ko
 | Module | Coordinate | Contents |
 | --- | --- | --- |
 | `frak-sdk` | `id.frak:frak-sdk` | Core. UI-free, headlessly testable. |
-| `frak-sdk-ui` | `id.frak:frak-sdk-ui` | The Compose sharing sheet. Depends on core. |
+| `frak-sdk-ui` | `id.frak:frak-sdk-ui` | The sharing sheet. Entry point is `FrakSharing.Builder`, callable from XML/Java/Compose; the sheet itself is still Compose, hosted in a `ComponentDialog`. Depends on core. |
 
 Split so a merchant taking only tracking never pulls in a web view. `minSdk 24`, Java/JVM target 17.
 
@@ -50,7 +50,7 @@ Split so a merchant taking only tracking never pulls in a web view. `minSdk 24`,
 | `sharing/` | `FrakContextCodec` (fCtx v2 binary), `FrakContext`, `SharingLinkBuilder`, `AttributionParams`, `SharingRequest` |
 | `applink/` | `InstallLinks`, `ReferralArrival`, `AppLauncher`, `DeepLinkObserver` |
 
-`frak-sdk-ui/src/main/kotlin/id/frak/sdk/ui/` — the Compose sharing sheet and its View/Activity fallback.
+`frak-sdk-ui/src/main/kotlin/id/frak/sdk/ui/` — the sharing sheet. `FrakSharing`/`FrakSharing.Builder` is the whole public surface; `SharingHost` owns the `ComponentDialog`, the warm `WebView` pool and the one-sheet-at-a-time guard, per hosting Activity.
 
 Tests: `frak-sdk/src/test/kotlin/...` (JVM unit tests, mirrors main packages) and `frak-sdk-ui/src/test/kotlin/...` (Robolectric, pinned to JDK 17 — Robolectric's bundled ASM cannot instrument newer bytecode). Robolectric is scoped to `frak-sdk-ui` only; `frak-sdk` stays framework-free.
 
@@ -94,11 +94,25 @@ lifecycleScope.launch {
 
 `FrakConfig.logSink` (a `fun interface`) and `FrakClient.setTrackingEnabled` are the merchant-facing hooks for logging and consent; see the doc comments on `FrakConfig` and `FrakClient` for the exact contract.
 
+The sharing sheet is a Stripe-shaped Builder with two build sites, so XML, Java and Compose callers see the same types:
+
+```kotlin
+// Activity / XML / Java
+private val sharing = FrakSharing.Builder(::onShareResult).build(this)
+sharing.warm()                 // when a share affordance becomes visible
+sharing.present(request)       // on the tap
+
+// Compose — warms on composition-enter
+val sharing = remember { FrakSharing.Builder(::onShareResult) }.build()
+```
+
+`frak-sdk-ui/src/test/java/.../JavaCallSiteFixture.java` is a compile-only assertion that the above stays callable from Java. There is no `build(Fragment)` yet — `build(requireActivity())` works, and Builder methods are additive with no ABI break, so it lands with the Fragment harness screen that would exercise it rather than ahead of it.
+
 ## Status
 
 The MVP surface above is implemented and covered by 220 JVM unit tests (`grep -rc '@Test' frak-sdk*/src/test -r --include=*.kt | awk -F: '{s+=$2} END {print s}'`), plus Robolectric coverage in `frak-sdk-ui` for the sharing sheet's sequencing (tier 3 fallback, the 1.5s latency budget, tier 2's cache-only retry, web view origin pinning).
 
-One Android device pass (SM-G998B, Android 15) has exercised `initialize`, the wallet-installed probe, `config.resolve` and `rewards.best`. The sharing sheet, the install handoff and inbound deep links have not run on a device. No CI job builds this SDK, and there is no publish path or binary-compatibility gate.
+One Android device pass (SM-G998B, Android 15) has exercised `initialize`, the wallet-installed probe, `config.resolve` and `rewards.best`. The sharing sheet, the install handoff and inbound deep links have not run on a device, and neither has the `ComponentDialog` host that replaced `ModalBottomSheet` — no rotation pass, no leak check, no edge-to-edge pass against a `targetSdk 35` host. `.github/workflows/apps.yaml` lints, builds and unit-tests this SDK on every push and PR touching `sdk/android/**`, but it does **not** build `example/native-android`: nothing in CI compiles the harness, so a broken harness call site does not go red. There is no publish path or binary-compatibility gate.
 
 `example/native-android` builds against the real artifacts via a Gradle composite build (`includeBuild("../../sdk/android")` with an explicit `dependencySubstitution`, since Gradle's automatic substitution matches on `project.group`, which defaults to `frak-android-sdk` here, not `id.frak`). It exercises `Frak.initialize`, `.appLink`, `.config.resolve`, `.tracking.purchase` and `.rewards.best` through the SDK's public API — a source checkout, not a published artifact.
 

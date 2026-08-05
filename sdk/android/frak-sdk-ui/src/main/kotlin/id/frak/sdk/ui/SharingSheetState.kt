@@ -11,13 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import id.frak.sdk.Frak
-import id.frak.sdk.OpenAppResult
-import id.frak.sdk.config.FrakResolvedConfig
-import id.frak.sdk.core.FrakEnvironment
 import id.frak.sdk.core.FrakError
-import id.frak.sdk.core.FrakResult
-import id.frak.sdk.core.ProductDetails
-import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.sharing.SharingRequest
 import id.frak.sdk.tracking.Interaction
 import kotlinx.coroutines.CancellationException
@@ -125,7 +119,22 @@ internal sealed interface SharingNavigation {
 /** The sheet's behaviour, kept out of the composable since the ordering rules here are sequencing-sensitive. */
 @Stable
 internal class SharingSheetState(
+    /**
+     * Outlives any one sheet on purpose: an in-flight `track()` or a chooser the user is still
+     * looking at must not be cancelled by the sheet closing. Owned by [SharingHost] and cancelled
+     * when the host's owner is destroyed.
+     */
     private val scope: CoroutineScope,
+    /**
+     * The **application** context, not the presenting Activity's.
+     *
+     * Everything this class does with it survives that: the chooser and the external-link intent
+     * both already carry `FLAG_ACTIVITY_NEW_TASK`, the clipboard is a process-wide system service,
+     * and `packageName` is identical either way. Holding the Activity here would pin it for as long
+     * as the session lives — which, once the session moves into a `ViewModel`, is across
+     * configuration changes. The web view still gets an Activity context; see
+     * [SharingWebViewPool].
+     */
     private val context: Context,
     private val sessionId: String,
     private val onFinished: (SharingResult) -> Unit,
@@ -134,11 +143,10 @@ internal class SharingSheetState(
     /**
      * Where [build] runs.
      *
-     * Off the composition's Main scope deliberately. [scope] is `rememberCoroutineScope()`, whose
-     * dispatcher drives work from the choreographer frame callback — so on Main this coroutine
-     * queued behind the sheet's entry animation and the web view's first layout and did not start
-     * for 203-430ms on device. Everything it calls does its own IO dispatching; the Compose state
-     * it writes ([session], [failure]) is snapshot state and safe to write from any thread.
+     * Off the main thread deliberately. [scope] is main-confined, so on it this coroutine queued
+     * behind the sheet's entry animation and the web view's first layout and did not start for
+     * 203-430ms on device. Everything it calls does its own IO dispatching; the Compose state it
+     * writes ([session], [failure]) is snapshot state and safe to write from any thread.
      *
      * Tests override this with `EmptyCoroutineContext` so work stays on their `TestScope`.
      */
@@ -151,20 +159,12 @@ internal class SharingSheetState(
      * then is exactly the question, and re-asking it later would race the answer.
      */
     private val activationBaseUrl: String? = null,
-    // Individually injected and resolved lazily, since Frak.initialize may not have run yet
-    // when this is constructed.
-    private val buildSharingLink: suspend (SharingRequest) -> String? = { Frak.client.sharing.buildLink(it) },
-    private val anonymousId: suspend () -> String? = { Frak.client.anonymousId() },
-    private val environment: () -> FrakEnvironment = { Frak.client.environment },
-    private val resolveConfig: suspend () -> FrakResolvedConfig = { Frak.client.config.resolve() },
-    private val bestReward: suspend (String?, List<ProductDetails>?) -> BestReward? =
-        { targetInteraction, products ->
-            Frak.client.rewards.best(targetInteraction = targetInteraction, products = products)
-        },
-    private val track: suspend (Interaction) -> FrakResult<Unit> = { Frak.client.tracking.track(it) },
-    private val installPageUrl: suspend (String, String) -> String? =
-        { returnScheme, sid -> Frak.client.appLink.installPageUrl(returnScheme, sid) },
-    private val openFrakApp: suspend () -> OpenAppResult = { Frak.client.appLink.openFrakApp() },
+    /**
+     * Everything this state needs from the SDK core. See [SharingDependencies] for why it is one
+     * interface rather than the eight individually injected lambdas it replaced, and why the
+     * default resolves `Frak.client` per call rather than holding one.
+     */
+    private val dependencies: SharingDependencies = FrakClientDependencies,
 ) {
     var session: SharingSession? by mutableStateOf(null)
         private set
@@ -275,7 +275,7 @@ internal class SharingSheetState(
     /**
      * How many outcome-deciding coroutines are still running. See [launchAttribution].
      *
-     * These run on [scope], which is the launcher's rather than the sheet's, deliberately: a
+     * These run on [scope], which is the host's rather than the sheet's, deliberately: a
      * chooser the user is still looking at, or a `track()` still being written, has to outlive the
      * sheet that started it. That is exactly what makes [abandon] dangerous — without this counter
      * it would report a dismissal over a share that had not finished resolving yet.
@@ -534,12 +534,12 @@ internal class SharingSheetState(
                     // Guarded, like everything else that reaches `Frak.client` from this scope:
                     // its getter throws once `Frak.shutdown()` has run, and this coroutine has no
                     // exception handler between it and the merchant's process. See [guarded].
-                    val page = guarded { installPageUrl(current.returnScheme, sessionId) }
+                    val page = guarded { dependencies.installPageUrl(current.returnScheme, sessionId) }
                     if (page == null) {
                         // No identity/merchant to hand the install page — falls back to the
                         // store. Reported only after the open, since finishing first could
                         // tear this scope down mid-call.
-                        guarded { openFrakApp() }
+                        guarded { dependencies.openFrakApp() }
                         finish(SharingResult.InstallStarted)
                         return@launchAttribution
                     }
@@ -659,7 +659,7 @@ internal class SharingSheetState(
         // Only http(s): intent: and vendor schemes could reach arbitrary installed activities.
         if (parsed.scheme != "https" && parsed.scheme != "http") return
         if (isWalletStoreListing(parsed)) {
-            scope.launch { guarded { openFrakApp() } }
+            scope.launch { guarded { dependencies.openFrakApp() } }
             return
         }
         val intent = Intent(Intent.ACTION_VIEW, parsed).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -669,23 +669,24 @@ internal class SharingSheetState(
     /** True only for this environment's own Play listing; dev and production ship different package ids, so it's read off the URL rather than assumed. */
     private fun isWalletStoreListing(url: Uri): Boolean =
         url.host.equals(PLAY_STORE_HOST, ignoreCase = true) &&
-            url.getQueryParameter("id") == environment().walletPackageId
+            url.getQueryParameter("id") == dependencies.environment().walletPackageId
 
     /** The user swiped or tapped away. Reports whatever the session achieved. */
     fun dismiss() = finish(SharingResult.Dismissed)
 
     /**
-     * The sheet left composition without any explicit outcome.
+     * The sheet went away without any explicit outcome.
      *
      * Reported as a dismissal, because from a merchant's side that is what it is: the sheet is
-     * gone and nothing was shared. Reached on a configuration change, a nav-graph pop, or any
-     * other disposal of the composable hosting the sheet — none of which route through [dismiss],
-     * so before this existed the merchant's `onResult` was simply never called for those sessions
-     * and any "sharing in progress" state they kept hung forever.
+     * gone and nothing was shared. Reached when the presenting Activity is destroyed, when a
+     * dialog is dismissed by something other than [dismiss], or when the composition hosting the
+     * sheet is disposed for any other reason — none of which route through [dismiss], so before
+     * this existed the merchant's `onResult` was simply never called for those sessions and any
+     * "sharing in progress" state they kept hung forever.
      *
      * Not a lie about a share that did happen, and this is the part that needs the counter rather
      * than just [finish]'s significance ordering. [share], [copy], the install handoff and the
-     * tier-3 fallback all run on [scope] — the launcher's, not the sheet's — precisely so a chooser
+     * tier-3 fallback all run on [scope] — the host's, not the sheet's — precisely so a chooser
      * the user is still looking at outlives the sheet. Reporting a dismissal in that window would
      * beat the share to [finish]'s compare-and-set and the real outcome would be dropped, not
      * merely out-ranked. So this defers: if anything is still resolving, the last one out reports,
@@ -744,7 +745,7 @@ internal class SharingSheetState(
 
     /** Suspends until the event is durable. See [share]. */
     private suspend fun track() {
-        guarded { track(Interaction.Sharing()) }
+        guarded { dependencies.track(Interaction.Sharing()) }
     }
 
     /**
@@ -783,20 +784,20 @@ internal class SharingSheetState(
 
     /** Null only when there's nothing to share (no identity/merchant); a later resolveConfig failure still returns a no-page session, never null. */
     private suspend fun build(request: SharingRequest): SharingSession? {
-        val link = buildSharingLink(request)
+        val link = dependencies.buildSharingLink(request)
         trace.mark("  link built")
-        val clientId = anonymousId()
+        val clientId = dependencies.anonymousId()
         trace.mark("  identity ready")
         if (link == null || clientId == null) {
             failure = FrakError.MerchantResolutionFailed("no anonymous id or merchant to build a sharing link from")
             return null
         }
 
-        val walletOrigin = environment().wallet
+        val walletOrigin = dependencies.environment().wallet
         val packageId = context.packageName
         val config =
             try {
-                resolveConfig()
+                dependencies.resolveConfig()
             } catch (resolveFailed: FrakError) {
                 // Tier 3: link stands alone. failure is deliberately not set — this is a
                 // no-page session, not a failed one.
@@ -823,7 +824,7 @@ internal class SharingSheetState(
         val seededReward =
             withTimeoutOrNull(SEED_TIMEOUT_MILLIS) {
                 try {
-                    bestReward(request.targetInteraction, scopedProducts)?.formatted
+                    dependencies.bestReward(request.targetInteraction, scopedProducts)?.formatted
                 } catch (unavailable: FrakError) {
                     null
                 }

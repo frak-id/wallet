@@ -33,6 +33,28 @@ compose-bom = "2026.06.01"
 # WebView APK, so there is no platform-version floor to raise instead.
 androidx-webkit = "1.16.0"
 
+# `androidx.activity` carries both halves of the sharing sheet's public shape: `ComponentActivity`,
+# which `FrakSharing.Builder.build(...)` takes, and `ComponentDialog`, which hosts the sheet's
+# window. Not transitive from Compose UI or Material3 — `activity-compose` is what usually pulls
+# it in, and this module does not use it — so it is declared here and nowhere else.
+#
+# NOT the latest. `compileSdk` is 36 across this build, and androidx artifacts published against
+# 37 fail resolution with a `minCompileSdk` error. 1.13.0 is the version `example/native-android`
+# has already proven at 36; raise both together or neither.
+#
+# `androidx.lifecycle` is deliberately NOT declared alongside it. `ComponentActivity` implements
+# `LifecycleOwner` and `ViewModelStoreOwner`, so lifecycle-runtime and lifecycle-viewmodel are
+# `api` dependencies of this artifact and arrive with it; Compose UI drags its own in as well.
+# Pinning a second, lower coordinate here would change nothing (Gradle takes the highest) while
+# creating a real way to accidentally pin a *higher* one — and lifecycle 2.11.0 requires
+# compileSdk 37, which would fail this build outright.
+androidx-activity = "1.13.0"
+
+# `@MainThread`. A pure-Java annotations jar: no resources, no `minCompileSdk` metadata, nothing
+# to keep in step with `compileSdk`. Reachable transitively through `androidx.activity`, declared
+# anyway because this file is meant to be the whole answer to "what does this build resolve".
+androidx-annotation = "1.9.1"
+
 junit = "4.13.2"
 # Test-only. Parses the golden fixture corpus in `sdk/core` from the Kotlin test suite.
 #
@@ -70,6 +92,8 @@ compose-foundation = { module = "androidx.compose.foundation:foundation" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
 
 androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "androidx-webkit" }
+androidx-activity = { module = "androidx.activity:activity", version.ref = "androidx-activity" }
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidx-annotation" }
 
 junit = { module = "junit:junit", version.ref = "junit" }
 json = { module = "org.json:json", version.ref = "json" }

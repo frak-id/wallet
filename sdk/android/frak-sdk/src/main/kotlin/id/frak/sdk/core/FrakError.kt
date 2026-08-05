@@ -60,7 +60,7 @@ public sealed class FrakError(
             "Frak tracking is disabled; no network request was issued.",
         )
 
-    /** [id.frak.sdk.ui.FrakSharingLauncher.launch] called while a sheet is already up. See [NotInitialized]'s doc for why this is not an `object`. */
+    /** [id.frak.sdk.ui.FrakSharing.present] called while a sheet is already up on the same Activity. See [NotInitialized]'s doc for why this is not an `object`. */
     public class AlreadyPresenting :
         FrakError(
             "A Frak sharing sheet is already presented.",

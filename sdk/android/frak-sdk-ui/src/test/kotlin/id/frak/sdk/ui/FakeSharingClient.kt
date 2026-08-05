@@ -12,16 +12,21 @@ import id.frak.sdk.tracking.Interaction
 import kotlinx.coroutines.CompletableDeferred
 
 /**
- * Backs [SharingSheetState]'s injected functions for tests. Not a [id.frak.sdk.FrakClient]
+ * Backs [SharingSheetState]'s [SharingDependencies] seam for tests. Not a [id.frak.sdk.FrakClient]
  * fake — stands in only for the handful of members the sheet actually calls.
+ *
+ * Implements the interface directly rather than being adapted into it, so `newState` passes one
+ * argument and every knob below stays where the tests already reach for it.
  */
-internal class FakeSharingClient {
+internal class FakeSharingClient : SharingDependencies {
     /** Null models `buildSharingLink`'s "nothing to share" case. */
     var link: String? = "https://acme.example/?fk=abc"
 
-    var anonymousId: String? = "a3f1c0de-0000-4000-8000-000000000000"
+    var anonymousIdValue: String? = "a3f1c0de-0000-4000-8000-000000000000"
 
-    val environment: FrakEnvironment = FrakEnvironment.Production
+    override suspend fun anonymousId(): String? = anonymousIdValue
+
+    override fun environment(): FrakEnvironment = FrakEnvironment.Production
 
     /** Thrown by [resolveConfig] when set. */
     var resolveFailure: FrakError? = null
@@ -49,13 +54,13 @@ internal class FakeSharingClient {
             domain = "acme.example",
         )
 
-    suspend fun resolveConfig(): FrakResolvedConfig {
+    override suspend fun resolveConfig(): FrakResolvedConfig {
         resolveGate?.await()
         resolveFailure?.let { throw it }
         return resolved
     }
 
-    suspend fun bestReward(
+    override suspend fun bestReward(
         targetInteraction: String?,
         products: List<ProductDetails>?,
     ): BestReward? {
@@ -63,7 +68,7 @@ internal class FakeSharingClient {
         return bestReward
     }
 
-    suspend fun buildSharingLink(request: SharingRequest): String? = link
+    override suspend fun buildSharingLink(request: SharingRequest): String? = link
 
     /**
      * Thrown by [track], [openFrakApp] and [installPageUrl] when set.
@@ -80,14 +85,14 @@ internal class FakeSharingClient {
      */
     var trackGate: CompletableDeferred<Unit>? = null
 
-    suspend fun track(interaction: Interaction): FrakResult<Unit> {
+    override suspend fun track(interaction: Interaction): FrakResult<Unit> {
         trackGate?.await()
         clientFailure?.let { throw it }
         trackCount++
         return FrakResult.Success(Unit)
     }
 
-    suspend fun openFrakApp(): OpenAppResult {
+    override suspend fun openFrakApp(): OpenAppResult {
         clientFailure?.let { throw it }
         openFrakAppCount++
         return OpenAppResult.OpenedApp
@@ -105,7 +110,7 @@ internal class FakeSharingClient {
     var installPageArgs: Pair<String, String>? = null
         private set
 
-    suspend fun installPageUrl(
+    override suspend fun installPageUrl(
         returnScheme: String,
         sessionId: String,
     ): String? {

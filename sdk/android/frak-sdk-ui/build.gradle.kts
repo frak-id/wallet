@@ -42,6 +42,15 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
 
+    // `api`, not `implementation`: `ComponentActivity` is a parameter of
+    // `FrakSharing.Builder.build(...)`, so a merchant cannot call the public API without it on
+    // their own compile classpath. `ComponentDialog` — the sheet's hosting window — ships in the
+    // same artifact.
+    api(libs.androidx.activity)
+
+    // `@MainThread` only. CLASS retention, so consumers need nothing at runtime.
+    implementation(libs.androidx.annotation)
+
     // One API: `addDocumentStartJavaScript`. It is what lets the sheet style the hosted page by
     // origin instead of by route — see `SharingHostStyle`. `implementation`, not `api`: no type
     // from it appears on this module's public surface, so it stays off merchants' compile
