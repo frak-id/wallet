@@ -21,7 +21,6 @@
 		"classname": { "type": "string", "default": "" },
 		"noRewardText": { "type": "string", "default": "" },
 		"targetInteraction": { "type": "string", "default": "" },
-		"clickAction": { "type": "string", "default": "sharing-page" },
 		"buttonStyle": { "type": "string", "default": "primary" }
 	},
 	"editorScript": "file:./editor.js",

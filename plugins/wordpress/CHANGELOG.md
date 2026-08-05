@@ -11,6 +11,12 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Changed
+
+- **The share button's *Click action* setting has been removed entirely** from every editor (Gutenberg block, classic widget, Elementor, Divi) along with the `click_action` shortcode attribute. The embedded wallet drawer was the last alternative to the hosted sharing page and it has now been retired SDK-side, which left the dropdown with a single choice. Every share CTA opens the sharing page, so there is nothing left to pick.
+
+  Nothing breaks for existing content: the `clickAction` block attribute and the `click_action` shortcode attribute are simply no longer read, so saved posts, widgets, Elementor pages and Divi layouts render exactly as before — the same way `use_reward` was retired. `Frak_Component_Renderer::SHARE_BUTTON_ATTRS` no longer maps `clickAction => click-action`, so the attribute stops being emitted on `<frak-button-share>`.
+
 ## [1.1.10] - 2026-08-04
 
 ### Added
