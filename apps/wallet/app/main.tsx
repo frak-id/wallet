@@ -21,6 +21,7 @@ import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
 import { StrictMode, startTransition } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
+import { queryClient } from "@/module/common/provider/queryClient";
 import { installViewTransitionOptOut } from "./utils/bottomBarRoutes";
 import { initDeepLinks } from "./utils/deepLink";
 import { initKeyboardInset } from "./utils/keyboardInset";
@@ -81,8 +82,19 @@ import { routeTree } from "./routeTree.gen";
 // Create a new router instance
 const router = createRouter({
     routeTree,
+    // Same instance as the one feeding `PersistQueryClientProvider`, so loader
+    // prefetches land in the cache the component hooks actually read.
+    context: { queryClient },
     // Preload routes when links render for instant navigation
     defaultPreload: "render",
+    // MUST be 0 now that loaders delegate to react-query. The router keeps its
+    // own preload-freshness window (30s by default) and uses it to decide
+    // whether to re-invoke a loader at all; leaving it non-zero means the
+    // prefetch quietly stops re-running. Query's `staleTime` (60s, see
+    // module/common/provider/queryClient.ts) is then the single source of
+    // truth for freshness, and is also what keeps `defaultPreload: "render"`
+    // from refetching every BottomTabBar tab on every paint.
+    defaultPreloadStaleTime: 0,
     defaultPendingMinMs: 500,
     scrollRestoration: true,
     scrollToTopSelectors: ["main"],

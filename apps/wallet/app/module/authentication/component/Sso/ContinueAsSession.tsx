@@ -5,7 +5,7 @@ import { ArrowLeftIcon, WalletIcon } from "@frak-labs/design-system/icons";
 import { ua } from "@frak-labs/wallet-shared";
 import { Trans, useTranslation } from "react-i18next";
 import type { Address } from "viem";
-import { shortenAddress } from "@/module/authentication/utils/shortenAddress";
+import { shortenAddress } from "@/module/common/utils/shortenAddress";
 
 /**
  * Smooth path shown when an active session is already in `sessionStore`.

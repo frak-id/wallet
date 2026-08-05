@@ -1,3 +1,4 @@
+import type { Address } from "viem";
 import { describe, expect, test } from "vitest";
 import { shortenAddress } from "./shortenAddress";
 
@@ -12,5 +13,13 @@ describe("shortenAddress", () => {
         expect(
             shortenAddress("0x00000000000000000000000000000000000000ab")
         ).toBe("0x000000...000000ab");
+    });
+
+    test("returns short input untouched instead of throwing", () => {
+        // viem's `slice` throws SliceOffsetOutOfBoundsError below 7 bytes.
+        // These screens render backend-supplied values, so degrade instead of
+        // blowing up mid-render.
+        expect(shortenAddress("0x1234" as Address)).toBe("0x1234");
+        expect(shortenAddress("0x" as Address)).toBe("0x");
     });
 });

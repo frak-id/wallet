@@ -2,7 +2,8 @@ import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { recordError } from "@frak-labs/wallet-shared";
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import type { QueryClient } from "@tanstack/react-query";
+import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 import { BiometricLock } from "@/module/biometrics";
@@ -19,7 +20,9 @@ import "./__root.css";
 import { useHardwareBack } from "@/module/common/hook/useHardwareBack";
 import { scheduleIdleModalPreload } from "@/module/common/utils/preloadModalChunks";
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+    queryClient: QueryClient;
+}>()({
     component: RootComponent,
     errorComponent: ErrorComponent,
     notFoundComponent: NotFoundComponent,

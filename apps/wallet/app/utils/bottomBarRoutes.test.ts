@@ -1,10 +1,11 @@
 import type { AnyRouter } from "@tanstack/react-router";
 import { createRouter } from "@tanstack/react-router";
 import { describe, expect, it } from "vitest";
+import { queryClient } from "@/module/common/provider/queryClient";
 import { routeTree } from "@/routeTree.gen";
 import { installViewTransitionOptOut, keepsBottomBar } from "./bottomBarRoutes";
 
-const router = createRouter({ routeTree });
+const router = createRouter({ routeTree, context: { queryClient } });
 
 const keeps = (from: string, to: string) => keepsBottomBar(router, from, to);
 
@@ -63,7 +64,11 @@ async function countTransitions(run: () => Promise<void> | void) {
 }
 
 function createAppRouter() {
-    const appRouter = createRouter({ routeTree, defaultViewTransition: true });
+    const appRouter = createRouter({
+        routeTree,
+        context: { queryClient },
+        defaultViewTransition: true,
+    });
     // Simulate WebKit below 18.2, where `defaultViewTransition.types` is never
     // consulted. The opt-out must hold without it.
     appRouter.isViewTransitionTypesSupported = false;

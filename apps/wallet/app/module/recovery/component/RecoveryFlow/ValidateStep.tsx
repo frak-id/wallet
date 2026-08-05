@@ -7,6 +7,7 @@ import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResult
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { WarningCard } from "@/module/common/component/WarningCard";
 import { useDateFormatter } from "@/module/common/hook/useDateFormatter";
+import { shortenAddress } from "@/module/common/utils/shortenAddress";
 import { useOnChainRecovery } from "@/module/recovery/hook/useOnChainRecovery";
 import { useRunRecovery } from "@/module/recovery/hook/useRunRecovery";
 import {
@@ -197,8 +198,4 @@ function BlockedScreen({
             </Button>
         </EmailFlowResultScreen>
     );
-}
-
-function shortenAddress(address: Address): string {
-    return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }

@@ -124,7 +124,10 @@ function renderModal(
             );
         case "explorerDetail":
             return (
-                <DetailOverlay onClose={closeModal}>
+                <DetailOverlay
+                    onClose={closeModal}
+                    labelKey="wallet.modal.explorerDetail.ariaLabel"
+                >
                     {({ handleClose }) => (
                         <ExplorerDetail
                             merchant={modal.merchant}
@@ -135,7 +138,10 @@ function renderModal(
             );
         case "welcomeDetail":
             return (
-                <DetailOverlay onClose={closeModal}>
+                <DetailOverlay
+                    onClose={closeModal}
+                    labelKey="wallet.modal.welcomeDetail.ariaLabel"
+                >
                     {({ handleClose }) => (
                         <WelcomeDetail onClose={handleClose} />
                     )}
@@ -143,7 +149,10 @@ function renderModal(
             );
         case "moneriumBankFlow":
             return (
-                <DetailOverlay onClose={closeModal}>
+                <DetailOverlay
+                    onClose={closeModal}
+                    labelKey="wallet.modal.moneriumBankFlow.ariaLabel"
+                >
                     {({ handleClose }) => (
                         <MoneriumBankFlow onClose={handleClose} />
                     )}
@@ -151,7 +160,10 @@ function renderModal(
             );
         case "rewardDetail":
             return (
-                <DetailOverlay onClose={closeModal}>
+                <DetailOverlay
+                    onClose={closeModal}
+                    labelKey="wallet.modal.rewardDetail.ariaLabel"
+                >
                     {({ handleClose }) => (
                         <RewardDetailModal
                             item={modal.item}
@@ -162,7 +174,10 @@ function renderModal(
             );
         case "moneriumOrderDetail":
             return (
-                <DetailOverlay onClose={closeModal}>
+                <DetailOverlay
+                    onClose={closeModal}
+                    labelKey="wallet.modal.moneriumOrderDetail.ariaLabel"
+                >
                     {({ handleClose }) => (
                         <MoneriumOrderDetailModal
                             order={modal.order}
@@ -173,7 +188,11 @@ function renderModal(
             );
         case "editReferralCode":
             return (
-                <DetailOverlay onClose={closeModal} variant="bottomSheet">
+                <DetailOverlay
+                    onClose={closeModal}
+                    variant="bottomSheet"
+                    labelKey="wallet.modal.editReferralCode.ariaLabel"
+                >
                     {({ handleClose }) => (
                         <EditReferralCodeSheet
                             onClose={handleClose}

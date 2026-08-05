@@ -13,7 +13,11 @@ const renderOverlay = (
     body: React.ReactNode = <div data-testid="overlay-body" />
 ) => {
     const utils = render(
-        <DetailOverlay onClose={onClose} variant={variant}>
+        <DetailOverlay
+            onClose={onClose}
+            variant={variant}
+            labelKey="wallet.modal.explorerDetail.ariaLabel"
+        >
             {({ handleClose }) => (
                 <div data-testid="overlay-body">
                     <button

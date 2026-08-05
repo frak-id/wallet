@@ -1,5 +1,7 @@
-import type { ReactNode } from "react";
+import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
+import { type ReactNode, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { useAnimatedClose } from "@/module/common/hook/useAnimatedClose";
 import * as styles from "@/module/common/styles/detailOverlay.css";
 
@@ -23,6 +25,12 @@ type DetailOverlayProps = {
      * elsewhere (e.g. `ResponsiveModal` portals to `document.body`).
      */
     variant?: DetailOverlayVariant;
+    /**
+     * i18n key resolved to the dialog's accessible name. Resolved here rather
+     * than passed pre-translated so the hook-free `renderModal` switch in
+     * `ModalOutlet` does not need a translation hook.
+     */
+    labelKey: DefaultTranslationKey;
 };
 
 /**
@@ -39,8 +47,41 @@ export function DetailOverlay({
     onClose,
     children,
     variant = "fullScreen",
+    labelKey,
 }: DetailOverlayProps) {
+    const { t } = useTranslation();
     const { isClosing, overlayRef, handleClose } = useAnimatedClose(onClose);
+    const closeRef = useRef(handleClose);
+    closeRef.current = handleClose;
+
+    // Move focus into the dialog on open and hand it back to the trigger on
+    // close, so keyboard and screen-reader users are not left on the inert
+    // page behind the overlay.
+    useEffect(() => {
+        const previouslyFocused = document.activeElement as HTMLElement | null;
+        overlayRef.current?.focus();
+        return () => previouslyFocused?.focus?.();
+    }, [overlayRef]);
+
+    // Escape closes. Bound to the document rather than the overlay because the
+    // overlay only receives key events while focus is inside it, and focus can
+    // legitimately sit on a portalled child (e.g. a nested popover).
+    useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== "Escape") return;
+            // A nested Radix layer (e.g. the Monerium transfer-success dialog
+            // inside MoneriumBankFlow) handles Escape on the capture phase and
+            // calls `preventDefault`. Without this guard the same keypress
+            // would dismiss the inner dialog *and* collapse the whole overlay.
+            if (event.defaultPrevented) return;
+            // Guard against IME: Escape cancels composition, it should not
+            // also close the dialog.
+            if (event.isComposing) return;
+            closeRef.current();
+        };
+        document.addEventListener("keydown", onKeyDown);
+        return () => document.removeEventListener("keydown", onKeyDown);
+    }, []);
 
     const className =
         variant === "bottomSheet"
@@ -52,7 +93,14 @@ export function DetailOverlay({
               : styles.overlay;
 
     return createPortal(
-        <div ref={overlayRef} className={className}>
+        <div
+            ref={overlayRef}
+            className={className}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t(labelKey)}
+            tabIndex={-1}
+        >
             {children({ handleClose })}
         </div>,
         document.body

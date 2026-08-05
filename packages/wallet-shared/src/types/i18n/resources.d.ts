@@ -1007,6 +1007,29 @@ export default interface Resources {
           "title": "Your accounts are now one"
         }
       },
+      "modal": {
+        "editReferralCode": {
+          "ariaLabel": "Edit your referral code"
+        },
+        "explorerDetail": {
+          "ariaLabel": "Merchant details"
+        },
+        "moneriumBankFlow": {
+          "ariaLabel": "Bank transfer"
+        },
+        "moneriumCallback": {
+          "ariaLabel": "Connecting your bank account"
+        },
+        "moneriumOrderDetail": {
+          "ariaLabel": "Transfer details"
+        },
+        "rewardDetail": {
+          "ariaLabel": "Reward details"
+        },
+        "welcomeDetail": {
+          "ariaLabel": "Welcome to Frak"
+        }
+      },
       "notifications": {
         "noNotifications": "No notifications"
       },

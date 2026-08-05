@@ -354,10 +354,7 @@ export default defineConfig(
                 ...(isProd ? [removeConsole()] : []),
                 stripAbiInternalType(),
                 inlineFontFaces({
-                    cssFiles: [
-                        "public/fonts/inter.css",
-                        "public/fonts/inter-tight.css",
-                    ],
+                    cssFiles: ["public/fonts/inter.css"],
                     preload: ["/fonts/inter-latin.woff2"],
                 }),
                 // The first backend call is issued from a React component, so
