@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { Toaster } from "sonner";
 import { useStore } from "zustand";
 import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
+import { isHostEmbedded } from "@/module/common/utils/hostEmbed";
 import { sendHostResult } from "@/module/sharing/host/bridge";
 import { useHostBridge } from "@/module/sharing/host/useHostBridge";
 import { useActivationParams } from "@/module/sharing/params/fragment";
@@ -92,7 +93,7 @@ function WalletSharingPage() {
     const navigate = useNavigate();
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
 
-    const embedded = embed === "native";
+    const embedded = isHostEmbedded(embed);
     const warm = state === "warm";
 
     const { returnToHost, canHandOff } = useHostBridge({
