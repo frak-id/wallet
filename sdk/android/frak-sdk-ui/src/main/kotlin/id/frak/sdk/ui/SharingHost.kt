@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.ComponentDialog
 import androidx.activity.OnBackPressedCallback
@@ -522,6 +523,11 @@ internal class SharingHost private constructor(
             // merchant's dark-on-white flags across would make them unreadable against it.
             @Suppress("DEPRECATION")
             run {
+                // Without this flag the two colour setters below are silently ignored, which is what
+                // shipped: the bars stayed opaque black. `Theme_Translucent_NoTitleBar` predates
+                // Lollipop and never sets `windowDrawsSystemBarBackgrounds`, so the dialog window
+                // does not own its bar backgrounds until it asks to.
+                window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
                 window.statusBarColor = Color.TRANSPARENT
                 window.navigationBarColor = Color.TRANSPARENT
             }
