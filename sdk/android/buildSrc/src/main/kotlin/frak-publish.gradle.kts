@@ -317,9 +317,16 @@ val apiBuild =
         // `nonPublicMarkers` and friends are not set here: BCV's own task base reads them from the
         // `apiValidation` extension by walking up to the root project, which is where they live.
         //
-        // `runtimeClasspath` is likewise left unset, which makes the worker fall back to buildSrc's
-        // classpath — and that is exactly why `kotlin-metadata-jvm` and ASM are declared there. BCV
-        // normally injects them itself, from a hook AGP 9's built-in Kotlin never fires.
+        // `runtimeClasspath` is likewise left unset, so the worker's classloader falls back to the
+        // one that loaded this plugin — buildSrc's — which is exactly why `kotlin-metadata-jvm` and
+        // ASM are declared there. BCV normally injects them itself, from a hook AGP 9's built-in
+        // Kotlin never fires.
+        //
+        // That fallback is inferred from Gradle's `ClassLoaderStructureProvider` and from the
+        // `android-bcv-bridge` reference implementation, which leaves it unset too and is verified by
+        // TestKit tests. It has not been executed here. If the first `apiBuild` dies with
+        // `NoClassDefFoundError: kotlin/metadata/jvm/…`, the fix is one line: set
+        // `runtimeClasspath.from(…)` with those three coordinates from a dedicated configuration.
     }
 
 val apiCheck =

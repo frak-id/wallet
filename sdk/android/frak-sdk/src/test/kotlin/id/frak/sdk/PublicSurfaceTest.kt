@@ -53,9 +53,10 @@ import org.junit.Test
  * compiler check. `ConfigTreeFixtures.kt` in this same source set builds the config tree through
  * exactly that friend access, which is the clearest possible demonstration of the hole. The check
  * that cannot be defeated this way is the committed `.api` dump; the compile-time check that cannot
- * be defeated is a Java source file in the test source set — which `:frak-sdk-ui` has
- * (`JavaCallSiteFixture.java`) and this module does not, yet. It arrives with the `*Async` twins;
- * see `docs/plans/native-sdk/09-android-api-surface.md` §6.
+ * be defeated is a Java source file in the test source set, which this module now has:
+ * `FrakSdkJavaCallSiteFixture.java`, alongside `:frak-sdk-ui`'s `JavaCallSiteFixture.java`. Between
+ * them they name every `*Async` twin, every Builder and every `Interaction` factory, and javac accepts
+ * or rejects the file.
  */
 class PublicSurfaceTest {
     @Test

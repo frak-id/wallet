@@ -77,7 +77,7 @@ public class RewardRequest internal constructor(
     override fun hashCode(): Int {
         var result = targetInteraction?.hashCode() ?: 0
         result = 31 * result + (audience?.hashCode() ?: 0)
-        result = 31 * result + (products?.hashCode() ?: 0)
+        result = 31 * result + products.hashCode()
         return result
     }
 

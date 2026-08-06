@@ -16,8 +16,11 @@ import org.gradle.work.DisableCachingByDefault
  * task's stale-output handling, and — the real problem — `apiCheck` reads `api/<module>.api` from
  * inside that directory with no dependency between the two, which Gradle rejects as an implicit
  * dependency the moment anyone runs `apiDump` and `apiCheck` in one invocation. An `@OutputFile`
- * naming exactly one file has neither problem. BCV's own dump task and the `android-bcv-bridge`
- * reference implementation both do it this way.
+ * naming exactly one file fixes the first half. It does *not* fix the second — `apiCheck` still reads
+ * the file this task writes, with no dependency declared between them, so `./gradlew apiDump apiCheck`
+ * in one invocation is still rejected. Run them separately; that is what `scripts/run.sh` does and
+ * what BCV's own workflow assumes. BCV's dump task and the `android-bcv-bridge` reference
+ * implementation are both shaped this way for the same reasons.
  *
  * Both properties are managed, and the action reads nothing but them, so it is configuration-cache
  * safe.

@@ -38,7 +38,8 @@ import java.util.Collections
  *
  * `build()` snapshots: it can be called more than once, and a Builder mutated afterwards does not
  * reach back into an object it already produced. `SharingRequest` copies its product list to make that
- * true of the one collection these six types put on the surface. It is not the only collection the SDK
+ * true of the one collection these types put on the surface. `RewardRequest.products` is the other, and
+ * copies for the same reason. It is not the only collection the SDK
  * exposes — `ResolvedSdkConfig.translations`/`placements` and
  * `BestReward.matchedProducts` are others. Those come *out* of the SDK, where the SDK built the list
  * and no caller holds the original — with the caveat that `BestReward` kept a public constructor, so a

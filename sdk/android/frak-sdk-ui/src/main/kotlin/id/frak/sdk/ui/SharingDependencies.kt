@@ -14,9 +14,9 @@ import id.frak.sdk.tracking.Interaction
 /**
  * The three merchant facts the sheet actually needs from a resolved config.
  *
- * The sheet used to take the whole [FrakResolvedConfig] — a fifty-one-property tree — and read five
- * values out of it across two files, folding `sdkConfig?.name ?: name` itself at two of them. This
- * carries the three it actually needs, already folded.
+ * The sheet used to take the whole [FrakResolvedConfig] — a fifty-one-property tree — and read four
+ * properties out of it over eight sites in two files, folding `sdkConfig?.name ?: name` itself at two
+ * of them. This carries the three values it actually needs, already folded.
  *
  * Two consequences, both wanted. The tree's constructors can be `internal` (it is a read model a
  * merchant is handed, never builds) because nothing in this module constructs one any more, tests

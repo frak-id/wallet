@@ -20,9 +20,11 @@ import java.util.Collections;
  *
  * <p>It started as a sharing-sheet fixture and has outgrown that: it now covers {@code :frak-sdk}
  * types too ({@code FrakConfig}, {@code Interaction}, the sharing input Builders), which are on this
- * module's test compile classpath through {@code api(project(":frak-sdk"))}. That is the wrong home
- * for them, and step 4 of {@code docs/plans/native-sdk/09-android-api-surface.md} gives
- * {@code :frak-sdk} its own fixture alongside the {@code *Async} twins; these move there then.
+ * module's test compile classpath through {@code api(project(":frak-sdk"))}. {@code :frak-sdk} now has
+ * its own fixture, {@code FrakSdkJavaCallSiteFixture}, but these were deliberately not moved into it:
+ * {@code FrakConfig.Builder} and the seven {@code Interaction} factories are javac-checked only from
+ * here, and duplicating them there would double the maintenance without adding a check. The split is
+ * arbitrary rather than principled — worth tidying, not worth a migration.
  *
  * <p>This exists because the claim that motivated the whole Builder rewrite -- "a merchant on an
  * XML or Java codebase cannot use this SDK at all" -- was, until it landed, unverified in both

@@ -4,8 +4,8 @@ import id.frak.sdk.core.FrakCurrency
 import id.frak.sdk.core.FrakLanguage
 
 /*
- * The resolved-config tree: ten classes, fifty-one properties, one `GET /user/merchant/resolve`
- * response.
+ * The resolved-config tree: ten classes, fifty-one constructor properties (fifty-three public ones,
+ * counting the two derived getters below), one `GET /user/merchant/resolve` response.
  *
  * Every constructor in this file is `internal`, and none takes a default argument. Both halves
  * matter, and they are the whole reason this tree needs no Builder:

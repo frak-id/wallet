@@ -53,8 +53,8 @@ handoff and inbound deep links have run nowhere; iOS has had no device or simula
 all. `.github/workflows/apps.yaml` lints, builds and unit-tests both SDKs on every push and PR
 touching them — compile-and-host-test coverage only, no emulator and no simulator — and there is no
 publish path, and the binary-compatibility gate is wired but its first dump is not committed (`05`
-§5, `09` §5a). Two findings still block the first publish and the security/privacy register is still
-open — see `06`.
+§5, `09` §5a). Two findings still block the first publish, the `api/*.api` dumps are the last action of the ABI
+work, and the security/privacy register is still open — see `06`.
 
 Three places where iOS could not mirror Android, each forced rather than chosen:
 

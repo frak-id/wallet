@@ -82,6 +82,7 @@ Order of application:
 |---|---|
 | `FrakSharing` | done (`refactor/android-sharing-sheet-api`) |
 | `SharingRequest`, `SharingProduct`, `ProductDetails` | done — step 2 |
+| `RewardRequest` | done — step 4, and the seventh Builder |
 | `FrakConfig`, `FrakMetadata`, `AttributionParams` | done — step 2 |
 | `FrakEnvironment.Custom`, `FrakError.Server`/`.Decoding` | done — step 2, explicit overloads rather than Builders (§1a) |
 | `FrakContext.V1`/`.V2` | done — step 2, but as a read model: `internal` constructors, no Builder |
@@ -202,8 +203,8 @@ Kotlin-only and never calls a twin.
 
 **The twin count is eighteen, not fifteen.** Fourteen suspending members live on `FrakClient` and the
 five `*Api` namespaces; the fifteenth is `Frak.shutdown`. The extra three are `resolveAsync()`,
-`campaignsAsync()` and `bestAsync(request)` — no-argument twins that exist because the *suspending* pair
-does. Keeping them applies "twins mirror the members they shadow" literally: a Java caller reading the
+`campaignsAsync()` and `bestAsync(request)` — the short form of each overload pair, mirroring the
+`suspend` side rather than forcing Java to pass `forceRefresh` explicitly. Keeping them applies "twins mirror the members they shadow" literally: a Java caller reading the
 Kotlin docs finds the same shape, and the alternative is a surface where Kotlin has a short form and Java
 does not.
 
@@ -453,7 +454,11 @@ what catches a `Continuation` on the public surface or a `$default` bridge Java 
 
 ## Sequencing
 
-Five commits, in this order, each reviewed before the next starts.
+Five commits, in this order, each reviewed before the next starts — by review, not by a compiler.
+**None of this was built or run**: the work had no JDK, no Android SDK and no Gradle, so every "Done"
+below means "written and reviewed against the sources", not "compiled and tested". Four thousand-odd
+changed lines, 435 `@Test` methods, two Java fixtures and a new `buildSrc` task class are waiting on
+the first CI run, which does `lint` + `build` + `test` (not `check`, so not the ABI gate).
 
 1. `@InternalFrakApi` + internal constructors on the config tree — biggest surface reduction,
    unblocks the rest. **Done**
@@ -569,7 +574,8 @@ Added by the step-2 review, in the order they become unfixable:
 - **`ConfigApi.updates` has no Java story.** It is a `StateFlow`, which a Java caller cannot collect, so
   "Java is a supported target" is overstated by exactly one member. Additive to fix (a listener
   registration, or a `Publisher` via `kotlinx-coroutines-reactive`, which would be a new dependency), so
-  not a freeze blocker — but the namespace table lists `updates` without a caveat and should not.
+  not a freeze blocker. `sdk/android/README.md`'s namespace table now carries the caveat;
+  `02-sdk-design.md`'s member table does not.
 - **`Frak.shutdownAsync` has no injectable dispatcher**, so it reaches `Looper.getMainLooper()` and is
   unreachable from `:frak-sdk`'s JVM suite. `AsyncTwinTest` covers `asFuture`, i.e. seventeen of the
   eighteen twins; this one is proven nameable by the Java fixture and proven to run by nothing. Same
@@ -603,10 +609,30 @@ Added by the step-2 review, in the order they become unfixable:
   `nonPublicMarkers` landed in the same commit as BCV, so the first dump conflates all three. What is
   left is that `PercentEncoding` is the only marked type, which isolates the marker question; nothing
   isolates the reshaping. Read the first dump accordingly.
-- **The dumps themselves.** `apiDump` needs a JDK and the Android SDK; there is nothing to hand-write.
-  It is the last action of step 5 and the only one outstanding.
-- **`checkDexSizeBudget` has not run since before step 1.** Roughly twenty-two new classes landed
-  across steps 2–4 against a 256 KB budget. A red budget is a signal about the `*Async` twin count,
+- **The dumps themselves — the one action outstanding, and everything it needs.** From a machine with
+  **JDK 17** (AGP targets JVM 17 and CI pins 17; a newer JDK will not do for the unit tests) and the
+  Android SDK reachable via `ANDROID_HOME`:
+
+  ```bash
+  bun run --cwd sdk/android apiDump    # writes both files
+  bun run --cwd sdk/android apiCheck   # should now pass
+  ```
+
+  Output is **per module**, not one top-level directory: `sdk/android/frak-sdk/api/frak-sdk.api` and
+  `sdk/android/frak-sdk-ui/api/frak-sdk-ui.api`. Do not run `apiDump` and `apiCheck` in the same Gradle
+  invocation — `apiCheck` reads the file `apiDump` writes with no dependency declared, which Gradle
+  rejects as an implicit dependency. `run.sh` keeps them separate for that reason.
+
+  Read the diff, do not just commit it. Three things to look for specifically: whether
+  `PercentEncoding` is **absent** (if it is present, `nonPublicMarkers` did not fire and §3a's whole
+  mechanism needs revisiting); whether `FrakSharing.build()`'s `@Composable` overload appears with the
+  Compose compiler's synthetic `(Composer, Int)` parameters, which `08-sharing-sheet-api.md` flags as
+  the one member of this surface whose signature a third party's compiler version owns; and whether any
+  `internal` constructor leaked in as a `public synthetic <init>` bridge.
+- **`checkDexSizeBudget` has not run since before step 1.** Roughly thirty new classes landed across
+  steps 2–4 against a 256 KB budget — seven `Builder`s and five file facades from step 2, `Kind` plus
+  its three classes and a `Companion` from step 3, eighteen `*Async` suspend lambdas plus
+  `MainThreadDispatcher` and `RewardRequest`'s three from step 4. A red budget is a signal about the `*Async` twin count,
   which is an ABI question, so it belongs before the dump rather than after.
 - **A2's remaining sealed hierarchies.** `FrakError`, `FrakEnvironment`, `RewardTier` and
   `SharingResult` are still exhaustively matchable, and `FrakError`/`SharingResult` are the two a

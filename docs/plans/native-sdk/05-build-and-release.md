@@ -92,7 +92,7 @@ These share one deadline — **the first publish of `id.frak:frak-sdk`**. After 
 | Q | State |
 |---|---|
 | `FrakClient` growth hazard | resolved — sealed concrete class, five namespaces |
-| Q1 `$default` freeze | answered — `09` §1/§3; landing in five steps, steps 1–2 done |
+| Q1 `$default` freeze | answered — `09` §1/§3; all five steps landed, only the `api/*.api` dumps outstanding |
 | Q2 `@InternalFrakApi` vs promote | answered — `09` §3; marker exists, applied to `PercentEncoding` only |
 | Q3 public `init(from:)` on iOS | open |
 | Q4 `FrakLogSink` divergence | open |
