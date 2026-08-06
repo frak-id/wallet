@@ -12,7 +12,7 @@
 #   bun run --cwd sdk/android size          # dex size against the budget
 #   bun run --cwd sdk/android check         # full `check`: ktlint, version drift, dex budget, the
 #                                              ABI gate (`apiCheck`), unit tests and Android Lint
-#   bun run --cwd sdk/android apiCheck      # public ABI vs api/*.api. RED until a dump is committed
+#   bun run --cwd sdk/android apiCheck      # public ABI vs the committed api/*.api. Green today
 #   bun run --cwd sdk/android apiDump       # rewrite those dumps; the diff IS the review
 #   bun run --cwd sdk/android publishLocal  # publishToMavenLocal (~/.m2)
 #
@@ -22,10 +22,9 @@
 #
 # The binary-compatibility gate is `apiCheck`, wired into `check`. It compares the compiled public
 # ABI against `<module>/api/<module>.api` and fails on any difference; `apiDump` rewrites those files,
-# and that diff is where an ABI change becomes a decision rather than an accident. Until the first
-# dump is committed, `apiCheck` fails — and so does `check`, which it hangs off. That is the correct
-# state, not a broken build. `apiDump` needs a JDK and the Android SDK, like every other task here;
-# there is nothing to hand-write.
+# and that diff is where an ABI change becomes a decision rather than an accident. A red `apiCheck`
+# means the public ABI moved: rerun `apiDump` and review the diff. `apiDump` needs a JDK and
+# the Android SDK, like every other task here; there is nothing to hand-write.
 #
 # The wiring is hand-rolled in buildSrc/src/main/kotlin/frak-publish.gradle.kts because BCV
 # registers nothing for an AGP 9 Android library and its documented replacement cannot be applied
@@ -107,9 +106,7 @@ do_size() {
 # `check` is the lifecycle task everything else hangs off: ktlintCheck,
 # checkSdkVersionMatchesArtifact, checkDexSizeBudget and apiCheck (all frak-publish.gradle.kts) run
 # here, plus the AGP-provided `test` task and Android Lint.
-#
-# Two reasons a first run here goes red for reasons that are not your change: `apiCheck` fails until
-# the api/*.api dumps are committed, and Android Lint has never executed in this project at all.
+# Green, and CI runs it.
 do_check() {
 	resolve_sdk
 	cd "$SDK_DIR"
@@ -117,12 +114,11 @@ do_check() {
 	./gradlew check
 }
 
-# The ABI gate. `apiCheck` also runs as part of `check`; this is how to run only it. It fails until
-# api/frak-sdk.api and api/frak-sdk-ui.api are committed, which is expected, not a bug.
+# The ABI gate. Also runs as part of `check`; this is how to run only it.
 do_api_check() {
 	resolve_sdk
 	cd "$SDK_DIR"
-	log "Comparing the public ABI against api/*.api (fails until those dumps are committed)..."
+	log "Comparing the public ABI against the committed api/*.api dumps..."
 	./gradlew apiCheck
 }
 
@@ -169,7 +165,7 @@ publishLocal) do_publish_local ;;
 	echo "                 'bun run lint' — ktlint here only covers subprojects, not the root Gradle"
 	echo "                 scripts. Android Lint has never run in this project; its first run may"
 	echo "                 surface pre-existing findings unrelated to your change"
-	echo "  apiCheck     - public ABI vs api/*.api. Also part of 'check'. RED until a dump exists"
+	echo "  apiCheck     - public ABI vs the committed api/*.api. Also part of 'check'"
 	echo "  apiDump      - write/rewrite those dumps; review the diff, it IS the ABI decision"
 	echo "  publishLocal - publishToMavenLocal, for consuming an unreleased build"
 	exit 1

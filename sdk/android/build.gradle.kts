@@ -25,6 +25,11 @@ configure<kotlinx.validation.ApiValidationExtension> {
     // `@Target(CLASS)` on the marker is load-bearing for this to work — a marker on a property never
     // reaches the class file as a Java annotation, so BCV cannot see it. See the annotation's KDoc.
     nonPublicMarkers.add("id.frak.sdk.InternalFrakApi")
+
+    // Compose generates this holder per file containing `@Composable` lambdas, and emits it `public`
+    // even though its only member is `internal`. Not merchant API, and its name is keyed off the
+    // file name, so freezing it would make renaming `FrakSharingSheet.kt` an ABI break.
+    ignoredClasses.add("id.frak.sdk.ui.ComposableSingletons\$FrakSharingSheetKt")
 }
 
 // `libs` catalog accessor only exists on this project, not the subproject receiver below.

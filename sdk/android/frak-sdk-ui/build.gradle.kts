@@ -37,6 +37,19 @@ tasks.withType<Test>().configureEach {
 dependencies {
     api(project(":frak-sdk")) // merchant code passes FrakConfig/FrakClient types into the sheet
 
+    // The two artifacts ship in lockstep; `api(project(...))` alone publishes a *required* version
+    // that Gradle may upgrade during conflict resolution. Written as a constraint because a
+    // `ProjectDependency` has no `version {}` block.
+    constraints {
+        api("id.frak:frak-sdk") {
+            version { strictly(providers.gradleProperty("frak.sdk.version").get()) }
+            because(
+                "frak-sdk-ui compiles against @InternalFrakApi members of frak-sdk that the ABI " +
+                    "gate cannot see, so the pair must resolve exactly",
+            )
+        }
+    }
+
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.foundation)

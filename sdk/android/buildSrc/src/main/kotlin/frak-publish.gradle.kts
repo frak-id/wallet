@@ -26,6 +26,10 @@ val sdkVersion: String =
 // "cannot resolve id.frak:frak-sdk" instead of resolving it locally.
 group = "id.frak"
 
+// Not redundant with the `version` on the MavenPublication below: without this `project.version` is
+// "unspecified", so `:frak-sdk-ui`'s strict constraint can't match the sibling project.
+version = sdkVersion
+
 // Everything both artifacts must agree on; they ship in lockstep, so a value that differs
 // between them is a bug, not a choice.
 android {
@@ -346,8 +350,6 @@ tasks.register<FrakApiDumpTask>("apiDump") {
     committedApiFile.set(apiFile)
 }
 
-// Gating `check` means CI's `bun run --cwd sdk/android check` is the gate, and a contributor who
-// widens the surface without running `apiDump` finds out locally. Until the first dump is committed
-// this fails with BCV's own message telling you to run `apiDump` — which is the correct state for a
-// build whose surface has just been reshaped and not yet ratified.
+// Gating `check` means a contributor who widens the surface without running `apiDump` finds out
+// locally, not in review.
 tasks.named("check") { dependsOn(apiCheck) }
