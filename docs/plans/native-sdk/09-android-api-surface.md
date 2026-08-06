@@ -19,8 +19,8 @@ the five decisions turn on them.
 | Opt-in propagates through signatures: *"if the signature of an API element includes a type that requires opt-in, the signature itself must also require opt-in"*, and applying `@OptIn` at the declaration **does not** stop it — *"the opt-in requirement still propagates"* | An `@InternalFrakApi` on a type that any merchant-facing member returns makes that member uncallable. See §3 |
 | No same-module exemption exists. Module-wide `-opt-in=<marker>` is the sanctioned escape, per file `@OptIn` the narrow one | The SDK must opt in to its own marker, and *where* it does so is a real choice — a module-wide flag also silences the marker in the tests written to prove what a merchant can reach |
 | A marker on a constructor-`val` resolves `param → property → field` and, on either of the first two, never reaches the class file as a Java annotation — it lives in `@Metadata` plus a synthetic `getX$annotations()` holder, which BCV filters out | A property-level marker gates the Kotlin compiler and leaves the getter frozen in the dump: the worst of both. Hence `@Target(CLASS)` only |
-| A `sealed` class's constructor may be `protected` (the default) or `private`, and nothing else — `public` and `internal` are compile errors | `FrakError`'s base constructor cannot be hidden. Dropping its `cause` default is the whole of what is available, and it is enough: the default was the bridge |
-| BCV omits an `internal` constructor from the dump, but *keeps* the `DefaultConstructorMarker` bridge a defaulted internal constructor still emits. Evidence: [BCV issue 171](https://github.com/Kotlin/binary-compatibility-validator/issues/171), which shows the before/after dumps for exactly this — marking the constructor `internal` removes one `<init>` line and leaves `public synthetic fun <init> (…DefaultConstructorMarker;)V` | "Internal constructor" and "no default arguments" are one decision, not two. Re-verify against the first real `apiDump`: if BCV filters `ACC_SYNTHETIC` in the version we pin, the no-defaults half is unmotivated |
+| A `sealed` class's constructor may be `protected` (the default) or `private`, and nothing else — `public` and `internal` are compile errors | `FrakError`'s base constructor cannot be hidden. ~~Dropping its `cause` default is the whole of what is available, and it is enough: the default was the bridge~~ **Falsified by the first dump.** The `cause` default *was* dropped (`FrakError(message: String, cause: Throwable?)` carries no default today) and the bridge is still there: `javap` shows `private FrakError(String, Throwable)` plus `public FrakError(String, Throwable, DefaultConstructorMarker)`. The bridge is how a sealed class's subclasses, which are separate class files, reach a constructor the compiler emitted `private` — it is a consequence of `sealed` + constructor parameters and has nothing to do with default arguments. Nothing available at the source level removes it |
+| BCV omits an `internal` constructor from the dump, but *keeps* the `DefaultConstructorMarker` bridge a defaulted internal constructor still emits. Evidence: [BCV issue 171](https://github.com/Kotlin/binary-compatibility-validator/issues/171), which shows the before/after dumps for exactly this — marking the constructor `internal` removes one `<init>` line and leaves `public synthetic fun <init> (…DefaultConstructorMarker;)V` | "Internal constructor" and "no default arguments" are one decision, not two. **Re-verified against the first real `apiDump`, as this row asked.** BCV 0.18.1 does *not* filter `ACC_SYNTHETIC` wholesale, so the no-defaults half stays motivated — but the filter is narrower than either reading here. A synthetic constructor whose only parameter is the marker is dropped: `RewardTier` and `EstimatedReward` both carry `public <init>(DefaultConstructorMarker)` in bytecode and neither appears in the dump. One with real parameters *plus* the marker is kept, which is why `FrakError`'s is the single `synthetic fun <init>` in either file |
 | `@RequiresOptIn` has no javac enforcement. `internal` is emitted `public` in bytecode; Kotlin name-mangles `internal` *functions* but cannot mangle a constructor, so an `internal` constructor stays javac-reachable | **Neither mechanism blocks Java.** What both buy is a Kotlin compile error plus absence from the `.api` dump — and the dump *is* the compatibility contract, so a Java caller who reaches past it is outside it by definition. Stated once here because three earlier drafts of this document claimed a javac block that does not exist |
 
 ## 1. Construction — Builder, with Kotlin sugar over it
@@ -519,15 +519,43 @@ same AGP 9 gap. Four consequences worth recording:
 Release variant only, because that is the variant a merchant consumes and the only one published. A
 difference confined to `debug` would go unseen; neither module has debug-only sources today.
 
-**The dump itself is deliberately absent.** Generating one requires a JDK and the Android SDK. Until it
-lands, `apiCheck` fails with BCV's own "run :apiDump" message — correct, not broken. Expect it larger
-than the deleted one: eighteen `*Async` twins, seven Builders and their sugar functions all add
-declarations. That is the intended outcome; the metric is frozen surface, not line count. And expect
-the first run to surface things unrelated to this work — BCV has never executed against this build,
-so nothing about it has been verified end to end, including whether `nonPublicMarkers` fires on
-`@InternalFrakApi`. `PercentEncoding` is the one type that answers that, and §3a says so.
+**The dump now exists.** `frak-sdk/api/frak-sdk.api` (36 KB) and `frak-sdk-ui/api/frak-sdk-ui.api`
+are committed, `apiCheck` passes, and both files are byte-identical when regenerated after a
+`./gradlew clean`, so the gate does not flap. What the first run settled:
+
+- **`nonPublicMarkers` fires.** `PercentEncoding` appears in neither file. This was the one
+  unverified link in §3a's mechanism — a `BINARY`-retention, `@Target(CLASS)` marker read by BCV
+  0.18.1 through hand-registered task types — and it works.
+- **The Compose overload landed as `08-sharing-sheet-api.md` predicted**:
+  `build (Landroidx/compose/runtime/Composer;I)Lid/frak/sdk/ui/FrakSharing;`. Its synthetic
+  `(Composer, Int)` tail is now frozen, and that tail is owned by the Compose compiler version, not
+  by this repo.
+- **One `synthetic fun <init>` leaked, on `FrakError`**, and §0's explanation for it was wrong. See
+  the two corrected rows there: it is a `sealed`-plus-parameters artifact, not a default-argument
+  one, and no source change removes it.
+- **One thing neither §5a nor the pre-dump list anticipated: `ComposableSingletons$FrakSharingSheetKt`.**
+  The Compose compiler emits a `public` holder class per file containing `@Composable` lambdas, and
+  its single member here — `getLambda$1656738965$frak_sdk_ui` — is `internal` (the `$frak_sdk_ui`
+  suffix is Kotlin's internal name mangling) and keyed by a compiler-generated number. It is
+  excluded via `ignoredClasses` in the root `build.gradle.kts` rather than frozen: an `internal`
+  member is precisely what `nonPublicMarkers` exists to keep out, it escaped only because Compose
+  emits the *holder* as public, and freezing it would have silently added `FrakSharingSheet.kt` to
+  the "never rename" list below — the key derives from the file name. Measured: the key is stable
+  across edits within the file, so this was a correctness call, not a churn one.
+
+The dump is larger than the deleted one — eighteen `*Async` twins, seven Builders and their sugar
+functions all add declarations. That is the intended outcome; the metric is frozen surface, not line
+count.
 
 ## Open, and to be answered before the dump is committed
+
+> **Status: the dump has been committed.** Four items below are struck through and closed — the two
+> `strictly`/BCV ones, the dumps themselves and the dex budget. Everything still open was
+> *ratified* by that dump rather than resolved by it: the file-facade names, `FrakMetadata.currency`,
+> the equality asymmetry, `FrakContext`/`FrakResolvedConfig` testability, the `:frak-sdk-ui` Builder
+> mismatch, `ConfigApi.updates`' missing Java story, `shutdownAsync`'s dispatcher and A2's sealed
+> hierarchies are now frozen as they are. Each is still fixable, but from here the fix has to be
+> additive or it is a break.
 
 Added by the step-2 review, in the order they become unfixable:
 
@@ -592,26 +620,31 @@ Added by the step-2 review, in the order they become unfixable:
   exercises the real decoder, is Java-callable, and can be added additively after step 5. The other
   candidates are a `testFixtures` variant or an `id.frak:frak-sdk-testing` artifact with its own ABI.
   Deferred, not dismissed.
-- **`api(project(":frak-sdk"))` publishes a *required*, not strict, version.** `:frak-sdk-ui` emits
-  21 `PercentEncoding.encode` call sites into its own class files, and once `nonPublicMarkers` drops
-  that symbol from the dump, re-signaturing it becomes an invisible change that a merchant on mixed
-  artifact versions meets as `NoSuchMethodError` at share time. `frak-publish.gradle.kts` says the two
-  artifacts "ship in lockstep"; the POM does not. `version { strictly(...) }` (or a shared Gradle
-  capability) was supposed to land in the same commit as `nonPublicMarkers` and **did not** —
-  `frak-sdk-ui/build.gradle.kts` is still a bare `api(project(":frak-sdk"))`. Not urgent while no dump
-  exists, since nothing is excluded from a contract that does not exist; urgent the moment one is,
-  which is why it stays on this list.
-- **BCV against an Android library module** has never run here. Whether `nonPublicMarkers` fires on a
-  `BINARY`-retention class-level marker in the pinned version (0.18.1) is unverified; `PercentEncoding`
-  is the spike that answers it. **The separation strategy this bullet used to prescribe is gone**: it
-  said to land BCV with the surface unchanged, commit that baseline, then the marker, so a surprise in
-  the first `apiDump` was separable from a surprise in the marker. BCV landed *after* steps 1–4, and
-  `nonPublicMarkers` landed in the same commit as BCV, so the first dump conflates all three. What is
-  left is that `PercentEncoding` is the only marked type, which isolates the marker question; nothing
-  isolates the reshaping. Read the first dump accordingly.
-- **The dumps themselves — the one action outstanding, and everything it needs.** From a machine with
-  **JDK 17** (AGP targets JVM 17 and CI pins 17; a newer JDK will not do for the unit tests) and the
-  Android SDK reachable via `ANDROID_HOME`:
+- **~~`api(project(":frak-sdk"))` publishes a *required*, not strict, version.~~ Closed.** The
+  reasoning stands and is worth keeping: `:frak-sdk-ui` emits 21 `PercentEncoding.encode` call sites
+  into its own class files, and `nonPublicMarkers` drops that symbol from the dump, so re-signaturing
+  it is invisible to the ABI gate and reaches a merchant on mixed artifact versions as a
+  `NoSuchMethodError` at share time. `frak-sdk-ui/build.gradle.kts` now carries a `strictly`
+  constraint, verified by `dependencyInsight`:
+  `id.frak:frak-sdk:{strictly 0.0.1} -> project :frak-sdk`.
+
+  Two things the plan did not foresee. It cannot be written as
+  `api(project(":frak-sdk")) { version { strictly(...) } }` — a `ProjectDependency` is not an
+  `ExternalModuleDependency` and has no `version {}` block — so it is a `constraints { }` entry
+  instead. And the first attempt failed with "Could not find id.frak:frak-sdk:0.0.1" on Maven
+  Central: `frak-publish.gradle.kts` set `group` at project level but only ever set `version` on the
+  `MavenPublication`, so `project.version` was the string `"unspecified"` and the constraint could
+  not match the sibling project. `version = sdkVersion` is now set alongside `group`, which is a
+  latent-coordinate fix independent of this constraint.
+- **~~BCV against an Android library module has never run here.~~ Closed.** `nonPublicMarkers` does
+  fire on a `BINARY`-retention, class-level marker in the pinned 0.18.1 through the hand-registered
+  task types: `PercentEncoding` is absent from both dumps. The caveat this bullet raised still holds
+  for anyone reading the first diff — BCV, `nonPublicMarkers` and the steps 1–4 reshaping all landed
+  before any dump existed, so the baseline conflates all three, and only the marker question was
+  independently isolated.
+- **~~The dumps themselves — the one action outstanding.~~ Done.** Kept as the runbook for the next
+  time. From a machine with **JDK 17** (AGP targets JVM 17 and CI pins 17; a newer JDK will not do
+  for the unit tests) and the Android SDK reachable via `ANDROID_HOME`:
 
   ```bash
   bun run --cwd sdk/android apiDump    # writes both files
@@ -623,17 +656,22 @@ Added by the step-2 review, in the order they become unfixable:
   invocation — `apiCheck` reads the file `apiDump` writes with no dependency declared, which Gradle
   rejects as an implicit dependency. `run.sh` keeps them separate for that reason.
 
-  Read the diff, do not just commit it. Three things to look for specifically: whether
-  `PercentEncoding` is **absent** (if it is present, `nonPublicMarkers` did not fire and §3a's whole
-  mechanism needs revisiting); whether `FrakSharing.build()`'s `@Composable` overload appears with the
-  Compose compiler's synthetic `(Composer, Int)` parameters, which `08-sharing-sheet-api.md` flags as
-  the one member of this surface whose signature a third party's compiler version owns; and whether any
-  `internal` constructor leaked in as a `public synthetic <init>` bridge.
-- **`checkDexSizeBudget` has not run since before step 1.** Roughly thirty new classes landed across
-  steps 2–4 against a 256 KB budget — seven `Builder`s and five file facades from step 2, `Kind` plus
-  its three classes and a `Companion` from step 3, eighteen `*Async` suspend lambdas plus
-  `MainThreadDispatcher` and `RewardRequest`'s three from step 4. A red budget is a signal about the `*Async` twin count,
-  which is an ABI question, so it belongs before the dump rather than after.
+  Read the diff, do not just commit it. All three checks this bullet prescribed were run, and their
+  answers are in §5a above: `PercentEncoding` absent (so `nonPublicMarkers` fired), the `@Composable`
+  overload present with its `(Composer, Int)` tail, and one `synthetic <init>` — on `FrakError`, for
+  a reason §0 had wrong.
+- **~~`checkDexSizeBudget` has not run since before step 1.~~ Run, and it was red.** `:frak-sdk`
+  measured **321 KB against the 256 KB budget**; `:frak-sdk-ui` came in at 162 KB. The budget is now
+  384 KB, set against the first measured number rather than a guess — the full reasoning and the
+  150 → 256 → 384 history is in `sdk/android/gradle.properties`.
+
+  **This bullet's diagnosis was wrong and the correction matters more than the number.** It said a
+  red budget is "a signal about the `*Async` twin count, which is an ABI question". Measured, the
+  eighteen twins are 44 KB of 915 KB of class bytes — about 5%, roughly 16 KB dexed. Deleting every
+  one of them would not have closed a 65 KB gap, and would have deleted the Java async story §2
+  exists to provide. The weight is spread across core (211 KB), config (164 KB), tracking (120 KB),
+  rewards (102 KB), net (83 KB), identity (63 KB) and sharing (49 KB), with no fat component. So this
+  was never an ABI question and did not need to block the dump.
 - **A2's remaining sealed hierarchies.** `FrakError`, `FrakEnvironment`, `RewardTier` and
   `SharingResult` are still exhaustively matchable, and `FrakError`/`SharingResult` are the two a
   merchant genuinely does match on — so the `Interaction` fix (§4) is not available to them. The dump

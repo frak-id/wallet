@@ -13,7 +13,7 @@ bun run --cwd sdk/android lint          # ktlint check
 bun run --cwd sdk/android format        # ktlint auto-format in place
 bun run --cwd sdk/android size          # release dex size vs the budget
 bun run --cwd sdk/android check         # all of the above plus the ABI gate, Android Lint, version drift
-bun run --cwd sdk/android apiCheck      # public ABI vs api/*.api. RED until a dump is committed
+bun run --cwd sdk/android apiCheck      # public ABI vs the committed api/*.api
 bun run --cwd sdk/android apiDump       # write those dumps; the diff IS the ABI decision
 bun run --cwd sdk/android publishLocal  # publishToMavenLocal (~/.m2)
 ```
@@ -212,9 +212,9 @@ bun run --cwd sdk/android apiCheck   # compare; also runs as part of `check`
 
 Release variant only: it is the variant a merchant consumes and the only one published. Neither module has debug-only sources; adding one is what would make this worth revisiting.
 
-`@InternalFrakApi` is wired into `nonPublicMarkers` in the root `build.gradle.kts`, so everything it marks drops out of the dump. `@Target(CLASS)` on that annotation is load-bearing: a marker on a property never reaches the class file as a Java annotation, so BCV cannot see one. That whole mechanism is unverified until the first `apiDump` runs — `PercentEncoding` is the only type carrying the marker, deliberately, so one type answers the question rather than fifty.
+`@InternalFrakApi` is wired into `nonPublicMarkers` in the root `build.gradle.kts`, so everything it marks drops out of the dump. `@Target(CLASS)` on that annotation is load-bearing: a marker on a property never reaches the class file as a Java annotation, so BCV cannot see one. That mechanism is now **verified**: the first `apiDump` ran and `PercentEncoding` is absent from both dumps. It is the only type carrying the marker, deliberately, so one type answered the question rather than fifty.
 
-The shape being frozen was decided in five reviewed steps — `docs/plans/native-sdk/09-android-api-surface.md` is the record, and its "Open, and to be answered before the dump is committed" list is what still stands between here and a committed dump. Both former open questions are answered there:
+The shape being frozen was decided in five reviewed steps — `docs/plans/native-sdk/09-android-api-surface.md` is the record, and its "Open, and to be answered before the dump is committed" list records what the now-committed dump made permanent. Both former open questions are answered there:
 
 - **Q1, the `$default` freeze.** Read models (the config tree, `FrakContext`) get `internal` constructors; merchant-constructed types get a `Builder` with a Kotlin scope-function sugar over the same Builder; `Interaction` becomes an opaque type with static factories; everything else takes explicit overloads. `@JvmOverloads` is banned — it fixes Java and leaves Kotlin callers on `$default` anyway. No holdouts remain: no public declaration in either module carries a Kotlin default argument. See "Construction" above.
 - **Q2, promoting types ahead of a reader.** Types that are `public` only to cross the `:frak-sdk`/`:frak-sdk-ui` boundary carry `@InternalFrakApi`, wired into `nonPublicMarkers` in the root `build.gradle.kts` so they never enter the dump. `PercentEncoding` is the first and, so far, only one: the marker propagates through signatures, so putting it on the config tree would have taken `ConfigApi.resolve()` out of the dump and out of every merchant's reach along with it.
@@ -223,7 +223,8 @@ The shape being frozen was decided in five reviewed steps — `docs/plans/native
 
 ## Open decisions blocking first publish
 
-- The committed `api/*.api` dumps. BCV and its tasks are wired; generating the first dump needs a JDK and the Android SDK. The decisions `docs/plans/native-sdk/09-android-api-surface.md` lists as "to be answered before the dump is committed" go with it — they are what the dump makes permanent.
+- ~~The committed `api/*.api` dumps.~~ **Done** — both are committed and `apiCheck` passes in CI. What `docs/plans/native-sdk/09-android-api-surface.md` still lists as open is now *frozen* rather than pending: fixes to those items have to be additive or they are a break.
+- **`publishToMavenLocal` is broken.** `:frak-sdk-ui:javaDocReleaseGeneration` fails inside AGP's bundled Dokka, which cannot parse this build's Kotlin 2.4 class files. Pre-existing and unrelated to the ABI work, but it blocks any publish. Finding A6 in `docs/plans/native-sdk/06-open-findings.md`.
 - Claiming the `id.frak` namespace (TXT record on the `frak.id` apex), generating the real GPG key, wiring the Portal repository. None of these has started; Portal verification is automated and same-day once requested.
 - A device pass covering the sharing sheet, the install handoff and inbound deep links — publishing an artifact nothing has run is how you burn a version number.
 - A CI job that builds `example/native-android`. `.github/workflows/apps.yaml` already lints, builds and unit-tests the SDK itself (see "Testing" above); nothing compiles the harness, so a broken harness call site does not go red.
