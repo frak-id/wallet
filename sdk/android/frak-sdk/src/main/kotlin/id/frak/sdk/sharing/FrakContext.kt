@@ -3,11 +3,11 @@ package id.frak.sdk.sharing
 /**
  * Referral context carried in a share link's `fCtx`: who shared, for which merchant, and when.
  * Two layouts live on the wire with genuinely different information, hence sealed rather than
- * nullable fields on one type. Not `data class`es, see note in `id.frak.sdk.core.FrakConfig`.
+ * nullable fields on one type.
  */
 public sealed interface FrakContext {
     /** Legacy layout: bare wallet address from pre-anonymous-id web builds. Decoded, never minted. */
-    public class V1(
+    public class V1 internal constructor(
         public val wallet: String,
     ) : FrakContext {
         override fun equals(other: Any?): Boolean = other is V1 && other.wallet == wallet
@@ -18,11 +18,11 @@ public sealed interface FrakContext {
     }
 
     /** Current layout. Carries the merchant, a share timestamp, and at least one of [clientId] / [wallet]. */
-    public class V2(
+    public class V2 internal constructor(
         public val merchantId: String,
         public val timestamp: Long,
-        public val clientId: String? = null,
-        public val wallet: String? = null,
+        public val clientId: String?,
+        public val wallet: String?,
     ) : FrakContext {
         override fun equals(other: Any?): Boolean =
             other is V2 &&

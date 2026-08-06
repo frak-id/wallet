@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildHostResultUrl, resetHostResults, sendHostResult } from "./bridge";
 
-// A shipped SDK binary parses these URLs and can never be updated to match a
-// change here, so the exact shape is the contract.
+// A shipped SDK binary parses these URLs, so the exact shape is the contract.
 describe("buildHostResultUrl", () => {
     it("builds the documented shape", () => {
         expect(
@@ -106,9 +105,6 @@ describe("sendHostResult", () => {
     });
 
     it("hands an outcome to the host once, however often it is asked", () => {
-        // Route guards re-run, so the same outcome arrives more than once.
-        // Both copies carry the session's own sid, leaving the host no way to
-        // tell a repeat from a genuine second outcome.
         const args = {
             scheme: "frak-acme",
             action: "error",

@@ -52,11 +52,11 @@ import id.frak.sdk.core.FrakMetadata
 import id.frak.sdk.core.FrakResult
 import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.rewards.BestReward
+import id.frak.sdk.rewards.RewardRequest
 import id.frak.sdk.sharing.SharingProduct
 import id.frak.sdk.sharing.SharingRequest
-import id.frak.sdk.ui.FrakSharingLauncher
+import id.frak.sdk.ui.FrakSharing
 import id.frak.sdk.ui.SharingResult
-import id.frak.sdk.ui.rememberFrakSharingLauncher
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -99,17 +99,17 @@ val sampleProducts =
 /** Order total used by the checkout simulator, shared with the iOS harness. */
 const val SAMPLE_ORDER_TOTAL_CENTS = 14999L
 
-/** `tracking.purchase` needs a merchant-owned customer id and checkout token; both are fabricated here for the demo. */
+/** `tracking.purchase` needs a customer id and checkout token; both are fabricated for the demo. */
 const val SAMPLE_CUSTOMER_ID = "cust_example_android_001"
 const val SAMPLE_CHECKOUT_TOKEN = "checkout_token_example_9988"
 
-/** Hoisted: allocating a formatter per log line is wasteful and this runs often. */
+/** Hoisted: this runs per log line. */
 private val LOG_TIME_FORMAT = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
 
 /** Formats the order total only; reward amounts come from [BestReward.formatted]. */
 fun formatCents(cents: Long): String = "$%d.%02d".format(cents / 100, cents % 100)
 
-/** State of the catalog-wide rewards.best lookup. See [CatalogRewardBanner]. */
+/** State of the catalog-wide rewards.best lookup. */
 private sealed interface CatalogRewardLookup {
     data object Loading : CatalogRewardLookup
 
@@ -123,6 +123,12 @@ private sealed interface CatalogRewardLookup {
 }
 
 class MainActivity : ComponentActivity() {
+    /**
+     * Built in `onCreate` rather than as a property initialiser: `build(activity)` needs the
+     * `ViewModelStore`, which does not exist that early.
+     */
+    private lateinit var sharing: FrakSharing
+
     private val logs = mutableStateListOf<LogEntry>()
     private var catalogReward by mutableStateOf<CatalogRewardLookup>(CatalogRewardLookup.Loading)
 
@@ -138,29 +144,29 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        sharing = FrakSharing.Builder(::logSharingResult).build(this)
+
         Frak.initialize(
             context = applicationContext,
             config =
-                FrakConfig(
-                    merchantId = "0a799880-ba54-4276-a734-db8721911bab",
-                    metadata = FrakMetadata(name = "Frak Android Harness"),
-                    // Development points at wallet-dev.frak.id / backend.gcp-dev.frak.id and the
-                    // dev wallet app (id.frak.wallet.dev, scheme frakwallet-dev). isFrakAppInstalled()
-                    // below reports false without it.
-                    env = FrakEnvironment.Development,
-                    // Automatic exists only on Android (hooks ActivityLifecycleCallbacks). iOS uses
-                    // .manual and routes .onOpenURL to appLink.handleReferral(_:) by hand.
-                    deepLink = DeepLinkHandling.Automatic,
-                    logLevel = FrakLogLevel.INFO,
-                    // Boots a web view against the wallet origin as soon as a share surface is
-                    // composed, and hands that same warm view to the sheet. Without it the sheet
-                    // pays for engine startup, TLS and the React bundle at tap time — the
-                    // 200-300ms of blank white this harness exists to catch. On by default here
-                    // precisely because the harness is where that regression would show up.
-                    preloadSharing = true,
-                ),
+                FrakConfig(merchantId = "0a799880-ba54-4276-a734-db8721911bab") {
+                    metadata = FrakMetadata { name = "Frak Android Harness" }
+                    // Development points at the dev wallet app; isFrakAppInstalled() reports
+                    // false without it.
+                    env = FrakEnvironment.Development
+                    // Automatic exists only on Android; iOS routes .onOpenURL by hand.
+                    deepLink = DeepLinkHandling.Automatic
+                    logLevel = FrakLogLevel.INFO
+                    // Boots the sharing web view up front, so the sheet does not pay for engine
+                    // startup at tap time.
+                    preloadSharing = true
+                },
         )
         addLog("Frak.initialize called for merchant 0a799880-ba54-4276-a734-db8721911bab (development)", LogType.INFO)
+
+        // Not the Compose build site, so warming has to be explicit. A merchant whose share
+        // surface is several taps in should warm when that surface appears, not at startup.
+        sharing.warm()
 
         intent?.dataString?.let { url -> logInboundIntent(url) }
 
@@ -182,14 +188,11 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     val scope = rememberCoroutineScope()
-                    // FrakSharingLauncher must be obtained inside the composable tree; its sheet is
-                    // hosted as a composable.
-                    val sharingLauncher = rememberFrakSharingLauncher { result -> logSharingResult(result) }
 
                     MerchantAppScreen(
                         logs = logs,
                         catalogRewardLabel = catalogRewardLabel,
-                        onShareProduct = { product -> shareProduct(product, sharingLauncher) },
+                        onShareProduct = ::shareProduct,
                         onSimulateDeepLink = { scope.launch { simulateDeepLink() } },
                         onOrderCompleted = { scope.launch { completeOrder() } },
                     )
@@ -203,27 +206,20 @@ class MainActivity : ComponentActivity() {
         intent.dataString?.let { url -> logInboundIntent(url) }
     }
 
-    /**
-     * Automatic mode already dispatched `handleReferral` via the activity lifecycle callback;
-     * this only logs the arrival. Calling `handleReferral` again would double-track it.
-     */
+    /** Automatic mode already dispatched `handleReferral`; calling it again would double-track. */
     private fun logInboundIntent(url: String) {
         addLog("Inbound link reached the activity (SDK auto-handles it): $url", LogType.SUCCESS)
     }
 
-    private fun shareProduct(
-        product: ProductItem,
-        launcher: FrakSharingLauncher,
-    ) {
+    private fun shareProduct(product: ProductItem) {
         addLog("Triggering sharing sheet for '${product.title}'...", LogType.INFO)
-        launcher.launch(
-            SharingRequest(
-                products = listOf(SharingProduct(title = product.title, link = product.link)),
-                // Reward trigger is "purchase" — matches the rewards.best call below and iOS's
-                // SharingRequest.
-                targetInteraction = "purchase",
-                placement = "product-page",
-            ),
+        sharing.present(
+            SharingRequest {
+                products = listOf(SharingProduct(title = product.title, link = product.link))
+                // Matches the rewards.best call below.
+                targetInteraction = "purchase"
+                placement = "product-page"
+            },
         )
     }
 
@@ -237,10 +233,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Passes the URL straight to `handleReferral`, bypassing `startActivity`/`onNewIntent` — the
-     * only place in the harness that calls it directly.
-     */
+    /** The only place in the harness that calls `handleReferral` directly. */
     private suspend fun simulateDeepLink() {
         val testUrl = "https://example-merchant.com/product?fCtx=test_referral_token_android_9988"
         addLog("Simulating inbound referral link: $testUrl", LogType.INFO)
@@ -276,15 +269,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** One `rewards.best` call for the whole visible catalog, not one per row. See [CatalogRewardBanner]. */
+    /** One `rewards.best` call for the whole visible catalog, not one per row. */
     private suspend fun loadCatalogReward() {
         catalogReward =
             try {
                 val best =
                     Frak.client.rewards.best(
-                        // Matches SharingRequest.targetInteraction used by shareProduct.
-                        targetInteraction = "purchase",
-                        products = sampleProducts.map { ProductDetails(productId = it.id, name = it.title) },
+                        RewardRequest {
+                            // Matches SharingRequest.targetInteraction used by shareProduct.
+                            targetInteraction = "purchase"
+                            products =
+                                sampleProducts.map { product ->
+                                    ProductDetails {
+                                        productId = product.id
+                                        name = product.title
+                                    }
+                                }
+                        },
                     )
                 if (best != null) {
                     addLog("Catalog reward: ${best.formatted}", LogType.SUCCESS)
@@ -425,8 +426,7 @@ fun ProductList(
     onShareProduct: (ProductItem) -> Unit,
 ) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        // One headline card for the whole catalog, not one per row — see
-        // `MainActivity.loadCatalogReward`.
+        // One headline card for the whole catalog, not one per row.
         item {
             CatalogRewardBanner(label = catalogRewardLabel)
         }
@@ -436,10 +436,7 @@ fun ProductList(
     }
 }
 
-/**
- * The single headline reward figure for the entire visible catalog. Deliberately not
- * per-[ProductCard]: see `MainActivity.loadCatalogReward`.
- */
+/** The single headline reward figure for the entire visible catalog. */
 @Composable
 private fun CatalogRewardBanner(label: String) {
     Card(

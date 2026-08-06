@@ -3,11 +3,7 @@ import { useRef, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { useOverlayBehaviour } from "./useOverlayBehaviour";
 
-/**
- * Mirrors how the real screens use this: an inline `onDismiss` closure, rebuilt
- * on every render, because both consumers build their outcome handlers as
- * object literals.
- */
+// mirrors the real screens: an inline `onDismiss` closure, rebuilt every render
 function Overlay({
     enabled = true,
     onDismiss,
@@ -65,11 +61,6 @@ describe("useOverlayBehaviour", () => {
     });
 
     it("does NOT steal focus back on an unrelated re-render", () => {
-        // The regression this exists for: `onDismiss` is a fresh closure every
-        // render, so listing it as an effect dependency re-ran the focus move
-        // on every background re-render (the reward query resolving, a product
-        // being selected, a share starting) and yanked focus away from
-        // whatever the user was on.
         render(<Overlay onDismiss={vi.fn()} />);
 
         const second = screen.getByText("second");
@@ -82,8 +73,6 @@ describe("useOverlayBehaviour", () => {
     });
 
     it("still calls the latest onDismiss after a re-render", () => {
-        // The other half of reading it through a ref: skipping the dependency
-        // must not pin the handler to the one captured on mount.
         const onDismiss = vi.fn();
         render(<Overlay onDismiss={onDismiss} />);
 

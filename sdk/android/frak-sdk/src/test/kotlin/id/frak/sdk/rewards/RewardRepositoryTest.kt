@@ -5,7 +5,7 @@ import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLogLevel
 import id.frak.sdk.core.FrakLogSink
 import id.frak.sdk.core.FrakLogger
-import id.frak.sdk.core.ProductDetails
+import id.frak.sdk.core.productDetails
 import id.frak.sdk.net.FAKE_BASE_URL
 import id.frak.sdk.net.FakeHttpTransport
 import id.frak.sdk.net.HttpClient
@@ -21,11 +21,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
 
-/**
- * Pins the query sent to `GET /user/merchant/estimated-rewards`. Three of five parameters
- * are ones the backend rejects or silently ignores if sent wrong, and the failure renders
- * as an absent reward, not an error.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class RewardRepositoryTest {
     private var clock = 0L
@@ -45,8 +40,7 @@ class RewardRepositoryTest {
             transport.respond(200, EMPTY)
             newRepository(this).fetch(MERCHANT_ID, FrakCurrency.EUR, null, null, forceRefresh = false)
 
-            // The backend declares this `t.Literal("1")`, not a boolean: "true" and "0" are
-            // both 422s, and omitting it leaves `best` absent.
+            // The backend declares this `t.Literal("1")`, not a boolean: "true" and "0" are both 422s.
             val url =
                 transport.requests
                     .single()
@@ -108,8 +102,7 @@ class RewardRepositoryTest {
     @Test
     fun `an unknown merchant returns an empty list rather than an error`() =
         runTest {
-            // This endpoint never 404s: a typo'd merchantId returns an empty success response,
-            // indistinguishable from a real merchant between campaigns.
+            // This endpoint never 404s: an unknown merchantId returns an empty success response.
             transport.respond(200, EMPTY)
 
             val result = newRepository(this).fetch(MERCHANT_ID, FrakCurrency.EUR, null, null, forceRefresh = false)
@@ -141,8 +134,6 @@ class RewardRepositoryTest {
             clock += RewardRepository.CACHE_TTL_MILLIS
             repository.fetch(MERCHANT_ID, FrakCurrency.EUR, null, null, forceRefresh = false)
 
-            // Unlike the config cache, which serves stale indefinitely: an unsure reward
-            // amount must not be shown.
             assertEquals(2, transport.requests.size)
         }
 
@@ -155,8 +146,6 @@ class RewardRepositoryTest {
             repository.fetch(MERCHANT_ID, FrakCurrency.EUR, null, RewardAudience.REFERRER, forceRefresh = false)
             repository.fetch(MERCHANT_ID, FrakCurrency.EUR, null, RewardAudience.REFEREE, forceRefresh = false)
 
-            // `best` is selected server-side from the query; sharing an entry would show a
-            // referrer's reward to a referee.
             assertEquals(2, transport.requests.size)
         }
 
@@ -172,7 +161,7 @@ class RewardRepositoryTest {
                 null,
                 null,
                 forceRefresh = false,
-                products = listOf(ProductDetails(sku = "SHOE-42")),
+                products = listOf(productDetails(sku = "SHOE-42")),
             )
             repository.fetch(
                 MERCHANT_ID,
@@ -180,7 +169,7 @@ class RewardRepositoryTest {
                 null,
                 null,
                 forceRefresh = false,
-                products = listOf(ProductDetails(sku = "SHIRT-1")),
+                products = listOf(productDetails(sku = "SHIRT-1")),
             )
 
             assertEquals(2, transport.requests.size)
@@ -198,7 +187,7 @@ class RewardRepositoryTest {
                 forceRefresh = false,
                 products =
                     listOf(
-                        ProductDetails(
+                        productDetails(
                             productId = "p1",
                             sku = "SHOE-42",
                             name = "Kettle",
@@ -214,9 +203,7 @@ class RewardRepositoryTest {
                     .single()
                     .url
                     .toString()
-            // Pinned against sdk/core's compressJsonToB64([{"name":"Kettle","productId":"p1",
-            // "quantity":2,"sku":"SHOE-42","totalPrice":159.8,"unitPrice":79.9}]). Both
-            // platforms and the backend must agree on this exact string.
+            // Golden vector from sdk/core's compressJsonToB64; both platforms and the backend must agree.
             assertTrue(
                 "was: $url",
                 url.contains(
@@ -235,7 +222,7 @@ class RewardRepositoryTest {
                 null,
                 null,
                 forceRefresh = false,
-                products = listOf(ProductDetails(name = "Babies camel cuir velours bout carré")),
+                products = listOf(productDetails(name = "Babies camel cuir velours bout carré")),
             )
 
             val url =
@@ -243,8 +230,7 @@ class RewardRepositoryTest {
                     .single()
                     .url
                     .toString()
-            // Raw UTF-8, not \u-escaped: JSON.stringify emits raw UTF-8 for non-ASCII text; an
-            // escaping encoder produces a different, still-valid string that fails this vector.
+            // Raw UTF-8, not \u-escaped: an escaping encoder produces a different, still-valid string.
             assertTrue(
                 "was: $url",
                 url.contains(
@@ -253,10 +239,6 @@ class RewardRepositoryTest {
             )
         }
 
-    /**
-     * RFC 8259 §7 forbids a raw control character inside a JSON string; merchant catalogue data
-     * carries stray newlines and tabs. Vector generated from `sdk/core`'s `compressJsonToB64`.
-     */
     @Test
     fun `control characters in a product name are escaped, not emitted raw`() =
         runTest {
@@ -267,7 +249,7 @@ class RewardRepositoryTest {
                 null,
                 null,
                 forceRefresh = false,
-                products = listOf(ProductDetails(name = "Line1\nLine2\tEnd")),
+                products = listOf(productDetails(name = "Line1\nLine2\tEnd")),
             )
 
             val url =
@@ -279,10 +261,7 @@ class RewardRepositoryTest {
             assertTrue("was: $url", url.contains("products=W3sibmFtZSI6IkxpbmUxXG5MaW5lMlx0RW5kIn1d"))
         }
 
-    /**
-     * NaN/Infinity have no JSON literal. `JSON.stringify` writes `null`, which the backend's
-     * `sanitizeProductDetailsList` discards — dropping the field reaches the same place.
-     */
+    /** NaN/Infinity have no JSON literal; `JSON.stringify` writes `null`, which the backend discards. */
     @Test
     fun `a non-finite price is dropped rather than emitted as an invalid JSON token`() =
         runTest {
@@ -295,7 +274,7 @@ class RewardRepositoryTest {
                 forceRefresh = false,
                 products =
                     listOf(
-                        ProductDetails(
+                        productDetails(
                             sku = "SHOE-42",
                             quantity = Double.NaN,
                             unitPrice = Double.POSITIVE_INFINITY,
@@ -323,7 +302,7 @@ class RewardRepositoryTest {
                 null,
                 null,
                 forceRefresh = false,
-                products = listOf(ProductDetails(quantity = -0.0)),
+                products = listOf(productDetails(quantity = -0.0)),
             )
 
             val url =
@@ -366,7 +345,7 @@ class RewardRepositoryTest {
                 null,
                 null,
                 forceRefresh = false,
-                products = listOf(ProductDetails()),
+                products = listOf(productDetails()),
             )
 
             val url =
@@ -381,8 +360,7 @@ class RewardRepositoryTest {
     fun `an oversized encoded payload is dropped and warns rather than failing the call`() =
         runTest {
             transport.respond(200, EMPTY)
-            // A custom sink, not the default logcat one: android.util.Log throws on this JVM
-            // unit-test classpath unless mocked, and no mocking framework runs in this tier.
+            // A custom sink: android.util.Log throws on this JVM unit-test classpath.
             val warnings = mutableListOf<String>()
             val logger = FrakLogger(FrakLogLevel.WARN, FrakLogSink { _, message, _ -> warnings.add(message) })
             val repository =
@@ -392,9 +370,8 @@ class RewardRepositoryTest {
                     scope = this,
                     now = { clock },
                 )
-            // 400 distinct skus comfortably exceeds the 8192-character budget once JSON-encoded
-            // and base64url-expanded (4/3 overhead).
-            val huge = (1..400).map { ProductDetails(sku = "SKU-$it-${"x".repeat(40)}") }
+            // 400 distinct skus comfortably exceeds the 8192-character budget once base64url-expanded.
+            val huge = (1..400).map { productDetails(sku = "SKU-$it-${"x".repeat(40)}") }
 
             repository.fetch(MERCHANT_ID, FrakCurrency.EUR, null, null, forceRefresh = false, products = huge)
 
@@ -443,15 +420,10 @@ class RewardRepositoryTest {
             val afterFirst = transport.requests.size
             runCatching { repository.fetch(MERCHANT_ID, FrakCurrency.EUR, null, null, forceRefresh = false) }
 
-            // The HTTP layer retries once internally, so afterFirst is 2; the second call adds
-            // nothing.
+            // The HTTP layer retries once internally, so afterFirst is 2.
             assertEquals("the second call was suppressed by backoff", afterFirst, transport.requests.size)
         }
 
-    /**
-     * Backoff must not be keyed by products, or a merchant browsing a catalogue would hammer a
-     * failing backend once per product instead of backing off.
-     */
     @Test
     fun `a backed-off backend stays backed off for a different product set`() =
         runTest {
@@ -465,7 +437,7 @@ class RewardRepositoryTest {
                     null,
                     null,
                     forceRefresh = false,
-                    products = listOf(ProductDetails(sku = "SHOE-42")),
+                    products = listOf(productDetails(sku = "SHOE-42")),
                 )
             }
             val afterFirst = transport.requests.size
@@ -477,7 +449,7 @@ class RewardRepositoryTest {
                     null,
                     null,
                     forceRefresh = false,
-                    products = listOf(ProductDetails(sku = "SHIRT-1")),
+                    products = listOf(productDetails(sku = "SHIRT-1")),
                 )
             }
 
@@ -488,10 +460,6 @@ class RewardRepositoryTest {
             )
         }
 
-    /**
-     * The cache key carries an up-to-4KB caller-controlled products string, so entries must not
-     * accumulate for the process's lifetime the way a merchant/currency-keyed map safely could.
-     */
     @Test
     fun `expired entries are swept, so browsing a catalogue cannot grow the cache forever`() =
         runTest {
@@ -505,7 +473,7 @@ class RewardRepositoryTest {
                     null,
                     null,
                     forceRefresh = false,
-                    products = listOf(ProductDetails(sku = "SKU-$index")),
+                    products = listOf(productDetails(sku = "SKU-$index")),
                 )
                 // Past the 30s TTL, so every previous entry is dead by the next insert.
                 clock += RewardRepository.CACHE_TTL_MILLIS + 1

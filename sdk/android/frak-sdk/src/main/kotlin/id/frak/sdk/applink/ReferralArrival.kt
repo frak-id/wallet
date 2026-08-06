@@ -7,15 +7,8 @@ import id.frak.sdk.tracking.Interaction
 internal object ReferralArrival {
     /**
      * Mandatory before any arrival is tracked. Ignores a self-referral (this device's own
-     * [anonymousId] as the link's `clientId`) and a foreign-merchant V2 referral. V1 carries no
-     * `merchantId`, so a V1 link from any merchant is still tracked as this merchant's arrival.
-     *
-     * [ownMerchantId] is best-effort (cached config, not a fresh resolve): null lets the context
-     * through rather than discard telemetry.
-     *
-     * The merchant-id comparison is case-insensitive and trims whitespace: [ownMerchantId] and
-     * `context.merchantId` may differ only by casing between a free-typed config value and the
-     * backend's canonical form.
+     * [anonymousId] as the link's `clientId`) and a foreign-merchant V2 referral; a V1 link carries
+     * no `merchantId`, so it counts as this merchant's. A null [ownMerchantId] lets it through.
      */
     fun shouldIgnoreArrival(
         context: FrakContext,
@@ -23,7 +16,7 @@ internal object ReferralArrival {
         ownMerchantId: String? = null,
     ): Boolean =
         when (context) {
-            // No merchantId on a V1 context to compare against ownMerchantId — see the doc above.
+            // A V1 context has no merchantId to compare against ownMerchantId.
             is FrakContext.V1 -> {
                 false
             }
@@ -40,14 +33,20 @@ internal object ReferralArrival {
         b: String,
     ): Boolean = a.trim().equals(b.trim(), ignoreCase = true)
 
-    fun arrivalFrom(context: FrakContext): Interaction.Arrival =
+    fun arrivalFrom(context: FrakContext): Interaction =
         when (context) {
             is FrakContext.V1 -> {
-                Interaction.Arrival(referrerWallet = context.wallet)
+                Interaction.arrival(
+                    referrerWallet = context.wallet,
+                    // V1 carries an address and nothing else
+                    referrerClientId = null,
+                    referrerMerchantId = null,
+                    referralTimestamp = null,
+                )
             }
 
             is FrakContext.V2 -> {
-                Interaction.Arrival(
+                Interaction.arrival(
                     referrerWallet = context.wallet,
                     referrerClientId = context.clientId,
                     referrerMerchantId = context.merchantId,

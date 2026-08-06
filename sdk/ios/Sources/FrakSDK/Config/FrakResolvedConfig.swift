@@ -1,28 +1,25 @@
 /// What the backend knows about this merchant, as resolved by `GET /user/merchant/resolve`.
 ///
-/// The whole tree is `public`, not just the fields acted on directly here: its actual
-/// reader, the sharing sheet, lives in the separate `FrakSDKUI` target, which only sees
-/// `public` API.
-///
-/// Deliberately absent from the public surface: `css` (no native use), `productId`
-/// (legacy), and `allowedDomains` (a browser-only origin check with no native equivalent).
+/// The whole tree is `public` because its actual reader, the sharing sheet, lives in the
+/// separate `FrakSDKUI` target. `css`, `productId` and `allowedDomains` are deliberately absent.
 public struct FrakResolvedConfig: Sendable, Hashable {
     /// Server-issued merchant UUID; the identity everything else is keyed by.
     public let merchantId: String
     public let name: String
     /// Merchant's canonical domain, not whatever domain was queried.
     public let domain: String
-    /// Language the backend resolved for this merchant. Nil for an unrecognised value.
     public let lang: FrakLanguage?
-    /// Currency the merchant configured. Informational only — reward formatting always
-    /// reads currency from `FrakMetadata`, never from this response.
+    /// Informational only — reward formatting always reads currency from `FrakMetadata`.
     public let currency: FrakCurrency?
     /// Merchant asked to be hidden from the explorer. Rarely relevant natively.
     public let hidden: Bool
-    /// Placement- and component-level copy overrides, translations and attribution
-    /// defaults. Nil when the backend omitted the block, or this value was built directly
-    /// rather than decoded from a resolve response.
     public let sdkConfig: ResolvedSdkConfig?
+
+    /// Name to show a user: the `sdkConfig` override when the backend sent one, else ``name``.
+    public var displayName: String { sdkConfig?.name ?? name }
+
+    /// Logo to show alongside ``displayName``, or nil when the backend has none on file.
+    public var displayLogoURL: String? { sdkConfig?.logoURL }
 
     public init(
         merchantId: String,
@@ -44,24 +41,20 @@ public struct FrakResolvedConfig: Sendable, Hashable {
 }
 
 /// The `sdkConfig` block of a resolve response: merchant-configured copy overrides,
-/// translations, per-placement components and attribution defaults for the SDK's
-/// native surfaces.
+/// translations, per-placement components and attribution defaults.
 public struct ResolvedSdkConfig: Decodable, Sendable, Hashable {
-    /// Merchant display name from the `sdkConfig` block. May differ from the
-    /// top-level `FrakResolvedConfig.name`.
     public let name: String?
     public let logoURL: String?
     public let homepageLink: String?
     public let currency: FrakCurrency?
     public let lang: FrakLanguage?
     public let hidden: Bool
-    /// Translation overrides, keyed by translation key (e.g. `"sharing.title"`).
+    /// Overrides keyed by translation key (e.g. `"sharing.title"`).
     public let translations: [String: String]
-    /// Per-placement copy and component overrides, keyed by placement id.
+    /// Keyed by placement id.
     public let placements: [String: ResolvedPlacement]
     /// Merchant-global component copy, used when a placement does not override it.
     public let components: ResolvedComponents?
-    /// Default attribution parameters applied when a share link omits them.
     public let attribution: AttributionDefaults?
 
     public init(
@@ -96,9 +89,7 @@ public struct ResolvedSdkConfig: Decodable, Sendable, Hashable {
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         // A wrong-typed or unrecognised optional field reads as nil rather than failing the
-        // whole decode: a missing logo beats a bricked config. Empty strings normalise to nil
-        // too, matching the Android twin's `JsonReader.string`, so the same wire response
-        // decodes identically on both platforms.
+        // whole decode. Empty strings normalise to nil, matching the Android twin.
         name = (try? container.decodeIfPresent(String.self, forKey: .name))?.nonEmpty
         logoURL = (try? container.decodeIfPresent(String.self, forKey: .logoURL))?.nonEmpty
         homepageLink = (try? container.decodeIfPresent(String.self, forKey: .homepageLink))?.nonEmpty
@@ -134,11 +125,8 @@ public struct ResolvedPlacement: Decodable, Sendable, Hashable {
         case components, targetInteraction, translations
     }
 
-    /// Hand-written rather than synthesized: `translations` is non-optional, matching the
-    /// Kotlin twin where an absent key decodes to `emptyMap()`. A synthesized `Decodable`
-    /// would call `decode(_:forKey:)` for a non-optional property and throw `keyNotFound`
-    /// when the backend omits `translations`, as it does whenever a placement has none —
-    /// which `ResolvedSdkConfig`'s `try?` would swallow into dropping every placement.
+    /// Hand-written rather than synthesized: a synthesized `Decodable` would throw
+    /// `keyNotFound` for the non-optional `translations` whenever the backend omits it.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         components = try? container.decodeIfPresent(ResolvedComponents.self, forKey: .components)
@@ -172,11 +160,8 @@ public struct ResolvedComponents: Decodable, Sendable, Hashable {
 
 /// Copy for the share button.
 public struct ButtonShareConfig: Decodable, Sendable, Hashable {
-    /// Button text when a reward applies.
     public let text: String?
-    /// Button text when no reward applies.
     public let noRewardText: String?
-    /// The action key fired when the button is tapped.
     public let clickAction: String?
 
     public init(
@@ -192,7 +177,6 @@ public struct ButtonShareConfig: Decodable, Sendable, Hashable {
 
 /// Copy for the wallet button.
 public struct ButtonWalletConfig: Decodable, Sendable, Hashable {
-    /// Where the button is anchored on screen.
     public let position: String?
 
     public init(position: String? = nil) {
@@ -212,17 +196,11 @@ public struct OpenInAppConfig: Decodable, Sendable, Hashable {
 /// Copy shown after a purchase, for both the referee and referrer.
 public struct PostPurchaseConfig: Decodable, Sendable, Hashable {
     public let badgeText: String?
-    /// Copy shown to the referee when a reward applies.
     public let refereeText: String?
-    /// Copy shown to the referee when no reward applies.
     public let refereeNoRewardText: String?
-    /// Copy shown to the referrer when a reward applies.
     public let referrerText: String?
-    /// Copy shown to the referrer when no reward applies.
     public let referrerNoRewardText: String?
-    /// Call-to-action text when a reward applies.
     public let ctaText: String?
-    /// Call-to-action text when no reward applies.
     public let ctaNoRewardText: String?
     public let imageUrl: String?
 
@@ -303,7 +281,6 @@ public struct AttributionDefaults: Decodable, Sendable, Hashable {
 }
 
 extension String {
-    /// nil for an empty string, self otherwise. Matches the Android twin's `JsonReader.string`,
-    /// which normalises the same way for every optional string field on the wire.
+    /// nil for an empty string, self otherwise. Matches the Android twin's `JsonReader.string`.
     fileprivate var nonEmpty: String? { isEmpty ? nil : self }
 }

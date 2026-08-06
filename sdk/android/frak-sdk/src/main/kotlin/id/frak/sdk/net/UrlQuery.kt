@@ -1,29 +1,22 @@
+// Opted in for `PercentEncoding`, which is `@InternalFrakApi`. Per file, not module-wide, so the
+// marker still applies elsewhere.
+@file:OptIn(InternalFrakApi::class)
+
 package id.frak.sdk.net
 
+import id.frak.sdk.InternalFrakApi
+
 /**
- * Minimal query-string editing over a URL string.
- *
- * Not `android.net.Uri` (throws on the JVM unit-test classpath, where this is
- * tested) and not `java.net.URI` (which offers no way to edit a query without
- * re-serialising the whole thing through a builder that re-encodes what is
- * already encoded). Only what the SDK actually needs: read, set and remove a
- * parameter, preserving everything else exactly as the merchant wrote it.
- *
- * Existing parameters are never re-encoded. A merchant's URL is theirs, and
- * normalising it would silently change links they have already published.
+ * Minimal query-string editing over a URL string. Not `android.net.Uri` (throws on the JVM
+ * unit-test classpath) and not `java.net.URI` (re-encodes what is already encoded). Existing
+ * parameters are never re-encoded, so links a merchant has already published are unchanged.
  */
 internal class UrlQuery private constructor(
     private val base: String,
     private val fragment: String,
     private val parameters: MutableList<Pair<String, String>>,
 ) {
-    /**
-     * The decoded value at [key], or null.
-     *
-     * Case-insensitive on the key: some channels lowercase query keys in transit, so `fCtx` can
-     * arrive as `fctx`. Percent-decoded on the value: a channel that re-encodes a link turns `-`
-     * into `%2D`, and the base64url payload would then fail to decode.
-     */
+    /** The key match is case-insensitive and the value is percent-decoded; channels mangle both. */
     fun get(key: String): String? =
         parameters
             .firstOrNull { it.first.equals(key, ignoreCase = true) }
@@ -35,7 +28,7 @@ internal class UrlQuery private constructor(
             parameters.removeAll { it.first.equals(key, ignoreCase = true) }
         }
 
-    /** Appends [key] only when it is absent — gap-fill, so a merchant's own value always wins. */
+    /** Gap-fill: a merchant's own value always wins. */
     fun fillIfAbsent(
         key: String,
         value: String?,
@@ -46,7 +39,6 @@ internal class UrlQuery private constructor(
             parameters += key to PercentEncoding.encode(value)
         }
 
-    /** Replaces [key], preserving position-independent ordering by appending. */
     fun set(
         key: String,
         value: String,

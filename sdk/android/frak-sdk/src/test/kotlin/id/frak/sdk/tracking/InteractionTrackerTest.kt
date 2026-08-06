@@ -32,11 +32,7 @@ class InteractionTrackerTest {
     private var keys = 0
     private var currentClientId: String? = CLIENT_ID
 
-    /**
-     * The egress gate: consent is withdrawn once N events have reached the wire. Keyed off the
-     * transport rather than a call counter, so this stays reachable mid-drain, unlike
-     * `DefaultFrakClientTest`, where the drain only ever holds the single event that started it.
-     */
+    /** Consent is withdrawn once N events have reached the wire; keyed off the transport, not a call count. */
     private var denyTrackingAfterRequests = Int.MAX_VALUE
 
     private suspend fun trackingAllowed(): Boolean = transport.requests.size < denyTrackingAfterRequests
@@ -44,10 +40,7 @@ class InteractionTrackerTest {
     private lateinit var file: File
     private lateinit var queue: EventQueue
 
-    /**
-     * A [TestScope] extension so the tracker's detached drains share this test's scheduler and
-     * run eagerly under [UnconfinedTestDispatcher]; `track` does not await its own flush.
-     */
+    /** A [TestScope] extension so the tracker's detached drains share this test's scheduler. */
     private fun TestScope.tracker(): InteractionTracker {
         file = File(folder.root, "frak-events.jsonl")
         queue = EventQueue(file, FrakLogger(FrakLogLevel.NONE, null), UnconfinedTestDispatcher(testScheduler))
@@ -55,8 +48,7 @@ class InteractionTrackerTest {
             queue = queue,
             http = HttpClient(FAKE_BASE_URL, UnconfinedTestDispatcher(testScheduler), transport::open),
             logger = FrakLogger(FrakLogLevel.NONE, null),
-            // Parented to backgroundScope so runTest cancels any drain still in flight at the end
-            // of a test instead of leaking it; Unconfined so the drain runs before track returns.
+            // Parented to backgroundScope so runTest cancels any drain still in flight.
             scope = CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler)),
             currentClientId = { currentClientId },
             trackingAllowed = { trackingAllowed() },
@@ -73,7 +65,7 @@ class InteractionTrackerTest {
     fun `posts a sharing interaction with the client id header and drains the queue`() =
         runTest {
             transport.respond(200, """{"success":true}""")
-            tracker().track(MERCHANT_ID, CLIENT_ID, Interaction.Sharing())
+            tracker().track(MERCHANT_ID, CLIENT_ID, Interaction.sharing())
 
             val request = transport.requests.single()
             assertEquals("POST", request.method)
@@ -93,7 +85,7 @@ class InteractionTrackerTest {
         runTest {
             transport.fail(IOException("offline"))
             val tracker = tracker()
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Sharing())
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.sharing())
 
             val queued = queue.read(now).single()
             assertEquals("key-0", queued.idempotencyKey)
@@ -113,8 +105,8 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
             transport.fail(IOException("offline"))
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Custom("first"))
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Custom("second"))
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.custom("first"))
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.custom("second"))
 
             now += Backoff.MAX_DELAY_MILLIS
             transport.respondEach(200, 503)
@@ -129,7 +121,7 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
             transport.respond(503, "")
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Sharing())
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.sharing())
             val attempts = transport.requests.size
 
             tracker.flush()
@@ -146,8 +138,8 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
             transport.respond(422, """{"success":false,"code":"BAD"}""")
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Custom("poison"))
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Custom("healthy"))
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.custom("poison"))
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.custom("healthy"))
 
             repeat(3) {
                 now += Backoff.MAX_DELAY_MILLIS
@@ -162,7 +154,7 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
             transport.fail(IOException("offline"))
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Sharing())
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.sharing())
 
             currentClientId = "550e8400-e29b-41d4-a716-446655440009"
             now += Backoff.MAX_DELAY_MILLIS
@@ -179,7 +171,7 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
             transport.fail(IOException("offline"))
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Sharing())
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.sharing())
 
             now += EventQueue.MAX_AGE_MILLIS + 1
             tracker.flush()
@@ -192,7 +184,7 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
             transport.fail(IOException("offline"))
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Sharing())
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.sharing())
 
             tracker.purge()
             assertTrue(queue.read(now).isEmpty())
@@ -203,8 +195,7 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
 
-            // A pre-migration file: every current field except "r", which never existed. Written
-            // directly, bypassing append/track, exactly like an install upgrading in place.
+            // A pre-migration file (no "r" field), written directly like an install upgrading in place.
             file.parentFile?.mkdirs()
             listOf("old-a" to now - 1, "old-b" to now).forEach { (key, capturedAt) ->
                 file.appendText(
@@ -219,11 +210,8 @@ class InteractionTrackerTest {
                 )
             }
 
-            // Forces EventQueue.replaceLocked's write to fail during the migration read inside
-            // flush: the temp path is occupied by a directory, so temp.writeText throws.
-            // The directory must be non-empty: replaceLocked's failure path runs
-            // runCatching { temp.delete() }, and File.delete() succeeds on an empty directory,
-            // which would clear the obstruction before the second rewrite and hide the regression.
+            // Occupies EventQueue.replaceLocked's temp path with a directory, so temp.writeText throws.
+            // Non-empty, or its failure path's temp.delete() would clear it before the second rewrite.
             val tempPath = File(file.parentFile, file.name + ".tmp")
             tempPath.mkdirs()
             File(tempPath, "occupied").writeText("x")
@@ -257,7 +245,12 @@ class InteractionTrackerTest {
             tracker().track(
                 MERCHANT_ID,
                 CLIENT_ID,
-                Interaction.Arrival(referrerClientId = CLIENT_ID, referralTimestamp = 1_709_654_000),
+                Interaction.arrival(
+                    referrerWallet = null,
+                    referrerClientId = CLIENT_ID,
+                    referrerMerchantId = null,
+                    referralTimestamp = 1_709_654_000,
+                ),
             )
 
             val body = bodyOf(0)
@@ -267,15 +260,9 @@ class InteractionTrackerTest {
         }
 
     /**
-     * A drain reads the whole backlog under [EventQueue]'s lock, then POSTs it one event at a
-     * time outside that lock, so a consent withdrawal landing mid-drain must be caught at the
-     * point of egress; purging the file cannot reach events the drain already holds in memory.
-     * Withdrawal also nulls `currentClientId`, which disables the stale-id guard rather than
-     * tightening it.
-     *
-     * The queue is seeded directly rather than through [InteractionTracker.track]: routed through
-     * it, each drain would hold exactly one event under `UnconfinedTestDispatcher`, and the
-     * mid-drain window would not exist to test.
+     * A drain reads the whole backlog under [EventQueue]'s lock and POSTs outside it, so a consent
+     * withdrawal landing mid-drain must be caught at the point of egress. The queue is seeded directly:
+     * routed through `track`, each drain would hold one event and the mid-drain window would not exist.
      */
     @Test
     fun `stops mid-drain when consent is withdrawn, and keeps the unsent events`() =
@@ -292,9 +279,7 @@ class InteractionTrackerTest {
             assertEquals("only the event before the withdrawal may reach the wire", 1, transport.requests.size)
             assertEquals("first", bodyOf(0).getString("interactionType"))
             // Reconciled, not abandoned: the delivered event is removed so a stalled purge cannot
-            // re-send it — `Interaction.Arrival` carries no idempotency key, so a re-send would be
-            // a duplicated referral payout. The undelivered one survives: withdrawal is a pause,
-            // not an erasure.
+            // re-send it; the undelivered one survives, since withdrawal is a pause, not an erasure.
             val remaining = queue.read(now)
             assertEquals(1, remaining.size)
             assertTrue(

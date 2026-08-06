@@ -1,0 +1,741 @@
+public final class id/frak/sdk/AppLinkApi {
+	public final fun handleReferral (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun handleReferralAsync (Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun installPageUrl (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun installPageUrlAsync (Ljava/lang/String;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun installUrl (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun installUrlAsync ()Ljava/util/concurrent/CompletableFuture;
+	public final fun isFrakAppInstalled ()Z
+	public final fun openFrakApp (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun openFrakAppAsync ()Ljava/util/concurrent/CompletableFuture;
+}
+
+public final class id/frak/sdk/ConfigApi {
+	public final fun getUpdates ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun resolve (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun resolve (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun resolveAsync ()Ljava/util/concurrent/CompletableFuture;
+	public final fun resolveAsync (Z)Ljava/util/concurrent/CompletableFuture;
+}
+
+public final class id/frak/sdk/Frak {
+	public static final field INSTANCE Lid/frak/sdk/Frak;
+	public static final fun getClient ()Lid/frak/sdk/FrakClient;
+	public static final fun getClientOrNull ()Lid/frak/sdk/FrakClient;
+	public static final fun getPreloadSharing ()Z
+	public static final fun initialize (Landroid/content/Context;Lid/frak/sdk/core/FrakConfig;)V
+	public static final fun isInitialized ()Z
+	public static final fun parseReferralLink (Ljava/lang/String;)Lid/frak/sdk/sharing/FrakContext;
+	public final fun shutdown (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun shutdownAsync ()Ljava/util/concurrent/CompletableFuture;
+}
+
+public final class id/frak/sdk/FrakClient {
+	public final fun anonymousId (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun anonymousIdAsync ()Ljava/util/concurrent/CompletableFuture;
+	public final fun getAppLink ()Lid/frak/sdk/AppLinkApi;
+	public final fun getConfig ()Lid/frak/sdk/ConfigApi;
+	public final fun getEnvironment ()Lid/frak/sdk/core/FrakEnvironment;
+	public final fun getRewards ()Lid/frak/sdk/RewardsApi;
+	public final fun getSharing ()Lid/frak/sdk/SharingApi;
+	public final fun getTracking ()Lid/frak/sdk/TrackingApi;
+	public final fun isTrackingEnabled (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun isTrackingEnabledAsync ()Ljava/util/concurrent/CompletableFuture;
+	public final fun resetAnonymousId (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun resetAnonymousIdAsync ()Ljava/util/concurrent/CompletableFuture;
+	public final fun setTrackingEnabled (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun setTrackingEnabledAsync (Z)Ljava/util/concurrent/CompletableFuture;
+}
+
+public final class id/frak/sdk/FrakSdkVersion {
+	public static final field INSTANCE Lid/frak/sdk/FrakSdkVersion;
+	public static final fun getCURRENT ()Ljava/lang/String;
+	public static final fun getHEADER_NAME ()Ljava/lang/String;
+	public static final fun getQUERY_PARAMETER_NAME ()Ljava/lang/String;
+}
+
+public abstract interface annotation class id/frak/sdk/InternalFrakApi : java/lang/annotation/Annotation {
+}
+
+public final class id/frak/sdk/OpenAppResult : java/lang/Enum {
+	public static final field Failed Lid/frak/sdk/OpenAppResult;
+	public static final field OpenedApp Lid/frak/sdk/OpenAppResult;
+	public static final field OpenedStore Lid/frak/sdk/OpenAppResult;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lid/frak/sdk/OpenAppResult;
+	public static fun values ()[Lid/frak/sdk/OpenAppResult;
+}
+
+public final class id/frak/sdk/RewardsApi {
+	public final fun best (Lid/frak/sdk/rewards/RewardRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun best (Lid/frak/sdk/rewards/RewardRequest;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun bestAsync (Lid/frak/sdk/rewards/RewardRequest;)Ljava/util/concurrent/CompletableFuture;
+	public final fun bestAsync (Lid/frak/sdk/rewards/RewardRequest;Z)Ljava/util/concurrent/CompletableFuture;
+	public final fun campaigns (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun campaigns (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun campaignsAsync ()Ljava/util/concurrent/CompletableFuture;
+	public final fun campaignsAsync (Z)Ljava/util/concurrent/CompletableFuture;
+}
+
+public final class id/frak/sdk/SharingApi {
+	public final fun buildLink (Lid/frak/sdk/sharing/SharingRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun buildLinkAsync (Lid/frak/sdk/sharing/SharingRequest;)Ljava/util/concurrent/CompletableFuture;
+}
+
+public final class id/frak/sdk/TrackingApi {
+	public final fun purchase (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun purchaseAsync (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun track (Lid/frak/sdk/tracking/Interaction;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun trackAsync (Lid/frak/sdk/tracking/Interaction;)Ljava/util/concurrent/CompletableFuture;
+}
+
+public final class id/frak/sdk/config/AttributionDefaults {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRef ()Ljava/lang/String;
+	public final fun getUtmCampaign ()Ljava/lang/String;
+	public final fun getUtmMedium ()Ljava/lang/String;
+	public final fun getUtmSource ()Ljava/lang/String;
+	public final fun getUtmTerm ()Ljava/lang/String;
+	public final fun getVia ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/config/BannerConfig {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getImageUrl ()Ljava/lang/String;
+	public final fun getInappCta ()Ljava/lang/String;
+	public final fun getInappDescription ()Ljava/lang/String;
+	public final fun getInappTitle ()Ljava/lang/String;
+	public final fun getReferralCta ()Ljava/lang/String;
+	public final fun getReferralDescription ()Ljava/lang/String;
+	public final fun getReferralTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/config/ButtonShareConfig {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClickAction ()Ljava/lang/String;
+	public final fun getNoRewardText ()Ljava/lang/String;
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/config/ButtonWalletConfig {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPosition ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/config/FrakResolvedConfig {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCurrency ()Lid/frak/sdk/core/FrakCurrency;
+	public final fun getDisplayLogoUrl ()Ljava/lang/String;
+	public final fun getDisplayName ()Ljava/lang/String;
+	public final fun getDomain ()Ljava/lang/String;
+	public final fun getHidden ()Z
+	public final fun getLang ()Lid/frak/sdk/core/FrakLanguage;
+	public final fun getMerchantId ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getSdkConfig ()Lid/frak/sdk/config/ResolvedSdkConfig;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/config/OpenInAppConfig {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/config/PostPurchaseConfig {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBadgeText ()Ljava/lang/String;
+	public final fun getCtaNoRewardText ()Ljava/lang/String;
+	public final fun getCtaText ()Ljava/lang/String;
+	public final fun getImageUrl ()Ljava/lang/String;
+	public final fun getRefereeNoRewardText ()Ljava/lang/String;
+	public final fun getRefereeText ()Ljava/lang/String;
+	public final fun getReferrerNoRewardText ()Ljava/lang/String;
+	public final fun getReferrerText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/config/ResolvedComponents {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBanner ()Lid/frak/sdk/config/BannerConfig;
+	public final fun getButtonShare ()Lid/frak/sdk/config/ButtonShareConfig;
+	public final fun getButtonWallet ()Lid/frak/sdk/config/ButtonWalletConfig;
+	public final fun getOpenInApp ()Lid/frak/sdk/config/OpenInAppConfig;
+	public final fun getPostPurchase ()Lid/frak/sdk/config/PostPurchaseConfig;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/config/ResolvedPlacement {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComponents ()Lid/frak/sdk/config/ResolvedComponents;
+	public final fun getTargetInteraction ()Ljava/lang/String;
+	public final fun getTranslations ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/config/ResolvedSdkConfig {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttribution ()Lid/frak/sdk/config/AttributionDefaults;
+	public final fun getComponents ()Lid/frak/sdk/config/ResolvedComponents;
+	public final fun getCurrency ()Lid/frak/sdk/core/FrakCurrency;
+	public final fun getHidden ()Z
+	public final fun getHomepageLink ()Ljava/lang/String;
+	public final fun getLang ()Lid/frak/sdk/core/FrakLanguage;
+	public final fun getLogoUrl ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getPlacements ()Ljava/util/Map;
+	public final fun getTranslations ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/core/DeepLinkHandling : java/lang/Enum {
+	public static final field Automatic Lid/frak/sdk/core/DeepLinkHandling;
+	public static final field Disabled Lid/frak/sdk/core/DeepLinkHandling;
+	public static final field Manual Lid/frak/sdk/core/DeepLinkHandling;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lid/frak/sdk/core/DeepLinkHandling;
+	public static fun values ()[Lid/frak/sdk/core/DeepLinkHandling;
+}
+
+public final class id/frak/sdk/core/FrakConfig {
+	public final fun getDeepLink ()Lid/frak/sdk/core/DeepLinkHandling;
+	public final fun getEnv ()Lid/frak/sdk/core/FrakEnvironment;
+	public final fun getLogLevel ()Lid/frak/sdk/core/FrakLogLevel;
+	public final fun getLogSink ()Lid/frak/sdk/core/FrakLogSink;
+	public final fun getMerchantId ()Ljava/lang/String;
+	public final fun getMetadata ()Lid/frak/sdk/core/FrakMetadata;
+	public final fun getPackageId ()Ljava/lang/String;
+	public final fun getPreloadSharing ()Z
+	public final fun getTrackingEnabled ()Z
+}
+
+public final class id/frak/sdk/core/FrakConfig$Builder {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public final fun build ()Lid/frak/sdk/core/FrakConfig;
+	public final fun deepLink (Lid/frak/sdk/core/DeepLinkHandling;)Lid/frak/sdk/core/FrakConfig$Builder;
+	public final fun env (Lid/frak/sdk/core/FrakEnvironment;)Lid/frak/sdk/core/FrakConfig$Builder;
+	public final fun getDeepLink ()Lid/frak/sdk/core/DeepLinkHandling;
+	public final fun getEnv ()Lid/frak/sdk/core/FrakEnvironment;
+	public final fun getLogLevel ()Lid/frak/sdk/core/FrakLogLevel;
+	public final fun getLogSink ()Lid/frak/sdk/core/FrakLogSink;
+	public final fun getMerchantId ()Ljava/lang/String;
+	public final fun getMetadata ()Lid/frak/sdk/core/FrakMetadata;
+	public final fun getPackageId ()Ljava/lang/String;
+	public final fun getPreloadSharing ()Z
+	public final fun getTrackingEnabled ()Z
+	public final fun logLevel (Lid/frak/sdk/core/FrakLogLevel;)Lid/frak/sdk/core/FrakConfig$Builder;
+	public final fun logSink (Lid/frak/sdk/core/FrakLogSink;)Lid/frak/sdk/core/FrakConfig$Builder;
+	public final fun merchantId (Ljava/lang/String;)Lid/frak/sdk/core/FrakConfig$Builder;
+	public final fun metadata (Lid/frak/sdk/core/FrakMetadata;)Lid/frak/sdk/core/FrakConfig$Builder;
+	public final fun packageId (Ljava/lang/String;)Lid/frak/sdk/core/FrakConfig$Builder;
+	public final fun preloadSharing (Z)Lid/frak/sdk/core/FrakConfig$Builder;
+	public final fun setDeepLink (Lid/frak/sdk/core/DeepLinkHandling;)V
+	public final fun setEnv (Lid/frak/sdk/core/FrakEnvironment;)V
+	public final fun setLogLevel (Lid/frak/sdk/core/FrakLogLevel;)V
+	public final fun setLogSink (Lid/frak/sdk/core/FrakLogSink;)V
+	public final fun setMerchantId (Ljava/lang/String;)V
+	public final fun setMetadata (Lid/frak/sdk/core/FrakMetadata;)V
+	public final fun setPackageId (Ljava/lang/String;)V
+	public final fun setPreloadSharing (Z)V
+	public final fun setTrackingEnabled (Z)V
+	public final fun trackingEnabled (Z)Lid/frak/sdk/core/FrakConfig$Builder;
+}
+
+public final class id/frak/sdk/core/FrakConfigKt {
+	public static final fun FrakConfig (Ljava/lang/String;)Lid/frak/sdk/core/FrakConfig;
+	public static final fun FrakConfig (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lid/frak/sdk/core/FrakConfig;
+	public static final fun FrakConfig (Lkotlin/jvm/functions/Function1;)Lid/frak/sdk/core/FrakConfig;
+	public static final fun FrakMetadata (Lkotlin/jvm/functions/Function1;)Lid/frak/sdk/core/FrakMetadata;
+}
+
+public final class id/frak/sdk/core/FrakCurrency : java/lang/Enum {
+	public static final field EUR Lid/frak/sdk/core/FrakCurrency;
+	public static final field GBP Lid/frak/sdk/core/FrakCurrency;
+	public static final field USD Lid/frak/sdk/core/FrakCurrency;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getWireValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lid/frak/sdk/core/FrakCurrency;
+	public static fun values ()[Lid/frak/sdk/core/FrakCurrency;
+}
+
+public abstract interface class id/frak/sdk/core/FrakEnvironment {
+	public abstract fun getBackend ()Ljava/lang/String;
+	public abstract fun getWallet ()Ljava/lang/String;
+	public fun getWalletPackageId ()Ljava/lang/String;
+	public fun getWalletScheme ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/core/FrakEnvironment$Custom : id/frak/sdk/core/FrakEnvironment {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun getBackend ()Ljava/lang/String;
+	public fun getWallet ()Ljava/lang/String;
+	public fun getWalletPackageId ()Ljava/lang/String;
+	public fun getWalletScheme ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/core/FrakEnvironment$Development : id/frak/sdk/core/FrakEnvironment {
+	public static final field INSTANCE Lid/frak/sdk/core/FrakEnvironment$Development;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getBackend ()Ljava/lang/String;
+	public fun getWallet ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/core/FrakEnvironment$Production : id/frak/sdk/core/FrakEnvironment {
+	public static final field INSTANCE Lid/frak/sdk/core/FrakEnvironment$Production;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getBackend ()Ljava/lang/String;
+	public fun getWallet ()Ljava/lang/String;
+	public fun getWalletPackageId ()Ljava/lang/String;
+	public fun getWalletScheme ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class id/frak/sdk/core/FrakError : java/lang/Exception {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class id/frak/sdk/core/FrakError$AlreadyPresenting : id/frak/sdk/core/FrakError {
+	public fun <init> ()V
+}
+
+public final class id/frak/sdk/core/FrakError$Decoding : id/frak/sdk/core/FrakError {
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public final class id/frak/sdk/core/FrakError$MerchantResolutionFailed : id/frak/sdk/core/FrakError {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class id/frak/sdk/core/FrakError$Network : id/frak/sdk/core/FrakError {
+	public fun <init> (Ljava/lang/Throwable;)V
+}
+
+public final class id/frak/sdk/core/FrakError$NotInitialized : id/frak/sdk/core/FrakError {
+	public fun <init> ()V
+}
+
+public final class id/frak/sdk/core/FrakError$Server : id/frak/sdk/core/FrakError {
+	public fun <init> (I)V
+	public fun <init> (ILjava/lang/String;Ljava/lang/Long;)V
+	public final fun getCode ()Ljava/lang/String;
+	public final fun getRetryAfterSeconds ()Ljava/lang/Long;
+	public final fun getStatus ()I
+}
+
+public final class id/frak/sdk/core/FrakError$TrackingDisabled : id/frak/sdk/core/FrakError {
+	public fun <init> ()V
+}
+
+public final class id/frak/sdk/core/FrakLanguage : java/lang/Enum {
+	public static final field EN Lid/frak/sdk/core/FrakLanguage;
+	public static final field FR Lid/frak/sdk/core/FrakLanguage;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getWireValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lid/frak/sdk/core/FrakLanguage;
+	public static fun values ()[Lid/frak/sdk/core/FrakLanguage;
+}
+
+public final class id/frak/sdk/core/FrakLogLevel : java/lang/Enum {
+	public static final field DEBUG Lid/frak/sdk/core/FrakLogLevel;
+	public static final field ERROR Lid/frak/sdk/core/FrakLogLevel;
+	public static final field INFO Lid/frak/sdk/core/FrakLogLevel;
+	public static final field NONE Lid/frak/sdk/core/FrakLogLevel;
+	public static final field WARN Lid/frak/sdk/core/FrakLogLevel;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lid/frak/sdk/core/FrakLogLevel;
+	public static fun values ()[Lid/frak/sdk/core/FrakLogLevel;
+}
+
+public abstract interface class id/frak/sdk/core/FrakLogSink {
+	public abstract fun log (Lid/frak/sdk/core/FrakLogLevel;Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public final class id/frak/sdk/core/FrakMetadata {
+	public final fun getCurrency ()Lid/frak/sdk/core/FrakCurrency;
+	public final fun getHomepageLink ()Ljava/lang/String;
+	public final fun getLang ()Lid/frak/sdk/core/FrakLanguage;
+	public final fun getLogoUrl ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/core/FrakMetadata$Builder {
+	public fun <init> ()V
+	public final fun build ()Lid/frak/sdk/core/FrakMetadata;
+	public final fun currency (Lid/frak/sdk/core/FrakCurrency;)Lid/frak/sdk/core/FrakMetadata$Builder;
+	public final fun getCurrency ()Lid/frak/sdk/core/FrakCurrency;
+	public final fun getHomepageLink ()Ljava/lang/String;
+	public final fun getLang ()Lid/frak/sdk/core/FrakLanguage;
+	public final fun getLogoUrl ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun homepageLink (Ljava/lang/String;)Lid/frak/sdk/core/FrakMetadata$Builder;
+	public final fun lang (Lid/frak/sdk/core/FrakLanguage;)Lid/frak/sdk/core/FrakMetadata$Builder;
+	public final fun logoUrl (Ljava/lang/String;)Lid/frak/sdk/core/FrakMetadata$Builder;
+	public final fun name (Ljava/lang/String;)Lid/frak/sdk/core/FrakMetadata$Builder;
+	public final fun setCurrency (Lid/frak/sdk/core/FrakCurrency;)V
+	public final fun setHomepageLink (Ljava/lang/String;)V
+	public final fun setLang (Lid/frak/sdk/core/FrakLanguage;)V
+	public final fun setLogoUrl (Ljava/lang/String;)V
+	public final fun setName (Ljava/lang/String;)V
+}
+
+public abstract interface class id/frak/sdk/core/FrakResult {
+}
+
+public final class id/frak/sdk/core/FrakResult$Failure : id/frak/sdk/core/FrakResult {
+	public fun <init> (Lid/frak/sdk/core/FrakError;)V
+	public final fun getError ()Lid/frak/sdk/core/FrakError;
+}
+
+public final class id/frak/sdk/core/FrakResult$Success : id/frak/sdk/core/FrakResult {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun getValue ()Ljava/lang/Object;
+}
+
+public final class id/frak/sdk/core/ProductDetails {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getProductId ()Ljava/lang/String;
+	public final fun getQuantity ()Ljava/lang/Double;
+	public final fun getSku ()Ljava/lang/String;
+	public final fun getTotalPrice ()Ljava/lang/Double;
+	public final fun getUnitPrice ()Ljava/lang/Double;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/core/ProductDetails$Builder {
+	public fun <init> ()V
+	public final fun build ()Lid/frak/sdk/core/ProductDetails;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getProductId ()Ljava/lang/String;
+	public final fun getQuantity ()Ljava/lang/Double;
+	public final fun getSku ()Ljava/lang/String;
+	public final fun getTotalPrice ()Ljava/lang/Double;
+	public final fun getUnitPrice ()Ljava/lang/Double;
+	public final fun name (Ljava/lang/String;)Lid/frak/sdk/core/ProductDetails$Builder;
+	public final fun productId (Ljava/lang/String;)Lid/frak/sdk/core/ProductDetails$Builder;
+	public final fun quantity (Ljava/lang/Double;)Lid/frak/sdk/core/ProductDetails$Builder;
+	public final fun setName (Ljava/lang/String;)V
+	public final fun setProductId (Ljava/lang/String;)V
+	public final fun setQuantity (Ljava/lang/Double;)V
+	public final fun setSku (Ljava/lang/String;)V
+	public final fun setTotalPrice (Ljava/lang/Double;)V
+	public final fun setUnitPrice (Ljava/lang/Double;)V
+	public final fun sku (Ljava/lang/String;)Lid/frak/sdk/core/ProductDetails$Builder;
+	public final fun totalPrice (Ljava/lang/Double;)Lid/frak/sdk/core/ProductDetails$Builder;
+	public final fun unitPrice (Ljava/lang/Double;)Lid/frak/sdk/core/ProductDetails$Builder;
+}
+
+public final class id/frak/sdk/core/ProductDetailsKt {
+	public static final fun ProductDetails (Lkotlin/jvm/functions/Function1;)Lid/frak/sdk/core/ProductDetails;
+}
+
+public final class id/frak/sdk/rewards/BestReward {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Double;Ljava/lang/Double;ZLjava/util/List;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFormatted ()Ljava/lang/String;
+	public final fun getLockupDurationDays ()Ljava/lang/Double;
+	public final fun getMatchedProducts ()Ljava/util/List;
+	public final fun getMinPurchaseAmount ()Ljava/lang/String;
+	public final fun getMinPurchaseValue ()Ljava/lang/Double;
+	public final fun getPayoutType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isProductScoped ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/rewards/Campaign {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lid/frak/sdk/rewards/EstimatedReward;Lid/frak/sdk/rewards/EstimatedReward;Ljava/lang/Double;Ljava/lang/Double;Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCampaignId ()Ljava/lang/String;
+	public final fun getDefaultLockupSeconds ()Ljava/lang/Double;
+	public final fun getExpiresAt ()Ljava/lang/String;
+	public final fun getInteractionTypeKey ()Ljava/lang/String;
+	public final fun getMaxRewardsPerUser ()Ljava/lang/Double;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getReferee ()Lid/frak/sdk/rewards/EstimatedReward;
+	public final fun getReferrer ()Lid/frak/sdk/rewards/EstimatedReward;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class id/frak/sdk/rewards/EstimatedReward {
+}
+
+public final class id/frak/sdk/rewards/EstimatedReward$Fixed : id/frak/sdk/rewards/EstimatedReward {
+	public fun <init> (Lid/frak/sdk/rewards/TokenAmount;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAmount ()Lid/frak/sdk/rewards/TokenAmount;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/rewards/EstimatedReward$Percentage : id/frak/sdk/rewards/EstimatedReward {
+	public fun <init> (DLjava/lang/String;Lid/frak/sdk/rewards/TokenAmount;Lid/frak/sdk/rewards/TokenAmount;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxAmount ()Lid/frak/sdk/rewards/TokenAmount;
+	public final fun getMinAmount ()Lid/frak/sdk/rewards/TokenAmount;
+	public final fun getPercent ()D
+	public final fun getPercentOf ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/rewards/EstimatedReward$Tiered : id/frak/sdk/rewards/EstimatedReward {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTierField ()Ljava/lang/String;
+	public final fun getTiers ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/rewards/EstimatedReward$Unknown : id/frak/sdk/rewards/EstimatedReward {
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayoutType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/rewards/RewardAudience : java/lang/Enum {
+	public static final field REFEREE Lid/frak/sdk/rewards/RewardAudience;
+	public static final field REFERRER Lid/frak/sdk/rewards/RewardAudience;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getWireValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lid/frak/sdk/rewards/RewardAudience;
+	public static fun values ()[Lid/frak/sdk/rewards/RewardAudience;
+}
+
+public final class id/frak/sdk/rewards/RewardRequest {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAudience ()Lid/frak/sdk/rewards/RewardAudience;
+	public final fun getProducts ()Ljava/util/List;
+	public final fun getTargetInteraction ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/rewards/RewardRequest$Builder {
+	public fun <init> ()V
+	public final fun addProduct (Lid/frak/sdk/core/ProductDetails;)Lid/frak/sdk/rewards/RewardRequest$Builder;
+	public final fun audience (Lid/frak/sdk/rewards/RewardAudience;)Lid/frak/sdk/rewards/RewardRequest$Builder;
+	public final fun build ()Lid/frak/sdk/rewards/RewardRequest;
+	public final fun getAudience ()Lid/frak/sdk/rewards/RewardAudience;
+	public final fun getProducts ()Ljava/util/List;
+	public final fun getTargetInteraction ()Ljava/lang/String;
+	public final fun products (Ljava/util/List;)Lid/frak/sdk/rewards/RewardRequest$Builder;
+	public final fun setAudience (Lid/frak/sdk/rewards/RewardAudience;)V
+	public final fun setProducts (Ljava/util/List;)V
+	public final fun setTargetInteraction (Ljava/lang/String;)V
+	public final fun targetInteraction (Ljava/lang/String;)Lid/frak/sdk/rewards/RewardRequest$Builder;
+}
+
+public final class id/frak/sdk/rewards/RewardRequestKt {
+	public static final fun RewardRequest (Lkotlin/jvm/functions/Function1;)Lid/frak/sdk/rewards/RewardRequest;
+}
+
+public abstract class id/frak/sdk/rewards/RewardTier {
+	public abstract fun getMaxValue ()Ljava/lang/Double;
+	public abstract fun getMinValue ()D
+}
+
+public final class id/frak/sdk/rewards/RewardTier$Amount : id/frak/sdk/rewards/RewardTier {
+	public fun <init> (DLjava/lang/Double;Lid/frak/sdk/rewards/TokenAmount;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAmount ()Lid/frak/sdk/rewards/TokenAmount;
+	public fun getMaxValue ()Ljava/lang/Double;
+	public fun getMinValue ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/rewards/RewardTier$Percentage : id/frak/sdk/rewards/RewardTier {
+	public fun <init> (DLjava/lang/Double;D)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getMaxValue ()Ljava/lang/Double;
+	public fun getMinValue ()D
+	public final fun getPercent ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/rewards/TokenAmount {
+	public fun <init> (DDDD)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAmount ()D
+	public final fun getEurAmount ()D
+	public final fun getGbpAmount ()D
+	public final fun getUsdAmount ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/sharing/AttributionParams {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRef ()Ljava/lang/String;
+	public final fun getUtmCampaign ()Ljava/lang/String;
+	public final fun getUtmContent ()Ljava/lang/String;
+	public final fun getUtmMedium ()Ljava/lang/String;
+	public final fun getUtmSource ()Ljava/lang/String;
+	public final fun getUtmTerm ()Ljava/lang/String;
+	public final fun getVia ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/sharing/AttributionParams$Builder {
+	public fun <init> ()V
+	public final fun build ()Lid/frak/sdk/sharing/AttributionParams;
+	public final fun getRef ()Ljava/lang/String;
+	public final fun getUtmCampaign ()Ljava/lang/String;
+	public final fun getUtmContent ()Ljava/lang/String;
+	public final fun getUtmMedium ()Ljava/lang/String;
+	public final fun getUtmSource ()Ljava/lang/String;
+	public final fun getUtmTerm ()Ljava/lang/String;
+	public final fun getVia ()Ljava/lang/String;
+	public final fun ref (Ljava/lang/String;)Lid/frak/sdk/sharing/AttributionParams$Builder;
+	public final fun setRef (Ljava/lang/String;)V
+	public final fun setUtmCampaign (Ljava/lang/String;)V
+	public final fun setUtmContent (Ljava/lang/String;)V
+	public final fun setUtmMedium (Ljava/lang/String;)V
+	public final fun setUtmSource (Ljava/lang/String;)V
+	public final fun setUtmTerm (Ljava/lang/String;)V
+	public final fun setVia (Ljava/lang/String;)V
+	public final fun utmCampaign (Ljava/lang/String;)Lid/frak/sdk/sharing/AttributionParams$Builder;
+	public final fun utmContent (Ljava/lang/String;)Lid/frak/sdk/sharing/AttributionParams$Builder;
+	public final fun utmMedium (Ljava/lang/String;)Lid/frak/sdk/sharing/AttributionParams$Builder;
+	public final fun utmSource (Ljava/lang/String;)Lid/frak/sdk/sharing/AttributionParams$Builder;
+	public final fun utmTerm (Ljava/lang/String;)Lid/frak/sdk/sharing/AttributionParams$Builder;
+	public final fun via (Ljava/lang/String;)Lid/frak/sdk/sharing/AttributionParams$Builder;
+}
+
+public final class id/frak/sdk/sharing/AttributionParamsKt {
+	public static final fun AttributionParams (Lkotlin/jvm/functions/Function1;)Lid/frak/sdk/sharing/AttributionParams;
+}
+
+public abstract interface class id/frak/sdk/sharing/FrakContext {
+}
+
+public final class id/frak/sdk/sharing/FrakContext$V1 : id/frak/sdk/sharing/FrakContext {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getWallet ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/sharing/FrakContext$V2 : id/frak/sdk/sharing/FrakContext {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClientId ()Ljava/lang/String;
+	public final fun getMerchantId ()Ljava/lang/String;
+	public final fun getTimestamp ()J
+	public final fun getWallet ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/sharing/SharingProduct {
+	public final fun getDetails ()Lid/frak/sdk/core/ProductDetails;
+	public final fun getImageUrl ()Ljava/lang/String;
+	public final fun getLink ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUtmContent ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/sharing/SharingProduct$Builder {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun build ()Lid/frak/sdk/sharing/SharingProduct;
+	public final fun details (Lid/frak/sdk/core/ProductDetails;)Lid/frak/sdk/sharing/SharingProduct$Builder;
+	public final fun getDetails ()Lid/frak/sdk/core/ProductDetails;
+	public final fun getImageUrl ()Ljava/lang/String;
+	public final fun getUtmContent ()Ljava/lang/String;
+	public final fun imageUrl (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingProduct$Builder;
+	public final fun setDetails (Lid/frak/sdk/core/ProductDetails;)V
+	public final fun setImageUrl (Ljava/lang/String;)V
+	public final fun setUtmContent (Ljava/lang/String;)V
+	public final fun utmContent (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingProduct$Builder;
+}
+
+public final class id/frak/sdk/sharing/SharingRequest {
+	public final fun getAttribution ()Lid/frak/sdk/sharing/AttributionParams;
+	public final fun getLink ()Ljava/lang/String;
+	public final fun getLogoUrl ()Ljava/lang/String;
+	public final fun getPlacement ()Ljava/lang/String;
+	public final fun getProducts ()Ljava/util/List;
+	public final fun getTargetInteraction ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/sharing/SharingRequest$Builder {
+	public fun <init> ()V
+	public final fun addProduct (Lid/frak/sdk/sharing/SharingProduct;)Lid/frak/sdk/sharing/SharingRequest$Builder;
+	public final fun attribution (Lid/frak/sdk/sharing/AttributionParams;)Lid/frak/sdk/sharing/SharingRequest$Builder;
+	public final fun build ()Lid/frak/sdk/sharing/SharingRequest;
+	public final fun getAttribution ()Lid/frak/sdk/sharing/AttributionParams;
+	public final fun getLink ()Ljava/lang/String;
+	public final fun getLogoUrl ()Ljava/lang/String;
+	public final fun getPlacement ()Ljava/lang/String;
+	public final fun getProducts ()Ljava/util/List;
+	public final fun getTargetInteraction ()Ljava/lang/String;
+	public final fun link (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
+	public final fun logoUrl (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
+	public final fun placement (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
+	public final fun products (Ljava/util/List;)Lid/frak/sdk/sharing/SharingRequest$Builder;
+	public final fun setAttribution (Lid/frak/sdk/sharing/AttributionParams;)V
+	public final fun setLink (Ljava/lang/String;)V
+	public final fun setLogoUrl (Ljava/lang/String;)V
+	public final fun setPlacement (Ljava/lang/String;)V
+	public final fun setProducts (Ljava/util/List;)V
+	public final fun setTargetInteraction (Ljava/lang/String;)V
+	public final fun targetInteraction (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
+}
+
+public final class id/frak/sdk/sharing/SharingRequestKt {
+	public static final fun SharingProduct (Ljava/lang/String;Ljava/lang/String;)Lid/frak/sdk/sharing/SharingProduct;
+	public static final fun SharingProduct (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lid/frak/sdk/sharing/SharingProduct;
+	public static final fun SharingRequest (Lkotlin/jvm/functions/Function1;)Lid/frak/sdk/sharing/SharingRequest;
+}
+
+public final class id/frak/sdk/tracking/Interaction {
+	public static final field Companion Lid/frak/sdk/tracking/Interaction$Companion;
+	public static final fun arrival (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Lid/frak/sdk/tracking/Interaction;
+	public static final fun custom (Ljava/lang/String;)Lid/frak/sdk/tracking/Interaction;
+	public static final fun custom (Ljava/lang/String;Ljava/util/Map;)Lid/frak/sdk/tracking/Interaction;
+	public static final fun custom (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)Lid/frak/sdk/tracking/Interaction;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public static final fun sharing ()Lid/frak/sdk/tracking/Interaction;
+	public static final fun sharing (Ljava/lang/Long;Ljava/lang/String;)Lid/frak/sdk/tracking/Interaction;
+	public static final fun sharing (Ljava/lang/String;)Lid/frak/sdk/tracking/Interaction;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/tracking/Interaction$Companion {
+	public final fun arrival (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Lid/frak/sdk/tracking/Interaction;
+	public final fun custom (Ljava/lang/String;)Lid/frak/sdk/tracking/Interaction;
+	public final fun custom (Ljava/lang/String;Ljava/util/Map;)Lid/frak/sdk/tracking/Interaction;
+	public final fun custom (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)Lid/frak/sdk/tracking/Interaction;
+	public final fun sharing ()Lid/frak/sdk/tracking/Interaction;
+	public final fun sharing (Ljava/lang/Long;Ljava/lang/String;)Lid/frak/sdk/tracking/Interaction;
+	public final fun sharing (Ljava/lang/String;)Lid/frak/sdk/tracking/Interaction;
+}
+

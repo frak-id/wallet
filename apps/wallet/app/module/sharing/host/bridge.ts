@@ -1,4 +1,4 @@
-/** Outcomes a native host is told about. `share`/`copy` are asks, not reports: `navigator.share` doesn't exist in an Android WebView, and the reward-bearing share must be signed by the SDK's keypair, which this page can't access. `error` lets the host close its sheet; `code` hands over the install code for the SDK to pasteboard; `ready` says the page has painted, so the host can drop its loading skeleton on a fact instead of a timer. */
+/** Outcomes a native host is told about. `share`/`copy` are asks the SDK fulfils, not reports. */
 export type HostResultAction =
     | "install"
     | "dismiss"
@@ -10,12 +10,9 @@ export type HostResultAction =
     | "ready";
 
 /**
- * Build the URL that hands an outcome back to a native host.
- *
- * The host intercepts this navigation in its own web view before it reaches the OS — that's
- * the only reason `code` may carry a capability value here. A page loaded anywhere else would
- * turn this into a real scheme launch, making `value` readable by any app registering the scheme.
- * `sid` is the host's own correlation token; mismatched callbacks are dropped.
+ * Build the URL that hands an outcome back to a native host. Only safe because
+ * the host intercepts this navigation inside its own web view: elsewhere it
+ * would be a real scheme launch, exposing `value` to any app claiming the scheme.
  */
 export function buildHostResultUrl({
     scheme,
@@ -41,10 +38,10 @@ export function buildHostResultUrl({
     return `${scheme}://result?${params}`;
 }
 
-/** Outcomes already handed to the host, so none is sent twice. Keyed by action and value: the install code can change across a remount, so a different code still reaches the host even though a repeat of the same one is suppressed. */
+/** Outcomes already sent, keyed by action and value so a regenerated code still gets through. */
 const sentActions = new Set<string>();
 
-/** Actions the dedupe above skips. `share`/`copy` are direct button-press results and suppressing a repeat would be wrong — e.g. copying then sharing, or retrying a share the user backed out of. `ready` is per-presentation: a host reuses one warmed page across many sheets, and every one of them has its own skeleton waiting to be dropped. */
+/** Actions exempt from the dedupe: repeated presses, plus a per-presentation `ready` ping. */
 const REPEATABLE_ACTIONS: ReadonlySet<HostResultAction> = new Set([
     "share",
     "copy",
@@ -52,24 +49,9 @@ const REPEATABLE_ACTIONS: ReadonlySet<HostResultAction> = new Set([
 ]);
 
 /**
- * Hand an outcome to the host, at most once per page bar [REPEATABLE_ACTIONS].
- *
- * What the dedupe protects has changed. It was written because route guards are
- * not navigations: the router re-runs `beforeLoad` whenever it resolves the
- * location again, and it does so on load because `validateSearch` fills in
- * absent params, which rewrites the URL. A guard that navigated on every run
- * fired the same outcome twice, and the host cannot tell the copies apart since
- * both carry the session's own `sid`.
- *
- * No outcome is sent from a guard any more — the `clientId` error moved to the
- * route's `errorComponent`, which renders once. What remains is the terminal
- * outcomes (`install`, `dismiss`, `shareAgain`, `code`), which navigate away via
- * `window.location.assign`. The document stays alive while the host intercepts
- * that navigation, so a second tap on a button whose page has not gone away yet
- * would otherwise send a duplicate. That is what this now guards.
- *
- * Returns whether the navigation was issued, so callers can fall through to
- * their web behaviour when there is no host to hand off to.
+ * Hand an outcome to the host, at most once per page bar [REPEATABLE_ACTIONS]:
+ * the document stays alive while the host intercepts the navigation, so a
+ * second tap would otherwise send a duplicate. Returns whether it was issued.
  */
 export function sendHostResult({
     scheme,

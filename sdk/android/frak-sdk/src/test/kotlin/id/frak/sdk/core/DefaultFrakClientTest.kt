@@ -9,9 +9,9 @@ import id.frak.sdk.identity.FakeDeviceKeyStore
 import id.frak.sdk.net.FAKE_BASE_URL
 import id.frak.sdk.net.FakeHttpTransport
 import id.frak.sdk.net.HttpClient
-import id.frak.sdk.sharing.FrakContext
 import id.frak.sdk.sharing.SharingLinkBuilder
-import id.frak.sdk.sharing.SharingRequest
+import id.frak.sdk.sharing.frakContextV2
+import id.frak.sdk.sharing.sharingRequest
 import id.frak.sdk.tracking.EventQueue
 import id.frak.sdk.tracking.Interaction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,11 +29,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
-/**
- * Pins [DefaultFrakClient.configUpdates] conflation: a `StateFlow` conflates via
- * `equals`, so [id.frak.sdk.config.FrakResolvedConfig] must have one, or every
- * `resolveConfig()` call — including a cache hit — emits a fresh value.
- */
+/** [DefaultFrakClient.configUpdates] conflates via `equals`, so the resolved config must have one. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultFrakClientTest {
     @get:Rule
@@ -72,8 +68,7 @@ class DefaultFrakClientTest {
             client.campaigns(forceRefresh = false)
             val resolvesAfterFirst = transport.requests.count { it.url.path == ConfigStore.RESOLVE_PATH }
 
-            // The second call's rewards fetch fails to decode BODY as a rewards response; only
-            // the resolve count matters here.
+            // The forced call's rewards fetch fails to decode BODY; only the resolve count matters.
             runCatching { client.campaigns(forceRefresh = true) }
             val resolvesAfterForced = transport.requests.count { it.url.path == ConfigStore.RESOLVE_PATH }
 
@@ -88,9 +83,7 @@ class DefaultFrakClientTest {
     @Test
     fun `two independently-fetched but byte-identical configs conflate to one emission`() =
         runTest {
-            // ConfigStore returns the same object reference on an in-memory hit, which conflates
-            // under identity equality alone. A forced refetch decodes a fresh object every time,
-            // so forceRefresh with an unchanged body is what exercises FrakResolvedConfig.equals.
+            // forceRefresh decodes a fresh object every time, so this exercises FrakResolvedConfig.equals.
             val client = newClient(testScheduler)
             transport.respond(200, BODY)
 
@@ -100,7 +93,7 @@ class DefaultFrakClientTest {
 
             client.resolveConfig(forceRefresh = true)
             advanceUntilIdle()
-            client.resolveConfig(forceRefresh = true) // same body, a fresh decode, a new object
+            client.resolveConfig(forceRefresh = true) // Same body, a fresh decode, a new object.
             advanceUntilIdle()
 
             collector.cancel()
@@ -140,7 +133,7 @@ class DefaultFrakClientTest {
 
             val posts = { transport.requests.count { it.method == "POST" } }
 
-            val ownLink = client.buildSharingLink(SharingRequest(link = "https://acme.example/p"))!!
+            val ownLink = client.buildSharingLink(sharingRequest(link = "https://acme.example/p"))!!
             val before = posts()
             assertEquals("a link this device built is still one of ours", true, client.handleReferralLink(ownLink))
             advanceUntilIdle()
@@ -173,9 +166,8 @@ class DefaultFrakClientTest {
     @Test
     fun `tracks a v2 arrival when only the configured merchant id's case or whitespace differs`() =
         runTest {
-            // FrakContextCodec requires a canonical lowercase UUID merchantId, so only
-            // FrakConfig.merchantId can carry mismatched case/whitespace here.
-            val client = newClient(testScheduler, config = FrakConfig(merchantId = " ${MERCHANT_ID.uppercase()} "))
+            // FrakContextCodec requires a canonical lowercase UUID, so only FrakConfig.merchantId can differ.
+            val client = newClient(testScheduler, config = frakConfig(merchantId = " ${MERCHANT_ID.uppercase()} "))
             transport.respond(200, """{"success":true}""")
             advanceUntilIdle()
 
@@ -204,10 +196,9 @@ class DefaultFrakClientTest {
     @Test
     fun `a tracking failure never escapes handleReferralLink, mirroring the Swift twin`() =
         runTest {
-            // No merchantId configured, so the arrival's trackingCall resolves one over the
-            // network; that resolve is made to fail below.
+            // No merchantId configured, so the arrival resolves one over the network — made to fail below.
             val client =
-                newClient(testScheduler, config = FrakConfig(packageId = "com.acme.app"))
+                newClient(testScheduler, config = frakConfig(packageId = "com.acme.app"))
             transport.fail(java.io.IOException("network down"))
 
             assertEquals(
@@ -232,8 +223,7 @@ class DefaultFrakClientTest {
             launcher.openableSchemes = setOf(FrakEnvironment.Production.walletScheme)
             assertEquals(OpenAppResult.OpenedApp, client.openFrakApp())
             assertEquals(true, launcher.opened.single().startsWith("frakwallet://install?m=$MERCHANT_ID"))
-            // substringAfter needs the empty missing-delimiter default, or it returns the whole
-            // URL when there is no `&p=`; non-empty proves a proof actually reached the wallet.
+            // substringAfter needs its empty default, or a missing `&p=` returns the whole URL.
             assertEquals(
                 true,
                 launcher.opened
@@ -246,8 +236,6 @@ class DefaultFrakClientTest {
     @Test
     fun `opens the wallet on a launch that works even when the probe says it is absent`() =
         runTest {
-            // The deep link is attempted regardless of isInstalled: the probe can report false
-            // for reasons unrelated to the app being there, so startActivity is authoritative.
             val client = newClient(testScheduler)
             transport.respond(200, BODY)
             advanceUntilIdle()
@@ -277,8 +265,6 @@ class DefaultFrakClientTest {
                         "&returnScheme=frak-com.acme.app&sid=session-1",
                 ),
             )
-            // The fragment, not a query param: never sent to a server, logged, or in a Referer.
-            // Non-empty, not merely present — an empty `#p=` would satisfy `contains`.
             assertEquals(true, (page?.substringAfter("#p=")?.length ?: 0) > 0)
             assertEquals(false, page?.contains("&p="))
         }
@@ -289,11 +275,10 @@ class DefaultFrakClientTest {
             val client =
                 newClient(
                     testScheduler,
-                    config = FrakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                    config = frakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
                 )
             advanceUntilIdle()
 
-            // Null here is what drives the sheet's store-handoff fallback.
             assertNull(client.installPageUrl(RETURN_SCHEME, SESSION_ID))
         }
 
@@ -303,17 +288,16 @@ class DefaultFrakClientTest {
             val client =
                 newClient(
                     testScheduler,
-                    config = FrakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                    config = frakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
                 )
 
-            val first = client.track(Interaction.Custom("first"))
-            val second = client.track(Interaction.Custom("second"))
+            val first = client.track(Interaction.custom("first"))
+            val second = client.track(Interaction.custom("second"))
 
             val firstError = (first as FrakResult.Failure).error
             val secondError = (second as FrakResult.Failure).error
             assertTrue("expected TrackingDisabled, got $firstError", firstError is FrakError.TrackingDisabled)
             assertTrue("expected TrackingDisabled, got $secondError", secondError is FrakError.TrackingDisabled)
-            // Each throw site captures its own stack trace, so this must not be the same singleton.
             assertTrue(
                 "each TrackingDisabled must be its own instance, not a shared singleton",
                 firstError !== secondError,
@@ -321,11 +305,6 @@ class DefaultFrakClientTest {
             assertEquals("no request should have been made", 0, transport.requests.size)
         }
 
-    /**
-     * The resolve request carries no user identifier (`x-frak-client-id` is set only by
-     * [id.frak.sdk.tracking.InteractionTracker]), so `resolveConfig` is not gated on tracking
-     * consent.
-     */
     @Test
     fun `resolveConfig still works with tracking off, and sends no client id`() =
         runTest {
@@ -333,7 +312,7 @@ class DefaultFrakClientTest {
             val client =
                 newClient(
                     testScheduler,
-                    config = FrakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                    config = frakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
                 )
 
             val resolved = client.resolveConfig()
@@ -355,7 +334,7 @@ class DefaultFrakClientTest {
             client.setTrackingEnabled(false)
             advanceUntilIdle()
             assertFalse(client.isTrackingEnabled())
-            val refused = client.track(Interaction.Custom("after-withdrawal"))
+            val refused = client.track(Interaction.custom("after-withdrawal"))
             assertTrue(
                 "expected TrackingDisabled once consent was withdrawn, got $refused",
                 (refused as FrakResult.Failure).error is FrakError.TrackingDisabled,
@@ -366,18 +345,13 @@ class DefaultFrakClientTest {
             assertTrue(client.isTrackingEnabled())
         }
 
-    /**
-     * A build that compiled tracking off must never be switched on at runtime, and must still
-     * mint no key material afterwards, exercised through the client rather than [TrackingConsent]
-     * directly.
-     */
     @Test
     fun `setTrackingEnabled true cannot lift a compile-time trackingEnabled false`() =
         runTest {
             val client =
                 newClient(
                     testScheduler,
-                    config = FrakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                    config = frakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
                 )
 
             client.setTrackingEnabled(true)
@@ -387,10 +361,6 @@ class DefaultFrakClientTest {
             assertNull(client.anonymousId())
         }
 
-    /**
-     * First half of the withdrawal recipe: the identity stays afterwards, so a pause is a pause.
-     * Erasure is the separate `resetAnonymousId()`.
-     */
     @Test
     fun `setTrackingEnabled false does not destroy the identity`() =
         runTest {
@@ -407,19 +377,14 @@ class DefaultFrakClientTest {
             assertEquals("the same identity must come back on re-consent", before, client.anonymousId())
         }
 
-    /**
-     * End-to-end withdrawal: the queue is emptied, and nothing queued under the old decision
-     * reaches the wire afterwards.
-     */
     @Test
     fun `the documented withdrawal recipe stops tracking and drops what was queued`() =
         runTest {
-            // A failing transport keeps the event queued on disk: the drain stops at the first
-            // failure and leaves the row there.
+            // A failing transport leaves the event queued on disk.
             transport.fail(java.io.IOException("offline"))
             val client = newClient(testScheduler)
             advanceUntilIdle()
-            client.track(Interaction.Custom("before-withdrawal"))
+            client.track(Interaction.custom("before-withdrawal"))
             advanceUntilIdle()
 
             val queueFile = File(temporaryFolder.root, "events.jsonl")
@@ -434,8 +399,6 @@ class DefaultFrakClientTest {
                 if (queueFile.exists()) queueFile.length() else 0L,
             )
 
-            // FakeDeviceKeyStore erases without throwing, so this must be true; false would
-            // mean the id never rotated.
             assertTrue(
                 "the recipe's second half must report a real erasure",
                 client.resetAnonymousId(),
@@ -443,11 +406,6 @@ class DefaultFrakClientTest {
             advanceUntilIdle()
         }
 
-    /**
-     * [DefaultFrakClient] and [AnonymousIdStore] must read the same [TrackingConsent] instance,
-     * or a withdrawal stops the network calls while the identity store carries on minting from
-     * its own memo.
-     */
     @Test
     fun `a runtime withdrawal reaches the identity store, not only the network gate`() =
         runTest {
@@ -471,10 +429,8 @@ class DefaultFrakClientTest {
             client.shutdown()
             client.shutdown()
 
-            // The scope is cancelled, so the detached drain `track` launches never runs; `track`
-            // itself still returns because the enqueue is on the caller's context.
             val before = transport.requests.size
-            client.track(Interaction.Custom("after-shutdown"))
+            client.track(Interaction.custom("after-shutdown"))
             advanceUntilIdle()
 
             assertEquals("a shut-down client must run no background work", before, transport.requests.size)
@@ -497,24 +453,21 @@ class DefaultFrakClientTest {
             val off = newClient(testScheduler)
             assertEquals(false, off.preloadSharing)
 
-            val on = newClient(testScheduler, config = FrakConfig(merchantId = MERCHANT_ID, preloadSharing = true))
+            val on = newClient(testScheduler, config = frakConfig(merchantId = MERCHANT_ID, preloadSharing = true))
             assertEquals(true, on.preloadSharing)
         }
 
-    // ioDispatcher (governs DefaultFrakClient's own background scope, including SingleFlight
-    // and ConfigStore's disk I/O) is Standard, not Unconfined: this file's assertions rely on
-    // background work landing only at an explicit advanceUntilIdle(), not eagerly mid-call.
-    // HttpClient's own dispatcher stays Unconfined, matching ConfigStoreTest.
+    // ioDispatcher is Standard, not Unconfined: background work lands only at an explicit advanceUntilIdle().
     private fun newClient(
         testScheduler: kotlinx.coroutines.test.TestCoroutineScheduler,
-        config: FrakConfig = FrakConfig(merchantId = MERCHANT_ID),
+        config: FrakConfig = frakConfig(merchantId = MERCHANT_ID),
         identityStore: InMemoryKeyValueStore = InMemoryKeyValueStore(),
+        // Injected because the production default reaches Looper.getMainLooper(), absent from the stub jar.
+        mainDispatcher: kotlinx.coroutines.CoroutineDispatcher = UnconfinedTestDispatcher(testScheduler),
     ): DefaultFrakClient {
         val logger = FrakLogger(FrakLogLevel.NONE)
         val ioDispatcher = kotlinx.coroutines.test.StandardTestDispatcher(testScheduler)
-        // ONE instance shared by the client and the identity store, as `Frak.initialize` wires it:
-        // two would memoise the persisted decision independently and drift on setTrackingEnabled.
-        // Built from the config, so `trackingEnabled = false` stays testable through the client.
+        // One instance shared with the identity store, as `Frak.initialize` wires it; two would drift.
         val consent = TrackingConsent(identityStore, config.trackingEnabled, logger, ioDispatcher)
         return DefaultFrakClient(
             settings = config,
@@ -538,6 +491,7 @@ class DefaultFrakClientTest {
             launcher = launcher,
             logger = logger,
             ioDispatcher = ioDispatcher,
+            mainDispatcher = mainDispatcher,
             http = HttpClient(FAKE_BASE_URL, UnconfinedTestDispatcher(testScheduler), transport::open),
         )
     }
@@ -554,7 +508,7 @@ class DefaultFrakClientTest {
         fun foreignLink(): String =
             SharingLinkBuilder.build(
                 baseUrl = "https://acme.example/p",
-                context = FrakContext.V2(MERCHANT_ID, 1_709_654_400, clientId = FOREIGN_CLIENT_ID),
+                context = frakContextV2(MERCHANT_ID, 1_709_654_400, clientId = FOREIGN_CLIENT_ID),
                 attribution = null,
                 defaults = null,
             )!!
@@ -563,7 +517,7 @@ class DefaultFrakClientTest {
         fun foreignMerchantLink(): String =
             SharingLinkBuilder.build(
                 baseUrl = "https://acme.example/p",
-                context = FrakContext.V2(FOREIGN_MERCHANT_ID, 1_709_654_400, clientId = FOREIGN_CLIENT_ID),
+                context = frakContextV2(FOREIGN_MERCHANT_ID, 1_709_654_400, clientId = FOREIGN_CLIENT_ID),
                 attribution = null,
                 defaults = null,
             )!!

@@ -2,13 +2,11 @@ package id.frak.sdk
 
 import id.frak.sdk.core.DefaultFrakClient
 import id.frak.sdk.core.FrakEnvironment
+import java.util.concurrent.CompletableFuture
 
 /**
- * Everything the SDK can do. Obtained from [Frak.client].
- *
- * A concrete class, not an interface: adding a member here stays binary-compatible, where
- * adding one to an interface breaks every implementer. Point
- * [id.frak.sdk.core.FrakEnvironment.Custom] at a stub server to fake the backend.
+ * Everything the SDK can do. Obtained from [Frak.client]. Every suspending member has a `*Async`
+ * twin returning a [CompletableFuture], since a Java caller cannot name a `Continuation`.
  */
 public class FrakClient internal constructor(
     internal val core: DefaultFrakClient,
@@ -19,31 +17,42 @@ public class FrakClient internal constructor(
     /** Anonymous id, or null when tracking is disabled or the device refused key material. */
     public suspend fun anonymousId(): String? = core.anonymousId()
 
+    /** [anonymousId] for Java. */
+    public fun anonymousIdAsync(): CompletableFuture<String?> = core.asFuture { core.anonymousId() }
+
     /**
-     * Destroys the keypair so the next [anonymousId] mints a new identity. For GDPR erasure; does not delete history already attributed to the old id.
+     * Destroys the keypair so the next [anonymousId] mints a new identity. For GDPR erasure;
+     * does not delete history already attributed to the old id.
      *
      * @return false when the platform keystore refused to erase the key; the identity did not rotate.
      */
     public suspend fun resetAnonymousId(): Boolean = core.resetAnonymousId()
 
+    /** [resetAnonymousId] for Java. */
+    public fun resetAnonymousIdAsync(): CompletableFuture<Boolean> = core.asFuture { core.resetAnonymousId() }
+
     /**
-     * Turns tracking on or off at runtime and persists the decision for this install.
-     *
-     * `false` stops tracking immediately and purges anything still queued. `true` re-enables it
-     * unless this build ships `FrakConfig(trackingEnabled = false)`, a floor a runtime call
-     * cannot lift.
-     *
-     * Does not destroy the identity — call [resetAnonymousId] too for a full withdrawal of
-     * consent. Purging the queue can discard purchase events not yet sent to the backend.
+     * Turns tracking on or off at runtime and persists the decision for this install. `false`
+     * purges anything still queued, which can discard purchase events not yet sent; `true` cannot
+     * lift a build shipping `trackingEnabled(false)`. Identity survives — see [resetAnonymousId].
      */
     public suspend fun setTrackingEnabled(enabled: Boolean): Unit = core.setTrackingEnabled(enabled)
+
+    /** [setTrackingEnabled] for Java. */
+    public fun setTrackingEnabledAsync(enabled: Boolean): CompletableFuture<Void?> =
+        core.asFuture {
+            core.setTrackingEnabled(enabled)
+            null
+        }
 
     /** Whether tracking is currently allowed: `FrakConfig.trackingEnabled` AND the persisted runtime decision. */
     public suspend fun isTrackingEnabled(): Boolean = core.isTrackingEnabled()
 
-    // No shutdown() here — teardown is [Frak.shutdown] only. A shutdown here would leave
-    // `Frak.instance` pointing at a dead client, so `Frak.client` would hand out a corpse and
-    // `Frak.initialize` would no-op.
+    /** [isTrackingEnabled] for Java. */
+    public fun isTrackingEnabledAsync(): CompletableFuture<Boolean> = core.asFuture { core.isTrackingEnabled() }
+
+    // No shutdown() here — teardown is [Frak.shutdown] only, otherwise `Frak.client` would hand out
+    // a dead client and `Frak.initialize` would no-op.
 
     /** Config resolution and its live stream. */
     public val config: ConfigApi = ConfigApi(core)

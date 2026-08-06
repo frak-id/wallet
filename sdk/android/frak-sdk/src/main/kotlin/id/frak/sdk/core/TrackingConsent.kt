@@ -8,19 +8,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * Whether the SDK may mint an identity and talk to the backend, as a runtime decision layered
- * over the build-time [FrakConfig.trackingEnabled] floor.
- *
- * `FrakConfig.trackingEnabled = false` is a floor no persisted grant can lift: a build with
- * tracking off must never have `setTrackingEnabled(true)` silently switch it on. The grant is
- * still written to disk, so it takes effect if a later build ships with the flag on; it just
- * cannot lift the floor of the current build. [setEnabled] logs when it is called into that floor.
- *
- * Stored in the identity [KeyValueStore], not the config cache, since the config cache can be
- * thrown away at any time and a consent decision must not be.
- *
- * `suspend`, with an in-memory memo: the backing `SharedPreferences` file is opened lazily on
- * first read, and that disk I/O must not land on whichever thread a merchant called `track()` from.
+ * Whether the SDK may mint an identity and talk to the backend: a persisted runtime decision
+ * layered over the build-time [FrakConfig.trackingEnabled] floor, which no grant can lift.
+ * Stored in the identity [KeyValueStore], not the config cache, which can be dropped at any time.
  */
 internal class TrackingConsent(
     private val store: KeyValueStore,
@@ -31,7 +21,7 @@ internal class TrackingConsent(
 ) {
     private val mutex = Mutex()
 
-    /** Persisted decision once read, so only the first call touches disk. `@Volatile`: the fast path below reads it outside [mutex]. Holds the persisted state only; [configDefault] is applied on every read. */
+    /** Persisted decision once read. `@Volatile`: the fast path below reads it outside [mutex]. */
     @Volatile
     private var persisted: Boolean? = null
 
@@ -41,16 +31,13 @@ internal class TrackingConsent(
         persisted?.let { return it }
         return mutex.withLock {
             persisted ?: withContext(ioDispatcher) {
-                // A read that threw and a key that is absent are not the same thing. Absent means
-                // "not decided": follow [configDefault], and memoise. A throw means "we do not
-                // know": leave [persisted] alone and answer false, so a read we could not perform
-                // is not treated as consent; the next call retries.
+                // Absent means "not decided", so follow [configDefault] and memoise; a failed read
+                // answers false without memoising, so it is never treated as consent.
                 val stored =
                     try {
                         Stored(store.getString(KEY))
                     } catch (cancelled: CancellationException) {
-                        // Never swallowed. Not reachable today (getString isn't suspend), but the
-                        // catch below is deliberately broad.
+                        // Never swallowed; the catch below is deliberately broad.
                         throw cancelled
                     } catch (unreadable: Exception) {
                         logger.error(
@@ -76,12 +63,8 @@ internal class TrackingConsent(
     )
 
     /**
-     * Records the decision. The caller owns the side effects (purging the queue).
-     *
-     * The memo is updated even if the write fails: the in-process answer must change the moment
-     * the user says no, regardless of disk. A withdrawal whose write is lost reverts on the next
-     * launch, since the write is `SharedPreferences.apply()`, which is asynchronous and reports
-     * nothing.
+     * Records the decision; the caller owns the side effects. The memo updates even if the write
+     * fails, so the in-process answer changes the moment the user says no.
      */
     suspend fun setEnabled(enabled: Boolean) {
         mutex.withLock {
@@ -99,7 +82,7 @@ internal class TrackingConsent(
         if (enabled && !configDefault) {
             logger.warn(
                 "setTrackingEnabled(true) was recorded but has no effect: this build ships " +
-                    "FrakConfig(trackingEnabled = false), which the SDK treats as a hard floor.",
+                    "FrakConfig.Builder(...).trackingEnabled(false), which the SDK treats as a hard floor.",
             )
         }
     }

@@ -4,16 +4,8 @@ enum InstallLinks {
 
     /// Links this installation's anonymous id to the user's wallet.
     ///
-    /// `installProof` rides as a search param, not the `#p=` fragment `installPage` uses. A
-    /// fragment cannot survive this hop: the wallet's deep-link router calls `navigate`, so
-    /// `window.location.hash` is already empty by the time `/install` renders — its
-    /// `routeResolvers.install` forwards `?p=` for exactly that reason. What the fragment buys
-    /// (never sent to a server, never logged, never in a `Referer`) is not lost either: a
-    /// custom-scheme URL is handed to the OS and never leaves the device.
-    ///
-    /// Load-bearing here in a way it is not on Android: there the Play referrer carries
-    /// attribution across an install, and iOS has no equivalent, so on an already-installed
-    /// device this is the only carrier the proof has.
+    /// `installProof` rides as a search param, not a fragment: the wallet's deep-link router
+    /// calls `navigate`, so the hash is already gone by the time `/install` renders.
     static func deepLink(
         scheme: String,
         merchantId: String,
@@ -32,25 +24,11 @@ enum InstallLinks {
         appStoreURL
     }
 
-    /// The wallet's hosted install page, which shows the install code and the store link.
+    /// The wallet's hosted install page (install code plus store link) — what the sharing sheet
+    /// navigates to, as opposed to the store listing `appStore()` returns.
     ///
-    /// Distinct from `appStore()`, which is the store listing itself. This is the page the
-    /// sharing sheet navigates to, so the user never leaves the merchant app to reach it.
-    ///
-    /// The proof rides in the fragment, matching the wallet's own `buildInstallUrl`: a
-    /// fragment is never sent to a server, never logged and never in a `Referer`, and it
-    /// survives here because the sheet loads this URL directly rather than routing it
-    /// through an in-app navigation that would drop it.
-    /// `returnScheme`/`sessionId` are what let the page hand the install code back, which the
-    /// SDK needs in order to put it on the pasteboard with an expiry and `localOnly`. Both are
-    /// query params and the proof stays in the fragment, so the fragment remains last.
-    ///
-    /// `embed=native` is the single marker that says "a host is presenting this page inside its
-    /// own sheet", and it is the same spelling `/sharing` uses. The two routes used to disagree —
-    /// `/sharing` read `embed`, `/install` inferred it from the presence of `returnScheme` — which
-    /// meant one page could render host-embedded while the other did not, in the same web view,
-    /// one navigation apart. It carries no corner radius: iOS deliberately injects none, since a
-    /// SwiftUI `.sheet` already clips to the system radius.
+    /// The proof rides in the fragment, matching the wallet's own `buildInstallUrl`;
+    /// `returnScheme`/`sessionId` let the page hand the install code back.
     static func installPage(
         walletOrigin: String,
         merchantId: String,

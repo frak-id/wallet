@@ -1,10 +1,13 @@
 package id.frak.sdk.net
 
+import id.frak.sdk.InternalFrakApi
+
 /**
  * RFC 3986 percent-encoding for a single query-string value. Not `java.net.URLEncoder` (form
  * encoding turns space into `+`), not `android.net.Uri.encode` (throws on the unit-test classpath).
- * Public only because `:frak-sdk-ui` needs it; not part of the merchant-facing surface.
+ * `public` only because `:frak-sdk-ui` needs it across the module boundary; see [InternalFrakApi].
  */
+@InternalFrakApi
 public object PercentEncoding {
     /** Percent-encodes every byte outside RFC 3986's unreserved set. */
     public fun encode(value: String): String =

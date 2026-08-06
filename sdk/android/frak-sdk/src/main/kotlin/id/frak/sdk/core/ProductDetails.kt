@@ -1,20 +1,46 @@
 package id.frak.sdk.core
 
 /**
- * The purchase line item fields a campaign's `productScope` can target. A field outside this
- * set cannot have been published, and a native app sending one would silently never match.
- *
- * `Double`, not `Int`, for every numeric field: an `Int` would silently truncate a fractional
- * `unitPrice`.
+ * The purchase line item fields a campaign's `productScope` can target. Build with [Builder], or
+ * `ProductDetails { }` from Kotlin. Also returned by the SDK, on
+ * [id.frak.sdk.rewards.BestReward.matchedProducts], hence `equals`/`hashCode`.
  */
-public class ProductDetails(
-    public val productId: String? = null,
-    public val sku: String? = null,
-    public val name: String? = null,
-    public val quantity: Double? = null,
-    public val unitPrice: Double? = null,
-    public val totalPrice: Double? = null,
+public class ProductDetails internal constructor(
+    public val productId: String?,
+    public val sku: String?,
+    public val name: String?,
+    public val quantity: Double?,
+    public val unitPrice: Double?,
+    public val totalPrice: Double?,
 ) {
+    public class Builder {
+        public var productId: String? = null
+
+        public var sku: String? = null
+
+        public var name: String? = null
+
+        public var quantity: Double? = null
+
+        public var unitPrice: Double? = null
+
+        public var totalPrice: Double? = null
+
+        public fun productId(productId: String?): Builder = apply { this.productId = productId }
+
+        public fun sku(sku: String?): Builder = apply { this.sku = sku }
+
+        public fun name(name: String?): Builder = apply { this.name = name }
+
+        public fun quantity(quantity: Double?): Builder = apply { this.quantity = quantity }
+
+        public fun unitPrice(unitPrice: Double?): Builder = apply { this.unitPrice = unitPrice }
+
+        public fun totalPrice(totalPrice: Double?): Builder = apply { this.totalPrice = totalPrice }
+
+        public fun build(): ProductDetails = ProductDetails(productId, sku, name, quantity, unitPrice, totalPrice)
+    }
+
     override fun toString(): String =
         "ProductDetails(productId=$productId, sku=$sku, name=$name, quantity=$quantity, " +
             "unitPrice=$unitPrice, totalPrice=$totalPrice)"
@@ -40,3 +66,7 @@ public class ProductDetails(
         return result
     }
 }
+
+/** Kotlin sugar over [ProductDetails.Builder]. */
+public fun ProductDetails(configure: ProductDetails.Builder.() -> Unit): ProductDetails =
+    ProductDetails.Builder().apply(configure).build()

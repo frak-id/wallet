@@ -3,23 +3,25 @@ package id.frak.sdk.config
 import id.frak.sdk.core.FrakCurrency
 import id.frak.sdk.core.FrakLanguage
 
-/**
- * What the backend knows about this merchant. Not a `data class`: a published
- * `copy()`/`componentN()` would freeze the ABI against future fields, hence hand-written
- * `equals`/`hashCode`/`toString`.
- */
-public class FrakResolvedConfig(
+/** What the backend knows about this merchant, as resolved by `GET /user/merchant/resolve`. */
+public class FrakResolvedConfig internal constructor(
     public val merchantId: String,
     public val name: String,
     /** Merchant's canonical domain, not whatever domain was queried. */
     public val domain: String,
     /** Null when the backend sends a value this SDK's build does not recognise. */
-    public val lang: FrakLanguage? = null,
+    public val lang: FrakLanguage?,
     /** May differ from [id.frak.sdk.core.FrakMetadata.currency]; informational only, never used for formatting. */
-    public val currency: FrakCurrency? = null,
-    public val hidden: Boolean = false,
-    public val sdkConfig: ResolvedSdkConfig? = null,
+    public val currency: FrakCurrency?,
+    public val hidden: Boolean,
+    public val sdkConfig: ResolvedSdkConfig?,
 ) {
+    /** Name to show a user: the `sdkConfig` override when the backend sent one, else [name]. */
+    public val displayName: String get() = sdkConfig?.name ?: name
+
+    /** Logo to show alongside [displayName], or null when the backend has none on file. */
+    public val displayLogoUrl: String? get() = sdkConfig?.logoUrl
+
     override fun toString(): String =
         "FrakResolvedConfig(merchantId=$merchantId, name=$name, domain=$domain, lang=$lang, " +
             "currency=$currency, hidden=$hidden, sdkConfig=$sdkConfig)"
@@ -48,20 +50,20 @@ public class FrakResolvedConfig(
     }
 }
 
-/** The `sdkConfig` block of the resolve response. Wire-shaped: every field defaults to absent. */
-public class ResolvedSdkConfig(
-    public val name: String? = null,
-    public val logoUrl: String? = null,
-    public val homepageLink: String? = null,
-    public val currency: FrakCurrency? = null,
-    public val lang: FrakLanguage? = null,
-    public val hidden: Boolean = false,
-    public val translations: Map<String, String> = emptyMap(),
+/** The `sdkConfig` block of the resolve response. Wire-shaped: every field may be absent. */
+public class ResolvedSdkConfig internal constructor(
+    public val name: String?,
+    public val logoUrl: String?,
+    public val homepageLink: String?,
+    public val currency: FrakCurrency?,
+    public val lang: FrakLanguage?,
+    public val hidden: Boolean,
+    public val translations: Map<String, String>,
     /** Tier 1 of the copy precedence. */
-    public val placements: Map<String, ResolvedPlacement> = emptyMap(),
+    public val placements: Map<String, ResolvedPlacement>,
     /** Tier 2 of the copy precedence. */
-    public val components: ResolvedComponents? = null,
-    public val attribution: AttributionDefaults? = null,
+    public val components: ResolvedComponents?,
+    public val attribution: AttributionDefaults?,
 ) {
     override fun toString(): String =
         "ResolvedSdkConfig(name=$name, logoUrl=$logoUrl, homepageLink=$homepageLink, " +
@@ -99,10 +101,10 @@ public class ResolvedSdkConfig(
 }
 
 /** One placement's overrides. Tier 1 of the copy precedence. */
-public class ResolvedPlacement(
-    public val components: ResolvedComponents? = null,
-    public val targetInteraction: String? = null,
-    public val translations: Map<String, String> = emptyMap(),
+public class ResolvedPlacement internal constructor(
+    public val components: ResolvedComponents?,
+    public val targetInteraction: String?,
+    public val translations: Map<String, String>,
 ) {
     override fun toString(): String =
         "ResolvedPlacement(components=$components, targetInteraction=$targetInteraction, " +
@@ -125,12 +127,12 @@ public class ResolvedPlacement(
 }
 
 /** Every field nullable: absent means "fall through to the next tier", not "empty". */
-public class ResolvedComponents(
-    public val buttonShare: ButtonShareConfig? = null,
-    public val buttonWallet: ButtonWalletConfig? = null,
-    public val openInApp: OpenInAppConfig? = null,
-    public val postPurchase: PostPurchaseConfig? = null,
-    public val banner: BannerConfig? = null,
+public class ResolvedComponents internal constructor(
+    public val buttonShare: ButtonShareConfig?,
+    public val buttonWallet: ButtonWalletConfig?,
+    public val openInApp: OpenInAppConfig?,
+    public val postPurchase: PostPurchaseConfig?,
+    public val banner: BannerConfig?,
 ) {
     override fun toString(): String =
         "ResolvedComponents(buttonShare=$buttonShare, buttonWallet=$buttonWallet, " +
@@ -156,11 +158,11 @@ public class ResolvedComponents(
     }
 }
 
-public class ButtonShareConfig(
-    public val text: String? = null,
+public class ButtonShareConfig internal constructor(
+    public val text: String?,
     /** Copy for when there is no concrete reward to advertise (e.g. a percentage-only campaign). */
-    public val noRewardText: String? = null,
-    public val clickAction: String? = null,
+    public val noRewardText: String?,
+    public val clickAction: String?,
 ) {
     override fun toString(): String =
         "ButtonShareConfig(text=$text, noRewardText=$noRewardText, clickAction=$clickAction)"
@@ -181,8 +183,8 @@ public class ButtonShareConfig(
     }
 }
 
-public class ButtonWalletConfig(
-    public val position: String? = null,
+public class ButtonWalletConfig internal constructor(
+    public val position: String?,
 ) {
     override fun toString(): String = "ButtonWalletConfig(position=$position)"
 
@@ -195,8 +197,8 @@ public class ButtonWalletConfig(
     override fun hashCode(): Int = position?.hashCode() ?: 0
 }
 
-public class OpenInAppConfig(
-    public val text: String? = null,
+public class OpenInAppConfig internal constructor(
+    public val text: String?,
 ) {
     override fun toString(): String = "OpenInAppConfig(text=$text)"
 
@@ -209,15 +211,15 @@ public class OpenInAppConfig(
     override fun hashCode(): Int = text?.hashCode() ?: 0
 }
 
-public class PostPurchaseConfig(
-    public val badgeText: String? = null,
-    public val refereeText: String? = null,
-    public val refereeNoRewardText: String? = null,
-    public val referrerText: String? = null,
-    public val referrerNoRewardText: String? = null,
-    public val ctaText: String? = null,
-    public val ctaNoRewardText: String? = null,
-    public val imageUrl: String? = null,
+public class PostPurchaseConfig internal constructor(
+    public val badgeText: String?,
+    public val refereeText: String?,
+    public val refereeNoRewardText: String?,
+    public val referrerText: String?,
+    public val referrerNoRewardText: String?,
+    public val ctaText: String?,
+    public val ctaNoRewardText: String?,
+    public val imageUrl: String?,
 ) {
     override fun toString(): String =
         "PostPurchaseConfig(badgeText=$badgeText, refereeText=$refereeText, " +
@@ -251,14 +253,14 @@ public class PostPurchaseConfig(
     }
 }
 
-public class BannerConfig(
-    public val referralTitle: String? = null,
-    public val referralDescription: String? = null,
-    public val referralCta: String? = null,
-    public val inappTitle: String? = null,
-    public val inappDescription: String? = null,
-    public val inappCta: String? = null,
-    public val imageUrl: String? = null,
+public class BannerConfig internal constructor(
+    public val referralTitle: String?,
+    public val referralDescription: String?,
+    public val referralCta: String?,
+    public val inappTitle: String?,
+    public val inappDescription: String?,
+    public val inappCta: String?,
+    public val imageUrl: String?,
 ) {
     override fun toString(): String =
         "BannerConfig(referralTitle=$referralTitle, referralDescription=$referralDescription, " +
@@ -290,13 +292,13 @@ public class BannerConfig(
 }
 
 /** Merged by the backend over anything the SDK supplies. */
-public class AttributionDefaults(
-    public val utmSource: String? = null,
-    public val utmMedium: String? = null,
-    public val utmCampaign: String? = null,
-    public val utmTerm: String? = null,
-    public val via: String? = null,
-    public val ref: String? = null,
+public class AttributionDefaults internal constructor(
+    public val utmSource: String?,
+    public val utmMedium: String?,
+    public val utmCampaign: String?,
+    public val utmTerm: String?,
+    public val via: String?,
+    public val ref: String?,
 ) {
     override fun toString(): String =
         "AttributionDefaults(utmSource=$utmSource, utmMedium=$utmMedium, utmCampaign=$utmCampaign, " +

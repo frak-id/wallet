@@ -9,6 +9,8 @@
         "format": "./scripts/run.sh format",
         "size": "./scripts/run.sh size",
         "check": "./scripts/run.sh check",
+        "apiCheck": "./scripts/run.sh apiCheck",
+        "apiDump": "./scripts/run.sh apiDump",
         "publishLocal": "./scripts/run.sh publishLocal"
     }
 }

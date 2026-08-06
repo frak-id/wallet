@@ -68,6 +68,30 @@ struct ResolvedConfigDecoderTests {
         #expect(rebuilt == decoded)
     }
 
+    @Test("displayName and displayLogoURL resolve the sdkConfig-over-top-level precedence")
+    func derivedDisplayValuesFollowPrecedence() throws {
+        let branded = try ResolvedConfigDecoder.decode(Data(Self.fullResponse.utf8))
+
+        #expect(branded.displayName == "Acme Shop")
+        #expect(branded.displayLogoURL == "https://acme.example/logo.png")
+
+        let unbranded = try ResolvedConfigDecoder.decode(Data(Self.minimalResponse.utf8))
+
+        #expect(unbranded.displayName == "Acme")
+        #expect(unbranded.displayLogoURL == nil)
+
+        // sdkConfig present but carrying neither field: falls back to the top-level name.
+        let bare = FrakResolvedConfig(
+            merchantId: "m",
+            name: "Acme",
+            domain: "acme.example",
+            sdkConfig: ResolvedSdkConfig(hidden: false)
+        )
+
+        #expect(bare.displayName == "Acme")
+        #expect(bare.displayLogoURL == nil)
+    }
+
     @Test("decodes a minimal response with no sdkConfig")
     func decodesMinimalResponse() throws {
         let config = try ResolvedConfigDecoder.decode(Data(Self.minimalResponse.utf8))
@@ -158,10 +182,7 @@ struct ResolvedConfigDecoderTests {
         #expect(sdkConfig.components?.buttonShare?.text == "Share")
     }
 
-    // `fullResponse`'s placement carries no `translations` key on purpose — the backend omits it
-    // when a placement has none. `translations` is non-optional, so a synthesized `Decodable`
-    // would throw `keyNotFound` and `ResolvedSdkConfig`'s `try?` would silently drop every
-    // placement. This pins the hand-written init that prevents that.
+    // The placement fixture carries no `translations` key, as the backend omits it when empty.
     @Test("a placement with no translations key still decodes, and defaults to empty")
     func placementWithoutTranslationsSurvives() throws {
         let sdkConfig = try #require(try ResolvedConfigDecoder.decode(Data(Self.fullResponse.utf8)).sdkConfig)

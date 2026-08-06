@@ -214,10 +214,10 @@ public class BestReward(
     public val minPurchaseAmount: String?,
     public val minPurchaseValue: Double?,
     public val lockupDurationDays: Double?,
-    /** Whether the selected campaign is gated to a `productScope`. Not the reward's basis — a product-gated campaign can still pay a percentage of the whole basket. Defaults false so an older backend still decodes. */
-    public val isProductScoped: Boolean = false,
-    /** The subset of the requested products matching the winning campaign's scope; null for an unscoped winner or when none were requested. */
-    public val matchedProducts: List<ProductDetails>? = null,
+    /** Whether the selected campaign is gated to a `productScope`; not the reward's basis. */
+    public val isProductScoped: Boolean,
+    /** The requested products matching the winning campaign's scope; null when unscoped or none requested. */
+    public val matchedProducts: List<ProductDetails>?,
 ) {
     override fun toString(): String =
         "BestReward(formatted=$formatted, payoutType=$payoutType, minPurchaseAmount=$minPurchaseAmount, " +

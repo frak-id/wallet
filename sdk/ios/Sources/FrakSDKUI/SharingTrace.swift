@@ -1,27 +1,15 @@
 import Foundation
 import os
 
-/// Tap-to-paint timings for one sheet.
+/// Tap-to-paint timings for one sheet, logged at `.debug` on subsystem `id.frak.sdk` and so
+/// dropped unless that subsystem is turned up with `log config --mode "level:debug"`.
 ///
-/// Costs a level check per milestone and nothing else, so it ships enabled-able rather than
-/// stripped: the numbers that matter can only be taken on a real device against the real
-/// wallet. `.debug` is dropped by the unified logging system unless the subsystem is turned
-/// up, which is this platform's equivalent of Android's `setprop log.tag.FrakSharing DEBUG`:
-///
-/// ```
-/// xcrun simctl spawn booted log config --mode "level:debug" --subsystem id.frak.sdk
-/// xcrun simctl spawn booted log stream --predicate 'subsystem == "id.frak.sdk"'
-/// ```
-///
-/// Deliberately not routed through `FrakLogger`: it is `internal` to the `FrakSDK` module, so
-/// `FrakSDKUI` cannot reach it without widening the published API for a diagnostic. Mirrors
-/// `SharingTrace.kt` on Android; the milestone strings are deliberately identical so one set
-/// of eyes can read both platforms' traces.
+/// Not routed through `FrakLogger`, which is `internal` to `FrakSDK`. Milestone strings match
+/// `SharingTrace.kt` on Android.
 struct SharingTrace {
     private let logger = Logger(subsystem: "id.frak.sdk", category: "FrakSharing")
     private let startedAt = DispatchTime.now()
-    /// A class box because `mark` is called on a `let` trace passed around by value, and the
-    /// inter-milestone delta is the number that actually locates a stall.
+    /// A class box because `mark` is called on a `let` trace passed around by value.
     private let previous = PreviousMark()
 
     func mark(_ event: String) {

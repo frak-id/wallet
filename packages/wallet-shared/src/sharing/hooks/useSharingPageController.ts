@@ -28,13 +28,8 @@ import {
 import { useShareLink } from "./useShareLink";
 
 /**
- * What a host does with an outcome, and the only thing that genuinely differs
- * between the three surfaces this page runs on.
- *
- * `share` and `copy` return `true` when the outcome was handed off, so the
- * page does not also act on it locally. A native host has to own both: an
- * Android WebView has no `navigator.share`, and the interaction a share earns
- * must be signed by the SDK keypair this page cannot reach.
+ * What a host does with an outcome. `share` and `copy` return `true` when the
+ * outcome was handed off, so the page does not also act on it locally.
  */
 export type SharingOutcomes = {
     share?: () => boolean;
@@ -43,18 +38,9 @@ export type SharingOutcomes = {
     shareAgain?: () => void;
     install: () => void;
     confirmationDismiss?: () => void;
-    /**
-     * A share or copy completed. The listener resolves its pending RPC here;
-     * the wallet has nothing to do.
-     */
+    /** A share or copy completed; the listener resolves its pending RPC here. */
     onConfirmed?: (action: "shared" | "copied") => void;
-    /**
-     * Record a sharing interaction with the backend, after the analytics
-     * event. Fired for a copy as well as a share — both are the user
-     * distributing the link. The listener wires its `useTrackSharing` here;
-     * the wallet has no equivalent, since a native host's own SDK records the
-     * interaction it can sign for.
-     */
+    /** Record a sharing interaction with the backend; fired for copy as well. */
     recordSharing?: () => void;
 };
 
@@ -75,10 +61,7 @@ export type SharingPageControllerInput = {
         targetInteraction?: InteractionTypeKey;
         context?: string;
     };
-    /**
-     * A host's cached headline, painted on the first frame and replaced the
-     * moment the real query resolves. Display-only.
-     */
+    /** A host's cached headline, painted until the real query resolves. */
     seedReward?: string;
     source: SharingSource;
     installUrl: string | null;
@@ -97,12 +80,7 @@ export type SharingPageControllerInput = {
 
 /**
  * Everything the sharing page decides, for every surface that renders it.
- *
- * The wallet route and the listener's sharing page used to implement this
- * twice — product selection, the reward query, the `t` wrapper, the link
- * builder, the confirmation lifecycle, the share mutation and the copy handler
- * — and had already drifted in four places, each a real bug on one surface
- * only. Returns `SharingPageProps` whole, so a consumer is
+ * Returns `SharingPageProps` whole, so a consumer is
  * `<SharingPage {...useSharingPageController(...)} />`.
  */
 export function useSharingPageController({
@@ -144,14 +122,11 @@ export function useSharingPageController({
             ...rewardQuery,
         });
 
-    // Paint the host's cached headline until the real one arrives, so the page
-    // opens on content instead of a skeleton. The query still runs and takes
-    // over the moment it resolves.
+    // Paint the host's cached headline until the real one arrives.
     const estimatedReward = reward?.formatted ?? seedReward;
     const appName = merchant.name ?? "";
 
-    // Inject the reward and merchant name into every interpolation, so callers
-    // never have to remember to pass them.
+    // Inject the reward and merchant name into every interpolation.
     const t = useCallback<SharingT>(
         (key, options) =>
             rawT(key, {
@@ -162,15 +137,11 @@ export function useSharingPageController({
         [rawT, estimatedReward, appName]
     );
 
-    // Report the page once, independent of which screen ends up rendering. A
-    // warm page has not been seen by anyone yet, so it reports itself as a
-    // preload and reports the view when its activation lands — `warm` is in
-    // the dep list precisely so that flip fires the second event.
+    // A warm page reports a preload, then the view when its activation flips
+    // `warm` — which is why `warm` is in the dep list.
     useEffect(() => {
         trackEvent(warm ? "sharing_page_preloaded" : "sharing_page_viewed", {
             merchant_id: merchantId,
-            // Which SDK versions are still in the field, so a change to this
-            // page can be weighed against what it would break.
             sdk_version: sdkVersion,
             native: chrome.mode === "none",
         });
@@ -181,19 +152,15 @@ export function useSharingPageController({
             confirmed || (merchantId ? getSavedConfirmation(merchantId) : false)
     );
 
-    // A host used to deliver `confirmed` by loading the page again, which
-    // remounted this hook and re-ran the initialiser above. It now delivers it
-    // as a fragment on the already-loaded page, and a `useState` initialiser
-    // does not run twice — so without this the confirmation screen never
-    // appears on exactly the warmed, activated path that is now the fast one.
+    // A host delivers `confirmed` on the already-loaded page, and the `useState`
+    // initialiser above does not run twice.
     useEffect(() => {
         if (confirmed) setShowConfirmation(true);
     }, [confirmed]);
 
     const selectedProduct = items[selectedProductIndex];
 
-    // Build the final sharing link with Frak context. Prefers the selected
-    // product's own link over the caller's default.
+    // Prefers the selected product's own link over the caller's default.
     const sharingLink = useMemo(
         () =>
             buildSharingLink({
@@ -234,9 +201,7 @@ export function useSharingPageController({
         {
             title: t("sharing.title"),
             text: t("sharing.text"),
-            // Drives the rich preview header (iOS `LinkPresentation` / Android
-            // chooser thumbnail). Ignored on web, where `navigator.share` has
-            // no standardised preview image field.
+            // Rich preview header on native; ignored on web.
             imageUrl: merchant.logoUrl,
         },
         {
@@ -252,8 +217,7 @@ export function useSharingPageController({
     );
 
     const onShare = useCallback(() => {
-        // A host that takes the share does the whole thing, including the
-        // confirmation, and tells us by reloading or re-activating the page.
+        // A host that takes the share also owns the confirmation.
         if (outcomes.share?.()) return;
         if (!sharingLink) return;
         triggerSharing();
@@ -264,11 +228,8 @@ export function useSharingPageController({
         if (!sharingLink) return;
         if (!handedOff) copy(sharingLink);
 
-        // Fired even when the copy was handed off, and that double-count is
-        // deliberate: this is an OpenPanel event feeding our own funnel
-        // analytics, while the host's SDK separately records an interaction
-        // that can earn a reward. They measure different things and neither
-        // substitutes for the other — do not de-duplicate them.
+        // Fired even when the copy was handed off: this funnel event and the
+        // host SDK's interaction measure different things, do not de-duplicate.
         trackEvent("sharing_link_copied", {
             source,
             merchant_id: merchantId,
@@ -280,17 +241,15 @@ export function useSharingPageController({
     }, [outcomes, sharingLink, copy, source, merchantId, t, confirm]);
 
     const onShareAgain = useCallback(() => {
-        // Clear first either way: a host may re-present this same URL, and a
-        // stale flag would drop the user straight back on the confirmation
-        // screen they just left.
+        // A host may re-present this same URL; a stale flag would land the user
+        // back on the confirmation screen.
         clearConfirmation();
         setShowConfirmation(false);
         outcomes.shareAgain?.();
     }, [outcomes]);
 
     const rewardView: SharingReward = useMemo(() => {
-        // A seeded headline is content, so the skeleton is skipped even while
-        // the real query is still in flight.
+        // A seeded headline is content, so skip the skeleton.
         if (isRewardLoading && !seedReward) return { status: "loading" };
         return {
             status: "ready",

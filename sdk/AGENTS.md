@@ -60,29 +60,37 @@ Two artifacts per platform so a merchant taking only tracking never pulls in a w
 | Registry | Maven Central Portal (not OSSRH — decommissioned), not yet wired | SPM only, no CocoaPods |
 
 - **MVP surface implemented on both platforms**, one Android device pass only — the sharing sheet, the install handoff and inbound deep links have run nowhere, iOS nowhere at all. See `sdk/{android,ios}/README.md`.
-- **CI lints/builds/tests both native SDKs, but there is still no publish path**: `.github/workflows/apps.yaml` runs `lint` + `build` + `test` for `sdk/android` (ubuntu, JDK 17) and `sdk/ios` (macos-26) on every `dev`/`main` push and PR touching them. A `changes` job (`dorny/paths-filter`) gates each one, so an `apps/**`-only change never boots the 10×-billed macOS runner. It deliberately skips `sdk/android check` (Android Lint has never run; expect untriaged pre-existing findings) and anything needing an emulator or simulator. Publishing remains `publishToMavenLocal` only, `bun run --cwd sdk/ios xcframework` still exits 1, and there is no binary-compatibility gate.
+- **CI lints/builds/tests both native SDKs, and there is still no publish path**: `.github/workflows/apps.yaml` runs `sdk/android` (ubuntu, JDK 17) and `sdk/ios` (macos-26) on every `dev`/`main` push and PR touching them. A `changes` job (`dorny/paths-filter`) gates each one, so an `apps/**`-only change never boots the 10×-billed macOS runner. **Android now runs `check` too** — `lint`, `build`, `test`, `apiCheck` and `check`, in that order. The narrower four are kept alongside `check` even though it subsumes them, so a failure is attributed by step name. That was previously skipped because Android Lint had never run and `apiCheck` was red without a dump; Android Lint has since run clean and both dumps are committed. Still no emulator or simulator anywhere. Publishing is **broken, not merely absent**: `publishToMavenLocal` fails in AGP's bundled Dokka, which cannot parse Kotlin 2.4 class files (A6 in `docs/plans/native-sdk/06-open-findings.md`), and `bun run --cwd sdk/ios xcframework` still exits 1.
 - **Three iOS divergences, each forced by the platform**: the anonymous id lives in `UserDefaults` (Keychain survives uninstall) in its own `id.frak.sdk.identity` suite, alongside the Secure Enclave's wrapped key blob; `DeepLinkHandling` has no `.automatic` case, because a library cannot observe a host's `Scene`/`AppDelegate` URL callbacks the way it can Android's `ActivityLifecycleCallbacks`; the install fallback is a plain App Store URL, so the identity handoff only completes when the wallet is already installed.
 - **The two wire formats are pinned to golden fixtures, not to each other.** The identity proof layout and the FrakContext v2 codec are asserted against `sdk/core/src/{identity,context}/fixtures/` on every platform. A port that does not assert against the corpus has not been ported.
 - **Android dex budget: 256 KB per artifact** (`sdk/android/gradle.properties`). The check measures each module's own `classes.jar`, so it is meaningful for `:frak-sdk` and vacuous for `:frak-sdk-ui`.
-- **`:frak-sdk` has zero third-party runtime deps** bar `kotlinx-coroutines-core`, which is `api` because `suspend`/`StateFlow` are in the public surface. `:frak-sdk-ui` ships Compose — that is the reason the two artifacts are split. Both iOS targets are genuinely dependency-free.
+- **`:frak-sdk` has zero third-party runtime deps** bar `kotlinx-coroutines-core`, which is `api` because `suspend`/`StateFlow` are in the public surface. `:frak-sdk-ui` ships Compose (`implementation`) and `androidx.activity` (`api` — `ComponentActivity` is a `FrakSharing.Builder.build` parameter and `ComponentDialog` hosts the sheet's window); that dependency load is the reason the two artifacts are split. Note the asymmetry: the `@Composable build()` overload is public but `androidx.compose.runtime` is only `implementation`, so a consumer must declare Compose themselves to call it. `08-sharing-sheet-api.md` step C moves Compose out of the base artifact and would settle this. Both iOS targets are genuinely dependency-free.
 - **`explicitApi()` on Android is deliberate**: a merchant's binary freezes at store submission, so an accidentally-public helper is one we are stuck supporting forever.
 - **`Presenter` lives in the UI artifact, not `sharing/`** — `client.sharing.buildLink()` is 100% local and must stay callable without the web view.
-- **`FrakClient` is a sealed concrete class with five namespaces** (`config`, `rewards`, `sharing`, `tracking`, `appLink`), not an interface/protocol. Adding a member is additive on both platforms; nothing can substitute a fake for it, so `frak-sdk-ui`'s tests inject narrow functions and merchant tests should point `FrakEnvironment.Custom`/`.custom` at a stub server.
+- **`FrakClient` is a sealed concrete class with five namespaces** (`config`, `rewards`, `sharing`, `tracking`, `appLink`), not an interface/protocol. Adding a member is additive on both platforms; nothing can substitute a fake for it, so `frak-sdk-ui`'s tests inject the narrow `SharingDependencies` interface and merchant tests should point `FrakEnvironment.Custom`/`.custom` at a stub server.
 - **No exported activity, no intent filter in the SDK manifest**: inbound `fCtx` is wired through `FrakConfig.deepLink`, so the merchant's own router keeps owning their links.
 - **`PrivacyInfo.xcprivacy` is a hard gate**: ITMS-91053 lands on the merchant's upload, not ours, and `FrakSDKUI` ships its own because it is separately consumable. Declared: `DeviceID`, `PurchaseHistory`, `ProductInteraction`, `UserID` on the core; `DeviceID` + `ProductInteraction` on the UI; `UserDefaults`/`CA92.1` as the only required-reason API, core only.
 
 ```bash
 bun run --cwd sdk/android build   # assembleRelease — no device, this is a library
 bun run --cwd sdk/android test    # JVM unit tests
-bun run --cwd sdk/android check   # ktlint, tests, Android Lint, version drift, dex budget
+bun run --cwd sdk/android check   # ktlint, ABI gate, tests, Android Lint, version drift, dex budget
+bun run --cwd sdk/android apiDump # write api/*.api; the diff IS the ABI decision
 bun run --cwd sdk/ios build       # swift build at an explicit iOS-simulator triple
 bun run --cwd sdk/ios test        # two stages: compile at the iOS triple, then run on the host
 bun run --filter '*/native-*' lint   # ktlint + swift-format across SDKs and harnesses
 ```
 
-No `apiCheck`/`apiDump`: binary-compatibility-validator was wired then removed while the public shape is
-unfrozen, and no `.api` dump is committed. It returns before the first publish — `explicitApi()` catches a
-newly-public symbol but not a breaking change to an existing one.
+`apiCheck`/`apiDump` exist on Android and hang off `check`. **Both dumps are now committed** —
+`frak-sdk/api/frak-sdk.api` and `frak-sdk-ui/api/frak-sdk-ui.api` — `apiCheck` passes, and it runs in CI.
+Change a public signature and it goes red until you rerun `bun run --cwd sdk/android apiDump` (JDK 17 +
+`ANDROID_HOME`) and review the diff, which *is* the ABI decision. Never run `apiDump` and `apiCheck` in one
+Gradle invocation — Gradle rejects the undeclared implicit dependency; `run.sh` keeps them separate.
+`explicitApi()` catches a newly-public symbol; only the dump catches a breaking change to an existing one.
+The wiring is hand-rolled in `buildSrc` because binary-compatibility-validator registers nothing for an
+AGP 9 Android library and its documented replacement is unavailable for the same reason — see
+`docs/plans/native-sdk/09-android-api-surface.md` §5a, which is also the record of the Builder /
+`*Async` / `Interaction` reshaping that gate freezes.
 
 ## See Also
 

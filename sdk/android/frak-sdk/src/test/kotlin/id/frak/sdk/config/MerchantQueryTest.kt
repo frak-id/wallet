@@ -1,44 +1,36 @@
 package id.frak.sdk.config
 
-import id.frak.sdk.core.FrakConfig
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLanguage
-import id.frak.sdk.core.FrakMetadata
+import id.frak.sdk.core.frakConfig
+import id.frak.sdk.core.frakMetadata
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Pins the query the SDK sends to `GET /user/merchant/resolve`.
- *
- * These are wire-contract assertions, not implementation details. Every one of
- * them corresponds to a way the backend answers 400 or silently resolves the
- * wrong merchant.
- */
+/** Pins the query the SDK sends to `GET /user/merchant/resolve`; these are wire-contract assertions. */
 class MerchantQueryTest {
     @Test
     fun `a merchantId takes precedence over a packageId`() {
         val query =
             MerchantQuery.from(
-                FrakConfig(merchantId = MERCHANT_ID, packageId = "com.example.app"),
+                frakConfig(merchantId = MERCHANT_ID, packageId = "com.example.app"),
             )
 
         val parameters = query.parameters()
         assertEquals("merchantId is sent", MERCHANT_ID, parameters["merchantId"])
-        // A packageId sent alongside a merchantId would be inert for lookup but still schema-
-        // validated, and without a platform that is a 400 rather than the 200 expected.
+        // A packageId alongside a merchantId is inert but still schema-validated: a 400 without a platform.
         assertNull("packageId is not sent alongside a merchantId", parameters["packageId"])
         assertNull("platform is not sent alongside a merchantId", parameters["platform"])
     }
 
     @Test
     fun `a packageId is always paired with a platform`() {
-        val parameters = MerchantQuery.from(FrakConfig(packageId = "com.example.app")).parameters()
+        val parameters = MerchantQuery.from(frakConfig(packageId = "com.example.app")).parameters()
 
         assertEquals("com.example.app", parameters["packageId"])
-        // The backend rejects the pair with 400 INVALID_PACKAGE_ID_PAIRING when platform is
-        // missing, and allowed_package_ids entries are platform-prefixed.
+        // The backend answers 400 INVALID_PACKAGE_ID_PAIRING when platform is missing.
         assertEquals("android", parameters["platform"])
     }
 
@@ -47,23 +39,22 @@ class MerchantQueryTest {
         val withLang =
             MerchantQuery
                 .from(
-                    FrakConfig(
+                    frakConfig(
                         merchantId = MERCHANT_ID,
-                        metadata = FrakMetadata(lang = FrakLanguage.FR),
+                        metadata = frakMetadata(lang = FrakLanguage.FR),
                     ),
                 ).parameters()
         assertEquals("fr", withLang["lang"])
 
-        val withoutLang = MerchantQuery.from(FrakConfig(merchantId = MERCHANT_ID)).parameters()
-        // Null rather than empty: the backend distinguishes an absent parameter from an empty
-        // one, and lets an absent lang fall back to the merchant's own configured language.
+        val withoutLang = MerchantQuery.from(frakConfig(merchantId = MERCHANT_ID)).parameters()
+        // Null rather than empty: an absent lang falls back to the merchant's configured language.
         assertNull(withoutLang["lang"])
     }
 
     @Test
     fun `cache keys separate the two resolution routes`() {
-        val byId = MerchantQuery.from(FrakConfig(merchantId = MERCHANT_ID)).cacheKey()
-        val byPackage = MerchantQuery.from(FrakConfig(packageId = "com.example.app")).cacheKey()
+        val byId = MerchantQuery.from(frakConfig(merchantId = MERCHANT_ID)).cacheKey()
+        val byPackage = MerchantQuery.from(frakConfig(packageId = "com.example.app")).cacheKey()
 
         assertTrue("id route is prefixed", byId.startsWith("id:"))
         assertTrue("package route is prefixed", byPackage.startsWith("pkg:"))
@@ -74,12 +65,12 @@ class MerchantQueryTest {
         val english =
             MerchantQuery
                 .from(
-                    FrakConfig(merchantId = MERCHANT_ID, metadata = FrakMetadata(lang = FrakLanguage.EN)),
+                    frakConfig(merchantId = MERCHANT_ID, metadata = frakMetadata(lang = FrakLanguage.EN)),
                 ).cacheKey()
         val french =
             MerchantQuery
                 .from(
-                    FrakConfig(merchantId = MERCHANT_ID, metadata = FrakMetadata(lang = FrakLanguage.FR)),
+                    frakConfig(merchantId = MERCHANT_ID, metadata = frakMetadata(lang = FrakLanguage.FR)),
                 ).cacheKey()
 
         assertTrue("languages do not share a cache entry", english != french)
@@ -87,8 +78,8 @@ class MerchantQueryTest {
 
     @Test
     fun `package cache keys are case insensitive`() {
-        val lower = MerchantQuery.from(FrakConfig(packageId = "com.example.app")).cacheKey()
-        val upper = MerchantQuery.from(FrakConfig(packageId = "COM.EXAMPLE.APP")).cacheKey()
+        val lower = MerchantQuery.from(frakConfig(packageId = "com.example.app")).cacheKey()
+        val upper = MerchantQuery.from(frakConfig(packageId = "COM.EXAMPLE.APP")).cacheKey()
 
         // Mirrors the backend's own normalisation (`normalizePackageId` lowercases).
         assertEquals(lower, upper)
@@ -96,7 +87,7 @@ class MerchantQueryTest {
 
     @Test
     fun `a config with neither identifier fails with a merchant resolution error`() {
-        val failure = runCatching { MerchantQuery.from(FrakConfig()) }.exceptionOrNull()
+        val failure = runCatching { MerchantQuery.from(frakConfig()) }.exceptionOrNull()
 
         assertTrue(
             "expected MerchantResolutionFailed, got $failure",
@@ -106,9 +97,8 @@ class MerchantQueryTest {
 
     @Test
     fun `blank identifiers are treated as absent`() {
-        // A merchant reading an empty BuildConfig field gets "" rather than null, which would
-        // resolve nothing while looking configured.
-        val query = MerchantQuery.from(FrakConfig(merchantId = "   ", packageId = "com.example.app"))
+        // A merchant reading an empty BuildConfig field gets "" rather than null.
+        val query = MerchantQuery.from(frakConfig(merchantId = "   ", packageId = "com.example.app"))
 
         assertEquals("com.example.app", query.parameters()["packageId"])
     }

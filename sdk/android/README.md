@@ -12,7 +12,9 @@ bun run --cwd sdk/android test          # JVM unit tests
 bun run --cwd sdk/android lint          # ktlint check
 bun run --cwd sdk/android format        # ktlint auto-format in place
 bun run --cwd sdk/android size          # release dex size vs the budget
-bun run --cwd sdk/android check         # ktlint, unit tests, Android Lint, version drift, dex budget
+bun run --cwd sdk/android check         # all of the above plus the ABI gate, Android Lint, version drift
+bun run --cwd sdk/android apiCheck      # public ABI vs the committed api/*.api
+bun run --cwd sdk/android apiDump       # write those dumps; the diff IS the ABI decision
 bun run --cwd sdk/android publishLocal  # publishToMavenLocal (~/.m2)
 ```
 
@@ -33,7 +35,7 @@ biome does not touch `sdk/android` (excluded in `biome.json`, it cannot parse Ko
 | Module | Coordinate | Contents |
 | --- | --- | --- |
 | `frak-sdk` | `id.frak:frak-sdk` | Core. UI-free, headlessly testable. |
-| `frak-sdk-ui` | `id.frak:frak-sdk-ui` | The Compose sharing sheet. Depends on core. |
+| `frak-sdk-ui` | `id.frak:frak-sdk-ui` | The sharing sheet. Entry point is `FrakSharing.Builder`, callable from XML/Java/Compose; the sheet itself is still Compose, hosted in a `ComponentDialog`. Depends on core. |
 
 Split so a merchant taking only tracking never pulls in a web view. `minSdk 24`, Java/JVM target 17.
 
@@ -50,27 +52,29 @@ Split so a merchant taking only tracking never pulls in a web view. `minSdk 24`,
 | `sharing/` | `FrakContextCodec` (fCtx v2 binary), `FrakContext`, `SharingLinkBuilder`, `AttributionParams`, `SharingRequest` |
 | `applink/` | `InstallLinks`, `ReferralArrival`, `AppLauncher`, `DeepLinkObserver` |
 
-`frak-sdk-ui/src/main/kotlin/id/frak/sdk/ui/` — the Compose sharing sheet and its View/Activity fallback.
+`frak-sdk-ui/src/main/kotlin/id/frak/sdk/ui/` — the sharing sheet. `FrakSharing`/`FrakSharing.Builder`, `SharingResult` and `FrakSharingDefaults` are the whole public surface; `SharingHost` owns the `ComponentDialog`, the warm `WebView` pool and the one-sheet-at-a-time guard, per hosting Activity.
 
 Tests: `frak-sdk/src/test/kotlin/...` (JVM unit tests, mirrors main packages) and `frak-sdk-ui/src/test/kotlin/...` (Robolectric, pinned to JDK 17 — Robolectric's bundled ASM cannot instrument newer bytecode). Robolectric is scoped to `frak-sdk-ui` only; `frak-sdk` stays framework-free.
 
 ## Public API
 
-Entry point: `Frak.initialize`, `Frak.client`, `Frak.shutdown`, `Frak.parseReferralLink`.
+Entry point: `Frak.initialize`, `Frak.client`, `Frak.clientOrNull`, `Frak.isInitialized`, `Frak.shutdown`/`Frak.shutdownAsync`, `Frak.parseReferralLink`.
 
-`FrakClient`: `environment`, `anonymousId`, `resetAnonymousId`, `setTrackingEnabled`, `isTrackingEnabled`, and five namespaces:
+`FrakClient`: `environment`, `anonymousId`, `resetAnonymousId`, `setTrackingEnabled`, `isTrackingEnabled` (each with an `*Async` twin — see "Java" below), and five namespaces:
 
 | Namespace | Members |
 | --- | --- |
-| `config` | `resolve`, `updates` |
-| `rewards` | `campaigns`, `best` |
-| `sharing` | `buildLink` |
-| `tracking` | `track`, `purchase` |
-| `appLink` | `handleReferral`, `isFrakAppInstalled`, `openFrakApp`, `installUrl`, `installPageUrl` |
+| `config` | `resolve`, `updates` (`resolveAsync` for Java; `updates` is a `StateFlow` and has no Java form) |
+| `rewards` | `campaigns`, `best` (+ `campaignsAsync`, `bestAsync`) |
+| `sharing` | `buildLink` (+ `buildLinkAsync`) |
+| `tracking` | `track`, `purchase` (+ `trackAsync`, `purchaseAsync`) |
+| `appLink` | `handleReferral`, `isFrakAppInstalled`, `openFrakApp`, `installUrl`, `installPageUrl` (+ an `*Async` for each except `isFrakAppInstalled`, which never suspended) |
 
-Supporting public types: `FrakContext`, `SharingRequest`, `SharingProduct`, `AttributionParams`, `Interaction`, `FrakResult`, `OpenAppResult`, `DeepLinkHandling`, `FrakLogSink`, `FrakConfig`, `FrakEnvironment`, `FrakMetadata`, `FrakError`, `FrakLogger`.
+Supporting public types: `FrakContext`, `SharingRequest`, `SharingProduct`, `ProductDetails`, `RewardRequest`, `AttributionParams`, `Interaction`, `FrakResult`, `OpenAppResult`, `DeepLinkHandling`, `FrakLogSink`, `FrakConfig`, `FrakEnvironment`, `FrakMetadata`, `FrakError`, `FrakLogger`.
 
-Resolved-config model, all public and decoded in full (placements, component copy, translations, attribution): `FrakResolvedConfig`, `ResolvedSdkConfig`, `ResolvedPlacement`, `ResolvedComponents`, `ButtonShareConfig`, `ButtonWalletConfig`, `OpenInAppConfig`, `PostPurchaseConfig`, `BannerConfig`, `AttributionDefaults`.
+Resolved-config model, publicly *readable* in full (placements, component copy, translations, attribution): `FrakResolvedConfig`, `ResolvedSdkConfig`, `ResolvedPlacement`, `ResolvedComponents`, `ButtonShareConfig`, `ButtonWalletConfig`, `OpenInAppConfig`, `PostPurchaseConfig`, `BannerConfig`, `AttributionDefaults`. Every constructor in that tree is `internal`: it is a read model the SDK hands you from `config.resolve()`, and a public constructor would freeze an arity the backend keeps adding fields to — see "Binary compatibility" below. `FrakResolvedConfig.displayName`/`displayLogoUrl` are derived properties that resolve the `sdkConfig`-over-top-level precedence once, so a caller never writes that fold itself. `display`-prefixed deliberately: a derived getter must not squat on the name a future top-level wire field would want, since repointing one is a behaviour change with an unchanged JVM descriptor that no `.api` dump could catch.
+
+`id.frak.sdk.net.PercentEncoding` is annotated `@InternalFrakApi` (`@RequiresOptIn`, ERROR): `public` only because `:frak-sdk-ui` builds URLs with it. Naming it from Kotlin is a compile error without an explicit opt-in; javac is not told, which is the annotation's known limit. It is also the marker wired into BCV's `nonPublicMarkers`, so it never enters the dump — see "Binary compatibility" below, including what about that is still unverified.
 
 Not implemented: the 4-tier copy precedence (`FrakClient.copy`), `referralStatus`, the analytics event stream.
 
@@ -79,10 +83,9 @@ Not implemented: the 4-tier copy precedence (`FrakClient.copy`), `referralStatus
 ```kotlin
 Frak.initialize(
     context,
-    FrakConfig(
-        merchantId = BuildConfig.FRAK_MERCHANT_ID,
-        logLevel = FrakLogLevel.INFO,
-    ),
+    FrakConfig(BuildConfig.FRAK_MERCHANT_ID) {
+        logLevel = FrakLogLevel.INFO
+    },
 )
 
 lifecycleScope.launch {
@@ -90,15 +93,80 @@ lifecycleScope.launch {
 }
 ```
 
+```java
+// The same thing from Java. The Kotlin form above is sugar over this Builder, not a second
+// implementation, so a default has exactly one home.
+Frak.initialize(
+        context,
+        new FrakConfig.Builder(BuildConfig.FRAK_MERCHANT_ID)
+                .logLevel(FrakLogLevel.INFO)
+                .build());
+```
+
+### Construction
+
+No public API takes a Kotlin default argument, anywhere. Merchant-constructed types split two ways: a `Builder` where the value is readable, static factories where it is opaque (`Interaction`, below). Everything else takes explicit constructor overloads. Both halves are one decision, and the reason is `FrakConfig`: it went from 8 to 9 parameters after the last `.api` dump was taken. A Kotlin default compiles to the full-arity constructor *plus* a synthetic `<init>(..., int mask, DefaultConstructorMarker)`, and adding a field changes both descriptors — so that change would have been `NoSuchMethodError` on every already-shipped merchant binary, unfixable by the merchant, because it is their app in the store that breaks. `@JvmOverloads` is not the answer either: it fixes Java and leaves Kotlin callers resolving through `$default` anyway.
+
+So: `FrakConfig`, `FrakMetadata`, `SharingRequest`, `SharingProduct`, `ProductDetails`, `AttributionParams` and `RewardRequest` — seven types — each have a nested `Builder` with chained setters, plus a Kotlin function of the same name taking `Builder.() -> Unit`. The Builder's `var`s *are* the Kotlin scope — there is no second scope type and therefore no second home for a default. A new option is one new setter plus one new `var`: additive forever.
+
+Types that are public but not expected to grow took explicit constructor overloads instead of a Builder: `FrakEnvironment.Custom` (two origins, optionally a wallet package id and scheme) and `FrakError.Server`/`FrakError.Decoding`.
+
+Read models — the things the SDK hands *back* — split two ways, and the split is a live question rather than a settled rule:
+
+- The resolved-config tree and `FrakContext` have `internal` constructors and no Builder at all. A merchant reads them and never builds one.
+- The reward models (`BestReward`, `Campaign`, `TokenAmount`, `RewardTier`, `EstimatedReward`) keep **public** constructors, because a merchant does build one — for a `@Preview`, or a fake over `rewards.best`, which `PublicSurfaceTest` pins. They carry no default arguments (`BestReward`'s two were dropped in step 2), so no `DefaultConstructorMarker` bridge reaches the dump, but their arity is frozen the moment it is committed. Whether they should follow the config tree instead is open — see `docs/plans/native-sdk/09-android-api-surface.md`.
+
+`Interaction` is neither a Builder nor a set of overloaded constructors: it is an opaque type with `@JvmStatic` factories (`Interaction.custom("checkout")`, `Interaction.sharing()`), over an `internal` `Kind` carrying the three wire shapes. That is iOS's shape, adopted here in step 3. It buys three things a sealed hierarchy could not: a fourth wire shape is additive rather than a break for any consumer who wrote an exhaustive `when`; the hierarchy leaves the frozen surface entirely; and Java calls it the same way Kotlin does instead of writing an `instanceof` chain. The cost is that an `Interaction` cannot be read back — acceptable, because it is write-only: you build one and hand it to `tracking.track`.
+
+Nothing on the public surface carries a Kotlin default argument any more. `ConfigApi.resolve` and `RewardsApi.campaigns` took explicit `()`/`(Boolean)` overloads; `RewardsApi.best` took a `RewardRequest` parameter object, because four optionals is what a parameter object is for. `forceRefresh` stays a parameter rather than a field of the request — it is cache control, not a description of the reward wanted.
+
+### Java
+
+Every suspending member of `FrakClient` and its five namespaces has a `CompletableFuture` twin named `*Async`, plus `Frak.shutdownAsync()` — eighteen twins for fifteen members, since three of those members are overload pairs and the twins mirror them. Kotlin callers use the `suspend` form; a Java caller cannot name a `Continuation`, so before the twins they could call none of them.
+
+```java
+Frak.getClient().getRewards()
+        .bestAsync(new RewardRequest.Builder().targetInteraction("purchase").build())
+        .thenAccept(reward -> banner.setText(reward == null ? "" : reward.getFormatted()));
+```
+
+The twins are the same work on the same `SupervisorJob` that `Frak.shutdown()` cancels, funnelled through one internal helper so the threading contract has one home: the body runs on the SDK's IO dispatcher and **completion is signalled on the main thread**, so the `thenAccept` above can touch a `View`. (`CompletableFuture` runs a non-`Async` stage on the completing *or* the registering thread, whichever is later — for the realistic call site those are the same.) `Dispatchers.Main` is deliberately not used: it lives in `kotlinx-coroutines-android`, which this SDK does not depend on, so there is a twelve-line `Handler`-backed dispatcher instead.
+
+**Never `get()` or `join()` a twin on the main thread.** Completion needs a main-looper turn and a blocked main thread never gives one, so the future never completes — a deterministic ANR, not a race. Register a continuation (`thenAccept`, `whenComplete`), or block on a background thread.
+
+A twin called after `Frak.shutdown()` returns an already-cancelled future rather than hanging. `Frak.shutdownAsync()` is the one twin on its own scope — it cannot use the one it is cancelling — and it returns immediately, so `shutdownAsync(); initialize(…)` back-to-back races the teardown; sequence the second call off the future.
+
+Twins mirror their suspending member's return type: `resolveAsync` completes exceptionally with the same `FrakError` that `resolve` throws (wrapped in `CompletionException`, as any future would), and `trackAsync` returns `CompletableFuture<FrakResult<Unit>>` because `track` returns `FrakResult<Unit>`. There is no second result type layered over the future. Two exceptions return `CompletableFuture<Void>`: `setTrackingEnabledAsync` and `shutdownAsync`, because `kotlin.Unit` on a Java signature is noise.
+
+Two async idioms coexist on purpose: a request/response call returns a future, and a *session outcome* — `FrakSharing`'s — stays a `@MainThread` callback, because a sheet reports once, later, from a lifecycle the caller does not own.
+
 `Frak.shutdown()` cancels background work and unregisters the deep-link observer; call it to release the SDK deterministically (`initialize` can then run again). It is not a consent control — it records no decision.
 
 `FrakConfig.logSink` (a `fun interface`) and `FrakClient.setTrackingEnabled` are the merchant-facing hooks for logging and consent; see the doc comments on `FrakConfig` and `FrakClient` for the exact contract.
 
+The sharing sheet is a Stripe-shaped Builder with two build sites, so XML, Java and Compose callers see the same types:
+
+```kotlin
+private lateinit var sharing: FrakSharing
+
+// Activity / XML / Java. In onCreate, after super.onCreate — not a property initialiser:
+// an Activity has no ViewModelStore (which is what carries a live sheet across a rotation)
+// until the framework attaches its Application, and build() throws if it cannot reach one.
+sharing = FrakSharing.Builder(::onShareResult).build(this)
+sharing.warm()                 // when a share affordance becomes visible
+sharing.present(request)       // on the tap
+
+// Compose — warms on composition-enter
+val sharing = remember { FrakSharing.Builder(::onShareResult) }.build()
+```
+
+`frak-sdk-ui/src/test/java/.../JavaCallSiteFixture.java` is a compile-only assertion that the above stays callable from Java. There is no `build(Fragment)` yet — `build(requireActivity())` works, and Builder methods are additive with no ABI break, so it lands with the Fragment harness screen that would exercise it rather than ahead of it.
+
 ## Status
 
-The MVP surface above is implemented and covered by 220 JVM unit tests (`grep -rc '@Test' frak-sdk*/src/test -r --include=*.kt | awk -F: '{s+=$2} END {print s}'`), plus Robolectric coverage in `frak-sdk-ui` for the sharing sheet's sequencing (tier 3 fallback, the 1.5s latency budget, tier 2's cache-only retry, web view origin pinning).
+The MVP surface above is implemented and covered by ~435 JVM unit tests (`grep -rc '@Test' frak-sdk*/src/test -r --include=*.kt | awk -F: '{s+=$2} END {print s}'`), plus Robolectric coverage in `frak-sdk-ui` for the sharing sheet's sequencing (tier 3 fallback, the 1.5s latency budget, tier 2's cache-only retry, web view origin pinning).
 
-One Android device pass (SM-G998B, Android 15) has exercised `initialize`, the wallet-installed probe, `config.resolve` and `rewards.best`. The sharing sheet, the install handoff and inbound deep links have not run on a device. No CI job builds this SDK, and there is no publish path or binary-compatibility gate.
+One Android device pass (SM-G998B, Android 15) has exercised `initialize`, the wallet-installed probe, `config.resolve` and `rewards.best`. The sharing sheet, the install handoff and inbound deep links have not run on a device, and neither has the `ComponentDialog` host that replaced `ModalBottomSheet` — no rotation pass, no leak check, no edge-to-edge pass against a `targetSdk 35`-or-later host. `.github/workflows/apps.yaml` lints, builds and unit-tests this SDK on every push and PR touching `sdk/android/**`, but it does **not** build `example/native-android`: nothing in CI compiles the harness, so a broken harness call site does not go red. There is no publish path. The binary-compatibility gate is wired (`apiCheck`, part of `check`) but its first `api/*.api` dumps are not committed, so `check` is red until they are — see "Binary compatibility" below.
 
 `example/native-android` builds against the real artifacts via a Gradle composite build (`includeBuild("../../sdk/android")` with an explicit `dependencySubstitution`, since Gradle's automatic substitution matches on `project.group`, which defaults to `frak-android-sdk` here, not `id.frak`). It exercises `Frak.initialize`, `.appLink`, `.config.resolve`, `.tracking.purchase` and `.rewards.best` through the SDK's public API — a source checkout, not a published artifact.
 
@@ -108,7 +176,7 @@ One Android device pass (SM-G998B, Android 15) has exercised `initialize`, the w
 - **AGP 9.1.1, Kotlin 2.4.10** compiling to Kotlin language/API level **2.2** (was 1.9 until the Kotlin 2.4 upgrade dropped `-language-version=1.9` and the K1 compiler). ktlint plugin 14.2.0, engine 1.8.0. Compose BOM 2026.06.01. Versions live in `gradle/libs.versions.toml`.
 - Kotlin is compiled by AGP's built-in Kotlin support, not the `org.jetbrains.kotlin.android` plugin — AGP 9.0 made that redundant and it now fails outright if applied alongside AGP's own support. Compiler settings live in `kotlin { compilerOptions {} }`. The Compose compiler plugin is still applied explicitly.
 - **`explicitApi()` is on for both modules.** Every public symbol needs an explicit visibility modifier and an explicit return type. It stops a helper from silently widening the API surface, but it does not by itself detect a breaking change to an already-public symbol — see "Binary compatibility" below.
-- **The config model types (`FrakResolvedConfig` and friends) are plain classes, not data classes.** A published `copy()`/`componentN()` would enter the ABI and could never be removed. Each has a hand-written `equals`/`hashCode`/`toString` and constructor defaults instead. That alone does not make them additively evolvable: a public constructor with default arguments compiles to a full-arity `<init>` plus a synthetic `<init>(..., int mask, DefaultConstructorMarker)`, and adding a parameter changes both descriptors — an already-compiled merchant binary would get `NoSuchMethodError`. An additively-evolvable shape (a `Builder`, or an internal constructor plus additive factory functions) is not implemented.
+- **The config model types (`FrakResolvedConfig` and friends) are plain classes, not data classes, with `internal` constructors and no default arguments.** A published `copy()`/`componentN()` would enter the ABI and could never be removed, hence hand-written `equals`/`hashCode`/`toString`. But that alone was not additive: a public constructor with default arguments compiles to a full-arity `<init>` plus a synthetic `<init>(..., int mask, DefaultConstructorMarker)`, and adding a parameter changes both descriptors — an already-compiled merchant binary would get `NoSuchMethodError`. The fix is both halves at once. `internal` keeps the constructor out of Kotlin merchants' reach and out of the `.api` dump — not out of *javac's* reach, since Kotlin mangles `internal` functions but cannot mangle a constructor, so it is emitted `public`; a Java caller who reaches it is simply outside the compatibility contract; dropping the defaults keeps the `DefaultConstructorMarker` bridge from landing in the dump anyway, which it does even for an `internal` constructor. A new backend field is now a new getter and nothing else. The old defaults live in `ConfigTreeFixtures.kt` in the test source set. Merchant-facing *input* types (`FrakConfig`, `FrakMetadata`, `SharingRequest`, `SharingProduct`, `ProductDetails`, `AttributionParams`) have a `Builder` instead, since a caller does have to construct those — see "Construction" below.
 - `gradle.properties` turns off AGP build features this project has no use for (`buildConfig`, `aidl`, `renderscript`, `resValues`, `shaders`) — each costs a task per module per variant and can only grow the AAR. The SDK version is a reviewed Kotlin constant (`FrakSdkVersion`), not a generated `BuildConfig` field.
 - No `.gitignore` here — the root one covers `sdk/android/.gradle/` and `sdk/android/**/build/`.
 - **Versioning sits outside Changesets.** `id.frak:frak-sdk` and iOS's `FrakSDK` version independently of the JS packages and of each other — a merchant's binary freezes at store submission, so a JS-style patch cadence does not apply. `sdk/android/package.json` is `private` and listed in `.changeset/config.json`'s `ignore`; it exists only to dispatch to `scripts/run.sh`.
@@ -131,16 +199,32 @@ Licence: Apache-2.0 (`sdk/android/LICENSE`), deliberately not the monorepo's GPL
 
 ## Binary compatibility
 
-No gate right now. kotlinx-binary-compatibility-validator was wired into `frak-publish.gradle.kts` and then removed, along with the `api/*.api` dumps it generated, because committing a dump ratifies the public shape before that shape is decided. Open questions:
+The gate is `apiCheck`, wired into `check`. It extracts the release variant's public ABI and fails on any difference from `<module>/api/<module>.api`; `apiDump` rewrites those files. **That diff is the point** — every line added is a symbol this SDK can no longer change, and every line removed is one a shipped merchant binary may already be linking against, so an ABI change becomes a reviewable decision instead of an accident.
 
-- Whether the config model types move to a builder or an internal-constructor-plus-factory shape (see "plain classes, not data classes" above).
-- Whether to keep promoting types straight to fully-public, or gate the ones that exist only for `frak-sdk-ui`'s consumption behind a `@RequiresOptIn` `@InternalFrakApi` wired into BCV's `nonPublicMarkers`. `id.frak.sdk.net.PercentEncoding` is the current example of a symbol public only because a second module needs it.
+```bash
+bun run --cwd sdk/android apiDump    # rewrite api/frak-sdk.api and api/frak-sdk-ui.api
+bun run --cwd sdk/android apiCheck   # compare; also runs as part of `check`
+```
 
-The gate — dumps included — comes back once these are settled and before the first publish. Until then `explicitApi()` is the only enforcement.
+**The dumps are not committed yet.** Until they are, `apiCheck` fails with BCV's own message telling you to run `apiDump` — which is the correct state for a build whose surface has just been reshaped and not yet ratified, and not something to work around. Note `apiDump` needs a JDK and the Android SDK; there is nothing to hand-write.
+
+**The wiring is hand-rolled, and it has to be.** binary-compatibility-validator registers its `apiDump`/`apiCheck` only when `kotlin-android`, `kotlin` or `kotlin-multiplatform` is applied — and AGP 9 compiles Kotlin itself and *blocks* `org.jetbrains.kotlin.android`, so BCV's Android hook never fires and it silently does nothing ([BCV#312](https://github.com/Kotlin/binary-compatibility-validator/issues/312)). Its documented replacement, KGP's `kotlin { abiValidation { } }`, is closed for the same reason: that DSL is on the extension the standalone Kotlin plugin registers, not the one AGP provides ([KT-78025](https://youtrack.jetbrains.com/issue/KT-78025), open). So `frak-publish.gradle.kts` registers BCV's own `KotlinApiBuildTask`/`KotlinApiCompareTask` against `compileReleaseKotlin` + `compileReleaseJavaWithJavac`, which is what okhttp and elastic/apm-agent-android did for the same gap. Those task types are internal to BCV, so its version is pinned rather than floated. If a future BCV or KGP starts registering the tasks itself, this build fails with "a task with that name already exists" — the signal to delete the block.
+
+Release variant only: it is the variant a merchant consumes and the only one published. Neither module has debug-only sources; adding one is what would make this worth revisiting.
+
+`@InternalFrakApi` is wired into `nonPublicMarkers` in the root `build.gradle.kts`, so everything it marks drops out of the dump. `@Target(CLASS)` on that annotation is load-bearing: a marker on a property never reaches the class file as a Java annotation, so BCV cannot see one. That mechanism is now **verified**: the first `apiDump` ran and `PercentEncoding` is absent from both dumps. It is the only type carrying the marker, deliberately, so one type answered the question rather than fifty.
+
+The shape being frozen was decided in five reviewed steps — `docs/plans/native-sdk/09-android-api-surface.md` is the record, and its "Open, and to be answered before the dump is committed" list records what the now-committed dump made permanent. Both former open questions are answered there:
+
+- **Q1, the `$default` freeze.** Read models (the config tree, `FrakContext`) get `internal` constructors; merchant-constructed types get a `Builder` with a Kotlin scope-function sugar over the same Builder; `Interaction` becomes an opaque type with static factories; everything else takes explicit overloads. `@JvmOverloads` is banned — it fixes Java and leaves Kotlin callers on `$default` anyway. No holdouts remain: no public declaration in either module carries a Kotlin default argument. See "Construction" above.
+- **Q2, promoting types ahead of a reader.** Types that are `public` only to cross the `:frak-sdk`/`:frak-sdk-ui` boundary carry `@InternalFrakApi`, wired into `nonPublicMarkers` in the root `build.gradle.kts` so they never enter the dump. `PercentEncoding` is the first and, so far, only one: the marker propagates through signatures, so putting it on the config tree would have taken `ConfigApi.resolve()` out of the dump and out of every merchant's reach along with it.
+
+`explicitApi()` remains the first line of defence — it stops a helper silently widening the surface — but it detects nothing about a change to an already-public symbol. That is what the dump is for.
 
 ## Open decisions blocking first publish
 
-- Binary-compatibility gate and the two questions above.
+- ~~The committed `api/*.api` dumps.~~ **Done** — both are committed and `apiCheck` passes in CI. What `docs/plans/native-sdk/09-android-api-surface.md` still lists as open is now *frozen* rather than pending: fixes to those items have to be additive or they are a break.
+- **`publishToMavenLocal` is broken.** `:frak-sdk-ui:javaDocReleaseGeneration` fails inside AGP's bundled Dokka, which cannot parse this build's Kotlin 2.4 class files. Pre-existing and unrelated to the ABI work, but it blocks any publish. Finding A6 in `docs/plans/native-sdk/06-open-findings.md`.
 - Claiming the `id.frak` namespace (TXT record on the `frak.id` apex), generating the real GPG key, wiring the Portal repository. None of these has started; Portal verification is automated and same-day once requested.
 - A device pass covering the sharing sheet, the install handoff and inbound deep links — publishing an artifact nothing has run is how you burn a version number.
-- A CI job that builds and tests this SDK; none exists today.
+- A CI job that builds `example/native-android`. `.github/workflows/apps.yaml` already lints, builds and unit-tests the SDK itself (see "Testing" above); nothing compiles the harness, so a broken harness call site does not go red.

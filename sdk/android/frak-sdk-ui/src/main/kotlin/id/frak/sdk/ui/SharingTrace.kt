@@ -4,20 +4,8 @@ import android.os.SystemClock
 import android.util.Log
 
 /**
- * Tap-to-paint timings for one sheet.
- *
- * Off unless the tag is turned on, which costs a property lookup per milestone and nothing
- * else — so it ships enabled-able rather than stripped, since the numbers that matter can only
- * be taken on a real device against the real wallet:
- *
- * ```
- * adb shell setprop log.tag.FrakSharing DEBUG
- * adb logcat -s FrakSharing
- * ```
- *
- * Deliberately not routed through `FrakConfig.logSink`: `FrakLogger` is `internal` to
- * `:frak-sdk` and Kotlin `internal` is per-compilation-unit, so `:frak-sdk-ui` cannot reach it
- * without widening the published API for a diagnostic.
+ * Tap-to-paint timings for one sheet, off unless the tag is enabled with
+ * `adb shell setprop log.tag.FrakSharing DEBUG`.
  */
 internal class SharingTrace {
     private val startedAt = SystemClock.elapsedRealtime()

@@ -15,7 +15,7 @@ merchant surface (product page / post-purchase / event)
     │  [ Share ]        [ Copy ]   │  ← the PAGE's own footer, performed natively
     └──────────────────────────────┘
  → user shares → page navigates `<scheme>://result?action=share`
- → SDK raises the real OS chooser, then fires Interaction.Sharing (after it, see §3)
+ → SDK raises the real OS chooser, then fires `Interaction.sharing()` (after it, see §3)
  → SDK reloads the page with &confirmed=1                    ← load-bearing, see below
  → page shows PostShareConfirmation: "create your wallet to get your rewards"
  → Install CTA → <scheme>://result?action=install → back to native
@@ -43,7 +43,7 @@ so going native later is a non-breaking internal change.
 | Terminal result | shared *then* install-clicked *then* dismissed → most significant event wins (install > shared/copied > dismissed) |
 | Dismiss mid-load | cancel the load, return dismissed. Queued interactions unaffected |
 | Web view fails to load | tier-3 fallback: native share sheet with the locally-built link. Never show a broken sheet |
-| Rotation | Android: state survives via `SavedStateHandle`; never re-create the web view |
+| Rotation | Android: the session, the pooled web view and the attribution scope are retained on the hosting Activity's `ViewModelStore` and re-attached to a fresh dialog; the web view is never re-created and nothing is reported. **Not** `SavedStateHandle`, as this row said until `08-sharing-sheet-api.md` §5.2: that buys survival across *process death*, which is undeliverable for a WebView-backed sheet — the pool, the warm document and the session are all gone with the process, so a restored sheet would pay the full cold load the warm pool exists to avoid. A plain `ViewModel` buys survival across *configuration change*, which is the case this row was written about |
 | Process death | the continuation is gone. Android can kill the host while the OS chooser is up; tracking is best-effort |
 
 ### Presentation (Android)

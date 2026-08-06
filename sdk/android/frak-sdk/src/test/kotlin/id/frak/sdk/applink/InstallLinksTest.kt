@@ -1,6 +1,7 @@
 package id.frak.sdk.applink
 
-import id.frak.sdk.sharing.FrakContext
+import id.frak.sdk.sharing.frakContextV1
+import id.frak.sdk.sharing.frakContextV2
 import id.frak.sdk.tracking.Interaction
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -17,13 +18,7 @@ class InstallLinksTest {
         )
     }
 
-    /**
-     * `?p=`, not the `#p=` the hosted install page uses: the wallet's deep-link router navigates
-     * in-app, so a fragment is gone before `/install` renders. `routeResolvers.install` forwards
-     * the search param for exactly this reason — the two have to agree or the proof is dropped
-     * on every already-installed device, which is the one path with no Play referrer to fall
-     * back on.
-     */
+    /** `?p=`, not `#p=`: the wallet's deep-link router navigates in-app, so a fragment is gone by then. */
     @Test
     fun `carries the install proof as a search param the deep-link router forwards`() {
         assertEquals(
@@ -32,12 +27,7 @@ class InstallLinksTest {
         )
     }
 
-    /**
-     * `embed=native` is the one marker of a host-embedded page, and it is the same spelling
-     * `/sharing` uses. The sharing sheet navigates its one web view from `/sharing` to here, so a
-     * route that read the marker differently rendered differently mid-flow — which is exactly what
-     * happened while `/install` inferred a host from the presence of `returnScheme` instead.
-     */
+    /** `embed=native` is the one marker of a host-embedded page, spelled the same way `/sharing` spells it. */
     @Test
     fun `marks the hosted install page as host-embedded, the same way the sharing url does`() {
         val url =
@@ -55,8 +45,7 @@ class InstallLinksTest {
                 "&returnScheme=frak-com.acme.app&sid=session-1",
             url,
         )
-        // No corner radius, and nothing else about how the sheet looks: presentation reaches the
-        // page as CSS custom properties injected by origin, so every route gets it at once.
+        // Presentation reaches the page as CSS custom properties injected by origin, not as params.
         assertEquals(false, url.contains("cornerRadius"))
     }
 
@@ -64,8 +53,7 @@ class InstallLinksTest {
     fun `nests the play install referrer as one encoded value`() {
         val url = InstallLinks.playStore("id.frak.wallet", MERCHANT_ID, CLIENT_ID)
 
-        // The referrer's own separators must be encoded, or Play reads them as
-        // separators of the outer query and the pair never reaches the wallet.
+        // The referrer's own separators must be encoded, or Play reads them as outer-query separators.
         assertEquals(
             "https://play.google.com/store/apps/details?id=id.frak.wallet" +
                 "&referrer=merchantId%3D$MERCHANT_ID%26anonymousId%3D$CLIENT_ID",
@@ -83,43 +71,45 @@ class InstallLinksTest {
 class ReferralArrivalTest {
     @Test
     fun `treats a link this device produced as a self-referral`() {
-        val own = FrakContext.V2(MERCHANT_ID, TIMESTAMP, clientId = CLIENT_ID)
+        val own = frakContextV2(MERCHANT_ID, TIMESTAMP, clientId = CLIENT_ID)
         assertTrue(ReferralArrival.shouldIgnoreArrival(own, CLIENT_ID))
     }
 
     @Test
     fun `treats someone else's link as a referral`() {
-        val other = FrakContext.V2(MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID)
+        val other = frakContextV2(MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID)
         assertFalse(ReferralArrival.shouldIgnoreArrival(other, CLIENT_ID))
     }
 
     @Test
     fun `cannot self-refer with no identity, or from a v1 link`() {
-        val context = FrakContext.V2(MERCHANT_ID, TIMESTAMP, clientId = CLIENT_ID)
+        val context = frakContextV2(MERCHANT_ID, TIMESTAMP, clientId = CLIENT_ID)
         assertFalse(ReferralArrival.shouldIgnoreArrival(context, null))
-        // A native app has no wallet, so the wallet comparison the web makes has nothing to
-        // compare against.
-        assertFalse(ReferralArrival.shouldIgnoreArrival(FrakContext.V1(WALLET), CLIENT_ID))
+        // A native app has no wallet, so the wallet comparison the web makes has nothing to compare.
+        assertFalse(ReferralArrival.shouldIgnoreArrival(frakContextV1(WALLET), CLIENT_ID))
     }
 
     @Test
     fun `ignores a v2 link minted for a different merchant, even from another device`() {
-        val foreign = FrakContext.V2(OTHER_MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID)
+        val foreign = frakContextV2(OTHER_MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID)
         assertTrue(ReferralArrival.shouldIgnoreArrival(foreign, CLIENT_ID, ownMerchantId = MERCHANT_ID))
     }
 
     @Test
     fun `lets a v2 link through when this SDK instance has not resolved its own merchant yet`() {
-        val other = FrakContext.V2(OTHER_MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID)
+        val other = frakContextV2(OTHER_MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID)
         assertFalse(ReferralArrival.shouldIgnoreArrival(other, CLIENT_ID, ownMerchantId = null))
     }
 
     @Test
     fun `carries every field a v2 context knows into the arrival`() {
+        // `Interaction` is opaque; this reaches through the `internal` `Kind` with friend access.
         val arrival =
-            ReferralArrival.arrivalFrom(
-                FrakContext.V2(MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID, wallet = WALLET),
-            )
+            ReferralArrival
+                .arrivalFrom(
+                    frakContextV2(MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID, wallet = WALLET),
+                ).kind as Interaction.Kind.Arrival
+
         assertEquals(OTHER_CLIENT_ID, arrival.referrerClientId)
         assertEquals(MERCHANT_ID, arrival.referrerMerchantId)
         assertEquals(WALLET, arrival.referrerWallet)
@@ -128,8 +118,10 @@ class ReferralArrivalTest {
 
     @Test
     fun `carries only the wallet from a v1 context`() {
-        val arrival: Interaction.Arrival = ReferralArrival.arrivalFrom(FrakContext.V1(WALLET))
+        val arrival = ReferralArrival.arrivalFrom(frakContextV1(WALLET)).kind as Interaction.Kind.Arrival
+
         assertEquals(WALLET, arrival.referrerWallet)
+        assertNull(arrival.referrerClientId)
         assertNull(arrival.referrerMerchantId)
         assertNull(arrival.referralTimestamp)
     }

@@ -9,12 +9,8 @@ import {
 } from "@/tests/fixtures";
 import { ListenerSharingPage } from "./index";
 
-// §3.2 regression test: `useShareLink` returns `canShare`, and
-// `SharingPageProps.share.canShare` used to default to `true` when never
-// passed. Rendering the real `SharingPage` would require driving its whole
-// footer/DOM tree just to read one prop, so `SharingPage` itself is mocked
-// down to a stub that surfaces the prop it was actually given — everything
-// else in this module (useShareLink, buildSharingLink, ...) runs for real.
+// `SharingPage` is stubbed down to surface the one prop under test; everything
+// else in this module runs for real.
 const emitterMock = vi.hoisted(() => vi.fn());
 const clearRequestMock = vi.hoisted(() => vi.fn());
 
@@ -39,8 +35,7 @@ vi.mock("@/ui/ListenerUiProvider", () => ({
 }));
 
 vi.mock("@/module/stores/hooks", () => ({
-    // No merchantId: keeps the reward query disabled, so this test does not
-    // need to mock the backend API client too.
+    // No merchantId keeps the reward query disabled, so no backend mock is needed.
     useSafeResolvingContext: () => ({
         sourceUrl: "https://acme.example",
         merchantId: undefined,
@@ -114,10 +109,6 @@ describe("ListenerSharingPage canShare wiring", () => {
     test("passes canShare=false through when the platform cannot share, instead of silently defaulting true", ({
         queryWrapper,
     }) => {
-        // Before the fix, `ListenerSharingPage` never destructured `canShare`
-        // from `useShareLink`, so `SharingPage` always fell back to its own
-        // `canShare = true` default and rendered a Share button that did
-        // nothing on any browser without `navigator.share`.
         setNavigatorShare(undefined);
         render(<ListenerSharingPage />, { wrapper: queryWrapper.wrapper });
         expect(screen.getByTestId("sharing-page").dataset.canShare).toBe(

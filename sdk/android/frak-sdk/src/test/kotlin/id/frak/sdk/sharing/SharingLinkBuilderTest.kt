@@ -1,6 +1,6 @@
 package id.frak.sdk.sharing
 
-import id.frak.sdk.config.AttributionDefaults
+import id.frak.sdk.config.attributionDefaults
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -8,7 +8,7 @@ import org.junit.Test
 
 class SharingLinkBuilderTest {
     private val context =
-        FrakContext.V2(
+        frakContextV2(
             merchantId = "550e8400-e29b-41d4-a716-446655440000",
             timestamp = 1_709_654_400,
             clientId = "550e8400-e29b-41d4-a716-446655440001",
@@ -52,8 +52,8 @@ class SharingLinkBuilderTest {
             SharingLinkBuilder.build(
                 baseUrl = "https://acme.example/p",
                 context = context,
-                attribution = AttributionParams(utmSource = "android-app"),
-                defaults = AttributionDefaults(utmSource = "web", utmMedium = "referral"),
+                attribution = attributionParams(utmSource = "android-app"),
+                defaults = attributionDefaults(utmSource = "web", utmMedium = "referral"),
             )
         assertTrue(link!!.contains("utm_source=android-app"))
         assertTrue(link.contains("utm_medium=referral"))
@@ -65,8 +65,8 @@ class SharingLinkBuilderTest {
             SharingLinkBuilder.build(
                 baseUrl = "https://acme.example/p",
                 context = context,
-                attribution = AttributionParams(utmContent = "per-call"),
-                defaults = AttributionDefaults(utmSource = "web"),
+                attribution = attributionParams(utmContent = "per-call"),
+                defaults = attributionDefaults(utmSource = "web"),
                 productUtmContent = "sku-42",
             )
         assertTrue(link!!.contains("utm_content=sku-42"))
@@ -78,7 +78,7 @@ class SharingLinkBuilderTest {
             SharingLinkBuilder.build(
                 baseUrl = "https://acme.example/p",
                 context = context,
-                attribution = AttributionParams(utmCampaign = "spring sale&more"),
+                attribution = attributionParams(utmCampaign = "spring sale&more"),
                 defaults = null,
             )
         // A space is %20, not `+`: this is a query string, not a form body.
@@ -104,8 +104,7 @@ class SharingLinkBuilderTest {
 
     @Test
     fun `parses a context a channel percent-encoded in transit`() {
-        // Messaging apps re-encode links; `-` and `_` are base64url characters
-        // that survive as `%2D` / `%5F`, which would otherwise fail to decode.
+        // Messaging apps re-encode links; base64url's `-` and `_` survive as `%2D` / `%5F`.
         val encoded = expectedContext.replace("-", "%2D").replace("_", "%5F")
         assertEquals(context, SharingLinkBuilder.parse("https://acme.example/p?fCtx=$encoded"))
     }
@@ -116,5 +115,5 @@ class SharingLinkBuilderTest {
         assertNull(SharingLinkBuilder.parse("https://acme.example/p?fCtx=not-a-context"))
     }
 
-    private fun FrakContext.V2.withoutIdentity() = FrakContext.V2(merchantId, timestamp)
+    private fun FrakContext.V2.withoutIdentity() = frakContextV2(merchantId, timestamp)
 }

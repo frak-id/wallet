@@ -6,9 +6,8 @@ import * as styles from "./sharingPage.css";
 import type { SharingMerchant, SharingReward, SharingT } from "./types";
 
 /**
- * The hero "credit card": the headline reward, its tagline, and the merchant
- * logo. Owns the reward-loading skeletons and the tiered / product-scoped copy
- * variants.
+ * The hero "credit card": headline reward, tagline and merchant logo, with the
+ * loading skeletons and the tiered / product-scoped copy variants.
  */
 export function RewardCard({
     merchant,
@@ -105,19 +104,10 @@ function CardTagline({
 }
 
 /**
- * Render the credit-card headline amount, styling the trailing unit (currency
- * symbol or `%`) smaller than the integer.
- *
- * Takes `parts` when the reward query produced them, which is the normal path
- * and needs no parsing at all.
- *
- * `amount` is the fallback, and it is not vestigial: a native host seeds a
- * cached headline through the `seedReward` URL param so the card paints on the
- * first frame, before any query resolves. That value is a bare string with
- * nothing structured behind it — and it is attacker-controllable, which is why
- * teaching the sanitiser to emit parts would be the wrong trade. When it is
- * what we have, it is printed whole: one frame without small-caps decimals,
- * replaced the moment the real reward lands.
+ * Render the headline amount, styling the trailing unit (currency symbol or `%`)
+ * smaller than the integer. `amount` is the fallback for a host-seeded headline,
+ * which has no `parts` behind it and is URL-supplied (attacker-controllable), so
+ * it is printed whole rather than parsed.
  */
 export function CreditCardAmount({
     amount,

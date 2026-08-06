@@ -8,41 +8,21 @@ import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
 import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme";
 import { sanitizeSeededReward } from "@/module/common/utils/sanitizeSeededReward";
 
-/**
- * Where a param may legally arrive.
- *
- * `query` — read once, at load. `both` — also deliverable by the activation
- * fragment a native host appends to an already-warmed page, which is a
- * same-document navigation and therefore the only way to hand per-tap state to
- * a page that has already booted.
- */
+/** Where a param may arrive: `query` at load only, `both` also via the activation fragment. */
 export type ParamTransport = "query" | "both";
 
 export type ParamCodec<T> = {
     /** Returns `undefined` for anything the param cannot legally be. */
     decode: (raw: unknown) => T | undefined;
     transport: ParamTransport;
-    /**
-     * Value written when a fragment arrives WITHOUT this key.
-     *
-     * Normally an absent key is omitted entirely — see `parseSharingFragment`,
-     * where that is load-bearing. This is the deliberate exception: a fragment
-     * only ever arrives because someone tapped, so a param whose whole meaning
-     * is "nobody has looked at this page yet" must be actively cleared rather
-     * than left standing from the warm URL.
-     */
+    /** Value written when a fragment arrives WITHOUT this key. */
     fragmentDefault?: T;
 };
 
-/** `typeof value === "string"`, and nothing else. */
 const str = (raw: unknown): string | undefined =>
     typeof raw === "string" ? raw : undefined;
 
-/**
- * The router parses search values as JSON, so a host that mints an id from a
- * counter or a timestamp sends digits that arrive as a `number`. Dropping
- * those would cost every callback its session id.
- */
+/** Search values are JSON-parsed, so a numeric-looking id arrives as a `number`. */
 const looseStr = (raw: unknown): string | undefined => {
     if (typeof raw === "string") return raw;
     if (typeof raw === "number") return String(raw);
@@ -59,20 +39,7 @@ const oneOf =
             : undefined;
     };
 
-/**
- * A `products` param in either encoding the contract accepts: raw JSON — which
- * the router's search parser already turns into an array, and which the
- * activation fragment hands over as a JSON string — or a `compressJsonToB64`
- * string, the encoding `sdk/components` already decodes on merchant pages.
- *
- * Tries the b64 decode first, since a JSON-parsed string is never valid
- * base64url, then falls back to sanitizing the value directly, which also
- * covers a JSON-stringified array on its own.
- *
- * Always ends in `sanitizeSharingProducts`: `products` reaches `<img src>`,
- * `product.title`, and campaign selection's numeric scope fields, so it is
- * never trusted as-is regardless of which encoding carried it.
- */
+/** `products` as raw JSON or as a `compressJsonToB64` string; always sanitized. */
 const productList = (raw: unknown): SharingPageProduct[] | undefined => {
     if (typeof raw === "string") {
         return decodeProductsParam(raw) ?? sanitizeSharingProducts(raw);
@@ -81,30 +48,10 @@ const productList = (raw: unknown): SharingPageProduct[] | undefined => {
 };
 
 /**
- * The `/sharing` param contract, declared once.
- *
- * Both transports read this table, which is the point: the query string and
- * the activation fragment used to be two hand-written parsers over the same
- * key set that had to agree by convention. Anything they disagreed about was a
- * silent bug — the fragment is spread over the query params, so a param the
- * fragment sanitized differently would quietly overwrite a good value with a
- * bad one, or erase it entirely.
- *
- * ## Frozen keys
- *
- * `merchantId`, `clientId`, `link`, `appName`, `logoUrl`, `products`,
- * `checkoutToken` and `redirectUrl` are sent by the Shopify post-purchase
- * extension, which is live and which merchants depend on
- * (`apps/shopify/extensions/checkout-post-purchase/src/PostPurchaseCard.tsx`).
- * They keep their names and their exact decoding. In particular `logoUrl` is a
- * plain string rather than an https-only URL: tightening it would be a
- * behaviour change on a live param, not a refactor.
- *
- * ## Shared with `/install`
- *
- * `returnScheme` and `sid` keep their names because `/install` reads the same
- * two params from its own hosts. Renaming them here alone would split one host
- * contract across two spellings.
+ * The `/sharing` param contract, read by both the query string and the
+ * activation fragment. `merchantId`, `clientId`, `link`, `appName`, `logoUrl`,
+ * `products`, `checkoutToken`, `redirectUrl`, `returnScheme` and `sid` are live
+ * host/Shopify params: renaming or tightening one is a behaviour change.
  */
 export const SHARING_PARAMS = {
     merchantId: { decode: str, transport: "query" },
@@ -116,55 +63,25 @@ export const SHARING_PARAMS = {
     checkoutToken: { decode: str, transport: "query" },
     redirectUrl: { decode: sanitizeRedirectUrl, transport: "query" },
 
-    /**
-     * How this page is being presented. `native` means a host has embedded it
-     * in its own sheet, which makes `clientId` mandatory (the host owns the
-     * caller identity) and renders the page without its own chrome.
-     *
-     * Decoded by `decodeHostEmbed` rather than this table's own `oneOf`,
-     * because `/install` — which the sheet navigates the same web view to —
-     * has to reach the identical answer from the identical param. See
-     * `@/module/common/utils/hostEmbed`.
-     */
+    /** `native` means a host embedded this page, which makes `clientId` mandatory. */
     embed: { decode: decodeHostEmbed, transport: "query" },
 
-    /**
-     * Custom scheme a native host listens on for outcomes, since it has no JS
-     * bridge: outcomes navigate to `<scheme>://result?action=…`, which the host
-     * intercepts in its own web view.
-     */
+    /** Custom scheme a native host listens on: `<scheme>://result?action=…`. */
     returnScheme: { decode: sanitizeReturnScheme, transport: "query" },
 
-    /**
-     * Opaque single-use token minted by the host, echoed back on every outcome
-     * so it can drop callbacks not belonging to the active session.
-     */
+    /** Opaque host session token, echoed back on every outcome. */
     sid: { decode: looseStr, transport: "both" },
 
     /** Version of the native SDK that opened this page. Telemetry only. */
     sdkVersion: { decode: looseStr, transport: "query" },
 
-    /**
-     * Already-formatted reward headline from a host's local cache, painted on
-     * the first frame and replaced once the real query resolves. Display-only:
-     * never reaches the sharing link or any identity decision.
-     */
+    /** Pre-formatted reward headline from a host's cache, until the real query resolves. */
     seedReward: { decode: sanitizeSeededReward, transport: "both" },
 
     /**
-     * Whether anyone is actually looking at this page.
-     *
-     * `warm` means a host has loaded it against the real merchant so the
-     * bundle, React, i18n and the merchant-keyed queries are all done before
-     * the user taps. A warm page reports `sharing_page_preloaded` instead of
-     * `sharing_page_viewed`, which is what keeps warming every merchant surface
-     * from inflating the sharing funnel's denominator with sheets nobody
-     * opened.
-     *
-     * `fragmentDefault: "live"` is the load-bearing bit: an activation fragment
-     * means someone tapped, so it clears `warm` even when the host forgot to
-     * say so. Without it a host that omitted the key would warm forever and
-     * never report a single view.
+     * `warm` means a host preloaded the page; it reports
+     * `sharing_page_preloaded` instead of `sharing_page_viewed`. The fragment
+     * default clears `warm` even when the host forgot to send `state`.
      */
     state: {
         decode: oneOf("live", "warm"),
@@ -172,11 +89,7 @@ export const SHARING_PARAMS = {
         fragmentDefault: "live",
     },
 
-    /**
-     * Which of the page's two screens to open on. `confirmation` is how a host
-     * whose own share sheet already completed says so, since the in-page
-     * buttons that would otherwise set it are hidden under `embed=native`.
-     */
+    /** Which screen to open on; `confirmation` means the host's own share sheet completed. */
     view: { decode: oneOf("share", "confirmation"), transport: "both" },
 } as const satisfies Record<string, ParamCodec<unknown>>;
 
@@ -194,15 +107,7 @@ export type SharingActivation = {
         : never]?: ReturnType<(typeof SHARING_PARAMS)[K]["decode"]>;
 };
 
-/**
- * A table entry seen through the general codec type.
- *
- * `as const satisfies` narrows each entry to exactly the properties it
- * declares, which is what gives `SharingSearch` its per-key value types — but
- * it also means `fragmentDefault` is missing from the entries that omit it,
- * and so unreadable across the union. Widening here keeps the precise types
- * where they are useful and the optional flags readable where they are needed.
- */
+/** Widens a table entry so optional flags like `fragmentDefault` stay readable. */
 export function paramCodec(key: SharingParamKey): ParamCodec<unknown> {
     return SHARING_PARAMS[key];
 }

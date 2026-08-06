@@ -7,20 +7,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useStore } from "zustand";
 
 /**
- * Resolve which anonymous client this sharing page is acting for.
- *
- * Three sources, in strict precedence:
- *
- * 1. the `clientId` param, stated outright by the caller;
- * 2. the wallet's own `clientIdStore`;
- * 3. a backend lookup by Shopify checkout token.
- *
- * A native host states the identity outright, and (2) and (3) must not stand
- * in for it: `clientIdStore` is global rather than merchant-keyed, and a
- * checkout token belongs to whoever happens to be checking out. Substituting
- * either would point `installUrl` and the `ensure` call at the wrong identity
- * — silently, and in the one mode where the wallet cannot see it happen. So
- * under `embed`, the param is the only source consulted.
+ * Resolve which anonymous client this page acts for: the `clientId` param, then
+ * `clientIdStore`, then a backend lookup by checkout token. Under `embed` only
+ * the param counts — the other two can name the wrong identity.
  */
 export function useSharingIdentity({
     merchantId,

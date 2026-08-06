@@ -16,6 +16,7 @@ declared unfixable both close (§3), and the sheet finally survives rotation as
 | [6](#6-sequencing) | Sequencing |
 | [7](#7-risks-and-open-questions) | Risks and open questions |
 | [8](#8-what-this-deliberately-does-not-do) | What this deliberately does not do |
+| [9](#9-what-actually-landed-deviations-from-the-above) | **What actually landed — deviations from the above** |
 
 ---
 
@@ -42,9 +43,10 @@ SwiftUI `ViewModifier`, and UIKit apps are equally locked out.
    not a migration with a deprecation cycle — it is a **replacement**. `rememberFrakSharingLauncher`
    gets deleted, not `@Deprecated`.
 2. **It is on the critical path to that publish.** The binary-compatibility validator was wired and
-   then removed with the comment *"the public shape isn't frozen. Re-add before first publish"*
-   (`frak-publish.gradle.kts:14`). Committing a dump ratifies the shape. This must land **before**
-   BCV returns, or we ratify the Compose-only surface and then break it.
+   then removed while the public shape was unfrozen; committing a dump ratifies the shape. This had to
+   land **before** BCV returned, or we would have ratified the Compose-only surface and then broken it.
+   It did: the sheet's Builder shipped first, then the five steps of
+   `09-android-api-surface.md` reshaped the rest, then BCV came back. No dump is committed yet.
 
 A third reason, less obvious: **no test or harness exercises a non-Compose caller.** Both example
 apps drive the SDK from inside a Compose/SwiftUI tree. The XML and UIKit paths are not merely
@@ -265,17 +267,25 @@ Merchant code:
 
 ```kotlin
 // XML / Java / plain Activity
-private val sharing = FrakSharing.Builder(::onShareResult).build(this)   // in onCreate
+private lateinit var sharing: FrakSharing
+
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    sharing = FrakSharing.Builder(::onShareResult).build(this)
+}
+
 // …when the share surface becomes visible:
 sharing.warm()
 sharing.present(request)
 
-// Fragment
-private val sharing = FrakSharing.Builder(::onShareResult).build(this)
-
 // Compose — warms on composition-enter, exactly as today
 val sharing = remember { FrakSharing.Builder(::onShareResult) }.build()
 ```
+
+> Amended after implementation. This originally showed a property initialiser annotated
+> `// in onCreate`, and the `Fragment` build site. It cannot be an initialiser — `build()` needs the
+> `ViewModelStore`, and an Activity has none until the framework attaches its `Application`, which
+> is after the constructor. `build(Fragment)` is deferred; see §9.4.
 
 The Compose form is `remember { Builder(...) }.build()` — `build()` is the `@Composable`, not the
 `Builder` construction. That matches Stripe's own migration guidance verbatim.
@@ -442,7 +452,7 @@ A merchant can hold two `FrakSharing` instances on one Activity, and two sheets 
 | **B** | An **XML + Java** screen in `example/native-android`, plus a rotation pass and a leak check | Validates A on the path nothing has ever compiled |
 | **C** | Replace the remaining Compose content with Views; split `id.frak:frak-sdk-ui-compose` for the `@Composable build()` | Compose leaves the base artifact; the dex gate stops being vacuous |
 | **D** | `FrakSharingPresenter` on iOS; reimplement `.frakSharingSheet` on top | UIKit merchants |
-| **E** | Answer `05` Q1–Q3, re-wire binary-compatibility-validator, commit dumps | The first publish |
+| **E** | Answer `05` Q3 (Q1/Q2 are answered in `09`), commit the `api/*.api` dumps — BCV itself is already wired | The first publish |
 
 A is split because A2 is the single largest risk item here and the only one that can leak an
 Activity. A1 is a re-parenting with a compile error at every site that needs attention; A2 is a
@@ -508,3 +518,223 @@ sees the base artifact's types.
   building it is not in scope.
 - **No durability across process death.** Not achievable for a WebView-backed sheet, and not worth
   simulating.
+
+---
+
+## 9. What actually landed — deviations from the above
+
+Written after implementing A1 and A2 on Android. Everything not listed here landed as designed.
+Each entry says what the plan asserted, what the code does instead, and why — so the next reader
+trusts §1–§8 only where it was not corrected.
+
+**None of this was compiled or run locally.** The machine the work was done on has no JDK and no
+Android SDK. CI is the only verifier, and see 9.1 for what CI does not cover.
+
+### 9.1 §6's enforcement mechanism does not exist
+
+§6 says deleting `rememberFrakSharingLauncher` *"breaks the harness's compilation in the same
+build… there is no version-pinning gap to hide a missed migration."* That is true for a developer
+with a toolchain and false everywhere else: `.github/workflows/apps.yaml` triggers on
+`apps/**`, `packages/**`, `sdk/**` and has no `example/**` path or job. **Nothing in CI ever
+compiles `example/native-android`.** The harness migration is in the A1 commit as promised, but it
+is unverified, and a future break in it will not go red.
+
+What replaced the missing coverage, all inside `sdk/android/**` so CI does run it:
+
+| Added | Pins |
+|---|---|
+| `frak-sdk-ui/src/test/java/…/JavaCallSiteFixture.java` | That the public API stays callable from Java: SAM lambda for `ResultCallback`, a chained `heightFraction`, `build(activity)`, every `SharingResult` arm, `FrakSharingDefaults.getHEIGHT_FRACTION()`. Compiled by `:frak-sdk-ui:test`, never executed |
+| `SharingPresentDecisionTest` | The `present()` guards Compose used to make unreachable |
+| `FrakSharingBuilderTest` | `heightFraction`'s `require`, including NaN |
+| `SharingWebViewContextTest` (A2) | That the pooled `WebView` holds the `MutableContextWrapper` itself rather than resolving through it once, that swapping its base is visible through the retained view, and that a release/re-acquire cycle hands back **the same** `WebView` instance |
+
+### 9.2 The dialog is built per `present()`, not at `build()` (§3)
+
+§3 claims constructing the `ComponentDialog` at `build()` time moves ~300ms off the critical path.
+Rejected, on three grounds:
+
+1. `SharingPresentation.kt`'s own KDoc attributes that ~300ms to the Dialog **and** *"the pooled
+   web view is attached and laid out in the same frames"*. The attach and layout are paid at
+   `show()` whatever happens; only decor inflation is deferred. §7.7 already concedes there is no
+   millisecond number for any of §3.
+2. Re-showing one retained `ComponentDialog` + `ComposeView` depends on `onStop()` nulling and
+   lazily rebuilding the lifecycle/saved-state registries, on `AbstractComposeView` re-creating its
+   composition on re-attach, **and** on `WindowRecomposerPolicy`'s cached recomposer being replaced
+   — three internal AndroidX details, none of which anything here can test. The failure mode is "the
+   second share of a session renders a blank sheet."
+3. The tap-time head start §3 actually cares about is untouched: `present()` still calls
+   `SharingPresentation.start(...)` *before* it builds the window, so the page load is in flight
+   first — exactly `FrakSharingLauncher.launch`'s old ordering.
+
+Revisit if and when §7.7's Perfetto trace says the decor inflation is worth the fragility.
+
+### 9.3 §4.2's threading fix names a dispatcher this build does not have
+
+§4.2 says `finish()` should hop to `Dispatchers.Main.immediate`. `kotlinx-coroutines-android` is on
+no classpath in `sdk/android` — `frak-sdk` declares only `kotlinx-coroutines-core`. `Dispatchers.Main`
+compiles fine against core and throws `IllegalStateException: Module with the Main dispatcher had
+failed to initialize` at first touch, i.e. inside the merchant's process, while reporting a share
+result. Neither the unit tests nor `assembleRelease` would have caught it.
+
+What landed instead:
+
+- The hop is in `SharingHost`'s callback adapter, not in `SharingSheetState.finish()`, using the
+  `Handler(Looper.getMainLooper())` pattern already in that file. Inline when already on main.
+  `SharingSheetState`'s ordering invariants stay synchronous, and its test file moves by one line
+  (the `SharingDependencies` collapse) rather than being rewritten around a new threading model.
+- `SharingHost`'s scope uses a hand-rolled `MainThreadDispatcher` (a `CoroutineDispatcher` over the
+  same `Handler`) for the same reason. It is main-confined because `SharingSheetState` drives the
+  `WebView` from that scope — the install-page load, the `view=confirmation` navigation and
+  share-again all reach `webView.navigate(...)` from it. A `ViewModel`'s `viewModelScope` would
+  have silently fallen back to `Dispatchers.Default` here for exactly the missing-artifact reason
+  above, which is a background-thread `WebView` call: A2 does **not** use `viewModelScope`.
+
+### 9.4 `build(Fragment)` is deferred
+
+§4.1 lists three build sites. Two landed. `build(Fragment)` would put `androidx.fragment` in the
+published POM as `api` — imposed on every merchant, including pure-Compose apps that will never
+touch it — for a build site nothing validates, since step B is out of scope. `build(requireActivity())`
+works today, and §4.3's own point stands: Builder methods are additive with no ABI break, so this
+lands alongside the Fragment harness screen that would exercise it.
+
+### 9.5 §3's replacement table is incomplete
+
+Four things `ModalBottomSheet` was supplying that §3 does not list, each of which had to be
+replaced by hand:
+
+| Missing from §3 | What it needed |
+|---|---|
+| The scrim | `window.setDimAmount` alone does nothing without `FLAG_DIM_BEHIND`, and a window dim is constant for the window's whole life, so it would pop in and out while the sheet is still sliding. The scrim is Compose-drawn (`drawBehind`) and keyed to the sheet's own offset instead |
+| The window itself | A `Dialog` built with `themeResId = 0` picks up the merchant's `android:dialogTheme`, and every standard dialog theme sets `windowIsFloating`, which shrink-wraps the decor and defeats `setLayout(MATCH_PARENT, MATCH_PARENT)`. Built with `android.R.style.Theme_Translucent_NoTitleBar` — a platform id, so no `res/` and no `resourcePrefix` collision — and `setWindowAnimations(0)` so the theme's fade does not race the slide-in. This is §7.3, which §3 left open |
+| `MaterialTheme` | The sheet used to compose inside the merchant's tree. In a window of its own it has no `MaterialTheme` ancestor, so `BottomSheetDefaults.DragHandle()`, `BottomSheetDefaults.ContainerColor` and the skeleton would silently fall back to M3 defaults. Pinned to `lightColorScheme()` — everything that reads it sits against the hosted page, and that page is white |
+| Accessibility | `ModalBottomSheet` supplies a scrim close action and a pane title. Replaced with a `dismiss` semantics action on the sheet container, which TalkBack labels itself; the scrim is `clearAndSetSemantics {}`. A pane title is **not** replaced — it needs a localised string and this module ships no resources |
+
+Also load-bearing and unstated: the window must be `MATCH_PARENT` in height, not `WRAP_CONTENT`.
+Drag-to-dismiss and the exit animation translate the sheet down by its full height, and a
+sheet-sized window clips that translation at its own edge.
+
+### 9.6 §5.2's `MutableContextWrapper` swap points are wrong
+
+§5.2: *"The swap points are exactly `SharingWebViewPool.acquire`/`release`."* They are not, because
+`acquire` is not where the view is **constructed** — `warm()` → `newHandle()` is, and that runs
+first. A `WebView` resolves its theme, `LayoutInflater` and popup host at construction, and swapping
+the base afterwards does not retroactively fix it; `<select>` dropdowns and text-selection handles
+would mis-place, silently, on a device nothing has tested. The pool's own KDoc already stated the
+invariant: *"a WebView needs a themed, windowed context for its own popups."*
+
+So the base is the **Activity** from the moment the host attaches to one, and is downgraded to the
+application context in `onDestroy` — Shopify's direction, not the plan's. Those two are the swap
+points, and `acquire`/`release` are deliberately **not**: between a release and the next acquire the
+Activity is alive anyway, so leaving it as the base leaks nothing, while swapping there would open a
+window in which a popup resolves against a context with no window.
+
+The construction ordering needs one more guard than a swap. `resolveWarmUrl` suspends on two network
+reads, so its continuation can land in the gap between one Activity's `onDestroy` and the next one's
+attach — and warming the pool from in there would construct the view against the application
+context after all. It therefore answers a URL rather than warming, and `SharingHost` holds it until
+it has an Activity.
+
+### 9.7 §5.5 and §5.2 contradict each other
+
+§5.5 puts the `AlreadyPresenting` guard on the Activity-scoped host. §5.2 has the session outlive
+the Activity in a `ViewModel`. Both cannot hold: a rotation mid-session would reset an
+Activity-scoped guard and let a second `present()` stack over a live session. The guard tracks the
+session, so in A2 it lives with it.
+
+### 9.8 §5.2's onDestroy/onCleared table drops results
+
+The table covers rotation not reporting `Dismissed`. It does not cover a **terminal** result
+arriving *during* the rotation window — which is reachable by construction, since `launchAttribution`
+runs on the retained scope precisely so a chooser the user is still looking at outlives the sheet.
+With the old Activity's callback detached and the new one not yet attached, that result had nowhere
+to go, and `finish()`'s compare-and-set means it is dropped rather than re-delivered. A2 buffers a
+result that lands with no callback attached and replays it on the next `build()`.
+
+### 9.9 Smaller deviations, recorded for completeness
+
+- **`WindowCompat.setDecorFitsSystemWindows` → the platform API, gated at API 30.** §7.2 names the
+  AndroidX wrapper; `androidx.core` is not a declared dependency of this module and adding one to
+  reach a single call is not worth the resolution risk at `compileSdk 36`. The consequence is real
+  and unstated in §7.2: on API 24–29 the dialog does nothing about insets at all.
+- **`FrakSharing`'s internal constructor takes three parameters**, not §4.1's one — the host, the
+  height fraction and the callback. Internal, so no ABI consequence.
+- **The Compose build site keeps `rememberUpdatedState`.** §4.1's snippet implies the callback is
+  captured by the `Builder`. It is, but `@Composable build()` reads the current one through
+  `rememberUpdatedState` and hands the host a stable delegating `ResultCallback`, restoring exactly
+  what `rememberFrakSharingLauncher` did. Without it a caller who omits the documented outer
+  `remember { Builder(...) }` would have their first lambda — and all of its captures — called for
+  the life of the screen.
+- **`build(activity)` must be called from `onCreate`, and now says so loudly.** §4.1's snippet reads
+  as a property initialiser with an `// in onCreate` comment. It cannot be one: `ViewModelStore` is
+  where a rotation-surviving sheet lives, and `ComponentActivity` has none until the framework
+  attaches its `Application`, which is after the constructor. `build(activity)` `check`s this with
+  a message rather than letting AndroidX throw a generic one.
+- **`@Composable build()` is the one ABI-hostile member of the new surface**, and neither §6 nor §4
+  says so: its erased signature carries the Compose compiler's synthetic `(Composer, Int)`
+  parameters, so a binary-compatibility dump ratifies a signature the Compose compiler version
+  owns. It is also exactly what pins Compose into the base artifact that step C exists to unpin.
+  Related, and also unstated: `androidx.activity` is `api` because `ComponentActivity` is in a
+  public signature, but `androidx.compose.runtime` is only `implementation` — so a consumer who has
+  not declared Compose themselves cannot call `@Composable build()` at all.
+- **A `WebView` that cannot be constructed is reported as `FrakError.Decoding`.** A device whose
+  WebView provider is missing, disabled or mid-update throws out of `WebView`'s constructor, and
+  there is no arm of `FrakError` that means "no usable web view". `Decoding` is the least-wrong of
+  the existing ones and carries the real cause; a proper arm is `05-build-and-release.md` Q1's
+  business, and §8 says this change does not touch `FrakError`.
+
+### 9.10 What A2 leaves untested
+
+Deliberately not written: a `WeakReference` + `System.gc()` collectability assertion. Robolectric's
+`ActivityController` retains Activities for the test's duration by design, so it would be asserting
+against the harness rather than the code, `System.gc()` is advisory, and the result would be a
+flaky red in the first CI job this package has ever had — on a machine that cannot run it once to
+find out. `SharingWebViewContextTest` pins the load-bearing line instead: that the swap is
+*possible*, i.e. that the view holds the wrapper.
+
+Not covered by anything, and the first thing a device pass should look at:
+
+- the `onDestroy(isChangingConfigurations)` / `onCleared()` split actually reporting once on a
+  finish and not at all on a rotation,
+- a sheet re-attaching to the recreated Activity's dialog with the session live — including that
+  the web view is out of the old dialog's view tree by then, or `AndroidView`'s factory throws
+  `The specified child already has a parent`,
+- the buffered-result replay (§9.8), and a dismissal that lands mid-rotation. All four exit routes
+  (back, scrim tap, drag/fling, the TalkBack dismiss action) tell the host an exit has begun before
+  they animate, so the host can finish the session itself rather than putting the sheet back on
+  screen — none of that has run,
+- the guards and latches added after review — `exitRequested`, `warmRequested`, `present()`'s
+  WebView-construction catch, and `onOwnerCleared` leaving the reporting path intact so a deferred
+  attribution still reports. All are plain state machines, and all of them need a real Activity and
+  a real dialog to reach, which is the same wall as everything else in this list,
+- LeakCanary over a rotate-with-sheet-up loop, per §7.1,
+- ~~insets, which nothing in the new window handles~~ — **found on the first device pass, fixed.**
+  The reasoning here was wrong: it asked whether `ModalBottomSheet`'s own insets changed (they did
+  not, they were top-only either way) when what changed was the *window underneath it*. The sheet
+  used to compose in the merchant's window, which fits system windows, so its content area already
+  stopped above the nav bar; it now composes in a dialog with `setDecorFitsSystemWindows(false)`
+  spanning the whole display. Two visible regressions came out of that, both in `example/native-android`:
+  the page's bottom ~48dp sat behind the nav bar, and both system bars flipped black for the life of
+  the sheet because `Theme_Translucent_NoTitleBar` never sets `statusBarColor`/`navigationBarColor`
+  and `Theme`'s default for both is opaque black. Fixed by `windowInsetsPadding(navigationBars)`
+  inside the sheet's `graphicsLayer` (outside it, a full-offset exit strands a sliver over the nav
+  bar) and transparent bar colours on the dialog window. `imePadding` is still absent, deliberately:
+  the hosted page has no text input, so there is no keyboard path to get wrong yet.
+
+Also unverified by construction: whether disposing the composition from inside its own effect
+coroutine is safe. The exit chain runs `Animatable` frame callback → `state.dismiss()` →
+`SharingHost.finish` (inline, on main) → `dialog.dismiss()` → `disposeComposition()`, which
+disposes the composition whose `LaunchedEffect` is on the stack. M3's own `hide() →
+onDismissRequest` has the same shape, so this is believed safe rather than known to be.
+
+Reaching those from a JVM test would mean composing a `ComposeView` inside a real `ComponentDialog`
+under Robolectric, which depends on enough internal Compose window machinery that a green result
+would not have meant much anyway.
+
+### 9.11 `clampSharingHeightFraction` stays
+
+§4.3 replaces the silent clamp with `require(...)` at the build site, and that landed. The internal
+clamp stays as well: `fillMaxHeight` *throws* on a non-finite fraction, and a crash inside the
+merchant's process is a worse answer than the default for a value that still crosses an internal
+boundary. `MIN_/MAX_HEIGHT_FRACTION` keep `const` — they are `internal`, so §4.3's inlining
+argument does not apply to them. `HEIGHT_FRACTION` drops `const` and gains `@JvmStatic`, so Java
+callers reach a getter rather than `INSTANCE`.

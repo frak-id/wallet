@@ -13,9 +13,8 @@ import org.json.JSONObject
 import java.util.UUID
 
 /**
- * Queues tracked events and drains them, oldest first. Enqueue is durable; sending is
- * best-effort behind it. Strictly FIFO with one send in flight; parallel sends would reorder
- * events for no gain at this volume.
+ * Queues tracked events and drains them oldest first: enqueue is durable, sending is best-effort
+ * behind it, one send in flight at a time.
  */
 internal class InteractionTracker(
     private val queue: EventQueue,
@@ -23,17 +22,11 @@ internal class InteractionTracker(
     private val logger: FrakLogger,
     /** Drains run here, not on the caller: [track] must not block on the whole backlog. */
     private val scope: CoroutineScope,
-    /** The id events are currently captured under, read fresh so a reset is visible mid-drain. Suspending: [id.frak.sdk.identity.AnonymousIdStore.anonymousId] awaits eager generation rather than blocking. */
+    /** The id events are currently captured under, read fresh so a reset is visible mid-drain. */
     private val currentClientId: suspend () -> String?,
     /**
-     * Whether tracking is still permitted, read fresh inside the drain loop.
-     *
-     * A [purge] alone cannot stop a drain: [flush] reads the whole backlog under [queueMutex] and
-     * posts it outside that lock, so an event already in `pending` would still upload after a
-     * withdrawal. Re-reading this per event is what actually stops it.
-     *
-     * Defaults to always-allowed so the tracker's own tests, which have no consent store, are
-     * unaffected; the real gate is wired in [id.frak.sdk.core.DefaultFrakClient].
+     * Whether tracking is still permitted, re-read per event: [flush] posts outside [queueMutex],
+     * so without this an event already read would still upload after a withdrawal.
      */
     private val trackingAllowed: suspend () -> Boolean = { true },
     private val now: () -> Long = System::currentTimeMillis,
@@ -52,7 +45,7 @@ internal class InteractionTracker(
         clientId: String?,
         interaction: Interaction,
     ) {
-        val key = (interaction as? Interaction.Custom)?.idempotencyKey ?: newKey()
+        val key = (interaction.kind as? Interaction.Kind.Custom)?.idempotencyKey ?: newKey()
         enqueue(INTERACTION_PATH, interactionBody(merchantId, interaction, key), clientId, key)
         scope.launch { flush() }
     }
@@ -75,9 +68,8 @@ internal class InteractionTracker(
         scope.launch { flush() }
     }
 
-    // No shutdown() here: every drain is a scope.launch on the client's single SupervisorJob
-    // scope, which DefaultFrakClient.shutdown() cancels and joins. A launch into a cancelled
-    // scope never runs its body, so there is nothing left for a stopped flag to refuse.
+    // No shutdown(): every drain is launched on the client's scope, which
+    // DefaultFrakClient.shutdown() cancels and joins.
 
     /** Called on anonymous id reset: an event captured under the dead id must never be emitted. */
     suspend fun purge() {
@@ -85,24 +77,18 @@ internal class InteractionTracker(
     }
 
     /**
-     * Sends oldest first, stopping (not skipping) at the first failure to keep FIFO order —
-     * except a permanently-rejected event, dropped after [MAX_FAILURES]. Network I/O happens
-     * outside [queueMutex] so [enqueue] never waits on a request. File is reconciled against a
-     * fresh read afterwards, so an event appended mid-flush isn't lost.
+     * Sends oldest first, stopping (not skipping) at the first failure to keep FIFO order — except
+     * a permanently-rejected event, dropped after [MAX_FAILURES]. Network I/O happens outside
+     * [queueMutex], and the file is reconciled against a fresh read so a mid-flush append isn't lost.
      */
     suspend fun flush() {
         flushMutex.withLock {
-            // Before the read, so a drain started by a track() that raced a consent withdrawal
-            // never even loads the backlog. The per-event re-read below is what actually closes
-            // the window.
             if (!trackingAllowed()) return
             if (backoff.isBackingOff(BACKOFF_KEY)) return
 
             val pending = queueMutex.withLock { queue.read(now()) }
             if (pending.isEmpty()) {
-                // Nothing to send, but expired/unreadable rows may still be on disk. reconcile,
-                // not a bare replace(emptyList()): it already refuses to compact a non-durable
-                // read, so it is safe unconditionally.
+                // Expired or unreadable rows may still be on disk.
                 queueMutex.withLock { queue.reconcile(emptySet(), emptyMap(), now()) }
                 return
             }
@@ -112,10 +98,8 @@ internal class InteractionTracker(
             val retried = mutableMapOf<Long, QueuedEvent>()
 
             for (event in pending) {
-                // break, not return: EventQueue.clear() swallows a failed File.delete(), and if
-                // that delete doesn't land, events this drain already uploaded stay on disk with
-                // no record that they went. Falling through to reconcile prevents a re-send
-                // (a duplicated referral payout) when the concurrent purge's delete fails.
+                // break, not return: falling through to reconcile prevents a re-send when a
+                // concurrent purge's file delete silently fails.
                 if (!trackingAllowed()) {
                     logger.info("Tracking was disabled mid-drain; stopping without sending the rest.")
                     break
@@ -156,10 +140,8 @@ internal class InteractionTracker(
                 break
             }
 
-            // queue.reconcile, not a read()-then-replace() from here: those would be two separate
-            // suspending hops, and an event appended between them would be read by neither and
-            // erased by the second. Keeping read+write inside one EventQueue-owned hop keeps this
-            // safe regardless of what future caller reaches EventQueue next.
+            // One EventQueue-owned hop: a read()-then-replace() from here would erase an event
+            // appended between the two suspending calls.
             queueMutex.withLock {
                 queue.reconcile(delivered, retried, now())
             }
@@ -173,8 +155,7 @@ internal class InteractionTracker(
         idempotencyKey: String,
     ) {
         queueMutex.withLock {
-            // MISSING_ROW_ID: EventQueue.append assigns and persists the real id; nothing
-            // upstream of it, including this call site, is allowed to choose one.
+            // EventQueue.append assigns and persists the real row id; no caller may choose one.
             queue.append(QueuedEvent(idempotencyKey, path, body, clientId, now(), rowId = EventQueue.MISSING_ROW_ID))
         }
     }
@@ -190,32 +171,31 @@ internal class InteractionTracker(
         idempotencyKey: String,
     ): JSONObject {
         val body = JSONObject().put("merchantId", merchantId)
-        return when (interaction) {
-            is Interaction.Arrival -> {
+        return when (val kind = interaction.kind) {
+            is Interaction.Kind.Arrival -> {
                 body
                     .put("type", "arrival")
-                    .put("referrerWallet", interaction.referrerWallet)
-                    .put("referrerClientId", interaction.referrerClientId)
-                    .put("referrerMerchantId", interaction.referrerMerchantId)
-                    .put("referralTimestamp", interaction.referralTimestamp)
+                    .put("referrerWallet", kind.referrerWallet)
+                    .put("referrerClientId", kind.referrerClientId)
+                    .put("referrerMerchantId", kind.referrerMerchantId)
+                    .put("referralTimestamp", kind.referralTimestamp)
             }
 
-            is Interaction.Sharing -> {
+            is Interaction.Kind.Sharing -> {
                 body
                     .put("type", "sharing")
-                    .put("sharingTimestamp", interaction.sharingTimestamp ?: (now() / 1000))
-                    .put("purchaseId", interaction.purchaseId)
+                    .put("sharingTimestamp", kind.sharingTimestamp ?: (now() / 1000))
+                    .put("purchaseId", kind.purchaseId)
                     .put("idempotencyKey", idempotencyKey)
             }
 
-            is Interaction.Custom -> {
-                // Not validated here: the route's schema is the authority; a rejection is a 4xx
-                // the flush loop already evicts.
+            is Interaction.Kind.Custom -> {
+                // Not validated here: the route's schema is the authority, and a rejection is a 4xx.
                 val data = JSONObject()
-                interaction.data.forEach { (key, value) -> data.put(key, value) }
+                kind.data.forEach { (key, value) -> data.put(key, value) }
                 body
                     .put("type", "custom")
-                    .put("customType", interaction.customType)
+                    .put("customType", kind.customType)
                     .put("data", data)
                     .put("idempotencyKey", idempotencyKey)
             }

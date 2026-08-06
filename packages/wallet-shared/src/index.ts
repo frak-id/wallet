@@ -1,10 +1,5 @@
-// Public API barrel for @frak-labs/wallet-shared.
-//
-// Exports are enumerated explicitly (rather than wildcard re-exports) so the
-// public surface is discoverable and tree-shakeable. Names re-exported by
-// more than one sub-barrel (e.g. the webauthn error helpers, shared by
-// `authentication` and `common`) are listed once, from the first sub-barrel
-// that owns them.
+// Public API barrel for @frak-labs/wallet-shared. Exports are enumerated
+// explicitly; a name owned by several sub-barrels is listed once, from the first.
 
 export {
     authKey,

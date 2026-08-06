@@ -1,6 +1,6 @@
 package id.frak.sdk.core
 
-/** The Frak stage the SDK talks to. Wallet/backend origins always stated together, never guessed. */
+/** The Frak stage the SDK talks to. */
 public sealed interface FrakEnvironment {
     /** No trailing slash. */
     public val wallet: String
@@ -27,32 +27,28 @@ public sealed interface FrakEnvironment {
 
     /**
      * Explicit origin pair for local development. On an emulator use `10.0.2.2`, not `localhost`.
-     * Trailing slashes are stripped.
-     *
-     * `wallet`/`backend` must be `https://`, or `http://` to a loopback/private-network host
-     * (`localhost`, `127.0.0.0/8`, `::1`, `10.0.2.2`/`10.0.3.2`, `*.local`, or an RFC 1918
-     * range). Anything else, including `file:`/`data:`/`javascript:`, is rejected.
-     *
-     * Not validated eagerly: a rejected origin is swapped for an unreachable placeholder and
-     * surfaces only as a generic [FrakError.Network] on first use. [Frak.initialize] logs the
-     * rejection at `ERROR` with the offending origin and rule.
-     *
-     * [walletPackageId] and [walletScheme] default to Frak's own dev wallet: override them for a
-     * merchant's stub server.
+     * Must be `https://`, or `http://` to a loopback/private-network host; anything else is swapped
+     * for an unreachable placeholder and surfaces as a generic [FrakError.Network] on first use.
      */
     public class Custom private constructor(
         wallet: String,
         backend: String,
         override val walletPackageId: String,
         override val walletScheme: String,
-        /** Null when neither raw origin was rejected; the rejection message otherwise. Logged by [id.frak.sdk.Frak.initialize] at `ERROR`. */
+        /** Null when neither raw origin was rejected; the rejection message otherwise. */
         internal val rejectionReason: String?,
     ) : FrakEnvironment {
+        /** Frak's own dev wallet package id and scheme. */
         public constructor(
             wallet: String,
             backend: String,
-            walletPackageId: String = DEV_WALLET_PACKAGE_ID,
-            walletScheme: String = DEV_WALLET_SCHEME,
+        ) : this(wallet, backend, DEV_WALLET_PACKAGE_ID, DEV_WALLET_SCHEME)
+
+        public constructor(
+            wallet: String,
+            backend: String,
+            walletPackageId: String,
+            walletScheme: String,
         ) : this(
             wallet = wallet,
             backend = backend,
@@ -76,17 +72,12 @@ private const val DEV_WALLET_SCHEME = "frakwallet-dev"
 internal object CustomOrigin {
     private const val PLACEHOLDER = "https://frak-sdk-invalid-custom-origin.invalid"
 
-    /**
-     * Null when [origin] is accepted as-is. Parsed with [java.net.URI], not manual string
-     * splitting: a bracketed IPv6 host like `"http://[::1]:3000"` needs the port separator
-     * recognised as the `:` after the matching `]`.
-     */
+    /** Parsed with [java.net.URI]: a bracketed IPv6 host needs the port separator found after the `]`. */
     internal fun rejectionReason(origin: String): String? {
         val uri = runCatching { java.net.URI(origin) }.getOrNull()
         val scheme = uri?.scheme?.lowercase() ?: ""
-        // getHost() is null for a registry-based authority, e.g. a hostname containing an
-        // underscore. Falling back to the raw authority keeps such hosts accepted; it cannot
-        // widen anything since isLoopbackOrPrivateHost is a closed allowlist.
+        // getHost() is null for a registry-based authority, e.g. a host containing an underscore;
+        // the raw-authority fallback cannot widen anything, the allowlist below is closed.
         val host =
             uri?.host
                 ?: uri?.authority?.substringAfterLast('@')?.substringBeforeLast(':')

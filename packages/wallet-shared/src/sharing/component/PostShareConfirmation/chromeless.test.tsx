@@ -24,8 +24,7 @@ function renderConfirmation(
         />
     );
 
-    // Same shape as SharingPage's chromeless test: the backdrop is the
-    // outermost element, the inner container stops propagation.
+    // the inner container stops propagation, so only the backdrop reaches the handler
     const backdrop = container.firstElementChild as HTMLElement;
     const surface = backdrop.firstElementChild as HTMLElement;
 
@@ -40,10 +39,7 @@ describe("PostShareConfirmation chromeless mode", () => {
     });
 
     it("never inlines a radius, whatever the chrome mode", () => {
-        // The host's corner radius reaches this container as a CSS custom
-        // property injected into the web view, not as a prop — so there is
-        // nothing left to put in `style`, and `containerChromeless` above is
-        // the whole of the wiring.
+        // the host radius arrives as a CSS custom property, never as a prop
         for (const chrome of [{ mode: "none" }, { mode: "full" }] as const) {
             const { surface } = renderConfirmation({ chrome });
 

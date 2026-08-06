@@ -19,17 +19,9 @@ export const container = style({
 });
 
 /**
- * Container variant for a host that presents this page inside its own sheet.
- *
- * The sharing sheet navigates its one web view here when the install CTA is
- * pressed, so this page has to round the sheet's top corners exactly as
- * `/sharing` does — otherwise the corners square off halfway through the flow.
- * Same custom property, injected once per web view rather than passed per
- * route, so the two cannot drift. Unset on the web, where it resolves to square.
- *
- * `container`'s `overflowY: "auto"` is what makes the radius clip: per the CSS
- * overflow spec an axis left at its `visible` default resolves to `auto` once
- * the other axis is non-visible.
+ * Container variant for a host that presents this page inside its own sheet:
+ * rounds the sheet's top corners from a custom property the host injects, unset
+ * on the web. `container`'s `overflowY: "auto"` is what makes the radius clip.
  */
 export const containerChromeless = style({
     borderRadius: hostSheetTopRadius,

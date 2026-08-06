@@ -111,11 +111,12 @@ jobs:
   # no second, CI-only definition of "does it build" that can drift.
   #
   # No device anywhere: `build` is `assembleRelease` and `test` is the JVM unit tests,
-  # both of which run on a bare Linux runner. `check` is deliberately NOT used — it
-  # pulls in Android Lint, which has never executed in this project, so its first run
-  # would likely fail on pre-existing findings unrelated to the commit under test.
+  # both of which run on a bare Linux runner.
+  #
+  # `check` adds Android Lint, the dex budget and version drift on top. The narrower steps are kept
+  # alongside it so a failure is attributed by step name; Gradle skips the repeated work.
   android-sdk:
-    name: "🤖 Android SDK · Lint, build & test"
+    name: "🤖 Android SDK · Lint, build, test & ABI"
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.android == 'true'
@@ -158,6 +159,13 @@ jobs:
 
       - name: "🧪 Unit tests"
         run: bun run --cwd sdk/android test
+
+      # Its own step, not just via `check`, so a broken ABI is readable from the step name.
+      - name: "🔒 ABI gate (apiCheck)"
+        run: bun run --cwd sdk/android apiCheck
+
+      - name: "✅ Full check (Android Lint, dex budget, version drift)"
+        run: bun run --cwd sdk/android check
 
   # ── iOS SDK ─────────────────────────────────────────────
   # macOS runner is unavoidable: `swift format` and the iphonesimulator SDK both come
