@@ -507,7 +507,7 @@ strip. Step B is plausibly *less* code than what is there now.
 | No `@JvmStatic` / `@JvmOverloads`, lambda callbacks | Java callers cannot use the API idiomatically |
 | `heightFraction` clamped and NaN-defaulted in silence | A merchant who computes it wrong gets a working-looking sheet at the wrong size, with no diagnostic |
 | "Hoist per screen, not per row" documented only in **`internal`** KDoc | Merchants cannot see it. Per-row hoisting in a `LazyColumn` means one warm web view **and one config round-trip per visible row** — a thundering herd against our own backend |
-| No "is a reward available" helper | Every integration re-derives the "should I show a Share CTA" question from `rewards.best()`. `example/native-android` already does it by hand |
+| No "is a reward available" helper | Every integration re-derives the "should I show a Share CTA" question from `rewards.best`. `example/native-android` already does it by hand |
 | Eight individually injected suspend lambdas on `SharingSheetState` | A single narrow `internal interface` is the same seam with one line instead of eight |
 
 ---

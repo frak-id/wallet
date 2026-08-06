@@ -88,8 +88,8 @@ Order of application:
 | Resolved-config tree | not builders — §3 |
 
 `ProductDetails` is an addition to the original list, and belongs there on the same evidence: six
-fully-defaulted parameters, merchant-constructed, reached from both `rewards.best(products = …)` and
-`SharingProduct.details`. It is the same finding as `SharingRequest`, one level down.
+fully-defaulted parameters, merchant-constructed, reached from both `SharingProduct.details` and — since
+step 4 — `RewardRequest.products`. It is the same finding as `SharingRequest`, one level down.
 
 ### 1a. Where defaults still survive
 
@@ -98,15 +98,14 @@ set turns up twelve more declarations across the nine rows below that the origin
 and one row is load-bearing for step 4. (`:frak-sdk-ui` is already clean: `FrakSharing.Builder`'s knobs
 are `private var`s and `FrakSharingDefaults.HEIGHT_FRACTION` is a `@JvmStatic val`.)
 
-After step 3 the surviving set is exactly one entry: the three `*Api` suspend functions
-(`ConfigApi.resolve`, `RewardsApi.campaigns`, `RewardsApi.best` — six defaults between them), which
-change shape with the `*Async` twins in step 4. Everything else in the table is closed.
+After step 4 the table is closed: no public declaration in either module carries a Kotlin default
+argument. Only step 5 remains.
 
 | Declaration | Defaults | Step |
 |---|---|---|
-| `ConfigApi.resolve(forceRefresh = false)` | 1 | 4, with `resolveAsync` |
-| `RewardsApi.campaigns(forceRefresh = false)` | 1 | 4, with `campaignsAsync` |
-| `RewardsApi.best(targetInteraction, audience, forceRefresh, products)` | 4 | 4 — collapses into the `RewardRequest` parameter object §2's example already assumes |
+| `ConfigApi.resolve(forceRefresh = false)` | 1 | 4 — **done**: `resolve()` / `resolve(Boolean)`, each with a `resolveAsync` twin |
+| `RewardsApi.campaigns(forceRefresh = false)` | 1 | 4 — **done**: same shape |
+| `RewardsApi.best(targetInteraction, audience, forceRefresh, products)` | 4 | 4 — **done**: `best(RewardRequest)` / `best(RewardRequest, Boolean)`. `forceRefresh` stays a parameter, not a field of the request; see §2a |
 | `FrakEnvironment.Custom` secondary constructor | 2 | 2 — **done**: two explicit overloads, `(wallet, backend)` and `(wallet, backend, walletPackageId, walletScheme)` |
 | `FrakError.Server(status, code, retryAfterSeconds)`, `FrakError.Decoding(message, cause)` | 3 | 2 — **done**: one explicit overload each (`Server(status)`, `Decoding(message)`), and the `FrakError` base constructor lost its `cause` default. It could *not* also be hidden — see the sealed-constructor row in §0 — so it stays `protected` and in the dump, minus the bridge |
 | `BestReward(…, isProductScoped, matchedProducts)` (`rewards/Rewards.kt`) | 2 | 2 — **done**: defaults dropped. Not in the original audit and it should have been: a *read* model with a public constructor and a `DefaultConstructorMarker` bridge is the same hazard as an input type. `RewardsDecoder` always passed all seven arguments, so the defaults only ever served the decoder's own forward-compatibility, which is where that concern belongs. Whether the reward read models should follow the config tree to `internal` constructors is still open, below |
@@ -133,9 +132,103 @@ cancels the job.
 Three invariants:
 
 1. `scope.future(Dispatchers.Main) { … }` — otherwise `thenAccept` runs off-main and the obvious
-   Java call site crashes.
+   Java call site crashes. (`Dispatchers.Main` turned out not to exist on this classpath; the
+   invariant survives, the mechanism does not — see §2a.)
 2. Launch on the same `SupervisorJob` `shutdown()` cancels. Not a fresh scope.
 3. `*Async` suffix, not `@JvmSynthetic` — hiding the twin also drops it from the BCV dump.
+
+### 2a. What landed, and four places the sketch above was wrong
+
+**`Dispatchers.Main` does not exist on this classpath, and adding it would be worse.** It lives in
+`kotlinx-coroutines-android`, which nothing here depends on; touching it throws
+`IllegalStateException: Module with the Main dispatcher had failed to initialize` in the merchant's
+process. `:frak-sdk-ui` already met this and answered it with a hand-rolled `MainThreadDispatcher`
+over `Handler(Looper.getMainLooper())`. `:frak-sdk` gets its own copy, for three reasons: adding the
+artifact is a second runtime dependency in a library that advertises one; it would retroactively
+falsify `SharingHost.kt`'s KDoc, which says the dispatcher is on no classpath *in this build*; and it
+would not even buy testability, since its `Dispatchers.Main` also resolves through
+`Looper.getMainLooper()`, which throws on the stubbed `android.jar` `:frak-sdk` tests run against. The
+seam that works is constructor injection, which `DefaultFrakClient` already uses for `ioDispatcher`.
+The copy's handler is `by lazy` where `:frak-sdk-ui`'s is not — `:frak-sdk-ui` runs under Robolectric
+and `:frak-sdk` does not, so class-init must not touch the framework. Duplicated rather than shared
+because sharing means `@InternalFrakApi public`, and that marker has not fired against a real
+`apiDump` yet (§3a).
+
+**Invariant 1 as written would have put the whole body on the main thread.** `scope.future(context)`
+merges `context` into the scope's, *overriding* the scope's `ioDispatcher`. It survives today only by
+accident — every blocking leaf hops itself, but `resolveConfig`/`campaigns`/`bestReward` deliberately do
+not — and the first leaf that forgets is an ANR in a release build. So every twin funnels through one
+internal helper, `DefaultFrakClient.asFuture`, which is `scope.future(mainDispatcher) { withContext(ioDispatcher) { … } }`:
+body on IO, completion signalled on main, one place that names either. `scope` stays private; nothing
+new reaches the public surface.
+
+The honest limit, recorded once: what this guarantees is that *completion is signalled* on the main
+thread. `CompletableFuture` runs a non-`Async` stage on the completing thread **or** the registering
+thread, whichever is later, so a `thenAccept` attached after the future already completed runs inline
+on whoever attached it. For the call site this exists for — register immediately, from main — the two
+are the same thing.
+
+**Invariant 2 cannot apply to `Frak.shutdownAsync`.** Routing teardown through the scope teardown
+cancels means the future is cancelled by the work it is awaiting: `isCancelled` true, and a Java
+caller's `thenRun(::finishTeardown)` never fires. It gets its own never-cancelled scope, and says why.
+
+**"Result type is `FrakResult<T>`" is a ban on `kotlin.Result`, not a wrapping mandate.** The twins
+mirror whatever the suspending member returns — `resolveAsync` completes exceptionally with the same
+`FrakError` that `resolve` throws; `trackAsync` returns `CompletableFuture<FrakResult<Unit>>` because
+`track` returns `FrakResult<Unit>`. Re-wrapping all eighteen would give one surface two error models,
+make `exceptionally`/`whenComplete` dead code, and redefine `FrakResult`'s documented meaning
+("outcome of a fire-and-forget call") one commit before it freezes. Two deliberate exceptions: `setTrackingEnabledAsync` and `shutdownAsync` return
+`CompletableFuture<Void?>`, because `kotlin.Unit` on a Java signature is noise. Stated precisely, since
+otherwise the exception looks arbitrary: **twins mirror, except where the mirrored type is `Unit` and not
+nested.** `trackAsync` stays `CompletableFuture<FrakResult<Unit>>` — unwrapping a nested `Unit` would
+mean inventing a different result type for the Java surface, which is what this paragraph refuses.
+
+**And the last three default arguments did not need a source break.** §1a framed
+`resolve`/`campaigns`/`best` as a signature change; dropping a default is a *binary* break, which the
+pre-freeze window is for, and it does not have to be a source break. `resolve()` and
+`resolve(forceRefresh: Boolean)` are explicit overloads — the mechanism steps 2 and 3 already blessed
+for `FrakEnvironment.Custom` and `FrakError.Server` — so `resolve()` still compiles for Kotlin *and*
+becomes callable from Java for the first time. `best`'s four optionals are the combinatorial problem a
+parameter object solves, and get `RewardRequest`; `forceRefresh`'s two-way problem is what an overload
+solves. `forceRefresh` deliberately stays *out* of `RewardRequest`: it is cache control, not a
+description of the reward wanted, the type is conceptually the cache key, and a merchant who built one
+request in a ViewModel and reused it would carry `forceRefresh = true` forever with no diagnostic.
+
+Coverage: `FrakSdkJavaCallSiteFixture.java` (new, `:frak-sdk`'s own) proves every twin is *nameable*
+from Java, which is the only thing a Java caller could not do before and the only thing no runtime test
+can see. `AsyncTwinTest` proves the two threading halves and the post-`shutdown()` behaviour, because
+otherwise the main-thread invariant would be asserted nowhere at all — `example/native-android` is
+Kotlin-only and never calls a twin.
+
+**The twin count is eighteen, not fifteen.** Fourteen suspending members live on `FrakClient` and the
+five `*Api` namespaces; the fifteenth is `Frak.shutdown`. The extra three are `resolveAsync()`,
+`campaignsAsync()` and `bestAsync(request)` — no-argument twins that exist because the *suspending* pair
+does. Keeping them applies "twins mirror the members they shadow" literally: a Java caller reading the
+Kotlin docs finds the same shape, and the alternative is a surface where Kotlin has a short form and Java
+does not.
+
+Two mechanical corrections while counting: the twins delegate to their suspending member rather than
+re-spelling the call into `DefaultFrakClient`, so `RewardRequest` → core has one mapping site and a field
+added to it cannot be silently dropped from the Java surface. And `asFuture` starts `UNDISPATCHED`: with
+`CoroutineStart.DEFAULT` the coroutine's *start* is posted to the main dispatcher too, so a `bestAsync`
+issued during a janky scroll would not begin its network work until the main queue drained.
+
+**The caveat that costs an ANR, recorded because it cannot be engineered away:** never `get()` or
+`join()` a twin on the main thread. Completion needs a main-looper turn and a blocked main thread never
+gives one, so the future never completes — deterministic, not a race. It is stated on `asFuture`, on
+`ConfigApi.resolveAsync`, on `Frak.shutdownAsync`, in `sdk/android/README.md`'s Java section, and in the
+Java fixture. Related, lower stakes: an internally-raised `CancellationException` reaches Java as
+`isCancelled == true`, so Java is told it cancelled something it did not.
+
+Also fixed while here, in both copies of the dispatcher: `Handler.post` returns `false` when the looper
+is exiting, and dropping the block on that path would leave a future suspended forever. It now cancels
+and re-dispatches so the coroutine resumes and finishes, which is what `kotlinx-coroutines-android`'s own
+`HandlerContext` does.
+
+Still owed: `checkDexSizeBudget` has not been run against this. Eighteen twins plus their suspend-lambda
+classes, `MainThreadDispatcher`, and `RewardRequest`'s three classes is roughly twenty-two new classes
+against a 256 KB budget. If it goes red that is a signal about the twin count, not a reason to raise the
+budget.
 
 Result type is `FrakResult<T>`. Never `kotlin.Result` — a value class, erases to `Object` from Java.
 
@@ -370,9 +463,9 @@ Five commits, in this order, each reviewed before the next starts.
    `FrakEnvironment.Custom` and for `FrakError.Server`/`FrakError.Decoding`
 3. `Interaction` collapse — which is also what removes its eight default arguments. **Done**, with
    structural equality and an `internal` rather than `private` constructor; see §4
-4. `*Async` twins + the `frak-sdk` Java fixture. Larger than it sounds: it is also a source-breaking
-   signature change to `ConfigApi.resolve`, `RewardsApi.campaigns` and `RewardsApi.best`, since a
-   twin pair must not have a `$default` bridge on either side (§1a)
+4. `*Async` twins + the `frak-sdk` Java fixture. **Done** — and not a source break after all: the
+   three defaulted `*Api` functions became explicit overloads rather than losing their short form.
+   `best` did change shape, to take a `RewardRequest`. Details and four corrections in §2a
 5. Re-add BCV and commit the dump
 
 Step 5 last because committing a dump ratifies the shape. Expect it larger than the deleted one
@@ -390,12 +483,13 @@ Added by the step-2 review, in the order they become unfixable:
 - **The Kotlin file-facade names are about to be frozen and there is no `@file:JvmName` anywhere.**
   `SharingRequest { }` compiles to `SharingRequestKt.SharingRequest(Function1)`, `FrakMetadata { }` to
   `FrakConfigKt.FrakMetadata(Function1)` — the facade is named after the *file*, not the type, and two
-  of the four files declare more than one. The nine sugar functions land like this:
+  of the five files declare more than one. The ten sugar functions land like this:
   `FrakConfigKt` gets `FrakMetadata(Function1)` plus all three `FrakConfig` overloads; `SharingRequestKt`
   gets both `SharingProduct` overloads plus `SharingRequest(Function1)`; `ProductDetailsKt` and
-  `AttributionParamsKt` get one each. Once the dump records those names, renaming or splitting **any of
-  the four files** — `core/FrakConfig.kt`, `core/ProductDetails.kt`, `sharing/SharingRequest.kt`,
-  `sharing/AttributionParams.kt` — is a binary break. The decision taken for now is deliberate and
+  `AttributionParamsKt` and `RewardRequestKt` get one each. Once the dump records those names, renaming
+  or splitting **any of the five files** — `core/FrakConfig.kt`, `core/ProductDetails.kt`,
+  `sharing/SharingRequest.kt`, `sharing/AttributionParams.kt`, `rewards/RewardRequest.kt` — is a binary
+  break. The decision taken for now is deliberate and
   minimal: **keep the default facade names and do not rename or split those four files after step 5.**
   A `@file:JvmName` would decouple the two, but picking a name badly is also permanent. Note that two of
   the nine — `FrakConfig(String)` and `SharingProduct(String, String)` — take no `Function1` and are
@@ -407,9 +501,11 @@ Added by the step-2 review, in the order they become unfixable:
   documented "null means let the backend decide". Pre-existing behaviour, not introduced here, but
   making it `FrakCurrency?` after the freeze is a Kotlin source break. Either match `lang`, or keep
   EUR and warn at `initialize` when it was never set (a `private var` on the Builder, no new surface).
-- **Equality is inconsistent across the input types.** `ProductDetails` and `AttributionParams` have
-  hand-written `equals`/`hashCode`; `FrakConfig`, `FrakMetadata`, `SharingProduct` and `SharingRequest`
-  do not. That asymmetry is inherited, and it has a visible cost: the Builder-versus-sugar comparison
+- **Equality is inconsistent across the input types, and step 4 made the split wider before it gets
+  narrower.** `ProductDetails`, `AttributionParams` and now `RewardRequest` have `equals`/`hashCode`;
+  `FrakConfig`, `FrakMetadata`, `SharingProduct` and `SharingRequest` do not — 3-have / 4-haven't, with
+  the new arrival on the *have* side while `SharingRequest`, the same shape on a hotter path, is not.
+  `RewardRequest` has it because a new type has no excuse; the older four are the decision still owed. That asymmetry is inherited, and it has a visible cost: the Builder-versus-sugar comparison
   in `PublicSurfaceTest` can only be an `assertEquals` for the two types that have equality, and has to
   be written out field by field for the rest — which is a test that silently weakens every time a field
   is added, since nothing forces the new one into the comparison. Adding `equals` after the dump is a
@@ -420,10 +516,18 @@ Added by the step-2 review, in the order they become unfixable:
   SDK, and no sample appears in the README or the KDoc. Same class of gap as `FrakResolvedConfig`
   below; cheapest fix is a documented known-good link rather than new API.
 - **`:frak-sdk-ui`'s `FrakSharing.Builder` is now the odd one out.** It uses `private var`s, a fluent
-  setter with `require()` validation, and has no Kotlin sugar; the six `:frak-sdk` Builders use public
+  setter with `require()` validation, and has no Kotlin sugar; the seven `:frak-sdk` Builders use public
   `var`s, no validation, and a sugar function each. Both are about to be frozen side by side. Either
   align them or write the rule down — the honest version is probably "`:frak-sdk-ui`'s builder has no
   sugar because its `build()` is `@Composable`, which a top-level function cannot wrap".
+- **`ConfigApi.updates` has no Java story.** It is a `StateFlow`, which a Java caller cannot collect, so
+  "Java is a supported target" is overstated by exactly one member. Additive to fix (a listener
+  registration, or a `Publisher` via `kotlinx-coroutines-reactive`, which would be a new dependency), so
+  not a freeze blocker — but the namespace table lists `updates` without a caveat and should not.
+- **`Frak.shutdownAsync` has no injectable dispatcher**, so it reaches `Looper.getMainLooper()` and is
+  unreachable from `:frak-sdk`'s JVM suite. `AsyncTwinTest` covers `asFuture`, i.e. seventeen of the
+  eighteen twins; this one is proven nameable by the Java fixture and proven to run by nothing. Same
+  file records the two `shutdown()` concurrency caveats `shutdownAsync` makes reachable.
 
 - **A merchant has no first-party way to obtain a `FrakResolvedConfig`.** All ten constructors are
   `internal`, `ResolvedConfigDecoder` is `internal`, and `ConfigApi`/`FrakClient` are final classes

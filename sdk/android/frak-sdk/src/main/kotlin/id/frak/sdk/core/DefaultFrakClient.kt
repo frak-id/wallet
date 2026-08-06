@@ -26,13 +26,17 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.future.future
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.concurrent.CompletableFuture
 
 /** The real [FrakClient]. Every public entry point lets only [FrakError]/`CancellationException` escape, see [frakCall]. */
 internal class DefaultFrakClient(
@@ -45,6 +49,12 @@ internal class DefaultFrakClient(
     private val launcher: AppLauncher,
     private val logger: FrakLogger,
     private val ioDispatcher: CoroutineDispatcher = defaultIoDispatcher(),
+    /**
+     * What the Java `*Async` twins complete on. Injected for the same reason [ioDispatcher] is: the
+     * default reaches `Looper.getMainLooper()`, which throws on the stubbed `android.jar` these tests
+     * run against. See [MainThreadDispatcher].
+     */
+    private val mainDispatcher: CoroutineDispatcher = MainThreadDispatcher,
     http: HttpClient =
         HttpClient(
             baseUrl = settings.env.backend,
@@ -75,6 +85,51 @@ internal class DefaultFrakClient(
             // upload rather than only emptying a file the drain has already read.
             trackingAllowed = { consent.isEnabled() },
         )
+
+    /**
+     * The one place a `*Async` twin is built, so both halves of its threading contract are named once.
+     *
+     * Two invariants, and they pull in opposite directions:
+     *
+     *  - **The body runs on [ioDispatcher].** `scope.future(mainDispatcher)` merges that context into
+     *    the scope's, *overriding* the scope's own `ioDispatcher` — so without the inner `withContext`
+     *    the whole call would run on the main thread. That survives today only by accident: every
+     *    blocking leaf hops itself, but `resolveConfig`/`campaigns`/`bestReward` deliberately do not
+     *    (see the note above them), so the first leaf that forgets becomes an ANR in a merchant's
+     *    release build.
+     *  - **The future completes on [mainDispatcher].** A Java caller writing
+     *    `future.thenAccept { textView.text = it }` has to land where a `View` can be touched, and
+     *    `thenAccept` — unlike `thenAcceptAsync` — runs on whichever thread completed the future.
+     *
+     * **Never `get()` or `join()` one of these on the main thread.** Completion needs a main-looper
+     * turn, and a blocked main thread never gives it one, so the future never completes: a
+     * deterministic ANR, not a race. This is inherent to "completion is signalled on main" and cannot
+     * be engineered away — a Java caller registers a continuation (`thenAccept`, `whenComplete`) or
+     * blocks on a background thread. It is the one caveat that costs a merchant an ANR, so it is
+     * stated here, in the `*Async` KDoc, in `README.md`'s Java section and in the Java fixture.
+     *
+     * Started `UNDISPATCHED`, deliberately: with `CoroutineStart.DEFAULT` the coroutine's *start* is
+     * posted to [mainDispatcher] too, so the body's network work would not begin until the main queue
+     * drained — which on a janky product-page scroll is exactly when a merchant calls `bestAsync`.
+     * `UNDISPATCHED` begins the body inline on the caller's thread; the `withContext` on the next line
+     * is the first thing it reaches, so nothing merchant-visible runs off-IO either way.
+     *
+     * A second honest limit: what this guarantees is that *completion is signalled* on the main
+     * thread. `CompletableFuture` runs a non-`Async` stage on the completing thread **or** the
+     * registering thread, whichever is later — so a `thenAccept` attached after the future already
+     * completed runs inline on whoever attached it, and `future.cancel(true)` from Java completes it
+     * synchronously on the canceller's thread. For the call site this exists for (register
+     * immediately, from the main thread) they are the same thing.
+     *
+     * Uses [scope], not a fresh one, so [shutdown] cancels an in-flight future rather than leaking it.
+     * A twin called *after* [shutdown] therefore returns an already-cancelled future: `isCancelled` is
+     * true, `join()` throws, and no `thenAccept` fires. That is the right answer and it differs from
+     * the `suspend` twin, which runs on the caller's context and still works.
+     */
+    fun <T> asFuture(block: suspend () -> T): CompletableFuture<T> =
+        scope.future(mainDispatcher, CoroutineStart.UNDISPATCHED) {
+            withContext(ioDispatcher) { block() }
+        }
 
     /** Forwards [ConfigStore]'s stream unchanged; [ConfigStore] owns publishing. */
     val configUpdates: StateFlow<FrakResolvedConfig?> = configStore.updates

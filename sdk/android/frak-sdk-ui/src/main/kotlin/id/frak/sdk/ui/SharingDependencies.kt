@@ -7,6 +7,7 @@ import id.frak.sdk.core.FrakEnvironment
 import id.frak.sdk.core.FrakResult
 import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.rewards.BestReward
+import id.frak.sdk.rewards.RewardRequest
 import id.frak.sdk.sharing.SharingRequest
 import id.frak.sdk.tracking.Interaction
 
@@ -95,7 +96,15 @@ internal object FrakClientDependencies : SharingDependencies {
     override suspend fun bestReward(
         targetInteraction: String?,
         products: List<ProductDetails>?,
-    ): BestReward? = Frak.client.rewards.best(targetInteraction = targetInteraction, products = products)
+    ): BestReward? =
+        Frak.client.rewards.best(
+            RewardRequest {
+                this.targetInteraction = targetInteraction
+                // `RewardRequest.products` is non-null; the seam's parameter is nullable because the
+                // sheet distinguishes "no products in this request" from "an empty scope".
+                this.products = products.orEmpty()
+            },
+        )
 
     override suspend fun track(interaction: Interaction): FrakResult<Unit> = Frak.client.tracking.track(interaction)
 

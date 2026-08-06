@@ -3,13 +3,25 @@ package id.frak.sdk
 import id.frak.sdk.core.DefaultFrakClient
 import id.frak.sdk.core.FrakResult
 import id.frak.sdk.tracking.Interaction
+import java.util.concurrent.CompletableFuture
 
-/** Interaction and purchase tracking. Obtained from [FrakClient.tracking]. */
+/**
+ * Interaction and purchase tracking. Obtained from [FrakClient.tracking].
+ *
+ * `*Async` twins, and why: see [ConfigApi]. These two are the members whose result type is already
+ * [FrakResult], so their twins are `CompletableFuture<FrakResult<Unit>>` — the twins mirror the
+ * suspending member rather than re-wrapping it, so a Java caller learns one error model per member,
+ * not two.
+ */
 public class TrackingApi internal constructor(
     private val core: DefaultFrakClient,
 ) {
     /** Records an [Interaction]; succeeds once durable, not once delivered (queued, oldest-first). */
     public suspend fun track(interaction: Interaction): FrakResult<Unit> = core.track(interaction)
+
+    /** [track] for Java. */
+    public fun trackAsync(interaction: Interaction): CompletableFuture<FrakResult<Unit>> =
+        core.asFuture { core.track(interaction) }
 
     /** Records a purchase; same enqueue-then-send contract as [track]. */
     public suspend fun purchase(
@@ -17,4 +29,11 @@ public class TrackingApi internal constructor(
         orderId: String,
         token: String,
     ): FrakResult<Unit> = core.trackPurchase(customerId, orderId, token)
+
+    /** [purchase] for Java. */
+    public fun purchaseAsync(
+        customerId: String,
+        orderId: String,
+        token: String,
+    ): CompletableFuture<FrakResult<Unit>> = core.asFuture { core.trackPurchase(customerId, orderId, token) }
 }

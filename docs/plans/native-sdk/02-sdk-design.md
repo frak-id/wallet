@@ -186,7 +186,7 @@ root       environment · anonymousId · resetAnonymousId
 ```
 
 ```kotlin
-Frak.client.rewards.best(targetInteraction = "purchase", products = items)
+Frak.client.rewards.best(RewardRequest { targetInteraction = "purchase"; products = items })
 Frak.client.tracking.purchase(customerId, orderId, token)
 ```
 ```swift
@@ -225,6 +225,13 @@ Four styles across fifteen members, undocumented as a rule:
 | nullable, error swallowed | `sharing.buildLink`, `appLink.installUrl`, `appLink.installPageUrl` | "nothing worth showing" — but also hides real failures |
 | `Bool`/enum, error swallowed | `appLink.handleReferral`, `appLink.openFrakApp` | best-effort, structurally cannot throw |
 
+Android added a **fifth** shape in `09-android-api-surface.md` step 4, and deliberately: each of these
+members now has a Java `*Async` twin whose failure arrives as a future completed exceptionally, wrapped
+in a `CompletionException`. The twins mirror their suspending member rather than re-wrapping everything in
+`FrakResult` — `resolveAsync` fails with the `FrakError` `resolve` throws, `trackAsync` returns the
+`FrakResult` `track` returns — so this is one shape per member per language, not a new axis of choice.
+iOS needs no equivalent: `async`/`await` is Swift's idiom and Swift can call a `suspend`-shaped API.
+
 Writing the rule down is owed before the wallet-session cluster lands (`05` §5 Q5);
 unifying onto `FrakResult` is not recommended — bigger break, smaller gain. The three
 throwing members carry `@Throws(FrakError::class)` on Kotlin, which has no checked
@@ -247,6 +254,14 @@ exceptions otherwise; `handleReferral` swallows on both platforms. Known gaps �
 | `tracking.*` | `FrakResult` | any | yes (queued), consent-gated |
 | `sharing.buildLink` | nullable | any | no — null with tracking off, since the link *is* the id |
 | `appLink.handleReferral` | `Bool` (consumed) | any | yes (queued), tracking half consent-gated |
+
+"Thread: any" holds for the `suspend` form on both platforms. It does **not** describe Android's Java
+`*Async` twins, which are a second column this table does not have: a twin's body runs on the SDK's IO
+dispatcher, its *completion is signalled on the main thread*, and it must never be `get()`/`join()`ed
+from the main thread — completion needs a main-looper turn, so a blocked main thread is a deterministic
+ANR. A twin called after `Frak.shutdown()` returns an already-cancelled future where the `suspend` form
+would still run. Full contract on `DefaultFrakClient.asFuture`; the decisions are in
+`09-android-api-surface.md` §2a.
 
 Two divergences: `isFrakAppInstalled()` is `async` on Swift, synchronous on Kotlin,
 neither `@MainActor`; Swift alone overloads `parseReferralLink`/`handleReferral` on `URL`

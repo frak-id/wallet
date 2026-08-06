@@ -56,19 +56,19 @@ Tests: `frak-sdk/src/test/kotlin/...` (JVM unit tests, mirrors main packages) an
 
 ## Public API
 
-Entry point: `Frak.initialize`, `Frak.client`, `Frak.shutdown`, `Frak.parseReferralLink`.
+Entry point: `Frak.initialize`, `Frak.client`, `Frak.clientOrNull`, `Frak.isInitialized`, `Frak.shutdown`/`Frak.shutdownAsync`, `Frak.parseReferralLink`.
 
-`FrakClient`: `environment`, `anonymousId`, `resetAnonymousId`, `setTrackingEnabled`, `isTrackingEnabled`, and five namespaces:
+`FrakClient`: `environment`, `anonymousId`, `resetAnonymousId`, `setTrackingEnabled`, `isTrackingEnabled` (each with an `*Async` twin — see "Java" below), and five namespaces:
 
 | Namespace | Members |
 | --- | --- |
-| `config` | `resolve`, `updates` |
-| `rewards` | `campaigns`, `best` |
-| `sharing` | `buildLink` |
-| `tracking` | `track`, `purchase` |
-| `appLink` | `handleReferral`, `isFrakAppInstalled`, `openFrakApp`, `installUrl`, `installPageUrl` |
+| `config` | `resolve`, `updates` (`resolveAsync` for Java; `updates` is a `StateFlow` and has no Java form) |
+| `rewards` | `campaigns`, `best` (+ `campaignsAsync`, `bestAsync`) |
+| `sharing` | `buildLink` (+ `buildLinkAsync`) |
+| `tracking` | `track`, `purchase` (+ `trackAsync`, `purchaseAsync`) |
+| `appLink` | `handleReferral`, `isFrakAppInstalled`, `openFrakApp`, `installUrl`, `installPageUrl` (+ an `*Async` for each except `isFrakAppInstalled`, which never suspended) |
 
-Supporting public types: `FrakContext`, `SharingRequest`, `SharingProduct`, `ProductDetails`, `AttributionParams`, `Interaction`, `FrakResult`, `OpenAppResult`, `DeepLinkHandling`, `FrakLogSink`, `FrakConfig`, `FrakEnvironment`, `FrakMetadata`, `FrakError`, `FrakLogger`.
+Supporting public types: `FrakContext`, `SharingRequest`, `SharingProduct`, `ProductDetails`, `RewardRequest`, `AttributionParams`, `Interaction`, `FrakResult`, `OpenAppResult`, `DeepLinkHandling`, `FrakLogSink`, `FrakConfig`, `FrakEnvironment`, `FrakMetadata`, `FrakError`, `FrakLogger`.
 
 Resolved-config model, publicly *readable* in full (placements, component copy, translations, attribution): `FrakResolvedConfig`, `ResolvedSdkConfig`, `ResolvedPlacement`, `ResolvedComponents`, `ButtonShareConfig`, `ButtonWalletConfig`, `OpenInAppConfig`, `PostPurchaseConfig`, `BannerConfig`, `AttributionDefaults`. Every constructor in that tree is `internal`: it is a read model the SDK hands you from `config.resolve()`, and a public constructor would freeze an arity the backend keeps adding fields to — see "Binary compatibility" below. `FrakResolvedConfig.displayName`/`displayLogoUrl` are derived properties that resolve the `sdkConfig`-over-top-level precedence once, so a caller never writes that fold itself. `display`-prefixed deliberately: a derived getter must not squat on the name a future top-level wire field would want, since repointing one is a behaviour change with an unchanged JVM descriptor that no `.api` dump could catch.
 
@@ -103,9 +103,9 @@ Frak.initialize(
 
 ### Construction
 
-No public API takes a Kotlin default argument — with one documented holdout, at the end of this section. Merchant-constructed types split two ways: a `Builder` where the value is readable, static factories where it is opaque (`Interaction`, below). Everything else takes explicit constructor overloads. Both halves are one decision, and the reason is `FrakConfig`: it went from 8 to 9 parameters after the last `.api` dump was taken. A Kotlin default compiles to the full-arity constructor *plus* a synthetic `<init>(..., int mask, DefaultConstructorMarker)`, and adding a field changes both descriptors — so that change would have been `NoSuchMethodError` on every already-shipped merchant binary, unfixable by the merchant, because it is their app in the store that breaks. `@JvmOverloads` is not the answer either: it fixes Java and leaves Kotlin callers resolving through `$default` anyway.
+No public API takes a Kotlin default argument, anywhere. Merchant-constructed types split two ways: a `Builder` where the value is readable, static factories where it is opaque (`Interaction`, below). Everything else takes explicit constructor overloads. Both halves are one decision, and the reason is `FrakConfig`: it went from 8 to 9 parameters after the last `.api` dump was taken. A Kotlin default compiles to the full-arity constructor *plus* a synthetic `<init>(..., int mask, DefaultConstructorMarker)`, and adding a field changes both descriptors — so that change would have been `NoSuchMethodError` on every already-shipped merchant binary, unfixable by the merchant, because it is their app in the store that breaks. `@JvmOverloads` is not the answer either: it fixes Java and leaves Kotlin callers resolving through `$default` anyway.
 
-So: `FrakConfig`, `FrakMetadata`, `SharingRequest`, `SharingProduct`, `ProductDetails` and `AttributionParams` each have a nested `Builder` with chained setters, plus a Kotlin function of the same name taking `Builder.() -> Unit`. The Builder's `var`s *are* the Kotlin scope — there is no second scope type and therefore no second home for a default. A new option is one new setter plus one new `var`: additive forever.
+So: `FrakConfig`, `FrakMetadata`, `SharingRequest`, `SharingProduct`, `ProductDetails`, `AttributionParams` and `RewardRequest` each have a nested `Builder` with chained setters, plus a Kotlin function of the same name taking `Builder.() -> Unit`. The Builder's `var`s *are* the Kotlin scope — there is no second scope type and therefore no second home for a default. A new option is one new setter plus one new `var`: additive forever.
 
 Types that are public but not expected to grow took explicit constructor overloads instead of a Builder: `FrakEnvironment.Custom` (two origins, optionally a wallet package id and scheme) and `FrakError.Server`/`FrakError.Decoding`.
 
@@ -116,7 +116,27 @@ Read models — the things the SDK hands *back* — split two ways, and the spli
 
 `Interaction` is neither a Builder nor a set of overloaded constructors: it is an opaque type with `@JvmStatic` factories (`Interaction.custom("checkout")`, `Interaction.sharing()`), over an `internal` `Kind` carrying the three wire shapes. That is iOS's shape, adopted here in step 3. It buys three things a sealed hierarchy could not: a fourth wire shape is additive rather than a break for any consumer who wrote an exhaustive `when`; the hierarchy leaves the frozen surface entirely; and Java calls it the same way Kotlin does instead of writing an `instanceof` chain. The cost is that an `Interaction` cannot be read back — acceptable, because it is write-only: you build one and hand it to `tracking.track`.
 
-One thing still carries default arguments: `ConfigApi.resolve`, `RewardsApi.campaigns` and `RewardsApi.best`, six between them. They change shape with the Java `*Async` twins (step 4 of `docs/plans/native-sdk/09-android-api-surface.md`), so they are fixed there rather than twice.
+Nothing on the public surface carries a Kotlin default argument any more. `ConfigApi.resolve` and `RewardsApi.campaigns` took explicit `()`/`(Boolean)` overloads; `RewardsApi.best` took a `RewardRequest` parameter object, because four optionals is what a parameter object is for. `forceRefresh` stays a parameter rather than a field of the request — it is cache control, not a description of the reward wanted.
+
+### Java
+
+Every suspending member of `FrakClient` and its five namespaces has a `CompletableFuture` twin named `*Async`, plus `Frak.shutdownAsync()` — eighteen twins for fifteen members, since three of those members are overload pairs and the twins mirror them. Kotlin callers use the `suspend` form; a Java caller cannot name a `Continuation`, so before the twins they could call none of them.
+
+```java
+Frak.getClient().getRewards()
+        .bestAsync(new RewardRequest.Builder().targetInteraction("purchase").build())
+        .thenAccept(reward -> banner.setText(reward == null ? "" : reward.getFormatted()));
+```
+
+The twins are the same work on the same `SupervisorJob` that `Frak.shutdown()` cancels, funnelled through one internal helper so the threading contract has one home: the body runs on the SDK's IO dispatcher and **completion is signalled on the main thread**, so the `thenAccept` above can touch a `View`. (`CompletableFuture` runs a non-`Async` stage on the completing *or* the registering thread, whichever is later — for the realistic call site those are the same.) `Dispatchers.Main` is deliberately not used: it lives in `kotlinx-coroutines-android`, which this SDK does not depend on, so there is a twelve-line `Handler`-backed dispatcher instead.
+
+**Never `get()` or `join()` a twin on the main thread.** Completion needs a main-looper turn and a blocked main thread never gives one, so the future never completes — a deterministic ANR, not a race. Register a continuation (`thenAccept`, `whenComplete`), or block on a background thread.
+
+A twin called after `Frak.shutdown()` returns an already-cancelled future rather than hanging. `Frak.shutdownAsync()` is the one twin on its own scope — it cannot use the one it is cancelling — and it returns immediately, so `shutdownAsync(); initialize(…)` back-to-back races the teardown; sequence the second call off the future.
+
+Twins mirror their suspending member's return type: `resolveAsync` completes exceptionally with the same `FrakError` that `resolve` throws (wrapped in `CompletionException`, as any future would), and `trackAsync` returns `CompletableFuture<FrakResult<Unit>>` because `track` returns `FrakResult<Unit>`. There is no second result type layered over the future. Two exceptions return `CompletableFuture<Void>`: `setTrackingEnabledAsync` and `shutdownAsync`, because `kotlin.Unit` on a Java signature is noise.
+
+Two async idioms coexist on purpose: a request/response call returns a future, and a *session outcome* — `FrakSharing`'s — stays a `@MainThread` callback, because a sheet reports once, later, from a lifecycle the caller does not own.
 
 `Frak.shutdown()` cancels background work and unregisters the deep-link observer; call it to release the SDK deterministically (`initialize` can then run again). It is not a consent control — it records no decision.
 

@@ -52,6 +52,7 @@ import id.frak.sdk.core.FrakMetadata
 import id.frak.sdk.core.FrakResult
 import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.rewards.BestReward
+import id.frak.sdk.rewards.RewardRequest
 import id.frak.sdk.sharing.SharingProduct
 import id.frak.sdk.sharing.SharingRequest
 import id.frak.sdk.ui.FrakSharing
@@ -300,15 +301,17 @@ class MainActivity : ComponentActivity() {
             try {
                 val best =
                     Frak.client.rewards.best(
-                        // Matches SharingRequest.targetInteraction used by shareProduct.
-                        targetInteraction = "purchase",
-                        products =
-                            sampleProducts.map {
-                                ProductDetails {
-                                    productId = it.id
-                                    name = it.title
+                        RewardRequest {
+                            // Matches SharingRequest.targetInteraction used by shareProduct.
+                            targetInteraction = "purchase"
+                            products =
+                                sampleProducts.map { product ->
+                                    ProductDetails {
+                                        productId = product.id
+                                        name = product.title
+                                    }
                                 }
-                            },
+                        },
                     )
                 if (best != null) {
                     addLog("Catalog reward: ${best.formatted}", LogType.SUCCESS)

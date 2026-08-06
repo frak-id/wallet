@@ -9,6 +9,8 @@ import id.frak.sdk.core.FrakLogLevel
 import id.frak.sdk.core.FrakLogSink
 import id.frak.sdk.core.FrakMetadata
 import id.frak.sdk.core.ProductDetails
+import id.frak.sdk.rewards.RewardAudience
+import id.frak.sdk.rewards.RewardRequest
 import id.frak.sdk.sharing.AttributionParams
 import id.frak.sdk.sharing.SharingProduct
 import id.frak.sdk.sharing.SharingRequest
@@ -201,6 +203,54 @@ class BuilderWiringTest {
         assertEquals("purchase", request.targetInteraction)
         assertEquals("product-page", request.placement)
         assertEquals("https://acme.example/logo.png", request.logoUrl)
+    }
+
+    @Test
+    fun `RewardRequest Builder carries every field to the right property`() {
+        val details = ProductDetails { sku = "sku" }
+        val request =
+            RewardRequest.Builder()
+                .targetInteraction("purchase")
+                .audience(RewardAudience.REFERRER)
+                .products(listOf(details))
+                .build()
+
+        assertEquals("purchase", request.targetInteraction)
+        assertEquals(RewardAudience.REFERRER, request.audience)
+        assertEquals(listOf(details), request.products)
+    }
+
+    @Test
+    fun `RewardRequest defaults, equality and list copy`() {
+        val bare = RewardRequest.Builder().build()
+
+        assertNull(bare.targetInteraction)
+        assertNull(bare.audience)
+        assertEquals(emptyList<ProductDetails>(), bare.products)
+
+        // The one request type with equality, so this is the one place it can be pinned. A merchant
+        // memoising a lookup on a `RewardRequest` depends on it.
+        assertEquals(RewardRequest { targetInteraction = "purchase" }, RewardRequest { targetInteraction = "purchase" })
+        assertEquals(
+            RewardRequest { targetInteraction = "purchase" }.hashCode(),
+            RewardRequest { targetInteraction = "purchase" }.hashCode(),
+        )
+
+        // `addProduct` accumulates from the empty default, and `build()` copies out of the caller's list.
+        val mutable = mutableListOf(ProductDetails { sku = "first" })
+        val accumulated =
+            RewardRequest.Builder()
+                .products(mutable)
+                .addProduct(ProductDetails { sku = "second" })
+                .build()
+
+        mutable.add(ProductDetails { sku = "never" })
+
+        assertEquals(2, accumulated.products.size)
+        assertThrows(UnsupportedOperationException::class.java) {
+            @Suppress("UNCHECKED_CAST")
+            (accumulated.products as MutableList<ProductDetails>).add(ProductDetails { sku = "third" })
+        }
     }
 
     @Test

@@ -509,6 +509,9 @@ class DefaultFrakClientTest {
         testScheduler: kotlinx.coroutines.test.TestCoroutineScheduler,
         config: FrakConfig = frakConfig(merchantId = MERCHANT_ID),
         identityStore: InMemoryKeyValueStore = InMemoryKeyValueStore(),
+        // Injected for the `*Async` twins: the production default reaches `Looper.getMainLooper()`,
+        // which throws on the stubbed `android.jar` this suite runs against. See MainThreadDispatcher.
+        mainDispatcher: kotlinx.coroutines.CoroutineDispatcher = UnconfinedTestDispatcher(testScheduler),
     ): DefaultFrakClient {
         val logger = FrakLogger(FrakLogLevel.NONE)
         val ioDispatcher = kotlinx.coroutines.test.StandardTestDispatcher(testScheduler)
@@ -538,6 +541,7 @@ class DefaultFrakClientTest {
             launcher = launcher,
             logger = logger,
             ioDispatcher = ioDispatcher,
+            mainDispatcher = mainDispatcher,
             http = HttpClient(FAKE_BASE_URL, UnconfinedTestDispatcher(testScheduler), transport::open),
         )
     }

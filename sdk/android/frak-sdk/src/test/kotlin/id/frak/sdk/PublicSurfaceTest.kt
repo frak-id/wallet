@@ -11,6 +11,7 @@ import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.rewards.Campaign
 import id.frak.sdk.rewards.EstimatedReward
+import id.frak.sdk.rewards.RewardRequest
 import id.frak.sdk.rewards.RewardTier
 import id.frak.sdk.rewards.TokenAmount
 import id.frak.sdk.sharing.AttributionParams
@@ -223,6 +224,30 @@ class PublicSurfaceTest {
         val bare = SharingRequest { }
         assertNull(bare.link)
         assertEquals(emptyList<SharingProduct>(), bare.products)
+    }
+
+    @Test
+    fun `RewardRequest is constructible both ways and compares structurally`() {
+        val built =
+            RewardRequest.Builder()
+                .targetInteraction("purchase")
+                .addProduct(ProductDetails { sku = "SHOE-42" })
+                .build()
+        val sugared =
+            RewardRequest {
+                targetInteraction = "purchase"
+                products = listOf(ProductDetails { sku = "SHOE-42" })
+            }
+
+        // The only request type with `equals`, so unlike `SharingRequest` this comparison is a real one.
+        assertEquals(built, sugared)
+        assertEquals(built.hashCode(), sugared.hashCode())
+        assertNotEquals(built, RewardRequest { targetInteraction = "referral" })
+
+        // `products` is non-null with an empty default, matching `SharingRequest`: an absent list and an
+        // empty one are the same request, and must therefore be the same value.
+        assertEquals(emptyList<ProductDetails>(), RewardRequest { }.products)
+        assertEquals(RewardRequest { }, RewardRequest { products = emptyList() })
     }
 
     @Test

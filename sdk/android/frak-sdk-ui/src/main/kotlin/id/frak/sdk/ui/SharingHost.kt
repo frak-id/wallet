@@ -24,8 +24,10 @@ import androidx.lifecycle.ViewModelProvider
 import id.frak.sdk.Frak
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.sharing.SharingRequest
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -748,6 +750,14 @@ internal object MainThreadDispatcher : CoroutineDispatcher() {
         context: CoroutineContext,
         block: Runnable,
     ) {
-        handler.post(block)
+        if (handler.post(block)) return
+        // `post` returns false only when the looper is exiting, i.e. the process is going away.
+        // Dropping the block would leave whatever is waiting on this resumption suspended forever —
+        // for a `*Async` twin, a future that never completes. Cancel and then run it anyway, so the
+        // coroutine resumes, observes the cancellation and finishes. This is what
+        // `kotlinx-coroutines-android`'s own `HandlerContext` does, and the reason to copy it rather
+        // than reinvent it.
+        context.cancel(CancellationException("Frak's main looper is shutting down"))
+        Dispatchers.IO.dispatch(context, block)
     }
 }
