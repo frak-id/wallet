@@ -26,6 +26,13 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
 /**
+ * The dispatcher the calling coroutine is running on. Must stay a real suspend function: reading
+ * `coroutineContext` inline in a suspend lambda binds to the enclosing scope (here `runTest`'s), not
+ * to where the lambda actually runs.
+ */
+private suspend fun currentInterceptor(): ContinuationInterceptor? = coroutineContext[ContinuationInterceptor]
+
+/**
  * The threading and lifetime contract of `DefaultFrakClient.asFuture`, which every `*Async` twin on
  * the public surface funnels through.
  *
@@ -69,11 +76,10 @@ class AsyncTwinTest {
             val io = StandardTestDispatcher(testScheduler)
             val client = newClient(testScheduler, io, main)
 
-            // `asFuture` merges its context into the scope's, which would otherwise move the *whole*
-            // body onto the main thread — the inner `withContext(ioDispatcher)` is what stops that,
-            // and this is the assertion that would fail if someone removed it.
+            // `asFuture` merges its context into the scope's, so without the inner
+            // `withContext(ioDispatcher)` the whole body would run on the main thread.
             var bodyInterceptor: Any? = null
-            val future = client.asFuture { bodyInterceptor = coroutineContext[ContinuationInterceptor] }
+            val future = client.asFuture { bodyInterceptor = currentInterceptor() }
 
             var completedInsideMainDispatch = false
             future.whenComplete { _, _ -> completedInsideMainDispatch = main.dispatching }
