@@ -22,7 +22,8 @@ internal fun sharingRequest(
     placement: String? = null,
     logoUrl: String? = null,
 ): SharingRequest =
-    SharingRequest.Builder()
+    SharingRequest
+        .Builder()
         .link(link)
         .products(products)
         .targetInteraction(targetInteraction)
@@ -37,7 +38,8 @@ internal fun sharingProduct(
     utmContent: String? = null,
     details: ProductDetails? = null,
 ): SharingProduct =
-    SharingProduct.Builder(title, link)
+    SharingProduct
+        .Builder(title, link)
         .imageUrl(imageUrl)
         .utmContent(utmContent)
         .details(details)
@@ -51,7 +53,8 @@ internal fun productDetails(
     unitPrice: Double? = null,
     totalPrice: Double? = null,
 ): ProductDetails =
-    ProductDetails.Builder()
+    ProductDetails
+        .Builder()
         .productId(productId)
         .sku(sku)
         .name(name)

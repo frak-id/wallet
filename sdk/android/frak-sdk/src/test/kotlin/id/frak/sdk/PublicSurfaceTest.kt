@@ -76,17 +76,18 @@ class PublicSurfaceTest {
     @Test
     fun `the Builder and the Kotlin sugar over it agree field by field`() {
         val built =
-            FrakConfig.Builder(MERCHANT_ID)
+            FrakConfig
+                .Builder(MERCHANT_ID)
                 .metadata(
-                    FrakMetadata.Builder()
+                    FrakMetadata
+                        .Builder()
                         .name("Acme")
                         .currency(FrakCurrency.USD)
                         .lang(FrakLanguage.FR)
                         .logoUrl("https://acme.example/logo.png")
                         .homepageLink("https://acme.example")
                         .build(),
-                )
-                .trackingEnabled(false)
+                ).trackingEnabled(false)
                 .logLevel(FrakLogLevel.DEBUG)
                 .preloadSharing(true)
                 .build()
@@ -146,7 +147,8 @@ class PublicSurfaceTest {
     @Test
     fun `every sharing input type is constructible both ways`() {
         val productDetails =
-            ProductDetails.Builder()
+            ProductDetails
+                .Builder()
                 .sku("SHOE-42")
                 .quantity(2.0)
                 .build()
@@ -159,7 +161,8 @@ class PublicSurfaceTest {
         )
 
         val product =
-            SharingProduct.Builder("Kettle", "https://acme.example/kettle")
+            SharingProduct
+                .Builder("Kettle", "https://acme.example/kettle")
                 .imageUrl("https://acme.example/kettle.png")
                 .details(productDetails)
                 .build()
@@ -190,7 +193,8 @@ class PublicSurfaceTest {
         assertEquals(attributionParams, AttributionParams { utmSource = "android-app" })
 
         val request =
-            SharingRequest.Builder()
+            SharingRequest
+                .Builder()
                 .addProduct(product)
                 .attribution(attributionParams)
                 .targetInteraction("purchase")
@@ -230,7 +234,8 @@ class PublicSurfaceTest {
     @Test
     fun `RewardRequest is constructible both ways and compares structurally`() {
         val built =
-            RewardRequest.Builder()
+            RewardRequest
+                .Builder()
                 .targetInteraction("purchase")
                 .addProduct(ProductDetails { sku = "SHOE-42" })
                 .build()
@@ -275,7 +280,13 @@ class PublicSurfaceTest {
 
     @Test
     fun `a merchant can state every environment, including a custom origin pair`() {
-        assertEquals("https://backend.frak.id", FrakConfig.Builder().build().env.backend)
+        assertEquals(
+            "https://backend.frak.id",
+            FrakConfig
+                .Builder()
+                .build()
+                .env.backend,
+        )
         assertEquals("https://wallet-dev.frak.id", FrakEnvironment.Development.wallet)
 
         val local =
@@ -286,7 +297,14 @@ class PublicSurfaceTest {
             )
         assertEquals("https://localhost:3000", local.wallet)
         assertEquals("https://localhost:3030", local.backend)
-        assertEquals(local.backend, FrakConfig.Builder().env(local).build().env.backend)
+        assertEquals(
+            local.backend,
+            FrakConfig
+                .Builder()
+                .env(local)
+                .build()
+                .env.backend,
+        )
     }
 
     @Test

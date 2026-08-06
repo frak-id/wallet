@@ -91,7 +91,10 @@ internal object FrakClientDependencies : SharingDependencies {
 
     override fun environment(): FrakEnvironment = Frak.client.environment
 
-    override suspend fun resolveConfig(): SharingMerchant = Frak.client.config.resolve().toSharingMerchant()
+    override suspend fun resolveConfig(): SharingMerchant =
+        Frak.client.config
+            .resolve()
+            .toSharingMerchant()
 
     override suspend fun bestReward(
         targetInteraction: String?,

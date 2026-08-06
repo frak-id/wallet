@@ -21,12 +21,13 @@ class InteractionFactoryTest {
     @Test
     fun `arrival carries all four fields`() {
         val kind =
-            Interaction.arrival(
-                referrerWallet = "0xwallet",
-                referrerClientId = "client",
-                referrerMerchantId = "merchant",
-                referralTimestamp = 1_709_654_400,
-            ).kind as Interaction.Kind.Arrival
+            Interaction
+                .arrival(
+                    referrerWallet = "0xwallet",
+                    referrerClientId = "client",
+                    referrerMerchantId = "merchant",
+                    referralTimestamp = 1_709_654_400,
+                ).kind as Interaction.Kind.Arrival
 
         assertEquals("0xwallet", kind.referrerWallet)
         assertEquals("client", kind.referrerClientId)

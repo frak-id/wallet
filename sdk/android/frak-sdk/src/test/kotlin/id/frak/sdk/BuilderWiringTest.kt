@@ -40,7 +40,8 @@ class BuilderWiringTest {
     @Test
     fun `FrakMetadata Builder carries every field to the right property`() {
         val metadata =
-            FrakMetadata.Builder()
+            FrakMetadata
+                .Builder()
                 .name("metadata-name")
                 .currency(FrakCurrency.GBP)
                 .lang(FrakLanguage.FR)
@@ -62,7 +63,8 @@ class BuilderWiringTest {
         val environment = FrakEnvironment.Custom("https://wallet.test", "https://backend.test")
 
         val config =
-            FrakConfig.Builder()
+            FrakConfig
+                .Builder()
                 .merchantId("merchant-id")
                 .packageId("com.acme.app")
                 .metadata(metadata)
@@ -126,7 +128,8 @@ class BuilderWiringTest {
     @Test
     fun `ProductDetails Builder carries every field to the right property`() {
         val details =
-            ProductDetails.Builder()
+            ProductDetails
+                .Builder()
                 .productId("product-id")
                 .sku("sku")
                 .name("product-name")
@@ -147,7 +150,8 @@ class BuilderWiringTest {
     @Test
     fun `AttributionParams Builder carries every field to the right property`() {
         val attribution =
-            AttributionParams.Builder()
+            AttributionParams
+                .Builder()
                 .utmSource("source")
                 .utmMedium("medium")
                 .utmCampaign("campaign")
@@ -170,7 +174,8 @@ class BuilderWiringTest {
     fun `SharingProduct Builder carries every field to the right property`() {
         val details = ProductDetails { sku = "sku" }
         val product =
-            SharingProduct.Builder("product-title", "https://acme.example/p")
+            SharingProduct
+                .Builder("product-title", "https://acme.example/p")
                 .imageUrl("https://acme.example/p.png")
                 .utmContent("content")
                 .details(details)
@@ -188,7 +193,8 @@ class BuilderWiringTest {
         val product = SharingProduct("product-title", "https://acme.example/p")
         val attribution = AttributionParams { utmSource = "source" }
         val request =
-            SharingRequest.Builder()
+            SharingRequest
+                .Builder()
                 .link("https://acme.example/request")
                 .products(listOf(product))
                 .attribution(attribution)
@@ -209,7 +215,8 @@ class BuilderWiringTest {
     fun `RewardRequest Builder carries every field to the right property`() {
         val details = ProductDetails { sku = "sku" }
         val request =
-            RewardRequest.Builder()
+            RewardRequest
+                .Builder()
                 .targetInteraction("purchase")
                 .audience(RewardAudience.REFERRER)
                 .products(listOf(details))
@@ -239,7 +246,8 @@ class BuilderWiringTest {
         // `addProduct` accumulates from the empty default, and `build()` copies out of the caller's list.
         val mutable = mutableListOf(ProductDetails { sku = "first" })
         val accumulated =
-            RewardRequest.Builder()
+            RewardRequest
+                .Builder()
                 .products(mutable)
                 .addProduct(ProductDetails { sku = "second" })
                 .build()
@@ -259,7 +267,8 @@ class BuilderWiringTest {
         val second = SharingProduct("second", "https://acme.example/2")
 
         val request =
-            SharingRequest.Builder()
+            SharingRequest
+                .Builder()
                 .products(listOf(first))
                 .addProduct(second)
                 .build()

@@ -21,7 +21,8 @@ internal fun frakMetadata(
     logoUrl: String? = null,
     homepageLink: String? = null,
 ): FrakMetadata =
-    FrakMetadata.Builder()
+    FrakMetadata
+        .Builder()
         .name(name)
         .currency(currency)
         .lang(lang)
@@ -40,7 +41,8 @@ internal fun frakConfig(
     logSink: FrakLogSink? = null,
     preloadSharing: Boolean = false,
 ): FrakConfig =
-    FrakConfig.Builder()
+    FrakConfig
+        .Builder()
         .merchantId(merchantId)
         .packageId(packageId)
         .metadata(metadata)
@@ -60,7 +62,8 @@ internal fun productDetails(
     unitPrice: Double? = null,
     totalPrice: Double? = null,
 ): ProductDetails =
-    ProductDetails.Builder()
+    ProductDetails
+        .Builder()
         .productId(productId)
         .sku(sku)
         .name(name)

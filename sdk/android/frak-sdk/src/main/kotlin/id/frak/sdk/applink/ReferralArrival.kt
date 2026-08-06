@@ -42,7 +42,7 @@ internal object ReferralArrival {
 
     fun arrivalFrom(context: FrakContext): Interaction =
         when (context) {
-            is FrakContext.V1 ->
+            is FrakContext.V1 -> {
                 Interaction.arrival(
                     referrerWallet = context.wallet,
                     // V1 carries an address and nothing else. That is finding 3.2: with no
@@ -52,13 +52,15 @@ internal object ReferralArrival {
                     referrerMerchantId = null,
                     referralTimestamp = null,
                 )
+            }
 
-            is FrakContext.V2 ->
+            is FrakContext.V2 -> {
                 Interaction.arrival(
                     referrerWallet = context.wallet,
                     referrerClientId = context.clientId,
                     referrerMerchantId = context.merchantId,
                     referralTimestamp = context.timestamp,
                 )
+            }
         }
 }

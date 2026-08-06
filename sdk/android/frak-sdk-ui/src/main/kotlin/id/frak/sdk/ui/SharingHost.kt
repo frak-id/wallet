@@ -351,13 +351,17 @@ internal class SharingHost private constructor(
                 sessionActive = active != null,
             )
         when (decision) {
-            SharingPresentDecision.Ignore -> return
+            SharingPresentDecision.Ignore -> {
+                return
+            }
+
             SharingPresentDecision.Refuse -> {
                 report(callback, SharingResult.Failed(FrakError.AlreadyPresenting()))
                 return
             }
 
-            SharingPresentDecision.Present -> Unit
+            // Fall through to presentation.
+            SharingPresentDecision.Present -> {}
         }
 
         // Late is still better than never: a merchant who never called warm() pays a cold view,

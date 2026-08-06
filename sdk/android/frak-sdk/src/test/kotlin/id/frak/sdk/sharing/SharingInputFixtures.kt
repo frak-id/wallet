@@ -17,7 +17,8 @@ internal fun sharingRequest(
     placement: String? = null,
     logoUrl: String? = null,
 ): SharingRequest =
-    SharingRequest.Builder()
+    SharingRequest
+        .Builder()
         .link(link)
         .products(products)
         .attribution(attribution)
@@ -35,7 +36,8 @@ internal fun attributionParams(
     via: String? = null,
     ref: String? = null,
 ): AttributionParams =
-    AttributionParams.Builder()
+    AttributionParams
+        .Builder()
         .utmSource(utmSource)
         .utmMedium(utmMedium)
         .utmCampaign(utmCampaign)

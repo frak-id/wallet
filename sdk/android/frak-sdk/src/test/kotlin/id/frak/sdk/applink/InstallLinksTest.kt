@@ -121,9 +121,10 @@ class ReferralArrivalTest {
         // `Kind` — friend access, same module. There is no public way to read an interaction back and
         // there is not meant to be; what a merchant does with one is hand it to `track`.
         val arrival =
-            ReferralArrival.arrivalFrom(
-                frakContextV2(MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID, wallet = WALLET),
-            ).kind as Interaction.Kind.Arrival
+            ReferralArrival
+                .arrivalFrom(
+                    frakContextV2(MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID, wallet = WALLET),
+                ).kind as Interaction.Kind.Arrival
 
         assertEquals(OTHER_CLIENT_ID, arrival.referrerClientId)
         assertEquals(MERCHANT_ID, arrival.referrerMerchantId)
