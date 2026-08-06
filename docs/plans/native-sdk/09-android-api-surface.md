@@ -262,8 +262,8 @@ the new placement is checked against a real `apiDump` first. The second half is 
 `PercentEncoding`, and so far only `PercentEncoding`. It is the genuine article: `public` purely
 because `:frak-sdk-ui` builds the sharing and install URLs, reachable from no public signature, of no
 conceivable merchant value. It is also the end-to-end spike for the mechanism — if
-`nonPublicMarkers` does not fire on a `BINARY`-retention class marker in whichever BCV version step 5
-pins, one type reveals it, not fifty-one properties.
+`nonPublicMarkers` does not fire on a `BINARY`-retention class marker in the pinned BCV version
+(0.18.1), one type reveals it, not fifty-one properties.
 
 ### 3b. What is *not* marked, revising the original plan
 
@@ -456,17 +456,20 @@ what catches a `Continuation` on the public surface or a `$default` bridge Java 
 Five commits, in this order, each reviewed before the next starts.
 
 1. `@InternalFrakApi` + internal constructors on the config tree — biggest surface reduction,
-   unblocks the rest
+   unblocks the rest. **Done**
 2. Builders + Kotlin sugar: `SharingRequest`/`SharingProduct`/`ProductDetails` first, then
    `FrakConfig`/`FrakMetadata`/`AttributionParams`/`FrakContext.V2`. Also the two §1a rows that are
    *not* builder candidates and would otherwise be missed: explicit overloads for
-   `FrakEnvironment.Custom` and for `FrakError.Server`/`FrakError.Decoding`
+   `FrakEnvironment.Custom` and for `FrakError.Server`/`FrakError.Decoding`. **Done**
 3. `Interaction` collapse — which is also what removes its eight default arguments. **Done**, with
    structural equality and an `internal` rather than `private` constructor; see §4
 4. `*Async` twins + the `frak-sdk` Java fixture. **Done** — and not a source break after all: the
    three defaulted `*Api` functions became explicit overloads rather than losing their short form.
    `best` did change shape, to take a `RewardRequest`. Details and four corrections in §2a
-5. Re-add BCV and commit the dump
+5. Re-add BCV and commit the dump. **BCV is wired; the dump is not committed** — generating one needs
+   a JDK and the Android SDK, neither of which was available to the work that reshaped the surface.
+   `apiCheck` is in `check` and currently fails telling you to run `apiDump`, which is the correct
+   state. See §5a
 
 Step 5 last because committing a dump ratifies the shape. Expect it larger than the deleted one
 (`05` §5 records that at 509 lines for `frak-sdk`; nothing in git history can confirm it, since no
@@ -475,6 +478,49 @@ correct outcome; the metric is frozen surface, not line count.
 
 One convenient interaction: BCV's `nonPublicMarkers` historically mishandled functions with default
 parameters. Removing defaults (§1) makes that moot.
+
+### 5a. What wiring BCV actually took
+
+**Neither BCV nor its replacement works on this build, and that is not a configuration mistake.** BCV
+registers `apiDump`/`apiCheck` only when `kotlin-android`, `kotlin` or `kotlin-multiplatform` is
+applied. AGP 9 compiles Kotlin itself and actively *blocks* `org.jetbrains.kotlin.android`, so BCV's
+Android hook never fires — no tasks, no error, nothing
+([BCV#312](https://github.com/Kotlin/binary-compatibility-validator/issues/312)). The migration path
+BCV's own README points at, KGP's `kotlin { abiValidation { } }`, is closed for the same reason: that
+DSL lives on the extension the standalone Kotlin plugin registers, not the one AGP provides
+([KT-78025](https://youtrack.jetbrains.com/issue/KT-78025), open and unscheduled). Had the plan been
+executed literally — "re-add BCV and commit the dump" — the result would have been a build with the
+plugin applied, no tasks, no dump, and nothing saying so.
+
+So the tasks are registered by hand in `frak-publish.gradle.kts`, feeding BCV's own
+`KotlinApiBuildTask`/`KotlinApiCompareTask` from `compileReleaseKotlin` and
+`compileReleaseJavaWithJavac`. This is the approach okhttp and elastic/apm-agent-android took for the
+same AGP 9 gap. Four consequences worth recording:
+
+- **BCV's version is pinned, in `buildSrc/build.gradle.kts`.** Those two task types are internal to
+  BCV, not public API, so a floating version could break the build silently on a patch bump.
+- **It is declared in `buildSrc`, not as a versioned `alias(...)` in the root build**, for the same
+  reason AGP is: a `buildSrc` `implementation` dependency joins every project's build script
+  classpath, so the root applies the plugin by id and the convention plugin references its task types
+  from *one* classloader. Two declarations would give two identities for `KotlinApiBuildTask`.
+- **The plugin is still applied — to the root only.** It registers no tasks there, but it creates the
+  `apiValidation` extension, and BCV's task base reads that extension by walking up the project
+  hierarchy. So `nonPublicMarkers` is configured in one place and the per-module tasks pick it up
+  without being told.
+- **The tasks are named `apiDump`/`apiCheck`**, not `releaseApiDump`, so the commands are the ones
+  BCV's documentation gives. If upstream ever starts registering them, Gradle fails with "a task with
+  that name already exists" — which is the right way to find out, and the signal to delete the block.
+
+Release variant only, because that is the variant a merchant consumes and the only one published. A
+difference confined to `debug` would go unseen; neither module has debug-only sources today.
+
+**The dump itself is deliberately absent.** Generating one requires a JDK and the Android SDK. Until it
+lands, `apiCheck` fails with BCV's own "run :apiDump" message — correct, not broken. Expect it larger
+than the deleted one: eighteen `*Async` twins, seven Builders and their sugar functions all add
+declarations. That is the intended outcome; the metric is frozen surface, not line count. And expect
+the first run to surface things unrelated to this work — BCV has never executed against this build,
+so nothing about it has been verified end to end, including whether `nonPublicMarkers` fires on
+`@InternalFrakApi`. `PercentEncoding` is the one type that answers that, and §3a says so.
 
 ## Open, and to be answered before the dump is committed
 
@@ -490,9 +536,9 @@ Added by the step-2 review, in the order they become unfixable:
   or splitting **any of the five files** — `core/FrakConfig.kt`, `core/ProductDetails.kt`,
   `sharing/SharingRequest.kt`, `sharing/AttributionParams.kt`, `rewards/RewardRequest.kt` — is a binary
   break. The decision taken for now is deliberate and
-  minimal: **keep the default facade names and do not rename or split those four files after step 5.**
+  minimal: **keep the default facade names and do not rename or split those five files after step 5.**
   A `@file:JvmName` would decouple the two, but picking a name badly is also permanent. Note that two of
-  the nine — `FrakConfig(String)` and `SharingProduct(String, String)` — take no `Function1` and are
+  the ten — `FrakConfig(String)` and `SharingProduct(String, String)` — take no `Function1` and are
   ordinary Java-callable statics, so the facade name is not purely internal noise.
 - **`FrakMetadata.currency` is non-null with an EUR default, and there is no "unset".**
   `RewardRepository` reads currency only from `FrakMetadata`, so a US merchant who never calls
@@ -544,13 +590,34 @@ Added by the step-2 review, in the order they become unfixable:
   21 `PercentEncoding.encode` call sites into its own class files, and once `nonPublicMarkers` drops
   that symbol from the dump, re-signaturing it becomes an invisible change that a merchant on mixed
   artifact versions meets as `NoSuchMethodError` at share time. `frak-publish.gradle.kts` says the two
-  artifacts "ship in lockstep"; the POM does not. Land `version { strictly(...) }` (or a shared Gradle
-  capability) in the same commit as `nonPublicMarkers`, or the marker removes a guard without
-  replacing it.
+  artifacts "ship in lockstep"; the POM does not. `version { strictly(...) }` (or a shared Gradle
+  capability) was supposed to land in the same commit as `nonPublicMarkers` and **did not** —
+  `frak-sdk-ui/build.gradle.kts` is still a bare `api(project(":frak-sdk"))`. Not urgent while no dump
+  exists, since nothing is excluded from a contract that does not exist; urgent the moment one is,
+  which is why it stays on this list.
 - **BCV against an Android library module** has never run here. Whether `nonPublicMarkers` fires on a
-  `BINARY`-retention class-level marker in the pinned version is unverified; `PercentEncoding` is the
-  spike that answers it. Land BCV with the surface unchanged first and commit that baseline, then the
-  marker, so a surprise in the first `apiDump` is separable from a surprise in the marker.
+  `BINARY`-retention class-level marker in the pinned version (0.18.1) is unverified; `PercentEncoding`
+  is the spike that answers it. **The separation strategy this bullet used to prescribe is gone**: it
+  said to land BCV with the surface unchanged, commit that baseline, then the marker, so a surprise in
+  the first `apiDump` was separable from a surprise in the marker. BCV landed *after* steps 1–4, and
+  `nonPublicMarkers` landed in the same commit as BCV, so the first dump conflates all three. What is
+  left is that `PercentEncoding` is the only marked type, which isolates the marker question; nothing
+  isolates the reshaping. Read the first dump accordingly.
+- **The dumps themselves.** `apiDump` needs a JDK and the Android SDK; there is nothing to hand-write.
+  It is the last action of step 5 and the only one outstanding.
+- **`checkDexSizeBudget` has not run since before step 1.** Roughly twenty-two new classes landed
+  across steps 2–4 against a 256 KB budget. A red budget is a signal about the `*Async` twin count,
+  which is an ABI question, so it belongs before the dump rather than after.
+- **A2's remaining sealed hierarchies.** `FrakError`, `FrakEnvironment`, `RewardTier` and
+  `SharingResult` are still exhaustively matchable, and `FrakError`/`SharingResult` are the two a
+  merchant genuinely does match on — so the `Interaction` fix (§4) is not available to them. The dump
+  ratifies all four as they are. Not a blocker, but it should be a decision rather than an omission.
+- **The task-name gamble.** `apiDump`/`apiCheck` are registered by hand under BCV's own names, so if
+  upstream ever registers them this build fails with "a task with that name already exists". That is
+  deliberate (§5a) and it is the *opposite* of what okhttp does for the same gap — okhttp namespaces
+  its hand-rolled tasks `androidApiDump`/`androidApiCheck` and folds them into the BCV-registered
+  aggregates, which it has because it is multiplatform. This build has none to fold into, so a
+  collision has nothing to hide behind and is better loud. Revisit if that stops being true.
 
 ## Deliberately out of scope, and why
 

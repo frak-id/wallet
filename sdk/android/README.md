@@ -72,7 +72,7 @@ Supporting public types: `FrakContext`, `SharingRequest`, `SharingProduct`, `Pro
 
 Resolved-config model, publicly *readable* in full (placements, component copy, translations, attribution): `FrakResolvedConfig`, `ResolvedSdkConfig`, `ResolvedPlacement`, `ResolvedComponents`, `ButtonShareConfig`, `ButtonWalletConfig`, `OpenInAppConfig`, `PostPurchaseConfig`, `BannerConfig`, `AttributionDefaults`. Every constructor in that tree is `internal`: it is a read model the SDK hands you from `config.resolve()`, and a public constructor would freeze an arity the backend keeps adding fields to — see "Binary compatibility" below. `FrakResolvedConfig.displayName`/`displayLogoUrl` are derived properties that resolve the `sdkConfig`-over-top-level precedence once, so a caller never writes that fold itself. `display`-prefixed deliberately: a derived getter must not squat on the name a future top-level wire field would want, since repointing one is a behaviour change with an unchanged JVM descriptor that no `.api` dump could catch.
 
-`id.frak.sdk.net.PercentEncoding` is annotated `@InternalFrakApi` (`@RequiresOptIn`, ERROR): `public` only because `:frak-sdk-ui` builds URLs with it. Naming it from Kotlin is a compile error without an explicit opt-in; javac is not told, which is the annotation's known limit. It is also the marker BCV's `nonPublicMarkers` will exclude from the dump — that half is not in force yet, see "Binary compatibility" below.
+`id.frak.sdk.net.PercentEncoding` is annotated `@InternalFrakApi` (`@RequiresOptIn`, ERROR): `public` only because `:frak-sdk-ui` builds URLs with it. Naming it from Kotlin is a compile error without an explicit opt-in; javac is not told, which is the annotation's known limit. It is also the marker wired into BCV's `nonPublicMarkers`, so it never enters the dump — see "Binary compatibility" below, including what about that is still unverified.
 
 Not implemented: the 4-tier copy precedence (`FrakClient.copy`), `referralStatus`, the analytics event stream.
 
@@ -197,18 +197,31 @@ Licence: Apache-2.0 (`sdk/android/LICENSE`), deliberately not the monorepo's GPL
 
 ## Binary compatibility
 
-No gate right now. kotlinx-binary-compatibility-validator was wired into `frak-publish.gradle.kts` and then removed, along with the `api/*.api` dumps it generated, because committing a dump ratifies the public shape before that shape is decided.
+The gate is `apiCheck`, wired into `check`. It extracts the release variant's public ABI and fails on any difference from `<module>/api/<module>.api`; `apiDump` rewrites those files. **That diff is the point** — every line added is a symbol this SDK can no longer change, and every line removed is one a shipped merchant binary may already be linking against, so an ABI change becomes a reviewable decision instead of an accident.
 
-The shape is now decided, and being applied in five reviewed steps — `docs/plans/native-sdk/09-android-api-surface.md` is the record. Both former open questions are answered there:
+```bash
+bun run --cwd sdk/android apiDump    # rewrite api/frak-sdk.api and api/frak-sdk-ui.api
+bun run --cwd sdk/android apiCheck   # compare; also runs as part of `check`
+```
 
-- **Q1, the `$default` freeze.** Read models (the config tree, `FrakContext`) get `internal` constructors; merchant-constructed types get a `Builder` with a Kotlin scope-function sugar over the same Builder; `Interaction` becomes an opaque type with static factories; everything else takes explicit overloads. `@JvmOverloads` is banned — it fixes Java and leaves Kotlin callers on `$default` anyway. One holdout remains, with a step assigned: `ConfigApi.resolve`/`RewardsApi.campaigns`/`RewardsApi.best`. See "Construction" above.
-- **Q2, promoting types ahead of a reader.** Types that are `public` only to cross the `:frak-sdk`/`:frak-sdk-ui` boundary carry `@InternalFrakApi`, which will drop them out of the dump via `nonPublicMarkers` once BCV is back. Today it is a Kotlin compile error and nothing more. `PercentEncoding` is the first and, so far, only one: the marker propagates through signatures, so putting it on the config tree would have taken `ConfigApi.resolve()` out of the dump and out of every merchant's reach along with it.
+**The dumps are not committed yet.** Until they are, `apiCheck` fails with BCV's own message telling you to run `apiDump` — which is the correct state for a build whose surface has just been reshaped and not yet ratified, and not something to work around. Note `apiDump` needs a JDK and the Android SDK; there is nothing to hand-write.
 
-BCV comes back — dumps included — as the last of the five steps, since committing a dump ratifies the shape. Until then `explicitApi()` is the only enforcement.
+**The wiring is hand-rolled, and it has to be.** binary-compatibility-validator registers its `apiDump`/`apiCheck` only when `kotlin-android`, `kotlin` or `kotlin-multiplatform` is applied — and AGP 9 compiles Kotlin itself and *blocks* `org.jetbrains.kotlin.android`, so BCV's Android hook never fires and it silently does nothing ([BCV#312](https://github.com/Kotlin/binary-compatibility-validator/issues/312)). Its documented replacement, KGP's `kotlin { abiValidation { } }`, is closed for the same reason: that DSL is on the extension the standalone Kotlin plugin registers, not the one AGP provides ([KT-78025](https://youtrack.jetbrains.com/issue/KT-78025), open). So `frak-publish.gradle.kts` registers BCV's own `KotlinApiBuildTask`/`KotlinApiCompareTask` against `compileReleaseKotlin` + `compileReleaseJavaWithJavac`, which is what okhttp and elastic/apm-agent-android did for the same gap. Those task types are internal to BCV, so its version is pinned rather than floated. If a future BCV or KGP starts registering the tasks itself, this build fails with "a task with that name already exists" — the signal to delete the block.
+
+Release variant only: it is the variant a merchant consumes and the only one published. Neither module has debug-only sources; adding one is what would make this worth revisiting.
+
+`@InternalFrakApi` is wired into `nonPublicMarkers` in the root `build.gradle.kts`, so everything it marks drops out of the dump. `@Target(CLASS)` on that annotation is load-bearing: a marker on a property never reaches the class file as a Java annotation, so BCV cannot see one. That whole mechanism is unverified until the first `apiDump` runs — `PercentEncoding` is the only type carrying the marker, deliberately, so one type answers the question rather than fifty.
+
+The shape being frozen was decided in five reviewed steps — `docs/plans/native-sdk/09-android-api-surface.md` is the record, and its "Open, and to be answered before the dump is committed" list is what still stands between here and a committed dump. Both former open questions are answered there:
+
+- **Q1, the `$default` freeze.** Read models (the config tree, `FrakContext`) get `internal` constructors; merchant-constructed types get a `Builder` with a Kotlin scope-function sugar over the same Builder; `Interaction` becomes an opaque type with static factories; everything else takes explicit overloads. `@JvmOverloads` is banned — it fixes Java and leaves Kotlin callers on `$default` anyway. No holdouts remain: no public declaration in either module carries a Kotlin default argument. See "Construction" above.
+- **Q2, promoting types ahead of a reader.** Types that are `public` only to cross the `:frak-sdk`/`:frak-sdk-ui` boundary carry `@InternalFrakApi`, wired into `nonPublicMarkers` in the root `build.gradle.kts` so they never enter the dump. `PercentEncoding` is the first and, so far, only one: the marker propagates through signatures, so putting it on the config tree would have taken `ConfigApi.resolve()` out of the dump and out of every merchant's reach along with it.
+
+`explicitApi()` remains the first line of defence — it stops a helper silently widening the surface — but it detects nothing about a change to an already-public symbol. That is what the dump is for.
 
 ## Open decisions blocking first publish
 
-- Binary-compatibility gate: BCV plus a committed dump, the last of the five steps in `docs/plans/native-sdk/09-android-api-surface.md`, along with the handful of decisions that document lists as "to be answered before the dump is committed".
+- The committed `api/*.api` dumps. BCV and its tasks are wired; generating the first dump needs a JDK and the Android SDK. The decisions `docs/plans/native-sdk/09-android-api-surface.md` lists as "to be answered before the dump is committed" go with it — they are what the dump makes permanent.
 - Claiming the `id.frak` namespace (TXT record on the `frak.id` apex), generating the real GPG key, wiring the Portal repository. None of these has started; Portal verification is automated and same-day once requested.
 - A device pass covering the sharing sheet, the install handoff and inbound deep links — publishing an artifact nothing has run is how you burn a version number.
 - A CI job that builds `example/native-android`. `.github/workflows/apps.yaml` already lints, builds and unit-tests the SDK itself (see "Testing" above); nothing compiles the harness, so a broken harness call site does not go red.

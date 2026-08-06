@@ -60,7 +60,7 @@ Two artifacts per platform so a merchant taking only tracking never pulls in a w
 | Registry | Maven Central Portal (not OSSRH — decommissioned), not yet wired | SPM only, no CocoaPods |
 
 - **MVP surface implemented on both platforms**, one Android device pass only — the sharing sheet, the install handoff and inbound deep links have run nowhere, iOS nowhere at all. See `sdk/{android,ios}/README.md`.
-- **CI lints/builds/tests both native SDKs, but there is still no publish path**: `.github/workflows/apps.yaml` runs `lint` + `build` + `test` for `sdk/android` (ubuntu, JDK 17) and `sdk/ios` (macos-26) on every `dev`/`main` push and PR touching them. A `changes` job (`dorny/paths-filter`) gates each one, so an `apps/**`-only change never boots the 10×-billed macOS runner. It deliberately skips `sdk/android check` (Android Lint has never run; expect untriaged pre-existing findings) and anything needing an emulator or simulator. Publishing remains `publishToMavenLocal` only, `bun run --cwd sdk/ios xcframework` still exits 1, and there is no binary-compatibility gate.
+- **CI lints/builds/tests both native SDKs, but there is still no publish path**: `.github/workflows/apps.yaml` runs `lint` + `build` + `test` for `sdk/android` (ubuntu, JDK 17) and `sdk/ios` (macos-26) on every `dev`/`main` push and PR touching them. A `changes` job (`dorny/paths-filter`) gates each one, so an `apps/**`-only change never boots the 10×-billed macOS runner. It deliberately skips `sdk/android check` — Android Lint has never run, and `apiCheck` is red until an `api/*.api` dump is committed — and anything needing an emulator or simulator. Publishing remains `publishToMavenLocal` only, `bun run --cwd sdk/ios xcframework` still exits 1, and the Android ABI gate is wired but not yet ratified by a dump.
 - **Three iOS divergences, each forced by the platform**: the anonymous id lives in `UserDefaults` (Keychain survives uninstall) in its own `id.frak.sdk.identity` suite, alongside the Secure Enclave's wrapped key blob; `DeepLinkHandling` has no `.automatic` case, because a library cannot observe a host's `Scene`/`AppDelegate` URL callbacks the way it can Android's `ActivityLifecycleCallbacks`; the install fallback is a plain App Store URL, so the identity handoff only completes when the wallet is already installed.
 - **The two wire formats are pinned to golden fixtures, not to each other.** The identity proof layout and the FrakContext v2 codec are asserted against `sdk/core/src/{identity,context}/fixtures/` on every platform. A port that does not assert against the corpus has not been ported.
 - **Android dex budget: 256 KB per artifact** (`sdk/android/gradle.properties`). The check measures each module's own `classes.jar`, so it is meaningful for `:frak-sdk` and vacuous for `:frak-sdk-ui`.
@@ -74,15 +74,20 @@ Two artifacts per platform so a merchant taking only tracking never pulls in a w
 ```bash
 bun run --cwd sdk/android build   # assembleRelease — no device, this is a library
 bun run --cwd sdk/android test    # JVM unit tests
-bun run --cwd sdk/android check   # ktlint, tests, Android Lint, version drift, dex budget
+bun run --cwd sdk/android check   # ktlint, ABI gate, tests, Android Lint, version drift, dex budget
+bun run --cwd sdk/android apiDump # write api/*.api; the diff IS the ABI decision
 bun run --cwd sdk/ios build       # swift build at an explicit iOS-simulator triple
 bun run --cwd sdk/ios test        # two stages: compile at the iOS triple, then run on the host
 bun run --filter '*/native-*' lint   # ktlint + swift-format across SDKs and harnesses
 ```
 
-No `apiCheck`/`apiDump`: binary-compatibility-validator was wired then removed while the public shape is
-unfrozen, and no `.api` dump is committed. It returns before the first publish — `explicitApi()` catches a
-newly-public symbol but not a breaking change to an existing one.
+`apiCheck`/`apiDump` exist on Android and hang off `check`, but **no `.api` dump is committed yet**, so
+`check` is red until one is (`bun run --cwd sdk/android apiDump`, which needs a JDK + the Android SDK).
+`explicitApi()` catches a newly-public symbol; only the dump catches a breaking change to an existing one.
+The wiring is hand-rolled in `buildSrc` because binary-compatibility-validator registers nothing for an
+AGP 9 Android library and its documented replacement is unavailable for the same reason — see
+`docs/plans/native-sdk/09-android-api-surface.md` §5a, which is also the record of the Builder /
+`*Async` / `Interaction` reshaping that gate freezes.
 
 ## See Also
 

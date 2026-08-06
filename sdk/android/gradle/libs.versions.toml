@@ -17,6 +17,21 @@ ktlint-plugin = "14.2.0"
 # as a group accessor with no `.get()`.
 ktlint-engine = "1.8.0"
 
+# binary-compatibility-validator. Recorded here because this file is meant to be the whole answer
+# to "what does this build resolve", but it is *declared* in buildSrc/build.gradle.kts, which cannot
+# read this catalog — same as AGP and the Kotlin Gradle plugin. Keep the two in step by hand.
+#
+# Pinned, not floating: `frak-publish.gradle.kts` registers BCV's `KotlinApiBuildTask` and
+# `KotlinApiCompareTask` itself, and those are internal to BCV rather than public API. See the
+# comment on `apiCheck` there for why the wiring is hand-rolled at all.
+bcv = "0.18.1"
+# BCV's ABI worker needs these at runtime and BCV's POM declares neither; also declared in
+# buildSrc/build.gradle.kts. `kotlin-metadata-jvm` tracks the `kotlin` version above, because it parses
+# the `@Metadata` this build's compiler emits. ASM reaches buildSrc through AGP as well, but relying on
+# a transitive leak for a verification gate is how a gate breaks for an unrelated reason.
+kotlin-metadata = "2.4.10"
+asm = "9.9"
+
 
 coroutines = "1.11.0"
 

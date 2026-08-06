@@ -9,12 +9,14 @@ package id.frak.sdk
  * needs from `:frak-sdk` has to be `public` even when no merchant should ever name it. This
  * marker separates the two.
  *
- * **What it does today:** a Kotlin consumer naming a marked declaration gets a compile error.
- * That is the whole of it. binary-compatibility-validator is not applied to this build yet, so the
- * second half of the intent — `nonPublicMarkers` keeping marked declarations out of the committed
- * `.api` dump, instead of freezing them there by accident — arrives with the dump, as the last step
- * of `docs/plans/native-sdk/09-android-api-surface.md`. Until then this annotation is documentation
- * plus a compiler error.
+ * **What it does:** a Kotlin consumer naming a marked declaration gets a compile error, and the
+ * declaration never enters the committed `.api` dump — the marker is wired into
+ * binary-compatibility-validator's `nonPublicMarkers` in `sdk/android/build.gradle.kts`.
+ *
+ * The second half is unverified. No `apiDump` has run against this build, so nothing has yet proven
+ * that `nonPublicMarkers` fires on a `BINARY`-retention class marker in the pinned BCV version.
+ * [id.frak.sdk.net.PercentEncoding] is the one type carrying this annotation, deliberately, so the
+ * first dump answers that with one type rather than fifty.
  *
  * **`@Target(CLASS)` deliberately, and nothing else.** A marker on a `val` is resolved by Kotlin
  * against `param → property → field` and, on either of the first two, never reaches the class

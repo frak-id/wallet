@@ -13,7 +13,7 @@ the sharing surface of `apps/listener`.
 | [`06-open-findings.md`](./06-open-findings.md) | Merged audit register — only what is still open |
 | [`07-sharing-sheet-audit.md`](./07-sharing-sheet-audit.md) | Android sharing sheet: why it janks (verified against Compose M3 1.4.0 and the WebView draw-functor ABI), four correctness defects, and the Stripe-shaped API surface that replaces the Compose-only entry point |
 | [`08-sharing-sheet-api.md`](./08-sharing-sheet-api.md) | Replacing the Compose-only sheet entry point with a Stripe-`PaymentSheet`-shaped `Builder`: why we take Stripe's API but not its Activity, dropping `ModalBottomSheet` for a `ComponentDialog`, rotation survival, and the sequence to XML/Java/UIKit support |
-| [`09-android-api-surface.md`](./09-android-api-surface.md) | The Android SDK's frozen public shape: Builders instead of default arguments, `*Async` twins for Java, `@InternalFrakApi` and the BCV `nonPublicMarkers` it will be wired to, the `Interaction` collapse, and the five-commit sequence to a committed `.api` dump |
+| [`09-android-api-surface.md`](./09-android-api-surface.md) | The Android SDK's frozen public shape: Builders instead of default arguments, `*Async` twins for Java, `@InternalFrakApi` wired into BCV's `nonPublicMarkers`, the `Interaction` collapse, and the five-commit sequence to a committed `.api` dump |
 
 ## Scope
 
@@ -52,8 +52,9 @@ wallet-installed probe, `config.resolve` and `rewards.best`. The sharing sheet, 
 handoff and inbound deep links have run nowhere; iOS has had no device or simulator pass at
 all. `.github/workflows/apps.yaml` lints, builds and unit-tests both SDKs on every push and PR
 touching them — compile-and-host-test coverage only, no emulator and no simulator — and there is no
-publish path and no binary-compatibility gate (`05` §5, and `09` for the shape the gate will freeze).
-Two findings still block the first publish and the security/privacy register is still open — see `06`.
+publish path, and the binary-compatibility gate is wired but its first dump is not committed (`05`
+§5, `09` §5a). Two findings still block the first publish and the security/privacy register is still
+open — see `06`.
 
 Three places where iOS could not mirror Android, each forced rather than chosen:
 

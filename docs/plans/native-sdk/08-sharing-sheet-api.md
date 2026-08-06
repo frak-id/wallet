@@ -43,9 +43,10 @@ SwiftUI `ViewModifier`, and UIKit apps are equally locked out.
    not a migration with a deprecation cycle — it is a **replacement**. `rememberFrakSharingLauncher`
    gets deleted, not `@Deprecated`.
 2. **It is on the critical path to that publish.** The binary-compatibility validator was wired and
-   then removed with the comment *"the public shape isn't frozen. Re-add before first publish"*
-   (`frak-publish.gradle.kts:14`). Committing a dump ratifies the shape. This must land **before**
-   BCV returns, or we ratify the Compose-only surface and then break it.
+   then removed while the public shape was unfrozen; committing a dump ratifies the shape. This had to
+   land **before** BCV returned, or we would have ratified the Compose-only surface and then broken it.
+   It did: the sheet's Builder shipped first, then the five steps of
+   `09-android-api-surface.md` reshaped the rest, then BCV came back. No dump is committed yet.
 
 A third reason, less obvious: **no test or harness exercises a non-Compose caller.** Both example
 apps drive the SDK from inside a Compose/SwiftUI tree. The XML and UIKit paths are not merely
@@ -451,7 +452,7 @@ A merchant can hold two `FrakSharing` instances on one Activity, and two sheets 
 | **B** | An **XML + Java** screen in `example/native-android`, plus a rotation pass and a leak check | Validates A on the path nothing has ever compiled |
 | **C** | Replace the remaining Compose content with Views; split `id.frak:frak-sdk-ui-compose` for the `@Composable build()` | Compose leaves the base artifact; the dex gate stops being vacuous |
 | **D** | `FrakSharingPresenter` on iOS; reimplement `.frakSharingSheet` on top | UIKit merchants |
-| **E** | Answer `05` Q1–Q3, re-wire binary-compatibility-validator, commit dumps | The first publish |
+| **E** | Answer `05` Q3 (Q1/Q2 are answered in `09`), commit the `api/*.api` dumps — BCV itself is already wired | The first publish |
 
 A is split because A2 is the single largest risk item here and the only one that can leak an
 Activity. A1 is a re-parenting with a compile error at every site that needs attention; A2 is a

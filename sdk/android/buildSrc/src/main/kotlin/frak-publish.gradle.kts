@@ -1,3 +1,5 @@
+import kotlinx.validation.KotlinApiBuildTask
+import kotlinx.validation.KotlinApiCompareTask
 import org.gradle.kotlin.dsl.support.serviceOf
 import org.gradle.process.ExecOperations
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
@@ -11,7 +13,9 @@ plugins {
     id("com.android.library")
     `maven-publish`
     signing
-    // No binary-compatibility-validator yet: the public shape isn't frozen. Re-add before first publish.
+    // binary-compatibility-validator is NOT applied here, deliberately — it would register nothing.
+    // It is applied to the root project (which owns the `apiValidation` extension) and its tasks are
+    // wired per module at the bottom of this file. See the long comment there for why by hand.
 }
 
 val sdkVersion: String =
@@ -260,3 +264,83 @@ val checkDexSizeBudget =
     }
 
 tasks.named("check") { dependsOn(checkDexSizeBudget) }
+
+// ---------------------------------------------------------------------------- ABI gate
+//
+// `api/<module>.api` is the frozen public surface. `apiCheck` fails the build when the compiled
+// surface differs from it; `apiDump` rewrites it, and that rewrite is the reviewable diff in which
+// an ABI change becomes a decision instead of an accident.
+//
+// **Hand-rolled, and it has to be.** binary-compatibility-validator registers its own `apiDump` and
+// `apiCheck` only when one of `kotlin-android`, `kotlin` or `kotlin-multiplatform` is applied — and
+// AGP 9 compiles Kotlin itself and *blocks* `org.jetbrains.kotlin.android`, so BCV's Android hook
+// never fires and it silently does nothing (Kotlin/binary-compatibility-validator#312). The
+// documented migration path, KGP's built-in `kotlin { abiValidation { } }`, is closed for the same
+// reason: that DSL lives on the extension the standalone Kotlin plugin registers, not on the one AGP
+// provides (KT-78025, open and unscheduled). So neither the plugin nor its replacement covers this
+// build, and the choice is between wiring BCV's own task types by hand and having no gate at all.
+//
+// The approach is the one okhttp and elastic/apm-agent-android took for the same AGP 9 gap: feed
+// `KotlinApiBuildTask` from the compile tasks' outputs. `KotlinApiBuildTask`/`KotlinApiCompareTask`
+// are internal to BCV rather than public API, which is why its version is pinned in
+// `buildSrc/build.gradle.kts` and not floated.
+//
+// Named `apiDump`/`apiCheck`, not `releaseApiDump`/`releaseApiCheck`, so the commands are the ones
+// BCV's own documentation gives. If a future BCV or KGP starts registering them for this setup, this
+// build fails loudly with "a task with that name already exists" — which is exactly the signal to
+// delete this block, and much better than silently running two gates.
+//
+// Release variant only. That is the variant a merchant consumes, and it is the only one published
+// (`singleVariant("release")` above). An API difference confined to `debug` would go unnoticed; there
+// are no debug-only sources in either module, and adding one would be the thing to reconsider this
+// over.
+val apiFile = layout.projectDirectory.file("api/${project.name}.api")
+
+val apiBuild =
+    tasks.register<KotlinApiBuildTask>("apiBuild") {
+        // No `group`, so it stays out of `./gradlew tasks`. BCV withholds one from its own equivalent
+        // for the same reason: it is plumbing for `apiCheck`/`apiDump`, not something to run.
+        description = "Extracts the public ABI of the release variant."
+
+        // These two `tasks.named` calls must stay *inside* this configuration action. Gradle runs it
+        // at task realisation, long after AGP's own `afterEvaluate` has created the variant's compile
+        // tasks; hoisting them to locals above `register` — the obvious readability refactor — would
+        // evaluate them during script execution instead, and `named` fails eagerly on a name that does
+        // not exist yet. It is why this needs no `afterEvaluate` of its own.
+        //
+        // Both halves, Kotlin *and* Java. `:frak-sdk-ui`'s `JavaCallSiteFixture` is test-only so it
+        // never reaches here, but a merchant-facing Java source file would, and a dump that silently
+        // omitted it would be worse than no dump.
+        inputClassesDirs.from(tasks.named("compileReleaseKotlin").map { it.outputs.files })
+        inputClassesDirs.from(tasks.named("compileReleaseJavaWithJavac").map { it.outputs.files })
+        outputApiFile.set(layout.buildDirectory.file("bcv/${project.name}.api"))
+        // `nonPublicMarkers` and friends are not set here: BCV's own task base reads them from the
+        // `apiValidation` extension by walking up to the root project, which is where they live.
+        //
+        // `runtimeClasspath` is likewise left unset, which makes the worker fall back to buildSrc's
+        // classpath — and that is exactly why `kotlin-metadata-jvm` and ASM are declared there. BCV
+        // normally injects them itself, from a hook AGP 9's built-in Kotlin never fires.
+    }
+
+val apiCheck =
+    tasks.register<KotlinApiCompareTask>("apiCheck") {
+        group = "verification"
+        description = "Fails if the public ABI differs from the committed api/*.api dump."
+
+        projectApiFile.set(apiFile)
+        generatedApiFile.set(apiBuild.flatMap { it.outputApiFile })
+    }
+
+tasks.register<FrakApiDumpTask>("apiDump") {
+    group = "verification"
+    description = "Rewrites the committed api/*.api dump from the current sources."
+
+    generatedApiFile.set(apiBuild.flatMap { it.outputApiFile })
+    committedApiFile.set(apiFile)
+}
+
+// Gating `check` means CI's `bun run --cwd sdk/android check` is the gate, and a contributor who
+// widens the surface without running `apiDump` finds out locally. Until the first dump is committed
+// this fails with BCV's own message telling you to run `apiDump` — which is the correct state for a
+// build whose surface has just been reshaped and not yet ratified.
+tasks.named("check") { dependsOn(apiCheck) }
