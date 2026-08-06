@@ -10,10 +10,19 @@ import id.frak.sdk.core.ProductDetails;
 import id.frak.sdk.sharing.AttributionParams;
 import id.frak.sdk.sharing.SharingProduct;
 import id.frak.sdk.sharing.SharingRequest;
+import id.frak.sdk.tracking.Interaction;
+
+import java.util.Collections;
 
 /**
- * Proof that the sharing sheet's public API is callable from Java. Compiled by
- * {@code :frak-sdk-ui:test}; never executed.
+ * Proof that the SDK's public API is callable from Java. Compiled by {@code :frak-sdk-ui:test};
+ * never executed.
+ *
+ * <p>It started as a sharing-sheet fixture and has outgrown that: it now covers {@code :frak-sdk}
+ * types too ({@code FrakConfig}, {@code Interaction}, the sharing input Builders), which are on this
+ * module's test compile classpath through {@code api(project(":frak-sdk"))}. That is the wrong home
+ * for them, and step 4 of {@code docs/plans/native-sdk/09-android-api-surface.md} gives
+ * {@code :frak-sdk} its own fixture alongside the {@code *Async} twins; these move there then.
  *
  * <p>This exists because the claim that motivated the whole Builder rewrite -- "a merchant on an
  * XML or Java codebase cannot use this SDK at all" -- was, until it landed, unverified in both
@@ -93,6 +102,33 @@ final class JavaCallSiteFixture {
     /** The no-merchant-id overload: the merchant is resolved from the package id instead. */
     static FrakConfig configWithoutMerchantId() {
         return new FrakConfig.Builder().packageId("com.acme.app").build();
+    }
+
+    /**
+     * All seven of {@code Interaction}'s static factories. This is the half of the collapse only javac
+     * can check: without {@code @JvmStatic} on each one these would read
+     * {@code Interaction.Companion.custom(...)}, which is the exact ergonomic regression the opaque
+     * shape exists to avoid. The old sealed hierarchy needed an {@code instanceof} chain here; there is
+     * nothing to match on now, which is the point.
+     */
+    static Interaction[] everyInteractionShape() {
+        return new Interaction[] {
+            Interaction.arrival("0xwallet", "client-id", "merchant-id", 1_709_654_400L),
+            Interaction.sharing(),
+            Interaction.sharing("order-1"),
+            Interaction.sharing(1_709_654_400L, "order-1"),
+            Interaction.custom("checkout"),
+            Interaction.custom("checkout", Collections.singletonMap("step", "2")),
+            Interaction.custom("checkout", Collections.singletonMap("step", "2"), "merchant-key"),
+        };
+    }
+
+    /**
+     * {@code Interaction} is comparable and printable from Java too, which is what makes a merchant's
+     * own tracking code testable. {@code equals} is structural over the payload.
+     */
+    static boolean twoIdenticalSharesAreEqual() {
+        return Interaction.sharing("order-1").equals(Interaction.sharing("order-1"));
     }
 
     /**

@@ -40,19 +40,25 @@ internal object ReferralArrival {
         b: String,
     ): Boolean = a.trim().equals(b.trim(), ignoreCase = true)
 
-    fun arrivalFrom(context: FrakContext): Interaction.Arrival =
+    fun arrivalFrom(context: FrakContext): Interaction =
         when (context) {
-            is FrakContext.V1 -> {
-                Interaction.Arrival(referrerWallet = context.wallet)
-            }
+            is FrakContext.V1 ->
+                Interaction.arrival(
+                    referrerWallet = context.wallet,
+                    // V1 carries an address and nothing else. That is finding 3.2: with no
+                    // merchantId on the wire there is no way to tell a V1 link from this merchant
+                    // apart from a V1 link from any other.
+                    referrerClientId = null,
+                    referrerMerchantId = null,
+                    referralTimestamp = null,
+                )
 
-            is FrakContext.V2 -> {
-                Interaction.Arrival(
+            is FrakContext.V2 ->
+                Interaction.arrival(
                     referrerWallet = context.wallet,
                     referrerClientId = context.clientId,
                     referrerMerchantId = context.merchantId,
                     referralTimestamp = context.timestamp,
                 )
-            }
         }
 }

@@ -73,7 +73,7 @@ class InteractionTrackerTest {
     fun `posts a sharing interaction with the client id header and drains the queue`() =
         runTest {
             transport.respond(200, """{"success":true}""")
-            tracker().track(MERCHANT_ID, CLIENT_ID, Interaction.Sharing())
+            tracker().track(MERCHANT_ID, CLIENT_ID, Interaction.sharing())
 
             val request = transport.requests.single()
             assertEquals("POST", request.method)
@@ -93,7 +93,7 @@ class InteractionTrackerTest {
         runTest {
             transport.fail(IOException("offline"))
             val tracker = tracker()
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Sharing())
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.sharing())
 
             val queued = queue.read(now).single()
             assertEquals("key-0", queued.idempotencyKey)
@@ -113,8 +113,8 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
             transport.fail(IOException("offline"))
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Custom("first"))
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Custom("second"))
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.custom("first"))
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.custom("second"))
 
             now += Backoff.MAX_DELAY_MILLIS
             transport.respondEach(200, 503)
@@ -129,7 +129,7 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
             transport.respond(503, "")
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Sharing())
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.sharing())
             val attempts = transport.requests.size
 
             tracker.flush()
@@ -146,8 +146,8 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
             transport.respond(422, """{"success":false,"code":"BAD"}""")
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Custom("poison"))
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Custom("healthy"))
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.custom("poison"))
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.custom("healthy"))
 
             repeat(3) {
                 now += Backoff.MAX_DELAY_MILLIS
@@ -162,7 +162,7 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
             transport.fail(IOException("offline"))
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Sharing())
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.sharing())
 
             currentClientId = "550e8400-e29b-41d4-a716-446655440009"
             now += Backoff.MAX_DELAY_MILLIS
@@ -179,7 +179,7 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
             transport.fail(IOException("offline"))
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Sharing())
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.sharing())
 
             now += EventQueue.MAX_AGE_MILLIS + 1
             tracker.flush()
@@ -192,7 +192,7 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
             transport.fail(IOException("offline"))
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Sharing())
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.sharing())
 
             tracker.purge()
             assertTrue(queue.read(now).isEmpty())
@@ -257,7 +257,12 @@ class InteractionTrackerTest {
             tracker().track(
                 MERCHANT_ID,
                 CLIENT_ID,
-                Interaction.Arrival(referrerClientId = CLIENT_ID, referralTimestamp = 1_709_654_000),
+                Interaction.arrival(
+                    referrerWallet = null,
+                    referrerClientId = CLIENT_ID,
+                    referrerMerchantId = null,
+                    referralTimestamp = 1_709_654_000,
+                ),
             )
 
             val body = bodyOf(0)
@@ -292,7 +297,7 @@ class InteractionTrackerTest {
             assertEquals("only the event before the withdrawal may reach the wire", 1, transport.requests.size)
             assertEquals("first", bodyOf(0).getString("interactionType"))
             // Reconciled, not abandoned: the delivered event is removed so a stalled purge cannot
-            // re-send it — `Interaction.Arrival` carries no idempotency key, so a re-send would be
+            // re-send it — an `arrival` carries no idempotency key, so a re-send would be
             // a duplicated referral payout. The undelivered one survives: withdrawal is a pause,
             // not an erasure.
             val remaining = queue.read(now)

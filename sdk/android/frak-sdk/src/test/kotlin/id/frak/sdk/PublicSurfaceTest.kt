@@ -16,7 +16,9 @@ import id.frak.sdk.rewards.TokenAmount
 import id.frak.sdk.sharing.AttributionParams
 import id.frak.sdk.sharing.SharingProduct
 import id.frak.sdk.sharing.SharingRequest
+import id.frak.sdk.tracking.Interaction
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -221,6 +223,28 @@ class PublicSurfaceTest {
         val bare = SharingRequest { }
         assertNull(bare.link)
         assertEquals(emptyList<SharingProduct>(), bare.products)
+    }
+
+    @Test
+    fun `every Interaction shape is reachable through the public factories`() {
+        // Public API only — no `kind`, which is `internal` and which `InteractionFactoryTest` reaches
+        // through with friend access. What is provable from out here is that the factories exist, that
+        // they are on `Interaction` itself rather than on `Interaction.Companion`, and that two
+        // interactions built the same way compare equal, which is the whole reason a merchant can test
+        // the code that builds one.
+        assertEquals(Interaction.sharing(), Interaction.sharing())
+        assertEquals(Interaction.sharing("order-1"), Interaction.sharing(null, "order-1"))
+        assertEquals(Interaction.custom("checkout"), Interaction.custom("checkout", emptyMap()))
+        assertEquals(
+            Interaction.custom("checkout", mapOf("step" to "2"), "key"),
+            Interaction.custom("checkout", mapOf("step" to "2"), "key"),
+        )
+        assertEquals(
+            Interaction.arrival("0xwallet", "client", MERCHANT_ID, 1L),
+            Interaction.arrival("0xwallet", "client", MERCHANT_ID, 1L),
+        )
+
+        assertNotEquals(Interaction.custom("checkout"), Interaction.custom("checkout", mapOf("step" to "2")))
     }
 
     @Test

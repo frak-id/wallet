@@ -15,7 +15,7 @@ merchant surface (product page / post-purchase / event)
     │  [ Share ]        [ Copy ]   │  ← the PAGE's own footer, performed natively
     └──────────────────────────────┘
  → user shares → page navigates `<scheme>://result?action=share`
- → SDK raises the real OS chooser, then fires Interaction.Sharing (after it, see §3)
+ → SDK raises the real OS chooser, then fires `Interaction.sharing()` (after it, see §3)
  → SDK reloads the page with &confirmed=1                    ← load-bearing, see below
  → page shows PostShareConfirmation: "create your wallet to get your rewards"
  → Install CTA → <scheme>://result?action=install → back to native

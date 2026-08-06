@@ -52,7 +52,7 @@ internal class InteractionTracker(
         clientId: String?,
         interaction: Interaction,
     ) {
-        val key = (interaction as? Interaction.Custom)?.idempotencyKey ?: newKey()
+        val key = (interaction.kind as? Interaction.Kind.Custom)?.idempotencyKey ?: newKey()
         enqueue(INTERACTION_PATH, interactionBody(merchantId, interaction, key), clientId, key)
         scope.launch { flush() }
     }
@@ -190,32 +190,35 @@ internal class InteractionTracker(
         idempotencyKey: String,
     ): JSONObject {
         val body = JSONObject().put("merchantId", merchantId)
-        return when (interaction) {
-            is Interaction.Arrival -> {
+        // The `when` is over `Interaction.Kind`, which is `internal`, so a fourth shape is a compile
+        // error *here* and additive for every consumer. That asymmetry is the whole reason
+        // `Interaction` is opaque; see its KDoc.
+        return when (val kind = interaction.kind) {
+            is Interaction.Kind.Arrival -> {
                 body
                     .put("type", "arrival")
-                    .put("referrerWallet", interaction.referrerWallet)
-                    .put("referrerClientId", interaction.referrerClientId)
-                    .put("referrerMerchantId", interaction.referrerMerchantId)
-                    .put("referralTimestamp", interaction.referralTimestamp)
+                    .put("referrerWallet", kind.referrerWallet)
+                    .put("referrerClientId", kind.referrerClientId)
+                    .put("referrerMerchantId", kind.referrerMerchantId)
+                    .put("referralTimestamp", kind.referralTimestamp)
             }
 
-            is Interaction.Sharing -> {
+            is Interaction.Kind.Sharing -> {
                 body
                     .put("type", "sharing")
-                    .put("sharingTimestamp", interaction.sharingTimestamp ?: (now() / 1000))
-                    .put("purchaseId", interaction.purchaseId)
+                    .put("sharingTimestamp", kind.sharingTimestamp ?: (now() / 1000))
+                    .put("purchaseId", kind.purchaseId)
                     .put("idempotencyKey", idempotencyKey)
             }
 
-            is Interaction.Custom -> {
+            is Interaction.Kind.Custom -> {
                 // Not validated here: the route's schema is the authority; a rejection is a 4xx
                 // the flush loop already evicts.
                 val data = JSONObject()
-                interaction.data.forEach { (key, value) -> data.put(key, value) }
+                kind.data.forEach { (key, value) -> data.put(key, value) }
                 body
                     .put("type", "custom")
-                    .put("customType", interaction.customType)
+                    .put("customType", kind.customType)
                     .put("data", data)
                     .put("idempotencyKey", idempotencyKey)
             }

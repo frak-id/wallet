@@ -749,7 +749,7 @@ internal class SharingSheetState(
 
     /** Suspends until the event is durable. See [share]. */
     private suspend fun track() {
-        guarded { dependencies.track(Interaction.Sharing()) }
+        guarded { dependencies.track(Interaction.sharing()) }
     }
 
     /**

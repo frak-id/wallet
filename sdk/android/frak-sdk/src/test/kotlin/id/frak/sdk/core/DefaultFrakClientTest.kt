@@ -306,8 +306,8 @@ class DefaultFrakClientTest {
                     config = frakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
                 )
 
-            val first = client.track(Interaction.Custom("first"))
-            val second = client.track(Interaction.Custom("second"))
+            val first = client.track(Interaction.custom("first"))
+            val second = client.track(Interaction.custom("second"))
 
             val firstError = (first as FrakResult.Failure).error
             val secondError = (second as FrakResult.Failure).error
@@ -355,7 +355,7 @@ class DefaultFrakClientTest {
             client.setTrackingEnabled(false)
             advanceUntilIdle()
             assertFalse(client.isTrackingEnabled())
-            val refused = client.track(Interaction.Custom("after-withdrawal"))
+            val refused = client.track(Interaction.custom("after-withdrawal"))
             assertTrue(
                 "expected TrackingDisabled once consent was withdrawn, got $refused",
                 (refused as FrakResult.Failure).error is FrakError.TrackingDisabled,
@@ -419,7 +419,7 @@ class DefaultFrakClientTest {
             transport.fail(java.io.IOException("offline"))
             val client = newClient(testScheduler)
             advanceUntilIdle()
-            client.track(Interaction.Custom("before-withdrawal"))
+            client.track(Interaction.custom("before-withdrawal"))
             advanceUntilIdle()
 
             val queueFile = File(temporaryFolder.root, "events.jsonl")
@@ -474,7 +474,7 @@ class DefaultFrakClientTest {
             // The scope is cancelled, so the detached drain `track` launches never runs; `track`
             // itself still returns because the enqueue is on the caller's context.
             val before = transport.requests.size
-            client.track(Interaction.Custom("after-shutdown"))
+            client.track(Interaction.custom("after-shutdown"))
             advanceUntilIdle()
 
             assertEquals("a shut-down client must run no background work", before, transport.requests.size)

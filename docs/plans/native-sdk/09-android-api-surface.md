@@ -98,8 +98,9 @@ set turns up twelve more declarations across the nine rows below that the origin
 and one row is load-bearing for step 4. (`:frak-sdk-ui` is already clean: `FrakSharing.Builder`'s knobs
 are `private var`s and `FrakSharingDefaults.HEIGHT_FRACTION` is a `@JvmStatic val`.)
 
-After step 2 the surviving set is exactly two entries, both with a step: `Interaction`'s three
-constructors and the three `*Api` suspend functions. Everything else in the table is closed.
+After step 3 the surviving set is exactly one entry: the three `*Api` suspend functions
+(`ConfigApi.resolve`, `RewardsApi.campaigns`, `RewardsApi.best` — six defaults between them), which
+change shape with the `*Async` twins in step 4. Everything else in the table is closed.
 
 | Declaration | Defaults | Step |
 |---|---|---|
@@ -110,7 +111,7 @@ constructors and the three `*Api` suspend functions. Everything else in the tabl
 | `FrakError.Server(status, code, retryAfterSeconds)`, `FrakError.Decoding(message, cause)` | 3 | 2 — **done**: one explicit overload each (`Server(status)`, `Decoding(message)`), and the `FrakError` base constructor lost its `cause` default. It could *not* also be hidden — see the sealed-constructor row in §0 — so it stays `protected` and in the dump, minus the bridge |
 | `BestReward(…, isProductScoped, matchedProducts)` (`rewards/Rewards.kt`) | 2 | 2 — **done**: defaults dropped. Not in the original audit and it should have been: a *read* model with a public constructor and a `DefaultConstructorMarker` bridge is the same hazard as an input type. `RewardsDecoder` always passed all seven arguments, so the defaults only ever served the decoder's own forward-compatibility, which is where that concern belongs. Whether the reward read models should follow the config tree to `internal` constructors is still open, below |
 | `FrakContext.V2(merchantId, timestamp, clientId, wallet)` | 2 | 2 — **done**, and not with a Builder. It is returned by `Frak.parseReferralLink` and never supplied by a merchant, so it took the read-model treatment: `internal` constructors on both `V1` and `V2` |
-| `Interaction.Arrival` (4), `Interaction.Sharing` (2), `Interaction.Custom` (2) | 8 | 3 — the collapse in §4 removes all three publicly-constructible classes, so the defaults go with them |
+| `Interaction.Arrival` (4), `Interaction.Sharing` (2), `Interaction.Custom` (2) | 8 | 3 — **done**: the collapse in §4 removed all three publicly-constructible classes, and the defaults with them |
 | `mergeAttribution(...)` | 1 | none — `internal`, not on the surface |
 
 Step 4 has to answer one thing the plan left open: when `best` gains `bestAsync`, does the `suspend`
@@ -290,6 +291,62 @@ the no-defaults rule with overloads where a factory has optionals — `arrival` 
 
 Cost: an `Interaction` becomes non-introspectable. Fine — it is write-only, you hand it to `track()`.
 
+**Landed as step 3, with three adjustments to the sketch above:**
+
+- `Kind` is a nested `internal sealed interface` of three classes rather than an enum: Kotlin has no
+  enum with per-case payloads, and a sealed interface keeps `InteractionTracker`'s `when` exhaustive.
+  Being `internal`, it stays out of the dump, and the exhaustiveness burden lands on the *SDK* — a
+  fourth shape is a compile error in `InteractionTracker` and additive for every consumer, which is
+  the whole asymmetry the collapse buys (A2).
+- Seven factories, no defaults: `arrival` takes one full-arity form (four nullables, spelled out at
+  the single call site that builds one), `sharing` takes `()`, `(purchaseId)` and
+  `(sharingTimestamp, purchaseId)`, `custom` takes `(customType)`, `(…, data)` and
+  `(…, data, idempotencyKey)`. Eight default arguments become zero. The `(purchaseId)`-only overload
+  is the plausible merchant call — "they shared, after this order", with no better answer for *when*
+  than now — and adding it later would have been awkward, since `sharing(null)` would then have had two
+  readings.
+- **`equals`/`hashCode`/`toString` are structural**, delegating to `Kind` (whose three classes are
+  `data class`es — they are `internal`, so the generated `copy()`/`componentN()` can never reach the
+  dump, and the objection that bans `data class` on the rest of this surface does not apply). This was
+  nearly missed. The *value* is write-only, but the code that *builds* one is ordinary merchant code
+  that wants a test, and without equality the only available assertion is reference identity. iOS's
+  twin is `Hashable` and pins exactly that in its own `PublicSurfaceTests`; shipping Android without it
+  would have been a fresh instance of finding 9.9 one commit before the dump froze it.
+- The constructor is `internal`, not `private`. A `private` constructor called from the companion makes
+  Kotlin emit a synthetic accessor of the form `<init>(Kind, DefaultConstructorMarker)` — and per the
+  §0 fact table BCV *keeps* synthetic `<init>`s with a `DefaultConstructorMarker`, which would have put
+  the `internal` `Kind` type into the ratified dump. `internal` is called directly, so no accessor is
+  generated. Unverifiable until step 5, and step 5 is the wrong place to find out.
+- `custom` copies its `data` map. The event goes onto a durable queue and is read back by a drain that
+  can run long after the call returned, so a caller who kept the map could otherwise mutate an event
+  already enqueued — the same fix `SharingRequest.Builder` applies to its product list.
+
+Coverage, in three layers because no one of them is sufficient. `InteractionFactoryTest` reaches
+through the `internal` `Kind` and checks every argument of every factory, because an opaque type makes
+a dropped argument invisible from outside — the same guard `BuilderWiringTest` gives the Builders, and
+with the same friend-access caveat, so it proves nothing about what a merchant can reach.
+`PublicSurfaceTest` therefore covers the factories through public API only, which it can do *because*
+equality is structural. And `JavaCallSiteFixture.java` calls all seven from Java, which is the only
+check that `@JvmStatic` is actually there: without it every call site would read
+`Interaction.Companion.custom(…)`.
+
+Two decisions worth stating rather than leaving to the KDoc:
+
+- **`arrival` stays public**, even though `handleReferral` builds one and the KDoc says calling it
+  yourself double-counts an event that carries no idempotency key. The case for `internal` is real — the
+  only reachable effect of a merchant calling it is a duplicated referral payout. It stays public
+  because `Frak.parseReferralLink` is public and `FrakContext`'s *fields* are public, so a merchant who
+  routes deep links entirely themselves can legitimately build and track an arrival; and because iOS
+  exposes it. If that flow is ever withdrawn, this should go `internal` with it.
+- **`Interaction` gets a weaker "additive" guarantee than the Builder types, deliberately.** A new
+  field on `custom` is a new overload, which means the parameter order is frozen, only prefix subsets
+  are expressible, and the overload count grows per field — exactly the objection §1 raises against
+  overloads and answers with Builders. `Interaction` is exempt because it is opaque and write-only: a
+  Builder's value is that a caller can name any subset of options, and there is no subset to name when
+  three shapes have two or three fields each and the type cannot be read back. That boundary — Builders
+  for readable input types, factories for opaque ones — is the rule, so that step 4's `RewardRequest`
+  taking a Builder reads as the rule rather than as drift.
+
 ## 5. Constants
 
 `public const val` banned — it inlines into merchant bytecode and freezes at their compile time. Use
@@ -311,7 +368,8 @@ Five commits, in this order, each reviewed before the next starts.
    `FrakConfig`/`FrakMetadata`/`AttributionParams`/`FrakContext.V2`. Also the two §1a rows that are
    *not* builder candidates and would otherwise be missed: explicit overloads for
    `FrakEnvironment.Custom` and for `FrakError.Server`/`FrakError.Decoding`
-3. `Interaction` collapse — which is also what removes its eight default arguments
+3. `Interaction` collapse — which is also what removes its eight default arguments. **Done**, with
+   structural equality and an `internal` rather than `private` constructor; see §4
 4. `*Async` twins + the `frak-sdk` Java fixture. Larger than it sounds: it is also a source-breaking
    signature change to `ConfigApi.resolve`, `RewardsApi.campaigns` and `RewardsApi.best`, since a
    twin pair must not have a `$default` bridge on either side (§1a)

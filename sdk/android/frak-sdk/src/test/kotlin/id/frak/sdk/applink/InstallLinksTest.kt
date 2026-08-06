@@ -117,10 +117,14 @@ class ReferralArrivalTest {
 
     @Test
     fun `carries every field a v2 context knows into the arrival`() {
+        // `Interaction` is opaque by design (see its KDoc), so this reaches through the `internal`
+        // `Kind` — friend access, same module. There is no public way to read an interaction back and
+        // there is not meant to be; what a merchant does with one is hand it to `track`.
         val arrival =
             ReferralArrival.arrivalFrom(
                 frakContextV2(MERCHANT_ID, TIMESTAMP, clientId = OTHER_CLIENT_ID, wallet = WALLET),
-            )
+            ).kind as Interaction.Kind.Arrival
+
         assertEquals(OTHER_CLIENT_ID, arrival.referrerClientId)
         assertEquals(MERCHANT_ID, arrival.referrerMerchantId)
         assertEquals(WALLET, arrival.referrerWallet)
@@ -129,8 +133,10 @@ class ReferralArrivalTest {
 
     @Test
     fun `carries only the wallet from a v1 context`() {
-        val arrival: Interaction.Arrival = ReferralArrival.arrivalFrom(frakContextV1(WALLET))
+        val arrival = ReferralArrival.arrivalFrom(frakContextV1(WALLET)).kind as Interaction.Kind.Arrival
+
         assertEquals(WALLET, arrival.referrerWallet)
+        assertNull(arrival.referrerClientId)
         assertNull(arrival.referrerMerchantId)
         assertNull(arrival.referralTimestamp)
     }
