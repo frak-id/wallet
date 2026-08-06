@@ -1,15 +1,14 @@
 plugins {
     id("com.android.library") // AGP 9.0 compiles Kotlin itself; no `kotlin.android` plugin needed.
     alias(libs.plugins.kotlin.compose)
-    id("frak-publish") // shared POM/signing + shared android {}, see buildSrc/src/main/kotlin/frak-publish.gradle.kts
+    id("frak-publish") // shared POM/signing + shared android {}
 }
 
 android {
     namespace = "id.frak.sdk.ui"
 
-    // A library's resources merge into the host app's namespace, where an unprefixed `share`
-    // would collide with the merchant's own. Prefixing also lets a merchant override one by
-    // declaring the same name in their app; the merger takes theirs.
+    // A library's resources merge into the host app's namespace, where an unprefixed `share` would
+    // collide with the merchant's own.
     resourcePrefix = "frak_"
 
     buildFeatures {
@@ -24,9 +23,6 @@ android {
     }
 }
 
-// explicitApi/jvmTarget/language version/jvmDefault are shared and configured once by the
-// frak-publish convention plugin applied above.
-
 // Pin unit-test JVM to 17: newer JDKs' bytecode breaks Robolectric's bundled ASM reader.
 tasks.withType<Test>().configureEach {
     javaLauncher.set(
@@ -37,9 +33,8 @@ tasks.withType<Test>().configureEach {
 dependencies {
     api(project(":frak-sdk")) // merchant code passes FrakConfig/FrakClient types into the sheet
 
-    // The two artifacts ship in lockstep; `api(project(...))` alone publishes a *required* version
-    // that Gradle may upgrade during conflict resolution. Written as a constraint because a
-    // `ProjectDependency` has no `version {}` block.
+    // The two ship in lockstep, but `api(project(...))` alone publishes a *required* version Gradle
+    // may upgrade. A constraint, because a `ProjectDependency` has no `version {}` block.
     constraints {
         api("id.frak:frak-sdk") {
             version { strictly(providers.gradleProperty("frak.sdk.version").get()) }
@@ -56,22 +51,15 @@ dependencies {
     implementation(libs.compose.material3)
 
     // `api`, not `implementation`: `ComponentActivity` is a parameter of
-    // `FrakSharing.Builder.build(...)`, so a merchant cannot call the public API without it on
-    // their own compile classpath. `ComponentDialog` — the sheet's hosting window — ships in the
-    // same artifact.
+    // `FrakSharing.Builder.build(...)`, and `ComponentDialog` (the sheet's window) ships with it.
     api(libs.androidx.activity)
 
     // `@MainThread` only. CLASS retention, so consumers need nothing at runtime.
     implementation(libs.androidx.annotation)
 
-    // One API: `addDocumentStartJavaScript`. It is what lets the sheet style the hosted page by
-    // origin instead of by route — see `SharingHostStyle`. `implementation`, not `api`: no type
-    // from it appears on this module's public surface, so it stays off merchants' compile
-    // classpath and cannot conflict with a webkit version they pull in themselves.
+    // Only for `addDocumentStartJavaScript`, which styles the hosted page by origin. No type from it
+    // is on this module's public surface, so it stays off merchants' compile classpath.
     implementation(libs.androidx.webkit)
-
-    // Chrome Custom Tabs deliberately absent: can't embed in a bottom sheet or intercept the
-    // page's own Share/Copy. Transport is an embedded WebView instead.
 
     testImplementation(libs.junit)
     testImplementation(libs.json) // test-only: local android.jar stubs org.json to throw

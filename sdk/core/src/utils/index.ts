@@ -1,7 +1,4 @@
-// Generic, framework-agnostic utilities. Stateful concerns (config store,
-// client identifiers) live in `src/config/`; URL/binary codecs for the
-// referral context live in `src/context/`; SSO URL listener belongs to the
-// iframe client lifecycle in `src/clients/`. Keep this surface narrow.
+// Generic, framework-agnostic utilities. Keep this surface narrow.
 export { Deferred } from "@frak-labs/frame-connector";
 
 // Analytics

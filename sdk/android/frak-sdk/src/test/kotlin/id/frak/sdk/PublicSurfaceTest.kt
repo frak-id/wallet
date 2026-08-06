@@ -24,40 +24,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Proves a merchant can construct every public input type and every public reward model, through the
- * real public API, and states what this file can and cannot prove.
- *
- * **What it proves:** the reward models below are merchant-constructible — a merchant writing a
- * preview screen, or a test double over `rewards.best`, needs to build one — and that every input
- * type is reachable through both of its entry points, the `Builder` and the Kotlin sugar over it.
- * Deliberately does not use `core/CoreInputFixtures.kt` or `sharing/SharingInputFixtures.kt`: the rest
- * of the suite reaches for those, so this file is the one place the raw shape is written out.
- *
- * **Where the two entry points are actually compared:** only where the type has `equals`
- * (`ProductDetails`, `AttributionParams`), because that is the only comparison that can fail on a
- * field. `FrakConfig`, `FrakMetadata`, `SharingProduct` and `SharingRequest` have no `equals`, so
- * asserting one against the other would compare by identity and pass whatever the sugar did. Their
- * per-field wiring is pinned in `BuilderWiringTest` instead, which is also where the defaults, the
- * `build()` snapshot and the product-list copy live — one file, distinct values, no fixtures.
- *
- * **What it no longer covers, deliberately:** the resolved-config tree. Its constructors are
- * `internal` now (see the note at the top of `config/FrakResolvedConfig.kt`): it is a read model the
- * SDK hands you, and a public constructor on it would freeze an arity that the backend adds fields
- * to. Merchants still *read* every field of it; they just do not build one. `FrakResolvedConfigTest`
- * covers the tree from inside, with friend access.
- *
- * **What this file cannot prove, and never could:** that anything here is genuinely public. Unlike
- * Swift's `@testable`, a same-module Kotlin test source set has friend access to `internal` by
- * default, so the guarantee rests on this file not importing anything internal — a convention, not a
- * compiler check. `ConfigTreeFixtures.kt` in this same source set builds the config tree through
- * exactly that friend access, which is the clearest possible demonstration of the hole. The check
- * that cannot be defeated this way is the committed `.api` dump; the compile-time check that cannot
- * be defeated is a Java source file in the test source set, which this module now has:
- * `FrakSdkJavaCallSiteFixture.java`, alongside `:frak-sdk-ui`'s `JavaCallSiteFixture.java`. Between
- * them they name every `*Async` twin, every Builder and every `Interaction` factory, and javac accepts
- * or rejects the file.
- */
+/** Every public input type and reward model is constructible through the real public API. */
 class PublicSurfaceTest {
     @Test
     fun `every public reward model is constructible`() {
@@ -107,10 +74,6 @@ class PublicSurfaceTest {
                 preloadSharing = true
             }
 
-        // `FrakConfig` has no `equals`, so `assertEquals(built, sugared)` would compare identity and
-        // pass regardless. Every field, then — including the four the Builder was not asked to set,
-        // since a sugar function that dropped the lambda would still get those right and must not be
-        // able to hide behind them.
         assertEquals(built.merchantId, sugared.merchantId)
         assertEquals(built.packageId, sugared.packageId)
         assertEquals(built.metadata.name, sugared.metadata.name)
@@ -125,16 +88,12 @@ class PublicSurfaceTest {
         assertEquals(built.logSink, sugared.logSink)
         assertEquals(built.preloadSharing, sugared.preloadSharing)
 
-        // And the no-lambda overload, which is the shortest working config there is.
         assertEquals(MERCHANT_ID, FrakConfig(MERCHANT_ID).merchantId)
         assertTrue(FrakConfig(MERCHANT_ID).trackingEnabled)
     }
 
     @Test
     fun `the merchant-id Builder overload and the no-arg one differ only in that field`() {
-        // The no-arg overload exists because merchantId is genuinely optional — with none, the
-        // merchant is resolved from the package id. Losing it to a required constructor argument
-        // would delete that integration path.
         val byId = FrakConfig.Builder(MERCHANT_ID).build()
         val byPackage = FrakConfig.Builder().packageId("com.acme.app").build()
 
@@ -169,9 +128,7 @@ class PublicSurfaceTest {
         val sugaredProduct =
             SharingProduct("Kettle", "https://acme.example/kettle") {
                 imageUrl = "https://acme.example/kettle.png"
-                // Named `productDetails`, not `details`: inside a `Builder`-receiver lambda a bare
-                // `details` on the right-hand side would resolve to the Builder's own property, and
-                // `details = details` would silently assign it to itself.
+                // Named `productDetails`: a bare `details` would self-assign the Builder's property.
                 details = productDetails
             }
 
@@ -184,7 +141,6 @@ class PublicSurfaceTest {
         assertEquals(product.imageUrl, sugaredProduct.imageUrl)
         assertEquals(product.details, sugaredProduct.details)
 
-        // The no-lambda overload, for a product with nothing optional to say.
         val bareProduct = SharingProduct("Mug", "https://acme.example/mug")
         assertEquals("Mug", bareProduct.title)
         assertNull(bareProduct.imageUrl)
@@ -209,15 +165,12 @@ class PublicSurfaceTest {
         val sugaredRequest =
             SharingRequest {
                 products = listOf(product)
-                // `attributionParams`, not `attribution`: inside a `Builder`-receiver lambda a bare
-                // `attribution` on the right would resolve to the Builder's own property and
-                // silently self-assign. Same trap as `details` above.
+                // Named `attributionParams`: a bare `attribution` would self-assign the Builder's property.
                 attribution = attributionParams
                 targetInteraction = "purchase"
                 placement = "product-page"
             }
 
-        // `SharingRequest` has no `equals`, so field by field, same as `FrakConfig` above.
         assertEquals(request.link, sugaredRequest.link)
         assertEquals(request.products, sugaredRequest.products)
         assertEquals(request.attribution, sugaredRequest.attribution)
@@ -225,7 +178,6 @@ class PublicSurfaceTest {
         assertEquals(request.placement, sugaredRequest.placement)
         assertEquals(request.logoUrl, sugaredRequest.logoUrl)
 
-        // The bare request is a real one: it shares the merchant's homepage.
         val bare = SharingRequest { }
         assertNull(bare.link)
         assertEquals(emptyList<SharingProduct>(), bare.products)
@@ -245,24 +197,16 @@ class PublicSurfaceTest {
                 products = listOf(ProductDetails { sku = "SHOE-42" })
             }
 
-        // The only request type with `equals`, so unlike `SharingRequest` this comparison is a real one.
         assertEquals(built, sugared)
         assertEquals(built.hashCode(), sugared.hashCode())
         assertNotEquals(built, RewardRequest { targetInteraction = "referral" })
 
-        // `products` is non-null with an empty default, matching `SharingRequest`: an absent list and an
-        // empty one are the same request, and must therefore be the same value.
         assertEquals(emptyList<ProductDetails>(), RewardRequest { }.products)
         assertEquals(RewardRequest { }, RewardRequest { products = emptyList() })
     }
 
     @Test
     fun `every Interaction shape is reachable through the public factories`() {
-        // Public API only — no `kind`, which is `internal` and which `InteractionFactoryTest` reaches
-        // through with friend access. What is provable from out here is that the factories exist, that
-        // they are on `Interaction` itself rather than on `Interaction.Companion`, and that two
-        // interactions built the same way compare equal, which is the whole reason a merchant can test
-        // the code that builds one.
         assertEquals(Interaction.sharing(), Interaction.sharing())
         assertEquals(Interaction.sharing("order-1"), Interaction.sharing(null, "order-1"))
         assertEquals(Interaction.custom("checkout"), Interaction.custom("checkout", emptyMap()))
@@ -325,8 +269,7 @@ class PublicSurfaceTest {
 
     @Test
     fun `a merchant can name every closed enum on the surface`() {
-        // These are the enums a merchant supplies or matches on. Named here so a value added to one
-        // shows up as a diff in this file as well as in the `.api` dump.
+        // A value added to any of these should show up as a diff here as well as in the .api dump.
         assertEquals("eur", FrakCurrency.EUR.wireValue)
         assertEquals("fr", FrakLanguage.FR.wireValue)
         assertEquals(5, FrakLogLevel.entries.size)

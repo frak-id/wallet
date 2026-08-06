@@ -39,9 +39,6 @@ describe("Faq", () => {
     });
 
     it("attaches the reward breakdown to the slot that declares it", () => {
-        // The `slot` marker replaced an `i === 6` check. The magic index was
-        // silently correct, so nothing else in the suite would notice if the
-        // replacement had stopped wiring the breakdown up at all.
         render(<Faq reward={readyWithBreakdown} t={t} />);
         openQuestion("6");
 

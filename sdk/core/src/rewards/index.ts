@@ -1,12 +1,7 @@
-// Framework-agnostic reward display logic shared across the SDK, listener,
-// wallet and wallet-shared. Depends only on `@frak-labs/core-sdk`'s own reward
-// types (`EstimatedReward`, `MerchantReward`, `RuleConditions`) — no backend or
-// framework coupling — so it stays safe to ship inside the published SDK and
-// lets core-sdk consume its own reward logic without a dependency cycle.
+// Framework-agnostic reward display logic, depending only on core-sdk's own
+// reward types so it stays safe to ship inside the published SDK.
 
 export type { ProductDetails } from "../types/product";
-// Re-exported here because `BestReward.parts` is typed with it, so every
-// consumer of that field needs it from the same entry point.
 export type { RewardAmountParts } from "../utils/format/formatAmountParts";
 export { extractMinPurchaseAmount, extractStartDate } from "./conditions";
 export {

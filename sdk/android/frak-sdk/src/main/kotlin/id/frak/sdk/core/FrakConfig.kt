@@ -39,11 +39,8 @@ public fun interface FrakLogSink {
 /** How inbound links carrying an `fCtx` reach the SDK. */
 public enum class DeepLinkHandling {
     /**
-     * The SDK watches host activities itself and calls [id.frak.sdk.AppLinkApi.handleReferral]
-     * for every inbound `Intent`. Calling `handleReferral` yourself for the same URL double-tracks
-     * the arrival: the observer only guards against its own re-delivery, not a manual call.
-     *
-     * Android-only: iOS only offers `Manual`/`Disabled`.
+     * The SDK watches host activities itself; calling [id.frak.sdk.AppLinkApi.handleReferral]
+     * as well double-tracks the arrival. Android-only.
      */
     Automatic,
 
@@ -56,9 +53,6 @@ public enum class DeepLinkHandling {
 /**
  * Static merchant-supplied facts, fixed at build time. Not the resolved backend config, see
  * [id.frak.sdk.config.FrakResolvedConfig].
- *
- * Build with [Builder], or `FrakMetadata { }` from Kotlin. See the note at the top of
- * `sharing/SharingRequest.kt` for why this carries no default arguments.
  */
 public class FrakMetadata internal constructor(
     public val name: String?,
@@ -100,27 +94,6 @@ public fun FrakMetadata(configure: FrakMetadata.Builder.() -> Unit): FrakMetadat
 /**
  * Everything the SDK needs to start, supplied once at [id.frak.sdk.Frak.initialize]. Never
  * validated at construction; an unusable config surfaces later as [FrakError.MerchantResolutionFailed].
- *
- * ```java
- * // Java — the canonical form; the Builder is the implementation
- * FrakConfig config = new FrakConfig.Builder("merchant-id")
- *         .metadata(new FrakMetadata.Builder().name("Acme").build())
- *         .logLevel(FrakLogLevel.DEBUG)
- *         .build();
- * ```
- *
- * ```kotlin
- * // Kotlin — sugar over the same Builder
- * val config = FrakConfig("merchant-id") {
- *     metadata = FrakMetadata { name = "Acme" }
- *     logLevel = FrakLogLevel.DEBUG
- * }
- * ```
- *
- * This type is the reason the whole SDK banned default arguments: it went from 8 to 9 parameters
- * (`preloadSharing`) after the last `.api` dump was taken, which would have been a
- * `NoSuchMethodError` on every already-shipped merchant binary. Full reasoning at the top of
- * `sharing/SharingRequest.kt`.
  */
 public class FrakConfig internal constructor(
     /** Optional; when null, merchant is resolved from [packageId] instead. `merchantId` wins if both set. */
@@ -132,13 +105,8 @@ public class FrakConfig internal constructor(
     public val env: FrakEnvironment,
     public val deepLink: DeepLinkHandling,
     /**
-     * Whether tracking may run. `false` means no anonymous id is ever minted and no tracking
-     * request is issued; a hard floor [id.frak.sdk.FrakClient.setTrackingEnabled] cannot lift at
-     * runtime.
-     *
-     * Not a whole-SDK off switch: merchant config and reward resolution still run since they
-     * carry no user identifier. Sharing does stop, since a share link is the anonymous id.
-     * Leave `true` and drive consent through [id.frak.sdk.FrakClient.setTrackingEnabled] instead.
+     * Hard floor for tracking that [id.frak.sdk.FrakClient.setTrackingEnabled] cannot lift at
+     * runtime. `false` also stops sharing, but config and reward resolution still run.
      */
     public val trackingEnabled: Boolean,
     public val logLevel: FrakLogLevel,
@@ -146,22 +114,11 @@ public class FrakConfig internal constructor(
     /** Warms an offscreen `WebView` against [env]'s wallet origin before the sheet is presented. */
     public val preloadSharing: Boolean,
 ) {
+    // See the note atop sharing/SharingRequest.kt.
     /**
-     * Two constructors, both explicit, neither defaulted.
-     *
-     * `Builder(merchantId)` is the form to reach for, and the one every example uses: a merchant id
-     * resolves without depending on what the app's `applicationId` happens to be. `Builder()` exists
-     * because [merchantId] is genuinely optional — with no id, the merchant is resolved from
-     * [packageId] (or, failing that, `context.packageName`), and a required constructor argument
-     * would have deleted that integration path.
-     *
-     * The empty one is the primary, and that is not cosmetic: a `private constructor(String?)`
-     * shared by both would erase to the same JVM descriptor as `constructor(String)` — nullability
-     * is an annotation, not part of the signature — and the two would collide.
-     *
-     * [merchantId] also has a setter, like every other option. The two constructors are ergonomics
-     * for the two shapes a call site actually takes, not an attempt to make the field unreachable
-     * any other way.
+     * `Builder()` exists alongside `Builder(merchantId)` because [merchantId] is optional. The empty
+     * one is primary: a shared `constructor(String?)` would erase to the same JVM descriptor as
+     * `constructor(String)`.
      */
     public class Builder() {
         public constructor(merchantId: String) : this() {
@@ -218,11 +175,7 @@ public class FrakConfig internal constructor(
             )
     }
 
-    /**
-     * Not a `data class`: publishing one bakes `copy()`/`componentN()` into the ABI permanently.
-     * Uses the `internal` primary constructor rather than the Builder, so a field added to this type
-     * fails to compile here instead of being silently dropped.
-     */
+    /** Not a `data class`: publishing one bakes `copy()`/`componentN()` into the ABI permanently. */
     internal fun withPackageId(packageId: String): FrakConfig =
         FrakConfig(
             merchantId = merchantId,
@@ -237,24 +190,15 @@ public class FrakConfig internal constructor(
         )
 }
 
-/**
- * Kotlin sugar over [FrakConfig.Builder], for the merchant-id form. See [FrakConfig] for an example.
- */
+/** Kotlin sugar over [FrakConfig.Builder], for the merchant-id form. */
 public fun FrakConfig(
     merchantId: String,
     configure: FrakConfig.Builder.() -> Unit,
 ): FrakConfig = FrakConfig.Builder(merchantId).apply(configure).build()
 
-/**
- * Merchant id only, which is the shortest working config: no `{ }` to write when there is nothing
- * else to set. An explicit overload rather than a default lambda — it takes exactly the one required
- * field, so a new option never changes its signature.
- */
+/** Merchant id only: the shortest working config. */
 public fun FrakConfig(merchantId: String): FrakConfig = FrakConfig.Builder(merchantId).build()
 
-/**
- * Kotlin sugar over [FrakConfig.Builder] for the no-merchant-id form, where the merchant is resolved
- * from the package id instead.
- */
+/** Kotlin sugar over [FrakConfig.Builder] for the no-merchant-id form. */
 public fun FrakConfig(configure: FrakConfig.Builder.() -> Unit): FrakConfig =
     FrakConfig.Builder().apply(configure).build()

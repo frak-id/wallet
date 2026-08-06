@@ -1,6 +1,4 @@
-// Opted in for `PercentEncoding`, which is `@InternalFrakApi`. Per file, not module-wide: a
-// `-opt-in` compiler flag would silence the marker everywhere, including in tests written to
-// prove what a merchant can actually reach.
+// Opted in per file rather than module-wide, so tests still see the marker where a merchant would.
 @file:OptIn(InternalFrakApi::class)
 
 package id.frak.sdk.applink
@@ -12,12 +10,8 @@ import id.frak.sdk.net.UrlQuery
 /** The two URLs that link this installation's anonymous id to a Frak wallet. */
 internal object InstallLinks {
     /**
-     * `<scheme>://install?m=&a=&p=`. Wallet performs `POST /user/identity/ensure`, which needs a
-     * wallet session.
-     *
-     * [installProof] rides as a search param, not the `#p=` fragment the hosted install page
-     * uses: the wallet's deep-link router calls `navigate`, which empties the hash before
-     * `/install` renders, so the fragment cannot survive this hop.
+     * `<scheme>://install?m=&a=&p=`. [installProof] rides as a search param, not a fragment: the
+     * wallet's deep-link router empties the hash before `/install` renders.
      */
     fun deepLink(
         scheme: String,
@@ -32,9 +26,8 @@ internal object InstallLinks {
     }
 
     /**
-     * Play Store listing with an install referrer carrying the same pair. Referrer is a
-     * percent-encoded query string nested inside another, built as text (not [UrlQuery]) since
-     * it's a value whose own separators must not be re-encoded.
+     * Play Store listing with an install referrer carrying the same pair. The referrer is built as
+     * text, not via [UrlQuery], since its own separators must not be re-encoded.
      */
     fun playStore(
         packageId: String,
@@ -52,19 +45,9 @@ internal object InstallLinks {
     }
 
     /**
-     * The wallet's hosted install page: shows the install code and the store link. Distinct from
-     * [playStore], which is the store listing itself.
-     *
-     * The proof rides in the fragment (never sent to a server, never logged, never in a
-     * `Referer`), matching the wallet's own `buildInstallUrl`. [returnScheme]/[sessionId] let the
-     * page hand the install code back to the SDK; both are query params, so the fragment stays
-     * last.
-     *
-     * `embed=native` is the single marker that says "a host is presenting this page inside its own
-     * sheet", and it is the same spelling `/sharing` uses. The two routes used to disagree —
-     * `/sharing` read `embed`, `/install` inferred it from the presence of `returnScheme` — which
-     * meant one page could render host-embedded while the other did not, in the same web view, one
-     * navigation apart.
+     * The wallet's hosted install page: shows the install code and the store link, unlike
+     * [playStore] which is the store listing itself. The proof rides in the fragment so it never
+     * reaches a server, and `embed=native` is the same marker `/sharing` reads.
      */
     fun installPage(
         walletOrigin: String,

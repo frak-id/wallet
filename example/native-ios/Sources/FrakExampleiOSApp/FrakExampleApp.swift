@@ -13,16 +13,14 @@ struct LogEntry: Identifiable {
     }
 }
 
-/// Catalog row display model, local to this harness. Mapped to `SharingProduct` at the
-/// sharing/rewards call sites.
+/// Catalog row display model, local to this harness.
 struct ProductItem: Identifiable, Sendable {
     let id: String
     let title: String
     let link: String
 }
 
-/// Shared with the Android harness — same ids, titles, links. Reward amounts are not
-/// hardcoded; they come from `rewards.best(...)` in `loadCatalogReward()`.
+/// Shared with the Android harness — same ids, titles, links.
 let sampleProducts = [
     ProductItem(
         id: "prod_001",
@@ -41,12 +39,10 @@ let sampleProducts = [
     ),
 ]
 
-/// Order total used by the checkout simulator, shared with the Android harness. Display-only:
-/// `tracking.purchase` takes no amount parameter.
+/// Order total used by the checkout simulator. Display-only: `tracking.purchase` takes no amount.
 let sampleOrderTotalCents: Int64 = 14999
 
-/// `tracking.purchase` needs a merchant-owned customer id and checkout token; both are
-/// fabricated here for the demo.
+/// `tracking.purchase` needs a customer id and checkout token; both are fabricated for the demo.
 let sampleCustomerId = "cust_example_ios_001"
 let sampleCheckoutToken = "checkout_token_example_9988"
 
@@ -62,7 +58,7 @@ func formatCents(_ cents: Int64) -> String {
     String(format: "$%lld.%02lld", cents / 100, cents % 100)
 }
 
-/// State of the catalog-wide rewards.best lookup. See `ProductCatalogView`.
+/// State of the catalog-wide rewards.best lookup.
 private enum CatalogRewardLookup {
     case loading
     case loaded(BestReward)
@@ -88,28 +84,19 @@ struct FrakExampleApp: App {
     @State private var pendingSharingRequest = SharingRequest()
 
     init() {
-        // Frak.initialize is synchronous and non-throwing; it only stores config, no I/O.
-        //
-        // .manual is the only DeepLinkHandling option on iOS — no .automatic. iOS has no
-        // app-wide hook like Android's ActivityLifecycleCallbacks, so inbound URLs must be
-        // routed to appLink.handleReferral(_:) by hand — see .onOpenURL below and
-        // handleInboundURL(_:).
+        // .manual is the only DeepLinkHandling option on iOS: inbound URLs are routed to
+        // appLink.handleReferral(_:) by hand — see .onOpenURL below.
         Frak.initialize(
             FrakConfig(
                 merchantId: "0a799880-ba54-4276-a734-db8721911bab",
                 metadata: FrakMetadata(name: "Frak iOS Harness"),
-                // Development points at wallet-dev.frak.id / backend.gcp-dev.frak.id and the
-                // dev wallet app (id.frak.wallet.dev, scheme frakwallet-dev). isFrakAppInstalled()
-                // reports false without it.
+                // Development points at the dev wallet app; isFrakAppInstalled() reports
+                // false without it.
                 env: .development,
                 deepLink: .manual,
                 logLevel: .info,
-                // Boots a web view against the merchant's own sharing page as soon as a share
-                // surface appears, and hands that same warm view to the sheet. Without it the
-                // sheet pays for engine startup, TLS and the React bundle at tap time — the
-                // couple of hundred milliseconds of blank surface this harness exists to catch.
-                // On by default here precisely because the harness is where that regression
-                // would show up. Mirrors the Android harness.
+                // Boots the sharing web view up front, so the sheet does not pay for engine
+                // startup at tap time.
                 preloadSharing: true
             )
         )
@@ -188,13 +175,11 @@ struct FrakExampleApp: App {
                 await resolveConfig()
                 await loadCatalogReward()
             }
-            // .manual is the only DeepLinkHandling mode on iOS, so this call is mandatory
-            // (unlike Android's .automatic).
+            // .manual is the only mode on iOS, so this call is mandatory.
             .onOpenURL { url in
                 handleInboundURL(url)
             }
-            // One sheet instance driven by pendingSharingRequest/isSharingPresented, not one
-            // per row — a preloaded web view per row would be wasteful.
+            // One sheet instance for every row, driven by pendingSharingRequest.
             .frakSharingSheet(
                 isPresented: $isSharingPresented,
                 request: pendingSharingRequest,
@@ -207,8 +192,7 @@ struct FrakExampleApp: App {
         addLog("Triggering sharing sheet for '\(product.title)'...", type: .info)
         pendingSharingRequest = SharingRequest(
             products: [SharingProduct(title: product.title, link: product.link)],
-            // Reward trigger is "purchase" — matches the rewards.best call below and
-            // Android's SharingRequest.
+            // Matches the rewards.best call below.
             targetInteraction: "purchase",
             placement: "product-page"
         )
@@ -303,8 +287,7 @@ struct FrakExampleApp: App {
         }
     }
 
-    /// One `rewards.best(...)` call for the whole visible catalog, not one per product. See
-    /// `CatalogRewardLookup` and `ProductCatalogView`.
+    /// One `rewards.best(...)` call for the whole visible catalog, not one per product.
     private func loadCatalogReward() async {
         guard let client = client() else {
             addLog("Frak.client unavailable — skipping reward lookup.", type: .error)
@@ -333,8 +316,7 @@ struct FrakExampleApp: App {
         }
     }
 
-    /// Adapts `Frak.client`'s throw to a plain optional, so call sites can `guard`/`?.`
-    /// against it in one place.
+    /// Adapts `Frak.client`'s throw to a plain optional, in one place.
     private func client() -> FrakClient? {
         try? Frak.client
     }
@@ -361,8 +343,7 @@ struct ProductCatalogView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
-                // One headline card for the whole catalog, not one per row — see
-                // `FrakExampleApp.loadCatalogReward()`.
+                // One headline card for the whole catalog, not one per row.
                 CatalogRewardBanner(label: catalogRewardLabel)
                 ForEach(products) { product in
                     VStack(alignment: .leading, spacing: 8) {
@@ -390,8 +371,7 @@ struct ProductCatalogView: View {
     }
 }
 
-/// The single headline reward figure for the entire visible catalog. Deliberately not
-/// per-product: see `FrakExampleApp.loadCatalogReward()`.
+/// The single headline reward figure for the entire visible catalog.
 struct CatalogRewardBanner: View {
     let label: String
 

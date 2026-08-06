@@ -1,12 +1,5 @@
 // Struct over a closed set of shapes (not a bare enum) so each factory can default
 // fields a caller almost never sets. Matches the three shapes POST /user/track/interaction accepts.
-//
-// Android matches this shape as of `09-android-api-surface.md` §4 — it used to expose a
-// `sealed interface` with three publicly-constructible classes, which made adding a fourth wire shape
-// a break for any consumer who had written an exhaustive `when`. That was finding 9.8. Two residual
-// differences, both deliberate: Android spells `arrival`'s four fields out (it has no default
-// arguments anywhere on its surface, because a Kotlin default freezes an arity in the ABI), and it
-// carries an explicit `sharing(purchaseId:)` overload where the label plus a default gives it here.
 public struct Interaction: Sendable, Hashable {
     enum Kind: Sendable, Hashable {
         case arrival(

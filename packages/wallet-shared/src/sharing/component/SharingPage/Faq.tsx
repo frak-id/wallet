@@ -12,17 +12,9 @@ import * as styles from "./sharingPage.css";
 import type { SharingReward, SharingT } from "./types";
 
 /**
- * The FAQ entries, in display order.
- *
- * `id` is the i18n key suffix (`faq.q1` / `faq.a1`) and is deliberately NOT
- * derived from the array index: these keys are a merchant-override surface
- * (see `Steps.tsx`), so their names have to stay stable even if the list is
- * reordered or an entry is removed.
- *
- * `slot` names extra content rendered under the answer. It replaces an
- * `i === 6` check that silently tied the reward breakdown to an ordinal —
- * reordering the list would have moved the breakdown to whatever question
- * happened to land sixth.
+ * The FAQ entries, in display order. `id` is the i18n key suffix (`faq.q1`), not
+ * the array index — these keys are a merchant-override surface and must stay
+ * stable across reordering. `slot` names extra content rendered under the answer.
  */
 const FAQ_ITEMS = [
     { id: "1" },

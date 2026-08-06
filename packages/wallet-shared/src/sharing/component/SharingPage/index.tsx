@@ -27,11 +27,8 @@ export type {
 } from "./types";
 
 /**
- * The sharing page, in both of its screens.
- *
- * Presentation only: every decision — which link, which reward, whether an
- * outcome is handed to a host — is made by `useSharingPageController` and
- * arrives here already resolved.
+ * The sharing page, in both of its screens. Presentation only: every decision is
+ * made by `useSharingPageController` and arrives here already resolved.
  */
 export function SharingPage({
     merchant,
@@ -48,11 +45,8 @@ export function SharingPage({
     const containerRef = useRef<HTMLDivElement>(null);
     const chromeless = isChromeless(chrome);
 
-    // A host that owns the sheet owns dismissal too: an in-page Escape or
-    // backdrop click it cannot observe would empty the sheet while the host
-    // keeps it open. Also off on the confirmation screen, which renders its
-    // own overlay with its own dismiss — two live handlers on `document` would
-    // fire two different callbacks for one Escape.
+    // off when a host owns dismissal, and on the confirmation screen, which
+    // installs its own document-level Escape handler
     useOverlayBehaviour({
         enabled: !chromeless && view === "share",
         onDismiss: actions.onDismiss,

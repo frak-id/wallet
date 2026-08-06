@@ -7,31 +7,23 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
-// Shared publishing setup for both artifacts, so their POM/licence/SCM cannot drift apart.
-
 plugins {
     id("com.android.library")
     `maven-publish`
     signing
-    // binary-compatibility-validator is NOT applied here, deliberately — it would register nothing.
-    // It is applied to the root project (which owns the `apiValidation` extension) and its tasks are
-    // wired per module at the bottom of this file. See the long comment there for why by hand.
+    // binary-compatibility-validator is applied to the root project; wired per module below.
 }
 
 val sdkVersion: String =
     providers.gradleProperty("frak.sdk.version").get()
 
-// Composite-build substitution (`includeBuild("…/sdk/android")`) matches on `project.group`,
-// not the `MavenPublication`'s `groupId` below — without this, a consumer falls through to
-// "cannot resolve id.frak:frak-sdk" instead of resolving it locally.
+// Composite-build substitution matches on `project.group`, not the publication's `groupId` below.
 group = "id.frak"
 
-// Not redundant with the `version` on the MavenPublication below: without this `project.version` is
+// Not redundant with the MavenPublication's `version`: without this `project.version` is
 // "unspecified", so `:frak-sdk-ui`'s strict constraint can't match the sibling project.
 version = sdkVersion
 
-// Everything both artifacts must agree on; they ship in lockstep, so a value that differs
-// between them is a bug, not a choice.
 android {
     compileSdk = 36
 
@@ -59,23 +51,17 @@ android {
     }
 }
 
-// Both artifacts publish public API, so explicitApi/jvmTarget/language version/jvmDefault are
-// identical across both and belong here rather than duplicated per module.
 extensions.configure<KotlinAndroidProjectExtension> {
-    // Published library: explicit visibility/return type on every public symbol,
-    // so nothing silently widens the frozen API.
     explicitApi()
 
     compilerOptions {
         jvmTarget = JvmTarget.JVM_17
 
-        // Raised from 1.9: Kotlin 2.4 dropped the K1 compiler that guarantee needed.
-        // 2.2 not 2.0/2.1: those are already deprecated in 2.4.
+        // 2.2, not 1.9: Kotlin 2.4 dropped the K1 compiler 1.9 needed, and 2.0/2.1 are deprecated in 2.4.
         apiVersion = KotlinVersion.KOTLIN_2_2
         languageVersion = KotlinVersion.KOTLIN_2_2
 
-        // Real JVM default methods, not synthetic DefaultImpls: adding an interface method
-        // must not AbstractMethodError merchants on an older artifact version.
+        // Real JVM default methods: adding an interface method must not break older consumers.
         jvmDefault = JvmDefaultMode.NO_COMPATIBILITY
     }
 }
@@ -92,7 +78,6 @@ afterEvaluate {
                 from(components["release"])
 
                 pom {
-                    // name/description are per-module; everything below is identical across artifacts.
                     name.set(project.findProperty("frak.pom.name") as String?)
                     description.set(
                         project.findProperty("frak.pom.description") as String?,
@@ -101,9 +86,8 @@ afterEvaluate {
 
                     licenses {
                         license {
-                            // Apache-2.0, not the monorepo's GPL-3.0: merchants statically link
-                            // this into closed-source store binaries, and the patent grant covers
-                            // the identity proof-of-possession scheme.
+                            // Apache-2.0, not the monorepo's GPL-3.0: merchants link this
+                            // into closed-source store binaries.
                             name.set("The Apache License, Version 2.0")
                             url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
                         }
@@ -132,8 +116,7 @@ afterEvaluate {
     }
 
     extensions.configure<SigningExtension> {
-        // Signing skipped entirely when credentials are absent, so local builds/CI don't need a key.
-        // Read via providers, not System.getenv, so Gradle tracks them as configuration inputs.
+        // Skipped when credentials are absent. Read via providers so Gradle tracks them as inputs.
         val signingKey =
             providers.environmentVariable("ORG_GRADLE_PROJECT_signingInMemoryKey")
                 .orElse(providers.gradleProperty("signingInMemoryKey"))
@@ -144,7 +127,6 @@ afterEvaluate {
             ).orElse(providers.gradleProperty("signingInMemoryKeyPassword"))
                 .orNull
 
-        // Opt-in by key presence: no way to accidentally publish unsigned or be forced to hold a key to build.
         isRequired = signingKey != null
 
         if (signingKey != null) {
@@ -158,8 +140,7 @@ afterEvaluate {
     }
 }
 
-// FrakSdkVersion.CURRENT is sent on the wire; it must match the published artifact coordinate,
-// or a shipped binary reports a version that was never published and cannot be corrected.
+// FrakSdkVersion.CURRENT is sent on the wire; it must match the published artifact coordinate.
 val checkSdkVersionMatchesArtifact =
     tasks.register("checkSdkVersionMatchesArtifact") {
         group = "verification"
@@ -196,8 +177,7 @@ val checkSdkVersionMatchesArtifact =
 
 tasks.named("check") { dependsOn(checkSdkVersionMatchesArtifact) }
 
-// Budget measured against dex, not the AAR: the AAR carries debug info/metadata that never
-// reaches a device and reads ~25% high. d8 without R8: the SDK's own pessimistic cost.
+// Measured against dex, not the AAR, which carries debug info/metadata and reads ~25% high.
 val checkDexSizeBudget =
     tasks.register("checkDexSizeBudget") {
         group = "verification"
@@ -269,68 +249,23 @@ val checkDexSizeBudget =
 
 tasks.named("check") { dependsOn(checkDexSizeBudget) }
 
-// ---------------------------------------------------------------------------- ABI gate
-//
-// `api/<module>.api` is the frozen public surface. `apiCheck` fails the build when the compiled
-// surface differs from it; `apiDump` rewrites it, and that rewrite is the reviewable diff in which
-// an ABI change becomes a decision instead of an accident.
-//
-// **Hand-rolled, and it has to be.** binary-compatibility-validator registers its own `apiDump` and
-// `apiCheck` only when one of `kotlin-android`, `kotlin` or `kotlin-multiplatform` is applied — and
-// AGP 9 compiles Kotlin itself and *blocks* `org.jetbrains.kotlin.android`, so BCV's Android hook
-// never fires and it silently does nothing (Kotlin/binary-compatibility-validator#312). The
-// documented migration path, KGP's built-in `kotlin { abiValidation { } }`, is closed for the same
-// reason: that DSL lives on the extension the standalone Kotlin plugin registers, not on the one AGP
-// provides (KT-78025, open and unscheduled). So neither the plugin nor its replacement covers this
-// build, and the choice is between wiring BCV's own task types by hand and having no gate at all.
-//
-// The approach is the one okhttp and elastic/apm-agent-android took for the same AGP 9 gap: feed
-// `KotlinApiBuildTask` from the compile tasks' outputs. `KotlinApiBuildTask`/`KotlinApiCompareTask`
-// are internal to BCV rather than public API, which is why its version is pinned in
-// `buildSrc/build.gradle.kts` and not floated.
-//
-// Named `apiDump`/`apiCheck`, not `releaseApiDump`/`releaseApiCheck`, so the commands are the ones
-// BCV's own documentation gives. If a future BCV or KGP starts registering them for this setup, this
-// build fails loudly with "a task with that name already exists" — which is exactly the signal to
-// delete this block, and much better than silently running two gates.
-//
-// Release variant only. That is the variant a merchant consumes, and it is the only one published
-// (`singleVariant("release")` above). An API difference confined to `debug` would go unnoticed; there
-// are no debug-only sources in either module, and adding one would be the thing to reconsider this
-// over.
+// ABI gate: `api/<module>.api` is the frozen public surface. Wired by hand from BCV's task types
+// because BCV (and KGP's `abiValidation` replacement) only hooks the standalone Kotlin plugins,
+// which AGP 9 blocks — Kotlin/binary-compatibility-validator#312, KT-78025. Release variant only.
 val apiFile = layout.projectDirectory.file("api/${project.name}.api")
 
 val apiBuild =
     tasks.register<KotlinApiBuildTask>("apiBuild") {
-        // No `group`, so it stays out of `./gradlew tasks`. BCV withholds one from its own equivalent
-        // for the same reason: it is plumbing for `apiCheck`/`apiDump`, not something to run.
+        // No `group`, so it stays out of `./gradlew tasks`: plumbing for `apiCheck`/`apiDump`.
         description = "Extracts the public ABI of the release variant."
 
-        // These two `tasks.named` calls must stay *inside* this configuration action. Gradle runs it
-        // at task realisation, long after AGP's own `afterEvaluate` has created the variant's compile
-        // tasks; hoisting them to locals above `register` — the obvious readability refactor — would
-        // evaluate them during script execution instead, and `named` fails eagerly on a name that does
-        // not exist yet. It is why this needs no `afterEvaluate` of its own.
-        //
-        // Both halves, Kotlin *and* Java. `:frak-sdk-ui`'s `JavaCallSiteFixture` is test-only so it
-        // never reaches here, but a merchant-facing Java source file would, and a dump that silently
-        // omitted it would be worse than no dump.
+        // These `tasks.named` calls must stay inside this configuration action: it runs at task
+        // realisation, after AGP created the compile tasks, and `named` fails eagerly otherwise.
         inputClassesDirs.from(tasks.named("compileReleaseKotlin").map { it.outputs.files })
         inputClassesDirs.from(tasks.named("compileReleaseJavaWithJavac").map { it.outputs.files })
         outputApiFile.set(layout.buildDirectory.file("bcv/${project.name}.api"))
-        // `nonPublicMarkers` and friends are not set here: BCV's own task base reads them from the
-        // `apiValidation` extension by walking up to the root project, which is where they live.
-        //
-        // `runtimeClasspath` is likewise left unset, so the worker's classloader falls back to the
-        // one that loaded this plugin — buildSrc's — which is exactly why `kotlin-metadata-jvm` and
-        // ASM are declared there. BCV normally injects them itself, from a hook AGP 9's built-in
-        // Kotlin never fires.
-        //
-        // That fallback is inferred from Gradle's `ClassLoaderStructureProvider` and from the
-        // `android-bcv-bridge` reference implementation, which leaves it unset too and is verified by
-        // TestKit tests. It has not been executed here. If the first `apiBuild` dies with
-        // `NoClassDefFoundError: kotlin/metadata/jvm/…`, the fix is one line: set
-        // `runtimeClasspath.from(…)` with those three coordinates from a dedicated configuration.
+        // `nonPublicMarkers`/`runtimeClasspath` are unset on purpose: BCV reads the former from the
+        // root `apiValidation` extension, and the worker's classloader falls back to buildSrc's.
     }
 
 val apiCheck =
@@ -350,6 +285,5 @@ tasks.register<FrakApiDumpTask>("apiDump") {
     committedApiFile.set(apiFile)
 }
 
-// Gating `check` means a contributor who widens the surface without running `apiDump` finds out
-// locally, not in review.
+// Gates `check`, so a surface widened without running `apiDump` fails locally and in CI.
 tasks.named("check") { dependsOn(apiCheck) }

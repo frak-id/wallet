@@ -32,8 +32,8 @@ vi.mock("./useShareLink", () => ({
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 
-// Real UUIDs: `FrakContextManager` validates these, and a short stand-in makes
-// `buildSharingLink` return null, which silently disables share and copy.
+// real UUIDs: `FrakContextManager` validates these, and a short stand-in makes
+// `buildSharingLink` return null
 const merchantId = "550e8400-e29b-41d4-a716-446655440000";
 const clientId = "550e8400-e29b-41d4-a716-446655440001";
 
@@ -107,8 +107,6 @@ describe("outcome hand-off", () => {
     });
 
     it("still shows the confirmation after a handed-off copy", () => {
-        // The host does not re-present the page for a copy, precisely so the
-        // toast and confirmation survive.
         const { result } = setup({ copy: () => true });
 
         act(() => result.current.actions.onCopy());
@@ -138,8 +136,6 @@ describe("confirmation lifecycle", () => {
     });
 
     it("honours a `confirmed` that arrives after mount", () => {
-        // A warmed page is activated by fragment, and a `useState` initialiser
-        // does not run twice — so the flag has to be watched, not just read.
         const { result, rerender } = renderHook(
             ({ confirmed }: { confirmed: boolean }) =>
                 useSharingPageController({
@@ -218,13 +214,11 @@ describe("props it derives", () => {
         expect(result.current.products?.selectedIndex).toBe(0);
         act(() => result.current.products?.onSelect(1));
         expect(result.current.products?.selectedIndex).toBe(1);
-        // The selected product's own link wins over the caller's default.
         expect(result.current.sharingLink).toContain("acme.example/m");
     });
 
     it("lets a host hand off a share the platform cannot do itself", () => {
-        // `useShareLink` reports `canShare: false` in an Android WebView; the
-        // hand-off is the only reason the button should still be there.
+        // `useShareLink` is mocked to `canShare: false`, as in an Android WebView
         expect(setup().result.current.share.canShare).toBe(false);
         expect(
             setup({}, { canHandOffShare: true }).result.current.share.canShare

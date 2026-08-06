@@ -22,20 +22,7 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Every `Builder` setter, called with a value distinguishable from every other field's, and every
- * resulting property asserted.
- *
- * This test exists because the move from constructors to Builders introduced a failure mode that did
- * not previously exist. A constructor cannot assign a parameter to the wrong property — the compiler
- * does it. A hand-written setter can: `fun homepageLink(v: String?) = apply { this.logoUrl = v }`
- * compiles, type-checks, and is wrong. The rest of the suite reaches for the defaulted fixture
- * helpers, which call every setter but almost always with `null` or the default enum, and a
- * `null`-for-`null` swap is invisible. So: distinct values, one assertion per field, no defaults.
- *
- * The `build()`-snapshot and list-copy contracts are pinned here too, for the same reason — they are
- * properties of the Builder rather than of any one field.
- */
+/** Every `Builder` setter called with a distinct value: a hand-written setter can assign the wrong property. */
 class BuilderWiringTest {
     @Test
     fun `FrakMetadata Builder carries every field to the right property`() {
@@ -89,7 +76,6 @@ class BuilderWiringTest {
 
     @Test
     fun `an untouched Builder produces the documented defaults`() {
-        // Every default has exactly one home, the Builder. This is what fails if one moves or drifts.
         val config = FrakConfig.Builder().build()
 
         assertNull(config.merchantId)
@@ -235,15 +221,12 @@ class BuilderWiringTest {
         assertNull(bare.audience)
         assertEquals(emptyList<ProductDetails>(), bare.products)
 
-        // The one request type with equality, so this is the one place it can be pinned. A merchant
-        // memoising a lookup on a `RewardRequest` depends on it.
         assertEquals(RewardRequest { targetInteraction = "purchase" }, RewardRequest { targetInteraction = "purchase" })
         assertEquals(
             RewardRequest { targetInteraction = "purchase" }.hashCode(),
             RewardRequest { targetInteraction = "purchase" }.hashCode(),
         )
 
-        // `addProduct` accumulates from the empty default, and `build()` copies out of the caller's list.
         val mutable = mutableListOf(ProductDetails { sku = "first" })
         val accumulated =
             RewardRequest
@@ -291,9 +274,6 @@ class BuilderWiringTest {
     @Test
     @Suppress("UNCHECKED_CAST")
     fun `products is copied out of the caller's list and is not mutable through the getter`() {
-        // Two separate contracts, one fix. Without the copy, a caller holding the list it passed in
-        // could change a request already built; and `getProducts()` would hand Java a list whose
-        // mutability depended on whether `products` or `addProduct` built it.
         val mutable = mutableListOf(SharingProduct("first", "https://acme.example/1"))
         val request = SharingRequest.Builder().products(mutable).build()
 

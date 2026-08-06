@@ -2,12 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetHostResults } from "@/module/sharing/host/bridge";
 import { Route } from "./sharing";
 
-// The param contract itself is tested in
-// `app/module/sharing/params/params.test.ts`, against the codec table both
-// transports share. What is left here is the route's own behaviour: the guard
-// that refuses a host launch with no identity, and how that refusal reaches
-// the host.
-
 const beforeLoad = Route.options.beforeLoad as (ctx: {
     search: Record<string, unknown>;
 }) => void;
@@ -43,8 +37,7 @@ describe("/sharing host error hand-off", () => {
     beforeEach(() => {
         resetHostResults();
         assign.mockClear();
-        // `location.assign` is non-configurable in jsdom, so it is stubbed
-        // wholesale rather than spied on — same approach as `bridge.test.ts`.
+        // `location.assign` is non-configurable in jsdom, so it is stubbed wholesale.
         vi.stubGlobal("location", { assign });
     });
 
@@ -53,9 +46,6 @@ describe("/sharing host error hand-off", () => {
     });
 
     it("tells the host instead of rendering an error it cannot read", () => {
-        // The guard throws; the error component is where the host is told, so
-        // the navigation happens once per render rather than once per guard
-        // run — and guards re-run whenever the router re-resolves the URL.
         let thrown: Error | undefined;
         try {
             beforeLoad({

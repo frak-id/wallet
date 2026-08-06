@@ -3,26 +3,18 @@
 
     /// What the sheet shows until the hosted page has actually painted.
     ///
-    /// A silhouette rather than a spinner, and opaque rather than translucent, because it is
-    /// stacked *over* the web view for the whole load: a `WKWebView` paints its background before
-    /// it has content, and the old spinner-then-swap sequence showed that empty rectangle for the
-    /// entire page load. Nothing here is measured against the real page — a rough shape that
-    /// fades out reads as content arriving, where an exact one that lands a few pixels off reads
-    /// as a jump.
-    ///
-    /// Mirrors `SharingSheetSkeleton.kt`; the two are deliberately the same silhouette, since a
-    /// merchant shipping both platforms sees them side by side.
+    /// Opaque and stacked over the web view for the whole load, because a `WKWebView` paints its
+    /// background before it has content. Mirrors `SharingSheetSkeleton.kt`.
     struct SharingSheetSkeleton: View {
         @State private var pulsing = false
 
         var body: some View {
             ZStack {
-                // The system sheet colour, opaque: this is covering a web view, not floating over
-                // the merchant's screen.
+                // Opaque: this covers a web view rather than floating over the merchant's screen.
                 Color(.systemBackground)
 
                 VStack(alignment: .leading, spacing: 16) {
-                    // Merchant row: logo, name.
+                    // Merchant row.
                     HStack(spacing: 12) {
                         Block(width: 28, height: 28, cornerRadius: 14)
                         Block(height: 28)
@@ -60,11 +52,8 @@
                     value: pulsing
                 )
             }
-            // Started from `onAppear` rather than an initial value: an animation attached to a
-            // state that never changes never runs.
+            // Started from `onAppear`: an animation on a state that never changes never runs.
             .onAppear { pulsing = true }
-            // Purely decorative, and stacked over a live web view — VoiceOver should read the
-            // page underneath, not this.
             .accessibilityHidden(true)
         }
 

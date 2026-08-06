@@ -44,16 +44,7 @@ type InstallSearch = {
     a?: string;
     /** `frak-install-v1` proof, when a fragment could not carry it. See `resolveInstallProof`. */
     p?: string;
-    /**
-     * How this page is being presented. `native` means a host has embedded it
-     * in its own sheet, so this page draws no chrome of its own.
-     *
-     * Read from the same param, through the same decoder, as `/sharing`. The
-     * two used to disagree: `/sharing` read `embed`, this route inferred a host
-     * from the presence of `returnScheme`. Since the sharing sheet navigates
-     * its one web view from `/sharing` to here, that meant the same sheet could
-     * render one page host-embedded and the next one not.
-     */
+    /** `native` means a host embedded this page, so it draws no chrome of its own. */
     embed?: HostEmbed;
     /** Native host's result scheme. Present only when the SDK's web view loaded this page. */
     returnScheme?: string;
@@ -67,8 +58,9 @@ export const Route = createFileRoute("/install")({
         a: typeof search.a === "string" ? search.a : undefined,
         p: typeof search.p === "string" ? search.p : undefined,
         embed: decodeHostEmbed(search.embed),
-        // Sanitised, not just read: the page navigates to whatever scheme this carries, so an
-        // unvalidated value turns a wallet-origin page into an arbitrary scheme launcher.
+        // Sanitised: the page navigates to whatever scheme this carries; an
+        // unvalidated value would turn a wallet-origin page into an arbitrary
+        // scheme launcher.
         returnScheme: sanitizeReturnScheme(search.returnScheme),
         sid: typeof search.sid === "string" ? search.sid : undefined,
     }),
@@ -76,13 +68,9 @@ export const Route = createFileRoute("/install")({
 });
 
 /**
- * Parses the `frak-install-v1` proof from the URL fragment (`#p=...`).
- *
- * A fragment, not a search param, deliberately: never sent to the server,
- * never logged, never in a `Referer` header. `validateSearch` only covers
- * search params, so this is a separate read off `window.location.hash`.
- * Must never throw — any malformed/missing fragment degrades silently to
- * "no proof".
+ * Parses the `frak-install-v1` proof from the URL fragment (`#p=...`), which is
+ * never sent to a server, never logged, never in a `Referer`. Never throws: a
+ * malformed or missing fragment means "no proof".
  */
 export function parseInstallProofFragment(hash: string): string | undefined {
     const raw = hash.startsWith("#") ? hash.slice(1) : hash;
@@ -95,17 +83,9 @@ export function parseInstallProofFragment(hash: string): string | undefined {
 }
 
 /**
- * The `frak-install-v1` proof for this visit, from whichever carrier could hold it.
- *
- * The fragment is preferred and is the only carrier for anything a user might copy or
- * share: fragments are never sent to a server, never logged, never in a `Referer`. But a
- * fragment cannot survive an in-app navigation — the deep-link router calls `navigate`, so
- * `window.location.hash` is empty by the time this route renders — and the Play referrer is
- * a referrer string with no fragment at all. Those handoffs use `?p=` instead.
- *
- * Fragment first rather than search first: it keeps today's behaviour byte-identical for
- * every existing link, and if a URL ever carries both, the one that could not have leaked
- * through a redirect or an access log wins.
+ * The install proof for this visit. The fragment wins, but it cannot survive an
+ * in-app navigation and the Play referrer carries none, so those handoffs use
+ * `?p=` instead.
  */
 export function resolveInstallProof(
     hash: string,
@@ -115,32 +95,23 @@ export function resolveInstallProof(
 }
 
 /**
- * Install page — unified entry point for the install/ensure flow.
- *
- * Decision matrix:
- *   Web + not logged in  → Install code + store links (user needs to download the app)
- *   Everything else      → Processing screen (fire ensure or store for post-auth)
+ * Install page: install code + store links for a logged-out web visitor,
+ * processing screen otherwise.
  */
 function InstallPage() {
     const { m, a, p, embed, returnScheme, sid } = Route.useSearch();
-    // frak-install-v1 proof, read once. Forwarded to both InstallCodeView and
-    // InstallProcessing — whether a proof is present is a property of the input,
-    // not of which shell (web/Tauri) is running.
+    // Read once, and forwarded to both views whichever shell is running.
     const proof = useMemo(
         () => resolveInstallProof(window.location.hash, p),
         [p]
     );
 
-    // Web + not logged in → show install code + store download links
-    // Otherwise → use the web processing flow (ensure + register/login)
     const shouldShowCodeView = !IS_TAURI && !getSafeSession()?.token;
 
     useEffect(() => {
         trackEvent("install_page_viewed", {
             merchant_id: m,
             has_anonymous_id: Boolean(a),
-            // Whether a proof reached this page by either carrier; purely
-            // diagnostic, attribution is preserved either way.
             has_install_proof: Boolean(proof),
             view: shouldShowCodeView ? "code" : "processing",
         });
@@ -175,11 +146,7 @@ function sleep(ms: number): Promise<void> {
 
 /**
  * Builds the ensure action for the direct-link / Tauri processing path.
- * Exported for direct testing, mirroring `parseInstallProofFragment`.
- *
- * With merchantId/anonymousId but no proof, this is byte-identical to the
- * pre-existing bare action — a missing fragment degrades silently, never
- * blocks.
+ * Exported for direct testing. A missing proof degrades silently, never blocks.
  */
 export function buildInstallProcessingEnsureAction(params: {
     merchantId?: string;
@@ -204,12 +171,8 @@ export function buildInstallProcessingEnsureAction(params: {
 }
 
 /**
- * Brief processing screen that handles the ensure call.
- *
- *   Logged in     → store ensure action + drain all pending actions + navigate /wallet
- *   Not logged in → store ensure action for post-auth + navigate /register
- *
- * Always shows for at least MIN_PROCESSING_MS to avoid a flash.
+ * Brief processing screen around the ensure call, then on to `/wallet` or
+ * `/register`. Always shown for at least MIN_PROCESSING_MS to avoid a flash.
  */
 function InstallProcessing({
     m: merchantId,
@@ -245,7 +208,6 @@ function InstallProcessing({
                 navigate({ to: "/wallet", replace: true });
             });
         } else {
-            // Not logged in — store for post-auth, redirect to register
             if (ensureAction) {
                 pendingActionsStore.getState().addAction(ensureAction);
             }
@@ -311,7 +273,6 @@ function InstallCodeView({
     });
     const estimatedReward = reward?.formatted;
 
-    // Wrap t to inject estimatedReward into i18n interpolation
     const t = useCallback(
         (key: string, options?: Record<string, unknown>) =>
             rawT(key, { ...options, estimatedReward: estimatedReward ?? "" }),
@@ -352,15 +313,10 @@ function InstallCodeView({
     }, [codeQueryStatus, error, merchantId]);
 
     /**
-     * Hands the code to the native host so it can write a pasteboard entry with an expiry and
-     * `localOnly`, neither of which this page can set. No-op in a browser, where `returnScheme`
-     * is absent.
-     *
-     * Called from a user gesture only, never an effect. `01-platform-changes.md` §1.2 requires
-     * it — this is the one action carrying a capability value — and it also stops a browser
-     * from being driven into a mint/prompt loop: `assign()` to a custom scheme raises the OS
-     * "open in app?" sheet, whose blur and refocus would retrigger any effect keyed on a
-     * refetched code.
+     * Hands the code to the native host, which can give the pasteboard entry an
+     * expiry and `localOnly`; this page cannot. No-op without a `returnScheme`.
+     * From a user gesture only: `assign()` to a custom scheme raises the OS
+     * "open in app?" sheet, whose blur/refocus would retrigger an effect.
      */
     const handOverCode = useCallback(() => {
         if (!data?.code) return;
@@ -376,20 +332,9 @@ function InstallCodeView({
         });
     }, [data?.code, data?.expiresAt, returnScheme, sid]);
 
-    // A native host presents this page inside its own sheet, which already carries a title, a
-    // drag handle and a scrim to dismiss with. The page's own header would be a second set of
-    // chrome inside the first, and its close button calls `window.close()`, which a web view
-    // does not honour — so it would read as a dead control.
-    //
-    // `embed`, not `returnScheme`: the two answer different questions, and reading the wrong
-    // one is what let this route drift out of step with `/sharing`. `returnScheme` says whether
-    // outcomes can be reported back; `embed` says who draws the chrome.
-    //
-    // Spoofable, and safe to be: any visitor can type `?embed=native`, and all it buys them is a
-    // page without its own header. Nothing downstream treats it as authorisation — `handOverCode`
-    // goes through `sendHostResult`, which still requires a `returnScheme` that survived
-    // `sanitizeReturnScheme` and no-ops without one. Hiding the header cannot trap anyone either:
-    // its close button calls `window.close()`, which a browser tab it did not open ignores.
+    // A native host already draws a title, a drag handle and a scrim, and this
+    // page's own close button calls `window.close()`, which a web view ignores.
+    // Reads `embed`, not `returnScheme`; spoofable, but it only hides the header.
     const chromeless = isHostEmbedded(embed);
 
     const isAndroid = useMemo(() => /android/i.test(navigator.userAgent), []);
@@ -406,8 +351,8 @@ function InstallCodeView({
     const handleCopy = useCallback(async () => {
         if (!data?.code) return;
         await navigator.clipboard.writeText(data.code);
-        // The host's write supersedes this one where there is a host: same code, but marked
-        // sensitive and given an expiry.
+        // Where there is a host, its write supersedes this one: same code, but
+        // marked sensitive and given an expiry.
         handOverCode();
         trackEvent("install_code_copied", { merchant_id: merchantId });
         setCopied(true);
@@ -526,8 +471,8 @@ function InstallCodeView({
                     href={downloadUrl}
                     className={styles.downloadButton}
                     onClick={() => {
-                        // Last gesture before the user leaves for the store, so the code is on
-                        // the pasteboard even if they never tapped copy.
+                        // Last gesture before leaving for the store, so the code is
+                        // on the pasteboard even if they never tapped copy.
                         handOverCode();
                         trackEvent("install_store_clicked", {
                             store: isAndroid ? "play_store" : "app_store",

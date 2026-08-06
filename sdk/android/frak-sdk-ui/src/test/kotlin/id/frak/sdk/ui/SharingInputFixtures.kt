@@ -5,15 +5,7 @@ import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.sharing.SharingProduct
 import id.frak.sdk.sharing.SharingRequest
 
-/*
- * Defaulted helpers over the SDK's Builders, so a sheet test that cares about one field says one
- * field. The twin of `:frak-sdk`'s `core/CoreInputFixtures.kt` and `sharing/SharingInputFixtures.kt`
- * — duplicated rather than shared because a test source set cannot cross a module boundary, and
- * because these go through the Builders, which is the same API a merchant has.
- *
- * The input types themselves carry no default arguments on purpose; see the note at the top of
- * `sharing/SharingRequest.kt` in `:frak-sdk`.
- */
+/* Defaulted helpers over the SDK's Builders, so a test that cares about one field says one field. */
 
 internal fun sharingRequest(
     link: String? = null,

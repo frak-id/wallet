@@ -4,11 +4,7 @@ import id.frak.sdk.core.DefaultFrakClient
 import id.frak.sdk.sharing.SharingRequest
 import java.util.concurrent.CompletableFuture
 
-/**
- * Share link construction. Obtained from [FrakClient.sharing].
- *
- * `*Async` twins, and why: see [ConfigApi].
- */
+/** Share link construction. Obtained from [FrakClient.sharing]. */
 public class SharingApi internal constructor(
     private val core: DefaultFrakClient,
 ) {

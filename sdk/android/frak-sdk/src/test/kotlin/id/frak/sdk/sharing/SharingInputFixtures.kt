@@ -2,11 +2,8 @@ package id.frak.sdk.sharing
 
 /*
  * Defaulted helpers for the sharing input types and the two `FrakContext` layouts. Same reasoning as
- * `core/CoreInputFixtures.kt`: the types carry no default arguments, so the defaults live with the
- * callers that can be recompiled.
- *
- * `frakContextV1`/`frakContextV2` go through the `internal` constructor, since `FrakContext` is a read
- * model with no Builder — it is decoded from a link, never built by a merchant.
+ * `core/CoreInputFixtures.kt`. `frakContextV1`/`frakContextV2` use the `internal` constructor, since
+ * `FrakContext` is a read model with no Builder — it is decoded from a link, never built by a merchant.
  */
 
 internal fun sharingRequest(

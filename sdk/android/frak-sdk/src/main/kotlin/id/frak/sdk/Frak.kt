@@ -27,37 +27,9 @@ import java.io.File
 import java.util.concurrent.CompletableFuture
 
 /**
- * Entry point. Call [initialize] once, then use [client].
+ * Entry point. Call [initialize] once from `Application.onCreate`, then use [client].
  *
- * ```kotlin
- * // Application.onCreate
- * Frak.initialize(
- *     this,
- *     FrakConfig(BuildConfig.FRAK_MERCHANT_ID) {
- *         metadata = FrakMetadata {
- *             name = "Acme"
- *             currency = FrakCurrency.EUR
- *         }
- *     },
- * )
- *
- * // anywhere afterwards
- * val reward = Frak.client.rewards.best(RewardRequest { targetInteraction = "purchase" })
- * ```
- *
- * ```java
- * // Application.onCreate, from Java — the same Builder the Kotlin form above delegates to
- * Frak.initialize(
- *         this,
- *         new FrakConfig.Builder(BuildConfig.FRAK_MERCHANT_ID)
- *                 .metadata(new FrakMetadata.Builder().name("Acme").currency(FrakCurrency.EUR).build())
- *                 .build());
- *
- * // and afterwards, from Java: every suspending member has a CompletableFuture twin
- * Frak.getClient().getRewards()
- *         .bestAsync(new RewardRequest.Builder().targetInteraction("purchase").build())
- *         .thenAccept(reward -> { /* on the main thread */ });
- * ```
+ * Java callers use `Frak.getClient()` and the `*Async` twin of every suspending member.
  */
 public object Frak {
     @Volatile
@@ -66,7 +38,7 @@ public object Frak {
     @Volatile
     private var instance: FrakClient? = null
 
-    /** Registered lifecycle observer, so [shutdown] can unregister it; otherwise a re-initialize cycle double-handles every inbound deep link. */
+    /** Kept so [shutdown] can unregister it; otherwise re-initializing double-handles inbound deep links. */
     @Volatile
     private var deepLinkObserver: Pair<Application, Application.ActivityLifecycleCallbacks>? = null
 
@@ -95,11 +67,9 @@ public object Frak {
             }
             // Shared by queue and client: two limitedParallelism(2) views would double the IO budget.
             val ioDispatcher = defaultIoDispatcher()
-            // Separate prefs file from the config cache: a corrupt write to the hot one must not
-            // take identity — or the consent decision — with it.
+            // Separate prefs file from the config cache: a corrupt write must not take identity with it.
             val identityStore = SharedPreferencesStore(context, IDENTITY_FILE_NAME)
-            // ONE instance, shared by the client and the identity store. Two would memoise the
-            // persisted decision independently and drift the moment setTrackingEnabled is called.
+            // ONE instance, shared by the client and the identity store; two would drift on setTrackingEnabled.
             val consent =
                 TrackingConsent(
                     store = identityStore,
@@ -141,19 +111,12 @@ public object Frak {
 
     /**
      * Tears the SDK down: cancels background coroutines, unregisters the deep-link observer, and
-     * drops the client so [initialize] can run again with a different [FrakConfig].
-     *
-     * Not a privacy control — use [FrakClient.setTrackingEnabled] for that; this neither records
-     * a consent decision nor erases anything.
-     *
-     * Idempotent and safe before [initialize]. Suspends until the background work has stopped.
-     *
-     * No `@JvmStatic` on this one: a `suspend fun` compiles to a method taking a `Continuation`, which
-     * no Java caller can supply. Java uses [shutdownAsync].
+     * drops the client so [initialize] can run again. Not a privacy control — use
+     * [FrakClient.setTrackingEnabled] for that. Idempotent; Java uses [shutdownAsync].
      */
     public suspend fun shutdown() {
-        // State is read and cleared under the lock, then acted on outside it: `synchronized`
-        // must never span a suspension point.
+        // State is read and cleared under the lock, then acted on outside it: `synchronized` must
+        // never span a suspension point.
         val (dying, observer) =
             synchronized(this) {
                 val client = core
@@ -170,31 +133,9 @@ public object Frak {
     }
 
     /**
-     * [shutdown] for Java.
-     *
-     * **The one `*Async` twin that does not run on the client's own scope**, and it cannot. Every other
-     * twin borrows the `SupervisorJob` that `shutdown()` cancels, so that a teardown cancels work in
-     * flight rather than leaking it. Routing *this* one through the same scope would mean the future is
-     * cancelled by the very work it is awaiting: `isCancelled` would be true, and a Java caller's
-     * `thenRun(::finishTeardown)` would never fire. So teardown gets its own scope, which nothing
-     * cancels.
-     *
-     * Completes on the main thread, like the others, and with `null` rather than `Unit` — see
-     * [FrakClient.setTrackingEnabledAsync]. **Never `get()`/`join()` it on the main thread**, for the
-     * reason given on [id.frak.sdk.core.DefaultFrakClient.asFuture].
-     *
-     * Two caveats [shutdown] shares and this one makes reachable, both recorded rather than fixed.
-     * [shutdown] clears its state under a lock and then acts outside it, so a *second* concurrent
-     * caller sees nothing to tear down and completes while the first is still cancelling — which makes
-     * "suspends until the background work has stopped" true only for the first caller. And because this
-     * returns immediately, `Frak.shutdownAsync(); Frak.initialize(…)` back to back — the natural Java
-     * spelling — can build a new client while the old one is mid-`cancelAndJoin`. Sequence the second
-     * call off the future (`thenRun`) rather than beside it.
-     *
-     * Unlike the client's twins this one has no injectable dispatcher, so it reaches
-     * `Looper.getMainLooper()` and is therefore unreachable from `:frak-sdk`'s JVM suite:
-     * `AsyncTwinTest` covers `asFuture`, not this. `FrakSdkJavaCallSiteFixture` proves it is nameable
-     * and `@JvmStatic`; nothing proves it runs.
+     * [shutdown] for Java. Runs on its own scope, not the client's, which `shutdown()` cancels.
+     * Never `get()`/`join()` it on the main thread, and sequence a following [initialize] off the
+     * future (`thenRun`) rather than beside it, or the new client races the old one's teardown.
      */
     @JvmStatic
     public fun shutdownAsync(): CompletableFuture<Void?> =
@@ -203,12 +144,7 @@ public object Frak {
             null
         }
 
-    /**
-     * Not the client's scope, deliberately: see [shutdownAsync]. `SupervisorJob` so one failed teardown
-     * cannot poison the next, and no dispatcher of its own — `shutdown()` is `cancelAndJoin` plus a
-     * `SharedPreferences`-free unregister, and the `future(MainThreadDispatcher)` above pins where it
-     * resumes.
-     */
+    /** Not the client's scope, deliberately: see [shutdownAsync]. */
     private val teardownScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     /** @throws FrakError.NotInitialized when [initialize] has not run. */
@@ -216,7 +152,7 @@ public object Frak {
     public val client: FrakClient
         get() = instance ?: throw FrakError.NotInitialized()
 
-    /** Same as [client], but null instead of throwing (A6): for a call site that would just null-check anyway. */
+    /** Same as [client], but null instead of throwing. */
     @JvmStatic
     public val clientOrNull: FrakClient?
         get() = instance
@@ -253,7 +189,7 @@ public object Frak {
         // Client owns the guard/tracking; this only reports that a link was seen.
         val callbacks = DeepLinkObserver { url -> core?.handleReferralLinkInBackground(url) }
         application.registerActivityLifecycleCallbacks(callbacks)
-        // Retained so [shutdown] can unregister it; see the field's doc for what leaking it costs.
+        // Retained so [shutdown] can unregister it.
         deepLinkObserver = application to callbacks
     }
 

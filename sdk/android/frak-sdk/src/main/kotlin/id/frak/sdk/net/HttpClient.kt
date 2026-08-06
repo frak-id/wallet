@@ -1,6 +1,5 @@
-// Opted in for `PercentEncoding`, which is `@InternalFrakApi`. Per file, not module-wide: a
-// `-opt-in` compiler flag would silence the marker everywhere, including in tests written to
-// prove what a merchant can actually reach.
+// Opted in for `PercentEncoding`, which is `@InternalFrakApi`. Per file, not module-wide, so the
+// marker still applies elsewhere.
 @file:OptIn(InternalFrakApi::class)
 
 package id.frak.sdk.net
@@ -23,26 +22,19 @@ import java.net.URL
 import kotlin.random.Random
 
 /**
- * A response body exceeded [HttpClient.MAX_RESPONSE_BODY_BYTES]. [total] is bytes read so far
- * when the cap was hit mid-stream, or the advertised Content-Length when that alone was enough
- * to reject the response.
- *
- * An [IOException] because it genuinely is one, not to route it through [HttpClient.get]'s
- * retry catch: both throw sites wrap it in [FrakError.Network] first, which is not an
- * `IOException`, so an oversized response is never retried.
+ * A response body exceeded [HttpClient.MAX_RESPONSE_BODY_BYTES]. [total] is the bytes read so far,
+ * or the advertised Content-Length when that alone was enough to reject the response.
  */
 internal class ResponseTooLargeException(
     val total: Long,
 ) : IOException("Response body exceeded the maximum of ${HttpClient.MAX_RESPONSE_BODY_BYTES} bytes (was $total)")
 
-/** GET/POST over [HttpURLConnection] (no OkHttp, zero runtime deps). See inline comments for footguns. */
+/** GET/POST over [HttpURLConnection]; no OkHttp, zero runtime deps. */
 internal class HttpClient(
     private val baseUrl: String,
     private val ioDispatcher: CoroutineDispatcher,
     private val open: (URL) -> HttpURLConnection = { it.openConnection() as HttpURLConnection },
-    // Constructed as one of DefaultFrakClient's own constructor-parameter defaults, before that
-    // init body has assembled anything, so logging is self-contained here. Defaults to null
-    // (silent) until a caller passes one in.
+    // Built as a DefaultFrakClient constructor default, before its init body runs; null is silent.
     private val logger: FrakLogger? = null,
 ) {
     data class Response(
@@ -61,17 +53,14 @@ internal class HttpClient(
     ): Response {
         // Deadline wraps both attempts, else the retry would get its own fresh window.
         return withDeadline {
-            // Inside the deadline block so a malformed origin surfaces as FrakError.Network, not
-            // a raw MalformedURLException.
+            // Inside the deadline block so a malformed origin surfaces as FrakError.Network.
             val url = urlOrThrow(buildUrl(path, query))
             try {
                 attempt(url, headers, null)
             } catch (retryable: IOException) {
                 if (!isTransient(retryable)) throw FrakError.Network(retryable)
-                // One retry: a pooled connection closed server-side while idle fails on next use
-                // indistinguishably from a real failure. Safe only because this is GET-only, and
-                // narrowed to SocketException/EOFException/InterruptedIOException: anything else
-                // fails identically again, so retrying wastes budget on a guaranteed repeat.
+                // One retry, safe only because this is GET-only: an idle pooled connection closed
+                // server-side fails on next use indistinguishably from a real failure.
                 delay(retryDelayMillis())
                 try {
                     attempt(url, headers, null)
@@ -83,21 +72,14 @@ internal class HttpClient(
         }
     }
 
-    /**
-     * A dropped/reset connection, a timeout, or a DNS lookup failure is worth one retry;
-     * anything else will just fail again. [java.net.UnknownHostException] is a plain
-     * [IOException], not a [java.net.SocketException] subtype, so it needs its own arm.
-     */
+    /** [java.net.UnknownHostException] is an [IOException], not a [java.net.SocketException] — hence its own arm. */
     private fun isTransient(error: IOException): Boolean =
         error is java.net.SocketException ||
             error is java.io.EOFException ||
             error is java.io.InterruptedIOException ||
             error is java.net.UnknownHostException
 
-    /**
-     * Short and jittered: a regional blip retried instantly, in lockstep, by every client
-     * recreates the load spike it was reacting to.
-     */
+    /** Jittered: every client retrying in lockstep recreates the spike it reacted to. */
     private fun retryDelayMillis(): Long = RETRY_DELAY_BASE_MILLIS + Random.nextLong(RETRY_DELAY_JITTER_MILLIS)
 
     /** No retry, unlike [get]: the transport can't tell whether the request was read before dying. */
@@ -136,18 +118,13 @@ internal class HttpClient(
             logResult(method, url, response.status, startMillis)
             response
         } catch (thrown: Exception) {
-            // Exception, not Throwable: a JVM Error (e.g. OutOfMemoryError) should propagate exactly
-            // as it did before this wrapper existed, not be intercepted for a log line.
+            // Exception, not Throwable: a JVM Error must propagate untouched
             logResult(method, url, status = null, startMillis)
             throw thrown
         }
     }
 
-    /**
-     * DEBUG-level only. Logs method, host, path and status/duration; never the query string (a
-     * merchant id or anonymous id can ride in it) and never a header value (an auth token lives
-     * there).
-     */
+    /** DEBUG-level only. Never logs the query string or a header value — both can carry identifiers. */
     private fun logResult(
         method: String,
         url: URL,
@@ -200,20 +177,15 @@ internal class HttpClient(
         }
 
         val status = responseCode
-        // Fail fast on an advertised size before opening the stream. Not sufficient alone: a
-        // chunked or lying response has no Content-Length, so the read below is capped
-        // independently.
+        // Fail fast on an advertised size; the read below caps chunked or lying responses too.
         if (contentLengthLong > MAX_RESPONSE_BODY_BYTES) {
-            // Neither stream was read, so there's nothing to drain: disconnect() is the only
-            // way back to a clean state for the pool.
+            // Nothing was read, so disconnect() is the only way back to a clean pooled state.
             runCatching { errorStream?.close() }
             runCatching { inputStream?.close() }
             runCatching { disconnect() }
             throw FrakError.Network(ResponseTooLargeException(contentLengthLong))
         }
-        // 204/205/304 never carry a body by spec; HttpURLConnection.inputStream throws
-        // IOException for them rather than returning null, which without this short-circuit
-        // would misread as a transient transport failure.
+        // 204/205/304 carry no body, and inputStream throws for them rather than returning null
         if (status == 204 || status == 205 || status == 304) {
             runCatching { inputStream?.close() }
             runCatching { errorStream?.close() }
@@ -225,11 +197,7 @@ internal class HttpClient(
         return Response(status, responseBody, retryAfterSeconds())
     }
 
-    /**
-     * Like [java.io.InputStream.readBytes], but aborts once more than [limit] bytes have been
-     * read: the advertised Content-Length above can be absent or wrong, so this bounds memory
-     * regardless. Never truncates silently: a body over the limit throws [ResponseTooLargeException].
-     */
+    /** Bounded read, since Content-Length can be absent or wrong. Throws rather than truncating. */
     private fun HttpURLConnection.readBytesUpTo(
         stream: java.io.InputStream,
         limit: Long,
@@ -242,8 +210,7 @@ internal class HttpClient(
             if (read == -1) break
             total += read
             if (total > limit) {
-                // Aborting mid-read never leaves a clean, fully-drained stream behind, same
-                // poisoned-connection risk the Content-Length pre-check avoids.
+                // Aborting mid-read leaves the stream undrained, so drop the connection.
                 runCatching { disconnect() }
                 throw FrakError.Network(ResponseTooLargeException(total))
             }
@@ -283,11 +250,7 @@ internal class HttpClient(
         fun Response.toServerError(): FrakError.Server =
             FrakError.Server(status, JsonReader.errorCodeOrNull(body), retryAfterSeconds)
 
-        /**
-         * Sized so two attempts plus [retryDelayMillis] fit inside [OVERALL_DEADLINE_MILLIS]:
-         * worst case per attempt is connect (3s) + read (5s) = 8s; two attempts plus up to 300ms
-         * of jitter is 16.3s, leaving 3.7s of slack under the 20s wall clock.
-         */
+        /** Sized so two attempts plus [retryDelayMillis] fit inside [OVERALL_DEADLINE_MILLIS]. */
         const val CONNECT_TIMEOUT_MILLIS: Int = 3_000
         const val READ_TIMEOUT_MILLIS: Int = 5_000
 
@@ -300,11 +263,7 @@ internal class HttpClient(
         /** 5 minutes: long enough for any real rate limit, short enough to recover from a bad header. */
         const val MAX_RETRY_AFTER_SECONDS: Long = 300
 
-        /**
-         * 1 MiB. Both responses this client ever reads (a merchant config resolve and a rewards
-         * list) are small JSON; this is generous headroom above any real payload while still
-         * bounding memory and what an oversized response could force into SharedPreferences.
-         */
+        /** 1 MiB — generous headroom over the small JSON payloads this client reads. */
         const val MAX_RESPONSE_BODY_BYTES: Long = 1024L * 1024L
     }
 }

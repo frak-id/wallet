@@ -1,98 +1,40 @@
-# Version catalog for the Frak Android SDK — every coordinate the build resolves is declared
-# here, so a version bump is a one-line diff in one file.
-#
-# Zero third-party runtime dependencies. `kotlinx-coroutines` and AndroidX/Compose are
-# first-party to Kotlin and Google respectively and are the only things allowed near
-# `api`/`implementation`. Anything else belongs in `testImplementation` or nowhere.
+# Version catalog for the Frak Android SDK.
+# Runtime dependencies stay first-party (Kotlin, AndroidX); anything else is test-only.
 
 [versions]
 agp = "9.1.1"
 kotlin = "2.4.10"
-# Resolved by Gradle rather than requiring `brew install ktlint`, so
-# `bun run --cwd sdk/android lint` works on a clean checkout.
 ktlint-plugin = "14.2.0"
-# The ktlint engine itself, pinned separately from the plugin that runs it.
-# Named `ktlint-engine` rather than plain `ktlint`: a bare `ktlint` key would be
-# a prefix of `ktlint-plugin`, and Gradle then generates `libs.versions.ktlint`
-# as a group accessor with no `.get()`.
+# Named `ktlint-engine`, not `ktlint`: a bare `ktlint` key is a prefix of `ktlint-plugin`, so
+# Gradle would generate a group accessor with no `.get()`.
 ktlint-engine = "1.8.0"
 
-# binary-compatibility-validator. Recorded here because this file is meant to be the whole answer
-# to "what does this build resolve", but it is *declared* in buildSrc/build.gradle.kts, which cannot
-# read this catalog — same as AGP and the Kotlin Gradle plugin. Keep the two in step by hand.
-#
-# Pinned, not floating: `frak-publish.gradle.kts` registers BCV's `KotlinApiBuildTask` and
-# `KotlinApiCompareTask` itself, and those are internal to BCV rather than public API. See the
-# comment on `apiCheck` there for why the wiring is hand-rolled at all.
+# Also declared in buildSrc/build.gradle.kts, which cannot read this catalog — keep them in step by hand.
 bcv = "0.18.1"
-# BCV's ABI worker needs these at runtime and BCV's POM declares neither; also declared in
-# buildSrc/build.gradle.kts. `kotlin-metadata-jvm` tracks the `kotlin` version above, because it parses
-# the `@Metadata` this build's compiler emits. ASM reaches buildSrc through AGP as well, but relying on
-# a transitive leak for a verification gate is how a gate breaks for an unrelated reason.
+# BCV's ABI worker needs these at runtime; also declared in buildSrc/build.gradle.kts.
+# `kotlin-metadata` must track the `kotlin` version above.
 kotlin-metadata = "2.4.10"
 asm = "9.9"
 
 
 coroutines = "1.11.0"
 
-# The BOM pins every `androidx.compose.*` artifact, so those are declared without
-# versions below and can never drift apart.
 compose-bom = "2026.06.01"
 
-# The stable AndroidX wrapper over the WebView APIs that ship with the WebView package rather
-# than with the platform. Only one is used: `addDocumentStartJavaScript`, which is how the sheet
-# hands the hosted page its corner radius without a query parameter (see `SharingHostStyle`).
-#
-# Same first-party argument as Compose above — this is AndroidX, not a third party. It is also
-# the only way to reach the API at all: the underlying support code lives in the updatable
-# WebView APK, so there is no platform-version floor to raise instead.
 androidx-webkit = "1.16.0"
 
-# `androidx.activity` carries both halves of the sharing sheet's public shape: `ComponentActivity`,
-# which `FrakSharing.Builder.build(...)` takes, and `ComponentDialog`, which hosts the sheet's
-# window. Not transitive from Compose UI or Material3 — `activity-compose` is what usually pulls
-# it in, and this module does not use it — so it is declared here and nowhere else.
-#
-# NOT the latest. `compileSdk` is 36 across this build, and androidx artifacts published against
-# 37 fail resolution with a `minCompileSdk` error. 1.13.0 is the version `example/native-android`
-# has already proven at 36; raise both together or neither.
-#
-# `androidx.lifecycle` is deliberately NOT declared alongside it. `ComponentActivity` implements
-# `LifecycleOwner` and `ViewModelStoreOwner`, so lifecycle-runtime and lifecycle-viewmodel are
-# `api` dependencies of this artifact and arrive with it; Compose UI drags its own in as well.
-# Pinning a second, lower coordinate here would change nothing (Gradle takes the highest) while
-# creating a real way to accidentally pin a *higher* one — and lifecycle 2.11.0 requires
-# compileSdk 37, which would fail this build outright.
+# Not the latest: `compileSdk` is 36 here, and androidx artifacts built against 37 fail with `minCompileSdk`.
+# androidx.lifecycle is deliberately not declared: it arrives as an api dep of activity; 2.11.0 needs compileSdk 37.
 androidx-activity = "1.13.0"
 
-# `@MainThread`. A pure-Java annotations jar: no resources, no `minCompileSdk` metadata, nothing
-# to keep in step with `compileSdk`. Reachable transitively through `androidx.activity`, declared
-# anyway because this file is meant to be the whole answer to "what does this build resolve".
 androidx-annotation = "1.9.1"
 
 junit = "4.13.2"
-# Test-only. Parses the golden fixture corpus in `sdk/core` from the Kotlin test suite.
-#
-# Does not violate the zero-third-party-runtime-dependency rule: declared `testImplementation`,
-# so it never reaches `components["release"]` or the published POM.
-#
-# Must not be removed on the reasoning that "org.json ships with Android" — for local unit
-# tests the classpath is the stubbed `android.jar`, whose methods all throw `Method ... not
-# mocked`. The real artifact in test scope shadows the stub.
-#
-# Public domain, no transitive dependencies.
+# Test-only. Do not drop it as "org.json ships with Android": unit tests compile against the stubbed
+# `android.jar`, whose methods throw `Method ... not mocked`; the real artifact shadows the stub.
 json = "20260719"
 
-# Test-only. Runs the `:frak-sdk-ui` unit tests against a real Android runtime on the JVM,
-# instead of the stubbed `android.jar` whose every method throws `Method ... not mocked`.
-#
-# This is what makes `SharingSheetState` and the sharing `WebViewClient` testable at all: both
-# are built on framework types (`Context`, `Intent`, `WebView`, `WebResourceRequest`) that
-# cannot be exercised on the stub.
-#
-# Same zero-runtime-dependency argument as `json` above: `testImplementation` only. Not added
-# to `:frak-sdk`, which stays on plain JUnit and must remain provable without an Android
-# runtime.
+# Test-only, `:frak-sdk-ui` only: a real Android runtime on the JVM instead of the stubbed `android.jar`.
 robolectric = "4.16.1"
 androidx-test-core = "1.7.0"
 
@@ -117,10 +59,7 @@ androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-te
 
 [plugins]
 android-library = { id = "com.android.library", version.ref = "agp" }
-# `org.jetbrains.kotlin.android` is deliberately absent: AGP 9.0 ships built-in Kotlin and
-# registers its own `kotlin` extension, so applying the JetBrains plugin alongside it fails
-# with "Cannot add extension with name 'kotlin'". The `kotlin` version above only feeds the
-# Compose compiler plugin below, which is bundled with Kotlin from 2.0 on and tracks its
-# version automatically.
+# `org.jetbrains.kotlin.android` is deliberately absent: AGP 9 ships built-in Kotlin and registers its
+# own `kotlin` extension, so applying it too fails. This `kotlin` version only feeds the Compose plugin.
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-plugin" }

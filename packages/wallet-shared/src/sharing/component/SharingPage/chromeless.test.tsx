@@ -3,8 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { containerChromeless } from "../shared.css";
 import { SharingPage, type SharingPageProps } from "./index";
 
-// Echo keys back so assertions read against stable identifiers rather than
-// translated copy.
+// echo keys back, so assertions read against stable identifiers
 const t = (key: string) => key;
 
 function renderPage(overrides: Partial<SharingPageProps> = {}) {
@@ -35,8 +34,7 @@ function renderPage(overrides: Partial<SharingPageProps> = {}) {
         />
     );
 
-    // The backdrop is the component's outermost element; the inner container
-    // stops propagation, so this is the only node that reaches the handler.
+    // the inner container stops propagation, so only the backdrop reaches the handler
     const backdrop = container.firstElementChild as HTMLElement;
     const surface = backdrop.firstElementChild as HTMLElement;
 
@@ -85,8 +83,6 @@ describe("SharingPage chromeless mode", () => {
     it("keeps the page content when chromeless", () => {
         renderPage({ chrome: { mode: "none" } });
 
-        // The host replaces the chrome, not the page itself: the how-it-works
-        // stepper still renders.
         expect(
             screen.getByText("sdk.sharingPage.steps.1.title")
         ).toBeInTheDocument();
@@ -119,8 +115,6 @@ describe("SharingPage chromeless mode", () => {
     });
 
     it("dismisses on Escape even when the keydown originates inside the container", () => {
-        // The old backdrop-level onKeyDown could never see this: the inner
-        // container's own onKeyDown called stopPropagation() on every keydown.
         const { onDismiss, surface } = renderPage();
 
         fireEvent.keyDown(surface, { key: "Escape" });
@@ -152,11 +146,6 @@ describe("SharingPage chromeless mode", () => {
     });
 
     it("routes Escape to the confirmation screen's own dismiss handler while it is shown, not this page's", () => {
-        // `PostShareConfirmation` (rendered when `showConfirmation` is true)
-        // owns an identical Escape effect scoped to `onConfirmationDismiss`.
-        // Without gating this page's own effect on `showConfirmation`, both
-        // would be live on `document` at once and a single Escape press would
-        // fire two, possibly different, callbacks.
         const onDismiss = vi.fn();
         const onConfirmationDismiss = vi.fn();
         renderPage({
@@ -190,12 +179,7 @@ describe("SharingPage chromeless mode", () => {
     });
 
     it("never inlines a radius, whatever the chrome mode", () => {
-        // The host's corner radius reaches this container as a CSS custom
-        // property injected into the web view, not as a prop — so there is
-        // nothing left to put in `style`, and `containerChromeless` above is
-        // the whole of the wiring. That is what lets `/install`, which the
-        // host navigates the same web view to, round itself identically
-        // without this component knowing anything about it.
+        // the host radius arrives as a CSS custom property, never as a prop
         for (const chrome of [{ mode: "none" }, { mode: "full" }] as const) {
             const { surface } = renderPage({ chrome });
 

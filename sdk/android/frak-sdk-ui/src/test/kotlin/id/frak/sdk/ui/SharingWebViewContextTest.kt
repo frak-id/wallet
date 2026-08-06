@@ -10,19 +10,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * The one thing in the rotation work that can leak an Activity, and whose failure mode is silent —
- * no crash, no log, just a destroyed Activity retained per rotation.
- *
- * A `WebView` keeps a hard reference to the `Context` it was constructed with. The pool is now
- * retained across configuration changes, so a view built directly against an Activity would pin
- * every Activity the user ever rotated away from. It also cannot simply be built against the
- * application context: it needs a themed, windowed one for its own popups.
- *
- * `SharingHost` resolves that with a `MutableContextWrapper` whose base is the Activity while one
- * is attached and the application context while none is. That only works if the view actually
- * holds the *wrapper* rather than resolving through it once at construction — which is what this
- * pins. A `System.gc()`-and-hope collectability assertion would be testing Robolectric's own
- * retention policy, not ours; this is the deterministic half.
+ * A `WebView` holds a hard reference to the `Context` it was built with, so the pooled view
+ * must hold `SharingHost`'s `MutableContextWrapper` rather than resolve through it once.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
@@ -46,10 +35,6 @@ class SharingWebViewContextTest {
         )
     }
 
-    /**
-     * Reads the swap the way `SharingHost.onDestroy` performs it: the base goes back to the
-     * application context, and the view — which is retained — is looking at the new one.
-     */
     @Test
     fun `swapping the wrapper's base is visible through the retained view`() {
         val wrapper = MutableContextWrapper(appContext)
@@ -65,15 +50,6 @@ class SharingWebViewContextTest {
         assertSame(appContext, (handle.view.context as MutableContextWrapper).baseContext)
     }
 
-    /**
-     * The pool never re-creates a view it still owns: a release and a re-acquire — what the *end
-     * of a session* does — hands back the same instance.
-     *
-     * Not the rotation path, which is different and untested: a configuration change goes through
-     * `SharingPresentation.detachView()` and leaves the handle lent, so the view never returns to
-     * the pool at all. This is the closest deterministic proxy for "the `WebView` instance is
-     * stable", which is what the rotation promise rests on.
-     */
     @Test
     fun `the same web view instance survives a release and re-acquire`() {
         val wrapper = MutableContextWrapper(appContext)

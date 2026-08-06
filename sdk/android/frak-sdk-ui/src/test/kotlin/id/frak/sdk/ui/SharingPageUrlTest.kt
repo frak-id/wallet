@@ -6,14 +6,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SharingPageUrlTest {
-    /** The wallet's own `sanitizeReturnScheme`. A scheme it rejects means every callback is dropped, silently. */
+    /** Mirrors the wallet's own `sanitizeReturnScheme`; a scheme it rejects drops every callback. */
     private val walletPattern = Regex("^frak-[a-z0-9._-]{1,60}$")
 
     @Test
     fun `derives a return scheme the wallet accepts`() {
         assertEquals("frak-com.groupeseb.moulinex.food", SharingPageUrl.returnScheme("com.groupeseb.moulinex.food"))
         assertTrue(walletPattern.matches(SharingPageUrl.returnScheme("com.Acme.App")))
-        // Package ids can carry characters the wallet's pattern rejects.
         assertTrue(walletPattern.matches(SharingPageUrl.returnScheme("com.acme:remote")))
     }
 
@@ -26,8 +25,6 @@ class SharingPageUrlTest {
 
     @Test
     fun `falls back rather than emitting a bare prefix`() {
-        // "frak-" alone does not match the wallet's pattern, which needs at
-        // least one trailing character.
         assertTrue(walletPattern.matches(SharingPageUrl.returnScheme("///")))
     }
 
@@ -51,8 +48,6 @@ class SharingPageUrlTest {
         assertTrue(url.contains("&sid=42"))
         assertTrue(url.contains("&sdkVersion="))
         assertTrue(url.contains("&appName=Acme%20Store"))
-        // The merchant's link is a value here, so its separators must be
-        // encoded or they become separators of the page's own query.
         assertTrue(url.contains("&link=https%3A%2F%2Facme.example%2Fp%3Fa%3D1"))
     }
 
@@ -80,15 +75,6 @@ class SharingPageUrlTest {
         assertFalse(url.contains("confirmed"))
     }
 
-    /**
-     * How the sheet looks is not addressed to a route.
-     *
-     * It was, briefly: a `cornerRadius` query param on this URL, which the `/install` page the
-     * install CTA navigates the same web view to never received — so the corners squared off
-     * halfway through the flow. It also had to be copied byte-identically into [SharingPageUrl.warm]
-     * or activation silently fell back to a full load. Both problems are gone because presentation
-     * now travels by origin, through `SharingHostStyle`, and not through here at all.
-     */
     @Test
     fun `carries no presentation params`() {
         val url =

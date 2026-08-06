@@ -4,8 +4,6 @@ import { formatAmountParts, percentAmountParts } from "./formatAmountParts";
 
 describe("formatAmountParts", () => {
     it("splits a whole EUR amount, synthesising the decimals", () => {
-        // The credit-card treatment always shows two decimals; the separator
-        // is read from the locale rather than assumed.
         expect(formatAmountParts(5)).toEqual({
             integer: "5",
             decimals: ",00",
@@ -29,7 +27,6 @@ describe("formatAmountParts", () => {
     });
 
     it("reports a leading symbol as a prefix", () => {
-        // `en-US` puts the symbol first; a surface cannot assume either side.
         expect(formatAmountParts(1234.56, "usd")).toMatchObject({
             unit: "$",
             unitPosition: "prefix",
@@ -37,8 +34,6 @@ describe("formatAmountParts", () => {
     });
 
     it("agrees with formatAmount about the number itself", () => {
-        // The two are separate code paths over the same options, so this is
-        // the property that keeps them from drifting.
         for (const amount of [0, 5, 12.5, 1500, 1234.56]) {
             for (const currency of ["eur", "usd", "gbp"] as const) {
                 const parts = formatAmountParts(amount, currency);
@@ -63,9 +58,6 @@ describe("percentAmountParts", () => {
     });
 
     it("takes the percent as sent, without Intl rounding", () => {
-        // The backend sends a whole percent; running it through
-        // `Intl.NumberFormat` with `style: "percent"` would divide by 100 and
-        // apply its own rounding, changing what the golden fixtures produce.
         expect(percentAmountParts(7.5).integer).toBe("7.5");
     });
 });

@@ -20,16 +20,7 @@ import { parseSharingSearch } from "@/module/sharing/params/search";
 import type { SharingSearch } from "@/module/sharing/params/table";
 import { useSharingIdentity } from "@/module/sharing/useSharingIdentity";
 
-/**
- * A native launch with no `clientId` is a host integration bug rather than a
- * state to render — the host owns the caller identity and the wallet's own
- * stored id must not stand in for it.
- *
- * Thrown from `beforeLoad` and caught by `errorComponent`, which is where the
- * host is told. Guards are re-entrant (the router re-resolves the location
- * whenever `validateSearch` rewrites the URL), so a guard that navigated would
- * fire the same outcome twice; a component renders once.
- */
+/** A native launch with no `clientId` is a host integration bug: the host owns the identity. */
 class MissingHostClientIdError extends Error {
     constructor(
         readonly returnScheme: string | undefined,
@@ -50,8 +41,7 @@ export const Route = createFileRoute("/sharing")({
         }
     },
     errorComponent: ({ error }) => {
-        // Tell the host, so its sheet closes instead of hanging on a
-        // wallet-branded error page it cannot interpret.
+        // Tell the host, so its sheet closes instead of showing an error it cannot read.
         if (error instanceof MissingHostClientIdError) {
             sendHostResult({
                 scheme: error.returnScheme,
@@ -67,9 +57,7 @@ export const Route = createFileRoute("/sharing")({
 
 function WalletSharingPage() {
     const search = Route.useSearch();
-    // A warmed page is activated by fragment, so the per-tap params can arrive
-    // after mount. Merging here means every consumer below sees one view and
-    // none of them has to know which half of the URL its value came from.
+    // A warmed page is activated by fragment, so per-tap params can arrive after mount.
     const activation = useActivationParams(!!search.embed);
     const {
         merchantId,
@@ -109,16 +97,11 @@ function WalletSharingPage() {
         embedded,
     });
 
-    // Merchant config supplies the branding, so a caller only sends `appName`
-    // / `logoUrl` when it wants to override it.
+    // Branding falls back to the merchant config unless the caller overrode it.
     const { data: config } = useMerchantResolvedConfig({ merchantId });
 
-    // Compute the install URL pointing to the /install route.
-    //
-    // No `#p=` proof here, unlike the listener's builder: this page's
-    // `clientId` arrives from a URL param, the wallet's own store, or a
-    // backend lookup by checkout token — never from the SDK keypair that could
-    // sign for it. Nothing to sign with, so this arm stays a bare id.
+    // No `#p=` proof here, unlike the listener's builder: this page has no SDK
+    // keypair to sign with.
     const installUrl = useMemo(() => {
         if (!(merchantId && clientId)) return null;
         return buildInstallUrl({ merchantId, clientId });
@@ -145,27 +128,17 @@ function WalletSharingPage() {
         canHandOffShare: canHandOff,
         t: rawT,
         outcomes: {
-            // The SDK owns the share itself, for two reasons this page cannot
-            // work around: `navigator.share` does not exist in an Android
-            // WebView, and the interaction a share earns has to be signed by
-            // the SDK keypair. The host re-presents this page as confirmed
-            // once its chooser is up.
+            // Handed to the SDK: `navigator.share` does not exist in an Android
+            // WebView, and the interaction has to be signed by the SDK keypair.
             share: () => returnToHost("share"),
-            // Handed off for the interaction half of the same reason — a
-            // WebView clipboard write would work, but the SDK still has to be
-            // the one to record the sharing interaction. Unlike `share` the
-            // page carries on afterwards: a host does not re-present the page
-            // for a copy, precisely so the toast and confirmation screen
-            // survive.
+            // Same reason, but the page carries on afterwards: a host does not
+            // re-present it for a copy.
             copy: () => returnToHost("copy"),
             dismiss: async () => {
-                // A native host owns the outcome: `redirectUrl` is a web-only
-                // concern and is not sent in native mode.
+                // `redirectUrl` is web-only; a native host owns the outcome.
                 if (returnToHost("dismiss")) return;
                 if (redirectUrl) {
                     if (IS_TAURI) {
-                        // In Tauri, open the redirect in the external browser
-                        // and navigate back to the wallet home.
                         await openExternalUrl(redirectUrl);
                         navigate({ to: "/wallet", replace: true });
                         return;
@@ -179,10 +152,8 @@ function WalletSharingPage() {
                 returnToHost("shareAgain");
             },
             install: () => {
-                // The SDK owns the whole install step: parts of the iOS path
-                // (a timed pasteboard entry, the in-app App Store sheet)
-                // cannot run in a web view, so hand back control instead of
-                // navigating directly.
+                // Parts of the iOS install path cannot run in a web view, so hand
+                // control back to the SDK.
                 if (returnToHost("install")) return;
                 if (!installUrl) return;
                 navigate({

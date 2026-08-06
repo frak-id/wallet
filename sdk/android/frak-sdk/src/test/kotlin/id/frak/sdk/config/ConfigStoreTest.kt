@@ -28,11 +28,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
 
-/**
- * Fakes only the `open: (URL) -> HttpURLConnection` seam on [HttpClient]; status dispatch,
- * header handling and stream selection run for real. Logger is [FrakLogLevel.NONE] because
- * `android.util.Log` throws on this classpath, matching the production default.
- */
+/** Fakes only the `open` seam on [HttpClient]; logging is NONE because `android.util.Log` throws here. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConfigStoreTest {
     private val query = MerchantQuery.from(frakConfig(merchantId = MERCHANT_ID))
@@ -46,8 +42,7 @@ class ConfigStoreTest {
             store = store,
             logger = FrakLogger(FrakLogLevel.NONE),
             scope = scope,
-            // Unconfined: readPersisted/writePersisted's withContext resolves without an
-            // explicit advanceUntilIdle.
+            // Unconfined: readPersisted/writePersisted resolve without an explicit advanceUntilIdle.
             ioDispatcher = UnconfinedTestDispatcher(scope.testScheduler),
             now = { clock },
         )
@@ -73,7 +68,7 @@ class ConfigStoreTest {
             transport.respond(200, BODY)
             configStore.resolve(query, forceRefresh = false)
 
-            clock = 0L // stepped backward: fetchedAtMillis is now in the future
+            clock = 0L // Stepped backward: fetchedAtMillis is now in the future.
             transport.respond(200, BODY.replace("Acme", "Acme Renamed"))
             configStore.resolve(query, forceRefresh = false)
             testScheduler.advanceUntilIdle()
@@ -98,11 +93,6 @@ class ConfigStoreTest {
             assertEquals("Acme Renamed", configStore.resolve(query, forceRefresh = false).name)
         }
 
-    /**
-     * [ConfigStore.updates] must receive background-revalidation updates too, not just what
-     * direct [ConfigStore.resolve] callers see — a subscriber that never calls resolve() again
-     * still needs the revalidated value.
-     */
     @Test
     fun `background revalidation reaches the updates stream, not just memory (C3)`() =
         runTest {
@@ -118,7 +108,7 @@ class ConfigStoreTest {
 
             clock += ConfigStore.FRESH_TTL_MILLIS + 1
             transport.respond(200, BODY.replace("Acme", "Acme Renamed"))
-            configStore.resolve(query, forceRefresh = false) // stale: served from cache, revalidates behind it
+            configStore.resolve(query, forceRefresh = false) // Stale: served from cache, revalidates behind it.
             advanceUntilIdle()
 
             collector.cancel()
@@ -130,14 +120,9 @@ class ConfigStoreTest {
         }
 
     /**
-     * [ConfigStore.memory]/[ConfigStore.updates]/the persisted disk entry are one slot shared
-     * across every key. [SingleFlight] only serialises fetches sharing a key, so two different
-     * keys can race to publish into that slot; a fetch that started first must not win just
-     * because its response arrives last.
-     *
-     * [ConfigStore] runs on its own real [CoroutineScope] backed by [Dispatchers.IO] here, not
-     * this test's `TestScope`: blocking inside `open()` on the TestScope's single virtual thread
-     * would starve the scheduler the test needs to ever deliver `secondPublished`.
+     * Memory, [ConfigStore.updates] and the persisted entry are one slot shared across every key, so
+     * two different keys can race to publish into it. Runs on a real [Dispatchers.IO] [CoroutineScope],
+     * not the TestScope: blocking inside `open()` would starve the scheduler the test needs.
      */
     @Test
     fun `an older fetch that starts first but lands last does not overwrite a newer publish (C4)`() =
@@ -148,9 +133,7 @@ class ConfigStoreTest {
             val firstStarted = CompletableDeferred<Unit>()
             val secondPublished = CompletableDeferred<Unit>()
 
-            // Two transports, not one shared FakeHttpTransport: its body is a single mutable
-            // field read lazily during perform(), so a shared instance risks the second
-            // respond() rewriting the body the first, still-blocked, connection reads.
+            // Two transports: FakeHttpTransport's body is one mutable field, read lazily in perform().
             val firstTransport = FakeHttpTransport()
             val secondTransport = FakeHttpTransport()
             firstTransport.respond(200, BODY)
@@ -167,8 +150,7 @@ class ConfigStoreTest {
                                 val isFirstQuery = url.query?.contains("merchantId=$MERCHANT_ID") == true
                                 if (isFirstQuery) {
                                     firstStarted.complete(Unit)
-                                    // Blocks a real backgroundScope thread until the second fetch
-                                    // publishes, so this response lands last despite starting first.
+                                    // Blocks until the second publish: this response lands last.
                                     kotlinx.coroutines.runBlocking { secondPublished.await() }
                                     firstTransport.open(url)
                                 } else {
@@ -184,8 +166,7 @@ class ConfigStoreTest {
                 )
 
             try {
-                // SingleFlight.run dispatches via backgroundScope.launch, never the caller's own
-                // coroutine, so calling resolve() from runTest's TestScope here is safe.
+                // SingleFlight.run dispatches via backgroundScope.launch, so resolving here is safe.
                 val firstFetch = backgroundScope.async { configStore.resolve(firstQuery, forceRefresh = true) }
                 firstStarted.await()
 
@@ -339,20 +320,13 @@ class ConfigStoreTest {
             assertEquals("Acme", coldStart.name)
         }
 
-    /**
-     * [DefaultFrakClient.handleReferralLink]'s merchant guard reads `ownMerchantId` from
-     * [ConfigStore.currentConfig], not [ConfigStore.updates], so a warm start reached before
-     * anything has called [resolve] in this process — the deep-link launch case — still has a
-     * merchant id. [currentConfig] hydrates from disk on demand for that reason.
-     */
     @Test
     fun `currentConfig hydrates from disk on its own, without a prior resolve call`() =
         runTest {
             transport.respond(200, BODY)
             newStore(this).resolve(query, forceRefresh = false)
 
-            // A second store sharing only the persisted KeyValueStore, like a fresh process;
-            // warmStart.resolve() is never called.
+            // A second store sharing only the persisted KeyValueStore; resolve() is never called on it.
             val warmStart = newStore(this)
 
             val emissions = mutableListOf<String?>()

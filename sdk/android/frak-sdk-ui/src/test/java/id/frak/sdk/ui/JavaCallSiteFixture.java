@@ -15,59 +15,25 @@ import id.frak.sdk.tracking.Interaction;
 import java.util.Collections;
 
 /**
- * Proof that the SDK's public API is callable from Java. Compiled by {@code :frak-sdk-ui:test};
- * never executed.
- *
- * <p>It started as a sharing-sheet fixture and has outgrown that: it now covers {@code :frak-sdk}
- * types too ({@code FrakConfig}, {@code Interaction}, the sharing input Builders), which are on this
- * module's test compile classpath through {@code api(project(":frak-sdk"))}. {@code :frak-sdk} now has
- * its own fixture, {@code FrakSdkJavaCallSiteFixture}, but these were deliberately not moved into it:
- * {@code FrakConfig.Builder} and the seven {@code Interaction} factories are javac-checked only from
- * here, and duplicating them there would double the maintenance without adding a check. The split is
- * arbitrary rather than principled — worth tidying, not worth a migration.
- *
- * <p>This exists because the claim that motivated the whole Builder rewrite -- "a merchant on an
- * XML or Java codebase cannot use this SDK at all" -- was, until it landed, unverified in both
- * directions. Every test and both example apps drive the SDK from inside a Compose or SwiftUI
- * tree, and CI does not build {@code example/native-android} at all. A Java source file in the
- * unit-test source set is the cheapest thing that actually fails when the API stops being
- * Java-shaped: no lambda where a SAM interface was promised, no {@code INSTANCE} where a static
- * was promised, no {@code $default} bridge a Java caller cannot name.
- *
- * <p>Deliberately <em>not</em> a JUnit test. There is nothing to assert at runtime -- the assertion
- * is that javac accepts this file.
- *
- * <p>Since every merchant-constructed type moved to a {@code Builder}, this file is also the only
- * check that the Builders are genuinely Java-shaped: a {@code $default} bridge a Java caller cannot
- * name, a setter that returns {@code Unit} instead of {@code Builder} and so breaks chaining, or a
- * {@code var} whose generated setter collides with the fluent method of the same name would all fail
- * here and nowhere else.
+ * javac accepting this file is the assertion: a {@code suspend} member reaching the public surface, or a
+ * {@code $default} bridge, fails to compile here. Compiled by {@code :frak-sdk-ui:test}; never executed.
  */
 @SuppressWarnings("unused")
 final class JavaCallSiteFixture {
 
     private FrakSharing sharing;
 
-    /**
-     * The XML/Java build site: one Builder, a lambda for the callback (so {@code ResultCallback}
-     * must stay a {@code fun interface}), and a chained setter.
-     */
+    /** The lambda requires {@code ResultCallback} to stay a {@code fun interface}. */
     void onCreate(ComponentActivity activity) {
         sharing = new FrakSharing.Builder(this::onShareResult)
                 .heightFraction(0.9f)
                 .build(activity);
     }
 
-    /** Warming is explicit for a non-Compose caller; this is the whole reason it is public. */
     void onShareSurfaceVisible() {
         sharing.warm();
     }
 
-    /**
-     * The whole point of the Builder rewrite, from the Java side. Before it, this read
-     * {@code new SharingRequest(null, list, null, "purchase", "product-page", null)} -- six
-     * positional arguments of which four were noise, and an arity that could never grow.
-     */
     void onShareTapped() {
         SharingProduct product = new SharingProduct.Builder(
                         "Babies camel cuir velours bout carre",
@@ -85,11 +51,6 @@ final class JavaCallSiteFixture {
         sharing.present(request);
     }
 
-    /**
-     * {@code FrakConfig}, the type that motivated the ban on default arguments: it grew from eight
-     * parameters to nine after the last {@code .api} dump was taken, which would have been a
-     * {@code NoSuchMethodError} on every shipped merchant binary.
-     */
     static FrakConfig configWithMerchantId() {
         return new FrakConfig.Builder("merchant-id")
                 .metadata(new FrakMetadata.Builder()
@@ -101,18 +62,11 @@ final class JavaCallSiteFixture {
                 .build();
     }
 
-    /** The no-merchant-id overload: the merchant is resolved from the package id instead. */
     static FrakConfig configWithoutMerchantId() {
         return new FrakConfig.Builder().packageId("com.acme.app").build();
     }
 
-    /**
-     * All seven of {@code Interaction}'s static factories. This is the half of the collapse only javac
-     * can check: without {@code @JvmStatic} on each one these would read
-     * {@code Interaction.Companion.custom(...)}, which is the exact ergonomic regression the opaque
-     * shape exists to avoid. The old sealed hierarchy needed an {@code instanceof} chain here; there is
-     * nothing to match on now, which is the point.
-     */
+    /** Without {@code @JvmStatic} these would read {@code Interaction.Companion.custom(...)}. */
     static Interaction[] everyInteractionShape() {
         return new Interaction[] {
             Interaction.arrival("0xwallet", "client-id", "merchant-id", 1_709_654_400L),
@@ -125,19 +79,11 @@ final class JavaCallSiteFixture {
         };
     }
 
-    /**
-     * {@code Interaction} is comparable and printable from Java too, which is what makes a merchant's
-     * own tracking code testable. {@code equals} is structural over the payload.
-     */
     static boolean twoIdenticalSharesAreEqual() {
         return Interaction.sharing("order-1").equals(Interaction.sharing("order-1"));
     }
 
-    /**
-     * Every arm of {@link SharingResult} reached the Java way. {@code InstallStarted} and
-     * {@code Dismissed} are Kotlin {@code object}s, so they are compared by identity against
-     * {@code INSTANCE}.
-     */
+    /** The Kotlin {@code object} arms are compared by identity against {@code INSTANCE}. */
     private void onShareResult(SharingResult result) {
         if (result instanceof SharingResult.Shared) {
             log(((SharingResult.Shared) result).getLink());
@@ -152,7 +98,7 @@ final class JavaCallSiteFixture {
         }
     }
 
-    /** {@code HEIGHT_FRACTION} is a {@code @JvmStatic val}, not a {@code const}: a static getter, not an inlined literal. */
+    /** {@code HEIGHT_FRACTION} is a {@code @JvmStatic val}: a static getter, not an inlined literal. */
     static float defaultHeightFraction() {
         return FrakSharingDefaults.getHEIGHT_FRACTION();
     }

@@ -31,11 +31,7 @@ import org.robolectric.annotation.Config
 import java.io.IOException
 import kotlin.coroutines.EmptyCoroutineContext
 
-/**
- * The sheet's sequencing rules. Robolectric because [SharingSheetState] reaches
- * `Intent.createChooser`/`startActivity`, which throw on the plain `android.jar` stub.
- * `TestScope` so the 1.5s budget is exercised via virtual time, not sleeping.
- */
+/** Robolectric because the sheet reaches `Intent.createChooser`/`startActivity`. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -44,13 +40,12 @@ class SharingSheetStateTest {
 
     @Before
     fun initializeFrak() {
-        // `prepare` guards on Frak.isInitialized; only that boolean is used, the real client isn't.
+        // `prepare` only checks Frak.isInitialized; the real client is never used.
         Frak.initialize(context, frakConfig(merchantId = "b7c2e1a4-1111-4111-8111-111111111111"))
     }
 
     private fun TestScope.newState(
         client: FakeSharingClient,
-        // Before `onFinished` so a trailing lambda still binds to it, as most tests here rely on.
         activationBaseUrl: String? = null,
         onFinished: (SharingResult) -> Unit = {},
     ) = SharingSheetState(
@@ -58,8 +53,7 @@ class SharingSheetStateTest {
         context = context,
         sessionId = "test-session",
         onFinished = onFinished,
-        // Keeps build() on the TestScope's scheduler; the production default (Dispatchers.Default)
-        // would run it on a real thread pool and make advanceUntilIdle meaningless.
+        // Keeps build() on the TestScope scheduler, so advanceUntilIdle covers it.
         workContext = EmptyCoroutineContext,
         activationBaseUrl = activationBaseUrl,
         dependencies = client,
@@ -80,13 +74,6 @@ class SharingSheetStateTest {
             assertNull(state.failure)
         }
 
-    /**
-     * The session's own navigation, which now leaves via `View.post` rather than a Compose
-     * effect — so it is invisible to a test that never idles the main looper. These three pin it:
-     * without them the sheet could navigate nowhere and the rest of this suite would stay green,
-     * since every other `lastLoadedUrl` assertion here is about a *later* load (`view=confirmation`,
-     * the install page) that still goes out directly.
-     */
     @Test
     fun `attaching after the session resolved navigates to its page`() =
         runTest {
@@ -112,8 +99,6 @@ class SharingSheetStateTest {
             val client = FakeSharingClient()
             val state = newState(client)
 
-            // Production order: SharingPresentation.start attaches the pooled view first, so the
-            // view is ready well before build() can be.
             val view = WebView(context)
             state.attach(view)
             assertNull("nothing to navigate to yet", shadowOf(view).lastLoadedUrl)
@@ -141,8 +126,7 @@ class SharingSheetStateTest {
             advanceUntilIdle()
             shadowOf(getMainLooper()).idle()
 
-            // A marker stands in for the page having moved on under its own steam. Re-attaching
-            // the same view is what a recomposition looks like, and it must not rewind that.
+            // The marker stands in for the page having navigated on its own.
             view.loadUrl(MARKER_URL)
             state.attach(view)
             shadowOf(getMainLooper()).idle()
@@ -180,13 +164,9 @@ class SharingSheetStateTest {
             advanceUntilIdle()
 
             val url = requireNotNull(state.session?.url(confirmed = false))
-            // The wallet route forwards this same `products=` value straight into reward
-            // selection (rewardProductsForSelection -> selectBestReward): a product-scoped
-            // campaign is only ranked correctly if these fields actually reach the wire.
             assertTrue("was: $url", url.contains("sku%22%3A%22SHOE-42%22"))
             assertTrue("was: $url", url.contains("quantity%22%3A2"))
             assertTrue("was: $url", url.contains("unitPrice%22%3A79.9"))
-            // Display fields must still be present alongside the scope fields.
             assertTrue("was: $url", url.contains("title%22%3A%22Kettle%22"))
         }
 
@@ -209,11 +189,6 @@ class SharingSheetStateTest {
             assertTrue("no scope details supplied, was: $url", !url.contains("quantity"))
         }
 
-    /**
-     * `JSONObject.put` throws outright on a non-finite number ("JSON does not allow non-finite
-     * numbers"), and this runs inside the sheet's `launch`, so the throw would surface as a crash
-     * rather than a missing product card. A price that is not a number carries no scope meaning.
-     */
     @Test
     fun `a non-finite price is dropped instead of throwing out of the sheet`() =
         runTest {
@@ -242,7 +217,6 @@ class SharingSheetStateTest {
             val url = requireNotNull(state.session?.url(confirmed = false))
             assertTrue("was: $url", !url.contains("quantity"))
             assertTrue("was: $url", !url.contains("unitPrice"))
-            // The usable field on the same product survives, as does the card itself.
             assertTrue("was: $url", url.contains("totalPrice%22%3A12.5"))
             assertTrue("was: $url", url.contains("title%22%3A%22Kettle%22"))
         }
@@ -272,7 +246,6 @@ class SharingSheetStateTest {
                                 link = "https://acme.example/kettle",
                                 details = productDetails(sku = "SHOE-42"),
                             ),
-                            // No details: the seed must drop this one, not pass a null entry through.
                             sharingProduct(title = "Mug", link = "https://acme.example/mug"),
                         ),
                 ),
@@ -300,7 +273,6 @@ class SharingSheetStateTest {
             assertNull(client.lastBestRewardProducts)
         }
 
-    /** Regression: a failed config resolve must not discard the local link. */
     @Test
     fun `a failed config resolve still shares, from the local link`() =
         runTest {
@@ -318,7 +290,6 @@ class SharingSheetStateTest {
             assertEquals("the share must be attributed exactly once", 1, client.trackCount)
         }
 
-    /** The one case tier 3 genuinely cannot rescue: there was never a link. */
     @Test
     fun `no link means Failed, not a silent tier 3`() =
         runTest {
@@ -333,14 +304,10 @@ class SharingSheetStateTest {
             assertNull(state.session)
             assertTrue(state.failure is FrakError.MerchantResolutionFailed)
             assertEquals(0, client.trackCount)
-            // Reported here rather than left for the sheet's `LaunchedEffect(state.failure)` to
-            // notice. Same outcome, one frame earlier, and no longer conditional on a composable
-            // being alive to observe a state change — which a torn-down sheet is not.
             assertTrue("was: $result", result is SharingResult.Failed)
             assertTrue((result as SharingResult.Failed).error is FrakError.MerchantResolutionFailed)
         }
 
-    /** Regression: budget must still fire when build was fast and the page itself hangs. */
     @Test
     fun `a fast build followed by a page that never loads still hits the deadline`() =
         runTest {
@@ -352,7 +319,7 @@ class SharingSheetStateTest {
             advanceUntilIdle()
             assertTrue("precondition: build succeeded with a page", state.session?.hasPage == true)
 
-            val gate = launchDeadline(state) // page is now "loading" and never calls onPageReady
+            val gate = launchDeadline(state) // Page is now "loading" and never calls onPageReady.
             advanceUntilIdle()
 
             assertTrue("the budget must bound the page load too", result is SharingResult.Shared)
@@ -360,7 +327,6 @@ class SharingSheetStateTest {
             gate.join()
         }
 
-    /** The other half: a build slow enough to blow the budget before a session exists. */
     @Test
     fun `a build slower than the budget falls back once it finally returns`() =
         runTest {
@@ -374,11 +340,10 @@ class SharingSheetStateTest {
             val gate = launchDeadline(state)
             advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS + 1)
 
-            // Deadline passed with no session yet.
             assertNull(state.session)
             assertNull(result)
 
-            resolveGate.complete(Unit) // must not publish a session the deadline already gave up on
+            resolveGate.complete(Unit)
             advanceUntilIdle()
 
             assertTrue("a late build must land on tier 3", result is SharingResult.Shared)
@@ -386,7 +351,6 @@ class SharingSheetStateTest {
             gate.join()
         }
 
-    /** A page that arrives inside the budget must not be pre-empted by it. */
     @Test
     fun `a page that loads in time is left alone`() =
         runTest {
@@ -408,7 +372,6 @@ class SharingSheetStateTest {
             gate.join()
         }
 
-    /** Offline, the deadline and the page's own main-frame error both fire; must fall back once. */
     @Test
     fun `the deadline and a page error together still fall back only once`() =
         runTest {
@@ -427,7 +390,6 @@ class SharingSheetStateTest {
             assertEquals("exactly one outcome reported", 1, finishedCount)
         }
 
-    /** `onFinished` is the merchant's callback: it fires once, with the best outcome. */
     @Test
     fun `only the most significant outcome is reported, once`() =
         runTest {
@@ -448,7 +410,6 @@ class SharingSheetStateTest {
             assertTrue("a completed share outranks the dismissal that follows it", results[0] is SharingResult.Shared)
         }
 
-    /** The install action is the SDK's own step; the merchant hears about it once it ran. */
     @Test
     fun `the install action keeps the sheet open on the wallet's install page`() =
         runTest {
@@ -459,9 +420,6 @@ class SharingSheetStateTest {
             state.prepare(sharingRequest())
             advanceUntilIdle()
 
-            // Attached so the navigation itself is observable: without it the assertion below
-            // passes for an implementation that asks for the URL and then drops it, which is
-            // the whole behaviour under test.
             val view = WebView(context)
             state.attach(view)
 
@@ -473,7 +431,6 @@ class SharingSheetStateTest {
                 client.installPage,
                 shadowOf(view).lastLoadedUrl,
             )
-            // The store handoff is what this replaces: the install page owns that decision now.
             assertEquals("the sheet must not hand off to the store", 0, client.openFrakAppCount)
             assertEquals("the install page must be asked for", 1, client.installPageUrlCount)
             assertEquals(
@@ -517,8 +474,6 @@ class SharingSheetStateTest {
             state.onPageAction(SharingPageAction.Install)
             advanceUntilIdle()
 
-            // Without these the page has nowhere to send the code back to, and the pasteboard
-            // write never happens.
             val args = client.installPageArgs
             assertNotNull("the return channel must reach the client", args)
             assertEquals(SharingPageUrl.returnScheme(context.packageName), args?.first)
@@ -539,7 +494,6 @@ class SharingSheetStateTest {
             state.onPageAction(SharingPageAction.Install)
             advanceUntilIdle()
 
-            // Nothing to hand the install page, so the old handoff is the honest answer.
             assertEquals(1, client.openFrakAppCount)
             assertEquals(SharingResult.InstallStarted, result)
         }
@@ -555,7 +509,6 @@ class SharingSheetStateTest {
             advanceUntilIdle()
             state.onPageReady()
 
-            // The user is mid-interaction. A chooser now would be a share they never asked for.
             state.onPageUnavailable()
             advanceUntilIdle()
 
@@ -563,7 +516,6 @@ class SharingSheetStateTest {
             assertEquals("nothing reported", 0, finishedCount)
         }
 
-    /** Paired deliberately: a guard that blocks everything would pass the negative case alone. */
     @Test
     fun `only http external urls leave the sheet`() =
         runTest {
@@ -577,7 +529,6 @@ class SharingSheetStateTest {
             assertNotNull("an ordinary link still opens", shadowOf(app).nextStartedActivity)
         }
 
-    /** Without this, a user who already has the wallet installed would land on its Play listing instead of in it. */
     @Test
     fun `the wallet's own store listing goes through the app handoff instead of Play`() =
         runTest {
@@ -594,7 +545,6 @@ class SharingSheetStateTest {
             assertNull("Play must not be opened over the handoff", shadowOf(app).nextStartedActivity)
         }
 
-    /** Paired with the above: the interception is for the wallet's listing, not for Play at large. */
     @Test
     fun `another app's store listing still opens Play`() =
         runTest {
@@ -623,8 +573,6 @@ class SharingSheetStateTest {
             state.share()
             advanceUntilIdle()
 
-            // `&view=confirmation` is what puts the page on its own post-share screen: under `native`
-            // it will not confirm itself, since only this sheet knows a chooser came up.
             assertEquals(
                 "the share must land the page on its confirmation screen",
                 true,
@@ -641,7 +589,6 @@ class SharingSheetStateTest {
             )
         }
 
-    /** The page draws both buttons and this sheet performs them, over the same navigation channel as every other page action. */
     @Test
     fun `the page's own share button raises the chooser and pays out`() =
         runTest {
@@ -691,7 +638,6 @@ class SharingSheetStateTest {
             )
         }
 
-    /** The asymmetry with `share`: the page raises its own toast and moves to the confirmation screen on its own button press. A `view=confirmation` reload on top of that would tear the toast down mid-copy. */
     @Test
     fun `a copy does not reload the page out from under its own toast`() =
         runTest {
@@ -715,7 +661,6 @@ class SharingSheetStateTest {
             )
         }
 
-    /** The page's footer stays enabled across the whole hand-off. The window that matters is `track()`, which the chooser's dismissal returns into with the page still live underneath. */
     @Test
     fun `two taps on the page's share button raise one chooser and bill one interaction`() =
         runTest {
@@ -736,7 +681,6 @@ class SharingSheetStateTest {
             assertNull("and only once", shadowOf(app).nextStartedActivity)
         }
 
-    /** Same guard on the copy half: two taps would otherwise bill two interactions. */
     @Test
     fun `two taps on the page's copy button bill one interaction`() =
         runTest {
@@ -754,7 +698,6 @@ class SharingSheetStateTest {
             assertEquals("one copy must bill one interaction", 1, client.trackCount)
         }
 
-    /** The install page's failure is not tier 3's business — the user has already shared. The sheet must not just sit on an error page with nothing to press either. */
     @Test
     fun `a failed install page falls back to the confirmation screen, not a dead sheet`() =
         runTest {
@@ -780,7 +723,6 @@ class SharingSheetStateTest {
                 true,
                 shadowOf(view).lastLoadedUrl?.contains("view=confirmation"),
             )
-            // Tier 3 would raise a chooser for a share that already happened.
             assertEquals("no chooser, and no premature outcome", 0, finishedCount)
         }
 
@@ -799,16 +741,9 @@ class SharingSheetStateTest {
 
             assertTrue("ready is what drops the skeleton", state.pageVisible)
             assertTrue("and settles the load, since a fragment nav may never finish a document", state.pageLoaded)
-            // Every other page action settles the sheet; this one is progress, and a sheet that
-            // closed the moment the page finished painting would be unusable.
             assertEquals("ready must not finish the session", 0, finishedCount)
         }
 
-    /**
-     * Fragment activation: the difference between reusing a warmed page and loading it twice.
-     * These pin both halves, because getting it wrong is silent — a mismatched base just costs
-     * ~300ms of React boot, and a wrongly-matched one shows the user a page that never activates.
-     */
     @Test
     fun `a session on a matching warm page navigates by fragment only`() =
         runTest {
@@ -822,9 +757,6 @@ class SharingSheetStateTest {
             activated.prepare(sharingRequest(link = "https://acme.example/kettle"))
             advanceUntilIdle()
             val view = WebView(context)
-            // The warm document, as the page left it: the router rewrites its own search params
-            // on load, so the committed URL is NOT the string we warmed with. Activation has to
-            // hang the fragment off this, which is the bug the first device trace exposed.
             view.loadUrl(NORMALISED_WARM_URL)
             activated.attach(view)
             shadowOf(getMainLooper()).idle()
@@ -854,8 +786,6 @@ class SharingSheetStateTest {
             shadowOf(getMainLooper()).idle()
 
             val loaded = requireNotNull(shadowOf(view).lastLoadedUrl)
-            // A pool warmed for a different merchant must not be activated on top of: the page
-            // would keep the wrong merchant's queries and never fetch the right ones.
             assertFalse("must not activate on a page it was not warmed against", loaded.contains("#"))
             assertEquals(state.session?.url(confirmed = false), loaded)
         }
@@ -877,14 +807,10 @@ class SharingSheetStateTest {
             state.attach(view)
             shadowOf(getMainLooper()).idle()
 
-            // share(), not copy(): copy deliberately records without reloading, so it is share
-            // that drives the page to its confirmation screen.
             state.share()
             advanceUntilIdle()
 
             val loaded = requireNotNull(shadowOf(view).lastLoadedUrl)
-            // Routing only the first load through the activation path would make every later
-            // step the expensive one instead — which is the bug this ordering exists to avoid.
             assertTrue(
                 "confirmation must stay on the same document: $loaded",
                 loaded.startsWith("$NORMALISED_WARM_URL#"),
@@ -906,20 +832,9 @@ class SharingSheetStateTest {
             advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
             advanceUntilIdle()
 
-            // The activation path is same-document, so `onPageFinished` may never arrive for it.
-            // If `ready` did not settle the budget, the fastest open would be the one that gave
-            // up on its own page and raised the native chooser instead.
             assertNull("a painted page must not be abandoned", finished)
         }
 
-    /**
-     * Neither URL carries presentation.
-     *
-     * The radius used to ride both, and had to match across them or `navigation` decided the warm
-     * page was a different document and paid for a full load instead of a fragment activation.
-     * That invariant no longer exists to break: `SharingHostStyle` injects the radius into the web
-     * view by origin, so it reaches `/sharing`, `/install` and anything else that view loads.
-     */
     @Test
     fun `the session and warm urls carry no presentation params`() =
         runTest {
@@ -935,11 +850,6 @@ class SharingSheetStateTest {
             assertFalse("presentation must not ride the URL: $warm", warm.contains("cornerRadius"))
         }
 
-    /**
-     * The sheet leaving composition with nothing reported — a configuration change, a nav-graph
-     * pop, the merchant's screen being replaced. None of those route through `dismiss()`, and
-     * before `abandon()` existed the merchant's callback was simply never called for them.
-     */
     @Test
     fun `abandoning an untouched sheet reports a dismissal`() =
         runTest {
@@ -956,7 +866,6 @@ class SharingSheetStateTest {
             assertTrue("was: ${results.first()}", results.first() is SharingResult.Dismissed)
         }
 
-    /** Abandonment must not overwrite what the session actually achieved. */
     @Test
     fun `abandoning after a share still reports the share`() =
         runTest {
@@ -968,7 +877,6 @@ class SharingSheetStateTest {
 
             state.copy()
             advanceUntilIdle()
-            // Copy records but does not finish — the page owns its own confirmation toast.
             assertTrue("copy must not report on its own", results.isEmpty())
 
             state.abandon()
@@ -978,7 +886,6 @@ class SharingSheetStateTest {
             assertTrue("a copy outranks a dismissal: ${results.first()}", results.first() is SharingResult.Copied)
         }
 
-    /** Both the sheet's disposal and an explicit dismissal reach [SharingSheetState]; only one may report. */
     @Test
     fun `abandoning an already dismissed sheet reports nothing further`() =
         runTest {
@@ -995,12 +902,6 @@ class SharingSheetStateTest {
             assertEquals("exactly one callback per session", 1, results.size)
         }
 
-    /**
-     * The 1.5s budget only ever bounded the page load *given a build that finishes*: with no
-     * session yet, `onLoadDeadline` records the expiry and waits for `build()` to come back. A
-     * `resolveConfig()` that hangs rather than throwing therefore reported nothing at all, and left
-     * the sheet on a blank surface once the skeleton's own 2.5s hold expired.
-     */
     @Test
     fun `a build that never returns still reports, on its own budget`() =
         runTest {
@@ -1023,11 +924,6 @@ class SharingSheetStateTest {
             assertTrue("was: ${results.first()}", results.first() is SharingResult.Failed)
         }
 
-    /**
-     * `Frak.client`'s getter throws once `Frak.shutdown()` has run, which a host app may do while a
-     * sheet is open. These calls run inside `scope.launch { }` with no exception handler between
-     * them and the merchant's process, so an uncaught one took the app down mid-share.
-     */
     @Test
     fun `a client call refused mid-share reports instead of propagating`() =
         runTest {
@@ -1037,31 +933,17 @@ class SharingSheetStateTest {
             state.prepare(sharingRequest())
             advanceUntilIdle()
 
-            // Everything the sheet still reaches for after this point is gone.
             client.clientFailure = FrakError.NotInitialized()
             state.share()
             advanceUntilIdle()
 
-            // share() records rather than finishing — the page moves to its confirmation screen and
-            // the sheet stays up — so the outcome surfaces when the sheet goes away.
             state.abandon()
             advanceUntilIdle()
 
             assertEquals("the share still happened; only its attribution was refused", 1, results.size)
-            // Typed, not just counted: a `guarded` that reported the refusal instead of swallowing
-            // it would also produce exactly one result, and this test would pass on a real bug.
             assertTrue("was: ${results.first()}", results.first() is SharingResult.Shared)
         }
 
-    /**
-     * The sheet's teardown racing an outcome that has not landed yet.
-     *
-     * [SharingSheetState.share] and friends run on the host's scope, not the sheet's, so a
-     * chooser outlives the sheet that raised it by design. A dismissal reported into that window
-     * would beat the share to `finish`'s compare-and-set, and the real outcome would be dropped —
-     * not out-ranked by significance, dropped, because the losing `finish` returns before it can
-     * record anything.
-     */
     @Test
     fun `abandoning while an outcome is still resolving waits for it`() =
         runTest {
@@ -1077,7 +959,6 @@ class SharingSheetStateTest {
             state.share()
             runCurrent()
 
-            // The sheet goes away mid-share: rotation, a nav pop, the merchant's screen replaced.
             state.abandon()
             runCurrent()
             assertTrue("nothing may be reported while the share is still resolving", results.isEmpty())
@@ -1092,11 +973,6 @@ class SharingSheetStateTest {
             )
         }
 
-    /**
-     * A renderer crash after the page painted deliberately leaves the sheet up rather than raising
-     * a chooser over content the user is reading. That was fine while the web view painted opaque
-     * white; it is transparent now, so the sheet has to be told to paint something itself.
-     */
     @Test
     fun `a renderer crash after paint marks the content lost so the sheet stays opaque`() =
         runTest {
@@ -1130,8 +1006,6 @@ class SharingSheetStateTest {
             state.onPageAction(SharingPageAction.Install)
             advanceUntilIdle()
 
-            // No install page to route to, so the store handoff runs and reports — the point being
-            // that it reports at all rather than throwing out of the coroutine.
             assertEquals(1, results.size)
             assertTrue("was: ${results.first()}", results.first() is SharingResult.InstallStarted)
         }
@@ -1141,8 +1015,6 @@ class SharingSheetStateTest {
         runTest {
             val client = FakeSharingClient()
 
-            // The skeleton exists to hide a blank web view. An activated one is not blank: it is
-            // already showing the merchant's page, painted before the user tapped.
             val activated = newState(client, activationBaseUrl = NORMALISED_WARM_URL)
             assertTrue("nothing to cover", activated.pageVisible)
 
@@ -1156,11 +1028,7 @@ class SharingSheetStateTest {
     private companion object {
         const val MARKER_URL = "https://acme.example/marker"
 
-        /**
-         * What a warmed sharing page's URL actually looks like once loaded. The router
-         * fills in and reorders its own search params, so this is deliberately not the
-         * string we warm with — the point of the constant is that it differs.
-         */
+        /** The URL a warmed page settles on; the router reorders its own search params. */
         const val NORMALISED_WARM_URL =
             "https://wallet.frak.id/sharing?embed=native&state=warm&view=share"
 

@@ -5,14 +5,7 @@ import id.frak.sdk.core.FrakResult
 import id.frak.sdk.tracking.Interaction
 import java.util.concurrent.CompletableFuture
 
-/**
- * Interaction and purchase tracking. Obtained from [FrakClient.tracking].
- *
- * `*Async` twins, and why: see [ConfigApi]. These two are the members whose result type is already
- * [FrakResult], so their twins are `CompletableFuture<FrakResult<Unit>>` — the twins mirror the
- * suspending member rather than re-wrapping it, so a Java caller learns one error model per member,
- * not two.
- */
+/** Interaction and purchase tracking. Obtained from [FrakClient.tracking]. */
 public class TrackingApi internal constructor(
     private val core: DefaultFrakClient,
 ) {

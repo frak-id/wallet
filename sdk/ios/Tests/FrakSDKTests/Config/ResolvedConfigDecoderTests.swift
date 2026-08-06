@@ -70,9 +70,6 @@ struct ResolvedConfigDecoderTests {
 
     @Test("displayName and displayLogoURL resolve the sdkConfig-over-top-level precedence")
     func derivedDisplayValuesFollowPrecedence() throws {
-        // Mirrors `FrakResolvedConfigTest` on Android. The two properties exist so the sharing sheet
-        // — and an app rendering its own share affordance — never writes the fold itself, which means
-        // the fold is a contract and needs pinning on both platforms.
         let branded = try ResolvedConfigDecoder.decode(Data(Self.fullResponse.utf8))
 
         #expect(branded.displayName == "Acme Shop")
@@ -83,7 +80,7 @@ struct ResolvedConfigDecoderTests {
         #expect(unbranded.displayName == "Acme")
         #expect(unbranded.displayLogoURL == nil)
 
-        // sdkConfig present but carrying neither field: falls back to the top-level name, still nil logo.
+        // sdkConfig present but carrying neither field: falls back to the top-level name.
         let bare = FrakResolvedConfig(
             merchantId: "m",
             name: "Acme",
@@ -185,10 +182,7 @@ struct ResolvedConfigDecoderTests {
         #expect(sdkConfig.components?.buttonShare?.text == "Share")
     }
 
-    // `fullResponse`'s placement carries no `translations` key on purpose — the backend omits it
-    // when a placement has none. `translations` is non-optional, so a synthesized `Decodable`
-    // would throw `keyNotFound` and `ResolvedSdkConfig`'s `try?` would silently drop every
-    // placement. This pins the hand-written init that prevents that.
+    // The placement fixture carries no `translations` key, as the backend omits it when empty.
     @Test("a placement with no translations key still decodes, and defaults to empty")
     func placementWithoutTranslationsSurvives() throws {
         let sdkConfig = try #require(try ResolvedConfigDecoder.decode(Data(Self.fullResponse.utf8)).sdkConfig)

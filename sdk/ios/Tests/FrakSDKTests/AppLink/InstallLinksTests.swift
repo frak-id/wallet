@@ -23,8 +23,8 @@ struct InstallLinksTests {
         )
     }
 
-    /// `?p=`, not the `#p=` `installPage` uses: the wallet's router navigates in-app, so a
-    /// fragment is gone before `/install` renders, and iOS has no install referrer fallback.
+    /// `?p=`, not `#p=`: the wallet's router navigates in-app, so a fragment is
+    /// gone before `/install` renders.
     @Test("carries the install proof as a search param the deep-link router forwards")
     func carriesTheInstallProof() {
         #expect(
@@ -38,10 +38,6 @@ struct InstallLinksTests {
         )
     }
 
-    /// `embed=native` is the one marker of a host-embedded page, and it is the same spelling
-    /// `/sharing` uses. The sharing sheet navigates its one web view from `/sharing` to here, so a
-    /// route that read the marker differently rendered differently mid-flow — which is exactly what
-    /// happened while `/install` inferred a host from the presence of `returnScheme` instead.
     @Test("marks the hosted install page as host-embedded, the same way the sharing url does")
     func marksTheInstallPageAsHostEmbedded() {
         let url = InstallLinks.installPage(
@@ -57,8 +53,7 @@ struct InstallLinksTests {
             url == "https://wallet.frak.id/install?embed=native&m=\(Self.merchantId)"
                 + "&a=\(Self.clientId)&returnScheme=frak-com.acme.app&sid=session-1"
         )
-        // No corner radius, and nothing else about how the sheet looks. iOS injects none at all:
-        // a SwiftUI `.sheet` already clips to the system radius.
+        // iOS injects no chrome: a SwiftUI `.sheet` already clips to the system radius.
         #expect(!url.contains("cornerRadius"))
     }
 

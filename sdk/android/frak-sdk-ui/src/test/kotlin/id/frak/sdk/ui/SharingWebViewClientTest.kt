@@ -20,17 +20,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
-/**
- * The web view's navigation rules: origin pinning, the return-scheme bridge, and
- * 01 §4 tier 2's cache-only retry.
- *
- * Driven through [createSharingWebView] rather than by constructing the client
- * directly. That factory is where the hardening lives — JS enabled but no bridge,
- * file access off, mixed content blocked — so a test that bypassed it would pass
- * against a view configured completely differently from the shipped one. The
- * client is recovered from the finished view via Robolectric's shadow, which is
- * also a check that the factory actually installs it.
- */
+/** Driven through [createSharingWebView], so the shipped hardening is what is under test. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class SharingWebViewClientTest {
@@ -52,8 +42,6 @@ class SharingWebViewClientTest {
                 walletOrigin = WALLET_ORIGIN,
                 returnScheme = RETURN_SCHEME,
             )
-        // The view is created unbound and warmed before any session exists; binding is what
-        // makes it one sheet's. Every assertion below is about the bound state.
         handle.bind(
             SharingWebViewBinding(
                 sessionId = SESSION_ID,
@@ -92,16 +80,12 @@ class SharingWebViewClientTest {
 
     private fun httpError(): WebResourceResponse = WebResourceResponse("text/html", "utf-8", null)
 
-    // --- hardening ------------------------------------------------------
-
     @Test
     fun `the factory hardens the view`() {
         val (view, _) = harness()
         val settings = view.settings
 
         assertTrue("the page is a React app", settings.javaScriptEnabled)
-        // Each of these is a way for page JS to reach the device or for a
-        // downgraded resource to reach the page. None may regress silently.
         assertFalse("file:// access would expose app-private storage", settings.allowFileAccess)
         assertFalse("content:// access would expose other apps' providers", settings.allowContentAccess)
         assertEquals(
@@ -110,8 +94,6 @@ class SharingWebViewClientTest {
             settings.mixedContentMode,
         )
     }
-
-    // --- navigation -----------------------------------------------------
 
     @Test
     fun `same-origin navigation stays in the sheet`() {
@@ -122,11 +104,6 @@ class SharingWebViewClientTest {
         assertTrue(h.externalUrls.isEmpty())
     }
 
-    /**
-     * The reason origin pinning is component-wise rather than a prefix match: a
-     * prefix test accepts this host, and the sheet is chromeless, so the user
-     * would have no way to tell it apart from the wallet.
-     */
     @Test
     fun `a lookalike host is not the wallet origin`() {
         val (view, h) = harness()
@@ -192,7 +169,6 @@ class SharingWebViewClientTest {
             ),
         )
 
-        // The code is the point; the expiry is a hint Android cannot enforce anyway.
         assertEquals(listOf(SharingPageAction.Code("ABC234", null)), h.actions)
     }
 
@@ -208,14 +184,9 @@ class SharingWebViewClientTest {
             ),
         )
 
-        // An embedded frame must not reach the dispatch at all.
         assertTrue(h.actions.isEmpty())
     }
 
-    /**
-     * The page keeps navigating for a moment after teardown. Acting on a result
-     * from a sheet the user already closed would reopen a flow they left.
-     */
     @Test
     fun `a return-scheme action from a stale session is ignored`() {
         val (view, h) = harness()
@@ -229,9 +200,6 @@ class SharingWebViewClientTest {
         assertTrue("but never acted on", h.actions.isEmpty())
     }
 
-    // --- tier 2 ---------------------------------------------------------
-
-    /** A device that has seen this sheet before should still paint from the HTTP cache rather than dropping straight to the native chooser. */
     @Test
     fun `a main-frame failure retries once against the cache`() {
         val (view, h) = harness()
@@ -249,7 +217,6 @@ class SharingWebViewClientTest {
         assertEquals("tier 3 must not have fired yet", 0, h.loadFailedCount)
     }
 
-    /** One failed navigation raises both error callbacks. Treating the second as the retry's own failure skipped tier 2 entirely, and reset `cacheMode` before `loadUrl`'s posted navigation dispatched, sending the retry to the network silently. */
     @Test
     fun `both error callbacks for one navigation still yield a single cache retry`() {
         val (view, h) = harness()
@@ -267,7 +234,6 @@ class SharingWebViewClientTest {
         assertEquals("the duplicate is not a second failure", 0, h.loadFailedCount)
     }
 
-    /** Once the retry itself fails there is nothing left to try: tier 3 takes over. */
     @Test
     fun `a failure after the retry has started falls through to tier 3`() {
         val (view, h) = harness()
@@ -275,7 +241,6 @@ class SharingWebViewClientTest {
         view.client.onPageStarted(view, url, null)
         view.client.onReceivedError(view, request(url), error())
 
-        // The retry navigation actually begins, then fails on its own.
         view.client.onPageStarted(view, url, null)
         view.client.onReceivedError(view, request(url), error())
 
@@ -287,7 +252,6 @@ class SharingWebViewClientTest {
         )
     }
 
-    /** The retry's own failure raises both callbacks too. Terminal means terminal, once. */
     @Test
     fun `a doubly-reported retry failure reports tier 3 only once`() {
         val (view, h) = harness()
@@ -302,7 +266,6 @@ class SharingWebViewClientTest {
         assertEquals("the caller must not be told twice", 1, h.loadFailedCount)
     }
 
-    /** Sub-resources degrade on their own; only the document failing means there is no sheet. */
     @Test
     fun `a sub-resource failure is not a page failure`() {
         val (view, h) = harness()
@@ -347,9 +310,7 @@ class SharingWebViewClientTest {
         view.client.onPageStarted(view, url, null)
         view.client.onReceivedError(view, request(url), error())
 
-        // Android fires onPageFinished for its own error page too, same load cycle, no
-        // onPageStarted between. Reading that as a load would cancel the tier-3 deadline and
-        // unpin the cache before the retry's navigation dispatches.
+        // Android fires onPageFinished for its own error page too, in the same load cycle.
         view.client.onPageFinished(view, url)
 
         assertEquals(0, h.pageReadyCount)
@@ -379,7 +340,7 @@ class SharingWebViewClientTest {
 
         val handled = view.client.onRenderProcessGone(view, FakeRenderProcessGoneDetail())
 
-        // False here lets the framework kill the merchant's app, not just the sheet.
+        // false here would let the framework kill the merchant's app, not just the sheet
         assertTrue(handled)
         assertEquals(1, h.loadFailedCount)
     }
@@ -402,9 +363,7 @@ class SharingWebViewClientTest {
         val overridden =
             view.client.shouldOverrideUrlLoading(view, request("https://ads.example/x", mainFrame = false))
 
-        // Cancelled: a full-bleed foreign frame in a sheet with no URL bar is what the pinning
-        // exists to stop. Not handed to onOpenExternal though, which would yank the user out on
-        // an iframe's say-so.
+        // Cancelled rather than handed to onOpenExternal: an iframe must not yank the user out.
         assertTrue(overridden)
         assertTrue(h.externalUrls.isEmpty())
     }
@@ -413,8 +372,7 @@ class SharingWebViewClientTest {
     fun `a sub-frame cannot forge a page result`() {
         val (view, h) = harness()
 
-        // A same-origin iframe can read the real sid off location.search, so the sid guard
-        // alone isn't trustworthy — the frame check is what makes it so.
+        // A same-origin iframe can read the real sid, so the frame check is the real guard.
         view.client.shouldOverrideUrlLoading(
             view,
             request(

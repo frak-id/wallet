@@ -6,16 +6,8 @@ import id.frak.sdk.core.FrakLanguage
 /*
  * Hand-built resolved-config trees for the tests that need one.
  *
- * The tree's own constructors take no default arguments on purpose — a defaulted constructor emits
- * a `DefaultConstructorMarker` bridge that lands in the `.api` dump and freezes an arity, which is
- * finding A3. The defaults were only ever a convenience for callers, and the only production caller
- * (`ResolvedConfigDecoder`) passes every argument anyway. So they live here instead, where the
- * convenience costs nothing: a new field is a new parameter on one of these helpers, and every test
- * that does not care about it keeps compiling.
- *
- * `internal`, and reachable only because a same-module test source set has friend access to
- * `internal` — which is also exactly why `PublicSurfaceTest` can no longer claim to prove anything
- * about what a merchant can construct. See the note in that file.
+ * The tree's own constructors take no default arguments: a defaulted constructor emits a
+ * `DefaultConstructorMarker` bridge that lands in the `.api` dump and freezes an arity.
  */
 
 internal fun resolvedConfig(

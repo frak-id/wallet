@@ -4,11 +4,6 @@ import Testing
 
 @testable import FrakSDKUI
 
-/// The tier choice, which is where the load-failure bugs live. Runs on the macOS test host
-/// because `sharingDecision` and `SharingSession` sit outside `SharingSheetModel`'s
-/// `#if canImport(UIKit)`. Does not cover the model itself or `SharingWebView` — those have
-/// no executed coverage on any platform; `SharingWebViewClientTest.kt` is Android's only
-/// evidence for that logic.
 @Suite("SharingDecision")
 struct SharingSheetLogicTests {
     private static let pageURL = "https://wallet.frak.id/sharing?embed=native"
@@ -60,7 +55,6 @@ struct SharingSheetLogicTests {
             fellBack: false,
             closed: false
         )
-        // The link is local and always works; the page is the part that needs the network.
         #expect(decision == .nativeShare(built))
     }
 
@@ -86,8 +80,6 @@ struct SharingSheetLogicTests {
             fellBack: false,
             closed: false
         )
-        // `prepare` is still running and owns the decision; falling back here would race it
-        // and queue a second `sharing` interaction.
         #expect(decision == .doNothing)
     }
 
@@ -100,8 +92,6 @@ struct SharingSheetLogicTests {
             fellBack: false,
             closed: false
         )
-        // A content-process crash after the page painted routes here; a chooser now would be a
-        // share the user never asked for.
         #expect(decision == .doNothing)
     }
 
@@ -117,8 +107,6 @@ struct SharingSheetLogicTests {
         #expect(decision == .doNothing)
     }
 
-    /// `pageURL` is present deliberately: with it nil, the guard order could be wrong and this
-    /// would still pass.
     @Test("a closed sheet decides nothing, even with a page ready to show")
     func closedBeatsAPresentPage() {
         let decision = sharingDecision(
@@ -150,15 +138,13 @@ struct SharingSheetLogicTests {
     func activatesOnTheWarmPage() throws {
         let expected = try #require(URL(string: Self.pageURL))
         let navigation = warmedSession().navigation(confirmed: false, currentBaseURL: Self.warmURL)
-        // No request, no remount, no React boot: the whole point of warming the real page.
         #expect(navigation == .activate(fragment: Self.fragment, fullURL: expected))
     }
 
     @Test("a session whose warm page is not the one loaded does a full navigation")
     func fullLoadWhenTheWarmPageDiffers() throws {
         let expected = try #require(URL(string: Self.pageURL))
-        // A pool warmed for another merchant, or one whose config moved under us. Activating on
-        // top of it would leave the user on someone else's page.
+        // A pool warmed for another merchant; activating on top of it would show the wrong page.
         let other = warmedSession().navigation(
             confirmed: false,
             currentBaseURL: "https://wallet.frak.id/sharing?embed=native&state=warm&merchantId=other"
@@ -171,8 +157,7 @@ struct SharingSheetLogicTests {
     @Test("a session with no warm half of its own never activates")
     func neverActivatesWithoutBothHalves() throws {
         let expected = try #require(URL(string: Self.pageURL))
-        // Preloading off: `build` leaves both nil, so even a coincidentally equal current URL
-        // cannot produce a fragment with nothing in it.
+        // Preloading off: `build` leaves both halves nil.
         #expect(session().navigation(confirmed: false, currentBaseURL: Self.warmURL) == .load(expected))
     }
 
@@ -180,9 +165,6 @@ struct SharingSheetLogicTests {
     func confirmationActivatesToo() throws {
         let expected = try #require(URL(string: Self.pageURL + "&view=confirmation"))
         let navigation = warmedSession().navigation(confirmed: true, currentBaseURL: Self.warmURL)
-        // Routing only the first navigation through the fragment would make the post-share
-        // confirmation the expensive one instead — a full page load the moment the chooser
-        // dismisses.
         #expect(
             navigation
                 == .activate(
@@ -194,8 +176,7 @@ struct SharingSheetLogicTests {
 
     @Test("a warm session with no page still falls back rather than activating")
     func noPageBeatsActivation() {
-        // Tier 3: `resolveConfig` failed, so there is no page to show and the local link is all
-        // there is. `hasPage` is what the decision reads.
+        // No page to show, so the local link is all there is; `hasPage` is what the decision reads.
         let built = warmedSession(pageURL: nil)
         #expect(!built.hasPage)
         #expect(built.navigation(confirmed: false, currentBaseURL: Self.warmURL) == nil)
@@ -225,8 +206,6 @@ struct SharingSheetLogicTests {
     }
 }
 
-/// What reaches the hosted page's `products=` parameter. Twinned with
-/// `SharingSheetStateTest`'s `product scope fields reach the page url` on Android.
 @Suite("SharingPageProductsJSON")
 struct SharingPageProductsJSONTests {
     private func product(details: ProductDetails? = nil) -> SharingProduct {
@@ -250,14 +229,13 @@ struct SharingPageProductsJSONTests {
         #expect(json.contains("\"sku\":\"SHOE-42\""))
         #expect(json.contains("\"productId\":\"p1\""))
         #expect(json.contains("\"name\":\"Kettle\""))
-        // The display half must survive the flattening.
         #expect(json.contains("\"title\":\"Kettle\""))
         #expect(json.contains("\"link\":\"https:\\/\\/acme.example\\/kettle\""))
         #expect(json.contains("\"utmContent\":\"kettle\""))
     }
 
-    /// The bug this pins: `JSONSerialization` prints a bare `Double` at full binary precision,
-    /// so `79.9` would go out as `79.900000000000006` and lose an `eq` comparison Android wins.
+    /// `JSONSerialization` prints a bare `Double` at binary precision: `79.9` would go out as
+    /// `79.900000000000006`.
     @Test("prices serialize the way JSON.stringify writes them, not at binary precision")
     func numbersMatchJSONStringify() throws {
         let json = try #require(
@@ -290,8 +268,7 @@ struct SharingPageProductsJSONTests {
 }
 
 extension SharingPageProductsJSONTests {
-    /// `JSONSerialization` rejects a non-finite number outright, so an unguarded NaN would take
-    /// the whole product array down. Android's `JSONObject.put` throws on the same input.
+    /// `JSONSerialization` rejects a non-finite number, so an unguarded NaN takes the array down.
     @Test("a non-finite price is dropped, not allowed to fail the whole array")
     func nonFiniteNumbersAreDropped() throws {
         let json = try #require(
@@ -302,7 +279,6 @@ extension SharingPageProductsJSONTests {
 
         #expect(!json.contains("quantity"))
         #expect(!json.contains("unitPrice"))
-        // The usable field on the same product survives.
         #expect(json.contains("\"totalPrice\":12.5"))
         #expect(json.contains("\"title\":\"Kettle\""))
     }
@@ -317,8 +293,6 @@ extension SharingPageProductsJSONTests {
     }
 }
 
-/// The defensive clamp on a merchant-supplied `heightFraction`, run on the macOS test host
-/// since `clampedSharingHeightFraction` sits outside `SharingSheetModel`'s `#if canImport(UIKit)`.
 @Suite("clampedSharingHeightFraction")
 struct ClampedSharingHeightFractionTests {
     @Test("a value already inside the range is left untouched")

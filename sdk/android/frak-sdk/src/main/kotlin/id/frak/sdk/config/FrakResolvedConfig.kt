@@ -3,41 +3,6 @@ package id.frak.sdk.config
 import id.frak.sdk.core.FrakCurrency
 import id.frak.sdk.core.FrakLanguage
 
-/*
- * The resolved-config tree: ten classes, fifty-one constructor properties (fifty-three public ones,
- * counting the two derived getters below), one `GET /user/merchant/resolve` response.
- *
- * Every constructor in this file is `internal`, and none takes a default argument. Both halves
- * matter, and they are the whole reason this tree needs no Builder:
- *
- *  - A **public** constructor freezes an arity. A defaulted one freezes two — the full-arity
- *    `<init>` plus a synthetic `<init>(…, int mask, DefaultConstructorMarker)` — and adding a
- *    field changes both descriptors, so an already-compiled merchant binary gets
- *    `NoSuchMethodError`. That is finding A3, and it has already fired once on `FrakConfig`.
- *  - An **internal** constructor is not a promise. A Kotlin merchant cannot see it, and
- *    binary-compatibility-validator leaves it out of the `.api` dump — which is what the
- *    compatibility contract is. So a new backend field is a new getter and nothing else: additive
- *    forever, with no Builder to write and no wire-shaped defaults to restate. (It is not a *hard*
- *    block: Kotlin mangles `internal` functions but cannot mangle a constructor, so it is emitted
- *    `public` and a Java caller could still reach it. Doing so puts them outside the contract, which
- *    is the same deal `@InternalFrakApi` offers.)
- *  - **No defaults even so**, because a defaulted internal constructor still emits the
- *    `DefaultConstructorMarker` bridge as `public synthetic`, and that bridge *does* land in the
- *    dump. `ResolvedConfigDecoder` — the only production caller — already passes every argument,
- *    so the defaults were never load-bearing.
- *
- * These are deliberately not `data class`es: a published `copy()`/`componentN()` would enter the
- * ABI and could never be removed. Hence hand-written `equals`/`hashCode`/`toString`.
- *
- * The tree is `public` rather than `internal` because its reader, the sharing sheet, lives in the
- * separate `:frak-sdk-ui` artifact and only sees `public` API — the same reason iOS gives. It is
- * also genuinely merchant-facing: [ConfigApi.resolve][id.frak.sdk.ConfigApi.resolve] hands one
- * back, and the copy-precedence tiers below are what a merchant reads to render their own share
- * affordance with backend-configured copy. That is why it carries no `@InternalFrakApi` marker:
- * marking it would propagate to `resolve()` itself and take the one API path ever exercised on a
- * device out of both the dump and every merchant's reach.
- */
-
 /** What the backend knows about this merchant, as resolved by `GET /user/merchant/resolve`. */
 public class FrakResolvedConfig internal constructor(
     public val merchantId: String,
@@ -51,34 +16,10 @@ public class FrakResolvedConfig internal constructor(
     public val hidden: Boolean,
     public val sdkConfig: ResolvedSdkConfig?,
 ) {
-    /**
-     * Name to show a user: the `sdkConfig` override when the backend sent one, else [name].
-     *
-     * A derived property rather than a fold each reader writes for itself — the sharing sheet needs
-     * exactly this, a merchant rendering their own share affordance needs exactly this, and the
-     * precedence is a rule, not an implementation detail. Resolving it here keeps `:frak-sdk-ui` off
-     * the deep tree and puts the rule somewhere `FrakResolvedConfigTest` can pin it against a real
-     * decoded response.
-     *
-     * Non-null: [name] comes from a `required` wire field that the decoder rejects when absent or
-     * empty, and `sdkConfig?.name` is normalised to absent when empty, so the elvis always has a
-     * value to fall back to.
-     *
-     * `display`-prefixed on purpose. It is derived, not a wire field, and the top level of the
-     * resolve response is free to grow a real `name`-adjacent field later without this name already
-     * being taken — repointing a getter is a behaviour change with an unchanged JVM descriptor,
-     * which no `.api` dump could catch.
-     */
+    /** Name to show a user: the `sdkConfig` override when the backend sent one, else [name]. */
     public val displayName: String get() = sdkConfig?.name ?: name
 
-    /**
-     * Logo to show alongside [displayName], from the resolved `sdkConfig`, or null when the backend
-     * has none on file.
-     *
-     * `displayLogoUrl`, not `logoUrl`, for the reason given on [displayName]: `logoUrl` is exactly
-     * what a future top-level wire field would be called, and a derived property must not squat on
-     * that name.
-     */
+    /** Logo to show alongside [displayName], or null when the backend has none on file. */
     public val displayLogoUrl: String? get() = sdkConfig?.logoUrl
 
     override fun toString(): String =

@@ -5,8 +5,8 @@ import * as styles from "./sharingPage.css";
 import type { SharingReward, SharingT } from "./types";
 
 /**
- * Step 2's i18next context key. Contexts don't compose, so the four
- * combinations are enumerated as distinct keys.
+ * Step 2's i18next context key. Contexts don't compose, so the four combinations
+ * are enumerated as distinct keys.
  */
 export function getStep2Context(
     isProductScoped: boolean,
@@ -19,19 +19,9 @@ export function getStep2Context(
 }
 
 /**
- * The three-step "how it works" list.
- *
- * Each step is two keys, `title` and `description`, rather than one string this
- * component splits at its first period. The split rule could not survive copy
- * that has a period anywhere else — a price ("Spend 10.50 € to earn."), an
- * abbreviation, a decimal — and silently produced a title of everything up to
- * that period.
- *
- * i18next contexts append to the last key segment, so `steps.2.title` with
- * `{ context: "product" }` resolves `steps.2.title_product` and falls back to
- * `steps.2.title` when that variant does not exist. That fallback is load
- * bearing: step 2's title is identical for the base and `min` cases, so only
- * the variants that actually differ are translated.
+ * The three-step "how it works" list. Each step is two keys, `title` and
+ * `description`; i18next contexts fall back to the base key, so only the variants
+ * that actually differ are translated.
  */
 export function Steps({ reward, t }: { reward: SharingReward; t: SharingT }) {
     const ready = reward.status === "ready" ? reward : undefined;
@@ -44,9 +34,7 @@ export function Steps({ reward, t }: { reward: SharingReward; t: SharingT }) {
         ? { context: step2Context, minAmount: minPurchaseAmount }
         : undefined;
 
-    // Extra step 3 line stating when locked earnings become available. Its own
-    // key rather than a context variant of the description, so it can be
-    // appended to that step instead of replacing it.
+    // appended to step 3 rather than replacing its description
     const lockupNote =
         ready?.lockupDurationDays != null
             ? t("sdk.sharingPage.steps.3.lockup", {
@@ -84,11 +72,7 @@ export function Steps({ reward, t }: { reward: SharingReward; t: SharingT }) {
     );
 }
 
-/**
- * One numbered "how it works" step: a title plus zero or more description
- * lines (falsy lines are skipped, so optional copy can be passed straight
- * through).
- */
+/** One numbered step: a title plus description lines, falsy lines skipped. */
 function Step({
     number,
     connector,

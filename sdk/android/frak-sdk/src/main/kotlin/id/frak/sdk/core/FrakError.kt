@@ -2,29 +2,16 @@ package id.frak.sdk.core
 
 /**
  * Every failure the SDK can hand back, as one closed hierarchy. `CancellationException` is never
- * wrapped into one of these, see `frakCall`.
- *
- * No default arguments anywhere in this hierarchy. A sealed class's constructor is `protected`, so it
- * is part of the published surface and would land in the `.api` dump — and `cause: Throwable? = null`
- * would put a synthetic `DefaultConstructorMarker` bridge there beside it. Dropping the default
- * removes the bridge; every subclass passes both arguments explicitly instead. Hiding the constructor
- * is not available on top of that: Kotlin allows a sealed class's constructor to be `protected` or
- * `private` and nothing else, so `internal` is a compile error. `protected` is harmless here, since
- * only this file can extend a sealed class in the first place.
- *
- * The leaf types that had optional parameters get explicit overloads: see [Server] and [Decoding].
- * Full reasoning at the top of `sharing/SharingRequest.kt`.
+ * wrapped into one of these, see `frakCall`. No default arguments anywhere: a sealed class's
+ * constructor is published, so a default would freeze a synthetic bridge into the `.api` dump.
  */
 public sealed class FrakError(
     message: String,
     cause: Throwable?,
 ) : Exception(message, cause) {
     /**
-     * Client method reached before [id.frak.sdk.Frak.initialize]. Always a programmer error.
-     *
-     * A plain `class`, not a Kotlin `object`: `Exception.fillInStackTrace()` runs once, at
-     * construction, so a singleton's stack trace would report the first-ever call site, not the
-     * real one.
+     * Client method reached before [id.frak.sdk.Frak.initialize]. A `class`, not an `object`:
+     * `fillInStackTrace()` runs at construction, so a singleton would report the first call site.
      */
     public class NotInitialized :
         FrakError(
@@ -53,13 +40,7 @@ public sealed class FrakError(
             },
             null,
         ) {
-        /**
-         * Status only — no envelope code, no `Retry-After`. Exists for a merchant faking a failure
-         * in their own test; the SDK itself always has all three.
-         *
-         * Deliberately the *only* extra overload: a middle `(status, code)` form would be a third
-         * frozen `<init>` expressing nothing the other two cannot.
-         */
+        /** Status only, for a merchant faking a failure in their own test; the SDK always has all three. */
         public constructor(status: Int) : this(status, null, null)
     }
 
@@ -72,12 +53,8 @@ public sealed class FrakError(
     }
 
     /**
-     * A tracking call was made while tracking is not permitted, either by
-     * `FrakConfig.Builder(...).trackingEnabled(false)` or a runtime
-     * [id.frak.sdk.FrakClient.setTrackingEnabled]`(false)`. Not raised by config or reward
-     * resolution, which are ungated.
-     *
-     * See [NotInitialized]'s doc for why this is not an `object`.
+     * A tracking call made while tracking is not permitted, by config or at runtime. Not raised by
+     * config or reward resolution, which are ungated.
      */
     public class TrackingDisabled :
         FrakError(
@@ -85,7 +62,7 @@ public sealed class FrakError(
             null,
         )
 
-    /** [id.frak.sdk.ui.FrakSharing.present] called while a sheet is already up on the same Activity. See [NotInitialized]'s doc for why this is not an `object`. */
+    /** [id.frak.sdk.ui.FrakSharing.present] called while a sheet is already up on the same Activity. */
     public class AlreadyPresenting :
         FrakError(
             "A Frak sharing sheet is already presented.",

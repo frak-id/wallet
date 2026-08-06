@@ -104,8 +104,7 @@ class SharingLinkBuilderTest {
 
     @Test
     fun `parses a context a channel percent-encoded in transit`() {
-        // Messaging apps re-encode links; `-` and `_` are base64url characters
-        // that survive as `%2D` / `%5F`, which would otherwise fail to decode.
+        // Messaging apps re-encode links; base64url's `-` and `_` survive as `%2D` / `%5F`.
         val encoded = expectedContext.replace("-", "%2D").replace("_", "%5F")
         assertEquals(context, SharingLinkBuilder.parse("https://acme.example/p?fCtx=$encoded"))
     }

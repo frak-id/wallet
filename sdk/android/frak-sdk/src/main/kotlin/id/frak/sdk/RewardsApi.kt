@@ -7,11 +7,7 @@ import id.frak.sdk.rewards.Campaign
 import id.frak.sdk.rewards.RewardRequest
 import java.util.concurrent.CompletableFuture
 
-/**
- * Campaigns and reward selection. Obtained from [FrakClient.rewards].
- *
- * `*Async` twins, and why: see [ConfigApi].
- */
+/** Campaigns and reward selection. Obtained from [FrakClient.rewards]. */
 public class RewardsApi internal constructor(
     private val core: DefaultFrakClient,
 ) {
@@ -19,10 +15,7 @@ public class RewardsApi internal constructor(
     @Throws(FrakError::class)
     public suspend fun campaigns(): List<Campaign> = core.campaigns(forceRefresh = false)
 
-    /**
-     * @param forceRefresh skips the cache and the backoff. Explicit overload, not a default — see
-     *   [ConfigApi.resolve].
-     */
+    /** @param forceRefresh skips the cache and the backoff. */
     @Throws(FrakError::class)
     public suspend fun campaigns(forceRefresh: Boolean): List<Campaign> = core.campaigns(forceRefresh)
 
@@ -36,17 +29,13 @@ public class RewardsApi internal constructor(
     /**
      * Reward worth advertising, formatted server-side; null when nothing matches.
      *
-     * Call once per screen for the whole visible product set, not once per row: the cache is
-     * keyed on the encoded product list, so per-row calls multiply cache keys and requests.
-     *
-     * Takes a [RewardRequest] rather than four optional parameters, because four optionals is what a
-     * parameter object is for and because a Kotlin default freezes an arity in the ABI. `forceRefresh`
-     * stays outside it deliberately — see [RewardRequest]'s own KDoc.
+     * Call once per screen for the whole visible product set, not once per row: the cache is keyed
+     * on the encoded product list, so per-row calls multiply cache keys and requests.
      */
     @Throws(FrakError::class)
     public suspend fun best(request: RewardRequest): BestReward? = best(request, forceRefresh = false)
 
-    /** @param forceRefresh skips the cache and the backoff. Explicit overload, not a default. */
+    /** @param forceRefresh skips the cache and the backoff. */
     @Throws(FrakError::class)
     public suspend fun best(
         request: RewardRequest,
@@ -56,21 +45,14 @@ public class RewardsApi internal constructor(
             request.targetInteraction,
             request.audience,
             forceRefresh,
-            // The core takes a nullable list and encodes empty and absent identically; `RewardRequest`
-            // holds the non-null shape, so this is where the two spellings meet.
+            // the core encodes empty and absent identically; RewardRequest holds the non-null shape.
             request.products.takeIf { it.isNotEmpty() },
         )
 
     /** [best] for Java. */
     public fun bestAsync(request: RewardRequest): CompletableFuture<BestReward?> = bestAsync(request, false)
 
-    /**
-     * [best] for Java.
-     *
-     * Delegates to the suspending member rather than repeating the `RewardRequest` → core mapping.
-     * `RewardRequest` is built to grow, and a second mapping site is a field silently dropped from the
-     * Java surface the day it does.
-     */
+    /** [best] for Java. */
     public fun bestAsync(
         request: RewardRequest,
         forceRefresh: Boolean,

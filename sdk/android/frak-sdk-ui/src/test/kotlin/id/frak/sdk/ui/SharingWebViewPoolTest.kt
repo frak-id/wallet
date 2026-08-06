@@ -16,15 +16,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
-/**
- * The pool's two modes: a plain per-sheet factory with preloading off, and a lent-and-returned
- * single view with it on.
- *
- * The reuse path is the one worth pinning. It is the whole reason the sheet stopped paying for
- * engine startup at tap time, and it trades that speed for a view that carries state between
- * sheets — so the invariants that make the trade safe (rebound to warm on return, never
- * destroyed while lent, never handed out twice) are asserted here rather than left to a device.
- */
+/** The pool's two modes: a per-sheet factory with preloading off, a lent-and-returned view with it on. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class SharingWebViewPoolTest {
@@ -119,7 +111,6 @@ class SharingWebViewPoolTest {
         val handle = pool.acquire(SharingWebViewBinding(sessionId = SESSION_ID, onAction = { actions++ }))
 
         pool.release(handle)
-        // Exactly the navigation the closed sheet's page would make on its way out.
         handle.dispatchResult(sessionId = SESSION_ID, action = "dismiss")
 
         assertEquals("a result from a closed sheet must reach nobody", 0, actions)
@@ -153,7 +144,6 @@ class SharingWebViewPoolTest {
                 ),
             )
 
-        // The warm navigation completing late, under the sheet's binding.
         handle.client().onPageFinished(handle.view, WARM_URL)
 
         assertEquals("the warm page settling must not cancel the tier-3 deadline", 0, ready)
@@ -187,11 +177,9 @@ class SharingWebViewPoolTest {
         assertTrue("the warm view must not outlive the share surface", shadowOf(handle.view).wasDestroyCalled())
     }
 
-    /** Recovered via the shadow, which doubles as a check that the factory installs the client. */
     private fun SharingWebViewHandle.client(): WebViewClient =
         requireNotNull(shadowOf(view).webViewClient) { "the factory must install a WebViewClient" }
 
-    /** Replays the result navigation the hosted page makes when it has something to report. */
     private fun SharingWebViewHandle.dispatchResult(
         sessionId: String,
         action: String,
@@ -226,8 +214,6 @@ class SharingWebViewPoolTest {
 
         val handle = pool.acquire(binding())
 
-        // The whole point of the flag: a fragment change starts no request, so hanging one off a
-        // half-loaded document would strand the page exactly where the load got to.
         assertFalse("warming was still in flight", handle.documentReady)
         assertEquals(WARM_URL, handle.loadedBaseUrl)
     }
@@ -244,15 +230,6 @@ class SharingWebViewPoolTest {
         assertEquals(WARM_URL, handle.loadedBaseUrl)
     }
 
-    /**
-     * A warm view is a fully booted React app nobody is looking at, and it keeps its timers and
-     * animation frames running for as long as the merchant's share surface is composed. `onPause`
-     * is the per-instance way to stop that — `pauseTimers` is process-global and would reach the
-     * merchant's own web views.
-     *
-     * Applied only once the document finishes, never mid-load: the whole point of warming is that
-     * the load completes before the tap.
-     */
     @Test
     fun `a warm view is paused once its document finishes, and resumed when a sheet takes it`() {
         val pool = pool(preload = true)
@@ -292,8 +269,6 @@ class SharingWebViewPoolTest {
 
         pool.release(handle)
 
-        // Re-warmed rather than merely reloaded: `warm` is what rebinds the readiness callback,
-        // and without it `documentReady` would never come back and no later sheet could activate.
         assertEquals("the pooled view must go back to the warm page", WARM_URL, handle.loadedBaseUrl)
         assertFalse("and start unready again, since that load has not finished", handle.documentReady)
 
@@ -309,17 +284,14 @@ class SharingWebViewPoolTest {
 
         pool.destroy()
 
-        // Destroying a WebView a live sheet is still driving crashes it, so the pool declines.
+        // destroying a WebView a live sheet is still driving crashes it
         assertFalse("must not be pulled out from under an open sheet", shadowOf(handle.view).wasDestroyCalled())
 
         pool.release(handle)
 
-        // But it must not be leaked either: the surface is gone, so release destroys rather than
-        // re-warming a view nobody will ever present again.
         assertTrue("the sheet handing it back is what destroys it", shadowOf(handle.view).wasDestroyCalled())
     }
 
-    /** Drives the pooled view's warm navigation to completion, as the real page load would. */
     private fun SharingWebViewPool.finishWarmLoad() {
         val warm = requireNotNull(warmHandle) { "nothing warm to finish" }
         warm.client().onPageStarted(warm.view, WARM_URL, null)
@@ -330,10 +302,6 @@ class SharingWebViewPoolTest {
         const val WALLET_ORIGIN = "https://wallet.frak.id"
         const val SESSION_ID = "session-1"
 
-        /**
-         * The pool no longer builds this itself: the URL worth warming carries the real
-         * merchantId, which only exists once the config resolves. See `resolveWarmUrl`.
-         */
         const val WARM_URL =
             "$WALLET_ORIGIN/sharing?embed=native&state=warm&merchantId=m1&clientId=c1&sid=warm"
     }

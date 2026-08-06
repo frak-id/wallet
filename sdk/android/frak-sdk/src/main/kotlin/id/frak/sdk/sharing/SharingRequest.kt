@@ -3,49 +3,9 @@ package id.frak.sdk.sharing
 import id.frak.sdk.core.ProductDetails
 import java.util.Collections
 
-/*
- * The two types a merchant touches on every share, and the reference shape for every
- * merchant-constructed type in this SDK.
- *
- * Three rules, and the reasoning for each, stated once here rather than repeated on every type:
- *
- * 1. **No default arguments on a public constructor, ever.** A default compiles to the full-arity
- *    `<init>` plus a synthetic `<init>(…, int mask, DefaultConstructorMarker)` encoding parameter
- *    count and a bitmask. Adding a field changes both descriptors, so a merchant binary already in
- *    the Play Store gets `NoSuchMethodError` — unfixable by them, since it is their shipped app that
- *    breaks. That is finding A3, and `FrakConfig` already grew 8→9 parameters once.
- * 2. **A `Builder` is the implementation, not a wrapper.** The primary constructor is `internal`, so
- *    it never enters the frozen surface and the SDK's own decoders can still use it. A new option is
- *    one new setter plus one new `var` — additive forever, and Java-callable, which a Kotlin-only DSL
- *    is not. This is where every merchant SDK that serves Java converges: Stripe (which migrated *to*
- *    it from data classes), RevenueCat, Braze, OkHttp, Coil.
- * 3. **The Kotlin sugar is the same Builder, not a second one.** `SharingRequest { link = … }` is a
- *    top-level function taking `Builder.() -> Unit` — the "fake constructor" idiom Compose uses for
- *    `AnnotatedString`. The Builder's `var`s *are* the scope, so a default has exactly one home and
- *    the two entry points cannot drift. `@JvmOverloads` is never used: it fixes Java and leaves
- *    Kotlin callers resolving through `$default` anyway.
- *
- * Setters mirror the field's nullability rather than insisting on non-null, so a Java caller can pass
- * a value it computed as nullable without a null check at the call site. Not calling a setter is how
- * you say "absent"; passing null means the same thing.
- *
- * Two costs of this shape, accepted rather than overlooked. Each *optional* option freezes three
- * declarations, not one — `getX()`, `setX(T)` and `x(T): Builder` — because the `var` is what makes
- * the Kotlin sugar possible, and hiding the accessors with `@JvmSynthetic` would also hide a
- * genuinely-linked symbol from the dump. That also means Java autocomplete offers a `void setX(T)`
- * beside the chaining `x(T)`; the fluent one is the documented form everywhere. A *required* field
- * (`SharingProduct`'s `title`/`link`) gets no `var` and no setter, only the constructor argument.
- *
- * `build()` snapshots: it can be called more than once, and a Builder mutated afterwards does not
- * reach back into an object it already produced. `SharingRequest` copies its product list to make that
- * true of the one collection these types put on the surface. `RewardRequest.products` is the other, and
- * copies for the same reason. It is not the only collection the SDK
- * exposes — `ResolvedSdkConfig.translations`/`placements` and
- * `BestReward.matchedProducts` are others. Those come *out* of the SDK, where the SDK built the list
- * and no caller holds the original — with the caveat that `BestReward` kept a public constructor, so a
- * merchant building one for a preview or a fake does hold it. `Interaction.custom(…, data)` is the
- * other genuinely inbound collection, and it copies for exactly this reason.
- */
+/* SDK-wide: no default arguments on any public constructor. A default compiles to a synthetic `$default` bridge
+ * whose descriptor encodes the arity, so adding a field is a NoSuchMethodError in a merchant binary already
+ * shipped. Builders / explicit overloads instead. */
 
 /**
  * One product to advertise on the sharing sheet. Build with [Builder], or
@@ -57,16 +17,9 @@ public class SharingProduct internal constructor(
     public val imageUrl: String?,
     /** `utm_content` for a link built from this product; highest-priority source for that field. */
     public val utmContent: String?,
-    /**
-     * Scope fields for reward selection. Composed rather than flattened: this type's fields are
-     * display copy, [ProductDetails]' are what a `productScope` can match on.
-     */
+    /** Scope fields for reward selection; [ProductDetails] is what a `productScope` matches on. */
     public val details: ProductDetails?,
 ) {
-    /**
-     * [title] and [link] are constructor arguments because there is no sensible product without
-     * them — the sheet renders the one and shares the other.
-     */
     public class Builder(
         private val title: String,
         private val link: String,
@@ -87,27 +40,14 @@ public class SharingProduct internal constructor(
     }
 }
 
-/**
- * Kotlin sugar over [SharingProduct.Builder]. Same Builder, same defaults, assignment syntax:
- *
- * ```kotlin
- * SharingProduct(title = product.title, link = product.url) {
- *     imageUrl = product.image
- *     details = ProductDetails { sku = product.sku }
- * }
- * ```
- */
+/** Kotlin sugar over [SharingProduct.Builder]. */
 public fun SharingProduct(
     title: String,
     link: String,
     configure: SharingProduct.Builder.() -> Unit,
 ): SharingProduct = SharingProduct.Builder(title, link).apply(configure).build()
 
-/**
- * Title and link only, which is the common case: no `{ }` to write when there is nothing to
- * configure. An explicit overload rather than a default lambda — it takes exactly the two required
- * fields, so a new optional field never changes its signature.
- */
+/** Title and link only. */
 public fun SharingProduct(
     title: String,
     link: String,
@@ -127,11 +67,6 @@ public class SharingRequest internal constructor(
     public val placement: String?,
     public val logoUrl: String?,
 ) {
-    /**
-     * Every field is optional, so this takes no constructor arguments: a bare
-     * `new SharingRequest.Builder().build()` shares the merchant's homepage, which is a real and
-     * supported request.
-     */
     public class Builder {
         public var link: String? = null
 
@@ -149,11 +84,6 @@ public class SharingRequest internal constructor(
 
         public fun products(products: List<SharingProduct>): Builder = apply { this.products = products }
 
-        /**
-         * Appends one product. Exists for Java, where building a `List` inline is
-         * `Collections.singletonList(...)` or `Arrays.asList(...)` and reads worse than a second
-         * chained call.
-         */
         public fun addProduct(product: SharingProduct): Builder = apply { this.products = this.products + product }
 
         public fun attribution(attribution: AttributionParams?): Builder = apply { this.attribution = attribution }
@@ -165,13 +95,7 @@ public class SharingRequest internal constructor(
 
         public fun logoUrl(logoUrl: String?): Builder = apply { this.logoUrl = logoUrl }
 
-        /**
-         * Copies [products] rather than handing the caller's list through. Without it a caller that
-         * kept a reference to a mutable list could change a request it had already built, and
-         * `getProducts()` would hand Java a list whose mutability depended on whether the request was
-         * built with [products] or [addProduct]. `unmodifiableList` over a fresh copy makes both
-         * questions have one answer.
-         */
+        /** Copies [products], so mutating the caller's list cannot change an already-built request. */
         public fun build(): SharingRequest =
             SharingRequest(
                 link,
@@ -184,16 +108,6 @@ public class SharingRequest internal constructor(
     }
 }
 
-/**
- * Kotlin sugar over [SharingRequest.Builder]. Same Builder, same defaults, assignment syntax:
- *
- * ```kotlin
- * val request = SharingRequest {
- *     products = listOf(SharingProduct(product.title, product.url))
- *     targetInteraction = "purchase"
- *     placement = "product-page"
- * }
- * ```
- */
+/** Kotlin sugar over [SharingRequest.Builder]. */
 public fun SharingRequest(configure: SharingRequest.Builder.() -> Unit): SharingRequest =
     SharingRequest.Builder().apply(configure).build()

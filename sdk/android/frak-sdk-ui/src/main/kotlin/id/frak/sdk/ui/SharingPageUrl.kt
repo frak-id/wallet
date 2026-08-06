@@ -1,6 +1,4 @@
-// Opted in for `PercentEncoding`, which is `@InternalFrakApi`. Per file, not module-wide: a
-// `-opt-in` compiler flag would silence the marker everywhere, including in tests written to
-// prove what a merchant can actually reach.
+// Opted in for `PercentEncoding` per file, not module-wide, so the marker still bites elsewhere.
 @file:OptIn(InternalFrakApi::class)
 
 package id.frak.sdk.ui
@@ -10,9 +8,8 @@ import id.frak.sdk.InternalFrakApi
 import id.frak.sdk.net.PercentEncoding
 
 /**
- * The hosted `/sharing` URL the sheet's web view loads. Nothing crosses back through
- * JavaScript: state goes in as query params, comes out as an intercepted navigation
- * to [returnScheme]`://result`, so the web view keeps no bridge at all.
+ * The hosted `/sharing` URL the sheet's web view loads. State goes in as query params and comes
+ * back out as an intercepted navigation to [returnScheme]`://result`, so there is no JS bridge.
  */
 internal object SharingPageUrl {
     /** Must match the wallet's `sanitizeReturnScheme` pattern `^frak-[a-z0-9._-]{1,60}$` or callbacks silently drop. */
@@ -22,7 +19,7 @@ internal object SharingPageUrl {
                 .lowercase()
                 .filter { it.isDigit() || it in 'a'..'z' || it in ".-_" }
                 .take(MAX_SCHEME_SUFFIX)
-        return "frak-" + sanitised.ifEmpty { "app" } // guards an id made entirely of rejected characters
+        return "frak-" + sanitised.ifEmpty { "app" } // Guards an id made entirely of rejected characters.
     }
 
     @Suppress("LongParameterList")
@@ -39,10 +36,7 @@ internal object SharingPageUrl {
         products: String? = null,
         seededReward: String? = null,
         confirmed: Boolean = false,
-        // No presentation params here. How the sheet looks is injected once per web view by
-        // [SharingHostStyle], which is scoped to the wallet origin rather than to this route — so
-        // the `/install` page the install CTA navigates to gets the same treatment for free, and
-        // there is nothing for [warm] to keep byte-identical.
+        // No presentation params: the sheet's chrome is injected per web view by [SharingHostStyle].
     ): String =
         buildString {
             append(walletOrigin).append("/sharing?embed=native")
@@ -65,15 +59,8 @@ internal object SharingPageUrl {
         }
 
     /**
-     * The URL a pooled view is warmed on: everything knowable before the user taps.
-     *
-     * Unlike a neutral warm-up this carries the real `merchantId` and `clientId`, so the page
-     * boots its bundle, i18n and both merchant-keyed queries while the user is still looking at
-     * the merchant's own screen. `state=warm` is what makes that safe — the page reports itself
-     * as `sharing_page_preloaded` instead of `sharing_page_viewed`, so warming surfaces nobody
-     * opens cannot inflate the sharing funnel's denominator.
-     *
-     * What is missing is exactly [activationFragment]'s job.
+     * The URL a pooled view is warmed on: everything knowable before the user taps. `state=warm`
+     * makes the page report `sharing_page_preloaded` rather than `sharing_page_viewed`.
      */
     fun warm(
         walletOrigin: String,
@@ -98,15 +85,9 @@ internal object SharingPageUrl {
         }
 
     /**
-     * The per-tap params, as a fragment to hang off a [warm] URL.
-     *
-     * A fragment change is a same-document navigation: no request, no remount, no React boot —
-     * which is the whole point, since that boot measured ~300ms of tap-to-paint and is the last
-     * large block the native side could not reach.
-     *
-     * Only keys with something to say are written. The page spreads this over the warm URL's own
-     * params, so writing a key with an empty value would erase the merchant config value under
-     * it rather than leave it alone.
+     * The per-tap params, as a fragment to hang off a [warm] URL — a same-document navigation, so
+     * the page is not remounted. Only keys with something to say are written: the page spreads this
+     * over the warm URL's own params, so an empty value would erase the config value under it.
      */
     fun activationFragment(
         sessionId: String,
@@ -118,8 +99,7 @@ internal object SharingPageUrl {
     ): String =
         buildString {
             append("#sid=").append(PercentEncoding.encode(sessionId))
-            // Explicit, not implied: this is what turns the page from a warm-up into a view,
-            // and the event it reports depends on it.
+            // Turns the page from a warm-up into a view; the event it reports depends on it.
             append("&state=live")
             link?.let { append("&link=").append(PercentEncoding.encode(it)) }
             products?.let { append("&products=").append(PercentEncoding.encode(it)) }

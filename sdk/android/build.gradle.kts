@@ -1,34 +1,24 @@
-// AGP not declared here: buildSrc's `frak-publish` plugin puts it on the classpath
-// unversioned; a versioned alias(...) here would conflict. Pinned in buildSrc/build.gradle.kts.
+// AGP is deliberately not declared here: buildSrc's `frak-publish` plugin puts it on the classpath
+// unversioned, and a versioned `alias(...)` here would conflict. Pinned in buildSrc/build.gradle.kts.
 plugins {
     // No `kotlin.android` alias: AGP 9.0's built-in Kotlin owns compilation now.
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.ktlint)
 }
 
-// binary-compatibility-validator, applied by id and unversioned for the same reason as AGP: the
-// version lives in buildSrc/build.gradle.kts, which is what puts it on this script's classpath.
-//
-// Applied to the root and nowhere else. It registers no tasks here — there is no Kotlin plugin on
-// the root project — but it does two things that matter: it creates the `apiValidation` extension
-// below, and BCV's own task types read that extension by walking up the project hierarchy, so the
-// per-module tasks `frak-publish.gradle.kts` registers pick up `nonPublicMarkers` from here without
-// being told.
+// binary-compatibility-validator, unversioned for the same reason as AGP. Applied to the root only:
+// it registers no tasks here, but it owns the `apiValidation` extension below, which the per-module
+// tasks registered by frak-publish.gradle.kts read by walking up the project hierarchy.
 apply(plugin = "org.jetbrains.kotlinx.binary-compatibility-validator")
 
 configure<kotlinx.validation.ApiValidationExtension> {
-    // `@InternalFrakApi` marks declarations that are `public` only because a second Gradle module
-    // has to see them. Everything annotated with it drops out of the dump entirely, which is the
-    // point: `public` in Kotlin means both "a merchant may call this" and "the sibling artifact may
-    // call this", and only the first belongs in a compatibility contract.
-    //
-    // `@Target(CLASS)` on the marker is load-bearing for this to work — a marker on a property never
-    // reaches the class file as a Java annotation, so BCV cannot see it. See the annotation's KDoc.
+    // `@InternalFrakApi` marks declarations that are public only so the sibling module can see them;
+    // they drop out of the dump. Its `@Target(CLASS)` is load-bearing — BCV only sees annotations
+    // that reach the class file.
     nonPublicMarkers.add("id.frak.sdk.InternalFrakApi")
 
-    // Compose generates this holder per file containing `@Composable` lambdas, and emits it `public`
-    // even though its only member is `internal`. Not merchant API, and its name is keyed off the
-    // file name, so freezing it would make renaming `FrakSharingSheet.kt` an ABI break.
+    // Compose emits this per-file holder `public` though its only member is `internal`. Its name is
+    // keyed off the file name, so freezing it would make renaming the file an ABI break.
     ignoredClasses.add("id.frak.sdk.ui.ComposableSingletons\$FrakSharingSheetKt")
 }
 

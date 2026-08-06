@@ -27,17 +27,7 @@ export type PostShareConfirmationProps = {
     installUrl: string | null;
     merchant: SharingMerchant;
     t: SharingT;
-    /**
-     * The same chrome the share screen uses — this is the screen shown right
-     * after a share/copy inside the very same host sheet, so it must round its
-     * corners identically and suppress its own header on exactly the same
-     * condition. Sharing the type is what stops the two drifting apart.
-     *
-     * Under `mode: "none"` the header goes (a host presenting this inside its
-     * own chrome would otherwise stack two logos and two close controls) but
-     * the footer stays: its install / share-again CTAs are this screen's whole
-     * point and have no equivalent in a host's share sheet.
-     */
+    /** Under `mode: "none"` the header goes, but the footer CTAs stay. */
     chrome: SharingChrome;
     onDismiss: () => void;
     onShareAgain: () => void;

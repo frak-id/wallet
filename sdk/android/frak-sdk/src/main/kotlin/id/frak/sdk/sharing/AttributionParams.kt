@@ -4,11 +4,8 @@ import id.frak.sdk.config.AttributionDefaults
 
 /**
  * Per-call attribution overrides for a share link's UTM parameters, merged over the
- * merchant-level [AttributionDefaults] field by field.
- *
- * Build with [Builder], or `AttributionParams { }` from Kotlin. See the note at the top of
- * `SharingRequest.kt` for why every merchant-constructed type in this SDK is shaped this way and
- * carries no default arguments.
+ * merchant-level [AttributionDefaults] field by field. Build with [Builder], or
+ * `AttributionParams { }` from Kotlin.
  */
 public class AttributionParams internal constructor(
     public val utmSource: String?,
@@ -71,25 +68,11 @@ public class AttributionParams internal constructor(
             "utmContent=$utmContent, utmTerm=$utmTerm, via=$via, ref=$ref)"
 }
 
-/**
- * Kotlin sugar over [AttributionParams.Builder]:
- *
- * ```kotlin
- * AttributionParams {
- *     utmSource = "android-app"
- *     utmCampaign = campaign.slug
- * }
- * ```
- */
+/** Kotlin sugar over [AttributionParams.Builder]. */
 public fun AttributionParams(configure: AttributionParams.Builder.() -> Unit): AttributionParams =
     AttributionParams.Builder().apply(configure).build()
 
-/**
- * Priority per field: [perCall] over [defaults]. `utmContent` never comes from [defaults].
- *
- * Uses the `internal` primary constructor rather than the Builder: this is not a caller expressing
- * intent field by field, it is the merge itself, and every field is decided here.
- */
+/** Priority per field: [perCall] over [defaults]. `utmContent` never comes from [defaults]. */
 internal fun mergeAttribution(
     perCall: AttributionParams?,
     defaults: AttributionDefaults?,

@@ -1,16 +1,9 @@
 package id.frak.sdk.core
 
 /**
- * The purchase line item fields a campaign's `productScope` can target. A field outside this
- * set cannot have been published, and a native app sending one would silently never match.
- *
- * `Double`, not `Int`, for every numeric field: an `Int` would silently truncate a fractional
- * [unitPrice].
- *
- * Build with [Builder], or `ProductDetails { }` from Kotlin. See the note at the top of
- * `sharing/SharingRequest.kt` for why every merchant-constructed type in this SDK is shaped this way
- * and carries no default arguments. This one is also *returned* by the SDK, on
- * [id.frak.sdk.rewards.BestReward.matchedProducts], which is why it keeps `equals`/`hashCode`.
+ * The purchase line item fields a campaign's `productScope` can target. Build with [Builder], or
+ * `ProductDetails { }` from Kotlin. Also returned by the SDK, on
+ * [id.frak.sdk.rewards.BestReward.matchedProducts], hence `equals`/`hashCode`.
  */
 public class ProductDetails internal constructor(
     public val productId: String?,
@@ -74,15 +67,6 @@ public class ProductDetails internal constructor(
     }
 }
 
-/**
- * Kotlin sugar over [ProductDetails.Builder]:
- *
- * ```kotlin
- * ProductDetails {
- *     sku = line.sku
- *     quantity = line.quantity.toDouble()
- * }
- * ```
- */
+/** Kotlin sugar over [ProductDetails.Builder]. */
 public fun ProductDetails(configure: ProductDetails.Builder.() -> Unit): ProductDetails =
     ProductDetails.Builder().apply(configure).build()

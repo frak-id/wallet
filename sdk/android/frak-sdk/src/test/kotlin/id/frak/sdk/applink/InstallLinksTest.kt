@@ -18,13 +18,7 @@ class InstallLinksTest {
         )
     }
 
-    /**
-     * `?p=`, not the `#p=` the hosted install page uses: the wallet's deep-link router navigates
-     * in-app, so a fragment is gone before `/install` renders. `routeResolvers.install` forwards
-     * the search param for exactly this reason — the two have to agree or the proof is dropped
-     * on every already-installed device, which is the one path with no Play referrer to fall
-     * back on.
-     */
+    /** `?p=`, not `#p=`: the wallet's deep-link router navigates in-app, so a fragment is gone by then. */
     @Test
     fun `carries the install proof as a search param the deep-link router forwards`() {
         assertEquals(
@@ -33,12 +27,7 @@ class InstallLinksTest {
         )
     }
 
-    /**
-     * `embed=native` is the one marker of a host-embedded page, and it is the same spelling
-     * `/sharing` uses. The sharing sheet navigates its one web view from `/sharing` to here, so a
-     * route that read the marker differently rendered differently mid-flow — which is exactly what
-     * happened while `/install` inferred a host from the presence of `returnScheme` instead.
-     */
+    /** `embed=native` is the one marker of a host-embedded page, spelled the same way `/sharing` spells it. */
     @Test
     fun `marks the hosted install page as host-embedded, the same way the sharing url does`() {
         val url =
@@ -56,8 +45,7 @@ class InstallLinksTest {
                 "&returnScheme=frak-com.acme.app&sid=session-1",
             url,
         )
-        // No corner radius, and nothing else about how the sheet looks: presentation reaches the
-        // page as CSS custom properties injected by origin, so every route gets it at once.
+        // Presentation reaches the page as CSS custom properties injected by origin, not as params.
         assertEquals(false, url.contains("cornerRadius"))
     }
 
@@ -65,8 +53,7 @@ class InstallLinksTest {
     fun `nests the play install referrer as one encoded value`() {
         val url = InstallLinks.playStore("id.frak.wallet", MERCHANT_ID, CLIENT_ID)
 
-        // The referrer's own separators must be encoded, or Play reads them as
-        // separators of the outer query and the pair never reaches the wallet.
+        // The referrer's own separators must be encoded, or Play reads them as outer-query separators.
         assertEquals(
             "https://play.google.com/store/apps/details?id=id.frak.wallet" +
                 "&referrer=merchantId%3D$MERCHANT_ID%26anonymousId%3D$CLIENT_ID",
@@ -98,8 +85,7 @@ class ReferralArrivalTest {
     fun `cannot self-refer with no identity, or from a v1 link`() {
         val context = frakContextV2(MERCHANT_ID, TIMESTAMP, clientId = CLIENT_ID)
         assertFalse(ReferralArrival.shouldIgnoreArrival(context, null))
-        // A native app has no wallet, so the wallet comparison the web makes has nothing to
-        // compare against.
+        // A native app has no wallet, so the wallet comparison the web makes has nothing to compare.
         assertFalse(ReferralArrival.shouldIgnoreArrival(frakContextV1(WALLET), CLIENT_ID))
     }
 
@@ -117,9 +103,7 @@ class ReferralArrivalTest {
 
     @Test
     fun `carries every field a v2 context knows into the arrival`() {
-        // `Interaction` is opaque by design (see its KDoc), so this reaches through the `internal`
-        // `Kind` — friend access, same module. There is no public way to read an interaction back and
-        // there is not meant to be; what a merchant does with one is hand it to `track`.
+        // `Interaction` is opaque; this reaches through the `internal` `Kind` with friend access.
         val arrival =
             ReferralArrival
                 .arrivalFrom(

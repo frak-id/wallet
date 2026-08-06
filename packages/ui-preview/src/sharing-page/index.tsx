@@ -11,29 +11,16 @@ import {
 import * as styles from "./styles.css";
 
 export type SharingPreviewProps = {
-    /**
-     * Translation function — returns the text for a given key.
-     * Keys follow the sdk.sharingPage.* namespace.
-     */
+    /** Resolves an `sdk.sharingPage.*` translation key. */
     t: (key: string) => string;
-    /**
-     * Merchant logo URL displayed in the header and credit card.
-     */
     logoUrl?: string;
-    /**
-     * Merchant app name.
-     */
     appName?: string;
 };
 
-/**
- * Preview of the sharing page header: logo bar, credit card, reward text, stepper, and footer buttons.
- * Mirrors the layout of wallet-shared SharingPage (no FAQ, no description, no products).
- */
+/** Static preview mirroring the layout of wallet-shared's `SharingPage`. */
 export function SharingPreview({ t, logoUrl, appName }: SharingPreviewProps) {
     return (
         <div className={styles.previewFrame}>
-            {/* Header */}
             <header className={styles.header}>
                 <Box display="flex" alignItems="center" gap="m">
                     {logoUrl && (
@@ -50,9 +37,7 @@ export function SharingPreview({ t, logoUrl, appName }: SharingPreviewProps) {
                 </span>
             </header>
 
-            {/* Main content */}
             <div className={styles.main}>
-                {/* Credit card */}
                 <section className={styles.creditCard}>
                     <CardBackground className={styles.creditCardBg} />
                     <div className={styles.creditCardContent}>
@@ -105,7 +90,6 @@ export function SharingPreview({ t, logoUrl, appName }: SharingPreviewProps) {
                     </div>
                 </section>
 
-                {/* Reward text */}
                 <section className={styles.rewardCard}>
                     <Text as="h2" variant="heading2">
                         {t("sdk.sharingPage.reward.title")}
@@ -115,7 +99,6 @@ export function SharingPreview({ t, logoUrl, appName }: SharingPreviewProps) {
                     </Text>
                 </section>
 
-                {/* Stepper */}
                 <Stack as="section" space="m">
                     <ol className={styles.stepper}>
                         <li className={styles.stepItem}>
@@ -166,7 +149,6 @@ export function SharingPreview({ t, logoUrl, appName }: SharingPreviewProps) {
                 </Stack>
             </div>
 
-            {/* Footer buttons */}
             <nav className={styles.footer}>
                 <div className={styles.shareButton}>
                     <ShareIcon width={14} height={14} />

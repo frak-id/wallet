@@ -6,11 +6,8 @@ import * as styles from "./sharingPage.css";
 import type { SharingMerchant, SharingT } from "./types";
 
 /**
- * Merchant + Frak lockup and the "Later" dismiss.
- *
- * Never rendered chromeless: a host presenting this page in its own sheet
- * already draws a header and a close affordance, and stacking two of each
- * reads as a bug.
+ * Merchant + Frak lockup and the "Later" dismiss. Never rendered chromeless: a
+ * host presenting this page in its own sheet draws its own header.
  */
 export function PageHeader({
     merchant,

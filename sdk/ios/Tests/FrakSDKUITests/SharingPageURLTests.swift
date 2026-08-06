@@ -5,8 +5,8 @@ import Testing
 
 @Suite("SharingPageURL")
 struct SharingPageURLTests {
-    /// The wallet's own `sanitizeReturnScheme`. A scheme that fails it makes the page drop
-    /// every callback silently, so this is asserted here rather than trusted.
+    /// Mirror of the wallet's own `sanitizeReturnScheme`; a scheme that fails it makes the page
+    /// drop every callback silently.
     private func matchesWalletPattern(_ scheme: String) -> Bool {
         guard scheme.hasPrefix("frak-") else { return false }
         let suffix = scheme.dropFirst("frak-".count)
@@ -102,9 +102,6 @@ struct SharingPageURLTests {
         )
     }
 
-    /// `state=warm` is what keeps a warmed page reporting `sharing_page_preloaded` rather than
-    /// `sharing_page_viewed`, which is the sharing funnel's denominator. Warming every merchant
-    /// surface into that event would silently deflate every downstream rate.
     @Test("the warm url carries no per-tap parameter")
     func warmURLCarriesNothingPerTap() {
         let url = SharingPageURL.warm(
@@ -116,8 +113,7 @@ struct SharingPageURLTests {
 
         #expect(url.contains("&state=warm"))
         #expect(url.contains("&sid=\(SharingPageURL.warmSessionId)"))
-        // No link, no products, no seeded headline, no confirmation — none of them is knowable
-        // before the tap, and the warm session id can never satisfy a real sheet's `sid` guard.
+        // None of these is knowable before the tap.
         #expect(!url.contains("&link="))
         #expect(!url.contains("&products="))
         #expect(!url.contains("&seedReward="))
@@ -146,10 +142,8 @@ struct SharingPageURLTests {
         )
     }
 
-    /// Load-bearing, not tidiness. The page spreads the fragment over the warm URL's own query
-    /// params, so a key written with an empty value would erase the merchant config value under
-    /// it — `logoUrl` comes from the config on the warm URL, and most activations have nothing
-    /// to say about it.
+    /// The page spreads the fragment over the warm URL's own query params, so a key written with
+    /// an empty value would erase the merchant-config value under it.
     @Test("the activation fragment omits every key it was not given")
     func activationFragmentOmitsAbsentKeys() {
         let fragment = SharingPageURL.activationFragment(sessionId: "session-1")
@@ -163,9 +157,6 @@ struct SharingPageURLTests {
         #expect(!fragment.contains("confirmed"))
     }
 
-    /// The fragment is hung off the *committed* URL, never off the warm URL string, so this is
-    /// about the page's own parsing rather than about concatenation. Two identical fragments in
-    /// a row fire no `hashchange`, which a fresh `sid` per session is what prevents.
     @Test("every activation fragment starts a new session")
     func activationFragmentIsSessionScoped() {
         let first = SharingPageURL.activationFragment(sessionId: "session-1")

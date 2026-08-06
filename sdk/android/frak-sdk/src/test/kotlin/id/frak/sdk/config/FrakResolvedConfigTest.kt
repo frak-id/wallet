@@ -7,16 +7,7 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/**
- * Pins `equals`/`hashCode`, hand-written because this is deliberately not a `data class`.
- * Without them, `StateFlow` conflation in [id.frak.sdk.core.DefaultFrakClient] falls back to
- * identity equality and emits on every resolve, cache hit or not.
- *
- * Also pins [FrakResolvedConfig.displayName]/[FrakResolvedConfig.displayLogoUrl], the two derived
- * properties `:frak-sdk-ui` reads instead of walking the tree itself. They live here rather than in
- * that module because building a tree needs the `internal` constructors, which friend access
- * reaches only from this source set.
- */
+/** Pins the hand-written `equals`/`hashCode` — not a `data class` — and the derived display properties. */
 class FrakResolvedConfigTest {
     @Test
     fun `two structurally identical configs are equal and share a hash code`() {
@@ -47,8 +38,6 @@ class FrakResolvedConfigTest {
 
     @Test
     fun `an SDK-decoded config equals a hand-built one with the same values`() {
-        // The whole tree is reachable through one constructor per class, so a hand-built fixture
-        // can equal a decoded response instead of always differing on the nested field.
         val decoded = ResolvedConfigDecoder.decode(FULL_BODY)
         val handBuilt =
             build(
@@ -81,8 +70,6 @@ class FrakResolvedConfigTest {
 
     @Test
     fun `a decoded response exposes the same two derived values the sharing sheet reads`() {
-        // The sheet folds nothing itself; these two properties are the whole contract between the
-        // resolved tree and `:frak-sdk-ui`.
         val decoded = ResolvedConfigDecoder.decode(BRANDED_BODY)
 
         assertEquals("Acme Store", decoded.displayName)
@@ -108,10 +95,7 @@ class FrakResolvedConfigTest {
 
     @Test
     fun `every node of the tree distinguishes itself on its own fields`() {
-        // One assertion per class, because every `equals`/`hashCode` in the tree is hand-written:
-        // ten of them, none compiler-generated, and a field left out of one is invisible from the
-        // enclosing config's own equality test as long as some *other* field differs. `sdkConfig()`
-        // populates the whole tree so the end-to-end tests above reach these too.
+        // One assertion per class: all ten `equals`/`hashCode` in the tree are hand-written.
         assertNotEquals(buttonShareConfig(text = "a"), buttonShareConfig(text = "b"))
         assertNotEquals(buttonWalletConfig(position = "top"), buttonWalletConfig(position = "bottom"))
         assertNotEquals(openInAppConfig(text = "a"), openInAppConfig(text = "b"))
@@ -128,7 +112,6 @@ class FrakResolvedConfigTest {
         )
         assertNotEquals(resolvedSdkConfig(homepageLink = "a"), resolvedSdkConfig(homepageLink = "b"))
 
-        // And the other half of the contract: identical values compare equal and agree on a hash.
         assertEquals(postPurchaseConfig(badgeText = "a"), postPurchaseConfig(badgeText = "a"))
         assertEquals(
             bannerConfig(referralTitle = "a").hashCode(),
@@ -147,15 +130,7 @@ class FrakResolvedConfigTest {
         sdkConfig: ResolvedSdkConfig? = null,
     ): FrakResolvedConfig = resolvedConfig(merchantId, name, domain, lang, currency, hidden, sdkConfig)
 
-    /**
-     * A fully populated tree: every one of the nine nested classes, a non-empty `translations` map
-     * and a `placements` entry.
-     *
-     * Deliberately not the minimal thing the enclosing assertions need. The tree's ten
-     * `equals`/`hashCode` implementations are hand-written, and a fixture that only reaches
-     * `ButtonShareConfig` leaves the other eight unexecuted — which is what a narrower version of
-     * this helper did, silently, while the file's name still promised equality was pinned.
-     */
+    /** A fully populated tree: every one of the nine nested classes, plus translations and a placement. */
     private fun sdkConfig(buttonShareText: String = "Share"): ResolvedSdkConfig =
         resolvedSdkConfig(
             name = "Acme Store",

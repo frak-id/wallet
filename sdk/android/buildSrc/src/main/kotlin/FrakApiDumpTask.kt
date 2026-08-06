@@ -8,22 +8,8 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
 
 /**
- * Copies a freshly extracted ABI dump over the committed `api/<module>.api`, which is what BCV's own
- * `apiDump` does.
- *
- * A task class rather than a `Copy`, and that is not fussiness. `Copy`'s output is a *directory*, so
- * `api/` would become a task output in the source tree: anything else put there would enter this
- * task's stale-output handling, and — the real problem — `apiCheck` reads `api/<module>.api` from
- * inside that directory with no dependency between the two, which Gradle rejects as an implicit
- * dependency the moment anyone runs `apiDump` and `apiCheck` in one invocation. An `@OutputFile`
- * naming exactly one file fixes the first half. It does *not* fix the second — `apiCheck` still reads
- * the file this task writes, with no dependency declared between them, so `./gradlew apiDump apiCheck`
- * in one invocation is still rejected. Run them separately; that is what `scripts/run.sh` does and
- * what BCV's own workflow assumes. BCV's dump task and the `android-bcv-bridge` reference
- * implementation are both shaped this way for the same reasons.
- *
- * Both properties are managed, and the action reads nothing but them, so it is configuration-cache
- * safe.
+ * Copies a freshly extracted ABI dump over the committed `api/<module>.api`, like BCV's own `apiDump`. `apiCheck`
+ * reads this task's output with no dependency declared, so run them in separate invocations.
  */
 @DisableCachingByDefault(because = "A trivial copy of a generated file over a committed one")
 abstract class FrakApiDumpTask : DefaultTask() {

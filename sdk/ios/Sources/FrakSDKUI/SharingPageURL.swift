@@ -5,12 +5,8 @@ import FrakSDK
 enum SharingPageURL {
     static let resultHost = "result"
 
-    /// The `sid` a warmed, unpresented page carries.
-    ///
-    /// Never a real sheet's id, so a result navigation from the warm page can never be
-    /// attributed to whichever session binds next. Lives here rather than on
-    /// `SharingWebViewBinding` because that type is behind `#if canImport(UIKit)` and this
-    /// file is not.
+    /// The `sid` a warmed, unpresented page carries. Never a real sheet's id, so a result
+    /// navigation from the warm page cannot be attributed to whichever session binds next.
     static let warmSessionId = "warm"
 
     private static let maxSchemeSuffix = 60
@@ -59,13 +55,8 @@ enum SharingPageURL {
 
     /// The URL a pooled view is warmed on: everything knowable before the user taps.
     ///
-    /// Unlike a neutral warm-up this carries the real `merchantId` and `clientId`, so the page
-    /// boots its bundle, i18n and both merchant-keyed queries while the user is still looking
-    /// at the merchant's own screen. `state=warm` is what makes that safe — the page reports
-    /// itself as `sharing_page_preloaded` instead of `sharing_page_viewed`, so warming surfaces
-    /// nobody opens cannot inflate the sharing funnel's denominator.
-    ///
-    /// What is missing is exactly `activationFragment(sessionId:...)`'s job.
+    /// `state=warm` makes the page report itself as `sharing_page_preloaded` rather than
+    /// `sharing_page_viewed`, so warm-ups nobody opens stay out of the sharing funnel.
     static func warm(
         walletOrigin: String,
         merchantId: String,
@@ -88,15 +79,11 @@ enum SharingPageURL {
         return url
     }
 
-    /// The per-tap params, as a fragment to hang off a `warm(...)` URL.
+    /// The per-tap params, as a fragment to hang off a `warm(...)` URL — a same-document
+    /// navigation, so no request and no React boot.
     ///
-    /// A fragment change is a same-document navigation: no request, no remount, no React boot —
-    /// which is the whole point, since that boot is the last large block of tap-to-paint the
-    /// native side could not otherwise reach.
-    ///
-    /// Only keys with something to say are written. The page spreads this over the warm URL's
-    /// own params, so writing a key with an empty value would erase the merchant config value
-    /// under it rather than leave it alone.
+    /// Only keys with something to say are written: the page spreads this over the warm URL's
+    /// own params, so an empty value would erase the merchant config value under it.
     static func activationFragment(
         sessionId: String,
         link: String? = nil,
@@ -106,8 +93,7 @@ enum SharingPageURL {
         confirmed: Bool = false
     ) -> String {
         var fragment = "#sid=" + PercentEncoding.encode(sessionId)
-        // Explicit, not implied: this is what turns the page from a warm-up into a view, and
-        // the event it reports depends on it.
+        // Turns the page from a warm-up into a view; the event it reports depends on it.
         fragment += "&state=live"
         for (key, value) in [
             // `logoUrl` only when the request overrode it; otherwise the warm URL's config

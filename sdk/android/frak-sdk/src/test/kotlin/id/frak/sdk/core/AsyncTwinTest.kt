@@ -27,21 +27,11 @@ import kotlin.coroutines.coroutineContext
 
 /**
  * The dispatcher the calling coroutine is running on. Must stay a real suspend function: reading
- * `coroutineContext` inline in a suspend lambda binds to the enclosing scope (here `runTest`'s), not
- * to where the lambda actually runs.
+ * `coroutineContext` inline in a suspend lambda binds to the enclosing scope, not to where it runs.
  */
 private suspend fun currentInterceptor(): ContinuationInterceptor? = coroutineContext[ContinuationInterceptor]
 
-/**
- * The threading and lifetime contract of `DefaultFrakClient.asFuture`, which every `*Async` twin on
- * the public surface funnels through.
- *
- * These are the two properties nothing else in the repo can check. `FrakSdkJavaCallSiteFixture.java`
- * proves the twins are *nameable* from Java; it proves nothing about which thread they resume on, and
- * `example/native-android` is Kotlin-only so it never calls one. Without this file the invariant the
- * plan's §2 exists to protect — "a naive `thenAccept` lands on the main thread" — would be asserted
- * nowhere at all.
- */
+/** The threading and lifetime contract of `DefaultFrakClient.asFuture`, which every `*Async` twin uses. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AsyncTwinTest {
     @get:Rule
@@ -76,8 +66,7 @@ class AsyncTwinTest {
             val io = StandardTestDispatcher(testScheduler)
             val client = newClient(testScheduler, io, main)
 
-            // `asFuture` merges its context into the scope's, so without the inner
-            // `withContext(ioDispatcher)` the whole body would run on the main thread.
+            // The inner `withContext(ioDispatcher)` is what keeps the body off the main dispatcher.
             var bodyInterceptor: Any? = null
             val future = client.asFuture { bodyInterceptor = currentInterceptor() }
 
@@ -100,18 +89,13 @@ class AsyncTwinTest {
 
             client.shutdown()
 
-            // Deliberately the weaker assertion. In practice the scope's cancelled `SupervisorJob`
-            // makes this a *cancelled* future — `isCancelled`, `join()` throws `CancellationException`,
-            // no `thenAccept` fires — but what the contract owes a Java caller is only that the future
-            // finishes and does not finish successfully. A twin that hung would be the real defect.
+            // The weaker assertion: the contract owes a Java caller only a finished, unsuccessful future.
             val future = client.asFuture { "should never run" }
             advanceUntilIdle()
 
             assertTrue("must not hang after shutdown", future.isDone)
             assertTrue("must not report success", future.isCompletedExceptionally)
-            // At most one: the coroutine starts UNDISPATCHED, observes the cancelled scope, and its
-            // completion may or may not need a main-thread turn depending on where it gave up. What
-            // must not happen is a *stream* of dispatches, i.e. work proceeding after shutdown.
+            // At most one: what must not happen is a stream of dispatches, i.e. work after shutdown.
             assertTrue("teardown must not keep dispatching", main.dispatches <= 1)
         }
 
@@ -126,8 +110,7 @@ class AsyncTwinTest {
 
             assertTrue(future.isCompletedExceptionally)
             val failure = runCatching { future.join() }.exceptionOrNull()
-            // `join()` wraps in `CompletionException`; `get()` would wrap in `ExecutionException`. The
-            // `FrakError` is the cause either way, which is what the `*Async` KDoc promises.
+            // `join()` wraps in `CompletionException`; the `FrakError` is the cause either way.
             assertTrue("cause must be the FrakError", failure?.cause is FrakError.MerchantResolutionFailed)
         }
 

@@ -7,16 +7,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * The [Interaction] factories, and the one thing an opaque type makes easy to get wrong.
- *
- * `Interaction` has no public way to read a value back — that is the point (see its KDoc) — so a
- * factory that dropped an argument, or an overload that forwarded the wrong default, would be
- * invisible from the outside. `InteractionTrackerTest` catches some of it downstream, through the JSON
- * body, but only for the fields it happens to assert. This reaches through the `internal` `Kind` and
- * checks every argument of every overload lands where it should, which is the same guard
- * `BuilderWiringTest` provides for the Builders.
- */
+/** The [Interaction] factories: the type is opaque, so a dropped argument is invisible from outside. */
 class InteractionFactoryTest {
     @Test
     fun `arrival carries all four fields`() {
@@ -49,7 +40,6 @@ class InteractionFactoryTest {
         assertEquals(42L, explicit.sharingTimestamp)
         assertEquals("order-1", explicit.purchaseId)
 
-        // The purchase-only overload: the common merchant call, "they shared, after this order".
         assertEquals(
             Interaction.sharing(sharingTimestamp = null, purchaseId = "order-1"),
             Interaction.sharing("order-1"),
@@ -59,9 +49,6 @@ class InteractionFactoryTest {
 
     @Test
     fun `equality is structural over the whole payload`() {
-        // The value is write-only, but the code that *builds* one is ordinary merchant code that
-        // wants a test, and without this the only available assertion is reference identity. iOS's
-        // twin is `Hashable` and pins the same thing.
         assertEquals(Interaction.sharing(), Interaction.sharing())
         assertEquals(Interaction.sharing().hashCode(), Interaction.sharing().hashCode())
         assertEquals(
@@ -76,8 +63,7 @@ class InteractionFactoryTest {
             Interaction.arrival("0xb", null, null, null),
         )
 
-        // And it prints its payload, because an interaction a merchant cannot log is one they cannot
-        // debug. The exact text is not a contract; containing the shape and a field is.
+        // The exact text of `toString` is not a contract; carrying the shape and a field is.
         val printed = Interaction.custom("newsletter").toString()
         assertTrue(printed, printed.contains("Custom") && printed.contains("newsletter"))
     }
@@ -105,9 +91,7 @@ class InteractionFactoryTest {
 
     @Test
     fun `custom copies the data map out of the caller's hands`() {
-        // The event outlives the call: it goes onto a durable queue and is read back by a drain that
-        // may run after the caller has returned. A caller mutating the map it passed in would
-        // otherwise change an event already enqueued.
+        // The event outlives the call: it goes onto a durable queue read back by a later drain.
         val mutable = mutableMapOf("step" to "2")
         val kind = Interaction.custom("checkout", mutable).kind as Interaction.Kind.Custom
 

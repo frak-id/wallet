@@ -15,7 +15,6 @@ struct FrakClientTests {
     private func makeClient(
         config: FrakConfig = FrakConfig(merchantId: FrakClientTests.merchantId),
         launcher: FakeAppLauncher = FakeAppLauncher(),
-        /// Supply this to inspect the durable queue afterwards; defaults to a throwaway path.
         queueURL: URL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
             .appendingPathComponent(EventQueue.fileName),
@@ -25,8 +24,7 @@ struct FrakClientTests {
         StubURLProtocol.handle(host: host, respond)
         let logger = FrakLogger(level: .none)
         let identityStore = InMemoryKeyValueStore()
-        // ONE instance shared by the client and identity store, as Frak.initialize wires it: two
-        // would memoise the persisted decision independently and drift on setTrackingEnabled.
+        // ONE instance shared by the client and identity store, as Frak.initialize wires it.
         let consent = TrackingConsent(
             store: identityStore,
             configDefault: config.trackingEnabled,
@@ -213,9 +211,6 @@ struct FrakClientTests {
         )
     }
 
-    /// The resolve request carries no user identifier (`x-frak-client-id` is set only by
-    /// `InteractionTracker`), so gating it on consent bought no privacy and cost the merchant
-    /// their own config, campaigns and reward copy. Tracking itself stays gated separately.
     @Test("resolveConfig still works with tracking off, and sends no client id")
     func resolveConfigIsNotGatedOnConsent() async throws {
         let log = RequestLog()
@@ -249,8 +244,6 @@ struct FrakClientTests {
         #expect(await client.isTrackingEnabled())
     }
 
-    /// The hard floor: letting the persisted value win outright would silently turn the SDK on
-    /// inside a merchant's staged-rollout build.
     @Test("setTrackingEnabled(true) cannot lift a compile-time trackingEnabled: false")
     func compileTimeDisableIsAHardFloor() async throws {
         let config = FrakConfig(merchantId: Self.merchantId, trackingEnabled: false)
@@ -262,9 +255,6 @@ struct FrakClientTests {
         #expect(await client.anonymousId == nil)
     }
 
-    /// The one-instance rule: `DefaultFrakClient` and `AnonymousIdStore` must read the same
-    /// `TrackingConsent`, or a withdrawal stops network calls while the identity store keeps
-    /// minting from its own memo.
     @Test("a runtime withdrawal reaches the identity store, not only the network gate")
     func withdrawalReachesTheIdentityStore() async throws {
         let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
@@ -275,8 +265,6 @@ struct FrakClientTests {
         #expect(await client.anonymousId == nil)
     }
 
-    /// The withdrawal recipe's first half: the id is still there afterwards, so a merchant who
-    /// wanted a pause got a pause. Erasure is `resetAnonymousId()`, deliberately separate.
     @Test("setTrackingEnabled(false) does not destroy the identity")
     func withdrawalIsAPauseNotAnErasure() async throws {
         let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
@@ -290,10 +278,7 @@ struct FrakClientTests {
         #expect(await client.anonymousId == before)
     }
 
-    /// The event must still be queued when consent is withdrawn, or the purge has nothing to
-    /// purge. A failing transport keeps the event on disk: the drain stops at the first failure.
-    /// Asserted against the queue file, not a request count, since a count cannot distinguish
-    /// "emptied" from "never drained".
+    /// The failing transport keeps the event on disk, so the queue file is the assertion.
     @Test("the documented withdrawal recipe stops tracking and drops what was queued")
     func withdrawalRecipeDropsTheQueue() async throws {
         let queueURL = FileManager.default.temporaryDirectory
@@ -309,8 +294,6 @@ struct FrakClientTests {
         let remaining = (try? Data(contentsOf: queueURL)) ?? Data()
         #expect(remaining.isEmpty, "withdrawal must leave nothing captured under the old decision")
 
-        // Second half of the recipe. The iOS delete cannot fail, so this always reports true;
-        // the return value exists for cross-platform contract parity.
         #expect(await client.resetAnonymousId())
     }
 
@@ -325,10 +308,7 @@ struct FrakClientTests {
         await client.shutdown()
         await client.shutdown()
 
-        // `track` still enqueues (the write is on the caller's task), so the observable
-        // difference is whether a drain follows. `scheduleDrain` uses `Task.init`, which does
-        // not inherit cancellation, so without the tracker's `stopped` flag this would still
-        // start a fresh drain.
+        // `track` still enqueues; the observable difference is whether a drain follows.
         let before = log.count
         _ = await client.track(.custom("after-shutdown"))
 
@@ -450,11 +430,7 @@ struct FrakClientTests {
 
     @Test("handleReferralLink tracks a v2 arrival when only the configured merchant id's case or whitespace differs")
     func handleReferralLinkToleratesMerchantIdCasing() async throws {
-        // Casing/whitespace can only live on the config side: FrakContextCodec requires a
-        // canonical lowercase UUID, so only FrakConfig.merchantId is free-typed. The link below
-        // uses the canonical merchantId with a different clientId, isolating settings.merchantId
-        // vs context.merchantId as the only variable — what ReferralArrival.sameMerchant
-        // normalises. Without that, this link would be dropped as foreign.
+        // Casing/whitespace can only live on the config side: the codec requires a canonical UUID.
         let requests = RequestLog()
         let client = makeClient(config: FrakConfig(merchantId: " \(Self.merchantId.uppercased()) ")) { request in
             requests.record(request)
@@ -519,9 +495,7 @@ struct FrakClientTests {
 
     @Test("openFrakApp opens the wallet even when the merchant never declared the scheme")
     func openFrakAppIgnoresARefusingProbe() async {
-        // canOpenURL answers false unless the merchant listed the wallet scheme in
-        // LSApplicationQueriesSchemes, which the SDK cannot inject. `open` is not gated by that
-        // list, so attempting it directly recovers a wallet that is installed but silent on the probe.
+        // canOpenURL answers false unless the merchant lists the scheme; `open` is not gated by it.
         let silentProbe = FakeAppLauncher(openableSchemes: ["frakwallet"], probeAnswers: false)
         let client = makeClient(launcher: silentProbe) { _ in
             StubResponse(status: 200, body: Self.resolveBody)
@@ -556,8 +530,7 @@ struct FrakClientTests {
             + "&returnScheme=frak-com.acme.app&sid=session-1"
         #expect(page.hasPrefix(expected))
 
-        // The fragment, never a search param: it is never sent to a server, never logged and
-        // never in a `Referer`, and the sheet loads this URL directly so it survives.
+        // The fragment, never a search param: it is never sent to a server or logged.
         let fragment = try #require(page.split(separator: "#", maxSplits: 1).last)
         #expect(fragment.hasPrefix("p="))
         #expect(fragment.count > "p=".count)

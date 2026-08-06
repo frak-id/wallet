@@ -3,12 +3,7 @@ package id.frak.sdk
 import id.frak.sdk.core.DefaultFrakClient
 import java.util.concurrent.CompletableFuture
 
-/**
- * Inbound referral links and the wallet app handoff. Obtained from [FrakClient.appLink].
- *
- * `*Async` twins, and why: see [ConfigApi]. [isFrakAppInstalled] has none — it does not suspend, so
- * Java can already call it.
- */
+/** Inbound referral links and the wallet app handoff. Obtained from [FrakClient.appLink]. */
 public class AppLinkApi internal constructor(
     private val core: DefaultFrakClient,
 ) {
@@ -32,7 +27,10 @@ public class AppLinkApi internal constructor(
     /** [installUrl] for Java. */
     public fun installUrlAsync(): CompletableFuture<String?> = core.asFuture { core.installUrl() }
 
-    /** Wallet's hosted install page for this device, carrying a fresh `frak-install-v1` proof, or null without an identity or a merchant to resolve. Not the store listing — that is [installUrl]. */
+    /**
+     * Wallet's hosted install page carrying a fresh proof, or null without an identity or a
+     * resolvable merchant. Not the store listing — that is [installUrl].
+     */
     public suspend fun installPageUrl(
         returnScheme: String,
         sessionId: String,

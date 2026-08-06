@@ -6,12 +6,8 @@ import en from "../../../i18n/locales/en/customized.json";
 import { getStep2Context, Steps } from "./Steps";
 import type { SharingReward } from "./types";
 
-/**
- * Runs against a real i18next instance loaded with the real locale file, not a
- * stub `t`. The whole point of the key split is which key each slot resolves
- * to — including i18next's context fallback, which a hand-written `t` mock
- * would quietly implement differently.
- */
+// real i18next against the real locale file: a stub `t` would not reproduce the
+// context fallback these tests are about
 beforeAll(async () => {
     await i18next.use(initReactI18next).init({
         lng: "en",
@@ -60,8 +56,6 @@ describe("Steps", () => {
     });
 
     it("keeps a period inside the copy out of the title", () => {
-        // The reason the split rule was replaced: the old first-period rule
-        // turned any price, decimal or abbreviation into the title boundary.
         render(
             <Steps reward={ready({ minPurchaseAmount: "10.50 €" })} t={t} />
         );
@@ -74,9 +68,7 @@ describe("Steps", () => {
     });
 
     it("falls back to the base title when only the description varies", () => {
-        // `title_min` deliberately does not exist — step 2's title is the same
-        // with and without a minimum, so only `description_min` is translated.
-        // This asserts i18next's context fallback, which that relies on.
+        // `title_min` deliberately does not exist; only `description_min` is translated
         render(<Steps reward={ready({ minPurchaseAmount: "10 €" })} t={t} />);
 
         expect(screen.getByText("Earn on every purchase.")).toBeInTheDocument();
@@ -116,7 +108,6 @@ describe("Steps", () => {
     it("appends the lockup note as an extra line on step 3", () => {
         render(<Steps reward={ready({ lockupDurationDays: 30 })} t={t} />);
 
-        // Appended, not substituted: step 3's own description survives.
         expect(
             screen.getByText("Install FRAK to collect your earnings.")
         ).toBeInTheDocument();
