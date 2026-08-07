@@ -99,6 +99,41 @@ func sharingDecision(
     return .showPage(navigation)
 }
 
+/// Sequencing for `SharingSheetModel.abandon(onSettled:)` — see 9.1 in
+/// `docs/plans/native-sdk/06-open-findings.md`. `share()`, `copy()` and `fallBack(to:)` are
+/// independent, un-cancelled tasks that can outlive the sheet (freely, for `copy()`, since no OS
+/// chooser covers it); a teardown with no better outcome must not report `.dismissed` while one
+/// of them is still resolving, or the real outcome lands on a callback that has already been
+/// nilled. `begin()`/`end()` bracket each of those calls; `abandon()` is the teardown asking
+/// "can I report now, or does the last one still running have to do it for me".
+///
+/// Pure counting, extracted here (outside the `#if canImport(UIKit)` gate `SharingSheetModel`
+/// lives behind) so this rule has a regression test that runs on the macOS test host — see
+/// `SharingSheetModel.attributions` for why the model itself needs no locking around it either.
+struct AttributionLedger: Equatable {
+    private(set) var inFlight = 0
+    private(set) var abandonRequested = false
+
+    mutating func begin() {
+        inFlight += 1
+    }
+
+    /// - Returns: true if this call is the one `abandon()` deferred to — the last attribution
+    ///   standing when an abandon was already requested.
+    @discardableResult
+    mutating func end() -> Bool {
+        inFlight -= 1
+        return inFlight == 0 && abandonRequested
+    }
+
+    /// - Returns: true if the caller may report/tear down immediately; false means a later
+    ///   `end()` will return true once, for whichever attribution is still in flight.
+    mutating func abandon() -> Bool {
+        abandonRequested = true
+        return inFlight == 0
+    }
+}
+
 /// The `products=` value the hosted sharing page's router parses as JSON. Nil rather than
 /// `[]`: the page skips the card section on an absent value, renders an empty one on `[]`.
 func sharingPageProductsJSON(_ products: [SharingProduct]) -> String? {

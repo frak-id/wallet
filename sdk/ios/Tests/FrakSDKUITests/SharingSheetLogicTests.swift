@@ -206,6 +206,71 @@ struct SharingSheetLogicTests {
     }
 }
 
+@Suite("AttributionLedger")
+struct AttributionLedgerTests {
+    @Test("abandon with nothing in flight settles immediately")
+    func abandonWithNothingInFlightSettlesNow() {
+        var ledger = AttributionLedger()
+        let settlesNow = ledger.abandon()
+        #expect(settlesNow)
+    }
+
+    @Test("abandon while an attribution is resolving defers")
+    func abandonDefersToAnInFlightAttribution() {
+        var ledger = AttributionLedger()
+        ledger.begin()
+        let settlesNow = ledger.abandon()
+        #expect(!settlesNow)
+    }
+
+    @Test("the attribution that empties the ledger is the one that settles a deferred abandon")
+    func endReportsOnceTheLedgerEmpties() {
+        // The exact race 9.1 is about: a swipe (`abandon`) lands while `copy()`'s `begin()` is
+        // still open, so the dismissal must wait for `copy()`'s own `end()` instead of winning.
+        var ledger = AttributionLedger()
+        ledger.begin()
+        let settlesNow = ledger.abandon()
+        #expect(!settlesNow)
+        let settlesFromEnd = ledger.end()
+        #expect(settlesFromEnd)
+    }
+
+    @Test("end before any abandon is requested never settles")
+    func endWithNoAbandonNeverSettles() {
+        var ledger = AttributionLedger()
+        ledger.begin()
+        let settlesFromEnd = ledger.end()
+        #expect(!settlesFromEnd)
+    }
+
+    @Test("only the last of several in-flight attributions settles a deferred abandon")
+    func onlyTheLastAttributionSettles() {
+        // `share()` and `copy()` are independently guarded; nothing stops both being in flight
+        // at once.
+        var ledger = AttributionLedger()
+        ledger.begin()
+        ledger.begin()
+        let settlesNow = ledger.abandon()
+        #expect(!settlesNow)
+        let firstEnd = ledger.end()
+        #expect(!firstEnd)
+        let secondEnd = ledger.end()
+        #expect(secondEnd)
+    }
+
+    @Test("abandon is idempotent to call twice while still deferred")
+    func abandonCalledTwiceStaysDeferred() {
+        var ledger = AttributionLedger()
+        ledger.begin()
+        let firstAbandon = ledger.abandon()
+        #expect(!firstAbandon)
+        let secondAbandon = ledger.abandon()
+        #expect(!secondAbandon)
+        let settlesFromEnd = ledger.end()
+        #expect(settlesFromEnd)
+    }
+}
+
 @Suite("SharingPageProductsJSON")
 struct SharingPageProductsJSONTests {
     private func product(details: ProductDetails? = nil) -> SharingProduct {

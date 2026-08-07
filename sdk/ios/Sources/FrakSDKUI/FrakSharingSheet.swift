@@ -4,10 +4,15 @@
 
     extension View {
         /// Presents the Frak sharing sheet while `isPresented` is true. Hoist onto a screen-level
-        /// view, not a list row: with `FrakConfig.preloadSharing` that warms one view per row.
+        /// view, not a list row: attaching this modifier always warms a pooled `WKWebView`, so one
+        /// per row is one engine per row.
         ///
-        /// - Parameter heightFraction: fraction of screen height, clamped to `0.3...1.0`.
-        /// - Parameter onResult: called once per presentation with the most significant outcome.
+        /// - Parameters:
+        ///   - isPresented: whether the sheet is up.
+        ///   - request: what to share.
+        ///   - heightFraction: fraction of screen height, clamped to `0.3...1.0`.
+        ///   - onResult: called once per presentation with the most significant outcome.
+        /// - Returns: `content` wrapped with the sheet's presentation, warm-up and teardown.
         public func frakSharingSheet(
             isPresented: Binding<Bool>,
             request: SharingRequest,
@@ -76,10 +81,17 @@
         }
 
         /// The single exit, whether the sheet closed itself or the user swiped it away.
+        ///
+        /// `onResult` is a completion handed to `SharingPresenter.finish`, not a value read
+        /// synchronously here: a share/copy/fallback attribution still resolving when the sheet
+        /// goes away can defer that completion — see `SharingSheetModel.abandon(onSettled:)` —
+        /// so `best` may keep changing after this call returns and before `onResult` actually
+        /// fires. `finish` never calls this closure more than once.
         private func finish(onlyIfUnpresented: Bool = false) {
-            guard presenter.finish(onlyIfUnpresented: onlyIfUnpresented) else { return }
-            onResult(best ?? .dismissed)
-            best = nil
+            presenter.finish(onlyIfUnpresented: onlyIfUnpresented) {
+                onResult(best ?? .dismissed)
+                best = nil
+            }
         }
     }
 
@@ -97,13 +109,15 @@
                     if let presentation = presenter.presentation {
                         PresentedSharingSession(presentation: presentation)
                     } else {
+                        // The background lives here rather than once at this view's root: once a
+                        // presentation exists, `PresentedSharingSession` has to pick between this
+                        // and `SheetBackground(clear: false)` for `contentLost`, and only it
+                        // observes the model that decides which.
                         SharingSheetSkeleton()
+                            .modifier(SheetBackground(clear: true))
                     }
                 }
                 .frame(height: sheetHeight)
-                // Without this the system sheet background shows as a seam wherever the page
-                // doesn't reach. iOS 16.4+ only.
-                .modifier(ClearSheetBackground())
             }
             .onAppear {
                 launch()
@@ -133,8 +147,22 @@
                     SharingSheetSkeleton()
                         .transition(.opacity)
                 }
+
+                if model.contentLost {
+                    // A renderer crash after the page painted: the (deliberately transparent —
+                    // see `SharingWebView.isOpaque`) web view now composites nothing. Not the
+                    // skeleton above, which pulses as though still loading, and not an error
+                    // screen: a dead renderer has nothing left to retry. Just a real surface
+                    // behind a sheet the user can still swipe away.
+                    ContentLostSurface()
+                }
             }
             .animation(.easeInOut(duration: Self.fadeDuration), value: model.pageVisible)
+            // Without this the system sheet background shows as a seam wherever the page
+            // doesn't reach — except once `contentLost`, when the page isn't reaching anywhere
+            // and a transparent sheet would be a hole straight through to whatever is behind it.
+            // iOS 16.4+ only.
+            .modifier(SheetBackground(clear: !model.contentLost))
             // Bounds how long the skeleton may cover the page when `SharingPageAction.ready`,
             // the real paint signal, never arrives.
             .task(id: model.pageLoaded) {
@@ -152,15 +180,27 @@
         private static let skeletonGrace: TimeInterval = 0.4
     }
 
-    /// Clears the sheet's own background where the OS allows it. A modifier rather than an
-    /// inline `if #available`: the two branches return different opaque types.
-    private struct ClearSheetBackground: ViewModifier {
+    /// Clears the sheet's own background where the OS allows it, or leaves the system default in
+    /// place. A modifier rather than an inline `if #available`: the two branches return different
+    /// opaque types. `clear` is false only for `SharingSheetModel.contentLost` — see
+    /// `ContentLostSurface`.
+    private struct SheetBackground: ViewModifier {
+        let clear: Bool
         func body(content: Content) -> some View {
-            if #available(iOS 16.4, *) {
+            if #available(iOS 16.4, *), clear {
                 content.presentationBackground(.clear)
             } else {
                 content
             }
+        }
+    }
+
+    /// What covers the sheet once `SharingSheetModel.contentLost` is set. Matches
+    /// `SharingSheetSkeleton`'s own `Color(.systemBackground)` fill rather than inventing a new
+    /// treatment — deliberately plain, since this is neither a loading state nor an error one.
+    private struct ContentLostSurface: View {
+        var body: some View {
+            Color(.systemBackground)
         }
     }
 #endif

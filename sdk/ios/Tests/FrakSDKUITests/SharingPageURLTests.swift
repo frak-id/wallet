@@ -1,4 +1,4 @@
-import FrakSDK
+@_spi(FrakInternal) import FrakSDK
 import Testing
 
 @testable import FrakSDKUI

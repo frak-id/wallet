@@ -5,8 +5,8 @@
     import SwiftUI
     import UIKit
 
-    // `SharingSession`, `SharingNavigation` and `sharingDecision` live in SharingSheetLogic.swift,
-    // outside this `#if`, so they stay reachable from a macOS test host.
+    // `SharingSession`, `SharingNavigation`, `sharingDecision` and `AttributionLedger` live in
+    // SharingSheetLogic.swift, outside this `#if`, so they stay reachable from a macOS test host.
 
     /// The sheet's behaviour, kept out of the view. Ordering matters — attribute the share
     /// after the OS chooser, confirm after that, never fall back twice.
@@ -28,6 +28,12 @@
 
         /// Document-finished. Observable so the sheet can bound its skeleton's wait.
         @Published private(set) var pageLoaded = false
+
+        /// Set only by a renderer crash after the page had painted (see `onPageUnavailable`'s
+        /// `pageLoaded` branch). `SharingWebView` is `isOpaque = false` and `FrakSharingSheet`
+        /// clears the sheet's own background for the normal case, so a transparent, contentless
+        /// sheet would otherwise be a see-through hole where the page used to be.
+        @Published private(set) var contentLost = false
 
         /// Every outcome as it happens; the caller keeps the most significant.
         var onOutcome: ((SharingResult) -> Void)?
@@ -65,9 +71,32 @@
         private var shareInFlight = false
         /// The `copy()` half of `shareInFlight`: two taps would bill two interactions for one copy.
         private var copyInFlight = false
+        /// Guards the install fetch + navigation exactly like `shareInFlight`/`copyInFlight`: the
+        /// page's footer stays tappable across this native round trip to `installPageURL`, and
+        /// two taps would fetch and navigate to two install pages, racing each other on the one
+        /// shared web view. Unlike `shareInFlight` (never cleared on success — the confirmation
+        /// screen has no Share button), this *is* cleared once the user is plausibly back on a
+        /// page that offers Install again: `onPageUnavailable`'s install-page recovery, and
+        /// `shareAgain`. It is never cleared on the success path (`showingInstallPage = true`) —
+        /// that document owns its own footer, not this one.
+        private var installInFlight = false
         /// On the wallet's install page rather than the sharing page, so `onPageUnavailable` can
         /// tell a failed install page apart from a failed sharing page.
         private var showingInstallPage = false
+
+        /// Counts `share()`/`copy()`/`fallBack(to:)` calls that can still produce a real outcome,
+        /// so `abandon(onSettled:)` can defer a `.dismissed` report to whichever one is still
+        /// resolving instead of racing it. Plain `AttributionLedger` state, not
+        /// `AtomicInteger`/`AtomicBoolean` the way Android's `SharingSheetState` needs: this whole
+        /// type is `@MainActor`, so every read and write of `attributions` already runs
+        /// serialized on one thread. Android's atomics exist because its equivalent work crosses
+        /// `Dispatchers.Default` and `Main.immediate`; there is no second dispatcher here for
+        /// `abandon()` and an in-flight `copy()` continuation to interleave on, so actor isolation
+        /// alone is the mutual exclusion Android buys with atomics.
+        private var attributions = AttributionLedger()
+        /// Set by `abandon(onSettled:)` when it had to defer; the attribution that empties
+        /// `attributions` calls it once, from `endAttribution()`.
+        private var onAbandonSettled: (() -> Void)?
 
         init(
             sessionId: String,
@@ -145,6 +174,10 @@
             // two interactions for one share.
             guard !shareInFlight else { return }
             shareInFlight = true
+            // Counted for the whole call: `abandon(onSettled:)` must not report `.dismissed`
+            // while the chooser or its tracking is still resolving.
+            attributions.begin()
+            defer { endAttribution() }
             // After the chooser, only on success: this interaction pays out, so recording it on
             // intent would reward a cancelled chooser.
             guard await NativeShare.share(link: session.link, title: session.shareTitle) else {
@@ -163,6 +196,12 @@
             guard let session else { return }
             guard !copyInFlight else { return }
             copyInFlight = true
+            // No chooser covers this call, so it is the case 9.1 is actually about: a swipe
+            // lands squarely inside `await trackSharing()` below with nothing else on screen to
+            // stop it. Counting it here is what lets `abandon(onSettled:)` defer instead of
+            // reporting `.dismissed` over the `.copied` this is about to produce.
+            attributions.begin()
+            defer { endAttribution() }
             // Before the copy, unlike `share()`: there is no chooser to cancel.
             await trackSharing()
             NativeShare.copy(session.link)
@@ -187,11 +226,21 @@
                 // the failed install page's own URL, leaving the user nowhere.
                 let recovery = pageNavigation(confirmed: true)
                 showingInstallPage = false
+                // Back on a page that plausibly offers Install again (the confirmation view), so
+                // a second tap must be able to fetch a fresh page instead of finding itself
+                // permanently locked out by this session's first attempt.
+                installInFlight = false
                 recovery.map { webView?.navigate($0) }
                 return
             }
-            // `pageLoaded` matters: a content-process crash after the page painted arrives here
-            // too, and a chooser then would be a share the user never asked for.
+            // A content-process crash after the page painted: raising a tier-3 chooser now would
+            // be a share the user never asked for, and the web view (deliberately transparent —
+            // see `SharingWebView.isOpaque`) now composites nothing, so `contentLost` tells the
+            // sheet to cover it instead of falling back.
+            if pageLoaded {
+                contentLost = true
+                return
+            }
             guard
                 case .nativeShare(let session) = sharingDecision(
                     session: session,
@@ -207,8 +256,17 @@
         func onPageAction(_ action: SharingPageAction) {
             switch action {
             case .install:
+                guard let session, !installInFlight else { return }
+                installInFlight = true
+                // Counted like `share()`/`copy()`, and for the same reason: `installPageURL` is a
+                // network round trip a user can dismiss straight through, and the `.installStarted`
+                // on the far side of it is a real outcome. Android wraps this action in
+                // `launchAttribution` for exactly this; iOS had the guard but not the ledger.
+                // Begun here rather than inside the `Task` so a dismissal cannot slip between the
+                // tap and the task's first execution.
+                attributions.begin()
                 Task {
-                    guard let session else { return }
+                    defer { endAttribution() }
                     // The install page rather than the store: it is the only iOS route that
                     // keeps attribution.
                     guard
@@ -230,6 +288,7 @@
                 if let navigation = pageNavigation(confirmed: false) {
                     shareInFlight = false
                     copyInFlight = false
+                    installInFlight = false
                     // Back on the sharing page — a later load failure belongs to it again.
                     showingInstallPage = false
                     webView?.navigate(navigation)
@@ -479,6 +538,10 @@
         private func fallBack(to session: SharingSession) async {
             guard !fellBack else { return }
             fellBack = true
+            // Same reason as `share()`/`copy()`: this can run from `onDeadline()`'s own detached
+            // `Task`, well after the sheet that triggered it has gone.
+            attributions.begin()
+            defer { endAttribution() }
             settleContent()
 
             // Same rule as `share()`: the interaction follows the chooser rather than announcing it.
@@ -519,6 +582,34 @@
         private func settleContent() {
             deadline?.cancel()
             deadline = nil
+        }
+
+        /// Called once from `SharingPresentation.dispose()`: the sheet is going away with no
+        /// explicit terminal outcome (a swipe, or the page's own Dismiss action reaching `close()`
+        /// through the same teardown). `share()`/`copy()`/`fallBack(to:)` are independent,
+        /// deliberately un-cancelled tasks that can outlive the sheet — for `copy()` that's the
+        /// whole call, since no OS chooser covers it — so reporting `.dismissed` unconditionally
+        /// here would race whichever of them is still resolving and win, dropping the real outcome
+        /// on a callback `dispose()` is about to nil anyway. `attributions` decides instead.
+        ///
+        /// - Parameter onSettled: called exactly once — synchronously if nothing is in flight, or
+        ///   later from `endAttribution()` once the last attribution finishes. `dispose()` doesn't
+        ///   nil `onOutcome`/`onClose` or release anything until this fires, which is what lets a
+        ///   deferred real outcome still reach `onOutcome` before that channel closes.
+        func abandon(onSettled: @escaping () -> Void) {
+            guard attributions.abandon() else {
+                onAbandonSettled = onSettled
+                return
+            }
+            onSettled()
+        }
+
+        /// Every `share`/`copy`/`fallBack(to:)` call reaches this via `defer`, abandoned or not;
+        /// it only does something when this was the attribution `abandon(onSettled:)` was waiting on.
+        private func endAttribution() {
+            guard attributions.end() else { return }
+            onAbandonSettled?()
+            onAbandonSettled = nil
         }
 
         // `sharingPageProductsJSON` lives in SharingSheetLogic.swift, outside this `#if`.

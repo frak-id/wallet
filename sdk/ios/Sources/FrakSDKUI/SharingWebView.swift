@@ -140,8 +140,10 @@
 
         /// A full navigation; fragment activations go through `navigate(_:)` instead.
         ///
-        /// - Parameter baseURL: the caller's own string, compared with `==` against
-        ///   `SharingSession.warmBaseURL`, so it must not rely on `URL(string:)` round-tripping.
+        /// - Parameters:
+        ///   - url: the address to load.
+        ///   - baseURL: the caller's own string, compared with `==` against
+        ///     `SharingSession.warmBaseURL`, so it must not rely on `URL(string:)` round-tripping.
         func load(_ url: URL, baseURL: String? = nil) {
             loadedBaseURL = (baseURL ?? url.absoluteString).components(separatedBy: "#")[0]
             documentReady = false
@@ -233,7 +235,7 @@
         func webView(
             _ webView: WKWebView,
             decidePolicyFor navigationAction: WKNavigationAction,
-            decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+            decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void
         ) {
             guard let url = navigationAction.request.url else {
                 decisionHandler(.cancel)
@@ -299,7 +301,7 @@
         func webView(
             _ webView: WKWebView,
             decidePolicyFor navigationResponse: WKNavigationResponse,
-            decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
+            decisionHandler: @escaping @MainActor @Sendable (WKNavigationResponsePolicy) -> Void
         ) {
             guard navigationResponse.isForMainFrame,
                 let http = navigationResponse.response as? HTTPURLResponse,

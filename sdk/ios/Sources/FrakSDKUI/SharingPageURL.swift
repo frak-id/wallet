@@ -1,4 +1,4 @@
-import FrakSDK
+@_spi(FrakInternal) import FrakSDK
 
 // Hosted /sharing URL the sheet's web view loads. No bridge back to native: state
 // goes in as query params, comes out as an intercepted navigation to returnScheme://result.

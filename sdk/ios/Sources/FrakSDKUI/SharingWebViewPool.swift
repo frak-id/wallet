@@ -3,11 +3,41 @@
     import FrakSDK
 
     /// Holds one sharing `WKWebView` while a share surface is on screen, so presenting costs
-    /// a fragment change instead of an engine boot. Gated behind `FrakConfig.preloadSharing`.
+    /// a fragment change instead of an engine boot. Driven by `SharingPresenter.warm()`, which is
+    /// the only control: an explicit `warm()` always warms.
+    ///
+    /// No `pause()`/`resume()` here, unlike Android's `SharingWebViewHandle` (finding 9.5).
+    /// Investigated and rejected, not overlooked — record of what was checked:
+    ///
+    /// A `WKWebView`, like any `UIView`, is composited by Core Animation only as part of a
+    /// window's layer tree; a view that has never been in a window has nothing for the
+    /// compositor to draw. The pooled view here never is one, for the entire warm period: `warm`
+    /// and `acquire` only ever call methods on the bare `SharingWebView`/`WKWebView` instance —
+    /// nothing in this file or `SharingWebView.swift` inserts it into a view hierarchy — and it
+    /// only becomes part of one when `SharingWebViewContainer.makeUIView` builds it for an
+    /// actually-presented sheet (`FrakSharingSheet`'s `PresentedSharingSession`, which SwiftUI
+    /// only constructs once `SharingPresenter.presentation` is non-nil, i.e. after `acquire()`
+    /// has already been called at the tap). `release()` then explicitly `removeFromSuperview()`s
+    /// the view before handing it back to `warm()`, so the invariant holds on the way back in too.
+    /// So the cost 9.5 describes on Android — a booted page compositing for as long as the
+    /// merchant's screen is up — has no iOS analogue to fix: the warm view is already off the
+    /// compositor by construction, not just momentarily.
+    ///
+    /// What's left is JavaScript/timers continuing in the WebContent process. Android's own
+    /// writeup for `pause()`/`resume()` notes `onPause()` doesn't stop that either — only
+    /// `pauseTimers()` does, and that is process-global and would reach a merchant's own web
+    /// views, so it is rejected there too. WebKit already throttles timers/`requestAnimationFrame`
+    /// for a page it doesn't consider visible, which an unattached view always is, on Safari's own
+    /// background-tab logic. There is no public API to suspend a single `WKWebView`'s JavaScript
+    /// short of that.
+    ///
+    /// Rejected alternatives, for completeness: `isHidden` is inert on a view with no window to
+    /// hide from, and toggling it adds a resume-forgetting failure mode for no measured gain;
+    /// `WKWebViewConfiguration.suppressesIncrementalRendering` only defers the first paint of a
+    /// *subsequent* load, not ongoing compositing, so it doesn't address 9.5's concern at all.
     @MainActor
     final class SharingWebViewPool {
         private let walletOrigin: String
-        private let preload: Bool
 
         private var pooled: SharingWebView?
 
@@ -17,9 +47,8 @@
 
         private var destroyed = false
 
-        init(walletOrigin: String, preload: Bool) {
+        init(walletOrigin: String) {
             self.walletOrigin = walletOrigin
-            self.preload = preload
         }
 
         var warmView: SharingWebView? { lent ? nil : pooled }
@@ -29,7 +58,7 @@
         /// Boots the pooled view against `url`; only a change of URL does work. `url` must be
         /// the real merchant page (`SharingPageURL.warm`) — the merchant-keyed work is the slow part.
         func warm(_ url: String) {
-            guard preload, !destroyed, warmURL != url, let target = URL(string: url) else { return }
+            guard !destroyed, warmURL != url, let target = URL(string: url) else { return }
             warmURL = url
             let trace = SharingTrace()
             trace.mark("warm load starting")
@@ -52,7 +81,7 @@
         /// The view the sheet should present, already bound to `binding`. Detached from any
         /// previous superview first: a reopened sheet can race SwiftUI's own removal.
         func acquire(_ binding: SharingWebViewBinding) -> SharingWebView {
-            guard preload, let reused = pooled, !lent else {
+            guard let reused = pooled, !lent else {
                 let view = makeView()
                 view.bind(binding)
                 return view
