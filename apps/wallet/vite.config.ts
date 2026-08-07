@@ -76,6 +76,34 @@ const tauriAlias = isTauri
           { find: /^tauri-plugin-.*$/, replacement: tauriStub },
       ];
 
+// `/sharing` and `/install` are served from their own build on the web
+// (`vite.standalone.config.ts` + nginx exact-match locations), so the SPA
+// copies of those two pages are Tauri-only. Swapping the views for redirect
+// stubs on the web build keeps them — and `sonner`, `CodeInput` and the
+// pending-action tree behind them — out of `feature-social`, which every
+// `_protected-fullscreen` route also pulls. See `StandaloneRedirect.tsx`.
+//
+// Only the views are aliased, not the route files: the routes stay in
+// `routeTree.gen.ts` for both targets, so the generated tree never depends on
+// the build and `to: "/install"` keeps typechecking.
+const standaloneRedirectStub = path.resolve(
+    __dirname,
+    "./app/module/common/component/StandaloneRedirect.tsx"
+);
+
+const standalonePageAlias = isTauri
+    ? []
+    : [
+          {
+              find: /^@\/module\/sharing\/component\/SharingView$/,
+              replacement: standaloneRedirectStub,
+          },
+          {
+              find: /^@\/module\/install\/component\/InstallView$/,
+              replacement: standaloneRedirectStub,
+          },
+      ];
+
 // Code-splitting groups for Rolldown. Same shape for web and Tauri.
 //
 // Tauri's `tauri://` protocol handler is faster than HTTP/2+CDN per asset
@@ -404,6 +432,7 @@ export default defineConfig(
                           ]
                         : []),
                     ...tauriAlias,
+                    ...standalonePageAlias,
                 ],
             },
             preview: {
