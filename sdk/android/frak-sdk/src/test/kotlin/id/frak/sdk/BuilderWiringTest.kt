@@ -60,7 +60,6 @@ class BuilderWiringTest {
                 .trackingEnabled(false)
                 .logLevel(FrakLogLevel.WARN)
                 .logSink(sink)
-                .preloadSharing(true)
                 .build()
 
         assertEquals("merchant-id", config.merchantId)
@@ -71,7 +70,6 @@ class BuilderWiringTest {
         assertFalse(config.trackingEnabled)
         assertEquals(FrakLogLevel.WARN, config.logLevel)
         assertSame(sink, config.logSink)
-        assertTrue(config.preloadSharing)
     }
 
     @Test
@@ -85,7 +83,6 @@ class BuilderWiringTest {
         assertTrue(config.trackingEnabled)
         assertEquals(FrakLogLevel.NONE, config.logLevel)
         assertNull(config.logSink)
-        assertFalse(config.preloadSharing)
 
         // FrakMetadata's own five defaults, which `FrakConfig.Builder` starts from.
         assertNull(config.metadata.name)

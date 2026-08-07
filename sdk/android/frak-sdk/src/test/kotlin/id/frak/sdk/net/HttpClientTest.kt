@@ -1,6 +1,11 @@
+// Opted in for `FrakSdkVersion.HEADER_NAME`, which is `@InternalFrakApi`: this asserts the wire
+// header a merchant never names.
+@file:OptIn(InternalFrakApi::class)
+
 package id.frak.sdk.net
 
 import id.frak.sdk.FrakSdkVersion
+import id.frak.sdk.InternalFrakApi
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLogLevel
 import id.frak.sdk.core.FrakLogSink

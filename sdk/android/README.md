@@ -64,11 +64,11 @@ Entry point: `Frak.initialize`, `Frak.client`, `Frak.clientOrNull`, `Frak.isInit
 
 | Namespace | Members |
 | --- | --- |
-| `config` | `resolve`, `updates` (`resolveAsync` for Java; `updates` is a `StateFlow` and has no Java form) |
+| `config` | `resolve` (+ `resolveAsync`). Stale-while-revalidate with a 5-minute freshness window; pass `forceRefresh = true` to skip both the cache and the backoff |
 | `rewards` | `campaigns`, `best` (+ `campaignsAsync`, `bestAsync`) |
 | `sharing` | `buildLink` (+ `buildLinkAsync`) |
 | `tracking` | `track`, `purchase` (+ `trackAsync`, `purchaseAsync`) |
-| `appLink` | `handleReferral`, `isFrakAppInstalled`, `openFrakApp`, `installUrl`, `installPageUrl` (+ an `*Async` for each except `isFrakAppInstalled`, which never suspended) |
+| `appLink` | `handleReferral`, `isFrakAppInstalled`, `openFrakApp`, `installPageUrl` (+ an `*Async` for each except `isFrakAppInstalled`, which never suspended) |
 
 Supporting public types: `FrakContext`, `SharingRequest`, `SharingProduct`, `ProductDetails`, `RewardRequest`, `AttributionParams`, `Interaction`, `FrakResult`, `OpenAppResult`, `DeepLinkHandling`, `FrakLogSink`, `FrakConfig`, `FrakEnvironment`, `FrakMetadata`, `FrakError`, `FrakLogger`.
 

@@ -194,8 +194,8 @@ internal class SharingHost private constructor(
     }
 
     /**
-     * Null until `Frak.initialize` has run: the pool needs a wallet origin and the `preloadSharing`
-     * flag. Re-tried on every call, so a merchant who initializes late still gets a pool.
+     * Null until `Frak.initialize` has run: the pool needs a wallet origin. Re-tried on every
+     * call, so a merchant who initializes late still gets a pool.
      */
     private fun poolOrNull(): SharingWebViewPool? {
         pool?.let { return it }
@@ -203,7 +203,6 @@ internal class SharingHost private constructor(
         return SharingWebViewPool(
             context = webViewContext,
             walletOrigin = Frak.client.environment.wallet,
-            preload = Frak.preloadSharing,
         ).also { pool = it }
     }
 

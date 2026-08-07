@@ -10,5 +10,7 @@ package id.frak.sdk
     message = "Internal to the Frak SDK; not covered by compatibility guarantees.",
 )
 @Retention(AnnotationRetention.BINARY)
-@Target(AnnotationTarget.CLASS)
+// PROPERTY as well as CLASS: `FrakSdkVersion`'s wire constants are members of an otherwise
+// merchant-facing object, so the marker has to land on the property, not the enclosing type.
+@Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 public annotation class InternalFrakApi

@@ -5,14 +5,13 @@ import android.view.ViewGroup
 
 /**
  * Holds one sharing `WebView` for as long as its hosting screen is alive, so presenting a sheet
- * costs a navigation rather than engine startup. Gated behind
- * [id.frak.sdk.core.FrakConfig.preloadSharing]. [context] must be [SharingHost]'s
+ * costs a navigation rather than engine startup. Driven by [SharingHost.warm], which is the only
+ * control: an explicit `warm()` always warms. [context] must be [SharingHost]'s
  * `MutableContextWrapper`: a `WebView` keeps a hard reference to its construction context.
  */
 internal class SharingWebViewPool(
     private val context: Context,
     private val walletOrigin: String,
-    private val preload: Boolean,
 ) {
     private var pooled: SharingWebViewHandle? = null
 
@@ -33,7 +32,6 @@ internal class SharingWebViewPool(
      * reporting itself as viewed. Cheap to call repeatedly; only a change of URL does work.
      */
     fun warm(url: String) {
-        if (!preload) return
         if (destroyed) return
         if (warmUrl == url) return
         warmUrl = url
@@ -65,7 +63,7 @@ internal class SharingWebViewPool(
      * parent first: a reopened sheet can race Compose's own removal, and re-parenting throws.
      */
     fun acquire(binding: SharingWebViewBinding): SharingWebViewHandle {
-        val reused = if (preload) pooled else null
+        val reused = pooled
         if (reused == null || lent) return newHandle().also { it.bind(binding) }
         lent = true
         reused.view.removeFromParent()

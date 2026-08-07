@@ -98,7 +98,6 @@ final class FrakSdkJavaCallSiteFixture {
 
         CompletableFuture<Boolean> handled = client.getAppLink().handleReferralAsync("https://acme.example/?fCtx=x");
         CompletableFuture<OpenAppResult> opened = client.getAppLink().openFrakAppAsync();
-        CompletableFuture<String> storeUrl = client.getAppLink().installUrlAsync();
         CompletableFuture<String> installPage = client.getAppLink()
                 .installPageUrlAsync("acmeapp", "session-1");
 

@@ -3,15 +3,12 @@ public final class id/frak/sdk/AppLinkApi {
 	public final fun handleReferralAsync (Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
 	public final fun installPageUrl (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun installPageUrlAsync (Ljava/lang/String;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
-	public final fun installUrl (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public final fun installUrlAsync ()Ljava/util/concurrent/CompletableFuture;
 	public final fun isFrakAppInstalled ()Z
 	public final fun openFrakApp (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun openFrakAppAsync ()Ljava/util/concurrent/CompletableFuture;
 }
 
 public final class id/frak/sdk/ConfigApi {
-	public final fun getUpdates ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun resolve (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun resolve (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun resolveAsync ()Ljava/util/concurrent/CompletableFuture;
@@ -22,7 +19,6 @@ public final class id/frak/sdk/Frak {
 	public static final field INSTANCE Lid/frak/sdk/Frak;
 	public static final fun getClient ()Lid/frak/sdk/FrakClient;
 	public static final fun getClientOrNull ()Lid/frak/sdk/FrakClient;
-	public static final fun getPreloadSharing ()Z
 	public static final fun initialize (Landroid/content/Context;Lid/frak/sdk/core/FrakConfig;)V
 	public static final fun isInitialized ()Z
 	public static final fun parseReferralLink (Ljava/lang/String;)Lid/frak/sdk/sharing/FrakContext;
@@ -50,8 +46,6 @@ public final class id/frak/sdk/FrakClient {
 public final class id/frak/sdk/FrakSdkVersion {
 	public static final field INSTANCE Lid/frak/sdk/FrakSdkVersion;
 	public static final fun getCURRENT ()Ljava/lang/String;
-	public static final fun getHEADER_NAME ()Ljava/lang/String;
-	public static final fun getQUERY_PARAMETER_NAME ()Ljava/lang/String;
 }
 
 public abstract interface annotation class id/frak/sdk/InternalFrakApi : java/lang/annotation/Annotation {
@@ -219,7 +213,6 @@ public final class id/frak/sdk/core/FrakConfig {
 	public final fun getMerchantId ()Ljava/lang/String;
 	public final fun getMetadata ()Lid/frak/sdk/core/FrakMetadata;
 	public final fun getPackageId ()Ljava/lang/String;
-	public final fun getPreloadSharing ()Z
 	public final fun getTrackingEnabled ()Z
 }
 
@@ -236,14 +229,12 @@ public final class id/frak/sdk/core/FrakConfig$Builder {
 	public final fun getMerchantId ()Ljava/lang/String;
 	public final fun getMetadata ()Lid/frak/sdk/core/FrakMetadata;
 	public final fun getPackageId ()Ljava/lang/String;
-	public final fun getPreloadSharing ()Z
 	public final fun getTrackingEnabled ()Z
 	public final fun logLevel (Lid/frak/sdk/core/FrakLogLevel;)Lid/frak/sdk/core/FrakConfig$Builder;
 	public final fun logSink (Lid/frak/sdk/core/FrakLogSink;)Lid/frak/sdk/core/FrakConfig$Builder;
 	public final fun merchantId (Ljava/lang/String;)Lid/frak/sdk/core/FrakConfig$Builder;
 	public final fun metadata (Lid/frak/sdk/core/FrakMetadata;)Lid/frak/sdk/core/FrakConfig$Builder;
 	public final fun packageId (Ljava/lang/String;)Lid/frak/sdk/core/FrakConfig$Builder;
-	public final fun preloadSharing (Z)Lid/frak/sdk/core/FrakConfig$Builder;
 	public final fun setDeepLink (Lid/frak/sdk/core/DeepLinkHandling;)V
 	public final fun setEnv (Lid/frak/sdk/core/FrakEnvironment;)V
 	public final fun setLogLevel (Lid/frak/sdk/core/FrakLogLevel;)V
@@ -251,7 +242,6 @@ public final class id/frak/sdk/core/FrakConfig$Builder {
 	public final fun setMerchantId (Ljava/lang/String;)V
 	public final fun setMetadata (Lid/frak/sdk/core/FrakMetadata;)V
 	public final fun setPackageId (Ljava/lang/String;)V
-	public final fun setPreloadSharing (Z)V
 	public final fun setTrackingEnabled (Z)V
 	public final fun trackingEnabled (Z)Lid/frak/sdk/core/FrakConfig$Builder;
 }

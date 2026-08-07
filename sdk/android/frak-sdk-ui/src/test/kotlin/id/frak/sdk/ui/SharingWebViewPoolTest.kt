@@ -16,30 +16,19 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
-/** The pool's two modes: a per-sheet factory with preloading off, a lent-and-returned view with it on. */
+/** Lending and returning the single pooled view. An explicit `warm` is the only thing that fills it. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class SharingWebViewPoolTest {
     private val context: Context get() = ApplicationProvider.getApplicationContext()
 
-    private fun pool(preload: Boolean) = SharingWebViewPool(context, WALLET_ORIGIN, preload)
+    private fun pool() = SharingWebViewPool(context, WALLET_ORIGIN)
 
     private fun binding(sessionId: String = SESSION_ID) = SharingWebViewBinding(sessionId = sessionId)
 
     @Test
-    fun `without preloading every sheet gets its own view`() {
-        val pool = pool(preload = false)
-        pool.warm(WARM_URL)
-
-        val first = pool.acquire(binding())
-        val second = pool.acquire(binding())
-
-        assertNotSame("an unpooled view must not be shared between sheets", first.view, second.view)
-    }
-
-    @Test
-    fun `without preloading a returned view is destroyed`() {
-        val pool = pool(preload = false)
+    fun `a view acquired before any warm is destroyed on release`() {
+        val pool = pool()
         val handle = pool.acquire(binding())
 
         pool.release(handle)
@@ -49,7 +38,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `warming loads the wallet origin before any sheet exists`() {
-        val pool = pool(preload = true)
+        val pool = pool()
 
         pool.warm(WARM_URL)
         val handle = pool.acquire(binding())
@@ -63,7 +52,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `warming twice reuses the first view`() {
-        val pool = pool(preload = true)
+        val pool = pool()
 
         pool.warm(WARM_URL)
         val first = pool.acquire(binding())
@@ -76,7 +65,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `the warm view is the one the sheet presents`() {
-        val pool = pool(preload = true)
+        val pool = pool()
         pool.warm(WARM_URL)
 
         val handle = pool.acquire(binding())
@@ -89,7 +78,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `a returned view goes back to the warm url`() {
-        val pool = pool(preload = true)
+        val pool = pool()
         pool.warm(WARM_URL)
         val handle = pool.acquire(binding())
         handle.load("$WALLET_ORIGIN/sharing?embed=native&merchantId=m&sid=$SESSION_ID")
@@ -105,7 +94,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `a returned view stops answering to its old session`() {
-        val pool = pool(preload = true)
+        val pool = pool()
         pool.warm(WARM_URL)
         var actions = 0
         val handle = pool.acquire(SharingWebViewBinding(sessionId = SESSION_ID, onAction = { actions++ }))
@@ -118,7 +107,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `a second sheet cannot take a view that is still lent`() {
-        val pool = pool(preload = true)
+        val pool = pool()
         pool.warm(WARM_URL)
 
         val lent = pool.acquire(binding("first"))
@@ -129,7 +118,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `the warm load finishing after the sheet took the view is not the sheet's page`() {
-        val pool = pool(preload = true)
+        val pool = pool()
         pool.warm(WARM_URL) // onPageStarted for the warm URL has fired; onPageFinished has not
         var ready = 0
         var visible = 0
@@ -153,7 +142,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `the session's own navigation still reports readiness`() {
-        val pool = pool(preload = true)
+        val pool = pool()
         pool.warm(WARM_URL)
         var ready = 0
         val handle = pool.acquire(SharingWebViewBinding(sessionId = SESSION_ID, onPageReady = { ready++ }))
@@ -167,7 +156,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `destroying the pool destroys the warm view`() {
-        val pool = pool(preload = true)
+        val pool = pool()
         pool.warm(WARM_URL)
         val handle = pool.acquire(binding())
         pool.release(handle)
@@ -209,7 +198,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `an unfinished warm view cannot be activated on top of`() {
-        val pool = pool(preload = true)
+        val pool = pool()
         pool.warm(WARM_URL)
 
         val handle = pool.acquire(binding())
@@ -220,7 +209,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `a finished warm view can be activated on top of`() {
-        val pool = pool(preload = true)
+        val pool = pool()
         pool.warm(WARM_URL)
         pool.finishWarmLoad()
 
@@ -232,7 +221,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `a warm view is paused once its document finishes, and resumed when a sheet takes it`() {
-        val pool = pool(preload = true)
+        val pool = pool()
         pool.warm(WARM_URL)
         val warm = requireNotNull(pool.warmHandle)
 
@@ -247,7 +236,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `a re-warmed view is awake for its own load and paused again after it`() {
-        val pool = pool(preload = true)
+        val pool = pool()
         pool.warm(WARM_URL)
         pool.finishWarmLoad()
         val handle = pool.acquire(binding())
@@ -261,7 +250,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `a returned view is re-warmed, not left on the session's page`() {
-        val pool = pool(preload = true)
+        val pool = pool()
         pool.warm(WARM_URL)
         pool.finishWarmLoad()
         val handle = pool.acquire(binding())
@@ -278,7 +267,7 @@ class SharingWebViewPoolTest {
 
     @Test
     fun `destroying the pool while a sheet holds the view leaves it to that sheet`() {
-        val pool = pool(preload = true)
+        val pool = pool()
         pool.warm(WARM_URL)
         val handle = pool.acquire(binding())
 

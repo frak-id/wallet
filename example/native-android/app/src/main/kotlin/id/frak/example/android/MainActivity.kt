@@ -157,9 +157,6 @@ class MainActivity : ComponentActivity() {
                     // Automatic exists only on Android; iOS routes .onOpenURL by hand.
                     deepLink = DeepLinkHandling.Automatic
                     logLevel = FrakLogLevel.INFO
-                    // Boots the sharing web view up front, so the sheet does not pay for engine
-                    // startup at tap time.
-                    preloadSharing = true
                 },
         )
         addLog("Frak.initialize called for merchant 0a799880-ba54-4276-a734-db8721911bab (development)", LogType.INFO)

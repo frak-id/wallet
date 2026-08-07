@@ -31,7 +31,6 @@ internal fun frakConfig(
     trackingEnabled: Boolean = true,
     logLevel: FrakLogLevel = FrakLogLevel.NONE,
     logSink: FrakLogSink? = null,
-    preloadSharing: Boolean = false,
 ): FrakConfig =
     FrakConfig
         .Builder()
@@ -43,7 +42,6 @@ internal fun frakConfig(
         .trackingEnabled(trackingEnabled)
         .logLevel(logLevel)
         .logSink(logSink)
-        .preloadSharing(preloadSharing)
         .build()
 
 internal fun productDetails(

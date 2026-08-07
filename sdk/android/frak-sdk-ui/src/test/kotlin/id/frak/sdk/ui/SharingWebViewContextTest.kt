@@ -23,7 +23,7 @@ class SharingWebViewContextTest {
     @Test
     fun `a pooled view holds the wrapper it was built with, not the base behind it`() {
         val wrapper = MutableContextWrapper(appContext)
-        val pool = SharingWebViewPool(wrapper, WALLET_ORIGIN, preload = true)
+        val pool = SharingWebViewPool(wrapper, WALLET_ORIGIN)
 
         pool.warm(WARM_URL)
         val handle = pool.acquire(binding())
@@ -38,7 +38,7 @@ class SharingWebViewContextTest {
     @Test
     fun `swapping the wrapper's base is visible through the retained view`() {
         val wrapper = MutableContextWrapper(appContext)
-        val pool = SharingWebViewPool(wrapper, WALLET_ORIGIN, preload = true)
+        val pool = SharingWebViewPool(wrapper, WALLET_ORIGIN)
         pool.warm(WARM_URL)
         val handle = pool.acquire(binding())
 
@@ -53,7 +53,7 @@ class SharingWebViewContextTest {
     @Test
     fun `the same web view instance survives a release and re-acquire`() {
         val wrapper = MutableContextWrapper(appContext)
-        val pool = SharingWebViewPool(wrapper, WALLET_ORIGIN, preload = true)
+        val pool = SharingWebViewPool(wrapper, WALLET_ORIGIN)
         pool.warm(WARM_URL)
 
         val first = pool.acquire(binding())

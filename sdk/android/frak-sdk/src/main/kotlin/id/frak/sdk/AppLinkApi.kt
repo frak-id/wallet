@@ -22,14 +22,9 @@ public class AppLinkApi internal constructor(
     /** [openFrakApp] for Java. */
     public fun openFrakAppAsync(): CompletableFuture<OpenAppResult> = core.asFuture { core.openFrakApp() }
 
-    public suspend fun installUrl(): String? = core.installUrl()
-
-    /** [installUrl] for Java. */
-    public fun installUrlAsync(): CompletableFuture<String?> = core.asFuture { core.installUrl() }
-
     /**
      * Wallet's hosted install page carrying a fresh proof, or null without an identity or a
-     * resolvable merchant. Not the store listing — that is [installUrl].
+     * resolvable merchant. Not the store listing — [openFrakApp] handles that handoff itself.
      */
     public suspend fun installPageUrl(
         returnScheme: String,

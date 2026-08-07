@@ -91,13 +91,7 @@ internal class DefaultFrakClient(
             withContext(ioDispatcher) { block() }
         }
 
-    /** Forwards [ConfigStore]'s stream unchanged; [ConfigStore] owns publishing. */
-    val configUpdates: StateFlow<FrakResolvedConfig?> = configStore.updates
-
     val environment: FrakEnvironment get() = settings.env
-
-    /** Read by `Frak.preloadSharing`; kept off [FrakClient] so hand-written fakes stay valid. */
-    internal val preloadSharing: Boolean get() = settings.preloadSharing
 
     /** Suspend because the first read may mint a keypair. */
     suspend fun anonymousId(): String? = identity.anonymousId()
@@ -282,12 +276,6 @@ internal class DefaultFrakClient(
 
             val store = storeUrl(merchantId, anonymousId, proof)
             if (launcher.open(store)) OpenAppResult.OpenedStore else OpenAppResult.Failed
-        }
-
-    suspend fun installUrl(): String? =
-        frakCall {
-            val (merchantId, anonymousId) = installIdentity() ?: return@frakCall null
-            storeUrl(merchantId, anonymousId, identity.signProof(ProofOp.Install, merchantId))
         }
 
     suspend fun installPageUrl(

@@ -1,5 +1,9 @@
+// Opted in for `FrakSdkVersion.HEADER_NAME`, which is `@InternalFrakApi`.
+@file:OptIn(InternalFrakApi::class)
+
 package id.frak.sdk.config
 
+import id.frak.sdk.InternalFrakApi
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLanguage
 import id.frak.sdk.core.FrakLogLevel

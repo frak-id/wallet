@@ -162,11 +162,6 @@ public object Frak {
     public val isInitialized: Boolean
         get() = instance != null
 
-    /** Mirrors [FrakConfig.preloadSharing] for `:frak-sdk-ui`. False before [initialize] has run. */
-    @JvmStatic
-    public val preloadSharing: Boolean
-        get() = core?.preloadSharing ?: false
-
     /** Pure and static; callable before [initialize]. Only decodes — does not track arrival. */
     @JvmStatic
     public fun parseReferralLink(url: String): FrakContext? = SharingLinkBuilder.parse(url)

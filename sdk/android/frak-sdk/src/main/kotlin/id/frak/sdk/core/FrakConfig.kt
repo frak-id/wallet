@@ -111,10 +111,9 @@ public class FrakConfig internal constructor(
     public val trackingEnabled: Boolean,
     public val logLevel: FrakLogLevel,
     public val logSink: FrakLogSink?,
-    /** Warms an offscreen `WebView` against [env]'s wallet origin before the sheet is presented. */
-    public val preloadSharing: Boolean,
 ) {
     // See the note atop sharing/SharingRequest.kt.
+
     /**
      * `Builder()` exists alongside `Builder(merchantId)` because [merchantId] is optional. The empty
      * one is primary: a shared `constructor(String?)` would erase to the same JVM descriptor as
@@ -141,8 +140,6 @@ public class FrakConfig internal constructor(
 
         public var logSink: FrakLogSink? = null
 
-        public var preloadSharing: Boolean = false
-
         public fun merchantId(merchantId: String?): Builder = apply { this.merchantId = merchantId }
 
         public fun packageId(packageId: String?): Builder = apply { this.packageId = packageId }
@@ -159,8 +156,6 @@ public class FrakConfig internal constructor(
 
         public fun logSink(logSink: FrakLogSink?): Builder = apply { this.logSink = logSink }
 
-        public fun preloadSharing(preloadSharing: Boolean): Builder = apply { this.preloadSharing = preloadSharing }
-
         public fun build(): FrakConfig =
             FrakConfig(
                 merchantId,
@@ -171,7 +166,6 @@ public class FrakConfig internal constructor(
                 trackingEnabled,
                 logLevel,
                 logSink,
-                preloadSharing,
             )
     }
 
@@ -186,7 +180,6 @@ public class FrakConfig internal constructor(
             trackingEnabled = trackingEnabled,
             logLevel = logLevel,
             logSink = logSink,
-            preloadSharing = preloadSharing,
         )
 }
 

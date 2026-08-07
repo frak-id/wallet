@@ -29,7 +29,6 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
-/** [DefaultFrakClient.configUpdates] conflates via `equals`, so the resolved config must have one. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultFrakClientTest {
     @get:Rule
@@ -39,25 +38,6 @@ class DefaultFrakClientTest {
 
     private val transport = FakeHttpTransport()
     private val store = InMemoryKeyValueStore()
-
-    @Test
-    fun `a repeat resolve with an unchanged in-memory cache does not re-emit`() =
-        runTest {
-            val client = newClient(testScheduler)
-            transport.respond(200, BODY)
-
-            val emissions = mutableListOf<String?>()
-            val collector = launch { client.configUpdates.collect { emissions.add(it?.name) } }
-            advanceUntilIdle()
-
-            client.resolveConfig()
-            advanceUntilIdle()
-            client.resolveConfig() // FRESH_TTL not elapsed: served from the same in-memory Entry
-            advanceUntilIdle()
-
-            collector.cancel()
-            assertEquals("a same-reference cache hit must not re-emit", listOf(null, "Acme"), emissions)
-        }
 
     @Test
     fun `campaigns forceRefresh also forces the config resolve, not just the rewards fetch (D6)`() =
@@ -78,50 +58,6 @@ class DefaultFrakClientTest {
                 2,
                 resolvesAfterForced,
             )
-        }
-
-    @Test
-    fun `two independently-fetched but byte-identical configs conflate to one emission`() =
-        runTest {
-            // forceRefresh decodes a fresh object every time, so this exercises FrakResolvedConfig.equals.
-            val client = newClient(testScheduler)
-            transport.respond(200, BODY)
-
-            val emissions = mutableListOf<String?>()
-            val collector = launch { client.configUpdates.collect { emissions.add(it?.name) } }
-            advanceUntilIdle()
-
-            client.resolveConfig(forceRefresh = true)
-            advanceUntilIdle()
-            client.resolveConfig(forceRefresh = true) // Same body, a fresh decode, a new object.
-            advanceUntilIdle()
-
-            collector.cancel()
-            assertEquals(
-                "two structurally-equal but distinct objects must conflate to one emission",
-                listOf(null, "Acme"),
-                emissions,
-            )
-        }
-
-    @Test
-    fun `a genuinely changed config still emits`() =
-        runTest {
-            val client = newClient(testScheduler)
-            transport.respond(200, BODY)
-
-            val emissions = mutableListOf<String?>()
-            val collector = launch { client.configUpdates.collect { emissions.add(it?.name) } }
-            advanceUntilIdle()
-
-            client.resolveConfig()
-            advanceUntilIdle()
-            transport.respond(200, BODY.replace("Acme", "Acme Renamed"))
-            client.resolveConfig(forceRefresh = true)
-            advanceUntilIdle()
-
-            collector.cancel()
-            assertEquals(listOf(null, "Acme", "Acme Renamed"), emissions)
         }
 
     @Test
@@ -445,16 +381,6 @@ class DefaultFrakClientTest {
 
             launcher.canOpen = false
             assertEquals(OpenAppResult.Failed, client.openFrakApp())
-        }
-
-    @Test
-    fun `preloadSharing mirrors the config flag frak-sdk-ui reads it through`() =
-        runTest {
-            val off = newClient(testScheduler)
-            assertEquals(false, off.preloadSharing)
-
-            val on = newClient(testScheduler, config = frakConfig(merchantId = MERCHANT_ID, preloadSharing = true))
-            assertEquals(true, on.preloadSharing)
         }
 
     // ioDispatcher is Standard, not Unconfined: background work lands only at an explicit advanceUntilIdle().

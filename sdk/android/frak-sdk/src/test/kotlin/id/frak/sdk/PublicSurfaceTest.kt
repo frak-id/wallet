@@ -56,7 +56,6 @@ class PublicSurfaceTest {
                         .build(),
                 ).trackingEnabled(false)
                 .logLevel(FrakLogLevel.DEBUG)
-                .preloadSharing(true)
                 .build()
 
         val sugared =
@@ -71,7 +70,6 @@ class PublicSurfaceTest {
                     }
                 trackingEnabled = false
                 logLevel = FrakLogLevel.DEBUG
-                preloadSharing = true
             }
 
         assertEquals(built.merchantId, sugared.merchantId)
@@ -86,7 +84,6 @@ class PublicSurfaceTest {
         assertEquals(built.trackingEnabled, sugared.trackingEnabled)
         assertEquals(built.logLevel, sugared.logLevel)
         assertEquals(built.logSink, sugared.logSink)
-        assertEquals(built.preloadSharing, sugared.preloadSharing)
 
         assertEquals(MERCHANT_ID, FrakConfig(MERCHANT_ID).merchantId)
         assertTrue(FrakConfig(MERCHANT_ID).trackingEnabled)
