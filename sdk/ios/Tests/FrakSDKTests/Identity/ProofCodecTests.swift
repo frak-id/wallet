@@ -46,7 +46,8 @@ struct ProofCodecTests {
                 description: description,
                 publicKey: publicKey,
                 derivedClientId: derivedClientId,
-                // `frak-sso-v1` is a web-SDK op with no native caller: it has no case here.
+                // `frak-sso-v1` and `frak-ensure-v1` are web-SDK ops with no native caller:
+                // neither has a case here, so both decode to nil and are skipped below.
                 op: ProofOp(rawValue: op),
                 merchantId: merchantId,
                 anonymousId: anonymousId,
@@ -85,7 +86,7 @@ struct ProofCodecTests {
             #expect(message == fixture.canonicalMessage, "\(fixture.description)")
         }
         // A new op with no fixture would otherwise ship unasserted.
-        #expect(covered == [.ensure, .install, .merge])
+        #expect(covered == [.install, .merge])
     }
 
     @Test("encodes every fixture's proof envelope")
@@ -118,7 +119,7 @@ struct ProofCodecTests {
     func signsAndVerifiesWithAFreshKey() throws {
         let key = DeviceKey.software(P256.Signing.PrivateKey())
         let message = try ProofCodec.message(
-            op: .ensure,
+            op: .install,
             merchantId: Self.merchantId,
             anonymousId: Self.anonymousId,
             binding: Data(),
@@ -135,14 +136,14 @@ struct ProofCodecTests {
     @Test("signs the same bytes whatever case the uuid arrived in")
     func normalisesUUIDCase() throws {
         let lower = try ProofCodec.message(
-            op: .ensure,
+            op: .install,
             merchantId: Self.merchantId,
             anonymousId: Self.anonymousId,
             binding: Data(),
             ts: 1
         )
         let upper = try ProofCodec.message(
-            op: .ensure,
+            op: .install,
             merchantId: Self.merchantId.uppercased(),
             anonymousId: Self.anonymousId,
             binding: Data(),
@@ -175,7 +176,7 @@ struct ProofCodecTests {
     func rejectsAMalformedUUID() {
         #expect(throws: InvalidProofInput.self) {
             try ProofCodec.message(
-                op: .ensure,
+                op: .install,
                 merchantId: "not-a-uuid",
                 anonymousId: Self.anonymousId,
                 binding: Data(),
@@ -198,7 +199,7 @@ struct ProofCodecTests {
     func rejectsANegativeTimestamp() {
         #expect(throws: InvalidProofInput.self) {
             try ProofCodec.message(
-                op: .ensure,
+                op: .install,
                 merchantId: Self.merchantId,
                 anonymousId: Self.anonymousId,
                 binding: Data(),

@@ -12,6 +12,9 @@
  * never verify for another — this is what stops a proof harvested from a
  * leaky channel (e.g. the install URL) from being replayed against a more
  * sensitive endpoint (e.g. merge).
+ *
+ * `/track/*` is unsigned and stays that way. A future optional `frak-track-v1`
+ * is sketched in `docs/plans/identity-proof-of-possession/ROLLOUT.md`.
  */
 export type ProofOp =
     | "frak-merge-v1"

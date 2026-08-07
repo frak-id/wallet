@@ -51,8 +51,12 @@ clientId = uuid_from(SHA-256(pubkey_uncompressed)[0..16])   // RFC-4122 bits set
 
 Native has no legacy ids — cryptographic-only, no trust-on-first-use path. Sensitive
 calls carry an opaque `proof` (`v ‖ pk ‖ ts ‖ sig`, base64url), validity window per op:
-±2 min for `merge`, 90 days for `ensure`, 30 days for `install` (minted on the sharer's
-device, consumed days later on another). Never signed on `track/*`. Layout frozen in
+±2 min for `merge`, 30 days for `install` (minted on the sharer's device, consumed days
+later on another). The native surface mints exactly those two: `ensure` needs a wallet
+session token no native client holds, and there is no native SSO surface, so neither
+`frak-ensure-v1` nor `frak-sso-v1` has a case in the native `ProofOp`. Never signed on
+`track/*` — a future optional `frak-track-v1` is sketched on the `ProofOp` union in
+`sdk/core/src/identity/types.ts`. Layout frozen in
 `sdk/core/src/identity/canonical.ts`, pinned by fixtures. Ship signing even while the
 backend arm is permissive — a released binary cannot be retrofitted. Generate key and id
 atomically: a surviving key with a lost id silently fails derivation.
@@ -79,10 +83,24 @@ an `ensure` under its own session (the SDK has no session of its own). Trigger t
 where an app switch is already expected (the install CTA), never opportunistically on
 init.
 
-When the wallet already holds a competing anonymous id the mechanism is `merge` instead:
-`POST /user/identity/merge/initiate` (no session, `{sourceAnonymousId, merchantId}` plus
-a proof), then `?fmt=<mergeToken>` for the wallet to `merge/execute`. **Not shippable
-until `ROLLOUT-STEP-3`** — that second arm is still fail-open.
+**Inbound merge (`?fmt=`), shipped.** A link opened from the wallet explorer deep-links into
+the merchant's app carrying `?fmt=<mergeToken>` next to its `fCtx`. The native SDK is the
+merge *target*: `handleReferral` reads the token, signs `frak-merge-v1` binding
+`SHA-256(mergeToken)` and posts `/user/identity/merge/execute` with its own id as
+`targetAnonymousId`. Same shape as the web SDK's `?fmt=` handling, except the web SDK routes
+the token through the listener and native posts it directly. See `identity/IdentityMerge`.
+
+The token is consumed once per process, the proof is **mandatory** (unlike the web arm, which
+must keep working for keyless legacy ids), and a link carrying only `?fmt=` still merges but
+answers `false` from `handleReferral` — that value has always meant "was there referral context".
+It did not need to wait for `ROLLOUT-STEP-3`: native always signs, and the latch only ever gated
+ids that could not.
+
+The **outbound** arm — `POST /user/identity/merge/initiate`, minting a token for another
+context to consume — has no native caller and no identified need. Nothing in the native
+surface hands identity out to a foreign browser context: the sharing sheet's web view is
+passed `clientId` explicitly and `useSharingIdentity` honours only that param under `embed`,
+and the Play-referrer install path adopts the native id outright rather than merging.
 
 Moving from the `frakwallet://` scheme to a universal link (`https://wallet.frak.id/install?…`,
 app-detection for free) is open work, not blocked. *(v0.2, Android only)*: silent linking

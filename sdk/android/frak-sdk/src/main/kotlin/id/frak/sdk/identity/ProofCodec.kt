@@ -3,11 +3,15 @@ package id.frak.sdk.identity
 import id.frak.sdk.core.Base64Url
 import id.frak.sdk.core.Uuid
 
-/** Domain-separated proof operations: a signature for one op must never verify for another. */
+/**
+ * Domain-separated proof operations: a signature for one op must never verify for another.
+ *
+ * Only what native can mint. `frak-ensure-v1` needs a wallet session token no native client holds
+ * (the install deep link is the equivalent) and there is no native SSO surface.
+ */
 internal enum class ProofOp(
     val wireValue: String,
 ) {
-    Ensure("frak-ensure-v1"),
     Install("frak-install-v1"),
     Merge("frak-merge-v1"),
 }

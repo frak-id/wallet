@@ -38,7 +38,7 @@ These three share one policy function, `enforceLatchedProof`.
   Its protection is the ticket `resolve` mints.
 - `install-code/resolve`. The binary reads the response; `ticket` is additive and the
   `anonymousId` arm must keep working.
-- `/track/*`, unsigned by design.
+- `/track/*`, unsigned by design. See below.
 
 **Never gated:** the wallet-session arm of `/merge/initiate` — already authenticated by
 session.
@@ -82,3 +82,23 @@ migration yet.**
 
 Legacy ids can never produce a proof and are baked into published `fCtx` links. They stay
 resolvable, remain usable as merge targets, and never latch. Accepted, not a gap.
+
+## Later: an optional `frak-track-v1`
+
+Not part of this rollout — it gates nothing, so it has no flip day.
+
+`/track/*` is unsigned because tracking must work for every client, including keyless legacy
+ids. The idea is an **optional** proof alongside a tracked interaction: never required, verified
+when present, a weak humanity/non-bot signal. The value is that it is not a gate — a bot can omit
+it, but then it is distinguishable.
+
+Three things to settle first:
+
+- **Binding.** The interaction's idempotency key is the obvious candidate, which would also make
+  a captured proof useless for any other event. `arrival` carries no idempotency key today.
+- **Window.** Shorter than install's 30 days, but events are queued offline and drained later, so
+  it has to cover a realistic backlog rather than a request-response round trip.
+- **Cost.** One ECDSA sign per event, on the native queue's drain path as well as the browser's.
+  Measure before choosing per-event over per-drain.
+
+It needs its own op string. Reusing an existing one throws away the domain separation.

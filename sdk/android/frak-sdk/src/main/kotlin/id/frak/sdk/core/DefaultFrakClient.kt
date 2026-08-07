@@ -10,6 +10,7 @@ import id.frak.sdk.config.FrakResolvedConfig
 import id.frak.sdk.config.KeyValueStore
 import id.frak.sdk.config.MerchantQuery
 import id.frak.sdk.identity.AnonymousIdStore
+import id.frak.sdk.identity.IdentityMerge
 import id.frak.sdk.identity.ProofOp
 import id.frak.sdk.net.HttpClient
 import id.frak.sdk.rewards.BestReward
@@ -70,6 +71,7 @@ internal class DefaultFrakClient(
 
     private val configStore = ConfigStore(http, store, logger, scope, ioDispatcher)
     private val rewards = RewardRepository(http, logger, scope)
+    private val merge = IdentityMerge(http, identity, logger)
     private val tracker =
         InteractionTracker(
             queue,
@@ -221,12 +223,19 @@ internal class DefaultFrakClient(
     }
 
     /**
-     * Returns whether this was a referral link. Never throws, so arrival tracking cannot take a
-     * merchant's URL routing down with it.
+     * Returns whether this carried an `fCtx`. A link carrying only `?fmt=` is still merged but
+     * answers false. Never throws, so nothing here takes a merchant's URL routing down with it.
      */
     suspend fun handleReferralLink(url: String): Boolean {
         if (settings.deepLink == DeepLinkHandling.Disabled) return false
-        val context = SharingLinkBuilder.parse(url) ?: return false
+        val mergeToken = IdentityMerge.parseToken(url)
+        val context = SharingLinkBuilder.parse(url)
+        if (mergeToken == null && context == null) return false
+
+        // Ahead of the arrival guard, which returns early on a self-referral link that still merges.
+        if (mergeToken != null) mergeInboundIdentity(mergeToken)
+
+        if (context == null) return false
 
         // currentConfig, not updates.value: a cold start launched by this very URL never called
         // resolve(). Guarded throughout, since this function must never throw.
@@ -252,11 +261,26 @@ internal class DefaultFrakClient(
         return true
     }
 
+    /**
+     * [linkIdentity] resolves over the network on a cache miss, unlike the arrival guard above:
+     * a merge token is single-use and short-lived, so losing one to a cold cache is permanent.
+     */
+    private suspend fun mergeInboundIdentity(mergeToken: String) {
+        try {
+            val (merchantId, anonymousId) = linkIdentity() ?: return
+            merge.execute(mergeToken, merchantId, anonymousId)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (unexpected: Throwable) {
+            logger.error("Inbound identity merge failed", unexpected)
+        }
+    }
+
     fun isFrakAppInstalled(): Boolean = launcher.isInstalled(settings.env.walletPackageId)
 
     suspend fun openFrakApp(): OpenAppResult =
         frakCall {
-            val link = installIdentity() ?: return@frakCall OpenAppResult.Failed
+            val link = linkIdentity() ?: return@frakCall OpenAppResult.Failed
             val (merchantId, anonymousId) = link
 
             // Minted once for whichever arm takes it; null when the keystore cannot sign.
@@ -283,7 +307,7 @@ internal class DefaultFrakClient(
         sessionId: String,
     ): String? =
         frakCall {
-            val (merchantId, anonymousId) = installIdentity() ?: return@frakCall null
+            val (merchantId, anonymousId) = linkIdentity() ?: return@frakCall null
             // Minted here, not at sheet open: the backend's 30-day window runs from this timestamp.
             InstallLinks.installPage(
                 walletOrigin = settings.env.wallet,
@@ -295,8 +319,11 @@ internal class DefaultFrakClient(
             )
         }
 
-    /** The merchant/anonymous-id pair an install link needs, or null when either is missing. */
-    private suspend fun installIdentity(): Pair<String, String>? {
+    /**
+     * The merchant/anonymous-id pair an install link or an inbound merge needs, or null when
+     * either is missing.
+     */
+    private suspend fun linkIdentity(): Pair<String, String>? {
         val anonymousId = identity.anonymousId() ?: return null
         val merchantId =
             settings.merchantId

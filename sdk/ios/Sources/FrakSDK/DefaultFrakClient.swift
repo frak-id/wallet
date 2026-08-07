@@ -7,6 +7,7 @@ actor DefaultFrakClient {
     private let logger: FrakLogger
     private let configStore: ConfigStore
     private let rewards: RewardRepository
+    private let merge: IdentityMerge
     private let tracker: InteractionTracker
     /// Must be the same instance `identity` holds: two `TrackingConsent` actors over the same
     /// suite would memoise independently, so a withdrawal here wouldn't stop identity's own
@@ -35,6 +36,7 @@ actor DefaultFrakClient {
         let http = HTTPClient(baseURL: backendURL ?? settings.env.backend, session: session, logger: logger)
         self.configStore = ConfigStore(http: http, store: store, logger: logger)
         self.rewards = RewardRepository(http: http, logger: logger)
+        self.merge = IdentityMerge(http: http, identity: identity, logger: logger)
         self.tracker = InteractionTracker(
             queue: queue,
             http: http,
@@ -252,9 +254,21 @@ actor DefaultFrakClient {
         }
     }
 
+    /// Returns whether this carried an `fCtx`. A link carrying only `?fmt=` is still merged but
+    /// answers false.
     @discardableResult
     func handleReferralLink(_ url: String) async -> Bool {
-        guard settings.deepLink != .disabled, let context = SharingLinkBuilder.parse(url) else { return false }
+        guard settings.deepLink != .disabled else { return false }
+        let mergeToken = IdentityMerge.parseToken(url)
+        let context = SharingLinkBuilder.parse(url)
+        guard mergeToken != nil || context != nil else { return false }
+
+        // Ahead of the arrival guard, which returns early on a self-referral link that still merges.
+        if let mergeToken {
+            await mergeInboundIdentity(mergeToken)
+        }
+
+        guard let context else { return false }
 
         // `currentConfig` hydrates from disk on demand, so a warm start reached via this deep
         // link — before anything has called resolveConfig() — can still resolve a merchant id.
@@ -278,12 +292,23 @@ actor DefaultFrakClient {
         return true
     }
 
+    /// `linkIdentity()` resolves over the network on a cache miss, unlike the arrival guard above:
+    /// a merge token is single-use and short-lived, so losing one to a cold cache is permanent.
+    private func mergeInboundIdentity(_ mergeToken: String) async {
+        guard let link = await linkIdentity() else { return }
+        await merge.execute(
+            mergeToken: mergeToken,
+            merchantId: link.merchantId,
+            anonymousId: link.anonymousId
+        )
+    }
+
     func isFrakAppInstalled() async -> Bool {
         await launcher.canOpen("\(settings.env.walletScheme)://")
     }
 
     func openFrakApp() async -> OpenAppResult {
-        guard let install = await installIdentity() else { return .failed }
+        guard let install = await linkIdentity() else { return .failed }
 
         // Attempted rather than gated on the probe: `canOpenURL` answers false when the
         // merchant forgot `LSApplicationQueriesSchemes` — which the SDK cannot inject, iOS
@@ -309,7 +334,7 @@ actor DefaultFrakClient {
     }
 
     func installPageURL(returnScheme: String, sessionId: String) async -> String? {
-        guard let install = await installIdentity() else { return nil }
+        guard let install = await linkIdentity() else { return nil }
         // Minted here rather than when the sheet opens: most sessions never reach the install
         // step, an enclave signature can fail for reasons that have nothing to do with sharing,
         // and the backend's 30-day window runs from this timestamp.
@@ -324,8 +349,9 @@ actor DefaultFrakClient {
         )
     }
 
-    /// The merchant/anonymous-id pair an install link needs, or nil when either is missing.
-    private func installIdentity() async -> (merchantId: String, anonymousId: String)? {
+    /// The merchant/anonymous-id pair an install link or an inbound merge needs, or nil when
+    /// either is missing.
+    private func linkIdentity() async -> (merchantId: String, anonymousId: String)? {
         guard let anonymousId = await identity.anonymousId() else { return nil }
         let resolved = await availableConfig()
         guard !Task.isCancelled, let merchantId = settings.merchantId ?? resolved?.merchantId else { return nil }
