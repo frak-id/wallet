@@ -26,6 +26,14 @@ const tauriPlatform = process.env.TAURI_ENV_PLATFORM;
 const isTauriIos = isTauri && tauriPlatform === "ios";
 const isTauriAndroid = isTauri && tauriPlatform === "android";
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
+// `vite build --watch` (used by `dev:built`) re-empties `outDir` on EVERY
+// rebuild, not just the first. `dist/` is shared with the standalone pass
+// (`vite.standalone.config.ts` writes `sharing.html`, `install.html` and
+// `standalone/` there), so emptying on rebuild would delete the other build's
+// output every time a source file changed. `dev:built` cleans `dist/` itself
+// once at startup instead. Read from argv because Vite resolves `--watch`
+// into `build.watch` only after this config function has run.
+const isWatch = process.argv.includes("--watch") || process.argv.includes("-w");
 // Web stays strict at 300 KB to surface regressions early; Tauri allows
 // 500 KB since assets ship in the binary (no network cost) and the
 // `blockchain-vendor` chunk runs close to the limit.
@@ -460,6 +468,9 @@ export default defineConfig(
                 },
             },
             build: {
+                // See `isWatch`: under `--watch` this build shares `dist/` with the
+                // standalone pass and must not wipe it on every rebuild.
+                emptyOutDir: !isWatch,
                 // Single bundled stylesheet for both web and Tauri.
                 // Per-route CSS splitting was tried, but Vanilla Extract emits
                 // a CSS file per `.css.ts` source — that exploded into 38 CSS
