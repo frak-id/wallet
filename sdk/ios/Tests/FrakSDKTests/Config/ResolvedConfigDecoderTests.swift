@@ -193,6 +193,69 @@ struct ResolvedConfigDecoderTests {
         #expect(sdkConfig.placements.count == 1)
     }
 
+    // 9.3 / 9.3t: no test on either platform had ever supplied a good and a bad placement in
+    // the same payload. Swift's synthesized dictionary decoding fails wholesale on one bad
+    // value, which used to drop every good placement along with it; Android's `objectMap`
+    // (`net/JsonReader.kt`) has always skipped only the bad entry.
+    @Test("a malformed placement is dropped, the well-formed one next to it survives (9.3)")
+    func malformedPlacementIsDroppedNotEveryPlacement() throws {
+        let body = """
+            {"merchantId":"m","productId":"0x00","name":"Acme","domain":"acme.example",
+             "allowedDomains":[],"sdkConfig":{"placements":{
+               "product-page":{"targetInteraction":"purchase"},
+               "broken":"not-an-object"
+             }}}
+            """
+
+        let sdkConfig = try #require(try ResolvedConfigDecoder.decode(Data(body.utf8)).sdkConfig)
+
+        #expect(sdkConfig.placements.count == 1)
+        #expect(sdkConfig.placements["product-page"]?.targetInteraction == "purchase")
+        #expect(sdkConfig.placements["broken"] == nil)
+    }
+
+    @Test("an absent placements object decodes to empty, not a throw")
+    func absentPlacementsDecodesEmpty() throws {
+        let body = """
+            {"merchantId":"m","productId":"0x00","name":"Acme","domain":"acme.example",
+             "allowedDomains":[],"sdkConfig":{}}
+            """
+
+        let sdkConfig = try #require(try ResolvedConfigDecoder.decode(Data(body.utf8)).sdkConfig)
+
+        #expect(sdkConfig.placements.isEmpty)
+    }
+
+    @Test("a null placements object decodes to empty, not a throw")
+    func nullPlacementsDecodesEmpty() throws {
+        let body = """
+            {"merchantId":"m","productId":"0x00","name":"Acme","domain":"acme.example",
+             "allowedDomains":[],"sdkConfig":{"placements":null}}
+            """
+
+        let sdkConfig = try #require(try ResolvedConfigDecoder.decode(Data(body.utf8)).sdkConfig)
+
+        #expect(sdkConfig.placements.isEmpty)
+    }
+
+    @Test("a placements value that isn't an object at all decodes to empty, not a throw")
+    func nonObjectPlacementsDecodesEmpty() throws {
+        let arrayBody = """
+            {"merchantId":"m","productId":"0x00","name":"Acme","domain":"acme.example",
+             "allowedDomains":[],"sdkConfig":{"placements":["product-page"]}}
+            """
+        let stringBody = """
+            {"merchantId":"m","productId":"0x00","name":"Acme","domain":"acme.example",
+             "allowedDomains":[],"sdkConfig":{"placements":"product-page"}}
+            """
+
+        let fromArray = try #require(try ResolvedConfigDecoder.decode(Data(arrayBody.utf8)).sdkConfig)
+        let fromString = try #require(try ResolvedConfigDecoder.decode(Data(stringBody.utf8)).sdkConfig)
+
+        #expect(fromArray.placements.isEmpty)
+        #expect(fromString.placements.isEmpty)
+    }
+
     @Test("decodes translations and attribution defaults")
     func decodesTranslationsAndAttribution() throws {
         let sdkConfig = try #require(try ResolvedConfigDecoder.decode(Data(Self.fullResponse.utf8)).sdkConfig)

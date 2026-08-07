@@ -95,12 +95,53 @@ public struct ResolvedSdkConfig: Decodable, Sendable, Hashable {
         homepageLink = (try? container.decodeIfPresent(String.self, forKey: .homepageLink))?.nonEmpty
         hidden = (try? container.decodeIfPresent(Bool.self, forKey: .hidden)) ?? false
         translations = (try? container.decodeIfPresent([String: String].self, forKey: .translations)) ?? [:]
-        placements =
-            (try? container.decodeIfPresent([String: ResolvedPlacement].self, forKey: .placements)) ?? [:]
+        placements = Self.decodePlacements(from: container)
         components = try? container.decodeIfPresent(ResolvedComponents.self, forKey: .components)
         attribution = try? container.decodeIfPresent(AttributionDefaults.self, forKey: .attribution)
         currency = try? container.decodeIfPresent(FrakCurrency.self, forKey: .currency)
         lang = try? container.decodeIfPresent(FrakLanguage.self, forKey: .lang)
+    }
+
+    // `try? container.decodeIfPresent([String: ResolvedPlacement].self, ...)` looked like the
+    // same tolerance as every field above, but Swift's synthesized dictionary decoding fails
+    // wholesale the moment one value in the dictionary throws — one malformed placement was
+    // silently discarding every good one. Android's twin, `net/JsonReader.kt`'s `objectMap`,
+    // walks the JSONObject's keys and skips only the entry that fails to parse; this nested
+    // container is the Swift shape of that same per-entry policy. An absent `placements`, a
+    // null, or a `placements` that isn't an object at all all still fall through to [:], same
+    // as every other field in this initializer.
+    private static func decodePlacements(
+        from container: KeyedDecodingContainer<CodingKeys>
+    ) -> [String: ResolvedPlacement] {
+        guard
+            let nested = try? container.nestedContainer(keyedBy: PlacementCodingKey.self, forKey: .placements)
+        else {
+            return [:]
+        }
+        var result: [String: ResolvedPlacement] = [:]
+        for key in nested.allKeys {
+            if let placement = try? nested.decode(ResolvedPlacement.self, forKey: key) {
+                result[key.stringValue] = placement
+            }
+        }
+        return result
+    }
+}
+
+/// Stand-in `CodingKey` used only to walk `placements`' keys, which aren't known ahead of
+/// time (they're merchant-defined placement ids, not a fixed enum).
+private struct PlacementCodingKey: CodingKey {
+    let stringValue: String
+    let intValue: Int?
+
+    init(stringValue: String) {
+        self.stringValue = stringValue
+        self.intValue = nil
+    }
+
+    init?(intValue: Int) {
+        self.stringValue = String(intValue)
+        self.intValue = intValue
     }
 }
 
