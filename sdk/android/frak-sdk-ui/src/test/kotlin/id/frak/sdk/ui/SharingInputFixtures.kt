@@ -5,7 +5,7 @@ import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.sharing.SharingProduct
 import id.frak.sdk.sharing.SharingRequest
 
-/* Defaulted helpers over the SDK's Builders, so a test that cares about one field says one field. */
+// Defaulted helpers over the SDK's Builders, so a test that cares about one field says one field.
 
 internal fun sharingRequest(
     link: String? = null,
