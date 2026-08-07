@@ -101,24 +101,27 @@
         let launch: () -> Void
 
         var body: some View {
-            // `GeometryReader`, not `UIScreen.main.bounds`: the latter is the physical display
-            // and does not shrink for Slide Over/Split View on iPad.
-            GeometryReader { proxy in
-                let sheetHeight = proxy.size.height * clampedSharingHeightFraction(heightFraction)
-                ZStack {
-                    if let presentation = presenter.presentation {
-                        PresentedSharingSession(presentation: presentation)
-                    } else {
-                        // The background lives here rather than once at this view's root: once a
-                        // presentation exists, `PresentedSharingSession` has to pick between this
-                        // and `SheetBackground(clear: false)` for `contentLost`, and only it
-                        // observes the model that decides which.
-                        SharingSheetSkeleton()
-                            .modifier(SheetBackground(clear: true))
-                    }
+            ZStack {
+                if let presentation = presenter.presentation {
+                    PresentedSharingSession(presentation: presentation)
+                } else {
+                    // The background lives here rather than once at this view's root: once a
+                    // presentation exists, `PresentedSharingSession` has to pick between this
+                    // and `SheetBackground(clear: false)` for `contentLost`, and only it
+                    // observes the model that decides which.
+                    SharingSheetSkeleton()
+                        .modifier(SheetBackground(clear: true))
                 }
-                .frame(height: sheetHeight)
+
+                SharingSheetGrabStrip()
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Full bleed: the page insets its own footer from `env(safe-area-inset-bottom)`, so
+            // honouring the safe area here shows the sheet through as a band under the CTA.
+            .ignoresSafeArea()
+            // The sheet is what `heightFraction` resizes, not the content inside it: a `.sheet`
+            // with no detents is presented at `.large` whatever the content does.
+            .modifier(SharingSheetChrome(fraction: clampedSharingHeightFraction(heightFraction)))
             .onAppear {
                 launch()
                 // From here the sheet owns teardown, not the `isPresented` change.
@@ -193,6 +196,45 @@
                 content
             }
         }
+    }
+
+    /// Sizes the sheet to `fraction` of the height available to it and shows the grabber. A
+    /// modifier rather than an inline `if #available`, for the same reason as `SheetBackground`.
+    ///
+    /// `.fraction` measures against the largest detent, so it already accounts for the sheet's
+    /// top inset and for Slide Over/Split View on iPad. iOS 15 has no detents, so there the
+    /// content is what shrinks.
+    private struct SharingSheetChrome: ViewModifier {
+        let fraction: CGFloat
+        func body(content: Content) -> some View {
+            if #available(iOS 16.0, *) {
+                content
+                    .presentationDetents([.fraction(fraction)])
+                    .presentationDragIndicator(.visible)
+            } else {
+                GeometryReader { proxy in
+                    content.frame(height: proxy.size.height * fraction)
+                }
+            }
+        }
+    }
+
+    /// The sheet's only drag surface: the page scrolls a child of its own, so WebKit claims
+    /// every vertical pan and the sheet's gesture never sees one. Invisible, and stacked over the
+    /// web view so that view never sees these touches. Mirrors `SharingSheetGrabStrip` in
+    /// `FrakSharingSheet.kt`, height included.
+    private struct SharingSheetGrabStrip: View {
+        var body: some View {
+            Color.clear
+                .frame(height: Self.height)
+                .contentShape(Rectangle())
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                // The grabber is decoration; the sheet publishes its own dismiss action.
+                .accessibilityHidden(true)
+        }
+
+        /// Deliberately generous: the visible pill is a few points tall.
+        private static let height: CGFloat = 44
     }
 
     /// What covers the sheet once `SharingSheetModel.contentLost` is set. Matches

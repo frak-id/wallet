@@ -125,6 +125,14 @@
             view.isOpaque = false
             view.backgroundColor = .clear
             view.navigationDelegate = self
+
+            // The view fills the sheet, home indicator included, and the page insets its own
+            // footer from `env(safe-area-inset-bottom)`. Any other behaviour insets the document
+            // by that same safe area, leaving the sheet showing through under the page.
+            view.scrollView.contentInsetAdjustmentBehavior = .never
+            // The document never scrolls — the page scrolls a child of its own — so a bounce here
+            // is only a rubber-band competing with the sheet's drag.
+            view.scrollView.bounces = false
         }
 
         /// Points the view at a session. Resets per-load state; see `SharingWebViewBinding`.
