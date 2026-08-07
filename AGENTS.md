@@ -31,6 +31,7 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 | Design tokens / Box | `packages/design-system/` |
 | Blockchain config/ABIs | `packages/app-essentials/src/blockchain/` |
 | Shared wallet state | `packages/wallet-shared/` (wallet+listener ONLY) |
+| Standalone sharing/install pages | `apps/wallet/app/entry/` + `apps/wallet/vite.standalone.config.ts` |
 | Test mocks/fixtures | `packages/test-foundation/src/` |
 | Native SDK | `sdk/android/` (Gradle, `id.frak:frak-sdk` + `-ui`) · `sdk/ios/` (SwiftPM, `FrakSDK` + `FrakSDKUI`) |
 | Native SDK harnesses | `example/native-{android,ios}/` (Kotlin/Compose + Swift/SwiftUI) |
@@ -39,6 +40,7 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 ## Non-Obvious Patterns (Tribal Knowledge)
 
 - **Service worker gate**: `apps/wallet` requires `bun run build:sw` BEFORE `dev`/`build` — silent load failure otherwise.
+- **`/sharing` + `/install` are standalone web entrypoints**: `apps/wallet` ships THREE builds, not one — the SPA, the service worker, and `vite.standalone.config.ts`, which emits `sharing.html` / `install.html` (preact, no router, no blockchain: ~90 KB gz against the SPA shell's ~390 KB) because both pages are opened as full-page loads by the web/iOS/Android SDKs. nginx routes those two paths there; Tauri and client-side navigations keep using the SPA routes. Same `SharingView` / `InstallView` on both surfaces — a build gate (`assertEagerBundleBudget`) fails the build if the light bundle regresses.
 - **Wallet `@/*` dual resolution**: resolves to both `./app/*` AND `../../packages/design-system/src/*` (tsconfig).
 - **Vanilla Extract everywhere**: all styles use `.css.ts` (`style()`/`keyframes()`) + `Box` sprinkles. No CSS Modules remain — do not add `.module.css`.
 - **No `globalStyle` (monorepo-wide)**: prefer scoped `style()` classes. To style a child/variant, put the same class on both elements (or add a dedicated class) instead of a `${parent} *` descendant selector.

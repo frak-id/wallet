@@ -3,7 +3,7 @@ import {
     buildInstallProcessingEnsureAction,
     parseInstallProofFragment,
     resolveInstallProof,
-} from "./install";
+} from "./params";
 
 describe("parseInstallProofFragment", () => {
     test("returns undefined when there is no fragment", () => {
