@@ -7,6 +7,7 @@
 #   bun run --cwd sdk/ios test          # swift test, same triple
 #   bun run --cwd sdk/ios lint          # swift-format lint (strict)
 #   bun run --cwd sdk/ios format        # swift-format rewrite in place
+#   bun run --cwd sdk/ios version       # FrakSDKVersion.current vs package.json (9.10)
 #   bun run --cwd sdk/ios xcframework   # NOT IMPLEMENTED — see do_xcframework
 
 set -euo pipefail
@@ -22,10 +23,12 @@ die() {
 
 # The iOS simulator SDK path and target triple, shared by build and test. A bare
 # `swift build` targets the host and would compile this package as macOS without ever
-# exercising iOS.
+# exercising iOS. Cross-compiling to the simulator triple is a separate concern from the
+# language mode below and still needs its own flags here.
 #
-# `-swift-version 6` is passed here rather than declared in Package.swift because
-# `.swiftLanguageMode` needs tools-version 6.0 and this manifest is 5.9.
+# Swift 6 strict concurrency itself no longer needs a flag here — `Package.swift` declares
+# `swift-tools-version: 6.0` and sets `.swiftLanguageMode(.v6)` on every target, so a bare
+# `swift build`/`swift test` gets it too, not just this script.
 # Sets IOS_FLAGS. Assigns a global rather than echoing: macOS ships bash 3.2, no
 # namerefs, no way to return an array.
 set_ios_flags() {
@@ -35,7 +38,6 @@ set_ios_flags() {
 	IOS_FLAGS=(
 		--sdk "$sdk_path"
 		-Xswiftc -target -Xswiftc arm64-apple-ios15.0-simulator
-		-Xswiftc -swift-version -Xswiftc 6
 	)
 }
 
@@ -52,8 +54,40 @@ set_ios_testing_flags() {
 	)
 }
 
+# FrakSDKVersion.current is sent on the wire (x-frak-sdk-version, ?sdkVersion=) and has no
+# release pipeline of its own yet, so it is kept in sync with package.json by hand. Android
+# has `checkSdkVersionMatchesArtifact` (`frak-publish.gradle.kts`) wired into `check` for the
+# same reason; this is that gate's iOS twin. 05-build-and-release.md §3 forbids retagging a
+# published version, so a drift caught after tagging ships uncorrectable — this must fail
+# loudly on either side being unreadable, not just on a mismatch, or a botched extraction
+# reads as an empty-equals-empty pass and the gate is worthless.
+# Sets SDK_VERSION. Matched on `current`'s own declaration line, not a line offset, so an
+# `@_spi`/doc comment on a neighbouring member (headerName, queryParameterName) can't shift it.
+check_sdk_version() {
+	local version_file="$PKG_DIR/Sources/FrakSDK/FrakSDKVersion.swift"
+	local package_json="$PKG_DIR/package.json"
+	local declared package_version
+
+	# || true on both extractions: set -euo pipefail would otherwise abort the script the
+	# moment grep finds no match, before the emptiness check below gets to die() with a
+	# readable message — the one silent-failure shape this gate must not have.
+	declared="$(grep -E 'public static let current: String = "' "$version_file" |
+		sed -E 's/.*current: String = "([^"]*)".*/\1/')" || true
+	[ -n "$declared" ] || die "Could not find FrakSDKVersion.current in $version_file"
+
+	package_version="$(grep -E '"version"[[:space:]]*:' "$package_json" | head -1 |
+		sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/')" || true
+	[ -n "$package_version" ] || die "Could not find \"version\" in $package_json"
+
+	[ "$declared" = "$package_version" ] ||
+		die "FrakSDKVersion.current is \"$declared\" but package.json version is \"$package_version\" — these must match. See finding 9.10 in docs/plans/native-sdk/06-open-findings.md."
+
+	SDK_VERSION="$declared"
+}
+
 do_build() {
 	cd "$PKG_DIR"
+	check_sdk_version
 	log "Building against the iOS simulator SDK (Swift 6 strict concurrency)..."
 	set_ios_flags
 	swift build "${IOS_FLAGS[@]}"
@@ -71,6 +105,7 @@ do_build() {
 #      type-checked by stage 1 only, not executed anywhere yet.
 do_test() {
 	cd "$PKG_DIR"
+	check_sdk_version
 
 	log "Compiling tests against the iOS simulator SDK (Swift 6 strict concurrency)..."
 	set_ios_flags
@@ -93,6 +128,13 @@ do_format() {
 	cd "$PKG_DIR"
 	log "Formatting Swift sources..."
 	swift format --in-place --recursive Sources Tests
+}
+
+# Standalone subcommand so CI (or a merchant) can gate on version sync without paying for a
+# full build/test cycle first.
+do_version() {
+	check_sdk_version
+	log "FrakSDKVersion.current matches package.json ($SDK_VERSION)."
 }
 
 # NOT IMPLEMENTED. The shipped artifact will be a signed binary XCFramework referenced
@@ -145,14 +187,16 @@ build) do_build ;;
 test) do_test ;;
 lint) do_lint ;;
 format) do_format ;;
+version) do_version ;;
 xcframework) do_xcframework ;;
 *)
-	echo "Usage: $0 {build|test|lint|format|xcframework}"
+	echo "Usage: $0 {build|test|lint|format|version|xcframework}"
 	echo ""
 	echo "  build       - compile against the iOS simulator SDK (Swift 6 strict concurrency)"
 	echo "  test        - swift test, same triple"
 	echo "  lint        - swift-format lint (strict), no simulator"
 	echo "  format      - swift-format rewrite in place"
+	echo "  version     - checks FrakSDKVersion.current against package.json (9.10)"
 	echo "  xcframework - NOT IMPLEMENTED (05 §3) — exits 1 with the intended outline"
 	exit 1
 	;;
