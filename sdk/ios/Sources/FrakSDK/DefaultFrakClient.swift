@@ -308,13 +308,6 @@ actor DefaultFrakClient {
         return await launcher.open(InstallLinks.appStore()) ? .openedStore : .failed
     }
 
-    func installURL() async -> String? {
-        // Only the identity gate, unlike the Kotlin twin: a Play referrer carries the merchant
-        // id, an App Store URL carries nothing, so resolving one would be a network round trip
-        // for a constant.
-        await identity.anonymousId() == nil ? nil : InstallLinks.appStore()
-    }
-
     func installPageURL(returnScheme: String, sessionId: String) async -> String? {
         guard let install = await installIdentity() else { return nil }
         // Minted here rather than when the sheet opens: most sessions never reach the install

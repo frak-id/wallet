@@ -544,17 +544,4 @@ struct FrakClientTests {
 
         #expect(await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "s1") == nil)
     }
-
-    @Test("installURL needs an identity to link")
-    func installURLNeedsAnIdentity() async {
-        let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
-        let url = await client.installURL()
-        #expect(url == "https://apps.apple.com/app/id6740261164")
-
-        let untracked = makeClient(config: FrakConfig(merchantId: Self.merchantId, trackingEnabled: false)) { _ in
-            StubResponse(status: 200, body: Self.resolveBody)
-        }
-        let withoutIdentity = await untracked.installURL()
-        #expect(withoutIdentity == nil)
-    }
 }

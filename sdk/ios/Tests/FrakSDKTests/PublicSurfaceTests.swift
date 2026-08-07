@@ -177,12 +177,10 @@ struct PublicSurfaceTests {
         #expect(Frak.parseReferralLink("https://acme.example/p") == nil)
     }
 
-    @Test("deep-link handling and preloading are stateable on FrakConfig")
-    func deepLinkAndPreloadAreStateable() {
-        let config = FrakConfig(merchantId: "m1", deepLink: .disabled, preloadSharing: true)
+    @Test("deep-link handling is stateable on FrakConfig")
+    func deepLinkIsStateable() {
+        let config = FrakConfig(merchantId: "m1", deepLink: .disabled)
         #expect(config.deepLink == .disabled)
-        #expect(config.preloadSharing)
         #expect(FrakConfig().deepLink == .manual)
-        #expect(!FrakConfig().preloadSharing)
     }
 }

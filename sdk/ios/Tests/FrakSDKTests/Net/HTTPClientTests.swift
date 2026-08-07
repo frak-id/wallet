@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import FrakSDK
+@_spi(FrakInternal) @testable import FrakSDK
 
 /// Records every line a `FrakLogger` handed to this sink, in order.
 private final class RecordingLogSink: FrakLogSink, @unchecked Sendable {

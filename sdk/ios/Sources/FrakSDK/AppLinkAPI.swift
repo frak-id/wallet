@@ -25,18 +25,13 @@ public struct AppLinkAPI: Sendable {
         await core.openFrakApp()
     }
 
-    // No network request, no identity carried (no Play-style install referrer on iOS).
-    public func installURL() async -> String? {
-        await core.installURL()
-    }
-
     /// The wallet's hosted install page for this device, or nil without an identity or a
     /// merchant to resolve.
     ///
-    /// Not the store listing — that is `installURL()`. This page shows the install code that
-    /// carries attribution across an install, plus the store link, and it carries a freshly
-    /// minted `frak-install-v1` proof. The sharing sheet navigates to it in place, so the user
-    /// never leaves the merchant app to reach it.
+    /// Not the store listing — `openFrakApp()` handles that handoff itself. This page shows the
+    /// install code that carries attribution across an install, plus the store link, and it
+    /// carries a freshly minted `frak-install-v1` proof. The sharing sheet navigates to it in
+    /// place, so the user never leaves the merchant app to reach it.
     public func installPageURL(returnScheme: String, sessionId: String) async -> String? {
         await core.installPageURL(returnScheme: returnScheme, sessionId: sessionId)
     }

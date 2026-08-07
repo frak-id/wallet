@@ -1,6 +1,6 @@
 import Testing
 
-@testable import FrakSDK
+@_spi(FrakInternal) @testable import FrakSDK
 
 @Suite("FrakSDKVersion")
 struct FrakSDKVersionTests {

@@ -79,8 +79,6 @@ public struct FrakConfig: Sendable, Hashable {
     public let logLevel: FrakLogLevel
     // Nil (default) keeps diagnostics in os.Logger.
     public let logSink: (any FrakLogSink)?
-    // Warms an offscreen WKWebView ahead of the share tap. Off by default (extra JS heap).
-    public let preloadSharing: Bool
 
     public init(
         merchantId: String? = nil,
@@ -90,8 +88,7 @@ public struct FrakConfig: Sendable, Hashable {
         deepLink: DeepLinkHandling = .manual,
         trackingEnabled: Bool = true,
         logLevel: FrakLogLevel = .none,
-        logSink: (any FrakLogSink)? = nil,
-        preloadSharing: Bool = false
+        logSink: (any FrakLogSink)? = nil
     ) {
         self.merchantId = merchantId
         self.bundleId = bundleId
@@ -101,7 +98,6 @@ public struct FrakConfig: Sendable, Hashable {
         self.trackingEnabled = trackingEnabled
         self.logLevel = logLevel
         self.logSink = logSink
-        self.preloadSharing = preloadSharing
     }
 
     func withBundleId(_ bundleId: String) -> FrakConfig {
@@ -113,8 +109,7 @@ public struct FrakConfig: Sendable, Hashable {
             deepLink: deepLink,
             trackingEnabled: trackingEnabled,
             logLevel: logLevel,
-            logSink: logSink,
-            preloadSharing: preloadSharing
+            logSink: logSink
         )
     }
 
@@ -123,7 +118,7 @@ public struct FrakConfig: Sendable, Hashable {
     public static func == (lhs: FrakConfig, rhs: FrakConfig) -> Bool {
         lhs.merchantId == rhs.merchantId && lhs.bundleId == rhs.bundleId && lhs.metadata == rhs.metadata
             && lhs.env == rhs.env && lhs.deepLink == rhs.deepLink && lhs.trackingEnabled == rhs.trackingEnabled
-            && lhs.logLevel == rhs.logLevel && lhs.preloadSharing == rhs.preloadSharing
+            && lhs.logLevel == rhs.logLevel
     }
 
     public func hash(into hasher: inout Hasher) {
@@ -134,6 +129,5 @@ public struct FrakConfig: Sendable, Hashable {
         hasher.combine(deepLink)
         hasher.combine(trackingEnabled)
         hasher.combine(logLevel)
-        hasher.combine(preloadSharing)
     }
 }

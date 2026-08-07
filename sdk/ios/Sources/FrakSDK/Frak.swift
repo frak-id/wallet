@@ -11,8 +11,6 @@ public enum Frak {
     private static let lock = NSLock()
     nonisolated(unsafe) private static var core: DefaultFrakClient?
     nonisolated(unsafe) private static var instance: FrakClient?
-    // Kept alongside the client so preloadSharing can be read without widening FrakClient.
-    nonisolated(unsafe) private static var configuration: FrakConfig?
 
     // Non-blocking, no I/O, never throws. Second call is a no-op; the first configuration wins.
     public static func initialize(_ config: FrakConfig) {
@@ -68,7 +66,6 @@ public enum Frak {
             )
             core = newCore
             instance = FrakClient(core: newCore)
-            configuration = effective
             return .initialized
         }()
 
@@ -125,14 +122,6 @@ public enum Frak {
         SharingLinkBuilder.parse(url.absoluteString)
     }
 
-    // Mirrors FrakConfig.preloadSharing for FrakSDKUI. Lives here (not FrakClient) so
-    // :frak-sdk-ui can read one flag without widening the client's public surface.
-    public static var preloadSharing: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return configuration?.preloadSharing ?? false
-    }
-
     public static var isInitialized: Bool {
         lock.lock()
         defer { lock.unlock() }
@@ -166,7 +155,6 @@ public enum Frak {
         let dying = core
         core = nil
         instance = nil
-        configuration = nil
         return dying
     }
 
@@ -177,7 +165,6 @@ public enum Frak {
         defer { lock.unlock() }
         core = nil
         instance = nil
-        configuration = nil
     }
 }
 

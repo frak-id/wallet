@@ -94,10 +94,7 @@ struct FrakExampleApp: App {
                 // false without it.
                 env: .development,
                 deepLink: .manual,
-                logLevel: .info,
-                // Boots the sharing web view up front, so the sheet does not pay for engine
-                // startup at tap time.
-                preloadSharing: true
+                logLevel: .info
             )
         )
     }
