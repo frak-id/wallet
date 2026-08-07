@@ -77,15 +77,20 @@ Not implemented: the 4-tier copy precedence (`copy(placement:component:)`), the
 install-code + pasteboard + `SKStoreProductViewController` handoff, and the
 XCFramework distribution path.
 
-No CI job builds this SDK. Nothing in it has run on a device or a simulator — every
-claim above rests on suites executed on the host toolchain (`swift test`), not on
-`xcodebuild test` against a simulator destination.
+`.github/workflows/apps.yaml`'s `ios-sdk` job runs `lint`, `build` and `test` on every
+`dev`/`main` push and PR touching `sdk/ios/**`. Nothing in it has run on a device or a
+simulator — every claim above rests on suites executed on the host toolchain
+(`swift test`), not on `xcodebuild test` against a simulator destination.
 
 ## Toolchain notes
 
-- `-swift-version 6` is passed from `scripts/run.sh`, not declared in `Package.swift`.
-  `.swiftLanguageMode(.v6)` is a PackageDescription 6.0 API; `Package.swift` declares
-  `swift-tools-version: 5.9`, below that floor.
+- Swift 6 language mode is declared in `Package.swift` (tools-version 6.0,
+  `.swiftLanguageMode(.v6)` on all four targets), so a consumer's own `swift build` or
+  Xcode SwiftPM resolve compiles this package the same way CI does. It used to come from
+  `scripts/run.sh` alone, which CI called and a merchant never did — a consumer silently
+  got Swift 5 mode and its hidden concurrency errors. Cost: resolving this package now
+  needs Xcode 16 at minimum. `.unsafeFlags` is not an alternative; SwiftPM refuses it on
+  any package resolved as someone else's dependency, which this always is.
 - Tests use **Swift Testing, not XCTest**. XCTest's Swift overlay is a zippered
   macOS/Catalyst dylib and cannot be linked for `arm64-apple-ios15.0-simulator` from
   SwiftPM.
