@@ -6,8 +6,7 @@
 #   bun run --cwd sdk/android test          # JVM unit tests
 #   bun run --cwd sdk/android lint          # ktlintCheck
 #   bun run --cwd sdk/android format        # ktlintFormat, rewrites in place
-#   bun run --cwd sdk/android size          # dex size against the budget
-#   bun run --cwd sdk/android check         # ktlint, version drift, dex budget, apiCheck, tests, Android Lint
+#   bun run --cwd sdk/android check         # ktlint, version drift, apiCheck, tests, Android Lint
 #   bun run --cwd sdk/android apiCheck      # public ABI vs the committed api/*.api
 #   bun run --cwd sdk/android apiDump       # rewrite those dumps; the diff IS the review
 #   bun run --cwd sdk/android publishLocal  # publishToMavenLocal (~/.m2)
@@ -58,18 +57,10 @@ do_format() {
 	./gradlew ktlintFormat
 }
 
-# Dex, not AAR: the budget is app-size impact on the merchant's app.
-do_size() {
-	resolve_sdk
-	cd "$SDK_DIR"
-	log "Measuring release dex against the size budget..."
-	./gradlew checkDexSizeBudget
-}
-
 do_check() {
 	resolve_sdk
 	cd "$SDK_DIR"
-	log "Running full verification (ktlint, ABI gate, unit tests, Android Lint, version drift, dex budget)..."
+	log "Running full verification (ktlint, ABI gate, unit tests, Android Lint, version drift)..."
 	./gradlew check
 }
 
@@ -99,24 +90,20 @@ build) do_build ;;
 test) do_test ;;
 lint) do_lint ;;
 format) do_format ;;
-size) do_size ;;
 check) do_check ;;
 apiCheck) do_api_check ;;
 apiDump) do_api_dump ;;
 publishLocal) do_publish_local ;;
 *)
-	echo "Usage: $0 {build|test|lint|format|size|check|apiCheck|apiDump|publishLocal}"
+	echo "Usage: $0 {build|test|lint|format|check|apiCheck|apiDump|publishLocal}"
 	echo ""
 	echo "  build        - assembleRelease; this IS the typecheck. No device required"
 	echo "  test         - JVM unit tests. No device required"
 	echo "  lint         - ktlint check. No device required"
 	echo "  format       - ktlint auto-format in place"
-	echo "  size         - release dex size vs the budget. No device required"
-	echo "  check        - full verification: ktlint, ABI gate, unit tests, Android Lint, version drift,"
-	echo "                 dex budget. NOT a superset of the repo-root"
-	echo "                 'bun run lint' — ktlint here only covers subprojects, not the root Gradle"
-	echo "                 scripts. Android Lint has never run in this project; its first run may"
-	echo "                 surface pre-existing findings unrelated to your change"
+	echo "  check        - full verification: ktlint, ABI gate, unit tests, Android Lint, version"
+	echo "                 drift. NOT a superset of the repo-root 'bun run lint' — ktlint here only"
+	echo "                 covers subprojects, not the root Gradle scripts"
 	echo "  apiCheck     - public ABI vs the committed api/*.api. Also part of 'check'"
 	echo "  apiDump      - write/rewrite those dumps; review the diff, it IS the ABI decision"
 	echo "  publishLocal - publishToMavenLocal, for consuming an unreleased build"

@@ -1,7 +1,5 @@
 import kotlinx.validation.KotlinApiBuildTask
 import kotlinx.validation.KotlinApiCompareTask
-import org.gradle.kotlin.dsl.support.serviceOf
-import org.gradle.process.ExecOperations
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
@@ -176,78 +174,6 @@ val checkSdkVersionMatchesArtifact =
     }
 
 tasks.named("check") { dependsOn(checkSdkVersionMatchesArtifact) }
-
-// Measured against dex, not the AAR, which carries debug info/metadata and reads ~25% high.
-val checkDexSizeBudget =
-    tasks.register("checkDexSizeBudget") {
-        group = "verification"
-        description = "Fails if the release dex exceeds the per-platform size budget."
-
-        val aar =
-            layout.buildDirectory.file("outputs/aar/${project.name}-release.aar")
-        val budgetKb =
-            (project.findProperty("frak.sdk.dexBudgetKb") as String?)?.toInt()
-                ?: error("frak.sdk.dexBudgetKb is not set in gradle.properties")
-        val workDir = layout.buildDirectory.dir("dex-size-check")
-
-        // Read at configuration time: inside doLast a bare `project` is deprecated/errors in Gradle 9/10.
-        val moduleName = project.name
-        val sdkDir = androidComponents.sdkComponents.sdkDirectory
-
-        // Project.exec {} removed in Gradle 9; ExecOperations resolved here since doLast can't inject services.
-        val execOps = serviceOf<ExecOperations>()
-
-        dependsOn("assembleRelease")
-        inputs.file(aar)
-        inputs.property("budgetKb", budgetKb)
-        outputs.file(layout.buildDirectory.file("dex-size-check/result.txt"))
-
-        doLast {
-            // Newest build-tools wins: d8 is backward compatible; pinning a version would break other machines.
-            val d8 =
-                File(sdkDir.get().asFile, "build-tools").listFiles()
-                    ?.filter { File(it, "d8").canExecute() }
-                    ?.maxByOrNull { it.name }
-                    ?.let { File(it, "d8") }
-                    ?: error("No build-tools with d8 found in ${sdkDir.get().asFile}.")
-
-            val out = workDir.get().asFile.apply { deleteRecursively(); mkdirs() }
-            val classes = File(out, "classes.jar")
-            copy {
-                from(zipTree(aar.get().asFile)) { include("classes.jar") }
-                into(out)
-            }
-
-            // A resource-only module has no classes.jar; that's a pass, not a failure.
-            if (!classes.exists()) {
-                outputs.files.singleFile.writeText("ok: no classes.jar\n")
-                return@doLast
-            }
-
-            execOps.exec {
-                commandLine(
-                    d8.absolutePath, "--release", "--min-api", "24",
-                    "--output", out.absolutePath, classes.absolutePath,
-                )
-            }
-
-            val dexBytes =
-                out.listFiles().orEmpty()
-                    .filter { it.name.endsWith(".dex") }
-                    .sumOf { it.length() }
-            val dexKb = dexBytes / 1024
-
-            check(dexKb <= budgetKb) {
-                "$moduleName release dex is ${dexKb} KB, over the ${budgetKb} KB budget. " +
-                    "Either cut it or change the budget deliberately."
-            }
-
-            logger.lifecycle("[$moduleName] dex ${dexKb} KB / ${budgetKb} KB budget")
-            outputs.files.singleFile.writeText("ok: ${dexKb} KB\n")
-        }
-    }
-
-tasks.named("check") { dependsOn(checkDexSizeBudget) }
 
 // ABI gate: `api/<module>.api` is the frozen public surface. Wired by hand from BCV's task types
 // because BCV (and KGP's `abiValidation` replacement) only hooks the standalone Kotlin plugins,

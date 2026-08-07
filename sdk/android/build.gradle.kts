@@ -13,8 +13,8 @@ apply(plugin = "org.jetbrains.kotlinx.binary-compatibility-validator")
 
 configure<kotlinx.validation.ApiValidationExtension> {
     // `@InternalFrakApi` marks declarations that are public only so the sibling module can see them;
-    // they drop out of the dump. Its `@Target(CLASS)` is load-bearing — BCV only sees annotations
-    // that reach the class file.
+    // they drop out of the dump. Its targets are load-bearing — BCV only sees annotations that reach
+    // the class file, so a member-level marker needs PROPERTY/FUNCTION, not just CLASS.
     nonPublicMarkers.add("id.frak.sdk.InternalFrakApi")
 
     // Compose emits this per-file holder `public` though its only member is `internal`. Its name is

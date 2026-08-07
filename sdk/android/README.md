@@ -11,7 +11,6 @@ bun run --cwd sdk/android build         # assembleRelease — this IS the typech
 bun run --cwd sdk/android test          # JVM unit tests
 bun run --cwd sdk/android lint          # ktlint check
 bun run --cwd sdk/android format        # ktlint auto-format in place
-bun run --cwd sdk/android size          # release dex size vs the budget
 bun run --cwd sdk/android check         # all of the above plus the ABI gate, Android Lint, version drift
 bun run --cwd sdk/android apiCheck      # public ABI vs the committed api/*.api
 bun run --cwd sdk/android apiDump       # write those dumps; the diff IS the ABI decision

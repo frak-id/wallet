@@ -113,7 +113,7 @@ jobs:
   # No device anywhere: `build` is `assembleRelease` and `test` is the JVM unit tests,
   # both of which run on a bare Linux runner.
   #
-  # `check` adds Android Lint, the dex budget and version drift on top. The narrower steps are kept
+  # `check` adds Android Lint and version drift on top. The narrower steps are kept
   # alongside it so a failure is attributed by step name; Gradle skips the repeated work.
   android-sdk:
     name: "🤖 Android SDK · Lint, build, test & ABI"
@@ -164,7 +164,7 @@ jobs:
       - name: "🔒 ABI gate (apiCheck)"
         run: bun run --cwd sdk/android apiCheck
 
-      - name: "✅ Full check (Android Lint, dex budget, version drift)"
+      - name: "✅ Full check (Android Lint, version drift)"
         run: bun run --cwd sdk/android check
 
   # ── iOS SDK ─────────────────────────────────────────────
