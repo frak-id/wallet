@@ -46,7 +46,7 @@ Our signature is verified at integration time only; it doesn't survive into the 
 | Namespace proof | apex TXT on `frak.id` with the Portal-issued key — not `_sonatype`, not a subdomain. Done |
 | GPG | public key on a keyserver, signed with a **primary** key |
 | POM | name/description/url/licence/developer/scm |
-| Javadoc jar | required by presence only — empty placeholder sanctioned |
+| Javadoc jar | required by presence only — placeholder sanctioned, and taken: A6 closed by shipping a stub on both artifacts rather than AGP's Dokka |
 | Checksums | `md5` + `sha1` mandatory |
 
 Trap: clicking Verify before the TXT propagates caches `NXDOMAIN` for the TTL — `dig` first. Claim the namespace only once there's an artifact worth publishing.
