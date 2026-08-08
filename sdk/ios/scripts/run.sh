@@ -9,6 +9,7 @@
 #   bun run --cwd sdk/ios format        # swift-format rewrite in place
 #   bun run --cwd sdk/ios version       # FrakSDKVersion.current vs package.json (9.10)
 #   bun run --cwd sdk/ios xcframework   # NOT IMPLEMENTED — see do_xcframework
+#   bun run --cwd sdk/ios mirror-stage <dir>  # lay out the SwiftPM mirror payload
 
 set -euo pipefail
 
@@ -182,6 +183,48 @@ The intended xcodebuild archive / -create-xcframework outline is in the comments
 do_xcframework() in $0."
 }
 
+# Lays out exactly what the SwiftPM mirror (frak-id/frak-ios-sdk) publishes, into $1.
+#
+# SwiftPM resolves a package by repo URL + tag and reads `Package.swift` from the repo
+# ROOT only, so this package cannot be consumed from `sdk/ios/` in the monorepo — hence a
+# mirror whose root is this directory's contents. Open upstream: swift-package-manager#5768.
+#
+# `Tests/` is deliberately NOT copied, and that is a correctness requirement rather than a
+# size one: `Tests/FrakSDKTests/Fixtures/GoldenFixtures.swift` loads the corpus from
+# `sdk/core/src/*/fixtures/*.json` by walking up to the monorepo root, and throws loudly
+# when it is absent. Mirrored, that suite could never pass. SwiftPM does not validate a
+# *dependency's* test-target paths, so `Package.swift` still declaring two `.testTarget`s
+# whose directories are missing costs a consumer nothing — verified by resolving a scratch
+# package against exactly this payload. It does mean `swift build` inside the mirror fails
+# with "invalid custom path 'Tests/FrakSDKTests'"; that is the mirror being un-developable
+# on purpose, and the README says so.
+#
+# README.mirror.md, not README.md: the monorepo README is written for contributors (bun
+# scripts, biome, a relative link into docs/plans/) and is wrong for a merchant.
+do_mirror_stage() {
+	local out="${1:-}"
+	[ -n "$out" ] || die "mirror-stage needs a target directory: $0 mirror-stage <dir>"
+	cd "$PKG_DIR"
+	check_sdk_version
+
+	[ -d "$out" ] && die "refusing to write into an existing directory: $out"
+	mkdir -p "$out"
+
+	cp -R Sources "$out/"
+	cp Package.swift LICENSE "$out/"
+	cp README.mirror.md "$out/README.md"
+
+	# The privacy manifests ride inside Sources/ as target resources; a missing one is an
+	# ITMS-91053 rejection on a merchant's binary, so fail here rather than at their upload.
+	local manifest
+	for manifest in FrakSDK FrakSDKUI; do
+		[ -f "$out/Sources/$manifest/PrivacyInfo.xcprivacy" ] ||
+			die "PrivacyInfo.xcprivacy missing from the staged $manifest target"
+	done
+
+	log "Staged the mirror payload for $SDK_VERSION in $out"
+}
+
 case "${1:-build}" in
 build) do_build ;;
 test) do_test ;;
@@ -189,15 +232,17 @@ lint) do_lint ;;
 format) do_format ;;
 version) do_version ;;
 xcframework) do_xcframework ;;
+mirror-stage) do_mirror_stage "${2:-}" ;;
 *)
-	echo "Usage: $0 {build|test|lint|format|version|xcframework}"
+	echo "Usage: $0 {build|test|lint|format|version|xcframework|mirror-stage <dir>}"
 	echo ""
-	echo "  build       - compile against the iOS simulator SDK (Swift 6 strict concurrency)"
-	echo "  test        - swift test, same triple"
-	echo "  lint        - swift-format lint (strict), no simulator"
-	echo "  format      - swift-format rewrite in place"
-	echo "  version     - checks FrakSDKVersion.current against package.json (9.10)"
-	echo "  xcframework - NOT IMPLEMENTED (05 §3) — exits 1 with the intended outline"
+	echo "  build        - compile against the iOS simulator SDK (Swift 6 strict concurrency)"
+	echo "  test         - swift test, same triple"
+	echo "  lint         - swift-format lint (strict), no simulator"
+	echo "  format       - swift-format rewrite in place"
+	echo "  version      - checks FrakSDKVersion.current against package.json (9.10)"
+	echo "  xcframework  - NOT IMPLEMENTED (05 §3) — exits 1 with the intended outline"
+	echo "  mirror-stage - lay out the frak-ios-sdk mirror payload into <dir>"
 	exit 1
 	;;
 esac

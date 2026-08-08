@@ -22,6 +22,15 @@ These wrap `scripts/run.sh`, which owns the real invocations. `xcframework` is a
 defined but not implemented — it exits 1 with the intended outline in the comments
 above `do_xcframework()`.
 
+`mirror-stage <dir>` lays out what the SwiftPM mirror publishes: `Sources/`,
+`Package.swift`, `LICENSE`, and `README.mirror.md` as `README.md`. Merchants cannot
+consume this package from the monorepo — SwiftPM reads `Package.swift` from a repo root
+only — so releases go to [`frak-id/frak-ios-sdk`](https://github.com/frak-id/frak-ios-sdk)
+via `.github/workflows/release-ios-sdk.yml`, triggered by an `ios-v*` tag. `Tests/` is
+deliberately absent from the payload: `GoldenFixtures` reads the corpus out of
+`sdk/core`, so a mirrored suite could never pass. `README.mirror.md` is the merchant-facing
+README and this file is the contributor-facing one; they are meant to diverge.
+
 `swift build` under Swift 6 strict concurrency is the typecheck: there is no separate
 `tsc`-equivalent step. A bare `swift build` without the flags `run.sh` supplies targets
 the host and compiles this as macOS, passing without ever exercising iOS.

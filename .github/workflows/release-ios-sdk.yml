@@ -1,0 +1,154 @@
+# Publishes sdk/ios to the SwiftPM mirror at frak-id/frak-ios-sdk.
+#
+# Why a mirror at all: SwiftPM resolves a package by repo URL + tag and reads
+# `Package.swift` from the repo ROOT only — there is no subpath form, and the upstream
+# request (swift-package-manager#5768) is open. `sdk/ios/Package.swift` is therefore
+# unreachable to a merchant from this monorepo. The mirror's root is sdk/ios's contents.
+#
+# The mirror is a snapshot, not a history: one orphan commit per release, force-pushed.
+# `git subtree split` was the alternative and buys nothing here — nobody bisects an SDK
+# mirror, and subtree's cost scales with this monorepo's 204 MiB pack for a 492 KB result.
+#
+# Tag convention: `ios-v0.1.0-alpha.1` here becomes `0.1.0-alpha.1` on the mirror. The
+# prefix keeps iOS releases out of the JS train's tag namespace; the mirror gets bare
+# semver because that is what SwiftPM reads as a version.
+name: Release iOS SDK
+
+on:
+  push:
+    tags: ["ios-v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, without the ios-v prefix (e.g. 0.1.0-alpha.1)"
+        required: true
+      dry_run:
+        description: "Stage and validate, but do not push to the mirror"
+        type: boolean
+        default: true
+
+# A second release racing the first would force-push main out from under it.
+permissions:
+  contents: read
+
+concurrency:
+  group: release-ios-sdk
+  cancel-in-progress: false
+
+env:
+  MIRROR: git@github.com:frak-id/frak-ios-sdk.git
+
+jobs:
+  publish:
+    name: "🍏 iOS SDK · Publish to the SwiftPM mirror"
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      pushed: ${{ steps.push.outputs.pushed }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: "🔢 Resolve the version"
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#ios-v}"
+          fi
+          # Semver with an optional prerelease. A malformed tag reaching the mirror is
+          # uncorrectable: 05-build-and-release.md §3 forbids retagging a published version.
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+            echo "::error::'$version' is not a semver version" && exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # run.sh's own gate only proves FrakSDKVersion.current == package.json. Neither knows
+      # about the tag, so a correctly-synced pair can still ship under the wrong coordinate.
+      - name: "🔒 Check the tag against FrakSDKVersion.current"
+        run: |
+          declared=$(grep -E 'public static let current: String = "' \
+            sdk/ios/Sources/FrakSDK/FrakSDKVersion.swift |
+            sed -E 's/.*current: String = "([^"]*)".*/\1/')
+          if [ "$declared" != "${{ steps.resolve.outputs.version }}" ]; then
+            echo "::error::tag says ${{ steps.resolve.outputs.version }}, FrakSDKVersion.current says $declared" && exit 1
+          fi
+
+      - name: "📦 Stage the mirror payload"
+        run: sdk/ios/scripts/run.sh mirror-stage "$RUNNER_TEMP/mirror"
+
+      - name: "🔑 Authorize the mirror push"
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.IOS_MIRROR_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: "🚀 Push to the mirror"
+        id: push
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: |
+          cd "$RUNNER_TEMP/mirror"
+          git init -q -b main .
+          git add -A
+          git -c user.email=ci@frak.id -c user.name="Frak CI" \
+            commit -qm "FrakSDK $VERSION
+
+          Generated from frak-id/wallet@${GITHUB_SHA} (sdk/ios). Do not commit here."
+          git tag "$VERSION"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            echo "### Dry run — nothing pushed" >> "$GITHUB_STEP_SUMMARY"
+            git -c core.pager=cat show --stat HEAD >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # A published version is immutable (05 §3). Refuse rather than clobber a tag a
+          # merchant may already have pinned in Package.resolved.
+          if git ls-remote --tags "$MIRROR" "refs/tags/$VERSION" | grep -q .; then
+            echo "::error::$VERSION is already tagged on the mirror; bump instead of retagging" && exit 1
+          fi
+
+          git push --force "$MIRROR" main
+          git push "$MIRROR" "$VERSION"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+  # The only thing that ever exercises the merchant spelling. example/native-ios uses a
+  # SwiftPM *path* dependency and always will, so without this nothing proves the published
+  # form resolves — the first person to find out would otherwise be a merchant.
+  # macOS because the package targets Apple platforms; billed at 10x, but only on a release.
+  verify:
+    name: "🍏 iOS SDK · Resolve the published package"
+    needs: publish
+    if: needs.publish.outputs.pushed == 'true'
+    runs-on: macos-26
+    steps:
+      - name: "🔍 Resolve and build as a merchant would"
+        env:
+          VERSION: ${{ needs.publish.outputs.version }}
+        run: |
+          mkdir -p consumer/Sources/App && cd consumer
+          cat > Package.swift <<EOF
+          // swift-tools-version: 6.0
+          import PackageDescription
+          let package = Package(
+              name: "App",
+              platforms: [.iOS(.v15), .macOS(.v12)],
+              products: [.library(name: "App", targets: ["App"])],
+              dependencies: [
+                  .package(url: "https://github.com/frak-id/frak-ios-sdk.git", exact: "$VERSION")
+              ],
+              targets: [.target(name: "App", dependencies: [
+                  .product(name: "FrakSDK", package: "frak-ios-sdk"),
+                  .product(name: "FrakSDKUI", package: "frak-ios-sdk"),
+              ])]
+          )
+          EOF
+          printf 'import FrakSDK\nimport FrakSDKUI\npublic func probe() { Frak.initialize(FrakConfig(merchantId: "ci")) }\n' \
+            > Sources/App/App.swift
+          swift build
+          echo "Resolved and built frak-ios-sdk $VERSION" >> "$GITHUB_STEP_SUMMARY"
