@@ -183,11 +183,30 @@ One Android device pass (SM-G998B, Android 15) has exercised `initialize`, the w
 
 ## Publishing
 
-Distribution will be Maven Central via the Central Publisher Portal. It is not wired yet: `frak-publish.gradle.kts` declares publications and signing but no `repositories { maven { … } }` and no Portal plugin, so the only working publish path today is `publishToMavenLocal`.
+Distribution will be Maven Central via the Central Publisher Portal. It is not wired yet: `frak-publish.gradle.kts` declares publications and signing but no `repositories { maven { … } }` and no Portal plugin, so the only working publish path today is `publishToMavenLocal`. The Portal user token is also still missing — only a human with the Sonatype login can mint one.
+
+**The signing key exists.** RSA 4096, sign-only primary with no subkey (Maven and Nexus cannot sign with a subkey), expires 2028-08-07:
+
+```
+Frak Labs <hello@frak-labs.com>
+A1BB F732 9154 CC10 824C  B10E C699 DDEA E382 89E1
+```
+
+Published to `keyserver.ubuntu.com` (serving, with the uid) and `keys.openpgp.org` (serving by fingerprint; it withholds the uid until the address is verified by clicking the mail it sends). The private half lives only in the `ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY` and `…KEYPASSWORD` secrets on `frak-id/wallet`, plus whatever out-of-band backup the holder filed.
+
+**Trap when wiring the CI job.** GitHub uppercases secret *names*, but Gradle reads the env var case-sensitively as `ORG_GRADLE_PROJECT_signingInMemoryKey`. The job must map them explicitly:
+
+```yaml
+env:
+  ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
+```
+
+Get the case wrong and nothing fails: `isRequired = signingKey != null` makes signing opt-in, so the build succeeds and publishes **unsigned**, and the first thing to notice is Central rejecting the deployment.
 
 ```bash
 bun run --cwd sdk/android publishLocal
-cat ~/.m2/repository/id/frak/frak-sdk/0.0.1/frak-sdk-0.0.1.pom
+cat ~/.m2/repository/id/frak/sdk/core/0.0.1/core-0.0.1.pom
 ```
 
 The POM contents are Central-valid already — `buildSrc/src/main/kotlin/frak-publish.gradle.kts` is a convention plugin applied by both modules (licence, developers, SCM, sources/javadoc jars), only the transport is missing.

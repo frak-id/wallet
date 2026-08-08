@@ -44,7 +44,7 @@ Our signature is verified at integration time only; it doesn't survive into the 
 | Requirement | Detail |
 |---|---|
 | Namespace proof | apex TXT on `frak.id` with the Portal-issued key — not `_sonatype`, not a subdomain. Done |
-| GPG | public key on a keyserver, signed with a **primary** key |
+| GPG | public key on a keyserver, signed with a **primary** key. **Done** — `A1BB F732 9154 CC10 824C B10E C699 DDEA E382 89E1`, `Frak Labs <hello@frak-labs.com>`, RSA 4096, sign-only primary with no subkey, expires 2028-08-07. On `keyserver.ubuntu.com` with the uid; on `keys.openpgp.org` by fingerprint only until the address is verified. All ten local artifacts verify `Good signature`. Private half only in the `ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY`/`…KEYPASSWORD` secrets. Two traps: GitHub uppercases secret names while Gradle reads `ORG_GRADLE_PROJECT_signingInMemoryKey` case-sensitively, and `isRequired = signingKey != null` means a mismatch publishes **unsigned** without failing; and `keyserver.ubuntu.com` served the key intermittently for ~10 minutes after upload, so confirm it is consistent before the first Portal deployment |
 | POM | name/description/url/licence/developer/scm |
 | Javadoc jar | required by presence only — placeholder sanctioned, and taken: A6 closed by shipping a stub on both artifacts rather than AGP's Dokka |
 | Checksums | `md5` + `sha1` mandatory |
