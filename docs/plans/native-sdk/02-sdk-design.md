@@ -17,8 +17,8 @@ Two per platform, so a merchant taking only tracking never pulls in a web view.
 
 | | Android | iOS |
 |---|---|---|
-| Core | `id.frak:frak-sdk` | `FrakSDK` |
-| UI (sharing sheet) | `id.frak:frak-sdk-ui` | `FrakSDKUI` |
+| Core | `id.frak.sdk:core` | `FrakSDK` |
+| UI (sharing sheet) | `id.frak.sdk:ui` | `FrakSDKUI` |
 | Minimum | `minSdk 24`, Kotlin 2.2+ | iOS 15, Swift 5.9+ declared |
 | Namespace | `id.frak.sdk` | module `FrakSDK` |
 | Distribution | Maven Central (Portal) | SPM — `05` §3 |

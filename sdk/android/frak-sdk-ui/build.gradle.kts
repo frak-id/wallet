@@ -36,7 +36,7 @@ dependencies {
     // The two ship in lockstep, but `api(project(...))` alone publishes a *required* version Gradle
     // may upgrade. A constraint, because a `ProjectDependency` has no `version {}` block.
     constraints {
-        api("id.frak:frak-sdk") {
+        api("id.frak.sdk:core") {
             version { strictly(providers.gradleProperty("frak.sdk.version").get()) }
             because(
                 "frak-sdk-ui compiles against @InternalFrakApi members of frak-sdk that the ABI " +

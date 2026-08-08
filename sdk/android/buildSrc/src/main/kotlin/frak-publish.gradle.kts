@@ -16,7 +16,19 @@ val sdkVersion: String =
     providers.gradleProperty("frak.sdk.version").get()
 
 // Composite-build substitution matches on `project.group`, not the publication's `groupId` below.
-group = "id.frak"
+// `id.frak.sdk` and not `id.frak`: the verified Central namespace is `id.frak.sdk`, and Sonatype
+// grants authorization downwards only — it covers `id.frak.sdk.*`, never the parent.
+group = "id.frak.sdk"
+
+// The Gradle module name is not the published artifact name. Modules keep their `frak-sdk` names
+// because the ABI gate keys its dump path off `project.name` (`api/<project.name>.api`, below),
+// and renaming them would churn both committed dumps for a cosmetic win.
+val artifactName: String =
+    when (project.name) {
+        "frak-sdk" -> "core"
+        "frak-sdk-ui" -> "ui"
+        else -> error("frak-publish applied to an unmapped module: ${project.name}")
+    }
 
 // Not redundant with the MavenPublication's `version`: without this `project.version` is
 // "unspecified", so `:frak-sdk-ui`'s strict constraint can't match the sibling project.
@@ -69,8 +81,8 @@ afterEvaluate {
     extensions.configure<PublishingExtension> {
         publications {
             register<MavenPublication>("release") {
-                groupId = "id.frak"
-                artifactId = project.name
+                groupId = "id.frak.sdk"
+                artifactId = artifactName
                 version = sdkVersion
 
                 from(components["release"])

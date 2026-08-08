@@ -29,11 +29,11 @@ Not greenfield on native: `apps/wallet/src-tauri/plugins/` already has 1,391 lin
 
 Our signature is verified at integration time only; it doesn't survive into the merchant's shipped app (re-signed at build, then by App Store Connect).
 
-**Android — Central Publisher Portal.** OSSRH is decommissioned; target the native Portal API. Verified: `id.frak` is unclaimed, `frak.id` is on Route 53, so the apex TXT record can be written today. Budget half a day.
+**Android — Central Publisher Portal.** OSSRH is decommissioned; target the native Portal API. **`id.frak.sdk` is claimed**, and that choice fixes the coordinates: Sonatype grants authorization downwards only, so a verified namespace covers itself and its children and never its parent. `id.frak:frak-sdk` — what this build produced until now — would have been rejected at upload. The published pair is `id.frak.sdk:core` and `id.frak.sdk:ui`, from Gradle modules still named `frak-sdk`/`frak-sdk-ui` because the ABI gate keys its dump path off `project.name`. One consequence to accept knowingly: `core`/`ui` are platform-neutral names taken by Android-only AARs, so a future KMP artifact could not have the root coordinate it would want — acceptable while §1 rejects KMP.
 
 | Requirement | Detail |
 |---|---|
-| Namespace proof | apex TXT on `frak.id` with the Portal-issued key — not `_sonatype`, not a subdomain |
+| Namespace proof | apex TXT on `frak.id` with the Portal-issued key — not `_sonatype`, not a subdomain. Done |
 | GPG | public key on a keyserver, signed with a **primary** key |
 | POM | name/description/url/licence/developer/scm |
 | Javadoc jar | required by presence only — empty placeholder sanctioned |
@@ -62,7 +62,7 @@ Codegen owns the mechanical boundary — OpenAPI generates Kotlin/Swift *models*
 
 ## 5. ABI decisions before the first publish
 
-These share one deadline — **the first publish of `id.frak:frak-sdk`**. After it, changing any of them is a breaking release for a binary already in the Play Store, not an edit.
+These share one deadline — **the first publish of `id.frak.sdk:core`**. After it, changing any of them is a breaking release for a binary already in the Play Store, not an edit.
 
 **State of play: gate wired, dumps not committed.** BCV was wired once before, along with dumps, and both were removed deliberately — committing a dump *ratifies* the public shape, and the shape was undecided. It is decided now, and the gate is back: `apiCheck` per module, hanging off `check`. The wiring is hand-rolled because BCV registers nothing for an AGP 9 Android library and its replacement is unavailable for the same reason; [`09-android-api-surface.md`](./09-android-api-surface.md) §5a is the record, and its "Open, and to be answered before the dump is committed" list is what remains. `explicitApi()` only forces you to *write* `public`; it detects nothing about a change to an already-public symbol. The last dump is remembered as 509 lines for `frak-sdk`, though nothing in git history confirms that — no `.api` file exists in any ref. Expect the next larger: Builders, `*Async` twins and `RewardRequest` all add declarations, and the metric is frozen surface, not line count.
 

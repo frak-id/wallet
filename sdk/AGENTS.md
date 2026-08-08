@@ -53,8 +53,8 @@ Two artifacts per platform so a merchant taking only tracking never pulls in a w
 
 | | Android | iOS |
 | --- | --- | --- |
-| Core (UI-free) | `id.frak:frak-sdk` (`:frak-sdk`) | `FrakSDK` |
-| UI (web view) | `id.frak:frak-sdk-ui` (`:frak-sdk-ui`) | `FrakSDKUI` |
+| Core (UI-free) | `id.frak.sdk:core` (`:frak-sdk`) | `FrakSDK` |
+| UI (web view) | `id.frak.sdk:ui` (`:frak-sdk-ui`) | `FrakSDKUI` |
 | Build | Gradle 9.5.0, AGP 9.1.1, Kotlin 2.4.10 → language/API level 2.2, JVM target 17, `compileSdk 36` | SwiftPM, tools-version 5.9 |
 | Minimum | `minSdk 24`, `explicitApi()` on | iOS 15 |
 | Registry | Maven Central Portal (not OSSRH — decommissioned), not yet wired | SPM only, no CocoaPods |

@@ -1,4 +1,4 @@
-# Consumer R8 / ProGuard rules for `id.frak:frak-sdk-ui`.
+# Consumer R8 / ProGuard rules for `id.frak.sdk:ui`.
 #
 # Like the core module's file, these ship inside the AAR and R8 merges them into the merchant
 # app automatically — nothing to paste.
