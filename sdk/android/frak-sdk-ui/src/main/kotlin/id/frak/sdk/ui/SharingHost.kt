@@ -265,7 +265,7 @@ internal class SharingHost private constructor(
                 this.pool = null
                 finish(
                     SharingResult.Failed(
-                        FrakError.Decoding("the sharing web view could not be created", unavailable),
+                        FrakError.InternalFailure("the sharing web view could not be created", unavailable),
                     ),
                 )
                 return

@@ -23,14 +23,21 @@ internal class Backoff(
     )
 
     /** True when [key] is inside its backoff window and must not be dialled. */
-    fun isBackingOff(key: String): Boolean {
-        val entry = state[key] ?: return false
-        if (now() >= entry.retryAtMillis) {
+    fun isBackingOff(key: String): Boolean = remainingMillis(key) != null
+
+    /**
+     * What is left of [key]'s backoff window, or null when it isn't backing off. Callers surface
+     * this as [FrakError.BackingOff.retryAfterMillis]; it is always positive.
+     */
+    fun remainingMillis(key: String): Long? {
+        val entry = state[key] ?: return null
+        val remaining = entry.retryAtMillis - now()
+        if (remaining <= 0L) {
             // Dropped on read rather than swept, so the map can't grow unbounded over a session.
             state.remove(key)
-            return false
+            return null
         }
-        return true
+        return remaining
     }
 
     /** `Retry-After` is a floor, not a replacement: the exponential must still grow past it. */

@@ -27,12 +27,16 @@ struct FrakCallTests {
         }
     }
 
-    @Test("an unexpected error thrown by body is normalised to FrakError.decoding")
+    @Test("an unexpected error thrown by body is normalised to FrakError.internalFailure")
     func unexpectedErrorIsNormalised() async throws {
         struct Boom: Error {}
 
-        await #expect(throws: FrakError.self) {
+        var thrown: FrakError?
+        do {
             _ = try await frakCall { () -> Int in throw Boom() }
+        } catch let error as FrakError {
+            thrown = error
         }
+        #expect(try #require(thrown).kind == .internalFailure)
     }
 }

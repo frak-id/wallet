@@ -75,9 +75,7 @@ internal class RewardRepository(
                 }?.let { return it.result }
         }
 
-        if (mutex.withLock { backoff.isBackingOff(backoffKey) }) {
-            throw FrakError.Network(IllegalStateException("backing off after repeated reward fetch failures"))
-        }
+        mutex.withLock { backoff.remainingMillis(backoffKey) }?.let { throw FrakError.BackingOff(it) }
 
         return singleFlight.run(key) {
             request(key, backoffKey, merchantId, currency, targetInteraction, audience, encodedProducts)

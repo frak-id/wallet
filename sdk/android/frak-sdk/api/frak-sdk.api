@@ -300,16 +300,43 @@ public final class id/frak/sdk/core/FrakEnvironment$Production : id/frak/sdk/cor
 }
 
 public abstract class id/frak/sdk/core/FrakError : java/lang/Exception {
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lid/frak/sdk/core/FrakError$Kind;Ljava/lang/String;Ljava/lang/Throwable;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getKind ()Lid/frak/sdk/core/FrakError$Kind;
 }
 
 public final class id/frak/sdk/core/FrakError$AlreadyPresenting : id/frak/sdk/core/FrakError {
 	public fun <init> ()V
 }
 
+public final class id/frak/sdk/core/FrakError$BackingOff : id/frak/sdk/core/FrakError {
+	public fun <init> (J)V
+	public final fun getRetryAfterMillis ()J
+}
+
 public final class id/frak/sdk/core/FrakError$Decoding : id/frak/sdk/core/FrakError {
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public final class id/frak/sdk/core/FrakError$InternalFailure : id/frak/sdk/core/FrakError {
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public final class id/frak/sdk/core/FrakError$Kind : java/lang/Enum {
+	public static final field ALREADY_PRESENTING Lid/frak/sdk/core/FrakError$Kind;
+	public static final field BACKING_OFF Lid/frak/sdk/core/FrakError$Kind;
+	public static final field DECODING Lid/frak/sdk/core/FrakError$Kind;
+	public static final field INTERNAL_FAILURE Lid/frak/sdk/core/FrakError$Kind;
+	public static final field MERCHANT_RESOLUTION_FAILED Lid/frak/sdk/core/FrakError$Kind;
+	public static final field NETWORK Lid/frak/sdk/core/FrakError$Kind;
+	public static final field NOT_INITIALIZED Lid/frak/sdk/core/FrakError$Kind;
+	public static final field SERVER Lid/frak/sdk/core/FrakError$Kind;
+	public static final field TRACKING_DISABLED Lid/frak/sdk/core/FrakError$Kind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getWireValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lid/frak/sdk/core/FrakError$Kind;
+	public static fun values ()[Lid/frak/sdk/core/FrakError$Kind;
 }
 
 public final class id/frak/sdk/core/FrakError$MerchantResolutionFailed : id/frak/sdk/core/FrakError {

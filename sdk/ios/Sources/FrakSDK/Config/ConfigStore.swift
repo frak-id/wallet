@@ -138,9 +138,9 @@ actor ConfigStore {
         // Backing off, so dialling again would only reproduce the same failure. Any
         // cached copy beats that, including under forceRefresh. With none, fail rather
         // than let a retry loop become a flood.
-        if backoff.isBackingOff(key) {
+        if let retryAfter = backoff.remaining(key) {
             if let fallback = readCache(key) { return fallback.config }
-            throw FrakError.network(underlying: Backoff.BackingOff(what: "merchant config fetch"))
+            throw FrakError.backingOff(retryAfter: retryAfter)
         }
 
         return try await singleFlight.run(key) { try await self.fetch(key, query: query) }

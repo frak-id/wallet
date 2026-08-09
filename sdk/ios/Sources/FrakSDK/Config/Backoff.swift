@@ -6,13 +6,6 @@ import Foundation
 /// A plain struct, held as isolated state inside an owning actor rather than being
 /// an actor itself.
 struct Backoff {
-    /// Distinguishes refusing to dial from an actual lost connection, so a merchant
-    /// catching `.network` isn't handed a misleading cause.
-    struct BackingOff: Error, LocalizedError {
-        let what: String
-        var errorDescription: String? { "backing off after repeated \(what) failures" }
-    }
-
     private struct Entry {
         let failureCount: Int
         let retryAt: Date
@@ -36,15 +29,21 @@ struct Backoff {
 
     /// True when `key` is inside its backoff window and must not be dialled.
     mutating func isBackingOff(_ key: String) -> Bool {
-        guard let entry = state[key] else { return false }
-        if now() >= entry.retryAt {
-            // Expired windows are dropped on read, so the map cannot grow unbounded.
-            state.removeValue(forKey: key)
-            return false
-        }
-        return true
+        remaining(key) != nil
     }
 
+    /// What is left of `key`'s backoff window, or nil when it isn't backing off. Callers surface
+    /// this as `FrakError.backingOff(retryAfter:)`; it is always positive.
+    mutating func remaining(_ key: String) -> TimeInterval? {
+        guard let entry = state[key] else { return nil }
+        let remaining = entry.retryAt.timeIntervalSince(now())
+        if remaining <= 0 {
+            // Expired windows are dropped on read, so the map cannot grow unbounded.
+            state.removeValue(forKey: key)
+            return nil
+        }
+        return remaining
+    }
     /// Records a failure and arms the next window. A server `Retry-After` — pulled out of
     /// `error` when it is a `.server` — acts as a floor, not a replacement: the exponential
     /// must still grow past repeated failures.

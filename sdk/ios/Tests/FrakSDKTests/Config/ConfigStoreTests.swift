@@ -292,9 +292,13 @@ struct ConfigStoreTests {
         // First-launch-offline: the backoff is armed and there is no cache to fall back on.
         // Serving that by dialling anyway makes a retry loop one real request per call.
         for _ in 0..<3 {
-            await #expect(throws: FrakError.self) {
+            var thrown: FrakError?
+            do {
                 _ = try await store.resolve(query(), forceRefresh: false)
+            } catch let error as FrakError {
+                thrown = error
             }
+            #expect(try #require(thrown).kind == .backingOff)
         }
 
         #expect(log.count == afterFirst)

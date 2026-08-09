@@ -192,7 +192,7 @@ internal class SharingSheetState(
                     fail(
                         failure
                             ?: unexpected as? FrakError
-                            ?: FrakError.Decoding("the sharing sheet could not be prepared"),
+                            ?: FrakError.InternalFailure("the sharing sheet could not be prepared"),
                     )
                     return@launch
                 }
@@ -389,7 +389,7 @@ internal class SharingSheetState(
             }
 
             SharingPageAction.Error -> {
-                finish(SharingResult.Failed(FrakError.Decoding("the sharing page refused to render")))
+                finish(SharingResult.Failed(FrakError.InternalFailure("the sharing page refused to render")))
             }
 
             SharingPageAction.Ready -> {

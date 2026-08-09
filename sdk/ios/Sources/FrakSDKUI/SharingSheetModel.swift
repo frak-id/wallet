@@ -305,7 +305,7 @@
             case .dismiss:
                 close()
             case .error:
-                fail(.decoding(message: "the sharing page refused to render"))
+                fail(.internalFailure(message: "the sharing page refused to render"))
             case .ready:
                 trace.mark("page reported ready")
                 // Settles the tier-3 deadline too: a fragment activation is a same-document
@@ -371,7 +371,7 @@
                 fail(error)
                 return
             } catch {
-                fail(.decoding(message: "unexpected failure: \(error.localizedDescription)"))
+                fail(.internalFailure(message: "unexpected failure: \(error.localizedDescription)"))
                 return
             }
 

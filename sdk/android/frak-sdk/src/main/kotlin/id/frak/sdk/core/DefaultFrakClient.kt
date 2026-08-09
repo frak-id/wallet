@@ -400,5 +400,5 @@ internal inline fun <T> frakCall(block: () -> T): T =
     } catch (known: FrakError) {
         throw known
     } catch (unexpected: Throwable) {
-        throw FrakError.Decoding("unexpected failure: ${unexpected.message}", unexpected)
+        throw FrakError.InternalFailure("unexpected failure: ${unexpected.message}", unexpected)
     }

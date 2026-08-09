@@ -366,11 +366,11 @@ struct RewardRepositoryTests {
         }
 
         let error = try #require(thrown)
-        guard case .network(let underlying) = error else {
-            Issue.record("expected .network")
+        guard case .backingOff(let retryAfter) = error else {
+            Issue.record("expected .backingOff, got \(error.kind)")
             return
         }
-        #expect(underlying.localizedDescription.contains("backing off"))
+        #expect(retryAfter > 0)
     }
 
     @Test("a backed-off backend stays backed off for a different product set")
@@ -404,11 +404,11 @@ struct RewardRepositoryTests {
         }
 
         let error = try #require(thrown)
-        guard case .network(let underlying) = error else {
-            Issue.record("expected .network")
+        guard case .backingOff(let retryAfter) = error else {
+            Issue.record("expected .backingOff, got \(error.kind)")
             return
         }
-        #expect(underlying.localizedDescription.contains("backing off"))
+        #expect(retryAfter > 0)
         #expect(log.all.count == afterFirstFailure)
     }
 
