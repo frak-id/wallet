@@ -85,6 +85,21 @@ do_publish_local() {
 	./gradlew publishToMavenLocal
 }
 
+# Builds the Central Portal deployment bundle and verifies it is complete.
+#
+# Signing is opt-in in `frak-publish.gradle.kts` (`isRequired = signingKey != null`), so without
+# ORG_GRADLE_PROJECT_signingInMemoryKey this produces an *unsigned* bundle rather than failing —
+# which is why `checkCentralBundle`, not `centralBundle`, is what this runs. Uploading is not done
+# here; `.github/workflows/release-android-sdk.yml` owns it, so the Portal token stays out of any
+# local build.
+do_bundle() {
+	resolve_sdk
+	cd "$SDK_DIR"
+	log "Building and verifying the Central Portal bundle..."
+	./gradlew checkCentralBundle
+	log "Bundle: $SDK_DIR/build/central-bundle.zip"
+}
+
 case "${1:-build}" in
 build) do_build ;;
 test) do_test ;;
@@ -94,8 +109,9 @@ check) do_check ;;
 apiCheck) do_api_check ;;
 apiDump) do_api_dump ;;
 publishLocal) do_publish_local ;;
+bundle) do_bundle ;;
 *)
-	echo "Usage: $0 {build|test|lint|format|check|apiCheck|apiDump|publishLocal}"
+	echo "Usage: $0 {build|test|lint|format|check|apiCheck|apiDump|publishLocal|bundle}"
 	echo ""
 	echo "  build        - assembleRelease; this IS the typecheck. No device required"
 	echo "  test         - JVM unit tests. No device required"
@@ -107,6 +123,7 @@ publishLocal) do_publish_local ;;
 	echo "  apiCheck     - public ABI vs the committed api/*.api. Also part of 'check'"
 	echo "  apiDump      - write/rewrite those dumps; review the diff, it IS the ABI decision"
 	echo "  publishLocal - publishToMavenLocal, for consuming an unreleased build"
+	echo "  bundle       - build + verify the Central Portal deployment bundle (no upload)"
 	exit 1
 	;;
 esac

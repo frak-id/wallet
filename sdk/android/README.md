@@ -183,7 +183,19 @@ One Android device pass (SM-G998B, Android 15) has exercised `initialize`, the w
 
 ## Publishing
 
-Distribution will be Maven Central via the Central Publisher Portal. It is not wired yet: `frak-publish.gradle.kts` declares publications and signing but no `repositories { maven { … } }` and no Portal plugin, so the only working publish path today is `publishToMavenLocal`. The Portal user token is also still missing — only a human with the Sonatype login can mint one.
+Distribution is Maven Central via the Central Publisher Portal, and the path is wired end to end. The Portal takes a zipped Maven-layout tree over REST rather than a Maven deploy — OSSRH, which would have given a repository URL, is decommissioned — so `frak-publish.gradle.kts` publishes both modules into a shared local `centralBundle` repository, the root build zips it, and `.github/workflows/release-android-sdk.yml` uploads it on an `android-v*` tag. Gradle never sees the Portal token.
+
+```bash
+bun run --cwd sdk/android bundle   # build + verify build/central-bundle.zip, no upload
+```
+
+`bundle` runs `checkCentralBundle`, not `centralBundle`, and the distinction matters: signing is opt-in, so a missing key yields an *unsigned* bundle rather than a failure. The check refuses a bundle where any artifact lacks its `.asc`, `.md5` or `.sha1`.
+
+Both artifacts go up in **one** deployment. They ship in lockstep behind a `strictly` constraint, so two deployments could land `ui` on Central pointing at a `core` that failed validation.
+
+Releases default to `USER_MANAGED`: the Portal validates, then a human releases or drops it at [central.sonatype.com/publishing/deployments](https://central.sonatype.com/publishing/deployments). `AUTOMATIC` exists as a workflow input and cannot be undone once it publishes.
+
+The format was proven against the real Portal rather than assumed — a `USER_MANAGED` probe of `0.0.1` returned `VALIDATED` with no errors and no warnings, confirming the layout, the signatures, the POM and the javadoc stub, and was then dropped without publishing.
 
 **The signing key exists.** RSA 4096, sign-only primary with no subkey (Maven and Nexus cannot sign with a subkey), expires 2028-08-07:
 

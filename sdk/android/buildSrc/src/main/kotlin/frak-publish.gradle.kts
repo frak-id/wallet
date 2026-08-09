@@ -182,6 +182,18 @@ afterEvaluate {
                 }
             }
         }
+
+        // A plain local directory, deliberately not a remote. The Central Portal takes a zipped
+        // Maven-layout tree over its own REST API, not a Maven deploy, so there is no repository
+        // URL to point at — OSSRH, which there would have been, is decommissioned. Both modules
+        // write into one shared tree under the root build directory so a single bundle carries
+        // both components, which is what the Portal expects for artifacts released in lockstep.
+        repositories {
+            maven {
+                name = "centralBundle"
+                url = rootProject.layout.buildDirectory.dir("central-bundle").get().asFile.toURI()
+            }
+        }
     }
 
     extensions.configure<SigningExtension> {

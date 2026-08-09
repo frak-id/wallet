@@ -10,6 +10,7 @@
         "check": "./scripts/run.sh check",
         "apiCheck": "./scripts/run.sh apiCheck",
         "apiDump": "./scripts/run.sh apiDump",
-        "publishLocal": "./scripts/run.sh publishLocal"
+        "publishLocal": "./scripts/run.sh publishLocal",
+        "bundle": "./scripts/run.sh bundle"
     }
 }
