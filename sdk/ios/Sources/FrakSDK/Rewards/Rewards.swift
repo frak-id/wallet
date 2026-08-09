@@ -2,7 +2,7 @@
 ///
 /// Fiat fields are `0` when unpriced, not when the reward is worthless — prefer
 /// `BestReward.formatted`.
-public struct TokenAmount: Sendable, Decodable, Hashable {
+public struct TokenAmount: Sendable, Hashable {
     /// Raw token units. Non-zero even when every fiat field is zero.
     public let amount: Double
     public let eurAmount: Double
@@ -52,7 +52,7 @@ public enum EstimatedReward: Sendable, Hashable {
 /// One active campaign, as returned by `GET /user/merchant/estimated-rewards`.
 ///
 /// Arrives sorted by campaign priority, descending; do not re-sort it.
-public struct Campaign: Sendable, Decodable, Hashable {
+public struct Campaign: Sendable, Hashable {
     public let campaignId: String
     public let name: String
     /// The interaction that triggers this campaign, e.g. `purchase`. Open on the wire.
@@ -92,7 +92,7 @@ public struct Campaign: Sendable, Decodable, Hashable {
 ///
 /// `formatted` contains a non-breaking space (U+00A0) before the currency symbol —
 /// render it as-is, never compare it against an ordinary-space string.
-public struct BestReward: Sendable, Decodable, Hashable {
+public struct BestReward: Sendable, Hashable {
     public let formatted: String
     /// Which shape `formatted` describes: `fixed`, `percentage` or `tiered`. A plain
     /// `String` so a payout type newer than this binary still decodes.

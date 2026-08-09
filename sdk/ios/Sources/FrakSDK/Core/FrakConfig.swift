@@ -1,3 +1,5 @@
+// The two public `Decodable`s the read models deliberately don't get: here the conformance is just
+// `rawValue`, which is already public and already the form we send on requests, so it freezes nothing.
 public enum FrakCurrency: String, Sendable, CaseIterable, Decodable, Hashable {
     case eur
     case usd

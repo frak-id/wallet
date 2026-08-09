@@ -183,4 +183,21 @@ struct PublicSurfaceTests {
         #expect(config.deepLink == .disabled)
         #expect(FrakConfig().deepLink == .manual)
     }
+
+    /// Swift has no ABI dump, so a conformance re-added for convenience would ship unnoticed.
+    @Test("no public read model is Decodable")
+    func readModelsAreNotDecodable() {
+        let readModels: [Any.Type] = [
+            FrakResolvedConfig.self, ResolvedSdkConfig.self, ResolvedPlacement.self, ResolvedComponents.self,
+            ButtonShareConfig.self, ButtonWalletConfig.self, OpenInAppConfig.self, PostPurchaseConfig.self,
+            BannerConfig.self, AttributionDefaults.self, TokenAmount.self, RewardTier.self, EstimatedReward.self,
+            Campaign.self, BestReward.self, ProductDetails.self,
+        ]
+
+        for model in readModels {
+            #expect(!(model is any Decodable.Type), "\(model) leaked a public Decodable conformance")
+        }
+        // Without this the loop above would pass even if `is any Decodable.Type` matched nothing.
+        #expect(FrakCurrency.self is any Decodable.Type)
+    }
 }
