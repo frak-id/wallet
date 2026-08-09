@@ -60,7 +60,7 @@ Three places where iOS could not mirror Android, each forced rather than chosen:
 
 | | Android | iOS |
 |---|---|---|
-| Identity storage | `SharedPreferences`, backup-excluded | `UserDefaults`; key in the Secure Enclave |
+| Identity storage | key in `AndroidKeyStore`, non-exportable | key in a backup-excluded file; Secure Enclave when available, raw scalar otherwise |
 | Inbound links | `Automatic` via `ActivityLifecycleCallbacks` | `.manual` only — a library cannot observe a host's `Scene`/`AppDelegate` |
 | Install carrier | Play referrer, deterministic | install code + pasteboard + `SKOverlay` |
 

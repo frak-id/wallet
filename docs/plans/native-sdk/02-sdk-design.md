@@ -63,8 +63,8 @@ atomically: a surviving key with a lost id silently fails derivation.
 
 | | Storage | Uninstall |
 |---|---|---|
-| Android | `SharedPreferences`, SDK-owned file, excluded from backup | wiped |
-| iOS | `UserDefaults`; key in the Secure Enclave | wiped |
+| Android | key in `AndroidKeyStore` (non-exportable, never backed up); merchant marker + consent in `SharedPreferences` | wiped |
+| iOS | key + merchant marker in `Application Support/id.frak.sdk/identity.json`, backup-excluded; consent in a `UserDefaults` suite, backed up on purpose | wiped |
 
 Keychain is rejected on iOS: it survives uninstall/reinstall, resurrecting a "fresh"
 user's id, inconsistent with Android and the web. Android backup exclusion needs both

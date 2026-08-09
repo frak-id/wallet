@@ -32,10 +32,15 @@ protocol DeviceKeyStore: Sendable {
     func delete()
 }
 
-// DeviceKeyStore over the SDK's own UserDefaults suite, not the Keychain: Keychain items
-// survive uninstall, which would resurrect a cross-install identifier (inconsistent with
-// Android/web, where reinstall/clearing data resets the id). Stores a key reference, not the
-// key itself; the Secure Enclave blob is chip-wrapped.
+// DeviceKeyStore over a `KeyValueStore`, not the Keychain: Keychain items survive uninstall,
+// which would resurrect a cross-install identifier (inconsistent with Android/web, where
+// reinstall/clearing data resets the id).
+//
+// What lands in that store is NOT always a key reference. `.secureEnclave` persists a
+// chip-wrapped blob that is useless off this device; `.software` persists the raw P-256 private
+// scalar. The caller must therefore back this with storage that is excluded from backup — see
+// `FileKeyValueStore` — or a restore clones the identity onto the new device instead of
+// regenerating it. That is the whole reason the identity moved off `UserDefaults`.
 struct PersistedDeviceKeyStore: DeviceKeyStore {
     // One byte in front of key material so a blob from one backing never reaches the other.
     private enum Backing: UInt8 {
@@ -46,9 +51,12 @@ struct PersistedDeviceKeyStore: DeviceKeyStore {
     static let storageKey = "device-key"
 
     private let store: KeyValueStore
+    private let logger: FrakLogger
 
-    init(store: KeyValueStore) {
+    /// Silent by default so the tests, which construct this directly, need no sink.
+    init(store: KeyValueStore, logger: FrakLogger = FrakLogger(level: .none)) {
         self.store = store
+        self.logger = logger
     }
 
     // Stored material this device cannot use is replaced, not preserved: an iCloud restore
@@ -62,7 +70,7 @@ struct PersistedDeviceKeyStore: DeviceKeyStore {
     // device's first unlock) clearing would destroy a healthy key.
     func loadOrCreate() throws -> DeviceKey {
         if let key = load() { return key }
-        let (key, blob) = try Self.generate()
+        let (key, blob) = try generate()
         store.set(Base64URL.encode(blob), forKey: Self.storageKey)
         return key
     }
@@ -79,8 +87,13 @@ struct PersistedDeviceKeyStore: DeviceKeyStore {
         store.removeValue(forKey: Self.storageKey)
     }
 
-    private static func generate() throws -> (DeviceKey, Data) {
+    private func generate() throws -> (DeviceKey, Data) {
+        // Logged, not guarded to the simulator: refusing here would leave a host with no enclave
+        // (a simulator, Catalyst on a pre-T2 Mac) permanently unable to track, silently. The raw
+        // scalar this path persists is only safe because the store is backup-excluded, so a build
+        // that reports this line on a real device is a signal the wiring regressed.
         guard SecureEnclave.isAvailable else {
+            logger.warn("No Secure Enclave on this host; the device key will be held in software.")
             let key = P256.Signing.PrivateKey()
             return (.software(key), Data([Backing.software.rawValue]) + key.rawRepresentation)
         }

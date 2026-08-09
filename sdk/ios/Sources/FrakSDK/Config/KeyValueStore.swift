@@ -12,9 +12,11 @@ final class UserDefaultsStore: KeyValueStore, @unchecked Sendable {
     /// Matches the reason declared in `PrivacyInfo.xcprivacy`.
     static let suiteName = "id.frak.sdk.config"
 
-    /// A separate suite for the identity: a corrupt write to the hot one must not take the
-    /// anonymous id with it.
-    static let identitySuiteName = "id.frak.sdk.identity"
+    /// The consent decision, and only that: it is the one persisted value that SHOULD survive a
+    /// restore, so it stays in a backed-up suite while the key material moved to
+    /// `FileKeyValueStore`. Separate from the config suite because a corrupt write to that hot
+    /// cache must not take the record that the user was ever asked with it.
+    static let consentSuiteName = "id.frak.sdk.consent"
 
     // UserDefaults is documented thread-safe; it predates the Sendable annotation.
     private let defaults: UserDefaults

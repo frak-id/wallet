@@ -149,25 +149,14 @@ actor EventQueue {
     /// events never replay onto a restored device that is no longer the same user.
     ///
     /// Falls back to the temporary directory rather than failing: a queue that does not
-    /// survive a restart still beats losing every event this session captures.
+    /// survive a restart still beats losing every event this session captures. The identity
+    /// store shares the directory but deliberately not this fallback — see `FrakStorage`.
     static func defaultFileURL(logger: FrakLogger) -> URL {
-        let manager = FileManager.default
         do {
-            let support = try manager.url(
-                for: .applicationSupportDirectory,
-                in: .userDomainMask,
-                appropriateFor: nil,
-                create: true
-            )
-            var directory = support.appendingPathComponent("id.frak.sdk", isDirectory: true)
-            try manager.createDirectory(at: directory, withIntermediateDirectories: true)
-            var values = URLResourceValues()
-            values.isExcludedFromBackup = true
-            try directory.setResourceValues(values)
-            return directory.appendingPathComponent(fileName, isDirectory: false)
+            return try FrakStorage.directory().appendingPathComponent(fileName, isDirectory: false)
         } catch {
             logger.warn("Frak could not prepare a durable event queue; it will not survive a restart.", error)
-            return manager.temporaryDirectory.appendingPathComponent(fileName, isDirectory: false)
+            return FileManager.default.temporaryDirectory.appendingPathComponent(fileName, isDirectory: false)
         }
     }
 
