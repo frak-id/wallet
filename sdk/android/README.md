@@ -141,7 +141,7 @@ Two async idioms coexist on purpose: a request/response call returns a future, a
 
 `Frak.shutdown()` cancels background work and unregisters the deep-link observer; call it to release the SDK deterministically (`initialize` can then run again). It is not a consent control — it records no decision.
 
-`FrakConfig.logSink` (a `fun interface`) and `FrakClient.setTrackingEnabled` are the merchant-facing hooks for logging and consent; see the doc comments on `FrakConfig` and `FrakClient` for the exact contract.
+`FrakConfig.logSink` (a `fun interface`) and `FrakClient.setTrackingEnabled` are the merchant-facing hooks for logging and consent; see the doc comments on `FrakConfig` and `FrakClient` for the exact contract, and [PRIVACY.md](PRIVACY.md) for what to declare in Play Data Safety. Two caveats before you build a consent flow on `setTrackingEnabled`: the decision is written with `SharedPreferences.apply()`, so a withdrawal lost to a process kill reverts to enabled on the next launch (finding S10); and the web SDK has no equivalent switch today, so a privacy notice written against this behaviour does not hold for a merchant's web integration.
 
 The sharing sheet is a Stripe-shaped Builder with two build sites, so XML, Java and Compose callers see the same types:
 

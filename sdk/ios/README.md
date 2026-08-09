@@ -123,20 +123,29 @@ simulator — every claim above rests on suites executed on the host toolchain
   feeds the `x-frak-sdk-version` header and the `?sdkVersion=` query parameter, and must not
   move because a web package bumped.
 - `Sources/FrakSDK/PrivacyInfo.xcprivacy` (and `FrakSDKUI`'s own copy) must stay
-  current with what the code does. Since 1 May 2024, an SDK using a required-reason
-  API without declaring it in a privacy manifest gets the merchant's App Store upload
-  rejected with ITMS-91053 — the rejection lands on the merchant's binary, not ours.
+  current with what the code does. Two independent mechanisms live in that one file and
+  it is worth not confusing them: `NSPrivacyAccessedAPITypes` is scanned at upload and an
+  undeclared required-reason API rejects the merchant's build with ITMS-91053, while
+  `NSPrivacyCollectedDataTypes` feeds the privacy report behind the merchant's App Store
+  nutrition label and is not an upload gate. Getting the first wrong breaks releases;
+  getting the second wrong misdescribes the merchant's app.
   `Interaction.custom(_:data:)` carries an arbitrary `[String: String]` the SDK
   persists and transmits; a merchant who puts an email or user id in there makes the
   manifest incomplete for their own binary.
+- The anonymous id is declared as **User ID, not Device ID**. Apple's Device ID means the
+  advertising identifier or another device-level id; this one is installation-scoped,
+  unreadable by other apps and gone on uninstall, which puts it under "assigned user ID".
+  `NSPrivacyTracking` stays `false`: no ad network is in the SDK path (the affiliate
+  integration lives in the wallet app), and the cross-merchant linkage is user-initiated
+  and serves reward distribution rather than advertising measurement. Both calls are
+  argued in full in the manifest comments — revisit if an ad network ever enters the SDK
+  path.
 
 ## Open decisions before first publish
 
 - XCFramework build and signing are unbuilt. `bun run --cwd sdk/ios xcframework`
   exits 1; only source distribution via a SwiftPM path/git dependency works today.
 - No CI builds either native SDK.
-- The ATT/tracking declaration in `PrivacyInfo.xcprivacy`
-  (`NSPrivacyTracking`) is still open.
 - `golden-rewards.json`'s `format-amount` vectors are hand-copied as literals in
   `RewardsDecoderTests.swift` instead of loaded from the shared fixture corpus.
 - `PrivacyInfo.xcprivacy` propagation has not been validated against a real consumer

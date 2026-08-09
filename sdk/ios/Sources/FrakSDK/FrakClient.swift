@@ -32,7 +32,10 @@ public final class FrakClient: Sendable {
     }
 
     /// Destroys the keypair (next `anonymousId` read mints a new one) and purges the queue.
-    /// For GDPR erasure; does not delete history already attributed to the old id.
+    ///
+    /// This is a local identity rotation, not an Art. 17 erasure: events already sent stay
+    /// attributed to the old id on Frak's side. Route an actual erasure request to
+    /// https://frak.id/account-deletion.
     ///
     /// Returns false when erasure failed and the id did NOT rotate. On this platform the
     /// underlying delete cannot fail, so this always returns true — the value exists to keep one

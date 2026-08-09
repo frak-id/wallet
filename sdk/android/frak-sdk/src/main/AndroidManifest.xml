@@ -34,8 +34,9 @@
       (API 24-30) are singular attributes and the manifest merger does not
       union them, so a library cannot set either on behalf of its consumer.
       Both ship as plain resources instead. Required merchant integration
-      step — see "Backup and device-transfer exclusion" in the SDK's README
-      for the `<application>` snippet and the `tools:replace` guidance.
+      step — see "Backup and device-transfer exclusion" in the SDK's
+      PRIVACY.md for the `<application>` snippet and the `tools:replace`
+      guidance.
 
       TODO: a debug-build runtime assertion that these exclusions are actually
       wired is not yet implemented.

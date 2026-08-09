@@ -21,8 +21,11 @@ public class FrakClient internal constructor(
     public fun anonymousIdAsync(): CompletableFuture<String?> = core.asFuture { core.anonymousId() }
 
     /**
-     * Destroys the keypair so the next [anonymousId] mints a new identity. For GDPR erasure;
-     * does not delete history already attributed to the old id.
+     * Destroys the keypair so the next [anonymousId] mints a new identity.
+     *
+     * This is a local identity rotation, not an Art. 17 erasure: events already sent stay
+     * attributed to the old id on Frak's side. Route an actual erasure request to
+     * https://frak.id/account-deletion.
      *
      * @return false when the platform keystore refused to erase the key; the identity did not rotate.
      */

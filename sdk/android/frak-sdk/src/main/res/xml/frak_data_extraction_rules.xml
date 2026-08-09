@@ -18,7 +18,7 @@
   This file being present is not sufficient: `android:dataExtractionRules` is a singular
   attribute on `<application>`, and Gradle's manifest merger does not union rules files, so a
   library cannot wire this from its own manifest. See "Backup and device-transfer exclusion" in
-  the SDK's README for the required `<application>` snippet.
+  the SDK's PRIVACY.md for the required `<application>` snippet.
 
   TODO: a debug-build runtime assertion that these exclusions are actually wired is not yet
   implemented.
