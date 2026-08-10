@@ -390,7 +390,7 @@ hands it a finished link. Making it depend on one would trade a duplicated deriv
 that cannot render without a host. `golden-sharing-links.json` (`04` §7) is what holds the two
 adapters together instead — same input, same bytes.
 
-Two consequences the duplication produced, both now fixed:
+Three consequences the duplication produced, all now fixed:
 
 - `sharing_link_copied` reported the *page's* link on a handed-off copy, while the SDK wrote its
   own to the clipboard — the analytics row and the user's clipboard held different URLs on the
@@ -399,6 +399,11 @@ Two consequences the duplication produced, both now fixed:
   SDK could have serviced from a link it already held — and a handed-off copy with no local link
   returned early, skipping the interaction record and the confirmation screen. Both CTAs now gate
   on `share.canAct`: this page built a link, *or* a host will service the action with its own.
+- A handed-off *share* emitted nothing at all: `useShareLink` owns `sharing_link_started`, and the
+  hand-off returns before it ever runs, so the entire native share funnel was invisible in
+  OpenPanel — taps went in, no event came out. The tap now emits `sharing_link_started` with
+  `handed_off: true`. No `sharing_link_shared` follows it, because the host reports no completion
+  back, so the chooser completion rate is only meaningful over `handed_off` false.
 
 This section exists so the next reviewer does not re-derive it: "why is this built twice" has a
 load-bearing answer, and it is not in the code.

@@ -13,14 +13,22 @@ type SharingLinkProps = {
     link?: string;
 };
 
+/**
+ * Set when a native host took the action over and served it with the link IT
+ * built. `link` is then absent: this page never sees the string the user got.
+ */
+type HandedOff = { handed_off?: boolean };
+
 export type SharingEventMap = {
-    sharing_link_started: SharingLinkProps;
-    sharing_link_shared: SharingLinkProps;
     /**
-     * `handed_off` means a native host wrote its own link to the clipboard, so
-     * `link` is absent — this page never sees the string the user actually got.
+     * The user asked to share. A `handed_off: true` one is never followed by a
+     * `sharing_link_shared` — the host owns the sheet and reports no completion
+     * back — so compute the chooser completion rate over `handed_off` false only.
      */
-    sharing_link_copied: SharingLinkProps & { handed_off?: boolean };
+    sharing_link_started: SharingLinkProps & HandedOff;
+    /** Completion. Only ever fires for a share this page ran itself. */
+    sharing_link_shared: SharingLinkProps;
+    sharing_link_copied: SharingLinkProps & HandedOff;
     /** `sdk_version` and `native` are only set when a native host opened the page. */
     sharing_page_viewed: {
         merchant_id?: string;

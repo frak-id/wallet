@@ -40,7 +40,11 @@ export type SharingOutcomes = {
     confirmationDismiss?: () => void;
     /** A share or copy completed; the listener resolves its pending RPC here. */
     onConfirmed?: (action: "shared" | "copied") => void;
-    /** Record a sharing interaction with the backend; fired for copy as well. */
+    /**
+     * Record a sharing interaction with the backend; fired for copy as well, and
+     * on a hand-off. A host that signs the interaction with its own SDK keypair
+     * already records it — such a host must leave this unset or it double-counts.
+     */
     recordSharing?: () => void;
 };
 
@@ -220,11 +224,21 @@ export function useSharingPageController({
     );
 
     const onShare = useCallback(() => {
-        // A host that takes the share also owns the confirmation.
-        if (outcomes.share?.()) return;
+        // A host that takes the share also owns the confirmation, and reports no
+        // completion back — so this tap is the only share signal we ever get for
+        // it. `useShareLink`, which normally emits it, never runs on this path.
+        if (outcomes.share?.()) {
+            trackEvent("sharing_link_started", {
+                source,
+                merchant_id: merchantId,
+                handed_off: true,
+            });
+            outcomes.recordSharing?.();
+            return;
+        }
         if (!sharingLink) return;
         triggerSharing();
-    }, [outcomes, sharingLink, triggerSharing]);
+    }, [outcomes, sharingLink, triggerSharing, source, merchantId]);
 
     const onCopy = useCallback(() => {
         const handedOff = outcomes.copy?.() ?? false;

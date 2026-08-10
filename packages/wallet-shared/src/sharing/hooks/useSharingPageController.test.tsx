@@ -97,6 +97,57 @@ describe("outcome hand-off", () => {
         expect(triggerSharing).toHaveBeenCalled();
     });
 
+    it("reports the tap when the host takes the share", () => {
+        // `useShareLink` never runs on this path, so without this the whole
+        // handed-off share funnel is invisible in OpenPanel.
+        const { result } = setup({ share: () => true });
+
+        act(() => result.current.actions.onShare());
+
+        expect(trackEvent).toHaveBeenCalledWith("sharing_link_started", {
+            source: "sharing_page_wallet",
+            merchant_id: merchantId,
+            handed_off: true,
+        });
+    });
+
+    it("reports a handed-off share even with no link of its own", () => {
+        const { result } = setup(
+            { share: () => true },
+            { clientId: undefined }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(result.current.sharingLink).toBeNull();
+        expect(trackEvent).toHaveBeenCalledWith(
+            "sharing_link_started",
+            expect.objectContaining({ handed_off: true })
+        );
+    });
+
+    it("records the interaction when the host takes the share", () => {
+        const recordSharing = vi.fn();
+        const { result } = setup({ share: () => true, recordSharing });
+
+        act(() => result.current.actions.onShare());
+
+        expect(recordSharing).toHaveBeenCalled();
+    });
+
+    it("leaves the local share to `useShareLink` to report", () => {
+        // The local path emits `sharing_link_started` from inside the mutation,
+        // which is mocked here — the controller must not double-fire it.
+        const { result } = setup({ share: () => false });
+
+        act(() => result.current.actions.onShare());
+
+        expect(trackEvent).not.toHaveBeenCalledWith(
+            "sharing_link_started",
+            expect.anything()
+        );
+    });
+
     it("does not write the clipboard when the host takes the copy", () => {
         const copyOutcome = vi.fn(() => true);
         const { result } = setup({ copy: copyOutcome });
