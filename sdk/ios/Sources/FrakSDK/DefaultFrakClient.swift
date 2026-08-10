@@ -38,7 +38,12 @@ actor DefaultFrakClient {
         self.configStore = ConfigStore(http: http, store: store, logger: logger)
         self.rewards = RewardRepository(http: http, logger: logger)
         self.merge = IdentityMerge(http: http, identity: identity, logger: logger)
-        self.merchantIdentity = MerchantIdentity(settings: settings, identity: identity, configStore: configStore)
+        self.merchantIdentity = MerchantIdentity(
+            settings: settings,
+            identity: identity,
+            configStore: configStore,
+            logger: logger
+        )
         self.tracker = InteractionTracker(
             queue: queue,
             http: http,
@@ -53,20 +58,39 @@ actor DefaultFrakClient {
         // previous session queued and could not send. Nothing else triggers a drain: the SDK
         // holds no connectivity callback.
         let tracker = self.tracker
+        let configStore = self.configStore
         self.startupTask = Task {
             // Gated inside AnonymousIdStore on `consent`; a no-op when consent is absent or withdrawn.
             await identity.startEagerGeneration()
-            guard await consent.isEnabled() else {
-                // Events captured before tracking was turned off must not be sent now.
-                await tracker.purge()
-                return
+
+            // A group, not a sequence: a slow config resolve must not hold back events a previous
+            // session already failed to send, and both must still die with this task on shutdown.
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask {
+                    // Ungated on consent, unlike the drain: this request carries no user identifier.
+                    do {
+                        _ = try await frakCall {
+                            let query = try MerchantQuery.from(settings)
+                            return try await configStore.resolve(query, forceRefresh: false)
+                        }
+                    } catch {
+                        logger.debug("Eager startup config resolve failed.")
+                    }
+                }
+                group.addTask {
+                    guard await consent.isEnabled() else {
+                        // Events captured before tracking was turned off must not be sent now.
+                        await tracker.purge()
+                        return
+                    }
+                    // A shutdown landing before this check would otherwise resume here and schedule
+                    // a drain the tracker then immediately cancels. The load-bearing mechanism is
+                    // the tracker's one-way `stopped` flag: `Task<Void, Never>` has no throwing
+                    // suspension point, so cancelling this task alone would only read as a teardown.
+                    guard !Task.isCancelled else { return }
+                    await tracker.flush()
+                }
             }
-            // A shutdown landing before this check would otherwise resume here and schedule a
-            // drain the tracker then immediately cancels. The load-bearing mechanism is the
-            // tracker's one-way `stopped` flag: `Task<Void, Never>` has no throwing suspension
-            // point, so cancelling this task alone would only read as a teardown.
-            guard !Task.isCancelled else { return }
-            await tracker.flush()
         }
     }
 

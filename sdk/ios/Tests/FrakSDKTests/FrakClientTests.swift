@@ -227,6 +227,20 @@ struct FrakClientTests {
         #expect(log.all.first?.value(forHTTPHeaderField: "x-frak-client-id") == nil)
     }
 
+    @Test("the config resolves eagerly at init, with nobody asking")
+    func configResolvesEagerlyAtInit() async throws {
+        let log = RequestLog()
+        let client = makeClient { request in
+            log.record(request)
+            return StubResponse(status: 200, body: Self.resolveBody)
+        }
+
+        // The warm cache is what lets a referral arrival on a cold start answer without blocking,
+        // and what lets the backend's merchant id win over a configured one.
+        #expect(await log.wait(forCount: 1))
+        await client.shutdown()
+    }
+
     @Test("setTrackingEnabled flips tracking at runtime, both ways")
     func setTrackingEnabledFlipsAtRuntime() async throws {
         let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
@@ -308,13 +322,18 @@ struct FrakClientTests {
         await client.shutdown()
         await client.shutdown()
 
-        // `track` still enqueues; the observable difference is whether a drain follows.
-        let before = log.count
+        // `track` still enqueues; the observable difference is whether a drain follows. Counted by
+        // path so the eager startup config resolve, which may land either side of shutdown, cannot
+        // be mistaken for one.
+        func trackRequestCount() -> Int {
+            log.all.filter { $0.url?.path.hasPrefix("/user/track/") == true }.count
+        }
+        let before = trackRequestCount()
         _ = await client.track(.custom("after-shutdown"))
 
         // Negative assertion, so give a drain every chance to happen before ruling it out.
-        _ = await log.wait(forCount: before + 1, timeoutSeconds: 0.3)
-        #expect(log.count == before)
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        #expect(trackRequestCount() == before)
     }
 
     @Test("resolveConfig, campaigns and bestReward have usable defaults")

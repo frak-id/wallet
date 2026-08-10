@@ -74,7 +74,7 @@ internal class DefaultFrakClient(
     private val configStore = ConfigStore(http, store, logger, scope, ioDispatcher)
     private val rewards = RewardRepository(http, logger, scope)
     private val merge = IdentityMerge(http, identity, logger)
-    private val merchantIdentity = MerchantIdentity(settings, identity, configStore)
+    private val merchantIdentity = MerchantIdentity(settings, identity, configStore, logger)
     private val tracker =
         InteractionTracker(
             queue,
@@ -136,6 +136,14 @@ internal class DefaultFrakClient(
     init {
         // Mints the keypair up front; a no-op when consent is withdrawn.
         identity.startEagerGeneration(scope)
+        scope.launch {
+            // Ungated on consent, like resolveConfig itself: carries no user identifier.
+            try {
+                resolveConfig()
+            } catch (failure: FrakError) {
+                logger.debug("Frak eager config resolve failed: ${failure.message}")
+            }
+        }
         scope.launch {
             if (!consent.isEnabled()) {
                 // Events captured before tracking was turned off must not be sent now.

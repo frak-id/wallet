@@ -12,17 +12,17 @@ import org.junit.Test
 /** Pins the query the SDK sends to `GET /user/merchant/resolve`; these are wire-contract assertions. */
 class MerchantQueryTest {
     @Test
-    fun `a merchantId takes precedence over a packageId`() {
+    fun `a packageId takes precedence over a merchantId`() {
         val query =
             MerchantQuery.from(
                 frakConfig(merchantId = MERCHANT_ID, packageId = "com.example.app"),
             )
 
         val parameters = query.parameters()
-        assertEquals("merchantId is sent", MERCHANT_ID, parameters["merchantId"])
-        // A packageId alongside a merchantId is inert but still schema-validated: a 400 without a platform.
-        assertNull("packageId is not sent alongside a merchantId", parameters["packageId"])
-        assertNull("platform is not sent alongside a merchantId", parameters["platform"])
+        assertEquals("packageId is sent", "com.example.app", parameters["packageId"])
+        assertEquals("platform is sent alongside a packageId", "android", parameters["platform"])
+        // A merchantId alongside a packageId is inert.
+        assertNull("merchantId is not sent alongside a packageId", parameters["merchantId"])
     }
 
     @Test
@@ -96,11 +96,11 @@ class MerchantQueryTest {
     }
 
     @Test
-    fun `blank identifiers are treated as absent`() {
+    fun `a blank packageId is treated as absent, falling back to merchantId`() {
         // A merchant reading an empty BuildConfig field gets "" rather than null.
-        val query = MerchantQuery.from(frakConfig(merchantId = "   ", packageId = "com.example.app"))
+        val query = MerchantQuery.from(frakConfig(merchantId = MERCHANT_ID, packageId = "   "))
 
-        assertEquals("com.example.app", query.parameters()["packageId"])
+        assertEquals(MERCHANT_ID, query.parameters()["merchantId"])
     }
 
     private companion object {

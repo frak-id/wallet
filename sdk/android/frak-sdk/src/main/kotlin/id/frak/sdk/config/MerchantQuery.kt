@@ -37,14 +37,18 @@ internal sealed interface MerchantQuery {
     companion object {
         const val ANDROID_PLATFORM: String = "android"
 
-        /** Picks the route: `merchantId` first, matching backend precedence. */
+        /**
+         * Picks the route: `packageId` first, `merchantId` only without one. Querying by a
+         * configured id can only echo it back — the backend resolves strict first-match — so
+         * routing by `packageId` is what lets the backend actually determine the merchant.
+         */
         fun from(config: FrakConfig): MerchantQuery {
             val lang = config.metadata.lang?.wireValue
-            val merchantId = config.merchantId?.trim()?.takeIf { it.isNotEmpty() }
-            if (merchantId != null) return ById(merchantId, lang)
-
             val packageId = config.packageId?.trim()?.takeIf { it.isNotEmpty() }
             if (packageId != null) return ByPackageId(packageId, lang)
+
+            val merchantId = config.merchantId?.trim()?.takeIf { it.isNotEmpty() }
+            if (merchantId != null) return ById(merchantId, lang)
 
             throw FrakError.MerchantResolutionFailed(
                 "FrakConfig carries neither a merchantId nor a packageId. " +

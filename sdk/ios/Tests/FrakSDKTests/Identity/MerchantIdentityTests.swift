@@ -42,7 +42,12 @@ struct MerchantIdentityTests {
         let http = HTTPClient(baseURL: "https://\(host)", session: session, logger: logger)
         let configStore = ConfigStore(http: http, store: InMemoryKeyValueStore(), logger: logger)
         return Harness(
-            merchantIdentity: MerchantIdentity(settings: config, identity: identity, configStore: configStore),
+            merchantIdentity: MerchantIdentity(
+                settings: config,
+                identity: identity,
+                configStore: configStore,
+                logger: logger
+            ),
             identity: identity,
             configStore: configStore,
             requests: requests,

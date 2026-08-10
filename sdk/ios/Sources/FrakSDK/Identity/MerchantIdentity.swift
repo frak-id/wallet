@@ -20,29 +20,32 @@ actor MerchantIdentity {
     private let settings: FrakConfig
     private let identity: AnonymousIdStore
     private let configStore: ConfigStore
+    private let logger: FrakLogger
+    private var warnedMismatch = false
 
-    init(settings: FrakConfig, identity: AnonymousIdStore, configStore: ConfigStore) {
+    init(settings: FrakConfig, identity: AnonymousIdStore, configStore: ConfigStore, logger: FrakLogger) {
         self.settings = settings
         self.identity = identity
         self.configStore = configStore
+        self.logger = logger
     }
 
-    /// The merchant id under `policy`. `.required` either returns one or throws — the nil case
-    /// exists only because the signature is shared with the other two policies, which use it.
+    /// The merchant id under `policy`. The backend is authoritative: a cached or resolved
+    /// merchant id always wins over `settings.merchantId`, which is only the fallback that keeps
+    /// a cold cache from blocking on the network. `.required` either returns one or throws — the
+    /// nil case exists only because the signature is shared with the other two policies, which
+    /// use it.
     func merchant(_ policy: Policy) async throws -> String? {
+        if let merchantId = await fastPathMerchantId() {
+            return merchantId
+        }
         switch policy {
         case .required:
-            if let merchantId = settings.merchantId { return merchantId }
             return try await resolve().merchantId
         case .optional:
-            if let merchantId = settings.merchantId { return merchantId }
             return try await availableConfig()?.merchantId
         case .cachedOnly:
-            if let merchantId = settings.merchantId { return merchantId }
-            // `currentConfig` hydrates from disk on demand, so a warm start reached via a
-            // referral deep link — before anything has resolved — can still find a merchant id.
-            guard let query = try? MerchantQuery.from(settings) else { return nil }
-            return await configStore.currentConfig(query)?.merchantId
+            return nil
         }
     }
 
@@ -55,9 +58,10 @@ actor MerchantIdentity {
     }
 
     /// `merchant(.optional)` for the caller that needs the config itself too, so one resolve
-    /// answers both.
+    /// answers both. Resolved-then-settings, matching `merchant(_:)`.
     func merchantFrom(_ resolved: FrakResolvedConfig?) -> String? {
-        settings.merchantId ?? resolved?.merchantId
+        warnIfMismatched(resolved?.merchantId, settings.merchantId)
+        return resolved?.merchantId ?? settings.merchantId
     }
 
     /// The resolved config where one is available, nil where it is not. Catching `FrakError`
@@ -76,5 +80,38 @@ actor MerchantIdentity {
             let query = try MerchantQuery.from(settings)
             return try await configStore.resolve(query, forceRefresh: false)
         }
+    }
+
+    /// A cached backend value wins over `settings.merchantId`; `settings.merchantId` is the
+    /// fallback that keeps this from ever blocking on the network.
+    private func fastPathMerchantId() async -> String? {
+        let cached = await cachedMerchantId()
+        warnIfMismatched(cached, settings.merchantId)
+        return cached ?? settings.merchantId
+    }
+
+    /// Building the query throws when `settings` carries neither identifier — that is "nothing
+    /// cached", not a failure.
+    private func cachedMerchantId() async -> String? {
+        guard let query = try? MerchantQuery.from(settings) else { return nil }
+        return await configStore.currentConfig(query)?.merchantId
+    }
+
+    /// At most once per actor instance: a mismatch is a standing misconfiguration, not a
+    /// per-call event, and every tracking call runs this path.
+    private func warnIfMismatched(_ backendId: String?, _ configuredId: String?) {
+        guard !warnedMismatch, let backendId, let configuredId, !Self.sameMerchant(backendId, configuredId) else {
+            return
+        }
+        warnedMismatch = true
+        logger.warn(
+            "FrakConfig.merchantId \"\(configuredId)\" does not match the backend's \"\(backendId)\"; "
+                + "the backend's merchant id is used."
+        )
+    }
+
+    private static func sameMerchant(_ a: String, _ b: String) -> Bool {
+        a.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare(b.trimmingCharacters(in: .whitespaces))
+            == .orderedSame
     }
 }

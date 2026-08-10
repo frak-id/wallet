@@ -63,6 +63,22 @@ class DefaultFrakClientTest {
         }
 
     @Test
+    fun `the config resolves eagerly at init, with nobody asking`() =
+        runTest {
+            transport.respond(200, BODY)
+
+            newClient(testScheduler)
+            advanceUntilIdle()
+
+            // The warm cache is what lets a referral arrival on a cold start answer without
+            // blocking, and what lets the backend's merchant id win over a configured one.
+            assertEquals(
+                1,
+                transport.requests.count { it.url.path == ConfigStore.RESOLVE_PATH },
+            )
+        }
+
+    @Test
     fun `tracks an arrival from someone else's link, and never from its own`() =
         runTest {
             val client = newClient(testScheduler)

@@ -323,25 +323,40 @@ well as the merchant and must not resolve twice to get both. One asymmetry survi
 `fetchRewards` still resolves unconditionally rather than going through the module, so a typo'd
 merchant id keeps surfacing as `MerchantResolutionFailed` on reward calls — pinned by the D6 test.
 
-**Precedence, and why iOS was wrong.** All three implementations answer "a configured merchantId
-short-circuits the resolve" — the TS SDK does it in one place, `sdkConfigStore.resolveMerchantId`:
-a sync read of the resolved config or `sessionStorage`, and only then an awaited resolve. That is a
-named function with the same three-way shape this module now has, arrived at independently.
-Android matched it. iOS did not, and not by decision: `trackingCall` and `handleReferralLink`
-short-circuited while `linkIdentity` and `buildSharingLink` resolved unconditionally, from the
-first commit of each. Since `settings.merchantId` wins over the resolved value anyway, that resolve
-was discarded whenever a merchant had configured an id — a blocking network round trip on a cold
-cache, on the install-handoff path, for a value thrown away. `.optional` now short-circuits like
-the other two implementations. Two iOS tests had to change, both of which were pinning the waste:
-one asserted the extra request, the other could only cancel a request that should not exist.
+**Resolution order, unified with the TS SDK.** The backend owns merchant identity; a configured
+`merchantId` is a fallback, not an override. Both platforms now resolve in one order:
 
-The TS SDK is not a third dialect of the same ladder, though. It resolves once at boot because the
+1. the cached config's `merchantId` — cache only, never the network;
+2. `settings.merchantId`;
+3. only if neither answers, fetch, under the caller's policy.
+
+So a cold cache still costs no blocking round trip when a merchant configured an id, and once the
+cache is warm the backend's answer wins. This matches `sdkConfigStore.resolveMerchantId` in the TS
+SDK, which reads the resolved config or `sessionStorage` first and only then awaits a resolve.
+
+**The route had to invert for that to mean anything.** `MerchantQuery.from` picked `merchantId`
+first, so the SDK asked the backend about the very id it already had. The backend's `findMerchant`
+is a strict first-match (`id` > `packageKey` > `domain`), so that query can only echo the id back
+or 404 — it can never tell a merchant their id is wrong, and a valid-but-wrong UUID resolves
+happily to the wrong merchant. Routing by `packageId`/`bundleId` first is what makes the backend
+authoritative. The cost is real and accepted: a merchant whose package is not registered in the
+dashboard now fails to resolve where setting `merchantId` used to carry them. Step 2 above keeps
+merchant identity working for them; rewards and campaigns, which need a real resolve, do not.
+
+When both a resolved and a configured id exist and genuinely differ, the SDK warns once per client
+naming both. Trimmed and case-insensitive, so a cosmetic difference stays silent — the arrival
+guard already treats merchant ids that way.
+
+**The config now resolves eagerly at init**, alongside the identity mint and the queue drain, so
+the cache is warm before the first sharing sheet or referral arrival. On iOS it is a sibling task
+in a group rather than a step in the startup sequence: sequencing it ahead of the drain would let a
+slow resolve hold back events a previous session already failed to send, and that drain is the only
+one the SDK has — there is no connectivity callback behind it.
+
+The TS SDK is still not a third dialect of the same ladder. It resolves once at boot because the
 iframe handshake needs `allowedDomains` for its trust level regardless, so every later read is a
-store lookup. Native has no such handshake and resolves lazily per call site, which is why the
-policy has to be a parameter here and does not there. One inversion worth knowing: at merge time
-TS lets the backend win over the merchant's static config (`merchantConfig?.merchantId ??
-config.metadata.merchantId`), where native lets the static config win. Native never validates a
-configured merchant id; TS overwrites it.
+store lookup. Native has no such handshake, which is why the policy stays a parameter here and
+does not there.
 
 One behaviour did change, on iOS only: a cancellation during `installPageURL`'s identity
 resolution now propagates instead of collapsing into `merchantResolutionFailed`, matching Android.
