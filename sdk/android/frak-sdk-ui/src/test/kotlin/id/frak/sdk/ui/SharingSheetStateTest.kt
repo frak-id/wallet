@@ -1109,7 +1109,7 @@ class SharingSheetStateTest {
         /** Mirrors `SharingPresentation`'s own constant. */
         const val SHEET_LOAD_DEADLINE_MILLIS = 1_500L
 
-        /** Mirrors `SharingSheetState`'s own private constant. */
+        /** Mirrors `SharingSessionBuilder`'s own private constant. */
         const val BUILD_DEADLINE_MILLIS = 8_000L
     }
 }

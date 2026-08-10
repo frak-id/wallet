@@ -32,15 +32,19 @@ import java.util.concurrent.CompletableFuture
  * Java callers use `Frak.getClient()` and the `*Async` twin of every suspending member.
  */
 public object Frak {
-    @Volatile
-    private var core: DefaultFrakClient? = null
+    /**
+     * Everything one [initialize] built, swapped as a unit. Three separate fields let a reader
+     * observe half a teardown, and left the "these always move together" invariant to code review.
+     */
+    private class Session(
+        val core: DefaultFrakClient,
+        val client: FrakClient,
+        /** Kept so [shutdown] can unregister it; otherwise re-initializing double-handles inbound deep links. */
+        val observer: Pair<Application, Application.ActivityLifecycleCallbacks>?,
+    )
 
     @Volatile
-    private var instance: FrakClient? = null
-
-    /** Kept so [shutdown] can unregister it; otherwise re-initializing double-handles inbound deep links. */
-    @Volatile
-    private var deepLinkObserver: Pair<Application, Application.ActivityLifecycleCallbacks>? = null
+    private var session: Session? = null
 
     /** Non-blocking, does no I/O, never throws. Second call is a no-op; first config wins. */
     @JvmStatic
@@ -49,12 +53,12 @@ public object Frak {
         config: FrakConfig,
     ) {
         val logger = FrakLogger(config.logLevel, config.logSink)
-        if (core != null) {
+        if (session != null) {
             logger.warn("Frak.initialize was called more than once. The first configuration is kept.")
             return
         }
         synchronized(this) {
-            if (core != null) return
+            if (session != null) return
             val effective = config.withPackageIdFrom(context)
             if (effective.merchantId == null && effective.packageId == null) {
                 logger.error(
@@ -102,9 +106,13 @@ public object Frak {
                     logger = logger,
                     ioDispatcher = ioDispatcher,
                 )
-            core = newCore
-            instance = FrakClient(newCore)
-            registerDeepLinkObserver(context, effective, logger)
+            // Built before the session is published and registered after it: a callback that fired
+            // against a half-built session would drop the link it was handed.
+            val registration = createDeepLinkObserver(context, effective, logger)
+            session = Session(core = newCore, client = FrakClient(newCore), observer = registration)
+            registration?.let { (application, callbacks) ->
+                application.registerActivityLifecycleCallbacks(callbacks)
+            }
             logger.info("Frak ${FrakSdkVersion.CURRENT} initialized.")
         }
     }
@@ -117,19 +125,16 @@ public object Frak {
     public suspend fun shutdown() {
         // State is read and cleared under the lock, then acted on outside it: `synchronized` must
         // never span a suspension point.
-        val (dying, observer) =
+        val dying =
             synchronized(this) {
-                val client = core
-                val registration = deepLinkObserver
-                core = null
-                instance = null
-                deepLinkObserver = null
-                client to registration
+                val current = session
+                session = null
+                current
             }
-        observer?.let { (application, callbacks) ->
+        dying?.observer?.let { (application, callbacks) ->
             application.unregisterActivityLifecycleCallbacks(callbacks)
         }
-        dying?.shutdown()
+        dying?.core?.shutdown()
     }
 
     /**
@@ -150,42 +155,43 @@ public object Frak {
     /** @throws FrakError.NotInitialized when [initialize] has not run. */
     @JvmStatic
     public val client: FrakClient
-        get() = instance ?: throw FrakError.NotInitialized()
+        get() = session?.client ?: throw FrakError.NotInitialized()
 
     /** Same as [client], but null instead of throwing. */
     @JvmStatic
     public val clientOrNull: FrakClient?
-        get() = instance
+        get() = session?.client
 
     /** Whether [initialize] has run. For merchants guarding optional integrations. */
     @JvmStatic
     public val isInitialized: Boolean
-        get() = instance != null
+        get() = session != null
 
     /** Pure and static; callable before [initialize]. Only decodes — does not track arrival. */
     @JvmStatic
     public fun parseReferralLink(url: String): FrakContext? = SharingLinkBuilder.parse(url)
 
-    /** Needs an `Application` to observe lifecycles; falls back to manual routing otherwise. */
-    private fun registerDeepLinkObserver(
+    /**
+     * Builds the observer without registering it, so [initialize] controls when it goes live.
+     * Needs an `Application` to observe lifecycles; falls back to manual routing otherwise.
+     */
+    private fun createDeepLinkObserver(
         context: Context,
         config: FrakConfig,
         logger: FrakLogger,
-    ) {
-        if (config.deepLink != DeepLinkHandling.Automatic) return
+    ): Pair<Application, Application.ActivityLifecycleCallbacks>? {
+        if (config.deepLink != DeepLinkHandling.Automatic) return null
         val application = context.applicationContext as? Application
         if (application == null) {
             logger.error(
                 "DeepLinkHandling.Automatic needs an Application context. " +
                     "Inbound referral links will be ignored; call handleReferralLink from your own router.",
             )
-            return
+            return null
         }
-        // Client owns the guard/tracking; this only reports that a link was seen.
-        val callbacks = DeepLinkObserver { url -> core?.handleReferralLinkInBackground(url) }
-        application.registerActivityLifecycleCallbacks(callbacks)
-        // Retained so [shutdown] can unregister it.
-        deepLinkObserver = application to callbacks
+        // Client owns the guard/tracking; this only reports that a link was seen. Reads the session
+        // at call time, so a link arriving after [shutdown] reports nowhere instead of to a dead client.
+        return application to DeepLinkObserver { url -> session?.core?.handleReferralLinkInBackground(url) }
     }
 
     private fun FrakConfig.withPackageIdFrom(context: Context): FrakConfig {

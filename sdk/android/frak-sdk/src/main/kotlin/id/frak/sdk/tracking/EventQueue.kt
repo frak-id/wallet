@@ -5,8 +5,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 
 /** One event waiting to be sent. Request body built at capture time, so its timestamp is when the user acted. */
 internal class QueuedEvent(
@@ -67,6 +65,13 @@ internal class QueuedEvent(
  * writes a temp file and renames over the original, so a kill mid-compaction can't lose the
  * queue. Single writer only: not safe across processes.
  *
+ * None of the counters below are synchronised, because callers are already serialised: every entry
+ * point here is reached from [InteractionTracker] under its `queueMutex`, which is also the lock
+ * that makes a read-then-write pair atomic against a concurrent append. Reaching this class from
+ * anywhere else, or from two coroutines at once, breaks the row-id monotonicity it exists to
+ * guarantee — keep the mutex one layer up rather than making these fields atomic again, since
+ * atomic fields would not have made the multi-step sequences here safe anyway.
+ *
  * Capped by count and age, oldest dropped first. Both bounds are applied by one pass
  * ([readLocked]), reached from every [read] and from an [append] that has taken the file
  * [MAX_EVENTS_SLACK] rows past [MAX_EVENTS] — see [liveRowCount] and [trimIfOverflowing].
@@ -90,14 +95,14 @@ internal class EventQueue(
      * disk"; [seedRowIdIfNeeded] resolves that on the first [read] or [append]. Seeded above
      * [nextMigrationRowId]'s reserved block.
      */
-    private val nextRowId = AtomicLong(UNSEEDED)
+    private var nextRowId = UNSEEDED
 
     /**
      * Next id for a row an old-format file wrote with no `"r"` field, drawn from the bottom of
      * the block [seedRowIdIfNeeded] reserves. Migration and fresh appends draw from disjoint
      * counters, so a migrated row never outranks a row appended before the file was ever read.
      */
-    private val nextMigrationRowId = AtomicLong(UNSEEDED)
+    private var nextMigrationRowId = UNSEEDED
 
     /**
      * Rows currently on disk, not rows [read] would return. Seeded alongside the id counters in
@@ -107,14 +112,14 @@ internal class EventQueue(
      * Exists so [append] can enforce [MAX_EVENTS] without reading the file on every call. If it
      * ever drifts the cost is a mistimed trim, never a lost row.
      */
-    private val liveRowCount = AtomicInteger(UNSEEDED_COUNT)
+    private var liveRowCount = UNSEEDED_COUNT
 
     /**
      * Row count at which [append] runs a trim pass. Re-armed after every pass from the count that
      * pass actually left on disk, so a failed rewrite backs off by one [MAX_EVENTS_SLACK] instead
      * of retrying the same failing write on every append.
      */
-    private val nextTrimAt = AtomicInteger(MAX_EVENTS + MAX_EVENTS_SLACK)
+    private var nextTrimAt = MAX_EVENTS + MAX_EVENTS_SLACK
 
     /** Oldest first. Rows that are unreadable, expired, or beyond the cap are dropped. */
     suspend fun read(now: Long): List<QueuedEvent> = withContext(ioDispatcher) { readLocked(now).events }
@@ -137,7 +142,7 @@ internal class EventQueue(
      */
     private fun readLocked(now: Long): ReadOutcome {
         if (!file.isFile) {
-            liveRowCount.set(0)
+            liveRowCount = 0
             return ReadOutcome(emptyList(), durable = true)
         }
 
@@ -162,13 +167,13 @@ internal class EventQueue(
         // Captured before the migration map runs: if the rewrite below fails to persist, the
         // counter must roll back to exactly this value, or a second pass over the
         // still-un-migrated file overruns into ids [nextRowId] already handed to a fresh append.
-        val migrationStart = nextMigrationRowId.get()
+        val migrationStart = nextMigrationRowId
         var migratedAny = false
         val migrated =
             decoded.map {
                 if (it.rowId == MISSING_ROW_ID) {
                     migratedAny = true
-                    it.withRowId(nextMigrationRowId.getAndIncrement())
+                    it.withRowId(nextMigrationRowId++)
                 } else {
                     it
                 }
@@ -196,18 +201,18 @@ internal class EventQueue(
             // [reconcile] can refuse to compact on a failed rewrite instead of treating "empty"
             // as "queue is empty".
             val durable = replaceLocked(bounded)
-            if (!durable) nextMigrationRowId.set(migrationStart)
+            if (!durable) nextMigrationRowId = migrationStart
             // replaceLocked already set the count on success; on failure the file still holds
             // every line that was on it, so the count must describe that rather than the failed
             // trim.
-            if (!durable) liveRowCount.set(present.size)
+            if (!durable) liveRowCount = present.size
             return ReadOutcome(bounded, durable)
         }
 
         // Nothing was rewritten, so the file still holds exactly the lines we just read. Count
         // the lines rather than the returned events, so the counter stays a description of the
         // file.
-        liveRowCount.set(present.size)
+        liveRowCount = present.size
         return ReadOutcome(bounded, durable = true)
     }
 
@@ -225,8 +230,8 @@ internal class EventQueue(
     suspend fun append(event: QueuedEvent) {
         withContext(ioDispatcher) {
             try {
-                if (nextRowId.get() == UNSEEDED) seedRowIdIfNeeded(readExistingForSeed())
-                val stamped = event.withRowId(nextRowId.getAndIncrement())
+                if (nextRowId == UNSEEDED) seedRowIdIfNeeded(readExistingForSeed())
+                val stamped = event.withRowId(nextRowId++)
                 file.parentFile?.mkdirs()
                 file.appendText(stamped.toJson().toString() + "\n")
                 trimIfOverflowing(stamped.capturedAtMillis)
@@ -245,9 +250,9 @@ internal class EventQueue(
      * instead of on the very next append.
      */
     private fun trimIfOverflowing(now: Long) {
-        if (liveRowCount.incrementAndGet() <= nextTrimAt.get()) return
+        if (++liveRowCount <= nextTrimAt) return
         readLocked(now)
-        nextTrimAt.set(maxOf(MAX_EVENTS, liveRowCount.get()) + MAX_EVENTS_SLACK)
+        nextTrimAt = maxOf(MAX_EVENTS, liveRowCount) + MAX_EVENTS_SLACK
     }
 
     /** Best-effort peek at the file for seeding [nextRowId] from [append], without [read]'s bounds/migration logic. */
@@ -272,14 +277,14 @@ internal class EventQueue(
      * migration ever will.
      */
     private fun seedRowIdIfNeeded(existing: List<QueuedEvent>) {
-        if (nextRowId.get() != UNSEEDED) return
+        if (nextRowId != UNSEEDED) return
         val highest = existing.maxOfOrNull { it.rowId }?.takeIf { it != MISSING_ROW_ID } ?: (FIRST_ROW_ID - 1)
         val unmigrated = existing.count { it.rowId == MISSING_ROW_ID }
-        nextMigrationRowId.compareAndSet(UNSEEDED, highest + 1)
-        nextRowId.compareAndSet(UNSEEDED, highest + 1 + unmigrated)
+        nextMigrationRowId = highest + 1
+        nextRowId = highest + 1 + unmigrated
         // Seeded from the same snapshot as the ids: a count from a different read could arm the
         // append-time trim against a file this instance never saw.
-        liveRowCount.compareAndSet(UNSEEDED_COUNT, existing.size)
+        if (liveRowCount == UNSEEDED_COUNT) liveRowCount = existing.size
     }
 
     /**
@@ -298,7 +303,7 @@ internal class EventQueue(
             file.parentFile?.mkdirs()
             temp.writeText(events.joinToString(separator = "") { it.toJson().toString() + "\n" })
             if (temp.renameTo(file)) {
-                liveRowCount.set(events.size)
+                liveRowCount = events.size
                 true
             } else {
                 logger.warn("Could not compact the event queue; leaving it as it was.")
@@ -352,7 +357,7 @@ internal class EventQueue(
 
     /** Unhopped delete, for callers already on [ioDispatcher]. Returns whether it landed. */
     private fun deleteFile(): Boolean =
-        runCatching { file.delete() }.getOrDefault(false).also { if (it) liveRowCount.set(0) }
+        runCatching { file.delete() }.getOrDefault(false).also { if (it) liveRowCount = 0 }
 
     companion object {
         const val MAX_AGE_MILLIS: Long = 14L * 24 * 60 * 60 * 1000
