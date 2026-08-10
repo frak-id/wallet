@@ -8,6 +8,7 @@ actor DefaultFrakClient {
     private let configStore: ConfigStore
     private let rewards: RewardRepository
     private let merge: IdentityMerge
+    private let merchantIdentity: MerchantIdentity
     private let tracker: InteractionTracker
     /// Must be the same instance `identity` holds: two `TrackingConsent` actors over the same
     /// suite would memoise independently, so a withdrawal here wouldn't stop identity's own
@@ -37,6 +38,7 @@ actor DefaultFrakClient {
         self.configStore = ConfigStore(http: http, store: store, logger: logger)
         self.rewards = RewardRepository(http: http, logger: logger)
         self.merge = IdentityMerge(http: http, identity: identity, logger: logger)
+        self.merchantIdentity = MerchantIdentity(settings: settings, identity: identity, configStore: configStore)
         self.tracker = InteractionTracker(
             queue: queue,
             http: http,
@@ -208,14 +210,14 @@ actor DefaultFrakClient {
         guard let clientId = await identity.anonymousId() else {
             throw FrakError.internalFailure(message: "the device refused the key material an anonymous id needs")
         }
-        let resolved = await availableConfig()
-        try Task.checkCancellation()
-
-        guard let merchantId = settings.merchantId ?? resolved?.merchantId else {
+        // One resolve: the same config answers the merchant fallback and the defaults below.
+        let resolved = try await merchantIdentity.availableConfig()
+        guard let merchantId = await merchantIdentity.merchantFrom(resolved) else {
             throw FrakError.merchantResolutionFailed(
                 reason: "no merchantId is configured and none could be resolved for this bundle"
             )
         }
+
         let product = request.products.first
         // A cold cache that cannot be filled yields nil rather than an unattributed link.
         guard
@@ -278,14 +280,9 @@ actor DefaultFrakClient {
 
         guard let context else { return false }
 
-        // `currentConfig` hydrates from disk on demand, so a warm start reached via this deep
-        // link — before anything has called resolveConfig() — can still resolve a merchant id.
-        // Only reached when settings.merchantId is unset, so a merchant who did set it never
-        // pays for the disk read.
-        var ownMerchantId = settings.merchantId
-        if ownMerchantId == nil, let query = try? MerchantQuery.from(settings) {
-            ownMerchantId = await configStore.currentConfig(query)?.merchantId
-        }
+        // Never touches the network: a referral arrival on a cold start must not block on a
+        // resolve.
+        let ownMerchantId = try? await merchantIdentity.merchant(.cachedOnly)
         let ignore = ReferralArrival.shouldIgnoreArrival(
             context,
             anonymousId: await identity.anonymousId(),
@@ -300,10 +297,10 @@ actor DefaultFrakClient {
         return true
     }
 
-    /// `linkIdentity()` resolves over the network on a cache miss, unlike the arrival guard above:
-    /// a merge token is single-use and short-lived, so losing one to a cold cache is permanent.
+    /// `pair()` resolves over the network on a cache miss, unlike the arrival guard above: a
+    /// merge token is single-use and short-lived, so losing one to a cold cache is permanent.
     private func mergeInboundIdentity(_ mergeToken: String) async {
-        guard let link = await linkIdentity() else { return }
+        guard let link = try? await merchantIdentity.pair(.optional) else { return }
         await merge.execute(
             mergeToken: mergeToken,
             merchantId: link.merchantId,
@@ -316,7 +313,7 @@ actor DefaultFrakClient {
     }
 
     func openFrakApp() async -> OpenAppResult {
-        guard let install = await linkIdentity() else { return .failed }
+        guard let install = try? await merchantIdentity.pair(.optional) else { return .failed }
 
         // Attempted rather than gated on the probe: `canOpenURL` answers false when the
         // merchant forgot `LSApplicationQueriesSchemes` — which the SDK cannot inject, iOS
@@ -343,7 +340,9 @@ actor DefaultFrakClient {
 
     func installPageURL(returnScheme: String, sessionId: String) async throws -> String {
         guard await consent.isEnabled() else { throw FrakError.trackingDisabled }
-        guard let install = await linkIdentity() else {
+        // `try`, not `try?`: a cancellation during resolution now propagates instead of
+        // reading as a resolution failure, matching Android.
+        guard let install = try await merchantIdentity.pair(.optional) else {
             throw FrakError.merchantResolutionFailed(
                 reason: "an install link needs both an anonymous id and a merchant; one of them is missing"
             )
@@ -362,43 +361,26 @@ actor DefaultFrakClient {
         )
     }
 
-    /// The merchant/anonymous-id pair an install link or an inbound merge needs, or nil when
-    /// either is missing.
-    private func linkIdentity() async -> (merchantId: String, anonymousId: String)? {
-        guard let anonymousId = await identity.anonymousId() else { return nil }
-        let resolved = await availableConfig()
-        guard !Task.isCancelled, let merchantId = settings.merchantId ?? resolved?.merchantId else { return nil }
-        return (merchantId, anonymousId)
-    }
-
-    /// The resolved config where one is available, nil where it is not. A resolve failure
-    /// means the same thing to the caller as no identity — there is nothing to hand back.
-    /// Callers must still check `Task.isCancelled` separately, since this cannot tell them
-    /// apart.
-    private func availableConfig() async -> FrakResolvedConfig? {
-        try? await resolveConfig()
-    }
-
     /// Resolves the merchant an event belongs to, then runs `body`. Failure here is only ever
     /// a reason that will not resolve itself — tracking off, or no merchant to attribute to.
     /// Everything transient is the queue's problem, not the caller's.
     private func trackingCall(_ body: (String) async -> Void) async -> Result<Void, FrakError> {
         guard await consent.isEnabled() else { return .failure(.trackingDisabled) }
         let merchantId: String
-        if let configured = settings.merchantId {
-            merchantId = configured
-        } else {
-            do {
-                merchantId = try await resolveConfig().merchantId
-            } catch let error as FrakError {
-                return .failure(error)
-            } catch {
-                // `resolveConfig` is `frakCall`-wrapped, so the only thing left is a
-                // `CancellationError`. `.network` because that is literally what happened — the
-                // request never reached the backend — and never `.decoding`, which would mean
-                // the frozen binary and the deployed backend disagree.
-                return .failure(.network(underlying: error))
+        do {
+            guard let resolved = try await merchantIdentity.merchant(.required) else {
+                // `.required` never actually returns nil here — see `MerchantIdentity.merchant`.
+                return .failure(.merchantResolutionFailed(reason: "no merchant could be resolved"))
             }
+            merchantId = resolved
+        } catch let error as FrakError {
+            return .failure(error)
+        } catch {
+            // `merchant(.required)` resolves through `frakCall` internally, so the only thing
+            // left is a `CancellationError`. `.network` because that is literally what happened
+            // — the request never reached the backend — and never `.decoding`, which would mean
+            // the frozen binary and the deployed backend disagree.
+            return .failure(.network(underlying: error))
         }
         await body(merchantId)
         return .success(())
@@ -411,6 +393,10 @@ actor DefaultFrakClient {
     /// `forceRefresh` forwards to the config resolve too: a caller asking to bypass the rewards
     /// cache almost certainly also wants a fresh merchant id/currency, not a stale one served
     /// alongside freshly-fetched rewards.
+    ///
+    /// Deliberately calls `resolveConfig` directly rather than through `MerchantIdentity`: this
+    /// must always hit the resolve, even when `settings.merchantId` is set, so a typo'd merchant
+    /// id surfaces as a resolution failure here instead of silently serving stale rewards.
     private func fetchRewards(
         targetInteraction: String?,
         audience: RewardAudience?,

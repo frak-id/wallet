@@ -562,4 +562,22 @@ struct FrakClientTests {
         }
         #expect(refused?.kind == .trackingDisabled)
     }
+
+    /// The one permitted behavioural difference from before this refactor: a cancellation
+    /// during identity resolution now propagates, rather than collapsing to
+    /// `merchantResolutionFailed` — matching Android's equivalent.
+    @Test("installPageURL propagates cancellation instead of collapsing it to merchantResolutionFailed")
+    func installPageURLPropagatesCancellation() async throws {
+        let client = makeClient { _ in throw StubHangs() }
+
+        let task = Task {
+            try await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "session-1")
+        }
+        try await Task.sleep(nanoseconds: 50_000_000)
+        task.cancel()
+
+        await #expect(throws: CancellationError.self) {
+            _ = try await task.value
+        }
+    }
 }

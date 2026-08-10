@@ -290,6 +290,48 @@ beside `String` (`onOpenURL` hands iOS a `URL`), Kotlin stays `String`-only
 `sdk/android/README.md` and `sdk/ios/README.md` are the shipped contract; this section
 is the design intent behind it.
 
+### 5.3 Merchant identity — built
+
+"Which merchant is this, and who is the user" is the SDK's most-used precondition and has no
+name. `DefaultFrakClient` re-expresses it seven times per platform as a `settings.merchantId ?:
+<resolve>` ladder, in three distinct policies:
+
+| Policy | Behaviour | Callers |
+|---|---|---|
+| `required` | resolve, let `FrakError` propagate | `trackingCall`, `fetchRewards`, `installPageUrl` |
+| `optional` | resolve, swallow failure to null | `linkIdentity`, `buildSharingLink` |
+| `cachedOnly` | never touch the network — a referral arrival on a cold start must not block | `handleReferralLink` |
+
+One internal module owns the `(merchantId, anonymousId)` pair, absorbing `linkIdentity`, with the
+policy as a parameter. The pair rather than the merchant alone: every caller that needs an
+identity needs a merchant too, and it makes `openFrakApp`'s consent enforcement a property of the
+module instead of an accident — today that call has no gate and relies on `AnonymousIdStore`
+returning null once consent is withdrawn, which is correct and invisible.
+
+Cancellation is where the two trees have drifted, though not into a live defect. Android's
+`runCatching`/`catch FrakError` rethrows `CancellationException`, so its swallow is precise; iOS
+uses `try?`, which swallows `CancellationError` too — which is why `linkIdentity` and
+`buildSharingLink` each carry a bolted-on `Task.isCancelled` afterwards, and `availableConfig`'s
+own doc admits it cannot tell the two apart. Those checks already cover it.
+
+So this is a refactor: it buys legibility, not correctness. No merchant-visible effect and no
+performance effect.
+
+Built as `MerchantIdentity` on both platforms, with `merchant(policy)`, `pair(policy)`, and an
+`availableConfig`/`merchantFrom` split for `buildSharingLink`, which needs the resolved config as
+well as the merchant and must not resolve twice to get both. Two asymmetries survive on purpose:
+Android short-circuits on `settings.merchantId` before the policy switch where iOS always resolves
+(each kept its own prior behaviour), and `fetchRewards` still resolves unconditionally rather than
+going through the module, so a typo'd merchant id keeps surfacing as `MerchantResolutionFailed`
+on reward calls — pinned by the D6 test.
+
+One behaviour did change, on iOS only: a cancellation during `installPageURL`'s identity
+resolution now propagates instead of collapsing into `merchantResolutionFailed`, matching Android.
+
+Consent stays where it is. `resolveConfig`, `campaigns` and `bestReward` are deliberately
+ungated — they carry no user identifier — so nothing here may fold consent in without keeping
+that exemption explicit.
+
 ## 6. Roadmap
 
 **v0.2:** native `FrakShareButton` / `FrakBanner` / `FrakPostPurchaseCard` with no web
