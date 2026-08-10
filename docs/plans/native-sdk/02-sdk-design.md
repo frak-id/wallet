@@ -67,12 +67,13 @@ atomically: a surviving key with a lost id silently fails derivation.
 | iOS | key + merchant marker in `Application Support/id.frak.sdk/identity.json`, backup-excluded; consent in a `UserDefaults` suite, backed up on purpose | wiped |
 
 Keychain is rejected on iOS: it survives uninstall/reinstall, resurrecting a "fresh"
-user's id, inconsistent with Android and the web. Android backup exclusion needs both
-`<cloud-backup>` and `<device-transfer>` blocks in `data_extraction_rules.xml`, or a
-standard phone transfer clones the id; the attribute is singular, so a host with its own
-rules file fails the manifest merge unless it adds `tools:replace` itself. Documented as
-an integration step; today neither rules file is referenced by anything
-(`06-open-findings.md` S3). Swift's `UUID.uuidString` is uppercase; normalise once at
+user's id, inconsistent with Android and the web. Neither platform asks a merchant to wire
+a backup exclusion for identity, and Android's rules files were deleted rather than
+documented — `AndroidKeyStore` keys cannot be backed up or transferred at all, so the
+identity already regenerates on a new device, while the file those rules excluded holds the
+consent decision, which must survive one (`06-open-findings.md` S3/S10). iOS gets the same
+outcome by holding key material in a backup-excluded directory and leaving consent in a
+backed-up suite. Swift's `UUID.uuidString` is uppercase; normalise once at
 the boundary or the break lands upstream, in cache keys, `merchantId` equality and the
 self-referral guard.
 

@@ -87,29 +87,36 @@ with `SharedPreferences.apply()`, so a withdrawal lost to a process kill reverts
 on the next launch (finding S10). And the web SDK has no equivalent switch today, so a
 notice written against this behaviour does not hold for your web integration.
 
-### 2. Backup and device-transfer exclusion
+### 2. Backup and device transfer
 
-**Required, and the SDK cannot do it for you.** `android:dataExtractionRules` (API 31+) and
-`android:fullBackupContent` (API 24–30) are singular attributes on `<application>`, and the
-manifest merger does not union rules files — so a library cannot set either on a consumer's
-behalf. Without this step the anonymous identity is cloned onto a restored or transferred
-device, resurrecting one installation's identity on another.
+**Nothing to wire.** Earlier versions of this document called this a required integration
+step and shipped `frak_data_extraction_rules.xml` and `frak_full_backup_content.xml` for
+you to reference. Both resources have been removed and the instruction withdrawn: it
+protected nothing and cost something real.
 
-The SDK ships both files as resources. Reference them:
+The identity cannot travel in the first place. The keypair lives in `AndroidKeyStore`,
+which is non-exportable by construction — it is absent from Auto Backup and from
+device-to-device transfer alike. On a restored or transferred device the SDK finds no key,
+mints a fresh one, and the new install is a new anonymous user. That is the intended
+behaviour and it holds with no `<application>` attribute from you.
 
-```xml
-<application
-    android:dataExtractionRules="@xml/frak_data_extraction_rules"
-    android:fullBackupContent="@xml/frak_full_backup_content">
-```
+What the withdrawn rules actually excluded was `id.frak.sdk.xml`, which holds the
+tracking-consent decision alongside the merchant marker. Excluding it would have meant a
+user's withdrawal did **not** survive a device transfer — it would silently revert to the
+config default on the new device. Consent is the one value here that should travel, so the
+file is deliberately left in Auto Backup.
 
-If you already set either attribute, do not swap yours out — copy the `<exclude>` entries
-for `id.frak.sdk.xml` and `id.frak.sdk.config.xml` into your own rules files, in both the
-`<cloud-backup>` and `<device-transfer>` blocks. `<cloud-backup>` alone still lets a
-device-to-device transfer clone them verbatim. A merged manifest conflict on these
-attributes needs `tools:replace`.
+The remaining pieces, for completeness:
 
-Nothing verifies this at build or run time yet, so it fails silently.
+| What | Where | Backed up? |
+|---|---|---|
+| Keypair | `AndroidKeyStore` | Never — not exportable |
+| Consent decision + merchant marker | `SharedPreferences` `id.frak.sdk.xml` | Yes, deliberately |
+| Resolved-config cache | `SharedPreferences` `id.frak.sdk.config.xml` | Yes; disposable, TTL'd and revalidated, holds no user identifier |
+| Queued interactions | `noBackupFilesDir/frak-events.jsonl` | Never — needs no attribute from you |
+
+If your own compliance posture calls for excluding the config cache anyway, exclude
+`id.frak.sdk.config.xml` only. Do not exclude `id.frak.sdk.xml`.
 
 ### 3. Data deletion route
 

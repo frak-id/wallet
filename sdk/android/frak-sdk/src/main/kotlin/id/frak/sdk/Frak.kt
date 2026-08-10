@@ -193,7 +193,12 @@ public object Frak {
         return withPackageId(context.packageName)
     }
 
-    /** Matches the `path` in `frak_data_extraction_rules.xml`. */
+    /**
+     * Holds the merchant marker AND the consent decision, which is why this file is deliberately
+     * left in Auto Backup: a withdrawal must survive a device transfer. The identity itself is not
+     * in here — the keypair lives in `AndroidKeyStore` and cannot be backed up or transferred at
+     * all — so there is nothing here to exclude. See `PRIVACY.md`.
+     */
     private const val IDENTITY_FILE_NAME = "id.frak.sdk"
 
     private const val EVENT_QUEUE_FILE_NAME = "frak-events.jsonl"
