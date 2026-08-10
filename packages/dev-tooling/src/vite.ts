@@ -175,6 +175,9 @@ const STATIC_IMPORT_RE =
  * fetches the target on boot even if a `<link rel=modulepreload>` filter
  * strips it from the HTML preload list, so walking the closure from disk is
  * more reliable than trusting the preload list.
+ *
+ * Deps are resolved against the importing chunk's own directory, so the walk
+ * works for any `chunkFileNames` layout — `assets/`, `standalone/`, or a mix.
  */
 export function collectEagerClosure(
     dir: string,
@@ -194,8 +197,9 @@ export function collectEagerClosure(
             continue;
         }
         eager.set(key, code);
+        const chunkDir = path.posix.dirname(key);
         for (const m of code.toString("utf-8").matchAll(STATIC_IMPORT_RE)) {
-            const dep = `assets/${m[1]}`;
+            const dep = path.posix.join(chunkDir, m[1]);
             if (!eager.has(dep)) stack.push(dep);
         }
     }
@@ -216,11 +220,18 @@ export type AssertEagerBundleBudgetOptions = {
      */
     enforce?: boolean;
     /**
-     * Optional hook run with the final boot `index.html` source before the
-     * budget check, e.g. to assert no lazy-chunk CSS/JS leaked into the eager
-     * HTML. Throw from this hook to fail the build with a custom message.
+     * Optional hook run with each measured HTML source before the budget
+     * check, e.g. to assert no lazy-chunk CSS/JS leaked into the eager HTML.
+     * Throw from this hook to fail the build with a custom message.
      */
-    assertHtml?: (htmlSource: string) => void;
+    assertHtml?: (htmlSource: string, htmlFile: string) => void;
+    /**
+     * Entry HTML files to measure, relative to the output dir. Defaults to
+     * `["index.html"]`. Each file is walked and budgeted INDEPENDENTLY: in a
+     * multi-entry build the budget describes what one visitor downloads, not
+     * the sum across pages they will never all open.
+     */
+    htmlFiles?: string[];
 };
 
 /**
@@ -237,63 +248,96 @@ export type AssertEagerBundleBudgetOptions = {
 export function assertEagerBundleBudget(
     options: AssertEagerBundleBudgetOptions
 ): Plugin {
-    const { budgetGzip, assertHtml, enforce = true } = options;
-    const scriptRe = /<script\b[^>]*\bsrc="[^"]*?(assets\/[^"]+\.js)"/g;
+    const {
+        budgetGzip,
+        assertHtml,
+        enforce = true,
+        htmlFiles = ["index.html"],
+    } = options;
+    // Any output directory, not just `assets/`: a multi-entry build may route
+    // its chunks elsewhere (see the wallet's `standalone/` pass).
+    const scriptRe = /<script\b[^>]*\bsrc="\/?([^"]+\.js)"/g;
 
     return {
         name: "frak:assert-eager-bundle-budget",
         apply: "build" as const,
-        // writeBundle (post-write) so the final, fully-transformed index.html and
+        // writeBundle (post-write) so the final, fully-transformed HTML and
         // every chunk are on disk — avoids in-memory bundle timing/encoding edge
         // cases where the emitted HTML asset isn't yet a string in generateBundle.
         writeBundle(buildOptions: { dir?: string }) {
             const dir = buildOptions.dir;
             if (!dir) return;
 
-            let htmlSource: string;
-            try {
-                htmlSource = readFileSync(
-                    path.join(dir, "index.html"),
-                    "utf-8"
-                );
-            } catch {
-                return;
+            for (const htmlFile of htmlFiles) {
+                measureEntry({
+                    dir,
+                    htmlFile,
+                    scriptRe,
+                    budgetGzip,
+                    enforce,
+                    assertHtml,
+                });
             }
-
-            assertHtml?.(htmlSource);
-
-            const entries: string[] = [];
-            for (const m of htmlSource.matchAll(scriptRe)) entries.push(m[1]);
-
-            const eager = collectEagerClosure(dir, entries);
-
-            let totalGzip = 0;
-            const breakdown: string[] = [];
-            for (const [key, code] of eager) {
-                const gz = gzipSync(code).length;
-                totalGzip += gz;
-                breakdown.push(`  ${key}: ${(gz / 1024).toFixed(2)} KB gz`);
-            }
-
-            const totalKb = (totalGzip / 1024).toFixed(2);
-            const overBudget = totalGzip > budgetGzip;
-            console.log(
-                `\n[eager-budget] boot JS: ${totalKb} KB gz across ${eager.size} chunks (limit ${budgetGzip / 1024} KB)${
-                    overBudget && !enforce ? " — OVER BUDGET (warn-only)" : ""
-                }`
-            );
-            if (!overBudget) return;
-
-            const detail = `Eager boot JS budget exceeded: ${totalKb} KB gz > ${budgetGzip / 1024} KB.\n${breakdown
-                .sort()
-                .join("\n")}`;
-            if (!enforce) {
-                console.warn(`[eager-budget] ${detail}`);
-                return;
-            }
-            throw new Error(detail);
         },
     };
+}
+
+/** One HTML entry, walked and budgeted on its own. */
+function measureEntry({
+    dir,
+    htmlFile,
+    scriptRe,
+    budgetGzip,
+    enforce,
+    assertHtml,
+}: {
+    dir: string;
+    htmlFile: string;
+    scriptRe: RegExp;
+    budgetGzip: number;
+    enforce: boolean;
+    assertHtml?: (htmlSource: string, htmlFile: string) => void;
+}) {
+    let htmlSource: string;
+    try {
+        htmlSource = readFileSync(path.join(dir, htmlFile), "utf-8");
+    } catch {
+        return;
+    }
+
+    assertHtml?.(htmlSource, htmlFile);
+
+    const entries: string[] = [];
+    // `matchAll` on a shared /g regex is safe: it clones the regex internally.
+    for (const m of htmlSource.matchAll(scriptRe)) entries.push(m[1]);
+
+    const eager = collectEagerClosure(dir, entries);
+
+    let totalGzip = 0;
+    const breakdown: string[] = [];
+    for (const [key, code] of eager) {
+        const gz = gzipSync(code).length;
+        totalGzip += gz;
+        breakdown.push(`  ${key}: ${(gz / 1024).toFixed(2)} KB gz`);
+    }
+
+    const totalKb = (totalGzip / 1024).toFixed(2);
+    const overBudget = totalGzip > budgetGzip;
+    console.log(
+        `\n[eager-budget] ${htmlFile} boot JS: ${totalKb} KB gz across ${eager.size} chunks (limit ${budgetGzip / 1024} KB)${
+            overBudget && !enforce ? " — OVER BUDGET (warn-only)" : ""
+        }`
+    );
+    if (!overBudget) return;
+
+    const detail = `Eager boot JS budget exceeded for ${htmlFile}: ${totalKb} KB gz > ${budgetGzip / 1024} KB.\n${breakdown
+        .sort()
+        .join("\n")}`;
+    if (!enforce) {
+        console.warn(`[eager-budget] ${detail}`);
+        return;
+    }
+    throw new Error(detail);
 }
 
 export type PreconnectOrigin = {
