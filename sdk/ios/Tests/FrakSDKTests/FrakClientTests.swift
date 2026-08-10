@@ -568,7 +568,8 @@ struct FrakClientTests {
     /// `merchantResolutionFailed` — matching Android's equivalent.
     @Test("installPageURL propagates cancellation instead of collapsing it to merchantResolutionFailed")
     func installPageURLPropagatesCancellation() async throws {
-        let client = makeClient { _ in throw StubHangs() }
+        // No merchantId, so the merchant genuinely resolves and there is a request to cancel.
+        let client = makeClient(config: FrakConfig(bundleId: "com.acme.app")) { _ in throw StubHangs() }
 
         let task = Task {
             try await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "session-1")

@@ -35,9 +35,8 @@ actor MerchantIdentity {
             if let merchantId = settings.merchantId { return merchantId }
             return try await resolve().merchantId
         case .optional:
-            // Resolves even when settings.merchantId is set; the Android twin short-circuits
-            // here. Collapsing the difference changes how often each platform hits the store.
-            return merchantFrom(try await availableConfig())
+            if let merchantId = settings.merchantId { return merchantId }
+            return try await availableConfig()?.merchantId
         case .cachedOnly:
             if let merchantId = settings.merchantId { return merchantId }
             // `currentConfig` hydrates from disk on demand, so a warm start reached via a

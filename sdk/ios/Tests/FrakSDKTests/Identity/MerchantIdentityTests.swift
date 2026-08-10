@@ -73,16 +73,15 @@ struct MerchantIdentityTests {
         }
     }
 
-    @Test("optional always resolves, but prefers settings.merchantId over the resolved value")
+    @Test("optional returns the configured merchantId without touching the network")
     func optionalPrefersConfiguredMerchantId() async throws {
         let harness = makeHarness { _ in StubResponse(status: 200, body: Self.resolveBody) }
         defer { StubURLProtocol.reset(host: harness.host) }
 
         let merchantId = try await harness.merchantIdentity.merchant(.optional)
         #expect(merchantId == Self.merchantId)
-        // Unlike `.required`, `.optional` still resolves even when settings.merchantId is set —
-        // matching the legacy linkIdentity/buildSharingLink behaviour it absorbs.
-        #expect(harness.requests.count == 1)
+        // A resolve here would be discarded anyway, since settings.merchantId wins over it.
+        #expect(harness.requests.count == 0)
     }
 
     @Test("optional swallows a resolve failure to nil")
