@@ -7,6 +7,20 @@ import java.util.concurrent.CompletableFuture
 /**
  * Everything the SDK can do. Obtained from [Frak.client]. Every suspending member has a `*Async`
  * twin returning a [CompletableFuture], since a Java caller cannot name a `Continuation`.
+ *
+ * How failure is signalled, one tier per kind of answer:
+ * - `T?` means **absence** — nothing was there, and that is a normal answer ([anonymousId],
+ *   [RewardsApi.best], [SharingApi.buildLink]'s null arm).
+ * - A sealed or enum type means **outcome** — several ends are all valid ([OpenAppResult]).
+ * - `Boolean` means **predicate** ([AppLinkApi.isFrakAppInstalled]).
+ * - A thrown [id.frak.sdk.core.FrakError] means **failure** — the call could have worked and did
+ *   not ([ConfigApi.resolve], [RewardsApi.campaigns], [SharingApi.buildLink],
+ *   [AppLinkApi.installPageUrl]). Through an `*Async` twin this arrives as a `CompletionException`
+ *   whose `cause` is the [id.frak.sdk.core.FrakError].
+ *
+ * [TrackingApi] is the one deliberate exception: it returns [id.frak.sdk.core.FrakResult] and never
+ * throws, because it is called from hot paths where a disabled-tracking refusal is expected rather
+ * than exceptional. See `docs/plans/native-sdk/09-android-api-surface.md` §5b before adding an API.
  */
 public class FrakClient internal constructor(
     internal val core: DefaultFrakClient,

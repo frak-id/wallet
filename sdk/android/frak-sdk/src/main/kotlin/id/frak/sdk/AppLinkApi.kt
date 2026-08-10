@@ -1,6 +1,7 @@
 package id.frak.sdk
 
 import id.frak.sdk.core.DefaultFrakClient
+import id.frak.sdk.core.FrakError
 import java.util.concurrent.CompletableFuture
 
 /** Inbound referral links and the wallet app handoff. Obtained from [FrakClient.appLink]. */
@@ -23,17 +24,24 @@ public class AppLinkApi internal constructor(
     public fun openFrakAppAsync(): CompletableFuture<OpenAppResult> = core.asFuture { core.openFrakApp() }
 
     /**
-     * Wallet's hosted install page carrying a fresh proof, or null without an identity or a
-     * resolvable merchant. Not the store listing — [openFrakApp] handles that handoff itself.
+     * Wallet's hosted install page, carrying a fresh proof. Not the store listing — [openFrakApp]
+     * handles that handoff itself.
+     *
+     * @throws FrakError when the page cannot be minted: tracking is disabled, the device refused
+     *   key material, or no merchant could be resolved.
      */
+    @Throws(FrakError::class)
     public suspend fun installPageUrl(
         returnScheme: String,
         sessionId: String,
-    ): String? = core.installPageUrl(returnScheme, sessionId)
+    ): String = core.installPageUrl(returnScheme, sessionId)
 
-    /** [installPageUrl] for Java. */
+    /**
+     * [installPageUrl] for Java. Completes exceptionally with a [FrakError] wrapped in a
+     * `CompletionException`.
+     */
     public fun installPageUrlAsync(
         returnScheme: String,
         sessionId: String,
-    ): CompletableFuture<String?> = core.asFuture { core.installPageUrl(returnScheme, sessionId) }
+    ): CompletableFuture<String> = core.asFuture { core.installPageUrl(returnScheme, sessionId) }
 }

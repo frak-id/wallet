@@ -166,9 +166,15 @@ internal class DefaultFrakClient(
             fetchRewards(targetInteraction, audience, forceRefresh, products).best
         }
 
+    /** Null only when there is nothing to link to; every other way this can fail throws. */
     suspend fun buildSharingLink(request: SharingRequest): String? =
         frakCall {
-            val clientId = identity.anonymousId() ?: return@frakCall null
+            requireTrackingEnabled()
+            val clientId =
+                identity.anonymousId()
+                    ?: throw FrakError.InternalFailure(
+                        "the device refused the key material an anonymous id needs",
+                    )
             // Not runCatching: it would also swallow the caller's CancellationException.
             val resolved =
                 try {
@@ -176,7 +182,12 @@ internal class DefaultFrakClient(
                 } catch (unavailable: FrakError) {
                     null
                 }
-            val merchantId = settings.merchantId ?: resolved?.merchantId ?: return@frakCall null
+            val merchantId =
+                settings.merchantId
+                    ?: resolved?.merchantId
+                    ?: throw FrakError.MerchantResolutionFailed(
+                        "no merchantId is configured and none could be resolved for this package",
+                    )
             val product = request.products.firstOrNull()
             val baseUrl =
                 request.link
@@ -305,9 +316,14 @@ internal class DefaultFrakClient(
     suspend fun installPageUrl(
         returnScheme: String,
         sessionId: String,
-    ): String? =
+    ): String =
         frakCall {
-            val (merchantId, anonymousId) = linkIdentity() ?: return@frakCall null
+            requireTrackingEnabled()
+            val (merchantId, anonymousId) =
+                linkIdentity()
+                    ?: throw FrakError.MerchantResolutionFailed(
+                        "an install link needs both an anonymous id and a merchant; one of them is missing",
+                    )
             // Minted here, not at sheet open: the backend's 30-day window runs from this timestamp.
             InstallLinks.installPage(
                 walletOrigin = settings.env.wallet,

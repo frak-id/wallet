@@ -16,6 +16,7 @@ import id.frak.sdk.tracking.EventQueue
 import id.frak.sdk.tracking.Interaction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -23,6 +24,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -215,7 +217,36 @@ class DefaultFrakClientTest {
                 )
             advanceUntilIdle()
 
-            assertNull(client.installPageUrl(RETURN_SCHEME, SESSION_ID))
+            // Throws rather than answering null: a caller refused an install page needs to know it
+            // was refused, not receive the same answer as "there was nothing to link to".
+            val refused =
+                assertThrows(FrakError::class.java) {
+                    runBlocking { client.installPageUrl(RETURN_SCHEME, SESSION_ID) }
+                }
+            assertEquals(FrakError.Kind.TRACKING_DISABLED, refused.kind)
+        }
+
+    @Test
+    fun `a share link refused for want of identity throws, where nothing to link to is still null`() =
+        runTest {
+            val disabled =
+                newClient(
+                    testScheduler,
+                    config = frakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                )
+            advanceUntilIdle()
+
+            val refused =
+                assertThrows(FrakError::class.java) {
+                    runBlocking { disabled.buildSharingLink(sharingRequest(link = "https://acme.example/p")) }
+                }
+            assertEquals(FrakError.Kind.TRACKING_DISABLED, refused.kind)
+
+            // The other channel, unchanged: tracking is on and the merchant resolves, but the request
+            // carries no link and no homepage is configured, so there is genuinely nothing to build on.
+            val enabled = newClient(testScheduler, config = frakConfig(merchantId = MERCHANT_ID))
+            advanceUntilIdle()
+            assertNull(enabled.buildSharingLink(sharingRequest()))
         }
 
     @Test

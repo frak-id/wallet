@@ -202,12 +202,20 @@ actor DefaultFrakClient {
         }
     }
 
-    func buildSharingLink(_ request: SharingRequest) async -> String? {
-        guard let clientId = await identity.anonymousId() else { return nil }
+    /// Nil only when there is nothing to link to; every other way this can fail throws.
+    func buildSharingLink(_ request: SharingRequest) async throws -> String? {
+        guard await consent.isEnabled() else { throw FrakError.trackingDisabled }
+        guard let clientId = await identity.anonymousId() else {
+            throw FrakError.internalFailure(message: "the device refused the key material an anonymous id needs")
+        }
         let resolved = await availableConfig()
-        guard !Task.isCancelled else { return nil }
+        try Task.checkCancellation()
 
-        guard let merchantId = settings.merchantId ?? resolved?.merchantId else { return nil }
+        guard let merchantId = settings.merchantId ?? resolved?.merchantId else {
+            throw FrakError.merchantResolutionFailed(
+                reason: "no merchantId is configured and none could be resolved for this bundle"
+            )
+        }
         let product = request.products.first
         // A cold cache that cannot be filled yields nil rather than an unattributed link.
         guard
@@ -333,8 +341,13 @@ actor DefaultFrakClient {
         return await launcher.open(InstallLinks.appStore()) ? .openedStore : .failed
     }
 
-    func installPageURL(returnScheme: String, sessionId: String) async -> String? {
-        guard let install = await linkIdentity() else { return nil }
+    func installPageURL(returnScheme: String, sessionId: String) async throws -> String {
+        guard await consent.isEnabled() else { throw FrakError.trackingDisabled }
+        guard let install = await linkIdentity() else {
+            throw FrakError.merchantResolutionFailed(
+                reason: "an install link needs both an anonymous id and a merchant; one of them is missing"
+            )
+        }
         // Minted here rather than when the sheet opens: most sessions never reach the install
         // step, an enclave signature can fail for reasons that have nothing to do with sharing,
         // and the backend's 30-day window runs from this timestamp.

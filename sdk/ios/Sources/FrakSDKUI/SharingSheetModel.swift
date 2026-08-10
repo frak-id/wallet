@@ -103,7 +103,7 @@
             trace: SharingTrace = SharingTrace(),
             activationBaseURL: String? = nil,
             buildSharingLink: @escaping @Sendable (SharingRequest) async -> String? = {
-                await (try? Frak.client)?.sharing.buildLink($0)
+                try? await Frak.client.sharing.buildLink($0)
             },
             anonymousId: @escaping @Sendable () async -> String? = { await (try? Frak.client)?.anonymousId },
             // Only read from `build(_:)`, reached after `prepare` has confirmed `Frak.isInitialized`.
@@ -120,7 +120,7 @@
                 await (try? Frak.client)?.tracking.track($0) ?? .failure(.notInitialized)
             },
             installPageURL: @escaping @Sendable (String, String) async -> String? = { returnScheme, sessionId in
-                await (try? Frak.client)?.appLink.installPageURL(returnScheme: returnScheme, sessionId: sessionId)
+                try? await Frak.client.appLink.installPageURL(returnScheme: returnScheme, sessionId: sessionId)
             },
             openFrakApp: @escaping @Sendable () async -> OpenAppResult = {
                 await (try? Frak.client)?.appLink.openFrakApp() ?? .failed

@@ -446,6 +446,55 @@ Two decisions worth stating rather than leaving to the KDoc:
 `public const val` banned — it inlines into merchant bytecode and freezes at their compile time. Use
 `@JvmStatic val`. Already fixed for `FrakSharingDefaults.HEIGHT_FRACTION`.
 
+## 5b. Failure signalling — one tier per kind of failure, and the rule for picking
+
+Kotlin's own API guidelines refuse to mandate a single convention and ask only that a library apply
+its options "consistently and appropriately" ([Consistency](https://kotlinlang.org/docs/api-guidelines-consistency.html)).
+The industry does not converge either: Stripe ships thrown-exception callbacks and a sealed
+`PaymentSheetResult` in one artifact family, Play Billing returns status codes, Firebase hands back
+`Task.getException()`, RevenueCat returns `kotlin.Result` and ships two optional artifacts rather
+than choose for its consumers. So the rule here is ours, and it is written down because nothing
+enforces it.
+
+**Four tiers. A new API picks one by asking what the caller can do about the answer.**
+
+| Tier | Shape | When | Members |
+|---|---|---|---|
+| Absence | `T?` | Nothing was there, and that is a normal answer the caller can act on | `rewards.best()`, `client.anonymousId()`, `sharing.buildLink()`'s nil arm |
+| Outcome | sealed / enum | Several ends are all valid; none is "the error" | `OpenAppResult`, `SharingResult` |
+| Predicate | `Boolean` | The question is a yes/no about the world | `appLink.isFrakAppInstalled()`, `appLink.handleReferral()` |
+| Failure | `throws FrakError` | The call could have worked and did not | `config.resolve()`, `rewards.campaigns()`, `rewards.best()`, `sharing.buildLink()`, `appLink.installPageUrl()` |
+
+The one deliberate exception is **tracking**: `tracking.track()` and `tracking.purchase()` return
+`FrakResult<Unit>` and never throw. They are called from merchant hot paths on every product view,
+and `TrackingDisabled` is an expected state rather than a failure — throwing there would make every
+merchant wrap telemetry in `try`/`catch` or ship a crash. `FrakResult` exists for that tier and
+should not spread to the others; `kotlin.Result` is deliberately not used, since Elizarov's own
+guidance is that domain results should be "domain-specific, named".
+
+Two consequences worth stating, because both are easy to get wrong later:
+
+- **Nullable and throwing coexist on one function, and that is the point.** `rewards.best()` and
+  `sharing.buildLink()` both return `T?` *and* declare `@Throws(FrakError::class)`: null means "there
+  is genuinely nothing", the throw means "this could have produced something and was refused".
+  Collapsing the two loses the distinction a caller needs — which is exactly the bug `buildLink` and
+  `installPageUrl` shipped with, where a disabled-tracking refusal and a missing merchant and a
+  network failure all arrived as the same `null`.
+- **A result-returning suspend function must still let `CancellationException` propagate.** Never
+  capture it into a `FrakResult.Failure`; `frakCall` rethrows it untouched and anything new must do
+  the same. The same trap in reverse is a `catch (Throwable)` around a suspend body — see
+  `ConfigStore.readPersisted`, which the house rule in `HttpClient` ("Exception, not Throwable: a JVM
+  Error must propagate untouched") already names.
+
+**The ABI gate does not police this.** Kotlin nullability and `@Throws` do not appear in JVM
+signatures, and a `suspend fun` erases to `Object` regardless — so moving a function between the
+Absence and Failure tiers is invisible in `frak-sdk.api` while being a behavioural break for every
+caller. Such a change needs a `!` in the commit subject and a note in the release entry; `apiCheck`
+staying green means nothing here.
+
+iOS mirrors all of the above: `throws` for the Failure tier, `Result<Void, FrakError>` for tracking,
+optionals for absence. `FrakError` is not `Equatable` on either platform, so tests assert on `.kind`.
+
 ## 6. Verification
 
 `JavaCallSiteFixture.java` — no assertions, no JUnit; the assertion is that `javac` accepts it.

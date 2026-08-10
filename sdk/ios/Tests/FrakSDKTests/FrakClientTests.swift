@@ -357,10 +357,25 @@ struct FrakClientTests {
     }
 
     @Test("buildSharingLink yields nil with no base url to build from")
-    func buildSharingLinkNeedsABaseURL() async {
+    func buildSharingLinkNeedsABaseURL() async throws {
         let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
-        let link = await client.buildSharingLink(SharingRequest())
+        let link = try await client.buildSharingLink(SharingRequest())
         #expect(link == nil)
+    }
+
+    /// Mirrors Android's `a share link refused for want of identity throws, where nothing to link
+    /// to is still null`. The two channels are deliberately distinct: nil means there was nothing
+    /// to link to, a throw means a link could have been built and was refused.
+    @Test("buildSharingLink throws, rather than yielding nil, when tracking is off")
+    func buildSharingLinkThrowsWhenRefused() async {
+        let client = makeClient(config: FrakConfig(merchantId: Self.merchantId, trackingEnabled: false)) { _ in
+            StubResponse(status: 200, body: Self.resolveBody)
+        }
+        // `.kind`, not the case itself: FrakError is deliberately not Equatable.
+        let refused = await #expect(throws: FrakError.self) {
+            try await client.buildSharingLink(SharingRequest(link: "https://acme.example/p"))
+        }
+        #expect(refused?.kind == .trackingDisabled)
     }
 
     @Test("track refuses up front when tracking is disabled")
@@ -520,9 +535,7 @@ struct FrakClientTests {
     func installPageURLCarriesAProof() async throws {
         let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
 
-        let page = try #require(
-            await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "session-1")
-        )
+        let page = try await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "session-1")
         let anonymousId = try #require(await client.anonymousId)
 
         let expected =
@@ -542,6 +555,11 @@ struct FrakClientTests {
         let config = FrakConfig(merchantId: FrakClientTests.merchantId, trackingEnabled: false)
         let client = makeClient(config: config) { _ in StubResponse(status: 200, body: Self.resolveBody) }
 
-        #expect(await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "s1") == nil)
+        // Throws rather than answering nil: a caller refused an install page needs to know it was
+        // refused, not receive the same answer as "there was nothing to link to".
+        let refused = await #expect(throws: FrakError.self) {
+            try await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "s1")
+        }
+        #expect(refused?.kind == .trackingDisabled)
     }
 }
