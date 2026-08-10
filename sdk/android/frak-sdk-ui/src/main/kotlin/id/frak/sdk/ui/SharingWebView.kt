@@ -123,6 +123,10 @@ internal class SharingWebViewHandle(
 
     /** Points the view at a session. Resets per-load state; see [SharingWebViewBinding]. */
     fun bind(binding: SharingWebViewBinding) {
+        // A session torn down while its cache-only retry rung was in flight leaves the view pinned
+        // to LOAD_CACHE_ONLY, and the next load — the pool's own re-warm, or the next sheet — would
+        // silently inherit it and fail on anything not already cached.
+        view.settings.cacheMode = WebSettings.LOAD_DEFAULT
         client.binding = binding
     }
 
@@ -157,6 +161,12 @@ internal class SharingWebViewHandle(
     }
 
     fun destroy() {
+        // The client can be holding a retry scheduled against this view. It is posted to the main
+        // looper, not to the view's own queue, so nothing else stops it — and `loadUrl` after
+        // `destroy()` takes the merchant's process down. The pool reaches here without rebinding
+        // first (a dead pool releasing a lent view, or destroying a warm one), so the binding
+        // setter's own cancellation does not cover this.
+        client.cancelPendingRetry()
         view.destroy()
     }
 }
@@ -238,6 +248,7 @@ internal class SharingWebViewClient(
             cancelPendingRetry()
             pendingMainFrameUrl = null
             retryCount = 0
+            ladderUrl = null
             retryPending = false
             settled = false
             navigationFailed = false
@@ -250,8 +261,15 @@ internal class SharingWebViewClient(
     /** Main-frame URL currently in flight, captured in [onPageStarted]; null once resolved. */
     private var pendingMainFrameUrl: String? = null
 
-    /** Rungs of [RETRY_LADDER] already spent on this binding. */
+    /** Rungs of [RETRY_LADDER] already spent on the document in [ladderUrl]. */
     private var retryCount = 0
+
+    /**
+     * Which document the spent rungs belong to. A session navigates more than once — the install
+     * page, and the confirmation screen — and a fresh document has not failed yet, so it must not
+     * inherit a budget the sharing page spent.
+     */
+    private var ladderUrl: String? = null
 
     /** The scheduled retry, held so a rebind can cancel one that would navigate the next session's view. */
     private var pendingRetry: Runnable? = null
@@ -326,7 +344,8 @@ internal class SharingWebViewClient(
         if (!navigationOwnedByBinding) return
         // Android delivers this for its own error page too, in the same load cycle.
         if (navigationFailed) return
-        // `retried` is NOT reset: one retry per binding for the sheet's whole lifetime.
+        // The ladder is NOT reset here: rungs belong to a document, not to an attempt at it, so a
+        // load that only succeeded on its retry must not hand a later failure a full budget again.
         pendingMainFrameUrl = null
         view.settings.cacheMode = WebSettings.LOAD_DEFAULT // Undo handleMainFrameFailure's cache-only mode.
         val settledBinding = binding
@@ -393,6 +412,11 @@ internal class SharingWebViewClient(
             giveUp(view)
             return
         }
+        // A document this ladder has not been spent on yet gets the whole thing.
+        if (url != ladderUrl) {
+            ladderUrl = url
+            retryCount = 0
+        }
         if (unreachable) retryCount = maxOf(retryCount, RETRY_LADDER.lastIndex)
         val rung = RETRY_LADDER.getOrNull(retryCount)
         if (rung == null) {
@@ -435,7 +459,8 @@ internal class SharingWebViewClient(
         handler.postDelayed(runnable, delayMillis)
     }
 
-    private fun cancelPendingRetry() {
+    /** Also reached from [SharingWebViewHandle.destroy], which is not a rebind. */
+    fun cancelPendingRetry() {
         pendingRetry?.let(handler::removeCallbacks)
         pendingRetry = null
     }

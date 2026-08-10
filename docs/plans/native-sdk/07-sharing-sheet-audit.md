@@ -380,7 +380,7 @@ sent. The host had simply stopped waiting for it on the warm path.
 **Fix.** `pageVisible` starts `false` unconditionally, on both platforms. `activationBaseUrl` keeps
 its real job — choosing a fragment activation over a full load — and `onPageAction(Ready)`, which
 already calls `onPageReady()` + `onPageVisible()`, uncovers the page, bounded by
-`SKELETON_GRACE_MILLIS` / `SKELETON_MAX_HOLD_MILLIS`. Real latency is unchanged; perceived latency
+`SKELETON_GRACE_MILLIS` (and, until §2.6 deleted it, `SKELETON_MAX_HOLD_MILLIS`). Real latency is unchanged; perceived latency
 drops to the entry animation, because the skeleton is pure Compose and paints on frame 1.
 
 iOS carried the identical line (`SharingSheetModel.swift`) on the identical premise, and
@@ -474,9 +474,10 @@ structurally unreachable from there.
 `resolved`/`contentSettled` stay as `CompletableDeferred`; they encode distinct semantics and are
 already correct.
 
-`SharingWebViewClient`'s own flags (`settled`, `retried`, `retryPending`, `navigationFailed`,
-`navigationOwnedByBinding`) are **not** part of this: every call site is a `WebViewClient`
-callback, which Android delivers on the main thread. Genuinely single-threaded.
+`SharingWebViewClient`'s own flags (`settled`, `retryCount`, `ladderUrl`, `retryPending`,
+`pendingRetry`, `navigationFailed`, `navigationOwnedByBinding`) are **not** part of this: every
+call site is a `WebViewClient` callback or a main-looper `Runnable`, both of which Android
+delivers on the main thread. Genuinely single-threaded.
 
 ### 2.5 Not changed, deliberately
 
@@ -534,6 +535,31 @@ document that produced no paint callback, and any page action other than `Error`
 all is ended by the load deadline, which is the only escape hatch that was ever needed.
 
 Mirrored on iOS, which carried all three verbatim.
+
+**Two things the 5 s does not mean.** `SharingSessionBuilder.BUILD_DEADLINE_MILLIS` is still 8 s and
+is deliberately independent (§2.2): a build that degrades rather than throwing is bounded by *that*
+number, not this one, so the true worst case from tap to some outcome is the max of the two, not 5 s.
+And the ladder's rungs belong to a *document*, not to a session — `ladderUrl` resets the count when
+the session navigates itself somewhere new — so a sheet that recovers the sharing page on a retry
+and then fails on the install page still gets a full budget for the second document.
+
+**Four defects the first cut of this shipped**, all caught by review before merge and worth recording
+because three of them are invisible until teardown: the retry `Runnable` was not cancelled by
+`SharingWebViewHandle.destroy()`, which the pool reaches without rebinding (a dead pool releasing a
+lent view, or destroying a warm one) — `loadUrl` after `WebView.destroy()` takes the merchant's
+process down, and on iOS the same shape is a stray load by an object ARC keeps alive; the binding
+setter did not unpin `WebSettings.cacheMode`, so a session torn down mid cache-only rung left the
+pool's own re-warm pinned to the cache (structurally impossible on iOS, where the policy is
+per-`URLRequest`); the ladder was scoped to the binding rather than the document; and iOS's
+`Task.isCancelled` guard sat inside the `delay > 0` branch, so the undelayed unreachable rung — the
+one most likely to race a rebind — ignored cancellation entirely. Each is pinned by a test on
+Android; none is reachable by a test on iOS, for the reason in the next paragraph.
+
+**iOS cannot test any of this today.** `SharingWebView.swift` is wrapped top to bottom in
+`#if canImport(UIKit)`, which is false on the macOS SwiftPM host the suite actually runs on, so the
+ladder does not even compile there. `SharingSheetLogic.swift` was deliberately kept outside that
+gate for exactly this reason. Reaching the ladder needs either a simulator destination in CI, or the
+rung-selection logic hoisted into a `WKWebView`-free type the way `sharingDecision` already is.
 ---
 
 ## 3. Public API surface

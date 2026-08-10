@@ -60,10 +60,8 @@ internal class SharingSheetState(
      * Whether the page has painted; drives the skeleton over the web view. Latches, so a later
      * same-session navigation cannot put the skeleton back.
      *
-     * Starts false even on a warm view. A pooled view is never in a window while it warms — it is
-     * unmeasured, hidden and paused — so a finished warm document has laid out nothing and drawn
-     * nothing, and uncovering it would show the scrim through a blank web view until the
-     * activation paints. The page's own `action=ready` is the paint signal; see [onPageAction].
+     * Starts false even on a warm view: a pooled view is never in a window while it warms, so a
+     * finished warm document has drawn nothing and uncovering it shows a blank web view.
      */
     var pageVisible: Boolean by mutableStateOf(false)
         private set

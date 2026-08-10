@@ -20,6 +20,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import java.time.Duration
 
 /** Driven through [createSharingWebView], so the shipped hardening is what is under test. */
 @RunWith(RobolectricTestRunner::class)
@@ -35,7 +36,8 @@ class SharingWebViewClientTest {
         var loadFailedCount = 0
     }
 
-    private fun harness(): Pair<WebView, Harness> {
+    /** The handle, for the tests that exercise what the pool does to a view rather than the client alone. */
+    private fun boundHandle(): Pair<SharingWebViewHandle, Harness> {
         val h = Harness()
         val handle =
             createSharingWebView(
@@ -53,6 +55,11 @@ class SharingWebViewClientTest {
                 onOpenExternal = { h.externalUrls += it },
             ),
         )
+        return handle to h
+    }
+
+    private fun harness(): Pair<WebView, Harness> {
+        val (handle, h) = boundHandle()
         return handle.view to h
     }
 
@@ -83,6 +90,9 @@ class SharingWebViewClientTest {
 
     /** Runs the ladder's backoff, which is posted to the main looper rather than run inline. */
     private fun settleRetry() = shadowOf(Looper.getMainLooper()).runToEndOfTasks()
+
+    /** Advances the virtual clock by exactly [millis], so a rung's delay can be pinned rather than drained. */
+    private fun elapse(millis: Long) = shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(millis))
 
     /** One whole rung: the attempt starts, fails, and its retry (if any) is let through. */
     private fun failOnce(
@@ -222,7 +232,12 @@ class SharingWebViewClientTest {
         view.client.onPageStarted(view, url, null)
 
         view.client.onReceivedError(view, request(url), error(WebViewClient.ERROR_TIMEOUT))
-        settleRetry()
+
+        // The rung is a backoff, not an immediate reload: without this the ladder would spend both
+        // its attempts inside the same failing instant.
+        elapse(NETWORK_RUNG_MILLIS - 1)
+        assertEquals("the rung must wait out its backoff", null, shadowOf(view).lastLoadedUrl)
+        elapse(1)
 
         assertEquals(
             "a transient failure deserves a real second attempt, not a cache lookup",
@@ -239,7 +254,13 @@ class SharingWebViewClientTest {
         val url = "$WALLET_ORIGIN/sharing?x=1"
         failOnce(view, url)
 
-        failOnce(view, url)
+        view.client.onPageStarted(view, url, null)
+        view.client.onReceivedError(view, request(url), error(WebViewClient.ERROR_TIMEOUT))
+
+        // The cache rung backs off further than the network one before it.
+        elapse(NETWORK_RUNG_MILLIS)
+        assertEquals("still on the previous rung's cache mode", WebSettings.LOAD_DEFAULT, view.settings.cacheMode)
+        elapse(CACHE_RUNG_MILLIS - NETWORK_RUNG_MILLIS)
 
         assertEquals(
             "the offline-but-visited-before case is what this rung is for",
@@ -271,7 +292,11 @@ class SharingWebViewClientTest {
         val (view, h) = harness()
         val url = "$WALLET_ORIGIN/sharing?x=1"
 
-        failOnce(view, url, error(WebViewClient.ERROR_HOST_LOOKUP))
+        view.client.onPageStarted(view, url, null)
+        view.client.onReceivedError(view, request(url), error(WebViewClient.ERROR_HOST_LOOKUP))
+
+        // Undelayed, unlike a network rung: there is nothing to wait for.
+        elapse(0)
 
         assertEquals(
             "dialling a dead radio again only spends the sheet's budget",
@@ -389,19 +414,96 @@ class SharingWebViewClientTest {
     }
 
     @Test
-    fun `the retry still paints after the error page finishes`() {
+    fun `the cache rung still paints after the error page finishes`() {
         val (view, h) = harness()
         val url = "$WALLET_ORIGIN/sharing"
+        failOnce(view, url) // network rung
         view.client.onPageStarted(view, url, null)
         view.client.onReceivedError(view, request(url), error())
-        view.client.onPageFinished(view, url) // error page
+        view.client.onPageFinished(view, url) // the error page, in the same load cycle
+        settleRetry() // the cache rung dispatches, pinning the cache
+        assertEquals(
+            "precondition: the cache rung is what is loading",
+            WebSettings.LOAD_CACHE_ONLY,
+            view.settings.cacheMode,
+        )
 
-        view.client.onPageStarted(view, url, null) // retry dispatches
+        view.client.onPageStarted(view, url, null)
         view.client.onPageFinished(view, url)
 
         assertEquals(1, h.pageReadyCount)
         assertEquals(0, h.loadFailedCount)
-        assertEquals(WebSettings.LOAD_DEFAULT, view.settings.cacheMode)
+        assertEquals("a success unpins the cache for the next load", WebSettings.LOAD_DEFAULT, view.settings.cacheMode)
+    }
+
+    @Test
+    fun `a second document gets its own ladder`() {
+        val (view, h) = harness()
+        val sharing = "$WALLET_ORIGIN/sharing?x=1"
+        failOnce(view, sharing) // one rung spent recovering the sharing page
+
+        // The session navigates itself to the install page, which has never failed.
+        val install = "$WALLET_ORIGIN/install?x=1"
+        failOnce(view, install)
+
+        assertEquals(
+            "a fresh document must get the network rung, not inherit a spent budget",
+            WebSettings.LOAD_DEFAULT,
+            view.settings.cacheMode,
+        )
+        assertEquals(install, shadowOf(view).lastLoadedUrl)
+        assertEquals(0, h.loadFailedCount)
+    }
+
+    @Test
+    fun `going unreachable after the network rung still ends at the cache`() {
+        val (view, h) = harness()
+        val url = "$WALLET_ORIGIN/sharing?x=1"
+        failOnce(view, url) // network rung spent normally
+
+        // The radio dropped between the two attempts; the clamp must not rewind the ladder.
+        failOnce(view, url, error(WebViewClient.ERROR_CONNECT))
+
+        assertEquals(WebSettings.LOAD_CACHE_ONLY, view.settings.cacheMode)
+        assertEquals("the clamp must not hand back a rung", 0, h.loadFailedCount)
+
+        failOnce(view, url, error(WebViewClient.ERROR_CONNECT))
+        assertEquals(1, h.loadFailedCount)
+    }
+
+    @Test
+    fun `destroying the view cancels a retry booked against it`() {
+        val (handle, _) = boundHandle()
+        val view = handle.view
+        val url = "$WALLET_ORIGIN/sharing?x=1"
+        view.client.onPageStarted(view, url, null)
+        view.client.onReceivedError(view, request(url), error(WebViewClient.ERROR_TIMEOUT))
+
+        // The pool reaches this without rebinding: a dead pool releasing a lent view, or
+        // destroying a warm one. `loadUrl` after `destroy()` takes the host process down.
+        handle.destroy()
+        settleRetry()
+
+        assertEquals("nothing may be loaded into a destroyed view", null, shadowOf(view).lastLoadedUrl)
+    }
+
+    @Test
+    fun `rebinding unpins a cache-only rung left in flight`() {
+        val (handle, _) = boundHandle()
+        val view = handle.view
+        val url = "$WALLET_ORIGIN/sharing?x=1"
+        failOnce(view, url)
+        failOnce(view, url) // the cache rung is now loading
+        assertEquals("precondition", WebSettings.LOAD_CACHE_ONLY, view.settings.cacheMode)
+
+        // The sheet closed mid-rung and the pool re-warmed this view.
+        handle.bind(SharingWebViewBinding.Warm)
+
+        assertEquals(
+            "the next load must not inherit the cache pinning",
+            WebSettings.LOAD_DEFAULT,
+            view.settings.cacheMode,
+        )
     }
 
     @Test
@@ -476,5 +578,9 @@ class SharingWebViewClientTest {
         const val WALLET_ORIGIN = "https://wallet.frak.id"
         const val RETURN_SCHEME = "frak-com.acme.app"
         const val SESSION_ID = "test-session"
+
+        /** Mirrors `SharingWebViewClient.RETRY_LADDER`, which is private. */
+        const val NETWORK_RUNG_MILLIS = 300L
+        const val CACHE_RUNG_MILLIS = 900L
     }
 }

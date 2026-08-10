@@ -95,8 +95,11 @@
 
         /// The last main-frame URL asked for, so a cache-only retry has something to retry.
         private var requested: URL?
-        /// Rungs of `retryLadder` already spent on this binding.
+        /// Rungs of `retryLadder` already spent on the document in `ladderURL`.
         private var retryCount = 0
+        /// Which document the spent rungs belong to. A session navigates more than once — the
+        /// install page, and the confirmation screen — and a fresh document has not failed yet.
+        private var ladderURL: URL?
         /// The scheduled retry, held so a rebind can cancel one that would navigate the next
         /// session's view.
         private var pendingRetry: Task<Void, Never>?
@@ -152,6 +155,7 @@
             cancelPendingRetry()
             requested = nil
             retryCount = 0
+            ladderURL = nil
             retryPending = false
             settled = false
             navigationFailed = false
@@ -205,6 +209,10 @@
 
         /// Retires the view for good: the delegate is dropped, so nothing can reach a binding after.
         func destroy() {
+            // The pool reaches here without rebinding — a dead pool releasing a lent view, or
+            // destroying a warm one — so the binding's own cancellation does not cover it, and a
+            // booked retry would keep the view alive to load a page nobody will see.
+            cancelPendingRetry()
             view.navigationDelegate = nil
             view.stopLoading()
         }
@@ -243,6 +251,11 @@
                 giveUp()
                 return
             }
+            // A document this ladder has not been spent on yet gets the whole thing.
+            if requested != ladderURL {
+                ladderURL = requested
+                retryCount = 0
+            }
             if unreachable { retryCount = max(retryCount, Self.retryLadder.count - 1) }
             guard retryCount < Self.retryLadder.count else {
                 giveUp()
@@ -274,8 +287,12 @@
             pendingRetry = Task { @MainActor [weak self] in
                 if delay > 0 {
                     try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-                    guard !Task.isCancelled else { return }
                 }
+                // Outside the delay branch on purpose: `Task.cancel()` is cooperative, and the
+                // undelayed rung is the one most likely to race a rebind. A `Task` does not run
+                // inline, so a synchronous `bind()` on the same turn can cancel this before it
+                // starts — and without this check it would navigate a view the pool reassigned.
+                guard !Task.isCancelled else { return }
                 self?.pendingRetry = nil
                 self?.retryPending = false
                 navigate()
