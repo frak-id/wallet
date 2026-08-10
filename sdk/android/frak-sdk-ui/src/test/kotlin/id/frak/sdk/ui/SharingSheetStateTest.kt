@@ -1085,15 +1085,19 @@ class SharingSheetStateTest {
         }
 
     @Test
-    fun `an activated sheet shows the warm page instead of covering it`() =
+    fun `an activated sheet stays covered until the page paints`() =
         runTest {
             val client = FakeSharingClient()
 
+            // A warm view has never been in a window, so its finished document has drawn nothing.
             val activated = newState(client, activationBaseUrl = NORMALISED_WARM_URL)
-            assertTrue("nothing to cover", activated.pageVisible)
+            assertFalse("a warm document is not a painted one", activated.pageVisible)
 
             val cold = newState(client)
             assertFalse("a cold view really is blank, and must stay covered", cold.pageVisible)
+
+            activated.onPageAction(SharingPageAction.Ready)
+            assertTrue("the activation's own ready is what uncovers it", activated.pageVisible)
         }
 
     private fun TestScope.launchDeadline(state: SharingSheetState) =

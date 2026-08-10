@@ -22,9 +22,13 @@
         /// `SKOverlay` wants the bare numeric id, not a URL.
         private static let walletAppStoreId = "6740261164"
 
-        /// Whether the hosted page has painted; drives the skeleton over the web view. Latches,
-        /// and starts true when this sheet was handed a finished warm page.
-        @Published private(set) var pageVisible: Bool
+        /// Whether the hosted page has painted; drives the skeleton over the web view. Latches.
+        ///
+        /// Starts false even for a warm page: a pooled `WKWebView` is never in a view hierarchy
+        /// until a sheet presents it, so a finished warm document has drawn nothing, and
+        /// uncovering it would show an empty sheet until the activation paints. The page's own
+        /// `action=ready` is the paint signal.
+        @Published private(set) var pageVisible = false
 
         /// Document-finished. Observable so the sheet can bound its skeleton's wait.
         @Published private(set) var pageLoaded = false
@@ -123,7 +127,6 @@
             self.sessionId = sessionId
             self.trace = trace
             self.activationBaseURL = activationBaseURL
-            self.pageVisible = activationBaseURL != nil
             self.buildSharingLink = buildSharingLink
             self.anonymousId = anonymousId
             self.environment = environment

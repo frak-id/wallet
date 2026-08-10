@@ -11,7 +11,7 @@ the *magnitude* of any of it — see §5.
 
 | Section | Content |
 |---|---|
-| [§1](#1-rendering-performance) | Why the sheet janks. Four stacked causes, all verified |
+| [§1](#1-rendering-performance) | Why the sheet janks. Four stacked causes, all verified, plus §1.7 on why it *looks* worse than it is |
 | [§2](#2-correctness) | Four defects the tests structurally cannot catch |
 | [§3](#3-public-api-surface) | The Compose-only entry point, and the Stripe-shaped replacement |
 | [§4](#4-what-the-analogues-do) | Shopify / Stripe / Chromium, and what is worth stealing |
@@ -337,6 +337,62 @@ drag start (`PixelCopy` / `view.draw(canvas)`), render the bitmap during the dra
 view back on settle. A bitmap round-clips for free and translates as a pure GPU blit. It is the
 2013-era idiom and it still works, at the cost of a capture and a possible one-frame swap flash.
 Deferred — measure §1.1–§1.5 first.
+
+### 1.7 A finished warm document is not a painted one
+
+Found from a merchant report — "the sheet opens the modal and the web view at once, and the
+skeleton never shows anymore". Both halves are the same line:
+
+```kotlin
+// SharingSheetState, as of a32a16132
+var pageVisible: Boolean by mutableStateOf(activationBaseUrl != null)
+```
+
+`activationBaseUrl` is `handle.loadedBaseUrl?.takeIf { handle.documentReady }`, and `warm()` runs
+on composition-enter, so by tap time it is essentially always non-null. The skeleton was therefore
+never composed on any real open — `skeletonAlpha` starts at `0f` and `SharingSheetSkeleton` is
+dropped from composition before the first frame.
+
+The premise was that a warm view is already showing the page. It is not. **The pooled `WebView` is
+never in a view hierarchy while it warms**: `SharingWebViewPool.newHandle()` constructs it and
+nothing ever `addView`s it — the only attach is `AndroidView(factory = { handle.view })` at sheet
+composition. So while warm it is unmeasured (0×0, hence a 0 Blink viewport and a `100dvh` of
+zero), detached (renderer hidden, no compositor frames, no raster) and, since §1.5, explicitly
+`onPause()`d. `documentReady` means `onPageFinished` fired: DNS, TLS, the bundle, V8, React's boot
+and both merchant-keyed queries are banked — which is the win `a32a16132` measured — and nothing
+has been laid out or drawn.
+
+So the sheet opened declaring "nothing to cover" over a transparent, blank web view, for the whole
+tap-to-paint window. `a32a16132`'s own trace sizes that window: **~540 ms** tap to `page reported
+ready`. Half a second of empty sheet, which is exactly what the report describes.
+
+The web side was already written to the opposite contract, and says so:
+
+```ts
+// apps/wallet/app/module/sharing/host/useHostBridge.ts
+// Two frames, so the host drops its loading skeleton once the page has really painted.
+// Skipped while warming: nothing is on screen yet.
+```
+
+`state=live` arrives by fragment → `warm` flips false → the effect re-runs → `action=ready` is
+sent. The host had simply stopped waiting for it on the warm path.
+
+**Fix.** `pageVisible` starts `false` unconditionally, on both platforms. `activationBaseUrl` keeps
+its real job — choosing a fragment activation over a full load — and `onPageAction(Ready)`, which
+already calls `onPageReady()` + `onPageVisible()`, uncovers the page, bounded by
+`SKELETON_GRACE_MILLIS` / `SKELETON_MAX_HOLD_MILLIS`. Real latency is unchanged; perceived latency
+drops to the entry animation, because the skeleton is pure Compose and paints on frame 1.
+
+iOS carried the identical line (`SharingSheetModel.swift`) on the identical premise, and
+`06-open-findings.md` row 9.5 had already established that its pooled `WKWebView` is never in a
+hierarchy until a sheet presents it. Fixed the same way.
+
+**What this does not fix, and why it was not attempted here.** Warming still banks no rendering.
+Pre-sizing the detached view (`measure`/`layout`) does not help on its own: a detached view's
+renderer is hidden, so Blink does not run the lifecycle and there is no early layout to bank.
+Genuinely warming raster means keeping the view attached *and* visible, which is the per-frame cost
+§1.5 went out of its way to remove, for a page nobody is looking at. That trade needs a device
+trace (`adb shell setprop log.tag.FrakSharing DEBUG`) before it is worth making.
 
 ---
 
