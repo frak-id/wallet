@@ -373,12 +373,43 @@ class SharingSheetStateTest {
         }
 
     @Test
+    fun `an activated page is not abandoned to tier 3 when ready never arrives`() =
+        runTest {
+            val client = FakeSharingClient()
+            var result: SharingResult? = null
+            val probe = newState(client)
+            probe.prepare(sharingRequest())
+            advanceUntilIdle()
+            val warmBase = requireNotNull(probe.session?.warmBaseUrl)
+
+            val state = newState(client, activationBaseUrl = warmBase) { result = it }
+            state.prepare(sharingRequest())
+            val gate = launchDeadline(state)
+            runCurrent()
+            val view = WebView(context)
+            view.loadUrl(warmBase)
+            state.attach(view)
+            shadowOf(getMainLooper()).idle()
+
+            // Deliberately no page action. `ready` rides two requestAnimationFrames, and a WebView
+            // produces no frames until the sheet has attached it and drawn it — so on a cold start
+            // this is the path that used to raise the chooser over a page that was already there.
+            advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
+            advanceUntilIdle()
+
+            assertTrue("only a finished document can be activated", state.pageLoaded)
+            assertNull("tier 3 must not fire over a document that is already loaded", result)
+            assertEquals("and must not share behind the user's back", 0, client.trackCount)
+            gate.join()
+        }
+
+    @Test
     fun `a share from an activated page settles the budget instead of racing it`() =
         runTest {
             val client = FakeSharingClient()
             val results = mutableListOf<SharingResult>()
-            // Activated by fragment: a same-document navigation fires no onPageFinished, so
-            // pageLoaded stays false while the user is already looking at a live, warm page.
+            // Never attached, so the activation navigation that would record a finished document
+            // has not run: a share is the only thing here that can settle the budget.
             val state = newState(client, activationBaseUrl = NORMALISED_WARM_URL) { results += it }
 
             state.prepare(sharingRequest())
@@ -391,7 +422,7 @@ class SharingSheetStateTest {
             advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
             advanceUntilIdle()
 
-            assertFalse("the fragment activation never finished a document", state.pageLoaded)
+            assertFalse("no document was finished on this state", state.pageLoaded)
             assertEquals("the deadline must not raise a second chooser", 1, client.trackCount)
             // Still open on its confirmation screen: a deadline that fired would have shared,
             // reported and closed the sheet under the chooser the user is looking at.
@@ -987,7 +1018,8 @@ class SharingSheetStateTest {
 
             state.prepare(sharingRequest())
             launchDeadline(state)
-            advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
+            // Past the page budget but short of the build one, which is the longer of the two.
+            advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS + 1)
             runCurrent()
             assertTrue("the page deadline alone cannot rescue a hung build", results.isEmpty())
 
@@ -1127,7 +1159,7 @@ class SharingSheetStateTest {
             "https://wallet.frak.id/sharing?embed=native&state=warm&view=share"
 
         /** Mirrors `SharingPresentation`'s own constant. */
-        const val SHEET_LOAD_DEADLINE_MILLIS = 1_500L
+        const val SHEET_LOAD_DEADLINE_MILLIS = 5_000L
 
         /** Mirrors `SharingSessionBuilder`'s own private constant. */
         const val BUILD_DEADLINE_MILLIS = 8_000L

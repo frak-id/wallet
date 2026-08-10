@@ -236,7 +236,7 @@
                 // a second tap must be able to fetch a fresh page instead of finding itself
                 // permanently locked out by this session's first attempt.
                 claimed.remove(.install)
-                recovery.map { webView?.navigate($0) }
+                if let webView, let recovery { navigateNow(webView, recovery) }
                 return
             }
             // A content-process crash after the page painted: raising a tier-3 chooser now would
@@ -306,7 +306,7 @@
                     claimed.removeAll()
                     // Back on the sharing page — a later load failure belongs to it again.
                     showingInstallPage = false
-                    webView?.navigate(navigation)
+                    if let webView { navigateNow(webView, navigation) }
                 }
             // The page draws both buttons; this model performs them — the SDK keypair the page
             // cannot reach has to sign the interaction.
@@ -415,7 +415,20 @@
         private func loadSessionURL() {
             guard !sessionLoaded, let webView, let navigation = pageNavigation(confirmed: false) else { return }
             sessionLoaded = true
+            navigateNow(webView, navigation)
+        }
+
+        /// Navigates, and on an activation records the document the engine will not report. A
+        /// fragment change is same-document: no `didFinish`, so the page's own `ready` is the only
+        /// word for it — and that rides two `requestAnimationFrame`s, which do not run until the
+        /// sheet has put the view on screen. That made the fastest path the one that timed out on
+        /// the load deadline and raised the chooser over a page that was already there.
+        private func navigateNow(_ webView: SharingWebView, _ navigation: SharingNavigation) {
             webView.navigate(navigation)
+            // Only a finished document can be activated, so tap-to-content is already met.
+            // `onPageVisible` is deliberately not called: paint stays the page's word, bounded by
+            // the skeleton grace this unlocks.
+            if case .activate = navigation { onPageReady() }
         }
 
         /// How the page gets where it is going next, preferring a same-document activation over
@@ -575,7 +588,7 @@
         private func confirm(_ result: SharingResult) {
             report(result)
             guard let navigation = pageNavigation(confirmed: true) else { return }  // nil under tier 3 (no page)
-            webView?.navigate(navigation)
+            if let webView { navigateNow(webView, navigation) }
         }
 
         private func report(_ result: SharingResult) {

@@ -117,6 +117,9 @@ internal class SharingSheetState(
 
     private var navigated = false
 
+    /** Distinguishes one activation's paint callback from a stale earlier one. */
+    private var activationVisualState = 0L
+
     private val mainHandler = Handler(Looper.getMainLooper())
 
     /**
@@ -194,10 +197,41 @@ internal class SharingSheetState(
         // Handler(mainLooper), not View.post: the pooled view is still detached at this point, and
         // View.post would park the runnable until the sheet attaches it to a window.
         if (Looper.myLooper() == Looper.getMainLooper()) {
-            view.navigate(navigation)
+            navigateNow(view, navigation)
         } else {
-            mainHandler.post { view.navigate(navigation) }
+            mainHandler.post { navigateNow(view, navigation) }
         }
+    }
+
+    /**
+     * Navigates, and on an activation supplies the two signals the engine will not. A fragment
+     * change is same-document: no `onPageStarted`, no `onPageFinished`, so [SharingWebViewClient]
+     * says nothing at all on this path and the page's own `ready` is the only word for it. That
+     * makes the fastest path the one that times out on the load deadline and raises the chooser
+     * over a page that is already there — `ready` rides two `requestAnimationFrame`s, and a
+     * WebView produces no frames until the sheet has attached it to a window and drawn it.
+     */
+    private fun navigateNow(
+        view: WebView,
+        navigation: SharingNavigation,
+    ) {
+        view.navigate(navigation)
+        if (navigation !is SharingNavigation.Activate) return
+        // Only a finished document can be activated, so tap-to-content is already met: whatever
+        // the page reports later, tier 3 must not fire over it.
+        onPageReady()
+        // Paint stays evidence-based. A pooled view has never rastered — it is 0×0 and detached
+        // while warm — so uncovering it on the strength of the document alone shows a hole.
+        val request = ++activationVisualState
+        view.postVisualStateCallback(
+            request,
+            object : WebView.VisualStateCallback() {
+                override fun onComplete(requestId: Long) {
+                    if (requestId != activationVisualState) return
+                    onPageVisible()
+                }
+            },
+        )
     }
 
     /** Every navigation goes through here, preferring a same-document activation over a full load. */
@@ -300,7 +334,7 @@ internal class SharingSheetState(
                     claimed.clear()
                     // Back on the sharing page — a later load failure belongs to it again.
                     showingInstallPage = false
-                    webView?.navigate(it)
+                    webView?.let { view -> navigateNow(view, it) }
                 }
             }
 
@@ -368,7 +402,7 @@ internal class SharingSheetState(
             // Back on a page that plausibly offers Install again, so a second tap must be able to
             // fetch a fresh one rather than stay locked out by this session's first attempt.
             claimed.remove(SharingPageAction.Install)
-            recovery?.let { webView?.navigate(it) }
+            recovery?.let { nav -> webView?.let { view -> navigateNow(view, nav) } }
             return
         }
         // A renderer crash after paint: leave a dismissible sheet rather than raise an unwanted
@@ -452,7 +486,7 @@ internal class SharingSheetState(
     private fun confirm(result: SharingResult) {
         outcome.record(result)
         val confirmed = pageNavigation(confirmed = true) ?: return // null under tier 3 (no page)
-        webView?.navigate(confirmed)
+        webView?.let { view -> navigateNow(view, confirmed) }
     }
 
     private companion object {

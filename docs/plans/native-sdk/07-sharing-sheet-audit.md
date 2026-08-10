@@ -12,7 +12,7 @@ the *magnitude* of any of it — see §5.
 | Section | Content |
 |---|---|
 | [§1](#1-rendering-performance) | Why the sheet janks. Four stacked causes, all verified, plus §1.7 on why it *looks* worse than it is |
-| [§2](#2-correctness) | Four defects the tests structurally cannot catch, plus §2.6 on tier 3 firing too eagerly |
+| [§2](#2-correctness) | Four defects the tests structurally cannot catch, plus §2.6 and §2.7 on tier 3 firing over pages that were fine |
 | [§3](#3-public-api-surface) | The Compose-only entry point, and the Stripe-shaped replacement |
 | [§4](#4-what-the-analogues-do) | Shopify / Stripe / Chromium, and what is worth stealing |
 | [§5](#5-what-was-implemented) | What landed, what could not, and two things the audit missed |
@@ -560,6 +560,57 @@ Android; none is reachable by a test on iOS, for the reason in the next paragrap
 ladder does not even compile there. `SharingSheetLogic.swift` was deliberately kept outside that
 gate for exactly this reason. Reaching the ladder needs either a simulator destination in CI, or the
 rung-selection logic hoisted into a `WKWebView`-free type the way `sharingDecision` already is.
+
+### 2.7 Tier 3 fired over a page that was already loaded (the activation path had no host signal)
+
+**Reported from the harness, and the one the user actually saw.** Kill the app, tap the first share
+button: correct. Close it, tap a second product: the sheet opens, shows its skeleton, then closes
+and raises the OS chooser — sometimes. Same for a third. Reopen any of them afterwards and all
+three are fine, for good.
+
+The self-healing is the tell, and it is the *warm* page being cached rather than the sharing page.
+The first tap lands while the pool's warm load is still in flight, so `documentReady` is false and
+the session does a **full load** — which produces `onPageFinished`, which settles the tap-to-content
+budget. It cannot time out. Every later tap lands on a warm page that is now in the HTTP cache, so
+the re-warm `release()` kicks off finishes before the user's next tap, `documentReady` is true, and
+the session takes the **activation** path instead.
+
+And a fragment change is same-document: no `onPageStarted`, no `onPageFinished`, no `didFinish`.
+`SharingWebViewClient` says *nothing at all* on that path. The only signal that could settle the
+budget was the page's own `action=ready`, which `useHostBridge.ts` emits from inside two nested
+`requestAnimationFrame`s — and rAF does not run in a WebView that is producing no frames. The
+pooled view is detached (`loadSessionUrl` says so in its own comment) and freshly `onResume`d from
+the `onPause` §1.5 added; frames only start once Compose has attached it and the sheet's window has
+drawn, which on a cold start is the slowest that will ever be. Miss the 5 s ceiling and tier 3 fires
+over a document that was loaded and ready the whole time.
+
+`03-sharing-and-install.md` predicted this in writing — "without this the *fastest* path is the one
+that times out on the load deadline and falls back to the native chooser over a perfectly good
+page" — and then left the page's rAF as the sole thing standing between the sheet and that outcome.
+One dropped message, no backstop.
+
+**Fixed** by having the activation supply the two signals the engine will not, in
+`SharingSheetState.navigateNow` (and `SharingSheetModel.navigateNow`):
+
+- **The budget is settled at the activation itself.** An activation only happens on a *finished*
+  document — that is precisely what `documentReady` gates — so tap-to-content is already met by
+  construction. Waiting for the page to confirm what the host already knows is what created the
+  window. Tier 3 now cannot fire over a page the SDK put there itself.
+- **Paint stays evidence-based**, because §1.7's finding still holds: a pooled view has never
+  rastered, so uncovering it on the strength of the document alone shows the scrim through a hole.
+  Android gets a real `postVisualStateCallback` on the activation, the same primitive the load path
+  already trusts. iOS has no equivalent, so it falls back to the `SKELETON_GRACE_MILLIS` timer that
+  settling the budget unlocks — a weaker guarantee, and the second thing on this page that only
+  Android can do properly.
+
+The `ready` action is untouched and still does both jobs when it arrives; it is simply no longer the
+only thing that can. Pinned by `an activated page is not abandoned to tier 3 when ready never
+arrives`, verified by mutation.
+
+**Not yet confirmed on the device that reported it.** The reasoning is from the code and from
+`03`'s own note, not from a trace: `adb shell setprop log.tag.FrakSharing DEBUG` prints
+`launch (warm view, ACTIVATING)` versus `launch (COLD view)` per tap, which is the discriminator.
+
 ---
 
 ## 3. Public API surface

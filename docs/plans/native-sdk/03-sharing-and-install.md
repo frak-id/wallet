@@ -126,11 +126,14 @@ Four things hold this together, and each one is a bug if dropped:
 - `SharingSession.warmBaseUrl` is rebuilt from the same resolved config as `pageUrl` and compared
   against what the view actually shows. A pool warmed for another merchant must not be activated
   on top of.
-- `action=ready` settles the tier-3 deadline, not just the skeleton. A same-document navigation
-  is not guaranteed to produce an `onPageFinished`, which is otherwise the only thing that
-  settles it — without this the *fastest* path is the one that times out on the load deadline and
-  falls back to the native chooser over a perfectly good page. It is also the paint signal that
-  drops the skeleton on that path; see `07` §2.6 for why there is no timer behind it any more.
+- `action=ready` is no longer what *settles* the tier-3 deadline, and the reason is §2.7 of `07`:
+  a same-document navigation produces no `onPageFinished`, so leaving `ready` as the only signal
+  made the *fastest* path the one that times out and falls back to the native chooser over a
+  perfectly good page — which is exactly what the harness then did. The host now settles the
+  budget at the activation itself, since only a finished document can be activated. `ready` still
+  settles it and still drops the skeleton when it arrives; it is just no longer alone. The
+  skeleton's own backstop on that path is a `postVisualStateCallback` on Android and
+  `SKELETON_GRACE_MILLIS` on iOS; see `07` §2.6 for why there is no max-hold timer any more.
 - The fragment is hung off `WebView.getUrl()`, **not** off the URL we warmed with. The page's
   router normalises its own search params on load (`native=1` becomes `native=true`, an absent
   `confirmed` becomes `confirmed=false`), so the document has moved before anyone taps. The
