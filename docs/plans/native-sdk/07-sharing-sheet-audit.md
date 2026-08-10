@@ -12,7 +12,7 @@ the *magnitude* of any of it — see §5.
 | Section | Content |
 |---|---|
 | [§1](#1-rendering-performance) | Why the sheet janks. Four stacked causes, all verified, plus §1.7 on why it *looks* worse than it is |
-| [§2](#2-correctness) | Four defects the tests structurally cannot catch |
+| [§2](#2-correctness) | Four defects the tests structurally cannot catch, plus §2.6 on tier 3 firing too eagerly |
 | [§3](#3-public-api-surface) | The Compose-only entry point, and the Stripe-shaped replacement |
 | [§4](#4-what-the-analogues-do) | Shopify / Stripe / Chromium, and what is worth stealing |
 | [§5](#5-what-was-implemented) | What landed, what could not, and two things the audit missed |
@@ -420,7 +420,7 @@ closes the rotation hole and the `prepare()` hole in §2.4.
 `build()` completes, from inside `prepare()`'s own `when`. If any of `buildSharingLink`,
 `anonymousId`, `resolveConfig` **hangs** rather than throws, `contentSettled` never completes and
 nothing is ever reported. `SKELETON_MAX_HOLD_MILLIS` (2.5 s) still lifts the skeleton, exposing a
-blank transparent sheet indefinitely.
+blank transparent sheet indefinitely. (That timer is gone as of §2.6; the hole it punched is why.)
 
 So the "1.5 s tap-to-content budget" the whole warm-pool architecture is built around is only an
 upper bound on page load *given a build that completes*.
@@ -492,6 +492,48 @@ callback, which Android delivers on the main thread. Genuinely single-threaded.
 - **Rewriting `SharingSheetState` wholesale.** The sequencing is well-reasoned and well-tested. The
   defects above are narrow and fixable in place.
 
+### 2.6 Tier 3 fired over pages that were merely still loading
+
+Reported from device use: with a working connection, the sheet would sometimes open on the
+skeleton for a moment and then raise the native chooser. Three causes, all pulling the same way.
+
+**The budget was sized for the fastest path and applied to the slowest.**
+`PAGE_LOAD_DEADLINE_MILLIS` was 1500 ms, timed from the tap, covering build + navigation + load +
+first paint. Against this file's own device numbers:
+
+| path | measured | old budget |
+|---|---|---|
+| warm + fragment activation | ~540 ms (`a32a16132`) | 1500 ms |
+| full load, warm cache and live renderer | 555-757 ms + build (`03`) | 1500 ms |
+| cold warm-document load | 1780 ms (`03`) | 1500 ms |
+
+And the fast path is not the usual one — `03-sharing-and-install.md` says so outright: activation
+needs a *finished* warm document, and "warming is usually still in flight at tap, so this is the
+common case, not the edge". A tap during the warm load takes `stopLoading()` plus a full load,
+which loses that race about as often as it wins. Reopening the sheet is the reliable reproduction:
+`release()` re-warms with a full navigation, so the pool is mid-load again. Now **5000 ms** — sized
+against the retry ladder below, and against the fact that tier 3 is not a failure but a *worse*
+flow, so waiting a little for the real one is worth more than firing early.
+
+**The retry was not one.** A main-frame failure got exactly one retry, immediate, pinned to
+`LOAD_CACHE_ONLY`. On a page never cached that fails in microseconds, so one transient error was a
+straight line to the chooser. Replaced by a two-rung ladder — network at +300 ms, then cache-only
+at +900 ms — with `ERROR_HOST_LOOKUP` / `ERROR_CONNECT` (and their `NSURLError` twins) skipping
+straight to the cache rung and taking it undelayed, since dialling a dead radio again only spends
+the budget. Both rungs fit inside the 5 s ceiling with room for the attempts themselves. The
+backoff is posted to the main looper, not `View.postDelayed` — same detached-view trap as the
+navigation (`03`) — and a rebind cancels a pending retry, or a closed session would navigate the
+view the pool has already taken back.
+
+**The skeleton's max-hold made it look worse.** `SKELETON_MAX_HOLD_MILLIS` (2.5 s) sat between the
+old deadline and the new one, and since §1.1 made the web view transparent, lifting the skeleton
+off an unpainted page shows the scrim through a hole rather than a loading page. Deleted rather
+than retuned. What replaces it is evidence: `SKELETON_GRACE_MILLIS` still covers a *finished*
+document that produced no paint callback, and any page action other than `Error` now sets
+`pageVisible` — a user cannot drive a document that is not on screen. A page that never paints at
+all is ended by the load deadline, which is the only escape hatch that was ever needed.
+
+Mirrored on iOS, which carried all three verbatim.
 ---
 
 ## 3. Public API surface

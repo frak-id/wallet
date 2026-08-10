@@ -2,6 +2,7 @@ package id.frak.sdk.ui
 
 import android.content.Context
 import android.net.Uri
+import android.os.Looper
 import android.webkit.FakeRenderProcessGoneDetail
 import android.webkit.FakeWebResourceError
 import android.webkit.WebResourceError
@@ -76,9 +77,23 @@ class SharingWebViewClientTest {
             override fun getRequestHeaders(): Map<String, String> = emptyMap()
         }
 
-    private fun error(): WebResourceError = FakeWebResourceError()
+    private fun error(code: Int = WebViewClient.ERROR_HOST_LOOKUP): WebResourceError = FakeWebResourceError(code)
 
     private fun httpError(): WebResourceResponse = WebResourceResponse("text/html", "utf-8", null)
+
+    /** Runs the ladder's backoff, which is posted to the main looper rather than run inline. */
+    private fun settleRetry() = shadowOf(Looper.getMainLooper()).runToEndOfTasks()
+
+    /** One whole rung: the attempt starts, fails, and its retry (if any) is let through. */
+    private fun failOnce(
+        view: WebView,
+        url: String,
+        error: WebResourceError = error(WebViewClient.ERROR_TIMEOUT),
+    ) {
+        view.client.onPageStarted(view, url, null)
+        view.client.onReceivedError(view, request(url), error)
+        settleRetry()
+    }
 
     @Test
     fun `the factory hardens the view`() {
@@ -201,16 +216,17 @@ class SharingWebViewClientTest {
     }
 
     @Test
-    fun `a main-frame failure retries once against the cache`() {
+    fun `a main-frame failure retries over the network before the cache`() {
         val (view, h) = harness()
         val url = "$WALLET_ORIGIN/sharing?x=1"
         view.client.onPageStarted(view, url, null)
 
-        view.client.onReceivedError(view, request(url), error())
+        view.client.onReceivedError(view, request(url), error(WebViewClient.ERROR_TIMEOUT))
+        settleRetry()
 
         assertEquals(
-            "the retry must be pinned to the cache",
-            WebSettings.LOAD_CACHE_ONLY,
+            "a transient failure deserves a real second attempt, not a cache lookup",
+            WebSettings.LOAD_DEFAULT,
             view.settings.cacheMode,
         )
         assertEquals("the retry must reload the same url", url, shadowOf(view).lastLoadedUrl)
@@ -218,31 +234,29 @@ class SharingWebViewClientTest {
     }
 
     @Test
-    fun `both error callbacks for one navigation still yield a single cache retry`() {
+    fun `the last rung of the ladder is the cache`() {
         val (view, h) = harness()
         val url = "$WALLET_ORIGIN/sharing?x=1"
-        view.client.onPageStarted(view, url, null)
+        failOnce(view, url)
 
-        view.client.onReceivedError(view, request(url), error())
-        view.client.onReceivedHttpError(view, request(url), httpError())
+        failOnce(view, url)
 
         assertEquals(
-            "the duplicate must not have reset the cache pinning",
+            "the offline-but-visited-before case is what this rung is for",
             WebSettings.LOAD_CACHE_ONLY,
             view.settings.cacheMode,
         )
-        assertEquals("the duplicate is not a second failure", 0, h.loadFailedCount)
+        assertEquals("the ladder is not spent yet", 0, h.loadFailedCount)
     }
 
     @Test
-    fun `a failure after the retry has started falls through to tier 3`() {
+    fun `a spent ladder falls through to tier 3`() {
         val (view, h) = harness()
         val url = "$WALLET_ORIGIN/sharing?x=1"
-        view.client.onPageStarted(view, url, null)
-        view.client.onReceivedError(view, request(url), error())
+        failOnce(view, url)
+        failOnce(view, url)
 
-        view.client.onPageStarted(view, url, null)
-        view.client.onReceivedError(view, request(url), error())
+        failOnce(view, url)
 
         assertEquals("tier 3 must fire exactly once", 1, h.loadFailedCount)
         assertEquals(
@@ -253,17 +267,71 @@ class SharingWebViewClientTest {
     }
 
     @Test
-    fun `a doubly-reported retry failure reports tier 3 only once`() {
+    fun `an unreachable network skips the network rung`() {
+        val (view, h) = harness()
+        val url = "$WALLET_ORIGIN/sharing?x=1"
+
+        failOnce(view, url, error(WebViewClient.ERROR_HOST_LOOKUP))
+
+        assertEquals(
+            "dialling a dead radio again only spends the sheet's budget",
+            WebSettings.LOAD_CACHE_ONLY,
+            view.settings.cacheMode,
+        )
+        assertEquals(0, h.loadFailedCount)
+
+        failOnce(view, url, error(WebViewClient.ERROR_HOST_LOOKUP))
+        assertEquals("and offline reaches the chooser in one rung, not three", 1, h.loadFailedCount)
+    }
+
+    @Test
+    fun `both error callbacks for one navigation still spend a single rung`() {
         val (view, h) = harness()
         val url = "$WALLET_ORIGIN/sharing?x=1"
         view.client.onPageStarted(view, url, null)
-        view.client.onReceivedError(view, request(url), error())
+
+        view.client.onReceivedError(view, request(url), error(WebViewClient.ERROR_TIMEOUT))
+        view.client.onReceivedHttpError(view, request(url), httpError())
+        settleRetry()
+
+        assertEquals(
+            "the duplicate must not have consumed the network rung too",
+            WebSettings.LOAD_DEFAULT,
+            view.settings.cacheMode,
+        )
+        assertEquals("the duplicate is not a second failure", 0, h.loadFailedCount)
+    }
+
+    @Test
+    fun `a doubly-reported final failure reports tier 3 only once`() {
+        val (view, h) = harness()
+        val url = "$WALLET_ORIGIN/sharing?x=1"
+        failOnce(view, url)
+        failOnce(view, url)
 
         view.client.onPageStarted(view, url, null)
         view.client.onReceivedError(view, request(url), error())
         view.client.onReceivedHttpError(view, request(url), httpError())
 
         assertEquals("the caller must not be told twice", 1, h.loadFailedCount)
+    }
+
+    @Test
+    fun `rebinding cancels a retry the previous session booked`() {
+        val (view, _) = harness()
+        val url = "$WALLET_ORIGIN/sharing?x=1"
+        view.client.onPageStarted(view, url, null)
+        view.client.onReceivedError(view, request(url), error(WebViewClient.ERROR_TIMEOUT))
+
+        // The sheet closed and the pool took the view back before the backoff elapsed.
+        (view.client as SharingWebViewClient).binding = SharingWebViewBinding.Warm
+        settleRetry()
+
+        assertEquals(
+            "a closed session must not navigate the view it gave back",
+            null,
+            shadowOf(view).lastLoadedUrl,
+        )
     }
 
     @Test
@@ -293,14 +361,18 @@ class SharingWebViewClientTest {
     fun `a retry that starts and finishes reports readiness and unpins the cache`() {
         val (view, h) = harness()
         val url = "$WALLET_ORIGIN/sharing?x=1"
-        view.client.onPageStarted(view, url, null)
-        view.client.onReceivedError(view, request(url), error())
+        failOnce(view, url)
+        failOnce(view, url) // down to the cache-only rung
 
         view.client.onPageStarted(view, url, null)
         view.client.onPageFinished(view, url)
 
         assertEquals(1, h.pageReadyCount)
-        assertEquals(WebSettings.LOAD_DEFAULT, view.settings.cacheMode)
+        assertEquals(
+            "the view outlives this session; it must not stay pinned",
+            WebSettings.LOAD_DEFAULT,
+            view.settings.cacheMode,
+        )
     }
 
     @Test
@@ -314,11 +386,10 @@ class SharingWebViewClientTest {
         view.client.onPageFinished(view, url)
 
         assertEquals(0, h.pageReadyCount)
-        assertEquals(WebSettings.LOAD_CACHE_ONLY, view.settings.cacheMode)
     }
 
     @Test
-    fun `the cache retry still paints after the error page finishes`() {
+    fun `the retry still paints after the error page finishes`() {
         val (view, h) = harness()
         val url = "$WALLET_ORIGIN/sharing"
         view.client.onPageStarted(view, url, null)

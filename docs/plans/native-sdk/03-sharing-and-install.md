@@ -128,8 +128,9 @@ Four things hold this together, and each one is a bug if dropped:
   on top of.
 - `action=ready` settles the tier-3 deadline, not just the skeleton. A same-document navigation
   is not guaranteed to produce an `onPageFinished`, which is otherwise the only thing that
-  settles it — without this the *fastest* path is the one that times out at 1.5s and falls back
-  to the native chooser over a perfectly good page.
+  settles it — without this the *fastest* path is the one that times out on the load deadline and
+  falls back to the native chooser over a perfectly good page. It is also the paint signal that
+  drops the skeleton on that path; see `07` §2.6 for why there is no timer behind it any more.
 - The fragment is hung off `WebView.getUrl()`, **not** off the URL we warmed with. The page's
   router normalises its own search params on load (`native=1` becomes `native=true`, an absent
   `confirmed` becomes `confirmed=false`), so the document has moved before anyone taps. The
@@ -396,4 +397,6 @@ Open questions:
    enforcement flip must not ship before a store binary carrying it. Needs an owner.
 4. Sharing performance targets (p75 < 400 ms, p95 < 1 s, fallback to native share > 1.5 s)
    were set for Chrome Custom Tabs and have not been re-measured on the WebView path; that
-   measurement gates whether the sharing screen goes native.
+   measurement gates whether the sharing screen goes native. **The fallback half of that target is
+   now knowingly out of date**: the deadline shipped at 1.5 s and fired over pages that were merely
+   still loading, so it is 5 s until someone measures the WebView path properly (`07` §2.6).

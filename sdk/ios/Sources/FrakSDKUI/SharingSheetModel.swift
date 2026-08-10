@@ -14,7 +14,13 @@
     final class SharingSheetModel: ObservableObject {
         /// Tap-to-content budget, timed from the tap: it has to cover `buildSharingLink` and
         /// `resolveConfig` too.
-        static let pageLoadDeadline: TimeInterval = 1.5
+        ///
+        /// Sized for the slowest path rather than the fastest. A warm fragment activation lands in
+        /// well under a second, but activation needs a *finished* warm document and warming is
+        /// usually still in flight at the tap — so the common case is a full load. The old 1.5s lost
+        /// that race often enough to raise the chooser over a page that was simply still coming.
+        /// Sized against `SharingWebView`'s retry ladder, which is bounded to fit inside this.
+        static let pageLoadDeadline: TimeInterval = 5
         /// How long the reward headline may delay the page navigation. Sized for a cache hit and
         /// nothing more; a miss costs nothing, since the page fetches the same value itself.
         nonisolated static let seedTimeout: TimeInterval = 0.04
@@ -261,6 +267,10 @@
             // Without this, the deadline elapsing behind an accepted chooser raises a second one
             // through `onDeadline` and closes the sheet under it.
             settleContent()
+            // And it is a paint signal by the same argument: a user cannot drive a document that is
+            // not on screen. This is what replaces the skeleton's old max-hold timer — evidence
+            // rather than a deadline. Not `.error`, which is the page saying it rendered nothing.
+            if action != .error { onPageVisible() }
             switch action {
             case .install:
                 guard let session, claim(.install) else { return }

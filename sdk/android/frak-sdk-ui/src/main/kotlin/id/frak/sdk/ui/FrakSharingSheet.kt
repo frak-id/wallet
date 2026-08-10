@@ -69,9 +69,13 @@ internal fun FrakSharingSheet(
         state.failure?.let(state::fail)
     }
 
-    // Bounds how long the skeleton may cover the page when no paint signal arrives.
+    // A finished document that produced no paint callback is uncovered on a short grace. There is
+    // deliberately no timer for the unfinished case: the web view is transparent, so lifting the
+    // skeleton off a page that has not painted shows the scrim through a hole rather than a page.
+    // A document that never arrives at all is ended by the load deadline, not uncovered.
     LaunchedEffect(state.pageLoaded) {
-        delay(if (state.pageLoaded) SKELETON_GRACE_MILLIS else SKELETON_MAX_HOLD_MILLIS)
+        if (!state.pageLoaded) return@LaunchedEffect
+        delay(SKELETON_GRACE_MILLIS)
         state.onPageVisible()
     }
 
@@ -235,9 +239,6 @@ private fun SharingSheetGrabStrip(
         BottomSheetDefaults.DragHandle()
     }
 }
-
-/** Longest the skeleton may cover a page whose document hasn't even finished. */
-private const val SKELETON_MAX_HOLD_MILLIS = 2_500L
 
 /** Longest it may cover a finished document that produced no paint signal. */
 private const val SKELETON_GRACE_MILLIS = 400L

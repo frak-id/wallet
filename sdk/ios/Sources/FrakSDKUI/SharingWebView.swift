@@ -95,8 +95,11 @@
 
         /// The last main-frame URL asked for, so a cache-only retry has something to retry.
         private var requested: URL?
-        /// At most one retry per binding.
-        private var retried = false
+        /// Rungs of `retryLadder` already spent on this binding.
+        private var retryCount = 0
+        /// The scheduled retry, held so a rebind can cancel one that would navigate the next
+        /// session's view.
+        private var pendingRetry: Task<Void, Never>?
         /// Set between issuing the retry and it starting, so the original load's duplicate
         /// failure callbacks are not read as the retry failing too.
         private var retryPending = false
@@ -144,8 +147,11 @@
         /// Points the view at a session. Resets per-load state; see `SharingWebViewBinding`.
         func bind(_ binding: SharingWebViewBinding) {
             self.binding = binding
+            // Before the counters: a retry booked by the previous session would otherwise navigate
+            // this view to that session's URL, on a pool that has already moved on.
+            cancelPendingRetry()
             requested = nil
-            retried = false
+            retryCount = 0
             retryPending = false
             settled = false
             navigationFailed = false
@@ -219,23 +225,90 @@
                 .value
         }
 
-        private func handleMainFrameFailure() {
+        /// A main-frame failure gets the rest of `retryLadder` before tier 3. Network rungs first,
+        /// because a transient failure is what a retry is for; the cache-only rung last, which is
+        /// the only thing that can answer for a device that went offline on a page it has seen.
+        ///
+        /// - Parameter unreachable: the network itself did not answer, so another attempt over it
+        ///   is pointless and the ladder jumps straight to its cache-only rung.
+        private func handleMainFrameFailure(unreachable: Bool) {
             // The warm load failing after this view was lent to a sheet: not the sheet's page.
             guard navigationOwnedByBinding else { return }
             // Before the `settled` guard: a later error document's `didFinish` must not report readiness.
             navigationFailed = true
             guard !settled else { return }
+            // Duplicate callback for the failure that already booked the next rung.
             guard !retryPending else { return }
-            guard !retried, let requested else {
-                settled = true
-                binding.onLoadFailed()
+            guard let requested else {
+                giveUp()
                 return
             }
-            // Tier 2: the document may still be in the HTTP cache with no network.
-            retried = true
+            if unreachable { retryCount = max(retryCount, Self.retryLadder.count - 1) }
+            guard retryCount < Self.retryLadder.count else {
+                giveUp()
+                return
+            }
+            let rung = Self.retryLadder[retryCount]
+            retryCount += 1
             retryPending = true
-            view.load(URLRequest(url: requested, cachePolicy: .returnCacheDataDontLoad))
+            // Undelayed when nothing is reachable: the cache answers or it does not, and the sheet
+            // is holding a skeleton over this either way.
+            scheduleRetry(after: unreachable ? 0 : rung.delay) { [weak self] in
+                guard let self else { return }
+                let policy: URLRequest.CachePolicy = rung.cacheOnly ? .returnCacheDataDontLoad : .useProtocolCachePolicy
+                view.load(URLRequest(url: requested, cachePolicy: policy))
+            }
         }
+
+        /// The ladder is spent.
+        private func giveUp() {
+            settled = true
+            binding.onLoadFailed()
+        }
+
+        private func scheduleRetry(
+            after delay: TimeInterval,
+            _ navigate: @escaping @MainActor () -> Void
+        ) {
+            cancelPendingRetry()
+            pendingRetry = Task { @MainActor [weak self] in
+                if delay > 0 {
+                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                    guard !Task.isCancelled else { return }
+                }
+                self?.pendingRetry = nil
+                self?.retryPending = false
+                navigate()
+            }
+        }
+
+        private func cancelPendingRetry() {
+            pendingRetry?.cancel()
+            pendingRetry = nil
+        }
+
+        /// The network itself did not answer, so another attempt over it is pointless.
+        private func isUnreachable(_ error: any Error) -> Bool {
+            let error = error as NSError
+            guard error.domain == NSURLErrorDomain else { return false }
+            return error.code == NSURLErrorNotConnectedToInternet
+                || error.code == NSURLErrorCannotFindHost
+                || error.code == NSURLErrorCannotConnectToHost
+                || error.code == NSURLErrorDNSLookupFailed
+        }
+
+        /// One rung of `retryLadder`: how long to wait, and what to let the attempt read.
+        private struct Rung {
+            let delay: TimeInterval
+            let cacheOnly: Bool
+        }
+
+        /// What a main-frame failure gets before tier 3. Two rungs, sized to fit inside the
+        /// sheet's own load budget alongside the attempts themselves.
+        private static let retryLadder = [
+            Rung(delay: 0.3, cacheOnly: false),
+            Rung(delay: 0.9, cacheOnly: true),
+        ]
 
         /// A navigation this code cancelled, which WebKit reports as a load failure.
         private func isCancellation(_ error: any Error) -> Bool {
@@ -329,7 +402,8 @@
             // `.allow`, not `.cancel`: cancelling surfaces as a cancellation error that
             // `isCancellation` filters out. `navigationFailed` suppresses the `didFinish`.
             decisionHandler(.allow)
-            handleMainFrameFailure()
+            // An answer, however bad, means the network is there; this is the retryable kind.
+            handleMainFrameFailure(unreachable: false)
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -341,7 +415,7 @@
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: any Error) {
             guard !isCancellation(error) else { return }
-            handleMainFrameFailure()
+            handleMainFrameFailure(unreachable: isUnreachable(error))
         }
 
         func webView(
@@ -350,7 +424,7 @@
             withError error: any Error
         ) {
             guard !isCancellation(error) else { return }
-            handleMainFrameFailure()
+            handleMainFrameFailure(unreachable: isUnreachable(error))
         }
 
         /// A jetsammed content process leaves a blank view and fires nothing else.
@@ -360,6 +434,8 @@
             documentReady = false
             // Tells the pool its warm URL no longer describes anything on screen.
             rendererGone = true
+            // A booked retry would only navigate a view with nothing behind it.
+            cancelPendingRetry()
             guard !settled else { return }
             settled = true
             binding.onLoadFailed()

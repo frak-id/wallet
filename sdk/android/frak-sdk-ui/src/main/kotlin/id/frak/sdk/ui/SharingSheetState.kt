@@ -287,6 +287,10 @@ internal class SharingSheetState(
         // page the user is already sharing from. Without this, the deadline elapsing behind an
         // accepted chooser raises a second one and closes the sheet under it.
         settleContent()
+        // And it is a paint signal by the same argument: a user cannot drive a document that is not
+        // on screen. This is what replaces the skeleton's old max-hold timer — evidence rather than
+        // a deadline. Not [SharingPageAction.Error], which is the page saying it rendered nothing.
+        if (action != SharingPageAction.Error) onPageVisible()
         when (action) {
             SharingPageAction.Install -> {
                 install()

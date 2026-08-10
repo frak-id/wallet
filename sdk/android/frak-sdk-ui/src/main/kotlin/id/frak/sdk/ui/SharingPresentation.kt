@@ -52,8 +52,18 @@ internal class SharingPresentation(
     }
 
     companion object {
-        /** Fallback threshold: past this, skip the page and fire the native share sheet directly. */
-        private const val PAGE_LOAD_DEADLINE_MILLIS = 1_500L
+        /**
+         * Fallback threshold: past this, skip the page and fire the native share sheet directly.
+         *
+         * One budget for build, navigation, load and first paint, and it has to cover the slowest
+         * path rather than the fastest. A warm fragment activation lands in ~540ms, but activation
+         * needs a *finished* warm document, and warming is usually still in flight at the tap — so
+         * the common case is a full load, measured at 0.8-1.8s on device, plus whatever the build
+         * cost. The old 1.5s lost that race often enough to raise the chooser over a page that was
+         * simply still coming. Sized against the retry ladder in [SharingWebViewClient], which is
+         * bounded so both its rungs fit inside this.
+         */
+        private const val PAGE_LOAD_DEADLINE_MILLIS = 5_000L
 
         fun start(
             pool: SharingWebViewPool,

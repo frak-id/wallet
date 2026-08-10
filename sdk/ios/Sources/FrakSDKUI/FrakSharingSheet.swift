@@ -166,20 +166,20 @@
             // and a transparent sheet would be a hole straight through to whatever is behind it.
             // iOS 16.4+ only.
             .modifier(SheetBackground(clear: !model.contentLost))
-            // Bounds how long the skeleton may cover the page when `SharingPageAction.ready`,
-            // the real paint signal, never arrives.
+            // A finished document that produced no paint signal is uncovered on a short grace.
+            // There is deliberately no timer for the unfinished case: the web view is transparent,
+            // so lifting the skeleton off a page that has not painted shows a hole rather than a
+            // page. A document that never arrives is ended by the load deadline, not uncovered.
             .task(id: model.pageLoaded) {
-                let hold = model.pageLoaded ? Self.skeletonGrace : Self.skeletonMaxHold
-                try? await Task.sleep(nanoseconds: UInt64(hold * 1_000_000_000))
+                guard model.pageLoaded else { return }
+                try? await Task.sleep(nanoseconds: UInt64(Self.skeletonGrace * 1_000_000_000))
                 guard !Task.isCancelled else { return }
                 model.onPageVisible()
             }
         }
 
         private static let fadeDuration = 0.18
-        /// Longest the skeleton may cover a page whose document has not finished. Above the
-        /// tier-3 deadline by design.
-        private static let skeletonMaxHold: TimeInterval = 2.5
+        /// Longest the skeleton may cover a finished document that produced no paint signal.
         private static let skeletonGrace: TimeInterval = 0.4
     }
 

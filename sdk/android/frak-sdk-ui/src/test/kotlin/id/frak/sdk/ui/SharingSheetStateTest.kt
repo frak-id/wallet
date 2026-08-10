@@ -1100,6 +1100,22 @@ class SharingSheetStateTest {
             assertTrue("the activation's own ready is what uncovers it", activated.pageVisible)
         }
 
+    @Test
+    fun `a page action is a paint signal, except a refusal to render`() =
+        runTest {
+            val client = FakeSharingClient()
+
+            // The skeleton has no max-hold timer any more: a user driving the document is the
+            // evidence that replaced it.
+            val driven = newState(client)
+            driven.onPageAction(SharingPageAction.Copy)
+            assertTrue("a user cannot tap a page that is not on screen", driven.pageVisible)
+
+            val refused = newState(client)
+            refused.onPageAction(SharingPageAction.Error)
+            assertFalse("the page saying it rendered nothing must not uncover it", refused.pageVisible)
+        }
+
     private fun TestScope.launchDeadline(state: SharingSheetState) =
         launch { state.awaitLoadDeadline(SHEET_LOAD_DEADLINE_MILLIS) }
 

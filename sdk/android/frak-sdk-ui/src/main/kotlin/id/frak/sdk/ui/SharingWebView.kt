@@ -5,6 +5,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.webkit.CookieManager
@@ -217,6 +219,9 @@ internal class SharingWebViewClient(
 ) : WebViewClient() {
     private val origin: Uri = Uri.parse(walletOrigin)
 
+    /** Where a backed-off retry is posted. See [scheduleRetry] for why it is not the view's own queue. */
+    private val handler = Handler(Looper.getMainLooper())
+
     /**
      * Told when this view's render process dies. Set once per view, not per binding: a renderer
      * crash outlives whichever session was using it, and the [SharingWebViewHandle] holding the
@@ -228,8 +233,11 @@ internal class SharingWebViewClient(
     var binding: SharingWebViewBinding = SharingWebViewBinding.Warm
         set(value) {
             field = value
+            // Before the counters: a retry booked by the previous session would otherwise navigate
+            // this view to that session's URL, on a pool that has already moved on.
+            cancelPendingRetry()
             pendingMainFrameUrl = null
-            retried = false
+            retryCount = 0
             retryPending = false
             settled = false
             navigationFailed = false
@@ -242,8 +250,11 @@ internal class SharingWebViewClient(
     /** Main-frame URL currently in flight, captured in [onPageStarted]; null once resolved. */
     private var pendingMainFrameUrl: String? = null
 
-    /** At most one cache-only retry per binding. */
-    private var retried = false
+    /** Rungs of [RETRY_LADDER] already spent on this binding. */
+    private var retryCount = 0
+
+    /** The scheduled retry, held so a rebind can cancel one that would navigate the next session's view. */
+    private var pendingRetry: Runnable? = null
 
     /** So a duplicate error callback for the same failure is not read as the retry itself failing. */
     private var retryPending = false
@@ -342,7 +353,7 @@ internal class SharingWebViewClient(
         error: WebResourceError,
     ) {
         // Sub-resource failures degrade on their own; only the document matters.
-        if (request.isForMainFrame) handleMainFrameFailure(view)
+        if (request.isForMainFrame) handleMainFrameFailure(view, unreachable = isUnreachable(error))
     }
 
     override fun onReceivedHttpError(
@@ -350,36 +361,83 @@ internal class SharingWebViewClient(
         request: WebResourceRequest,
         errorResponse: WebResourceResponse,
     ) {
-        if (request.isForMainFrame) handleMainFrameFailure(view)
+        // An answer, however bad, means the network is there; this is the retryable kind.
+        if (request.isForMainFrame) handleMainFrameFailure(view, unreachable = false)
     }
 
-    /** One cache-only retry so a live-but-erroring or offline-but-visited-before load can still paint. */
-    private fun handleMainFrameFailure(view: WebView) {
+    /**
+     * The network itself did not answer. Another attempt over it is pointless, so the ladder skips
+     * straight to its cache-only rung rather than spending the sheet's budget on a dead radio.
+     */
+    private fun isUnreachable(error: WebResourceError): Boolean =
+        error.errorCode == WebViewClient.ERROR_HOST_LOOKUP || error.errorCode == WebViewClient.ERROR_CONNECT
+
+    /**
+     * A main-frame failure gets the rest of [RETRY_LADDER] before tier 3. Network rungs first,
+     * because a transient failure is what a retry is for; the cache-only rung last, which is the
+     * only thing that can answer for a device that went offline on a page it has seen before.
+     */
+    private fun handleMainFrameFailure(
+        view: WebView,
+        unreachable: Boolean,
+    ) {
         // The warm load failing after this view was lent to a sheet.
         if (!navigationOwnedByBinding) return
         // Before the `settled` guard: a later error page's onPageFinished must not report readiness.
         navigationFailed = true
         if (settled) return
+        // Duplicate callback for the failure that already booked the next rung.
+        if (retryPending) return
         val url = pendingMainFrameUrl
-        // Duplicate callback for the failure that already triggered the retry.
-        if (retryPending) {
-            return
-        }
-        if (retried) {
-            view.settings.cacheMode = WebSettings.LOAD_DEFAULT
-            settled = true
-            binding.onLoadFailed()
-            return
-        }
         if (url == null) {
-            settled = true
-            binding.onLoadFailed()
+            giveUp(view)
             return
         }
-        retried = true
+        if (unreachable) retryCount = maxOf(retryCount, RETRY_LADDER.lastIndex)
+        val rung = RETRY_LADDER.getOrNull(retryCount)
+        if (rung == null) {
+            giveUp(view)
+            return
+        }
+        retryCount++
         retryPending = true
-        view.settings.cacheMode = WebSettings.LOAD_CACHE_ONLY
-        view.loadUrl(url)
+        // Undelayed when nothing is reachable: the cache answers or it does not, and the sheet is
+        // holding a skeleton over this either way.
+        scheduleRetry(if (unreachable) 0L else rung.delayMillis) {
+            view.settings.cacheMode = if (rung.cacheOnly) WebSettings.LOAD_CACHE_ONLY else WebSettings.LOAD_DEFAULT
+            view.loadUrl(url)
+        }
+    }
+
+    /** The ladder is spent. Unpins the cache first: this view outlives the session that failed on it. */
+    private fun giveUp(view: WebView) {
+        view.settings.cacheMode = WebSettings.LOAD_DEFAULT
+        settled = true
+        binding.onLoadFailed()
+    }
+
+    /**
+     * Posted to the main looper rather than through [WebView.postDelayed]: the pooled view can be
+     * detached here, and a `View`'s own queue parks runnables until it is attached to a window.
+     */
+    private fun scheduleRetry(
+        delayMillis: Long,
+        navigate: () -> Unit,
+    ) {
+        cancelPendingRetry()
+        val runnable =
+            Runnable {
+                pendingRetry = null
+                retryPending = false
+                navigate()
+            }
+        pendingRetry = runnable
+        handler.postDelayed(runnable, delayMillis)
+    }
+
+    private fun cancelPendingRetry() {
+        pendingRetry?.let(handler::removeCallbacks)
+        pendingRetry = null
     }
 
     override fun onRenderProcessGone(
@@ -390,10 +448,31 @@ internal class SharingWebViewClient(
         // Reported before the `settled` guard below: the view is unusable whether or not this
         // binding still has a failure to report.
         onRendererGone()
+        // A view whose renderer is gone cannot load anything, so a booked retry would only navigate
+        // a corpse and keep the sheet waiting on it.
+        cancelPendingRetry()
         if (!settled) {
             settled = true
             binding.onLoadFailed()
         }
         return true
+    }
+
+    /** One rung of [RETRY_LADDER]: how long to wait, and what to allow the attempt to read. */
+    private class Rung(
+        val delayMillis: Long,
+        val cacheOnly: Boolean,
+    )
+
+    private companion object {
+        /**
+         * What a main-frame failure gets before tier 3. Two rungs, sized to fit inside the sheet's
+         * own load budget alongside the attempts themselves — a third would only ever expire it.
+         */
+        val RETRY_LADDER =
+            listOf(
+                Rung(delayMillis = 300L, cacheOnly = false),
+                Rung(delayMillis = 900L, cacheOnly = true),
+            )
     }
 }
