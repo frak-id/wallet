@@ -116,7 +116,7 @@ export function SharingView({
         confirmed: view === "confirmation",
         warm,
         sdkVersion,
-        canHandOffShare: canHandOff,
+        canHandOff,
         t: rawT,
         outcomes: {
             // Handed to the SDK: `navigator.share` does not exist in an Android

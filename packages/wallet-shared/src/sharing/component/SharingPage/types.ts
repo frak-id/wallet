@@ -52,6 +52,11 @@ export type SharingShareState = {
     /** Web Share API available, or a host is listening for the hand-off. */
     canShare: boolean;
     isSharing: boolean;
+    /**
+     * Whether share/copy can be serviced at all: this page built a link, or a
+     * host will service the action with its own. Drives the CTAs' disabled state.
+     */
+    canAct: boolean;
 };
 
 export type SharingActions = {
@@ -69,7 +74,11 @@ export type SharingPageProps = {
     /** Which of the two screens to render. */
     view: "share" | "confirmation";
     chrome: SharingChrome;
-    /** Sharing link with Frak context encoded; when null, share/copy are disabled. */
+    /**
+     * The link this page built, with the Frak context encoded. Null when it could
+     * not build one — which does not by itself disable the CTAs, since a host may
+     * still service them; see `share.canAct`.
+     */
     sharingLink: string | null;
     installUrl: string | null;
     reward: SharingReward;

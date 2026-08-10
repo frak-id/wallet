@@ -376,6 +376,56 @@ Android caveat: `NativeShare.share` returns whether the chooser launched, not wh
 share completed — telling them apart needs `ActivityResultLauncher`, a public API change.
 Gate on the returned flag on both platforms; Android's is optimistic until that lands.
 
+## 3b. Decided, not built — two architecture-review calls
+
+### The share link is built twice per session, deliberately
+
+The SDK builds `session.link` and that is what the OS chooser shares and what `copy()` writes to
+the clipboard. The hosted page then builds its own, calling `buildSharingLink` on the params the
+SDK passed it — and it adds `w` when a wallet session exists, which the SDK never does. So the two
+links differ by construction whenever the user is signed in inside the web view.
+
+Kept, because the page is not only a native surface: it runs standalone on the web, where nothing
+hands it a finished link. Making it depend on one would trade a duplicated derivation for a page
+that cannot render without a host. `golden-sharing-links.json` (`04` §7) is what holds the two
+adapters together instead — same input, same bytes.
+
+Two consequences the duplication produced, both now fixed:
+
+- `sharing_link_copied` reported the *page's* link on a handed-off copy, while the SDK wrote its
+  own to the clipboard — the analytics row and the user's clipboard held different URLs on the
+  same tap. The event now omits `link` on a hand-off and carries `handed_off` instead.
+- Share and Copy were `disabled={!sharingLink}`, so a failed page-side build disabled buttons the
+  SDK could have serviced from a link it already held — and a handed-off copy with no local link
+  returned early, skipping the interaction record and the confirmation screen. Both CTAs now gate
+  on `share.canAct`: this page built a link, *or* a host will service the action with its own.
+
+This section exists so the next reviewer does not re-derive it: "why is this built twice" has a
+load-bearing answer, and it is not in the code.
+
+### iOS gets two seams under the sheet
+
+`SharingSheetModel` is 645 lines behind `#if canImport(UIKit)`, so it type-checks at the iOS
+triple and executes in no test anywhere; 2,052 of `FrakSDKUI`'s 2,438 lines are in that position.
+Android needs no equivalent — Robolectric gives its twin a real Android runtime on the JVM, which
+is why `SharingSheetStateTest.kt` can be 1,167 lines.
+
+Every UIKit and StoreKit touchpoint in the model is seven calls, so one protocol lifts all of it
+out of the gate:
+
+| Seam | Members | Adapters |
+|---|---|---|
+| `SharingSurface` | `navigate`, `load`, `share`, `copy`, `copyInstallCode`, `openExternally`, `presentStoreOverlay` | UIKit (inside the `#if`), recording fake (macOS host) |
+| `SharingDependencies` | the eight client calls currently injected as separate closures | `Frak.client`, test double — matching Android's interface of the same name |
+
+Everything else the model names is already host-reachable: `SharingNavigation`, `SharingSession`,
+`SharingPageURL`, `FrakError`, `Bundle.main`, `ObservableObject`/`@Published`.
+
+`SharingWebView`'s retry ladder stays gated; faking WKWebView's navigation callbacks is the
+simulator tier's job (`06` T3), not a seam's. `SharingPresentation`'s launch queue is deferred —
+and when it lands it must carry its ordering rules, not the four booleans alone, for the reason
+`06` 8.2 gives.
+
 ## 4. Status
 
 Landed on both platforms: the probe gate deleted from `openFrakApp`; the tracking correction

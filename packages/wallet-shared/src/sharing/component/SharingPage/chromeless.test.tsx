@@ -19,7 +19,7 @@ function renderPage(overrides: Partial<SharingPageProps> = {}) {
             sharingLink="https://example.com/share"
             installUrl="/install?m=1&a=2"
             reward={{ status: "ready" }}
-            share={{ canShare: true, isSharing: false }}
+            share={{ canShare: true, isSharing: false, canAct: true }}
             t={t}
             {...overrides}
             actions={{
@@ -63,7 +63,7 @@ describe("SharingPage chromeless mode", () => {
     it("still hides the share CTA when the platform cannot share", () => {
         renderPage({
             chrome: { mode: "none" },
-            share: { canShare: false, isSharing: false },
+            share: { canShare: false, isSharing: false, canAct: true },
         });
 
         expect(screen.queryByText("sharing.btn.share")).not.toBeInTheDocument();

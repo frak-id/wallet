@@ -16,7 +16,11 @@ type SharingLinkProps = {
 export type SharingEventMap = {
     sharing_link_started: SharingLinkProps;
     sharing_link_shared: SharingLinkProps;
-    sharing_link_copied: SharingLinkProps;
+    /**
+     * `handed_off` means a native host wrote its own link to the clipboard, so
+     * `link` is absent — this page never sees the string the user actually got.
+     */
+    sharing_link_copied: SharingLinkProps & { handed_off?: boolean };
     /** `sdk_version` and `native` are only set when a native host opened the page. */
     sharing_page_viewed: {
         merchant_id?: string;

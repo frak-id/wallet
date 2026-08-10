@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { trackEvent } from "../../common/analytics";
 import {
     type SharingOutcomes,
     type SharingPageControllerInput,
@@ -221,7 +222,89 @@ describe("props it derives", () => {
         // `useShareLink` is mocked to `canShare: false`, as in an Android WebView
         expect(setup().result.current.share.canShare).toBe(false);
         expect(
-            setup({}, { canHandOffShare: true }).result.current.share.canShare
+            setup({}, { canHandOff: true }).result.current.share.canShare
         ).toBe(true);
+    });
+
+    it("can act while it has a link of its own", () => {
+        expect(setup().result.current.share.canAct).toBe(true);
+    });
+
+    it("cannot act with neither a link nor a host", () => {
+        // No clientId and no wallet: `buildSharingLink` returns null.
+        const { result } = setup({}, { clientId: undefined });
+
+        expect(result.current.sharingLink).toBeNull();
+        expect(result.current.share.canAct).toBe(false);
+    });
+
+    it("can act with no link of its own once a host is listening", () => {
+        // The host services share/copy with the link IT built; this page having
+        // none must not disable CTAs the host can fulfil.
+        const { result } = setup({}, { clientId: undefined, canHandOff: true });
+
+        expect(result.current.sharingLink).toBeNull();
+        expect(result.current.share.canAct).toBe(true);
+    });
+});
+
+describe("the copied event", () => {
+    it("reports the link when this page wrote the clipboard", () => {
+        const { result } = setup({ copy: () => false });
+
+        act(() => result.current.actions.onCopy());
+
+        expect(trackEvent).toHaveBeenCalledWith(
+            "sharing_link_copied",
+            expect.objectContaining({
+                link: expect.stringContaining("acme.example"),
+                handed_off: false,
+            })
+        );
+    });
+
+    it("reports no link when the host wrote the clipboard", () => {
+        // The host copies its own link, which this page never sees — reporting
+        // ours would attribute the copy to a URL the user never got.
+        const { result } = setup({ copy: () => true });
+
+        act(() => result.current.actions.onCopy());
+
+        expect(trackEvent).toHaveBeenCalledWith(
+            "sharing_link_copied",
+            expect.objectContaining({ link: undefined, handed_off: true })
+        );
+    });
+
+    it("completes a handed-off copy even with no link of its own", () => {
+        const recordSharing = vi.fn();
+        const onConfirmed = vi.fn();
+        const { result } = setup(
+            { copy: () => true, recordSharing, onConfirmed },
+            { clientId: undefined }
+        );
+
+        act(() => result.current.actions.onCopy());
+
+        expect(result.current.sharingLink).toBeNull();
+        expect(copy).not.toHaveBeenCalled();
+        expect(recordSharing).toHaveBeenCalled();
+        expect(onConfirmed).toHaveBeenCalledWith("copied");
+        expect(result.current.view).toBe("confirmation");
+    });
+
+    it("does nothing with neither a link nor a host", () => {
+        const recordSharing = vi.fn();
+        const { result } = setup({ recordSharing }, { clientId: undefined });
+
+        act(() => result.current.actions.onCopy());
+
+        expect(copy).not.toHaveBeenCalled();
+        expect(trackEvent).not.toHaveBeenCalledWith(
+            "sharing_link_copied",
+            expect.anything()
+        );
+        expect(recordSharing).not.toHaveBeenCalled();
+        expect(result.current.view).toBe("share");
     });
 });

@@ -72,8 +72,11 @@ export type SharingPageControllerInput = {
     warm?: boolean;
     /** Telemetry only: which SDK build opened this page. */
     sdkVersion?: string;
-    /** Whether a share can be handed to a host that has no Web Share API. */
-    canHandOffShare?: boolean;
+    /**
+     * Whether a native host is listening for the hand-off. It services BOTH share
+     * and copy with its own link, so this page having none does not disable them.
+     */
+    canHandOff?: boolean;
     t: SharingT;
     outcomes: SharingOutcomes;
 };
@@ -100,7 +103,7 @@ export function useSharingPageController({
     confirmed = false,
     warm = false,
     sdkVersion,
-    canHandOffShare = false,
+    canHandOff = false,
     t: rawT,
     outcomes,
 }: SharingPageControllerInput): SharingPageProps {
@@ -225,15 +228,20 @@ export function useSharingPageController({
 
     const onCopy = useCallback(() => {
         const handedOff = outcomes.copy?.() ?? false;
-        if (!sharingLink) return;
-        if (!handedOff) copy(sharingLink);
+        // A host with nothing to hand off still needs a link of our own.
+        if (!(handedOff || sharingLink)) return;
+        if (!handedOff && sharingLink) copy(sharingLink);
 
         // Fired even when the copy was handed off: this funnel event and the
         // host SDK's interaction measure different things, do not de-duplicate.
         trackEvent("sharing_link_copied", {
             source,
             merchant_id: merchantId,
-            link: sharingLink,
+            // Omitted on a hand-off: the host wrote its own link to the
+            // clipboard and this page never sees that string, so reporting
+            // ours would attribute the copy to a URL the user never got.
+            link: handedOff ? undefined : (sharingLink ?? undefined),
+            handed_off: handedOff,
         });
         outcomes.recordSharing?.();
         toast.success(t("sharing.btn.copySuccess"));
@@ -281,7 +289,13 @@ export function useSharingPageController({
                       onSelect: setSelectedProductIndex,
                   }
                 : undefined,
-        share: { canShare: canShare || canHandOffShare, isSharing },
+        share: {
+            canShare: canShare || canHandOff,
+            isSharing,
+            // A host services both CTAs with its own link, so a null
+            // `sharingLink` alone must not disable them.
+            canAct: sharingLink !== null || canHandOff,
+        },
         actions: {
             onShare,
             onCopy,
