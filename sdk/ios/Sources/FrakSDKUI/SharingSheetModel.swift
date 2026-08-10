@@ -67,19 +67,13 @@
         /// one share could queue two `sharing` interactions.
         private var fellBack = false
         private var deadlineExpired = false
-        /// A share is between its page-side press and its outcome; see `share()`.
-        private var shareInFlight = false
-        /// The `copy()` half of `shareInFlight`: two taps would bill two interactions for one copy.
-        private var copyInFlight = false
-        /// Guards the install fetch + navigation exactly like `shareInFlight`/`copyInFlight`: the
-        /// page's footer stays tappable across this native round trip to `installPageURL`, and
-        /// two taps would fetch and navigate to two install pages, racing each other on the one
-        /// shared web view. Unlike `shareInFlight` (never cleared on success — the confirmation
-        /// screen has no Share button), this *is* cleared once the user is plausibly back on a
-        /// page that offers Install again: `onPageUnavailable`'s install-page recovery, and
-        /// `shareAgain`. It is never cleared on the success path (`showingInstallPage = true`) —
-        /// that document owns its own footer, not this one.
-        private var installInFlight = false
+        /// The page's buttons that are mid-round-trip. The footer stays enabled throughout, so
+        /// without this a second tap stacks a second chooser, or bills a second reward-bearing
+        /// interaction, or fetches a second install page to race the first one's navigation on the
+        /// one shared web view. A set rather than one flag per button, matching Android's
+        /// `SharingSheetState.claimed`: `shareAgain` reopens them all by construction instead of
+        /// having to remember each one by hand.
+        private var claimed: Set<SharingPageAction> = []
         /// On the wallet's install page rather than the sharing page, so `onPageUnavailable` can
         /// tell a failed install page apart from a failed sharing page.
         private var showingInstallPage = false
@@ -168,12 +162,16 @@
             webView = nil
         }
 
+        /// Claims one of the page's buttons for its round trip.
+        ///
+        /// - Returns: false when that button is already in flight.
+        private func claim(_ action: SharingPageAction) -> Bool {
+            claimed.insert(action).inserted
+        }
+
         func share() async {
             guard let session else { return }
-            // The page's footer stays enabled for the whole round trip, so two taps would bill
-            // two interactions for one share.
-            guard !shareInFlight else { return }
-            shareInFlight = true
+            guard claim(.share) else { return }
             // Counted for the whole call: `abandon(onSettled:)` must not report `.dismissed`
             // while the chooser or its tracking is still resolving.
             attributions.begin()
@@ -181,8 +179,8 @@
             // After the chooser, only on success: this interaction pays out, so recording it on
             // intent would reward a cancelled chooser.
             guard await NativeShare.share(link: session.link, title: session.shareTitle) else {
-                // Cleared, unlike the success path: the page is still on its sharing screen.
-                shareInFlight = false
+                // Released, unlike the success path: the page is still on its sharing screen.
+                claimed.remove(.share)
                 return
             }
             await trackSharing()
@@ -194,8 +192,7 @@
         /// its confirmation screen, and navigating on top would tear down the document mid-toast.
         func copy() async {
             guard let session else { return }
-            guard !copyInFlight else { return }
-            copyInFlight = true
+            guard claim(.copy) else { return }
             // No chooser covers this call, so it is the case 9.1 is actually about: a swipe
             // lands squarely inside `await trackSharing()` below with nothing else on screen to
             // stop it. Counting it here is what lets `abandon(onSettled:)` defer instead of
@@ -229,7 +226,7 @@
                 // Back on a page that plausibly offers Install again (the confirmation view), so
                 // a second tap must be able to fetch a fresh page instead of finding itself
                 // permanently locked out by this session's first attempt.
-                installInFlight = false
+                claimed.remove(.install)
                 recovery.map { webView?.navigate($0) }
                 return
             }
@@ -263,8 +260,7 @@
             settleContent()
             switch action {
             case .install:
-                guard let session, !installInFlight else { return }
-                installInFlight = true
+                guard let session, claim(.install) else { return }
                 // Counted like `share()`/`copy()`, and for the same reason: `installPageURL` is a
                 // network round trip a user can dismiss straight through, and the `.installStarted`
                 // on the far side of it is a real outcome. Android wraps this action in
@@ -293,9 +289,8 @@
                 }
             case .shareAgain:
                 if let navigation = pageNavigation(confirmed: false) {
-                    shareInFlight = false
-                    copyInFlight = false
-                    installInFlight = false
+                    // Reopens every button `share()`/`copy()`/`.install` left claimed.
+                    claimed.removeAll()
                     // Back on the sharing page — a later load failure belongs to it again.
                     showingInstallPage = false
                     webView?.navigate(navigation)

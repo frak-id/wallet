@@ -3,7 +3,7 @@
     import WebKit
 
     /// What the hosted page can tell the host, over the intercepted return-scheme navigation.
-    enum SharingPageAction: Equatable {
+    enum SharingPageAction: Hashable {
         case install
         case dismiss
         case shareAgain
