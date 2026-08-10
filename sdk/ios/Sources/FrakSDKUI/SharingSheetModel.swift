@@ -254,6 +254,13 @@
         }
 
         func onPageAction(_ action: SharingPageAction) {
+            // Any action at all is the page's own JS reporting a user driving a rendered
+            // document, so the tap-to-content budget has been met however this session got here —
+            // a fragment activation is same-document, so WebKit fires no `didFinish` and
+            // `pageLoaded` can still be false on a warm page the user is already sharing from.
+            // Without this, the deadline elapsing behind an accepted chooser raises a second one
+            // through `onDeadline` and closes the sheet under it.
+            settleContent()
             switch action {
             case .install:
                 guard let session, !installInFlight else { return }

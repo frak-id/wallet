@@ -140,6 +140,12 @@ What's built so far is internal only — no merchant integrates it, Moulinex inc
 4. Does cross-surface attribution resolve — share from native, open in a mobile browser?
 5. Does the fixture corpus catch a real divergence? Introduce a deliberate one-byte error in one platform's codec and confirm the suite goes red — until that's run, the corpus is an assumption.
 
+**Required cases for the first iOS simulator/device pass**, from the sharing-sheet defect pass in `06-open-findings.md` §4. All three landed with zero executed coverage, because `SharingSheetModel`/`SharingPresenter`/`SharingWebViewPool` are behind `#if canImport(UIKit)` and cannot run on the macOS test host (8.2). Their Android twins are covered by seven JVM tests; these are the parity claims resting on reading alone:
+
+1. **Deadline settling on a fragment-activated page.** Warm the sheet, open it so it activates by fragment (no `didFinish`, so `pageLoaded` stays false), tap Share inside 1.5s, accept the chooser. Exactly one chooser, one `sharing` interaction, sheet still open on its confirmation screen.
+2. **The launch queue.** Copy a link, swipe the sheet away while `trackSharing()` is still in flight, tap Share again inside the 5s `abandonGrace`. The second sheet must open with a real session behind it, and `onResult` must fire once per presentation, in order. Then the same sequence with a second dismissal instead of a second sheet: still one report per presentation, `.dismissed` for the one that never became a session.
+3. **The warm pool after a jetsam.** Force a content-process termination on the idle warm view (Safari Web Inspector, or memory pressure), then present. The next sheet must load, and the pool must warm again afterwards rather than staying cold for the rest of the process.
+
 Questions 3 and 5 are worth pausing for; the rest are bugs to fix.
 
 **Open ownership questions:** who owns the RN wrapper's recurring cost across three release trains; whether to pre-empt the 10× macOS billing multiplier with the Hetzner runner; and whether `docs/ios-app-clips.md` (App Clip P0 for *web → wallet*) conflicts with this plan's exclusion (scoped to *merchant app → wallet*, no Safari banner to host a Card) — probably not, but whoever owns both should say so in both documents.

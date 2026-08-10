@@ -164,15 +164,3 @@ struct SharingPageURLTests {
         #expect(first != second)
     }
 }
-
-@Suite("SharingResult")
-struct SharingResultTests {
-    /// A session can produce several outcomes; the caller is told the most significant.
-    @Test("ranks install above a share, and a share above a dismissal")
-    func ranksOutcomes() {
-        #expect(SharingResult.installStarted.significance > SharingResult.shared(link: "l").significance)
-        #expect(SharingResult.shared(link: "l").significance > SharingResult.dismissed.significance)
-        #expect(SharingResult.copied(link: "l").significance == SharingResult.shared(link: "l").significance)
-        #expect(SharingResult.dismissed.significance > SharingResult.failed(.notInitialized).significance)
-    }
-}

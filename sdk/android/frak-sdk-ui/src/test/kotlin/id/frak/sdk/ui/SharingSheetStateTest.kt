@@ -373,6 +373,38 @@ class SharingSheetStateTest {
         }
 
     @Test
+    fun `a share from an activated page settles the budget instead of racing it`() =
+        runTest {
+            val client = FakeSharingClient()
+            val results = mutableListOf<SharingResult>()
+            // Activated by fragment: a same-document navigation fires no onPageFinished, so
+            // pageLoaded stays false while the user is already looking at a live, warm page.
+            val state = newState(client, activationBaseUrl = NORMALISED_WARM_URL) { results += it }
+
+            state.prepare(sharingRequest())
+            val gate = launchDeadline(state)
+            // runCurrent, not advanceUntilIdle: the latter would also fire the deadline under test.
+            runCurrent()
+            state.onPageAction(SharingPageAction.Share)
+            advanceUntilIdle()
+
+            advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
+            advanceUntilIdle()
+
+            assertFalse("the fragment activation never finished a document", state.pageLoaded)
+            assertEquals("the deadline must not raise a second chooser", 1, client.trackCount)
+            // Still open on its confirmation screen: a deadline that fired would have shared,
+            // reported and closed the sheet under the chooser the user is looking at.
+            assertTrue("the sheet must outlive the budget it already met", results.isEmpty())
+
+            state.dismiss()
+            advanceUntilIdle()
+            assertEquals(1, results.size)
+            assertTrue("was: ${results.first()}", results.first() is SharingResult.Shared)
+            gate.join()
+        }
+
+    @Test
     fun `the deadline and a page error together still fall back only once`() =
         runTest {
             val client = FakeSharingClient()
@@ -496,6 +528,48 @@ class SharingSheetStateTest {
 
             assertEquals(1, client.openFrakAppCount)
             assertEquals(SharingResult.InstallStarted, result)
+        }
+
+    @Test
+    fun `a second install tap does not fetch a second install page`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client) {}
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            // The page's footer stays tappable across the whole native round trip, so both taps
+            // land before the first fetch returns.
+            state.onPageAction(SharingPageAction.Install)
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            assertEquals("two taps must not race two install pages", 1, client.installPageUrlCount)
+        }
+
+    @Test
+    fun `share again reopens the install guard`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client) {}
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+            state.onPageAction(SharingPageAction.ShareAgain)
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            assertEquals(
+                "the user is back on a page that offers Install again",
+                2,
+                client.installPageUrlCount,
+            )
         }
 
     @Test

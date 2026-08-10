@@ -101,6 +101,24 @@ internal class SharingWebViewHandle(
     var documentReady: Boolean = false
         private set
 
+    /**
+     * This view's render process was reclaimed or crashed. Terminal: Android's contract is that a
+     * `WebView` whose renderer is gone is unusable for good, so [SharingWebViewPool] discards it
+     * rather than loading into it again.
+     */
+    var rendererGone: Boolean = false
+        private set
+
+    /**
+     * Called from [SharingWebViewClient.onRenderProcessGone], which cannot reach this handle
+     * itself. Clearing [documentReady] is what stops the next sheet activating by fragment into a
+     * document that no longer exists.
+     */
+    fun onRendererGone() {
+        rendererGone = true
+        documentReady = false
+    }
+
     /** Points the view at a session. Resets per-load state; see [SharingWebViewBinding]. */
     fun bind(binding: SharingWebViewBinding) {
         client.binding = binding
@@ -186,7 +204,11 @@ internal fun createSharingWebView(
     // Result unused: the page's own CSS fallbacks are the degraded rendering.
     SharingHostStyle.install(view = view, walletOrigin = walletOrigin, topRadiusDp = SHEET_CORNER_RADIUS_DP)
 
-    return SharingWebViewHandle(view = view, client = client)
+    // Wired after construction rather than passed in: the client is built first, and this is the
+    // only way back from it to the state a renderer crash invalidates.
+    return SharingWebViewHandle(view = view, client = client).also {
+        client.onRendererGone = it::onRendererGone
+    }
 }
 
 internal class SharingWebViewClient(
@@ -194,6 +216,13 @@ internal class SharingWebViewClient(
     private val returnScheme: String,
 ) : WebViewClient() {
     private val origin: Uri = Uri.parse(walletOrigin)
+
+    /**
+     * Told when this view's render process dies. Set once per view, not per binding: a renderer
+     * crash outlives whichever session was using it, and the [SharingWebViewHandle] holding the
+     * state it invalidates is not reachable from here.
+     */
+    var onRendererGone: () -> Unit = {}
 
     /** Whose session this view is currently serving. Rebinding clears every field below. */
     var binding: SharingWebViewBinding = SharingWebViewBinding.Warm
@@ -358,6 +387,9 @@ internal class SharingWebViewClient(
         detail: RenderProcessGoneDetail,
     ): Boolean {
         // MUST return true — false lets the framework kill the host app, not just the sheet.
+        // Reported before the `settled` guard below: the view is unusable whether or not this
+        // binding still has a failure to report.
+        onRendererGone()
         if (!settled) {
             settled = true
             binding.onLoadFailed()

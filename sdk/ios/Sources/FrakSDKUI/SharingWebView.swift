@@ -87,6 +87,12 @@
         /// activating on top of a half-loaded document would leave the page stuck where it got to.
         private(set) var documentReady = false
 
+        /// This view's content process was jetsammed and it has not been loaded since. Unlike
+        /// Android, where a dead renderer finishes a `WebView` for good, WebKit gives the view a
+        /// new process on the next load — so this only tells `SharingWebViewPool` that its idea
+        /// of what is warmed is stale.
+        private(set) var rendererGone = false
+
         /// The last main-frame URL asked for, so a cache-only retry has something to retry.
         private var requested: URL?
         /// At most one retry per binding.
@@ -155,6 +161,8 @@
         func load(_ url: URL, baseURL: String? = nil) {
             loadedBaseURL = (baseURL ?? url.absoluteString).components(separatedBy: "#")[0]
             documentReady = false
+            // This load is what gives a jetsammed view its new content process back.
+            rendererGone = false
             requested = url
             view.load(URLRequest(url: url))
         }
@@ -350,6 +358,8 @@
             // Ahead of the `settled` guard: a jetsammed renderer leaves nothing on screen, so a
             // pooled view still claiming `documentReady` would activate into a dead renderer.
             documentReady = false
+            // Tells the pool its warm URL no longer describes anything on screen.
+            rendererGone = true
             guard !settled else { return }
             settled = true
             binding.onLoadFailed()

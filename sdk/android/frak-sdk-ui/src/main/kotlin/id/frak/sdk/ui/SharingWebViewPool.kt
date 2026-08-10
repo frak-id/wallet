@@ -19,7 +19,7 @@ internal class SharingWebViewPool(
     private var lent = false
 
     /** The view [acquire] would hand out, or null when the next sheet gets a cold one. */
-    val warmHandle: SharingWebViewHandle? get() = pooled?.takeIf { !lent }
+    val warmHandle: SharingWebViewHandle? get() = pooled?.takeIf { !lent && !it.rendererGone }
 
     val hasWarmView: Boolean get() = warmHandle != null
 
@@ -33,6 +33,9 @@ internal class SharingWebViewPool(
      */
     fun warm(url: String) {
         if (destroyed) return
+        // Before the unchanged-URL short circuit: a crashed view is still pooled against the URL
+        // it died on, and would otherwise be kept forever by that comparison.
+        discardIfRendererGone()
         if (warmUrl == url) return
         warmUrl = url
         val trace = SharingTrace()
@@ -63,6 +66,9 @@ internal class SharingWebViewPool(
      * parent first: a reopened sheet can race Compose's own removal, and re-parenting throws.
      */
     fun acquire(binding: SharingWebViewBinding): SharingWebViewHandle {
+        // Hands out a cold view rather than a dead one. It does not re-warm here: the sheet is
+        // about to navigate this view itself, and `SharingHost.present` warms again on the way in.
+        discardIfRendererGone()
         val reused = pooled
         if (reused == null || lent) return newHandle().also { it.bind(binding) }
         lent = true
@@ -81,8 +87,12 @@ internal class SharingWebViewPool(
      * reliably undoes the mid-flow page the closed session left behind.
      */
     fun release(handle: SharingWebViewHandle) {
-        // Not ours, or ours but the surface has gone away underneath it: this view has no future.
-        if (handle !== pooled || destroyed) {
+        // Not ours, ours but finished for good, or ours but the surface has gone away underneath
+        // it: this view has no future either way.
+        if (handle !== pooled || destroyed || handle.rendererGone) {
+            // Read before the pool forgets it: a crashed view is still owed its page, and a fresh
+            // one is warmed against the same URL below rather than leaving the next sheet cold.
+            val rewarmUrl = warmUrl.takeIf { handle === pooled && handle.rendererGone && !destroyed }
             if (handle === pooled) {
                 pooled = null
                 warmUrl = null
@@ -90,6 +100,7 @@ internal class SharingWebViewPool(
             lent = false
             handle.view.removeFromParent()
             handle.destroy()
+            rewarmUrl?.let { warm(it) }
             return
         }
         lent = false
@@ -105,6 +116,20 @@ internal class SharingWebViewPool(
             // Never warmed: just make sure a late navigation reports nowhere.
             handle.bind(SharingWebViewBinding.Warm)
         }
+    }
+
+    /**
+     * Drops a pooled view whose render process died. Android's contract is that such a view is
+     * finished for good — a reload lands nowhere — so it is destroyed rather than warmed or lent
+     * again. A no-op while [lent]: the sheet holding it is the one that will hand it to [release].
+     */
+    private fun discardIfRendererGone() {
+        val handle = pooled ?: return
+        if (lent || !handle.rendererGone) return
+        pooled = null
+        warmUrl = null
+        handle.view.removeFromParent()
+        handle.destroy()
     }
 
     /**

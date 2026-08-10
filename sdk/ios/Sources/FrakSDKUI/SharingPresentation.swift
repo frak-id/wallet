@@ -178,6 +178,20 @@
         /// one is still about to write into.
         private var disposing = false
 
+        /// A launch that arrived during that window, replayed once it closes.
+        ///
+        /// Dropping it instead would not just lose a tap: SwiftUI presents the `.sheet` off the
+        /// same `isPresented` binding regardless, so the user would be left looking at a skeleton
+        /// with no session behind it and nothing to re-ask.
+        private var pendingLaunch: (() -> Void)?
+
+        /// What a held launch is owed when its own binding closes before it can be replayed.
+        ///
+        /// It never became a session, but SwiftUI did present a sheet for it, so it is a
+        /// presentation and `onResult` is promised one report per presentation. Queued rather than
+        /// called on the spot so it lands after the outcome the deferral is still resolving.
+        private var pendingReports: [() -> Void] = []
+
         /// Warms the data the sheet needs before it can build a URL at all, then the page itself.
         ///
         /// Driven by attaching the `frakSharingSheet` modifier, which is the only control: iOS has
@@ -217,10 +231,17 @@
             onClose: @escaping () -> Void
         ) {
             // `launched`, not `presentation == nil`: a launch that could not build one has still
-            // reported its failure, and must not report it twice. `disposing` closes the same
-            // gap while a previous session's dismissal is still deferred to an in-flight
-            // attribution — see the property's own doc.
-            guard !launched, !disposing else { return }
+            // reported its failure, and must not report it twice.
+            guard !launched else { return }
+            // A previous session's dismissal is still deferred to an in-flight attribution, so a
+            // fresh model would race it for `best`/`isPresented` — see `disposing`. Held rather
+            // than dropped: the sheet SwiftUI is presenting has nothing else coming.
+            guard !disposing else {
+                pendingLaunch = { [weak self] in
+                    self?.launch(request, onOutcome: onOutcome, onClose: onClose)
+                }
+                return
+            }
             launched = true
             guard let pool = poolIfPossible() else {
                 onOutcome(.failed(.notInitialized))
@@ -249,6 +270,14 @@
         ///     defers it — see that method's doc. Never called at all when this call itself is a
         ///     no-op (not launched, or `onlyIfUnpresented` with a presented sheet still up).
         func finish(onlyIfUnpresented: Bool = false, onSettled: @escaping () -> Void) {
+            // The binding has gone false, so a launch held during a deferral is superseded — but
+            // it was presented, so it is owed the report this call carries. Ahead of the guard
+            // below, which a held launch would otherwise slip past: `launched` reads false for
+            // the whole time one is held.
+            if pendingLaunch != nil {
+                pendingLaunch = nil
+                pendingReports.append(onSettled)
+            }
             guard launched else { return }
             if onlyIfUnpresented, presentation?.wasPresented == true { return }
             launched = false
@@ -261,12 +290,31 @@
             disposing = true
             current.dispose { [weak self] in
                 self?.disposing = false
+                // Before the replay: `onSettled` is what hands the merchant this session's
+                // result and resets the caller's `best`, and a session launched before that
+                // would fold its own outcomes into the previous one's.
                 onSettled()
+                self?.drainPending()
             }
+        }
+
+        /// Settles everything that was waiting on the deferral this dispose completed: first the
+        /// reports owed to launches their own binding closed, then the one launch still standing.
+        private func drainPending() {
+            let reports = pendingReports
+            pendingReports = []
+            reports.forEach { $0() }
+            guard let pending = pendingLaunch else { return }
+            pendingLaunch = nil
+            pending()
         }
 
         /// The share surface has left the screen; the pooled view's timers and process go with it.
         func teardown() {
+            // A held launch dies with the surface: replaying it would rebuild a pool for a screen
+            // that has gone. `pendingReports` is left alone — the dispose that owes them still
+            // completes, and a report is owed whether or not its screen is still up.
+            pendingLaunch = nil
             pool?.destroy()
             pool = nil
         }

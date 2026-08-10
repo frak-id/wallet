@@ -10,6 +10,26 @@ public enum SharingResult: Sendable {
     case installStarted
     case dismissed
     case failed(FrakError)
+
+    /// Stable discriminator, one per case. A `switch` over ``Kind`` with a `default` survives a
+    /// new case; an exhaustive `switch` over the result does not. Spelled identically on Android.
+    public enum Kind: String, Sendable, Hashable, CaseIterable {
+        case shared
+        case copied
+        case installStarted
+        case dismissed
+        case failed
+    }
+
+    public var kind: Kind {
+        switch self {
+        case .shared: return .shared
+        case .copied: return .copied
+        case .installStarted: return .installStarted
+        case .dismissed: return .dismissed
+        case .failed: return .failed
+        }
+    }
 }
 
 extension SharingResult {

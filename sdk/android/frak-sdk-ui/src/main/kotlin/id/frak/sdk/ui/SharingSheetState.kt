@@ -143,6 +143,13 @@ internal class SharingSheetState(
     /** The [copy] half of [shareInFlight]: two taps would bill two interactions for one copy. */
     private val copyInFlight = AtomicBoolean(false)
 
+    /**
+     * The install half of [shareInFlight]: two taps would fetch two install pages and race each
+     * other's navigation on the one shared web view. Cleared only on the paths back to a page that
+     * offers Install again — [onPageUnavailable]'s recovery and [SharingPageAction.ShareAgain].
+     */
+    private val installInFlight = AtomicBoolean(false)
+
     /** [onPageUnavailable] has to tell a failed install page apart from a failed sharing page. */
     @Volatile
     private var showingInstallPage = false
@@ -281,6 +288,15 @@ internal class SharingSheetState(
 
     fun onPageReady() {
         pageLoaded = true
+        settleContent()
+    }
+
+    /**
+     * Stops the tap-to-content budget: whatever it was waiting for has happened, or has been
+     * overtaken by the user. Idempotent — [CompletableDeferred.complete] answers false the second
+     * time — and it only stops [awaitLoadDeadline] from firing, never anything already in flight.
+     */
+    private fun settleContent() {
         contentSettled.complete(Unit)
     }
 
@@ -339,12 +355,19 @@ internal class SharingSheetState(
     }
 
     fun onPageAction(action: SharingPageAction) {
+        // Any action at all is the page's own JS reporting a user driving a rendered document, so
+        // the tap-to-content budget has been met however this session got here — a fragment
+        // activation never fires `onPageFinished`, so [pageLoaded] can still be false on a warm
+        // page the user is already sharing from. Without this, the deadline elapsing behind an
+        // accepted chooser raises a second one and closes the sheet under it.
+        settleContent()
         when (action) {
             SharingPageAction.Install -> {
+                val current = session ?: return
+                if (!installInFlight.compareAndSet(false, true)) return
                 launchAttribution {
                     // In-sheet, not to the store: that page owns install code, store link and
                     // installed-wallet routing.
-                    val current = session ?: return@launchAttribution
                     val page = guarded { dependencies.installPageUrl(current.returnScheme, sessionId) }
                     if (page == null) {
                         // No identity or merchant to hand the install page — fall back to the store.
@@ -360,9 +383,10 @@ internal class SharingSheetState(
 
             SharingPageAction.ShareAgain -> {
                 pageNavigation(confirmed = false)?.let {
-                    // Reopens the guards share()/copy() left set.
+                    // Reopens the guards share()/copy()/install left set.
                     shareInFlight.set(false)
                     copyInFlight.set(false)
+                    installInFlight.set(false)
                     // Back on the sharing page — a later load failure belongs to it again.
                     showingInstallPage = false
                     webView?.navigate(it)
@@ -411,6 +435,9 @@ internal class SharingSheetState(
             // activated document, so a fragment hung off it would leave the user nowhere.
             val recovery = pageNavigation(confirmed = true)
             showingInstallPage = false
+            // Back on a page that plausibly offers Install again, so a second tap must be able to
+            // fetch a fresh one rather than stay locked out by this session's first attempt.
+            installInFlight.set(false)
             recovery?.let { webView?.navigate(it) }
             return
         }
@@ -540,7 +567,7 @@ internal class SharingSheetState(
     /** Reports once. A session can produce several outcomes; the caller gets the most significant. */
     private fun finish(result: SharingResult) {
         if (!finished.compareAndSet(false, true)) return
-        contentSettled.complete(Unit)
+        settleContent()
         record(result)
         onFinished(best.get() ?: result)
     }

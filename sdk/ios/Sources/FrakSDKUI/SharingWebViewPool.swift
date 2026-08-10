@@ -58,7 +58,13 @@
         /// Boots the pooled view against `url`; only a change of URL does work. `url` must be
         /// the real merchant page (`SharingPageURL.warm`) — the merchant-keyed work is the slow part.
         func warm(_ url: String) {
-            guard !destroyed, warmURL != url, let target = URL(string: url) else { return }
+            guard !destroyed else { return }
+            // A jetsammed idle view leaves `warmURL` claiming a page that is no longer on screen,
+            // and the short circuit below would then decline to load it again for the rest of this
+            // pool's life. Reloaded rather than rebuilt: WebKit hands the view a new content
+            // process on the next load, where Android's equivalent view is finished for good.
+            if pooled?.rendererGone == true { warmURL = nil }
+            guard warmURL != url, let target = URL(string: url) else { return }
             warmURL = url
             let trace = SharingTrace()
             trace.mark("warm load starting")

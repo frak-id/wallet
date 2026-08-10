@@ -346,6 +346,23 @@ class SharingWebViewClientTest {
     }
 
     @Test
+    fun `a renderer crash clears the finished document the next sheet would activate into`() {
+        val handle =
+            createSharingWebView(
+                context = context,
+                walletOrigin = WALLET_ORIGIN,
+                returnScheme = RETURN_SCHEME,
+            )
+        handle.load("$WALLET_ORIGIN/sharing")
+        handle.onDocumentReady()
+
+        handle.view.client.onRenderProcessGone(handle.view, FakeRenderProcessGoneDetail())
+
+        assertFalse("a fragment hung off a dead renderer starts no request at all", handle.documentReady)
+        assertTrue("and the view is finished for good, so the pool has to drop it", handle.rendererGone)
+    }
+
+    @Test
     fun `a same-origin sub-frame is left to the web view`() {
         val (view, h) = harness()
 
