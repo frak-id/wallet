@@ -1,8 +1,13 @@
 import type { FrakClient, SharingPageProduct } from "@frak-labs/core-sdk";
 import {
     compressJsonToB64,
+    FrakContextManager,
     getClientId,
     getClientIdAsync,
+    isIOS,
+    isMobile,
+    sdkConfigStore,
+    triggerDeepLinkWithFallback,
 } from "@frak-labs/core-sdk";
 import { displayModal, displaySharingPage } from "@frak-labs/core-sdk/actions";
 
@@ -244,6 +249,156 @@ function bindShareLinkSamples() {
     }
 }
 
+/**
+ * Merchant id both native harnesses initialize with. The native SDK drops an arrival whose
+ * `fCtx` merchant differs from the app's own, so the link can't carry this site's merchant.
+ */
+const NATIVE_EXAMPLE_MERCHANT_ID = "0a799880-ba54-4276-a734-db8721911bab";
+
+/**
+ * The only scheme both harnesses actually receive: iOS has no associated-domains entitlement,
+ * and the Android `https://example-merchant.com/product` filter has no `autoVerify`.
+ */
+const NATIVE_APP_SCHEME = "merchantapp://";
+const NATIVE_APP_TARGET = `${NATIVE_APP_SCHEME}product`;
+
+type NativePlatform = "ios" | "android";
+
+const nativePlatforms: Record<
+    NativePlatform,
+    { label: string; buttonId: string; linkId: string }
+> = {
+    ios: {
+        label: "iOS",
+        buttonId: "btn-share-native-ios",
+        linkId: "native-link-ios",
+    },
+    android: {
+        label: "Android",
+        buttonId: "btn-share-native-android",
+        linkId: "native-link-android",
+    },
+};
+
+/** `isMobile()` also matches webOS/BlackBerry, so Android needs its own check. */
+function detectNativePlatform(): NativePlatform | null {
+    if (!isMobile()) return null;
+    if (isIOS) return "ios";
+    return /Android/i.test(navigator.userAgent) ? "android" : null;
+}
+
+/**
+ * Build the `fCtx`-carrying deep link the native SDK decodes. Same builder the wallet uses
+ * for web share links — only the base URL changes, from an https page to the app scheme.
+ */
+async function buildNativeReferralLink(
+    platform: NativePlatform
+): Promise<string | null> {
+    const clientId = await getClientIdAsync();
+    return FrakContextManager.update({
+        url: NATIVE_APP_TARGET,
+        context: {
+            v: 2,
+            m: NATIVE_EXAMPLE_MERCHANT_ID,
+            t: Math.floor(Date.now() / 1000),
+            c: clientId,
+        },
+        attribution: {
+            utmMedium: "native-app",
+            utmCampaign: `${platform}-example`,
+        },
+    });
+}
+
+/**
+ * Chromium on Android shows a "Continue to app?" bar for custom schemes; `intent://` skips it.
+ *
+ * `package=` is deliberately omitted: with it Chrome jumps to the Play Store (where these
+ * harnesses are not published) and the visibility-based fallback never fires.
+ */
+function toAndroidIntentUrl(link: string): string {
+    const isChromiumAndroid =
+        /Android/i.test(navigator.userAgent) &&
+        /Chrome\/\d+/i.test(navigator.userAgent);
+    if (!isChromiumAndroid) return link;
+    const scheme = NATIVE_APP_SCHEME.replace("://", "");
+    return `intent://${link.slice(NATIVE_APP_SCHEME.length)}#Intent;scheme=${scheme};end`;
+}
+
+async function handleNativeShare(platform: NativePlatform) {
+    const statusBoxId = "native-share-status";
+    const { label } = nativePlatforms[platform];
+    const link = await buildNativeReferralLink(platform);
+    if (!link) {
+        log(`Could not build the ${label} referral link`, "error", statusBoxId);
+        return;
+    }
+
+    // Off-platform (desktop, or Android looking at the iOS link): hand the link over instead
+    // of navigating to a scheme nothing here can open.
+    if (detectNativePlatform() !== platform) {
+        if (navigator.share) {
+            await navigator.share({ url: link });
+            log(
+                `${label} link handed to the share sheet`,
+                "success",
+                statusBoxId
+            );
+            return;
+        }
+        await copyShareLink(link, `${label} app`);
+        return;
+    }
+
+    log(`Opening the ${label} example app…`, "info", statusBoxId);
+    triggerDeepLinkWithFallback(
+        platform === "android" ? toAndroidIntentUrl(link) : link,
+        {
+            onFallback: () =>
+                log(
+                    `The ${label} example app doesn't seem installed — build & run example/native-${platform}`,
+                    "warn",
+                    statusBoxId
+                ),
+        }
+    );
+}
+
+async function bindNativeShareButtons() {
+    const statusBoxId = "native-share-status";
+    const platform = detectNativePlatform();
+    log(
+        platform
+            ? `Detected ${nativePlatforms[platform].label} — its button opens the app directly`
+            : "Not on iOS/Android — both buttons fall back to the share sheet or clipboard",
+        "info",
+        statusBoxId
+    );
+
+    const siteMerchantId = sdkConfigStore.getMerchantId();
+    if (siteMerchantId && siteMerchantId !== NATIVE_EXAMPLE_MERCHANT_ID) {
+        log(
+            `This site resolves to merchant ${siteMerchantId}; links are built for the native example merchant ${NATIVE_EXAMPLE_MERCHANT_ID}`,
+            "warn",
+            statusBoxId
+        );
+    }
+
+    for (const [key, target] of Object.entries(nativePlatforms)) {
+        const nativePlatform = key as NativePlatform;
+        document
+            .getElementById(target.buttonId)
+            ?.addEventListener("click", () =>
+                handleNativeShare(nativePlatform)
+            );
+
+        const codeEl = document.getElementById(target.linkId);
+        if (!codeEl) continue;
+        const preview = await buildNativeReferralLink(nativePlatform);
+        codeEl.textContent = preview ?? "(link unavailable)";
+    }
+}
+
 function bindTestButtons() {
     document
         .getElementById("btn-modal-no-placement")
@@ -267,6 +422,7 @@ function bindTestButtons() {
         .getElementById("btn-sharing-page-product")
         ?.addEventListener("click", () => handleSharingPage(true));
     bindShareLinkSamples();
+    void bindNativeShareButtons();
 }
 
 async function init() {

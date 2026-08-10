@@ -447,6 +447,43 @@
     </div>
 </div>
 
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 7: Native App Referral Deep Links  -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2 class="test-section__title">7. Share into the native example apps</h2>
+    <p class="test-section__text">
+        Builds a <code>FrakContext</code> v2 referral link targeting the native
+        harnesses in <code>example/native-ios</code> and <code>example/native-android</code>.
+        The <code>fCtx</code> query param is decoded natively and tracked as a referral
+        arrival: on iOS the harness forwards <code>onOpenURL</code> to
+        <code>Frak.client.appLink.handleReferral(url)</code>, while Android needs no host code
+        at all — <code>DeepLinkHandling.Automatic</code> reads the intent itself.
+    </p>
+    <p class="test-section__note">
+        Both harnesses only declare the <code>merchantapp://</code> URL scheme
+        (iOS has no associated-domains entitlement, and the Android
+        <code>https://example-merchant.com/product</code> filter is not
+        <code>autoVerify</code>'d), so that scheme is the link target on both platforms.
+        The link carries the native harnesses' merchant id — the native SDK drops an
+        arrival whose <code>fCtx</code> merchant doesn't match the app's own. On a
+        non-matching platform the button falls back to the native share sheet / clipboard.
+    </p>
+
+    <div class="share-link-row">
+        <button id="btn-share-native-ios" class="test-section__button">Share to iOS app</button>
+        <code id="native-link-ios" class="share-link-row__url">Generating…</code>
+    </div>
+    <div class="share-link-row">
+        <button id="btn-share-native-android" class="test-section__button test-section__button--variant">Share to Android app</button>
+        <code id="native-link-android" class="share-link-row__url">Generating…</code>
+    </div>
+
+    <div id="native-share-status" class="status-box">
+        <div class="info">[Ready] Detecting platform…</div>
+    </div>
+</div>
+
 <!-- Merge Token Demo Section -->
 <div class="merge-demo">
     <h2 class="merge-demo__title">Identity Merge Demo</h2>
