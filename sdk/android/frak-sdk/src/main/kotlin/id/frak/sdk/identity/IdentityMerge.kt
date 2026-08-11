@@ -1,85 +1,54 @@
 package id.frak.sdk.identity
 
-import id.frak.sdk.core.FrakError
-import id.frak.sdk.core.FrakLogger
-import id.frak.sdk.net.HttpClient
 import id.frak.sdk.net.UrlQuery
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
 import java.security.MessageDigest
 
 /**
- * Inbound `?fmt=` handling: this install is the merge *target*, folding its anonymous id into the
- * group the token names. Mirrors the web SDK's handling in `createIFrameFrakClient.ts`, except
- * there the listener posts and here the SDK does.
+ * Inbound `?fmt=` wire contract: this install is the merge *target*, folding its anonymous id into
+ * the group the token names. Mirrors the web SDK's handling in `createIFrameFrakClient.ts`, except
+ * there the listener posts and here [id.frak.sdk.tracking.MergeSender] does.
  *
- * The outbound half (`/merge/initiate`) has no native caller.
+ * Delivery itself lives in [id.frak.sdk.tracking.MergeSender], which is retried from the durable
+ * queue; this class keeps only the once-per-process claim and the stateless wire contract.
  */
-internal class IdentityMerge(
-    private val http: HttpClient,
-    private val identity: AnonymousIdStore,
-    private val logger: FrakLogger,
-) {
+internal class IdentityMerge {
     private val mutex = Mutex()
     private val consumed = mutableSetOf<String>()
 
     /**
-     * Never throws: this runs off a merchant's deep-link callback. Returns whether the backend
-     * accepted the merge.
+     * Claims a token for this process, so a merchant's router replaying the same intent on every
+     * activity recreation enqueues one merge, not one per recreation. Returns false if this
+     * process has already claimed it.
      *
-     * A proof is mandatory, unlike the web arm that must keep working for keyless legacy ids: a
-     * native id that cannot sign is one the backend is expected to start refusing (see ROLLOUT.md).
+     * Separate from delivery on purpose: delivery is retried from the durable queue, and a
+     * once-only guard inside it would make the first failed attempt the last one.
      */
-    suspend fun execute(
-        mergeToken: String,
-        merchantId: String,
-        anonymousId: String,
-    ): Boolean {
-        if (mergeToken.isEmpty()) return false
-        // A merchant's router replays the same intent on every recreation; each is not a merge.
-        if (!mutex.withLock { consumed.add(mergeToken) }) return false
+    suspend fun claim(mergeToken: String): Boolean =
+        mergeToken.isNotEmpty() && mutex.withLock { consumed.add(mergeToken) }
 
-        val proof =
-            identity.signProof(ProofOp.Merge, merchantId, binding = sha256(mergeToken))
-                ?: run {
-                    logger.warn("Could not sign the merge proof; skipping the identity merge.")
-                    return false
-                }
+    companion object {
+        const val TOKEN_KEY: String = "fmt"
+        const val MERGE_EXECUTE_PATH: String = "/user/identity/merge/execute"
 
-        val body =
+        fun parseToken(url: String): String? = UrlQuery.parse(url)?.get(TOKEN_KEY)?.takeIf { it.isNotEmpty() }
+
+        /** UTF-8, matching `IdentityProofService.hashMergeToken`. Binds the proof to this token, not just this merchant. */
+        fun binding(mergeToken: String): ByteArray =
+            MessageDigest.getInstance("SHA-256").digest(mergeToken.toByteArray(Charsets.UTF_8))
+
+        fun body(
+            mergeToken: String,
+            anonymousId: String,
+            merchantId: String,
+            proof: String,
+        ): JSONObject =
             JSONObject()
                 .put("mergeToken", mergeToken)
                 .put("targetAnonymousId", anonymousId)
                 .put("merchantId", merchantId)
                 .put("proof", proof)
-
-        return try {
-            val response = http.post(MERGE_EXECUTE_PATH, body.toString())
-            if (response.isSuccess) {
-                true
-            } else {
-                logger.warn("Identity merge refused with status ${response.status}.")
-                false
-            }
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (failure: FrakError) {
-            logger.warn("Identity merge could not reach the backend", failure)
-            false
-        }
-    }
-
-    /** UTF-8, matching `IdentityProofService.hashMergeToken`. */
-    private fun sha256(value: String): ByteArray =
-        MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8))
-
-    companion object {
-        const val TOKEN_KEY: String = "fmt"
-
-        const val MERGE_EXECUTE_PATH: String = "/user/identity/merge/execute"
-
-        fun parseToken(url: String): String? = UrlQuery.parse(url)?.get(TOKEN_KEY)?.takeIf { it.isNotEmpty() }
     }
 }

@@ -47,7 +47,7 @@ Split so a merchant taking only tracking never pulls in a web view. `minSdk 24`,
 | `identity/` | `AnonymousIdStore`, `ProofCodec`, `DeviceKey`, `AndroidKeystoreDeviceKeyStore` |
 | `config/` | `ConfigStore` (SWR cache), `FrakResolvedConfig`, `ResolvedConfigDecoder`, `MerchantQuery`, `SingleFlight`, `Backoff`, `KeyValueStore` |
 | `rewards/` | `RewardRepository`, `Rewards`, `RewardsDecoder` |
-| `tracking/` | `InteractionTracker`, `Interaction`, `EventQueue` |
+| `tracking/` | `EventOutbox` (drain + retry policy), `EventQueue` (the durable file it owns), `QueuedRow`, `RowSender` + `InteractionSender`/`PurchaseSender`/`MergeSender`, `SendContext`, `DeliveryOutcome`, `Interaction` |
 | `sharing/` | `FrakContextCodec` (fCtx v2 binary), `FrakContext`, `SharingLinkBuilder`, `AttributionParams`, `SharingRequest` |
 | `applink/` | `InstallLinks`, `ReferralArrival`, `AppLauncher`, `DeepLinkObserver` |
 

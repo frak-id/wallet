@@ -22,9 +22,11 @@ import id.frak.sdk.rewards.RewardRepository
 import id.frak.sdk.sharing.FrakContext
 import id.frak.sdk.sharing.SharingLinkBuilder
 import id.frak.sdk.sharing.SharingRequest
+import id.frak.sdk.tracking.EventOutbox
 import id.frak.sdk.tracking.EventQueue
 import id.frak.sdk.tracking.Interaction
-import id.frak.sdk.tracking.InteractionTracker
+import id.frak.sdk.tracking.RowSender
+import id.frak.sdk.tracking.RowSenders
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -35,6 +37,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
@@ -73,10 +77,11 @@ internal class DefaultFrakClient(
 
     private val configStore = ConfigStore(http, store, logger, scope, ioDispatcher)
     private val rewards = RewardRepository(http, logger, scope)
-    private val merge = IdentityMerge(http, identity, logger)
+    private val merge = IdentityMerge()
     private val merchantIdentity = MerchantIdentity(settings, identity, configStore, logger)
+    private val senders: Map<String, RowSender> = RowSenders.default(logger)
     private val tracker =
-        InteractionTracker(
+        EventOutbox(
             queue,
             http,
             logger,
@@ -84,6 +89,11 @@ internal class DefaultFrakClient(
             currentClientId = { identity.anonymousId() },
             // Read per event inside the drain, so a mid-drain withdrawal stops the upload.
             trackingAllowed = { consent.isEnabled() },
+            // Optional, not Required: a drain that cannot resolve holds its rows and retries on
+            // the next one, so a failure here must answer null rather than throw.
+            resolveMerchantId = { merchantIdentity.merchant(MerchantPolicy.Optional) },
+            signProof = { op, merchantId, binding -> identity.signProof(op, merchantId, binding) },
+            senders = senders,
         )
 
     /**
@@ -151,6 +161,12 @@ internal class DefaultFrakClient(
                 return@launch
             }
             tracker.flush()
+        }
+        scope.launch {
+            // A row captured with no merchant becomes sendable the moment one resolves, and
+            // nothing else would retry it before the next track() or the next launch. Never
+            // completes; the scope's cancellation ends it.
+            configStore.updates.filterNotNull().collect { tracker.flush() }
         }
     }
 
@@ -270,13 +286,21 @@ internal class DefaultFrakClient(
     }
 
     /**
-     * [MerchantIdentity.pair] resolves over the network on a cache miss, unlike the arrival guard
-     * above: a merge token is single-use and short-lived, so losing one to a cold cache is permanent.
+     * Queues the merge rather than posting it: a merge token is single-use and short-lived, so
+     * losing one to a cold cache or a dead network is permanent. The merchant is taken from cache
+     * only, like the arrival guard above — the queue resolves it at drain if there is none yet.
      */
     private suspend fun mergeInboundIdentity(mergeToken: String) {
         try {
-            val (merchantId, anonymousId) = merchantIdentity.pair(MerchantPolicy.Optional) ?: return
-            merge.execute(mergeToken, merchantId, anonymousId)
+            // Gated explicitly, not just by the null id below: this now writes a live merge
+            // token to disk for as long as the queue holds it, where it used to cost one POST.
+            // Checked, not required(): a link arriving with tracking off is refused, not an error.
+            if (!consent.isEnabled()) return
+            // Claimed only once the gates are passed, or a link that arrived before consent
+            // burns the token for the process and a later opt-in cannot replay it.
+            val anonymousId = identity.anonymousId() ?: return
+            if (!merge.claim(mergeToken)) return
+            tracker.trackMerge(merchantIdentity.merchant(MerchantPolicy.CachedOnly), anonymousId, mergeToken)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (unexpected: Throwable) {
@@ -345,13 +369,22 @@ internal class DefaultFrakClient(
             installProof = installProof,
         )
 
-    /** Routed through [frakCall] so an unexpected `Throwable` normalises before becoming a [FrakResult.Failure]. */
-    private suspend inline fun trackingCall(block: (merchantId: String) -> FrakResult<Unit>): FrakResult<Unit> =
+    /**
+     * Routed through [frakCall] so an unexpected `Throwable` normalises before becoming a
+     * [FrakResult.Failure].
+     *
+     * [MerchantPolicy.CachedOnly], so capture never waits on the network and never fails for
+     * want of a merchant: a null here defers resolution to the drain and the event is durable
+     * either way. Identical to [MerchantPolicy.Required] whenever [FrakConfig.merchantId] is set
+     * — [MerchantIdentity.merchant] answers from the configured id before it reads the policy at
+     * all — so this only changes the unconfigured case, where `Required` blocked on the network
+     * and failed the call outright.
+     */
+    private suspend inline fun trackingCall(block: (merchantId: String?) -> FrakResult<Unit>): FrakResult<Unit> =
         try {
             frakCall {
                 requireTrackingEnabled()
-                // Required always either resolves or throws; requireNotNull only satisfies the compiler.
-                block(requireNotNull(merchantIdentity.merchant(MerchantPolicy.Required)))
+                block(merchantIdentity.merchant(MerchantPolicy.CachedOnly))
             }
         } catch (known: FrakError) {
             FrakResult.Failure(known)

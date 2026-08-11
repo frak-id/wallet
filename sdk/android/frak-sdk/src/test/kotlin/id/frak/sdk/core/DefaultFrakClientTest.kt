@@ -6,6 +6,7 @@ import id.frak.sdk.config.ConfigStore
 import id.frak.sdk.config.InMemoryKeyValueStore
 import id.frak.sdk.identity.AnonymousIdStore
 import id.frak.sdk.identity.FakeDeviceKeyStore
+import id.frak.sdk.identity.IdentityMerge
 import id.frak.sdk.net.FAKE_BASE_URL
 import id.frak.sdk.net.FakeHttpTransport
 import id.frak.sdk.net.HttpClient
@@ -14,6 +15,8 @@ import id.frak.sdk.sharing.frakContextV2
 import id.frak.sdk.sharing.sharingRequest
 import id.frak.sdk.tracking.EventQueue
 import id.frak.sdk.tracking.Interaction
+import id.frak.sdk.tracking.InteractionSender
+import id.frak.sdk.tracking.MergeSender
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -430,11 +433,167 @@ class DefaultFrakClientTest {
             assertEquals(OpenAppResult.Failed, client.openFrakApp())
         }
 
+    @Test
+    fun `writes nothing to disk for a referral link that arrives with tracking disabled`() =
+        runTest {
+            transport.respond(200, BODY)
+            val queueFile = File(temporaryFolder.root, "events.jsonl")
+            val client =
+                newClient(
+                    testScheduler,
+                    config = frakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                    queueFile = queueFile,
+                )
+            advanceUntilIdle()
+
+            val link = "${foreignLink()}&${IdentityMerge.TOKEN_KEY}=fmt-no-consent"
+            client.handleReferralLink(link)
+            advanceUntilIdle()
+
+            // The gate has to stay ahead of the durable write: a queued merge token is a live
+            // credential bound to this device's anonymous id, not a deferred analytics event.
+            assertFalse("no consent means nothing on disk", queueFile.exists())
+            assertEquals(0, merges())
+        }
+
+    @Test
+    fun `does not burn an fmt token that arrived before consent was granted`() =
+        runTest {
+            transport.respond(200, BODY)
+            val queueFile = File(temporaryFolder.root, "events.jsonl")
+            val client = newClient(testScheduler, queueFile = queueFile)
+            client.setTrackingEnabled(false)
+            advanceUntilIdle()
+
+            val link = "${foreignLink()}&${IdentityMerge.TOKEN_KEY}=fmt-late-consent"
+            client.handleReferralLink(link)
+            advanceUntilIdle()
+            assertEquals("refused while consent is off", 0, merges())
+            assertFalse("and nothing durable was written either", queueFile.exists())
+
+            // The claim guard must not have consumed the token while it was being refused, or a
+            // merchant whose CMP prompt lands after the deep link loses every merge.
+            client.setTrackingEnabled(true)
+            client.handleReferralLink(link)
+            advanceUntilIdle()
+
+            assertEquals(
+                "the replayed link must still merge once consent lands",
+                1,
+                merges(),
+            )
+        }
+
+    @Test
+    fun `keeps both halves of a referral link on a cold start with no cache, no merchantId and no network`() =
+        runTest {
+            // The worst case the SDK is asked to survive: nothing configured but a package id,
+            // nothing cached, and every request failing. Both halves are attribution — losing
+            // either is losing the referral.
+            transport.fail(java.io.IOException("offline"))
+            val queueFile = File(temporaryFolder.root, "events.jsonl")
+            val client =
+                newClient(
+                    testScheduler,
+                    config = frakConfig(packageId = "com.acme.app"),
+                    queueFile = queueFile,
+                )
+            advanceUntilIdle()
+
+            val link = "${foreignLink()}&${IdentityMerge.TOKEN_KEY}=fmt-cold-start"
+            assertTrue("an fCtx link still reports as one", client.handleReferralLink(link))
+            advanceUntilIdle()
+
+            val queued =
+                EventQueue(queueFile, FrakLogger(FrakLogLevel.NONE), UnconfinedTestDispatcher())
+                    .read(System.currentTimeMillis())
+            assertEquals("the arrival and the merge must both be on disk", 2, queued.size)
+            assertTrue(
+                "the merge must be durable, not fire-and-forget",
+                queued.any { it.kind == MergeSender.KIND },
+            )
+            assertTrue(
+                "the arrival must be durable",
+                queued.any { it.kind == InteractionSender.KIND },
+            )
+            // Deferred, not stamped with a guess: no merchant could be resolved, and the drain
+            // is what fills it in once one can be.
+            assertTrue(
+                "neither row may carry a merchant nobody resolved",
+                queued.none { it.merchantId != null },
+            )
+        }
+
+    @Test
+    fun `a held referral drains itself once the config finally resolves, with nobody asking`() =
+        runTest {
+            // Cold start, no network: both halves are captured and held.
+            transport.fail(java.io.IOException("offline"))
+            val queueFile = File(temporaryFolder.root, "events.jsonl")
+            val client =
+                newClient(
+                    testScheduler,
+                    config = frakConfig(packageId = "com.acme.app"),
+                    queueFile = queueFile,
+                )
+            advanceUntilIdle()
+            client.handleReferralLink("${foreignLink()}&${IdentityMerge.TOKEN_KEY}=fmt-recovers")
+            advanceUntilIdle()
+            assertTrue("nothing can be sent while offline", transport.requests.none { it.method == "POST" })
+
+            // The network returns. ConfigStore's backoff is keyed off wall-clock time, not the
+            // test scheduler, so this waits it out for real rather than pretending; the ceiling is
+            // Backoff.MIN_DELAY_MILLIS plus its jitter, so 1.1s always clears the first failure.
+            transport.respond(200, BODY)
+            Thread.sleep(1_100)
+
+            // Nothing calls flush(): the config publish is the only trigger, and it is what turns
+            // a held row into a delivered one.
+            client.resolveConfig(forceRefresh = true)
+            advanceUntilIdle()
+
+            assertEquals("the held merge must go out on the config publish", 1, merges())
+            assertTrue(
+                "and the held arrival with it",
+                transport.requests.any { it.url.path == "/user/track/interaction" },
+            )
+        }
+
+    @Test
+    fun `track and trackPurchase queue rather than fail when no merchant can be resolved`() =
+        runTest {
+            // The contract change behind the deferral: capture used to resolve the merchant over
+            // the network first, so an unconfigured merchant offline returned MerchantResolutionFailed
+            // and the event was never written down. Now it is durable and the drain resolves it.
+            transport.fail(java.io.IOException("offline"))
+            val queueFile = File(temporaryFolder.root, "events.jsonl")
+            val client =
+                newClient(
+                    testScheduler,
+                    config = frakConfig(packageId = "com.acme.app"),
+                    queueFile = queueFile,
+                )
+            advanceUntilIdle()
+
+            assertTrue(client.track(Interaction.custom("offline")) is FrakResult.Success)
+            assertTrue(client.trackPurchase("customer-1", "order-1", "token-1") is FrakResult.Success)
+            advanceUntilIdle()
+
+            val queued =
+                EventQueue(queueFile, FrakLogger(FrakLogLevel.NONE), UnconfinedTestDispatcher())
+                    .read(System.currentTimeMillis())
+            assertEquals("both must be durable", 2, queued.size)
+            assertTrue("and both deferred, not guessed", queued.none { it.merchantId != null })
+        }
+
+    private fun merges() = transport.requests.count { it.url.path == IdentityMerge.MERGE_EXECUTE_PATH }
+
     // ioDispatcher is Standard, not Unconfined: background work lands only at an explicit advanceUntilIdle().
     private fun newClient(
         testScheduler: kotlinx.coroutines.test.TestCoroutineScheduler,
         config: FrakConfig = frakConfig(merchantId = MERCHANT_ID),
         identityStore: InMemoryKeyValueStore = InMemoryKeyValueStore(),
+        queueFile: File = File(temporaryFolder.root, "events.jsonl"),
         // Injected because the production default reaches Looper.getMainLooper(), absent from the stub jar.
         mainDispatcher: kotlinx.coroutines.CoroutineDispatcher = UnconfinedTestDispatcher(testScheduler),
     ): DefaultFrakClient {
@@ -447,7 +606,7 @@ class DefaultFrakClientTest {
             store = store,
             queue =
                 EventQueue(
-                    File(temporaryFolder.root, "events.jsonl"),
+                    queueFile,
                     logger,
                     UnconfinedTestDispatcher(),
                 ),

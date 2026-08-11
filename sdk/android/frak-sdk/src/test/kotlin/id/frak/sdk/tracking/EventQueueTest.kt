@@ -35,11 +35,12 @@ class EventQueueTest {
         capturedAt: Long = NOW,
         failures: Int = 0,
         rowId: Long = EventQueue.MISSING_ROW_ID,
-    ) = QueuedEvent(
+    ) = QueuedRow(
         idempotencyKey = key,
-        path = "/user/track/interaction",
-        body = JSONObject().put("type", "sharing").put("merchantId", MERCHANT_ID),
+        kind = "interaction",
+        payload = JSONObject().put("type", "sharing"),
         clientId = "256b1be3-2745-41d1-89d4-9121cc87bc45",
+        merchantId = MERCHANT_ID,
         capturedAtMillis = capturedAt,
         failures = failures,
         rowId = rowId,
@@ -53,10 +54,11 @@ class EventQueueTest {
         file.parentFile?.mkdirs()
         val line =
             JSONObject()
+                .put("kind", "interaction")
                 .put("k", key)
-                .put("p", "/user/track/interaction")
-                .put("b", JSONObject().put("type", "sharing").put("merchantId", MERCHANT_ID))
+                .put("payload", JSONObject().put("type", "sharing"))
                 .put("c", "256b1be3-2745-41d1-89d4-9121cc87bc45")
+                .put("m", MERCHANT_ID)
                 .put("t", capturedAt)
                 .put("f", 0)
                 .toString()
@@ -72,8 +74,8 @@ class EventQueueTest {
 
             val read = queue.read(NOW)
             assertEquals(listOf("a", "b"), read.map { it.idempotencyKey })
-            assertEquals("sharing", read.first().body.getString("type"))
-            assertEquals(MERCHANT_ID, read.first().body.getString("merchantId"))
+            assertEquals("sharing", read.first().payload.getString("type"))
+            assertEquals(MERCHANT_ID, read.first().merchantId)
         }
 
     @Test
@@ -81,7 +83,7 @@ class EventQueueTest {
         runTest {
             open()
             queue.append(event("a"))
-            file.appendText("""{"k":"b","p":"/user/tra""")
+            file.appendText("""{"k":"b","kind":"inte""")
 
             assertEquals(listOf("a"), queue.read(NOW).map { it.idempotencyKey })
         }
@@ -91,7 +93,7 @@ class EventQueueTest {
         runTest {
             open()
             queue.append(event("a"))
-            file.appendText("""{"k":"b","p":"/user/tra""")
+            file.appendText("""{"k":"b","kind":"inte""")
 
             // The partial line must be dropped from the file too, not just the parsed result,
             // or torn tails would accumulate on disk past the ceiling, one per mid-write kill.
@@ -259,7 +261,7 @@ class EventQueueTest {
             tempPath.mkdirs()
 
             // read() must not signal the non-durable rewrite by returning an empty list: that
-            // would be indistinguishable from an empty queue, and InteractionTracker.flush's
+            // would be indistinguishable from an empty queue, and EventOutbox.flush's
             // bare compaction would then delete a queue that is not actually empty.
             val migrated = queue.read(NOW)
             assertEquals(listOf("old-a", "old-b"), migrated.map { it.idempotencyKey })
@@ -282,7 +284,7 @@ class EventQueueTest {
             val tempPath = File(file.parentFile, file.name + ".tmp")
             tempPath.mkdirs()
 
-            // The exact call InteractionTracker.flush makes after a drain: reconcile with
+            // The exact call EventOutbox.flush makes after a drain: reconcile with
             // nothing delivered, as if every send in this pass failed before reconcile ever ran.
             val result = queue.reconcile(delivered = emptySet(), retried = emptyMap(), now = NOW)
 
@@ -302,10 +304,10 @@ class EventQueueTest {
             queue.append(event("wire-check"))
             val stored = queue.read(NOW).single()
 
-            // rowId lives only in QueuedEvent.toJson() (the on-disk envelope) and never in
-            // .body, which is exactly what InteractionTracker.flush sends as the POST payload.
-            assertFalse(stored.body.toString().contains("\"r\""))
-            assertFalse(stored.body.has("r"))
+            // rowId lives only in QueuedRow.toJson() (the on-disk envelope) and never in
+            // .payload, which is exactly what a RowSender reads as the kind-specific facts.
+            assertFalse(stored.payload.toString().contains("\"r\""))
+            assertFalse(stored.payload.has("r"))
         }
 
     @Test
@@ -379,6 +381,29 @@ class EventQueueTest {
             )
 
             assertEquals(1, queue.read(NOW).single().failures)
+        }
+
+    @Test
+    fun `skips a row whose schema version is newer than this build understands`() =
+        runTest {
+            open()
+            file.parentFile?.mkdirs()
+            file.appendText(
+                JSONObject()
+                    .put("r", 0)
+                    .put("v", QueuedRow.SCHEMA_VERSION + 1)
+                    .put("kind", "interaction")
+                    .put("k", "future")
+                    .put("payload", JSONObject().put("type", "sharing"))
+                    .put("c", "256b1be3-2745-41d1-89d4-9121cc87bc45")
+                    .put("m", MERCHANT_ID)
+                    .put("t", NOW)
+                    .put("f", 0)
+                    .toString() + "\n",
+            )
+            queue.append(event("current"))
+
+            assertEquals(listOf("current"), queue.read(NOW).map { it.idempotencyKey })
         }
 
     private companion object {

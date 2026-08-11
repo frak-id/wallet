@@ -11,7 +11,7 @@ Three things leave the device, and only three.
 | What | Play data type | Purpose | Sent when |
 | --- | --- | --- | --- |
 | Anonymous id (`clientId`), and the `customerId` you pass to `tracking.purchase` | Personal info → **User IDs** | App functionality | Only on tracking calls |
-| Referral and sharing events (`arrival`, `sharing`, `custom`) | App activity → **App interactions** | App functionality, Analytics | `tracking.track` |
+| Referral and sharing events (`arrival`, `sharing`, `custom`) | App activity → **App interactions** | App functionality, Analytics | `tracking.track`, though delivery can lag capture by days — see "What it stores on the device" |
 | `customerId`, `orderId`, checkout `token` | Financial info → **Purchase history** | App functionality | `tracking.purchase` |
 
 **Not** declared, because the SDK does not touch them: advertising ID, `ANDROID_ID`,
@@ -60,7 +60,19 @@ or an internal user id in it and the table above stops describing your app.
 | Android Keystore, alias `id.frak.sdk.identity` | P-256 private key, non-exportable |
 | SharedPreferences `id.frak.sdk` | Merchant marker, tracking-consent decision |
 | SharedPreferences `id.frak.sdk.config` | Resolved merchant config cache |
-| `noBackupFilesDir/frak-events.jsonl` | Queued events awaiting upload |
+| `noBackupFilesDir/frak-events.jsonl` | Queued events awaiting upload, plus inbound identity-merge intents (see below) |
+
+The queue file holds more than finished tracking calls. A referral arriving before the SDK
+can resolve a merchant id is written down without one — referrer client id, referrer merchant
+id and referral timestamp — and the merchant is filled in when the queue next drains. An
+inbound identity merge (a `?fmt=` link) is queued the same way, carrying its single-use token
+and this install's anonymous id; before, that request was attempted once over the network and
+never touched disk. Both exist because a referral that cannot be sent yet is attribution the
+user is owed, not telemetry to drop.
+
+Rows leave the file when they are delivered, when the backend rejects them three times, or
+after 14 days, whichever comes first. `setTrackingEnabled(false)` and `resetAnonymousId()`
+both purge it outright.
 
 The two SharedPreferences files are plaintext in your app's private storage. Only the key
 material is hardware-backed.

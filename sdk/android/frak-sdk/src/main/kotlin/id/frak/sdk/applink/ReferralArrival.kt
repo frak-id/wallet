@@ -28,7 +28,8 @@ internal object ReferralArrival {
             }
         }
 
-    private fun sameMerchant(
+    /** Trim + case-insensitive: shared with [id.frak.sdk.tracking.InteractionSender]'s send-time guard. */
+    internal fun sameMerchant(
         a: String,
         b: String,
     ): Boolean = a.trim().equals(b.trim(), ignoreCase = true)
