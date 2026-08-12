@@ -77,43 +77,124 @@ Resolved in `useSharingPageController`, applied to web and native alike:
 3. Merchant `translations["sharing.title" | "sharing.text"]`
 4. Bundled `common.json` defaults
 
-Note step 3 is a fix in its own right: `apps/listener` merges merchant translations into i18next via
+Placement in `useSharingPageController`: between the `t` wrapper and the `useShareLink` call, as a
+memoised `shareData` feeding both `useShareLink`'s second argument and `outcomes.share`. A selected
+product with no `imageUrl` falls through to `merchant.logoUrl` rather than sending an empty image;
+same for an empty-string `title`, so normalise `""` → `undefined` rather than relying on `??`.
+
+Leave the `t` wrapper's `productName: appName` binding alone. It binds the *merchant* name, not the
+product title, and that is pre-existing web behaviour — step 2 already sits above the translation, so
+a product-scoped share takes the product title from the override and a merchant with no products
+keeps today's copy byte-for-byte.
+
+Step 3 is a fix in its own right: `apps/listener` merges merchant translations into i18next via
 `ListenerUiProvider`, but `apps/wallet`'s `/sharing` route (`SharingView.tsx`) uses `rawT` straight
 from `useTranslation()`. A merchant's `sharing.title` override is silently dropped on every native
 share today.
+
+It is also a smaller fix than it looks. The namespace plumbing is already correct: the wallet boots
+with `fallbackNS: ["customized", "common"]` (`entry/shared/bootstrap.tsx`) and `sharing.*` lives only
+in `common.json`, so `t("sharing.title")` already resolves `translation` → `customized` → `common`,
+consulting merchant overrides first. The single missing piece is that nobody calls
+`addResourceBundle` on this route. Port the listener's block, keyed on
+`config?.sdkConfig?.translations`.
+
+`translationKeyPathToObject` currently lives in `apps/listener/app/module/utils/i18nMapper.ts`, and
+`apps/wallet` must not import from `apps/listener`. Move it to `packages/wallet-shared` and update the
+listener's import — a fourth directory outside the three lanes, so it belongs to whoever does this
+step.
 
 ## 6. Wire contract
 
 ### Inbound — native → page
 
 Three params in `apps/wallet/app/module/sharing/params/table.ts`, transport `both` so a warmed page
-can receive them on the activation fragment:
+can receive them on the activation fragment. Sourced from three new `SharingRequest` fields
+(`shareTitle`, `shareText`, `shareImageUrl`) — Builder methods on Android, defaulted init params on
+iOS, both additive.
 
 | Param | Codec |
 |---|---|
-| `shareTitle` | `str`, length-capped |
-| `shareText` | `str`, length-capped, control chars stripped |
-| `shareImage` | new `sanitizeShareImage` — https only, length-capped |
+| `shareTitle` | `str`, capped at 120 |
+| `shareText` | `str`, capped at 280, control chars stripped |
+| `shareImage` | new `sanitizeShareImage` — https only, capped at 512 |
 
 Written by `SharingPageUrl.build()` / `.activationFragment()` (Kotlin) and `SharingPageURL.swift`.
-Sourced from three new `SharingRequest` fields.
+
+**On `transport: "both"` and warm-page reuse.** A reviewer flagged this as leaking across sessions:
+session A sets `shareText`, `resetToWarm()` recycles the view, session B inherits A's copy. It does
+not, and the reason is worth recording because it is the same mechanism `logoUrl` already depends on.
+`useActivationParams` replaces its state wholesale on every `hashchange`
+(`setParams(parseSharingFragment(...))`, `fragment.ts`), and both `resetToWarm()` and
+`activationFragment()` write a *complete* fragment rather than mutating the previous one. So an
+absent key falls through to `search`, which on a warm URL never carried these params — `undefined`,
+not A's value. Any future change that merges activations instead of replacing them breaks this, and
+`logoUrl` with it.
 
 ### Outbound — page → native
 
-`buildHostResultUrl` currently admits `value`/`exp` for `action=code` only. Extend it so
-`action=share` carries `title`, `text` and `image`:
+`buildHostResultUrl` currently admits `value`/`exp` for `action=code` only. Extend it with an
+optional `share?: { title?, text?, image?, rect? }`, leaving `value`/`exp` untouched:
 
 ```
-frak-<pkg>://result?action=share&sid=…&title=…&text=…&image=…
+frak-<pkg>://result?action=share&sid=…&title=…&text=…&image=…&rect=x,y,w,h
 ```
+
+Every field optional; absent means today's behaviour exactly. `rect` is CSS pixels relative to the
+viewport, four comma-separated integers, iOS-only (Android drops it at the parser rather than
+carrying a dead field).
 
 Parsed in `SharingWebView.kt` `SharingPageAction.fromWire()` (currently `action`/`value`/`exp`) and
-its iOS twin in `SharingWebView.swift`. `Share` becomes a data class/case carrying the payload;
-absent fields keep today's behaviour.
+its iOS twin in `SharingWebView.swift`. `Share` becomes a data class/case carrying the payload.
+**Empty-string values decode to null, not `""`** — an empty `EXTRA_SUBJECT` is worse than an absent
+one.
+
+The dedupe needs no change: `REPEATABLE_ACTIONS` already contains `share`, so `sentActions` never
+keys on the payload.
+
+**Length budget**, enforced once on the page side at the point of resolution so web, Tauri and native
+all see the same string:
+
+| Field | Cap | Why |
+|---|---|---|
+| `text` | 280 | SMS/X-shaped composition; ~840 bytes percent-encoded worst case |
+| `title` | 120 | A headline, not a body |
+| `image` | 512 | A URL |
+
+Worst case ≈ 1.6 KB, inside every relevant limit. **Past the cap, truncate on a grapheme boundary and
+append `…` — never drop the field.** Clipped copy beats a bare URL. No chunking protocol: a field
+that overruns this budget is bad copy, not a transport problem.
+
+Percent-encoding round-trips cleanly. Both native encoders are strict RFC 3986 over UTF-8 with an
+unreserved set of `A-Za-z0-9-._~` (`PercentEncoding.kt`, `PercentEncoding.swift`), so newlines, `&`,
+`#` and emoji all survive; the page emits via `URLSearchParams`, whose `+`-for-space is handled by
+both decoders in query position.
 
 Safe for the same reason the existing channel is: the host intercepts this navigation inside its own
-web view. Share copy is not sensitive. **`image` must still be re-validated native-side** — https
-only, capped download size — because the SDK fetches it and writes it into a FileProvider cache dir.
+web view. Share copy is not sensitive. **`image` must still be re-validated native-side** — see §6b.
+
+### 6b. Sanitization
+
+**Page side, outbound** — once, in the resolution step:
+
+- `text` / `title`: strip C0/C1 controls except `\n` in `text`
+  (`/[\u0000-\u0008\u000B-\u001F\u007F-\u009F]/g`); strip bidi overrides `\u202A-\u202E\u2066-\u2069`
+  (RTL-override spoofing); collapse `\n{3,}` → `\n\n`; trim; then truncate. `title` strips all `\n`.
+- `image`: `new URL()` parse, require `protocol === "https:"`, reject non-empty `username`/`password`
+  (credential smuggling). Shaped like `sanitizeRedirectUrl` but **keeps the query string** — CDN image
+  URLs are signed.
+
+**Native side, inbound** — the page is first-party, but iOS *fetches* `image`, so re-validate:
+
+- iOS: reject non-https; reject private/link-local hosts (`10.`, `172.16-31.`, `192.168.`, `169.254.`,
+  `.local`) — the app's network position is not ours to lend; cap the response at 2 MB and the fetch
+  at 2 s (matching the Tauri plugin); require an `image/*` content type; abort if `UIImage(data:)`
+  returns nil.
+- Android: drops `image` at the parser. No fetch, no risk.
+- Both: re-apply the §6 length caps defensively before `EXTRA_TEXT` / `LPLinkMetadata`. A megabyte
+  `Intent` extra is `TransactionTooLargeException` in the *merchant's* process.
+- `rect` (iOS): require four finite values, `w`/`h` > 0, and intersection with the web view bounds
+  after conversion. Otherwise fall back to centre.
 
 ## 7. Native changes
 
@@ -171,10 +252,27 @@ deadline. Android needs none of this — it ships no image.
 
 ### Tier-3 fallback
 
-No page, so the SDK resolves it: request override → first product → `translations` → built-in en/fr
-constants. Interpolation is limited to `{{productName}}` — a ~20-line replacer. `{{estimatedReward}}`
-is available via `SharingSessionBuilder.seedReward`, but it is nullable under a 40 ms budget, so any
-key using it needs a no-reward variant, the same shape as `buttonShare.noRewardText`.
+No page, so the SDK resolves it — but **not from `translations`**. Tier 3 is entered from the
+`catch (FrakError)` around `resolveConfig()` in `SharingSessionBuilder.resolve()` /
+`SharingSheetModel`, i.e. it exists precisely because the resolved config is unavailable. Anything
+sourced from `sdkConfig` is out of reach on this path by construction.
+
+What *is* available is local: the `SharingRequest` in memory, and `FrakMetadata` (merchant-supplied,
+fixed at build time — `name`, `logoUrl`, `homepageLink`). So the chain is:
+
+1. `SharingRequest.shareTitle` / `.shareText` — the per-call override
+2. First product's `title`
+3. Built-in en/fr constants
+
+Interpolation is `{{productName}}` only, bound to `FrakMetadata.name`, which survives a config
+failure. `SharingDependencies` does not expose it yet — add a `metadataName(): String?` member.
+Skip the placeholder entirely when `name` is null rather than rendering an empty gap.
+
+`{{estimatedReward}}` is **not** available here: `seedReward` calls `dependencies.bestReward()`,
+which needs the network that just failed. No reward-bearing key in the tier-3 constants.
+
+Which locale to pick for the constants: `FrakMetadata.lang`, falling back to the device locale
+(see §8), falling back to `en`.
 
 ## 8. Device locale
 
@@ -200,13 +298,41 @@ worth its own commit.
 8. Device-locale `lang` default.
 9. `apiDump` + `.api` review.
 
+### Lanes
+
+The steps map onto three near-disjoint directory lanes:
+
+| Lane | Owns | Steps |
+|---|---|---|
+| A — web | `apps/wallet`, `packages/wallet-shared`, + the `i18nMapper` move in `apps/listener` | 1, 2, web halves of 3-4 |
+| B — Android | `sdk/android` | Android halves of 3-4, 5 |
+| C — iOS | `sdk/ios` | iOS halves of 3-4, 5, 6, 7 |
+
+Three things are genuinely *not* disjoint, and each is handled rather than discovered:
+
+- **`buildHostResultUrl` is a shared schema.** Lane A writes it, B and C parse it. §6 is exact enough
+  that all three can start together, but A must land first — B and C code against the spec, not
+  against A's diff.
+- **`translationKeyPathToObject` moves packages**, touching `apps/listener`, which is in no lane.
+  Lane A owns the move and the listener's import.
+- **Device-locale `lang` (step 8) is not disjoint at all.** It lives in `frak-sdk` core on both
+  platforms, and it changes `MerchantQuery.cacheKey()`, which changes *which* `translations` map comes
+  back — i.e. it changes the input to precedence step 3. Do not let B and C touch `FrakMetadata`
+  concurrently. It lands last, as its own commit, after the sharing work is green.
+
+`apiDump` (step 9) runs after B. `SharingRequest` gains three fields, so the `.api` diff will be
+non-empty; review it rather than rubber-stamping.
+
 ## 10. Open
 
 - **A1** — *Closed: no Android thumbnail.* The FileProvider cost is an `<application>` block in every
   merchant manifest for sender-side chrome that never travels. If a merchant ever asks for the tile,
   §7 has the chain; the `shareImage` param stays on the wire for iOS regardless.
-- **A2** — No test asserts page-resolved and SDK-resolved (tier-3) payloads agree. The golden-fixture
-  pattern from `04-golden-fixtures.md` is the obvious tool if drift proves real.
+- **A2** — *Closed: no golden fixture.* Pinning page-resolved and tier-3 payloads to each other would
+  assert something false — tier 3 has no merchant copy *by design*, because it is the path taken when
+  config resolution failed. The corpus in `04-golden-fixtures.md` exists for wire formats where a
+  byte-level disagreement is silent and unrecoverable; this is not one. A unit test per platform that
+  tier 3 prefers the product title over null is the right size.
 - **A3** — No merchant UI for `sharing.title` / `sharing.text`. They are API-settable only until
   someone builds the editor, at which point the `components.shareSheet` question reopens.
 
