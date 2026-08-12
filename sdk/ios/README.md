@@ -140,6 +140,13 @@ simulator — every claim above rests on suites executed on the host toolchain
   and serves reward distribution rather than advertising measurement. Both calls are
   argued in full in the manifest comments — revisit if an ad network ever enters the SDK
   path.
+- **`track(_:)` and `trackPurchase(...)` no longer fail with `merchantResolutionFailed`.**
+  They enqueue durably first and resolve the merchant from cache only (`.cachedOnly`),
+  never over the network; an unresolved merchant lands on disk as a `nil` `merchantId` and
+  is filled in by the drain once one is available (from config, cache, or a later launch).
+  This is a public behaviour change from the old `.required` resolve, even though the
+  signature is unchanged: a caller checking for `.merchantResolutionFailed` from `track`
+  itself will no longer see it there.
 
 ## Open decisions before first publish
 

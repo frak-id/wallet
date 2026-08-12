@@ -1,5 +1,9 @@
 import Foundation
 
+#if canImport(UIKit)
+    import UIKit
+#endif
+
 actor DefaultFrakClient {
     private let settings: FrakConfig
     private let identity: AnonymousIdStore
@@ -9,7 +13,7 @@ actor DefaultFrakClient {
     private let rewards: RewardRepository
     private let merge: IdentityMerge
     private let merchantIdentity: MerchantIdentity
-    private let tracker: InteractionTracker
+    private let tracker: EventOutbox
     /// Must be the same instance `identity` holds: two `TrackingConsent` actors over the same
     /// suite would memoise independently, so a withdrawal here wouldn't stop identity's own
     /// key minting.
@@ -17,6 +21,15 @@ actor DefaultFrakClient {
 
     /// The startup drain, retained so `shutdown()` can cancel it.
     private var startupTask: Task<Void, Never>?
+    /// Flushes the outbox the moment a merchant resolves, rather than waiting for the next
+    /// `track()` or process launch. Retained so `shutdown()` can cancel it.
+    private var configFlushTask: Task<Void, Never>?
+    #if canImport(UIKit)
+        /// Nothing else triggers a drain today, so a queued merge token whose first drain fails
+        /// waits for the next PROCESS LAUNCH against a 60-minute server-side TTL. Retained so
+        /// `shutdown()` can cancel it; never `UIApplication.shared`, which is extension-unsafe.
+        private var foregroundTask: Task<Void, Never>?
+    #endif
 
     init(
         settings: FrakConfig,
@@ -37,26 +50,33 @@ actor DefaultFrakClient {
         let http = HTTPClient(baseURL: backendURL ?? settings.env.backend, session: session, logger: logger)
         self.configStore = ConfigStore(http: http, store: store, logger: logger)
         self.rewards = RewardRepository(http: http, logger: logger)
-        self.merge = IdentityMerge(http: http, identity: identity, logger: logger)
-        self.merchantIdentity = MerchantIdentity(
+        self.merge = IdentityMerge(logger: logger)
+        // Assigned to a local first: `self` isn't fully initialized yet, so the closures below
+        // (built before `self.tracker` is assigned) capture this local, never `self`.
+        let merchantIdentity = MerchantIdentity(
             settings: settings,
             identity: identity,
             configStore: configStore,
             logger: logger
         )
-        self.tracker = InteractionTracker(
+        self.merchantIdentity = merchantIdentity
+        self.tracker = EventOutbox(
             queue: queue,
             http: http,
             logger: logger,
+            senders: RowSenders.default(logger: logger),
             currentClientId: { await identity.anonymousId() },
+            resolveMerchantId: { try? await merchantIdentity.merchant(.required) },
+            signProof: { op, merchantId, binding in
+                await identity.signProof(op, merchantId: merchantId, binding: binding)
+            },
             // Read per event inside the drain, so a withdrawal that lands mid-drain stops the
             // upload rather than only emptying a file the drain has already read.
             trackingAllowed: { await consent.isEnabled() }
         )
 
         // Mints the keypair now, off whichever thread this init runs on, then drains whatever a
-        // previous session queued and could not send. Nothing else triggers a drain: the SDK
-        // holds no connectivity callback.
+        // previous session queued and could not send.
         let tracker = self.tracker
         let configStore = self.configStore
         self.startupTask = Task {
@@ -92,6 +112,25 @@ actor DefaultFrakClient {
                 }
             }
         }
+
+        // `ConfigStore.updates` builds a fresh `AsyncStream` and continuation per access, so this
+        // subscription multicasts alongside any merchant-owned one rather than stealing from it.
+        self.configFlushTask = Task {
+            for await _ in await configStore.updates {
+                await tracker.flush()
+            }
+        }
+
+        #if canImport(UIKit)
+            self.foregroundTask = Task {
+                let foregrounds = NotificationCenter.default.notifications(
+                    named: UIApplication.willEnterForegroundNotification
+                )
+                for await _ in foregrounds {
+                    await tracker.flush()
+                }
+            }
+        #endif
     }
 
     nonisolated var environment: FrakEnvironment {
@@ -145,8 +184,8 @@ actor DefaultFrakClient {
         await consent.isEnabled()
     }
 
-    /// Cancels the background work this client owns: the startup drain and any queue drain in
-    /// flight.
+    /// Cancels the background work this client owns: the startup drain, the config-update and
+    /// foreground flush subscriptions, and any queue drain in flight.
     ///
     /// Idempotent, and there is no restart contract: this client is dead afterwards. Get a live
     /// one from `Frak.initialize` after `Frak.shutdown()`. Not a privacy control —
@@ -161,8 +200,10 @@ actor DefaultFrakClient {
     /// - the startup drain — cancelled, and its body checks `Task.isCancelled` before
     ///   scheduling a flush, so cancelling it is not the no-op `Task<Void, Never>` would
     ///   otherwise make it;
-    /// - the tracker — `InteractionTracker.shutdown()` cancels the in-flight drain and refuses
-    ///   to start another, which is what stops a later `track()` from reviving one;
+    /// - the config-update and foreground flush subscriptions — cancelled, so neither keeps
+    ///   iterating its `AsyncStream`/`NotificationCenter` sequence past shutdown;
+    /// - the tracker — `EventOutbox.shutdown()` cancels the in-flight drain and refuses to start
+    ///   another, which is what stops a later `track()` from reviving one;
     /// - not covered: `ConfigStore`'s background revalidation, `RewardRepository`, and
     ///   `resetAnonymousId`'s purge, all of which spawn unstructured `Task`s that nothing
     ///   retains, and the eager identity mint, a `Task.detached` inside `AnonymousIdStore`.
@@ -171,6 +212,12 @@ actor DefaultFrakClient {
     func shutdown() async {
         startupTask?.cancel()
         startupTask = nil
+        configFlushTask?.cancel()
+        configFlushTask = nil
+        #if canImport(UIKit)
+            foregroundTask?.cancel()
+            foregroundTask = nil
+        #endif
         await tracker.shutdown()
     }
 
@@ -321,14 +368,24 @@ actor DefaultFrakClient {
         return true
     }
 
-    /// `pair()` resolves over the network on a cache miss, unlike the arrival guard above: a
-    /// merge token is single-use and short-lived, so losing one to a cold cache is permanent.
+    /// Durable now, unlike the old `pair()`-resolving path: a merge token is single-use and
+    /// short-lived, so losing one to a cold cache or a transient failure was permanent.
+    /// `merchantId` may land nil on the queued row — the drain resolves it, and `MergeSender`
+    /// holds rather than failing.
     private func mergeInboundIdentity(_ mergeToken: String) async {
-        guard let link = try? await merchantIdentity.pair(.optional) else { return }
-        await merge.execute(
+        // Order matters: claiming before the consent gate would burn a single-use token that a
+        // later in-session opt-in can never replay.
+        guard await consent.isEnabled() else { return }
+        guard let anonymousId = await identity.anonymousId() else { return }
+        // Claimed only once the gates are passed. `trackMerge` owns the cold-start replay guard,
+        // where the check and the append are one hop.
+        guard await merge.claim(mergeToken) else { return }
+        // `.cachedOnly`: never touches the network, unlike the deleted `pair()` call.
+        let merchantId = try? await merchantIdentity.merchant(.cachedOnly)
+        await tracker.trackMerge(
             mergeToken: mergeToken,
-            merchantId: link.merchantId,
-            anonymousId: link.anonymousId
+            anonymousId: anonymousId,
+            merchantId: merchantId
         )
     }
 
@@ -385,27 +442,14 @@ actor DefaultFrakClient {
         )
     }
 
-    /// Resolves the merchant an event belongs to, then runs `body`. Failure here is only ever
-    /// a reason that will not resolve itself — tracking off, or no merchant to attribute to.
-    /// Everything transient is the queue's problem, not the caller's.
-    private func trackingCall(_ body: (String) async -> Void) async -> Result<Void, FrakError> {
+    /// Runs `body` once consent allows it. `.cachedOnly` never touches the network — a cold
+    /// start with no cache and no network must still land the row on disk rather than lose the
+    /// event to a resolve that can't happen; `merchantId` may be nil, and the drain resolves it
+    /// later. `try?` is safe: `.cachedOnly` never actually throws, it only shares a `throws`
+    /// signature with the other two policies.
+    private func trackingCall(_ body: (String?) async -> Void) async -> Result<Void, FrakError> {
         guard await consent.isEnabled() else { return .failure(.trackingDisabled) }
-        let merchantId: String
-        do {
-            guard let resolved = try await merchantIdentity.merchant(.required) else {
-                // `.required` never actually returns nil here — see `MerchantIdentity.merchant`.
-                return .failure(.merchantResolutionFailed(reason: "no merchant could be resolved"))
-            }
-            merchantId = resolved
-        } catch let error as FrakError {
-            return .failure(error)
-        } catch {
-            // `merchant(.required)` resolves through `frakCall` internally, so the only thing
-            // left is a `CancellationError`. `.network` because that is literally what happened
-            // — the request never reached the backend — and never `.decoding`, which would mean
-            // the frozen binary and the deployed backend disagree.
-            return .failure(.network(underlying: error))
-        }
+        let merchantId = try? await merchantIdentity.merchant(.cachedOnly)
         await body(merchantId)
         return .success(())
     }

@@ -55,7 +55,7 @@ Two artifacts per platform so a merchant taking only tracking never pulls in a w
 | --- | --- | --- |
 | Core (UI-free) | `id.frak.sdk:core` (`:frak-sdk`) | `FrakSDK` |
 | UI (web view) | `id.frak.sdk:ui` (`:frak-sdk-ui`) | `FrakSDKUI` |
-| Build | Gradle 9.5.0, AGP 9.1.1, Kotlin 2.4.10 → language/API level 2.2, JVM target 17, `compileSdk 36` | SwiftPM, tools-version 5.9 |
+| Build | Gradle 9.5.0, AGP 9.1.1, Kotlin 2.4.10 → language/API level 2.2, JVM target 17, `compileSdk 36` | SwiftPM, tools-version 6.0, `.swiftLanguageMode(.v6)` on all four targets |
 | Minimum | `minSdk 24`, `explicitApi()` on | iOS 15 |
 | Registry | Maven Central Portal (not OSSRH — decommissioned). Namespace `id.frak.sdk` claimed, GPG key live, Portal token wired, `release-android-sdk.yml` on an `android-v*` tag. The Portal takes a zipped Maven tree over REST, so Gradle stages into a local `centralBundle` repo and the workflow uploads; both artifacts go in ONE deployment. `USER_MANAGED` by default. Nothing published yet | SPM only, no CocoaPods. Mirrored to [`frak-id/frak-ios-sdk`](https://github.com/frak-id/frak-ios-sdk) — SwiftPM reads `Package.swift` from a repo root only, so `sdk/ios` is unreachable to a merchant. `release-ios-sdk.yml` on an `ios-v*` tag; `main` seeded, no tags yet |
 
@@ -69,7 +69,7 @@ Two artifacts per platform so a merchant taking only tracking never pulls in a w
 - **`Presenter` lives in the UI artifact, not `sharing/`** — `client.sharing.buildLink()` is 100% local and must stay callable without the web view.
 - **`FrakClient` is a sealed concrete class with five namespaces** (`config`, `rewards`, `sharing`, `tracking`, `appLink`), not an interface/protocol. Adding a member is additive on both platforms; nothing can substitute a fake for it, so `frak-sdk-ui`'s tests inject the narrow `SharingDependencies` interface and merchant tests should point `FrakEnvironment.Custom`/`.custom` at a stub server.
 - **No exported activity, no intent filter in the SDK manifest**: inbound `fCtx` is wired through `FrakConfig.deepLink`, so the merchant's own router keeps owning their links.
-- **`PrivacyInfo.xcprivacy` is a hard gate**: ITMS-91053 lands on the merchant's upload, not ours, and `FrakSDKUI` ships its own because it is separately consumable. Declared: `DeviceID`, `PurchaseHistory`, `ProductInteraction`, `UserID` on the core; `DeviceID` + `ProductInteraction` on the UI; `UserDefaults`/`CA92.1` as the only required-reason API, core only.
+- **`PrivacyInfo.xcprivacy` is a hard gate**: ITMS-91053 lands on the merchant's upload, not ours, and `FrakSDKUI` ships its own because it is separately consumable. Declared: `UserID`, `PurchaseHistory`, `ProductInteraction` on the core; `UserID` + `ProductInteraction` on the UI; `UserDefaults`/`CA92.1` as the only required-reason API, core only. Neither manifest declares `DeviceID` — the anonymous id is deliberately argued as a `UserID` (installation-scoped, gone on uninstall), never a device identifier; do not add the category without re-litigating that argument in the manifest comments.
 
 ```bash
 bun run --cwd sdk/android build   # assembleRelease — no device, this is a library

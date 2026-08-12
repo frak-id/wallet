@@ -3,6 +3,10 @@ import Testing
 
 @testable import FrakSDK
 
+#if canImport(UIKit)
+    import UIKit
+#endif
+
 @Suite("DefaultFrakClient")
 struct FrakClientTests {
     private static let merchantId = "b3d5e5b8-9b1a-4c0e-8f5a-1a2b3c4d5e6f"
@@ -598,6 +602,176 @@ struct FrakClientTests {
 
         await #expect(throws: CancellationError.self) {
             _ = try await task.value
+        }
+    }
+
+    /// Regression for bug 1: `trackingCall` used to resolve `.required` before the durable
+    /// enqueue, so a cold start with no cache and no network lost the event outright.
+    @Test("track lands the event on disk with no cached merchant and no reachable network (bug 1)")
+    func trackDoesNotBlockOnAMerchantResolve() async throws {
+        let queueURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+            .appendingPathComponent(EventQueue.fileName)
+        let client = makeClient(config: FrakConfig(bundleId: "com.acme.app"), queueURL: queueURL) { _ in
+            throw URLError(.notConnectedToInternet)
+        }
+
+        let result = await client.track(.custom("cold-start"))
+
+        guard case .success = result else {
+            Issue.record("expected track to succeed with no merchant to resolve, got \(result)")
+            return
+        }
+        let rows = await EventQueue(fileURL: queueURL, logger: FrakLogger(level: .none)).read(now: Date())
+        #expect(rows.first?.merchantId == nil)
+    }
+
+    /// Regression for bug 2: `mergeInboundIdentity` used to call `pair(.optional)`, which
+    /// resolves over the network and drops the token outright on failure.
+    @Test("handleReferralLink durably queues an inbound merge with no cached merchant and no reachable network (bug 2)")
+    func mergeIsDurableWithoutANetworkResolve() async throws {
+        let queueURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+            .appendingPathComponent(EventQueue.fileName)
+        let client = makeClient(config: FrakConfig(bundleId: "com.acme.app"), queueURL: queueURL) { _ in
+            throw URLError(.notConnectedToInternet)
+        }
+
+        _ = await client.handleReferralLink("https://acme.example/p?fmt=merge-token-1")
+        // Lets the detached drain, which cannot succeed offline, settle before asserting.
+        try await Task.sleep(nanoseconds: 200_000_000)
+
+        let rows = await EventQueue(fileURL: queueURL, logger: FrakLogger(level: .none)).read(now: Date())
+        let merged = rows.first { $0.kind == "merge" }
+        #expect(merged?.idempotencyKey == "merge-token-1")
+        #expect(merged?.merchantId == nil)
+    }
+
+    // MARK: - drain triggers (fix 3)
+
+    /// A row held for want of a merchant must not wait for the next `track()`/foreground/process
+    /// launch: the moment `ConfigStore` publishes a resolved merchant, `configFlushTask` drains it.
+    @Test("a config update triggers a drain with no explicit flush call, and stops after shutdown")
+    func configUpdateTriggersADrain() async throws {
+        let queueURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+            .appendingPathComponent(EventQueue.fileName)
+        let networkUp = Flag(false)
+        let resolveCalls = Counter()
+        let requests = RequestLog()
+        let client = makeClient(config: FrakConfig(bundleId: "com.acme.app"), queueURL: queueURL) { request in
+            requests.record(request)
+            guard networkUp.value else { throw URLError(.notConnectedToInternet) }
+            guard request.url?.path == "/user/merchant/resolve" else { return StubResponse(status: 200, body: "{}") }
+            let n = resolveCalls.increment()
+            return StubResponse(
+                status: 200,
+                body: #"{"merchantId":"\#(Self.merchantId)","productId":"0x00","name":"Acme-\#(n)","#
+                    + #""domain":"acme.example","allowedDomains":["acme.example"]}"#
+            )
+        }
+
+        _ = await client.track(.custom("held-for-merchant"))
+        // Lets the offline auto-drain hold the row before the network comes up.
+        try await Task.sleep(nanoseconds: 200_000_000)
+
+        networkUp.value = true
+        // Retried rather than a single `try await`: the offline attempts above may have armed
+        // ConfigStore's own backoff, independent of the tracker's; this waits it out instead of
+        // racing it.
+        var resolvedOnce = false
+        var resolveWaited = 0
+        while !resolvedOnce, resolveWaited < 40 {
+            if (try? await client.resolveConfig(forceRefresh: true)) != nil { resolvedOnce = true }
+            if !resolvedOnce {
+                try await Task.sleep(nanoseconds: 50_000_000)
+                resolveWaited += 1
+            }
+        }
+        #expect(resolvedOnce, "resolveConfig should succeed once the network is back and backoff clears")
+
+        func trackHits() -> Int { requests.all.filter { $0.url?.path == "/user/track/interaction" }.count }
+        var waited = 0
+        while trackHits() == 0, waited < 400 {
+            try await Task.sleep(nanoseconds: 5_000_000)
+            waited += 1
+        }
+        #expect(trackHits() == 1, "a config update must flush a held row without an explicit flush() call")
+
+        await client.shutdown()
+        let afterFirstFlush = trackHits()
+
+        _ = await client.track(.custom("after-shutdown"))
+        _ = try? await client.resolveConfig(forceRefresh: true)
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        #expect(trackHits() == afterFirstFlush, "the config-update flush must not fire once the client is shut down")
+    }
+
+    #if canImport(UIKit)
+        /// The single biggest delivery-rate lever on iOS: nothing else drains on app resume. Uses
+        /// only `NotificationCenter`, never `UIApplication.shared`.
+        @Test("posting willEnterForeground triggers a drain, and stops after shutdown")
+        func foregroundNotificationTriggersADrain() async throws {
+            let queueURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString, isDirectory: true)
+                .appendingPathComponent(EventQueue.fileName)
+            let requests = RequestLog()
+            let client = makeClient(config: FrakConfig(bundleId: "com.acme.app"), queueURL: queueURL) { request in
+                requests.record(request)
+                throw URLError(.notConnectedToInternet)
+            }
+
+            func resolveAttempts() -> Int {
+                requests.all.filter { $0.url?.path == "/user/merchant/resolve" }.count
+            }
+
+            _ = await client.track(.custom("held-forever"))
+            var waited = 0
+            while resolveAttempts() == 0, waited < 400 {
+                try await Task.sleep(nanoseconds: 5_000_000)
+                waited += 1
+            }
+            let beforeForeground = resolveAttempts()
+            #expect(beforeForeground > 0)
+
+            NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+            waited = 0
+            while resolveAttempts() == beforeForeground, waited < 400 {
+                try await Task.sleep(nanoseconds: 5_000_000)
+                waited += 1
+            }
+            #expect(resolveAttempts() > beforeForeground, "the foreground notification must trigger a drain")
+
+            await client.shutdown()
+            let afterShutdown = resolveAttempts()
+            NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            #expect(
+                resolveAttempts() == afterShutdown,
+                "the foreground hook must not fire once the client is shut down"
+            )
+        }
+    #endif
+
+    /// A mutable test flag, for a stub handler whose behaviour changes mid-test.
+    private final class Flag: @unchecked Sendable {
+        private let lock = NSLock()
+        private var stored: Bool
+
+        init(_ value: Bool) { stored = value }
+
+        var value: Bool {
+            get {
+                lock.lock()
+                defer { lock.unlock() }
+                return stored
+            }
+            set {
+                lock.lock()
+                stored = newValue
+                lock.unlock()
+            }
         }
     }
 }

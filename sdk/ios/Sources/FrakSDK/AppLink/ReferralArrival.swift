@@ -33,7 +33,7 @@ enum ReferralArrival {
         }
     }
 
-    private static func sameMerchant(_ a: String, _ b: String) -> Bool {
+    static func sameMerchant(_ a: String, _ b: String) -> Bool {
         a.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare(b.trimmingCharacters(in: .whitespaces))
             == .orderedSame
     }

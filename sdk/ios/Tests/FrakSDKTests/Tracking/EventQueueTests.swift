@@ -17,12 +17,13 @@ struct EventQueueTests {
         return (EventQueue(fileURL: fileURL, logger: FrakLogger(level: .none)), fileURL)
     }
 
-    private func event(_ key: String, capturedAt: Date = EventQueueTests.now) -> QueuedEvent {
-        QueuedEvent(
+    private func event(_ key: String, capturedAt: Date = EventQueueTests.now) -> QueuedRow {
+        QueuedRow(
             idempotencyKey: key,
-            path: "/user/track/interaction",
-            body: #"{"type":"sharing"}"#,
+            kind: "interaction",
+            payload: #"{"type":"sharing"}"#,
             clientId: "client",
+            merchantId: "merchant",
             capturedAt: capturedAt
         )
     }
@@ -36,12 +37,20 @@ struct EventQueueTests {
         let millis = Int64((capturedAt.timeIntervalSince1970 * 1000).rounded())
         let object: [String: Any] = [
             "k": key,
-            "p": "/user/track/interaction",
-            "b": #"{"type":"sharing"}"#,
+            "kind": "interaction",
+            "payload": #"{"type":"sharing"}"#,
             "c": "client",
             "t": millis,
             "f": 0,
         ]
+        try appendRawLine(object, to: fileURL)
+    }
+
+    private func appendRawLine(_ object: [String: Any], to fileURL: URL) throws {
+        try FileManager.default.createDirectory(
+            at: fileURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
         let line = try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys]) + Data("\n".utf8)
         if FileManager.default.fileExists(atPath: fileURL.path) {
             let handle = try FileHandle(forWritingTo: fileURL)
@@ -61,7 +70,7 @@ struct EventQueueTests {
 
         let read = await queue.read(now: Self.now)
         #expect(read.map(\.idempotencyKey) == ["a", "b"])
-        #expect(read.first?.body == #"{"type":"sharing"}"#)
+        #expect(read.first?.payload == #"{"type":"sharing"}"#)
     }
 
     @Test("survives a torn tail")
@@ -70,7 +79,7 @@ struct EventQueueTests {
         await queue.append(event("a"))
         let handle = try FileHandle(forWritingTo: fileURL)
         try handle.seekToEnd()
-        try handle.write(contentsOf: Data(#"{"k":"b","p":"/user/tra"#.utf8))
+        try handle.write(contentsOf: Data(#"{"k":"b","kind":"interacti"#.utf8))
         try handle.close()
 
         let read = await queue.read(now: Self.now)
@@ -83,7 +92,7 @@ struct EventQueueTests {
         await queue.append(event("a"))
         let handle = try FileHandle(forWritingTo: fileURL)
         try handle.seekToEnd()
-        try handle.write(contentsOf: Data(#"{"k":"b","p":"/user/tra"#.utf8))
+        try handle.write(contentsOf: Data(#"{"k":"b","kind":"interacti"#.utf8))
         try handle.close()
 
         _ = await queue.read(now: Self.now)
@@ -301,13 +310,13 @@ struct EventQueueTests {
         #expect(read.map(\.idempotencyKey) == ["old-a", "old-b"])
     }
 
-    @Test("the outbound wire body never contains a row id field")
-    func wireBodyNeverContainsRowId() async throws {
+    @Test("the outbound payload never contains a row id field")
+    func payloadNeverContainsRowId() async throws {
         let (queue, _) = makeQueue()
         await queue.append(event("wire-check"))
         let stored = try #require(await queue.read(now: Self.now).first)
 
-        #expect(!stored.body.contains("\"r\":"))
+        #expect(!stored.payload.contains("\"r\":"))
     }
 
     @Test("bounds the file from append alone, without a read ever running (2.6)")
@@ -381,6 +390,105 @@ struct EventQueueTests {
 
         let kept = await queue.read(now: Self.now)
         #expect(kept.first?.failures == 1)
+    }
+
+    @Test("heldSince round-trips through a compaction")
+    func heldSinceRoundTrips() async throws {
+        let (queue, _) = makeQueue()
+        await queue.append(event("a"))
+        let queued = try #require(await queue.read(now: Self.now).first)
+        let heldAt = Self.now.addingTimeInterval(60)
+
+        await queue.replace([queued.withHeldSince(heldAt)])
+
+        let read = try #require(await queue.read(now: Self.now).first)
+        #expect(read.heldSince?.timeIntervalSince1970 == heldAt.timeIntervalSince1970)
+    }
+
+    @Test("a future schema version is dropped without disturbing its neighbours")
+    func futureSchemaVersionDoesNotBreakNeighbours() async throws {
+        let (queue, fileURL) = makeQueue()
+        try appendRawLine(
+            [
+                "r": 0,
+                "v": 1,
+                "k": "before",
+                "kind": "interaction",
+                "payload": #"{"type":"sharing"}"#,
+                "t": Int64(Self.now.timeIntervalSince1970 * 1000),
+                "f": 0,
+            ],
+            to: fileURL
+        )
+        try appendRawLine(
+            [
+                "r": 1,
+                "v": QueuedRow.currentSchemaVersion + 1,
+                "k": "from-the-future",
+                "kind": "interaction",
+                "payload": #"{"type":"sharing"}"#,
+                "t": Int64(Self.now.timeIntervalSince1970 * 1000),
+                "f": 0,
+            ],
+            to: fileURL
+        )
+        try appendRawLine(
+            [
+                "r": 2,
+                "v": 1,
+                "k": "after",
+                "kind": "interaction",
+                "payload": #"{"type":"sharing"}"#,
+                "t": Int64(Self.now.timeIntervalSince1970 * 1000),
+                "f": 0,
+            ],
+            to: fileURL
+        )
+
+        let read = await queue.read(now: Self.now)
+        #expect(read.map(\.idempotencyKey) == ["before", "after"])
+    }
+
+    /// Pins the on-disk row shape: nil `clientId`/`merchantId`/`rowId`/`heldSince` vanish rather
+    /// than encoding JSON `null`, and `t`/`h` are Unix milliseconds, not the Apple reference date.
+    @Test("golden byte shape: a fully-populated row")
+    func goldenFullyPopulatedRow() throws {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .millisecondsSince1970
+        encoder.outputFormatting = .sortedKeys
+        let row = QueuedRow(
+            idempotencyKey: "idem-1",
+            kind: "interaction",
+            payload: #"{"type":"sharing"}"#,
+            clientId: "client-1",
+            merchantId: "merchant-1",
+            capturedAt: Date(timeIntervalSince1970: 1_709_654_400),
+            failures: 2,
+            rowId: 7,
+            heldSince: Date(timeIntervalSince1970: 1_709_654_500)
+        )
+        let data = try encoder.encode(row)
+        let expected =
+            #"{"c":"client-1","f":2,"h":1709654500000,"k":"idem-1","kind":"interaction","m":"merchant-1","payload":"{\"type\":\"sharing\"}","r":7,"t":1709654400000,"v":1}"#
+        #expect(String(decoding: data, as: UTF8.self) == expected)
+    }
+
+    @Test("golden byte shape: every optional nil")
+    func goldenAllOptionalsNil() throws {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .millisecondsSince1970
+        encoder.outputFormatting = .sortedKeys
+        let row = QueuedRow(
+            idempotencyKey: "idem-2",
+            kind: "purchase",
+            payload: "{}",
+            clientId: nil,
+            merchantId: nil,
+            capturedAt: Date(timeIntervalSince1970: 1_709_654_400)
+        )
+        let data = try encoder.encode(row)
+        let expected = #"{"f":0,"k":"idem-2","kind":"purchase","payload":"{}","t":1709654400000,"v":1}"#
+        #expect(String(decoding: data, as: UTF8.self) == expected)
     }
 
     // FileProtectionType is unavailable on macOS, the only host this target is verified on;

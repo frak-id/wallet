@@ -1,17 +1,16 @@
 import Foundation
 
-/// Captures interactions durably, then drains them oldest-first.
+/// Captures interactions, purchases and identity merges durably, then drains them oldest-first
+/// through the `RowSender` registered for each row's `kind`.
 ///
 /// The queue is the contract: `track` returns once the event is on disk, not once it is
 /// delivered. Delivery is a best-effort drain that stops at the first failure, so a later
 /// event is never sent before an earlier one has gone through.
-actor InteractionTracker {
-    private static let interactionPath = "/user/track/interaction"
-    private static let purchasePath = "/user/track/purchase"
-    private static let clientIdHeader = "x-frak-client-id"
-    private static let tooManyRequests = 429
-    private static let serverError = 500
-    /// Permanent rejections tolerated before an event is dropped rather than left blocking
+actor EventOutbox {
+    private static let interactionKind = InteractionSender.kind
+    private static let purchaseKind = PurchaseSender.kind
+    private static let mergeKind = MergeSender.kind
+    /// Permanent rejections tolerated before a row is dropped rather than left blocking
     /// the head of the queue forever.
     private static let maxFailures = 3
     private static let backoffKey = "track"
@@ -19,6 +18,9 @@ actor InteractionTracker {
     private let queue: EventQueue
     private let http: HTTPClient
     private let logger: FrakLogger
+    /// The only place a `QueuedRow.kind` is turned into a request. An unregistered kind is
+    /// `continue`d in `drain()`, not dropped — see `QueuedRow.currentSchemaVersion`.
+    private let senders: [String: any RowSender]
     /// Read fresh on every drain, so an identity reset takes effect mid-flight. Async:
     /// `AnonymousIdStore.anonymousId()` awaits eager generation rather than blocking, so this
     /// drain loop does not call a blocking keystore read from inside itself.
@@ -29,9 +31,11 @@ actor InteractionTracker {
     /// posted, and the stale-id guard below cannot catch it either — withdrawing consent makes
     /// `currentClientId` nil, which disables that guard rather than tightening it.
     ///
-    /// Defaults to always-allowed so the tracker's own tests, which have no consent store, are
+    /// Defaults to always-allowed so the outbox's own tests, which have no consent store, are
     /// unaffected; the real gate is wired in `DefaultFrakClient`.
     private let trackingAllowed: @Sendable () async -> Bool
+    private let resolveMerchantId: @Sendable () async -> String?
+    private let signProof: @Sendable (ProofOp, String, Data) async -> String?
     private let now: @Sendable () -> Date
     private let newKey: @Sendable () -> String
 
@@ -42,14 +46,21 @@ actor InteractionTracker {
     /// Bumped every time `drainTask` is replaced or cleared, so a finishing drain can tell
     /// whether the slot still holds it before nilling it out.
     private var drainToken = 0
-    /// Set once by `shutdown()`, never cleared: a torn-down tracker starts no further drains.
+    /// Set once by `shutdown()`, never cleared: a torn-down outbox starts no further drains.
     private var stopped = false
+    /// Memoised across one drain's rows. Outer nil: not attempted this drain. Inner nil:
+    /// attempted, nothing resolved. Actor state, not a captured `var` — a `@Sendable` closure
+    /// cannot capture a mutable var under Swift 6. Reset at the top of every drain.
+    private var drainMerchantId: String??
 
     init(
         queue: EventQueue,
         http: HTTPClient,
         logger: FrakLogger,
+        senders: [String: any RowSender],
         currentClientId: @escaping @Sendable () async -> String?,
+        resolveMerchantId: @escaping @Sendable () async -> String?,
+        signProof: @escaping @Sendable (ProofOp, String, Data) async -> String?,
         trackingAllowed: @escaping @Sendable () async -> Bool = { true },
         now: @escaping @Sendable () -> Date = { Date() },
         newKey: @escaping @Sendable () -> String = { UUID().uuidString.lowercased() },
@@ -58,22 +69,31 @@ actor InteractionTracker {
         self.queue = queue
         self.http = http
         self.logger = logger
+        self.senders = senders
         self.currentClientId = currentClientId
+        self.resolveMerchantId = resolveMerchantId
+        self.signProof = signProof
         self.trackingAllowed = trackingAllowed
         self.now = now
         self.newKey = newKey
         self.backoff = backoff
     }
 
-    func track(merchantId: String, clientId: String?, interaction: Interaction) async {
+    func track(merchantId: String?, clientId: String?, interaction: Interaction) async {
         let key = idempotencyKey(for: interaction)
-        let body = interactionBody(merchantId: merchantId, interaction: interaction, idempotencyKey: key)
-        await enqueue(path: Self.interactionPath, body: body, clientId: clientId, idempotencyKey: key)
+        let body = interactionBody(interaction: interaction, idempotencyKey: key)
+        await enqueue(
+            kind: Self.interactionKind,
+            payload: body,
+            clientId: clientId,
+            merchantId: merchantId,
+            idempotencyKey: key
+        )
         detachDrain()
     }
 
     func trackPurchase(
-        merchantId: String,
+        merchantId: String?,
         clientId: String?,
         customerId: String,
         orderId: String,
@@ -82,13 +102,42 @@ actor InteractionTracker {
         // No idempotency key: the purchase route carries no such field and reconciles on
         // `(orderId, token)` server-side.
         let body = Self.json([
-            "merchantId": merchantId,
             "customerId": customerId,
             "orderId": orderId,
             "token": token,
         ])
-        await enqueue(path: Self.purchasePath, body: body, clientId: clientId, idempotencyKey: newKey())
+        await enqueue(
+            kind: Self.purchaseKind,
+            payload: body,
+            clientId: clientId,
+            merchantId: merchantId,
+            idempotencyKey: newKey()
+        )
         detachDrain()
+    }
+
+    /// Enqueues an identity merge. `clientId` MUST be the anonymousId being folded in: it is
+    /// what lets the drain's stale-id guard drop this row after an identity reset instead of
+    /// posting a merge for an identity the caller already walked away from.
+    func trackMerge(mergeToken: String, anonymousId: String, merchantId: String?) async {
+        // A token already on disk was claimed by a previous process, whose in-memory guard died
+        // with it; without this, every cold start on the same intent would queue it again.
+        // Checked here rather than by the caller so the check and the append are one hop into
+        // this actor: two of them would let interleaved calls both pass before either appends.
+        guard await !isQueued(kind: Self.mergeKind, idempotencyKey: mergeToken) else { return }
+        await enqueue(
+            kind: Self.mergeKind,
+            payload: "{}",
+            clientId: anonymousId,
+            merchantId: merchantId,
+            idempotencyKey: mergeToken
+        )
+        detachDrain()
+    }
+
+    /// [idempotencyKey] is the token itself for a merge row; it never reaches the wire from there.
+    private func isQueued(kind: String, idempotencyKey: String) async -> Bool {
+        await queue.read(now: now()).contains { $0.kind == kind && $0.idempotencyKey == idempotencyKey }
     }
 
     /// Starts a drain without waiting for it: `track` is durable once enqueued, and a caller
@@ -113,7 +162,7 @@ actor InteractionTracker {
     ///
     /// The refusal is the load-bearing half: cancelling alone would not do it, since
     /// `scheduleDrain` uses `Task.init`, which does not inherit cancellation, so the very next
-    /// `track()` would start a fresh, uncancelled drain. One-way: a torn-down tracker is not
+    /// `track()` would start a fresh, uncancelled drain. One-way: a torn-down outbox is not
     /// restartable, matching `Frak.shutdown()`'s contract that you get a live SDK by calling
     /// `Frak.initialize` again.
     ///
@@ -164,6 +213,29 @@ actor InteractionTracker {
         return task
     }
 
+    /// A `SendContext` for one drain, with `resolveMerchantId` memoised for that drain's
+    /// lifetime. `[weak self]`: a strong capture here would be a retain cycle through
+    /// `drainTask`, and the memo itself must live on the actor, not in the closure.
+    private func makeSendContext() -> SendContext {
+        drainMerchantId = nil
+        return SendContext(
+            http: http,
+            resolveMerchantId: { [weak self] in
+                guard let self else { return nil }
+                return await self.memoizedMerchantId()
+            },
+            signProof: signProof
+        )
+    }
+
+    private func memoizedMerchantId() async -> String? {
+        // `if let` because `??` is an autoclosure and rejects `await` on its right-hand side.
+        if let cached = drainMerchantId { return cached }
+        let resolved = await resolveMerchantId()
+        drainMerchantId = resolved
+        return resolved
+    }
+
     private func drain() async {
         // Checked before the read, so a drain started by a `track()` that raced a consent
         // withdrawal never even loads the backlog. The per-event re-read below is what closes
@@ -181,10 +253,11 @@ actor InteractionTracker {
         }
 
         let currentId = await currentClientId()
+        let ctx = makeSendContext()
         var delivered: Set<Int64> = []
-        var retried: [Int64: QueuedEvent] = [:]
+        var retried: [Int64: QueuedRow] = [:]
 
-        for event in pending {
+        eventLoop: for event in pending {
             // `break`, not `return`: the caller that flipped consent is about to `purge()` the
             // whole file, but if that purge does not land, every event this drain already
             // uploaded is still on disk with no record that it went, and the next flush
@@ -195,7 +268,7 @@ actor InteractionTracker {
             // instead — there the queue file must be left exactly as found.
             guard await trackingAllowed() else {
                 logger.info("Tracking was disabled mid-drain; stopping without sending the rest.")
-                break
+                break eventLoop
             }
 
             // Every event `queue.read` returns has already been migrated to a non-nil `rowId`;
@@ -213,43 +286,53 @@ actor InteractionTracker {
                 continue
             }
 
-            let response: HTTPClient.Response
+            guard let sender = senders[event.kind] else { continue }
+
+            let outcome: DeliveryOutcome
             do {
-                response = try await http.post(
-                    event.path,
-                    body: Data(event.body.utf8),
-                    headers: headers(for: event)
-                )
-            } catch let error as FrakError {
-                backoff.recordFailure(Self.backoffKey, from: error)
-                break
+                outcome = try await sender.deliver(row: event, ctx: ctx)
             } catch {
-                // Cancellation, and nothing else — `HTTPClient` maps every transport failure to
-                // a `FrakError`. Returning rather than breaking skips the reconcile below, so a
-                // cancelled drain leaves the file exactly as it found it: re-sending a
-                // delivered event is recoverable server-side, compacting away an undelivered
-                // one is not.
+                // Cancellation, and nothing else — `deliver` is typed `throws(CancellationError)`.
+                // Returning rather than breaking skips the reconcile below, so a cancelled drain
+                // leaves the file exactly as it found it: re-sending a delivered event is
+                // recoverable server-side, compacting away an undelivered one is not.
                 return
             }
 
-            if response.isSuccess {
+            switch outcome {
+            case .delivered:
                 backoff.recordSuccess(Self.backoffKey)
                 delivered.insert(rowId)
-                continue
-            }
-
-            backoff.recordFailure(Self.backoffKey, from: response.toServerError())
-            // Transient: the event is fine, the backend is not. Keep it as it is.
-            if response.status == Self.tooManyRequests || response.status >= Self.serverError { break }
-
-            let failed = event.withFailure()
-            if failed.failures >= Self.maxFailures {
-                logger.warn("Dropping an event the backend keeps rejecting (HTTP \(response.status)).")
+            case .dropped:
                 delivered.insert(rowId)
-            } else {
-                retried[rowId] = failed
+            case .retryable(let error):
+                backoff.recordFailure(Self.backoffKey, from: error)
+                break eventLoop
+            case .rejected:
+                let failed = event.withFailure()
+                if failed.failures >= Self.maxFailures {
+                    logger.warn("Dropping a row the backend keeps rejecting (kind \(event.kind)).")
+                    delivered.insert(rowId)
+                } else {
+                    retried[rowId] = failed
+                }
+                break eventLoop
+            case .hold:
+                // heldSince is never cleared once set, so this measures total time stuck, not
+                // time since the row was last attempted.
+                if let heldSince = event.heldSince {
+                    guard now().timeIntervalSince(heldSince) > sender.holdTimeout else {
+                        break eventLoop
+                    }
+                    logger.warn(
+                        "Dropping a row held past its budget (kind \(event.kind), held \(Int(now().timeIntervalSince(heldSince)))s)."
+                    )
+                    delivered.insert(rowId)
+                    continue eventLoop
+                }
+                retried[rowId] = event.withHeldSince(now())
+                break eventLoop
             }
-            break
         }
 
         // Re-read rather than write back `pending`: a `track` that landed while the drain was
@@ -257,20 +340,23 @@ actor InteractionTracker {
         await queue.reconcile(delivered: delivered, retried: retried, now: now())
     }
 
-    private func enqueue(path: String, body: String, clientId: String?, idempotencyKey: String) async {
+    private func enqueue(
+        kind: String,
+        payload: String,
+        clientId: String?,
+        merchantId: String?,
+        idempotencyKey: String
+    ) async {
         await queue.append(
-            QueuedEvent(
+            QueuedRow(
                 idempotencyKey: idempotencyKey,
-                path: path,
-                body: body,
+                kind: kind,
+                payload: payload,
                 clientId: clientId,
+                merchantId: merchantId,
                 capturedAt: now()
             )
         )
-    }
-
-    private func headers(for event: QueuedEvent) -> [String: String] {
-        event.clientId.map { [Self.clientIdHeader: $0] } ?? [:]
     }
 
     private func idempotencyKey(for interaction: Interaction) -> String {
@@ -280,11 +366,12 @@ actor InteractionTracker {
         return newKey()
     }
 
-    private func interactionBody(merchantId: String, interaction: Interaction, idempotencyKey: String) -> String {
+    /// `merchantId` is deliberately absent: a `RowSender` injects it at send time from
+    /// `QueuedRow.merchantId`, which is what lets a row be captured before any merchant is known.
+    private func interactionBody(interaction: Interaction, idempotencyKey: String) -> String {
         switch interaction.kind {
         case .arrival(let wallet, let clientId, let referrerMerchantId, let timestamp):
             return Self.json([
-                "merchantId": merchantId,
                 "type": "arrival",
                 "referrerWallet": wallet,
                 "referrerClientId": clientId,
@@ -293,7 +380,6 @@ actor InteractionTracker {
             ])
         case .sharing(let timestamp, let purchaseId):
             return Self.json([
-                "merchantId": merchantId,
                 "type": "sharing",
                 // Unix seconds, stamped now and stored: a retry must not restamp it.
                 "sharingTimestamp": timestamp ?? Int64(now().timeIntervalSince1970),
@@ -302,7 +388,6 @@ actor InteractionTracker {
             ])
         case .custom(let customType, let data, _):
             return Self.json([
-                "merchantId": merchantId,
                 "type": "custom",
                 "customType": customType,
                 "data": data,

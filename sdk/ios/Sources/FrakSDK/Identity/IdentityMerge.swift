@@ -6,18 +6,17 @@ import Foundation
 /// there the listener posts and here the SDK does.
 ///
 /// The outbound half (`/merge/initiate`) has no native caller.
+///
+/// The wire post itself now runs through `MergeSender` off the durable queue; this actor only
+/// owns token parsing, the wire-body shape and the same-process claim.
 actor IdentityMerge {
     static let tokenKey = "fmt"
     static let executePath = "/user/identity/merge/execute"
 
-    private let http: HTTPClient
-    private let identity: AnonymousIdStore
     private let logger: FrakLogger
     private var consumed: Set<String> = []
 
-    init(http: HTTPClient, identity: AnonymousIdStore, logger: FrakLogger) {
-        self.http = http
-        self.identity = identity
+    init(logger: FrakLogger) {
         self.logger = logger
     }
 
@@ -25,45 +24,29 @@ actor IdentityMerge {
         URLQuery.parse(url)?.value(for: tokenKey).flatMap { $0.isEmpty ? nil : $0 }
     }
 
-    /// Never throws: this runs off a merchant's deep-link callback. Returns whether the backend
-    /// accepted the merge.
-    ///
-    /// A proof is mandatory, unlike the web arm that must keep working for keyless legacy ids: a
-    /// native id that cannot sign is one the backend is expected to start refusing (see ROLLOUT.md).
-    @discardableResult
-    func execute(mergeToken: String, merchantId: String, anonymousId: String) async -> Bool {
-        // A merchant's router hands the same URL back on every reactivation; each is not a merge.
-        guard !mergeToken.isEmpty, consumed.insert(mergeToken).inserted else { return false }
+    /// The bytes a merge proof signs over. Shared with `MergeSender` so the queued wire post and
+    /// the enclave binding never drift on what is being attested to.
+    static func binding(_ mergeToken: String) -> Data {
+        Data(SHA256.hash(data: Data(mergeToken.utf8)))
+    }
 
-        let binding = Data(SHA256.hash(data: Data(mergeToken.utf8)))
-        guard let proof = await identity.signProof(.merge, merchantId: merchantId, binding: binding) else {
-            logger.warn("Could not sign the merge proof; skipping the identity merge.")
-            return false
-        }
-
-        let payload = [
+    /// The wire body for `executePath`. Nil only if `JSONSerialization` itself fails, which none
+    /// of these plain-string fields can trigger in practice.
+    static func body(mergeToken: String, anonymousId: String, merchantId: String, proof: String) -> Data? {
+        let payload: [String: String] = [
             "mergeToken": mergeToken,
             "targetAnonymousId": anonymousId,
             "merchantId": merchantId,
             "proof": proof,
         ]
-        guard let body = try? JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys]) else {
-            logger.warn("Could not encode the identity merge body.")
-            return false
-        }
+        return try? JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys])
+    }
 
-        do {
-            let response = try await http.post(Self.executePath, body: body)
-            guard response.isSuccess else {
-                logger.warn("Identity merge refused with status \(response.status).")
-                return false
-            }
-            return true
-        } catch is CancellationError {
-            return false
-        } catch {
-            logger.warn("Identity merge could not reach the backend", error)
-            return false
-        }
+    /// Burns a merge token once: true the first time, false on any repeat, including an empty
+    /// token. In-memory only — `EventOutbox.isQueued` is what survives a process restart; this
+    /// closes the reentrancy race between two same-process `handleReferralLink` calls that a
+    /// disk check can't, because both could read "not queued yet" before either enqueues.
+    func claim(_ mergeToken: String) -> Bool {
+        !mergeToken.isEmpty && consumed.insert(mergeToken).inserted
     }
 }

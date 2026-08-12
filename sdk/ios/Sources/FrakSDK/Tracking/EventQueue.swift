@@ -1,84 +1,110 @@
 import Foundation
 
-struct QueuedEvent: Codable, Sendable, Hashable {
-    /// Stamped once at capture, reused across every retry; lets the backend dedupe a request sent twice.
-    let idempotencyKey: String
-    let path: String
-    /// Built once at capture time and never rebuilt: a retry must report when the user acted, not when the network came back.
-    let body: String
-    /// Anonymous id the event was captured under, not necessarily the current one. Nil omits the `x-frak-client-id` header.
-    let clientId: String?
-    let capturedAt: Date
-    /// How many times the backend has permanently rejected this event.
-    let failures: Int
-    /// Local row id, assigned once at enqueue, never sent on the wire. Reconciliation deletes by this, not by `idempotencyKey`, which callers can supply and isn't guaranteed unique. Nil only for a row an old-format file wrote before this field existed.
-    let rowId: Int64?
+/// A queued row: `payload` holds only kind-specific facts true at capture time and is opaque
+/// JSON, not a typed model — see `RowBody.withMerchantId`.
+struct QueuedRow: Codable, Sendable, Hashable {
+    /// Bumped when a new `kind` is introduced; an unregistered kind is skipped by the drain,
+    /// which breaks strict FIFO. A downgrade after a bump deletes the rows a sweep can no longer
+    /// decode — nothing has shipped yet, so that's accepted rather than solved.
+    static let currentSchemaVersion = 1
 
-    // Short keys: this file grows unboundedly on disk.
+    var idempotencyKey: String
+    /// A raw string, not a typed enum: adding a kind must not require touching every switch that reads a row.
+    var kind: String
+    var payload: String
+    /// The anonymous id this was captured under; a sender's header must match it, not the current one.
+    var clientId: String?
+    /// Nil means "not resolved yet"; a sender resolves it at drain.
+    var merchantId: String?
+    var capturedAt: Date
+    /// Permanent rejections so far. At the cap the row is dropped rather than blocking the queue.
+    var failures: Int
+    /// Local row id, never sent on the wire. Reconciliation deletes by this, not by `idempotencyKey`, which callers can supply and isn't guaranteed unique. Nil only for a row an old-format file wrote before this field existed.
+    var rowId: Int64?
+    /// When this row first held, ever — never cleared, so the hold budget measures total time stuck, not time since the last hold.
+    var heldSince: Date?
+    var schemaVersion: Int
+
     enum CodingKeys: String, CodingKey {
+        case rowId = "r"
+        case schemaVersion = "v"
+        case kind
         case idempotencyKey = "k"
-        case path = "p"
-        case body = "b"
         case clientId = "c"
+        case merchantId = "m"
         case capturedAt = "t"
         case failures = "f"
-        case rowId = "r"
+        case heldSince = "h"
+        case payload
     }
 
     init(
         idempotencyKey: String,
-        path: String,
-        body: String,
+        kind: String,
+        payload: String,
         clientId: String?,
+        merchantId: String?,
         capturedAt: Date,
         failures: Int = 0,
-        rowId: Int64? = nil
+        rowId: Int64? = nil,
+        heldSince: Date? = nil,
+        schemaVersion: Int = QueuedRow.currentSchemaVersion
     ) {
         self.idempotencyKey = idempotencyKey
-        self.path = path
-        self.body = body
+        self.kind = kind
+        self.payload = payload
         self.clientId = clientId
+        self.merchantId = merchantId
         self.capturedAt = capturedAt
         self.failures = failures
         self.rowId = rowId
+        self.heldSince = heldSince
+        self.schemaVersion = schemaVersion
     }
 
-    // Explicit decode: `"r"` is absent on rows an old-format file wrote; decodeIfPresent reads
-    // that as nil instead of failing the whole row.
+    // Explicit decode: `"r"`/`"m"`/`"h"` are absent on rows an older build wrote; decodeIfPresent
+    // reads that as nil instead of failing the whole row. A `"v"` above currentSchemaVersion
+    // throws, so the sweep in `EventQueue.read` drops that one line instead of misparsing it.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        let version = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? Self.currentSchemaVersion
+        guard version <= Self.currentSchemaVersion else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .schemaVersion,
+                in: container,
+                debugDescription: "schema version \(version) is newer than \(Self.currentSchemaVersion)"
+            )
+        }
+        schemaVersion = version
         idempotencyKey = try container.decode(String.self, forKey: .idempotencyKey)
-        path = try container.decode(String.self, forKey: .path)
-        body = try container.decode(String.self, forKey: .body)
+        kind = try container.decode(String.self, forKey: .kind)
+        payload = try container.decode(String.self, forKey: .payload)
         clientId = try container.decodeIfPresent(String.self, forKey: .clientId)
+        merchantId = try container.decodeIfPresent(String.self, forKey: .merchantId)
         capturedAt = try container.decode(Date.self, forKey: .capturedAt)
         failures = try container.decode(Int.self, forKey: .failures)
         rowId = try container.decodeIfPresent(Int64.self, forKey: .rowId)
+        heldSince = try container.decodeIfPresent(Date.self, forKey: .heldSince)
     }
 
-    func withFailure() -> QueuedEvent {
-        QueuedEvent(
-            idempotencyKey: idempotencyKey,
-            path: path,
-            body: body,
-            clientId: clientId,
-            capturedAt: capturedAt,
-            failures: failures + 1,
-            rowId: rowId
-        )
+    func withFailure() -> QueuedRow {
+        var copy = self
+        copy.failures += 1
+        return copy
     }
 
     /// Stamps the id after enqueue, or migrates an old-format row.
-    func withRowId(_ newRowId: Int64) -> QueuedEvent {
-        QueuedEvent(
-            idempotencyKey: idempotencyKey,
-            path: path,
-            body: body,
-            clientId: clientId,
-            capturedAt: capturedAt,
-            failures: failures,
-            rowId: newRowId
-        )
+    func withRowId(_ newRowId: Int64) -> QueuedRow {
+        var copy = self
+        copy.rowId = newRowId
+        return copy
+    }
+
+    /// A no-op if already stamped is the caller's job, not this one's.
+    func withHeldSince(_ date: Date) -> QueuedRow {
+        var copy = self
+        copy.heldSince = date
+        return copy
     }
 }
 
@@ -109,9 +135,11 @@ actor EventQueue {
     static let fileName = "frak-events.jsonl"
 
     // Explicit: the default strategy encodes seconds since the Apple reference date, not Unix time.
+    // sortedKeys: deterministic on-disk bytes, pinned by the golden fixtures in EventQueueTests.
     private static let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .millisecondsSince1970
+        encoder.outputFormatting = .sortedKeys
         return encoder
     }()
     private static let decoder: JSONDecoder = {
@@ -163,13 +191,13 @@ actor EventQueue {
     /// Result of a read plus whether any rewrite it triggered actually landed on disk.
     /// `reconcile` must not compact against a non-durable read.
     private struct ReadOutcome {
-        let events: [QueuedEvent]
+        let events: [QueuedRow]
         let durable: Bool
     }
 
     /// Every event still worth sending, oldest first. Expired and over-cap rows are dropped
     /// here, not on write.
-    func read(now: Date) -> [QueuedEvent] {
+    func read(now: Date) -> [QueuedRow] {
         readWithOutcome(now: now).events
     }
 
@@ -197,14 +225,14 @@ actor EventQueue {
         let decoded =
             present
             // A truncated last line is expected after a kill, not a corruption to report.
-            .compactMap { try? Self.decoder.decode(QueuedEvent.self, from: Data($0.utf8)) }
+            .compactMap { try? Self.decoder.decode(QueuedRow.self, from: Data($0.utf8)) }
         seedRowIdIfNeeded(from: decoded)
 
         // Captured before migration runs: if the rewrite below fails, the counter rolls back
         // to this so a later pass doesn't overrun into ids already handed to a fresh append.
         let migrationStart = nextMigrationRowId
         var migratedAny = false
-        let migrated = decoded.map { event -> QueuedEvent in
+        let migrated = decoded.map { event -> QueuedRow in
             guard event.rowId == nil else { return event }
             migratedAny = true
             return event.withRowId(takeNextMigrationRowId())
@@ -245,7 +273,7 @@ actor EventQueue {
     ///
     /// Uses the event's own `capturedAt` as the trim's `now` rather than a fresh clock read;
     /// close enough for a day-scale age bound.
-    func append(_ event: QueuedEvent) {
+    func append(_ event: QueuedRow) {
         do {
             if nextRowId == nil { seedRowIdIfNeeded(from: readExistingForSeed()) }
             let stamped = event.withRowId(takeNextRowId())
@@ -279,14 +307,14 @@ actor EventQueue {
     }
 
     /// Best-effort peek at the file for seeding `nextRowId` from `append`, without `read`'s bounds/migration logic.
-    private func readExistingForSeed() -> [QueuedEvent] {
+    private func readExistingForSeed() -> [QueuedRow] {
         guard FileManager.default.fileExists(atPath: fileURL.path), let data = try? Data(contentsOf: fileURL) else {
             return []
         }
         return
             String(decoding: data, as: UTF8.self)
             .split(separator: "\n")
-            .compactMap { try? Self.decoder.decode(QueuedEvent.self, from: Data($0.utf8)) }
+            .compactMap { try? Self.decoder.decode(QueuedRow.self, from: Data($0.utf8)) }
     }
 
     /// Idempotent. Reserves one id per row still awaiting migration, not just past the highest
@@ -294,7 +322,7 @@ actor EventQueue {
     /// file. `nextMigrationRowId` takes the bottom of that reservation and `nextRowId` the id
     /// above the whole block, so a fresh append never collides with a migration id and the
     /// newest row always carries the highest one.
-    private func seedRowIdIfNeeded(from existing: [QueuedEvent]) {
+    private func seedRowIdIfNeeded(from existing: [QueuedRow]) {
         guard nextRowId == nil else { return }
         let highest = existing.compactMap(\.rowId).max() ?? -1
         // count(where:) needs iOS 18/macOS 15 (SwiftStdlib 6.0), above this package's iOS
@@ -328,7 +356,7 @@ actor EventQueue {
     /// caller relying on durability (the migration pass in `read`) can refuse to trust ids
     /// that never made it to disk.
     @discardableResult
-    func replace(_ events: [QueuedEvent]) -> Bool {
+    func replace(_ events: [QueuedRow]) -> Bool {
         guard !events.isEmpty else {
             // A failed delete must be reported as non-durable too, or a caller believes stale
             // rows are gone when they are still on disk.
@@ -370,7 +398,7 @@ actor EventQueue {
     /// Skips the write entirely when nothing changed, since `readWithOutcome` has already
     /// persisted anything it changed — when `changed` is false, `next` is byte-for-byte what
     /// is on disk right now.
-    func reconcile(delivered: Set<Int64>, retried: [Int64: QueuedEvent], now: Date) {
+    func reconcile(delivered: Set<Int64>, retried: [Int64: QueuedRow], now: Date) {
         let outcome = readWithOutcome(now: now)
         guard outcome.durable else { return }
         let next =
