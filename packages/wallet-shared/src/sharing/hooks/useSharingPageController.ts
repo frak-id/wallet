@@ -26,14 +26,23 @@ import {
     saveConfirmation,
     sharingConfirmationScope,
 } from "../utils/confirmation";
+import { SHARE_BUDGET, truncateForShare } from "../utils/shareBudget";
 import { useShareLink } from "./useShareLink";
+
+/** The resolved share payload, after precedence and sanitization: what actually goes out. */
+export type SharingResolvedShareData = {
+    link: string | null;
+    title: string;
+    text: string;
+    imageUrl?: string;
+};
 
 /**
  * What a host does with an outcome. `share` and `copy` return `true` when the
  * outcome was handed off, so the page does not also act on it locally.
  */
 export type SharingOutcomes = {
-    share?: () => boolean;
+    share?: (data: SharingResolvedShareData) => boolean;
     copy?: () => boolean;
     dismiss: () => void;
     shareAgain?: () => void;
@@ -68,6 +77,13 @@ export type SharingPageControllerInput = {
     };
     /** A host's cached headline, painted until the real query resolves. */
     seedReward?: string;
+    /**
+     * Per-call overrides for the share title/text/image, highest precedence tier.
+     * See docs/plans/native-sdk/10-native-share-payload.md §5.
+     */
+    shareTitle?: string;
+    shareText?: string;
+    shareImage?: string;
     source: SharingSource;
     installUrl: string | null;
     chrome: SharingChrome;
@@ -87,6 +103,42 @@ export type SharingPageControllerInput = {
 };
 
 /**
+ * Strips control characters (`\n` in `text` excepted) and RTL/bidi overrides a
+ * merchant field could otherwise smuggle in. `\p{Cc}` covers C0/C1 without
+ * spelling out literal control-character ranges.
+ */
+const CONTROL_CHARS_EXCEPT_NEWLINE = /(?!\n)\p{Cc}/gu;
+const BIDI_OVERRIDES = /[\u202a-\u202e\u2066-\u2069]/g;
+
+function sanitizeShareText(value: string): string {
+    return truncateForShare(
+        value
+            .replace(CONTROL_CHARS_EXCEPT_NEWLINE, "")
+            .replace(BIDI_OVERRIDES, "")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim(),
+        SHARE_BUDGET.text
+    );
+}
+
+function sanitizeShareTitle(value: string): string {
+    return truncateForShare(
+        sanitizeShareText(value).replace(/\n/g, " "),
+        SHARE_BUDGET.title
+    );
+}
+
+/** `""` is "no override", not "override with nothing" — never let a blank win a precedence tier. */
+function firstNonEmpty(
+    ...values: (string | null | undefined)[]
+): string | undefined {
+    for (const value of values) {
+        if (value) return value;
+    }
+    return undefined;
+}
+
+/**
  * Everything the sharing page decides, for every surface that renders it.
  * Returns `SharingPageProps` whole, so a consumer is
  * `<SharingPage {...useSharingPageController(...)} />`.
@@ -102,6 +154,9 @@ export function useSharingPageController({
     defaultAttribution,
     rewardQuery,
     seedReward,
+    shareTitle,
+    shareText,
+    shareImage,
     source,
     installUrl,
     chrome,
@@ -213,6 +268,39 @@ export function useSharingPageController({
         ]
     );
 
+    /**
+     * Precedence per docs/plans/native-sdk/10-native-share-payload.md §5: per-call
+     * override > selected product > merchant translation > bundled default. Sanitized
+     * and truncated once here so web, Tauri and native all see the same string (§6b).
+     */
+    const shareData: SharingResolvedShareData = useMemo(() => {
+        const title = firstNonEmpty(
+            shareTitle,
+            selectedProduct?.title,
+            t("sharing.title")
+        );
+        const text = firstNonEmpty(shareText, t("sharing.text"));
+        const imageUrl = firstNonEmpty(
+            shareImage,
+            selectedProduct?.imageUrl,
+            merchant.logoUrl
+        );
+        return {
+            link: sharingLink,
+            title: title ? sanitizeShareTitle(title) : "",
+            text: text ? sanitizeShareText(text) : "",
+            imageUrl,
+        };
+    }, [
+        shareTitle,
+        shareText,
+        shareImage,
+        selectedProduct,
+        merchant.logoUrl,
+        sharingLink,
+        t,
+    ]);
+
     const confirm = useCallback(
         (action: "shared" | "copied") => {
             // See `migrateConfirmation`.
@@ -231,10 +319,10 @@ export function useSharingPageController({
     } = useShareLink(
         sharingLink,
         {
-            title: t("sharing.title"),
-            text: t("sharing.text"),
+            title: shareData.title,
+            text: shareData.text,
             // Rich preview header on native; ignored on web.
-            imageUrl: merchant.logoUrl,
+            imageUrl: shareData.imageUrl,
         },
         {
             source,
@@ -252,7 +340,7 @@ export function useSharingPageController({
         // A host that takes the share also owns the confirmation, and reports no
         // completion back — so this tap is the only share signal we ever get for
         // it. `useShareLink`, which normally emits it, never runs on this path.
-        if (outcomes.share?.()) {
+        if (outcomes.share?.(shareData)) {
             trackEvent("sharing_link_started", {
                 source,
                 merchant_id: merchantId,
@@ -263,7 +351,7 @@ export function useSharingPageController({
         }
         if (!sharingLink) return;
         triggerSharing();
-    }, [outcomes, sharingLink, triggerSharing, source, merchantId]);
+    }, [outcomes, shareData, sharingLink, triggerSharing, source, merchantId]);
 
     const onCopy = useCallback(() => {
         const handedOff = outcomes.copy?.() ?? false;

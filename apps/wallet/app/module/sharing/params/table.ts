@@ -3,10 +3,12 @@ import {
     decodeProductsParam,
     sanitizeSharingProducts,
 } from "@frak-labs/core-sdk";
+import { truncateForShare } from "@frak-labs/wallet-shared/sharing";
 import { decodeHostEmbed } from "@/module/common/utils/hostEmbed";
 import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
 import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme";
 import { sanitizeSeededReward } from "@/module/common/utils/sanitizeSeededReward";
+import { sanitizeShareImage } from "@/module/common/utils/sanitizeShareImage";
 
 /** Where a param may arrive: `query` at load only, `both` also via the activation fragment. */
 export type ParamTransport = "query" | "both";
@@ -48,11 +50,18 @@ const productList = (raw: unknown): SharingPageProduct[] | undefined => {
 };
 
 /**
- * The `/sharing` param contract, read by both the query string and the
- * activation fragment. `merchantId`, `clientId`, `link`, `appName`, `logoUrl`,
- * `products`, `checkoutToken`, `redirectUrl`, `returnScheme` and `sid` are live
- * host/Shopify params: renaming or tightening one is a behaviour change.
+ * A non-empty string clipped to `maxLength`. Truncates rather than rejecting: dropping
+ * an over-long override would silently fall through to the tier below it, so a merchant
+ * who wrote 300 characters would get the generic copy instead of their own, clipped.
  */
+const cappedStr =
+    (maxLength: number) =>
+    (raw: unknown): string | undefined => {
+        const value = str(raw);
+        if (!value) return undefined;
+        return truncateForShare(value, maxLength);
+    };
+
 export const SHARING_PARAMS = {
     merchantId: { decode: str, transport: "query" },
     clientId: { decode: str, transport: "query" },
@@ -77,6 +86,15 @@ export const SHARING_PARAMS = {
 
     /** Pre-formatted reward headline from a host's cache, until the real query resolves. */
     seedReward: { decode: sanitizeSeededReward, transport: "both" },
+
+    /** Per-call share title override; see `SharingRequest.shareTitle` on both native SDKs. */
+    shareTitle: { decode: cappedStr(120), transport: "both" },
+
+    /** Per-call share body override; see `SharingRequest.shareText` on both native SDKs. */
+    shareText: { decode: cappedStr(280), transport: "both" },
+
+    /** Per-call preview image override; see `SharingRequest.shareImage` on both native SDKs. */
+    shareImage: { decode: sanitizeShareImage, transport: "both" },
 
     /**
      * `warm` means a host preloaded the page; it reports

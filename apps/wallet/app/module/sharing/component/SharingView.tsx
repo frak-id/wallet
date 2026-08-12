@@ -3,10 +3,11 @@ import { openExternalUrl } from "@frak-labs/wallet-shared/common/utils/openExter
 import {
     buildInstallUrl,
     SharingPage,
+    translationKeyPathToObject,
     useSharingPageController,
 } from "@frak-labs/wallet-shared/sharing";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Toaster } from "sonner";
 import { useStore } from "zustand";
@@ -65,11 +66,14 @@ export function SharingView({
         sid,
         sdkVersion,
         seedReward,
+        shareTitle,
+        shareText,
+        shareImage,
         state,
         view,
     } = { ...search, ...activation };
 
-    const { t: rawT } = useTranslation();
+    const { t: rawT, i18n } = useTranslation();
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
 
     const embedded = isHostEmbedded(embed);
@@ -91,6 +95,22 @@ export function SharingView({
     // Branding falls back to the merchant config unless the caller overrode it.
     const { data: config } = useMerchantResolvedConfig({ merchantId });
 
+    // A merchant's `sharing.title`/`sharing.text` overrides, which the listener
+    // already merges for the embedded wallet UI but this standalone route did
+    // not: `t()` below resolves `translation` -> `customized` -> `common`, so
+    // adding the merchant's copy to `customized` is all that was missing.
+    useEffect(() => {
+        const translations = config?.sdkConfig?.translations;
+        if (!translations || Object.keys(translations).length === 0) return;
+        i18n.addResourceBundle(
+            i18n.language,
+            "customized",
+            translationKeyPathToObject(translations),
+            true,
+            true
+        );
+    }, [config?.sdkConfig?.translations, i18n]);
+
     // No `#p=` proof here, unlike the listener's builder: this page has no SDK
     // keypair to sign with.
     const installUrl = useMemo(() => {
@@ -110,6 +130,9 @@ export function SharingView({
         },
         defaultAttribution: config?.sdkConfig?.attribution ?? undefined,
         seedReward,
+        shareTitle,
+        shareText,
+        shareImage,
         source: "sharing_page_wallet",
         installUrl,
         chrome: embedded ? { mode: "none" } : { mode: "full" },
@@ -121,7 +144,12 @@ export function SharingView({
         outcomes: {
             // Handed to the SDK: `navigator.share` does not exist in an Android
             // WebView, and the interaction has to be signed by the SDK keypair.
-            share: () => returnToHost("share"),
+            share: (data) =>
+                returnToHost("share", {
+                    title: data.title || undefined,
+                    text: data.text || undefined,
+                    image: data.imageUrl,
+                }),
             // Same reason, but the page carries on afterwards: a host does not
             // re-present it for a copy.
             copy: () => returnToHost("copy"),

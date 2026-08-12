@@ -10,6 +10,23 @@ export type HostResultAction =
     | "ready";
 
 /**
+ * The resolved share payload carried on `action: "share"`. See
+ * docs/plans/native-sdk/10-native-share-payload.md §6 — every field optional,
+ * absent means the pre-payload behaviour (bare link, no title/text/image).
+ *
+ * `rect` (the Share CTA's viewport rect, for the iOS iPad popover anchor) is
+ * part of the frozen wire contract but is not emitted from this surface: the
+ * design-system `Button` in `Footer.tsx` forwards no click event, so there is
+ * no rect to read without widening `SharingActions.onShare` beyond this
+ * lane's scope. Native falls back to its existing centred anchor.
+ */
+export type HostShareResult = {
+    title?: string;
+    text?: string;
+    image?: string;
+};
+
+/**
  * Build the URL that hands an outcome back to a native host. Only safe because
  * the host intercepts this navigation inside its own web view: elsewhere it
  * would be a real scheme launch, exposing `value` to any app claiming the scheme.
@@ -20,6 +37,7 @@ export function buildHostResultUrl({
     sid,
     value,
     expiresAt,
+    share,
 }: {
     scheme: string;
     action: HostResultAction;
@@ -28,12 +46,19 @@ export function buildHostResultUrl({
     value?: string;
     /** When `value` stops being valid, as epoch seconds. */
     expiresAt?: number;
+    /** The resolved share payload, for `action: "share"`. Ignored otherwise. */
+    share?: HostShareResult;
 }): string {
     const params = new URLSearchParams({ action });
     if (sid) params.set("sid", sid);
     if (action === "code" && value) {
         params.set("value", value);
         if (expiresAt !== undefined) params.set("exp", String(expiresAt));
+    }
+    if (action === "share" && share) {
+        if (share.title) params.set("title", share.title);
+        if (share.text) params.set("text", share.text);
+        if (share.image) params.set("image", share.image);
     }
     return `${scheme}://result?${params}`;
 }
@@ -64,12 +89,14 @@ export function sendHostResult({
     sid,
     value,
     expiresAt,
+    share,
 }: {
     scheme?: string;
     action: HostResultAction;
     sid?: string;
     value?: string;
     expiresAt?: number;
+    share?: HostShareResult;
 }): boolean {
     if (!scheme) return false;
     if (!REPEATABLE_ACTIONS.has(action)) {
@@ -78,7 +105,7 @@ export function sendHostResult({
         sentActions.add(key);
     }
     window.location.assign(
-        buildHostResultUrl({ scheme, action, sid, value, expiresAt })
+        buildHostResultUrl({ scheme, action, sid, value, expiresAt, share })
     );
     return true;
 }

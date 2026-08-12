@@ -14,12 +14,10 @@ import type {
     RpcResponse,
 } from "@frak-labs/frame-connector";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
+import { translationKeyPathToObject } from "@frak-labs/wallet-shared/sharing";
 import type { i18n, TOptions } from "i18next";
 import { useStore } from "zustand";
-import {
-    mapI18nConfig,
-    translationKeyPathToObject,
-} from "@/module/utils/i18nMapper";
+import { mapI18nConfig } from "@/module/utils/i18nMapper";
 
 /**
  * TFunction overloads expect `Omit<TOptions, "context"> & { context?: string }` rather than raw
