@@ -45,9 +45,7 @@ internal interface SharingDependencies {
 
     /**
      * A preference, never a gate: it picks the better of two routes that both work, so a false
-     * answer must always degrade to the install page rather than block the handoff. The SDK
-     * manifest's `<queries>` entry makes it reliable here; iOS cannot promise the same, and the
-     * two flows are kept identical.
+     * answer must degrade to the install page rather than block the handoff.
      */
     fun isFrakAppInstalled(): Boolean
 

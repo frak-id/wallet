@@ -165,12 +165,8 @@ export function useSharingPageController({
         confirmed ? true : getSavedConfirmation(confirmationScope)
     );
 
-    // A share made before the sharer was known was banked under a scope that is
-    // about to change. `buildSharingLink` accepts a session wallet with no
-    // `clientId`, so a logged-in user can reach the confirmation inside that
-    // window; without this they are bounced back to the share screen the moment
-    // the anonymous id lands. Consumed once, so a genuinely different share
-    // still drops the confirmation.
+    // A share banked before the sharer was known sits under a scope about to
+    // change. Consumed once, so a different share still drops the confirmation.
     const migrateConfirmation = useRef(false);
 
     // Neither input is settled at mount, and the `useState` initialiser above

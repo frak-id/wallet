@@ -8,16 +8,11 @@ const CONFIRMATION_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 /**
  * What a saved confirmation belongs to: this sharer, this merchant, these
- * products.
- *
- * Keyed on all three because a native host reuses one pooled web view — and so
- * one document, and one `sessionStorage` — across every sheet it opens. Keyed on
- * the merchant alone, a user who shared anything once was sent straight to the
- * success screen for the next hour, whatever they opened the sheet on next.
+ * products. Keyed on all three because a native host reuses one pooled web view
+ * — and so one document, and one `sessionStorage` — across every sheet.
  *
  * Products contribute their identity only (`productId`/`sku`/`link`/`title`),
  * never quantity or price: a cart whose totals moved is still the same share.
- * Sorted, so the same set offered in a different order is the same scope.
  */
 export function sharingConfirmationScope({
     merchantId,

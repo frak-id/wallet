@@ -40,13 +40,8 @@ export function buildHostResultUrl({
 
 /**
  * Outcomes already sent, keyed by session, action and value so a regenerated
- * code still gets through.
- *
- * Scoped by `sid` and not just by action: a native host pools its web view and
- * puts the same document in front of the next sheet, so this module's state
- * outlives the presentation that filled it. Keyed by action alone, the second
- * sheet's Install tap is swallowed here and never reaches the SDK — the button
- * is simply dead, with nothing in either log to say why.
+ * code still gets through. Scoped by `sid` and not by action alone: a native
+ * host pools its web view, so this module's state outlives the sheet.
  */
 const sentActions = new Set<string>();
 

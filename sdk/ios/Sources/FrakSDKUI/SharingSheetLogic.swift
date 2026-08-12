@@ -119,12 +119,9 @@ func sharingExternalRoute(_ url: URL) -> SharingExternalRoute {
     return isAppStoreListing(url) ? .walletStoreListing : .openURL(url)
 }
 
-/// Any App Store listing on `apps.apple.com`, deliberately not matched on the wallet's id.
-///
-/// The overlay is always raised with the wallet's own id, so the id in the URL only has to say
-/// "this is a store listing", not which one. Matching the id itself would tie a constant frozen
-/// into the merchant's binary at submission to a page served live, and the tap would silently
-/// degrade to a plain store handoff the first time either side changed.
+/// Any App Store listing on `apps.apple.com`, deliberately not matched on the wallet's id: the
+/// overlay is always raised with the wallet's own id, so the URL only has to say "store listing".
+/// Matching the id would tie a constant frozen at submission to a page served live.
 ///
 /// Scans path components, so storefront-prefixed forms like `/us/app/name/id123` match.
 func isAppStoreListing(_ url: URL) -> Bool {
