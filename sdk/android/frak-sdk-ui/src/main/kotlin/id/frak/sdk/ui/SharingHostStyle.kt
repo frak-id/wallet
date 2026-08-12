@@ -56,7 +56,6 @@ internal object SharingHostStyle {
         }.isSuccess
     }
 
-    /** Shared with [SharingTrace] so one `adb logcat -s FrakSharing` catches both. */
     private const val TAG: String = "FrakSharing"
 
     /**

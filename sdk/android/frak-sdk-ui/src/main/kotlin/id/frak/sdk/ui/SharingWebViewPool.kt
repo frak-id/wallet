@@ -21,8 +21,6 @@ internal class SharingWebViewPool(
     /** The view [acquire] would hand out, or null when the next sheet gets a cold one. */
     val warmHandle: SharingWebViewHandle? get() = pooled?.takeIf { !lent && !it.rendererGone }
 
-    val hasWarmView: Boolean get() = warmHandle != null
-
     private var warmUrl: String? = null
 
     private var destroyed = false
@@ -38,10 +36,7 @@ internal class SharingWebViewPool(
         discardIfRendererGone()
         if (warmUrl == url) return
         warmUrl = url
-        val trace = SharingTrace()
-        trace.mark("warm load starting")
         val handle = pooled ?: newHandle().also { pooled = it }
-        // Bound rather than left on the shared default, so the warm load's milestones are traceable.
         handle.bind(
             SharingWebViewBinding(
                 sessionId = SharingWebViewBinding.WARM_SESSION_ID,
@@ -50,10 +45,7 @@ internal class SharingWebViewPool(
                     handle.onDocumentReady()
                     // Nobody is looking at this document until a tap.
                     handle.pause()
-                    trace.mark("warm document finished")
                 },
-                onPageVisible = { trace.mark("warm first paint") },
-                onLoadFailed = { trace.mark("warm load FAILED") },
             ),
         )
         // A re-warm after a sheet closed lands on a view this pool paused on its previous cycle.

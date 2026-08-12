@@ -9,6 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -233,7 +234,7 @@ class SharingWebViewPoolTest {
 
         dead.crashRenderer()
 
-        assertFalse("a finished document behind a dead renderer is not a warm view", pool.hasWarmView)
+        assertNull("a finished document behind a dead renderer is not a warm view", pool.warmHandle)
 
         val handle = pool.acquire(binding())
 

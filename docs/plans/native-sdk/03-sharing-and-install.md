@@ -146,17 +146,17 @@ Only keys the fragment actually carries are parsed, on both sides. The result is
 warm URL's params, so a key present-and-undefined would erase the merchant config value beneath
 it rather than leave it alone.
 
-`SharingTrace` records these milestones. It is off unless the tag is enabled:
-`adb shell setprop log.tag.FrakSharing DEBUG` then `adb logcat -s FrakSharing`. `launch (warm
-view, ACTIVATING)` is the line that says the fast path was taken.
+Android used to record these milestones through a `SharingTrace` gated on `adb shell setprop
+log.tag.FrakSharing DEBUG`. It was there to size the tap-to-paint window, that measurement is
+done, and it has been removed; iOS keeps its own.
 
 ### Presentation (iOS)
 
 The latency half of the Android section above is ported; the gesture half is not. What follows
 is only what differs, because the shapes are otherwise deliberately identical — `SharingPageURL.
-warm`/`activationFragment`, `SharingWebViewPool`, `SharingPresentation`, `SharingSheetSkeleton`
-and `SharingTrace` all exist on both platforms with the same names and the same milestone
-strings, so one set of eyes can read either trace.
+warm`/`activationFragment`, `SharingWebViewPool`, `SharingPresentation` and
+`SharingSheetSkeleton` all exist on both platforms with the same names. `SharingTrace` is now
+iOS-only — Android's was removed once it had answered the timing questions it was written for.
 
 **"The tap" is the `isPresented` change.** A merchant flips a `Binding<Bool>` rather than calling
 a method, so `SharingPresenter.launch` runs from `.onChange(of: isPresented)` — the update that

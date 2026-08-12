@@ -31,7 +31,6 @@ internal class SharingSessionBuilder(
     private val dependencies: SharingDependencies,
     private val packageId: String,
     private val sessionId: String,
-    private val trace: SharingTrace,
 ) {
     /**
      * Under a hard ceiling, so a `resolveConfig()` that hangs rather than throws still answers. A
@@ -59,9 +58,7 @@ internal class SharingSessionBuilder(
 
     private suspend fun resolve(request: SharingRequest): SharingBuild {
         val link = dependencies.buildSharingLink(request)
-        trace.mark("  link built")
         val clientId = dependencies.anonymousId()
-        trace.mark("  identity ready")
         if (link == null || clientId == null) {
             return SharingBuild.Unavailable(
                 FrakError.MerchantResolutionFailed("no anonymous id or merchant to build a sharing link from"),
@@ -84,10 +81,8 @@ internal class SharingSessionBuilder(
                     ),
                 )
             }
-        trace.mark("  config resolved")
 
         val seededReward = seedReward(request)
-        trace.mark("  reward seeded")
 
         val appName = merchant.displayName
         val requestLogoUrl = request.logoUrl

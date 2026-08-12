@@ -40,7 +40,6 @@ internal class SharingSheetState(
     private val context: Context,
     private val sessionId: String,
     onFinished: (SharingResult) -> Unit,
-    private val trace: SharingTrace = SharingTrace(),
     /**
      * Where the build runs. Off the main thread deliberately: [scope] is main-confined, so there it
      * queued behind the sheet's entry animation. Tests override it with `EmptyCoroutineContext`.
@@ -94,7 +93,6 @@ internal class SharingSheetState(
             dependencies = dependencies,
             packageId = context.packageName,
             sessionId = sessionId,
-            trace = trace,
         )
 
     /**
@@ -137,7 +135,6 @@ internal class SharingSheetState(
         if (prepareStarted) return
         prepareStarted = true
         scope.launch(workContext) {
-            trace.mark("  prepare running")
             val built =
                 if (Frak.isInitialized) {
                     builder.build(request)
@@ -362,7 +359,6 @@ internal class SharingSheetState(
             }
 
             SharingPageAction.Ready -> {
-                trace.mark("page reported ready")
                 // Settles the tier-3 deadline as well as the skeleton: a fragment activation is a
                 // same-document navigation and may never produce an `onPageFinished`.
                 onPageReady()
@@ -473,7 +469,6 @@ internal class SharingSheetState(
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (unavailable: FrakError) {
-            trace.mark("client call refused: ${unavailable.message}")
             null
         }
 

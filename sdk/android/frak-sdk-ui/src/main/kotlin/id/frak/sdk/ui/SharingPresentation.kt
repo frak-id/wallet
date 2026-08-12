@@ -68,7 +68,6 @@ internal class SharingPresentation(
             request: SharingRequest,
             onFinished: (SharingResult) -> Unit,
         ): SharingPresentation {
-            val trace = SharingTrace()
             val sessionId = UUID.randomUUID().toString()
 
             // Taken before the state exists: whether this view is a finished warm page decides how
@@ -78,13 +77,6 @@ internal class SharingPresentation(
             // A fragment activation is only same-document if the document is actually there;
             // hanging one off a half-loaded page would strand the load.
             val activationBaseUrl = handle.loadedBaseUrl?.takeIf { handle.documentReady }
-            trace.mark(
-                when {
-                    activationBaseUrl != null -> "launch (warm view, ACTIVATING)"
-                    pool.hasWarmView -> "launch (warm view, still loading)"
-                    else -> "launch (COLD view)"
-                },
-            )
 
             val state =
                 SharingSheetState(
@@ -94,7 +86,6 @@ internal class SharingPresentation(
                     context = context,
                     sessionId = sessionId,
                     onFinished = onFinished,
-                    trace = trace,
                     activationBaseUrl = activationBaseUrl,
                 )
 
@@ -102,18 +93,9 @@ internal class SharingPresentation(
                 SharingWebViewBinding(
                     sessionId = sessionId,
                     onAction = state::onPageAction,
-                    onPageReady = {
-                        trace.mark("document finished")
-                        state.onPageReady()
-                    },
-                    onPageVisible = {
-                        trace.mark("first paint")
-                        state.onPageVisible()
-                    },
-                    onLoadFailed = {
-                        trace.mark("load FAILED")
-                        state.onPageUnavailable()
-                    },
+                    onPageReady = state::onPageReady,
+                    onPageVisible = state::onPageVisible,
+                    onLoadFailed = state::onPageUnavailable,
                     onOpenExternal = state::openExternally,
                 ),
             )
