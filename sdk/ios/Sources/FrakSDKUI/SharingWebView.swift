@@ -2,43 +2,6 @@
     import SwiftUI
     import WebKit
 
-    /// What the hosted page can tell the host, over the intercepted return-scheme navigation.
-    enum SharingPageAction: Hashable {
-        case install
-        case dismiss
-        case shareAgain
-        /// The page's own Share button — an ask, not a report: the host signs the interaction.
-        case share
-        case copy
-        case error
-        /// The page has painted. iOS's only paint signal: WebKit exposes no public
-        /// `postVisualStateCallback`, and a fragment activation fires no `didFinish` at all.
-        case ready
-        case code(value: String, expiresAt: Date?)
-
-        /// Unknown actions are nil, not a failure: the page may ship one before the SDK reads it.
-        static func from(action: String, value: String?, exp: String?) -> SharingPageAction? {
-            switch action {
-            case "install": return .install
-            case "dismiss": return .dismiss
-            case "shareAgain": return .shareAgain
-            case "share": return .share
-            case "copy": return .copy
-            case "error": return .error
-            case "ready": return .ready
-            case "code":
-                guard let value, !value.isEmpty else { return nil }
-                // `Int64`, not `Double`: has to agree with Kotlin's `toLongOrNull`, which rejects
-                // "NaN"/"inf".
-                let expiresAt = exp.flatMap(Int64.init).map {
-                    Date(timeIntervalSince1970: TimeInterval($0))
-                }
-                return .code(value: value, expiresAt: expiresAt)
-            default: return nil
-            }
-        }
-    }
-
     /// One sheet's worth of wiring for a `SharingWebView`. Split from the view so a pooled view
     /// can outlive a sheet; rebinding also resets the view's per-load state.
     struct SharingWebViewBinding {
@@ -391,7 +354,11 @@
                     let action = SharingPageAction.from(
                         action: name,
                         value: queryValue(url, "value"),
-                        exp: queryValue(url, "exp")
+                        exp: queryValue(url, "exp"),
+                        shareTitle: queryValue(url, "title"),
+                        shareText: queryValue(url, "text"),
+                        shareImage: queryValue(url, "image"),
+                        shareRect: queryValue(url, "rect")
                     )
                 {
                     binding.onAction(action)

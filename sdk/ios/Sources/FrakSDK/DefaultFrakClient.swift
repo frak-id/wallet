@@ -139,6 +139,19 @@ actor DefaultFrakClient {
         settings.env
     }
 
+    /// `FrakMetadata.name`, for the sharing sheet's tier-3 fallback — the one place a session has
+    /// no resolved config to read a merchant name from. `nonisolated` for the same reason as
+    /// `environment` above: `settings` is a `Sendable` `let`, fixed at construction.
+    nonisolated var metadataName: String? {
+        settings.metadata.name
+    }
+
+    /// `FrakMetadata.lang`, for the same tier-3 fallback: which of the bundled en/fr constants to
+    /// use when there is no resolved config to pick a language from either.
+    nonisolated var metadataLang: FrakLanguage? {
+        settings.metadata.lang
+    }
+
     /// Async because a first read can mint a keypair. `identity`'s eager generation, started in
     /// `init`, means a caller here usually awaits an already-completed result.
     var anonymousId: String? {

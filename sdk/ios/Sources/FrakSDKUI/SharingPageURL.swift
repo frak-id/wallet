@@ -41,7 +41,10 @@ enum SharingPageURL {
         products: String? = nil,
         seededReward: String? = nil,
         /// BCP-47. `lng` is what the page's language detector reads first, ahead of `navigator`.
-        language: String? = nil
+        language: String? = nil,
+        shareTitle: String? = nil,
+        shareText: String? = nil,
+        shareImageURL: String? = nil
     ) -> String {
         var url = "\(walletOrigin)/sharing?embed=native"
         url += "&merchantId=" + PercentEncoding.encode(merchantId)
@@ -53,6 +56,7 @@ enum SharingPageURL {
             ("lng", language),
             ("appName", appName), ("logoUrl", logoURL), ("link", link),
             ("products", products), ("seedReward", seededReward),
+            ("shareTitle", shareTitle), ("shareText", shareText), ("shareImage", shareImageURL),
         ] {
             if let value {
                 url += "&\(key)=" + PercentEncoding.encode(value)
@@ -99,6 +103,9 @@ enum SharingPageURL {
         products: String? = nil,
         logoURL: String? = nil,
         seededReward: String? = nil,
+        shareTitle: String? = nil,
+        shareText: String? = nil,
+        shareImageURL: String? = nil,
         confirmed: Bool = false
     ) -> String {
         var fragment = "#sid=" + PercentEncoding.encode(sessionId)
@@ -108,6 +115,7 @@ enum SharingPageURL {
             // `logoUrl` only when the request overrode it; otherwise the warm URL's config
             // value stands.
             ("link", link), ("products", products), ("logoUrl", logoURL), ("seedReward", seededReward),
+            ("shareTitle", shareTitle), ("shareText", shareText), ("shareImage", shareImageURL),
         ] {
             if let value {
                 fragment += "&\(key)=" + PercentEncoding.encode(value)

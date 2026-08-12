@@ -71,6 +71,14 @@
         private let installPageURL: @Sendable (String, String) async -> String?
         private let isFrakAppInstalled: @Sendable () async -> Bool
         private let openFrakApp: @Sendable () async -> OpenAppResult
+        /// Tier-3's only source of a merchant name: `FrakMetadata.name`, fixed at build time and
+        /// so still readable when `resolveConfig` — this session's only other name source — has
+        /// just thrown. See docs/plans/native-sdk/10-native-share-payload.md §7 "Tier-3 fallback".
+        private let metadataName: @Sendable () -> String?
+        /// `FrakMetadata.lang`; picks which bundled tier-3 constants to use. Nil falls through to
+        /// `.en` — the device-locale rung of that fallback is §8, not this lane.
+        private let metadataLang: @Sendable () -> FrakLanguage?
+        private let imageCache: SharingImagePreviewCache
 
         private var webView: SharingWebView?
         private var session: SharingSession?
@@ -87,7 +95,7 @@
         /// without this a second tap stacks a second chooser, bills a second reward-bearing
         /// interaction, or races two install pages on the one shared web view. A set, matching
         /// Android's `SharingSheetState.claimed`, so `shareAgain` reopens them all at once.
-        private var claimed: Set<SharingPageAction> = []
+        private var claimed: Set<SharingPageAction.Kind> = []
         /// On the wallet's install page rather than the sharing page, so `onPageUnavailable` can
         /// tell a failed install page apart from a failed sharing page.
         private var showingInstallPage = false
@@ -139,7 +147,10 @@
             },
             openFrakApp: @escaping @Sendable () async -> OpenAppResult = {
                 await (try? Frak.client)?.appLink.openFrakApp() ?? .failed
-            }
+            },
+            metadataName: @escaping @Sendable () -> String? = { (try? Frak.client)?.metadataName },
+            metadataLang: @escaping @Sendable () -> FrakLanguage? = { (try? Frak.client)?.metadataLang },
+            imageCache: SharingImagePreviewCache = SharingImagePreviewCache()
         ) {
             self.sessionId = sessionId
             self.trace = trace
@@ -156,6 +167,9 @@
             self.installPageURL = installPageURL
             self.isFrakAppInstalled = isFrakAppInstalled
             self.openFrakApp = openFrakApp
+            self.metadataName = metadataName
+            self.metadataLang = metadataLang
+            self.imageCache = imageCache
         }
 
         func attach(_ webView: SharingWebView) {
@@ -196,11 +210,14 @@
         /// Claims one of the page's buttons for its round trip.
         ///
         /// - Returns: false when that button is already in flight.
-        private func claim(_ action: SharingPageAction) -> Bool {
+        private func claim(_ action: SharingPageAction.Kind) -> Bool {
             claimed.insert(action).inserted
         }
 
-        func share() async {
+        /// The page's own Share button. Uses its reported payload — title/text/image, resolved
+        /// and localised by the page — rather than `session.shareTitle`, which only tier 3
+        /// (`fallBack(to:)`) still reads: this path always has a page, so the page's answer wins.
+        func share(_ payload: SharingSharePayload) async {
             guard let session else { return }
             // The tier-3 fallback races a page action that arrives in the same turn; without this
             // a chooser it already raised is stacked under a second one, and both attribute.
@@ -210,7 +227,18 @@
             // dismissed underneath one.
             // After the chooser, only on success: this interaction pays out, so recording it on
             // intent would reward a cancelled chooser.
-            guard await NativeShare.share(link: session.link, title: session.shareTitle) else {
+            guard
+                await NativeShare.share(
+                    // `session.shareTitle` (the merchant display name) only as a defensive floor:
+                    // every current page build always resolves a non-empty title/text of its own.
+                    link: session.link,
+                    title: payload.title ?? session.shareTitle,
+                    text: payload.text,
+                    imageURL: payload.imageURL,
+                    imageCache: imageCache,
+                    anchorRect: payload.rect
+                )
+            else {
                 // Released, unlike the success path: the page is still on its sharing screen.
                 claimed.remove(.share)
                 return
@@ -336,8 +364,8 @@
                 }
             // The page draws both buttons; this model performs them — the SDK keypair the page
             // cannot reach has to sign the interaction.
-            case .share:
-                Task { await share() }
+            case .share(let payload):
+                Task { await share(payload) }
             case .copy:
                 Task { await copy() }
             case .code(let value, let expiresAt):
@@ -544,12 +572,17 @@
             do {
                 config = try await resolveConfig()
             } catch is FrakError {
-                // No page, but the link is already built; the native-share fallback fires from this.
+                // Tier 3: the link stands alone. Config is unreachable on this path by
+                // construction, so the fallback copy cannot read it — see
+                // docs/plans/native-sdk/10-native-share-payload.md §7.
+                let fallback = tier3ShareData(request: request, productName: metadataName(), lang: metadataLang())
                 return SharingSession(
                     walletOrigin: walletOrigin,
                     returnScheme: returnScheme,
                     link: link,
-                    shareTitle: nil,
+                    shareTitle: fallback.title,
+                    shareText: fallback.text,
+                    shareImageURL: request.shareImageURL,
                     pageURL: nil
                 )
             }
@@ -566,6 +599,9 @@
                 walletOrigin: walletOrigin,
                 returnScheme: returnScheme,
                 link: link,
+                // Not read on this path: a session with a page gets its OS-share copy from the
+                // page's own `action=share` payload, not from here — see `share(_:)`. Only reached
+                // if the page never loads and `fallBack(to:)` fires instead.
                 shareTitle: name,
                 pageURL: SharingPageURL.build(
                     walletOrigin: walletOrigin,
@@ -578,7 +614,10 @@
                     link: pageLink,
                     products: productsJSON,
                     seededReward: seeded,
-                    language: language
+                    language: language,
+                    shareTitle: request.shareTitle,
+                    shareText: request.shareText,
+                    shareImageURL: request.shareImageURL
                 ),
                 // Rebuilt from the same resolved config as `pageURL`: if the pool warmed against
                 // anything else the strings differ and the session does a full load instead.
@@ -597,7 +636,10 @@
                     products: productsJSON,
                     // Only when the request overrides the config; the warm URL already carries it.
                     logoURL: requestLogoURL,
-                    seededReward: seeded
+                    seededReward: seeded,
+                    shareTitle: request.shareTitle,
+                    shareText: request.shareText,
+                    shareImageURL: request.shareImageURL
                 )
             )
         }
@@ -648,7 +690,14 @@
             settleContent()
 
             // Same rule as `share()`: the interaction follows the chooser rather than announcing it.
-            let shared = await NativeShare.share(link: session.link, title: session.shareTitle)
+            let imageURL = session.shareImageURL.flatMap(URL.init(string:))
+            let shared = await NativeShare.share(
+                link: session.link,
+                title: session.shareTitle,
+                text: session.shareText,
+                imageURL: imageURL,
+                imageCache: imageCache
+            )
             if shared { await trackSharing() }
             report(shared ? .shared(link: session.link) : .dismissed)
             close()

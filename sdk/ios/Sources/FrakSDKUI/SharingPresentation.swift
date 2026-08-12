@@ -82,6 +82,7 @@
             install: FrakInstallPresentation,
             detectInstall: Bool,
             language: String?,
+            imageCache: SharingImagePreviewCache,
             onOutcome: @escaping (SharingResult) -> Void,
             onClose: @escaping () -> Void
         ) -> SharingPresentation {
@@ -105,7 +106,8 @@
                 activationBaseURL: activationBaseURL,
                 install: install,
                 detectInstall: detectInstall,
-                language: language
+                language: language,
+                imageCache: imageCache
             )
             model.onOutcome = onOutcome
             model.onClose = onClose
@@ -161,6 +163,10 @@
 
         private var phase: Phase = .idle
         private var pool: SharingWebViewPool?
+        /// Shared with every `SharingSheetModel` this presenter starts, so a logo prefetched here
+        /// resolves instantly at the tap instead of paying `SharingImagePreview.tapDeadlineSeconds`
+        /// again. One per presenter, not per session: the merchant logo rarely changes mid-app-run.
+        private let imageCache = SharingImagePreviewCache()
 
         /// The BCP-47 tag the pool was warmed on, so a re-drive rebuilds the identical URL.
         private var warmLanguage: String?
@@ -191,6 +197,15 @@
             // that banks only DNS/TLS/bundle rather than the queries.
             guard let config = try? await client.config.resolve() else { return }
             trace.mark("warm config ready")
+
+            // `await` here only crosses into the actor to start the fetch `Task` — it does not
+            // wait for the image itself, so `warm()` is not slowed down by a slow CDN. A product
+            // image (known only at tap time) is not prefetchable here, and a per-call
+            // `shareImageURL` override takes precedence anyway, so this is only ever a possible
+            // win, never a correctness requirement.
+            if let logoURL = config.displayLogoURL, let url = URL(string: logoURL) {
+                await imageCache.prefetch(url)
+            }
 
             poolIfPossible()?
                 .warm(
@@ -238,6 +253,7 @@
                 install: install,
                 detectInstall: detectInstall,
                 language: language,
+                imageCache: imageCache,
                 onOutcome: onOutcome,
                 onClose: onClose
             )
