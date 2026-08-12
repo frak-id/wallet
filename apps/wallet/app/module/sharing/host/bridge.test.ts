@@ -139,6 +139,38 @@ describe("sendHostResult", () => {
         expect(assign).toHaveBeenCalledTimes(2);
     });
 
+    it("lets the next sheet repeat an outcome the previous one already sent", () => {
+        // A pooled web view hands the same document to the next presentation, so
+        // this module's state outlives the session that filled it. Keyed by
+        // action alone, the second sheet's Install tap died here.
+        expect(
+            sendHostResult({
+                scheme: "frak-acme",
+                action: "install",
+                sid: "s1",
+            })
+        ).toBe(true);
+        sendHostResult({ scheme: "frak-acme", action: "install", sid: "s2" });
+
+        expect(assign).toHaveBeenCalledTimes(2);
+        expect(assign).toHaveBeenLastCalledWith(
+            "frak-acme://result?action=install&sid=s2"
+        );
+    });
+
+    it("still refuses a second tap inside one sheet", () => {
+        const args = {
+            scheme: "frak-acme",
+            action: "install",
+            sid: "s1",
+        } as const;
+
+        sendHostResult(args);
+        sendHostResult(args);
+
+        expect(assign).toHaveBeenCalledTimes(1);
+    });
+
     it("lets a regenerated code through, but not the same one twice", () => {
         expect(
             sendHostResult({

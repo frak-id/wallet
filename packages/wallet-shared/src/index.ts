@@ -226,6 +226,7 @@ export {
     type SharingShareState,
     type SharingT,
     saveConfirmation,
+    sharingConfirmationScope,
     sharingKey,
     useShareLink,
     useSharingPageController,

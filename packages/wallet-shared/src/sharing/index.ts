@@ -35,4 +35,5 @@ export {
     clearConfirmation,
     getSavedConfirmation,
     saveConfirmation,
+    sharingConfirmationScope,
 } from "./utils/confirmation";

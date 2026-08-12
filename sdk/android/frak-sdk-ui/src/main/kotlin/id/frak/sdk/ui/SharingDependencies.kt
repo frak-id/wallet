@@ -43,6 +43,14 @@ internal interface SharingDependencies {
 
     suspend fun track(interaction: Interaction): FrakResult<Unit>
 
+    /**
+     * A preference, never a gate: it picks the better of two routes that both work, so a false
+     * answer must always degrade to the install page rather than block the handoff. The SDK
+     * manifest's `<queries>` entry makes it reliable here; iOS cannot promise the same, and the
+     * two flows are kept identical.
+     */
+    fun isFrakAppInstalled(): Boolean
+
     suspend fun installPageUrl(
         returnScheme: String,
         sessionId: String,
@@ -82,6 +90,8 @@ internal object FrakClientDependencies : SharingDependencies {
         )
 
     override suspend fun track(interaction: Interaction): FrakResult<Unit> = Frak.client.tracking.track(interaction)
+
+    override fun isFrakAppInstalled(): Boolean = Frak.client.appLink.isFrakAppInstalled()
 
     override suspend fun installPageUrl(
         returnScheme: String,

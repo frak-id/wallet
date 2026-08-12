@@ -5,7 +5,7 @@ import type {
     InteractionTypeKey,
     SharingPageProduct,
 } from "@frak-labs/core-sdk";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Address } from "viem";
 import { trackEvent } from "../../common/analytics";
@@ -24,6 +24,7 @@ import {
     clearConfirmation,
     getSavedConfirmation,
     saveConfirmation,
+    sharingConfirmationScope,
 } from "../utils/confirmation";
 import { useShareLink } from "./useShareLink";
 
@@ -154,16 +155,42 @@ export function useSharingPageController({
         });
     }, [merchantId, sdkVersion, warm, chrome.mode]);
 
-    const [showConfirmation, setShowConfirmation] = useState(
+    const confirmationScope = useMemo(
         () =>
-            confirmed || (merchantId ? getSavedConfirmation(merchantId) : false)
+            sharingConfirmationScope({ merchantId, clientId, products: items }),
+        [merchantId, clientId, items]
     );
 
-    // A host delivers `confirmed` on the already-loaded page, and the `useState`
-    // initialiser above does not run twice.
+    const [showConfirmation, setShowConfirmation] = useState(() =>
+        confirmed ? true : getSavedConfirmation(confirmationScope)
+    );
+
+    // A share made before the sharer was known was banked under a scope that is
+    // about to change. `buildSharingLink` accepts a session wallet with no
+    // `clientId`, so a logged-in user can reach the confirmation inside that
+    // window; without this they are bounced back to the share screen the moment
+    // the anonymous id lands. Consumed once, so a genuinely different share
+    // still drops the confirmation.
+    const migrateConfirmation = useRef(false);
+
+    // Neither input is settled at mount, and the `useState` initialiser above
+    // does not run twice: a host delivers `confirmed` on the already-loaded
+    // page, and `clientId` is minted asynchronously. Re-reading rather than
+    // latching is what sends a *different* share back to the share screen — the
+    // scope changes, storage has nothing for it, false.
     useEffect(() => {
-        if (confirmed) setShowConfirmation(true);
-    }, [confirmed]);
+        if (confirmed) {
+            setShowConfirmation(true);
+            return;
+        }
+        if (migrateConfirmation.current) {
+            migrateConfirmation.current = false;
+            saveConfirmation(confirmationScope);
+            setShowConfirmation(true);
+            return;
+        }
+        setShowConfirmation(getSavedConfirmation(confirmationScope));
+    }, [confirmed, confirmationScope]);
 
     const selectedProduct = items[selectedProductIndex];
 
@@ -192,11 +219,13 @@ export function useSharingPageController({
 
     const confirm = useCallback(
         (action: "shared" | "copied") => {
-            if (merchantId) saveConfirmation(merchantId);
+            // See `migrateConfirmation`.
+            if (!clientId) migrateConfirmation.current = true;
+            saveConfirmation(confirmationScope);
             setShowConfirmation(true);
             outcomes.onConfirmed?.(action);
         },
-        [merchantId, outcomes]
+        [clientId, confirmationScope, outcomes]
     );
 
     const {
@@ -266,6 +295,7 @@ export function useSharingPageController({
         // A host may re-present this same URL; a stale flag would land the user
         // back on the confirmation screen.
         clearConfirmation();
+        migrateConfirmation.current = false;
         setShowConfirmation(false);
         outcomes.shareAgain?.();
     }, [outcomes]);

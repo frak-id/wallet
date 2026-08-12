@@ -99,6 +99,43 @@ func sharingDecision(
     return .showPage(navigation)
 }
 
+/// Where a link the hosted page handed out should go.
+enum SharingExternalRoute: Equatable {
+    /// Not http(s), so it is an app-to-app launch the merchant never sanctioned.
+    case ignore
+    /// The wallet's own App Store listing. The caller decides between a deep link and the
+    /// store overlay — that needs a probe this cannot make.
+    case walletStoreListing
+    /// Anything else the page linked to.
+    case openURL(URL)
+}
+
+/// Classifies an outbound link from the sharing/install page.
+func sharingExternalRoute(_ url: URL) -> SharingExternalRoute {
+    // Case-insensitive, like Android's `normalizeScheme()`: `URL` keeps whatever case the page
+    // wrote, and an exact compare would silently drop a legitimate `HTTPS:` link.
+    let scheme = url.scheme?.lowercased()
+    guard scheme == "https" || scheme == "http" else { return .ignore }
+    return isAppStoreListing(url) ? .walletStoreListing : .openURL(url)
+}
+
+/// Any App Store listing on `apps.apple.com`, deliberately not matched on the wallet's id.
+///
+/// The overlay is always raised with the wallet's own id, so the id in the URL only has to say
+/// "this is a store listing", not which one. Matching the id itself would tie a constant frozen
+/// into the merchant's binary at submission to a page served live, and the tap would silently
+/// degrade to a plain store handoff the first time either side changed.
+///
+/// Scans path components, so storefront-prefixed forms like `/us/app/name/id123` match.
+func isAppStoreListing(_ url: URL) -> Bool {
+    guard url.host?.caseInsensitiveCompare("apps.apple.com") == .orderedSame else { return false }
+    return url.pathComponents.contains { component in
+        guard component.hasPrefix("id") else { return false }
+        let digits = component.dropFirst(2)
+        return !digits.isEmpty && digits.allSatisfy(\.isNumber)
+    }
+}
+
 /// What `SharingWebViewPool` should do with a view a closing sheet just handed back.
 enum SharingReclaim: Equatable {
     /// Never warmed, so there is nothing to put back — just stop the closed session reporting.

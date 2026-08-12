@@ -220,6 +220,94 @@ describe("confirmation lifecycle", () => {
         expect(shareAgain).toHaveBeenCalled();
     });
 
+    it("restores a confirmation for the share it was saved under", () => {
+        const products = [{ productId: "sku-1", title: "Kettle" }];
+        const first = setup({ copy: () => true }, { products });
+        act(() => first.result.current.actions.onCopy());
+        expect(first.result.current.view).toBe("confirmation");
+
+        // A pooled web view survives the sheet, so the next one re-reads this.
+        expect(setup({}, { products }).result.current.view).toBe(
+            "confirmation"
+        );
+    });
+
+    it("does not carry a confirmation over to a different share", () => {
+        const first = setup(
+            { copy: () => true },
+            { products: [{ productId: "sku-1", title: "Kettle" }] }
+        );
+        act(() => first.result.current.actions.onCopy());
+        expect(first.result.current.view).toBe("confirmation");
+
+        // Same merchant, same sharer, different product: a share the user has
+        // not made yet, so the success screen is not theirs to see.
+        const second = setup(
+            {},
+            { products: [{ productId: "sku-2", title: "Teapot" }] }
+        );
+        expect(second.result.current.view).toBe("share");
+    });
+
+    it("re-reads once the client id is minted", () => {
+        // `clientId` resolves asynchronously, so the scope the page first
+        // renders with is not the one the share was saved under.
+        const first = setup({ copy: () => true });
+        act(() => first.result.current.actions.onCopy());
+
+        const { result, rerender } = renderHook(
+            ({ id }: { id?: string }) =>
+                useSharingPageController({
+                    merchantId,
+                    clientId: id,
+                    link: "https://acme.example/kettle",
+                    merchant: { name: "Acme" },
+                    source: "sharing_page_wallet",
+                    installUrl: null,
+                    chrome: { mode: "full" },
+                    t: (key) => key,
+                    outcomes: { dismiss: vi.fn(), install: vi.fn() },
+                }),
+            { wrapper, initialProps: { id: undefined as string | undefined } }
+        );
+
+        expect(result.current.view).toBe("share");
+        rerender({ id: clientId });
+        expect(result.current.view).toBe("confirmation");
+    });
+
+    it("keeps a confirmation earned before the client id landed", () => {
+        // `buildSharingLink` takes a session wallet with no `clientId`, so the
+        // confirmation is reachable inside that window and the scope moves
+        // underneath it.
+        const { result, rerender } = renderHook(
+            ({ id }: { id?: string }) =>
+                useSharingPageController({
+                    merchantId,
+                    clientId: id,
+                    wallet: "0x0000000000000000000000000000000000000001",
+                    link: "https://acme.example/kettle",
+                    merchant: { name: "Acme" },
+                    source: "sharing_page_wallet",
+                    installUrl: null,
+                    chrome: { mode: "full" },
+                    t: (key) => key,
+                    outcomes: {
+                        dismiss: vi.fn(),
+                        install: vi.fn(),
+                        copy: () => true,
+                    },
+                }),
+            { wrapper, initialProps: { id: undefined as string | undefined } }
+        );
+
+        act(() => result.current.actions.onCopy());
+        expect(result.current.view).toBe("confirmation");
+
+        rerender({ id: clientId });
+        expect(result.current.view).toBe("confirmation");
+    });
+
     it("reports the completed action to the host", () => {
         const onConfirmed = vi.fn();
         const { result } = setup({ onConfirmed, copy: () => false });

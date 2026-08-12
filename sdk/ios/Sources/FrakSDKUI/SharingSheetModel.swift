@@ -74,6 +74,7 @@
         private let bestReward: @Sendable (String?, [ProductDetails]) async -> BestReward?
         private let track: @Sendable (Interaction) async -> Result<Void, FrakError>
         private let installPageURL: @Sendable (String, String) async -> String?
+        private let isFrakAppInstalled: @Sendable () async -> Bool
         private let openFrakApp: @Sendable () async -> OpenAppResult
 
         private var webView: SharingWebView?
@@ -123,6 +124,12 @@
             installPageURL: @escaping @Sendable (String, String) async -> String? = { returnScheme, sessionId in
                 try? await Frak.client.appLink.installPageURL(returnScheme: returnScheme, sessionId: sessionId)
             },
+            // Answers false when the merchant never declared the wallet's scheme in
+            // `LSApplicationQueriesSchemes`, so it may only ever pick the *better* of two working
+            // routes — never gate the install handoff itself.
+            isFrakAppInstalled: @escaping @Sendable () async -> Bool = {
+                await (try? Frak.client)?.appLink.isFrakAppInstalled() ?? false
+            },
             openFrakApp: @escaping @Sendable () async -> OpenAppResult = {
                 await (try? Frak.client)?.appLink.openFrakApp() ?? .failed
             }
@@ -137,6 +144,7 @@
             self.bestReward = bestReward
             self.track = track
             self.installPageURL = installPageURL
+            self.isFrakAppInstalled = isFrakAppInstalled
             self.openFrakApp = openFrakApp
         }
 
@@ -276,6 +284,13 @@
                 // asked to install has started an install whether or not the page URL resolves.
                 report(.installStarted)
                 Task {
+                    // The wallet is already here, so the install page has nothing left to do: its
+                    // code exists only to reconnect an identity across a fresh install, and the
+                    // deep link carries that identity — merchant, anonymous id and proof — itself.
+                    if await isFrakAppInstalled(), await openFrakApp() == .openedApp {
+                        close()
+                        return
+                    }
                     // The install page rather than the store: it is the only iOS route that
                     // keeps attribution.
                     guard
@@ -321,13 +336,25 @@
             }
         }
 
+        /// Where the page's own outbound links go. The wallet's store listing prefers the app over
+        /// the overlay, so an already-installed wallet does not get offered its own store page.
         func openExternally(_ url: URL) {
-            // Anything but http(s) is an app-to-app launch the merchant never sanctioned.
-            guard url.scheme == "https" || url.scheme == "http" else { return }
-            switch storeOverlay.present(for: url) {
-            case .handled: return
-            case .needsAppHandoff: Task { _ = await openFrakApp() }
-            case .notAListing: Task { _ = await UIApplication.shared.open(url) }
+            switch sharingExternalRoute(url) {
+            case .ignore:
+                return
+            case .openURL(let url):
+                Task { _ = await UIApplication.shared.open(url) }
+            case .walletStoreListing:
+                Task {
+                    // Probed, not assumed installed-by-absence: the overlay is always raised on the
+                    // production listing, so on a device carrying a dev build it offers GET for a
+                    // wallet that is already there — and unlike the store, the deep link carries
+                    // attribution.
+                    if await isFrakAppInstalled(), await openFrakApp() == .openedApp { return }
+                    // No scene to raise an overlay in. Opening the listing here would send an
+                    // already-installed wallet's owner to its own store page, so hand off instead.
+                    if !storeOverlay.present() { _ = await openFrakApp() }
+                }
             }
         }
 

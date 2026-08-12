@@ -5,16 +5,33 @@
     Built by `vite.standalone.config.ts` and served by nginx at `/sharing`
     (see `nginx.conf`). Deliberately minimal: this page is opened inside SDK
     web views and as a post-purchase handoff, so everything that only matters
-    to the installable wallet app (manifest, Tauri viewport shim, PWA meta,
-    apple-itunes-app banner) is absent on purpose.
+    to the installable wallet app (manifest, PWA meta, apple-itunes-app
+    banner) is absent on purpose. The viewport zoom lock is not one of those:
+    the SPA keys it off Tauri, this page keys it off `embed=native`.
 -->
 <html lang="en">
     <head>
         <meta charset="utf-8">
         <meta
+            id="viewport"
             name="viewport"
             content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
         >
+        <script>
+        // Pinch-zoom off inside a native host's web view only. The SDK presents this
+        // page as a fixed-height sheet it also drags, so a pinch there fights the
+        // sheet's own gesture and strands the user on a zoomed document with no
+        // chrome to reset it. A plain web visit keeps zoom — WCAG 1.4.4 wants it.
+        // The SPA shell runs the same swap for Tauri; see index.html.
+        if (new URLSearchParams(location.search).get("embed") === "native") {
+            document
+                .getElementById("viewport")
+                ?.setAttribute(
+                    "content",
+                    "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content"
+                );
+        }
+        </script>
 
         <title>Share &amp; earn | Frak</title>
         <meta

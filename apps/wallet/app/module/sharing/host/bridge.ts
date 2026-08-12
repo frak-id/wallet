@@ -38,7 +38,16 @@ export function buildHostResultUrl({
     return `${scheme}://result?${params}`;
 }
 
-/** Outcomes already sent, keyed by action and value so a regenerated code still gets through. */
+/**
+ * Outcomes already sent, keyed by session, action and value so a regenerated
+ * code still gets through.
+ *
+ * Scoped by `sid` and not just by action: a native host pools its web view and
+ * puts the same document in front of the next sheet, so this module's state
+ * outlives the presentation that filled it. Keyed by action alone, the second
+ * sheet's Install tap is swallowed here and never reaches the SDK — the button
+ * is simply dead, with nothing in either log to say why.
+ */
 const sentActions = new Set<string>();
 
 /** Actions exempt from the dedupe: repeated presses, plus a per-presentation `ready` ping. */
@@ -49,9 +58,10 @@ const REPEATABLE_ACTIONS: ReadonlySet<HostResultAction> = new Set([
 ]);
 
 /**
- * Hand an outcome to the host, at most once per page bar [REPEATABLE_ACTIONS]:
- * the document stays alive while the host intercepts the navigation, so a
- * second tap would otherwise send a duplicate. Returns whether it was issued.
+ * Hand an outcome to the host, at most once per session bar
+ * [REPEATABLE_ACTIONS]: the document stays alive while the host intercepts the
+ * navigation, so a second tap would otherwise send a duplicate. Returns
+ * whether it was issued.
  */
 export function sendHostResult({
     scheme,
@@ -68,7 +78,7 @@ export function sendHostResult({
 }): boolean {
     if (!scheme) return false;
     if (!REPEATABLE_ACTIONS.has(action)) {
-        const key = value === undefined ? action : `${action}:${value}`;
+        const key = [sid ?? "", action, value ?? ""].join("\u0000");
         if (sentActions.has(key)) return true;
         sentActions.add(key);
     }

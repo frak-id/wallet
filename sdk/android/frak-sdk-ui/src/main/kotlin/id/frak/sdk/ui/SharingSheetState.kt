@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import id.frak.sdk.Frak
+import id.frak.sdk.OpenAppResult
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.sharing.SharingRequest
 import id.frak.sdk.tracking.Interaction
@@ -371,6 +372,15 @@ internal class SharingSheetState(
         val current = session ?: return
         if (!claim(SharingPageAction.Install)) return
         outcome.launch {
+            // The wallet is already here, so the install page has nothing left to do: its code
+            // exists only to reconnect an identity across a fresh install, and the deep link
+            // openFrakApp takes carries that identity — merchant, anonymous id, proof — itself.
+            if (guarded { dependencies.isFrakAppInstalled() } == true &&
+                guarded { dependencies.openFrakApp() } == OpenAppResult.OpenedApp
+            ) {
+                finish(SharingResult.InstallStarted)
+                return@launch
+            }
             // In-sheet, not to the store: that page owns install code, store link and
             // installed-wallet routing.
             val page = guarded { dependencies.installPageUrl(current.returnScheme, sessionId) }

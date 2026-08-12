@@ -7,6 +7,7 @@ import android.os.Looper.getMainLooper
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import id.frak.sdk.Frak
+import id.frak.sdk.OpenAppResult
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.rewards.BestReward
 import kotlinx.coroutines.CompletableDeferred
@@ -559,6 +560,71 @@ class SharingSheetStateTest {
 
             assertEquals(1, client.openFrakAppCount)
             assertEquals(SharingResult.InstallStarted, result)
+        }
+
+    @Test
+    fun `an installed wallet is deep linked instead of shown the install page`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.walletInstalled = true
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            assertEquals("the deep link carries the identity itself", 1, client.openFrakAppCount)
+            assertEquals(
+                "an install code has nothing to reconnect on a device that already has the wallet",
+                0,
+                client.installPageUrlCount,
+            )
+            assertEquals(SharingResult.InstallStarted, result)
+        }
+
+    @Test
+    fun `a probe the merchant's manifest refused still reaches the install page`() =
+        runTest {
+            val client = FakeSharingClient()
+            // What a missing `<queries>` entry looks like from here: installed, answered false.
+            client.walletInstalled = false
+            val state = newState(client) {}
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            val view = WebView(context)
+            state.attach(view)
+
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            assertEquals("a refused probe must degrade, never block", client.installPage, shadowOf(view).lastLoadedUrl)
+            assertEquals(0, client.openFrakAppCount)
+        }
+
+    @Test
+    fun `a deep link nothing handles falls through to the install page`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.walletInstalled = true
+            // The probe said yes and the launch still found no handler — the page is the fallback.
+            client.openAppResult = OpenAppResult.Failed
+            val state = newState(client) {}
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            val view = WebView(context)
+            state.attach(view)
+
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            assertEquals(1, client.openFrakAppCount)
+            assertEquals(client.installPage, shadowOf(view).lastLoadedUrl)
         }
 
     @Test

@@ -73,10 +73,24 @@ internal class FakeSharingClient : SharingDependencies {
         return FrakResult.Success(Unit)
     }
 
+    /** The device's answer to the wallet probe; false is the un-merged-manifest case too. */
+    var walletInstalled: Boolean = false
+
+    /** Models `Frak.client` throwing once the merchant has shut the SDK down. */
+    var probeFailure: FrakError? = null
+
+    override fun isFrakAppInstalled(): Boolean {
+        probeFailure?.let { throw it }
+        return walletInstalled
+    }
+
+    /** Answered by [openFrakApp]; `Failed` models a deep link nothing on the device handles. */
+    var openAppResult: OpenAppResult = OpenAppResult.OpenedApp
+
     override suspend fun openFrakApp(): OpenAppResult {
         clientFailure?.let { throw it }
         openFrakAppCount++
-        return OpenAppResult.OpenedApp
+        return openAppResult
     }
 
     /** Null models "no identity or no merchant", the store-handoff fallback path. */

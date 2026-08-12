@@ -206,6 +206,46 @@ struct SharingSheetLogicTests {
     }
 }
 
+@Suite("sharingExternalRoute")
+struct SharingExternalRouteTests {
+    private func route(_ string: String) throws -> SharingExternalRoute {
+        sharingExternalRoute(try #require(URL(string: string)))
+    }
+
+    @Test("the wallet's listing is routed to the app handoff, not opened")
+    func walletListingIsRouted() throws {
+        // The link the web install page's download button actually carries.
+        #expect(try route("https://apps.apple.com/app/frak-wallet/id6759159306") == .walletStoreListing)
+        // Storefront-prefixed, which is what the App Store hands out on share.
+        #expect(try route("https://apps.apple.com/us/app/frak-wallet/id6759159306") == .walletStoreListing)
+        // Any id, not just the wallet's: the overlay is raised on a constant the URL cannot move.
+        #expect(try route("https://apps.apple.com/app/id1") == .walletStoreListing)
+        #expect(try route("HTTPS://APPS.APPLE.COM/app/id6759159306") == .walletStoreListing)
+    }
+
+    @Test("a merchant link is opened as-is")
+    func merchantLinkIsOpened() throws {
+        let url = try #require(URL(string: "https://shop.example.com/product"))
+        #expect(sharingExternalRoute(url) == .openURL(url))
+        // Apple's own domain, but not a listing: no `idNNN` component to find.
+        let story = try #require(URL(string: "https://apps.apple.com/us/story/something"))
+        #expect(sharingExternalRoute(story) == .openURL(story))
+        // `id` with no digits behind it is a path segment, not an app id.
+        let identity = try #require(URL(string: "https://apps.apple.com/app/identity"))
+        #expect(sharingExternalRoute(identity) == .openURL(identity))
+        // A look-alike host must not reach the overlay.
+        #expect(try route("https://apps.apple.com.evil.test/app/id6759159306") != .walletStoreListing)
+    }
+
+    @Test("anything but http(s) is dropped")
+    func customSchemesAreDropped() throws {
+        // An app-to-app launch the merchant never sanctioned, whatever the page asked for.
+        #expect(try route("frakwallet://install?m=m&a=a") == .ignore)
+        #expect(try route("itms-apps://apps.apple.com/app/id6759159306") == .ignore)
+        #expect(try route("javascript:alert(1)") == .ignore)
+    }
+}
+
 @Suite("SharingPageProductsJSON")
 struct SharingPageProductsJSONTests {
     private func product(details: ProductDetails? = nil) -> SharingProduct {
