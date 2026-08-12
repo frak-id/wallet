@@ -133,6 +133,28 @@ func isAppStoreListing(_ url: URL) -> Bool {
     }
 }
 
+/// Whether a finished OS chooser counts as a share.
+///
+/// `completed` alone is the share extension's word for it, and extensions get it wrong in both
+/// directions — this is the SDK dropping a share the user had just made. `activityType` is
+/// UIKit's own: it is set once the user picks a target and stays nil for a sheet dismissed
+/// without picking one. Taking either as a share still keeps a cancelled chooser out, which is
+/// the case the two signals agree on, and stops losing a real share to an extension that failed
+/// to report it.
+///
+/// Android cannot make this call at all — `startActivity` returns nothing about the outcome — so
+/// it attributes every raised chooser. This is the stricter of the two; the gap is deliberate.
+///
+/// - Parameters:
+///   - activityType: `UIActivity.ActivityType.rawValue`, or nil when nothing was picked.
+///   - completed: the extension's own claim.
+///   - failed: whether the handler carried an error.
+/// - Returns: whether to attribute and confirm this chooser as a share.
+func sharingChooserCompleted(activityType: String?, completed: Bool, failed: Bool) -> Bool {
+    guard !failed else { return false }
+    return completed || activityType != nil
+}
+
 /// What `SharingWebViewPool` should do with a view a closing sheet just handed back.
 enum SharingReclaim: Equatable {
     /// Never warmed, so there is nothing to put back — just stop the closed session reporting.

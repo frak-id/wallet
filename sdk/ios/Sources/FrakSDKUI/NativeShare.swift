@@ -7,7 +7,8 @@
     @MainActor
     enum NativeShare {
         /// Presents the system share sheet and resolves once the user has finished with it.
-        /// - Returns: whether the user completed a share. False also covers "nothing could present it".
+        /// - Returns: whether the user shared — see `sharingChooserCompleted` for what counts.
+        ///   False also covers "nothing could present it".
         static func share(link: String, title: String?) async -> Bool {
             guard let presenter = topViewController() else { return false }
 
@@ -25,22 +26,32 @@
                 popover.permittedArrowDirections = []
             }
 
+            // Asked before presenting, never after. This used to read
+            // `controller.presentingViewController` on the same turn as the `present` call and
+            // treat nil as "refused" — but UIKit does not promise to have wired that up by then,
+            // and when it had not, this call resolved false while the chooser went on to appear.
+            // The user shared, and the sheet stayed on its share screen with nothing recorded.
+            //
+            // These two are what a refusal actually looks like, and both are settled facts at
+            // this point: `topViewController()` walks to the deepest presented controller, so
+            // anything already presenting here is a race, and a controller out of the window
+            // hierarchy cannot present at all.
+            guard presenter.presentedViewController == nil, presenter.viewIfLoaded?.window != nil
+            else { return false }
+
             let latch = ResumeLatch()
             return await withCheckedContinuation { continuation in
-                controller.completionWithItemsHandler = { _, completed, _, _ in
+                controller.completionWithItemsHandler = { activityType, completed, _, error in
                     guard latch.claim() else { return }
-                    continuation.resume(returning: completed)
+                    continuation.resume(
+                        returning: sharingChooserCompleted(
+                            activityType: activityType?.rawValue,
+                            completed: completed,
+                            failed: error != nil
+                        )
+                    )
                 }
                 presenter.present(controller, animated: true)
-                // A refused presentation never fires the completion handler, so without this
-                // check the continuation would hang. Checked after the fact: `present` sets
-                // `presentingViewController` only once it succeeds, so nil here means refused.
-                //
-                // A presentation accepted and torn down before the handler fires still leaks;
-                // that needs a device to reproduce.
-                if controller.presentingViewController == nil, latch.claim() {
-                    continuation.resume(returning: false)
-                }
             }
         }
 

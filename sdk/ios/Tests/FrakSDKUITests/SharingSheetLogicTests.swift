@@ -206,6 +206,42 @@ struct SharingSheetLogicTests {
     }
 }
 
+@Suite("sharingChooserCompleted")
+struct SharingChooserCompletedTests {
+    @Test("an extension that picked a target counts, whatever it claims")
+    func pickedTargetCounts() {
+        // The reported bug: shared for real, chooser said otherwise, and the sheet stayed put.
+        #expect(
+            sharingChooserCompleted(
+                activityType: "com.apple.UIKit.activity.Message",
+                completed: false,
+                failed: false
+            )
+        )
+        #expect(sharingChooserCompleted(activityType: "com.example.share", completed: true, failed: false))
+    }
+
+    @Test("a dismissed chooser is not a share")
+    func dismissedIsNotAShare() {
+        // Nothing picked: `activityType` is UIKit's own value and stays nil, so the two signals
+        // agree here and this is the case the predicate must keep out.
+        #expect(!sharingChooserCompleted(activityType: nil, completed: false, failed: false))
+    }
+
+    @Test("an error is never a share, whatever else it says")
+    func errorIsNeverAShare() {
+        #expect(!sharingChooserCompleted(activityType: "com.example.share", completed: true, failed: true))
+        #expect(!sharingChooserCompleted(activityType: nil, completed: true, failed: true))
+    }
+
+    @Test("a claimed completion with no target still counts")
+    func claimedCompletionCounts() {
+        // Not observed in the wild, but `completed` is still a signal: refusing it here would
+        // trade one silent drop for another.
+        #expect(sharingChooserCompleted(activityType: nil, completed: true, failed: false))
+    }
+}
+
 @Suite("sharingExternalRoute")
 struct SharingExternalRouteTests {
     private func route(_ string: String) throws -> SharingExternalRoute {
