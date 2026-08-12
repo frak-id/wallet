@@ -514,4 +514,26 @@ struct EventQueueTests {
             #expect(attributes[.protectionKey] as? FileProtectionType == .completeUntilFirstUserAuthentication)
         }
     #endif
+
+    /// The queue file carries the same protection class as the identity store, so it is
+    /// unreadable until first unlock. `try?` used to swallow that into "present but unreadable"
+    /// and DELETE the file — a whole backlog lost because the screen was locked.
+    @Test("a queue that cannot be read yet is preserved, not dropped")
+    func unreadableQueueIsPreserved() async throws {
+        let (queue, fileURL) = makeQueue()
+        await queue.append(event("a"))
+        let onDisk = try Data(contentsOf: fileURL)
+        try FileManager.default.setAttributes([.posixPermissions: 0], ofItemAtPath: fileURL.path)
+        defer {
+            try? FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: fileURL.path)
+        }
+
+        let locked = EventQueue(fileURL: fileURL, logger: FrakLogger(level: .none))
+        #expect(await locked.read(now: Self.now).isEmpty)
+
+        try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: fileURL.path)
+        #expect(try Data(contentsOf: fileURL) == onDisk)
+        #expect(await locked.read(now: Self.now).count == 1)
+    }
+
 }

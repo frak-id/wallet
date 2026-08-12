@@ -72,7 +72,8 @@ actor DefaultFrakClient {
             },
             // Read per event inside the drain, so a withdrawal that lands mid-drain stops the
             // upload rather than only emptying a file the drain has already read.
-            trackingAllowed: { await consent.isEnabled() }
+            trackingAllowed: { await consent.isEnabled() },
+            identityReadable: { await identity.isReadable }
         )
 
         // Mints the keypair now, off whichever thread this init runs on, then drains whatever a

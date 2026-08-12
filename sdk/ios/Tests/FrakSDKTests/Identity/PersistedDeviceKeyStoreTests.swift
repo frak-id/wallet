@@ -100,4 +100,16 @@ struct PersistedDeviceKeyStoreTests {
 
         #expect(first.publicKeyUncompressed != second.publicKeyUncompressed)
     }
+
+    /// An unreadable store reads as empty, so minting would replace an identity that is present
+    /// and healthy, just locked. The whole install would lose its anonymous id for good.
+    @Test("refuses to mint over a store it cannot read")
+    func refusesToMintOverAnUnreadableStore() throws {
+        let values = InMemoryKeyValueStore(readable: false)
+        let store = PersistedDeviceKeyStore(store: values)
+
+        #expect(throws: (any Error).self) { try store.loadOrCreate() }
+        #expect(values.string(forKey: PersistedDeviceKeyStore.storageKey) == nil)
+    }
+
 }

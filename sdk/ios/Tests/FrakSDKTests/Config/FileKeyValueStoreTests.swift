@@ -77,6 +77,74 @@ struct FileKeyValueStoreTests {
             #expect(!FileManager.default.fileExists(atPath: fileURL.path))
         }
     }
+
+    /// Before a device's first unlock the file exists and is intact, but its protection class
+    /// makes it unreadable. Reading that as empty is how a healthy identity gets minted over.
+    @Test("an unreadable file is never overwritten, and reports itself unreadable")
+    func unreadableFileIsLeftIntact() throws {
+        try withTemporaryStore { store, fileURL in
+            store.set("real-key-material", forKey: "device-key")
+            try FileManager.default.setAttributes([.posixPermissions: 0], ofItemAtPath: fileURL.path)
+            defer {
+                try? FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: fileURL.path)
+            }
+
+            let locked = FileKeyValueStore(fileURL: fileURL, logger: FrakLogger(level: .none))
+            #expect(locked.isReadable == false)
+            // The write that would destroy it: a dict rebuilt from an empty read, missing the key.
+            locked.set("marker", forKey: "merchant-marker")
+
+            try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: fileURL.path)
+            let unlocked = FileKeyValueStore(fileURL: fileURL, logger: FrakLogger(level: .none))
+            #expect(unlocked.string(forKey: "device-key") == "real-key-material")
+            #expect(unlocked.string(forKey: "merchant-marker") == nil)
+        }
+    }
+
+    /// The unreadable result must not be memoised, or a session that started locked stays blind
+    /// to the identity for the rest of its life.
+    @Test("a store that was unreadable sees the file once it becomes readable")
+    func unreadableIsNotMemoised() throws {
+        try withTemporaryStore { store, fileURL in
+            store.set("v", forKey: "k")
+            try FileManager.default.setAttributes([.posixPermissions: 0], ofItemAtPath: fileURL.path)
+
+            let reopened = FileKeyValueStore(fileURL: fileURL, logger: FrakLogger(level: .none))
+            #expect(reopened.string(forKey: "k") == nil)
+
+            try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: fileURL.path)
+            #expect(reopened.string(forKey: "k") == "v")
+        }
+    }
+
+    /// An absent file is a first launch, not a locked device: minting must still happen.
+    @Test("an absent file reads as readable, so a first launch still mints")
+    func absentFileIsReadable() throws {
+        try withTemporaryStore { store, _ in
+            #expect(store.isReadable)
+        }
+    }
+
+    /// A "forget me" landing in the unlock window must not be the thing that silently fails:
+    /// refusing the write would leave the old identity on disk to be handed back at first unlock.
+    @Test("an erasure still erases while the file is unreadable")
+    func removalErasesEvenWhenUnreadable() throws {
+        try withTemporaryStore { store, fileURL in
+            store.set("real-key-material", forKey: "device-key")
+            try FileManager.default.setAttributes([.posixPermissions: 0], ofItemAtPath: fileURL.path)
+            defer {
+                try? FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: fileURL.path)
+            }
+
+            let locked = FileKeyValueStore(fileURL: fileURL, logger: FrakLogger(level: .none))
+            locked.removeValue(forKey: "device-key")
+
+            #expect(FileManager.default.fileExists(atPath: fileURL.path) == false)
+            let reopened = FileKeyValueStore(fileURL: fileURL, logger: FrakLogger(level: .none))
+            #expect(reopened.string(forKey: "device-key") == nil)
+        }
+    }
+
 }
 
 /// Separate suite: this asserts on `FrakStorage`'s real location, not an injected temporary one.

@@ -20,6 +20,15 @@ final class FileKeyValueStore: KeyValueStore, @unchecked Sendable {
     /// Nil until the first access reads the file, matching the Kotlin twin: construction happens
     /// under `Frak.initialize`, which does no I/O.
     private var values: [String: String]?
+    /// Set when the file exists but could not be read; cleared by the next successful read.
+    private var unreadable = false
+
+    var isReadable: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        _ = loaded()
+        return !unreadable
+    }
 
     init(fileURL: URL, logger: FrakLogger) {
         self.fileURL = fileURL
@@ -46,8 +55,24 @@ final class FileKeyValueStore: KeyValueStore, @unchecked Sendable {
         mutate { $0[key] = value }
     }
 
+    /// An erasure must never be the operation that silently fails: refusing it would leave the
+    /// old identity on disk and hand it back at the next unlock, undoing a user's "forget me".
+    /// The whole file goes when it cannot be read, which errs toward erasing more than asked —
+    /// the safe direction for a request to erase, and the only one available without a readable
+    /// dict to remove a single key from.
     func removeValue(forKey key: String) {
-        mutate { $0.removeValue(forKey: key) }
+        lock.lock()
+        defer { lock.unlock() }
+        var next = loaded()
+        guard !unreadable else {
+            try? FileManager.default.removeItem(at: fileURL)
+            // Cleared, not marked absent: the next read re-derives both from the empty directory.
+            values = nil
+            return
+        }
+        next.removeValue(forKey: key)
+        values = next
+        write(next)
     }
 
     /// The memo keeps the change even when the write fails, so this session stays consistent with
@@ -56,6 +81,12 @@ final class FileKeyValueStore: KeyValueStore, @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         var next = loaded()
+        // A write built on an unreadable file would persist a dict missing every key it could not
+        // see, replacing a healthy identity with whatever this session happened to set.
+        guard !unreadable else {
+            logger.warn("Frak's identity store is not readable yet; leaving it untouched.")
+            return
+        }
         change(&next)
         values = next
         write(next)
@@ -64,16 +95,25 @@ final class FileKeyValueStore: KeyValueStore, @unchecked Sendable {
     private func loaded() -> [String: String] {
         if let values { return values }
         let read = read()
+        unreadable = read == nil
+        // An unreadable file is not memoised: it becomes readable at first unlock, and this
+        // session has to be able to see it then.
+        guard let read else { return [:] }
         values = read
         return read
     }
 
-    /// An unreadable file reads as empty, matching `PersistedDeviceKeyStore`'s policy for material
-    /// it cannot use: the next write replaces it rather than the SDK refusing to run.
-    private func read() -> [String: String] {
+    /// Nil when the file exists but cannot be read right now. A corrupt file still reads as empty,
+    /// matching `PersistedDeviceKeyStore`'s policy for material it cannot use.
+    private func read() -> [String: String]? {
         guard FileManager.default.fileExists(atPath: fileURL.path) else { return [:] }
         do {
             return try JSONDecoder().decode([String: String].self, from: Data(contentsOf: fileURL))
+        } catch let error as CocoaError where error.code == .fileReadNoPermission {
+            // Before first unlock the protection class holds, and the identity on disk is intact.
+            // Minting over it is how a healthy install loses its anonymous id for good.
+            logger.warn("Frak's identity store is unreadable until this device is first unlocked.", error)
+            return nil
         } catch {
             logger.warn("Frak could not read its identity store; a fresh identity will be minted.", error)
             return [:]

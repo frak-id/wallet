@@ -58,6 +58,9 @@ struct EventOutboxTests {
         /// the backend rather than a call counter, so a test states what it means, independent
         /// of how many times the drain consults the gate.
         let denyTrackingAfterRequests = Box(Int.max)
+        /// Stands in for a device before its first unlock, where the identity file is intact but
+        /// unreadable.
+        let identityReadable = Box(true)
 
         init(
             clientId: String? = EventOutboxTests.clientId,
@@ -84,6 +87,7 @@ struct EventOutboxTests {
             let keys = self.keys
             let currentId = self.currentId
             let deny = self.denyTrackingAfterRequests
+            let readable = self.identityReadable
             self.tracker = EventOutbox(
                 queue: queue,
                 http: HTTPClient(baseURL: "https://\(host)", session: session),
@@ -96,6 +100,7 @@ struct EventOutboxTests {
                 resolveMerchantId: resolveMerchantId ?? { nil },
                 signProof: signProof ?? { _, _, _ in nil },
                 trackingAllowed: { backend.requests.count < deny.value },
+                identityReadable: { readable.value },
                 now: { clock.current },
                 newKey: { "key-\(keys.increment() - 1)" },
                 // Deterministic jitter: the top of the range; a test advancing the clock past
@@ -502,6 +507,36 @@ struct EventOutboxTests {
         #expect(pending.count == 1)
         #expect(pending.first?.idempotencyKey == "third")
         #expect(pending.first?.merchantId == nil)
+    }
+
+    // MARK: - identity availability
+
+    /// Before a device's first unlock the identity is unreadable, so `currentClientId` is nil —
+    /// and the stale-id guard reads `if let captured, let currentId`, so a nil current id
+    /// DISABLES it rather than tightening it. Draining then posts rows for an identity the user
+    /// may already have reset. The gate returns before the read, leaving the file untouched.
+    @Test("a drain is skipped, and the queue left byte-identical, while the identity is unreadable")
+    func unreadableIdentitySkipsTheDrain() async throws {
+        let fixture = Fixture()
+        // Set before the first capture: a successful drain DELETES the queue file, so flushing
+        // first and comparing afterwards would compare against nothing.
+        fixture.identityReadable.value = false
+        await fixture.tracker.track(
+            merchantId: Self.merchantId,
+            clientId: Self.clientId,
+            interaction: .custom("locked")
+        )
+        let queued = try Data(contentsOf: fixture.fileURL)
+
+        await fixture.tracker.flush()
+
+        #expect(fixture.backend.requests.isEmpty)
+        #expect(try Data(contentsOf: fixture.fileURL) == queued)
+
+        // First unlock: the same row goes out, unchanged, with no further prompting.
+        fixture.identityReadable.value = true
+        await fixture.tracker.flush()
+        #expect(fixture.backend.requests.count == 1)
     }
 
     // MARK: - cancellation

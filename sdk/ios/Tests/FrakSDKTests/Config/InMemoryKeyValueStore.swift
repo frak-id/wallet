@@ -10,6 +10,18 @@ import Foundation
 final class InMemoryKeyValueStore: KeyValueStore, @unchecked Sendable {
     private let lock = NSLock()
     private var values: [String: String] = [:]
+    /// Stands in for a file-backed store before a device's first unlock.
+    private var readable: Bool
+
+    init(readable: Bool = true) {
+        self.readable = readable
+    }
+
+    var isReadable: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return readable
+    }
 
     func string(forKey key: String) -> String? {
         lock.lock()

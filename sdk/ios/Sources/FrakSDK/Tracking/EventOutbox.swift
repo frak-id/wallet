@@ -34,6 +34,14 @@ actor EventOutbox {
     /// Defaults to always-allowed so the outbox's own tests, which have no consent store, are
     /// unaffected; the real gate is wired in `DefaultFrakClient`.
     private let trackingAllowed: @Sendable () async -> Bool
+    /// False while the identity store exists but cannot be read, which is only true before a
+    /// device's first unlock.
+    ///
+    /// Gates the drain, never capture. A row captured in that window carries no client id and is
+    /// delivered unattributed once the drain resumes; gating capture too would turn that into no
+    /// row at all, which is strictly worse — an interaction without an id still counts, a missing
+    /// one never does.
+    private let identityReadable: @Sendable () async -> Bool
     private let resolveMerchantId: @Sendable () async -> String?
     private let signProof: @Sendable (ProofOp, String, Data) async -> String?
     private let now: @Sendable () -> Date
@@ -62,6 +70,7 @@ actor EventOutbox {
         resolveMerchantId: @escaping @Sendable () async -> String?,
         signProof: @escaping @Sendable (ProofOp, String, Data) async -> String?,
         trackingAllowed: @escaping @Sendable () async -> Bool = { true },
+        identityReadable: @escaping @Sendable () async -> Bool = { true },
         now: @escaping @Sendable () -> Date = { Date() },
         newKey: @escaping @Sendable () -> String = { UUID().uuidString.lowercased() },
         backoff: Backoff = Backoff()
@@ -74,6 +83,7 @@ actor EventOutbox {
         self.resolveMerchantId = resolveMerchantId
         self.signProof = signProof
         self.trackingAllowed = trackingAllowed
+        self.identityReadable = identityReadable
         self.now = now
         self.newKey = newKey
         self.backoff = backoff
@@ -241,6 +251,11 @@ actor EventOutbox {
         // withdrawal never even loads the backlog. The per-event re-read below is what closes
         // the withdrawal-lands-mid-drain window; this one just avoids the pointless work.
         guard await trackingAllowed() else { return }
+        // Returns before the read, so the file is left exactly as found. The stale-id guard below
+        // needs a current id to compare against, and an unreadable identity store yields nil —
+        // which disables that guard rather than tightening it, posting events for an identity the
+        // user may already have reset.
+        guard await identityReadable() else { return }
         guard !backoff.isBackingOff(Self.backoffKey) else { return }
 
         let pending = await queue.read(now: now())

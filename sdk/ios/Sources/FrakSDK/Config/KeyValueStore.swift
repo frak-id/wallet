@@ -5,6 +5,15 @@ protocol KeyValueStore: Sendable {
     func string(forKey key: String) -> String?
     func set(_ value: String, forKey key: String)
     func removeValue(forKey key: String)
+
+    /// False only while the backing exists but cannot be read — a file-backed store before the
+    /// device's first unlock. Distinct from empty: minting over an unreadable store destroys the
+    /// identity sitting in it.
+    var isReadable: Bool { get }
+}
+
+extension KeyValueStore {
+    var isReadable: Bool { true }
 }
 
 /// `KeyValueStore` backed by an SDK-owned `UserDefaults` suite, wiped on uninstall.

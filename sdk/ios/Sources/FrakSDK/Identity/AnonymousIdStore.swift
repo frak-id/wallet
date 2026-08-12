@@ -76,6 +76,13 @@ actor AnonymousIdStore {
         await identity()?.id
     }
 
+    /// False only before a device's first unlock, where the identity on disk is intact but its
+    /// file protection class still holds. Callers use it to tell "no identity" apart from "not
+    /// yet", which read the same through [anonymousId].
+    var isReadable: Bool {
+        store.isReadable
+    }
+
     /// A base64url proof that this device holds the key behind `anonymousId`, or nil when
     /// there is no identity or the platform refused to sign.
     func signProof(

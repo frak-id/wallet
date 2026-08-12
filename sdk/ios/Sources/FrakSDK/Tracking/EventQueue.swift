@@ -208,11 +208,21 @@ actor EventQueue {
             liveRowCount = 0
             return ReadOutcome(events: [], durable: true)
         }
-        guard let data = try? Data(contentsOf: fileURL) else {
+        let data: Data
+        do {
+            data = try Data(contentsOf: fileURL)
+        } catch let error as CocoaError where error.code == .fileReadNoPermission {
+            // Intact, just locked: this file carries the same protection class as the identity
+            // store, so it is unreadable until the device's first unlock. Not durable, so
+            // `reconcile` cannot compact against it, and emphatically not deleted — dropping a
+            // backlog because the screen was locked is the loss this queue exists to prevent.
+            logger.warn("The event queue is unreadable until this device is first unlocked.", error)
+            return ReadOutcome(events: [], durable: false)
+        } catch {
             // Present but unreadable: delete it so tracking doesn't go silently and
             // permanently inert. A failed delete leaves the count as-is; drift here only
             // delays a trim, it never loses a row.
-            logger.warn("Could not read the event queue; dropping it.")
+            logger.warn("Could not read the event queue; dropping it.", error)
             delete()
             return ReadOutcome(events: [], durable: true)
         }

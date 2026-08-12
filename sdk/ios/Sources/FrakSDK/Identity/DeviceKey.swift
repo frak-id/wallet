@@ -70,6 +70,12 @@ struct PersistedDeviceKeyStore: DeviceKeyStore {
     // device's first unlock) clearing would destroy a healthy key.
     func loadOrCreate() throws -> DeviceKey {
         if let key = load() { return key }
+        // An unreadable store reads as empty, so minting here would replace an identity that is
+        // present and healthy, just locked. Refused instead: the caller is left without an id for
+        // this session and retries once the device is unlocked.
+        guard store.isReadable else {
+            throw InvalidProofInput(description: "the identity store is not readable yet")
+        }
         let (key, blob) = try generate()
         store.set(Base64URL.encode(blob), forKey: Self.storageKey)
         return key
