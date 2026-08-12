@@ -3,12 +3,14 @@ import {
     decodeProductsParam,
     sanitizeSharingProducts,
 } from "@frak-labs/core-sdk";
-import { truncateForShare } from "@frak-labs/wallet-shared/sharing";
+import {
+    sanitizeShareImage,
+    truncateForShare,
+} from "@frak-labs/wallet-shared/sharing";
 import { decodeHostEmbed } from "@/module/common/utils/hostEmbed";
 import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
 import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme";
 import { sanitizeSeededReward } from "@/module/common/utils/sanitizeSeededReward";
-import { sanitizeShareImage } from "@/module/common/utils/sanitizeShareImage";
 
 /** Where a param may arrive: `query` at load only, `both` also via the activation fragment. */
 export type ParamTransport = "query" | "both";

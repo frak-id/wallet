@@ -177,11 +177,16 @@ internal class SharingSessionBuilder(
     private fun tier3ShareCopy(request: SharingRequest): Tier3ShareCopy {
         val defaults = Tier3Defaults.forLang(dependencies.metadataLang())
         val name = dependencies.metadataName()
+        // Interpolated over the winner, not just the default: a merchant may put the placeholder
+        // in their own override. Mirrors iOS's `tier3ShareData`.
         val title =
-            request.shareTitle
-                ?: request.products.firstOrNull()?.title
-                ?: interpolateProductName(defaults.title, name)
-        val text = request.shareText ?: interpolateProductName(defaults.text, name)
+            interpolateProductName(
+                request.shareTitle
+                    ?: request.products.firstOrNull()?.title
+                    ?: defaults.title,
+                name,
+            )
+        val text = interpolateProductName(request.shareText ?: defaults.text, name)
         return Tier3ShareCopy(title = title, text = text)
     }
 
@@ -196,6 +201,7 @@ internal class SharingSessionBuilder(
         if (productName != null) return template.replace(PRODUCT_NAME_PLACEHOLDER, productName)
         return template
             .replace(" $PRODUCT_NAME_PLACEHOLDER", "")
+            .replace("$PRODUCT_NAME_PLACEHOLDER ", "")
             .replace(PRODUCT_NAME_PLACEHOLDER, "")
             .trim()
     }

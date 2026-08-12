@@ -33,6 +33,11 @@
         ) async -> Bool {
             guard let presenter = topViewController() else { return false }
 
+            // The page caps these already; re-applied because the query string is not trusted,
+            // for the same reason the empty check is. Android does the same in `NativeShare.kt`.
+            let title = title.map { $0.clippedForShare(to: shareTitleLimit) }
+            let text = text.map { $0.clippedForShare(to: shareTextLimit) }
+
             let metadata = LPLinkMetadata()
             if let title { metadata.title = title }
             let linkURL = URL(string: link)

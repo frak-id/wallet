@@ -43,3 +43,24 @@ describe("truncateForShare", () => {
         expect(SHARE_BUDGET).toEqual({ title: 120, text: 280, image: 512 });
     });
 });
+
+describe("truncateForShare — budget is a wire budget", () => {
+    it("clips a string whose grapheme count is under max but whose length is not", () => {
+        // Family-of-four ZWJ sequences: 1 grapheme, 11 UTF-16 units each.
+        const family = "\u{1F468}\u200D\u{1F469}\u200D\u{1F467}\u200D\u{1F466}";
+        const value = family.repeat(30);
+        expect(value.length).toBeGreaterThan(120);
+        const result = truncateForShare(value, 120);
+        expect(result.length).toBeLessThanOrEqual(120);
+        expect(result.endsWith("…")).toBe(true);
+    });
+
+    it("never exceeds the budget for any max on a multi-unit string", () => {
+        const value = "😀".repeat(40);
+        for (let max = 1; max <= 40; max++) {
+            expect(truncateForShare(value, max).length).toBeLessThanOrEqual(
+                max
+            );
+        }
+    });
+});

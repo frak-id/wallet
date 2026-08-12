@@ -217,10 +217,7 @@
         }
 
         private func queryValue(_ url: URL, _ name: String) -> String? {
-            URLComponents(url: url, resolvingAgainstBaseURL: false)?
-                .queryItems?
-                .first { $0.name == name }?
-                .value
+            sharingQueryValue(url, name)
         }
 
         /// A main-frame failure gets the rest of `retryLadder` before tier 3. Every rung is a

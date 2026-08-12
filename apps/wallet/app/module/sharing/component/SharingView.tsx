@@ -99,16 +99,22 @@ export function SharingView({
     // already merges for the embedded wallet UI but this standalone route did
     // not: `t()` below resolves `translation` -> `customized` -> `common`, so
     // adding the merchant's copy to `customized` is all that was missing.
+    //
+    // Removed on cleanup rather than only added. `addResourceBundle` deep-merges into a
+    // page-lifetime singleton, so on the SPA route -- where `/sharing` is reachable without a
+    // document load -- merchant A's overrides would otherwise still be in `customized` when
+    // merchant B renders, and dropping an override server-side would never restore the default.
     useEffect(() => {
         const translations = config?.sdkConfig?.translations;
         if (!translations || Object.keys(translations).length === 0) return;
-        i18n.addResourceBundle(
-            i18n.language,
-            "customized",
-            translationKeyPathToObject(translations),
-            true,
-            true
-        );
+        const lng = i18n.language;
+        const overrides = translationKeyPathToObject(translations);
+        i18n.addResourceBundle(lng, "customized", overrides, true, true);
+        return () => {
+            for (const key of Object.keys(overrides)) {
+                i18n.removeResourceBundle(lng, `customized.${key}`);
+            }
+        };
     }, [config?.sdkConfig?.translations, i18n]);
 
     // No `#p=` proof here, unlike the listener's builder: this page has no SDK

@@ -93,3 +93,23 @@ struct IPv4AddressTests {
         #expect(IPv4Address("1.2.3.4.5") == nil)
     }
 }
+
+@Suite("isFetchableShareImageURL — IPv6 literals")
+struct ShareImageIPv6GuardTests {
+    @Test("loopback, unique-local and link-local literals are rejected")
+    func privateLiteralsRejected() {
+        for host in ["[::1]", "[fc00::1]", "[fd12:3456::1]", "[fe80::1]", "[febf::1]"] {
+            #expect(isFetchableShareImageURL(URL(string: "https://\(host)/p.png")!) == false, "\(host)")
+        }
+    }
+
+    @Test("an IPv4-mapped private address is rejected through its embedded address")
+    func mappedPrivateRejected() {
+        #expect(isFetchableShareImageURL(URL(string: "https://[::ffff:192.168.1.1]/p.png")!) == false)
+    }
+
+    @Test("a public IPv6 literal is still fetchable")
+    func publicLiteralAllowed() {
+        #expect(isFetchableShareImageURL(URL(string: "https://[2606:4700::1111]/p.png")!) == true)
+    }
+}

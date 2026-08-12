@@ -91,6 +91,35 @@ enum SharingPageAction: Hashable {
     }
 }
 
+/// The §6 wire budget, mirrored from `packages/wallet-shared/src/sharing/utils/shareBudget.ts`.
+let shareTitleLimit = 120
+let shareTextLimit = 280
+
+extension String {
+    /// Clips to `max` characters on a grapheme boundary, ellipsis inside the budget. Slicing by
+    /// `prefix` alone would cut inside an emoji's surrogate pair or between a base character and
+    /// its combining mark.
+    func clippedForShare(to max: Int) -> String {
+        guard count > max, max > 1 else { return count > max ? String(prefix(max)) : self }
+        return String(prefix(max - 1)).trimmingCharacters(in: .whitespaces) + "…"
+    }
+}
+
+/// One query value off the return-scheme URL.
+///
+/// `+` is normalised to `%20` before parsing: the page builds this query with `URLSearchParams`,
+/// which serialises a space as `+`, but `URLComponents` follows RFC 3986 and hands that back as a
+/// literal plus. Without this, every share title or text containing a space arrives as
+/// `Kettle+deal`. Android's `Uri.getQueryParameter` folds `+` itself, which is why this only ever
+/// bit one platform.
+func sharingQueryValue(_ url: URL, _ name: String) -> String? {
+    guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return nil }
+    if let query = components.percentEncodedQuery, query.contains("+") {
+        components.percentEncodedQuery = query.replacingOccurrences(of: "+", with: "%20")
+    }
+    return components.queryItems?.first { $0.name == name }?.value
+}
+
 /// An empty string is "absent", not "override with nothing" — the page already enforces this
 /// on the way out; re-checked here because the query string is not otherwise trusted.
 private func nonEmpty(_ value: String?) -> String? {
@@ -126,7 +155,27 @@ func isFetchableShareImageURL(_ url: URL) -> Bool {
     guard url.scheme == "https", let host = url.host?.lowercased(), !host.isEmpty else { return false }
     if host.hasSuffix(".local") { return false }
     if let address = IPv4Address(host) { return !address.isPrivateOrLinkLocal }
+    // An IPv6 literal keeps its brackets in some `URL.host` paths and loses them in others.
+    if host.contains(":") || host.hasPrefix("[") { return !isPrivateIPv6Literal(host) }
     return true
+}
+
+/// Loopback, unique-local (`fc00::/7`) and link-local (`fe80::/10`), plus IPv4-mapped forms like
+/// `::ffff:10.0.0.1`. Prefix matching rather than a parser: this only has to reject, and a literal
+/// it does not recognise is one `URLSession` will not route to a private network either.
+private func isPrivateIPv6Literal(_ host: String) -> Bool {
+    let bare = host.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+    if bare == "::1" || bare == "::" { return true }
+    if bare.hasPrefix("fc") || bare.hasPrefix("fd") || bare.hasPrefix("fe8") || bare.hasPrefix("fe9")
+        || bare.hasPrefix("fea") || bare.hasPrefix("feb")
+    {
+        return true
+    }
+    // `::ffff:a.b.c.d` — the embedded address is what actually gets routed.
+    if let mapped = bare.split(separator: ":").last, let address = IPv4Address(String(mapped)) {
+        return address.isPrivateOrLinkLocal
+    }
+    return false
 }
 
 /// Just enough of RFC 1918 / RFC 3927 to keep this SDK from being handed a URL that makes the

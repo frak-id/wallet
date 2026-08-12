@@ -31,14 +31,13 @@ function graphemes(value: string): string[] {
  * than rejecting: clipped copy still beats handing the OS a bare URL.
  */
 export function truncateForShare(value: string, max: number): string {
+    // The budget is a wire budget, so it counts UTF-16 units, not graphemes. A grapheme-count
+    // shortcut here would wave through a string of ZWJ sequences many times longer than `max`.
     if (value.length <= max) return value;
-
-    const units = graphemes(value);
-    // Fast path: every grapheme is one UTF-16 unit, so the count is the length.
-    if (units.length <= max) return value;
+    if (max <= ELLIPSIS.length) return value.slice(0, max);
 
     let taken = "";
-    for (const unit of units) {
+    for (const unit of graphemes(value)) {
         if (taken.length + unit.length > max - ELLIPSIS.length) break;
         taken += unit;
     }

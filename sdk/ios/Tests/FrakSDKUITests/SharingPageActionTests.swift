@@ -206,3 +206,34 @@ struct SharingPageActionKindTests {
         #expect(Set(kinds).count == kinds.count)
     }
 }
+
+@Suite("sharingQueryValue")
+struct SharingQueryValueTests {
+    /// The page builds this query with `URLSearchParams`, which writes a space as `+`.
+    /// `URLComponents` alone hands that back as a literal plus, so every share text with a
+    /// space used to arrive mangled on iOS while Android decoded it correctly.
+    @Test("a URLSearchParams space arrives as a space, not a plus")
+    func plusDecodesToSpace() {
+        let url = URL(string: "frak-x://result?action=share&title=Kettle+deal&text=Grab+it%21")!
+        #expect(sharingQueryValue(url, "title") == "Kettle deal")
+        #expect(sharingQueryValue(url, "text") == "Grab it!")
+    }
+
+    @Test("an encoded plus stays a plus")
+    func encodedPlusSurvives() {
+        let url = URL(string: "frak-x://result?action=share&text=a%2Bb")!
+        #expect(sharingQueryValue(url, "text") == "a+b")
+    }
+
+    @Test("newlines and emoji survive the round trip")
+    func multiByteSurvives() {
+        let url = URL(string: "frak-x://result?text=one%0Atwo%20%F0%9F%98%80")!
+        #expect(sharingQueryValue(url, "text") == "one\ntwo 😀")
+    }
+
+    @Test("an absent key is nil, and a query-less url is nil")
+    func absentIsNil() {
+        #expect(sharingQueryValue(URL(string: "frak-x://result?action=share")!, "title") == nil)
+        #expect(sharingQueryValue(URL(string: "frak-x://result")!, "action") == nil)
+    }
+}

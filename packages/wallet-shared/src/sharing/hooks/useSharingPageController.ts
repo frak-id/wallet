@@ -26,6 +26,7 @@ import {
     saveConfirmation,
     sharingConfirmationScope,
 } from "../utils/confirmation";
+import { sanitizeShareImage } from "../utils/sanitizeShareImage";
 import { SHARE_BUDGET, truncateForShare } from "../utils/shareBudget";
 import { useShareLink } from "./useShareLink";
 
@@ -103,27 +104,28 @@ export type SharingPageControllerInput = {
 };
 
 /**
- * Strips control characters (`\n` in `text` excepted) and RTL/bidi overrides a
- * merchant field could otherwise smuggle in. `\p{Cc}` covers C0/C1 without
- * spelling out literal control-character ranges.
+ * Strips control characters (tab and newline excepted) and RTL/bidi overrides a merchant field
+ * could otherwise smuggle in. `\p{Cc}` covers C0/C1 without spelling out literal ranges.
  */
-const CONTROL_CHARS_EXCEPT_NEWLINE = /(?!\n)\p{Cc}/gu;
+const CONTROL_CHARS_EXCEPT_WHITESPACE = /(?![\n\t])\p{Cc}/gu;
 const BIDI_OVERRIDES = /[\u202a-\u202e\u2066-\u2069]/g;
 
+/** Shared by title and text; each clips to its own budget afterwards, exactly once. */
+function scrubShareCopy(value: string): string {
+    return value
+        .replace(CONTROL_CHARS_EXCEPT_WHITESPACE, "")
+        .replace(BIDI_OVERRIDES, "")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+}
+
 function sanitizeShareText(value: string): string {
-    return truncateForShare(
-        value
-            .replace(CONTROL_CHARS_EXCEPT_NEWLINE, "")
-            .replace(BIDI_OVERRIDES, "")
-            .replace(/\n{3,}/g, "\n\n")
-            .trim(),
-        SHARE_BUDGET.text
-    );
+    return truncateForShare(scrubShareCopy(value), SHARE_BUDGET.text);
 }
 
 function sanitizeShareTitle(value: string): string {
     return truncateForShare(
-        sanitizeShareText(value).replace(/\n/g, " "),
+        scrubShareCopy(value).replace(/\n/g, " "),
         SHARE_BUDGET.title
     );
 }
@@ -280,10 +282,14 @@ export function useSharingPageController({
             t("sharing.title")
         );
         const text = firstNonEmpty(shareText, t("sharing.text"));
-        const imageUrl = firstNonEmpty(
-            shareImage,
-            selectedProduct?.imageUrl,
-            merchant.logoUrl
+        // Sanitized on the winner, not just on `shareImage`: a product's `imageUrl` only has to be
+        // an http(s) URL to get this far, and `merchant.logoUrl` arrives as a bare string.
+        const imageUrl = sanitizeShareImage(
+            firstNonEmpty(
+                shareImage,
+                selectedProduct?.imageUrl,
+                merchant.logoUrl
+            )
         );
         return {
             link: sharingLink,

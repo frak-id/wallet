@@ -2,6 +2,7 @@ package id.frak.sdk.ui
 
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLanguage
+import id.frak.sdk.sharing.SharingRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -19,9 +20,12 @@ class SharingSessionBuilderTest {
     private fun builder(client: FakeSharingClient): SharingSessionBuilder =
         SharingSessionBuilder(dependencies = client, packageId = "com.acme.app", sessionId = "1", language = null)
 
-    private suspend fun tier3Session(client: FakeSharingClient): SharingSession {
+    private suspend fun tier3Session(
+        client: FakeSharingClient,
+        request: SharingRequest = sharingRequest(),
+    ): SharingSession {
         client.resolveFailure = FrakError.Network(IOException("offline"))
-        val built = builder(client).build(sharingRequest())
+        val built = builder(client).build(request)
         val ready = built as SharingBuild.Ready
         assertTrue("expected a page-less tier-3 session", !ready.session.hasPage)
         return ready.session
@@ -43,6 +47,20 @@ class SharingSessionBuilderTest {
             val session = (built as SharingBuild.Ready).session
             assertEquals("Custom title", session.shareTitle)
             assertEquals("Custom text", session.shareText)
+        }
+
+    @Test
+    fun `an override carrying the placeholder is interpolated too, not passed through raw`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.metadataNameValue = "Acme"
+            val session =
+                tier3Session(
+                    client,
+                    sharingRequest(shareTitle = "Win big with {{productName}}", shareText = "From {{productName}}!"),
+                )
+            assertEquals("Win big with Acme", session.shareTitle)
+            assertEquals("From Acme!", session.shareText)
         }
 
     @Test

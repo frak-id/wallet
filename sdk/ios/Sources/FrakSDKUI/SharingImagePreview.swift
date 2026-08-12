@@ -31,21 +31,30 @@
             // the `isFetchable` check above, which only ever sees the URL this SDK was handed.
             let session = URLSession(configuration: .ephemeral, delegate: NoRedirectDelegate(), delegateQueue: nil)
 
-            let result: (Data, URLResponse)?
+            let body: Data?
             do {
-                result = try await withTimeout(timeoutSeconds) {
-                    try await session.data(for: request)
+                body = try await withTimeout(timeoutSeconds) {
+                    // Streamed, not `data(for:)`: that buffers the whole body before anyone can
+                    // check its size, so a fast host can deliver hundreds of megabytes inside the
+                    // timeout. `maxBytes` has to bound what is read, not what was already read.
+                    let (stream, response) = try await session.bytes(for: request)
+                    guard let http = response as? HTTPURLResponse,
+                        http.isSuccess,
+                        isImageContentType(http.value(forHTTPHeaderField: "Content-Type"))
+                    else { return nil }
+
+                    var data = Data()
+                    data.reserveCapacity(min(maxBytes, max(Int(http.expectedContentLength), 0)))
+                    for try await byte in stream {
+                        data.append(byte)
+                        if data.count > maxBytes { return nil }
+                    }
+                    return data
                 }
             } catch {
                 return nil
             }
-            guard let (data, response) = result,
-                let http = response as? HTTPURLResponse,
-                http.isSuccess,
-                isImageContentType(http.value(forHTTPHeaderField: "Content-Type")),
-                data.count <= maxBytes,
-                UIImage(data: data) != nil
-            else { return nil }
+            guard let data = body, UIImage(data: data) != nil else { return nil }
 
             return data
         }
