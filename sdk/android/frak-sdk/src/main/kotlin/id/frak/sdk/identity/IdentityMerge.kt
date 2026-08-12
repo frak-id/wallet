@@ -8,23 +8,16 @@ import java.security.MessageDigest
 
 /**
  * Inbound `?fmt=` wire contract: this install is the merge *target*, folding its anonymous id into
- * the group the token names. Mirrors the web SDK's handling in `createIFrameFrakClient.ts`, except
- * there the listener posts and here [id.frak.sdk.tracking.MergeSender] does.
- *
- * Delivery itself lives in [id.frak.sdk.tracking.MergeSender], which is retried from the durable
- * queue; this class keeps only the once-per-process claim and the stateless wire contract.
+ * the group the token names. Keeps only the once-per-process claim and the stateless wire
+ * contract; delivery lives in [id.frak.sdk.tracking.MergeSender].
  */
 internal class IdentityMerge {
     private val mutex = Mutex()
     private val consumed = mutableSetOf<String>()
 
     /**
-     * Claims a token for this process, so a merchant's router replaying the same intent on every
-     * activity recreation enqueues one merge, not one per recreation. Returns false if this
-     * process has already claimed it.
-     *
-     * Separate from delivery on purpose: delivery is retried from the durable queue, and a
-     * once-only guard inside it would make the first failed attempt the last one.
+     * Claims a token for this process, so a router replaying the same intent on every activity
+     * recreation enqueues one merge. Separate from delivery, which the durable queue retries.
      */
     suspend fun claim(mergeToken: String): Boolean =
         mergeToken.isNotEmpty() && mutex.withLock { consumed.add(mergeToken) }

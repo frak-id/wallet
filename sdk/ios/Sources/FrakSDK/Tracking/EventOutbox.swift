@@ -25,22 +25,16 @@ actor EventOutbox {
     /// `AnonymousIdStore.anonymousId()` awaits eager generation rather than blocking, so this
     /// drain loop does not call a blocking keystore read from inside itself.
     private let currentClientId: @Sendable () async -> String?
-    /// Whether tracking is still permitted, read fresh inside the drain loop rather than once,
-    /// so a withdrawal mid-drain actually stops the upload. A `purge()` alone cannot do that:
-    /// `drain()` reads the whole backlog up front, so an event already read would still be
-    /// posted, and the stale-id guard below cannot catch it either — withdrawing consent makes
-    /// `currentClientId` nil, which disables that guard rather than tightening it.
+    /// Read fresh inside the drain loop, so a withdrawal mid-drain stops the upload. `purge()`
+    /// alone cannot: `drain()` reads the backlog up front, and the stale-id guard below is
+    /// disabled rather than tightened by the nil id a withdrawal produces.
     ///
-    /// Defaults to always-allowed so the outbox's own tests, which have no consent store, are
-    /// unaffected; the real gate is wired in `DefaultFrakClient`.
+    /// Defaults to always-allowed for this file's own tests; the real gate is wired in
+    /// `DefaultFrakClient`.
     private let trackingAllowed: @Sendable () async -> Bool
-    /// False while the identity store exists but cannot be read, which is only true before a
-    /// device's first unlock.
-    ///
-    /// Gates the drain, never capture. A row captured in that window carries no client id and is
-    /// delivered unattributed once the drain resumes; gating capture too would turn that into no
-    /// row at all, which is strictly worse — an interaction without an id still counts, a missing
-    /// one never does.
+    /// False while the identity store exists but cannot be read — only before a device's first
+    /// unlock. Gates the drain, never capture: a row captured in that window carries no client id
+    /// and lands unattributed, where gating capture too would drop it entirely.
     private let identityReadable: @Sendable () async -> Bool
     private let resolveMerchantId: @Sendable () async -> String?
     private let signProof: @Sendable (ProofOp, String, Data) async -> String?
@@ -56,9 +50,8 @@ actor EventOutbox {
     private var drainToken = 0
     /// Set once by `shutdown()`, never cleared: a torn-down outbox starts no further drains.
     private var stopped = false
-    /// Memoised across one drain's rows. Outer nil: not attempted this drain. Inner nil:
-    /// attempted, nothing resolved. Actor state, not a captured `var` — a `@Sendable` closure
-    /// cannot capture a mutable var under Swift 6. Reset at the top of every drain.
+    /// Memoised across one drain's rows. Outer nil: not attempted. Inner nil: attempted, nothing
+    /// resolved. Actor state, not a captured `var`, which Swift 6 forbids in a `@Sendable`.
     private var drainMerchantId: String??
 
     init(
@@ -167,21 +160,12 @@ actor EventOutbox {
         await scheduleDrain().value
     }
 
-    /// Cancels an in-flight drain and refuses to start another, so
-    /// `DefaultFrakClient.shutdown()` leaves nothing running and nothing able to start.
+    /// Cancels an in-flight drain and refuses to start another, so `DefaultFrakClient.shutdown()`
+    /// leaves nothing running and nothing able to start. One-way: a torn-down outbox is dead.
     ///
-    /// The refusal is the load-bearing half: cancelling alone would not do it, since
-    /// `scheduleDrain` uses `Task.init`, which does not inherit cancellation, so the very next
-    /// `track()` would start a fresh, uncancelled drain. One-way: a torn-down outbox is not
-    /// restartable, matching `Frak.shutdown()`'s contract that you get a live SDK by calling
-    /// `Frak.initialize` again.
-    ///
-    /// Does not await the cancelled task: `drain()` writes the queue file back after each
-    /// batch, and awaiting a task we have just cancelled would block shutdown on a network
-    /// round-trip that is already doomed. Queued events survive on disk — shutdown is not
-    /// erasure, `purge()` is. The token is bumped too, so the drain being cancelled cannot
-    /// clear a `drainTask` that a `track()` racing this call installed while it was still
-    /// unwinding.
+    /// The refusal is the load-bearing half — `scheduleDrain` uses `Task.init`, which does not
+    /// inherit cancellation, so the next `track()` would start a fresh, uncancelled drain. Does
+    /// not await the cancelled task; queued events survive on disk, since this is not an erasure.
     func shutdown() {
         stopped = true
         drainToken += 1
@@ -202,14 +186,11 @@ actor EventOutbox {
             drainAgain = true
             return inFlight
         }
-        // Mirrors `AnonymousIdStore.generationToken`: the tail below has to know whether the
-        // `drainTask` slot still holds THIS task before clearing it, and a closure cannot
-        // capture the `let` it is being assigned to, so it compares against a token instead.
+        // Mirrors `AnonymousIdStore.generationToken`: the tail has to know whether `drainTask`
+        // still holds THIS task, and a closure cannot capture the `let` being assigned to it.
         //
-        // Without it: `shutdown()` clears `drainTask` while this task is still unwinding, a
-        // `track()` immediately after installs a new one, this tail then erases that newer
-        // task, and the next `track()` starts a second concurrent drain over the same queue
-        // file — two writers, which `EventQueue` does not serialise.
+        // Without it, a `track()` racing `shutdown()` ends up with two concurrent drains over one
+        // queue file — two writers, which `EventQueue` does not serialise.
         drainToken += 1
         let token = drainToken
         let task = Task {
@@ -251,10 +232,8 @@ actor EventOutbox {
         // withdrawal never even loads the backlog. The per-event re-read below is what closes
         // the withdrawal-lands-mid-drain window; this one just avoids the pointless work.
         guard await trackingAllowed() else { return }
-        // Returns before the read, so the file is left exactly as found. The stale-id guard below
-        // needs a current id to compare against, and an unreadable identity store yields nil —
-        // which disables that guard rather than tightening it, posting events for an identity the
-        // user may already have reset.
+        // Returns before the read, leaving the file as found. An unreadable identity store yields
+        // a nil id, which disables the stale-id guard below rather than tightening it.
         guard await identityReadable() else { return }
         guard !backoff.isBackingOff(Self.backoffKey) else { return }
 
@@ -273,14 +252,10 @@ actor EventOutbox {
         var retried: [Int64: QueuedRow] = [:]
 
         eventLoop: for event in pending {
-            // `break`, not `return`: the caller that flipped consent is about to `purge()` the
-            // whole file, but if that purge does not land, every event this drain already
-            // uploaded is still on disk with no record that it went, and the next flush
-            // re-sends all of them — an `Interaction.arrival` carries no idempotency key, so
-            // that is a duplicated referral payout. Falling through to `reconcile` costs
-            // nothing when the purge does land (it re-reads the file) and prevents the
-            // duplicate when it does not. The cancellation path further down must `return`
-            // instead — there the queue file must be left exactly as found.
+            // `break`, not `return`: the caller that flipped consent is about to `purge()`, but a
+            // purge that does not land leaves every event this drain already uploaded on disk with
+            // no record it went, and `Interaction.arrival` carries no idempotency key — a
+            // duplicated referral payout. The cancellation path below must `return` instead.
             guard await trackingAllowed() else {
                 logger.info("Tracking was disabled mid-drain; stopping without sending the rest.")
                 break eventLoop
@@ -307,10 +282,8 @@ actor EventOutbox {
             do {
                 outcome = try await sender.deliver(row: event, ctx: ctx)
             } catch {
-                // Cancellation, and nothing else — `deliver` is typed `throws(CancellationError)`.
-                // Returning rather than breaking skips the reconcile below, so a cancelled drain
-                // leaves the file exactly as it found it: re-sending a delivered event is
-                // recoverable server-side, compacting away an undelivered one is not.
+                // Cancellation only — `deliver` is typed `throws(CancellationError)`. Returning
+                // skips the reconcile: compacting away an undelivered event is unrecoverable.
                 return
             }
 

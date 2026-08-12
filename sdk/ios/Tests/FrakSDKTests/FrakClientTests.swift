@@ -386,9 +386,7 @@ struct FrakClientTests {
         #expect(link == nil)
     }
 
-    /// Mirrors Android's `a share link refused for want of identity throws, where nothing to link
-    /// to is still null`. The two channels are deliberately distinct: nil means there was nothing
-    /// to link to, a throw means a link could have been built and was refused.
+    /// Nil means there was nothing to link to; a throw means a link could have been built.
     @Test("buildSharingLink throws, rather than yielding nil, when tracking is off")
     func buildSharingLinkThrowsWhenRefused() async {
         let client = makeClient(config: FrakConfig(merchantId: Self.merchantId, trackingEnabled: false)) { _ in
@@ -586,9 +584,6 @@ struct FrakClientTests {
         #expect(refused?.kind == .trackingDisabled)
     }
 
-    /// The one permitted behavioural difference from before this refactor: a cancellation
-    /// during identity resolution now propagates, rather than collapsing to
-    /// `merchantResolutionFailed` — matching Android's equivalent.
     @Test("installPageURL propagates cancellation instead of collapsing it to merchantResolutionFailed")
     func installPageURLPropagatesCancellation() async throws {
         // No merchantId, so the merchant genuinely resolves and there is a request to cancel.
@@ -605,8 +600,7 @@ struct FrakClientTests {
         }
     }
 
-    /// Regression for bug 1: `trackingCall` used to resolve `.required` before the durable
-    /// enqueue, so a cold start with no cache and no network lost the event outright.
+    /// Regression: bug 1.
     @Test("track lands the event on disk with no cached merchant and no reachable network (bug 1)")
     func trackDoesNotBlockOnAMerchantResolve() async throws {
         let queueURL = FileManager.default.temporaryDirectory
@@ -626,8 +620,7 @@ struct FrakClientTests {
         #expect(rows.first?.merchantId == nil)
     }
 
-    /// Regression for bug 2: `mergeInboundIdentity` used to call `pair(.optional)`, which
-    /// resolves over the network and drops the token outright on failure.
+    /// Regression: bug 2.
     @Test("handleReferralLink durably queues an inbound merge with no cached merchant and no reachable network (bug 2)")
     func mergeIsDurableWithoutANetworkResolve() async throws {
         let queueURL = FileManager.default.temporaryDirectory
@@ -649,8 +642,6 @@ struct FrakClientTests {
 
     // MARK: - drain triggers (fix 3)
 
-    /// A row held for want of a merchant must not wait for the next `track()`/foreground/process
-    /// launch: the moment `ConfigStore` publishes a resolved merchant, `configFlushTask` drains it.
     @Test("a config update triggers a drain with no explicit flush call, and stops after shutdown")
     func configUpdateTriggersADrain() async throws {
         let queueURL = FileManager.default.temporaryDirectory
@@ -709,8 +700,7 @@ struct FrakClientTests {
     }
 
     #if canImport(UIKit)
-        /// The single biggest delivery-rate lever on iOS: nothing else drains on app resume. Uses
-        /// only `NotificationCenter`, never `UIApplication.shared`.
+        /// Nothing else drains on app resume, so this is the biggest delivery-rate lever on iOS.
         @Test("posting willEnterForeground triggers a drain, and stops after shutdown")
         func foregroundNotificationTriggersADrain() async throws {
             let queueURL = FileManager.default.temporaryDirectory

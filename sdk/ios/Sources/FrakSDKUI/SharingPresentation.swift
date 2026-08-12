@@ -54,16 +54,13 @@
         /// Ends the session. Idempotent, and deliberately not driven by `.onDisappear`, which also
         /// fires when a `UIActivityViewController` covers the sheet.
         ///
-        /// Synchronous: an outcome still resolving when this runs loses to the `.dismissed` the
-        /// caller is about to report. That race is a local queue append behind the sheet's own
-        /// dismissal animation, and Android accepts the same one on its gesture path — its
-        /// `SharingSheetState.dismiss` reports without consulting the in-flight counter, which only
-        /// guards host teardown. The multi-second window this used to matter for was the install
-        /// action, and `SharingSheetModel` now reports `.installStarted` at the tap instead.
+        /// Synchronous: an outcome still resolving loses to the `.dismissed` the caller is about to
+        /// report. That race is a local queue append behind the dismissal animation, and Android
+        /// accepts the same one on its gesture path.
         func dispose() {
             guard !disposed else { return }
             disposed = true
-            // Stops a stale build resuming into a session this presentation no longer wants,
+            // Stops a stale build resuming into a session this presentation has dropped,
             // cooperative cancellation notwithstanding.
             preparation?.cancel()
             preparation = nil
@@ -148,21 +145,12 @@
             case reported
         }
 
-        /// The request from the most recent render of `frakSharingSheet`.
-        ///
-        /// Written by the modifier's `body` and read by its `launch`, rather than captured by the
-        /// change observer that triggers one: `onChange(of:perform:)` runs the action registered
-        /// by the render *before* the change, so a merchant that sets its request and its
-        /// `isPresented` in one gesture would otherwise share whatever it offered last time.
-        ///
-        /// Deliberately not `@Published` — it is assigned during `body`, where publishing would be
-        /// a re-entrant update, and nothing renders from it.
+        /// Written by the modifier's `body`, not captured by the observer: `onChange` runs the
+        /// action registered by the *previous* render, which would share the previous request.
         var pendingRequest = SharingRequest()
 
-        /// What the sheet renders. Deliberately **not** cleared when a session ends: this is
-        /// `@Published`, and a presented sheet is finished from inside SwiftUI's dismissal
-        /// transaction, where publishing re-presents the sheet. Replaced by the next `launch`,
-        /// dropped by `teardown`.
+        /// Deliberately **not** cleared when a session ends: `@Published`, so finishing inside
+        /// SwiftUI's dismissal transaction would re-present the sheet.
         @Published private(set) var presentation: SharingPresentation?
 
         private var phase: Phase = .idle
@@ -179,12 +167,8 @@
             let walletOrigin = client.environment.wallet
             let bundleId = Bundle.main.bundleIdentifier ?? ""
 
-            // Ahead of both awaits, and the reason `prepare` is split off `warm(_:)` at all.
-            // Booting the engine needs nothing but the origin we already have, while the URL to
-            // point it at is two round trips away — an identity mint and a merchant resolve. Left
-            // until after them, a user who taps inside that window gets a `WKWebView` built on the
-            // main thread in front of the sheet's own presentation, and the sheet visibly does not
-            // open. `SharingWebViewPool` is idempotent here, so re-entry costs nothing.
+            // Ahead of both awaits, and the reason `prepare` is split off `warm(_:)`: booting the
+            // engine needs only the origin, while the URL is two round trips away.
             poolIfPossible()?.prepare()
             trace.mark("warm engine ready")
 
@@ -251,8 +235,7 @@
         /// - Parameters:
         ///   - onlyIfUnpresented: pass true from the `isPresented` change, which fires before the
         ///     dismissal animation; a presented sheet is left to `onDismiss`.
-        ///   - onSettled: the merchant-visible report, called synchronously. Not called at all when
-        ///     this call is a no-op (`idle`, or `onlyIfUnpresented` with a presented sheet up).
+        ///   - onSettled: the merchant-visible report, called synchronously. Not called on a no-op.
         func finish(onlyIfUnpresented: Bool = false, onSettled: () -> Void) {
             switch phase {
             case .idle:

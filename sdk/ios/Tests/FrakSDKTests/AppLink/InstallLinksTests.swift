@@ -23,8 +23,7 @@ struct InstallLinksTests {
         )
     }
 
-    /// `?p=`, not `#p=`: the wallet's router navigates in-app, so a fragment is
-    /// gone before `/install` renders.
+    /// `?p=`, not `#p=`: the router navigates in-app, so a fragment is gone before `/install`.
     @Test("carries the install proof as a search param the deep-link router forwards")
     func carriesTheInstallProof() {
         #expect(

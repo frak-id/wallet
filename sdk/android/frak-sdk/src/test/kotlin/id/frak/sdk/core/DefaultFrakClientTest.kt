@@ -541,9 +541,8 @@ class DefaultFrakClientTest {
             advanceUntilIdle()
             assertTrue("nothing can be sent while offline", transport.requests.none { it.method == "POST" })
 
-            // The network returns. ConfigStore's backoff is keyed off wall-clock time, not the
-            // test scheduler, so this waits it out for real rather than pretending; the ceiling is
-            // Backoff.MIN_DELAY_MILLIS plus its jitter, so 1.1s always clears the first failure.
+            // ConfigStore's backoff is keyed off wall-clock time, not the test scheduler, so this
+            // waits it out for real: 1.1s clears MIN_DELAY_MILLIS plus its jitter.
             transport.respond(200, BODY)
             Thread.sleep(1_100)
 
@@ -562,9 +561,8 @@ class DefaultFrakClientTest {
     @Test
     fun `track and trackPurchase queue rather than fail when no merchant can be resolved`() =
         runTest {
-            // The contract change behind the deferral: capture used to resolve the merchant over
-            // the network first, so an unconfigured merchant offline returned MerchantResolutionFailed
-            // and the event was never written down. Now it is durable and the drain resolves it.
+            // Offline and unconfigured: the merchant cannot resolve, and the event must still be
+            // written down for the drain to resolve later.
             transport.fail(java.io.IOException("offline"))
             val queueFile = File(temporaryFolder.root, "events.jsonl")
             val client =

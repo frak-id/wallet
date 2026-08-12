@@ -3,15 +3,11 @@ import Testing
 
 @testable import FrakSDK
 
-/// The real store, not a fake. Which backing `generate()` picks depends on the host, so nothing
-/// here asserts on the backing.
+/// The real store, not a fake, so nothing here asserts on which backing `generate()` picks.
 ///
-/// Gates the suite: an unsigned SPM test binary has no Secure Enclave entitlement, so
-/// `generate()` can throw for reasons unrelated to the SDK. A skip here means the environment,
-/// not a regression.
-///
-/// Declared outside the suite type because `@Suite` is an attached macro — reading a static off
-/// the decorated type needs a member table the macro hasn't resolved yet.
+/// Gates the suite: an unsigned SPM test binary has no Secure Enclave entitlement, so a skip means
+/// the environment, not a regression. Declared outside the suite type because `@Suite` is an
+/// attached macro and cannot resolve a static on the type it decorates.
 private enum HostKeyMaterial {
     static let isMintable: Bool = {
         (try? PersistedDeviceKeyStore(store: InMemoryKeyValueStore()).loadOrCreate()) != nil
@@ -46,9 +42,7 @@ struct PersistedDeviceKeyStoreTests {
         #expect(first.publicKeyUncompressed == second.publicKeyUncompressed)
     }
 
-    /// Uses the software tag with a wrong-sized scalar rather than an enclave blob: the length
-    /// check rejects it on any host, unlike an enclave blob which needs hardware the test
-    /// machine may not have.
+    /// A wrong-sized software scalar, not an enclave blob: the length check rejects it on any host.
     @Test("material this device cannot use is replaced, not fatal")
     func discardsMaterialTheDeviceCannotUse() throws {
         let unusable = Base64URL.encode(Data([2]) + Data(repeating: 0xAB, count: 5))
@@ -101,8 +95,7 @@ struct PersistedDeviceKeyStoreTests {
         #expect(first.publicKeyUncompressed != second.publicKeyUncompressed)
     }
 
-    /// An unreadable store reads as empty, so minting would replace an identity that is present
-    /// and healthy, just locked. The whole install would lose its anonymous id for good.
+    /// An unreadable store reads as empty, so minting would replace a healthy, merely locked id.
     @Test("refuses to mint over a store it cannot read")
     func refusesToMintOverAnUnreadableStore() throws {
         let values = InMemoryKeyValueStore(readable: false)

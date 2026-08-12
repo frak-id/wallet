@@ -87,10 +87,8 @@
         /// activating on top of a half-loaded document would leave the page stuck where it got to.
         private(set) var documentReady = false
 
-        /// This view's content process was jetsammed and it has not been loaded since. Unlike
-        /// Android, where a dead renderer finishes a `WebView` for good, WebKit gives the view a
-        /// new process on the next load — so this only tells `SharingWebViewPool` that its idea
-        /// of what is warmed is stale.
+        /// Jetsammed content process, not loaded since. WebKit gives the view a new process on the
+        /// next load, so this only tells `SharingWebViewPool` its warm URL is stale.
         private(set) var rendererGone = false
 
         /// The last main-frame URL asked for, so a cache-only retry has something to retry.
@@ -200,12 +198,9 @@
             }
         }
 
-        /// Puts this view's page back to its warm params after a session moved them.
-        ///
-        /// Same document, so `loadedBaseURL` and `documentReady` keep describing it and the next
-        /// session can still activate on top instead of loading. A no-op when there is no
-        /// committed document to reset, which is the correct answer — `SharingWebViewPool.release`
-        /// only reaches here for a view whose document is the warm one.
+        /// Puts this view's page back to its warm params after a session moved them. Same document,
+        /// so `loadedBaseURL` and `documentReady` keep describing it and the next session can
+        /// activate on top instead of loading.
         func resetToWarm() {
             guard let target = fragmentTarget(SharingPageURL.warmFragment) else { return }
             view.load(URLRequest(url: target))
@@ -465,7 +460,7 @@
             // Ahead of the `settled` guard: a jetsammed renderer leaves nothing on screen, so a
             // pooled view still claiming `documentReady` would activate into a dead renderer.
             documentReady = false
-            // Tells the pool its warm URL no longer describes anything on screen.
+            // Tells the pool its warm URL describes nothing on screen.
             rendererGone = true
             // A booked retry would only navigate a view with nothing behind it.
             cancelPendingRetry()
@@ -478,28 +473,17 @@
     /// Puts an already-built `SharingWebView` on screen; the sheet's model owns it, not SwiftUI.
     struct SharingWebViewContainer: UIViewRepresentable {
         let webView: SharingWebView
-        /// Called once SwiftUI has actually taken this view out of the hierarchy.
-        ///
-        /// The pooled view goes back on this rather than on `SharingPresentation.dispose`, which
-        /// runs from `onDismiss` — while the sheet still has frames to draw. `SharingWebViewPool
-        /// .release` detaches the view and resets it, and `updateUIView` never puts it back, so
-        /// reclaiming it there empties the closing sheet mid-animation: a transparent hole, since
-        /// the sheet's own background is cleared for the page to show through.
+        /// Called once SwiftUI has actually taken this view out of the hierarchy — not from
+        /// `onDismiss`, which still has frames to draw and would empty the closing sheet.
         let onDismantled: () -> Void
 
         func makeCoordinator() -> Coordinator {
             Coordinator(onDismantled: onDismantled)
         }
 
-        /// The engine itself, not a host wrapping it.
-        ///
-        /// A wrapper was tried and reverted: SwiftUI builds this representable twice in the update
-        /// that swaps `SharingPresenter.presentation`, and a wrapper has to *move* the engine into
-        /// the second host, leaving the first — the one left on screen — empty, which shows as a
-        /// transparent sheet. Returning the engine is idempotent under that double build. Swapping
-        /// between two engines is handled by identity instead: `PresentedSharingSession` carries
-        /// `.id(ObjectIdentifier(presentation))`, so a new session builds a new representable here
-        /// rather than inheriting the previous one's answer.
+        /// The engine itself, not a host wrapping it: SwiftUI builds this representable twice when
+        /// `SharingPresenter.presentation` swaps, and a host would have to *move* the engine into
+        /// the second one, leaving the on-screen first one empty.
         func makeUIView(context: Context) -> WKWebView {
             return webView.view
         }

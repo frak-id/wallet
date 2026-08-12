@@ -81,30 +81,12 @@ internal class QueuedRow(
 }
 
 /**
- * Durable event queue: append-only JSONL file, compacted on flush. Unparseable rows (torn tail
- * from a mid-write kill) are discarded on read rather than failing the whole file. [replace]
- * writes a temp file and renames over the original, so a kill mid-compaction can't lose the
- * queue. Single writer only: not safe across processes.
+ * Durable append-only JSONL queue, compacted on flush, capped by count and age. Unparseable rows
+ * are dropped on read, and [replace] renames a temp file over the original so a kill
+ * mid-compaction cannot lose the queue. Every row carries a monotonic `rowId` assigned here.
  *
- * None of the counters below are synchronised, because callers are already serialised: every entry
- * point here is reached from [EventOutbox] under its `queueMutex`, which is also the lock
- * that makes a read-then-write pair atomic against a concurrent append. Reaching this class from
- * anywhere else, or from two coroutines at once, breaks the row-id monotonicity it exists to
- * guarantee — keep the mutex one layer up rather than making these fields atomic again, since
- * atomic fields would not have made the multi-step sequences here safe anyway.
- *
- * Capped by count and age, oldest dropped first. Both bounds are applied by one pass
- * ([readLocked]), reached from every [read] and from an [append] that has taken the file
- * [MAX_EVENTS_SLACK] rows past [MAX_EVENTS] — see [liveRowCount] and [trimIfOverflowing].
- *
- * Every row gets an SDK-owned, monotonically increasing `rowId`, assigned here, never by
- * [EventOutbox]. [nextRowId] is seeded lazily from the highest `rowId` this file has ever
- * held, so ids stay monotonic across a process restart with no separate counter file.
- *
- * Migration: a file written before this field existed has no `"r"` key on any row.
- * [QueuedRow.fromJson] reads a missing key as [MISSING_ROW_ID], and the first [read] of such a
- * file assigns fresh ids in on-disk order and rewrites the file through [replace] immediately.
- * No row is ever dropped for predating this field.
+ * Single writer, nothing synchronised: every entry point is reached from [EventOutbox] under its
+ * `queueMutex`, which is also what makes a read-then-write pair atomic.
  */
 internal class EventQueue(
     private val file: File,
@@ -112,33 +94,26 @@ internal class EventQueue(
     private val ioDispatcher: CoroutineDispatcher,
 ) {
     /**
-     * Next id to hand out to a newly appended row. [Long.MIN_VALUE] means "not yet seeded from
-     * disk"; [seedRowIdIfNeeded] resolves that on the first [read] or [append]. Seeded above
-     * [nextMigrationRowId]'s reserved block.
+     * Next id for an appended row. [UNSEEDED] means "not yet read from disk"; [seedRowIdIfNeeded]
+     * resolves that above [nextMigrationRowId]'s reserved block.
      */
     private var nextRowId = UNSEEDED
 
     /**
-     * Next id for a row an old-format file wrote with no `"r"` field, drawn from the bottom of
-     * the block [seedRowIdIfNeeded] reserves. Migration and fresh appends draw from disjoint
-     * counters, so a migrated row never outranks a row appended before the file was ever read.
+     * Id for a row an old-format file wrote with no `"r"` field, drawn from the bottom of the
+     * block [seedRowIdIfNeeded] reserves, so a migrated row never outranks a fresh append.
      */
     private var nextMigrationRowId = UNSEEDED
 
     /**
-     * Rows currently on disk, not rows [read] would return. Seeded alongside the id counters in
-     * [seedRowIdIfNeeded] from the same snapshot, then maintained at every site that changes the
-     * file: [append], [replaceLocked], [deleteFile] and [readLocked]'s tail.
-     *
-     * Exists so [append] can enforce [MAX_EVENTS] without reading the file on every call. If it
-     * ever drifts the cost is a mistimed trim, never a lost row.
+     * Rows on disk, not rows [read] would return, so [append] can enforce [MAX_EVENTS] without
+     * reading the file. Drift costs a mistimed trim, never a lost row.
      */
     private var liveRowCount = UNSEEDED_COUNT
 
     /**
-     * Row count at which [append] runs a trim pass. Re-armed after every pass from the count that
-     * pass actually left on disk, so a failed rewrite backs off by one [MAX_EVENTS_SLACK] instead
-     * of retrying the same failing write on every append.
+     * Row count at which [append] runs a trim pass. Re-armed from what that pass actually left on
+     * disk, so a failed rewrite backs off by one [MAX_EVENTS_SLACK] instead of retrying forever.
      */
     private var nextTrimAt = MAX_EVENTS + MAX_EVENTS_SLACK
 
@@ -204,23 +179,16 @@ internal class EventQueue(
         // takeLast: oldest dropped first, a fresh event is more likely to still matter.
         val bounded = if (events.size > MAX_EVENTS) events.takeLast(MAX_EVENTS) else events
 
-        // Migration, the age/count bound and unparseable rows all want a rewrite; do it once. A
-        // file with nothing to change is left untouched, so a steady-state read costs only the
-        // read.
+        // Migration, the bounds and unparseable rows all want a rewrite; do it once, and leave a
+        // file with nothing to change untouched.
         //
-        // `decoded.size != present.size` is the sweep: a torn tail from a mid-write kill is
-        // dropped from `decoded` at parse time but stays on disk, and without this it would be
-        // re-read and re-discarded forever. The rewrite removes it, so the next read finds the
-        // two counts equal.
+        // `decoded.size != present.size` is the sweep: a torn tail is dropped at parse time but
+        // stays on disk, and would be re-read and re-discarded forever without this.
         if (migratedAny || bounded.size != decoded.size || decoded.size != present.size) {
-            // A migration id is only real once it is durable. If the rewrite fails, the ids
-            // just assigned exist nowhere but this call stack, so the next read starts migration
-            // over from the un-rewritten file.
-            //
-            // Not signalled by returning an empty events list: [read] always returns `bounded`
-            // regardless, and durability is reported out-of-band via [ReadOutcome.durable] so
-            // [reconcile] can refuse to compact on a failed rewrite instead of treating "empty"
-            // as "queue is empty".
+            // A migration id is only real once it is durable: if the rewrite fails, the ids just
+            // assigned exist nowhere but this call stack. Reported out-of-band via
+            // [ReadOutcome.durable], never as an empty list, so [reconcile] can tell a failed
+            // rewrite from an empty queue.
             val durable = replaceLocked(bounded)
             if (!durable) nextMigrationRowId = migrationStart
             // replaceLocked already set the count on success; on failure the file still holds
@@ -239,14 +207,9 @@ internal class EventQueue(
 
     /**
      * Appends one line. O(1) in the common case; roughly one row in [MAX_EVENTS_SLACK] also pays
-     * a trim pass.
-     *
-     * The bound lives here, not just in [read]: enforcing it only there left the file growing
-     * without limit while backoff was armed, since a backing-off drain returns before it reads.
-     *
-     * The trim pass uses the event's own [QueuedRow.capturedAtMillis] as its `now`: close
-     * enough for an age bound measured in days, and avoids a second time source that could
-     * disagree with [EventOutbox]'s.
+     * a trim pass. The bound lives here, not just in [read]: a backing-off drain returns before
+     * it reads, which left the file growing without limit. The trim uses the event's own
+     * [QueuedRow.capturedAtMillis], so there is no second time source to disagree with.
      */
     suspend fun append(event: QueuedRow) {
         withContext(ioDispatcher) {
@@ -289,13 +252,10 @@ internal class EventQueue(
         }
 
     /**
-     * Idempotent: a second caller finding [nextRowId] already seeded does nothing.
-     *
-     * Reserves one id per row still awaiting migration, not just past the highest already
-     * stamped, since [append] can seed here before [read] has run over an old-format file.
-     * [nextMigrationRowId] takes the bottom of that reservation (`highest + 1`) and [nextRowId]
-     * the id above the whole block, so a fresh append always draws a strictly higher id than
-     * migration ever will.
+     * Idempotent. Reserves one id per row still awaiting migration, not just past the highest
+     * already stamped, because [append] can seed here before [read] has run over an old-format
+     * file. Migration draws from the bottom of that block and [nextRowId] from above it, so a
+     * fresh append always outranks any migrated row.
      */
     private fun seedRowIdIfNeeded(existing: List<QueuedRow>) {
         if (nextRowId != UNSEEDED) return
@@ -342,20 +302,11 @@ internal class EventQueue(
     suspend fun replace(events: List<QueuedRow>): Boolean = withContext(ioDispatcher) { replaceLocked(events) }
 
     /**
-     * Drops [delivered], applies [retried], and rewrites the file, in one hop. Not `read` then
-     * `replace` from the caller: those are two separate hops, and an event appended between them
-     * would be read by neither and erased by the second.
-     *
-     * Keyed on `rowId`, not `idempotencyKey`: a caller-suppliable idempotency key is not
-     * guaranteed unique, so two distinct queued rows could collide on it.
-     *
-     * Refuses to compact when the read it started from was not durable (see [readLocked]):
-     * writing `next` back could drop rows whose ids never made it to disk, or write an empty
-     * file when the true queue is not empty. Returns the in-memory list either way, so the
-     * caller still gets a correct picture for logging/backoff; only the disk write is skipped.
-     *
-     * Skips the write entirely when nothing changed, since [readLocked] has already persisted
-     * anything it changed before returning.
+     * Drops [delivered], applies [retried], and rewrites the file in one hop. Not `read` then
+     * `replace` from the caller: an event appended between those two hops would be read by
+     * neither and erased by the second. Keyed on `rowId` — `idempotencyKey` is caller-suppliable
+     * and can collide. Refuses to compact when the read was not durable (see [readLocked]), since
+     * writing back could erase rows whose ids never reached disk.
      */
     suspend fun reconcile(
         delivered: Set<Long>,
@@ -385,12 +336,8 @@ internal class EventQueue(
         const val MAX_EVENTS: Int = 1000
 
         /**
-         * How far past [MAX_EVENTS] the file may run before [append] trims it back.
-         *
-         * Amortisation knob: one O(N) pass per [MAX_EVENTS_SLACK] appends. Scales with the cap
-         * rather than a small constant, or a slack of e.g. 16 would make roughly every sixteenth
-         * append pay a full rewrite of a thousand rows. Price of the slack: the on-disk ceiling
-         * is `MAX_EVENTS + MAX_EVENTS_SLACK`, not [MAX_EVENTS] exactly.
+         * How far past [MAX_EVENTS] the file may run before [append] trims it back: one O(N) pass
+         * per [MAX_EVENTS_SLACK] appends, scaled to the cap so no single append rewrites the file.
          */
         const val MAX_EVENTS_SLACK: Int = MAX_EVENTS / 10
 

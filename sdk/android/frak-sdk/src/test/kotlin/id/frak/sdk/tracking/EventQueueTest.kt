@@ -236,9 +236,8 @@ class EventQueueTest {
             appendPreMigrationLine("old-a", capturedAt = NOW - 1)
             appendPreMigrationLine("old-b", capturedAt = NOW)
 
-            // No read() yet: append's own seed path (readExistingForSeed) must reserve one id
-            // per un-migrated row ahead of it, or "new" would take id 0 — the same id the later
-            // migration in read() assigns to "old-a".
+            // No read() yet: append's own seed path must reserve one id per un-migrated row ahead
+            // of it, or "new" would take the id read()'s migration later assigns to "old-a".
             queue.append(event("new"))
 
             val all = queue.read(NOW)
@@ -260,9 +259,8 @@ class EventQueueTest {
             val tempPath = File(file.parentFile, file.name + ".tmp")
             tempPath.mkdirs()
 
-            // read() must not signal the non-durable rewrite by returning an empty list: that
-            // would be indistinguishable from an empty queue, and EventOutbox.flush's
-            // bare compaction would then delete a queue that is not actually empty.
+            // read() must not signal a non-durable rewrite with an empty list: that is
+            // indistinguishable from an empty queue, and the next flush would wipe it.
             val migrated = queue.read(NOW)
             assertEquals(listOf("old-a", "old-b"), migrated.map { it.idempotencyKey })
 
@@ -292,8 +290,7 @@ class EventQueueTest {
 
             tempPath.deleteRecursively()
             // ...and the file was never touched: reconcile must not compact against a read whose
-            // migration ids are not durable, or the next flush would silently wipe events still
-            // on disk.
+            // migration ids are not durable.
             assertEquals(listOf("old-a", "old-b"), queue.read(NOW).map { it.idempotencyKey })
         }
 
@@ -349,15 +346,13 @@ class EventQueueTest {
             queue.append(event("a"))
             queue.append(event("b"))
             val before = file.readBytes()
-            // Backdated deliberately: a skipped rewrite and a performed one produce byte-identical
-            // content, so mtime is the only thing that can tell them apart. An hour in the past
-            // cannot be reached by a rewrite that stamps `now`.
+            // Backdated deliberately: a skipped rewrite and a performed one are byte-identical, so
+            // mtime is the only thing that can tell them apart.
             val backdated = System.currentTimeMillis() - 3_600_000
             assertTrue("could not backdate the fixture", file.setLastModified(backdated))
 
-            // The whole-file rewrite is the expensive half of a flush; skipping it here is safe
-            // only because read() already persisted anything it changed, so `next` is
-            // byte-identical to disk.
+            // Skipping the whole-file rewrite is safe only because read() already persisted
+            // anything it changed, so `next` is byte-identical to disk.
             val result = queue.reconcile(delivered = emptySet(), retried = emptyMap(), now = NOW)
 
             assertEquals(listOf("a", "b"), result.map { it.idempotencyKey })

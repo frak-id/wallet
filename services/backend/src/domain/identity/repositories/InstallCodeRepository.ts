@@ -6,10 +6,8 @@ import { installCodesTable } from "../db/schema";
 const CODE_TTL_HOURS = 72;
 
 /**
- * Max resolve attempts against a single install code. Caps repeated
- * hammering of one already-minted code independently of source IP —
- * durable across pod replicas, unlike `rateLimitMiddleware`'s in-memory
- * store. Does not bound enumeration of the ~887M-code keyspace.
+ * Max resolve attempts against a single install code, durable across pod replicas unlike
+ * `rateLimitMiddleware`'s in-memory store. Does not bound enumeration of the keyspace.
  */
 export const MAX_RESOLVE_ATTEMPTS = 20;
 
@@ -20,13 +18,10 @@ type InstallCodeSelect = typeof installCodesTable.$inferSelect;
 
 export class InstallCodeRepository {
     /**
-     * The live code for `(merchantId, anonymousId)`, minting one only when
-     * there is no usable one already.
-     *
-     * Reuse never extends `expires_at` — a sliding window would keep one
-     * credential alive indefinitely. Exhausted rows are excluded on purpose:
-     * exhaustion happens in the app, which cannot signal this page, so a
-     * reload is the user's only recovery.
+     * The live code for `(merchantId, anonymousId)`, minting one only when there is none usable.
+     * Reuse never extends `expires_at`, which would keep one credential alive indefinitely.
+     * Exhausted rows are excluded: exhaustion happens in the app, so a reload is the only
+     * recovery.
      */
     async create(params: {
         merchantId: string;
@@ -100,11 +95,9 @@ export class InstallCodeRepository {
     }
 
     /**
-     * Resolve a code and atomically count the attempt against it in one
-     * round-trip (UPDATE … RETURNING, not read-then-write) so concurrent
-     * guesses can't race past `MAX_RESOLVE_ATTEMPTS`. Returns `null` once
-     * expired, not found, or exhausted — callers can't distinguish which,
-     * which is deliberate: a distinguishable "exhausted" response would leak
+     * Resolve a code and count the attempt in one round-trip (UPDATE … RETURNING, not
+     * read-then-write) so concurrent guesses cannot race past `MAX_RESOLVE_ATTEMPTS`. `null`
+     * covers expired, missing and exhausted alike: a distinguishable "exhausted" would leak
      * that the code was real.
      */
     async findByCode(code: string): Promise<InstallCodeSelect | null> {

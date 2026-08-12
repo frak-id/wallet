@@ -1,15 +1,8 @@
 import Foundation
 
-/// `KeyValueStore` over one SDK-owned file, for the values that must not reach a restored
-/// device: the device key and the merchant marker guarding it.
-///
-/// `TrackingConsent` deliberately does NOT live here. A denial that evaporates on a device
-/// migration silently re-enables tracking on the new phone, so the consent decision wants the
-/// backup this type exists to avoid — it stays in `UserDefaultsStore`.
-///
-/// A file rather than another `UserDefaults` suite because a suite plist cannot be held out of a
-/// backup: `cfprefsd` reallocates the inode on every flush, so an exclusion set on the plist does
-/// not survive the next write. `FrakStorage` carries it on the directory instead.
+/// `KeyValueStore` over one SDK-owned file, for the values that must not reach a restored device.
+/// Not a `UserDefaults` suite: `cfprefsd` reallocates the plist inode on every flush, so a backup
+/// exclusion set on it dies with the next write.
 final class FileKeyValueStore: KeyValueStore, @unchecked Sendable {
     static let fileName = "identity.json"
 
@@ -55,11 +48,9 @@ final class FileKeyValueStore: KeyValueStore, @unchecked Sendable {
         mutate { $0[key] = value }
     }
 
-    /// An erasure must never be the operation that silently fails: refusing it would leave the
-    /// old identity on disk and hand it back at the next unlock, undoing a user's "forget me".
-    /// The whole file goes when it cannot be read, which errs toward erasing more than asked —
-    /// the safe direction for a request to erase, and the only one available without a readable
-    /// dict to remove a single key from.
+    /// An erasure must never be the operation that silently fails: refusing it would leave a dead
+    /// identity on disk to hand back at the next unlock. The whole file goes when it cannot be
+    /// read — the safe direction for a request to erase.
     func removeValue(forKey key: String) {
         lock.lock()
         defer { lock.unlock() }
@@ -130,13 +121,9 @@ final class FileKeyValueStore: KeyValueStore, @unchecked Sendable {
         }
     }
 
-    /// Reapplied after every write because `.atomic` replaces the file rather than rewriting it,
-    /// so the class does not carry over. `afterFirstUnlock`, matching the enclave key's own access
-    /// control: the SDK signs from background work, with no user present and the screen possibly
-    /// locked.
-    ///
-    /// `FileProtectionType` is unavailable on macOS, which this package still builds and tests on;
-    /// no-op there, as in `EventQueue`.
+    /// Reapplied after every write because `.atomic` replaces the file, so the class does not carry
+    /// over. `afterFirstUnlock`, matching the enclave key: the SDK signs from background work with
+    /// the screen possibly locked. No-op on macOS, as in `EventQueue`.
     private func applyProtection() {
         #if canImport(UIKit)
             do {

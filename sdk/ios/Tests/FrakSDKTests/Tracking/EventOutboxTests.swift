@@ -339,8 +339,6 @@ struct EventOutboxTests {
 
     // MARK: - the durable merge-replay guard
 
-    /// The replay guard keys on kind as well as the token, mirroring Android: a same-named
-    /// idempotency key on another kind must not swallow the merge row.
     @Test("a merge is still enqueued when another kind already holds the same idempotency key")
     func replayGuardFiltersByKind() async {
         let fixture = Fixture()
@@ -356,9 +354,7 @@ struct EventOutboxTests {
         #expect(pending.filter { $0.kind == MergeSender.kind }.count == 1)
     }
 
-    /// The guarantee this port adds: a merge token replayed across a process relaunch, where
-    /// `IdentityMerge`'s in-memory `consumed` set is empty again, still enqueues exactly once —
-    /// only the disk check (`isQueued`) can catch it the second time.
+    /// Only the disk check (`isQueued`) can catch the second arrival across a relaunch.
     @Test("the same merge token arriving twice across two IdentityMerge instances enqueues once")
     func isQueuedSurvivesARelaunch() async {
         let fixture = Fixture(signProof: { _, _, _ in nil })
@@ -511,10 +507,7 @@ struct EventOutboxTests {
 
     // MARK: - identity availability
 
-    /// Before a device's first unlock the identity is unreadable, so `currentClientId` is nil —
-    /// and the stale-id guard reads `if let captured, let currentId`, so a nil current id
-    /// DISABLES it rather than tightening it. Draining then posts rows for an identity the user
-    /// may already have reset. The gate returns before the read, leaving the file untouched.
+    /// A nil `currentClientId` disables the stale-id guard rather than tightening it.
     @Test("a drain is skipped, and the queue left byte-identical, while the identity is unreadable")
     func unreadableIdentitySkipsTheDrain() async throws {
         let fixture = Fixture()
@@ -543,13 +536,9 @@ struct EventOutboxTests {
 
     @Test("a cancelled drain leaves the queue file byte-identical (no reconcile)")
     func cancelledDrainLeavesTheFileUntouched() async throws {
-        // Appended directly, not via `track`, so both rows are on disk before the drain ever
-        // starts: two separate `track` calls can race their own detached drains, letting the
-        // first settle (and reconcile away) before the second is even appended.
-        //
-        // First row must actually be delivered before the second hangs: with nothing already
-        // reconciled this pass, `break` and `return` write the same (empty) diff, so a one-row
-        // version of this test cannot tell them apart.
+        // Appended directly, not via `track`, so both rows are on disk before the drain starts.
+        // The first must actually be delivered before the second hangs: with nothing reconciled,
+        // `break` and `return` write the same empty diff.
         let backend = FirstSucceedsThenHangsBackend()
         let (session, host) = StubURLProtocol.makeSession()
         defer { StubURLProtocol.reset(host: host) }
@@ -817,13 +806,7 @@ struct EventOutboxTests {
         #expect(survivors.map(\.idempotencyKey) == ["old-a", "old-b"])
     }
 
-    /// Consent withdrawn mid-drain must stop before the next POST: the drain already holds
-    /// every event in memory, so purging the file alone can't stop it. Withdrawal also nils
-    /// `currentClientId`, which disables the stale-id guard rather than tightening it.
-    ///
-    /// The queue is seeded directly rather than through `track`, since `track` schedules one
-    /// drain per call — routed through it, each drain would hold exactly one event and the
-    /// mid-drain window wouldn't exist to test.
+    /// Seeded directly: `track` schedules one drain per call, so no mid-drain window would exist.
     @Test("stops mid-drain when consent is withdrawn, and keeps the unsent events")
     func stopsMidDrainOnWithdrawal() async throws {
         let fixture = Fixture()

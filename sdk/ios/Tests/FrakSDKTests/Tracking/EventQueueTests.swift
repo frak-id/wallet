@@ -240,9 +240,8 @@ struct EventQueueTests {
         try appendPreMigrationLine("old-a", to: fileURL, capturedAt: Self.now.addingTimeInterval(-1))
         try appendPreMigrationLine("old-b", to: fileURL, capturedAt: Self.now)
 
-        // No read() yet: append's own seed path (readExistingForSeed), not read's, must reserve
-        // one id per un-migrated row ahead of it, or "new" would take id 0, the same id the
-        // later migration in read() assigns to "old-a", making the newest row the lowest id.
+        // No read() yet: append's own seed path must reserve one id per un-migrated row ahead of
+        // it, or "new" would take the id read()'s migration later assigns to "old-a".
         await queue.append(event("new"))
 
         let all = await queue.read(now: Self.now)
@@ -267,10 +266,8 @@ struct EventQueueTests {
         try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: parent.path)
         defer { try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: parent.path) }
 
-        // read() must not signal the failure via an empty array: that is indistinguishable from
-        // "the queue is empty", and InteractionTracker.drain's bare `guard !pending.isEmpty`
-        // would then treat a non-empty queue as having nothing to send. The durability signal
-        // lives on EventQueue.reconcile instead.
+        // read() must not signal the failure with an empty array: that is indistinguishable from
+        // an empty queue. The durability signal lives on EventQueue.reconcile instead.
         let migrated = await queue.read(now: Self.now)
         #expect(migrated.map(\.idempotencyKey) == ["old-a", "old-b"])
 
@@ -359,9 +356,8 @@ struct EventQueueTests {
         await queue.append(event("a"))
         await queue.append(event("b"))
         let before = try Data(contentsOf: fileURL)
-        // Backdated by an hour: a skipped rewrite and a performed one produce byte-identical
-        // content, so only the modification date can tell them apart, and backdating avoids a
-        // race against filesystem timestamp granularity that comparing against `now` would have.
+        // Backdated by an hour: a skipped rewrite and a performed one are byte-identical, so only
+        // the modification date can tell them apart.
         let backdated = Date(timeIntervalSinceNow: -3600)
         try FileManager.default.setAttributes([.modificationDate: backdated], ofItemAtPath: fileURL.path)
 
@@ -449,8 +445,7 @@ struct EventQueueTests {
         #expect(read.map(\.idempotencyKey) == ["before", "after"])
     }
 
-    /// Pins the on-disk row shape: nil `clientId`/`merchantId`/`rowId`/`heldSince` vanish rather
-    /// than encoding JSON `null`, and `t`/`h` are Unix milliseconds, not the Apple reference date.
+    /// Nil fields vanish rather than encoding JSON `null`; `t`/`h` are Unix milliseconds.
     @Test("golden byte shape: a fully-populated row")
     func goldenFullyPopulatedRow() throws {
         let encoder = JSONEncoder()
@@ -515,9 +510,7 @@ struct EventQueueTests {
         }
     #endif
 
-    /// The queue file carries the same protection class as the identity store, so it is
-    /// unreadable until first unlock. `try?` used to swallow that into "present but unreadable"
-    /// and DELETE the file — a whole backlog lost because the screen was locked.
+    /// "Present but unreadable" (locked, before first unlock) must never be read as "delete it".
     @Test("a queue that cannot be read yet is preserved, not dropped")
     func unreadableQueueIsPreserved() async throws {
         let (queue, fileURL) = makeQueue()

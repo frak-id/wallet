@@ -7,9 +7,8 @@ export const STORE_PACKAGE_ID = isProdStage
     ? "id.frak.wallet"
     : "id.frak.wallet.dev";
 
-// Apple ID 6759159306 (`id.frak.wallet`). The iOS SDK no longer matches this id — it only
-// checks that the tapped link is an App Store listing — so an old app in the wild keeps
-// working when this changes. The id still has to be right for the web install page itself.
+// Apple ID 6759159306 (`id.frak.wallet`). The iOS SDK only checks that a tapped link is an App
+// Store listing, so this id has to be right for the web install page, not for the SDK.
 export const APP_STORE_URL =
     "https://apps.apple.com/app/frak-wallet/id6759159306";
 

@@ -3,11 +3,9 @@ import Testing
 
 @testable import FrakSDKUI
 
-/// What a closing sheet's view is reset to, and what the reset fragment is allowed to say.
-///
-/// Both halves are quiet when wrong. Reset the wrong way and the pool either strands the previous
-/// share's params on a page the next sheet activates, or silently pays a full page load between
-/// every sheet — which is what it used to do, and the reason warming never showed up as a win.
+/// What a closing sheet's view is reset to, and what the reset fragment may say. Both halves are
+/// quiet when wrong: stale params on a page the next sheet activates, or a full page load between
+/// every sheet.
 @Suite("SharingReclaim")
 struct SharingReclaimTests {
     private static let warmURL =
@@ -40,8 +38,8 @@ struct SharingReclaimTests {
 
     @Test("a session that loaded its own page is reloaded, not reset")
     func fullLoadReloads() {
-        // Tap beat the warm-up, so the session did a full load and the document is no longer the
-        // warm one. Hanging a warm fragment off it would reset the params of the wrong page.
+        // Tap beat the warm-up, so the session did a full load and this is not the warm document.
+        // Hanging a warm fragment off it would reset the params of the wrong page.
         #expect(
             sharingReclaim(
                 warmURL: Self.warmURL,
@@ -93,11 +91,9 @@ struct SharingWarmFragmentTests {
 
     @Test("omits every key whose warm value has to stand again")
     func omitsTheSessionKeys() {
-        // The page spreads a fragment over the params it was loaded with, and those are frozen at
-        // document load, so an omitted key falls back to the warm URL's own value. Naming one here
-        // would pin the previous share's value instead — which is the ghost this reset exists to
-        // clear. `logoUrl` is included: a request may override it, and only the fragment carries
-        // that override.
+        // The page freezes its query params at document load, so an omitted key falls back to the
+        // warm URL's own value while a named one would pin the previous share's. `logoUrl` is
+        // included: a request may override it, and only the fragment carries that override.
         for key in ["link=", "products=", "seedReward=", "view=", "logoUrl="] {
             #expect(!SharingPageURL.warmFragment.contains(key), "warmFragment must not pin \(key)")
         }

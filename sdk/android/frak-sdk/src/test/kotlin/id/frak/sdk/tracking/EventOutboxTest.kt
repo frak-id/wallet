@@ -337,11 +337,7 @@ class EventOutboxTest {
             assertTrue("an absent wallet must not reach the wire", body.isNull("referrerWallet"))
         }
 
-    /**
-     * A drain reads the whole backlog under [EventQueue]'s lock and POSTs outside it, so a consent
-     * withdrawal landing mid-drain must be caught at the point of egress. The queue is seeded directly:
-     * routed through `track`, each drain would hold one event and the mid-drain window would not exist.
-     */
+    // Seeded directly: through `track`, each drain holds one event and the window would not exist.
     @Test
     fun `stops mid-drain when consent is withdrawn, and keeps the unsent events`() =
         runTest {
@@ -739,15 +735,7 @@ class EventOutboxTest {
             assertTrue(queue.read(now).isEmpty())
         }
 
-    /**
-     * Dropped must never touch the shared backoff: a Dropped row queued ahead of a row that then
-     * fails transiently must leave that failure's window at the fresh, one-failure minimum, not a
-     * second one stacked on top of a Dropped row that also (wrongly) armed it.
-     *
-     * Only the arming direction is testable. Dropped wrongly *clearing* the backoff is inert:
-     * [Backoff.remainingMillis] deletes the entry as soon as the window expires, and [flush] calls
-     * it before touching a row, so the failure count is always zero by the time any row is reached.
-     */
+    // Only the arming direction is testable: an expired entry is dropped before [flush] reaches a row.
     @Test
     fun `a dropped row does not arm the backoff, so the failure behind it gets a fresh window`() =
         runTest {

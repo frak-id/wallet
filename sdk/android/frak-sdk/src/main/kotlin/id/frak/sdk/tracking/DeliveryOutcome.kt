@@ -8,9 +8,8 @@ internal sealed interface DeliveryOutcome {
     data object Delivered : DeliveryOutcome
 
     /**
-     * Removed from the queue without a backend verdict (e.g. a foreign-merchant arrival). Kept
-     * apart from [Delivered] because nothing was sent: reporting backend success for a request
-     * that never happened is a lie, whatever the drain later does with it.
+     * Removed from the queue without a backend verdict (e.g. a foreign-merchant arrival). Apart
+     * from [Delivered] because nothing was sent.
      */
     data object Dropped : DeliveryOutcome
 

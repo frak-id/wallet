@@ -2,13 +2,8 @@ import CryptoKit
 import Foundation
 
 /// Inbound `?fmt=` handling: this install is the merge *target*, folding its anonymous id into the
-/// group the token names. Mirrors the web SDK's handling in `createIFrameFrakClient.ts`, except
-/// there the listener posts and here the SDK does.
-///
-/// The outbound half (`/merge/initiate`) has no native caller.
-///
-/// The wire post itself now runs through `MergeSender` off the durable queue; this actor only
-/// owns token parsing, the wire-body shape and the same-process claim.
+/// group the token names. Owns token parsing, the wire-body shape and the same-process claim; the
+/// post itself runs through `MergeSender` off the durable queue.
 actor IdentityMerge {
     static let tokenKey = "fmt"
     static let executePath = "/user/identity/merge/execute"

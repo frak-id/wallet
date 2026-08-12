@@ -53,11 +53,8 @@ internal class SharingPresentation(
 
     companion object {
         /**
-         * Fallback threshold: past this, skip the page and fire the native share sheet directly.
-         *
-         * Covers build, navigation, load and first paint together, and has to fit the *slowest*
-         * path: activation needs a finished warm document, which usually is not ready at the tap,
-         * so the common case is a full load plus a build. See `07-sharing-sheet-audit.md` §2.6.
+         * Past this, skip the page and fire the native share sheet directly. Covers build,
+         * navigation, load and first paint — see `07-sharing-sheet-audit.md` §2.6.
          */
         private const val PAGE_LOAD_DEADLINE_MILLIS = 5_000L
 

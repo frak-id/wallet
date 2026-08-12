@@ -150,17 +150,10 @@ enum SharingReclaim: Equatable {
 
 /// Which reset a released view needs.
 ///
-/// Kept out of the pool so a macOS test host can reach it, and gated on exactly the pair
-/// `SharingPresentation` activates on: an unfinished document has nothing to hang a fragment off,
-/// and a document that is not the warm one is not the page whose params a reset would put back.
-/// Getting this wrong is quiet in both directions — too eager leaves the previous share's params
-/// on screen, too shy silently spends a full page load between every sheet.
-///
-/// - Parameters:
-///   - warmURL: what the pool warmed this view on, if it ever did.
-///   - loadedBaseURL: the document the view was last asked to load, minus any fragment.
-///   - documentReady: whether that document finished loading.
-/// - Returns: how the pool should put the view back to warm.
+/// Gated on exactly the pair `SharingPresentation` activates on: an unfinished document has
+/// nothing to hang a fragment off, and a document that is not the warm one is not the page a reset
+/// would put back. Wrong in either direction is quiet — stale params on screen, or a full page
+/// load between every sheet.
 func sharingReclaim(
     warmURL: String?,
     loadedBaseURL: String?,
@@ -212,17 +205,8 @@ private func sharingPageJSONNumber(_ value: Double) -> NSDecimalNumber? {
     return NSDecimalNumber(string: text)
 }
 
-/// Waits between attempts at building the session, when the failure looks transient.
-///
-/// The build is the only step with no fallback of its own — the page retries, the tap-to-content
-/// deadline degrades to the OS chooser, but a throwing build closes the sheet on the spot, which
-/// is what a cold start losing the identity mint looks like to a user. The skeleton is already up
-/// and stays up across the attempts, so a wasted one is invisible.
-///
-/// Two rungs, not more: the config resolve behind this has its own `SingleFlight` and `Backoff`,
-/// so a third would mostly re-await the same answer, and the whole ladder has to stay well inside
-/// `SharingSheetModel.pageLoadDeadline` — past that the deadline has promoted the session to a
-/// native share and a late build has nothing to hand a page to.
+/// Waits between attempts at building the session, when the failure looks transient: the build is
+/// the only step with no fallback, and a throwing one closes the sheet outright.
 let sharingBuildRetryDelays: [TimeInterval] = [0.25, 0.75]
 
 /// Whether a failed session build is worth another attempt.

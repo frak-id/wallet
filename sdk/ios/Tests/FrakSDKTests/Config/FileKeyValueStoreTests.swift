@@ -30,8 +30,6 @@ struct FileKeyValueStoreTests {
         }
     }
 
-    /// The reason this type exists at all: the value has to come back after the process that
-    /// wrote it is gone, which a second instance over the same URL stands in for.
     @Test("a second store over the same file reads the value back")
     func persistsAcrossInstances() throws {
         try withTemporaryStore { store, fileURL in
@@ -55,8 +53,7 @@ struct FileKeyValueStoreTests {
         }
     }
 
-    /// Matches `PersistedDeviceKeyStore`'s policy for material it cannot use: replace, never
-    /// refuse. A store that threw here would brick an install over a truncated write.
+    /// Matches `PersistedDeviceKeyStore`: replace material it cannot use, never refuse.
     @Test("an unreadable file reads as empty and is replaced by the next write")
     func replacesAnUnreadableFile() throws {
         try withTemporaryStore { store, fileURL in
@@ -78,8 +75,7 @@ struct FileKeyValueStoreTests {
         }
     }
 
-    /// Before a device's first unlock the file exists and is intact, but its protection class
-    /// makes it unreadable. Reading that as empty is how a healthy identity gets minted over.
+    /// Before first unlock the file is intact but unreadable; reading it as empty mints over it.
     @Test("an unreadable file is never overwritten, and reports itself unreadable")
     func unreadableFileIsLeftIntact() throws {
         try withTemporaryStore { store, fileURL in
@@ -101,8 +97,7 @@ struct FileKeyValueStoreTests {
         }
     }
 
-    /// The unreadable result must not be memoised, or a session that started locked stays blind
-    /// to the identity for the rest of its life.
+    /// Memoised, a session that started locked stays blind to the identity for its whole life.
     @Test("a store that was unreadable sees the file once it becomes readable")
     func unreadableIsNotMemoised() throws {
         try withTemporaryStore { store, fileURL in
@@ -125,8 +120,7 @@ struct FileKeyValueStoreTests {
         }
     }
 
-    /// A "forget me" landing in the unlock window must not be the thing that silently fails:
-    /// refusing the write would leave the old identity on disk to be handed back at first unlock.
+    /// Refusing the write would leave a dead identity on disk to hand back at first unlock.
     @Test("an erasure still erases while the file is unreadable")
     func removalErasesEvenWhenUnreadable() throws {
         try withTemporaryStore { store, fileURL in
@@ -150,9 +144,7 @@ struct FileKeyValueStoreTests {
 /// Separate suite: this asserts on `FrakStorage`'s real location, not an injected temporary one.
 @Suite("FrakStorage")
 struct FrakStorageTests {
-    /// The load-bearing assertion of the whole identity-storage change. If this attribute is ever
-    /// lost, a restore clones the installation's identity onto the new device (finding 3.3) and
-    /// nothing else in the suite would notice.
+    /// Lose this attribute and a restore clones the installation's identity onto the new device.
     @Test("the SDK directory is excluded from backup")
     func directoryIsExcludedFromBackup() throws {
         let directory = try FrakStorage.directory()

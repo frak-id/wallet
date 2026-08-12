@@ -109,9 +109,7 @@ class MerchantIdentityTest {
             assertEquals("a cache hit must not touch the network either", requestsAfterResolve, transport.requests.size)
         }
 
-    // Was "a configured merchantId always wins": inverted now that the backend is authoritative.
-    // A cold cache still needs seeding without going through merchant() itself, which now returns
-    // the configured id on a cold cache; availableConfig() resolves unconditionally.
+    // availableConfig() resolves unconditionally, which is how a cold cache gets seeded.
     @Test
     fun `merchant prefers a cached backend value over a configured merchantId that disagrees`() =
         runTest {

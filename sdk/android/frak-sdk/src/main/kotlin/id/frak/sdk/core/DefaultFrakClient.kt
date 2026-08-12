@@ -292,9 +292,9 @@ internal class DefaultFrakClient(
      */
     private suspend fun mergeInboundIdentity(mergeToken: String) {
         try {
-            // Gated explicitly, not just by the null id below: this now writes a live merge
-            // token to disk for as long as the queue holds it, where it used to cost one POST.
-            // Checked, not required(): a link arriving with tracking off is refused, not an error.
+            // Gated explicitly, not just by the null id below: this writes a live merge token to
+            // disk for as long as the queue holds it. Checked, not required(): a link arriving
+            // with tracking off is refused, not an error.
             if (!consent.isEnabled()) return
             // Claimed only once the gates are passed, or a link that arrived before consent
             // burns the token for the process and a later opt-in cannot replay it.
@@ -370,15 +370,11 @@ internal class DefaultFrakClient(
         )
 
     /**
-     * Routed through [frakCall] so an unexpected `Throwable` normalises before becoming a
-     * [FrakResult.Failure].
+     * Routed through [frakCall] so an unexpected `Throwable` normalises into a [FrakResult.Failure].
      *
-     * [MerchantPolicy.CachedOnly], so capture never waits on the network and never fails for
-     * want of a merchant: a null here defers resolution to the drain and the event is durable
-     * either way. Identical to [MerchantPolicy.Required] whenever [FrakConfig.merchantId] is set
-     * — [MerchantIdentity.merchant] answers from the configured id before it reads the policy at
-     * all — so this only changes the unconfigured case, where `Required` blocked on the network
-     * and failed the call outright.
+     * [MerchantPolicy.CachedOnly], so capture never waits on the network and never fails for want
+     * of a merchant: a null here defers resolution to the drain and the event is durable either
+     * way. Only the unconfigured case differs from [MerchantPolicy.Required].
      */
     private suspend inline fun trackingCall(block: (merchantId: String?) -> FrakResult<Unit>): FrakResult<Unit> =
         try {

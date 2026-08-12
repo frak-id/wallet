@@ -3,9 +3,8 @@ import Foundation
 /// A queued row: `payload` holds only kind-specific facts true at capture time and is opaque
 /// JSON, not a typed model — see `RowBody.withMerchantId`.
 struct QueuedRow: Codable, Sendable, Hashable {
-    /// Bumped when a new `kind` is introduced; an unregistered kind is skipped by the drain,
-    /// which breaks strict FIFO. A downgrade after a bump deletes the rows a sweep can no longer
-    /// decode — nothing has shipped yet, so that's accepted rather than solved.
+    /// Bumped when a new `kind` is introduced; an unregistered kind is skipped by the drain, which
+    /// breaks strict FIFO. A downgrade after a bump deletes rows a sweep cannot decode.
     static let currentSchemaVersion = 1
 
     var idempotencyKey: String
@@ -108,18 +107,12 @@ struct QueuedRow: Codable, Sendable, Hashable {
     }
 }
 
-/// An append-only JSONL file of events waiting to be sent, one line per event so a kill
-/// mid-write only costs the torn tail.
+/// An append-only JSONL file of events waiting to be sent, one line per event so a kill mid-write
+/// only costs the torn tail. Durable rather than in-memory: iOS can suspend the host app while the
+/// share sheet is up, which is exactly when a `sharing` event is in flight.
 ///
-/// Durable rather than in-memory: iOS can suspend the host app while the share sheet is up,
-/// which is exactly when a `sharing` event is in flight.
-///
-/// Every row gets an SDK-owned, monotonically increasing `rowId`, assigned here and seeded
-/// from the highest id already on disk so ids stay monotonic across a restart. A file written
-/// before `rowId` existed gets ids assigned and persisted on first read.
-///
-/// File I/O runs synchronously inside the actor: making these methods `async` would let
-/// `append` interleave with `reconcile`/`read` and reopen the race they close.
+/// File I/O runs synchronously inside the actor — making these methods `async` would let `append`
+/// interleave with `reconcile`/`read` and reopen the race they close.
 actor EventQueue {
     /// Past this, an event is too old to attribute anything.
     static let maxAge: TimeInterval = 14 * 24 * 60 * 60
@@ -127,9 +120,8 @@ actor EventQueue {
     /// from `read` and from `append` once the file drifts `maxEventsSlack` past this.
     static let maxEvents = 1000
 
-    /// How far past `maxEvents` the file may run before `append` trims it back. Bounds the
-    /// on-disk ceiling to `maxEvents + maxEventsSlack` while amortising the O(N) rewrite over
-    /// that many appends.
+    /// How far past `maxEvents` the file may run before `append` trims it back, amortising the
+    /// O(N) rewrite over that many appends.
     static let maxEventsSlack = maxEvents / 10
 
     static let fileName = "frak-events.jsonl"
@@ -154,14 +146,12 @@ actor EventQueue {
     /// the first `read` or `append`.
     private var nextRowId: Int64?
 
-    /// Next id for a row an old-format file wrote with no `"r"` field, drawn from the low end
-    /// of the block `seedRowIdIfNeeded` reserves so migrated and freshly appended rows never
-    /// share an id.
+    /// Id for a row an old-format file wrote with no `"r"` field, drawn from the low end of the
+    /// block `seedRowIdIfNeeded` reserves, so migrated and fresh rows never share an id.
     private var nextMigrationRowId: Int64?
 
-    /// Row count on disk, not rows `read` returns. Lets `append` enforce `maxEvents` without
-    /// reading the file on every call; if it ever drifts, only the trim timing is affected,
-    /// never a lost row.
+    /// Row count on disk, not rows `read` returns, so `append` can enforce `maxEvents` without
+    /// reading the file. Drift costs trim timing, never a row.
     private var liveRowCount: Int?
 
     /// Row count at which `append` runs a trim pass, re-armed from the count the last pass
@@ -173,12 +163,9 @@ actor EventQueue {
         self.logger = logger
     }
 
-    /// The SDK's own directory under Application Support, excluded from backup so queued
-    /// events never replay onto a restored device that is no longer the same user.
-    ///
-    /// Falls back to the temporary directory rather than failing: a queue that does not
-    /// survive a restart still beats losing every event this session captures. The identity
-    /// store shares the directory but deliberately not this fallback — see `FrakStorage`.
+    /// The SDK's own directory under Application Support, excluded from backup so queued events
+    /// never replay onto a restored device. Falls back to the temporary directory rather than
+    /// failing; the identity store shares the directory but deliberately not that fallback.
     static func defaultFileURL(logger: FrakLogger) -> URL {
         do {
             return try FrakStorage.directory().appendingPathComponent(fileName, isDirectory: false)
@@ -275,14 +262,11 @@ actor EventQueue {
         return ReadOutcome(events: bounded, durable: true)
     }
 
-    /// A failed append is a lost event, never a crash: nothing a merchant called is failing.
-    ///
     /// Appends one line; O(1) except roughly one append in `maxEventsSlack`, which also pays a
-    /// trim pass. Enforced here rather than only on `read`, because a caller that only appends
-    /// must not be able to grow the file forever while a backing-off drain never reads.
-    ///
-    /// Uses the event's own `capturedAt` as the trim's `now` rather than a fresh clock read;
-    /// close enough for a day-scale age bound.
+    /// trim pass. A failed append is a lost event, never a crash. The bound is enforced here and
+    /// not only on `read`, or a caller that only appends could grow the file forever while a
+    /// backing-off drain never reads. Trims against the event's own `capturedAt`, so there is no
+    /// second clock to disagree with.
     func append(_ event: QueuedRow) {
         do {
             if nextRowId == nil { seedRowIdIfNeeded(from: readExistingForSeed()) }
@@ -393,21 +377,12 @@ actor EventQueue {
         delete()
     }
 
-    /// Drops `delivered`, applies `retried`, and rewrites the file in one hop rather than
-    /// `read` then `replace`: two hops would let an event appended between them be read by
-    /// neither and erased by the rewrite.
+    /// Drops `delivered`, applies `retried`, and rewrites the file in one hop: two hops would let
+    /// an event appended between them be read by neither and erased by the rewrite.
     ///
-    /// Keyed on `rowId`, not `idempotencyKey`, which a caller can supply and isn't guaranteed
-    /// unique. Every row `read` returns has already been migrated to a non-nil `rowId`; a nil
-    /// here is unreachable and is treated as "keep, unmodified".
-    ///
-    /// Refuses to compact when the read it started from was not durable: `delivered`/`retried`
-    /// are keyed on ids from that read, and writing back could drop rows that never made it to
-    /// disk, or write an empty file when the queue is not actually empty.
-    ///
-    /// Skips the write entirely when nothing changed, since `readWithOutcome` has already
-    /// persisted anything it changed — when `changed` is false, `next` is byte-for-byte what
-    /// is on disk right now.
+    /// Keyed on `rowId`, not the caller-suppliable `idempotencyKey`. Refuses to compact when the
+    /// read was not durable — writing back could drop rows that never reached disk, or empty a
+    /// queue that is not empty.
     func reconcile(delivered: Set<Int64>, retried: [Int64: QueuedRow], now: Date) {
         let outcome = readWithOutcome(now: now)
         guard outcome.durable else { return }
@@ -449,15 +424,12 @@ actor EventQueue {
         )
     }
 
-    /// Readable only once the device has been unlocked at least once since boot, then stays
-    /// readable: appropriate for a queue that must stay writable while the device is locked
-    /// (an interaction can be tracked from a locked-screen share sheet) but must never be
-    /// readable off a stolen, powered-off device. Best-effort: a failure here still leaves the
-    /// write that just succeeded, so it is never escalated past a warning.
+    /// Readable only once the device has been unlocked since boot, then stays readable: the queue
+    /// must stay writable while locked (a share sheet can track from the lock screen) but never
+    /// readable off a stolen, powered-off device. Best-effort — a failure here still leaves the
+    /// write that just succeeded, so it never escalates past a warning.
     ///
-    /// `NSFileProtectionKey`/`FileProtectionType` are unavailable on macOS, which this package
-    /// still builds and tests on; no-op there since there is no shipping product on that
-    /// platform and no equivalent API to fall back to.
+    /// No-op on macOS, where `FileProtectionType` does not exist and nothing ships.
     private func applyProtection() {
         #if canImport(UIKit)
             do {

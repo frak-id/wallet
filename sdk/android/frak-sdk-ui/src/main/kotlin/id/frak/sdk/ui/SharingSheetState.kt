@@ -57,11 +57,8 @@ internal class SharingSheetState(
         private set
 
     /**
-     * Whether the page has painted; drives the skeleton over the web view. Latches, so a later
-     * same-session navigation cannot put the skeleton back.
-     *
-     * Starts false even on a warm view: a pooled view is never in a window while it warms, so a
-     * finished warm document has drawn nothing and uncovering it shows a blank web view.
+     * Whether the page has painted; drives the skeleton over the web view. Latches. Starts false
+     * even on a warm view, which has drawn nothing because it was never in a window.
      */
     var pageVisible: Boolean by mutableStateOf(false)
         private set
@@ -98,8 +95,7 @@ internal class SharingSheetState(
 
     /**
      * The page's buttons that are mid-round-trip. The footer stays enabled throughout, so without
-     * this a second tap stacks a second chooser, or bills a second reward-bearing interaction, or
-     * fetches a second install page to race the first one's navigation on the one shared web view.
+     * this a second tap stacks a chooser, bills a second reward, or races two install pages.
      */
     private val claimed = mutableSetOf<SharingPageAction>()
 
@@ -122,9 +118,8 @@ internal class SharingSheetState(
     private val mainHandler = Handler(Looper.getMainLooper())
 
     /**
-     * [scope]'s own dispatcher, so work dispatched to [workContext] can come back on-thread before
-     * it touches anything here. A no-op hop when the two share an interceptor, which is what tests
-     * pass and what keeps them free of an extra dispatch.
+     * [scope]'s own dispatcher, so work dispatched to [workContext] comes back on-thread before it
+     * touches anything here. A no-op hop when the two share an interceptor, as tests pass.
      */
     private val stateContext: CoroutineContext = scope.coroutineContext.minusKey(Job)
 
@@ -202,12 +197,10 @@ internal class SharingSheetState(
     }
 
     /**
-     * Navigates, and on an activation supplies the two signals the engine will not. A fragment
-     * change is same-document: no `onPageStarted`, no `onPageFinished`, so [SharingWebViewClient]
-     * says nothing at all on this path and the page's own `ready` is the only word for it. That
-     * makes the fastest path the one that times out on the load deadline and raises the chooser
-     * over a page that is already there — `ready` rides two `requestAnimationFrame`s, and a
-     * WebView produces no frames until the sheet has attached it to a window and drawn it.
+     * Navigates, and on an activation supplies the two signals the engine will not: a fragment
+     * change is same-document, so [SharingWebViewClient] says nothing and the page's own `ready`
+     * is the only word for it. `ready` rides two `requestAnimationFrame`s, and a WebView produces
+     * no frames until the sheet has attached it to a window.
      */
     private fun navigateNow(
         view: WebView,

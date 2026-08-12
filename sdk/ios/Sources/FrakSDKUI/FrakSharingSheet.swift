@@ -45,11 +45,8 @@
         @State private var best: SharingResult?
 
         func body(content: Content) -> some View {
-            // Published to the presenter on every render rather than captured by the observers
-            // below. A merchant sets its request and its `isPresented` in one gesture, and
-            // `onChange(of:perform:)` runs the action the *previous* render registered — which
-            // would launch the previous share. Whichever generation of the closure runs, it reads
-            // this, and the body that observed the change has already written it.
+            // Published on every render, not captured by the observers below: `onChange` runs the
+            // action the *previous* render registered, which would launch the previous share.
             presenter.pendingRequest = request
 
             return
@@ -63,13 +60,10 @@
                 .onAppear { if isPresented { launch() } }
                 .onDisappear { presenter.teardown() }
                 // The tap. Synchronous, and deliberately not `.task(id:)`, which would run after
-                // SwiftUI had already begun presenting: the sheet's content is built from
-                // `presenter.presentation`, so a launch that lands later builds it from the
-                // *previous* session and then replaces it underneath. That leaves two live
-                // representable identities for one pooled engine, and tearing the first one down
-                // removes the engine from the sheet the second one is showing — a transparent
-                // sheet. `false` is handled here only for a session that never got a sheet, and
-                // so has no `onDismiss` coming.
+                // SwiftUI had begun presenting: the sheet's content is built from
+                // `presenter.presentation`, so a late launch builds the *previous* session and then
+                // replaces it underneath, leaving two identities for one pooled engine.
+                // `false` is handled here only for a session that never got a sheet.
                 .onChange(of: isPresented) { presenting in
                     if presenting {
                         launch()
@@ -112,19 +106,14 @@
         var body: some View {
             ZStack {
                 if let presentation = presenter.presentation {
-                    // Deliberately no `.id(presentation)` here. It was tried, to rebuild the
-                    // subtree when a presentation is replaced under a live sheet, and it is
-                    // actively wrong: two identities then exist for one *pooled* engine, and
-                    // SwiftUI tearing the outgoing one down calls `removeFromSuperview` on the
-                    // view it made — which by then belongs to the sheet the incoming one shows,
-                    // so the sheet goes transparent. The launch is synchronous instead, so a
-                    // stale presentation is never built from in the first place.
+                    // Deliberately no `.id(presentation)`: two identities for one *pooled* engine
+                    // means SwiftUI tearing the outgoing one down calls `removeFromSuperview` on a
+                    // view that by then belongs to the incoming sheet, which goes transparent.
                     PresentedSharingSession(presentation: presentation)
                 } else {
-                    // The background lives here rather than once at this view's root: once a
-                    // presentation exists, `PresentedSharingSession` has to pick between this
-                    // and `SheetBackground(clear: false)` for `contentLost`, and only it
-                    // observes the model that decides which.
+                    // Here rather than at this view's root: once a presentation exists,
+                    // `PresentedSharingSession` picks between this and `SheetBackground(clear:
+                    // false)` for `contentLost`, and only it observes the model that decides.
                     SharingSheetSkeleton()
                         .modifier(SheetBackground(clear: true))
                 }

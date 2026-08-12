@@ -274,8 +274,7 @@ struct SharingPageProductsJSONTests {
         #expect(json.contains("\"utmContent\":\"kettle\""))
     }
 
-    /// `JSONSerialization` prints a bare `Double` at binary precision: `79.9` would go out as
-    /// `79.900000000000006`.
+    /// `JSONSerialization` prints a bare `Double` at binary precision: `79.9` as `79.900000000000006`.
     @Test("prices serialize the way JSON.stringify writes them, not at binary precision")
     func numbersMatchJSONStringify() throws {
         let json = try #require(
@@ -368,9 +367,7 @@ struct ClampedSharingHeightFractionTests {
 
 @Suite("sharing build retry ladder")
 struct SharingBuildRetryTests {
-    // Every kind below is one `SharingSheetModel.build` can actually raise, now that
-    // `buildSharingLink` is injected as throwing: a `try?` there used to flatten all of them into
-    // one `merchantResolutionFailed`, which made this whole predicate a constant.
+    // Every kind below is one `SharingSheetModel.build` can actually raise.
     @Test("a cold start's identity or link failure is retried")
     func coldStartFailureIsRetried() {
         // The enclave refused to mint a key — never cached, so the next attempt can succeed.

@@ -4,16 +4,13 @@ import UIKit
 
 /// The two ways iOS can invite an app install, side by side, against an editable item id.
 ///
-/// They differ in where they attach: `SKOverlay` has only `present(in:)` and goes on the
-/// `UIWindowScene`, so a modal covers it; `SKStoreProductViewController` is an ordinary view
-/// controller and presents on top. They also differ in how they fail, which is what this
-/// harness exists to show — a non-app id makes the overlay do nothing at all, silently, while
-/// the product page cheerfully opens whatever medium the id really points at.
+/// They differ in where they attach — `SKOverlay` goes on the `UIWindowScene`, so a modal covers
+/// it — and in how they fail: a non-app id makes the overlay do nothing at all, silently, while
+/// the product page opens whatever the id really points at.
 @MainActor
 enum StoreInvite {
-    /// Frak Wallet, `id.frak.wallet`, live since 2026-05-18. Listed in FR/GB/DE/ES/IT and not
-    /// in the US — so an iTunes lookup without a `country` reports it missing, and a
-    /// storefront-less `apps.apple.com/app/id…` URL 404s outside those territories.
+    /// Frak Wallet, `id.frak.wallet`. Listed in FR/GB/DE/ES/IT and not the US, so a lookup
+    /// without a `country` reports it missing and a storefront-less URL 404s elsewhere.
     static let frakWalletId = "6759159306"
 
     private static var presenter: ProductPagePresenter?

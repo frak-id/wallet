@@ -4,10 +4,8 @@ import id.frak.sdk.Frak
 import id.frak.sdk.core.FrakError
 
 /**
- * Warms the identity and merchant config the sheet needs before it can build a page URL, then
- * answers that URL. Driven by an explicit [FrakSharing.warm]. Answers a URL rather
- * than warming the pool itself because this can resume with no Activity attached, and a `WebView`
- * must be built against a windowed context — [SharingHost] holds the answer until it has one.
+ * Warms the identity and merchant config the sheet needs, then answers a URL rather than warming
+ * the pool: this can resume with no Activity attached, and a `WebView` needs a windowed context.
  */
 internal suspend fun resolveWarmUrl(packageId: String): String? {
     if (!Frak.isInitialized) return null

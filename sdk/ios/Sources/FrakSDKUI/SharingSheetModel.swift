@@ -12,16 +12,12 @@
     /// after the OS chooser, confirm after that, never fall back twice.
     @MainActor
     final class SharingSheetModel: ObservableObject {
-        /// Tap-to-content budget, timed from the tap, so it has to cover the build too.
-        ///
-        /// Sized for a full load, not a warm activation: warming is usually still in flight at the
-        /// tap, so the common case is the slow one. The old 1.5s raised the chooser over pages
-        /// that were merely still coming. `SharingWebView`'s retry ladder fits inside this.
+        /// Tap-to-content budget, timed from the tap, so it has to cover the build too. Sized for a
+        /// full load, not a warm activation: warming is usually still in flight at the tap, so the
+        /// common case is the slow one. `SharingWebView`'s retry ladder fits inside this.
         static let pageLoadDeadline: TimeInterval = 5
-        // `sharingBuildRetryDelays` and `sharingBuildIsWorthRetrying` live in
-        // SharingSheetLogic.swift, outside this `#if`, so the ladder has a host-run test.
-        /// How long the reward headline may delay the page navigation. Sized for a cache hit and
-        /// nothing more; a miss costs nothing, since the page fetches the same value itself.
+        // `sharingBuildRetryDelays` and `sharingBuildIsWorthRetrying` live in SharingSheetLogic
+        // .swift, outside this `#if`, so the ladder has a host-run test.
         nonisolated static let seedTimeout: TimeInterval = 0.04
         // The App Store handoff lives in `StoreOverlay`.
 
@@ -37,8 +33,7 @@
             /// The page's own `action=ready`, or any user action on it — either is proof it drew.
             case painted
             /// A renderer crash after the page had painted. `SharingWebView` is `isOpaque = false`
-            /// and the sheet clears its own background for the normal case, so what is left is a
-            /// see-through hole where the page used to be, and the sheet has to cover it.
+            /// and the sheet clears its background, so what is left is a see-through hole to cover.
             case lost
         }
 
@@ -89,11 +84,9 @@
         private var fellBack = false
         private var deadlineExpired = false
         /// The page's buttons that are mid-round-trip. The footer stays enabled throughout, so
-        /// without this a second tap stacks a second chooser, or bills a second reward-bearing
-        /// interaction, or fetches a second install page to race the first one's navigation on the
-        /// one shared web view. A set rather than one flag per button, matching Android's
-        /// `SharingSheetState.claimed`: `shareAgain` reopens them all by construction instead of
-        /// having to remember each one by hand.
+        /// without this a second tap stacks a second chooser, bills a second reward-bearing
+        /// interaction, or races two install pages on the one shared web view. A set, matching
+        /// Android's `SharingSheetState.claimed`, so `shareAgain` reopens them all at once.
         private var claimed: Set<SharingPageAction> = []
         /// On the wallet's install page rather than the sharing page, so `onPageUnavailable` can
         /// tell a failed install page apart from a failed sharing page.
@@ -174,11 +167,8 @@
             deadline?.cancel()
             deadline = nil
             webView = nil
-            // An `SKOverlay` is attached to the `UIWindowScene`, not to the sheet that raised it,
-            // so it survives this sheet unless taken down here. It is taken down: the sheet only
-            // ever raises one from its own install page, so "was this install-driven?" is a
-            // question with one answer and cannot gate anything. A tapped GET keeps downloading
-            // after the overlay goes, so the cost of dismissing is only the untapped case.
+            // An `SKOverlay` attaches to the `UIWindowScene`, not the sheet, so it survives unless
+            // taken down here. A tapped GET keeps downloading, so this only costs the untapped case.
             storeOverlay.dismiss()
         }
 
@@ -211,11 +201,9 @@
         func copy() async {
             guard let session else { return }
             guard claim(.copy) else { return }
-            // No chooser covers this one, so a swipe can land inside `trackSharing()` below and
-            // report `.dismissed` over the `.copied` this is about to produce. That window is a
-            // local queue append behind the sheet's own dismissal animation; Android accepts the
-            // same race on its gesture path (`SharingSheetState.dismiss` reports without waiting).
-            // Before the copy, unlike `share()`: there is no chooser to cancel.
+            // No chooser covers this one, so a swipe can land inside `trackSharing()` and report
+            // `.dismissed` over the `.copied` it is about to produce — a local queue append behind
+            // the dismissal animation. Before the copy, unlike `share()`: no chooser to cancel.
             await trackSharing()
             NativeShare.copy(session.link)
             report(.copied(link: session.link))
@@ -436,8 +424,7 @@
         private func navigateNow(_ webView: SharingWebView, _ navigation: SharingNavigation) {
             webView.navigate(navigation)
             // Only a finished document can be activated, so tap-to-content is already met.
-            // `onPageVisible` is deliberately not called: paint stays the page's word, bounded by
-            // the skeleton grace this unlocks.
+            // `onPageVisible` is not called: paint stays the page's word.
             if case .activate = navigation { onPageReady() }
         }
 

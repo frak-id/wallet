@@ -9,15 +9,9 @@ enum SharingPageURL {
     /// navigation from the warm page cannot be attributed to whichever session binds next.
     static let warmSessionId = "warm"
 
-    /// Puts an activated page back where `warm(...)` left it, as a fragment — a same-document
-    /// change, so the booted page survives the sheet that used it.
-    ///
-    /// `state=warm` is written out because the page defaults a fragment that omits it to `live`
-    /// (`SHARING_PARAMS.state.fragmentDefault`), and everything else is omitted on purpose: the
-    /// page spreads a fragment over the query params it was loaded with, and those params are
-    /// frozen at document load (`apps/wallet/app/entry/sharing/main.tsx` reads them once, at
-    /// module scope), so an absent key falls back to the warm URL's own value rather than to
-    /// whatever the last session set.
+    /// Puts an activated page back where `warm(...)` left it, as a same-document fragment change.
+    /// `state=warm` is spelled out because a fragment omitting it defaults to `live`; the rest is
+    /// omitted, the query params being frozen at document load.
     static let warmFragment = "#sid=" + warmSessionId + "&state=warm"
 
     private static let maxSchemeSuffix = 60

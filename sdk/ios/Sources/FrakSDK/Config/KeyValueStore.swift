@@ -6,9 +6,8 @@ protocol KeyValueStore: Sendable {
     func set(_ value: String, forKey key: String)
     func removeValue(forKey key: String)
 
-    /// False only while the backing exists but cannot be read — a file-backed store before the
-    /// device's first unlock. Distinct from empty: minting over an unreadable store destroys the
-    /// identity sitting in it.
+    /// False only while the backing exists but cannot be read — a file-backed store before first
+    /// unlock. Distinct from empty: minting over an unreadable store destroys the identity in it.
     var isReadable: Bool { get }
 }
 
@@ -21,10 +20,8 @@ final class UserDefaultsStore: KeyValueStore, @unchecked Sendable {
     /// Matches the reason declared in `PrivacyInfo.xcprivacy`.
     static let suiteName = "id.frak.sdk.config"
 
-    /// The consent decision, and only that: it is the one persisted value that SHOULD survive a
-    /// restore, so it stays in a backed-up suite while the key material moved to
-    /// `FileKeyValueStore`. Separate from the config suite because a corrupt write to that hot
-    /// cache must not take the record that the user was ever asked with it.
+    /// The consent decision, and only that: the one persisted value that SHOULD survive a restore.
+    /// Separate from the config suite so a corrupt write to that hot cache cannot take it along.
     static let consentSuiteName = "id.frak.sdk.consent"
 
     // UserDefaults is documented thread-safe; it predates the Sendable annotation.
