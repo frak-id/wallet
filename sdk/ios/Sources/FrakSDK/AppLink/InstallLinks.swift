@@ -1,6 +1,9 @@
 enum InstallLinks {
-    // Single App Store listing for all stages; dev build installs out of band.
-    private static let appStoreURL = "https://apps.apple.com/app/id6740261164"
+    // Single App Store listing for all stages; dev build installs out of band. Storefront-less
+    // on purpose: the App Store app resolves it against the user's own storefront. The same
+    // form 404s in a browser outside the territories the app is sold in, which is why the
+    // wallet's web install page must not reuse this constant.
+    private static let appStoreURL = "https://apps.apple.com/app/id6759159306"
 
     /// Links this installation's anonymous id to the user's wallet.
     ///

@@ -59,6 +59,6 @@ struct InstallLinksTests {
 
     @Test("points at the wallet's App Store listing")
     func pointsAtTheAppStoreListing() {
-        #expect(InstallLinks.appStore() == "https://apps.apple.com/app/id6740261164")
+        #expect(InstallLinks.appStore() == "https://apps.apple.com/app/id6759159306")
     }
 }

@@ -25,8 +25,10 @@
         /// nothing more; a miss costs nothing, since the page fetches the same value itself.
         nonisolated static let seedTimeout: TimeInterval = 0.04
         private static let appStoreHost = "apps.apple.com"
-        /// `SKOverlay` wants the bare numeric id, not a URL.
-        private static let walletAppStoreId = "6740261164"
+        /// `SKOverlay` wants the bare numeric id, not a URL. Frak Wallet, `id.frak.wallet`.
+        /// This is the only id the overlay is ever raised with; the one in the tapped link is
+        /// not read, so a stale install page cannot downgrade the handoff.
+        private static let walletAppStoreId = "6759159306"
 
         /// Whether the hosted page has painted; drives the skeleton over the web view. Latches.
         ///
@@ -87,6 +89,8 @@
         /// On the wallet's install page rather than the sharing page, so `onPageUnavailable` can
         /// tell a failed install page apart from a failed sharing page.
         private var showingInstallPage = false
+        /// Whether this sheet raised an `SKOverlay`, so `release()` knows to take it back down.
+        private var presentedStoreOverlay = false
 
         /// Counts `share()`/`copy()`/`fallBack(to:)` calls that can still produce a real outcome,
         /// so `abandon(onSettled:)` can defer a `.dismissed` report to whichever one is still
@@ -169,6 +173,7 @@
             deadline?.cancel()
             deadline = nil
             webView = nil
+            dismissStoreOverlay()
         }
 
         /// Claims one of the page's buttons for its round trip.
@@ -344,13 +349,25 @@
             Task { _ = await UIApplication.shared.open(url) }
         }
 
-        /// The wallet's own listing and nothing else on `apps.apple.com`. Scans path components,
-        /// so storefront-prefixed forms like `/us/app/name/id123` still match.
+        /// Any App Store listing on `apps.apple.com`, deliberately not this SDK's own id.
+        ///
+        /// The overlay is always raised with `walletAppStoreId`, so the id in the URL only has to
+        /// say "this is a store listing", not which one. Matching the id itself would tie a
+        /// constant frozen into the merchant's binary at submission to a page served live — the
+        /// two drift the first time either side changes, and the tap then silently degrades to a
+        /// plain store handoff. The sheet only ever loads the wallet's own install page, and the
+        /// only store link on it is the wallet's.
+        ///
+        /// Scans path components, so storefront-prefixed forms like `/us/app/name/id123` match.
         private func isWalletAppStoreListing(_ url: URL) -> Bool {
             guard url.host?.caseInsensitiveCompare(Self.appStoreHost) == .orderedSame else {
                 return false
             }
-            return url.pathComponents.contains("id" + Self.walletAppStoreId)
+            return url.pathComponents.contains { component in
+                guard component.hasPrefix("id") else { return false }
+                let digits = component.dropFirst(2)
+                return !digits.isEmpty && digits.allSatisfy(\.isNumber)
+            }
         }
 
         /// - Returns: whether the overlay was presented; false leaves the caller to open the URL.
@@ -369,7 +386,24 @@
                     position: .bottom
                 )
                 SKOverlay(configuration: configuration).present(in: scene)
+                presentedStoreOverlay = true
                 return true
+            #endif
+        }
+
+        /// An overlay is attached to the `UIWindowScene`, not to the sheet that raised it, so it
+        /// stays on screen over the merchant's own UI once the sheet goes away. Taken down with
+        /// the sheet, from `release()`.
+        private func dismissStoreOverlay() {
+            guard presentedStoreOverlay else { return }
+            presentedStoreOverlay = false
+            #if !targetEnvironment(macCatalyst)
+                guard
+                    let scene = UIApplication.shared.connectedScenes
+                        .compactMap({ $0 as? UIWindowScene })
+                        .first(where: { $0.activationState == .foregroundActive })
+                else { return }
+                SKOverlay.dismiss(in: scene)
             #endif
         }
 

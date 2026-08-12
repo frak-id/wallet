@@ -528,7 +528,7 @@ struct FrakClientTests {
         let withoutWallet = makeClient(launcher: absent) { _ in StubResponse(status: 200, body: Self.resolveBody) }
         let fellBack = await withoutWallet.openFrakApp()
         #expect(fellBack == .openedStore)
-        #expect(absent.opened == ["https://apps.apple.com/app/id6740261164"])
+        #expect(absent.opened == ["https://apps.apple.com/app/id6759159306"])
     }
 
     @Test("openFrakApp opens the wallet even when the merchant never declared the scheme")
