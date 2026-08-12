@@ -640,6 +640,8 @@ struct CheckoutToolsView: View {
                     isRefreshing: isDebugRefreshing,
                     onRefresh: onRefreshDebugInfo
                 )
+
+                StoreInviteCard()
             }
         }
     }
