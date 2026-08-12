@@ -210,7 +210,7 @@ struct SharingSheetLogicTests {
 struct SharingChooserCompletedTests {
     @Test("an extension that picked a target counts, whatever it claims")
     func pickedTargetCounts() {
-        // The reported bug: shared for real, chooser said otherwise, and the sheet stayed put.
+        // Message under-reports: `completed` false on a share that happened.
         #expect(
             sharingChooserCompleted(
                 activityType: "com.apple.UIKit.activity.Message",
@@ -236,8 +236,7 @@ struct SharingChooserCompletedTests {
 
     @Test("a claimed completion with no target still counts")
     func claimedCompletionCounts() {
-        // Not observed in the wild, but `completed` is still a signal: refusing it here would
-        // trade one silent drop for another.
+        // `completed` is still a signal; refusing it here would trade one silent drop for another.
         #expect(sharingChooserCompleted(activityType: nil, completed: true, failed: false))
     }
 }

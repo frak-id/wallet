@@ -26,16 +26,10 @@
                 popover.permittedArrowDirections = []
             }
 
-            // Asked before presenting, never after. This used to read
-            // `controller.presentingViewController` on the same turn as the `present` call and
-            // treat nil as "refused" — but UIKit does not promise to have wired that up by then,
-            // and when it had not, this call resolved false while the chooser went on to appear.
-            // The user shared, and the sheet stayed on its share screen with nothing recorded.
-            //
-            // These two are what a refusal actually looks like, and both are settled facts at
-            // this point: `topViewController()` walks to the deepest presented controller, so
-            // anything already presenting here is a race, and a controller out of the window
-            // hierarchy cannot present at all.
+            // Before presenting, never after: `presentingViewController` is not reliably wired up
+            // on the same turn as the `present` call, so reading it there reports a refusal for a
+            // chooser that goes on to appear. These two are settled facts here — `topViewController()`
+            // already walked past anything presented.
             guard presenter.presentedViewController == nil, presenter.viewIfLoaded?.window != nil
             else { return false }
 

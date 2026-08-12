@@ -135,15 +135,11 @@ func isAppStoreListing(_ url: URL) -> Bool {
 
 /// Whether a finished OS chooser counts as a share.
 ///
-/// `completed` alone is the share extension's word for it, and extensions get it wrong in both
-/// directions — this is the SDK dropping a share the user had just made. `activityType` is
-/// UIKit's own: it is set once the user picks a target and stays nil for a sheet dismissed
-/// without picking one. Taking either as a share still keeps a cancelled chooser out, which is
-/// the case the two signals agree on, and stops losing a real share to an extension that failed
-/// to report it.
+/// `completed` is the share extension's own claim and is wrong in both directions in the wild;
+/// `activityType` is UIKit's, and is nil only when the sheet was dismissed without picking a
+/// target. Either one counts, which still keeps a cancelled chooser out.
 ///
-/// Android cannot make this call at all — `startActivity` returns nothing about the outcome — so
-/// it attributes every raised chooser. This is the stricter of the two; the gap is deliberate.
+/// Android attributes every raised chooser — `startActivity` tells it nothing — so it is looser.
 ///
 /// - Parameters:
 ///   - activityType: `UIActivity.ActivityType.rawValue`, or nil when nothing was picked.
