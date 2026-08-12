@@ -47,6 +47,12 @@
         func body(content: Content) -> some View {
             content
                 .task { await presenter.warm() }
+                // The net for a binding that is already true at first render: `onChange` has no
+                // change to observe there, so nothing else would ever start that session. It lives
+                // here rather than on the sheet's own content, which SwiftUI can re-insert behind a
+                // dismissal — see `SharingPresenter.presentation`. This one runs before SwiftUI
+                // presents anything, so it cannot resurrect a finished session.
+                .onAppear { if isPresented { launch() } }
                 .onDisappear { presenter.teardown() }
                 // The tap: SwiftUI has not begun presenting yet, so the pooled view is taken and
                 // the build started first. `false` is handled here only for a session that never
@@ -59,12 +65,7 @@
                     }
                 }
                 .sheet(isPresented: $isPresented, onDismiss: { finish() }) {
-                    FrakSharingSheetContent(
-                        presenter: presenter,
-                        heightFraction: heightFraction,
-                        // Idempotent safety net if the `onChange` lands after the sheet is built.
-                        launch: launch
-                    )
+                    FrakSharingSheetContent(presenter: presenter, heightFraction: heightFraction)
                 }
         }
 
@@ -80,13 +81,8 @@
             )
         }
 
-        /// The single exit, whether the sheet closed itself or the user swiped it away.
-        ///
-        /// `onResult` is a completion handed to `SharingPresenter.finish`, not a value read
-        /// synchronously here: a share/copy/fallback attribution still resolving when the sheet
-        /// goes away can defer that completion — see `SharingSheetModel.abandon(onSettled:)` —
-        /// so `best` may keep changing after this call returns and before `onResult` actually
-        /// fires. `finish` never calls this closure more than once.
+        /// The single exit, whether the sheet closed itself or the user swiped it away. `finish`
+        /// never calls this closure more than once, and never for a session that had no sheet.
         private func finish(onlyIfUnpresented: Bool = false) {
             presenter.finish(onlyIfUnpresented: onlyIfUnpresented) {
                 onResult(best ?? .dismissed)
@@ -98,7 +94,6 @@
     private struct FrakSharingSheetContent: View {
         @ObservedObject var presenter: SharingPresenter
         let heightFraction: CGFloat
-        let launch: () -> Void
 
         var body: some View {
             ZStack {
@@ -122,11 +117,9 @@
             // The sheet is what `heightFraction` resizes, not the content inside it: a `.sheet`
             // with no detents is presented at `.large` whatever the content does.
             .modifier(SharingSheetChrome(fraction: clampedSharingHeightFraction(heightFraction)))
-            .onAppear {
-                launch()
-                // From here the sheet owns teardown, not the `isPresented` change.
-                presenter.onPresented()
-            }
+            // Deliberately does not launch: from here the sheet owns teardown, not the
+            // `isPresented` change, and SwiftUI can fire this again behind a dismissal.
+            .onAppear { presenter.onPresented() }
         }
     }
 
@@ -144,7 +137,10 @@
 
         var body: some View {
             ZStack {
-                SharingWebViewContainer(webView: presentation.webView)
+                SharingWebViewContainer(
+                    webView: presentation.webView,
+                    onDismantled: { [presentation] in presentation.onContentDismantled() }
+                )
 
                 if !model.pageVisible {
                     SharingSheetSkeleton()

@@ -462,11 +462,37 @@
     /// Puts an already-built `SharingWebView` on screen; the sheet's model owns it, not SwiftUI.
     struct SharingWebViewContainer: UIViewRepresentable {
         let webView: SharingWebView
+        /// Called once SwiftUI has actually taken this view out of the hierarchy.
+        ///
+        /// The pooled view goes back on this rather than on `SharingPresentation.dispose`, which
+        /// runs from `onDismiss` — while the sheet still has frames to draw. `SharingWebViewPool
+        /// .release` detaches the view and re-warms it, and `updateUIView` never puts it back, so
+        /// reclaiming it there empties the closing sheet mid-animation: a transparent hole, since
+        /// the sheet's own background is cleared for the page to show through.
+        let onDismantled: () -> Void
+
+        func makeCoordinator() -> Coordinator {
+            Coordinator(onDismantled: onDismantled)
+        }
 
         func makeUIView(context: Context) -> WKWebView {
             webView.view
         }
 
         func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+        static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
+            coordinator.onDismantled()
+        }
+
+        /// Carries the callback, which `dismantleUIView` cannot reach any other way — it is
+        /// static, and the representable value is gone by the time it runs.
+        final class Coordinator {
+            let onDismantled: () -> Void
+
+            init(onDismantled: @escaping () -> Void) {
+                self.onDismantled = onDismantled
+            }
+        }
     }
 #endif

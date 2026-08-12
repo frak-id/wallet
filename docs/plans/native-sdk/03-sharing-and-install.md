@@ -177,14 +177,44 @@ gets no `onDismiss` at all and is disposed from the `isPresented` change. `wasPr
 tells the two apart. Android reaches the same conclusion from the other end — its grab-strip
 dismiss animates off screen *before* reporting, for the same reason.
 
+**Nothing may publish while `onDismiss` runs.** `onDismiss` fires *inside* SwiftUI's dismissal
+transaction, and `.onChange(of: isPresented)` does not always precede it — on a tap outside the
+sheet it lands after, even though the binding already reads false. So while disposal runs, SwiftUI
+still holds the sheet up, and an `@Published` write from there invalidates the modifier and gets
+answered with a **re-presentation**: the sheet visibly reopens, its content's `onAppear` fires
+again and starts a second session (second pooled view, second `onResult`, second `SKOverlay`
+owner), and the whole thing closes again. `SharingPresenter` therefore splits the two roles —
+`presentation` is the published render slot and is only ever *replaced* by the next launch or
+dropped by `teardown`, while the unpublished `active` carries the lifecycle `finish` acts on. The
+second guard is directional: `launch(opening:)` is opened only by the `isPresented` change, and
+the sheet's own `onAppear` may join a session but never start one. Reproduced and fixed against an
+iOS 26 simulator; Android's `ComponentDialog` has no equivalent, its dismiss path being imperative.
+
 **Disposal also severs the session.** `dispose` cancels the build task and clears the model's
 `onOutcome`/`onClose` before releasing anything. `release()` deliberately does not mark the model
 closed — an in-flight `share` outlives the sheet that started it — so a build still suspended for
 a dismissed sheet will run its failure path to completion; those closures write the presenter's
 `best` and flip its `isPresented`, which by then may belong to the *next* session. Without the
 severing, a slow build from a sheet the user already dismissed could report its failure as the
-next sheet's outcome, or dismiss that next sheet outright. Android is guarded differently and only
-partly, by `FrakSharingLauncher.finish`'s `active == null` check.
+next sheet's outcome, or dismiss that next sheet outright. Android is guarded differently, by
+`SharingHost.finish`'s `live == null` check.
+
+**Disposal is synchronous, and a still-resolving outcome loses.** iOS used to defer the `.dismissed`
+report to an in-flight `share()`/`copy()`/`.install`, through an `AttributionLedger` ported from
+Android's `SharingOutcome.inFlight` (finding 9.1). That port put the mechanism on the wrong path.
+Android has **two** exits and defers on only one: a user gesture runs `exit()` → `SharingSheetState.
+dismiss()` → `outcome.finish(Dismissed)` with no counter check at all (`FrakSharingSheet.kt:205-214`,
+`SharingSheetState.kt:455`), and `abandon()` is reached only from host teardown — an Activity being
+destroyed or a `ViewModel` cleared. SwiftUI gives iOS one exit for both, so the port applied a
+teardown-only deferral to the *primary gesture*, and that single decision is what forced
+`selfUntilSettled` (a self-retain across the deferral), a 5s `abandonGrace` bound, `pendingLaunch`
+and `pendingReports` — four constructs Android has no equivalent of, because it solves those
+structurally (`ViewModel` retention, and a `SupervisorJob` scope cancelled only *after* `abandon`).
+All of it is now deleted. What remains is the same race Android ships: a swipe landing between a
+`copy()` and its `record`, which is a local queue append behind the sheet's own dismissal animation.
+The one window that was genuinely multi-second — `.install`, whose `installPageURL` is a network
+round trip — is closed instead by reporting `.installStarted` **at the tap**; it is the
+highest-significance outcome, so nothing can outrank it later.
 
 **`action=ready` is the only paint signal.** WebKit exposes no public equivalent of
 `postVisualStateCallback`, so where Android has a heuristic plus the page's own `ready`, iOS has
@@ -207,12 +237,23 @@ rather than by a frame callback, so that number has no iOS twin and is unmeasure
 is still kept off the main actor, because there is no reason to put network and keystore work on
 it to find out.
 
-**No device or simulator pass has run on any of this**, so every number in the Android section
-above is Android's. `swift build` at the iOS-simulator triple and the host-run suites are the
-only evidence; `SharingWebViewPool`, `SharingSheetModel` and `SharingWebView` are behind
-`#if canImport(UIKit)` and therefore compile-checked only, never executed. The logic that could
-be pulled out from under that wall — `SharingPageURL.warm`/`activationFragment` and
-`SharingSession.navigation` — is tested on the host.
+**The session build has its own retry ladder** (`sharingBuildRetryDelays`, 250ms/500ms/1s). Every
+other step degrades on failure — the page retries, the deadline promotes to the OS chooser — but a
+throwing build closed the sheet outright, which is what a cold start losing the identity mint or
+the merchant resolve looks like from the outside: the first share of a session fails, every later
+one works. The skeleton is already up and stays up across the attempts, so a wasted one is
+invisible; the ladder is bounded well inside `pageLoadDeadline`, past which the deadline has
+already promoted the session and a late build has nothing to hand a page to. Only transient kinds
+are retried (`sharingBuildIsWorthRetrying`) — a misconfiguration retried three times is three
+times the wait for the same answer. **Android has no equivalent yet.**
+
+**One simulator pass has now run, on the dismissal flows only** (iOS 26, XCUITest driving
+tap-outside / drag-down / reopen against the harness). Every *number* in the Android section above
+is still Android's. `swift build` at the iOS-simulator triple and the host-run suites remain the
+only evidence for the rest; `SharingWebViewPool`, `SharingSheetModel` and `SharingWebView` are
+behind `#if canImport(UIKit)` and therefore compile-checked only. The logic that could be pulled
+out from under that wall — `SharingPageURL.warm`/`activationFragment`, `SharingSession.navigation`
+and the build retry policy — is tested on the host.
 
 #### Gestures on iOS: not ported, and why
 
@@ -343,6 +384,11 @@ the backend's 30-day window measures from.
   `isFrakAppInstalled()` for this flow (which stays public for other callers).
   `SKStoreProductViewController` is rejected: it fails presenting alongside an already-up
   `UISheetPresentationController`.
+- **The overlay outlives the sheet once `.installStarted` is reported, and only then.** It is
+  attached to the scene, not to the sheet, so surviving is what it does by default; the sheet
+  used to take it back down unconditionally, which meant closing the sheet — by any gesture —
+  cancelled an install already under way. An overlay raised from any other store link still goes
+  away with the sheet that showed it, so a stray link cannot strand one over the merchant's UI.
 - Never read the pasteboard (raises an OS banner/permission alert since iOS 16); writing
   triggers nothing. It carries the code, not a URL — the code surfaces in the QuickType bar
   and tapping the suggestion is the consent with no prompt. The write sets `.expirationDate`

@@ -5,47 +5,52 @@
     import SwiftUI
     import UIKit
 
-    // `SharingSession`, `SharingNavigation`, `sharingDecision` and `AttributionLedger` live in
+    // `SharingSession`, `SharingNavigation` and `sharingDecision` live in
     // SharingSheetLogic.swift, outside this `#if`, so they stay reachable from a macOS test host.
 
     /// The sheet's behaviour, kept out of the view. Ordering matters — attribute the share
     /// after the OS chooser, confirm after that, never fall back twice.
     @MainActor
     final class SharingSheetModel: ObservableObject {
-        /// Tap-to-content budget, timed from the tap: it has to cover `buildSharingLink` and
-        /// `resolveConfig` too.
+        /// Tap-to-content budget, timed from the tap, so it has to cover the build too.
         ///
-        /// Sized for the slowest path rather than the fastest. A warm fragment activation lands in
-        /// well under a second, but activation needs a *finished* warm document and warming is
-        /// usually still in flight at the tap — so the common case is a full load. The old 1.5s lost
-        /// that race often enough to raise the chooser over a page that was simply still coming.
-        /// Sized against `SharingWebView`'s retry ladder, which is bounded to fit inside this.
+        /// Sized for a full load, not a warm activation: warming is usually still in flight at the
+        /// tap, so the common case is the slow one. The old 1.5s raised the chooser over pages
+        /// that were merely still coming. `SharingWebView`'s retry ladder fits inside this.
         static let pageLoadDeadline: TimeInterval = 5
+        // `sharingBuildRetryDelays` and `sharingBuildIsWorthRetrying` live in
+        // SharingSheetLogic.swift, outside this `#if`, so the ladder has a host-run test.
         /// How long the reward headline may delay the page navigation. Sized for a cache hit and
         /// nothing more; a miss costs nothing, since the page fetches the same value itself.
         nonisolated static let seedTimeout: TimeInterval = 0.04
-        private static let appStoreHost = "apps.apple.com"
-        /// `SKOverlay` wants the bare numeric id, not a URL. Frak Wallet, `id.frak.wallet`.
-        /// This is the only id the overlay is ever raised with; the one in the tapped link is
-        /// not read, so a stale install page cannot downgrade the handoff.
-        private static let walletAppStoreId = "6759159306"
+        // The App Store handoff lives in `StoreOverlay`.
 
-        /// Whether the hosted page has painted; drives the skeleton over the web view. Latches.
-        ///
-        /// Starts false even for a warm page: a pooled `WKWebView` is never in a view hierarchy
-        /// until a sheet presents it, so a finished warm document has drawn nothing, and
-        /// uncovering it would show an empty sheet until the activation paints. The page's own
-        /// `action=ready` is the paint signal.
-        @Published private(set) var pageVisible = false
+        /// How far the hosted page has got. One value rather than three published booleans, which
+        /// could spell "painted but lost" and "lost before it ever rendered".
+        enum PagePhase {
+            /// Nothing on screen yet; the skeleton covers the web view.
+            case loading
+            /// The document finished, but nothing says it has drawn. A warm page starts here even
+            /// though its document is complete: a pooled `WKWebView` is in no view hierarchy until
+            /// a sheet presents it, so uncovering it would show an empty sheet until it paints.
+            case documentReady
+            /// The page's own `action=ready`, or any user action on it — either is proof it drew.
+            case painted
+            /// A renderer crash after the page had painted. `SharingWebView` is `isOpaque = false`
+            /// and the sheet clears its own background for the normal case, so what is left is a
+            /// see-through hole where the page used to be, and the sheet has to cover it.
+            case lost
+        }
 
-        /// Document-finished. Observable so the sheet can bound its skeleton's wait.
-        @Published private(set) var pageLoaded = false
+        @Published private(set) var page: PagePhase = .loading
 
-        /// Set only by a renderer crash after the page had painted (see `onPageUnavailable`'s
-        /// `pageLoaded` branch). `SharingWebView` is `isOpaque = false` and `FrakSharingSheet`
-        /// clears the sheet's own background for the normal case, so a transparent, contentless
-        /// sheet would otherwise be a see-through hole where the page used to be.
-        @Published private(set) var contentLost = false
+        /// Whether the page has drawn; drives the skeleton over the web view.
+        var pageVisible: Bool { page == .painted }
+
+        /// Document-finished, so the sheet can bound its skeleton's wait.
+        var pageLoaded: Bool { page != .loading }
+
+        var contentLost: Bool { page == .lost }
 
         /// Every outcome as it happens; the caller keeps the most significant.
         var onOutcome: ((SharingResult) -> Void)?
@@ -59,7 +64,10 @@
 
         // Individually injected, not `() -> FrakClient`. Defaulted lazily since `Frak.initialize`
         // may not have run when this is constructed.
-        private let buildSharingLink: @Sendable (SharingRequest) async -> String?
+        /// Throwing, deliberately: a `try?` here collapsed `.trackingDisabled`, a refused enclave
+        /// key and a cold merchant resolve into one nil, which the retry ladder then could not
+        /// tell apart and the merchant's `onResult` reported as the wrong thing.
+        private let buildSharingLink: @Sendable (SharingRequest) async throws -> String?
         private let anonymousId: @Sendable () async -> String?
         private let environment: @Sendable () -> FrakEnvironment
         private let resolveConfig: @Sendable () async throws -> FrakResolvedConfig
@@ -89,29 +97,14 @@
         /// On the wallet's install page rather than the sharing page, so `onPageUnavailable` can
         /// tell a failed install page apart from a failed sharing page.
         private var showingInstallPage = false
-        /// Whether this sheet raised an `SKOverlay`, so `release()` knows to take it back down.
-        private var presentedStoreOverlay = false
-
-        /// Counts `share()`/`copy()`/`fallBack(to:)` calls that can still produce a real outcome,
-        /// so `abandon(onSettled:)` can defer a `.dismissed` report to whichever one is still
-        /// resolving instead of racing it. Plain `AttributionLedger` state, not
-        /// `AtomicInteger`/`AtomicBoolean` the way Android's `SharingSheetState` needs: this whole
-        /// type is `@MainActor`, so every read and write of `attributions` already runs
-        /// serialized on one thread. Android's atomics exist because its equivalent work crosses
-        /// `Dispatchers.Default` and `Main.immediate`; there is no second dispatcher here for
-        /// `abandon()` and an in-flight `copy()` continuation to interleave on, so actor isolation
-        /// alone is the mutual exclusion Android buys with atomics.
-        private var attributions = AttributionLedger()
-        /// Set by `abandon(onSettled:)` when it had to defer; the attribution that empties
-        /// `attributions` calls it once, from `endAttribution()`.
-        private var onAbandonSettled: (() -> Void)?
+        private let storeOverlay = StoreOverlay()
 
         init(
             sessionId: String,
             trace: SharingTrace = SharingTrace(),
             activationBaseURL: String? = nil,
-            buildSharingLink: @escaping @Sendable (SharingRequest) async -> String? = {
-                try? await Frak.client.sharing.buildLink($0)
+            buildSharingLink: @escaping @Sendable (SharingRequest) async throws -> String? = {
+                try await Frak.client.sharing.buildLink($0)
             },
             anonymousId: @escaping @Sendable () async -> String? = { await (try? Frak.client)?.anonymousId },
             // Only read from `build(_:)`, reached after `prepare` has confirmed `Frak.isInitialized`.
@@ -173,7 +166,12 @@
             deadline?.cancel()
             deadline = nil
             webView = nil
-            dismissStoreOverlay()
+            // An `SKOverlay` is attached to the `UIWindowScene`, not to the sheet that raised it,
+            // so it survives this sheet unless taken down here. It is taken down: the sheet only
+            // ever raises one from its own install page, so "was this install-driven?" is a
+            // question with one answer and cannot gate anything. A tapped GET keeps downloading
+            // after the overlay goes, so the cost of dismissing is only the untapped case.
+            storeOverlay.dismiss()
         }
 
         /// Claims one of the page's buttons for its round trip.
@@ -186,10 +184,8 @@
         func share() async {
             guard let session else { return }
             guard claim(.share) else { return }
-            // Counted for the whole call: `abandon(onSettled:)` must not report `.dismissed`
-            // while the chooser or its tracking is still resolving.
-            attributions.begin()
-            defer { endAttribution() }
+            // The OS chooser covers the sheet for the whole of this call, so it cannot be
+            // dismissed underneath one.
             // After the chooser, only on success: this interaction pays out, so recording it on
             // intent would reward a cancelled chooser.
             guard await NativeShare.share(link: session.link, title: session.shareTitle) else {
@@ -207,12 +203,10 @@
         func copy() async {
             guard let session else { return }
             guard claim(.copy) else { return }
-            // No chooser covers this call, so it is the case 9.1 is actually about: a swipe
-            // lands squarely inside `await trackSharing()` below with nothing else on screen to
-            // stop it. Counting it here is what lets `abandon(onSettled:)` defer instead of
-            // reporting `.dismissed` over the `.copied` this is about to produce.
-            attributions.begin()
-            defer { endAttribution() }
+            // No chooser covers this one, so a swipe can land inside `trackSharing()` below and
+            // report `.dismissed` over the `.copied` this is about to produce. That window is a
+            // local queue append behind the sheet's own dismissal animation; Android accepts the
+            // same race on its gesture path (`SharingSheetState.dismiss` reports without waiting).
             // Before the copy, unlike `share()`: there is no chooser to cancel.
             await trackSharing()
             NativeShare.copy(session.link)
@@ -220,12 +214,14 @@
         }
 
         func onPageReady() {
-            pageLoaded = true
+            // Never backwards: an already-painted page that reports its document finished, or a
+            // renderer crash the sheet has already covered, must not be uncovered again.
+            if page == .loading { page = .documentReady }
             settleContent()
         }
 
         func onPageVisible() {
-            pageVisible = true
+            if page == .loading || page == .documentReady { page = .painted }
         }
 
         /// The web view gave up, tier-2 retry included.
@@ -244,12 +240,12 @@
                 if let webView, let recovery { navigateNow(webView, recovery) }
                 return
             }
-            // A content-process crash after the page painted: raising a tier-3 chooser now would
+            // A content-process crash after the page arrived: raising a tier-3 chooser now would
             // be a share the user never asked for, and the web view (deliberately transparent —
-            // see `SharingWebView.isOpaque`) now composites nothing, so `contentLost` tells the
-            // sheet to cover it instead of falling back.
+            // see `SharingWebView.isOpaque`) now composites nothing, so `.lost` tells the sheet to
+            // cover it instead of falling back.
             if pageLoaded {
-                contentLost = true
+                page = .lost
                 return
             }
             guard
@@ -265,29 +261,21 @@
         }
 
         func onPageAction(_ action: SharingPageAction) {
-            // Any action at all is the page's own JS reporting a user driving a rendered
-            // document, so the tap-to-content budget has been met however this session got here —
-            // a fragment activation is same-document, so WebKit fires no `didFinish` and
-            // `pageLoaded` can still be false on a warm page the user is already sharing from.
-            // Without this, the deadline elapsing behind an accepted chooser raises a second one
-            // through `onDeadline` and closes the sheet under it.
+            // A user driving the page proves it both arrived and drew, whatever WebKit reported —
+            // a fragment activation is same-document, so there is no `didFinish` for a warm page
+            // the user is already sharing from. Without this the deadline can elapse behind an
+            // accepted chooser and raise a second one. `.error` is the page saying it drew nothing.
             settleContent()
-            // And it is a paint signal by the same argument: a user cannot drive a document that is
-            // not on screen. This is what replaces the skeleton's old max-hold timer — evidence
-            // rather than a deadline. Not `.error`, which is the page saying it rendered nothing.
             if action != .error { onPageVisible() }
             switch action {
             case .install:
                 guard let session, claim(.install) else { return }
-                // Counted like `share()`/`copy()`, and for the same reason: `installPageURL` is a
-                // network round trip a user can dismiss straight through, and the `.installStarted`
-                // on the far side of it is a real outcome. Android wraps this action in
-                // `launchAttribution` for exactly this; iOS had the guard but not the ledger.
-                // Begun here rather than inside the `Task` so a dismissal cannot slip between the
-                // tap and the task's first execution.
-                attributions.begin()
+                // Reported at the tap, not on the far side of `installPageURL`. That call is a
+                // network round trip a user can swipe straight through, and this is the highest
+                // significance a session can reach, so nothing can outrank it later — a user who
+                // asked to install has started an install whether or not the page URL resolves.
+                report(.installStarted)
                 Task {
-                    defer { endAttribution() }
                     // The install page rather than the store: it is the only iOS route that
                     // keeps attribution.
                     guard
@@ -296,14 +284,12 @@
                     else {
                         // Nothing to build an install page from; the store handoff closes the sheet.
                         _ = await openFrakApp()
-                        report(.installStarted)
                         close()
                         return
                     }
                     // A full load, never an activation: this is a different document.
                     webView?.load(url)
                     showingInstallPage = true
-                    report(.installStarted)
                 }
             case .shareAgain:
                 if let navigation = pageNavigation(confirmed: false) {
@@ -338,73 +324,11 @@
         func openExternally(_ url: URL) {
             // Anything but http(s) is an app-to-app launch the merchant never sanctioned.
             guard url.scheme == "https" || url.scheme == "http" else { return }
-            // `SKOverlay` installs in place and needs no `LSApplicationQueriesSchemes` entry.
-            if isWalletAppStoreListing(url) {
-                if presentAppStoreOverlay() { return }
-                // No foreground-active scene for the overlay. `UIApplication.open` would send an
-                // already-installed wallet's owner to its own store page; `openFrakApp` does not.
-                Task { _ = await openFrakApp() }
-                return
+            switch storeOverlay.present(for: url) {
+            case .handled: return
+            case .needsAppHandoff: Task { _ = await openFrakApp() }
+            case .notAListing: Task { _ = await UIApplication.shared.open(url) }
             }
-            Task { _ = await UIApplication.shared.open(url) }
-        }
-
-        /// Any App Store listing on `apps.apple.com`, deliberately not this SDK's own id.
-        ///
-        /// The overlay is always raised with `walletAppStoreId`, so the id in the URL only has to
-        /// say "this is a store listing", not which one. Matching the id itself would tie a
-        /// constant frozen into the merchant's binary at submission to a page served live — the
-        /// two drift the first time either side changes, and the tap then silently degrades to a
-        /// plain store handoff. The sheet only ever loads the wallet's own install page, and the
-        /// only store link on it is the wallet's.
-        ///
-        /// Scans path components, so storefront-prefixed forms like `/us/app/name/id123` match.
-        private func isWalletAppStoreListing(_ url: URL) -> Bool {
-            guard url.host?.caseInsensitiveCompare(Self.appStoreHost) == .orderedSame else {
-                return false
-            }
-            return url.pathComponents.contains { component in
-                guard component.hasPrefix("id") else { return false }
-                let digits = component.dropFirst(2)
-                return !digits.isEmpty && digits.allSatisfy(\.isNumber)
-            }
-        }
-
-        /// - Returns: whether the overlay was presented; false leaves the caller to open the URL.
-        private func presentAppStoreOverlay() -> Bool {
-            // `SKOverlay` is unavailable on Mac Catalyst, which `canImport(UIKit)` doesn't exclude.
-            #if targetEnvironment(macCatalyst)
-                return false
-            #else
-                guard
-                    let scene = UIApplication.shared.connectedScenes
-                        .compactMap({ $0 as? UIWindowScene })
-                        .first(where: { $0.activationState == .foregroundActive })
-                else { return false }
-                let configuration = SKOverlay.AppConfiguration(
-                    appIdentifier: Self.walletAppStoreId,
-                    position: .bottom
-                )
-                SKOverlay(configuration: configuration).present(in: scene)
-                presentedStoreOverlay = true
-                return true
-            #endif
-        }
-
-        /// An overlay is attached to the `UIWindowScene`, not to the sheet that raised it, so it
-        /// stays on screen over the merchant's own UI once the sheet goes away. Taken down with
-        /// the sheet, from `release()`.
-        private func dismissStoreOverlay() {
-            guard presentedStoreOverlay else { return }
-            presentedStoreOverlay = false
-            #if !targetEnvironment(macCatalyst)
-                guard
-                    let scene = UIApplication.shared.connectedScenes
-                        .compactMap({ $0 as? UIWindowScene })
-                        .first(where: { $0.activationState == .foregroundActive })
-                else { return }
-                SKOverlay.dismiss(in: scene)
-            #endif
         }
 
         private func prepare(_ request: SharingRequest) async {
@@ -415,9 +339,13 @@
 
             let built: SharingSession
             do {
-                built = try await build(request)
+                built = try await buildWithRetry(request)
             } catch let error as FrakError {
                 fail(error)
+                return
+            } catch is CancellationError {
+                // `dispose()` cancelled this build; the sheet is already gone. Reporting a failure
+                // here would spend this presentation's one `onResult` on a user-driven dismissal.
                 return
             } catch {
                 fail(.internalFailure(message: "unexpected failure: \(error.localizedDescription)"))
@@ -442,6 +370,27 @@
                 await fallBack(to: session)
             case .doNothing:
                 return
+            }
+        }
+
+        /// `build(_:)`, retried on a transient failure while the skeleton holds the sheet.
+        ///
+        /// Rethrows the *last* failure rather than the first: the ladder is short enough that the
+        /// most recent attempt is the better description of why the sheet is closing.
+        private func buildWithRetry(_ request: SharingRequest) async throws -> SharingSession {
+            var attempt = 0
+            while true {
+                do {
+                    return try await build(request)
+                } catch let error as FrakError where attempt < sharingBuildRetryDelays.count {
+                    guard sharingBuildIsWorthRetrying(error) else { throw error }
+                    try await Task.sleep(nanoseconds: UInt64(sharingBuildRetryDelays[attempt] * 1_000_000_000))
+                    // The sheet went away, or the deadline already promoted this session to a
+                    // native share, while this was sleeping. Either way the next attempt has
+                    // nobody to hand a page to.
+                    guard !closed, !fellBack, !deadlineExpired else { throw error }
+                    attempt += 1
+                }
             }
         }
 
@@ -479,16 +428,18 @@
         /// presentation work. Returns a no-page session, never nil, when `resolveConfig` fails —
         /// the link is local and still shareable; throws only when there is nothing to share.
         private nonisolated func build(_ request: SharingRequest) async throws -> SharingSession {
-            guard let link = await buildSharingLink(request) else {
-                // The one failure the fallback cannot help with: there is no link to share.
+            guard let link = try await buildSharingLink(request) else {
+                // Nothing to link to. Still worth a retry: the last fallback in that chain is the
+                // *resolved* config's homepage link, which a cold start has not fetched yet.
                 throw FrakError.merchantResolutionFailed(
-                    reason: "no anonymous id or merchant to build a sharing link from"
+                    reason: "nothing to link to: neither the request, its products, the resolved "
+                        + "config nor FrakMetadata.homepageLink supplies a URL"
                 )
             }
             trace.mark("  link built")
             guard let clientId = await anonymousId() else {
-                throw FrakError.merchantResolutionFailed(
-                    reason: "no anonymous id or merchant to build a sharing link from"
+                throw FrakError.internalFailure(
+                    message: "the device refused the key material an anonymous id needs"
                 )
             }
             trace.mark("  identity ready")
@@ -600,10 +551,6 @@
         private func fallBack(to session: SharingSession) async {
             guard !fellBack else { return }
             fellBack = true
-            // Same reason as `share()`/`copy()`: this can run from `onDeadline()`'s own detached
-            // `Task`, well after the sheet that triggered it has gone.
-            attributions.begin()
-            defer { endAttribution() }
             settleContent()
 
             // Same rule as `share()`: the interaction follows the chooser rather than announcing it.
@@ -644,34 +591,6 @@
         private func settleContent() {
             deadline?.cancel()
             deadline = nil
-        }
-
-        /// Called once from `SharingPresentation.dispose()`: the sheet is going away with no
-        /// explicit terminal outcome (a swipe, or the page's own Dismiss action reaching `close()`
-        /// through the same teardown). `share()`/`copy()`/`fallBack(to:)` are independent,
-        /// deliberately un-cancelled tasks that can outlive the sheet — for `copy()` that's the
-        /// whole call, since no OS chooser covers it — so reporting `.dismissed` unconditionally
-        /// here would race whichever of them is still resolving and win, dropping the real outcome
-        /// on a callback `dispose()` is about to nil anyway. `attributions` decides instead.
-        ///
-        /// - Parameter onSettled: called exactly once — synchronously if nothing is in flight, or
-        ///   later from `endAttribution()` once the last attribution finishes. `dispose()` doesn't
-        ///   nil `onOutcome`/`onClose` or release anything until this fires, which is what lets a
-        ///   deferred real outcome still reach `onOutcome` before that channel closes.
-        func abandon(onSettled: @escaping () -> Void) {
-            guard attributions.abandon() else {
-                onAbandonSettled = onSettled
-                return
-            }
-            onSettled()
-        }
-
-        /// Every `share`/`copy`/`fallBack(to:)` call reaches this via `defer`, abandoned or not;
-        /// it only does something when this was the attribution `abandon(onSettled:)` was waiting on.
-        private func endAttribution() {
-            guard attributions.end() else { return }
-            onAbandonSettled?()
-            onAbandonSettled = nil
         }
 
         // `sharingPageProductsJSON` lives in SharingSheetLogic.swift, outside this `#if`.

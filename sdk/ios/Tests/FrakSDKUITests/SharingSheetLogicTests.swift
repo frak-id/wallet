@@ -206,71 +206,6 @@ struct SharingSheetLogicTests {
     }
 }
 
-@Suite("AttributionLedger")
-struct AttributionLedgerTests {
-    @Test("abandon with nothing in flight settles immediately")
-    func abandonWithNothingInFlightSettlesNow() {
-        var ledger = AttributionLedger()
-        let settlesNow = ledger.abandon()
-        #expect(settlesNow)
-    }
-
-    @Test("abandon while an attribution is resolving defers")
-    func abandonDefersToAnInFlightAttribution() {
-        var ledger = AttributionLedger()
-        ledger.begin()
-        let settlesNow = ledger.abandon()
-        #expect(!settlesNow)
-    }
-
-    @Test("the attribution that empties the ledger is the one that settles a deferred abandon")
-    func endReportsOnceTheLedgerEmpties() {
-        // The exact race 9.1 is about: a swipe (`abandon`) lands while `copy()`'s `begin()` is
-        // still open, so the dismissal must wait for `copy()`'s own `end()` instead of winning.
-        var ledger = AttributionLedger()
-        ledger.begin()
-        let settlesNow = ledger.abandon()
-        #expect(!settlesNow)
-        let settlesFromEnd = ledger.end()
-        #expect(settlesFromEnd)
-    }
-
-    @Test("end before any abandon is requested never settles")
-    func endWithNoAbandonNeverSettles() {
-        var ledger = AttributionLedger()
-        ledger.begin()
-        let settlesFromEnd = ledger.end()
-        #expect(!settlesFromEnd)
-    }
-
-    @Test("only the last of several in-flight attributions settles a deferred abandon")
-    func onlyTheLastAttributionSettles() {
-        // `share()` and `copy()` are independently guarded; nothing stops both being in flight
-        // at once.
-        var ledger = AttributionLedger()
-        ledger.begin()
-        ledger.begin()
-        let settlesNow = ledger.abandon()
-        #expect(!settlesNow)
-        let firstEnd = ledger.end()
-        #expect(!firstEnd)
-        let secondEnd = ledger.end()
-        #expect(secondEnd)
-    }
-
-    @Test("abandon is idempotent to call twice while still deferred")
-    func abandonCalledTwiceStaysDeferred() {
-        var ledger = AttributionLedger()
-        ledger.begin()
-        let firstAbandon = ledger.abandon()
-        #expect(!firstAbandon)
-        let secondAbandon = ledger.abandon()
-        #expect(!secondAbandon)
-        let settlesFromEnd = ledger.end()
-        #expect(settlesFromEnd)
-    }
-}
-
 @Suite("SharingPageProductsJSON")
 struct SharingPageProductsJSONTests {
     private func product(details: ProductDetails? = nil) -> SharingProduct {
@@ -388,5 +323,41 @@ struct ClampedSharingHeightFractionTests {
     @Test("the public default itself is inside the clamp's own range")
     func defaultIsWithinRange() {
         #expect(clampedSharingHeightFraction(FrakSharingDefaults.heightFraction) == FrakSharingDefaults.heightFraction)
+    }
+}
+
+@Suite("sharing build retry ladder")
+struct SharingBuildRetryTests {
+    // Every kind below is one `SharingSheetModel.build` can actually raise, now that
+    // `buildSharingLink` is injected as throwing: a `try?` there used to flatten all of them into
+    // one `merchantResolutionFailed`, which made this whole predicate a constant.
+    @Test("a cold start's identity or link failure is retried")
+    func coldStartFailureIsRetried() {
+        // The enclave refused to mint a key — never cached, so the next attempt can succeed.
+        #expect(sharingBuildIsWorthRetrying(.internalFailure(message: "the device refused key material")))
+        // Nothing to link to yet, because the resolved config's homepage link has not landed.
+        #expect(sharingBuildIsWorthRetrying(.merchantResolutionFailed(reason: "nothing to link to")))
+        #expect(sharingBuildIsWorthRetrying(.network(underlying: URLError(.timedOut))))
+        #expect(sharingBuildIsWorthRetrying(.backingOff(retryAfter: 1)))
+        #expect(sharingBuildIsWorthRetrying(.server(status: 503, code: nil, retryAfterSeconds: nil)))
+        #expect(sharingBuildIsWorthRetrying(.decoding(message: "bad body")))
+    }
+
+    @Test("a decision the merchant already made is not retried")
+    func settledFailureIsNotRetried() {
+        // Both reach the ladder for real: `buildLink` raises `trackingDisabled` on a withdrawn
+        // consent, and `Frak.client` raises `notInitialized`. Retrying either just makes the user
+        // wait out the whole ladder for an answer that cannot change.
+        #expect(!sharingBuildIsWorthRetrying(.notInitialized))
+        #expect(!sharingBuildIsWorthRetrying(.trackingDisabled))
+        #expect(!sharingBuildIsWorthRetrying(.alreadyPresenting))
+    }
+
+    @Test("the ladder fits inside the tap-to-content deadline")
+    func ladderFitsInsideTheDeadline() {
+        // Otherwise the last attempt lands after the deadline has already raised the OS chooser,
+        // and the sheet holds a skeleton over a share that has moved on without it.
+        #expect(sharingBuildRetryDelays.reduce(0, +) < 5)
+        #expect(sharingBuildRetryDelays.allSatisfy { $0 > 0 })
     }
 }

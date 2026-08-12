@@ -99,41 +99,6 @@ func sharingDecision(
     return .showPage(navigation)
 }
 
-/// Sequencing for `SharingSheetModel.abandon(onSettled:)` — see 9.1 in
-/// `docs/plans/native-sdk/06-open-findings.md`. `share()`, `copy()` and `fallBack(to:)` are
-/// independent, un-cancelled tasks that can outlive the sheet (freely, for `copy()`, since no OS
-/// chooser covers it); a teardown with no better outcome must not report `.dismissed` while one
-/// of them is still resolving, or the real outcome lands on a callback that has already been
-/// nilled. `begin()`/`end()` bracket each of those calls; `abandon()` is the teardown asking
-/// "can I report now, or does the last one still running have to do it for me".
-///
-/// Pure counting, extracted here (outside the `#if canImport(UIKit)` gate `SharingSheetModel`
-/// lives behind) so this rule has a regression test that runs on the macOS test host — see
-/// `SharingSheetModel.attributions` for why the model itself needs no locking around it either.
-struct AttributionLedger: Equatable {
-    private(set) var inFlight = 0
-    private(set) var abandonRequested = false
-
-    mutating func begin() {
-        inFlight += 1
-    }
-
-    /// - Returns: true if this call is the one `abandon()` deferred to — the last attribution
-    ///   standing when an abandon was already requested.
-    @discardableResult
-    mutating func end() -> Bool {
-        inFlight -= 1
-        return inFlight == 0 && abandonRequested
-    }
-
-    /// - Returns: true if the caller may report/tear down immediately; false means a later
-    ///   `end()` will return true once, for whichever attribution is still in flight.
-    mutating func abandon() -> Bool {
-        abandonRequested = true
-        return inFlight == 0
-    }
-}
-
 /// The `products=` value the hosted sharing page's router parses as JSON. Nil rather than
 /// `[]`: the page skips the card section on an absent value, renders an empty one on `[]`.
 func sharingPageProductsJSON(_ products: [SharingProduct]) -> String? {
@@ -173,6 +138,35 @@ private func sharingPageJSONNumber(_ value: Double) -> NSDecimalNumber? {
     var text = value.description
     if text.hasSuffix(".0") { text.removeLast(2) }
     return NSDecimalNumber(string: text)
+}
+
+/// Waits between attempts at building the session, when the failure looks transient.
+///
+/// The build is the only step with no fallback of its own — the page retries, the tap-to-content
+/// deadline degrades to the OS chooser, but a throwing build closes the sheet on the spot, which
+/// is what a cold start losing the identity mint looks like to a user. The skeleton is already up
+/// and stays up across the attempts, so a wasted one is invisible.
+///
+/// Two rungs, not more: the config resolve behind this has its own `SingleFlight` and `Backoff`,
+/// so a third would mostly re-await the same answer, and the whole ladder has to stay well inside
+/// `SharingSheetModel.pageLoadDeadline` — past that the deadline has promoted the session to a
+/// native share and a late build has nothing to hand a page to.
+let sharingBuildRetryDelays: [TimeInterval] = [0.25, 0.75]
+
+/// Whether a failed session build is worth another attempt.
+///
+/// Narrow on purpose, and closed rather than defaulted-open: a misconfiguration retried three
+/// times is three times the wait for the same answer, and a kind added later is more likely to be
+/// one of those than a blip.
+func sharingBuildIsWorthRetrying(_ error: FrakError) -> Bool {
+    switch error.kind {
+    // `merchantResolutionFailed` is what a cold start reports when the identity mint or the
+    // merchant resolve has not landed yet — the case this ladder exists for.
+    case .network, .server, .backingOff, .decoding, .merchantResolutionFailed, .internalFailure:
+        return true
+    default:
+        return false
+    }
 }
 
 /// Tunable defaults for `View.frakSharingSheet(isPresented:request:heightFraction:onResult:)`. Mirrored on the
