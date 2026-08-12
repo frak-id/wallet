@@ -13,13 +13,25 @@ const CODE_TTL_HOURS = 72;
  */
 export const MAX_RESOLVE_ATTEMPTS = 20;
 
+/** Below this, a code could expire while its user is still at the store. */
+const REUSE_MIN_REMAINING_HOURS = 6;
+
 type InstallCodeSelect = typeof installCodesTable.$inferSelect;
 
 export class InstallCodeRepository {
+    /**
+     * The live code for `(merchantId, anonymousId)`, minting one only when
+     * there is no usable one already.
+     *
+     * Reuse never extends `expires_at` — a sliding window would keep one
+     * credential alive indefinitely. Exhausted rows are excluded on purpose:
+     * exhaustion happens in the app, which cannot signal this page, so a
+     * reload is the user's only recovery.
+     */
     async create(params: {
         merchantId: string;
         anonymousId: string;
-    }): Promise<InstallCodeSelect> {
+    }): Promise<InstallCodeSelect & { reused: boolean }> {
         const { merchantId, anonymousId } = params;
 
         const candidates = generateCandidates();
@@ -29,6 +41,8 @@ export class InstallCodeRepository {
             sql`, `
         );
 
+        // One statement: concurrent loads of this page are routine, and
+        // read-then-write would let both miss and both mint.
         const result = await db.execute<{
             id: string;
             code: string;
@@ -37,17 +51,33 @@ export class InstallCodeRepository {
             created_at: Date;
             expires_at: Date;
             attempts: number;
+            reused: boolean;
         }>(sql`
-            WITH candidates(code) AS (VALUES ${values})
-            INSERT INTO install_codes (code, merchant_id, anonymous_id, expires_at)
-            SELECT c.code, ${merchantId}::uuid, ${anonymousId}, now() + ${CODE_TTL_HOURS} * interval '1 hour'
-            FROM candidates c
-            WHERE NOT EXISTS (
-                SELECT 1 FROM install_codes ic WHERE ic.code = c.code
+            WITH reusable AS (
+                SELECT * FROM install_codes
+                WHERE merchant_id = ${merchantId}::uuid
+                  AND anonymous_id = ${anonymousId}
+                  AND expires_at > now() + ${REUSE_MIN_REMAINING_HOURS} * interval '1 hour'
+                  AND attempts < ${MAX_RESOLVE_ATTEMPTS}
+                ORDER BY expires_at DESC
+                LIMIT 1
+            ),
+            candidates(code) AS (VALUES ${values}),
+            minted AS (
+                INSERT INTO install_codes (code, merchant_id, anonymous_id, expires_at)
+                SELECT c.code, ${merchantId}::uuid, ${anonymousId}, now() + ${CODE_TTL_HOURS} * interval '1 hour'
+                FROM candidates c
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM install_codes ic WHERE ic.code = c.code
+                )
+                AND NOT EXISTS (SELECT 1 FROM reusable)
+                LIMIT 1
+                ON CONFLICT (code) DO NOTHING
+                RETURNING *
             )
-            LIMIT 1
-            ON CONFLICT (code) DO NOTHING
-            RETURNING *
+            SELECT *, false AS reused FROM minted
+            UNION ALL
+            SELECT *, true AS reused FROM reusable
         `);
 
         const row = [...result][0];
@@ -65,6 +95,7 @@ export class InstallCodeRepository {
             createdAt: row.created_at,
             expiresAt: row.expires_at,
             attempts: row.attempts,
+            reused: row.reused,
         };
     }
 

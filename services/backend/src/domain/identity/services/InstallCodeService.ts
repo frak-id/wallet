@@ -16,12 +16,17 @@ export class InstallCodeService {
         // The code itself never goes to the logs: it is the credential that
         // links an anonymousId to a wallet, and log readers are a far wider
         // set than DB readers. Correlate on the anonymousId instead.
+        // A collapsing `reused` rate means returning visitors are getting new
+        // codes again.
         log.info(
             {
                 merchantId: params.merchantId,
                 anonymousId: params.anonymousId,
+                reused: installCode.reused,
             },
-            "Install code generated"
+            installCode.reused
+                ? "Install code reused"
+                : "Install code generated"
         );
 
         return {

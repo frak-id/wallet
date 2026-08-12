@@ -6,6 +6,69 @@ import {
 } from "./InstallCodeRepository";
 
 /**
+ * `db.execute` is mocked, so the reuse predicate — remaining life, attempt
+ * cap, race safety — is NOT covered here. Row mapping only.
+ */
+describe("InstallCodeRepository.create", () => {
+    const row = {
+        id: "id-1",
+        code: "ABC234",
+        merchant_id: "merchant-1",
+        anonymous_id: "anon-1",
+        created_at: new Date(),
+        expires_at: new Date(Date.now() + 72 * 3600 * 1000),
+        attempts: 0,
+    };
+
+    beforeEach(() => {
+        dbMock.__reset();
+    });
+
+    it("maps a freshly minted row and flags it as not reused", async () => {
+        dbMock.__setExecuteResponse(() =>
+            Promise.resolve([{ ...row, reused: false }])
+        );
+
+        const result = await new InstallCodeRepository().create({
+            merchantId: "merchant-1",
+            anonymousId: "anon-1",
+        });
+
+        expect(result).toMatchObject({
+            code: "ABC234",
+            merchantId: "merchant-1",
+            anonymousId: "anon-1",
+            reused: false,
+        });
+    });
+
+    it("maps a reused row and flags it", async () => {
+        dbMock.__setExecuteResponse(() =>
+            Promise.resolve([{ ...row, attempts: 3, reused: true }])
+        );
+
+        const result = await new InstallCodeRepository().create({
+            merchantId: "merchant-1",
+            anonymousId: "anon-1",
+        });
+
+        expect(result).toMatchObject({ code: "ABC234", reused: true });
+        expect(result.attempts).toBe(3);
+    });
+
+    it("throws when neither arm produced a row (every candidate collided)", async () => {
+        dbMock.__setExecuteResponse(() => Promise.resolve([]));
+
+        await expect(
+            new InstallCodeRepository().create({
+                merchantId: "merchant-1",
+                anonymousId: "anon-1",
+            })
+        ).rejects.toThrow(/Failed to generate unique install code/);
+    });
+});
+
+/**
  * `findByCode` counts the attempt in the same UPDATE ... RETURNING as the
  * lookup, so the exhaustion check and the increment can't race across
  * concurrent guesses. The mock's `update` chain ignores the `where`

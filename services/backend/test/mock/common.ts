@@ -70,6 +70,8 @@ const mockFunctions = {
     updateMockFn: () => Promise.resolve([]),
     deleteMockFn: () => Promise.resolve([]),
     findManyMockFn: () => Promise.resolve([]),
+    // Raw `db.execute`: returns rows verbatim, so tests assert mapping only.
+    executeMockFn: () => Promise.resolve([]),
 };
 
 const deleteExecuteMock = vi.fn(() => mockFunctions.deleteMockFn());
@@ -158,6 +160,7 @@ export const dbMock = {
         }),
     })),
     transaction: transactionMock,
+    execute: vi.fn((_query?: unknown) => mockFunctions.executeMockFn()),
     query: {
         purchaseStatusTable: {
             findMany: vi.fn((_opts?: unknown) =>
@@ -209,6 +212,10 @@ export const dbMock = {
     __setFindManyResponse: (fn: any) => {
         mockFunctions.findManyMockFn = fn;
     },
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration
+    __setExecuteResponse: (fn: any) => {
+        mockFunctions.executeMockFn = fn;
+    },
     __getDeleteExecuteMock: () => deleteExecuteMock,
     __getTransactionMock: () => transactionMock,
     __getUpdateMock: () => updateMock,
@@ -218,6 +225,7 @@ export const dbMock = {
         mockFunctions.updateMockFn = () => Promise.resolve([]);
         mockFunctions.deleteMockFn = () => Promise.resolve([]);
         mockFunctions.findManyMockFn = () => Promise.resolve([]);
+        mockFunctions.executeMockFn = () => Promise.resolve([]);
         deleteExecuteMock.mockClear();
         transactionMock.mockClear();
         updateMock.mockClear();
