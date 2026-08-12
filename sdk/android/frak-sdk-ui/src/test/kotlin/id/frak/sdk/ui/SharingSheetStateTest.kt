@@ -420,7 +420,7 @@ class SharingSheetStateTest {
             val gate = launchDeadline(state)
             // runCurrent, not advanceUntilIdle: the latter would also fire the deadline under test.
             runCurrent()
-            state.onPageAction(SharingPageAction.Share)
+            state.onPageAction(SharingPageAction.Share(title = null, text = null))
             advanceUntilIdle()
 
             advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
@@ -797,7 +797,7 @@ class SharingSheetStateTest {
             advanceUntilIdle()
             state.attach(WebView(context))
 
-            state.onPageAction(SharingPageAction.Share)
+            state.onPageAction(SharingPageAction.Share(title = null, text = null))
             advanceUntilIdle()
             state.dismiss()
             advanceUntilIdle()
@@ -869,8 +869,8 @@ class SharingSheetStateTest {
             advanceUntilIdle()
             state.attach(WebView(context))
 
-            state.onPageAction(SharingPageAction.Share)
-            state.onPageAction(SharingPageAction.Share)
+            state.onPageAction(SharingPageAction.Share(title = null, text = null))
+            state.onPageAction(SharingPageAction.Share(title = null, text = null))
             advanceUntilIdle()
 
             assertEquals("one share must bill one interaction", 1, client.trackCount)

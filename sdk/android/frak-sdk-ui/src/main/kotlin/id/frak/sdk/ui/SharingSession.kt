@@ -5,11 +5,16 @@ import android.webkit.WebView
 /**
  * Resolved once before anything can be shown. [link] is local and always usable; a null page URL
  * is the tier-3 fallback (native share sheet, no page), not a broken session.
+ *
+ * [shareTitle]/[shareText] are the tier-3 fallback copy only. On a session with a page, the OS
+ * share payload comes back from the page itself on the `Share` action — see
+ * `docs/plans/native-sdk/10-native-share-payload.md` §7, "Tier-3 fallback".
  */
 internal class SharingSession(
     val returnScheme: String,
     val link: String,
     val shareTitle: String?,
+    val shareText: String? = null,
     private val pageUrl: String?,
     /** The warm page this session's params can be hung off, if the view is actually showing it. */
     val warmBaseUrl: String? = null,

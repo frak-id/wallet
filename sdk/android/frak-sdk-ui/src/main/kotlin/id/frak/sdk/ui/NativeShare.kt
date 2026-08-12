@@ -11,22 +11,34 @@ import android.os.PersistableBundle
 
 /** The two native actions in the sheet's footer — `ACTION_SEND` opens the real OS share sheet, unlike a web page. */
 internal object NativeShare {
+    /**
+     * No [ClipData] thumbnail: the Sharesheet renders in the system chooser process, which cannot
+     * read our files without an SDK-owned FileProvider — an `<application>` block this SDK does not
+     * ship, for a tile that never leaves the sharer's device. See
+     * docs/plans/native-sdk/10-native-share-payload.md §7.
+     */
     fun share(
         context: Context,
         link: String,
         title: String?,
+        text: String? = null,
     ): Boolean {
+        // Re-capped defensively: a megabyte extra is TransactionTooLargeException in the
+        // merchant's own process, not ours.
+        val cappedTitle = title?.take(TITLE_LIMIT)
+        val cappedText = text?.take(TEXT_LIMIT)
         val send =
             Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, link)
-                title?.let {
+                // The only field that reaches the recipient; the rest is sender-side chrome.
+                putExtra(Intent.EXTRA_TEXT, if (cappedText != null) "$cappedText\n\n$link" else link)
+                cappedTitle?.let {
                     putExtra(Intent.EXTRA_TITLE, it)
                     // Mail targets read SUBJECT, not TITLE; without it a shared link arrives blank-subject.
                     putExtra(Intent.EXTRA_SUBJECT, it)
                 }
             }
-        val chooser = Intent.createChooser(send, title)
+        val chooser = Intent.createChooser(send, cappedTitle)
         // Only when there is no task to join: from an Activity, NEW_TASK parks the chooser in its
         // own recents entry and the user comes back to the wrong screen.
         if (context !is Activity) chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -68,4 +80,9 @@ internal object NativeShare {
     private const val CLIP_LABEL = "Frak sharing link"
 
     private const val INSTALL_CODE_LABEL = "Frak install code"
+
+    /** Mirrors the page-side budget (`docs/plans/native-sdk/10-native-share-payload.md` §6). */
+    private const val TITLE_LIMIT = 120
+
+    private const val TEXT_LIMIT = 280
 }

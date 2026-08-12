@@ -171,6 +171,57 @@ class SharingPageUrlTest {
         assertTrue(warm("en") == warm("en"))
     }
 
+    @Test
+    fun `carries the share override params, percent-encoded`() {
+        val url =
+            SharingPageUrl.build(
+                walletOrigin = "https://wallet.frak.id",
+                merchantId = MERCHANT_ID,
+                clientId = CLIENT_ID,
+                packageId = "com.acme.app",
+                sessionId = "1",
+                shareTitle = "Kettle deal",
+                shareText = "Grab it!",
+                shareImage = "https://cdn.example.com/p.png",
+            )
+        assertTrue(url.contains("&shareTitle=Kettle%20deal"))
+        assertTrue(url.contains("&shareText=Grab%20it%21"))
+        assertTrue(url.contains("&shareImage=https%3A%2F%2Fcdn.example.com%2Fp.png"))
+    }
+
+    @Test
+    fun `omits share override params entirely when the request had none`() {
+        val url = SharingPageUrl.build("https://wallet.frak.id", MERCHANT_ID, CLIENT_ID, "com.acme.app", "1")
+        assertFalse(url.contains("shareTitle"))
+        assertFalse(url.contains("shareText"))
+        assertFalse(url.contains("shareImage"))
+    }
+
+    @Test
+    fun `the activation fragment carries the same share override params`() {
+        val fragment =
+            SharingPageUrl.activationFragment(
+                sessionId = "1",
+                shareTitle = "Kettle deal",
+                shareText = "Grab it!",
+                shareImage = "https://cdn.example.com/p.png",
+            )
+        assertTrue(fragment.contains("&shareTitle=Kettle%20deal"))
+        assertTrue(fragment.contains("&shareText=Grab%20it%21"))
+        assertTrue(fragment.contains("&shareImage=https%3A%2F%2Fcdn.example.com%2Fp.png"))
+    }
+
+    @Test
+    fun `an unset share override does not erase the warm page's own value`() {
+        // Mirrors `logoUrl`'s existing contract: only a key with something to say is written, so
+        // an absent param falls through to the warm URL's own params instead of overwriting them
+        // with nothing.
+        val fragment = SharingPageUrl.activationFragment(sessionId = "1")
+        assertFalse(fragment.contains("shareTitle"))
+        assertFalse(fragment.contains("shareText"))
+        assertFalse(fragment.contains("shareImage"))
+    }
+
     private companion object {
         const val MERCHANT_ID = "550e8400-e29b-41d4-a716-446655440000"
         const val CLIENT_ID = "256b1be3-2745-41d1-89d4-9121cc87bc45"

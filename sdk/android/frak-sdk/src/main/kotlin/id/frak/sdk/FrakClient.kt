@@ -2,6 +2,7 @@ package id.frak.sdk
 
 import id.frak.sdk.core.DefaultFrakClient
 import id.frak.sdk.core.FrakEnvironment
+import id.frak.sdk.core.FrakLanguage
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -27,6 +28,17 @@ public class FrakClient internal constructor(
 ) {
     /** The stage this client talks to. Merchants never set it directly, see [id.frak.sdk.core.FrakConfig.env]. */
     public val environment: FrakEnvironment get() = core.environment
+
+    /**
+     * The merchant-supplied build-time name. `public` only so `:frak-sdk-ui`'s sharing sheet can
+     * read it across the module boundary for its tier-3 fallback copy — see [InternalFrakApi].
+     */
+    @InternalFrakApi
+    public val metadataName: String? get() = core.metadataName
+
+    /** The merchant-supplied build-time language, for the same tier-3 copy. See [metadataName]. */
+    @InternalFrakApi
+    public val metadataLang: FrakLanguage? get() = core.metadataLang
 
     /** Anonymous id, or null when tracking is disabled or the device refused key material. */
     public suspend fun anonymousId(): String? = core.anonymousId()

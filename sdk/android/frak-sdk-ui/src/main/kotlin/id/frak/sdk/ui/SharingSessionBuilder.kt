@@ -1,6 +1,7 @@
 package id.frak.sdk.ui
 
 import id.frak.sdk.core.FrakError
+import id.frak.sdk.core.FrakLanguage
 import id.frak.sdk.sharing.SharingRequest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
@@ -76,12 +77,16 @@ internal class SharingSessionBuilder(
             try {
                 dependencies.resolveConfig()
             } catch (resolveFailed: FrakError) {
-                // Tier 3: the link stands alone. A no-page session, not a failed one.
+                // Tier 3: the link stands alone. A no-page session, not a failed one. Config is
+                // unreachable on this path by construction, so the fallback copy cannot read it —
+                // see docs/plans/native-sdk/10-native-share-payload.md §7.
+                val fallback = tier3ShareCopy(request)
                 return SharingBuild.Ready(
                     SharingSession(
                         returnScheme = returnScheme,
                         link = link,
-                        shareTitle = null,
+                        shareTitle = fallback.title,
+                        shareText = fallback.text,
                         pageUrl = null,
                     ),
                 )
@@ -97,6 +102,8 @@ internal class SharingSessionBuilder(
             SharingSession(
                 returnScheme = returnScheme,
                 link = link,
+                // Not read on this path: a session with a page gets its OS-share copy from the
+                // page's own `action=share` payload, not from here.
                 shareTitle = appName,
                 pageUrl =
                     SharingPageUrl.build(
@@ -111,6 +118,9 @@ internal class SharingSessionBuilder(
                         products = products,
                         seededReward = seededReward,
                         language = language,
+                        shareTitle = request.shareTitle,
+                        shareText = request.shareText,
+                        shareImage = request.shareImageUrl,
                     ),
                 // Rebuilt from the same resolved config as pageUrl. If the pool warmed against
                 // anything else the strings differ, and the session does a full load instead of
@@ -134,6 +144,9 @@ internal class SharingSessionBuilder(
                         // the config's own logo.
                         logoUrl = requestLogoUrl,
                         seededReward = seededReward,
+                        shareTitle = request.shareTitle,
+                        shareText = request.shareText,
+                        shareImage = request.shareImageUrl,
                     ),
             ),
         )
@@ -154,6 +167,43 @@ internal class SharingSessionBuilder(
             }
         }
     }
+
+    /**
+     * Tier-3 copy: per-call override, then the first product's title, then a built-in default.
+     * Never reads `sdkConfig` — see the call site. `{{productName}}` binds to
+     * [id.frak.sdk.core.FrakMetadata.name], which is local and survives a config failure; no
+     * reward-bearing placeholder exists here, since that needs the network that just failed.
+     */
+    private fun tier3ShareCopy(request: SharingRequest): Tier3ShareCopy {
+        val defaults = Tier3Defaults.forLang(dependencies.metadataLang())
+        val name = dependencies.metadataName()
+        val title =
+            request.shareTitle
+                ?: request.products.firstOrNull()?.title
+                ?: interpolateProductName(defaults.title, name)
+        val text = request.shareText ?: interpolateProductName(defaults.text, name)
+        return Tier3ShareCopy(title = title, text = text)
+    }
+
+    /**
+     * Drops the placeholder entirely when there is no name, rather than rendering "null" or an
+     * empty gap. The surrounding space collapses with it so "Discover !" cannot happen.
+     */
+    private fun interpolateProductName(
+        template: String,
+        productName: String?,
+    ): String {
+        if (productName != null) return template.replace(PRODUCT_NAME_PLACEHOLDER, productName)
+        return template
+            .replace(" $PRODUCT_NAME_PLACEHOLDER", "")
+            .replace(PRODUCT_NAME_PLACEHOLDER, "")
+            .trim()
+    }
+
+    private class Tier3ShareCopy(
+        val title: String,
+        val text: String,
+    )
 
     /**
      * Null rather than `[]` when empty — the page skips the card section on null and renders an
@@ -186,11 +236,39 @@ internal class SharingSessionBuilder(
     /** Null for NaN/Infinity, which [JSONObject.put] rejects outright. */
     private fun Double?.finiteOrNull(): Double? = this?.takeIf { it.isFinite() }
 
+    /**
+     * Bundled `sharing.title`/`sharing.text` defaults, mirrored from
+     * `packages/wallet-shared/src/i18n/locales/{en,fr}/common.json` and from iOS's `tier3Defaults`.
+     * Kept in step by hand — `04-golden-fixtures.md` pins codecs, not prose. A `when` over the enum
+     * rather than a map, so a third language fails the build here instead of silently degrading a
+     * share to the English copy.
+     */
+    private object Tier3Defaults {
+        fun forLang(lang: FrakLanguage?): Tier3ShareCopy =
+            when (lang) {
+                FrakLanguage.FR -> {
+                    Tier3ShareCopy(
+                        title = "Lien d'invitation $PRODUCT_NAME_PLACEHOLDER",
+                        text = "Découvrez ce produit incroyable !",
+                    )
+                }
+
+                FrakLanguage.EN, null -> {
+                    Tier3ShareCopy(
+                        title = "$PRODUCT_NAME_PLACEHOLDER invite link",
+                        text = "Discover this amazing product!",
+                    )
+                }
+            }
+    }
+
     private companion object {
         /** Sized for a cache hit and nothing more; a miss needs the network, which the page does itself. */
         const val SEED_TIMEOUT_MILLIS = 40L
 
         /** Hard ceiling on a build. A liveness backstop, sized never to fire on a merely slow device. */
         const val BUILD_DEADLINE_MILLIS = 8_000L
+
+        const val PRODUCT_NAME_PLACEHOLDER = "{{productName}}"
     }
 }

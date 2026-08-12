@@ -42,6 +42,9 @@ internal object SharingPageUrl {
         /** BCP-47. `lng` is what the page's language detector reads first, ahead of `navigator`. */
         language: String? = null,
         // No presentation params: the sheet's chrome is injected per web view by [SharingHostStyle].
+        shareTitle: String? = null,
+        shareText: String? = null,
+        shareImage: String? = null,
     ): String =
         buildString {
             append(walletOrigin).append("/sharing?embed=native")
@@ -61,6 +64,9 @@ internal object SharingPageUrl {
             link?.let { append("&link=").append(PercentEncoding.encode(it)) }
             products?.let { append("&products=").append(PercentEncoding.encode(it)) }
             seededReward?.let { append("&seedReward=").append(PercentEncoding.encode(it)) }
+            shareTitle?.let { append("&shareTitle=").append(PercentEncoding.encode(it)) }
+            shareText?.let { append("&shareText=").append(PercentEncoding.encode(it)) }
+            shareImage?.let { append("&shareImage=").append(PercentEncoding.encode(it)) }
             if (confirmed) append("&view=confirmation")
         }
 
@@ -97,6 +103,7 @@ internal object SharingPageUrl {
      * the page is not remounted. Only keys with something to say are written: the page spreads this
      * over the warm URL's own params, so an empty value would erase the config value under it.
      */
+    @Suppress("LongParameterList")
     fun activationFragment(
         sessionId: String,
         link: String? = null,
@@ -104,6 +111,9 @@ internal object SharingPageUrl {
         logoUrl: String? = null,
         seededReward: String? = null,
         confirmed: Boolean = false,
+        shareTitle: String? = null,
+        shareText: String? = null,
+        shareImage: String? = null,
     ): String =
         buildString {
             append("#sid=").append(PercentEncoding.encode(sessionId))
@@ -114,6 +124,9 @@ internal object SharingPageUrl {
             // Only when the request overrode it; otherwise the warm URL's config value stands.
             logoUrl?.let { append("&logoUrl=").append(PercentEncoding.encode(it)) }
             seededReward?.let { append("&seedReward=").append(PercentEncoding.encode(it)) }
+            shareTitle?.let { append("&shareTitle=").append(PercentEncoding.encode(it)) }
+            shareText?.let { append("&shareText=").append(PercentEncoding.encode(it)) }
+            shareImage?.let { append("&shareImage=").append(PercentEncoding.encode(it)) }
             if (confirmed) append("&view=confirmation")
         }
 

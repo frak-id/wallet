@@ -3,7 +3,7 @@ package id.frak.sdk.sharing
 import id.frak.sdk.core.ProductDetails
 import java.util.Collections
 
-/* SDK-wide: no default arguments on any public constructor. A default compiles to a synthetic `$default` bridge
+/* SDK-wide: no default arguments on any public constructor. A default compiles to a synthetic $default bridge
  * whose descriptor encodes the arity, so adding a field is a NoSuchMethodError in a merchant binary already
  * shipped. Builders / explicit overloads instead. */
 
@@ -66,6 +66,12 @@ public class SharingRequest internal constructor(
     /** Which configured placement's copy to render, e.g. `product-page`. Accepted but not yet acted on. */
     public val placement: String?,
     public val logoUrl: String?,
+    /** Highest-precedence override for the OS share sheet's title. See `docs/plans/native-sdk/10-native-share-payload.md` §5. */
+    public val shareTitle: String?,
+    /** Highest-precedence override for the OS share sheet's body text. */
+    public val shareText: String?,
+    /** Highest-precedence override for the OS share sheet's preview image. iOS only — Android ships no preview, see §7. */
+    public val shareImageUrl: String?,
 ) {
     public class Builder {
         public var link: String? = null
@@ -79,6 +85,12 @@ public class SharingRequest internal constructor(
         public var placement: String? = null
 
         public var logoUrl: String? = null
+
+        public var shareTitle: String? = null
+
+        public var shareText: String? = null
+
+        public var shareImageUrl: String? = null
 
         public fun link(link: String?): Builder = apply { this.link = link }
 
@@ -95,6 +107,12 @@ public class SharingRequest internal constructor(
 
         public fun logoUrl(logoUrl: String?): Builder = apply { this.logoUrl = logoUrl }
 
+        public fun shareTitle(shareTitle: String?): Builder = apply { this.shareTitle = shareTitle }
+
+        public fun shareText(shareText: String?): Builder = apply { this.shareText = shareText }
+
+        public fun shareImageUrl(shareImageUrl: String?): Builder = apply { this.shareImageUrl = shareImageUrl }
+
         /** Copies [products], so mutating the caller's list cannot change an already-built request. */
         public fun build(): SharingRequest =
             SharingRequest(
@@ -104,6 +122,9 @@ public class SharingRequest internal constructor(
                 targetInteraction,
                 placement,
                 logoUrl,
+                shareTitle,
+                shareText,
+                shareImageUrl,
             )
     }
 }
