@@ -454,8 +454,6 @@ describe("the copied event", () => {
 
 describe("share payload precedence", () => {
     it("keeps today's copy byte-for-byte with no products and no overrides", () => {
-        // The bundled `t()` fixture returns the key itself: this is the
-        // pre-existing web behaviour the precedence chain must not disturb.
         const share = vi.fn(() => true);
         const { result } = setup({ share });
 

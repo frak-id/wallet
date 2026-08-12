@@ -1,13 +1,6 @@
 import { SHARE_BUDGET } from "./shareBudget";
 
-/**
- * Sanitize a share preview image URL: https only, no embedded credentials, query string kept —
- * CDN image URLs are signed. Unlike `sanitizeRedirectUrl`, which strips the query to prevent open
- * redirects, this value is never navigated to; iOS fetches it, everything else ignores it.
- *
- * Applied to whichever precedence tier wins, not only to the per-call override: a merchant's
- * `logoUrl` arrives as an unvalidated string too.
- */
+/** https-only image URL, credentials rejected, query kept — CDN image URLs are signed. */
 export function sanitizeShareImage(value: unknown): string | undefined {
     if (typeof value !== "string" || value.length > SHARE_BUDGET.image) {
         return undefined;

@@ -8,20 +8,7 @@
     @MainActor
     enum NativeShare {
         /// Presents the system share sheet and resolves once the user has finished with it.
-        ///
-        /// `imageURL` is sender-side chrome only — the `LPLinkMetadata` header the sharer sees in
-        /// the chooser, never anything the recipient gets — so a fetch failure silently proceeds
-        /// without a thumbnail rather than blocking or failing the share.
-        ///
-        /// - Parameters:
-        ///   - link: the tracking URL, shared as a typed `URL` activity item where it parses.
-        ///   - title: `LPLinkMetadata.title`, and the mail/message subject.
-        ///   - text: the message body, offered as a separate activity item from `link`.
-        ///   - imageURL: fetched into `LPLinkMetadata.iconProvider`; nil skips the fetch outright.
-        ///   - imageCache: shared with `SharingPresenter.warm()`'s prefetch, so a logo warmed
-        ///     ahead of the tap resolves immediately instead of paying `tapDeadlineSeconds` again.
-        ///   - anchorRect: the Share CTA's rect, in this window's coordinate space, for the iPad
-        ///     popover. Falls back to the presenter's centre when nil or off-screen.
+        /// `imageURL` is sender-side chrome only, so a failed fetch still shares.
         /// - Returns: whether the user completed a share. False also covers "nothing could present it".
         static func share(
             link: String,
@@ -33,8 +20,7 @@
         ) async -> Bool {
             guard let presenter = topViewController() else { return false }
 
-            // The page caps these already; re-applied because the query string is not trusted,
-            // for the same reason the empty check is. Android does the same in `NativeShare.kt`.
+            // Re-capped: the query string carrying these is not trusted.
             let title = title.map { $0.clippedForShare(to: shareTitleLimit) }
             let text = text.map { $0.clippedForShare(to: shareTextLimit) }
 
@@ -52,9 +38,7 @@
                 } else {
                     data = await SharingImagePreview.fetch(imageURL)
                 }
-                // Decoded a second time here: `SharingImagePreview.fetch` only proved the bytes
-                // decode, on a background context that cannot hand back the `UIImage` itself under
-                // Swift 6 strict concurrency (`NSItemProvider(object:)` needs the main actor).
+                // Decoded again here: `NSItemProvider(object:)` needs the main actor.
                 if let data, let image = UIImage(data: data) {
                     metadata.iconProvider = NSItemProvider(object: image)
                 }
@@ -94,10 +78,8 @@
             }
         }
 
-        /// The page-reported rect when it lands inside the presenting view; centre with no arrow
-        /// otherwise — both a nil rect (web sends none today) and one that has scrolled off-screen
-        /// degrade the same way, since an arrow pointing at a rect outside `presenter.view.bounds`
-        /// is worse than no arrow at all.
+        /// Centres with no arrow when the rect is absent or off-screen: an arrow pointing at
+        /// nothing reads worse than none.
         private static func popoverSourceRect(_ rect: CGRect?, in view: UIView) -> CGRect {
             guard let rect, rect.intersects(view.bounds) else {
                 return CGRect(origin: CGPoint(x: view.bounds.midX, y: view.bounds.midY), size: .zero)
@@ -159,9 +141,8 @@
         }
     }
 
-    /// Carries the link, its `LPLinkMetadata` (title, and preview image when one was fetched) and
-    /// the mail/message subject. Kept separate from `TextActivityItemSource` so an activity that
-    /// consumes only one item — Safari's Reading List, say — gets the link, not text-glued-to-URL.
+    /// Separate from `TextActivityItemSource` so a single-item activity gets the link, not
+    /// text glued to a URL.
     private final class LinkActivityItemSource: NSObject, UIActivityItemSource {
         private let item: Any
         private let subject: String?
@@ -197,8 +178,7 @@
         }
     }
 
-    /// The message body, offered as its own activity item so it never gets concatenated onto the
-    /// URL for an activity that only takes one item.
+    /// The message body as its own activity item.
     private final class TextActivityItemSource: NSObject, UIActivityItemSource {
         private let text: String
         private let subject: String?

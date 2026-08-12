@@ -3,9 +3,6 @@ import Testing
 
 @testable import FrakSDKUI
 
-/// `tier3ShareData` is what the OS chooser says when there is no hosted page to ask — reached
-/// only from `resolveConfig()`'s own `catch`, so it must never assume `sdkConfig`/`translations`
-/// are reachable. See docs/plans/native-sdk/10-native-share-payload.md §7.
 @Suite("tier3ShareData")
 struct Tier3ShareDataTests {
     @Test("a per-call override wins outright, over both the product and the bundled default")

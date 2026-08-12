@@ -95,15 +95,8 @@ export function SharingView({
     // Branding falls back to the merchant config unless the caller overrode it.
     const { data: config } = useMerchantResolvedConfig({ merchantId });
 
-    // A merchant's `sharing.title`/`sharing.text` overrides, which the listener
-    // already merges for the embedded wallet UI but this standalone route did
-    // not: `t()` below resolves `translation` -> `customized` -> `common`, so
-    // adding the merchant's copy to `customized` is all that was missing.
-    //
-    // Removed on cleanup rather than only added. `addResourceBundle` deep-merges into a
-    // page-lifetime singleton, so on the SPA route -- where `/sharing` is reachable without a
-    // document load -- merchant A's overrides would otherwise still be in `customized` when
-    // merchant B renders, and dropping an override server-side would never restore the default.
+    // Removed on cleanup: `addResourceBundle` deep-merges into a page-lifetime singleton, so a
+    // merchant's overrides would otherwise outlive the merchant that set them.
     useEffect(() => {
         const translations = config?.sdkConfig?.translations;
         if (!translations || Object.keys(translations).length === 0) return;

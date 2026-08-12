@@ -67,8 +67,7 @@ public struct SharingRequest: Sendable, Hashable {
     /// Where in the app the share was offered, e.g. `product-page`.
     public let placement: String?
     public let logoURL: String?
-    /// Per-call overrides for the OS share sheet's title/body/preview image — highest
-    /// precedence tier; see docs/plans/native-sdk/10-native-share-payload.md §5.
+    /// Per-call overrides for the OS share sheet's title/body/preview image; highest precedence.
     public let shareTitle: String?
     public let shareText: String?
     public let shareImageURL: String?

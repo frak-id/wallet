@@ -108,10 +108,7 @@ internal class SharingSheetState(
      */
     private val claimed = mutableSetOf<ClaimKey>()
 
-    /**
-     * What [claimed] tracks. Deliberately not [SharingPageAction] itself: [SharingPageAction.Share]
-     * now carries a payload, and two different payloads must still count as one in-flight claim.
-     */
+    /** Payload-free, so two taps carrying different payloads still count as one in-flight claim. */
     private enum class ClaimKey { Share, Copy, Install }
 
     /** [onPageUnavailable] has to tell a failed install page apart from a failed sharing page. */
@@ -285,10 +282,7 @@ internal class SharingSheetState(
     /** Claims one of the page's buttons for its round trip. False when that button is already in flight. */
     private fun claim(key: ClaimKey): Boolean = claimed.add(key)
 
-    /**
-     * Raises the chooser, then attributes the share. [payload] is the page's resolved OS share
-     * copy — absent on a tier-3 session (no page), which falls back to the session's own.
-     */
+    /** Raises the chooser, then attributes the share. A null [payload] falls back to the session's own copy. */
     fun share(payload: SharingPageAction.Share? = null) {
         val active = session ?: return
         if (!claim(ClaimKey.Share)) return

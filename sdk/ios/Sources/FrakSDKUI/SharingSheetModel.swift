@@ -71,12 +71,9 @@
         private let installPageURL: @Sendable (String, String) async -> String?
         private let isFrakAppInstalled: @Sendable () async -> Bool
         private let openFrakApp: @Sendable () async -> OpenAppResult
-        /// Tier-3's only source of a merchant name: `FrakMetadata.name`, fixed at build time and
-        /// so still readable when `resolveConfig` — this session's only other name source — has
-        /// just thrown. See docs/plans/native-sdk/10-native-share-payload.md §7 "Tier-3 fallback".
+        /// Tier-3's only name source: `FrakMetadata.name` survives a failed config resolve.
         private let metadataName: @Sendable () -> String?
-        /// `FrakMetadata.lang`; picks which bundled tier-3 constants to use. Nil falls through to
-        /// `.en` — the device-locale rung of that fallback is §8, not this lane.
+        /// `FrakMetadata.lang`; picks the bundled tier-3 constants. Nil means `.en`.
         private let metadataLang: @Sendable () -> FrakLanguage?
         private let imageCache: SharingImagePreviewCache
 
@@ -214,9 +211,7 @@
             claimed.insert(action).inserted
         }
 
-        /// The page's own Share button. Uses its reported payload — title/text/image, resolved
-        /// and localised by the page — rather than `session.shareTitle`, which only tier 3
-        /// (`fallBack(to:)`) still reads: this path always has a page, so the page's answer wins.
+        /// The page's own Share button; its reported payload wins, `session.shareTitle` is tier-3 only.
         func share(_ payload: SharingSharePayload) async {
             guard let session else { return }
             // The tier-3 fallback races a page action that arrives in the same turn; without this
@@ -229,8 +224,6 @@
             // intent would reward a cancelled chooser.
             guard
                 await NativeShare.share(
-                    // `session.shareTitle` (the merchant display name) only as a defensive floor:
-                    // every current page build always resolves a non-empty title/text of its own.
                     link: session.link,
                     title: payload.title ?? session.shareTitle,
                     text: payload.text,
@@ -572,9 +565,7 @@
             do {
                 config = try await resolveConfig()
             } catch is FrakError {
-                // Tier 3: the link stands alone. Config is unreachable on this path by
-                // construction, so the fallback copy cannot read it — see
-                // docs/plans/native-sdk/10-native-share-payload.md §7.
+                // Tier 3: config is unreachable here by construction, so the fallback cannot read it.
                 let fallback = tier3ShareData(request: request, productName: metadataName(), lang: metadataLang())
                 return SharingSession(
                     walletOrigin: walletOrigin,

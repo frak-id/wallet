@@ -3,9 +3,6 @@ import Testing
 
 @testable import FrakSDKUI
 
-/// `isFetchableShareImageURL` re-validates a `shareImage` independently of the hosted page's own
-/// https-only check: this SDK is the one that fetches the URL, so a scheme downgrade or a request
-/// aimed at the app's own private network is this layer's problem, not the page's.
 @Suite("isFetchableShareImageURL")
 struct ShareImageURLGuardTests {
     @Test("a well-formed https url on a public host is fetchable")

@@ -32,8 +32,7 @@ internal sealed interface SharingPageAction {
 
     /**
      * The page asking the host to share: navigator.share does not exist in an Android WebView.
-     * [title]/[text] are the page-resolved OS share copy. `image` is never parsed at all — Android
-     * ships no preview thumbnail, see docs/plans/native-sdk/10-native-share-payload.md §7.
+     * `image` is never parsed — Android ships no preview thumbnail.
      */
     data class Share(
         val title: String?,

@@ -11,10 +11,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
 
-/**
- * Tier-3 fallback copy: entered only from a `resolveConfig()` failure, so it must never read
- * `sdkConfig`/`translations` — see `docs/plans/native-sdk/10-native-share-payload.md` §7.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SharingSessionBuilderTest {
     private fun builder(client: FakeSharingClient): SharingSessionBuilder =
@@ -120,9 +116,7 @@ class SharingSessionBuilderTest {
     @Test
     fun `tier 3 never reaches resolveConfig's translations`() =
         runTest {
-            // resolveConfig() throws before returning anything, so there is nothing to read from —
-            // this test's real assertion is that build() does not crash trying to read a merchant
-            // that was never resolved. See the tier3ShareCopy call site.
+            // resolveConfig() throws, so build() must not try to read a merchant that was never resolved.
             val client = FakeSharingClient()
             val session = tier3Session(client)
             assertNull("no page means no config-sourced copy at all", session.url(confirmed = false))

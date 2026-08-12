@@ -235,8 +235,7 @@ class SharingWebViewClientTest {
 
     @Test
     fun `a share action ignores an image param entirely`() {
-        // Android ships no preview thumbnail; `image` must not even reach the harness's actions in
-        // a form that could be mistaken for something read. See §7 of the wire contract.
+        // Android ships no preview thumbnail, so `image` must not reach the actions at all.
         val (view, h) = harness()
         view.client.shouldOverrideUrlLoading(
             view,

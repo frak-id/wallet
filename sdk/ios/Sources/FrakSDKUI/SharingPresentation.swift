@@ -163,9 +163,7 @@
 
         private var phase: Phase = .idle
         private var pool: SharingWebViewPool?
-        /// Shared with every `SharingSheetModel` this presenter starts, so a logo prefetched here
-        /// resolves instantly at the tap instead of paying `SharingImagePreview.tapDeadlineSeconds`
-        /// again. One per presenter, not per session: the merchant logo rarely changes mid-app-run.
+        /// Shared with every session this presenter starts, so a warmed logo is instant at the tap.
         private let imageCache = SharingImagePreviewCache()
 
         /// The BCP-47 tag the pool was warmed on, so a re-drive rebuilds the identical URL.
@@ -198,11 +196,7 @@
             guard let config = try? await client.config.resolve() else { return }
             trace.mark("warm config ready")
 
-            // `await` here only crosses into the actor to start the fetch `Task` — it does not
-            // wait for the image itself, so `warm()` is not slowed down by a slow CDN. A product
-            // image (known only at tap time) is not prefetchable here, and a per-call
-            // `shareImageURL` override takes precedence anyway, so this is only ever a possible
-            // win, never a correctness requirement.
+            // Only starts the fetch; `warm()` never waits on the image.
             if let logoURL = config.displayLogoURL, let url = URL(string: logoURL) {
                 await imageCache.prefetch(url)
             }

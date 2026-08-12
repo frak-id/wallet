@@ -11,20 +11,14 @@ import android.os.PersistableBundle
 
 /** The two native actions in the sheet's footer — `ACTION_SEND` opens the real OS share sheet, unlike a web page. */
 internal object NativeShare {
-    /**
-     * No [ClipData] thumbnail: the Sharesheet renders in the system chooser process, which cannot
-     * read our files without an SDK-owned FileProvider — an `<application>` block this SDK does not
-     * ship, for a tile that never leaves the sharer's device. See
-     * docs/plans/native-sdk/10-native-share-payload.md §7.
-     */
+    /** No [ClipData] thumbnail: the system chooser process cannot read our files without an SDK-owned FileProvider. */
     fun share(
         context: Context,
         link: String,
         title: String?,
         text: String? = null,
     ): Boolean {
-        // Re-capped defensively: a megabyte extra is TransactionTooLargeException in the
-        // merchant's own process, not ours.
+        // Re-capped: an oversized extra is TransactionTooLargeException in the merchant's process.
         val cappedTitle = title?.take(TITLE_LIMIT)
         val cappedText = text?.take(TEXT_LIMIT)
         val send =
@@ -81,7 +75,7 @@ internal object NativeShare {
 
     private const val INSTALL_CODE_LABEL = "Frak install code"
 
-    /** Mirrors the page-side budget (`docs/plans/native-sdk/10-native-share-payload.md` §6). */
+    /** Mirrors the page-side share budget. */
     private const val TITLE_LIMIT = 120
 
     private const val TEXT_LIMIT = 280

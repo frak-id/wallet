@@ -29,10 +29,7 @@ public class FrakClient internal constructor(
     /** The stage this client talks to. Merchants never set it directly, see [id.frak.sdk.core.FrakConfig.env]. */
     public val environment: FrakEnvironment get() = core.environment
 
-    /**
-     * The merchant-supplied build-time name. `public` only so `:frak-sdk-ui`'s sharing sheet can
-     * read it across the module boundary for its tier-3 fallback copy — see [InternalFrakApi].
-     */
+    /** The merchant-supplied build-time name. `public` only so `:frak-sdk-ui` can read it across the module boundary. */
     @InternalFrakApi
     public val metadataName: String? get() = core.metadataName
 

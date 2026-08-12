@@ -58,11 +58,7 @@ internal interface SharingDependencies {
 
     suspend fun openFrakApp(): OpenAppResult
 
-    /**
-     * [id.frak.sdk.core.FrakMetadata.name], the merchant-supplied build-time name. Local — unlike
-     * [resolveConfig], it survives a config resolution failure, which is what the tier-3 fallback
-     * needs it for.
-     */
+    /** Tier-3's only name source: local, so it survives a [resolveConfig] failure. */
     fun metadataName(): String?
 
     /** [id.frak.sdk.core.FrakMetadata.lang]; picks which bundled tier-3 copy to use. */

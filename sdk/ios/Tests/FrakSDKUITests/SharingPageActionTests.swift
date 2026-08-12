@@ -4,10 +4,6 @@ import Testing
 
 @testable import FrakSDKUI
 
-/// Parses the query values `SharingWebView` reads off `returnScheme://result?...`. Kept in
-/// `SharingSheetLogic.swift` rather than the `#if canImport(UIKit)` `SharingWebView.swift` so this
-/// suite actually runs — see `scripts/run.sh`'s `do_test`, which only compiles the UIKit-gated
-/// files on this machine, never executes them.
 @Suite("SharingPageAction.from — action dispatch")
 struct SharingPageActionDispatchTests {
     @Test("known actions map to their case")
@@ -121,8 +117,6 @@ struct SharingPageActionSharePayloadTests {
 
     // MARK: - rect
 
-    /// Web does not emit `rect` today (`bridge.ts`'s `HostShareResult` documents it as reserved),
-    /// so this is the path every real share currently takes — not a theoretical one.
     @Test("an absent rect falls back to nil, which NativeShare reads as the centred anchor")
     func absentRectIsNil() {
         let action = SharingPageAction.from(action: "share", value: nil, exp: nil)
@@ -209,9 +203,6 @@ struct SharingPageActionKindTests {
 
 @Suite("sharingQueryValue")
 struct SharingQueryValueTests {
-    /// The page builds this query with `URLSearchParams`, which writes a space as `+`.
-    /// `URLComponents` alone hands that back as a literal plus, so every share text with a
-    /// space used to arrive mangled on iOS while Android decoded it correctly.
     @Test("a URLSearchParams space arrives as a space, not a plus")
     func plusDecodesToSpace() {
         let url = URL(string: "frak-x://result?action=share&title=Kettle+deal&text=Grab+it%21")!

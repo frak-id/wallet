@@ -51,11 +51,7 @@ const productList = (raw: unknown): SharingPageProduct[] | undefined => {
     return sanitizeSharingProducts(raw);
 };
 
-/**
- * A non-empty string clipped to `maxLength`. Truncates rather than rejecting: dropping
- * an over-long override would silently fall through to the tier below it, so a merchant
- * who wrote 300 characters would get the generic copy instead of their own, clipped.
- */
+/** A non-empty string clipped to `maxLength`; truncating keeps the merchant's own copy. */
 const cappedStr =
     (maxLength: number) =>
     (raw: unknown): string | undefined => {
@@ -89,13 +85,13 @@ export const SHARING_PARAMS = {
     /** Pre-formatted reward headline from a host's cache, until the real query resolves. */
     seedReward: { decode: sanitizeSeededReward, transport: "both" },
 
-    /** Per-call share title override; see `SharingRequest.shareTitle` on both native SDKs. */
+    /** Per-call share title override. */
     shareTitle: { decode: cappedStr(120), transport: "both" },
 
-    /** Per-call share body override; see `SharingRequest.shareText` on both native SDKs. */
+    /** Per-call share body override. */
     shareText: { decode: cappedStr(280), transport: "both" },
 
-    /** Per-call preview image override; see `SharingRequest.shareImage` on both native SDKs. */
+    /** Per-call preview image override. */
     shareImage: { decode: sanitizeShareImage, transport: "both" },
 
     /**

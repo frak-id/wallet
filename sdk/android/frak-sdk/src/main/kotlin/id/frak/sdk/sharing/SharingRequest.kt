@@ -66,11 +66,11 @@ public class SharingRequest internal constructor(
     /** Which configured placement's copy to render, e.g. `product-page`. Accepted but not yet acted on. */
     public val placement: String?,
     public val logoUrl: String?,
-    /** Highest-precedence override for the OS share sheet's title. See `docs/plans/native-sdk/10-native-share-payload.md` §5. */
+    /** Highest-precedence override for the OS share sheet's title. */
     public val shareTitle: String?,
     /** Highest-precedence override for the OS share sheet's body text. */
     public val shareText: String?,
-    /** Highest-precedence override for the OS share sheet's preview image. iOS only — Android ships no preview, see §7. */
+    /** Highest-precedence override for the OS share sheet's preview image. iOS only; Android ships no preview. */
     public val shareImageUrl: String?,
 ) {
     public class Builder {

@@ -77,9 +77,8 @@ internal class SharingSessionBuilder(
             try {
                 dependencies.resolveConfig()
             } catch (resolveFailed: FrakError) {
-                // Tier 3: the link stands alone. A no-page session, not a failed one. Config is
-                // unreachable on this path by construction, so the fallback copy cannot read it —
-                // see docs/plans/native-sdk/10-native-share-payload.md §7.
+                // Tier 3: a no-page session, not a failed one. Config is unreachable here, so the
+                // fallback copy cannot read it.
                 val fallback = tier3ShareCopy(request)
                 return SharingBuild.Ready(
                     SharingSession(
@@ -102,8 +101,7 @@ internal class SharingSessionBuilder(
             SharingSession(
                 returnScheme = returnScheme,
                 link = link,
-                // Not read on this path: a session with a page gets its OS-share copy from the
-                // page's own `action=share` payload, not from here.
+                // Not read on this path: the page reports its own share copy.
                 shareTitle = appName,
                 pageUrl =
                     SharingPageUrl.build(
@@ -168,17 +166,11 @@ internal class SharingSessionBuilder(
         }
     }
 
-    /**
-     * Tier-3 copy: per-call override, then the first product's title, then a built-in default.
-     * Never reads `sdkConfig` — see the call site. `{{productName}}` binds to
-     * [id.frak.sdk.core.FrakMetadata.name], which is local and survives a config failure; no
-     * reward-bearing placeholder exists here, since that needs the network that just failed.
-     */
+    /** Per-call override, then the first product's title, then a built-in default. Never reads `sdkConfig`. */
     private fun tier3ShareCopy(request: SharingRequest): Tier3ShareCopy {
         val defaults = Tier3Defaults.forLang(dependencies.metadataLang())
         val name = dependencies.metadataName()
-        // Interpolated over the winner, not just the default: a merchant may put the placeholder
-        // in their own override. Mirrors iOS's `tier3ShareData`.
+        // Interpolated over the winner: a merchant may put the placeholder in their own override.
         val title =
             interpolateProductName(
                 request.shareTitle
@@ -190,10 +182,7 @@ internal class SharingSessionBuilder(
         return Tier3ShareCopy(title = title, text = text)
     }
 
-    /**
-     * Drops the placeholder entirely when there is no name, rather than rendering "null" or an
-     * empty gap. The surrounding space collapses with it so "Discover !" cannot happen.
-     */
+    /** Drops the placeholder and its adjacent space when there is no name, so "Discover !" cannot happen. */
     private fun interpolateProductName(
         template: String,
         productName: String?,
@@ -242,13 +231,7 @@ internal class SharingSessionBuilder(
     /** Null for NaN/Infinity, which [JSONObject.put] rejects outright. */
     private fun Double?.finiteOrNull(): Double? = this?.takeIf { it.isFinite() }
 
-    /**
-     * Bundled `sharing.title`/`sharing.text` defaults, mirrored from
-     * `packages/wallet-shared/src/i18n/locales/{en,fr}/common.json` and from iOS's `tier3Defaults`.
-     * Kept in step by hand — `04-golden-fixtures.md` pins codecs, not prose. A `when` over the enum
-     * rather than a map, so a third language fails the build here instead of silently degrading a
-     * share to the English copy.
-     */
+    /** Bundled defaults mirroring the wallet's `sharing.title`/`sharing.text`; kept in step by hand. */
     private object Tier3Defaults {
         fun forLang(lang: FrakLanguage?): Tier3ShareCopy =
             when (lang) {

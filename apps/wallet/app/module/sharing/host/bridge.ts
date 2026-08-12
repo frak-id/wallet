@@ -9,17 +9,7 @@ export type HostResultAction =
     | "code"
     | "ready";
 
-/**
- * The resolved share payload carried on `action: "share"`. See
- * docs/plans/native-sdk/10-native-share-payload.md §6 — every field optional,
- * absent means the pre-payload behaviour (bare link, no title/text/image).
- *
- * `rect` (the Share CTA's viewport rect, for the iOS iPad popover anchor) is
- * part of the frozen wire contract but is not emitted from this surface: the
- * design-system `Button` in `Footer.tsx` forwards no click event, so there is
- * no rect to read without widening `SharingActions.onShare` beyond this
- * lane's scope. Native falls back to its existing centred anchor.
- */
+/** The resolved share payload carried on `action: "share"`; every field optional. */
 export type HostShareResult = {
     title?: string;
     text?: string;

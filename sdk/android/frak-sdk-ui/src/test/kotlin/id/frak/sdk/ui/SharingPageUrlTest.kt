@@ -213,9 +213,7 @@ class SharingPageUrlTest {
 
     @Test
     fun `an unset share override does not erase the warm page's own value`() {
-        // Mirrors `logoUrl`'s existing contract: only a key with something to say is written, so
-        // an absent param falls through to the warm URL's own params instead of overwriting them
-        // with nothing.
+        // An absent param falls through to the warm URL's own params instead of overwriting them with nothing.
         val fragment = SharingPageUrl.activationFragment(sessionId = "1")
         assertFalse(fragment.contains("shareTitle"))
         assertFalse(fragment.contains("shareText"))

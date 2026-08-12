@@ -2,12 +2,8 @@ import CoreGraphics
 import Foundation
 import FrakSDK
 
-/// The resolved share payload the page reports on `action=share`. Every field optional and
-/// independently absent — see docs/plans/native-sdk/10-native-share-payload.md §6.
-///
-/// `rect`, the Share CTA's viewport rect for the iPad popover anchor, is CSS pixels; treated
-/// as 1:1 with `WKWebView` points, which holds only because the hosted page pins
-/// `viewport-fit`/`initial-scale=1` and this sheet never lets the user pinch-zoom it.
+/// The share payload the page reports on `action=share`; every field independently optional.
+/// `rect` is CSS pixels, treated 1:1 with `WKWebView` points.
 struct SharingSharePayload: Hashable {
     let title: String?
     let text: String?
@@ -16,9 +12,7 @@ struct SharingSharePayload: Hashable {
 }
 
 /// What the hosted page can tell the host, over the intercepted return-scheme navigation. Kept
-/// outside the `#if canImport(UIKit)` files (unlike the `WKWebView` that reports it) so its wire
-/// parsing runs in the host-toolchain test stage, not just the compile-only iOS-simulator one —
-/// see `scripts/run.sh`'s `do_test`.
+/// out of the UIKit-gated files so its wire parsing is reachable from the host-toolchain tests.
 enum SharingPageAction: Hashable {
     case install
     case dismiss
@@ -32,9 +26,7 @@ enum SharingPageAction: Hashable {
     case ready
     case code(value: String, expiresAt: Date?)
 
-    /// Payload-free discriminator for `SharingSheetModel.claimed`, which needs "is a share
-    /// round trip already in flight", not "is this the exact same payload" — two taps in a
-    /// row report different `rect`s and must still collide in the set.
+    /// Payload-free discriminator: two taps differ only by `rect` and must still collide.
     enum Kind: Hashable {
         case install, dismiss, shareAgain, share, copy, error, ready, code
     }
@@ -91,27 +83,20 @@ enum SharingPageAction: Hashable {
     }
 }
 
-/// The §6 wire budget, mirrored from `packages/wallet-shared/src/sharing/utils/shareBudget.ts`.
+/// Mirrors the page-side share budget.
 let shareTitleLimit = 120
 let shareTextLimit = 280
 
 extension String {
-    /// Clips to `max` characters on a grapheme boundary, ellipsis inside the budget. Slicing by
-    /// `prefix` alone would cut inside an emoji's surrogate pair or between a base character and
-    /// its combining mark.
+    /// Clips on a grapheme boundary; `prefix` alone can cut inside an emoji.
     func clippedForShare(to max: Int) -> String {
         guard count > max, max > 1 else { return count > max ? String(prefix(max)) : self }
         return String(prefix(max - 1)).trimmingCharacters(in: .whitespaces) + "…"
     }
 }
 
-/// One query value off the return-scheme URL.
-///
-/// `+` is normalised to `%20` before parsing: the page builds this query with `URLSearchParams`,
-/// which serialises a space as `+`, but `URLComponents` follows RFC 3986 and hands that back as a
-/// literal plus. Without this, every share title or text containing a space arrives as
-/// `Kettle+deal`. Android's `Uri.getQueryParameter` folds `+` itself, which is why this only ever
-/// bit one platform.
+/// One query value off the return-scheme URL. Normalises `+` to `%20` first: the page writes
+/// spaces as `+`, and `URLComponents` does not fold them.
 func sharingQueryValue(_ url: URL, _ name: String) -> String? {
     guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return nil }
     if let query = components.percentEncodedQuery, query.contains("+") {
@@ -120,23 +105,20 @@ func sharingQueryValue(_ url: URL, _ name: String) -> String? {
     return components.queryItems?.first { $0.name == name }?.value
 }
 
-/// An empty string is "absent", not "override with nothing" — the page already enforces this
-/// on the way out; re-checked here because the query string is not otherwise trusted.
+/// An empty string is "absent", not "override with nothing".
 private func nonEmpty(_ value: String?) -> String? {
     guard let value, !value.isEmpty else { return nil }
     return value
 }
 
-/// Re-validated independently of the page's own https-only check: this SDK fetches the URL,
-/// so a scheme downgrade here would be an SSRF vector the page's sanitizer cannot see.
+/// Re-validated independently of the page: this SDK fetches the URL, so a scheme downgrade
+/// here is an SSRF vector.
 private func sharingHTTPSImageURL(_ value: String) -> URL? {
     guard let url = URL(string: value), url.scheme == "https" else { return nil }
     return url
 }
 
-/// `x,y,w,h`, four finite CSS-pixel values with a positive width and height. Anything else —
-/// missing a component, non-numeric, negative or zero size — answers nil so the caller falls
-/// back to the centred anchor rather than pointing at a degenerate rect.
+/// `x,y,w,h`; nil for anything degenerate, so the caller falls back to the centred anchor.
 private func parseShareRect(_ value: String) -> CGRect? {
     let parts = value.split(separator: ",", omittingEmptySubsequences: false)
     guard parts.count == 4 else { return nil }
@@ -147,10 +129,7 @@ private func parseShareRect(_ value: String) -> CGRect? {
     return CGRect(x: x, y: y, width: w, height: h)
 }
 
-/// https-only, and no private/link-local target: the app's own network position is not ours to
-/// lend to a URL this SDK did not choose, which either the hosted page or a merchant did. Kept
-/// outside the `#if canImport(UIKit)` `SharingImagePreview` for the same host-testability reason
-/// as `SharingPageAction` above.
+/// https-only and no private/link-local target: this SDK fetches a URL it did not choose.
 func isFetchableShareImageURL(_ url: URL) -> Bool {
     guard url.scheme == "https", let host = url.host?.lowercased(), !host.isEmpty else { return false }
     if host.hasSuffix(".local") { return false }
@@ -160,9 +139,7 @@ func isFetchableShareImageURL(_ url: URL) -> Bool {
     return true
 }
 
-/// Loopback, unique-local (`fc00::/7`) and link-local (`fe80::/10`), plus IPv4-mapped forms like
-/// `::ffff:10.0.0.1`. Prefix matching rather than a parser: this only has to reject, and a literal
-/// it does not recognise is one `URLSession` will not route to a private network either.
+/// Prefix matching, not a parser: this only has to reject.
 private func isPrivateIPv6Literal(_ host: String) -> Bool {
     let bare = host.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
     if bare == "::1" || bare == "::" { return true }
@@ -178,9 +155,7 @@ private func isPrivateIPv6Literal(_ host: String) -> Bool {
     return false
 }
 
-/// Just enough of RFC 1918 / RFC 3927 to keep this SDK from being handed a URL that makes the
-/// merchant's app fetch its own internal network. Hostnames only reach here after `URL` has
-/// already rejected anything that is not a valid authority.
+/// Enough of RFC 1918 / RFC 3927 to reject a private target.
 struct IPv4Address {
     let octets: (UInt8, UInt8, UInt8, UInt8)
 
@@ -212,8 +187,7 @@ struct SharingSession: Equatable {
     let walletOrigin: String
     let returnScheme: String
     let link: String
-    /// The chooser's fallback title/text/image, used only if `fallBack(to:)` fires — a session
-    /// with a hosted page gets its OS-share copy from the page's own `action=share` instead.
+    /// Tier-3 fallback copy only; a session with a page uses the page's reported payload.
     let shareTitle: String?
     let shareText: String?
     let shareImageURL: String?
@@ -387,21 +361,15 @@ func sharingReclaim(
     return .reload(warmURL)
 }
 
-/// What the OS share sheet says when there is no hosted page to ask — either config resolution
-/// failed outright, or a page that did resolve never loaded before the tap-to-content deadline.
-/// Native never reads `sdkConfig.translations` on this path (`FrakResolvedConfig` may not even be
-/// available), so the chain is local-only: docs/plans/native-sdk/10-native-share-payload.md §7.
+/// What the OS chooser says when there is no page to ask; local sources only, since the
+/// resolved config may not be available.
 struct Tier3ShareData: Equatable {
     let title: String
     let text: String
 }
 
-/// Bundled `sharing.title`/`sharing.text` defaults, mirrored from
-/// `packages/wallet-shared/src/i18n/locales/{en,fr}/common.json`. Kept in step by hand — there is
-/// no shared fixture for prose copy the way there is for the wire formats (`04-golden-fixtures.md`
-/// covers codecs, not translations). A `switch`, not a dictionary: `FrakLanguage`'s `CaseIterable`
-/// conformance makes this exhaustive, so a third case fails the build here instead of degrading a
-/// share to a missing-key lookup at runtime.
+/// Bundled defaults mirroring the wallet's `sharing.title`/`sharing.text`; kept in step by hand.
+/// Exhaustive, so a third language fails the build rather than degrading at runtime.
 private func tier3Defaults(for lang: FrakLanguage) -> Tier3ShareData {
     switch lang {
     case .en:
@@ -411,9 +379,7 @@ private func tier3Defaults(for lang: FrakLanguage) -> Tier3ShareData {
     }
 }
 
-/// Per-call override, then the first product's title, then the bundled default for `lang` (`en`
-/// when `lang` is nil). `{{productName}}` interpolates from `productName`, which is nil when
-/// `FrakMetadata.name` was never set — the placeholder is dropped rather than left showing `{{}}`.
+/// Per-call override, then the first product's title, then the bundled default.
 func tier3ShareData(
     request: SharingRequest,
     productName: String?,
@@ -427,8 +393,7 @@ func tier3ShareData(
     )
 }
 
-/// Drops the placeholder entirely when there is no name, rather than rendering an empty gap.
-/// The whitespace on either side of it collapses too, so "Discover !" cannot happen.
+/// Drops the placeholder and its adjacent space when there is no name, so "Discover !" cannot happen.
 private func interpolateProductName(_ template: String, _ productName: String?) -> String {
     guard let productName else {
         return

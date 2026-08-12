@@ -78,10 +78,7 @@ export type SharingPageControllerInput = {
     };
     /** A host's cached headline, painted until the real query resolves. */
     seedReward?: string;
-    /**
-     * Per-call overrides for the share title/text/image, highest precedence tier.
-     * See docs/plans/native-sdk/10-native-share-payload.md §5.
-     */
+    /** Per-call overrides for the share title/text/image; highest precedence. */
     shareTitle?: string;
     shareText?: string;
     shareImage?: string;
@@ -103,10 +100,7 @@ export type SharingPageControllerInput = {
     outcomes: SharingOutcomes;
 };
 
-/**
- * Strips control characters (tab and newline excepted) and RTL/bidi overrides a merchant field
- * could otherwise smuggle in. `\p{Cc}` covers C0/C1 without spelling out literal ranges.
- */
+/** Strips control chars (bar tab/newline) and bidi overrides a merchant field could smuggle in. */
 const CONTROL_CHARS_EXCEPT_WHITESPACE = /(?![\n\t])\p{Cc}/gu;
 const BIDI_OVERRIDES = /[\u202a-\u202e\u2066-\u2069]/g;
 
@@ -270,11 +264,7 @@ export function useSharingPageController({
         ]
     );
 
-    /**
-     * Precedence per docs/plans/native-sdk/10-native-share-payload.md §5: per-call
-     * override > selected product > merchant translation > bundled default. Sanitized
-     * and truncated once here so web, Tauri and native all see the same string (§6b).
-     */
+    /** Precedence: per-call override > selected product > merchant translation > bundled default. */
     const shareData: SharingResolvedShareData = useMemo(() => {
         const title = firstNonEmpty(
             shareTitle,
@@ -282,8 +272,7 @@ export function useSharingPageController({
             t("sharing.title")
         );
         const text = firstNonEmpty(shareText, t("sharing.text"));
-        // Sanitized on the winner, not just on `shareImage`: a product's `imageUrl` only has to be
-        // an http(s) URL to get this far, and `merchant.logoUrl` arrives as a bare string.
+        // Sanitize the precedence winner, not just the override: `logoUrl` is a bare string too.
         const imageUrl = sanitizeShareImage(
             firstNonEmpty(
                 shareImage,
