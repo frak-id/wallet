@@ -286,8 +286,9 @@ internal class SharingSheetState(
     fun share(payload: SharingPageAction.Share? = null) {
         val active = session ?: return
         if (!claim(ClaimKey.Share)) return
-        val title = payload?.title ?: active.shareTitle
-        val text = payload?.text ?: active.shareText
+        // Blank counts as absent, so a payload carrying one cannot suppress the session's own copy.
+        val title = payload?.title?.takeIf { it.isNotBlank() } ?: active.shareTitle
+        val text = payload?.text?.takeIf { it.isNotBlank() } ?: active.shareText
         outcome.launch {
             if (!NativeShare.share(launchContext(), active.link, title, text)) {
                 // Released here, unlike the success path: no chooser came up, so the user can retry.

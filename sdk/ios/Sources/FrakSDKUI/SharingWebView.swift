@@ -354,8 +354,7 @@
                         exp: queryValue(url, "exp"),
                         shareTitle: queryValue(url, "title"),
                         shareText: queryValue(url, "text"),
-                        shareImage: queryValue(url, "image"),
-                        shareRect: queryValue(url, "rect")
+                        shareImage: queryValue(url, "image")
                     )
                 {
                     binding.onAction(action)

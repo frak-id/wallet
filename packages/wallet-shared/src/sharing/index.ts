@@ -39,4 +39,3 @@ export {
 } from "./utils/confirmation";
 export { sanitizeShareImage } from "./utils/sanitizeShareImage";
 export { SHARE_BUDGET, truncateForShare } from "./utils/shareBudget";
-export { translationKeyPathToObject } from "./utils/translationKeyPathToObject";

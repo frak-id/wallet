@@ -50,6 +50,11 @@ describe("query params", () => {
         expect(fromUrl("?sid=abc123").sid).toBe("abc123");
     });
 
+    it("keeps an all-digit share override, which parses as a number", () => {
+        expect(fromUrl("?shareTitle=2024").shareTitle).toBe("2024");
+        expect(fromUrl("?shareText=2024").shareText).toBe("2024");
+    });
+
     it("drops a returnScheme that is not a valid frak scheme", () => {
         expect(fromUrl("?returnScheme=frak-acme").returnScheme).toBe(
             "frak-acme"

@@ -1,3 +1,5 @@
+import Foundation
+
 @_spi(FrakInternal) import FrakSDK
 
 // Hosted /sharing URL the sheet's web view loads. No bridge back to native: state
@@ -15,6 +17,30 @@ enum SharingPageURL {
     static let warmFragment = "#sid=" + warmSessionId + "&state=warm"
 
     private static let maxSchemeSuffix = 60
+
+    /// Capped on the way out as well as on the page's way in: an uncapped merchant string can
+    /// push the whole URL past the WebView's limit, which loses every param, not just this one.
+    private static func shareParams(
+        title: String?,
+        text: String?,
+        imageURL: String?
+    ) -> [(String, String?)] {
+        [
+            ("shareTitle", nonEmpty(title).map { $0.clippedForShare(to: shareTitleLimit) }),
+            ("shareText", nonEmpty(text).map { $0.clippedForShare(to: shareTextLimit) }),
+            // Dropped rather than clipped: a truncated URL is not a weaker URL, it is a broken one.
+            ("shareImage", nonEmpty(imageURL).flatMap(sharingOutboundImageURL)),
+        ]
+    }
+
+    /// https-only and inside the wire budget, matching what the page will accept.
+    private static func sharingOutboundImageURL(_ value: String) -> String? {
+        guard value.utf16.count <= shareImageLimit,
+            let url = URL(string: value),
+            url.scheme == "https"
+        else { return nil }
+        return value
+    }
 
     // Must match wallet's ^frak-[a-z0-9._-]{1,60}$ or callbacks silently drop.
     static func returnScheme(bundleId: String) -> String {
@@ -56,8 +82,7 @@ enum SharingPageURL {
             ("lng", language),
             ("appName", appName), ("logoUrl", logoURL), ("link", link),
             ("products", products), ("seedReward", seededReward),
-            ("shareTitle", shareTitle), ("shareText", shareText), ("shareImage", shareImageURL),
-        ] {
+        ] + shareParams(title: shareTitle, text: shareText, imageURL: shareImageURL) {
             if let value {
                 url += "&\(key)=" + PercentEncoding.encode(value)
             }
@@ -115,8 +140,7 @@ enum SharingPageURL {
             // `logoUrl` only when the request overrode it; otherwise the warm URL's config
             // value stands.
             ("link", link), ("products", products), ("logoUrl", logoURL), ("seedReward", seededReward),
-            ("shareTitle", shareTitle), ("shareText", shareText), ("shareImage", shareImageURL),
-        ] {
+        ] + shareParams(title: shareTitle, text: shareText, imageURL: shareImageURL) {
             if let value {
                 fragment += "&\(key)=" + PercentEncoding.encode(value)
             }

@@ -1,5 +1,5 @@
 import type { I18nConfig, LocalizedI18nConfig } from "@frak-labs/core-sdk";
-import { translationKeyPathToObject } from "@frak-labs/wallet-shared/sharing";
+import { translationKeyPathToObject } from "@frak-labs/wallet-shared/common/utils/translationKeyPathToObject";
 import type { i18n as I18nType } from "i18next";
 
 /**

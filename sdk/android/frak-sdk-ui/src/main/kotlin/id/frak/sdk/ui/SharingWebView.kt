@@ -68,8 +68,13 @@ internal sealed interface SharingPageAction {
 
                 "shareAgain" -> ShareAgain
 
-                // Empty string decodes to null, not "" — an empty EXTRA_SUBJECT is worse than an absent one.
-                "share" -> Share(title = title?.ifEmpty { null }, text = text?.ifEmpty { null })
+                // Blank decodes to null, so it falls through to the session's own copy rather
+                // than suppressing it with an empty subject.
+                "share" ->
+                    Share(
+                        title = title?.trim()?.takeIf { it.isNotEmpty() },
+                        text = text?.trim()?.takeIf { it.isNotEmpty() },
+                    )
 
                 "copy" -> Copy
 

@@ -10,27 +10,37 @@
         /// The tap path's budget: the chooser's appearance blocks on this.
         static let tapDeadlineSeconds: TimeInterval = 0.3
 
+        /// Retained for the process: a `URLSession` with a delegate keeps that delegate and its
+        /// queue alive until it is invalidated, so building one per fetch leaks all three.
+        private static let session = URLSession(
+            configuration: .ephemeral,
+            delegate: NoRedirectDelegate(),
+            delegateQueue: nil
+        )
+
         /// nil on any failure; the image is optional chrome.
         static func fetch(_ url: URL) async -> Data? {
             guard isFetchableShareImageURL(url) else { return nil }
 
             let request = URLRequest(url: url, cachePolicy: .useProtocolCachePolicy, timeoutInterval: timeoutSeconds)
-            // No redirects: a public host could otherwise redirect to a private one.
-            let session = URLSession(configuration: .ephemeral, delegate: NoRedirectDelegate(), delegateQueue: nil)
 
             let body: Data?
             do {
                 body = try await withTimeout(timeoutSeconds) {
-                    // Streamed: `maxBytes` must bound what is read, not what was already buffered.
-                    let (stream, response) = try await session.bytes(for: request)
+                    // Headers first, so an advertised over-cap body is refused before a byte of it
+                    // is buffered; the running cap below is for a response that lies or omits it.
+                    let (bytes, response) = try await session.bytes(for: request)
                     guard let http = response as? HTTPURLResponse,
                         http.isSuccess,
-                        isImageContentType(http.value(forHTTPHeaderField: "Content-Type"))
+                        isImageContentType(http.value(forHTTPHeaderField: "Content-Type")),
+                        http.expectedContentLength <= maxBytes
                     else { return nil }
 
                     var data = Data()
-                    data.reserveCapacity(min(maxBytes, max(Int(http.expectedContentLength), 0)))
-                    for try await byte in stream {
+                    if http.expectedContentLength > 0 {
+                        data.reserveCapacity(Int(http.expectedContentLength))
+                    }
+                    for try await byte in bytes {
                         data.append(byte)
                         if data.count > maxBytes { return nil }
                     }
@@ -39,7 +49,7 @@
             } catch {
                 return nil
             }
-            guard let data = body, UIImage(data: data) != nil else { return nil }
+            guard let data = body, !data.isEmpty else { return nil }
 
             return data
         }
@@ -83,8 +93,7 @@
         }
     }
 
-    /// One in-flight fetch per URL, so a prefetch and a tap landing mid-flight share it. Nothing
-    /// evicts; a sheet only ever sees a handful of URLs.
+    /// One in-flight fetch per URL, so a prefetch and a tap landing mid-flight share it.
     actor SharingImagePreviewCache {
         private var entries: [URL: Task<Data?, Never>] = [:]
 
@@ -94,25 +103,26 @@
             task(for: url)
         }
 
-        /// Bounded by `tapDeadlineSeconds`. The deadline races in a sibling task because
-        /// cancelling the shared fetch here would cancel `warm()`'s await on it too.
+        /// Bounded by `tapDeadlineSeconds`.
+        ///
+        /// The two racers are unstructured tasks on purpose: a task group implicitly awaits its
+        /// children on exit, and `Task.value` on a non-throwing task ignores cancellation, so a
+        /// group here would wait out the whole fetch no matter what the deadline said.
         func imageData(for url: URL) async -> Data? {
             let fetch = task(for: url)
-            let winner = SharingRaceBox()
-            return await withTaskGroup(of: Void.self) { group in
-                group.addTask {
+            let deadline = SharingImagePreview.tapDeadlineSeconds
+            return await withCheckedContinuation { continuation in
+                let latch = SharingRaceBox()
+                // `Task.detached`, not `Task`: an actor-inheriting task would queue behind this
+                // actor's own work, and the deadline has to tick independently of it.
+                Task.detached {
                     let result = await fetch.value
-                    winner.set(result)
+                    if latch.claim() { continuation.resume(returning: result) }
                 }
-                group.addTask {
-                    try? await Task.sleep(
-                        nanoseconds: UInt64(SharingImagePreview.tapDeadlineSeconds * 1_000_000_000)
-                    )
-                    winner.set(nil)
+                Task.detached {
+                    try? await Task.sleep(nanoseconds: UInt64(deadline * 1_000_000_000))
+                    if latch.claim() { continuation.resume(returning: nil) }
                 }
-                await group.next()
-                group.cancelAll()
-                return winner.value
             }
         }
 
@@ -120,29 +130,30 @@
             if let existing = entries[url] { return existing }
             let created = Task { await SharingImagePreview.fetch(url) }
             entries[url] = created
+            Task.detached { [weak self] in await self?.forgetIfFailed(url, created) }
             return created
+        }
+
+        /// A failure is not cached: the prefetch runs at attach, the likeliest moment to be
+        /// offline, and pinning nil there would mean no image for the rest of the process.
+        private func forgetIfFailed(_ url: URL, _ task: Task<Data?, Never>) async {
+            guard await task.value == nil else { return }
+            if entries[url] == task { entries[url] = nil }
         }
     }
 
-    /// First-write-wins holder for the fetch/deadline race; `@unchecked` because every mutation
-    /// is behind the lock.
+    /// First-claim-wins gate for the fetch/deadline race: exactly one of the two resumes the
+    /// continuation, and resuming twice is a hard crash. `@unchecked` because the lock covers it.
     private final class SharingRaceBox: @unchecked Sendable {
         private let lock = NSLock()
-        private var written = false
-        private var stored: Data?
+        private var claimed = false
 
-        func set(_ value: Data?) {
+        func claim() -> Bool {
             lock.lock()
             defer { lock.unlock() }
-            guard !written else { return }
-            written = true
-            stored = value
-        }
-
-        var value: Data? {
-            lock.lock()
-            defer { lock.unlock() }
-            return stored
+            if claimed { return false }
+            claimed = true
+            return true
         }
     }
 #endif

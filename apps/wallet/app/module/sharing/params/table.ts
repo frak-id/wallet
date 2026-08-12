@@ -4,6 +4,7 @@ import {
     sanitizeSharingProducts,
 } from "@frak-labs/core-sdk";
 import {
+    SHARE_BUDGET,
     sanitizeShareImage,
     truncateForShare,
 } from "@frak-labs/wallet-shared/sharing";
@@ -55,7 +56,9 @@ const productList = (raw: unknown): SharingPageProduct[] | undefined => {
 const cappedStr =
     (maxLength: number) =>
     (raw: unknown): string | undefined => {
-        const value = str(raw);
+        // `looseStr`, not `str`: search values are JSON-parsed, so an all-digit
+        // override would otherwise be dropped here but honoured by the standalone entry.
+        const value = looseStr(raw);
         if (!value) return undefined;
         return truncateForShare(value, maxLength);
     };
@@ -86,10 +89,10 @@ export const SHARING_PARAMS = {
     seedReward: { decode: sanitizeSeededReward, transport: "both" },
 
     /** Per-call share title override. */
-    shareTitle: { decode: cappedStr(120), transport: "both" },
+    shareTitle: { decode: cappedStr(SHARE_BUDGET.title), transport: "both" },
 
     /** Per-call share body override. */
-    shareText: { decode: cappedStr(280), transport: "both" },
+    shareText: { decode: cappedStr(SHARE_BUDGET.text), transport: "both" },
 
     /** Per-call preview image override. */
     shareImage: { decode: sanitizeShareImage, transport: "both" },

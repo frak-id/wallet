@@ -67,11 +67,48 @@ struct Tier3ShareDataTests {
         #expect(!fr.title.hasSuffix(" "))
     }
 
+    @Test("a dropped placeholder does not leave a doubled space before punctuation")
+    func droppedPlaceholderDoesNotStrandPunctuation() {
+        let request = SharingRequest(shareTitle: "Buy {{productName}}, now")
+        #expect(tier3ShareData(request: request, productName: nil, lang: .en).title == "Buy, now")
+    }
+
+    @Test("the French default keeps its own space before the exclamation mark")
+    func frenchDefaultKeepsItsSpacedPunctuation() {
+        let fr = tier3ShareData(request: SharingRequest(), productName: nil, lang: .fr)
+        #expect(fr.text == "Découvrez ce produit incroyable !")
+    }
+
     @Test("a per-call override with its own placeholder still interpolates")
     func overridePlaceholderStillInterpolates() {
         let request = SharingRequest(shareTitle: "Win big with {{productName}}")
         let data = tier3ShareData(request: request, productName: "Acme", lang: .en)
         #expect(data.title == "Win big with Acme")
+    }
+
+    @Test("a blank override does not beat the value under it")
+    func blankOverrideLosesToTheTierBelow() {
+        let request = SharingRequest(
+            products: [SharingProduct(title: "Kettle", link: "https://acme.example/k")],
+            shareTitle: "   ",
+            shareText: ""
+        )
+        let data = tier3ShareData(request: request, productName: "Acme", lang: .en)
+        #expect(data.title == "Kettle")
+        #expect(data.text == "Discover this amazing product!")
+    }
+
+    @Test("a blank product name is treated as absent, leaving no stray whitespace")
+    func blankProductNameDropsThePlaceholder() {
+        let data = tier3ShareData(request: SharingRequest(), productName: "", lang: .en)
+        #expect(data.title == "invite link")
+    }
+
+    @Test("a blank product title does not beat the bundled default")
+    func blankProductTitleLosesToTheDefault() {
+        let request = SharingRequest(products: [SharingProduct(title: "  ", link: "https://acme.example/k")])
+        let data = tier3ShareData(request: request, productName: "Acme", lang: .en)
+        #expect(data.title == "Acme invite link")
     }
 
     @Test("no reward-bearing placeholder exists in the bundled constants")

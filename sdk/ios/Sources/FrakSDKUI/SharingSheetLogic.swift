@@ -3,12 +3,10 @@ import Foundation
 import FrakSDK
 
 /// The share payload the page reports on `action=share`; every field independently optional.
-/// `rect` is CSS pixels, treated 1:1 with `WKWebView` points.
 struct SharingSharePayload: Hashable {
     let title: String?
     let text: String?
     let imageURL: URL?
-    let rect: CGRect?
 }
 
 /// What the hosted page can tell the host, over the intercepted return-scheme navigation. Kept
@@ -26,7 +24,7 @@ enum SharingPageAction: Hashable {
     case ready
     case code(value: String, expiresAt: Date?)
 
-    /// Payload-free discriminator: two taps differ only by `rect` and must still collide.
+    /// Payload-free discriminator, so two taps in a row still collide as one in-flight share.
     enum Kind: Hashable {
         case install, dismiss, shareAgain, share, copy, error, ready, code
     }
@@ -51,8 +49,7 @@ enum SharingPageAction: Hashable {
         exp: String?,
         shareTitle: String? = nil,
         shareText: String? = nil,
-        shareImage: String? = nil,
-        shareRect: String? = nil
+        shareImage: String? = nil
     ) -> SharingPageAction? {
         switch action {
         case "install": return .install
@@ -63,8 +60,7 @@ enum SharingPageAction: Hashable {
                 SharingSharePayload(
                     title: nonEmpty(shareTitle),
                     text: nonEmpty(shareText),
-                    imageURL: nonEmpty(shareImage).flatMap(sharingHTTPSImageURL),
-                    rect: shareRect.flatMap(parseShareRect)
+                    imageURL: nonEmpty(shareImage).flatMap(sharingHTTPSImageURL)
                 )
             )
         case "copy": return .copy
@@ -86,13 +82,48 @@ enum SharingPageAction: Hashable {
 /// Mirrors the page-side share budget.
 let shareTitleLimit = 120
 let shareTextLimit = 280
+let shareImageLimit = 512
 
 extension String {
-    /// Clips on a grapheme boundary; `prefix` alone can cut inside an emoji.
+    /// Clips to `max`, ellipsis included in the budget.
+    ///
+    /// The budget counts UTF-16 units, matching the wire, but the cut lands on a grapheme
+    /// boundary: slicing by unit alone splits a surrogate pair or strands a combining mark.
     func clippedForShare(to max: Int) -> String {
-        guard count > max, max > 1 else { return count > max ? String(prefix(max)) : self }
-        return String(prefix(max - 1)).trimmingCharacters(in: .whitespaces) + "…"
+        guard utf16.count > max else { return self }
+
+        let ellipsis = "…"
+        let marked = max > ellipsis.utf16.count
+        let budget = marked ? max - ellipsis.utf16.count : max
+        var taken = ""
+        var takenUnits = 0
+        for cluster in self {
+            let clusterUnits = String(cluster).utf16.count
+            if takenUnits + clusterUnits > budget { break }
+            taken.append(cluster)
+            takenUnits += clusterUnits
+        }
+        guard marked else { return taken }
+        while let last = taken.last, last.isWhitespace { taken.removeLast() }
+        return taken + ellipsis
     }
+}
+
+/// What the OS chooser is handed: the link, the subject shown on both items, and the body as a
+/// separate item so a single-item activity gets the link rather than text glued to a URL.
+struct SharingShareItems: Equatable {
+    let link: String
+    let title: String?
+    let text: String?
+}
+
+/// Applies the wire budget and the blank-is-absent rule once, before anything reaches the chooser.
+func sharingShareItems(link: String, title: String?, text: String?) -> SharingShareItems {
+    SharingShareItems(
+        link: link,
+        title: nonEmpty(title).map { $0.clippedForShare(to: shareTitleLimit) },
+        text: nonEmpty(text).map { $0.clippedForShare(to: shareTextLimit) }
+    )
 }
 
 /// One query value off the return-scheme URL. Normalises `+` to `%20` first: the page writes
@@ -105,10 +136,11 @@ func sharingQueryValue(_ url: URL, _ name: String) -> String? {
     return components.queryItems?.first { $0.name == name }?.value
 }
 
-/// An empty string is "absent", not "override with nothing".
-private func nonEmpty(_ value: String?) -> String? {
-    guard let value, !value.isEmpty else { return nil }
-    return value
+/// Blank is "absent", not "override with nothing".
+func nonEmpty(_ value: String?) -> String? {
+    guard let value else { return nil }
+    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? nil : trimmed
 }
 
 /// Re-validated independently of the page: this SDK fetches the URL, so a scheme downgrade
@@ -118,21 +150,11 @@ private func sharingHTTPSImageURL(_ value: String) -> URL? {
     return url
 }
 
-/// `x,y,w,h`; nil for anything degenerate, so the caller falls back to the centred anchor.
-private func parseShareRect(_ value: String) -> CGRect? {
-    let parts = value.split(separator: ",", omittingEmptySubsequences: false)
-    guard parts.count == 4 else { return nil }
-    let numbers = parts.compactMap { Double($0) }
-    guard numbers.count == 4 else { return nil }
-    let (x, y, w, h) = (numbers[0], numbers[1], numbers[2], numbers[3])
-    guard [x, y, w, h].allSatisfy(\.isFinite), w > 0, h > 0 else { return nil }
-    return CGRect(x: x, y: y, width: w, height: h)
-}
-
 /// https-only and no private/link-local target: this SDK fetches a URL it did not choose.
 func isFetchableShareImageURL(_ url: URL) -> Bool {
     guard url.scheme == "https", let host = url.host?.lowercased(), !host.isEmpty else { return false }
-    if host.hasSuffix(".local") { return false }
+    if host == "localhost" || host.hasSuffix(".localhost") { return false }
+    if host.hasSuffix(".local") || host.hasSuffix(".internal") { return false }
     if let address = IPv4Address(host) { return !address.isPrivateOrLinkLocal }
     // An IPv6 literal keeps its brackets in some `URL.host` paths and loses them in others.
     if host.contains(":") || host.hasPrefix("[") { return !isPrivateIPv6Literal(host) }
@@ -148,9 +170,17 @@ private func isPrivateIPv6Literal(_ host: String) -> Bool {
     {
         return true
     }
-    // `::ffff:a.b.c.d` — the embedded address is what actually gets routed.
-    if let mapped = bare.split(separator: ":").last, let address = IPv4Address(String(mapped)) {
-        return address.isPrivateOrLinkLocal
+    // `::ffff:a.b.c.d` — the embedded address is what actually gets routed, and `URL` may hand it
+    // back hex-normalised (`::ffff:a00:1`), so both spellings have to be decoded.
+    if bare.hasPrefix("::ffff:") {
+        let mapped = String(bare.dropFirst("::ffff:".count))
+        if let address = IPv4Address(mapped) { return address.isPrivateOrLinkLocal }
+        let groups = mapped.split(separator: ":")
+        if groups.count == 2, let high = UInt16(groups[0], radix: 16), let low = UInt16(groups[1], radix: 16) {
+            return IPv4Address(
+                octets: (UInt8(high >> 8), UInt8(high & 0xff), UInt8(low >> 8), UInt8(low & 0xff))
+            ).isPrivateOrLinkLocal
+        }
     }
     return false
 }
@@ -158,6 +188,10 @@ private func isPrivateIPv6Literal(_ host: String) -> Bool {
 /// Enough of RFC 1918 / RFC 3927 to reject a private target.
 struct IPv4Address {
     let octets: (UInt8, UInt8, UInt8, UInt8)
+
+    init(octets: (UInt8, UInt8, UInt8, UInt8)) {
+        self.octets = octets
+    }
 
     init?(_ host: String) {
         let parts = host.split(separator: ".")
@@ -169,6 +203,8 @@ struct IPv4Address {
 
     var isPrivateOrLinkLocal: Bool {
         switch octets {
+        // `0.0.0.0/8` routes to loopback on Darwin, so it bypasses the `127/8` rule.
+        case (0, _, _, _): return true
         case (10, _, _, _): return true
         case (172, let second, _, _) where (16...31).contains(second): return true
         case (192, 168, _, _): return true
@@ -187,7 +223,8 @@ struct SharingSession: Equatable {
     let walletOrigin: String
     let returnScheme: String
     let link: String
-    /// Tier-3 fallback copy only; a session with a page uses the page's reported payload.
+    /// The copy used when no page reports its own: either there was never a page, or one
+    /// resolved and never loaded. A page's `action=share` payload wins over it.
     let shareTitle: String?
     let shareText: String?
     let shareImageURL: String?
@@ -368,6 +405,8 @@ struct Tier3ShareData: Equatable {
     let text: String
 }
 
+private let productNamePlaceholder = "{{productName}}"
+
 /// Bundled defaults mirroring the wallet's `sharing.title`/`sharing.text`; kept in step by hand.
 /// Exhaustive, so a third language fails the build rather than degrading at runtime.
 private func tier3Defaults(for lang: FrakLanguage) -> Tier3ShareData {
@@ -386,24 +425,34 @@ func tier3ShareData(
     lang: FrakLanguage?
 ) -> Tier3ShareData {
     let defaults = tier3Defaults(for: lang ?? .en)
-    let fallbackTitle = request.products.first?.title
+    let fallbackTitle = nonEmpty(request.products.first?.title)
+    let name = nonEmpty(productName)
     return Tier3ShareData(
-        title: interpolateProductName(request.shareTitle ?? fallbackTitle ?? defaults.title, productName),
-        text: interpolateProductName(request.shareText ?? defaults.text, productName)
+        title: interpolateProductName(nonEmpty(request.shareTitle) ?? fallbackTitle ?? defaults.title, name),
+        text: interpolateProductName(nonEmpty(request.shareText) ?? defaults.text, name)
     )
 }
 
-/// Drops the placeholder and its adjacent space when there is no name, so "Discover !" cannot happen.
+/// Drops the placeholder when there is no name. Takes the whitespace with it before punctuation,
+/// so "Buy {{productName}}, now" cannot become "Buy , now", and collapses to one space elsewhere.
 private func interpolateProductName(_ template: String, _ productName: String?) -> String {
     guard let productName else {
+        let placeholder = NSRegularExpression.escapedPattern(for: productNamePlaceholder)
         return
             template
-            .replacingOccurrences(of: " {{productName}}", with: "")
-            .replacingOccurrences(of: "{{productName}} ", with: "")
-            .replacingOccurrences(of: "{{productName}}", with: "")
-            .trimmingCharacters(in: .whitespaces)
+            .replacingOccurrences(
+                of: "\\s*\(placeholder)\\s*(?=[,.!?;:])",
+                with: "",
+                options: .regularExpression
+            )
+            .replacingOccurrences(
+                of: "\\s*\(placeholder)\\s*",
+                with: " ",
+                options: .regularExpression
+            )
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    return template.replacingOccurrences(of: "{{productName}}", with: productName)
+    return template.replacingOccurrences(of: productNamePlaceholder, with: productName)
 }
 
 /// The `products=` value the hosted sharing page's router parses as JSON. Nil rather than

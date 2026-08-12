@@ -118,8 +118,9 @@ function sanitizeShareText(value: string): string {
 }
 
 function sanitizeShareTitle(value: string): string {
+    // Whitespace collapses after the newlines go, so a blank line cannot leave a double space.
     return truncateForShare(
-        scrubShareCopy(value).replace(/\n/g, " "),
+        scrubShareCopy(value).replace(/\s+/g, " ").trim(),
         SHARE_BUDGET.title
     );
 }

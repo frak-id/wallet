@@ -225,11 +225,11 @@
             guard
                 await NativeShare.share(
                     link: session.link,
+                    // The page's own copy wins; the session's is the floor for a field it omitted.
                     title: payload.title ?? session.shareTitle,
-                    text: payload.text,
-                    imageURL: payload.imageURL,
-                    imageCache: imageCache,
-                    anchorRect: payload.rect
+                    text: payload.text ?? session.shareText,
+                    imageURL: payload.imageURL ?? session.shareImageURL.flatMap(URL.init(string:)),
+                    imageCache: imageCache
                 )
             else {
                 // Released, unlike the success path: the page is still on its sharing screen.
@@ -561,12 +561,14 @@
             let bundleId = Bundle.main.bundleIdentifier ?? ""
             let returnScheme = SharingPageURL.returnScheme(bundleId: bundleId)
 
+            // Resolved before the config attempt so it is available on both branches: a session
+            // that has a page still falls back to this when the page never loads.
+            let fallback = tier3ShareData(request: request, productName: metadataName(), lang: metadataLang())
+
             let config: FrakResolvedConfig
             do {
                 config = try await resolveConfig()
             } catch is FrakError {
-                // Tier 3: config is unreachable here by construction, so the fallback cannot read it.
-                let fallback = tier3ShareData(request: request, productName: metadataName(), lang: metadataLang())
                 return SharingSession(
                     walletOrigin: walletOrigin,
                     returnScheme: returnScheme,
@@ -590,10 +592,10 @@
                 walletOrigin: walletOrigin,
                 returnScheme: returnScheme,
                 link: link,
-                // Not read on this path: a session with a page gets its OS-share copy from the
-                // page's own `action=share` payload, not from here — see `share(_:)`. Only reached
-                // if the page never loads and `fallBack(to:)` fires instead.
-                shareTitle: name,
+                // Only read if the page never loads; otherwise the page reports its own copy.
+                shareTitle: fallback.title,
+                shareText: fallback.text,
+                shareImageURL: request.shareImageURL,
                 pageURL: SharingPageURL.build(
                     walletOrigin: walletOrigin,
                     merchantId: config.merchantId,

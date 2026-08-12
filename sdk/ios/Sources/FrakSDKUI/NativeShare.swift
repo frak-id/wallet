@@ -1,5 +1,6 @@
 #if canImport(UIKit)
     import Foundation
+    import ImageIO
     import LinkPresentation
     import UIKit
     import UniformTypeIdentifiers
@@ -15,17 +16,17 @@
             title: String?,
             text: String? = nil,
             imageURL: URL? = nil,
-            imageCache: SharingImagePreviewCache? = nil,
-            anchorRect: CGRect? = nil
+            imageCache: SharingImagePreviewCache? = nil
         ) async -> Bool {
-            guard let presenter = topViewController() else { return false }
+            // Early bail only; the presenter is resolved again after the image await below.
+            guard topViewController() != nil else { return false }
 
-            // Re-capped: the query string carrying these is not trusted.
-            let title = title.map { $0.clippedForShare(to: shareTitleLimit) }
-            let text = text.map { $0.clippedForShare(to: shareTextLimit) }
+            // Re-capped: the query string carrying these is not trusted. Blank is absent, so an
+            // empty subject never reaches the chooser.
+            let items = sharingShareItems(link: link, title: title, text: text)
 
             let metadata = LPLinkMetadata()
-            if let title { metadata.title = title }
+            if let title = items.title { metadata.title = title }
             let linkURL = URL(string: link)
             if let linkURL {
                 metadata.originalURL = linkURL
@@ -38,23 +39,33 @@
                 } else {
                     data = await SharingImagePreview.fetch(imageURL)
                 }
-                // Decoded again here: `NSItemProvider(object:)` needs the main actor.
-                if let data, let image = UIImage(data: data) {
+                // Downsampled rather than `UIImage(data:)`: `maxBytes` bounds the compressed
+                // payload, so a small highly-compressed image can still decode to hundreds of MB.
+                if let data, let image = downsampledShareIcon(data) {
                     metadata.iconProvider = NSItemProvider(object: image)
                 }
             }
 
-            var items: [Any] = [LinkActivityItemSource(link: link, url: linkURL, subject: title, metadata: metadata)]
-            if let text, !text.isEmpty {
-                items.append(TextActivityItemSource(text: text, subject: title))
+            var activityItems: [Any] = [
+                LinkActivityItemSource(link: items.link, url: linkURL, subject: items.title, metadata: metadata)
+            ]
+            if let text = items.text {
+                activityItems.append(TextActivityItemSource(text: text, subject: items.title))
             }
 
-            let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+            // Re-resolved: the image await above can outlast the controller that was on top when
+            // this started, and presenting on a detached one silently shows nothing.
+            guard let presenter = topViewController() else { return false }
+
+            let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
             // Required on iPad: an unanchored popover traps instead of presenting.
             if let popover = controller.popoverPresentationController {
                 popover.sourceView = presenter.view
-                popover.sourceRect = popoverSourceRect(anchorRect, in: presenter.view)
-                popover.permittedArrowDirections = anchorRect == nil ? [] : .any
+                popover.sourceRect = CGRect(
+                    origin: CGPoint(x: presenter.view.bounds.midX, y: presenter.view.bounds.midY),
+                    size: .zero
+                )
+                popover.permittedArrowDirections = []
             }
 
             // Before presenting, never after: `presentingViewController` is not reliably wired on
@@ -78,15 +89,6 @@
             }
         }
 
-        /// Centres with no arrow when the rect is absent or off-screen: an arrow pointing at
-        /// nothing reads worse than none.
-        private static func popoverSourceRect(_ rect: CGRect?, in view: UIView) -> CGRect {
-            guard let rect, rect.intersects(view.bounds) else {
-                return CGRect(origin: CGPoint(x: view.bounds.midX, y: view.bounds.midY), size: .zero)
-            }
-            return rect
-        }
-
         /// iOS shows its own banner only when an app reads the pasteboard, not when it writes,
         /// so the page's own UI has to tell the user the copy happened.
         /// `localOnly`, like the install code: the link carries the user's own referral identity,
@@ -108,6 +110,24 @@
             var options: [UIPasteboard.OptionsKey: Any] = [.localOnly: true]
             if let expiresAt { options[.expirationDate] = expiresAt }
             UIPasteboard.general.setItems([[UTType.utf8PlainText.identifier: code]], options: options)
+        }
+
+        /// The chooser's preview icon is a small tile; nothing needs more than this.
+        private static let iconMaxPixelSize = 512
+
+        /// Decodes at most `iconMaxPixelSize` on the long edge, so the bitmap is bounded by the
+        /// icon's own size rather than by whatever the source image happens to decode to.
+        private static func downsampledShareIcon(_ data: Data) -> UIImage? {
+            guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+            let options: [CFString: Any] = [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: iconMaxPixelSize,
+            ]
+            guard let thumbnail = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+                return nil
+            }
+            return UIImage(cgImage: thumbnail)
         }
 
         /// The view controller anything the SDK presents has to come from.

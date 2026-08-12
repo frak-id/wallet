@@ -570,3 +570,86 @@ describe("share payload precedence", () => {
         expect(shareData.text).toBe("Custom text");
     });
 });
+
+describe("share payload sanitization", () => {
+    it("strips bidi overrides and control characters from a product title", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup(
+            { share },
+            {
+                products: [
+                    {
+                        title: "Kett\u202Ele\u0007r",
+                        link: "https://acme.example/k",
+                    },
+                ],
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({ title: "Kettler" })
+        );
+    });
+
+    it("clips an over-budget product title to the wire budget", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup(
+            { share },
+            {
+                products: [
+                    { title: "a".repeat(300), link: "https://acme.example/k" },
+                ],
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        const { title } = share.mock.calls[0][0] as unknown as {
+            title: string;
+        };
+        expect(title.length).toBe(120);
+        expect(title.endsWith("…")).toBe(true);
+    });
+
+    it("flattens a blank line in a title to a single space", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup({ share }, { shareTitle: "A\n\n\nB" });
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({ title: "A B" })
+        );
+    });
+
+    it("drops a product image that is not a safe https URL", () => {
+        const share = vi.fn(() => true);
+        for (const imageUrl of [
+            "http://cdn.example.com/x.png",
+            "javascript:alert(1)",
+            "https://192.168.1.1/x.png",
+        ]) {
+            share.mockClear();
+            const { result } = setup(
+                { share },
+                {
+                    products: [
+                        {
+                            title: "Kettle",
+                            link: "https://acme.example/k",
+                            imageUrl,
+                        },
+                    ],
+                }
+            );
+
+            act(() => result.current.actions.onShare());
+
+            expect(share).toHaveBeenCalledWith(
+                expect.objectContaining({ imageUrl: undefined })
+            );
+        }
+    });
+});

@@ -5,6 +5,7 @@ package id.frak.sdk.ui
 import android.app.Application
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.os.Looper.getMainLooper
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
@@ -1239,6 +1240,150 @@ class SharingSheetStateTest {
             refused.onPageAction(SharingPageAction.Error)
             assertFalse("the page saying it rendered nothing must not uncover it", refused.pageVisible)
         }
+
+    @Test
+    fun `a page-bearing session that never loads still shares localised text`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            client.metadataNameValue = "Kettle"
+            val state = newState(client)
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            assertTrue("precondition: build succeeded with a page", state.session?.hasPage == true)
+
+            val gate = launchDeadline(state)
+            advanceUntilIdle()
+
+            val send = sentShareIntent(app)
+            assertEquals(
+                "the body must carry the tier-3 copy, not a bare link",
+                "Discover this amazing product!\n\n${client.link}",
+                send?.getStringExtra(Intent.EXTRA_TEXT),
+            )
+            assertEquals("Kettle invite link", send?.getStringExtra(Intent.EXTRA_SUBJECT))
+            gate.join()
+        }
+
+    @Test
+    fun `the page's share payload becomes the chooser's extras`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share(title = "Kettle deal", text = "Grab it!"))
+            advanceUntilIdle()
+
+            val send = sentShareIntent(app)
+            assertEquals("text/plain", send?.type)
+            assertEquals("Grab it!\n\n${client.link}", send?.getStringExtra(Intent.EXTRA_TEXT))
+            assertEquals("Kettle deal", send?.getStringExtra(Intent.EXTRA_SUBJECT))
+            assertEquals("Kettle deal", send?.getStringExtra(Intent.EXTRA_TITLE))
+        }
+
+    @Test
+    fun `a payload with no text falls back to the session's copy, not a bare link`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share(title = "Kettle deal", text = null))
+            advanceUntilIdle()
+
+            val send = sentShareIntent(app)
+            assertEquals(
+                "Discover this amazing product!\n\n${client.link}",
+                send?.getStringExtra(Intent.EXTRA_TEXT),
+            )
+        }
+
+    @Test
+    fun `a blank payload falls back to the session's own copy`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            client.metadataNameValue = "Kettle"
+            val state = newState(client)
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share(title = " ", text = "   "))
+            advanceUntilIdle()
+
+            val send = sentShareIntent(app)
+            assertEquals(
+                "a blank body must not suppress the session's copy, nor leave empty lines",
+                "Discover this amazing product!\n\n${client.link}",
+                send?.getStringExtra(Intent.EXTRA_TEXT),
+            )
+            assertEquals(
+                "a blank title must fall through, not become an empty subject",
+                "Kettle invite link",
+                send?.getStringExtra(Intent.EXTRA_SUBJECT),
+            )
+        }
+
+    @Test
+    fun `an over-budget payload is clipped with an ellipsis`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share(title = "\u00e9".repeat(200), text = null))
+            advanceUntilIdle()
+
+            val subject = sentShareIntent(app)?.getStringExtra(Intent.EXTRA_SUBJECT)
+            assertNotNull("precondition: a subject was set", subject)
+            assertEquals("the title must be clipped to its budget", 120, subject?.length ?: 0)
+            assertTrue("and marked as clipped", subject?.endsWith("\u2026") == true)
+        }
+
+    @Test
+    fun `the chooser flags the new task and hides its own header`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share(title = "Kettle deal", text = null))
+            advanceUntilIdle()
+
+            val chooser = shadowOf(app).nextStartedActivity
+            assertTrue(
+                "the chooser leaves the sheet's task",
+                (chooser?.flags ?: 0) and Intent.FLAG_ACTIVITY_NEW_TASK != 0,
+            )
+            assertNull(
+                "the share title is not the chooser's header",
+                chooser?.getStringExtra(Intent.EXTRA_TITLE),
+            )
+        }
+
+    /** The `ACTION_SEND` the chooser wraps, which is where every extra actually lives. */
+    private fun sentShareIntent(app: Application): Intent? =
+        shadowOf(app).nextStartedActivity?.getParcelableExtra(Intent.EXTRA_INTENT)
 
     private fun TestScope.launchDeadline(state: SharingSheetState) =
         launch { state.awaitLoadDeadline(SHEET_LOAD_DEADLINE_MILLIS) }

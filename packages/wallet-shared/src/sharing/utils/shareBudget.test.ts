@@ -63,4 +63,33 @@ describe("truncateForShare — budget is a wire budget", () => {
             );
         }
     });
+
+    it("never splits a surrogate pair, at any max", () => {
+        const values = [
+            "😀".repeat(40),
+            "e\u0301".repeat(40),
+            "\u{1F468}\u200D\u{1F469}\u200D\u{1F467}".repeat(10),
+            `a😀${"b".repeat(20)}`,
+        ];
+        for (const value of values) {
+            for (let max = 1; max <= 40; max++) {
+                const result = truncateForShare(value, max);
+                expect(result.length).toBeLessThanOrEqual(max);
+                expect(result).not.toContain("\uFFFD");
+                // A trailing high surrogate means the cut landed inside a pair.
+                const last = result.charCodeAt(result.length - 1);
+                if (result.length > 0) {
+                    expect(last >= 0xd800 && last <= 0xdbff).toBe(false);
+                }
+            }
+        }
+    });
+
+    it("returns whole graphemes when max leaves no room for the ellipsis", () => {
+        // A lone surrogate here would render as U+FFFD.
+        expect(truncateForShare("😀…", 1)).toBe("");
+        // At max 2 there is room to mark the cut, but not for the emoji beside it.
+        expect(truncateForShare("😀ab", 2)).toBe("…");
+        expect(truncateForShare("😀ab", 3)).toBe("😀…");
+    });
 });

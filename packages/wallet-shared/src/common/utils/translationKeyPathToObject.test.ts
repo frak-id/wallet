@@ -182,6 +182,36 @@ describe("translationKeyPathToObject", () => {
         });
     });
 
+    it("does not pollute Object.prototype", () => {
+        translationKeyPathToObject({
+            "__proto__.polluted": "x",
+            "constructor.prototype.alsoPolluted": "y",
+            "a.__proto__.nested": "z",
+        });
+
+        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+        expect(({} as Record<string, unknown>).alsoPolluted).toBeUndefined();
+        expect(({} as Record<string, unknown>).nested).toBeUndefined();
+    });
+
+    it("drops unsafe key paths but keeps the rest", () => {
+        expect(
+            translationKeyPathToObject({
+                "__proto__.polluted": "x",
+                "sharing.title": "kept",
+            })
+        ).toEqual({ sharing: { title: "kept" } });
+    });
+
+    it("overwrites a leaf a shallower key already wrote", () => {
+        expect(
+            translationKeyPathToObject({
+                sharing: "leaf",
+                "sharing.title": "nested",
+            })
+        ).toEqual({ sharing: { title: "nested" } });
+    });
+
     it("should be deterministic", () => {
         const input = {
             "key1.text": "value1",

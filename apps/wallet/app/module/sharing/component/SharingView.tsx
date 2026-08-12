@@ -1,13 +1,13 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { openExternalUrl } from "@frak-labs/wallet-shared/common/utils/openExternalUrl";
+import { translationKeyPathToObject } from "@frak-labs/wallet-shared/common/utils/translationKeyPathToObject";
 import {
     buildInstallUrl,
     SharingPage,
-    translationKeyPathToObject,
     useSharingPageController,
 } from "@frak-labs/wallet-shared/sharing";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Toaster } from "sonner";
 import { useStore } from "zustand";
@@ -73,7 +73,7 @@ export function SharingView({
         view,
     } = { ...search, ...activation };
 
-    const { t: rawT, i18n } = useTranslation();
+    const { i18n } = useTranslation();
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
 
     const embedded = isHostEmbedded(embed);
@@ -95,20 +95,34 @@ export function SharingView({
     // Branding falls back to the merchant config unless the caller overrode it.
     const { data: config } = useMerchantResolvedConfig({ merchantId });
 
-    // Removed on cleanup: `addResourceBundle` deep-merges into a page-lifetime singleton, so a
-    // merchant's overrides would otherwise outlive the merchant that set them.
-    useEffect(() => {
+    // Merged into a clone, never the shared instance: `addResourceBundle` deep-merges
+    // into a page-lifetime singleton, so one merchant's overrides would outlive them and
+    // land on the next. Building it during render also keeps `t` in step with the config,
+    // which a store mutation would not — nothing re-renders on one.
+    const t = useMemo(() => {
+        const lng = i18n.resolvedLanguage ?? i18n.language;
         const translations = config?.sdkConfig?.translations;
-        if (!translations || Object.keys(translations).length === 0) return;
-        const lng = i18n.language;
-        const overrides = translationKeyPathToObject(translations);
-        i18n.addResourceBundle(lng, "customized", overrides, true, true);
-        return () => {
-            for (const key of Object.keys(overrides)) {
-                i18n.removeResourceBundle(lng, `customized.${key}`);
-            }
-        };
-    }, [config?.sdkConfig?.translations, i18n]);
+        if (!translations || Object.keys(translations).length === 0) {
+            return i18n.getFixedT(lng, null);
+        }
+        const scoped = i18n.cloneInstance({
+            lng,
+            // Without this the clone shares the parent's store and the merge is still global.
+            forkResourceStore: true,
+            // Nothing to fetch once the store is forked: init synchronously rather than
+            // racing an async init queued behind this render.
+            initAsync: false,
+            partialBundledLanguages: false,
+        });
+        scoped.addResourceBundle(
+            lng,
+            "customized",
+            translationKeyPathToObject(translations),
+            true,
+            true
+        );
+        return scoped.getFixedT(lng, null);
+    }, [config?.sdkConfig?.translations, i18n, i18n.resolvedLanguage]);
 
     // No `#p=` proof here, unlike the listener's builder: this page has no SDK
     // keypair to sign with.
@@ -139,7 +153,7 @@ export function SharingView({
         warm,
         sdkVersion,
         canHandOff,
-        t: rawT,
+        t,
         outcomes: {
             // Handed to the SDK: `navigator.share` does not exist in an Android
             // WebView, and the interaction has to be signed by the SDK keypair.

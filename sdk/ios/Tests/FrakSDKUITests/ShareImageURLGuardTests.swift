@@ -3,63 +3,80 @@ import Testing
 
 @testable import FrakSDKUI
 
+/// `URL(string:)` is optional and force-unwrapping is banned, so every literal goes through here.
+private func url(_ value: String) throws -> URL {
+    try #require(URL(string: value))
+}
+
 @Suite("isFetchableShareImageURL")
 struct ShareImageURLGuardTests {
     @Test("a well-formed https url on a public host is fetchable")
-    func httpsPublicHostIsFetchable() {
-        #expect(isFetchableShareImageURL(URL(string: "https://cdn.example.com/logo.png")!))
+    func httpsPublicHostIsFetchable() throws {
+        #expect(isFetchableShareImageURL(try url("https://cdn.example.com/logo.png")))
     }
 
     @Test("http is rejected outright")
-    func httpIsRejected() {
-        #expect(!isFetchableShareImageURL(URL(string: "http://cdn.example.com/logo.png")!))
+    func httpIsRejected() throws {
+        #expect(!isFetchableShareImageURL(try url("http://cdn.example.com/logo.png")))
     }
 
     @Test("a non-network scheme is rejected")
-    func nonNetworkSchemeIsRejected() {
-        #expect(!isFetchableShareImageURL(URL(string: "file:///etc/passwd")!))
+    func nonNetworkSchemeIsRejected() throws {
+        #expect(!isFetchableShareImageURL(try url("file:///etc/passwd")))
     }
 
     @Test("a bare-IP-literal host with no scheme match still requires https")
-    func requiresHTTPSRegardlessOfHostShape() {
-        #expect(!isFetchableShareImageURL(URL(string: "ftp://93.184.216.34/logo.png")!))
+    func requiresHTTPSRegardlessOfHostShape() throws {
+        #expect(!isFetchableShareImageURL(try url("ftp://93.184.216.34/logo.png")))
     }
 
     // MARK: - SSRF: private and link-local targets
 
     @Test("RFC 1918 private ranges are rejected")
-    func privateRangesAreRejected() {
+    func privateRangesAreRejected() throws {
         for host in ["10.0.0.1", "10.255.255.255", "172.16.0.1", "172.31.255.255", "192.168.1.1"] {
-            #expect(!isFetchableShareImageURL(URL(string: "https://\(host)/x.png")!), "expected \(host) rejected")
+            #expect(!isFetchableShareImageURL(try url("https://\(host)/x.png")), "expected \(host) rejected")
         }
     }
 
     @Test("link-local (169.254.0.0/16) is rejected")
-    func linkLocalIsRejected() {
-        #expect(!isFetchableShareImageURL(URL(string: "https://169.254.169.254/x.png")!))
+    func linkLocalIsRejected() throws {
+        #expect(!isFetchableShareImageURL(try url("https://169.254.169.254/x.png")))
     }
 
     @Test("loopback is rejected")
-    func loopbackIsRejected() {
-        #expect(!isFetchableShareImageURL(URL(string: "https://127.0.0.1/x.png")!))
+    func loopbackIsRejected() throws {
+        #expect(!isFetchableShareImageURL(try url("https://127.0.0.1/x.png")))
     }
 
-    @Test(".local mDNS hosts are rejected")
-    func dotLocalIsRejected() {
-        #expect(!isFetchableShareImageURL(URL(string: "https://printer.local/x.png")!))
+    @Test("internal-only name suffixes are rejected")
+    func internalNameSuffixesAreRejected() throws {
+        #expect(!isFetchableShareImageURL(try url("https://printer.local/x.png")))
+        #expect(!isFetchableShareImageURL(try url("https://localhost/x.png")))
+        #expect(!isFetchableShareImageURL(try url("https://api.localhost/x.png")))
+        #expect(!isFetchableShareImageURL(try url("https://svc.internal/x.png")))
+        // The rule is a suffix, not a substring: this is an ordinary public name.
+        #expect(isFetchableShareImageURL(try url("https://localhost.cdn.example.com/x.png")))
+    }
+
+    @Test("0.0.0.0/8 is rejected, since Darwin routes it to loopback")
+    func unspecifiedAddressIsRejected() throws {
+        #expect(!isFetchableShareImageURL(try url("https://0.0.0.0/x.png")))
+        #expect(!isFetchableShareImageURL(try url("https://0.0.0.1/x.png")))
+        #expect(!isFetchableShareImageURL(try url("https://[::ffff:0:1]/x.png")))
     }
 
     @Test("a public IP that merely resembles a private one at a boundary octet is not rejected")
-    func boundaryOctetsOutsideThePrivateRangeAreAllowed() {
+    func boundaryOctetsOutsideThePrivateRangeAreAllowed() throws {
         // 172.15.x and 172.32.x sit just outside the 172.16/12 block.
-        #expect(isFetchableShareImageURL(URL(string: "https://172.15.0.1/x.png")!))
-        #expect(isFetchableShareImageURL(URL(string: "https://172.32.0.1/x.png")!))
-        #expect(isFetchableShareImageURL(URL(string: "https://11.0.0.1/x.png")!))
+        #expect(isFetchableShareImageURL(try url("https://172.15.0.1/x.png")))
+        #expect(isFetchableShareImageURL(try url("https://172.32.0.1/x.png")))
+        #expect(isFetchableShareImageURL(try url("https://11.0.0.1/x.png")))
     }
 
     @Test("a public hostname is fetchable even though it is not an IP literal at all")
-    func publicHostnameIsFetchable() {
-        #expect(isFetchableShareImageURL(URL(string: "https://images.frak.id/logo.png")!))
+    func publicHostnameIsFetchable() throws {
+        #expect(isFetchableShareImageURL(try url("https://images.frak.id/logo.png")))
     }
 }
 
@@ -94,19 +111,23 @@ struct IPv4AddressTests {
 @Suite("isFetchableShareImageURL — IPv6 literals")
 struct ShareImageIPv6GuardTests {
     @Test("loopback, unique-local and link-local literals are rejected")
-    func privateLiteralsRejected() {
+    func privateLiteralsRejected() throws {
         for host in ["[::1]", "[fc00::1]", "[fd12:3456::1]", "[fe80::1]", "[febf::1]"] {
-            #expect(isFetchableShareImageURL(URL(string: "https://\(host)/p.png")!) == false, "\(host)")
+            #expect(isFetchableShareImageURL(try url("https://\(host)/p.png")) == false, "\(host)")
         }
     }
 
     @Test("an IPv4-mapped private address is rejected through its embedded address")
-    func mappedPrivateRejected() {
-        #expect(isFetchableShareImageURL(URL(string: "https://[::ffff:192.168.1.1]/p.png")!) == false)
+    func mappedPrivateRejected() throws {
+        #expect(isFetchableShareImageURL(try url("https://[::ffff:192.168.1.1]/p.png")) == false)
+        // `URL` may normalise the embedded address to hex.
+        #expect(isFetchableShareImageURL(try url("https://[::ffff:a00:1]/p.png")) == false)
+        #expect(isFetchableShareImageURL(try url("https://[::ffff:c0a8:1]/p.png")) == false)
+        #expect(isFetchableShareImageURL(try url("https://[::ffff:808:808]/p.png")) == true)
     }
 
     @Test("a public IPv6 literal is still fetchable")
-    func publicLiteralAllowed() {
-        #expect(isFetchableShareImageURL(URL(string: "https://[2606:4700::1111]/p.png")!) == true)
+    func publicLiteralAllowed() throws {
+        #expect(isFetchableShareImageURL(try url("https://[2606:4700::1111]/p.png")) == true)
     }
 }

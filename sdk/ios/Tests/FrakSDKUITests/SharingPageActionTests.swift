@@ -1,8 +1,12 @@
-import CoreGraphics
 import Foundation
 import Testing
 
 @testable import FrakSDKUI
+
+/// `URL(string:)` is optional and force-unwrapping is banned, so every literal goes through here.
+private func url(_ value: String) throws -> URL {
+    try #require(URL(string: value))
+}
 
 @Suite("SharingPageAction.from — action dispatch")
 struct SharingPageActionDispatchTests {
@@ -47,7 +51,7 @@ struct SharingPageActionDispatchTests {
 @Suite("SharingPageAction.from — share payload")
 struct SharingPageActionSharePayloadTests {
     @Test("carries title, text and https image through")
-    func carriesFieldsThrough() {
+    func carriesFieldsThrough() throws {
         let action = SharingPageAction.from(
             action: "share",
             value: nil,
@@ -62,8 +66,7 @@ struct SharingPageActionSharePayloadTests {
                     SharingSharePayload(
                         title: "Kettle deal",
                         text: "Grab it before it's gone",
-                        imageURL: URL(string: "https://cdn.example.com/p.png"),
-                        rect: nil
+                        imageURL: try url("https://cdn.example.com/p.png")
                     )
                 )
         )
@@ -79,14 +82,26 @@ struct SharingPageActionSharePayloadTests {
             shareText: "",
             shareImage: ""
         )
-        #expect(action == .share(SharingSharePayload(title: nil, text: nil, imageURL: nil, rect: nil)))
+        #expect(action == .share(SharingSharePayload(title: nil, text: nil, imageURL: nil)))
+    }
+
+    @Test("a whitespace-only string decodes to nil")
+    func blankStringDecodesToNil() {
+        let action = SharingPageAction.from(
+            action: "share",
+            value: nil,
+            exp: nil,
+            shareTitle: "   ",
+            shareText: "\n\t "
+        )
+        #expect(action == .share(SharingSharePayload(title: nil, text: nil, imageURL: nil)))
     }
 
     @Test("every field absent still produces a share action, all nil")
     func allAbsentStillShares() {
         #expect(
             SharingPageAction.from(action: "share", value: nil, exp: nil)
-                == .share(SharingSharePayload(title: nil, text: nil, imageURL: nil, rect: nil))
+                == .share(SharingSharePayload(title: nil, text: nil, imageURL: nil))
         )
     }
 
@@ -114,60 +129,6 @@ struct SharingPageActionSharePayloadTests {
         }
         #expect(payload.imageURL == nil)
     }
-
-    // MARK: - rect
-
-    @Test("an absent rect falls back to nil, which NativeShare reads as the centred anchor")
-    func absentRectIsNil() {
-        let action = SharingPageAction.from(action: "share", value: nil, exp: nil)
-        guard case .share(let payload) = action else {
-            Issue.record("expected a share action")
-            return
-        }
-        #expect(payload.rect == nil)
-    }
-
-    @Test("a well-formed rect parses to CSS-pixel coordinates")
-    func wellFormedRectParses() {
-        let action = SharingPageAction.from(action: "share", value: nil, exp: nil, shareRect: "12,34,56,78")
-        guard case .share(let payload) = action else {
-            Issue.record("expected a share action")
-            return
-        }
-        #expect(payload.rect == CGRect(x: 12, y: 34, width: 56, height: 78))
-    }
-
-    @Test("a rect missing a component is dropped")
-    func rectMissingComponentIsDropped() {
-        let action = SharingPageAction.from(action: "share", value: nil, exp: nil, shareRect: "12,34,56")
-        guard case .share(let payload) = action else {
-            Issue.record("expected a share action")
-            return
-        }
-        #expect(payload.rect == nil)
-    }
-
-    @Test("a rect with a non-numeric component is dropped")
-    func rectWithNonNumericComponentIsDropped() {
-        let action = SharingPageAction.from(action: "share", value: nil, exp: nil, shareRect: "12,34,NaN,78")
-        guard case .share(let payload) = action else {
-            Issue.record("expected a share action")
-            return
-        }
-        #expect(payload.rect == nil)
-    }
-
-    @Test("a rect with a zero or negative width/height is dropped rather than pointing at nothing")
-    func degenerateRectIsDropped() {
-        for candidate in ["12,34,0,78", "12,34,56,0", "12,34,-1,78"] {
-            let action = SharingPageAction.from(action: "share", value: nil, exp: nil, shareRect: candidate)
-            guard case .share(let payload) = action else {
-                Issue.record("expected a share action")
-                return
-            }
-            #expect(payload.rect == nil, "expected \(candidate) to be rejected")
-        }
-    }
 }
 
 @Suite("SharingPageAction.Kind")
@@ -175,10 +136,10 @@ struct SharingPageActionKindTests {
     @Test("two share actions with different payloads still collide as the same kind")
     func differentPayloadsShareAKind() {
         let first = SharingPageAction.share(
-            SharingSharePayload(title: "a", text: nil, imageURL: nil, rect: nil)
+            SharingSharePayload(title: "a", text: nil, imageURL: nil)
         )
         let second = SharingPageAction.share(
-            SharingSharePayload(title: "b", text: nil, imageURL: nil, rect: CGRect(x: 1, y: 2, width: 3, height: 4))
+            SharingSharePayload(title: "b", text: nil, imageURL: nil)
         )
         #expect(first != second)
         #expect(first.kind == second.kind)
@@ -191,7 +152,7 @@ struct SharingPageActionKindTests {
             SharingPageAction.install.kind,
             SharingPageAction.dismiss.kind,
             SharingPageAction.shareAgain.kind,
-            SharingPageAction.share(SharingSharePayload(title: nil, text: nil, imageURL: nil, rect: nil)).kind,
+            SharingPageAction.share(SharingSharePayload(title: nil, text: nil, imageURL: nil)).kind,
             SharingPageAction.copy.kind,
             SharingPageAction.error.kind,
             SharingPageAction.ready.kind,
@@ -204,27 +165,25 @@ struct SharingPageActionKindTests {
 @Suite("sharingQueryValue")
 struct SharingQueryValueTests {
     @Test("a URLSearchParams space arrives as a space, not a plus")
-    func plusDecodesToSpace() {
-        let url = URL(string: "frak-x://result?action=share&title=Kettle+deal&text=Grab+it%21")!
-        #expect(sharingQueryValue(url, "title") == "Kettle deal")
-        #expect(sharingQueryValue(url, "text") == "Grab it!")
+    func plusDecodesToSpace() throws {
+        let target = try url("frak-x://result?action=share&title=Kettle+deal&text=Grab+it%21")
+        #expect(sharingQueryValue(target, "title") == "Kettle deal")
+        #expect(sharingQueryValue(target, "text") == "Grab it!")
     }
 
     @Test("an encoded plus stays a plus")
-    func encodedPlusSurvives() {
-        let url = URL(string: "frak-x://result?action=share&text=a%2Bb")!
-        #expect(sharingQueryValue(url, "text") == "a+b")
+    func encodedPlusSurvives() throws {
+        #expect(sharingQueryValue(try url("frak-x://result?action=share&text=a%2Bb"), "text") == "a+b")
     }
 
     @Test("newlines and emoji survive the round trip")
-    func multiByteSurvives() {
-        let url = URL(string: "frak-x://result?text=one%0Atwo%20%F0%9F%98%80")!
-        #expect(sharingQueryValue(url, "text") == "one\ntwo 😀")
+    func multiByteSurvives() throws {
+        #expect(sharingQueryValue(try url("frak-x://result?text=one%0Atwo%20%F0%9F%98%80"), "text") == "one\ntwo 😀")
     }
 
     @Test("an absent key is nil, and a query-less url is nil")
-    func absentIsNil() {
-        #expect(sharingQueryValue(URL(string: "frak-x://result?action=share")!, "title") == nil)
-        #expect(sharingQueryValue(URL(string: "frak-x://result")!, "action") == nil)
+    func absentIsNil() throws {
+        #expect(sharingQueryValue(try url("frak-x://result?action=share"), "title") == nil)
+        #expect(sharingQueryValue(try url("frak-x://result"), "action") == nil)
     }
 }

@@ -114,6 +114,50 @@ class SharingSessionBuilderTest {
         }
 
     @Test
+    fun `a session that has a page still carries the fallback copy`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.metadataNameValue = "Acme"
+            val built = builder(client).build(sharingRequest())
+            val session = (built as SharingBuild.Ready).session
+
+            assertTrue("precondition: this session resolved a page", session.hasPage)
+            assertEquals(
+                "a page that never loads must still degrade to localised copy",
+                "Acme invite link",
+                session.shareTitle,
+            )
+            assertEquals("Discover this amazing product!", session.shareText)
+        }
+
+    @Test
+    fun `a blank override does not beat the product title or the default`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.metadataNameValue = "Acme"
+            val session =
+                tier3Session(
+                    client,
+                    sharingRequest(
+                        products = listOf(sharingProduct(title = "Kettle", link = "https://acme.example/k")),
+                        shareTitle = "   ",
+                        shareText = "",
+                    ),
+                )
+            assertEquals("Kettle", session.shareTitle)
+            assertEquals("Discover this amazing product!", session.shareText)
+        }
+
+    @Test
+    fun `a dropped placeholder does not leave a doubled space before punctuation`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.metadataNameValue = null
+            val session = tier3Session(client, sharingRequest(shareTitle = "Buy {{productName}}, now"))
+            assertEquals("Buy, now", session.shareTitle)
+        }
+
+    @Test
     fun `tier 3 never reaches resolveConfig's translations`() =
         runTest {
             // resolveConfig() throws, so build() must not try to read a merchant that was never resolved.
