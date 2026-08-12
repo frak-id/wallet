@@ -9,6 +9,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,6 +44,7 @@ import androidx.lifecycle.lifecycleScope
 import id.frak.example.android.ui.FrakColorScheme
 import id.frak.example.android.ui.FrakTheme
 import id.frak.sdk.Frak
+import id.frak.sdk.FrakSdkVersion
 import id.frak.sdk.core.DeepLinkHandling
 import id.frak.sdk.core.FrakConfig
 import id.frak.sdk.core.FrakEnvironment
@@ -70,12 +72,20 @@ data class LogEntry(
 
 enum class LogType { INFO, SUCCESS, ERROR }
 
-/** Catalog row display model, shared with the iOS harness (same ids, titles, links). */
+/** Catalog row display model, shared with the iOS harness (same ids, titles, links, images). */
 data class ProductItem(
     val id: String,
     val title: String,
     val link: String,
+    val imageUrl: String,
+    val priceCents: Long,
 )
+
+/** Configured merchant id, echoed in the debug panel next to the one the backend resolves. */
+const val MERCHANT_ID = "0a799880-ba54-4276-a734-db8721911bab"
+
+/** Store homepage, used by the unscoped share and as the collection landing page. */
+const val STORE_LINK = "https://example.com"
 
 val sampleProducts =
     listOf(
@@ -83,16 +93,22 @@ val sampleProducts =
             id = "prod_001",
             title = "Babies camel cuir velours bout carré",
             link = "https://example.com/product-1",
+            imageUrl = "https://picsum.photos/seed/frak-prod-001/600/600",
+            priceCents = 14999,
         ),
         ProductItem(
             id = "prod_002",
             title = "Sneakers blanches classiques",
             link = "https://example.com/product-2",
+            imageUrl = "https://picsum.photos/seed/frak-prod-002/600/600",
+            priceCents = 8990,
         ),
         ProductItem(
             id = "prod_003",
             title = "Boots en cuir noir",
             link = "https://example.com/product-3",
+            imageUrl = "https://picsum.photos/seed/frak-prod-003/600/600",
+            priceCents = 21500,
         ),
     )
 
@@ -122,6 +138,12 @@ private sealed interface CatalogRewardLookup {
     data object Failed : CatalogRewardLookup
 }
 
+/** One label/value line of the SDK debug panel. */
+data class DebugRow(
+    val label: String,
+    val value: String,
+)
+
 class MainActivity : ComponentActivity() {
     /**
      * Built in `onCreate` rather than as a property initialiser: `build(activity)` needs the
@@ -130,6 +152,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var sharing: FrakSharing
 
     private val logs = mutableStateListOf<LogEntry>()
+    private val debugRows = mutableStateListOf<DebugRow>()
+    private var isDebugRefreshing by mutableStateOf(false)
     private var catalogReward by mutableStateOf<CatalogRewardLookup>(CatalogRewardLookup.Loading)
 
     private val catalogRewardLabel: String
@@ -149,8 +173,14 @@ class MainActivity : ComponentActivity() {
         Frak.initialize(
             context = applicationContext,
             config =
-                FrakConfig(merchantId = "0a799880-ba54-4276-a734-db8721911bab") {
-                    metadata = FrakMetadata { name = "Frak Android Harness" }
+                FrakConfig(merchantId = MERCHANT_ID) {
+                    metadata =
+                        FrakMetadata {
+                            name = "Frak Android Harness"
+                            // Last fallback of the share link chain, so the unscoped share
+                            // (no link, no products) still has something to link to.
+                            homepageLink = STORE_LINK
+                        }
                     // Development points at the dev wallet app; isFrakAppInstalled() reports
                     // false without it.
                     env = FrakEnvironment.Development
@@ -159,7 +189,7 @@ class MainActivity : ComponentActivity() {
                     logLevel = FrakLogLevel.INFO
                 },
         )
-        addLog("Frak.initialize called for merchant 0a799880-ba54-4276-a734-db8721911bab (development)", LogType.INFO)
+        addLog("Frak.initialize called for merchant $MERCHANT_ID (development)", LogType.INFO)
 
         // Not the Compose build site, so warming has to be explicit. A merchant whose share
         // surface is several taps in should warm when that surface appears, not at startup.
@@ -176,6 +206,7 @@ class MainActivity : ComponentActivity() {
                 addLog("Config resolve failed: ${error.message}", LogType.ERROR)
             }
             loadCatalogReward()
+            refreshDebugInfo(log = false)
         }
 
         setContent {
@@ -189,9 +220,14 @@ class MainActivity : ComponentActivity() {
                     MerchantAppScreen(
                         logs = logs,
                         catalogRewardLabel = catalogRewardLabel,
+                        debugRows = debugRows,
+                        isDebugRefreshing = isDebugRefreshing,
+                        onShareStore = ::shareStore,
                         onShareProduct = ::shareProduct,
+                        onShareCollection = ::shareCollection,
                         onSimulateDeepLink = { scope.launch { simulateDeepLink() } },
                         onOrderCompleted = { scope.launch { completeOrder() } },
+                        onRefreshDebugInfo = { scope.launch { refreshDebugInfo(log = true) } },
                     )
                 }
             }
@@ -208,17 +244,56 @@ class MainActivity : ComponentActivity() {
         addLog("Inbound link reached the activity (SDK auto-handles it): $url", LogType.SUCCESS)
     }
 
+    /** Share #1: no products at all — the link falls back to the merchant homepage. */
+    private fun shareStore() {
+        addLog("Triggering sharing sheet with no product scope...", LogType.INFO)
+        sharing.present(
+            SharingRequest {
+                targetInteraction = "purchase"
+                placement = "home"
+            },
+        )
+    }
+
+    /** Share #2: exactly one product, scoped and illustrated. */
     private fun shareProduct(product: ProductItem) {
         addLog("Triggering sharing sheet for '${product.title}'...", LogType.INFO)
         sharing.present(
             SharingRequest {
-                products = listOf(SharingProduct(title = product.title, link = product.link))
+                products = listOf(sharingProduct(product))
                 // Matches the rewards.best call below.
                 targetInteraction = "purchase"
                 placement = "product-page"
             },
         )
     }
+
+    /** Share #3: the whole catalog, so the sheet renders several illustrated product cards. */
+    private fun shareCollection() {
+        addLog("Triggering sharing sheet for ${sampleProducts.size} products...", LogType.INFO)
+        sharing.present(
+            SharingRequest {
+                // Products carry their own links, so the shared URL has to be stated: without it
+                // the first product's link would win and the recipient would miss the collection.
+                link = "$STORE_LINK/collections/best-sellers"
+                products = sampleProducts.map(::sharingProduct)
+                targetInteraction = "purchase"
+                placement = "category-page"
+            },
+        )
+    }
+
+    private fun sharingProduct(product: ProductItem): SharingProduct =
+        SharingProduct(title = product.title, link = product.link) {
+            imageUrl = product.imageUrl
+            utmContent = product.id
+            details =
+                ProductDetails {
+                    productId = product.id
+                    name = product.title
+                    unitPrice = product.priceCents / 100.0
+                }
+        }
 
     private fun logSharingResult(result: SharingResult) {
         when (result) {
@@ -297,6 +372,58 @@ class MainActivity : ComponentActivity() {
             }
     }
 
+    /**
+     * Every wiring fact the SDK can answer for, in one snapshot: the configured merchant id next
+     * to the one the backend resolved, the identity events are attributed to, and the origins the
+     * calls actually go to.
+     */
+    private suspend fun refreshDebugInfo(log: Boolean) {
+        isDebugRefreshing = true
+        val rows = mutableListOf<DebugRow>()
+        rows += DebugRow("SDK version", FrakSdkVersion.CURRENT)
+        rows += DebugRow("Configured merchant id", MERCHANT_ID)
+
+        val client = Frak.clientOrNull
+        if (client == null) {
+            rows += DebugRow("Client", "not initialized")
+            replaceDebugRows(rows)
+            isDebugRefreshing = false
+            if (log) addLog("SDK debug info: client not initialized.", LogType.ERROR)
+            return
+        }
+
+        val environment = client.environment
+        rows += DebugRow("Environment", environment::class.simpleName ?: "custom")
+        rows += DebugRow("Wallet origin", environment.wallet)
+        rows += DebugRow("Backend origin", environment.backend)
+        rows += DebugRow("Wallet package id", environment.walletPackageId)
+        rows += DebugRow("Wallet app installed", client.appLink.isFrakAppInstalled().toString())
+        rows += DebugRow("Tracking enabled", client.isTrackingEnabled().toString())
+        rows += DebugRow("Anonymous id", client.anonymousId() ?: "none (tracking off or key refused)")
+
+        try {
+            val resolved = client.config.resolve()
+            rows += DebugRow("Resolved merchant id", resolved.merchantId)
+            rows += DebugRow("Merchant name", resolved.displayName)
+            rows += DebugRow("Merchant domain", resolved.domain)
+            rows += DebugRow("Currency", resolved.currency?.wireValue ?: "unset")
+            rows += DebugRow("Language", resolved.lang?.wireValue ?: "unset")
+            val placements = resolved.sdkConfig?.placements.orEmpty()
+            rows += DebugRow("Configured placements", placements.keys.joinToString().ifEmpty { "none" })
+        } catch (error: FrakError) {
+            rows += DebugRow("Resolved config", "failed: ${error.message}")
+        }
+
+        replaceDebugRows(rows)
+        isDebugRefreshing = false
+        if (log) addLog("SDK debug info refreshed (${rows.size} fields).", LogType.SUCCESS)
+    }
+
+    private fun replaceDebugRows(rows: List<DebugRow>) {
+        debugRows.clear()
+        debugRows.addAll(rows)
+    }
+
     private fun addLog(
         message: String,
         type: LogType,
@@ -310,9 +437,14 @@ class MainActivity : ComponentActivity() {
 fun MerchantAppScreen(
     logs: List<LogEntry>,
     catalogRewardLabel: String,
+    debugRows: List<DebugRow>,
+    isDebugRefreshing: Boolean,
+    onShareStore: () -> Unit,
     onShareProduct: (ProductItem) -> Unit,
+    onShareCollection: () -> Unit,
     onSimulateDeepLink: () -> Unit,
     onOrderCompleted: () -> Unit,
+    onRefreshDebugInfo: () -> Unit,
 ) {
     var activeTab by remember { mutableIntStateOf(0) }
 
@@ -365,12 +497,17 @@ fun MerchantAppScreen(
                 ProductList(
                     products = sampleProducts,
                     catalogRewardLabel = catalogRewardLabel,
+                    onShareStore = onShareStore,
                     onShareProduct = onShareProduct,
+                    onShareCollection = onShareCollection,
                 )
             } else {
                 CheckoutToolsView(
+                    debugRows = debugRows,
+                    isDebugRefreshing = isDebugRefreshing,
                     onSimulateDeepLink = onSimulateDeepLink,
                     onOrderCompleted = onOrderCompleted,
+                    onRefreshDebugInfo = onRefreshDebugInfo,
                 )
             }
         }
@@ -420,12 +557,30 @@ fun MerchantAppScreen(
 fun ProductList(
     products: List<ProductItem>,
     catalogRewardLabel: String,
+    onShareStore: () -> Unit,
     onShareProduct: (ProductItem) -> Unit,
+    onShareCollection: () -> Unit,
 ) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         // One headline card for the whole catalog, not one per row.
         item {
             CatalogRewardBanner(label = catalogRewardLabel)
+        }
+        item {
+            ShareScopeCard(
+                title = "Share the store",
+                subtitle = "No product scope: no products and no link, so the sheet falls back to the homepage.",
+                buttonLabel = "Share Store (no product)",
+                onClick = onShareStore,
+            )
+        }
+        item {
+            ShareScopeCard(
+                title = "Share the collection",
+                subtitle = "${products.size} products, each with an image — the sheet renders one card per product.",
+                buttonLabel = "Share Collection (${products.size} products)",
+                onClick = onShareCollection,
+            )
         }
         items(products) { product ->
             ProductCard(product = product, onShareProduct = onShareProduct)
@@ -458,6 +613,40 @@ private fun CatalogRewardBanner(label: String) {
     }
 }
 
+/** The store-wide and collection-wide share entry points; product rows have their own button. */
+@Composable
+private fun ShareScopeCard(
+    title: String,
+    subtitle: String,
+    buttonLabel: String,
+    onClick: () -> Unit,
+) {
+    Card(
+        colors =
+            CardDefaults.cardColors(
+                containerColor = FrakTheme.surfaceBackground2,
+            ),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = FrakTheme.textPrimary,
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = FrakTheme.textSecondary,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+                Text(buttonLabel)
+            }
+        }
+    }
+}
+
 @Composable
 private fun ProductCard(
     product: ProductItem,
@@ -476,12 +665,17 @@ private fun ProductCard(
                 style = MaterialTheme.typography.titleMedium,
                 color = FrakTheme.textPrimary,
             )
+            Text(
+                text = "${formatCents(product.priceCents)} · ${product.id}",
+                style = MaterialTheme.typography.bodySmall,
+                color = FrakTheme.textSecondary,
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = { onShareProduct(product) },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Share Product")
+                Text("Share This Product")
             }
         }
     }
@@ -489,70 +683,148 @@ private fun ProductCard(
 
 @Composable
 fun CheckoutToolsView(
+    debugRows: List<DebugRow>,
+    isDebugRefreshing: Boolean,
     onSimulateDeepLink: () -> Unit,
     onOrderCompleted: () -> Unit,
+    onRefreshDebugInfo: () -> Unit,
 ) {
-    Column(
+    LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Card(
-            colors =
-                CardDefaults.cardColors(
-                    containerColor = FrakTheme.surfaceBackground2,
-                ),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    text = "Order Confirmation Test",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = FrakTheme.textPrimary,
-                )
-                Text(
-                    text =
-                        "Simulate completing a purchase order " +
-                            "(#ORD-98231, ${formatCents(SAMPLE_ORDER_TOTAL_CENTS)})",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = FrakTheme.textSecondary,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = onOrderCompleted,
-                    colors =
-                        ButtonDefaults.buttonColors(
-                            containerColor = FrakTheme.success,
-                            contentColor = FrakTheme.textOnAction,
-                        ),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Complete Order & Track Purchase")
+        item {
+            Card(
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = FrakTheme.surfaceBackground2,
+                    ),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = "Order Confirmation Test",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = FrakTheme.textPrimary,
+                    )
+                    Text(
+                        text =
+                            "Simulate completing a purchase order " +
+                                "(#ORD-98231, ${formatCents(SAMPLE_ORDER_TOTAL_CENTS)})",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = FrakTheme.textSecondary,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = onOrderCompleted,
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = FrakTheme.success,
+                                contentColor = FrakTheme.textOnAction,
+                            ),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Complete Order & Track Purchase")
+                    }
                 }
             }
         }
 
-        Card(
-            colors =
-                CardDefaults.cardColors(
-                    containerColor = FrakTheme.surfaceBackground2,
-                ),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
+        item {
+            Card(
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = FrakTheme.surfaceBackground2,
+                    ),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = "Referral Deep Link Simulator",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = FrakTheme.textPrimary,
+                    )
+                    Text(
+                        text = "Simulate user opening app from an inbound referral link with fCtx",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = FrakTheme.textSecondary,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(onClick = onSimulateDeepLink, modifier = Modifier.fillMaxWidth()) {
+                        Text("Simulate Inbound fCtx Link")
+                    }
+                }
+            }
+        }
+
+        item {
+            SdkDebugCard(
+                rows = debugRows,
+                isRefreshing = isDebugRefreshing,
+                onRefresh = onRefreshDebugInfo,
+            )
+        }
+    }
+}
+
+/** Everything the SDK reports about this install, for checking the wiring on a real device. */
+@Composable
+private fun SdkDebugCard(
+    rows: List<DebugRow>,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+) {
+    Card(
+        colors =
+            CardDefaults.cardColors(
+                containerColor = FrakTheme.surfaceBackground2,
+            ),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = "SDK Debug Info",
+                style = MaterialTheme.typography.titleMedium,
+                color = FrakTheme.textPrimary,
+            )
+            Text(
+                text = "Read back from the live client — identity, merchant and origins.",
+                style = MaterialTheme.typography.bodySmall,
+                color = FrakTheme.textSecondary,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (rows.isEmpty()) {
                 Text(
-                    text = "Referral Deep Link Simulator",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = FrakTheme.textPrimary,
-                )
-                Text(
-                    text = "Simulate user opening app from an inbound referral link with fCtx",
+                    text = "Loading…",
                     style = MaterialTheme.typography.bodySmall,
                     color = FrakTheme.textSecondary,
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(onClick = onSimulateDeepLink, modifier = Modifier.fillMaxWidth()) {
-                    Text("Simulate Inbound fCtx Link")
+            }
+            rows.forEach { row ->
+                Row(modifier = Modifier.padding(vertical = 2.dp)) {
+                    Text(
+                        text = "${row.label}: ",
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 11.sp,
+                        color = FrakTheme.textSecondary,
+                    )
+                    Text(
+                        text = row.value,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 11.sp,
+                        color = FrakTheme.textPrimary,
+                    )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = onRefresh,
+                enabled = !isRefreshing,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(if (isRefreshing) "Refreshing…" else "Refresh SDK Info")
             }
         }
     }

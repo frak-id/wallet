@@ -9,9 +9,11 @@ Configured with `env = FrakEnvironment.Development` and a real merchant id (`0a7
 Jetpack Compose app that exercises:
 
 - SDK init via `Frak.initialize(...)` with `deepLink = DeepLinkHandling.Automatic`
-- `Frak.client.rewards.best(RewardRequest { targetInteraction = "purchase"; products = ... })` for a single catalog-wide reward, and `FrakSharing.Builder(::onResult).build(this)` — the plain-Activity build site, not the `@Composable` one — for the sharing sheet on each product row
+- `Frak.client.rewards.best(RewardRequest { targetInteraction = "purchase"; products = ... })` for a single catalog-wide reward, and `FrakSharing.Builder(::onResult).build(this)` — the plain-Activity build site, not the `@Composable` one — for the sharing sheet
+- the three sharing scopes, one button each: **store** (no `products` and no `link`, so the link falls back to the merchant homepage), **product** (one `SharingProduct` with `imageUrl` and `ProductDetails`), **collection** (all three products, each illustrated, under an explicit collection `link`)
 - `Frak.client.tracking.purchase(customerId, orderId, token)` on order confirmation
 - inbound deep links via Android intent filters (cold and warm start), plus a manual `appLink.handleReferral(url)` trigger for testing
+- an SDK debug panel in the *Checkout & Tools* tab, read back from the live client: SDK version, environment and its wallet/backend origins, configured vs. resolved merchant id, `anonymousId()`, `isTrackingEnabled()`, `isFrakAppInstalled()` and the resolved merchant's name, domain, currency, language and placements
 - wallet-detection `<queries>` and the `INTERNET` permission come from `:frak-sdk`'s own manifest, folded in by the manifest merger
 
 Product fixtures and order total match the iOS harness so the two stay comparable.
