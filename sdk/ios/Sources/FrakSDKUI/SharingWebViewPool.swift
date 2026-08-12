@@ -55,6 +55,23 @@
 
         var hasWarmView: Bool { warmView != nil }
 
+        /// Builds the pooled engine, without navigating it.
+        ///
+        /// Split from `warm(_:)` because the two halves cost different things and need different
+        /// prerequisites. Constructing a `WKWebView` boots the WebContent and Networking processes
+        /// — hundreds of milliseconds, main-thread-only — and needs nothing but a wallet origin,
+        /// while the URL it should hold needs an identity mint and a merchant resolve in front of
+        /// it. Fused, a tap that beats those two awaits pays the engine boot inside the sheet's own
+        /// presentation, which a merchant sees as the sheet taking a quarter-second to appear.
+        func prepare() {
+            guard !destroyed, pooled == nil else { return }
+            let trace = SharingTrace()
+            let view = makeView()
+            view.bind(warmBinding(view, trace: trace))
+            pooled = view
+            trace.mark("warm engine allocated")
+        }
+
         /// Boots the pooled view against `url`; only a change of URL does work. `url` must be
         /// the real merchant page (`SharingPageURL.warm`) — the merchant-keyed work is the slow part.
         func warm(_ url: String) {
@@ -71,16 +88,7 @@
             let view = pooled ?? makeView()
             pooled = view
             // Rebound so the warm load's `documentReady` is recorded — activation depends on it.
-            view.bind(
-                SharingWebViewBinding(
-                    sessionId: SharingPageURL.warmSessionId,
-                    onPageReady: { [weak view] in
-                        view?.onDocumentReady()
-                        trace.mark("warm document finished")
-                    },
-                    onLoadFailed: { trace.mark("warm load FAILED") }
-                )
-            )
+            view.bind(warmBinding(view, trace: trace))
             view.load(target, baseURL: url)
         }
 
@@ -88,8 +96,16 @@
         /// previous superview first: a reopened sheet can race SwiftUI's own removal.
         func acquire(_ binding: SharingWebViewBinding) -> SharingWebView {
             guard let reused = pooled, !lent else {
+                // Nothing to lend: `prepare()` has not run, or a previous sheet still holds the
+                // pooled view. Adopted rather than handed out loose — an unadopted view is
+                // destroyed by `release`, so the tap after this one would boot another engine,
+                // and a pool that started cold used to stay cold for the rest of its life.
                 let view = makeView()
                 view.bind(binding)
+                if pooled == nil, !destroyed {
+                    pooled = view
+                    lent = true
+                }
                 return view
             }
             lent = true
@@ -101,8 +117,15 @@
             return reused
         }
 
-        /// Takes the view back when a sheet closes. Reset rather than destroyed: rebound to
-        /// `.warm` and fully reloaded, since the page it leaves behind is mid-flow.
+        /// Takes the view back when a sheet closes.
+        ///
+        /// Reset rather than destroyed, and reset in place wherever possible. A session that
+        /// activated on the warm document left that same document loaded and moved only its
+        /// params, so putting the params back is a fragment change: no request, no React boot, and
+        /// the next sheet activates instead of loading. Reloading it instead — which is what this
+        /// used to do unconditionally — threw away the booted page after every single share, so
+        /// the pool only ever paid off for a user who waited out a fresh load between sheets, and
+        /// `acquire` cancelled that load anyway if they did not.
         func release(_ view: SharingWebView) {
             // Not ours, or ours but the surface has gone away underneath it: no future either way.
             guard view === pooled, !destroyed else {
@@ -117,17 +140,33 @@
             }
             lent = false
             view.view.removeFromSuperview()
-            view.stopLoading()
-            let url = warmURL
-            // Re-warm rather than reload: only `warm` rebinds the readiness callback. Cleared
-            // first so it does not short-circuit on an unchanged URL.
-            warmURL = nil
-            if let url {
-                warm(url)
-            } else {
-                // Never warmed: just make sure a late navigation from the closed session
-                // reports nowhere.
+
+            let reclaim = sharingReclaim(
+                warmURL: warmURL,
+                loadedBaseURL: view.loadedBaseURL,
+                documentReady: view.documentReady
+            )
+            switch reclaim {
+            case .park:
+                // Never warmed, so there is nothing to put back — just make sure a late
+                // navigation from the closed session reports nowhere.
+                view.stopLoading()
                 view.bind(.warm)
+            case .resetInPlace:
+                let trace = SharingTrace()
+                // Rebound first: only the warm binding records `documentReady`, which is what the
+                // next session's activation is gated on.
+                view.bind(warmBinding(view, trace: trace))
+                trace.mark("warm reset in place")
+                view.resetToWarm()
+            case .reload(let url):
+                let trace = SharingTrace()
+                view.bind(warmBinding(view, trace: trace))
+                trace.mark("warm reload")
+                view.stopLoading()
+                // Cleared so `warm` does not short-circuit on an unchanged URL.
+                warmURL = nil
+                warm(url)
             }
         }
 
@@ -146,6 +185,19 @@
             SharingWebView(
                 walletOrigin: walletOrigin,
                 returnScheme: SharingPageURL.returnScheme(bundleId: Bundle.main.bundleIdentifier ?? "")
+            )
+        }
+
+        /// What an unpresented view carries: a `warmSessionId` no sheet can be attributed to, and
+        /// the one callback that records `documentReady` — the gate every activation is taken on.
+        private func warmBinding(_ view: SharingWebView, trace: SharingTrace) -> SharingWebViewBinding {
+            SharingWebViewBinding(
+                sessionId: SharingPageURL.warmSessionId,
+                onPageReady: { [weak view] in
+                    view?.onDocumentReady()
+                    trace.mark("warm document finished")
+                },
+                onLoadFailed: { trace.mark("warm load FAILED") }
             )
         }
     }

@@ -99,6 +99,41 @@ func sharingDecision(
     return .showPage(navigation)
 }
 
+/// What `SharingWebViewPool` should do with a view a closing sheet just handed back.
+enum SharingReclaim: Equatable {
+    /// Never warmed, so there is nothing to put back — just stop the closed session reporting.
+    case park
+    /// Still the document the pool warmed, so the session moved only its params: put those back
+    /// as a fragment and the engine keeps its booted page for the next sheet.
+    case resetInPlace
+    /// The document itself moved — a full session load, or the install page — so it has to be
+    /// loaded again before it is warm.
+    case reload(String)
+}
+
+/// Which reset a released view needs.
+///
+/// Kept out of the pool so a macOS test host can reach it, and gated on exactly the pair
+/// `SharingPresentation` activates on: an unfinished document has nothing to hang a fragment off,
+/// and a document that is not the warm one is not the page whose params a reset would put back.
+/// Getting this wrong is quiet in both directions — too eager leaves the previous share's params
+/// on screen, too shy silently spends a full page load between every sheet.
+///
+/// - Parameters:
+///   - warmURL: what the pool warmed this view on, if it ever did.
+///   - loadedBaseURL: the document the view was last asked to load, minus any fragment.
+///   - documentReady: whether that document finished loading.
+/// - Returns: how the pool should put the view back to warm.
+func sharingReclaim(
+    warmURL: String?,
+    loadedBaseURL: String?,
+    documentReady: Bool
+) -> SharingReclaim {
+    guard let warmURL else { return .park }
+    if documentReady, loadedBaseURL == warmURL { return .resetInPlace }
+    return .reload(warmURL)
+}
+
 /// The `products=` value the hosted sharing page's router parses as JSON. Nil rather than
 /// `[]`: the page skips the card section on an absent value, renders an empty one on `[]`.
 func sharingPageProductsJSON(_ products: [SharingProduct]) -> String? {

@@ -182,17 +182,14 @@
         }
 
         /// Performs a `SharingNavigation`. The activation case hangs its fragment off
-        /// `WKWebView.url`, not off the URL we warmed with: the page's router rewrites its own
-        /// search params on load. A fragment-only load fires no `didFinish`.
+        /// `WKWebView.url` rather than off the URL we warmed with, so it stays correct if the two
+        /// ever diverge. A fragment-only load fires no `didFinish`.
         func navigate(_ navigation: SharingNavigation) {
             switch navigation {
             case .load(let url):
                 load(url)
             case .activate(let fragment, let fullURL):
-                guard
-                    let committed = view.url?.absoluteString.components(separatedBy: "#")[0],
-                    let target = URL(string: committed + fragment)
-                else {
+                guard let target = fragmentTarget(fragment) else {
                     // No committed URL means no document to hang a fragment off; load the page.
                     load(fullURL)
                     return
@@ -201,6 +198,25 @@
                 // `requested` must keep describing it.
                 view.load(URLRequest(url: target))
             }
+        }
+
+        /// Puts this view's page back to its warm params after a session moved them.
+        ///
+        /// Same document, so `loadedBaseURL` and `documentReady` keep describing it and the next
+        /// session can still activate on top instead of loading. A no-op when there is no
+        /// committed document to reset, which is the correct answer — `SharingWebViewPool.release`
+        /// only reaches here for a view whose document is the warm one.
+        func resetToWarm() {
+            guard let target = fragmentTarget(SharingPageURL.warmFragment) else { return }
+            view.load(URLRequest(url: target))
+        }
+
+        /// `fragment` hung off whatever document is committed, or nil when there is none.
+        private func fragmentTarget(_ fragment: String) -> URL? {
+            guard let committed = view.url?.absoluteString.components(separatedBy: "#")[0] else {
+                return nil
+            }
+            return URL(string: committed + fragment)
         }
 
         func stopLoading() {
@@ -466,7 +482,7 @@
         ///
         /// The pooled view goes back on this rather than on `SharingPresentation.dispose`, which
         /// runs from `onDismiss` — while the sheet still has frames to draw. `SharingWebViewPool
-        /// .release` detaches the view and re-warms it, and `updateUIView` never puts it back, so
+        /// .release` detaches the view and resets it, and `updateUIView` never puts it back, so
         /// reclaiming it there empties the closing sheet mid-animation: a transparent hole, since
         /// the sheet's own background is cleared for the page to show through.
         let onDismantled: () -> Void
@@ -475,8 +491,17 @@
             Coordinator(onDismantled: onDismantled)
         }
 
+        /// The engine itself, not a host wrapping it.
+        ///
+        /// A wrapper was tried and reverted: SwiftUI builds this representable twice in the update
+        /// that swaps `SharingPresenter.presentation`, and a wrapper has to *move* the engine into
+        /// the second host, leaving the first — the one left on screen — empty, which shows as a
+        /// transparent sheet. Returning the engine is idempotent under that double build. Swapping
+        /// between two engines is handled by identity instead: `PresentedSharingSession` carries
+        /// `.id(ObjectIdentifier(presentation))`, so a new session builds a new representable here
+        /// rather than inheriting the previous one's answer.
         func makeUIView(context: Context) -> WKWebView {
-            webView.view
+            return webView.view
         }
 
         func updateUIView(_ uiView: WKWebView, context: Context) {}

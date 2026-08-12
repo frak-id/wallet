@@ -148,6 +148,17 @@
             case reported
         }
 
+        /// The request from the most recent render of `frakSharingSheet`.
+        ///
+        /// Written by the modifier's `body` and read by its `launch`, rather than captured by the
+        /// change observer that triggers one: `onChange(of:perform:)` runs the action registered
+        /// by the render *before* the change, so a merchant that sets its request and its
+        /// `isPresented` in one gesture would otherwise share whatever it offered last time.
+        ///
+        /// Deliberately not `@Published` — it is assigned during `body`, where publishing would be
+        /// a re-entrant update, and nothing renders from it.
+        var pendingRequest = SharingRequest()
+
         /// What the sheet renders. Deliberately **not** cleared when a session ends: this is
         /// `@Published`, and a presented sheet is finished from inside SwiftUI's dismissal
         /// transaction, where publishing re-presents the sheet. Replaced by the next `launch`,
@@ -157,7 +168,7 @@
         private var phase: Phase = .idle
         private var pool: SharingWebViewPool?
 
-        /// Warms the data the sheet needs before it can build a URL at all, then the page itself.
+        /// Warms the sheet: first the engine, then the data it needs to build a URL, then the page.
         ///
         /// Driven by attaching the `frakSharingSheet` modifier, which is the only control: iOS has
         /// no other warm entry point, so a merchant does not call this by hand. The reward is not
@@ -167,6 +178,15 @@
             let trace = SharingTrace()
             let walletOrigin = client.environment.wallet
             let bundleId = Bundle.main.bundleIdentifier ?? ""
+
+            // Ahead of both awaits, and the reason `prepare` is split off `warm(_:)` at all.
+            // Booting the engine needs nothing but the origin we already have, while the URL to
+            // point it at is two round trips away — an identity mint and a merchant resolve. Left
+            // until after them, a user who taps inside that window gets a `WKWebView` built on the
+            // main thread in front of the sheet's own presentation, and the sheet visibly does not
+            // open. `SharingWebViewPool` is idempotent here, so re-entry costs nothing.
+            poolIfPossible()?.prepare()
+            trace.mark("warm engine ready")
 
             guard let clientId = await client.anonymousId else { return }
             trace.mark("warm identity ready")

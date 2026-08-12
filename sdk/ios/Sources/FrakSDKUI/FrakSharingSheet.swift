@@ -45,7 +45,15 @@
         @State private var best: SharingResult?
 
         func body(content: Content) -> some View {
-            content
+            // Published to the presenter on every render rather than captured by the observers
+            // below. A merchant sets its request and its `isPresented` in one gesture, and
+            // `onChange(of:perform:)` runs the action the *previous* render registered — which
+            // would launch the previous share. Whichever generation of the closure runs, it reads
+            // this, and the body that observed the change has already written it.
+            presenter.pendingRequest = request
+
+            return
+                content
                 .task { await presenter.warm() }
                 // The net for a binding that is already true at first render: `onChange` has no
                 // change to observe there, so nothing else would ever start that session. It lives
@@ -54,9 +62,14 @@
                 // presents anything, so it cannot resurrect a finished session.
                 .onAppear { if isPresented { launch() } }
                 .onDisappear { presenter.teardown() }
-                // The tap: SwiftUI has not begun presenting yet, so the pooled view is taken and
-                // the build started first. `false` is handled here only for a session that never
-                // got a sheet, and so has no `onDismiss` coming.
+                // The tap. Synchronous, and deliberately not `.task(id:)`, which would run after
+                // SwiftUI had already begun presenting: the sheet's content is built from
+                // `presenter.presentation`, so a launch that lands later builds it from the
+                // *previous* session and then replaces it underneath. That leaves two live
+                // representable identities for one pooled engine, and tearing the first one down
+                // removes the engine from the sheet the second one is showing — a transparent
+                // sheet. `false` is handled here only for a session that never got a sheet, and
+                // so has no `onDismiss` coming.
                 .onChange(of: isPresented) { presenting in
                     if presenting {
                         launch()
@@ -71,7 +84,8 @@
 
         private func launch() {
             presenter.launch(
-                request,
+                // Read, never captured — see `body`.
+                presenter.pendingRequest,
                 onOutcome: { result in
                     if result.significance > (best?.significance ?? -1) {
                         best = result
@@ -98,6 +112,13 @@
         var body: some View {
             ZStack {
                 if let presentation = presenter.presentation {
+                    // Deliberately no `.id(presentation)` here. It was tried, to rebuild the
+                    // subtree when a presentation is replaced under a live sheet, and it is
+                    // actively wrong: two identities then exist for one *pooled* engine, and
+                    // SwiftUI tearing the outgoing one down calls `removeFromSuperview` on the
+                    // view it made — which by then belongs to the sheet the incoming one shows,
+                    // so the sheet goes transparent. The launch is synchronous instead, so a
+                    // stale presentation is never built from in the first place.
                     PresentedSharingSession(presentation: presentation)
                 } else {
                     // The background lives here rather than once at this view's root: once a
