@@ -19,7 +19,7 @@ ACTIVITY="$PACKAGE_ID/.MainActivity"
 # `Frak` is FrakLogger's tag in :frak-sdk; `FrakSharing` is a separate one in
 # :frak-sdk-ui, and filtering on `Frak` alone drops every sheet warning. The
 # last two catch the crashes and WebView errors the SDK never sees.
-LOG_TAGS=(Frak FrakSharing AndroidRuntime:E chromium:E)
+LOG_TAGS=(Frak FrakSharing FrakHarness AndroidRuntime:E chromium:E)
 
 log() { echo "[native-android] $*"; }
 die() {

@@ -2,6 +2,7 @@ package id.frak.example.android
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -121,6 +122,9 @@ const val SAMPLE_CHECKOUT_TOKEN = "checkout_token_example_9988"
 
 /** Hoisted: this runs per log line. */
 private val LOG_TIME_FORMAT = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+
+/** Distinct from the SDK tags (Frak, FrakSharing) so a run can separate app from SDK. */
+private const val HARNESS_TAG: String = "FrakHarness"
 
 /** Formats the order total only; reward amounts come from [BestReward.formatted]. */
 fun formatCents(cents: Long): String = "$%d.%02d".format(cents / 100, cents % 100)
@@ -446,6 +450,11 @@ class MainActivity : ComponentActivity() {
     ) {
         val timeStr = LOG_TIME_FORMAT.format(Date())
         logs.add(0, LogEntry(timeStr, message, type))
+        // Mirrored so a device run is greppable from `adb logcat` instead of read off the screen.
+        when (type) {
+            LogType.ERROR -> Log.e(HARNESS_TAG, message)
+            else -> Log.i(HARNESS_TAG, message)
+        }
     }
 }
 

@@ -33,7 +33,7 @@ public final class JavaInterop {
         client.anonymousIdAsync()
                 .thenAccept(id -> log.accept("Java anonymousIdAsync -> " + id));
         client.getConfig().resolveAsync()
-                .thenAccept(config -> log.accept("Java resolveAsync -> " + config));
+                .thenAccept(config -> log.accept("Java resolveAsync -> " + config.getName()));
 
         // Consent and identity hang off the client; only events live on `tracking`.
         client.isTrackingEnabledAsync()
@@ -44,13 +44,14 @@ public final class JavaInterop {
         client.getTracking().trackAsync(Interaction.custom("java_probe", data))
                 .thenAccept(result -> log.accept("Java trackAsync -> " + describe(result)));
 
-        // Bound but not completed: calling it would enqueue a real purchase row. The point is that
-        // the signature is compiled against from Java at all.
+        log.accept("Java isFrakAppInstalled -> " + client.getAppLink().isFrakAppInstalled());
+
+        // This does enqueue a real purchase row: asFuture starts the coroutine on the calling
+        // thread, so binding the future is calling it. Kept anyway — the harness points at the
+        // development backend, and a Java call site is the only thing freezing this signature.
         CompletableFuture<FrakResult<kotlin.Unit>> purchase =
                 client.getTracking().purchaseAsync("customer", "order", "token");
-        log.accept("Java purchaseAsync signature bound: " + (purchase != null));
-
-        log.accept("Java isFrakAppInstalled -> " + client.getAppLink().isFrakAppInstalled());
+        purchase.thenAccept(result -> log.accept("Java purchaseAsync -> " + describe(result)));
     }
 
     /**

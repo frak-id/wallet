@@ -473,3 +473,52 @@ dispatched at all. The device runs Android 16. Predictive back was enabled for t
 
 Withdrawn at §4. The defect class stands and the iOS portrait-only finding stands; this exemplar
 does not, and the run is quiet evidence *for* the gesture path rather than silent about it.
+
+---
+
+## §10 — The Java interop surface, executed on a device
+
+Sweep item 10. Sixteen `*Async` methods are frozen in `frak-sdk.api` with **zero call sites outside
+the SDK's own Kotlin tests**, so the entire `CompletableFuture` bridge had never been compiled — let
+alone run — by a Java consumer. `example/native-android/.../JavaInterop.java` now does both: it
+compiles in the harness build and runs from a *Run Java interop probe* button.
+
+**Executed** — RMX3511, Android 16, debug build, 2026-08-13, against the development backend:
+
+```
+I FrakHarness: Java isFrakAppInstalled -> true
+I FrakHarness: Java anonymousIdAsync -> 9b0dd75a-920a-460f-b413-d460b3711ef4
+I FrakHarness: Java resolveAsync -> Eram [dev]
+I FrakHarness: Java isTrackingEnabledAsync -> true
+I FrakHarness: Java trackAsync -> Success(kotlin.Unit)
+I FrakHarness: Java purchaseAsync -> Success(kotlin.Unit)
+```
+
+The surface works. Three things it settled that a Kotlin call site never could:
+
+1. **`FrakResult.Failure` is `FrakResult<Nothing>`**, so Java sees it as a *raw* type while `Success`
+   stays generic. A Java merchant matching on the result must write an unchecked cast. Not a bug, but
+   it is a wart with a cost, and nothing in the tree said so.
+2. **The `*Async` variants do not wrap in `FrakResult`** where the suspend original does not —
+   `anonymousIdAsync` is `CompletableFuture<String?>`, `resolveAsync` is of `FrakResolvedConfig`.
+   They mirror their originals faithfully; the asymmetry is in the originals.
+3. **Every completion arrived on the main thread** (pid == tid in all six lines), which is what
+   `asFuture`'s `mainDispatcher` promises, so `thenAccept` can touch UI directly. That also makes the
+   KDoc's "never `get()`/`join()` on the main thread" warning load-bearing rather than defensive.
+
+`purchaseAsync` is genuinely *called*, not merely bound: `asFuture` uses `CoroutineStart.UNDISPATCHED`,
+so obtaining the future starts the coroutine. The file says so rather than pretending otherwise.
+
+### The measurement fix that made this possible
+
+The first four attempts to read this run were wrong, and the reason is worth keeping. The harness log
+was **screen-only**, so evidence had to be scraped with `uiautomator dump` — which serialises only the
+*rendered* rows of a `LazyColumn`. Scrolling between dumps silently skipped rows, and two consecutive
+dumps looked contiguous while hiding entries between them. That produced a confident false reading:
+that execution halted at `purchaseAsync`, with a fabricated mechanism to explain it. It halted
+nowhere; the rows were simply never rendered.
+
+`addLog` now mirrors to logcat under a third tag, `FrakHarness`, and the run above is a plain
+`adb logcat -d -s FrakHarness`. This is the cheap half of sweep item 5, and its real value is not
+convenience: a device claim that can only be produced by scrolling a screenshot is not reproducible,
+and this one would have been recorded as a defect that does not exist.
