@@ -233,8 +233,8 @@ struct HTTPClientTests {
         }
     }
 
-    @Test("the overall deadline bounds a retried request rather than doubling the per-attempt wait")
-    func overallDeadlineBoundsRetriedRequest() async throws {
+    @Test("the overall deadline spans the retry backoff rather than giving each attempt its own")
+    func overallDeadlineSpansRetryBackoff() async throws {
         let attempts = Counter()
         let (session, host) = StubURLProtocol.makeSession()
         StubURLProtocol.handle(host: host) { _ in
@@ -243,18 +243,14 @@ struct HTTPClientTests {
             }
             throw StubHangs()
         }
-        // Comfortably above the retry's 100-300ms jittered delay so the second attempt is never
-        // starved by the delay itself, while still well under the 1s assertion below.
-        let client = HTTPClient(baseURL: "https://\(host)", session: session, overallDeadlineSeconds: 0.5)
+        // Under the retry's 100ms backoff floor on purpose: the deadline must fire during the sleep.
+        let client = HTTPClient(baseURL: "https://\(host)", session: session, overallDeadlineSeconds: 0.05)
 
-        let start = Date()
         await #expect(throws: FrakError.self) {
             _ = try await client.get("/slow")
         }
-        let elapsed = Date().timeIntervalSince(start)
 
-        #expect(attempts.value == 2)
-        #expect(elapsed < 1)
+        #expect(attempts.value == 1)
     }
 
     @Test("cancelling the caller surfaces CancellationError even with a request in flight")
