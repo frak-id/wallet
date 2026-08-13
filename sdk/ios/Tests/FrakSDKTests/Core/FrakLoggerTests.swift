@@ -20,8 +20,32 @@ private final class RecordingSink: FrakLogSink, @unchecked Sendable {
     }
 }
 
+/// Non-throwing on purpose, and it is the point of `throwingSinkIsSwallowed`'s sibling claim: a
+/// merchant's existing sink satisfies a `throws` requirement unchanged.
+private final class ThrowingSink: FrakLogSink, @unchecked Sendable {
+    struct Refused: Error {}
+
+    private(set) var calls = 0
+
+    func log(level: FrakLogLevel, message: String, error: (any Error)?) throws {
+        calls += 1
+        throw Refused()
+    }
+}
+
 @Suite("FrakLogger")
 struct FrakLoggerTests {
+    @Test("a sink that throws is swallowed, so it cannot take the merchant's app down")
+    func throwingSinkIsSwallowed() {
+        let sink = ThrowingSink()
+        let logger = FrakLogger(level: .debug, sink: sink)
+
+        logger.error("boom")
+        logger.warn("careful")
+
+        #expect(sink.calls == 2)
+    }
+
     @Test("a debug message is not built when the level is .none")
     func messageNotEvaluatedWhenLevelIsNone() {
         let logger = FrakLogger(level: .none)

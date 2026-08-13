@@ -91,9 +91,9 @@ actor AnonymousIdStore {
         }
     }
 
-    /// Destroys the keypair, so the next read mints a new identity. Always true here (a
-    /// `UserDefaults` removal); the `Bool` exists because the Android equivalent can genuinely
-    /// fail and merchants share erasure logic across both.
+    /// Destroys the keypair, so the next read mints a new identity. False when the key store
+    /// refused to erase it, exactly as on Android — merchants share erasure logic across both, so
+    /// this must not answer true for an erasure that did not happen.
     ///
     /// Clears `generation` first, so a mint in flight cannot publish the destroyed identity.
     @discardableResult
@@ -104,9 +104,9 @@ actor AnonymousIdStore {
         generation?.cancel()
         generation = nil
         generationToken += 1
-        keyStore.delete()
+        let erased = keyStore.delete()
         store.removeValue(forKey: Self.merchantMarkerKey)
-        return true
+        return erased
     }
 
     /// Awaits the in-flight or completed generation. A refusal is never cached — a keystore can

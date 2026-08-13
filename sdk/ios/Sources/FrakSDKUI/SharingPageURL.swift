@@ -39,7 +39,9 @@ enum SharingPageURL {
         logoURL: String? = nil,
         link: String? = nil,
         products: String? = nil,
-        seededReward: String? = nil
+        seededReward: String? = nil,
+        /// BCP-47. `lng` is what the page's language detector reads first, ahead of `navigator`.
+        language: String? = nil
     ) -> String {
         var url = "\(walletOrigin)/sharing?embed=native"
         url += "&merchantId=" + PercentEncoding.encode(merchantId)
@@ -48,6 +50,7 @@ enum SharingPageURL {
         url += "&sid=" + PercentEncoding.encode(sessionId)
         url += "&\(FrakSDKVersion.queryParameterName)=" + PercentEncoding.encode(FrakSDKVersion.current)
         for (key, value) in [
+            ("lng", language),
             ("appName", appName), ("logoUrl", logoURL), ("link", link),
             ("products", products), ("seedReward", seededReward),
         ] {
@@ -68,7 +71,8 @@ enum SharingPageURL {
         clientId: String,
         bundleId: String,
         appName: String? = nil,
-        logoURL: String? = nil
+        logoURL: String? = nil,
+        language: String? = nil
     ) -> String {
         var url = "\(walletOrigin)/sharing?embed=native&state=warm"
         url += "&merchantId=" + PercentEncoding.encode(merchantId)
@@ -76,7 +80,7 @@ enum SharingPageURL {
         url += "&returnScheme=" + PercentEncoding.encode(returnScheme(bundleId: bundleId))
         url += "&sid=" + warmSessionId
         url += "&\(FrakSDKVersion.queryParameterName)=" + PercentEncoding.encode(FrakSDKVersion.current)
-        for (key, value) in [("appName", appName), ("logoUrl", logoURL)] {
+        for (key, value) in [("lng", language), ("appName", appName), ("logoUrl", logoURL)] {
             if let value {
                 url += "&\(key)=" + PercentEncoding.encode(value)
             }

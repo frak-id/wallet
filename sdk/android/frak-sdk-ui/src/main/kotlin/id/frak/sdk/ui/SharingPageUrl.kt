@@ -39,6 +39,8 @@ internal object SharingPageUrl {
         products: String? = null,
         seededReward: String? = null,
         confirmed: Boolean = false,
+        /** BCP-47. `lng` is what the page's language detector reads first, ahead of `navigator`. */
+        language: String? = null,
         // No presentation params: the sheet's chrome is injected per web view by [SharingHostStyle].
     ): String =
         buildString {
@@ -53,6 +55,7 @@ internal object SharingPageUrl {
                 FrakSdkVersion.QUERY_PARAMETER_NAME,
             ).append('=')
                 .append(PercentEncoding.encode(FrakSdkVersion.CURRENT))
+            language?.let { append("&lng=").append(PercentEncoding.encode(it)) }
             appName?.let { append("&appName=").append(PercentEncoding.encode(it)) }
             logoUrl?.let { append("&logoUrl=").append(PercentEncoding.encode(it)) }
             link?.let { append("&link=").append(PercentEncoding.encode(it)) }
@@ -72,6 +75,7 @@ internal object SharingPageUrl {
         packageId: String,
         appName: String? = null,
         logoUrl: String? = null,
+        language: String? = null,
     ): String =
         buildString {
             append(walletOrigin).append("/sharing?embed=native&state=warm")
@@ -83,6 +87,7 @@ internal object SharingPageUrl {
                 .append(FrakSdkVersion.QUERY_PARAMETER_NAME)
                 .append('=')
                 .append(PercentEncoding.encode(FrakSdkVersion.CURRENT))
+            language?.let { append("&lng=").append(PercentEncoding.encode(it)) }
             appName?.let { append("&appName=").append(PercentEncoding.encode(it)) }
             logoUrl?.let { append("&logoUrl=").append(PercentEncoding.encode(it)) }
         }

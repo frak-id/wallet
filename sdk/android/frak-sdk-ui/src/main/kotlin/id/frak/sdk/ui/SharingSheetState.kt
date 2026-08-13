@@ -54,6 +54,8 @@ internal class SharingSheetState(
     private val workContext: CoroutineContext = Dispatchers.Default,
     /** Set when the view was handed a finished warm page, so the session can activate by fragment. */
     private val activationBaseUrl: String? = null,
+    /** BCP-47, or null for the device default. Must match what the pool warmed on. */
+    private val language: String? = null,
     private val dependencies: SharingDependencies = FrakClientDependencies,
 ) {
     var session: SharingSession? by mutableStateOf(null)
@@ -97,6 +99,7 @@ internal class SharingSheetState(
             dependencies = dependencies,
             packageId = context.packageName,
             sessionId = sessionId,
+            language = language,
         )
 
     /**

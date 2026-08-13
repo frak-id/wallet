@@ -146,7 +146,6 @@ actor DefaultFrakClient {
     }
 
     /// `false` means the key store refused to erase the key, so the identity did not rotate.
-    /// Always true here; the value exists because the Android equivalent can genuinely fail.
     @discardableResult
     func resetAnonymousId() async -> Bool {
         let erased = await identity.reset()

@@ -56,6 +56,8 @@ private class LiveSession(
     val request: SharingRequest,
     /** The presenting [FrakSharing]'s fraction, kept so a rotation can re-create the sheet at the same size. */
     val heightFraction: Float,
+    /** BCP-47, or null for the device default. Same reason as [heightFraction]. */
+    val language: String?,
 ) {
     /** Null between the tap and the presentation being built; `start` can report before it returns. */
     var presentation: SharingPresentation? = null
@@ -108,6 +110,9 @@ internal class SharingHost private constructor(
 
     /** Whether [warm] has been asked for, as opposed to having run: it needs an attached Activity. */
     private var warmRequested = false
+
+    /** The BCP-47 tag the pool was warmed on, so a re-drive rebuilds the identical URL. */
+    private var warmLanguage: String? = null
 
     private var warmState: WarmState = WarmState.Idle
 
@@ -193,9 +198,13 @@ internal class SharingHost private constructor(
      * The reads only answer a URL; [applyWarmUrl] boots the pool once there is an Activity.
      */
     @MainThread
-    fun warm() {
+    fun warm(language: String? = warmLanguage) {
         if (cleared) return
         warmRequested = true
+        // Latched on the host, not the caller: `attach` and `present` re-drive this with no
+        // language to hand, and the warm URL must stay byte-identical to the one `present` rebuilds
+        // or the pooled view is discarded for a full load.
+        warmLanguage = language
         // Nothing to construct a themed, windowed web view against yet. [attach] re-drives this.
         if (activity == null) return
         when (warmState) {
@@ -213,7 +222,7 @@ internal class SharingHost private constructor(
         }
         warmState = WarmState.Resolving
         scope.launch {
-            val url = resolveWarmUrl(appContext.packageName)
+            val url = resolveWarmUrl(appContext.packageName, warmLanguage)
             if (url == null) {
                 // Un-latched deliberately: `present()`'s own late `warm()` should get another go rather
                 // than inherit a failure the user never saw.
@@ -260,6 +269,7 @@ internal class SharingHost private constructor(
     fun present(
         request: SharingRequest,
         heightFraction: Float,
+        language: String?,
         callback: FrakSharing.ResultCallback,
     ) {
         val activity = this.activity
@@ -298,10 +308,10 @@ internal class SharingHost private constructor(
 
         // Late is still better than never: a merchant who never called warm() pays a cold view, not a
         // broken sheet.
-        warm()
+        warm(language)
 
         this.callback = callback
-        val session = LiveSession(request = request, heightFraction = heightFraction)
+        val session = LiveSession(request = request, heightFraction = heightFraction, language = language)
         live = session
 
         val pool = poolOrNull()
@@ -317,7 +327,15 @@ internal class SharingHost private constructor(
         // already live, so every later `present()` here would answer `AlreadyPresenting`.
         val started =
             try {
-                SharingPresentation.start(pool, appContext, { activity ?: appContext }, scope, request, ::finish)
+                SharingPresentation.start(
+                    pool,
+                    appContext,
+                    { activity ?: appContext },
+                    scope,
+                    request,
+                    language,
+                    ::finish,
+                )
             } catch (unavailable: Exception) {
                 // Almost always a missing/disabled/updating WebView provider. The pool goes with it,
                 // since `acquire` may have marked its view lent before the throw.

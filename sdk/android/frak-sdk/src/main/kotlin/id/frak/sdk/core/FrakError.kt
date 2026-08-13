@@ -49,10 +49,11 @@ public sealed class FrakError(
      * request was attempted. Any cached copy is served in preference to raising this.
      */
     public class BackingOff(
-        public val retryAfterMillis: Long,
+        /** Seconds, like [Server.retryAfterSeconds] and iOS's twin. Fractional: the floor is 0.5s. */
+        public val retryAfterSeconds: Double,
     ) : FrakError(
             Kind.BACKING_OFF,
-            "Frak is backing off after repeated failures; retry in ${retryAfterMillis}ms.",
+            "Frak is backing off after repeated failures; retry in ${retryAfterSeconds}s.",
             null,
         )
 
@@ -120,3 +121,6 @@ public sealed class FrakError(
         public constructor(message: String) : this(message, null)
     }
 }
+
+/** Backoff is computed in millis and published in seconds; converted at the two throw sites. */
+internal const val MILLIS_PER_SECOND: Double = 1_000.0

@@ -2,6 +2,7 @@ package id.frak.sdk.ui
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.annotation.MainThread
 import androidx.compose.runtime.Composable
@@ -11,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import id.frak.sdk.sharing.SharingRequest
+import java.util.Locale
 
 /**
  * The Frak sharing sheet. Build it once per screen, [warm] it when a share affordance becomes
@@ -23,6 +25,7 @@ import id.frak.sdk.sharing.SharingRequest
 public class FrakSharing internal constructor(
     private val host: SharingHost,
     private val heightFraction: Float,
+    private val language: String?,
     private val callback: ResultCallback,
 ) {
     /**
@@ -41,24 +44,44 @@ public class FrakSharing internal constructor(
         private val callback: ResultCallback,
     ) {
         private var heightFraction: Float = FrakSharingDefaults.HEIGHT_FRACTION
+        private var language: String? = null
 
         /**
-         * Share of the screen height the sheet occupies.
-         *
-         * @throws IllegalArgumentException if [fraction] is outside `0.3..1.0`, or is not finite.
+         * Share of the screen height the sheet occupies. Values outside `0.3..1.0`, and non-finite
+         * ones, are clamped and logged rather than thrown: a layout number must not crash the
+         * merchant's app, and iOS clamps the same input.
          */
         public fun heightFraction(fraction: Float): Builder {
-            // NaN fails this too, since every comparison against NaN is false.
-            require(
-                fraction >= FrakSharingDefaults.MIN_HEIGHT_FRACTION &&
-                    fraction <= FrakSharingDefaults.MAX_HEIGHT_FRACTION,
-            ) {
-                "heightFraction must be between ${FrakSharingDefaults.MIN_HEIGHT_FRACTION} and " +
-                    "${FrakSharingDefaults.MAX_HEIGHT_FRACTION}, was $fraction"
+            val clamped = clampSharingHeightFraction(fraction)
+            // Equality, not a range test: `clampSharingHeightFraction` also rewrites NaN, which
+            // every comparison would call in-range.
+            if (clamped != fraction) {
+                Log.w(
+                    "FrakSharing",
+                    "heightFraction $fraction is outside " +
+                        "${FrakSharingDefaults.MIN_HEIGHT_FRACTION}..${FrakSharingDefaults.MAX_HEIGHT_FRACTION}; " +
+                        "using $clamped.",
+                )
             }
-            this.heightFraction = fraction
+            this.heightFraction = clamped
             return this
         }
+
+        /**
+         * Language of the sheet's contents as a BCP-47 tag (`"en"`, `"fr-CA"`), defaulting to the
+         * device locale. Selects among what the page ships; it falls back to its own default for a
+         * tag it has no translation for. Part of the pre-warmed URL, so set it once per instance.
+         */
+        public fun language(languageTag: String?): Builder {
+            this.language = languageTag?.takeIf { it.isNotBlank() }
+            return this
+        }
+
+        /**
+         * Resolved here rather than at URL-build time so one instance cannot warm on one tag and
+         * present on another: `Locale.getDefault()` can change under a running process.
+         */
+        private fun resolvedLanguage(): String = language ?: Locale.getDefault().toLanguageTag()
 
         /**
          * The Activity that will host the sheet's window. Call from `onCreate` (after
@@ -67,6 +90,7 @@ public class FrakSharing internal constructor(
          *
          * @throws IllegalStateException if called before the Activity reaches `onCreate`.
          */
+
         @MainThread
         public fun build(activity: ComponentActivity): FrakSharing {
             check(activity.application != null) {
@@ -76,7 +100,7 @@ public class FrakSharing internal constructor(
             }
             val host = SharingHost.of(activity)
             host.attach(activity, callback)
-            return FrakSharing(host, heightFraction, callback)
+            return FrakSharing(host, heightFraction, resolvedLanguage(), callback)
         }
 
         /**
@@ -95,7 +119,11 @@ public class FrakSharing internal constructor(
                 host.attach(activity, stable)
                 onDispose { }
             }
-            val sharing = remember(host, heightFraction, stable) { FrakSharing(host, heightFraction, stable) }
+            val resolved = resolvedLanguage()
+            val sharing =
+                remember(host, heightFraction, resolved, stable) {
+                    FrakSharing(host, heightFraction, resolved, stable)
+                }
             LaunchedEffect(sharing) { sharing.warm() }
             return sharing
         }
@@ -107,7 +135,7 @@ public class FrakSharing internal constructor(
      */
     @MainThread
     public fun warm() {
-        host.warm()
+        host.warm(language)
     }
 
     /**
@@ -116,7 +144,7 @@ public class FrakSharing internal constructor(
      */
     @MainThread
     public fun present(request: SharingRequest) {
-        host.present(request, heightFraction, callback)
+        host.present(request, heightFraction, language, callback)
     }
 }
 

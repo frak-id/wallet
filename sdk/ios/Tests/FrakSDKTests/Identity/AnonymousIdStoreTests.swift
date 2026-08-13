@@ -86,6 +86,17 @@ struct AnonymousIdStoreTests {
         #expect(keyStore.creations == 1)
     }
 
+    @Test("a key store that cannot erase reports false rather than a rotation that did not happen")
+    func resetReportsARefusedErasure() async {
+        let keyStore = FakeDeviceKeyStore()
+        keyStore.refusesDeletion = true
+        let store = makeStore(keyStore: keyStore)
+
+        _ = await store.anonymousId()
+
+        #expect(await store.reset() == false)
+    }
+
     @Test("reset mints a new identity")
     func resetMintsANewIdentity() async {
         let keyStore = FakeDeviceKeyStore()

@@ -10,6 +10,7 @@ public final class id/frak/sdk/ui/FrakSharing$Builder {
 	public final fun build (Landroidx/activity/ComponentActivity;)Lid/frak/sdk/ui/FrakSharing;
 	public final fun build (Landroidx/compose/runtime/Composer;I)Lid/frak/sdk/ui/FrakSharing;
 	public final fun heightFraction (F)Lid/frak/sdk/ui/FrakSharing$Builder;
+	public final fun language (Ljava/lang/String;)Lid/frak/sdk/ui/FrakSharing$Builder;
 }
 
 public abstract interface class id/frak/sdk/ui/FrakSharing$ResultCallback {

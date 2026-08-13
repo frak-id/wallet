@@ -28,7 +28,10 @@ enum DeviceKey: @unchecked Sendable {
 
 protocol DeviceKeyStore: Sendable {
     func loadOrCreate() throws -> DeviceKey
-    func delete()
+
+    /// False when the key survived the attempt — a full disk or a store not yet readable. The
+    /// caller must not report an erasure that did not happen.
+    func delete() -> Bool
 }
 
 // DeviceKeyStore over a `KeyValueStore`, not the Keychain: Keychain items survive uninstall, which
@@ -80,8 +83,11 @@ struct PersistedDeviceKeyStore: DeviceKeyStore {
         return try? Self.restore(blob)
     }
 
-    func delete() {
+    func delete() -> Bool {
         store.removeValue(forKey: Self.storageKey)
+        // Verified, not assumed: the backing store's removal is a `try?` and an unchecked write,
+        // so it can leave the key in place and say nothing.
+        return store.string(forKey: Self.storageKey) == nil
     }
 
     private func generate() throws -> (DeviceKey, Data) {

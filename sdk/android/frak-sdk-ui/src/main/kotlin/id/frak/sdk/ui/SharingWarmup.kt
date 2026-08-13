@@ -7,7 +7,10 @@ import id.frak.sdk.core.FrakError
  * Warms the identity and merchant config the sheet needs, then answers a URL rather than warming
  * the pool: this can resume with no Activity attached, and a `WebView` needs a windowed context.
  */
-internal suspend fun resolveWarmUrl(packageId: String): String? {
+internal suspend fun resolveWarmUrl(
+    packageId: String,
+    language: String?,
+): String? {
     if (!Frak.isInitialized) return null
 
     val client = Frak.client
@@ -36,5 +39,6 @@ internal suspend fun resolveWarmUrl(packageId: String): String? {
         packageId = packageId,
         appName = merchant.displayName,
         logoUrl = merchant.logoUrl,
+        language = language,
     )
 }

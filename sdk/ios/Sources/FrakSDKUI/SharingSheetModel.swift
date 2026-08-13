@@ -93,6 +93,7 @@
         private var showingInstallPage = false
         private let storeInvite: any StoreInvite
         private let installProbe: InstallProbe?
+        private let language: String?
         /// Set at the tap so `didDetectInstall` can rebuild the fragment `onPageUnavailable`
         /// would otherwise have no context for.
         private var installProofURL: URL?
@@ -105,6 +106,9 @@
             install: FrakInstallPresentation = FrakSharingDefaults.install,
             // No default: a defaulted merchant opt-out is one that silently stops being threaded.
             detectInstall: Bool,
+            /// BCP-47, and it must be what the pool warmed on: `warmBaseURL` is compared
+            /// string-for-string, so a mismatch costs the warm view and does a full load.
+            language: String? = nil,
             buildSharingLink: @escaping @Sendable (SharingRequest) async throws -> String? = {
                 try await Frak.client.sharing.buildLink($0)
             },
@@ -138,6 +142,7 @@
             self.sessionId = sessionId
             self.trace = trace
             self.activationBaseURL = activationBaseURL
+            self.language = language
             self.storeInvite = StoreInvites.make(install)
             self.installProbe = detectInstall ? InstallProbe() : nil
             self.buildSharingLink = buildSharingLink
@@ -570,7 +575,8 @@
                     logoURL: requestLogoURL ?? config.displayLogoURL,
                     link: pageLink,
                     products: productsJSON,
-                    seededReward: seeded
+                    seededReward: seeded,
+                    language: language
                 ),
                 // Rebuilt from the same resolved config as `pageURL`: if the pool warmed against
                 // anything else the strings differ and the session does a full load instead.
@@ -580,7 +586,8 @@
                     clientId: clientId,
                     bundleId: bundleId,
                     appName: name,
-                    logoURL: config.displayLogoURL
+                    logoURL: config.displayLogoURL,
+                    language: language
                 ),
                 activationFragment: SharingPageURL.activationFragment(
                     sessionId: sessionId,

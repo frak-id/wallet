@@ -31,6 +31,11 @@ internal class SharingSessionBuilder(
     private val dependencies: SharingDependencies,
     private val packageId: String,
     private val sessionId: String,
+    /**
+     * BCP-47, and it must be the same value the pool warmed on: `warmBaseUrl` is compared to the
+     * warm URL string-for-string, so a mismatch costs the warm view and does a full load.
+     */
+    private val language: String?,
 ) {
     /**
      * Under a hard ceiling, so a `resolveConfig()` that hangs rather than throws still answers. A
@@ -105,6 +110,7 @@ internal class SharingSessionBuilder(
                         link = pageLink,
                         products = products,
                         seededReward = seededReward,
+                        language = language,
                     ),
                 // Rebuilt from the same resolved config as pageUrl. If the pool warmed against
                 // anything else the strings differ, and the session does a full load instead of
@@ -117,6 +123,7 @@ internal class SharingSessionBuilder(
                         packageId = packageId,
                         appName = appName,
                         logoUrl = merchant.logoUrl,
+                        language = language,
                     ),
                 activationFragment =
                     SharingPageUrl.activationFragment(

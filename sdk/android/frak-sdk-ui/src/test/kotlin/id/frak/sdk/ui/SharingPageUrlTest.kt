@@ -119,6 +119,58 @@ class SharingPageUrlTest {
         assertTrue(url.endsWith("&view=confirmation"))
     }
 
+    @Test
+    fun `the language tag reaches the page as lng, on both the tap URL and the warm URL`() {
+        val built =
+            SharingPageUrl.build(
+                walletOrigin = "https://wallet.frak.id",
+                merchantId = MERCHANT_ID,
+                clientId = CLIENT_ID,
+                packageId = "com.acme.app",
+                sessionId = "1",
+                language = "fr-CA",
+            )
+        val warmed =
+            SharingPageUrl.warm(
+                walletOrigin = "https://wallet.frak.id",
+                merchantId = MERCHANT_ID,
+                clientId = CLIENT_ID,
+                packageId = "com.acme.app",
+                language = "fr-CA",
+            )
+        assertTrue(built.contains("&lng=fr-CA"))
+        assertTrue(warmed.contains("&lng=fr-CA"))
+    }
+
+    @Test
+    fun `no language writes no lng, so the page falls back to its own detection`() {
+        val url =
+            SharingPageUrl.build(
+                walletOrigin = "https://wallet.frak.id",
+                merchantId = MERCHANT_ID,
+                clientId = CLIENT_ID,
+                packageId = "com.acme.app",
+                sessionId = "1",
+            )
+        assertTrue(!url.contains("lng="))
+    }
+
+    @Test
+    fun `a warm URL built with one language does not match one built with another`() {
+        fun warm(language: String?) =
+            SharingPageUrl.warm(
+                walletOrigin = "https://wallet.frak.id",
+                merchantId = MERCHANT_ID,
+                clientId = CLIENT_ID,
+                packageId = "com.acme.app",
+                language = language,
+            )
+        // The session compares these strings to decide whether it can activate a warm view, so a
+        // language that changes between warm and tap must cost the warm view, never the language.
+        assertTrue(warm("en") != warm("fr"))
+        assertTrue(warm("en") == warm("en"))
+    }
+
     private companion object {
         const val MERCHANT_ID = "550e8400-e29b-41d4-a716-446655440000"
         const val CLIENT_ID = "256b1be3-2745-41d1-89d4-9121cc87bc45"

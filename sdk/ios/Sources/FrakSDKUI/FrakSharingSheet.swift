@@ -51,7 +51,7 @@
 
             return
                 content
-                .task { await presenter.warm() }
+                .task { await presenter.warm(language: configuration.resolvedLanguage) }
                 // The net for a binding that is already true at first render: `onChange` has no
                 // change to observe there, so nothing else would ever start that session. It lives
                 // here rather than on the sheet's own content, which SwiftUI can re-insert behind a
@@ -90,6 +90,7 @@
                 presenter.pendingRequest,
                 install: configuration.install,
                 detectInstall: configuration.detectInstall,
+                language: configuration.resolvedLanguage,
                 onOutcome: { result in
                     if result.significance > (best?.significance ?? -1) {
                         best = result

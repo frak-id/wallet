@@ -27,7 +27,7 @@ internal class Backoff(
 
     /**
      * What is left of [key]'s backoff window, or null when it isn't backing off. Callers surface
-     * this as [FrakError.BackingOff.retryAfterMillis]; it is always positive.
+     * this as [FrakError.BackingOff.retryAfterSeconds]; it is always positive.
      */
     fun remainingMillis(key: String): Long? {
         val entry = state[key] ?: return null

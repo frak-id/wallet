@@ -10,7 +10,7 @@ class FrakErrorTest {
         listOf(
             FrakError.NotInitialized(),
             FrakError.Network(IOException("offline")),
-            FrakError.BackingOff(1_500L),
+            FrakError.BackingOff(1.5),
             FrakError.Server(500),
             FrakError.Decoding("bad body"),
             FrakError.TrackingDisabled(),

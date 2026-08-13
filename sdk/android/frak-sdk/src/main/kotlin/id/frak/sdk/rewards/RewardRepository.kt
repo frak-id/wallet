@@ -6,6 +6,7 @@ import id.frak.sdk.core.Base64Url
 import id.frak.sdk.core.FrakCurrency
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLogger
+import id.frak.sdk.core.MILLIS_PER_SECOND
 import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.net.HttpClient
 import id.frak.sdk.net.HttpClient.Companion.toServerError
@@ -75,7 +76,9 @@ internal class RewardRepository(
                 }?.let { return it.result }
         }
 
-        mutex.withLock { backoff.remainingMillis(backoffKey) }?.let { throw FrakError.BackingOff(it) }
+        mutex.withLock { backoff.remainingMillis(backoffKey) }?.let {
+            throw FrakError.BackingOff(it / MILLIS_PER_SECOND)
+        }
 
         return singleFlight.run(key) {
             request(key, backoffKey, merchantId, currency, targetInteraction, audience, encodedProducts)

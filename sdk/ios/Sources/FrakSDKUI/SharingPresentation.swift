@@ -81,6 +81,7 @@
             request: SharingRequest,
             install: FrakInstallPresentation,
             detectInstall: Bool,
+            language: String?,
             onOutcome: @escaping (SharingResult) -> Void,
             onClose: @escaping () -> Void
         ) -> SharingPresentation {
@@ -103,7 +104,8 @@
                 trace: trace,
                 activationBaseURL: activationBaseURL,
                 install: install,
-                detectInstall: detectInstall
+                detectInstall: detectInstall,
+                language: language
             )
             model.onOutcome = onOutcome
             model.onClose = onClose
@@ -160,13 +162,19 @@
         private var phase: Phase = .idle
         private var pool: SharingWebViewPool?
 
+        /// The BCP-47 tag the pool was warmed on, so a re-drive rebuilds the identical URL.
+        private var warmLanguage: String?
+
         /// Warms the sheet: first the engine, then the data it needs to build a URL, then the page.
         ///
         /// Driven by attaching the `frakSharingSheet` modifier, which is the only control: iOS has
         /// no other warm entry point, so a merchant does not call this by hand. The reward is not
         /// warmed: its cache key includes the request's products, which are unknown here.
-        func warm() async {
+        func warm(language: String? = nil) async {
             guard Frak.isInitialized, let client = try? Frak.client else { return }
+            // Latched: `launch` rebuilds this URL and compares it string-for-string, and the
+            // modifier's own warm call has no configuration to hand.
+            if let language { warmLanguage = language }
             let trace = SharingTrace()
             let walletOrigin = client.environment.wallet
             let bundleId = Bundle.main.bundleIdentifier ?? ""
@@ -192,7 +200,8 @@
                         clientId: clientId,
                         bundleId: bundleId,
                         appName: config.displayName,
-                        logoURL: config.displayLogoURL
+                        logoURL: config.displayLogoURL,
+                        language: warmLanguage
                     )
                 )
         }
@@ -202,9 +211,11 @@
             _ request: SharingRequest,
             install: FrakInstallPresentation,
             detectInstall: Bool,
+            language: String?,
             onOutcome: @escaping (SharingResult) -> Void,
             onClose: @escaping () -> Void
         ) {
+            warmLanguage = language
             switch phase {
             case .live, .reported:
                 // Already up. Both the merchant's binding and the modifier's own `onAppear` ask.
@@ -226,6 +237,7 @@
                 request: request,
                 install: install,
                 detectInstall: detectInstall,
+                language: language,
                 onOutcome: onOutcome,
                 onClose: onClose
             )

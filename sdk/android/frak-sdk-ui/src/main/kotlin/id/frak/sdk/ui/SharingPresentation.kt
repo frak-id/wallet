@@ -64,6 +64,7 @@ internal class SharingPresentation(
             launchContext: () -> Context,
             scope: CoroutineScope,
             request: SharingRequest,
+            language: String?,
             onFinished: (SharingResult) -> Unit,
         ): SharingPresentation {
             val sessionId = UUID.randomUUID().toString()
@@ -86,6 +87,7 @@ internal class SharingPresentation(
                     sessionId = sessionId,
                     onFinished = onFinished,
                     activationBaseUrl = activationBaseUrl,
+                    language = language,
                 )
 
             handle.bind(

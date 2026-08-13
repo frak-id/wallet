@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 
 /// How the sharing sheet is presented, as opposed to what it shares.
 public struct FrakSharingConfiguration: Sendable, Hashable {
@@ -12,14 +13,27 @@ public struct FrakSharingConfiguration: Sendable, Hashable {
     /// and hands off deterministically, instead of falling back to the install code. iOS-only.
     public var detectInstall: Bool
 
+    /// Language of the sheet's contents as a BCP-47 tag (`"en"`, `"fr-CA"`); `nil` uses the device
+    /// locale. The page falls back to its own default for a tag it has no translation for, so this
+    /// selects among what the page ships rather than adding a language.
+    public var language: String?
+
     public init(
         heightFraction: CGFloat = FrakSharingDefaults.heightFraction,
         install: FrakInstallPresentation = FrakSharingDefaults.install,
-        detectInstall: Bool = FrakSharingDefaults.detectInstall
+        detectInstall: Bool = FrakSharingDefaults.detectInstall,
+        language: String? = nil
     ) {
         self.heightFraction = heightFraction
         self.install = install
         self.detectInstall = detectInstall
+        self.language = language
+    }
+
+    /// Resolved once per read rather than at URL-build time, so a session cannot warm on one tag
+    /// and present on another: `warmBaseURL` is compared string-for-string.
+    var resolvedLanguage: String {
+        language ?? Locale.preferredLanguages.first ?? "en"
     }
 }
 

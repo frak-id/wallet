@@ -182,13 +182,13 @@ A freshly auto-created node is by definition unlatched, so proof enforcement is 
 > ```
 > This costs native nothing (native signs from day one) and is a step *toward* `ROLLOUT-STEP-3`: new ids become proof-mandatory immediately while legacy unlatched ids keep working. Also move `markProofSeen` to after the node exists — today it is written before `findGroupByIdentity`, and that ordering stops being safe the moment the 404 goes away. **Complexity: small.**
 
-### 3.4 Every non-`en`/`fr` device gets a **French** sharing sheet, and the merchant cannot override it
+### 3.4 ~~Every non-`en`/`fr` device gets a **French** sharing sheet, and the merchant cannot override it~~ — **partly closed, see §12.4**
 
 Neither `SharingPageUrl.kt` nor `SharingPageURL.swift` forwards a locale (grep: zero matches), and `fallbackLng` is `"fr"` (`packages/wallet-shared/src/i18n/config.test.ts:27`). A German user of a French appliance brand's app gets a French sheet. There is no theming and no localisation knob at all — the entire sheet API is `heightFraction`.
 
 > **Fix:** forward `Locale.getDefault()` / `Locale.preferredLanguages` as a param and read it page-side. **Complexity: trivial.**
 
-### 3.5 iOS `SharingWebViewPool.warm(_:)` has no `lent` guard
+### 3.5 ~~iOS `SharingWebViewPool.warm(_:)` has no `lent` guard~~ — **CLOSED**, `guard !destroyed, !lent` shipped in `74e43c4c3`
 
 `warmView` checks `lent`; `prepare()` checks `pooled == nil`; `warm(_:)` checks **only `destroyed`** (`SharingWebViewPool.swift:44-58`). A warm-up task finishing *after* a tap rebinds and re-navigates the web view the live sheet is holding — the **first share of every app session**. Result: ~5 s of pulsing skeleton, then the raw OS chooser.
 
@@ -211,9 +211,11 @@ Proof timestamps are raw wall-clock. The `frak-merge-v1` window is ±2 min again
 
 > **Fix:** point the fixture at a loopback `FrakEnvironment.Custom` (already allowlisted) and add the `Frak.resetForTesting()` seam `T2` has been asking for.
 
-### 3.9 iOS: `NativeShare.share` can suspend forever, and `SharingPresenter.teardown()` abandons a live session
+### 3.9 iOS: `NativeShare.share` can suspend forever, and `SharingPresenter.teardown()` abandons a live session — **both halves addressed**
 
 `78c96b8` fixed two real bugs and, in doing so, deleted the only escape hatch for a refused presentation without replacing it — and the tier-3 path calls it while the sheet is mid-presentation, which is exactly when UIKit refuses. Separately, `teardown()` does no `dispose` and no `onResult`: live sheet stranded on the skeleton, `WKWebView` leaked.
+
+**Both are addressed against the current tree.** `share` now checks `presentedViewController == nil` and a windowed presenter *before* presenting and returns `false` rather than suspending, with a `ResumeLatch` against a double resume; `teardown()` calls `dispose()` then `reclaimWebView()`. The reporting half is owned by the surface, not `teardown`: SwiftUI reports through `.onDisappear` → `finish()`, and the UIKit host through `SharingHostingController.viewDidDisappear` (§12.4).
 
 ### 3.10 ~~UIKit/ObjC merchants cannot use `FrakSDKUI` at all~~ — **CLOSED, see §12.2**
 
@@ -570,3 +572,66 @@ Of §2's six P0s: **2.1 closed on Android** (`AppLauncher.kt:40`, package-pinned
 What still has no owner: the §4 ABI list (rows 2, 3, 6, 7, 8, 9, 10 — free now, impossible after the first tag), §2.4, §3.4's locale, §3.2c's Android outbox re-drive, and the §11.5 partials. The `12-alpha-audit-response.md` internal contradictions listed in §11.5 were partly addressed by `7b4d7e77c`; the rest are doc hygiene, not risk.
 
 **The most valuable thing to do next is not another audit.** It is the rest of [`harness-blind-spots.md`](./audit-2026-08-13/review-fix-branch/harness-blind-spots.md)'s priority list. `087231df4` took one item off it and found three new defects in an afternoon; eighteen remain, each with the cheapest change that makes it reachable. A finding that no harness can reach is not a finding anyone will fix by reading harder.
+
+### 12.4 The ABI-and-locale pass
+
+Taken while the ABI window is still open — the tree is on `1.0.0-beta.1`, which is a CI exercise, so
+§4's rows are still free. Five of them, plus §3.4 and Q4 from `05-build-and-release.md`.
+
+**§3.4 locale — the prescription was right, the diagnosis was not.** The fix reads "forward a locale
+and read it page-side"; the page side already existed. `bootstrap.tsx` initialises
+`i18next-browser-languagedetector` with `order: ["querystring", "cookie", …, "navigator"]`, and the
+querystring detector's key is `lng`, so a `?lng=` the SDK appends is honoured ahead of everything
+with **no web change at all**. Both SDKs now send it, and both gained the override the finding asked
+for: `FrakSharing.Builder.language(tag)` and `FrakSharingConfiguration.language`, defaulting to the
+device locale.
+
+Two things this does **not** do, stated because the finding's headline implies otherwise:
+
+- **A German device still gets a French sheet.** `supportedLngs` is `["en", "fr"]` and `fallbackLng`
+  is `"fr"`, so an unsupported tag falls back exactly as before — forwarding the locale cannot change
+  that. The symptom the finding names is governed by `fallbackLng`, a wallet-wide product decision
+  taken deliberately and left alone. What changed is that the language is now *chosen* rather than
+  inferred, and a merchant can override it.
+- **It does not use the merchant's configured `lang`.** `FrakResolvedConfig.lang` exists and is
+  resolved, but making it win would override the user's own language with the merchant's — which is
+  the defect, not the fix.
+
+The trap worth recording: `warmBaseUrl` is compared to the pool's warm URL **string-for-string** to
+decide whether a tap can activate a warm view instead of doing a full load. A language that differs
+between warm and tap therefore costs the warm view. Both platforms latch the tag they warmed on
+(`SharingHost.warmLanguage`, `SharingPresenter.warmLanguage`) so a re-drive rebuilds the identical
+URL, and both suites pin it — a mismatch must cost the warm view, never the language.
+
+**§4 row 3 — retry-hint units.** Android published `BackingOff.retryAfterMillis: Long` beside its own
+`Server.retryAfterSeconds: Long?`, so the divergence was not only cross-platform. Now
+`retryAfterSeconds: Double`, matching iOS's `TimeInterval`. `Double`, not integral: `MIN_DELAY_MILLIS`
+is 1 s and the jitter halves it, so 500 ms values are real and seconds-as-`Long` would publish them
+as `0`.
+
+**§4 row 8 — `heightFraction`.** Both platforms already clamped at render; the divergence was that
+Android's *Builder* threw first. It now clamps and logs, matching iOS. Chosen in the direction the
+SDK already leans — a layout number must not crash the merchant's app.
+
+**§4 row 7 — `resetAnonymousId`.** Not a signature change after all, which is the interesting part.
+The `Bool` was fine; iOS was lying into it. `PersistedDeviceKeyStore.delete()` called a
+`removeValue` that is a `try?` plus an unchecked write, then returned `true` unconditionally. It now
+returns whether the key is actually gone, read back, and `reset()` propagates it. The public shape
+is untouched, so this is a bug fix rather than an ABI change.
+
+**Q4 — `FrakLogSink`.** iOS's protocol method was non-throwing, so a merchant with a failing sink had
+no legal way out and took the host process down; Android has always caught `Throwable`. The
+requirement is now `throws` and the call site `try?`. It costs conformers nothing — Swift satisfies a
+throwing requirement with a non-throwing witness, proved by `RecordingSink`, which is unchanged and
+still compiles. A deliberate Swift *trap* is still fatal; nothing can catch one.
+
+**One defect of my own.** The UIKit host reported through `presentationControllerDidDismiss`, which
+fires only for the user's own swipe, so a merchant popping the screen under a live sheet got **no
+result at all**. Now reported from `SharingHostingController.viewDidDisappear`, guarded on
+`isBeingDismissed || presentingViewController == nil` — without that guard the share chooser and the
+store sheet, which cover the sheet rather than dismiss it, would report a session that is still
+running.
+
+The ABI delta is three lines: `language` added to the Android builder, and `BackingOff`'s
+constructor and getter re-typed. Verified with `apiDump`; `check`, both suites and both harnesses
+green.

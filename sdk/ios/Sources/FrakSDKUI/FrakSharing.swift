@@ -50,7 +50,7 @@
         /// Starts warming the pooled web view and the identity/config reads. Call when a share
         /// affordance becomes visible; cheap to call repeatedly, and ``present(_:)`` implies it.
         public func warm() {
-            Task { @MainActor in await presenter.warm() }
+            Task { @MainActor in await presenter.warm(language: configuration.resolvedLanguage) }
         }
 
         /// Presents the sheet for `request`. A second call while a sheet is up is a no-op.
@@ -66,6 +66,7 @@
                 request,
                 install: configuration.install,
                 detectInstall: configuration.detectInstall,
+                language: configuration.resolvedLanguage,
                 onOutcome: { [weak self] result in
                     guard let self else { return }
                     if result.significance > (self.best?.significance ?? -1) {
@@ -79,7 +80,11 @@
                 presenter: presenter,
                 heightFraction: configuration.heightFraction
             )
-            let controller = UIHostingController(rootView: content)
+            let controller = SharingHostingController(rootView: content)
+            // Every way the sheet can leave, including the merchant popping the screen under it —
+            // `presentationControllerDidDismiss` covers only the user's own swipe, so on its own it
+            // loses the result for a session the merchant navigated away from.
+            controller.onDismissed = { [weak self] in self?.settle() }
             controller.modalPresentationStyle = .pageSheet
             controller.presentationController?.delegate = dismissalObserver
             applyDetents(to: controller)
@@ -120,6 +125,20 @@
             presenter.finish {
                 onResult(best ?? .dismissed)
                 best = nil
+            }
+        }
+
+        /// Reports the sheet actually leaving the screen, which `UIHostingController` alone does
+        /// not: `viewDidDisappear` also fires when the share chooser or the store sheet covers it,
+        /// and settling there would report a session that is still running.
+        private final class SharingHostingController<Content: View>: UIHostingController<Content> {
+            var onDismissed: (@MainActor () -> Void)?
+
+            override func viewDidDisappear(_ animated: Bool) {
+                super.viewDidDisappear(animated)
+                // Only a real dismissal detaches it from its presenter; being covered does not.
+                guard isBeingDismissed || presentingViewController == nil else { return }
+                onDismissed?()
             }
         }
 
