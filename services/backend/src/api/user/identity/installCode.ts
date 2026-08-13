@@ -105,7 +105,6 @@ const installCodeResolveRoute = new Elysia()
             // ROLLOUT-STEP-3: `anonymousId` stays in this response for old
             // binaries that ignore `ticket`. Drop it, and the dual-arm
             // handling in /identity/ensure, once minVersion excludes them.
-            // See ROLLOUT.md.
             const ticket =
                 await IdentityContext.services.installCode.mintTicket({
                     merchantId,

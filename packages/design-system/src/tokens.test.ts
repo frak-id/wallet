@@ -60,8 +60,7 @@ describe("design-system tokens", () => {
         });
     });
 
-    // Behavior-preserving guard for the token-derivation refactor (see
-    // docs/plans/2026-07-03-001-refactor-token-derivation-plan.md). These
+    // Behavior-preserving guard for the token-derivation refactor. These
     // values were captured from the pre-refactor literal maps in
     // tokens.css.ts. They must keep passing after `alias` and `semantic*`
     // are rewired to reference `brand.colors.*` — a green suite here proves

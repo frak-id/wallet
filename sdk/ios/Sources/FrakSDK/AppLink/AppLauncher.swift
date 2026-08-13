@@ -6,7 +6,7 @@ protocol AppLauncher: Sendable {
     func open(_ url: String) async -> Bool
 
     /// `open(_:)` restricted to a genuine universal link: opens silently, and answers false
-    /// rather than falling back to Safari. See `docs/plans/native-sdk/03-sharing-and-install.md`.
+    /// rather than falling back to Safari, so a scheme fallback stays the caller's choice.
     func openUniversalLink(_ url: String) async -> Bool
 }
 

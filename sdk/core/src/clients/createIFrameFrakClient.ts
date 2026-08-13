@@ -352,7 +352,6 @@ async function hashMergeToken(token: string): Promise<Uint8Array | undefined> {
  * ROLLOUT-STEP-1: `proofs.install` travels on `resolved-config` and the
  * listener forwards it into the `/install` URL as a `#p=` fragment — the
  * wallet's install route still needs to read it and send it to the backend.
- * See ROLLOUT.md.
  */
 async function buildSdkIdentity({
     merchantId,

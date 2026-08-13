@@ -111,7 +111,7 @@ export class AnonymousMergeOrchestrator {
         //
         // ROLLOUT-STEP-3: revisit whether this arm should become
         // unconditionally mandatory once the wallet binary and legacy SDK
-        // population have aged out (see ROLLOUT.md).
+        // population have aged out.
         //
         // TODO(merge-initiate-proof): one production caller still sends no
         // proof here — the listener's modal / embedded-wallet path, via
@@ -240,7 +240,6 @@ export class AnonymousMergeOrchestrator {
                 "targetAnonymousId does not exist; a proof is required to create it"
             );
         }
-
 
         // After `resolve`, never before: `markProofSeen` is a no-op when the
         // node is absent, so latching a brand-new id here silently did nothing.

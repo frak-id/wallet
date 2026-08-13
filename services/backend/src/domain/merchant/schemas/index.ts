@@ -277,9 +277,8 @@ export type Placement = Static<typeof PlacementSchema>;
 
 /**
  * Merchant company/accounting info used on generated billing documents.
- * `country` and `vatNumber` are tax-relevant and platform-admin-writable only
- * (see billing-feature-plan.md §3.1) — enforced at the service/route layer,
- * not by this schema.
+ * `country` and `vatNumber` are tax-relevant and platform-admin-writable
+ * only — enforced at the service/route layer, not by this schema.
  */
 export const MerchantAccountingInfoSchema = t.Object({
     companyName: t.String({ maxLength: 200 }),

@@ -20,7 +20,7 @@ import java.util.concurrent.CompletableFuture
  *
  * [TrackingApi] is the one deliberate exception: it returns [id.frak.sdk.core.FrakResult] and never
  * throws, because it is called from hot paths where a disabled-tracking refusal is expected rather
- * than exceptional. See `docs/plans/native-sdk/09-android-api-surface.md` §5b before adding an API.
+ * than exceptional. A tier change is invisible to the ABI dump, so it needs a `!` commit.
  */
 public class FrakClient internal constructor(
     internal val core: DefaultFrakClient,

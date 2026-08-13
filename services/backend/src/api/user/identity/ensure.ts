@@ -77,7 +77,7 @@ async function resolveWalletEnsureAnonymousId(params: {
 
     // ROLLOUT-STEP-3: legacy bearer arm — a raw id with nothing proving it
     // belongs to the caller, kept only because the installed Tauri binary
-    // POSTs exactly this shape. See ROLLOUT.md.
+    // POSTs exactly this shape.
     //
     // Unreachable today (only called when `ticket || bodyAnonymousId`);
     // kept as a defensive guard.

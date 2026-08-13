@@ -44,6 +44,14 @@ const HISTORY_PHRASES = [
     "investigated and rejected",
 ].map((p) => new RegExp(`\\b${p}\\b`, "i"));
 
+/**
+ * A pointer to a document is a dangling reference waiting to happen: the doc moves, the comment
+ * does not. A sibling doc shipped alongside the code may be named; a path or a plan document
+ * may not — restate the constraint here instead.
+ */
+const DOC_REFERENCE = /[\w.\-/]*\.md\b/gi;
+const COLOCATED_DOC = /^(readme|agents|privacy|changelog|license)\.md$/i;
+
 /** Where the prose stops and the allowed `@param`/`@return` tail starts. */
 const DOC_TAG =
     /^(-\s*(parameters?|returns?|throws?)\b|@(param|returns?|throws))/i;
@@ -154,6 +162,25 @@ function budgetFindings(
     return out;
 }
 
+function docReferenceFindings(
+    file: string,
+    at: number,
+    content: string[]
+): Finding[] {
+    return (
+        content
+            .join(" ")
+            .match(DOC_REFERENCE)
+            ?.filter((ref) => !COLOCATED_DOC.test(ref))
+            .map((ref) => ({
+                file,
+                line: at,
+                rule: "references-a-doc",
+                detail: `points at "${ref}" — state the constraint here instead`,
+            })) ?? []
+    );
+}
+
 function checkFile(file: string): Finding[] {
     const lines = readFileSync(file, "utf8").split("\n");
     const findings: Finding[] = [];
@@ -186,6 +213,8 @@ function checkFile(file: string): Finding[] {
 
         findings.push(...budgetFindings(file, at, content.length, codeLines));
 
+        findings.push(...docReferenceFindings(file, at, content));
+
         for (const phrase of HISTORY_PHRASES) {
             const hit = joined.match(phrase);
             if (hit) {
@@ -193,7 +222,7 @@ function checkFile(file: string): Finding[] {
                     file,
                     line: at,
                     rule: "narrates-history",
-                    detail: `contains "${hit[0]}" — put it in the commit message or docs/plans/**`,
+                    detail: `contains "${hit[0]}" — put it in the commit message or the plan, not here`,
                 });
             }
         }

@@ -49,7 +49,7 @@ export namespace JwtContext {
         iss: "frak-identity",
     });
     /**
-     * Install ticket (docs/plans/identity-proof-of-possession/README.md §5, "Ticket design") — minted unconditionally
+     * Install ticket — minted unconditionally
      * by `install-code/resolve`, consumed by `/identity/ensure`. TTL is tied
      * to `INSTALL_TICKET_TTL_MS`, the single constant also imported by the
      * wallet's `pendingActionsStore.ts` (`DEFAULT_ENSURE_TTL_MS`), so the two

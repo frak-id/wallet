@@ -53,8 +53,8 @@ internal class SharingPresentation(
 
     companion object {
         /**
-         * Past this, skip the page and fire the native share sheet directly. Covers build,
-         * navigation, load and first paint — see `07-sharing-sheet-audit.md` §2.6.
+         * Past this, skip the page and fire the native share sheet directly. One budget
+         * covering build, navigation, load and first paint; measured paths run 540-1780ms.
          */
         private const val PAGE_LOAD_DEADLINE_MILLIS = 5_000L
 

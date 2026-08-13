@@ -30,9 +30,8 @@ const oneOf =
 /**
  * The `/install` fragment contract: the SDK writes `p`/`sid`/`probe` once at
  * page load and rewrites the whole set plus `installed`/`dt`/`via` when its
- * post-install probe fires. See `03-sharing-and-install.md`, *Post-install
- * detection*. Deliberately not shared with `sharing`'s table — the two key
- * sets have nothing in common.
+ * post-install probe fires. Deliberately not shared with `sharing`'s table
+ * — the two key sets have nothing in common.
  */
 export const INSTALL_PARAMS = {
     p: { decode: str, transport: "both" },

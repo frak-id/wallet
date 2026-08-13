@@ -6,8 +6,8 @@
     /// Notices the wallet becoming installable while a store surface is up, so the sheet can hand
     /// off deterministically instead of falling back to the install code.
     ///
-    /// Owned by `SharingSheetModel`, not by `StoreInvite` — see
-    /// `docs/plans/native-sdk/03-sharing-and-install.md` for why bracketing the invite is wrong.
+    /// Owned by `SharingSheetModel`, not by `StoreInvite`: the overlay outlives the sheet
+    /// once `.installStarted` is reported, so bracketing the invite would stop it too early.
     @MainActor
     final class InstallProbe {
         /// Injected so detection order is host-testable with a fake, reusing the same seam

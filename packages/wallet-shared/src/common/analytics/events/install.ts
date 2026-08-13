@@ -65,9 +65,8 @@ export type InstallEventMap = {
     };
     install_page_dismissed: undefined;
 
-    // iOS post-install detection — `03-sharing-and-install.md`, *Post-install
-    // detection*. Sourced from the SDK's fragment rewrite (`dt`/`via`/`probe`);
-    // neither native SDK has an analytics sink of its own.
+    // iOS post-install detection. Sourced from the SDK's fragment rewrite
+    // (`dt`/`via`/`probe`); neither native SDK has an analytics sink of its own.
     install_detected: MerchantMaybe & {
         elapsed_ms: number;
         surface: InstallProbeSurface;

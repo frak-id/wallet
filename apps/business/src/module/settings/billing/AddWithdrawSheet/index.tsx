@@ -73,7 +73,7 @@ function useLinkableDeposits(merchantId: string, enabled: boolean) {
 
 /**
  * Platform-admin-only sheet to record a withdraw bill. Requires linking an
- * existing deposit (restitution source, billing-feature-plan.md §4) — its
+ * existing deposit (the restitution source) — its
  * currency is authoritative and the withdraw currency auto-follows it
  * (the backend rejects a currency mismatch).
  */

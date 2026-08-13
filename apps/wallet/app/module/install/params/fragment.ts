@@ -9,9 +9,9 @@ import {
 /**
  * Read the post-install probe's params out of a location fragment. Absent
  * keys are omitted rather than set to `undefined`, matching the sharing
- * page's contract: a same-document rewrite always re-emits the whole set
- * (see `03-sharing-and-install.md`), so an absent key here means the host
- * never sent one, not that it was cleared.
+ * page's contract: a same-document rewrite always re-emits the whole set,
+ * so an absent key here means the host never sent one, not that it was
+ * cleared.
  */
 export function parseInstallFragment(hash: string): InstallActivation | null {
     const raw = hash.startsWith("#") ? hash.slice(1) : hash;

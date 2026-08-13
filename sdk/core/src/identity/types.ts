@@ -14,7 +14,7 @@
  * sensitive endpoint (e.g. merge).
  *
  * `/track/*` is unsigned and stays that way. A future optional `frak-track-v1`
- * is sketched in `docs/plans/identity-proof-of-possession/ROLLOUT.md`.
+ * is sketched but unscheduled.
  */
 export type ProofOp =
     | "frak-merge-v1"

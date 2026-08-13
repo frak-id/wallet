@@ -4,7 +4,7 @@ import type { Address } from "viem";
 import { isAddressEqual } from "viem";
 
 /**
- * VAT + Frak fee + withdraw-restitution math (billing-feature-plan.md §4).
+ * VAT + Frak fee + withdraw-restitution math.
  *
  * Pure, side-effect-free, no DB/cross-domain imports — safe to unit test in
  * isolation and safe to call directly from the orchestrator. All money in/out

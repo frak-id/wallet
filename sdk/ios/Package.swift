@@ -3,8 +3,8 @@ import PackageDescription
 
 // macOS(.v12) floor: HTTPClient needs URLSession.data(for:delegate:) (macOS 12); FrakLogger needs os.Logger (macOS 11). Do not lower without re-checking both.
 // Tools-version 6.0 is what makes `.swiftLanguageMode(.v6)` below available at all. It costs a
-// hard Xcode 16 floor for anyone resolving this package. Rationale in
-// docs/plans/native-sdk/05-build-and-release.md.
+// hard Xcode 16 floor for anyone resolving this package. `.unsafeFlags` is not an
+// alternative: SwiftPM forbids it on a package resolved as a dependency.
 let package = Package(
     name: "FrakSDK",
     platforms: [
