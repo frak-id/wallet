@@ -16,6 +16,7 @@
         private let walletSchemeStatus: @Sendable () async -> ProbeStatus
         private let now: @Sendable () -> TimeInterval
 
+        private var generation = 0
         private var sessionId: String?
         private var startedAt: TimeInterval?
         private var poll: Task<Void, Never>?
@@ -38,10 +39,16 @@
 
         /// Answers false, and starts nothing, when the wallet's scheme cannot be probed at all —
         /// `walletSchemeStatus` already warns once through `FrakLogger` in that case.
+        ///
+        /// `generation` closes the gap around the `await`: a second `start` landing inside it would
+        /// otherwise have its poll and observer overwritten by the first one resuming, leaving both
+        /// unreachable by `stop()`.
         @discardableResult
         func start(sessionId: String, onDetected: @escaping (TimeInterval) -> Void) async -> Bool {
             stop()
-            guard await walletSchemeStatus() == .ok else { return false }
+            generation &+= 1
+            let generation = generation
+            guard await walletSchemeStatus() == .ok, generation == self.generation else { return false }
             self.sessionId = sessionId
             self.onDetected = onDetected
             let startedAt = now()
@@ -86,7 +93,8 @@
         /// past — a rebind on the pooled view — reports nothing and reschedules nothing.
         private func check(sessionId: String) {
             guard self.sessionId == sessionId, let startedAt else { return }
-            Task {
+            Task { [weak self] in
+                guard let self else { return }
                 guard await canOpenWallet() else {
                     guard self.sessionId == sessionId else { return }
                     scheduleNextPoll(sessionId: sessionId, startedAt: startedAt)

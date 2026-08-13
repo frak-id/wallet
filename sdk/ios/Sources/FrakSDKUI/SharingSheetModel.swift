@@ -103,7 +103,8 @@
             trace: SharingTrace = SharingTrace(),
             activationBaseURL: String? = nil,
             install: FrakInstallPresentation = FrakSharingDefaults.install,
-            detectInstall: Bool = FrakSharingDefaults.detectInstall,
+            // No default: a defaulted merchant opt-out is one that silently stops being threaded.
+            detectInstall: Bool,
             buildSharingLink: @escaping @Sendable (SharingRequest) async throws -> String? = {
                 try await Frak.client.sharing.buildLink($0)
             },

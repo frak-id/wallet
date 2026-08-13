@@ -80,6 +80,7 @@
             pool: SharingWebViewPool,
             request: SharingRequest,
             install: FrakInstallPresentation,
+            detectInstall: Bool,
             onOutcome: @escaping (SharingResult) -> Void,
             onClose: @escaping () -> Void
         ) -> SharingPresentation {
@@ -101,7 +102,8 @@
                 sessionId: sessionId,
                 trace: trace,
                 activationBaseURL: activationBaseURL,
-                install: install
+                install: install,
+                detectInstall: detectInstall
             )
             model.onOutcome = onOutcome
             model.onClose = onClose
@@ -199,6 +201,7 @@
         func launch(
             _ request: SharingRequest,
             install: FrakInstallPresentation,
+            detectInstall: Bool,
             onOutcome: @escaping (SharingResult) -> Void,
             onClose: @escaping () -> Void
         ) {
@@ -222,6 +225,7 @@
                 pool: pool,
                 request: request,
                 install: install,
+                detectInstall: detectInstall,
                 onOutcome: onOutcome,
                 onClose: onClose
             )
@@ -262,6 +266,10 @@
         func teardown() {
             // A session goes with the surface.
             phase = .idle
+            // A surface can go while the session is still live — a merchant navigating away from
+            // the presenting screen — and only `dispose` stops the install probe and takes the
+            // store surface down. Idempotent, so a sheet that already dismissed pays nothing.
+            presentation?.dispose()
             // Ahead of `destroy()`, which refuses to drop a view the pool still thinks is lent.
             presentation?.reclaimWebView()
             // The one place `presentation` is cleared: the surface is gone, so nothing is

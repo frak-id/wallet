@@ -893,8 +893,19 @@ Open questions:
    measurement gates whether the sharing screen goes native. **The fallback half of that target is
    now knowingly out of date**: the deadline shipped at 1.5 s and fired over pages that were merely
    still loading, so it is 5 s until someone measures the WebView path properly (`07` §2.6).
-5. Post-install detection (§3, *the deterministic iOS path*) is designed and unbuilt. The three
-   calls it opened are settled — the probe stays on the configured environment's scheme,
-   `SharingResult` gains `.walletOpened`, and the poll has no ceiling — so what is left is the
-   build, the universal-link handoff rung, and the first `install_detected` distribution telling
-   us whether the 30 s / 120 s knees are in the right place.
+5. Post-install detection (§3, *the deterministic iOS path*) has **landed** on all three lanes:
+   `InstallProbe` + `InstallProbeSchedule` + `QueriedSchemes`, `detectInstall`, the universal-link
+   rung on `openFrakApp()`, `SharingResult.walletOpened` on both platforms, and the `/install`
+   fragment contract with its `installed` state. What is left:
+   - **Nothing executable covers the wiring.** `SharingSheetModel` and `SharingPresentation` are
+     behind `#if canImport(UIKit)`, so `detectInstall` reaching the model is compile-checked only.
+     It shipped inert once already, for exactly that reason, and was caught in review rather than
+     by a test. The structural guard is that `detectInstall` now has no default anywhere between
+     the modifier and the model, so dropping it is a compile error — a device/simulator test stage
+     is what would make it a test failure instead.
+   - **`release()` dismisses the store surface unconditionally**, which reads against *iOS
+     specifics*' "the overlay outlives the sheet once `.installStarted` is reported". Pre-existing,
+     and the code's own comment argues a tapped GET keeps downloading regardless, so the cost is
+     only the untapped case. Needs one of the two rewritten to match the other.
+   - The first `install_detected` distribution, which is the only evidence for whether the
+     30 s / 120 s knees are in the right place.
