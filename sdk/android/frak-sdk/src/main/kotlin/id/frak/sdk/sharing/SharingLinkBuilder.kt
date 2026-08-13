@@ -11,7 +11,7 @@ internal object SharingLinkBuilder {
     /** `utm_source` when nothing else supplies one, matching `frakContext.ts`. */
     private const val DEFAULT_SOURCE = "frak"
 
-    /** Null when [baseUrl] isn't a URL, or context can't be encoded (no identity to build from). */
+    /** Null when [baseUrl] isn't an http(s) URL, or context can't be encoded (no identity to build from). */
     fun build(
         baseUrl: String,
         context: FrakContext.V2,
@@ -19,6 +19,9 @@ internal object SharingLinkBuilder {
         defaults: AttributionDefaults?,
         productUtmContent: String? = null,
     ): String? {
+        // Scheme-checked, not just parseable: `UrlQuery` accepts any `scheme://`, and a share
+        // link is handed to the OS chooser — `intent://` or a vendor scheme would resolve there.
+        if (!isWebUrl(baseUrl)) return null
         val url = UrlQuery.parse(baseUrl) ?: return null
         val encoded = FrakContextCodec.compress(context) ?: return null
         val resolved = mergeAttribution(attribution, defaults, productUtmContent)
@@ -35,6 +38,9 @@ internal object SharingLinkBuilder {
             .fillIfAbsent("ref", resolved.ref)
             .toString()
     }
+
+    private fun isWebUrl(url: String): Boolean =
+        url.startsWith("https://", ignoreCase = true) || url.startsWith("http://", ignoreCase = true)
 
     /** Reads the referral context out of an inbound URL, or null when it carries none. */
     fun parse(url: String): FrakContext? = UrlQuery.parse(url)?.get(CONTEXT_KEY)?.let(FrakContextCodec::decompress)

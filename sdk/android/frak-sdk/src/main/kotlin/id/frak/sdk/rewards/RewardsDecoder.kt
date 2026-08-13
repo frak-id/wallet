@@ -1,5 +1,8 @@
+@file:OptIn(InternalFrakApi::class)
+
 package id.frak.sdk.rewards
 
+import id.frak.sdk.InternalFrakApi
 import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.net.JsonReader
 import org.json.JSONObject

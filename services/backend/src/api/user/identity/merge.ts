@@ -99,6 +99,10 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                 // PROOF_REQUIRED (latched targetAnonymousId with no proof) or
                 // PROOF_INVALID (proof present but fails verification).
                 403: t.ErrorResponse,
+                // TARGET_NOT_FOUND: the target does not exist and no proof was
+                // presented, so it may not be created. Both routes here are
+                // unauthenticated; a proof is what authorises the create.
+                404: t.ErrorResponse,
             },
         }
     );

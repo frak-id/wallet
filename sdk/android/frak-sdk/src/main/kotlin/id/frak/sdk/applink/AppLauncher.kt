@@ -8,8 +8,16 @@ import android.net.Uri
 internal interface AppLauncher {
     fun isInstalled(packageId: String): Boolean
 
-    /** True when something handled [url]. */
-    fun open(url: String): Boolean
+    /**
+     * True when something handled [url]. [packageId] pins the receiver: the wallet handoff must not
+     * be answerable by another app that also claims `frakwallet://`, which would silently cost the
+     * user their install attribution while this still reports success. Null for a store URL, where
+     * the whole point is to let the device choose.
+     */
+    fun open(
+        url: String,
+        packageId: String? = null,
+    ): Boolean
 }
 
 internal class AndroidAppLauncher(
@@ -21,11 +29,15 @@ internal class AndroidAppLauncher(
     override fun isInstalled(packageId: String): Boolean =
         runCatching { appContext.packageManager.getPackageInfo(packageId, 0) }.isSuccess
 
-    override fun open(url: String): Boolean {
+    override fun open(
+        url: String,
+        packageId: String?,
+    ): Boolean {
         val intent =
             Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 // Application context has no task of its own for the new activity.
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (packageId != null) intent.setPackage(packageId)
         return runCatching { appContext.startActivity(intent) }.isSuccess
     }
 }

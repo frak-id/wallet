@@ -14,6 +14,14 @@ public object FrakSdkVersion {
     @InternalFrakApi
     public val HEADER_NAME: String = "x-frak-sdk-version"
 
+    /**
+     * What [HEADER_NAME] carries. Platform-prefixed: the version alone is identical on both
+     * SDKs, so a fleet of frozen binaries is otherwise indistinguishable on the wire.
+     */
+    @JvmStatic
+    @InternalFrakApi
+    public val HEADER_VALUE: String = "android/$CURRENT"
+
     /** Wire plumbing for `:frak-sdk-ui`'s page URLs; not merchant API. */
     @JvmStatic
     @InternalFrakApi

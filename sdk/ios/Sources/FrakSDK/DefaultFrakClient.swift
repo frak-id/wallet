@@ -150,11 +150,10 @@ actor DefaultFrakClient {
     @discardableResult
     func resetAnonymousId() async -> Bool {
         let erased = await identity.reset()
-        // Purged so an event captured under the dead id doesn't re-link the identity the user
-        // just asked to be forgotten. Best-effort; the drain loop's stale-id check is the real
-        // guarantee.
-        let tracker = self.tracker
-        Task { await tracker.purge() }
+        // Purged so an event captured under the dead id doesn't re-link the identity the user just
+        // asked to be forgotten. Awaited: a caller that resets and then reads has been told the
+        // queue is clear, and detaching this made that a lie under any real drain.
+        await tracker.purge()
         return erased
     }
 
@@ -183,6 +182,7 @@ actor DefaultFrakClient {
     /// Covers only what this client retains: `ConfigStore` revalidation, `RewardRepository`, the
     /// purge and the eager mint can still touch the network after this returns.
     func shutdown() async {
+        await configStore.finishSubscribers()
         startupTask?.cancel()
         startupTask = nil
         configFlushTask?.cancel()
@@ -334,6 +334,13 @@ actor DefaultFrakClient {
         )
         if ignore {
             logger.info("Ignoring a self- or foreign-merchant referral link.")
+            return true
+        }
+
+        // One link, one arrival: `.onOpenURL` fans out to every view that registers it.
+        guard let raw = URLQuery.parse(url)?.value(for: SharingLinkBuilder.contextKey),
+            await merge.claimArrival(raw)
+        else {
             return true
         }
 

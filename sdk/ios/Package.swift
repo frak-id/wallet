@@ -2,12 +2,9 @@
 import PackageDescription
 
 // macOS(.v12) floor: HTTPClient needs URLSession.data(for:delegate:) (macOS 12); FrakLogger needs os.Logger (macOS 11). Do not lower without re-checking both.
-// Tools-version 6.0 (up from 5.9) is what makes `.swiftLanguageMode(.v6)` below available at
-// all — it's a PackageDescription 6.0 API. The consequence: a merchant's own `swift build` or
-// Xcode SwiftPM resolve now needs Xcode 16 at minimum to read this manifest, not just to run
-// scripts/run.sh's CI-only flags. `.unsafeFlags` was considered instead and rejected — SwiftPM
-// refuses `.unsafeFlags` on any target of a package resolved as someone else's dependency, which
-// this always is.
+// Tools-version 6.0 is what makes `.swiftLanguageMode(.v6)` below available at all. It costs a
+// hard Xcode 16 floor for anyone resolving this package. Rationale in
+// docs/plans/native-sdk/05-build-and-release.md.
 let package = Package(
     name: "FrakSDK",
     platforms: [

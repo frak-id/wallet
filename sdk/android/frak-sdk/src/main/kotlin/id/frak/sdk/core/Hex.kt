@@ -44,7 +44,7 @@ internal object Hex {
         }
     }
 
-    private fun nibble(char: Char): Int? =
+    fun nibble(char: Char): Int? =
         when (char) {
             in '0'..'9' -> char - '0'
             in 'a'..'f' -> char - 'a' + 10

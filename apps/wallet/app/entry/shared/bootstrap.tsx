@@ -121,6 +121,12 @@ async function initI18n() {
                     "navigator",
                 ],
             },
+            react: {
+                // The English bundle is added AFTER `languageChanged` fires, and
+                // react-i18next's default only listens to that event — without this an
+                // English device renders the French fallback and never re-renders.
+                bindI18nStore: "added",
+            },
         });
 }
 

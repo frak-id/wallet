@@ -22,10 +22,35 @@ struct URLQueryTests {
         #expect(query.value(for: "fctx") == "a-b_c")
     }
 
+    @Test("prefers an exact-case match over a mangled duplicate")
+    func prefersAnExactCaseMatch() throws {
+        let query = try #require(URLQuery.parse("https://acme.example/p?fctx=stale&fCtx=real"))
+        #expect(query.value(for: "fCtx") == "real")
+    }
+
+    @Test("exactValue does not fall back to another casing")
+    func exactValueIsCaseSensitive() throws {
+        let query = try #require(URLQuery.parse("https://acme.example/p?FMT=token"))
+        #expect(query.value(for: "fmt") == "token")
+        #expect(query.exactValue(for: "fmt") == nil)
+    }
+
+    @Test("exactValue still decodes the value it matches")
+    func exactValueDecodes() throws {
+        let query = try #require(URLQuery.parse("https://acme.example/p?fmt=a%20b"))
+        #expect(query.exactValue(for: "fmt") == "a b")
+    }
+
     @Test("leaves a malformed escape as written rather than dropping the value")
     func toleratesAMalformedEscape() throws {
         let query = try #require(URLQuery.parse("https://acme.example/p?a=100%zz"))
         #expect(query.value(for: "a") == "100%zz")
+    }
+
+    @Test("decodes a plus as a space, like URLSearchParams")
+    func decodesPlusAsSpace() throws {
+        let query = try #require(URLQuery.parse("https://acme.example/p?a=spring+sale"))
+        #expect(query.value(for: "a") == "spring sale")
     }
 
     @Test("decodes multi-byte utf-8")

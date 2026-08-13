@@ -1,9 +1,12 @@
 package id.frak.sdk.ui
 
+import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.MutableContextWrapper
+import android.content.res.Configuration
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.ComponentDialog
 import androidx.annotation.MainThread
@@ -125,6 +128,9 @@ internal class SharingHost private constructor(
     /** Set by [onOwnerCleared]. The screen is really gone; refuse everything. */
     private var cleared = false
 
+    /** Registered on the first [attach], not at construction: a leak here outlives the process's interest in this host. */
+    private var memoryCallbacksRegistered = false
+
     private val mainHandler = Handler(Looper.getMainLooper())
 
     /**
@@ -138,6 +144,10 @@ internal class SharingHost private constructor(
         callback: FrakSharing.ResultCallback,
     ) {
         if (cleared) return
+        if (!memoryCallbacksRegistered) {
+            memoryCallbacksRegistered = true
+            appContext.registerComponentCallbacks(memoryCallbacks)
+        }
         if (this.activity !== activity) {
             this.activity = activity
             webViewContext.baseContext = activity
@@ -147,17 +157,30 @@ internal class SharingHost private constructor(
         // A session that outlived the previous Activity has nowhere to report until now.
         val resumed = live
         if (resumed?.presentation != null) {
-            if (this.callback == null) this.callback = callback
+            if (this.callback == null) {
+                this.callback = callback
+            } else {
+                // Two FrakSharing instances on one Activity: attach order, not present order,
+                // decides which callback a resumed session reports to. See the class KDoc.
+                Log.w(TAG, "A second FrakSharing attached while a sheet is live; the first one keeps the result.")
+            }
             // The dialog died with the previous Activity; the web view did not, so no entry animation.
             if (dialog == null) show(resumed, animateIn = false)
         }
 
         // Posted, never inline: this runs from `build(...)`, which a Compose caller reaches from inside
         // a composition.
-        pendingResult?.let { pending ->
-            pendingResult = null
-            // Re-checked inside the post: a fast rotate-rotate can destroy this Activity first.
-            mainHandler.post { if (!cleared && this.activity === activity) callback.onResult(pending) }
+        if (pendingResult != null) {
+            // Everything re-read inside the post, never captured: a fast rotate-rotate can destroy
+            // this Activity first, and two attach() calls on the same one would otherwise schedule
+            // two posts that both deliver. Cleared only on the branch that actually delivers, or a
+            // second recreation drops the outcome and the merchant's callback never fires.
+            mainHandler.post {
+                if (cleared || this.activity !== activity) return@post
+                val pending = pendingResult ?: return@post
+                pendingResult = null
+                callback.onResult(pending)
+            }
         }
         // Either picks up a `warm()` that arrived before there was an Activity, or boots the pool
         // against a URL that resolved during the rotation gap.
@@ -250,6 +273,17 @@ internal class SharingHost private constructor(
             )
         when (decision) {
             SharingPresentDecision.Ignore -> {
+                // The merchant's callback is the single source of truth for everything else, so an
+                // arm that reports nowhere has to at least say why in logcat.
+                Log.w(
+                    TAG,
+                    "present() ignored: the hosting Activity is " +
+                        when {
+                            cleared || activity == null -> "gone"
+                            activity.isFinishing || activity.isDestroyed -> "finishing"
+                            else -> "not started"
+                        },
+                )
                 return
             }
 
@@ -283,7 +317,7 @@ internal class SharingHost private constructor(
         // already live, so every later `present()` here would answer `AlreadyPresenting`.
         val started =
             try {
-                SharingPresentation.start(pool, appContext, scope, request, ::finish)
+                SharingPresentation.start(pool, appContext, { activity ?: appContext }, scope, request, ::finish)
             } catch (unavailable: Exception) {
                 // Almost always a missing/disabled/updating WebView provider. The pool goes with it,
                 // since `acquire` may have marked its view lent before the throw.
@@ -433,6 +467,7 @@ internal class SharingHost private constructor(
      */
     fun onOwnerCleared() {
         cleared = true
+        if (memoryCallbacksRegistered) appContext.unregisterComponentCallbacks(memoryCallbacks)
         // Before `dispose()`: a pool already marked dead destroys the view on release instead of
         // reloading a warm URL into a view that is about to be thrown away.
         pool?.destroy()
@@ -448,6 +483,27 @@ internal class SharingHost private constructor(
         // [finish], which early-returns once the session has been dropped.
     }
 
+    /**
+     * A warm `WebView` is a whole renderer process held for a tap that may never come. Released on
+     * real memory pressure; a lent view is never taken, and the next [present] warms again — cold,
+     * which is why `TRIM_MEMORY_UI_HIDDEN` must not reach here. It is a lifecycle signal, not
+     * pressure: it fires on every home press, and trimming there makes every later share cold.
+     */
+    private val memoryCallbacks =
+        object : ComponentCallbacks2 {
+            override fun onTrimMemory(level: Int) {
+                if (!isMemoryPressure(level)) return
+                onMainThread { pool?.trim() }
+            }
+
+            override fun onConfigurationChanged(newConfig: Configuration) = Unit
+
+            @Deprecated("Deprecated in ComponentCallbacks, still abstract")
+            override fun onLowMemory() {
+                onMainThread { pool?.trim() }
+            }
+        }
+
     private fun onMainThread(block: () -> Unit) {
         if (Looper.myLooper() == Looper.getMainLooper()) block() else mainHandler.post { block() }
     }
@@ -462,6 +518,14 @@ internal class SharingHost private constructor(
             return retained.host
                 ?: SharingHost(activity.applicationContext).also { retained.host = it }
         }
+
+        /**
+         * `TRIM_MEMORY_UI_HIDDEN` sorts between the running and background levels but means "your UI
+         * went away", so a `>=` test both catches it and misses the running-low levels below it.
+         */
+        fun isMemoryPressure(level: Int): Boolean =
+            level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW &&
+                level != ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN
     }
 }
 
@@ -510,3 +574,6 @@ internal object MainThreadDispatcher : CoroutineDispatcher() {
         Dispatchers.IO.dispatch(context, block)
     }
 }
+
+/** Matches `SharingHostStyle`'s, so the whole sheet reads as one tag in logcat. */
+private const val TAG: String = "FrakSharing"

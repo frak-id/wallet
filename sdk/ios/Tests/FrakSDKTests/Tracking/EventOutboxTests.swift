@@ -242,11 +242,6 @@ struct EventOutboxTests {
             clientId: Self.clientId,
             interaction: .custom("poison")
         )
-        await fixture.tracker.track(
-            merchantId: Self.merchantId,
-            clientId: Self.clientId,
-            interaction: .custom("healthy")
-        )
         await fixture.tracker.flush()
 
         for _ in 0..<3 {
@@ -255,8 +250,32 @@ struct EventOutboxTests {
         }
 
         let pending = await fixture.pending()
+        #expect(pending.isEmpty)
+    }
+
+    @Test("a rejected row does not stall the rows queued behind it")
+    func aRejectedRowDoesNotStallTheQueue() async {
+        let fixture = Fixture()
+        fixture.backend.respond(StubResponse(status: 422, body: #"{"success":false,"code":"BAD"}"#))
+        await fixture.tracker.track(
+            merchantId: Self.merchantId,
+            clientId: Self.clientId,
+            interaction: .custom("poison")
+        )
+        await fixture.tracker.track(
+            merchantId: Self.merchantId,
+            clientId: Self.clientId,
+            interaction: .custom("healthy")
+        )
+        fixture.backend.respondEach([
+            StubResponse(status: 422, body: #"{"success":false,"code":"BAD"}"#),
+            StubResponse(status: 200, body: "{}"),
+        ])
+        await fixture.tracker.flush()
+
+        let pending = await fixture.pending()
         #expect(pending.count == 1)
-        #expect(pending.first?.payload.contains("healthy") == true)
+        #expect(pending.first?.payload.contains("poison") == true)
     }
 
     @Test("drops events captured under an id that has since been replaced")
@@ -749,14 +768,25 @@ struct EventOutboxTests {
         #expect(!body.keys.contains("referrerMerchantId"))
     }
 
-    @Test("sends no client id header when the event was captured without one")
-    func omitsTheHeaderWithoutAnIdentity() async throws {
+    @Test("holds a row captured before any id existed rather than posting it header-less")
+    func holdsARowWithNoIdentity() async {
         let fixture = Fixture(clientId: nil)
         await fixture.tracker.track(merchantId: Self.merchantId, clientId: nil, interaction: .sharing())
         await fixture.tracker.flush()
 
+        #expect(fixture.backend.requests.isEmpty)
+        #expect(await fixture.pending().count == 1)
+    }
+
+    @Test("stamps a row captured before any id existed at drain time")
+    func stampsARowCapturedWithoutAnIdentity() async throws {
+        let fixture = Fixture()
+        await fixture.tracker.track(merchantId: Self.merchantId, clientId: nil, interaction: .sharing())
+        await fixture.tracker.flush()
+
         let request = try #require(fixture.backend.requests.last)
-        #expect(request.value(forHTTPHeaderField: "x-frak-client-id") == nil)
+        #expect(request.value(forHTTPHeaderField: "x-frak-client-id") == Self.clientId)
+        #expect(await fixture.pending().isEmpty)
     }
 
     @Test("flush survives a failed migration rewrite instead of wiping the queue (2-7,critical)")

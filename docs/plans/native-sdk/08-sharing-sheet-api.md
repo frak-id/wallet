@@ -498,10 +498,10 @@ sees the base artifact's types.
 5. **IME.** Shopify needed the deprecated `SOFT_INPUT_ADJUST_RESIZE` on their dialog window, noting
    the modern insets listener *"is not adjusting the pan properly into the fields."* Our page has no
    text input today, so this is latent — and becomes real the moment it grows one.
-6. **The dex budget is still vacuous.** `checkDexSizeBudget` dexes only the module's own
-   `classes.jar`, never its transitive `implementation` deps, so the Compose runtime a merchant must
-   ship is invisible. Step C fixes the underlying problem; the gate should be made transitive
-   independently, or it keeps passing while lying.
+6. **The dex budget was vacuous, and has been retired** (`32836c217`). It dexed only the module's
+   own unminified `classes.jar`, so the Compose runtime a merchant must ship was invisible and the
+   number bore no relation to what R8 keeps. A replacement over the minified-APK attribution is
+   possible and needs a real app build in the loop. Step C fixes the underlying problem.
 7. **No millisecond number** for any of §3's claims. The mechanism is sound and is why Shopify chose
    as it did, but `07` §1.1's dominance was never measured either, and this compounds that. A
    Perfetto trace before and after step A is the check.

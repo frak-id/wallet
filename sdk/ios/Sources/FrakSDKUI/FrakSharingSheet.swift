@@ -58,7 +58,12 @@
                 // dismissal — see `SharingPresenter.presentation`. This one runs before SwiftUI
                 // presents anything, so it cannot resurrect a finished session.
                 .onAppear { if isPresented { launch() } }
-                .onDisappear { presenter.teardown() }
+                // `finish` first: a surface leaving with a session still live is an outcome the
+                // merchant is owed, and `teardown` alone reports nothing.
+                .onDisappear {
+                    finish()
+                    presenter.teardown()
+                }
                 // The tap. Synchronous, and deliberately not `.task(id:)`, which would run after
                 // SwiftUI had begun presenting: the sheet's content is built from
                 // `presenter.presentation`, so a late launch builds the *previous* session and then
@@ -104,7 +109,9 @@
         }
     }
 
-    private struct FrakSharingSheetContent: View {
+    /// Internal, not private: `FrakSharing` hosts this same content from UIKit, so both entry
+    /// points render one implementation.
+    struct FrakSharingSheetContent: View {
         @ObservedObject var presenter: SharingPresenter
         let heightFraction: CGFloat
 
@@ -126,6 +133,10 @@
                 SharingSheetGrabStrip()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Without `.isModal` VoiceOver keeps reading the merchant's screen behind the sheet.
+            // No label of our own: this module ships no resources, and the page names itself.
+            .accessibilityElement(children: .contain)
+            .accessibilityAddTraits(.isModal)
             // Full bleed: the page insets its own footer from `env(safe-area-inset-bottom)`, so
             // honouring the safe area here shows the sheet through as a band under the CTA.
             .ignoresSafeArea()
@@ -212,9 +223,9 @@
     /// Sizes the sheet to `fraction` of the height available to it and shows the grabber. A
     /// modifier rather than an inline `if #available`, for the same reason as `SheetBackground`.
     ///
-    /// `.fraction` measures against the largest detent, so it already accounts for the sheet's
-    /// top inset and for Slide Over/Split View on iPad. iOS 15 has no detents, so there the
-    /// content is what shrinks.
+    /// `.fraction` measures against the largest detent, so it already accounts for the sheet's top
+    /// inset and for Slide Over/Split View on iPad. iOS 15 has no detents and its sheet is always
+    /// full height, so the page fills it rather than being shrunk inside it.
     private struct SharingSheetChrome: ViewModifier {
         let fraction: CGFloat
         func body(content: Content) -> some View {
@@ -223,9 +234,7 @@
                     .presentationDetents([.fraction(fraction)])
                     .presentationDragIndicator(.visible)
             } else {
-                GeometryReader { proxy in
-                    content.frame(height: proxy.size.height * fraction)
-                }
+                content
             }
         }
     }

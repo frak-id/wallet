@@ -1,8 +1,9 @@
 # Frak Android SDK — privacy and Play Data Safety
 
 What the SDK collects, where it goes, and what you must declare and wire before you ship.
-The iOS counterpart is `sdk/ios/Sources/FrakSDK/PrivacyInfo.xcprivacy`; the two are kept
-deliberately consistent, so a declaration written from one holds for the other.
+The iOS counterpart is `sdk/ios/Sources/FrakSDK/PrivacyInfo.xcprivacy`. The two are kept
+consistent by hand, reviewed against the code on 2026-08-13; nothing checks either
+automatically, so treat a claim here as evidence of a review, not of a gate.
 
 ## What the SDK collects
 
@@ -15,7 +16,14 @@ Three things leave the device, and only three.
 | `customerId`, `orderId`, checkout `token` | Financial info → **Purchase history** | App functionality | `tracking.purchase` |
 
 **Not** declared, because the SDK does not touch them: advertising ID, `ANDROID_ID`,
-Install Referrer, location, contacts, device or other IDs.
+location, contacts, device or other IDs.
+
+**Install Referrer** is the one exception worth stating precisely: the SDK never *reads* it,
+and declares no `com.android.installreferrer` dependency. It does *write* one — handing off
+to the Play listing (`appLink.openFrakApp()` when the wallet is not installed) appends
+`referrer=merchantId=…&anonymousId=…&proof=…`, so the wallet app can reconnect the identity
+after install. That is the same anonymous id and install proof already declared above, on
+the same legal basis; nothing new is collected, and nothing is read back on this side.
 
 ### Why "User IDs" and not "Device or other IDs"
 
@@ -38,7 +46,7 @@ declare consistently.
 ## Where it goes
 
 All traffic is HTTPS to the backend for the configured `FrakEnvironment`. Every request
-carries `Accept`, `Content-Type` and `X-Frak-Sdk-Version`; tracking calls add
+carries `Accept`, `Content-Type` and `x-frak-sdk-version`; tracking calls add
 `x-frak-client-id`. As with any network call, the backend sees the device's public IP.
 
 | Endpoint | Payload | Consent-gated |
@@ -70,8 +78,9 @@ and this install's anonymous id; before, that request was attempted once over th
 never touched disk. Both exist because a referral that cannot be sent yet is attribution the
 user is owed, not telemetry to drop.
 
-Rows leave the file when they are delivered, when the backend rejects them three times, or
-after 14 days, whichever comes first. `setTrackingEnabled(false)` and `resetAnonymousId()`
+Rows leave the file when they are delivered, when the backend rejects them three times,
+after 14 days, or when the file passes its caps — 1000 rows or 2 MiB, oldest dropped first
+— whichever comes first. `setTrackingEnabled(false)` and `resetAnonymousId()`
 both purge it outright.
 
 The two SharedPreferences files are plaintext in your app's private storage. Only the key

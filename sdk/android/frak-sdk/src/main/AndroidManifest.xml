@@ -25,7 +25,7 @@
       No <application> block, and deliberately no exported activity and no
       intent filter. Inbound `fCtx` handling is wired through
       `FrakConfig.deepLink` (Automatic via ActivityLifecycleCallbacks, or
-      Manual via `handleReferralLink(url)`), so the merchant's own activity
+      Manual via `appLink.handleReferral(url)`), so the merchant's own activity
       keeps owning the intent.
 
       No backup-exclusion rules ship here either, and the SDK asks nothing of

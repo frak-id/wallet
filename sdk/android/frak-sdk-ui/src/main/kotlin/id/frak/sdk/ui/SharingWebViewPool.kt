@@ -140,6 +140,19 @@ internal class SharingWebViewPool(
     }
 
     /**
+     * Gives the warm view back under memory pressure. Unlike [destroy] the pool stays usable, so a
+     * later [warm] rebuilds it; a lent view belongs to a sheet on screen and is kept.
+     */
+    fun trim() {
+        if (lent || destroyed) return
+        val handle = pooled ?: return
+        pooled = null
+        warmUrl = null
+        handle.view.removeFromParent()
+        handle.destroy()
+    }
+
+    /**
      * Builds a view against [context], the `MutableContextWrapper` [SharingHost] keeps pointed at
      * the current Activity: a `WebView` resolves theme, inflater and popup host at construction.
      */

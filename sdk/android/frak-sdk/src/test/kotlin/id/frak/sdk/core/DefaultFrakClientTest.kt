@@ -18,7 +18,6 @@ import id.frak.sdk.tracking.Interaction
 import id.frak.sdk.tracking.InteractionSender
 import id.frak.sdk.tracking.MergeSender
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -188,6 +187,24 @@ class DefaultFrakClientTest {
                     .substringAfter("&p=", "")
                     .isNotEmpty(),
             )
+        }
+
+    @Test
+    fun `the wallet handoff is pinned to the wallet package, the store link is not`() =
+        runTest {
+            val client = newClient(testScheduler)
+            transport.respond(200, BODY)
+            advanceUntilIdle()
+
+            assertEquals(OpenAppResult.OpenedStore, client.openFrakApp())
+            assertEquals(null, launcher.openedPackages.single())
+
+            launcher.opened.clear()
+            launcher.openedPackages.clear()
+            launcher.openableSchemes = setOf(FrakEnvironment.Production.walletScheme)
+
+            assertEquals(OpenAppResult.OpenedApp, client.openFrakApp())
+            assertEquals(FrakEnvironment.Production.walletPackageId, launcher.openedPackages.single())
         }
 
     @Test

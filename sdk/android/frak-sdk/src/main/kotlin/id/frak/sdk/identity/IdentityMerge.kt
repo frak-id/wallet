@@ -14,6 +14,7 @@ import java.security.MessageDigest
 internal class IdentityMerge {
     private val mutex = Mutex()
     private val consumed = mutableSetOf<String>()
+    private val arrivals = mutableSetOf<String>()
 
     /**
      * Claims a token for this process, so a router replaying the same intent on every activity
@@ -22,11 +23,18 @@ internal class IdentityMerge {
     suspend fun claim(mergeToken: String): Boolean =
         mergeToken.isNotEmpty() && mutex.withLock { consumed.add(mergeToken) }
 
+    /**
+     * The arrival half of [claim]: a merchant routing the same URL by hand from more than one
+     * entry point would otherwise track one arrival per call.
+     */
+    suspend fun claimArrival(context: String): Boolean =
+        context.isNotEmpty() && mutex.withLock { arrivals.add(context) }
+
     companion object {
         const val TOKEN_KEY: String = "fmt"
         const val MERGE_EXECUTE_PATH: String = "/user/identity/merge/execute"
 
-        fun parseToken(url: String): String? = UrlQuery.parse(url)?.get(TOKEN_KEY)?.takeIf { it.isNotEmpty() }
+        fun parseToken(url: String): String? = UrlQuery.parse(url)?.getExact(TOKEN_KEY)?.takeIf { it.isNotEmpty() }
 
         /** UTF-8, matching `IdentityProofService.hashMergeToken`. Binds the proof to this token, not just this merchant. */
         fun binding(mergeToken: String): ByteArray =

@@ -53,6 +53,9 @@ jobs:
       - uses: gradle/actions/setup-gradle@v5
         with:
           build-root-directory: sdk/android
+          # This job holds the signing key and the Portal token; the wrapper jar it runs
+          # is worth verifying against Gradle's published hashes.
+          validate-wrappers: true
 
       - name: "🔢 Resolve the version"
         id: resolve
@@ -125,6 +128,16 @@ jobs:
                 ;;
             esac
           done
+
+          # The loop ending is not the same as the loop succeeding: without this a deployment
+          # still PENDING after 600s exits 0 and the summary reports it as a release.
+          case "$state" in
+            VALIDATED|PUBLISHED) ;;
+            *)
+              echo "::error::Portal validation did not settle within 600s (last state: $state)"
+              exit 1
+              ;;
+          esac
 
           {
             echo "### Android SDK $VERSION"

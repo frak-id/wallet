@@ -5,13 +5,24 @@ import Foundation
 enum FrakStorage {
     static let directoryName = "id.frak.sdk"
 
-    /// Throws rather than degrading, because the two callers want opposite failure policies: the
-    /// event queue falls back to `tmp`, the identity store must not — `tmp` is purgeable, and an
-    /// identity that silently churns reports every purge as a brand-new user.
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var prepared: URL?
+
+    /// Throws rather than degrading: the event queue falls back to `tmp`, the identity store must
+    /// not — `tmp` is purgeable, and an identity that churns reports every purge as a new user.
     ///
-    /// The exclusion goes on the directory, which covers the whole subtree, so a file added here
-    /// later cannot forget to set it. Idempotent, so callers need no ordering between them.
+    /// The exclusion goes on the directory, so a file added later cannot forget it. Memoised:
+    /// both callers run inside `Frak.initialize`, and three syscalls each is not free there.
     static func directory() throws -> URL {
+        lock.lock()
+        defer { lock.unlock() }
+        if let prepared { return prepared }
+        let directory = try prepare()
+        prepared = directory
+        return directory
+    }
+
+    private static func prepare() throws -> URL {
         let manager = FileManager.default
         let support = try manager.url(
             for: .applicationSupportDirectory,

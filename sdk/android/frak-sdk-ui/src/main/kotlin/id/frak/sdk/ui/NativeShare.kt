@@ -1,5 +1,6 @@
 package id.frak.sdk.ui
 
+import android.app.Activity
 import android.content.ClipData
 import android.content.ClipDescription
 import android.content.ClipboardManager
@@ -19,9 +20,16 @@ internal object NativeShare {
             Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_TEXT, link)
-                title?.let { putExtra(Intent.EXTRA_TITLE, it) }
+                title?.let {
+                    putExtra(Intent.EXTRA_TITLE, it)
+                    // Mail targets read SUBJECT, not TITLE; without it a shared link arrives blank-subject.
+                    putExtra(Intent.EXTRA_SUBJECT, it)
+                }
             }
-        val chooser = Intent.createChooser(send, title).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val chooser = Intent.createChooser(send, title)
+        // Only when there is no task to join: from an Activity, NEW_TASK parks the chooser in its
+        // own recents entry and the user comes back to the wrong screen.
+        if (context !is Activity) chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         return runCatching { context.startActivity(chooser) }.isSuccess
     }
 

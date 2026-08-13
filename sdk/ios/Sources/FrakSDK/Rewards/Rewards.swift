@@ -9,7 +9,7 @@ public struct TokenAmount: Sendable, Hashable {
     public let usdAmount: Double
     public let gbpAmount: Double
 
-    public init(amount: Double, eurAmount: Double, usdAmount: Double, gbpAmount: Double) {
+    @_spi(FrakInternal) public init(amount: Double, eurAmount: Double, usdAmount: Double, gbpAmount: Double) {
         self.amount = amount
         self.eurAmount = eurAmount
         self.usdAmount = usdAmount
@@ -66,7 +66,7 @@ public struct Campaign: Sendable, Hashable {
     /// ISO-8601 expiry, or nil for a campaign that never expires.
     public let expiresAt: String?
 
-    public init(
+    @_spi(FrakInternal) public init(
         campaignId: String,
         name: String,
         interactionTypeKey: String,
@@ -108,7 +108,7 @@ public struct BestReward: Sendable, Hashable {
     /// scope. `nil` for an unscoped winner, or when no products were supplied.
     public let matchedProducts: [ProductDetails]?
 
-    public init(
+    @_spi(FrakInternal) public init(
         formatted: String,
         payoutType: String,
         minPurchaseAmount: String? = nil,

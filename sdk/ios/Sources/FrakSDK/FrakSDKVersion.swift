@@ -10,6 +10,11 @@ public enum FrakSDKVersion {
     @_spi(FrakInternal)
     public static let headerName: String = "x-frak-sdk-version"
 
+    /// What `headerName` carries. Platform-prefixed: the version alone is identical on both
+    /// SDKs, so a fleet of frozen binaries is otherwise indistinguishable on the wire.
+    @_spi(FrakInternal)
+    public static let headerValue: String = "ios/\(current)"
+
     /// Wire plumbing for `FrakSDKUI`'s page URLs; not merchant API.
     @_spi(FrakInternal)
     public static let queryParameterName: String = "sdkVersion"

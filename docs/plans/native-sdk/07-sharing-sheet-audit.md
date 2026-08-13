@@ -629,8 +629,8 @@ Every public entry point is `@Composable`:
 
 A merchant on an XML codebase must add `androidx.compose.ui`, the Compose compiler plugin, a
 `ComposeView` in their layout and a `setContent {}` block — to open a share sheet. `frak-sdk-ui`
-also `implementation`s compose-ui + foundation + material3, and per `sdk/AGENTS.md` the dex budget
-check is *"vacuous for `:frak-sdk-ui`"*, so nothing is watching what that costs.
+also `implementation`s compose-ui + foundation + material3, and nothing watches what that costs —
+the dex budget that would have was retired in `32836c217`, and it never saw transitive deps anyway.
 
 **iOS has the identical gap**: `View.frakSharingSheet(…)` is a SwiftUI `ViewModifier`; UIKit apps
 are equally locked out.

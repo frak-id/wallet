@@ -300,7 +300,7 @@ struct FrakExampleApp: App {
                 let hadReferral = await client.appLink.handleReferral(url)
                 addLog(
                     hadReferral
-                        ? "Referral context recognized and tracked."
+                        ? "Referral context recognized and queued."
                         : "URL carried no Frak referral context.",
                     type: hadReferral ? .success : .info
                 )
@@ -330,7 +330,7 @@ struct FrakExampleApp: App {
             )
             switch result {
             case .success:
-                addLog("Order \(orderId) tracked successfully.", type: .success)
+                addLog("Order \(orderId) queued for delivery (enqueue-then-send).", type: .success)
             case .failure(let error):
                 addLog(
                     "Order \(orderId) tracking failed: \(error.localizedDescription)",

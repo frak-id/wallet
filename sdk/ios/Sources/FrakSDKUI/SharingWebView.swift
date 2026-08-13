@@ -91,7 +91,7 @@
         /// next load, so this only tells `SharingWebViewPool` its warm URL is stale.
         private(set) var rendererGone = false
 
-        /// The last main-frame URL asked for, so a cache-only retry has something to retry.
+        /// The last main-frame URL asked for, so a retry has something to retry.
         private var requested: URL?
         /// Rungs of `retryLadder` already spent on the document in `ladderURL`.
         private var retryCount = 0
@@ -124,7 +124,10 @@
             configuration.websiteDataStore = .default()
             configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
 
-            self.view = WKWebView(frame: .zero, configuration: configuration)
+            // Screen-sized, not `.zero`: a warm view is never in a window, and at 0x0 the page's
+            // whole first layout — every `innerWidth`, media query and container query — is made
+            // against a degenerate viewport it then has to recover from when the sheet shows it.
+            self.view = WKWebView(frame: Self.warmFrame(), configuration: configuration)
             self.origin = URL(string: walletOrigin)
             self.returnScheme = returnScheme
             self.binding = binding
@@ -135,6 +138,12 @@
             view.isOpaque = false
             view.backgroundColor = .clear
             view.navigationDelegate = self
+            #if DEBUG
+                if #available(iOS 16.4, *) {
+                    // The hosted page is the one part of the sheet that can fail silently.
+                    view.isInspectable = true
+                }
+            #endif
 
             // The view fills the sheet, home indicator included, and the page insets its own
             // footer from `env(safe-area-inset-bottom)`. Any other behaviour insets the document
@@ -143,6 +152,13 @@
             // The document never scrolls — the page scrolls a child of its own — so a bounce here
             // is only a rubber-band competing with the sheet's drag.
             view.scrollView.bounces = false
+        }
+
+        /// A plausible viewport for a view that is not in a window yet. The constant is a
+        /// mid-range iPhone; only its non-degeneracy matters, since the sheet resizes the view.
+        private static func warmFrame() -> CGRect {
+            let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+            return scene?.screen.bounds ?? CGRect(x: 0, y: 0, width: 390, height: 844)
         }
 
         /// Points the view at a session. Resets per-load state; see `SharingWebViewBinding`.
@@ -244,12 +260,12 @@
                 .value
         }
 
-        /// A main-frame failure gets the rest of `retryLadder` before tier 3. Network rungs first,
-        /// because a transient failure is what a retry is for; the cache-only rung last, which is
-        /// the only thing that can answer for a device that went offline on a page it has seen.
+        /// A main-frame failure gets the rest of `retryLadder` before tier 3. Every rung is a
+        /// network rung: the hosted document is served `no-store`, so it is never in the HTTP
+        /// cache and a cache-only attempt cannot answer.
         ///
         /// - Parameter unreachable: the network itself did not answer, so another attempt over it
-        ///   is pointless and the ladder jumps straight to its cache-only rung.
+        ///   is pointless and there is no cached copy to read instead — tier 3 now.
         private func handleMainFrameFailure(unreachable: Bool) {
             // The warm load failing after this view was lent to a sheet: not the sheet's page.
             guard navigationOwnedByBinding else { return }
@@ -267,20 +283,16 @@
                 ladderURL = requested
                 retryCount = 0
             }
-            if unreachable { retryCount = max(retryCount, Self.retryLadder.count - 1) }
-            guard retryCount < Self.retryLadder.count else {
+            guard !unreachable, retryCount < Self.retryLadder.count else {
                 giveUp()
                 return
             }
-            let rung = Self.retryLadder[retryCount]
+            let delay = Self.retryLadder[retryCount]
             retryCount += 1
             retryPending = true
-            // Undelayed when nothing is reachable: the cache answers or it does not, and the sheet
-            // is holding a skeleton over this either way.
-            scheduleRetry(after: unreachable ? 0 : rung.delay) { [weak self] in
+            scheduleRetry(after: delay) { [weak self] in
                 guard let self else { return }
-                let policy: URLRequest.CachePolicy = rung.cacheOnly ? .returnCacheDataDontLoad : .useProtocolCachePolicy
-                view.load(URLRequest(url: requested, cachePolicy: policy))
+                view.load(URLRequest(url: requested, cachePolicy: .useProtocolCachePolicy))
             }
         }
 
@@ -325,18 +337,9 @@
                 || error.code == NSURLErrorDNSLookupFailed
         }
 
-        /// One rung of `retryLadder`: how long to wait, and what to let the attempt read.
-        private struct Rung {
-            let delay: TimeInterval
-            let cacheOnly: Bool
-        }
-
-        /// What a main-frame failure gets before tier 3. Two rungs, sized to fit inside the
-        /// sheet's own load budget alongside the attempts themselves.
-        private static let retryLadder = [
-            Rung(delay: 0.3, cacheOnly: false),
-            Rung(delay: 0.9, cacheOnly: true),
-        ]
+        /// Delays a main-frame failure gets before tier 3, in order. Two rungs, sized to fit
+        /// inside the sheet's own load budget alongside the attempts themselves.
+        private static let retryLadder: [TimeInterval] = [0.3, 0.9]
 
         /// A navigation this code cancelled, which WebKit reports as a load failure.
         private func isCancellation(_ error: any Error) -> Bool {

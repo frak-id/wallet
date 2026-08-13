@@ -49,8 +49,13 @@
 
         /// iOS shows its own banner only when an app reads the pasteboard, not when it writes,
         /// so the page's own UI has to tell the user the copy happened.
+        /// `localOnly`, like the install code: the link carries the user's own referral identity,
+        /// and Universal Clipboard would fan it out to their other devices.
         static func copy(_ link: String) {
-            UIPasteboard.general.string = link
+            UIPasteboard.general.setItems(
+                [[UTType.utf8PlainText.identifier: link]],
+                options: [.localOnly: true]
+            )
         }
 
         /// Puts the install code where the wallet's six-character field will offer it.

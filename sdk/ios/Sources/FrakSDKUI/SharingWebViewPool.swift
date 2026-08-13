@@ -42,7 +42,9 @@
         /// Boots the pooled view against `url`; only a change of URL does work. `url` must be
         /// the real merchant page (`SharingPageURL.warm`) — the merchant-keyed work is the slow part.
         func warm(_ url: String) {
-            guard !destroyed else { return }
+            // `!lent` as well as `!destroyed`: a lent view is on screen mid-session, and warming it
+            // would navigate the sheet the user is looking at back to the merchant page.
+            guard !destroyed, !lent else { return }
             // A jetsammed idle view leaves `warmURL` claiming a page that is gone, and the short
             // circuit below would then decline to load it again for the rest of this pool's life.
             // Reloaded, not rebuilt: WebKit hands the view a new content process on the next load.

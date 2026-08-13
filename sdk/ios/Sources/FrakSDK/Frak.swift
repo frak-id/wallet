@@ -12,7 +12,8 @@ public enum Frak {
     nonisolated(unsafe) private static var core: DefaultFrakClient?
     nonisolated(unsafe) private static var instance: FrakClient?
 
-    // Non-blocking, no I/O, never throws. Second call is a no-op; the first configuration wins.
+    // Never throws, and the only I/O is preparing the SDK's storage directory, which is memoised.
+    // Second call is a no-op; the first configuration wins.
     public static func initialize(_ config: FrakConfig) {
         let logger = FrakLogger(level: config.logLevel, sink: config.logSink)
         let effective = config.withBundleIdFromMainBundle()

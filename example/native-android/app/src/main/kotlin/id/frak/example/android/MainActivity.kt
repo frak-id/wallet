@@ -2,6 +2,7 @@ package id.frak.example.android
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -122,6 +123,9 @@ const val SAMPLE_CHECKOUT_TOKEN = "checkout_token_example_9988"
 /** Hoisted: this runs per log line. */
 private val LOG_TIME_FORMAT = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
 
+/** Distinct from the SDK tags (Frak, FrakSharing) so a run can separate app from SDK. */
+private const val HARNESS_TAG: String = "FrakHarness"
+
 /** Formats the order total only; reward amounts come from [BestReward.formatted]. */
 fun formatCents(cents: Long): String = "$%d.%02d".format(cents / 100, cents % 100)
 
@@ -226,6 +230,7 @@ class MainActivity : ComponentActivity() {
                         onShareProduct = ::shareProduct,
                         onShareCollection = ::shareCollection,
                         onSimulateDeepLink = { scope.launch { simulateDeepLink() } },
+                        onRunJavaInterop = { JavaInterop.exercise { line -> addLog(line, LogType.INFO) } },
                         onOrderCompleted = { scope.launch { completeOrder() } },
                         onRefreshDebugInfo = { scope.launch { refreshDebugInfo(log = true) } },
                     )
@@ -236,12 +241,19 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        // Android does not do this for you, and without it `activity.intent` returns the launch
+        // intent forever — the stale read that hid the warm-start bug from every device pass.
+        setIntent(intent)
         intent.dataString?.let { url -> logInboundIntent(url) }
     }
 
-    /** Automatic mode already dispatched `handleReferral`; calling it again would double-track. */
+    /**
+     * Reports arrival at the activity, which is all this callback can honestly observe. Whether the
+     * SDK tracked it is a separate question that only Debug info answers, so this is not a SUCCESS.
+     */
     private fun logInboundIntent(url: String) {
-        addLog("Inbound link reached the activity (SDK auto-handles it): $url", LogType.SUCCESS)
+        addLog("Inbound link reached the activity: $url", LogType.INFO)
+        addLog("Check Debug info to confirm the SDK tracked the arrival.", LogType.INFO)
     }
 
     /** Share #1: no products at all — the link falls back to the merchant homepage. */
@@ -297,11 +309,18 @@ class MainActivity : ComponentActivity() {
 
     private fun logSharingResult(result: SharingResult) {
         when (result) {
-            is SharingResult.Shared -> addLog("Reward link shared: ${result.link}", LogType.SUCCESS)
+            // Android cannot see what the user picked: NativeShare returns startActivity().isSuccess,
+            // so this fires when the chooser opens. iOS reports the same case only on a real share.
+            is SharingResult.Shared -> addLog("Share chooser opened for: ${result.link}", LogType.INFO)
+
             is SharingResult.Copied -> addLog("Reward link copied to clipboard: ${result.link}", LogType.SUCCESS)
+
             SharingResult.InstallStarted -> addLog("Wallet install flow started by the sharing sheet.", LogType.INFO)
+
             SharingResult.WalletOpened -> addLog("Wallet opened directly; identity handed off.", LogType.SUCCESS)
+
             SharingResult.Dismissed -> addLog("Sharing sheet dismissed by user.", LogType.INFO)
+
             is SharingResult.Failed -> addLog("Sharing failed: ${result.error.message}", LogType.ERROR)
         }
     }
@@ -330,7 +349,7 @@ class MainActivity : ComponentActivity() {
                 )
         ) {
             is FrakResult.Success -> {
-                addLog("Order $orderId tracked successfully.", LogType.SUCCESS)
+                addLog("Order $orderId queued for delivery (enqueue-then-send).", LogType.SUCCESS)
             }
 
             is FrakResult.Failure -> {
@@ -431,6 +450,11 @@ class MainActivity : ComponentActivity() {
     ) {
         val timeStr = LOG_TIME_FORMAT.format(Date())
         logs.add(0, LogEntry(timeStr, message, type))
+        // Mirrored so a device run is greppable from `adb logcat` instead of read off the screen.
+        when (type) {
+            LogType.ERROR -> Log.e(HARNESS_TAG, message)
+            else -> Log.i(HARNESS_TAG, message)
+        }
     }
 }
 
@@ -444,6 +468,7 @@ fun MerchantAppScreen(
     onShareProduct: (ProductItem) -> Unit,
     onShareCollection: () -> Unit,
     onSimulateDeepLink: () -> Unit,
+    onRunJavaInterop: () -> Unit,
     onOrderCompleted: () -> Unit,
     onRefreshDebugInfo: () -> Unit,
 ) {
@@ -507,6 +532,7 @@ fun MerchantAppScreen(
                     debugRows = debugRows,
                     isDebugRefreshing = isDebugRefreshing,
                     onSimulateDeepLink = onSimulateDeepLink,
+                    onRunJavaInterop = onRunJavaInterop,
                     onOrderCompleted = onOrderCompleted,
                     onRefreshDebugInfo = onRefreshDebugInfo,
                 )
@@ -687,6 +713,7 @@ fun CheckoutToolsView(
     debugRows: List<DebugRow>,
     isDebugRefreshing: Boolean,
     onSimulateDeepLink: () -> Unit,
+    onRunJavaInterop: () -> Unit,
     onOrderCompleted: () -> Unit,
     onRefreshDebugInfo: () -> Unit,
 ) {
@@ -753,6 +780,10 @@ fun CheckoutToolsView(
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(onClick = onSimulateDeepLink, modifier = Modifier.fillMaxWidth()) {
                         Text("Simulate Inbound fCtx Link")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(onClick = onRunJavaInterop, modifier = Modifier.fillMaxWidth()) {
+                        Text("Run Java interop probe")
                     }
                 }
             }

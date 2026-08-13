@@ -60,8 +60,9 @@ assuming. Do not flip on the strength of this alone; (2) matters just as much.
 **4. Migrations must be applied before the branch is deployed anywhere.**
 `findNodeByIdentity` and `markProofSeen` name `proof_seen_at` explicitly, so against a
 database missing the column Postgres raises `42703` and the query throws — every
-proof-absent `/merge/execute` 500s instead of returning 200. **`prod` has no generated
-migration yet.**
+proof-absent `/merge/execute` 500s instead of returning 200. The column ships in
+`prod/0020_gigantic_black_crow.sql`, `dev/0040_yummy_amphibian.sql` and
+`local/0035_natural_carlie_cooper.sql`; confirm each is applied, not just generated.
 
 ## Step 3 — after store approval
 

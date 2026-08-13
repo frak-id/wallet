@@ -33,7 +33,7 @@ struct Backoff {
     }
 
     /// What is left of `key`'s backoff window, or nil when it isn't backing off. Callers surface
-    /// this as `FrakError.backingOff(retryAfter:)`; it is always positive.
+    /// this as `FrakError.backingOff(retryAfterSeconds:)`; it is always positive.
     mutating func remaining(_ key: String) -> TimeInterval? {
         guard let entry = state[key] else { return nil }
         let remaining = entry.retryAt.timeIntervalSince(now())

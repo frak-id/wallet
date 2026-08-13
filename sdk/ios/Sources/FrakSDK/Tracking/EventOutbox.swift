@@ -278,9 +278,20 @@ actor EventOutbox {
 
             guard let sender = senders[event.kind] else { continue }
 
+            // Stamped at drain, not left nil: capture deliberately does not gate on an id (a
+            // device locked since boot has none yet), and a row posted without `x-frak-client-id`
+            // is a guaranteed 401 that spends the failure cap and lands unattributed.
+            let row: QueuedRow
+            if event.clientId == nil, let currentId {
+                row = event.withClientId(currentId)
+            } else {
+                row = event
+            }
+
             let outcome: DeliveryOutcome
             do {
-                outcome = try await sender.deliver(row: event, ctx: ctx)
+                // Still nothing to authenticate it with: hold rather than burn an attempt.
+                outcome = row.clientId == nil ? .hold : try await sender.deliver(row: row, ctx: ctx)
             } catch {
                 // Cancellation only — `deliver` is typed `throws(CancellationError)`. Returning
                 // skips the reconcile: compacting away an undelivered event is unrecoverable.
@@ -297,28 +308,30 @@ actor EventOutbox {
                 backoff.recordFailure(Self.backoffKey, from: error)
                 break eventLoop
             case .rejected:
-                let failed = event.withFailure()
+                let failed = row.withFailure()
                 if failed.failures >= Self.maxFailures {
-                    logger.warn("Dropping a row the backend keeps rejecting (kind \(event.kind)).")
+                    logger.warn("Dropping a row the backend keeps rejecting (kind \(row.kind)).")
                     delivered.insert(rowId)
                 } else {
                     retried[rowId] = failed
                 }
-                break eventLoop
+                // `continue`, not `break`: a rejection is a verdict on this row alone, and one
+                // poison row must not stall every event queued behind it.
+                continue eventLoop
             case .hold:
                 // heldSince is never cleared once set, so this measures total time stuck, not
                 // time since the row was last attempted.
-                if let heldSince = event.heldSince {
+                if let heldSince = row.heldSince {
                     guard now().timeIntervalSince(heldSince) > sender.holdTimeout else {
                         break eventLoop
                     }
                     logger.warn(
-                        "Dropping a row held past its budget (kind \(event.kind), held \(Int(now().timeIntervalSince(heldSince)))s)."
+                        "Dropping a row held past its budget (kind \(row.kind), held \(Int(now().timeIntervalSince(heldSince)))s)."
                     )
                     delivered.insert(rowId)
                     continue eventLoop
                 }
-                retried[rowId] = event.withHeldSince(now())
+                retried[rowId] = row.withHeldSince(now())
                 break eventLoop
             }
         }

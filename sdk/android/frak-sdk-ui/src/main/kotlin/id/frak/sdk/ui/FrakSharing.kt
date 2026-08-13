@@ -16,8 +16,9 @@ import id.frak.sdk.sharing.SharingRequest
  * The Frak sharing sheet. Build it once per screen, [warm] it when a share affordance becomes
  * visible, then [present] on the tap.
  *
- * A sheet that is up survives a configuration change, but not process death. Two instances on one
- * Activity share a warm web view and a single "one sheet at a time" guard.
+ * A sheet that is up survives a configuration change, but not process death. Use one instance per
+ * Activity: two share a warm web view and a "one sheet at a time" guard, and after a configuration
+ * change a live session reports to whichever was built first, not whichever presented.
  */
 public class FrakSharing internal constructor(
     private val host: SharingHost,

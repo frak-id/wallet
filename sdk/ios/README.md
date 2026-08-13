@@ -42,9 +42,15 @@ format`/`lint` here; rules live in `.swift-format`, copied from
 
 `Package.swift` declares no `dependencies` — zero third-party packages.
 
-## Public API surface
+## Internal layout
 
-| Target | Folder | Public API |
+Folders inside the two targets, and the main type in each. **Almost none of these are
+`public`** — the merchant-facing surface is `Frak`, `FrakClient` and its five namespaces,
+the input/read models they take and return, and `FrakSDKUI`'s two entry points —
+`.frakSharingSheet` for SwiftUI and `FrakSharing` for UIKit — plus `FrakSharingConfiguration`.
+Everything else below is `internal`.
+
+| Target | Folder | Main types |
 | --- | --- | --- |
 | `FrakSDK` | `Core` | `FrakConfig`, `FrakLogSink`, `FrakEnvironment`, `FrakMetadata`, `FrakError`, `FrakLogger`, `Base64URL`, `Hex` |
 | `FrakSDK` | `Net` | `HTTPClient` over `URLSession` (GET + POST), `JSONDecoding`, `URLQuery`, `PercentEncoding` |
@@ -52,10 +58,10 @@ format`/`lint` here; rules live in `.swift-format`, copied from
 | `FrakSDK` | `Rewards` | reward models, decoder, `RewardRepository` |
 | `FrakSDK` | `Identity` | `DeviceKey` (Secure Enclave P-256), `ProofCodec`, `AnonymousIdStore` |
 | `FrakSDK` | `Sharing` | `FrakContext`, `FrakContextCodec` (v2 binary), attribution merge, `SharingLinkBuilder` |
-| `FrakSDK` | `Tracking` | `Interaction`, `EventQueue` (durable JSONL), `InteractionTracker` |
+| `FrakSDK` | `Tracking` | `Interaction`, `EventQueue` (durable JSONL), `EventOutbox` |
 | `FrakSDK` | `AppLink` | `AppLauncher`, `InstallLinks`, `ReferralArrival` |
 | `FrakSDK` | (root) | `Frak`, `FrakClient`, `DefaultFrakClient` |
-| `FrakSDKUI` | — | `.frakSharingSheet` modifier: native share/copy with a three-tier fallback, and `FrakSharingConfiguration` for its height and install surface |
+| `FrakSDKUI` | — | `.frakSharingSheet` (SwiftUI) and `FrakSharing` (UIKit), both onto one `SharingPresenter`: native share/copy with a three-tier fallback, plus `FrakSharingConfiguration` for height and install surface |
 
 `Core/`, `Net/`, `Identity/`, etc. are folders inside the single `FrakSDK` target, not
 separate Swift modules — SwiftPM has no submodule concept, so they carry no
@@ -77,8 +83,12 @@ Inbound deep links have no automatic handling — wire `appLink.handleReferral(_
 
 ## Status
 
-The table above is implemented and covered by 491 Swift Testing tests under
-`sdk/ios/Tests`. The FrakContext v2 codec and the signed proof byte layout are
+The table above is implemented and covered by 499 Swift Testing tests under
+`sdk/ios/Tests`. That count is the *host* run and excludes every UIKit-dependent suite:
+`run.sh test` compiles the tests at the iOS simulator triple (stage 1) and then executes them
+on the host (stage 2), where `canImport(UIKit)` is false, so `InstallProbeTests` and
+`FrakSharingUIKitTests` are type-checked and never run. Executing them needs `xcodebuild test`
+against a simulator destination, which is deferred with the XCFramework work. The FrakContext v2 codec and the signed proof byte layout are
 asserted against the golden fixtures in `sdk/core/src/{identity,context}/fixtures/`,
 shared with the Kotlin and TypeScript suites.
 
@@ -86,9 +96,12 @@ Not implemented: the 4-tier copy precedence (`copy(placement:component:)`) and t
 XCFramework distribution path.
 
 `.github/workflows/apps.yaml`'s `ios-sdk` job runs `lint`, `build` and `test` on every
-`dev`/`main` push and PR touching `sdk/ios/**`. Nothing in it has run on a device or a
+`dev`/`main` push and PR touching `sdk/ios/**`. Nothing in CI has run on a device or a
 simulator — every claim above rests on suites executed on the host toolchain
-(`swift test`), not on `xcodebuild test` against a simulator destination.
+(`swift test`), not on `xcodebuild test` against a simulator destination. Manual device
+testing of the sharing sheet started on 2026-08-12; there is no XCUITest target anywhere in
+the repo, so any claim of a simulator UI-test pass elsewhere in `docs/plans/native-sdk/`
+is wrong.
 
 ## Toolchain notes
 
@@ -151,7 +164,6 @@ simulator — every claim above rests on suites executed on the host toolchain
 
 - XCFramework build and signing are unbuilt. `bun run --cwd sdk/ios xcframework`
   exits 1; only source distribution via a SwiftPM path/git dependency works today.
-- No CI builds either native SDK.
 - `golden-rewards.json`'s `format-amount` vectors are hand-copied as literals in
   `RewardsDecoderTests.swift` instead of loaded from the shared fixture corpus.
 - `PrivacyInfo.xcprivacy` propagation has not been validated against a real consumer

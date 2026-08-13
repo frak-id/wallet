@@ -410,7 +410,7 @@ struct SharingBuildRetryTests {
         // Nothing to link to yet, because the resolved config's homepage link has not landed.
         #expect(sharingBuildIsWorthRetrying(.merchantResolutionFailed(reason: "nothing to link to")))
         #expect(sharingBuildIsWorthRetrying(.network(underlying: URLError(.timedOut))))
-        #expect(sharingBuildIsWorthRetrying(.backingOff(retryAfter: 1)))
+        #expect(sharingBuildIsWorthRetrying(.backingOff(retryAfterSeconds: 1)))
         #expect(sharingBuildIsWorthRetrying(.server(status: 503, code: nil, retryAfterSeconds: nil)))
         #expect(sharingBuildIsWorthRetrying(.decoding(message: "bad body")))
     }

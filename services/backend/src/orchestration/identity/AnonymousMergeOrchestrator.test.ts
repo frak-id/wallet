@@ -32,6 +32,7 @@ function makeOrchestrator() {
     const identityOrchestrator = {
         resolveAndAssociate: vi.fn(),
         associate: vi.fn(),
+        resolve: vi.fn(),
     };
     const verify = vi.fn();
     const identityProofService = {
@@ -229,6 +230,12 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
             ctx.anonymousMergeService.validateToken.mockResolvedValue({
                 sourceGroupId: "group-source",
             });
+            ctx.identityOrchestrator.resolve.mockResolvedValue({
+                groupId: "group-target",
+                isNew: false,
+            });
+            // The proofless path reads this instead of `resolve`: an existing
+            // target is a merge, an absent one is a create it may not do.
             ctx.identityRepository.findGroupByIdentity.mockResolvedValue({
                 id: "group-target",
             });
@@ -331,6 +338,113 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
                 value: "already-latched-id",
                 merchantId: MERCHANT_ID,
             });
+        });
+
+        it("creates the target identity when the device has never been seen", async () => {
+            const ctx = makeOrchestrator();
+            setupSuccessfulExecute(ctx);
+            ctx.identityOrchestrator.resolve.mockResolvedValue({
+                groupId: "group-created",
+                isNew: true,
+            });
+            ctx.identityOrchestrator.associate.mockResolvedValue({
+                finalGroupId: "group-created",
+                merged: true,
+            });
+            ctx.identityProofService.verify.mockResolvedValue({ valid: true });
+            ctx.identityProofService.hashMergeToken.mockReturnValue(
+                new Uint8Array(32)
+            );
+
+            const result = await ctx.orchestrator.executeMerge({
+                mergeToken: MERGE_TOKEN,
+                targetAnonymousId: "brand-new-id",
+                merchantId: MERCHANT_ID,
+                proof: "valid-proof",
+            });
+
+            expect(result).toEqual({
+                finalGroupId: "group-created",
+                merged: true,
+            });
+            expect(ctx.identityOrchestrator.resolve).toHaveBeenCalledWith({
+                type: "anonymous_fingerprint",
+                value: "brand-new-id",
+                merchantId: MERCHANT_ID,
+            });
+            expect(ctx.identityOrchestrator.associate).toHaveBeenCalledWith(
+                "group-source",
+                "group-created"
+            );
+        });
+
+        it("refuses to conjure an absent target when no proof is presented", async () => {
+            const ctx = makeOrchestrator();
+            setupSuccessfulExecute(ctx);
+            ctx.identityRepository.findNodeByIdentity.mockResolvedValue(null);
+            ctx.identityRepository.findGroupByIdentity.mockResolvedValue(null);
+
+            await expect(
+                ctx.orchestrator.executeMerge({
+                    mergeToken: MERGE_TOKEN,
+                    targetAnonymousId: "never-existed",
+                    merchantId: MERCHANT_ID,
+                })
+            ).rejects.toMatchObject({ code: "TARGET_NOT_FOUND", status: 404 });
+
+            expect(ctx.identityOrchestrator.resolve).not.toHaveBeenCalled();
+            expect(ctx.identityOrchestrator.associate).not.toHaveBeenCalled();
+        });
+
+        it("creates an absent target only on the proven branch", async () => {
+            const ctx = makeOrchestrator();
+            setupSuccessfulExecute(ctx);
+            ctx.identityRepository.findGroupByIdentity.mockResolvedValue(null);
+            ctx.identityOrchestrator.resolve.mockResolvedValue({
+                groupId: "group-created",
+                isNew: true,
+            });
+            ctx.identityProofService.verify.mockResolvedValue({ valid: true });
+            ctx.identityProofService.hashMergeToken.mockReturnValue(
+                new Uint8Array(32)
+            );
+
+            await ctx.orchestrator.executeMerge({
+                mergeToken: MERGE_TOKEN,
+                targetAnonymousId: "never-existed",
+                merchantId: MERCHANT_ID,
+                proof: "valid-proof",
+            });
+
+            expect(ctx.identityOrchestrator.resolve).toHaveBeenCalled();
+        });
+
+        it("latches a brand-new id, which needs the node to exist first", async () => {
+            const ctx = makeOrchestrator();
+            setupSuccessfulExecute(ctx);
+            const calls: string[] = [];
+            ctx.identityOrchestrator.resolve.mockImplementation(async () => {
+                calls.push("resolve");
+                return { groupId: "group-created", isNew: true };
+            });
+            ctx.identityRepository.markProofSeen.mockImplementation(
+                async () => {
+                    calls.push("markProofSeen");
+                }
+            );
+            ctx.identityProofService.verify.mockResolvedValue({ valid: true });
+            ctx.identityProofService.hashMergeToken.mockReturnValue(
+                new Uint8Array(32)
+            );
+
+            await ctx.orchestrator.executeMerge({
+                mergeToken: MERGE_TOKEN,
+                targetAnonymousId: "brand-new-id",
+                merchantId: MERCHANT_ID,
+                proof: "valid-proof",
+            });
+
+            expect(calls).toEqual(["resolve", "markProofSeen"]);
         });
 
         it("proven path adds no query: the node lookup is not called when a valid proof is present", async () => {
