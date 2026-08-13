@@ -6,6 +6,22 @@ Referral tracking and rewards for iOS apps. Zero third-party dependencies.
 > sheet and the install handoff have never been exercised outside a test suite. Pin an
 > exact version and expect breaking changes until 1.0.
 
+## What is supported
+
+| | Status |
+|---|---|
+| **iOS floor** | 15.0. The package declares it and CI compiles at `arm64-apple-ios15.0-simulator`, so an unguarded iOS 16+ API is a build error |
+| **SwiftUI** | Fully supported, both the core SDK and the sharing sheet |
+| **UIKit** | Supported. Core SDK as-is; the sheet through `FrakSharing` rather than the SwiftUI modifier |
+| **Objective-C** | Not supported. See the note under *Sharing sheet — UIKit* |
+| **Xcode** | 16 or newer, for Swift 6 language mode |
+
+**iOS 15 and 16 are supported but not verified.** The sheet degrades where the OS gives it less to
+work with: no resizable detent below iOS 16, so the sheet is full height there, and no clear sheet
+background below 16.4. Both are handled, neither has been exercised on a device — Xcode 26 cannot
+install a simulator runtime that old, so verifying it needs physical hardware. Report anything odd
+on those versions and it will be treated as a real bug.
+
 ## Install
 
 Xcode → File → Add Package Dependencies → `https://github.com/frak-id/frak-ios-sdk`
@@ -71,7 +87,7 @@ let outcome = try await Frak.client.tracking.purchase(
 )
 ```
 
-### Sharing sheet
+### Sharing sheet — SwiftUI
 
 ```swift
 import FrakSDKUI
@@ -110,6 +126,46 @@ deterministically — no install code needed — reporting `.walletOpened`. Set
 `detectInstall: false` to keep the store surface without the polling; the same
 `LSApplicationQueriesSchemes` entry `isFrakAppInstalled()` already needs is what makes either
 one work at all.
+
+### Sharing sheet — UIKit
+
+`frakSharingSheet` is a SwiftUI `ViewModifier`, so a UIKit screen uses `FrakSharing` instead. Both
+drive the same session machinery and the same pooled web view; the Android SDK is split the same
+way, between the Compose modifier and `FrakSharing.Builder.build(activity)`.
+
+```swift
+import FrakSDKUI
+
+final class ProductViewController: UIViewController {
+    private var sharing: FrakSharing?
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        sharing = FrakSharing(presentingFrom: self) { result in
+            // handle SharingResult
+        }
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Boots the web view and the identity/config reads before the tap.
+        sharing?.warm()
+    }
+
+    @objc private func shareTapped() {
+        sharing?.present(request)
+    }
+}
+```
+
+Hold the instance for as long as the screen lives — releasing it takes the warm web view with it and
+the next share pays a cold start. It takes the same `FrakSharingConfiguration` as the modifier, and
+holds the presenting controller weakly, so it never keeps a screen alive.
+
+**Objective-C is not supported.** The SDK's surface is Swift structs, enums with associated values
+and `async` methods, none of which bridge, so using it from Objective-C means adding a Swift bridge
+file to your app. That is a deliberate scoping decision, not an oversight — tell us if it blocks you
+and we will look at a compatibility layer.
 
 ### Inbound referral links
 

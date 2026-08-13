@@ -46,8 +46,9 @@ format`/`lint` here; rules live in `.swift-format`, copied from
 
 Folders inside the two targets, and the main type in each. **Almost none of these are
 `public`** — the merchant-facing surface is `Frak`, `FrakClient` and its five namespaces,
-the input/read models they take and return, and `FrakSDKUI`'s `.frakSharingSheet` modifier
-plus `FrakSharingConfiguration`. Everything else below is `internal`.
+the input/read models they take and return, and `FrakSDKUI`'s two entry points —
+`.frakSharingSheet` for SwiftUI and `FrakSharing` for UIKit — plus `FrakSharingConfiguration`.
+Everything else below is `internal`.
 
 | Target | Folder | Main types |
 | --- | --- | --- |
@@ -60,7 +61,7 @@ plus `FrakSharingConfiguration`. Everything else below is `internal`.
 | `FrakSDK` | `Tracking` | `Interaction`, `EventQueue` (durable JSONL), `EventOutbox` |
 | `FrakSDK` | `AppLink` | `AppLauncher`, `InstallLinks`, `ReferralArrival` |
 | `FrakSDK` | (root) | `Frak`, `FrakClient`, `DefaultFrakClient` |
-| `FrakSDKUI` | — | `.frakSharingSheet` modifier: native share/copy with a three-tier fallback, and `FrakSharingConfiguration` for its height and install surface |
+| `FrakSDKUI` | — | `.frakSharingSheet` (SwiftUI) and `FrakSharing` (UIKit), both onto one `SharingPresenter`: native share/copy with a three-tier fallback, plus `FrakSharingConfiguration` for height and install surface |
 
 `Core/`, `Net/`, `Identity/`, etc. are folders inside the single `FrakSDK` target, not
 separate Swift modules — SwiftPM has no submodule concept, so they carry no
@@ -82,8 +83,12 @@ Inbound deep links have no automatic handling — wire `appLink.handleReferral(_
 
 ## Status
 
-The table above is implemented and covered by 495 Swift Testing tests under
-`sdk/ios/Tests`. The FrakContext v2 codec and the signed proof byte layout are
+The table above is implemented and covered by 499 Swift Testing tests under
+`sdk/ios/Tests`. That count is the *host* run and excludes every UIKit-dependent suite:
+`run.sh test` compiles the tests at the iOS simulator triple (stage 1) and then executes them
+on the host (stage 2), where `canImport(UIKit)` is false, so `InstallProbeTests` and
+`FrakSharingUIKitTests` are type-checked and never run. Executing them needs `xcodebuild test`
+against a simulator destination, which is deferred with the XCFramework work. The FrakContext v2 codec and the signed proof byte layout are
 asserted against the golden fixtures in `sdk/core/src/{identity,context}/fixtures/`,
 shared with the Kotlin and TypeScript suites.
 

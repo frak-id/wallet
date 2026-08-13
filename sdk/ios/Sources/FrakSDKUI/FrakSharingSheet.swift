@@ -109,7 +109,9 @@
         }
     }
 
-    private struct FrakSharingSheetContent: View {
+    /// Internal, not private: `FrakSharing` hosts this same content from UIKit, so both entry
+    /// points render one implementation.
+    struct FrakSharingSheetContent: View {
         @ObservedObject var presenter: SharingPresenter
         let heightFraction: CGFloat
 
