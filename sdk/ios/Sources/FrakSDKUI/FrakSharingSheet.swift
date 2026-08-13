@@ -10,20 +10,20 @@
         /// - Parameters:
         ///   - isPresented: whether the sheet is up.
         ///   - request: what to share.
-        ///   - heightFraction: fraction of screen height, clamped to `0.3...1.0`.
+        ///   - configuration: sheet height and which store surface the install step raises.
         ///   - onResult: called once per presentation with the most significant outcome.
         /// - Returns: `content` wrapped with the sheet's presentation, warm-up and teardown.
         public func frakSharingSheet(
             isPresented: Binding<Bool>,
             request: SharingRequest,
-            heightFraction: CGFloat = FrakSharingDefaults.heightFraction,
+            configuration: FrakSharingConfiguration = FrakSharingConfiguration(),
             onResult: @escaping (SharingResult) -> Void = { _ in }
         ) -> some View {
             modifier(
                 FrakSharingSheetModifier(
                     isPresented: isPresented,
                     request: request,
-                    heightFraction: heightFraction,
+                    configuration: configuration,
                     onResult: onResult
                 )
             )
@@ -33,7 +33,7 @@
     private struct FrakSharingSheetModifier: ViewModifier {
         @Binding var isPresented: Bool
         let request: SharingRequest
-        let heightFraction: CGFloat
+        let configuration: FrakSharingConfiguration
         let onResult: (SharingResult) -> Void
 
         /// A `@StateObject` because it outlives every sheet this modifier presents — the pooled
@@ -72,7 +72,10 @@
                     }
                 }
                 .sheet(isPresented: $isPresented, onDismiss: { finish() }) {
-                    FrakSharingSheetContent(presenter: presenter, heightFraction: heightFraction)
+                    FrakSharingSheetContent(
+                        presenter: presenter,
+                        heightFraction: configuration.heightFraction
+                    )
                 }
         }
 
@@ -80,6 +83,7 @@
             presenter.launch(
                 // Read, never captured — see `body`.
                 presenter.pendingRequest,
+                install: configuration.install,
                 onOutcome: { result in
                     if result.significance > (best?.significance ?? -1) {
                         best = result

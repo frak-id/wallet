@@ -19,7 +19,7 @@
         // `sharingBuildRetryDelays` and `sharingBuildIsWorthRetrying` live in SharingSheetLogic
         // .swift, outside this `#if`, so the ladder has a host-run test.
         nonisolated static let seedTimeout: TimeInterval = 0.04
-        // The App Store handoff lives in `StoreOverlay`.
+        // The App Store handoff lives behind `StoreInvite`.
 
         /// How far the hosted page has got. One value rather than three published booleans, which
         /// could spell "painted but lost" and "lost before it ever rendered".
@@ -91,12 +91,13 @@
         /// On the wallet's install page rather than the sharing page, so `onPageUnavailable` can
         /// tell a failed install page apart from a failed sharing page.
         private var showingInstallPage = false
-        private let storeOverlay = StoreOverlay()
+        private let storeInvite: any StoreInvite
 
         init(
             sessionId: String,
             trace: SharingTrace = SharingTrace(),
             activationBaseURL: String? = nil,
+            install: FrakInstallPresentation = FrakSharingDefaults.install,
             buildSharingLink: @escaping @Sendable (SharingRequest) async throws -> String? = {
                 try await Frak.client.sharing.buildLink($0)
             },
@@ -130,6 +131,7 @@
             self.sessionId = sessionId
             self.trace = trace
             self.activationBaseURL = activationBaseURL
+            self.storeInvite = StoreInvites.make(install)
             self.buildSharingLink = buildSharingLink
             self.anonymousId = anonymousId
             self.environment = environment
@@ -169,7 +171,7 @@
             webView = nil
             // An `SKOverlay` attaches to the `UIWindowScene`, not the sheet, so it survives unless
             // taken down here. A tapped GET keeps downloading, so this only costs the untapped case.
-            storeOverlay.dismiss()
+            storeInvite.dismiss()
         }
 
         /// Claims one of the page's buttons for its round trip.
@@ -325,7 +327,7 @@
         }
 
         /// Where the page's own outbound links go. The wallet's store listing prefers the app over
-        /// the overlay, so an already-installed wallet does not get offered its own store page.
+        /// the listing, so an already-installed wallet does not get offered its own store page.
         func openExternally(_ url: URL) {
             switch sharingExternalRoute(url) {
             case .ignore:
@@ -334,14 +336,16 @@
                 Task { _ = await UIApplication.shared.open(url) }
             case .walletStoreListing:
                 Task {
-                    // Probed, not assumed installed-by-absence: the overlay is always raised on the
-                    // production listing, so on a device carrying a dev build it offers GET for a
+                    // Probed, not assumed installed-by-absence: the listing is always raised on the
+                    // production one, so on a device carrying a dev build it offers GET for a
                     // wallet that is already there — and unlike the store, the deep link carries
                     // attribution.
                     if await isFrakAppInstalled(), await openFrakApp() == .openedApp { return }
-                    // No scene to raise an overlay in. Opening the listing here would send an
-                    // already-installed wallet's owner to its own store page, so hand off instead.
-                    if !storeOverlay.present() { _ = await openFrakApp() }
+                    // Nothing on screen to raise the listing from, or it refused to load. Opening
+                    // it here would send an already-installed wallet's owner to its own store
+                    // page, so hand off instead.
+                    let raised = await storeInvite.present()
+                    if !raised { _ = await openFrakApp() }
                 }
             }
         }

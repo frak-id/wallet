@@ -351,7 +351,7 @@ re-derived by a different app, so it has to be carried across the install bounda
 | Platform | Mechanism | Determinism |
 |---|---|---|
 | Android | Play Store URL carrying an install referrer with `m`, `a` and the proof | deterministic — survives the store round trip exactly |
-| iOS | install code + pasteboard + `SKOverlay` | user-mediated, deterministic when used |
+| iOS | install code + pasteboard + `SKStoreProductViewController` or `SKOverlay` | user-mediated, deterministic when used |
 
 iOS has no install referrer and fingerprinting-based alternatives were rejected, so the
 handoff is user-mediated instead — no fingerprinting, no ATT prompt, one interaction.
@@ -366,7 +366,7 @@ returnToHost("install")
   │         ├─ on Copy or Download (a gesture, never an effect) the page hands the code
   │         │    back: returnToHost("code", value, exp) → HOST writes the pasteboard
   │         └─ download
-  │              ├─ iOS: HOST intercepts → SKOverlay → installs in place
+  │              ├─ iOS: HOST intercepts → store page or SKOverlay → installs in place
   │              └─ Android: Play URL with referrer (leaves the app; nothing is lost)
   └─ the sheet STAYS OPEN throughout
 ```
@@ -380,10 +380,26 @@ the backend's 30-day window measures from.
 
 ### iOS specifics
 
-- `SKOverlay`, presented on the sheet's `UIWindowScene`, installs in place and replaces
-  `isFrakAppInstalled()` for this flow (which stays public for other callers).
-  `SKStoreProductViewController` is rejected: it fails presenting alongside an already-up
-  `UISheetPresentationController`.
+- **The store surface is the merchant's choice, `FrakSharingConfiguration.install`.** Both
+  replace `isFrakAppInstalled()` for this flow (which stays public for other callers), and
+  both are reached through the internal `StoreInvite` protocol, so the model's install path
+  does not know which one it has:
+  - `.storeProductPage` (default) — an `SKStoreProductViewController` presented modally
+    over the sheet, from `StoreInvites.topViewController()`. The earlier claim that it
+    "fails presenting alongside an already-up `UISheetPresentationController`" holds only
+    when it is presented from a controller that is *already presenting*, which the sheet's
+    host is; presenting from the topmost controller is the fix. It reports whether it
+    loaded, accepts a custom product page id, and hands the sheet back on close.
+  - `.overlay` — the `SKOverlay` banner on the sheet's `UIWindowScene`, which installs in
+    place without covering the sheet, and reports nothing at all: a wrong id silently draws
+    nothing.
+  - Both accept the App Analytics `campaignToken`/`providerToken` and a
+    `customProductPageId`; the overlay also carries `position` and `userDismissible`. The
+    app id stays a constant (`StoreInvites.walletAppStoreId`) — the merchant never picks
+    which app is installed, only how it is offered.
+  - The product page falls back to `openFrakApp()` when `loadProduct` fails or takes longer
+    than 5 s. The overlay has no such signal, so it falls back only when there is no
+    foreground scene, or on Mac Catalyst where `SKOverlay` does not exist.
 - **The overlay outlives the sheet once `.installStarted` is reported, and only then.** It is
   attached to the scene, not to the sheet, so surviving is what it does by default; the sheet
   used to take it back down unconditionally, which meant closing the sheet — by any gesture —
@@ -481,8 +497,8 @@ and when it lands it must carry its ordering rules, not the four booleans alone,
 
 Landed on both platforms: the probe gate deleted from `openFrakApp`; the tracking correction
 above; the router's `p` forwarding and fragment-first resolution; the in-sheet `/install`
-navigation with `SKOverlay` on iOS and the referrer URL on Android; the `code` action with
-the pasteboard write.
+navigation with the merchant-picked store surface on iOS and the referrer URL on Android; the
+`code` action with the pasteboard write.
 
 None of it has run on a device. Test coverage is the web half, Android's JVM suites, and — since
 the fragment-activation port — the iOS logic that could be lifted out from behind
@@ -493,8 +509,10 @@ load deadline raising a second chooser and the missing install in-flight guard, 
 
 Open questions:
 
-1. `SKOverlay` vs `SKStoreProductViewController` — SKOverlay is lighter and installs in place
-   but has no styling control. Current design assumes SKOverlay.
+1. ~~`SKOverlay` vs `SKStoreProductViewController`~~ — **settled: both, merchant's choice.**
+   `FrakSharingConfiguration.install` picks the surface and carries its options; the default
+   is the store product page. See §3's iOS specifics. Android has no equivalent knob, so this
+   is a deliberate iOS-only divergence. Neither surface has run on a device.
 2. Should `installStarted` become a tracked interaction rather than only a merchant callback?
    Today it notifies and records nothing.
 3. Ordering against the identity-proof rollout: iOS emitted no proof until this landed, so the

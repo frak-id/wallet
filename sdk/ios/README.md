@@ -55,7 +55,7 @@ format`/`lint` here; rules live in `.swift-format`, copied from
 | `FrakSDK` | `Tracking` | `Interaction`, `EventQueue` (durable JSONL), `InteractionTracker` |
 | `FrakSDK` | `AppLink` | `AppLauncher`, `InstallLinks`, `ReferralArrival` |
 | `FrakSDK` | (root) | `Frak`, `FrakClient`, `DefaultFrakClient` |
-| `FrakSDKUI` | — | `.frakSharingSheet` modifier: native share/copy with a three-tier fallback |
+| `FrakSDKUI` | — | `.frakSharingSheet` modifier: native share/copy with a three-tier fallback, and `FrakSharingConfiguration` for its height and install surface |
 
 `Core/`, `Net/`, `Identity/`, etc. are folders inside the single `FrakSDK` target, not
 separate Swift modules — SwiftPM has no submodule concept, so they carry no
@@ -77,13 +77,12 @@ Inbound deep links have no automatic handling — wire `appLink.handleReferral(_
 
 ## Status
 
-The table above is implemented and covered by 257 Swift Testing tests under
+The table above is implemented and covered by 476 Swift Testing tests under
 `sdk/ios/Tests`. The FrakContext v2 codec and the signed proof byte layout are
 asserted against the golden fixtures in `sdk/core/src/{identity,context}/fixtures/`,
 shared with the Kotlin and TypeScript suites.
 
-Not implemented: the 4-tier copy precedence (`copy(placement:component:)`), the
-install-code + pasteboard + `SKStoreProductViewController` handoff, and the
+Not implemented: the 4-tier copy precedence (`copy(placement:component:)`) and the
 XCFramework distribution path.
 
 `.github/workflows/apps.yaml`'s `ios-sdk` job runs `lint`, `build` and `test` on every

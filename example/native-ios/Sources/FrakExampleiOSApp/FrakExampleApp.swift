@@ -121,6 +121,7 @@ struct FrakExampleApp: App {
     @State private var pendingSharingRequest = SharingRequest()
     @State private var debugRows: [DebugRow] = []
     @State private var isDebugRefreshing = false
+    @State private var installRoute: InstallRoute = .storeProductPage
 
     init() {
         // .manual is the only DeepLinkHandling option on iOS: inbound URLs are routed to
@@ -178,6 +179,7 @@ struct FrakExampleApp: App {
                 } else {
                     CheckoutToolsView(
                         debugRows: debugRows,
+                        installRoute: $installRoute,
                         isDebugRefreshing: isDebugRefreshing,
                         onSimulateDeepLink: handleSimulateDeepLink,
                         onOrderCompleted: handleOrderCompleted,
@@ -230,6 +232,7 @@ struct FrakExampleApp: App {
             .frakSharingSheet(
                 isPresented: $isSharingPresented,
                 request: pendingSharingRequest,
+                configuration: FrakSharingConfiguration(install: installRoute.presentation),
                 onResult: handleSharingResult
             )
         }
@@ -579,8 +582,24 @@ struct ShareScopeCard: View {
     }
 }
 
+/// Which store surface `FrakSharingConfiguration.install` should hand the sheet's install step.
+enum InstallRoute: String, CaseIterable, Identifiable {
+    case storeProductPage = "Store page"
+    case overlay = "Overlay"
+
+    var id: String { rawValue }
+
+    var presentation: FrakInstallPresentation {
+        switch self {
+        case .storeProductPage: return .storeProductPage
+        case .overlay: return .overlay(.init(position: .bottomRaised))
+        }
+    }
+}
+
 struct CheckoutToolsView: View {
     let debugRows: [DebugRow]
+    @Binding var installRoute: InstallRoute
     let isDebugRefreshing: Bool
     let onSimulateDeepLink: () -> Void
     let onOrderCompleted: () -> Void
@@ -641,9 +660,38 @@ struct CheckoutToolsView: View {
                     onRefresh: onRefreshDebugInfo
                 )
 
+                InstallRouteCard(route: $installRoute)
+
                 StoreInviteCard()
             }
         }
+    }
+}
+
+/// Switches the sheet's install step between the two store surfaces, so both can be driven
+/// from a real share rather than only from `StoreInviteCard`'s standalone buttons.
+struct InstallRouteCard: View {
+    @Binding var route: InstallRoute
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Sharing Sheet Install Route")
+                .font(.headline)
+                .foregroundColor(FrakTheme.textPrimary)
+            Text("What the sheet's Install button raises. Applies to the next share.")
+                .font(.caption)
+                .foregroundColor(FrakTheme.textSecondary)
+
+            Picker("Install route", selection: $route) {
+                ForEach(InstallRoute.allCases) { route in
+                    Text(route.rawValue).tag(route)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle())
+        }
+        .padding(12)
+        .background(FrakTheme.surfaceBackground2)
+        .cornerRadius(10)
     }
 }
 

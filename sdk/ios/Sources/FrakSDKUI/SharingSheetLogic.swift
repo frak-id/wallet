@@ -240,10 +240,14 @@ func sharingBuildIsWorthRetrying(_ error: FrakError) -> Bool {
     }
 }
 
-/// Tunable defaults for `View.frakSharingSheet(isPresented:request:heightFraction:onResult:)`. Mirrored on the
-/// other platform; keep both in step.
+/// Tunable defaults for `FrakSharingConfiguration`. `heightFraction` is mirrored on the other
+/// platform; keep both in step. `install` is iOS-only.
 public enum FrakSharingDefaults {
     public static let heightFraction: CGFloat = 0.85
+
+    /// The store page, not the overlay: it reports whether it drew, it can be styled through a
+    /// custom product page, and it hands the sheet back when the user closes it.
+    public static let install: FrakInstallPresentation = .storeProductPage
 }
 
 /// The range a caller-supplied `heightFraction` is clamped into.

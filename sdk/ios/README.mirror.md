@@ -72,6 +72,23 @@ struct ProductView: View {
 }
 ```
 
+`FrakSharingConfiguration` tunes the sheet's height and picks which App Store surface the
+install step raises — an `SKStoreProductViewController` page (the default) or an
+`SKOverlay` banner:
+
+```swift
+.frakSharingSheet(
+    isPresented: $sharing,
+    request: request,
+    configuration: FrakSharingConfiguration(
+        heightFraction: 0.9,
+        install: .overlay(.init(position: .bottomRaised))
+    )
+) { result in
+    // handle SharingResult
+}
+```
+
 ### Inbound referral links
 
 There is no automatic deep-link handling — a library cannot observe your `Scene` or

@@ -79,6 +79,7 @@
         static func start(
             pool: SharingWebViewPool,
             request: SharingRequest,
+            install: FrakInstallPresentation,
             onOutcome: @escaping (SharingResult) -> Void,
             onClose: @escaping () -> Void
         ) -> SharingPresentation {
@@ -99,7 +100,8 @@
             let model = SharingSheetModel(
                 sessionId: sessionId,
                 trace: trace,
-                activationBaseURL: activationBaseURL
+                activationBaseURL: activationBaseURL,
+                install: install
             )
             model.onOutcome = onOutcome
             model.onClose = onClose
@@ -196,6 +198,7 @@
         /// Starts the session. A second call while one is up is a no-op rather than a replacement.
         func launch(
             _ request: SharingRequest,
+            install: FrakInstallPresentation,
             onOutcome: @escaping (SharingResult) -> Void,
             onClose: @escaping () -> Void
         ) {
@@ -218,6 +221,7 @@
             let started = SharingPresentation.start(
                 pool: pool,
                 request: request,
+                install: install,
                 onOutcome: onOutcome,
                 onClose: onClose
             )
