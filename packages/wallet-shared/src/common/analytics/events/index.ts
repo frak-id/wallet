@@ -31,6 +31,8 @@ export type {
 export type {
     InstallEventMap,
     InstallPageView,
+    InstallProbeSurface,
+    InstallProbeUnavailableReason,
     InstallReferrerMissingReason,
     InstallSource,
     InstallStore,

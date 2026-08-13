@@ -1,4 +1,5 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -34,6 +35,7 @@ import {
     buildInstallProcessingEnsureAction,
     resolveInstallProof,
 } from "@/module/install/params";
+import { useInstallActivation } from "@/module/install/params/fragment";
 import {
     fireEnsureActions,
     queuePendingAction,
@@ -214,6 +216,7 @@ function InstallCodeView({
 }: InstallSearch & { proof?: string }) {
     const { t: rawT } = useTranslation();
     const [copied, setCopied] = useState(false);
+    const [showCodeAfterInstall, setShowCodeAfterInstall] = useState(false);
 
     const { data: merchantInfo } = useQuery(
         merchantInfoQueryOptions(merchantId)
@@ -241,6 +244,9 @@ function InstallCodeView({
         proof,
     });
 
+    const activation = useInstallActivation(true);
+    const installed = activation?.installed === "1";
+
     // `install_code_displayed` fires once per successful generation,
     // `install_code_generation_failed` fires on transition into error state.
     const reportedCodeRef = useRef<string | null>(null);
@@ -262,6 +268,31 @@ function InstallCodeView({
             reportedErrorRef.current = false;
         }
     }, [codeQueryStatus, error, merchantId]);
+
+    // `probe` arrives on the very first load (no host round trip needed), so
+    // unavailability is reported once on mount rather than waiting on a
+    // `hashchange` that a disabled/undeclared probe will never send.
+    const reportedProbeRef = useRef(false);
+    useEffect(() => {
+        const probe = activation?.probe;
+        if (!probe || probe === "ok" || reportedProbeRef.current) return;
+        reportedProbeRef.current = true;
+        trackEvent("install_probe_unavailable", {
+            merchant_id: merchantId,
+            reason: probe,
+        });
+    }, [activation?.probe, merchantId]);
+
+    const reportedDetectionRef = useRef(false);
+    useEffect(() => {
+        if (!installed || reportedDetectionRef.current) return;
+        reportedDetectionRef.current = true;
+        trackEvent("install_detected", {
+            merchant_id: merchantId,
+            elapsed_ms: activation?.dt ?? 0,
+            surface: activation?.via ?? "product",
+        });
+    }, [installed, activation?.dt, activation?.via, merchantId]);
 
     /**
      * Hands the code to the native host, which can give the pasteboard entry an
@@ -345,12 +376,36 @@ function InstallCodeView({
 
             <main className={styles.main}>
                 <section className={styles.heroSection}>
-                    <Text as="h1" variant="heading2" className={styles.title}>
-                        {t("installCode.title")}
-                    </Text>
-                    <Text variant="bodySmall" color="secondary">
-                        {t("installCode.description")}
-                    </Text>
+                    {installed ? (
+                        <>
+                            <Badge
+                                variant="success"
+                                className={styles.installedBadge}
+                            >
+                                {t("installCode.installedTitle")}
+                            </Badge>
+                            <Text
+                                as="h1"
+                                variant="heading2"
+                                className={styles.title}
+                            >
+                                {t("installCode.installedHeadline")}
+                            </Text>
+                        </>
+                    ) : (
+                        <>
+                            <Text
+                                as="h1"
+                                variant="heading2"
+                                className={styles.title}
+                            >
+                                {t("installCode.title")}
+                            </Text>
+                            <Text variant="bodySmall" color="secondary">
+                                {t("installCode.description")}
+                            </Text>
+                        </>
+                    )}
                 </section>
 
                 {isLoading && (
@@ -368,7 +423,17 @@ function InstallCodeView({
                     </Text>
                 )}
 
-                {data?.code && (
+                {data?.code && installed && !showCodeAfterInstall && (
+                    <button
+                        type="button"
+                        className={styles.installedCodeToggle}
+                        onClick={() => setShowCodeAfterInstall(true)}
+                    >
+                        {t("installCode.installedCodeToggle")}
+                    </button>
+                )}
+
+                {data?.code && (!installed || showCodeAfterInstall) && (
                     <Stack space="m" align="center">
                         <CodeInput value={data.code} mode="alphanumeric" />
                         <Button
@@ -422,6 +487,12 @@ function InstallCodeView({
                     href={downloadUrl}
                     className={styles.downloadButton}
                     onClick={() => {
+                        if (installed) {
+                            trackEvent("install_open_wallet_clicked", {
+                                merchant_id: merchantId,
+                            });
+                            return;
+                        }
                         // Last gesture before leaving for the store, so the code is
                         // on the pasteboard even if they never tapped copy.
                         handOverCode();
@@ -434,7 +505,9 @@ function InstallCodeView({
                         });
                     }}
                 >
-                    {t("installCode.download")}
+                    {installed
+                        ? t("installCode.openWallet")
+                        : t("installCode.download")}
                 </ExternalLink>
             </footer>
         </div>

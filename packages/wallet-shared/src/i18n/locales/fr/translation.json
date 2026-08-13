@@ -804,7 +804,11 @@
         "infoTitle": "Code valable 3 jours",
         "infoDescription": "À l'ouverture de l'app, appuie sur <1>\"J'ai un code de récupération\"</1>.",
         "download": "Télécharger l'app",
-        "processing": "Configuration de ton porte-monnaie..."
+        "processing": "Configuration de ton porte-monnaie...",
+        "installedTitle": "Frak est installé",
+        "installedCodeToggle": "Ou saisis ce code manuellement",
+        "openWallet": "Ouvre Frak et récupère {{ estimatedReward }}",
+        "installedHeadline": "C'est prêt. Ouvre l'app pour récupérer {{ estimatedReward }}."
     },
     "pendingActions": {
         "walletAlreadyLinked": "Ce lien de parrainage est déjà lié à un autre porte-monnaie."

@@ -512,7 +512,11 @@ export default interface Resources {
       "error": "Failed to generate code. Please refresh.",
       "infoDescription": "When opening the app, tap <1>\"I have a recovery code\"</1>.",
       "infoTitle": "Code valid for 3 days",
+      "installedCodeToggle": "Or enter this code manually",
+      "installedHeadline": "You're all set. Open the app to claim {{estimatedReward}}.",
+      "installedTitle": "Frak is installed",
       "loading": "Generating your code...",
+      "openWallet": "Open Frak & claim {{estimatedReward}}",
       "processing": "Setting up your wallet...",
       "title": "Don't lose your {{estimatedReward}}!\nCopy this code"
     },

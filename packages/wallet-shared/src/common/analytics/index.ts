@@ -15,6 +15,8 @@ export type {
     InAppBrowserRedirectTarget,
     InstallEventMap,
     InstallPageView,
+    InstallProbeSurface,
+    InstallProbeUnavailableReason,
     InstallReferrerMissingReason,
     InstallSource,
     InstallStore,

@@ -21,6 +21,10 @@ export type InstallStore = "app_store" | "play_store";
 
 export type InstallReferrerMissingReason = "empty" | "missing_params";
 
+export type InstallProbeSurface = "overlay" | "product";
+
+export type InstallProbeUnavailableReason = "disabled" | "undeclared";
+
 export type InstallPageView = "code" | "processing";
 
 type MerchantMaybe = {
@@ -60,6 +64,18 @@ export type InstallEventMap = {
         has_referrer_proof: boolean;
     };
     install_page_dismissed: undefined;
+
+    // iOS post-install detection — `03-sharing-and-install.md`, *Post-install
+    // detection*. Sourced from the SDK's fragment rewrite (`dt`/`via`/`probe`);
+    // neither native SDK has an analytics sink of its own.
+    install_detected: MerchantMaybe & {
+        elapsed_ms: number;
+        surface: InstallProbeSurface;
+    };
+    install_probe_unavailable: MerchantMaybe & {
+        reason: InstallProbeUnavailableReason;
+    };
+    install_open_wallet_clicked: MerchantMaybe;
 
     // PWA "Add to Home Screen" — separate from the mobile-app retrieval flow
     // but kept here to keep every install-themed event under one domain.
