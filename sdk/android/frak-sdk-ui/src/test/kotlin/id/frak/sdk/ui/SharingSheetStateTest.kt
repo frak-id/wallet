@@ -583,7 +583,7 @@ class SharingSheetStateTest {
                 0,
                 client.installPageUrlCount,
             )
-            assertEquals(SharingResult.InstallStarted, result)
+            assertEquals(SharingResult.WalletOpened, result)
         }
 
     @Test
@@ -705,7 +705,8 @@ class SharingSheetStateTest {
         runTest {
             val app = ApplicationProvider.getApplicationContext<Application>()
             val client = FakeSharingClient()
-            val state = newState(client)
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
 
             state.openExternally(
                 "https://play.google.com/store/apps/details?id=id.frak.wallet&referrer=merchantId%3Dm",
@@ -714,6 +715,28 @@ class SharingSheetStateTest {
 
             assertEquals("the deep link must be tried first", 1, client.openFrakAppCount)
             assertNull("Play must not be opened over the handoff", shadowOf(app).nextStartedActivity)
+            assertNull("the sheet stays open, so nothing is reported yet", result)
+
+            state.dismiss()
+
+            assertEquals(SharingResult.WalletOpened, result)
+        }
+
+    @Test
+    fun `a store listing handoff that finds no handler reports nothing`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.openAppResult = OpenAppResult.Failed
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
+
+            state.openExternally(
+                "https://play.google.com/store/apps/details?id=id.frak.wallet&referrer=merchantId%3Dm",
+            )
+            advanceUntilIdle()
+            state.dismiss()
+
+            assertEquals(SharingResult.Dismissed, result)
         }
 
     @Test

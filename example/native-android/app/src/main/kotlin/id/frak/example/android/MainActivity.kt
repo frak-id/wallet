@@ -300,6 +300,7 @@ class MainActivity : ComponentActivity() {
             is SharingResult.Shared -> addLog("Reward link shared: ${result.link}", LogType.SUCCESS)
             is SharingResult.Copied -> addLog("Reward link copied to clipboard: ${result.link}", LogType.SUCCESS)
             SharingResult.InstallStarted -> addLog("Wallet install flow started by the sharing sheet.", LogType.INFO)
+            SharingResult.WalletOpened -> addLog("Wallet opened directly; identity handed off.", LogType.SUCCESS)
             SharingResult.Dismissed -> addLog("Sharing sheet dismissed by user.", LogType.INFO)
             is SharingResult.Failed -> addLog("Sharing failed: ${result.error.message}", LogType.ERROR)
         }

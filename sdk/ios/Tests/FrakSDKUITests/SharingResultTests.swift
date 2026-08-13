@@ -9,6 +9,7 @@ struct SharingResultTests {
         .shared(link: "https://example.com"),
         .copied(link: "https://example.com"),
         .installStarted,
+        .walletOpened,
         .dismissed,
         .failed(.internalFailure(message: "boom")),
     ]
@@ -26,6 +27,7 @@ struct SharingResultTests {
         #expect(SharingResult.Kind.shared.rawValue == "shared")
         #expect(SharingResult.Kind.copied.rawValue == "copied")
         #expect(SharingResult.Kind.installStarted.rawValue == "installStarted")
+        #expect(SharingResult.Kind.walletOpened.rawValue == "walletOpened")
         #expect(SharingResult.Kind.dismissed.rawValue == "dismissed")
         #expect(SharingResult.Kind.failed.rawValue == "failed")
     }
@@ -37,5 +39,10 @@ struct SharingResultTests {
         #expect(SharingResult.shared(link: "l").significance > SharingResult.dismissed.significance)
         #expect(SharingResult.copied(link: "l").significance == SharingResult.shared(link: "l").significance)
         #expect(SharingResult.dismissed.significance > SharingResult.failed(.notInitialized).significance)
+    }
+
+    @Test("ranks a wallet open above an install tap: it is the outcome that is actually worth money")
+    func ranksWalletOpenAboveInstallStarted() {
+        #expect(SharingResult.walletOpened.significance > SharingResult.installStarted.significance)
     }
 }

@@ -440,6 +440,357 @@ No `SKOverlay` equivalent — Play always foregrounds the Play app, which does n
 because the referrer carries `m`/`a`/proof deterministically. The clipboard write is a
 fallback, not load-bearing; the SDK emits the referrer only, with no read-back.
 
+### Post-install detection — the deterministic iOS path
+
+Designed, not built. The install code stays, but only to carry the failure cases; the primary
+path becomes the same `m`/`a`/proof deep link Android's referrer carries.
+
+`SKOverlay` installs the wallet **without leaving the merchant app**, so the SDK is still
+foregrounded when the install finishes. Nothing in the OS announces it, but `canOpenURL` flips,
+and from there `openFrakApp()` delivers the identity deterministically — no code, no pasteboard,
+no QuickType, no manual entry.
+
+#### Not the store's own campaign tokens
+
+`SKOverlay.AppConfiguration.campaignToken` / `providerToken` cannot do this, and the reasoning is
+recorded here so nobody re-derives it. They are an App Store Connect App Analytics dimension, not
+a transport: a campaign token is a 40-byte string (shorter than `m` alone), campaigns surface in
+Analytics only after a day *and* five attributed App Units, and the only client-side readback —
+`AAAttribution.attributionToken()` → `api-adservices.apple.com` — returns numeric Apple Ads
+identifiers, never the `ct` string, and answers `attribution: false` for an install that came from
+no ad. SKAdNetwork and AdAttributionKit postback to an ad network's server with a ≤4-digit source
+id and a coarse conversion value. There is no `ct` readback at any layer. iOS still has no Play
+Install Referrer equivalent. Setting `ct = frak-<merchantSlug>` is worth doing for aggregate ASC
+reporting; it is unrelated to the handoff.
+
+#### Both store surfaces grow a button that loses the payload
+
+Once the wallet is installed, `SKOverlay` flips GET → OPEN and `SKStoreProductViewController` does
+the same. Either launches `id.frak.wallet` **cold, with no URL** — no merchant, no anonymous id,
+no proof — and the user lands on a blank wallet with the whole handoff thrown back onto the code.
+So detection is not an optimisation layered on top: it is a race against Apple's own button, and
+detection has to *dismiss the store surface*, not merely repaint behind it. On the `SKOverlay`
+variant it is worse than a race, because `position: .bottom` is a banner sitting exactly where the
+install page's footer CTA is — a repaint underneath it is invisible.
+
+#### The detector: owned by the model, two triggers
+
+**`StoreInvite` is not the seam, and bracketing `present()`/`dismiss()` is a blocker.**
+`StoreProductPageInvite.productViewControllerDidFinish` *calls* `dismiss()`, so on the
+`.storeProductPage` default a user who taps GET, watches it install and then closes the page by
+hand would stop the poll before it ever answered — the exact case this section calls likely. Three
+more lifetimes disagree with the surface: `present()` is `async` and can burn the whole 5 s load
+deadline before returning, both invites return `true` early when already presenting (so a second
+tap would start a second poll), and `release()` calls `dismiss()` unconditionally even though the
+overlay is meant to survive a sheet close once `.installStarted` is reported.
+
+So `InstallProbe` is a separate `@MainActor` type owned by `SharingSheetModel`, and
+`StoreInvite.dismiss()` is what it *calls on success*, not what bounds it.
+
+| Model event | Probe |
+|---|---|
+| `onPageAction(.install)`, after `report(.installStarted)` | `start()` |
+| `didDetectInstall()` | one-shot: `dismiss()` the invite, write the fragment, `stop()` |
+| `release()` | `stop()`, **before** `storeInvite.dismiss()` |
+
+Start at the install claim rather than at `present()`: it is synchronous, already guarded by
+`claim(.install)` so re-entrancy is solved where it is already solved, and it precedes the product
+page's load deadline instead of trailing it. Cancellation is a `Task` held in the probe and
+cancelled in `stop()`, mirroring the model's existing `deadline` — never a `Timer`, which `Task`
+semantics do not cancel and which would outlive a disposed model. Capture `sessionId` at `start()`
+and compare before writing: the probe is the one component whose callback can land after the
+pooled view has been rebound.
+
+| Trigger | Covers |
+|---|---|
+| poll timer | both variants — the app never backgrounds |
+| `willEnterForegroundNotification` | the App Store app, Mac Catalyst, any path that did background |
+
+`productViewControllerDidFinish` is deliberately **not** a third trigger. It already means
+"dismiss"; overloading it to also mean "an install may have happened" conflates two unrelated
+facts, and under model ownership the poll is still running when the product page closes, so the
+foreground trigger and the timer already cover it.
+
+Both feed one idempotent `didDetectInstall()`.
+
+**Polling is not a shortcut, it is the whole API.** iOS emits no notification when another app is
+installed, `SKOverlayDelegate` has presentation and dismissal callbacks and nothing else, and
+`SKStoreProductViewController` is the same. Attribution SDKs do not solve this either — Branch,
+AppsFlyer and Adjust reach the same place with server-side probabilistic click matching, which is
+the fingerprinting `§3` already rejected and which ATT has since squeezed further. Periodic
+`canOpenURL` is the only mechanism that exists.
+
+| Window | Interval |
+|---|---|
+| 0–30 s | 1 s |
+| 30–120 s | 2 s |
+| 120 s → `dismiss()` | 5 s |
+
+No hard ceiling: the store surface being dismissed is the bound, which is also the moment the
+detector stops being able to do anything useful. Three facts make the cadence safe, all from
+Apple's own documentation rather than folklore:
+
+- **The `canOpenURL` rate limit counts distinct schemes, not calls.** The `"exceeded the number
+  of allowed scheme queries"` failures are the ~50-unique-scheme cap from iOS 9, which bit SDKs
+  probing hundreds of *different* schemes. We probe exactly one, declared, repeatedly. That is the
+  shape the cap was designed to allow.
+- **It is documented thread-safe** — *"You can call this method safely on a thread that isn't the
+  main thread"* — so the poll is not a main-thread hazard by contract. Swift 6 keeps it on
+  `@MainActor` anyway because `UIApplication` is isolated there, and the Main Thread Checker has
+  historically flagged it off-main regardless. Stay on the main actor; the cost is a
+  LaunchServices lookup, no prompt and no ATT.
+- **`true` is a launch guarantee**, not a hint: *"When this method returns true, iOS guarantees
+  subsequent calls to `open(_:options:completionHandler:)` with the same URL will successfully
+  launch an app that can handle the URL."* There is no window in which the probe is true and the
+  handoff would fail.
+
+#### Two gates, and the merchant already holds the first one
+
+Unattended polling is the one thing here a merchant could be surprised by, so it is switchable:
+
+```swift
+FrakSharingConfiguration(
+    install: .storeProductPage,
+    detectInstall: false          // default true
+)
+```
+
+`detectInstall` sits beside `install` on `FrakSharingConfiguration`, **not** inside
+`FrakInstallPresentation`. The detector is owned by the model and is identical for both variants,
+and `willEnterForegroundNotification` is not a surface concern at all — a per-variant knob would
+have to be written twice and set twice to mean one thing. Named for
+the outcome rather than the mechanism: a merchant is deciding whether the SDK notices an install,
+not whether it uses a timer. iOS-only, like `install` itself; Android's referrer makes it moot.
+
+Off means off for everything downstream, because `didDetectInstall()` is the only thing that ever
+writes the `installed` fragment: no timer, no foreground re-probe, no
+`productViewControllerDidFinish` hook, no CTA repaint. The result is byte-for-byte today's flow —
+install code, pasteboard, QuickType — which is why disabling it is safe rather than degraded.
+
+Two boundaries the flag must not cross:
+
+- **The shipped single probe stays ungated.** `.walletStoreListing` calls `isFrakAppInstalled()`
+  once, on a user gesture, and that is what stops an already-installed wallet's owner being sent to
+  their own store page. Gating it would reintroduce a bug this section did not open.
+- **The universal-link handoff stays ungated.** It is one `open()` on a tap, no probing, so a
+  merchant with `detectInstall: false` still gets the better handoff — they only lose the
+  automatic noticing.
+
+Default true, and the justification is that the merchant has already opted in once. Repeated
+`canOpenURL` on a single declared scheme is not a new capability: `LSApplicationQueriesSchemes`
+belongs to the merchant, the SDK cannot inject it, and it is *already* required by the shipped
+`isFrakAppInstalled()`. What changes with detection is frequency, not access. So the plist entry is
+the real gate and this flag is the explicit opt-out for someone who declared it and still wants
+the polling off — a compliance posture, not a performance escape hatch.
+
+Missing plist entry → `canOpenURL` is permanently false → the probe never fires → today's flow,
+silently. Correct, and invisible, which is why `install_probe_unavailable` has to carry a reason
+(`disabled` vs `undeclared`): without it a flat `install_detected` line reads as a defect rather
+than as a configuration. Undeclared also deserves a debug-build warning, since it is the case the
+merchant did not choose.
+
+`Bool` rather than an enum or an options struct. If cadence ever becomes tunable it belongs in
+`FrakInstallPresentation.Overlay` beside `position`, which exists as a struct for exactly that
+reason — a defaulted property is additive, a case parameter is not. This knob answers one
+question, and swapping its type later would be a source break for everyone.
+
+#### The undeclared case is detectable, so the detector never starts
+
+The SDK is a framework inside the merchant's app, which makes `Bundle.main` *their* bundle and the
+declaration readable directly:
+
+```swift
+let declared = Bundle.main
+    .object(forInfoDictionaryKey: "LSApplicationQueriesSchemes") as? [String] ?? []
+let canProbe = declared.contains {
+    $0.caseInsensitiveCompare(settings.env.walletScheme) == .orderedSame
+}
+```
+
+Authoritative, synchronous, once per process. `canOpenURL` cannot answer this itself — it returns
+false for *undeclared* and for *not installed* identically, which is the entire difficulty — but
+nothing obliges us to ask it. Compare case-insensitively: URL schemes are, and a merchant who
+types `FrakWallet` has declared it correctly as far as iOS is concerned.
+
+So the precondition runs before the first tick and the detector **never starts**, rather than
+starting and giving up. Three reasons that is worth more than it looks:
+
+- **iOS logs every rejected query.** `-canOpenURL: failed for URL: "frakwallet://" - error: "This
+  app is not allowed to query for scheme frakwallet"` goes to the console on each call. At the 1 s
+  cadence that is thirty lines in the first half-minute of one sheet, in the merchant's own
+  console, about a scheme they have never heard of. That is exactly the surprise `detectInstall`
+  exists to prevent — and the flag does not prevent it, since only a merchant who already knows to
+  set it is helped. The precheck is what actually prevents it.
+- **A dead probe is not a negative result.** Without the precondition, `install_detected` never
+  firing means either "nobody installed" or "we were never allowed to look", and the funnel cannot
+  separate them.
+- **It can name the fix.** The diagnostic prints the exact missing string, which matters most for
+  the mistake the dev/prod split makes easy: declaring `frakwallet` while running `.development`,
+  which needs `frakwallet-dev`. `example/native-ios`'s Info.plist declares both and carries a
+  comment explaining why; a merchant integrating from the README has no such comment.
+
+On failure: warn once at `.error` through the logger `Frak.initialize` already owns — the
+precedent `FrakEnvironment`'s rejected-origin path set — emit
+`install_probe_unavailable(reason: .undeclared)`, skip the detector, and keep everything that does
+not need the scheme: the universal-link handoff on tap, the install code, the pasteboard. The
+merchant loses automatic noticing and nothing else.
+
+Warn but do not block on the cap: the array holds ~50 schemes, we can see its length, so a
+merchant already at it can be told ours may be ignored. Behaviour past the cap is undocumented, so
+report the risk rather than infer the outcome.
+
+#### The same precondition closes a hole that already shipped
+
+`isFrakAppInstalled()` is public and fails silently in exactly this way today. A merchant who
+forgot the entry gets `false` forever, `.walletStoreListing` therefore raises the store even for
+someone who already has the wallet, and nothing anywhere says why. `openFrakApp()` carries a
+comment about routing around it — *"Attempted, not gated on the probe: `canOpenURL` answers false
+when the merchant forgot `LSApplicationQueriesSchemes`"* — which is a workaround for a condition
+the SDK could have detected outright. One precondition, computed once, serves both call sites and
+lets that comment shrink to what it is really saying.
+
+#### The handoff is a universal link; only the probe needs the scheme
+
+`services/backend/src/api/common/wellKnown.ts` already serves an AASA claiming `paths: ["/*"]`,
+and it is **stage-scoped by host**: `wallet.frak.id` advertises `id.frak.wallet`,
+`wallet-dev.frak.id` advertises `id.frak.wallet.dev`. So `FrakEnvironment.wallet` is already the
+right universal-link origin for whichever environment is configured, with no constant to keep in
+sync.
+
+That makes the CTA's action `open(<wallet>/install?m=&a=#p=…, options: [.universalLinksOnly: true])`
+with the custom scheme as the fallback, and it buys three things at once: no
+`LSApplicationQueriesSchemes` dependency, no *"Open in Frak?"* system alert (universal links open
+silently, custom schemes do not), and the same payload. A universal link cannot be a *probe* —
+succeeding means it has already opened the app — so the poll still needs the scheme. The ladder is
+universal link → custom scheme → install code, and only the first rung is free of merchant
+configuration.
+
+The one thing that defeats it: a user who has tapped the Safari breadcrumb to open `wallet.frak.id`
+in the browser turns universal links off for that domain, persistently, and
+`.universalLinksOnly` then answers false on a device where the wallet *is* installed. That is
+exactly what the custom-scheme rung is for.
+
+#### Dev configs: the probe is right, the listing is wrong, and that is documented not fixed
+
+**Settled: the probe stays on `FrakConfig.env.walletScheme`.** A dev config installs the dev
+wallet, so the dev scheme is the thing worth waiting for; probing both would make a production
+install satisfy a development session.
+
+`StoreInvites.walletAppStoreId` stays the production listing regardless, because there is no
+public App Store listing for the dev build to point at. The consequence is a dev-only detour that
+belongs in the SDK's getting-started docs rather than in code:
+
+| | Today | At public release |
+|---|---|---|
+| Android | works as-is — the dev app is in internal testing, so the Play listing resolves | dev app moves to closed testing; a merchant's team requests access |
+| iOS | store surface shows the **prod** wallet; the tester installs the dev build from TestFlight instead, returns to the merchant app, and the poll picks it up | same, plus a TestFlight invite on request |
+
+Written out for iOS, because it looks like a bug the first time: raise the store popup, ignore it,
+switch to TestFlight, install the dev wallet, come back — the sheet updates itself. The poll's 5 s
+tail after 120 s exists partly for this: a TestFlight round trip is nothing like a one-tap in-place
+install, and the `willEnterForeground` trigger catches the return regardless.
+
+#### The channel is a fragment, like every other inbound state change
+
+```
+install-page load (full navigation, fragment already present)
+  <install page>#p=<proof>&sid=<sid>&probe=<ok|disabled|undeclared>
+
+didDetectInstall()
+  1. dismiss the store surface       storeInvite.dismiss()   ← one call, either variant
+  2. load <install page>#p=…&sid=…&probe=…&installed=1&dt=<ms>&via=<overlay|product>
+                                     ← same-document, off webView.url
+  3. page: hashchange → CTA state flips, `install_detected` emitted with dt/via
+```
+
+`installPageURL` already returns a URL ending in `#p=<proof>`, so FrakSDKUI **appends** to that
+fragment (`&probe=…`) and never writes a second `#`. `probe` rides the fragment rather than a
+query param for a layering reason: `installPageURL` is `AppLinkAPI` in **FrakSDK**, `detectInstall`
+is `FrakSharingConfiguration` in **FrakSDKUI**, and FrakSDK cannot depend upward. Threading it
+through the URL builder would push a FrakSDKUI concept into a public signature that Android
+mirrors — and so into the Android ABI gate — for a concept Android does not have.
+
+Facts travel, events do not: **neither native SDK has an analytics sink.** There is no `trackEvent`
+equivalent anywhere in `sdk/ios/Sources` or `sdk/android`; every product event is emitted by the
+hosted page. So the SDK carries `dt`, `via` and `probe`, and the page emits `install_detected` and
+`install_probe_unavailable` from them. The `.error` log line is the exception and stays native —
+`FrakLogger` exists and `Frak.initialize` owns one.
+
+§2's rule holds: inbound is the URL, and on a view already on its page that is
+`activationFragment`. No bridge — `WKScriptMessageHandler` would need an origin check, an Android
+twin, and would open an injection surface on a remote-origin page to do what a fragment does. A
+full reload with `&installed=1` is worse: it discards `useGenerateInstallCode`, remounts and
+white-flashes, which is the entire reason fragment activation exists.
+
+Four rules carry over from the sharing page verbatim, each a bug if dropped:
+
+1. **Hang the fragment off `webView.url`, not off the URL we loaded.** `/install` normalises its
+   own search params on load exactly as `/sharing` does, so a fragment on a non-committed URL is a
+   full cross-document navigation — the 695ms defect in `### Presentation (Android)`, which will
+   reproduce here identically.
+2. **Re-emit the whole fragment, never a delta.** `InstallView` resolves the proof out of
+   `window.location.hash`; a bare `#installed=1` erases it from the URL.
+3. **`hashchange` does not fire on an identical hash.** One-shot here, fatal to any retry.
+4. **Scope on `sid`.** The web view is pooled; a stale `installed=1` must not land on a rebound
+   session.
+
+Page side this is `apps/wallet/app/module/install/params/fragment.ts`, mirroring the sharing one.
+Do not generalise the sharing table on the first pass — the key sets share nothing.
+
+#### The page's second state
+
+| | `awaiting` (today) | `installed` (new) |
+|---|---|---|
+| Hero | get the app to claim `{reward}` | Frak is installed |
+| Code | `CodeInput` + Copy, primary | collapsed behind "or enter this code manually" |
+| Footer CTA | download → store listing | open Frak → **the same URL, the same route** |
+
+The routing needs no change at all. `sharingExternalRoute` sends the footer's App Store link to
+`.walletStoreListing`, which already probes `isFrakAppInstalled()` and calls `openFrakApp()`
+before it would raise an overlay. That guard now has a second reason to exist: it is also what
+covers the ~400ms between detection and repaint, during which the CTA still reads "download" and a
+tap on it does the right thing anyway.
+
+Ordering, all of it deliberate:
+
+- **Dismiss the store surface first, then write the fragment.** The repaint should be what the
+  store surface reveals as it goes, not something that already happened behind it. The two
+  variants differ only in how much is hidden: the overlay banner covers the footer, the product
+  page covers the whole sheet, and both are gone before the new CTA is on screen.
+- **The CTA does not change size or position.** A thumb may already be travelling toward the old
+  button. Same footprint, new label and variant, with a confirmation chip animating in above it —
+  the change should read as confirmation, not as a new object arriving under the finger.
+- **No auto-open**, and the reason narrowed once the docs were read. "The probe may be true before
+  the app is launchable" is wrong — Apple guarantees the opposite. What is left is that the tap is
+  the user's consent to leave the merchant's app, which is not ours to assume on their behalf
+  while they are still looking at a download they just started.
+- **The sheet closes on the tap, not on detection.** `close()` after a successful `openFrakApp()`
+  is already the behaviour; closing at detection would strand the user in the merchant app with
+  the payload unspent.
+
+#### `SharingResult` gains `.walletOpened`
+
+**Settled.** `.installStarted` at significance 3 means "tapped install" and nothing more; a
+merchant cannot tell it apart from the only outcome worth money. `.walletOpened` sits above it at
+significance 4, reported after `openFrakApp()` answers `.openedApp` — the same place `close()`
+already fires.
+
+Named for what the SDK observed, not for what it hopes happened. `.walletLinked` was the other
+candidate and it over-claims: linking is a backend outcome, the ensure can still fail, and the SDK
+has no way to see either. A merchant who needs *linked* has to read it from the backend. Public
+API on both platforms, so it lands with an `apiDump` on the Android side.
+
+#### Still open
+
+- **Instrumentation sizes the cadence, and nothing else can.** All three events are emitted by the
+  page, from facts the SDK carried: `install_detected` (`elapsed_ms` from `dt`, `surface` from
+  `via`), `install_probe_unavailable` (`reason` from `probe`), and `install_open_wallet_clicked`
+  on the installed-state CTA. The elapsed
+  distribution is the only evidence for whether the 30 s / 120 s knees are in the right place; the
+  5 s tail is unbounded by design, so the risk is a knee too early rather than a ceiling too low.
+- **Android needs none of this** — Play foregrounds its own app and the referrer is deterministic
+  — but the `installed` fragment key should exist on both so the page has one contract.
+
 ### The proof path through `apps/wallet`
 
 `/install` resolves the proof fragment first, then search param, so existing links stay
@@ -542,3 +893,19 @@ Open questions:
    measurement gates whether the sharing screen goes native. **The fallback half of that target is
    now knowingly out of date**: the deadline shipped at 1.5 s and fired over pages that were merely
    still loading, so it is 5 s until someone measures the WebView path properly (`07` §2.6).
+5. Post-install detection (§3, *the deterministic iOS path*) has **landed** on all three lanes:
+   `InstallProbe` + `InstallProbeSchedule` + `QueriedSchemes`, `detectInstall`, the universal-link
+   rung on `openFrakApp()`, `SharingResult.walletOpened` on both platforms, and the `/install`
+   fragment contract with its `installed` state. What is left:
+   - **Nothing executable covers the wiring.** `SharingSheetModel` and `SharingPresentation` are
+     behind `#if canImport(UIKit)`, so `detectInstall` reaching the model is compile-checked only.
+     It shipped inert once already, for exactly that reason, and was caught in review rather than
+     by a test. The structural guard is that `detectInstall` now has no default anywhere between
+     the modifier and the model, so dropping it is a compile error — a device/simulator test stage
+     is what would make it a test failure instead.
+   - **`release()` dismisses the store surface unconditionally**, which reads against *iOS
+     specifics*' "the overlay outlives the sheet once `.installStarted` is reported". Pre-existing,
+     and the code's own comment argues a tapped GET keeps downloading regardless, so the cost is
+     only the untapped case. Needs one of the two rewritten to match the other.
+   - The first `install_detected` distribution, which is the only evidence for whether the
+     30 s / 120 s knees are in the right place.

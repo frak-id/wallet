@@ -1,6 +1,6 @@
 #if canImport(UIKit)
+    @_spi(FrakInternal) import FrakSDK
     import Foundation
-    import FrakSDK
     import StoreKit
     import SwiftUI
     import UIKit
@@ -92,12 +92,19 @@
         /// tell a failed install page apart from a failed sharing page.
         private var showingInstallPage = false
         private let storeInvite: any StoreInvite
+        private let installProbe: InstallProbe?
+        /// Set at the tap so `didDetectInstall` can rebuild the fragment `onPageUnavailable`
+        /// would otherwise have no context for.
+        private var installProofURL: URL?
+        private var installProbeStatus: ProbeStatus = .disabled
 
         init(
             sessionId: String,
             trace: SharingTrace = SharingTrace(),
             activationBaseURL: String? = nil,
             install: FrakInstallPresentation = FrakSharingDefaults.install,
+            // No default: a defaulted merchant opt-out is one that silently stops being threaded.
+            detectInstall: Bool,
             buildSharingLink: @escaping @Sendable (SharingRequest) async throws -> String? = {
                 try await Frak.client.sharing.buildLink($0)
             },
@@ -132,6 +139,7 @@
             self.trace = trace
             self.activationBaseURL = activationBaseURL
             self.storeInvite = StoreInvites.make(install)
+            self.installProbe = detectInstall ? InstallProbe() : nil
             self.buildSharingLink = buildSharingLink
             self.anonymousId = anonymousId
             self.environment = environment
@@ -169,6 +177,9 @@
             deadline?.cancel()
             deadline = nil
             webView = nil
+            // Before the invite: a detection racing this teardown must not write a fragment to a
+            // view this model has just released.
+            installProbe?.stop()
             // Neither store surface belongs to the sheet — one is on the scene, one on its own
             // window — so both outlive it unless taken down here. A tapped GET keeps downloading,
             // so this only costs the untapped case.
@@ -232,6 +243,8 @@
                 // the failed install page's own URL, leaving the user nowhere.
                 let recovery = pageNavigation(confirmed: true)
                 showingInstallPage = false
+                installProbe?.stop()
+                installProofURL = nil
                 // Back on a page that plausibly offers Install again (the confirmation view), so
                 // a second tap must be able to fetch a fresh page instead of finding itself
                 // permanently locked out by this session's first attempt.
@@ -279,6 +292,7 @@
                     // code exists only to reconnect an identity across a fresh install, and the
                     // deep link carries that identity — merchant, anonymous id and proof — itself.
                     if await isFrakAppInstalled(), await openFrakApp() == .openedApp {
+                        report(.walletOpened)
                         close()
                         return
                     }
@@ -286,7 +300,7 @@
                     // keeps attribution.
                     guard
                         let page = await installPageURL(session.returnScheme, sessionId),
-                        let url = URL(string: page)
+                        let url = await installProbeURL(page, sessionId: sessionId)
                     else {
                         // Nothing to build an install page from; the store handoff closes the sheet.
                         _ = await openFrakApp()
@@ -303,6 +317,8 @@
                     claimed.removeAll()
                     // Back on the sharing page — a later load failure belongs to it again.
                     showingInstallPage = false
+                    installProbe?.stop()
+                    installProofURL = nil
                     if let webView { navigateNow(webView, navigation) }
                 }
             // The page draws both buttons; this model performs them — the SDK keypair the page
@@ -341,7 +357,10 @@
                     // production listing, so on a device carrying a dev build it offers GET for a
                     // wallet that is already there — and unlike the store, the deep link carries
                     // attribution.
-                    if await isFrakAppInstalled(), await openFrakApp() == .openedApp { return }
+                    if await isFrakAppInstalled(), await openFrakApp() == .openedApp {
+                        report(.walletOpened)
+                        return
+                    }
                     // No scene to raise the surface in, or it refused to load. Opening the listing
                     // here would send an already-installed wallet's owner to its own store page,
                     // so hand off instead.
@@ -431,6 +450,47 @@
             // Only a finished document can be activated, so tap-to-content is already met.
             // `onPageVisible` is not called: paint stays the page's word.
             if case .activate = navigation { onPageReady() }
+        }
+
+        /// The install page URL, carrying `sid`/`probe` in its fragment. Starts the probe as a
+        /// side effect when it can run at all, so a `.ok` status and a running poll never drift
+        /// apart.
+        private func installProbeURL(_ page: String, sessionId: String) async -> URL? {
+            guard let installProbe else {
+                return probedInstallURL(page, sessionId: sessionId, probe: .disabled)
+            }
+            let started = await installProbe.start(sessionId: sessionId) { [weak self] elapsedMillis in
+                self?.didDetectInstall(sessionId: sessionId, elapsedMillis: elapsedMillis)
+            }
+            return probedInstallURL(page, sessionId: sessionId, probe: started ? .ok : .undeclared)
+        }
+
+        private func probedInstallURL(_ page: String, sessionId: String, probe: ProbeStatus) -> URL? {
+            let probed = SharingPageURL.installPageProbed(page, sid: sessionId, probe: probe)
+            guard let url = URL(string: probed) else { return nil }
+            installProbeStatus = probe
+            installProofURL = url
+            return url
+        }
+
+        /// Dismisses the store surface Apple's own OPEN button would otherwise race, then rewrites
+        /// the install page in place with the payload the deep link would have carried, through
+        /// `navigateNow`/`.activate` like every other in-sheet state change — load-bearing here,
+        /// since it hangs the fragment off `webView.url` rather than this session's own URL.
+        private func didDetectInstall(sessionId: String, elapsedMillis: TimeInterval) {
+            guard showingInstallPage, self.sessionId == sessionId, let webView, let installProofURL else { return }
+            storeInvite.dismiss()
+            let proof = URLComponents(string: "?" + (installProofURL.fragment ?? ""))?
+                .queryItems?.first { $0.name == "p" }?.value
+            let surface: InstallSurface = storeInvite is StoreOverlayInvite ? .overlay : .product
+            let fragment = SharingPageURL.installDetectedFragment(
+                proof: proof,
+                sid: sessionId,
+                probe: installProbeStatus,
+                elapsedMillis: Int(elapsedMillis),
+                surface: surface
+            )
+            navigateNow(webView, .activate(fragment: fragment, fullURL: installProofURL))
         }
 
         /// How the page gets where it is going next, preferring a same-document activation over

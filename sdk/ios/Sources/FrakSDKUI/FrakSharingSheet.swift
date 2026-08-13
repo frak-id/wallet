@@ -84,6 +84,7 @@
                 // Read, never captured — see `body`.
                 presenter.pendingRequest,
                 install: configuration.install,
+                detectInstall: configuration.detectInstall,
                 onOutcome: { result in
                     if result.significance > (best?.significance ?? -1) {
                         best = result

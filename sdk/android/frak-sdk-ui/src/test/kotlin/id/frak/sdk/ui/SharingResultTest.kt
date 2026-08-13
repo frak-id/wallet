@@ -10,6 +10,7 @@ class SharingResultTest {
             SharingResult.Shared("https://example.com"),
             SharingResult.Copied("https://example.com"),
             SharingResult.InstallStarted,
+            SharingResult.WalletOpened,
             SharingResult.Dismissed,
             SharingResult.Failed(FrakError.InternalFailure("boom")),
         )
@@ -28,16 +29,17 @@ class SharingResultTest {
         assertEquals("shared", SharingResult.Kind.SHARED.wireValue)
         assertEquals("copied", SharingResult.Kind.COPIED.wireValue)
         assertEquals("installStarted", SharingResult.Kind.INSTALL_STARTED.wireValue)
+        assertEquals("walletOpened", SharingResult.Kind.WALLET_OPENED.wireValue)
         assertEquals("dismissed", SharingResult.Kind.DISMISSED.wireValue)
         assertEquals("failed", SharingResult.Kind.FAILED.wireValue)
     }
 
     /** The order the sheet resolves competing outcomes in; [significance] is what `record` compares. */
     @Test
-    fun `install outranks a share, which outranks a dismissal, which outranks a failure`() {
+    fun `outcomes rank walletOpened above install, above share, above dismissal, above failure`() {
         val ordered = allResults.sortedBy { it.significance }.map { it.kind }
 
         assertEquals(SharingResult.Kind.FAILED, ordered.first())
-        assertEquals(SharingResult.Kind.INSTALL_STARTED, ordered.last())
+        assertEquals(SharingResult.Kind.WALLET_OPENED, ordered.last())
     }
 }

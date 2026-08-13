@@ -25,6 +25,24 @@ enum InstallLinks {
         appStoreURL
     }
 
+    /// The same payload as `deepLink`, addressed to the wallet's own universal-link domain
+    /// instead of its custom scheme. Tried first: `open(_:options:[.universalLinksOnly: true])`
+    /// opens silently on an installed app and answers false rather than falling through to a
+    /// Safari tab on one that is not, so failing this rung costs nothing `deepLink` would not
+    /// also have to recover from.
+    static func universalLink(
+        walletOrigin: String,
+        merchantId: String,
+        anonymousId: String,
+        installProof: String? = nil
+    ) -> String {
+        let url =
+            "\(walletOrigin)/install?m=\(PercentEncoding.encode(merchantId))"
+            + "&a=\(PercentEncoding.encode(anonymousId))"
+        guard let installProof else { return url }
+        return url + "#p=" + PercentEncoding.encode(installProof)
+    }
+
     /// The wallet's hosted install page (install code plus store link) — what the sharing sheet
     /// navigates to, as opposed to the store listing `appStore()` returns.
     ///

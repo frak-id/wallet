@@ -163,4 +163,65 @@ struct SharingPageURLTests {
         let second = SharingPageURL.activationFragment(sessionId: "session-2")
         #expect(first != second)
     }
+
+    @Test("the probe keys append to a proof fragment installPageURL already returned")
+    func installPageProbedAppendsToAnExistingProof() {
+        let page = "https://wallet.frak.id/install?m=m1&a=a1#p=AQR-_x"
+        let probed = SharingPageURL.installPageProbed(page, sid: "session-1", probe: .ok)
+        #expect(probed == "https://wallet.frak.id/install?m=m1&a=a1#p=AQR-_x&sid=session-1&probe=ok")
+    }
+
+    @Test("the probe keys open a fragment when installPageURL carried no proof")
+    func installPageProbedWithNoProof() {
+        let page = "https://wallet.frak.id/install?m=m1&a=a1"
+        let probed = SharingPageURL.installPageProbed(page, sid: "session-1", probe: .undeclared)
+        #expect(probed == "https://wallet.frak.id/install?m=m1&a=a1#sid=session-1&probe=undeclared")
+    }
+
+    @Test("a merchant opt-out is spelled disabled, not undeclared")
+    func installPageProbedCarriesDisabled() {
+        let probed = SharingPageURL.installPageProbed(
+            "https://wallet.frak.id/install?m=m1",
+            sid: "s1",
+            probe: .disabled
+        )
+        #expect(probed.hasSuffix("#sid=s1&probe=disabled"))
+    }
+
+    @Test("the detection fragment carries every contract key")
+    func installDetectedFragmentCarriesEveryKey() {
+        let fragment = SharingPageURL.installDetectedFragment(
+            proof: "AQR-_x",
+            sid: "session-1",
+            probe: .ok,
+            elapsedMillis: 4200,
+            surface: .overlay
+        )
+        #expect(fragment == "#p=AQR-_x&sid=session-1&probe=ok&installed=1&dt=4200&via=overlay")
+    }
+
+    @Test("the detection fragment omits p entirely when there is no proof, never a bare p=")
+    func installDetectedFragmentOmitsAbsentProof() {
+        let fragment = SharingPageURL.installDetectedFragment(
+            proof: nil,
+            sid: "session-1",
+            probe: .undeclared,
+            elapsedMillis: 0,
+            surface: .product
+        )
+        #expect(fragment == "#sid=session-1&probe=undeclared&installed=1&dt=0&via=product")
+        #expect(!fragment.contains("p="))
+    }
+
+    @Test("the detection fragment percent-encodes the proof")
+    func installDetectedFragmentEncodesTheProof() {
+        let fragment = SharingPageURL.installDetectedFragment(
+            proof: "a b",
+            sid: "session-1",
+            probe: .ok,
+            elapsedMillis: 1,
+            surface: .product
+        )
+        #expect(fragment.contains("p=a%20b"))
+    }
 }

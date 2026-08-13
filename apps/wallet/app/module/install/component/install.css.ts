@@ -147,3 +147,17 @@ export const downloadButton = style({
         color: vars.text.onAction,
     },
 });
+
+export const installedBadge = style({
+    alignSelf: "center",
+});
+
+export const installedCodeToggle = style({
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    color: vars.text.secondary,
+    textDecoration: "underline",
+    padding: 0,
+    alignSelf: "center",
+});

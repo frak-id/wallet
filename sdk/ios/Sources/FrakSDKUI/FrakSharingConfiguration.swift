@@ -8,12 +8,18 @@ public struct FrakSharingConfiguration: Sendable, Hashable {
     /// How the wallet's App Store listing is raised when the user asks to install it.
     public var install: FrakInstallPresentation
 
+    /// Whether the sheet notices the wallet becoming installable while its store surface is up
+    /// and hands off deterministically, instead of falling back to the install code. iOS-only.
+    public var detectInstall: Bool
+
     public init(
         heightFraction: CGFloat = FrakSharingDefaults.heightFraction,
-        install: FrakInstallPresentation = FrakSharingDefaults.install
+        install: FrakInstallPresentation = FrakSharingDefaults.install,
+        detectInstall: Bool = FrakSharingDefaults.detectInstall
     ) {
         self.heightFraction = heightFraction
         self.install = install
+        self.detectInstall = detectInstall
     }
 }
 

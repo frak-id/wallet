@@ -26,10 +26,8 @@
                 popover.permittedArrowDirections = []
             }
 
-            // Before presenting, never after: `presentingViewController` is not reliably wired up
-            // on the same turn as the `present` call, so reading it there reports a refusal for a
-            // chooser that goes on to appear. These two are settled facts here — `topViewController()`
-            // already walked past anything presented.
+            // Before presenting, never after: `presentingViewController` is not reliably wired on
+            // the same turn as `present`, so reading it there refuses a chooser that does appear.
             guard presenter.presentedViewController == nil, presenter.viewIfLoaded?.window != nil
             else { return false }
 

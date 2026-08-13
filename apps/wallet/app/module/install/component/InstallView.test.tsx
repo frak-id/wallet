@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 // `vi` must come from "vitest" directly: `vi.mock` is hoisted above module
 // imports, so routing it through the fixtures module would reference an
 // uninitialized binding.
@@ -17,9 +17,10 @@ import { InstallView } from "./InstallView";
 
 // `vi.hoisted` because the factory below runs while `InstallView` is being
 // imported, which is before a plain `const` would have been initialised.
-const { mockEnsurePost, mockGenerateCode } = vi.hoisted(() => ({
+const { mockEnsurePost, mockGenerateCode, mockTrackEvent } = vi.hoisted(() => ({
     mockEnsurePost: vi.fn(),
     mockGenerateCode: vi.fn(),
+    mockTrackEvent: vi.fn(),
 }));
 
 vi.mock("@frak-labs/wallet-shared/common/api/backendClient", () => ({
@@ -44,7 +45,7 @@ vi.mock("@frak-labs/wallet-shared/common/analytics", async (importOriginal) => {
         await importOriginal<
             typeof import("@frak-labs/wallet-shared/common/analytics")
         >();
-    return { ...actual, trackEvent: vi.fn(), recordError: vi.fn() };
+    return { ...actual, trackEvent: mockTrackEvent, recordError: vi.fn() };
 });
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -164,5 +165,181 @@ describe("InstallView — processing branch", () => {
         ).not.toBeInTheDocument();
         await waitFor(() => expect(mockEnsurePost).not.toHaveBeenCalled());
         expect(toRegister).not.toHaveBeenCalled();
+    });
+});
+
+describe("InstallView — install-code branch, post-install detection", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockGenerateCode.mockResolvedValue({
+            data: {
+                code: "ABCD1234",
+                expiresAt: new Date(Date.now() + 60_000).toISOString(),
+            },
+            error: null,
+        });
+        sessionStore.getState().clearSession();
+        window.location.hash = "";
+    });
+
+    afterEach(() => {
+        window.location.hash = "";
+    });
+
+    test("no fragment arrives: behaviour is byte-identical to today", async ({
+        queryWrapper,
+    }) => {
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(screen.getByText("installCode.download")).toBeInTheDocument()
+        );
+        expect(
+            screen.queryByText("installCode.installedTitle")
+        ).not.toBeInTheDocument();
+        expect(mockTrackEvent).not.toHaveBeenCalledWith(
+            "install_detected",
+            expect.anything()
+        );
+    });
+
+    test("hashchange carrying installed=1 flips the CTA and fires install_detected once", async ({
+        queryWrapper,
+    }) => {
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(screen.getByText("installCode.download")).toBeInTheDocument()
+        );
+
+        window.location.hash =
+            "#p=proof-1&sid=session-1&probe=ok&installed=1&dt=4200&via=overlay";
+        window.dispatchEvent(new Event("hashchange"));
+
+        await waitFor(() =>
+            expect(
+                screen.getByText("installCode.openWallet")
+            ).toBeInTheDocument()
+        );
+        expect(
+            screen.getByText("installCode.installedTitle")
+        ).toBeInTheDocument();
+
+        await waitFor(() =>
+            expect(mockTrackEvent).toHaveBeenCalledWith("install_detected", {
+                merchant_id: "merchant-1",
+                elapsed_ms: 4200,
+                surface: "overlay",
+            })
+        );
+        const detectedCalls = mockTrackEvent.mock.calls.filter(
+            ([event]) => event === "install_detected"
+        );
+        expect(detectedCalls).toHaveLength(1);
+
+        // A second identical rewrite does not re-fire hashchange in a real
+        // browser; simulating the dispatch anyway proves the ref guard holds.
+        window.dispatchEvent(new Event("hashchange"));
+        await waitFor(() => {
+            const stillOne = mockTrackEvent.mock.calls.filter(
+                ([event]) => event === "install_detected"
+            );
+            expect(stillOne).toHaveLength(1);
+        });
+    });
+
+    test("the collapsed code stays hidden until the toggle is tapped", async ({
+        queryWrapper,
+    }) => {
+        window.location.hash = "#installed=1&dt=100&via=product";
+
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(
+                screen.getByText("installCode.installedCodeToggle")
+            ).toBeInTheDocument()
+        );
+        expect(screen.queryByText("A B C D 1 2")).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByText("installCode.installedCodeToggle"));
+
+        await waitFor(() =>
+            expect(screen.getByText("A B C D 1 2")).toBeInTheDocument()
+        );
+    });
+
+    test("probe: disabled fires install_probe_unavailable once, before any hashchange", async ({
+        queryWrapper,
+    }) => {
+        window.location.hash = "#probe=disabled";
+
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(mockTrackEvent).toHaveBeenCalledWith(
+                "install_probe_unavailable",
+                { merchant_id: "merchant-1", reason: "disabled" }
+            )
+        );
+        const calls = mockTrackEvent.mock.calls.filter(
+            ([event]) => event === "install_probe_unavailable"
+        );
+        expect(calls).toHaveLength(1);
+    });
+
+    test("tapping the installed-state CTA fires install_open_wallet_clicked, not install_store_clicked", async ({
+        queryWrapper,
+    }) => {
+        window.location.hash = "#installed=1&dt=100&via=product";
+
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        const cta = await screen.findByText("installCode.openWallet");
+        fireEvent.click(cta);
+
+        expect(mockTrackEvent).toHaveBeenCalledWith(
+            "install_open_wallet_clicked",
+            { merchant_id: "merchant-1" }
+        );
+        expect(mockTrackEvent).not.toHaveBeenCalledWith(
+            "install_store_clicked",
+            expect.anything()
+        );
     });
 });

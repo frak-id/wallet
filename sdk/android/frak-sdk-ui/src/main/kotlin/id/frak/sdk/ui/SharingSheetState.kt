@@ -371,7 +371,7 @@ internal class SharingSheetState(
             if (guarded { dependencies.isFrakAppInstalled() } == true &&
                 guarded { dependencies.openFrakApp() } == OpenAppResult.OpenedApp
             ) {
-                finish(SharingResult.InstallStarted)
+                finish(SharingResult.WalletOpened)
                 return@launch
             }
             // In-sheet, not to the store: that page owns install code, store link and
@@ -438,7 +438,11 @@ internal class SharingSheetState(
         // Only http(s): intent: and vendor schemes could reach arbitrary installed activities.
         if (parsed.scheme != "https" && parsed.scheme != "http") return
         if (isWalletStoreListing(parsed)) {
-            scope.launch { guarded { dependencies.openFrakApp() } }
+            outcome.launch {
+                if (guarded { dependencies.openFrakApp() } == OpenAppResult.OpenedApp) {
+                    outcome.record(SharingResult.WalletOpened)
+                }
+            }
             return
         }
         val intent = Intent(Intent.ACTION_VIEW, parsed).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

@@ -282,6 +282,8 @@ struct FrakExampleApp: App {
             addLog("Reward link copied to clipboard: \(link)", type: .success)
         case .installStarted:
             addLog("Wallet install flow started by the sharing sheet.", type: .info)
+        case .walletOpened:
+            addLog("Wallet opened with the sharing sheet's identity handoff.", type: .success)
         case .dismissed:
             addLog("Sharing sheet dismissed by user.", type: .info)
         case .failed(let error):
