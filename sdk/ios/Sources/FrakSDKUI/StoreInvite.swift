@@ -35,15 +35,5 @@
                 .compactMap { $0 as? UIWindowScene }
                 .first { $0.activationState == .foregroundActive }
         }
-
-        /// The controller a modal has to be presented from: UIKit refuses one presented from a
-        /// controller already presenting, which the sheet's own host is.
-        static func topViewController() -> UIViewController? {
-            guard var top = foregroundScene()?.keyWindow?.rootViewController else { return nil }
-            while let presented = top.presentedViewController, !presented.isBeingDismissed {
-                top = presented
-            }
-            return top
-        }
     }
 #endif

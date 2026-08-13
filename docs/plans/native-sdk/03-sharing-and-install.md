@@ -384,12 +384,21 @@ the backend's 30-day window measures from.
   replace `isFrakAppInstalled()` for this flow (which stays public for other callers), and
   both are reached through the internal `StoreInvite` protocol, so the model's install path
   does not know which one it has:
-  - `.storeProductPage` (default) — an `SKStoreProductViewController` presented modally
-    over the sheet, from `StoreInvites.topViewController()`. The earlier claim that it
-    "fails presenting alongside an already-up `UISheetPresentationController`" holds only
-    when it is presented from a controller that is *already presenting*, which the sheet's
-    host is; presenting from the topmost controller is the fix. It reports whether it
-    loaded, accepts a custom product page id, and hands the sheet back on close.
+  - `.storeProductPage` (default) — an `SKStoreProductViewController` on a `UIWindow` of its
+    own, one level above the sheet's. It reports whether it loaded, accepts a custom product
+    page id, and hands the sheet back untouched on close.
+    **The window is the whole design, and it was arrived at the expensive way.** The original
+    note here said this surface "fails presenting alongside an already-up
+    `UISheetPresentationController`", which was overridden on the theory that presenting from
+    the topmost controller was enough. It is not. Presenting from the sheet's own host puts
+    the page inside the sheet's presentation chain, and taking it back out of that chain
+    dismisses the sheet with it — install code and all. Two device passes were spent on this:
+    the first blamed `dismiss(animated:)` being forwarded up the chain when its receiver has
+    nothing presented (a real trap, and `productViewControllerDidFinish` does arrive after
+    StoreKit has already closed the page, so the guard is still worth keeping — but it was not
+    the cause), the second showed the symptom unchanged. So the page is presented on a window
+    the sheet does not own, which is structurally what `SKOverlay` gets for free by attaching
+    to the scene, and is why the overlay never had this bug.
   - `.overlay` — the `SKOverlay` banner on the sheet's `UIWindowScene`, which installs in
     place without covering the sheet, and reports nothing at all: a wrong id silently draws
     nothing.

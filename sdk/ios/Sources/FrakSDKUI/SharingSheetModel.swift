@@ -169,8 +169,9 @@
             deadline?.cancel()
             deadline = nil
             webView = nil
-            // An `SKOverlay` attaches to the `UIWindowScene`, not the sheet, so it survives unless
-            // taken down here. A tapped GET keeps downloading, so this only costs the untapped case.
+            // Neither store surface belongs to the sheet — one is on the scene, one on its own
+            // window — so both outlive it unless taken down here. A tapped GET keeps downloading,
+            // so this only costs the untapped case.
             storeInvite.dismiss()
         }
 
@@ -326,8 +327,8 @@
             }
         }
 
-        /// Where the page's own outbound links go. The wallet's store listing prefers the app over
-        /// the listing, so an already-installed wallet does not get offered its own store page.
+        /// Where the page's own outbound links go. The wallet's store listing prefers the app
+        /// over the store, so an already-installed wallet is not offered its own store page.
         func openExternally(_ url: URL) {
             switch sharingExternalRoute(url) {
             case .ignore:
@@ -336,14 +337,14 @@
                 Task { _ = await UIApplication.shared.open(url) }
             case .walletStoreListing:
                 Task {
-                    // Probed, not assumed installed-by-absence: the listing is always raised on the
-                    // production one, so on a device carrying a dev build it offers GET for a
+                    // Probed, not assumed installed-by-absence: the store surface always shows the
+                    // production listing, so on a device carrying a dev build it offers GET for a
                     // wallet that is already there — and unlike the store, the deep link carries
                     // attribution.
                     if await isFrakAppInstalled(), await openFrakApp() == .openedApp { return }
-                    // Nothing on screen to raise the listing from, or it refused to load. Opening
-                    // it here would send an already-installed wallet's owner to its own store
-                    // page, so hand off instead.
+                    // No scene to raise the surface in, or it refused to load. Opening the listing
+                    // here would send an already-installed wallet's owner to its own store page,
+                    // so hand off instead.
                     let raised = await storeInvite.present()
                     if !raised { _ = await openFrakApp() }
                 }
