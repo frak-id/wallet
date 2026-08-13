@@ -2,6 +2,7 @@
 # Runtime dependencies stay first-party (Kotlin, AndroidX); anything else is test-only.
 
 [versions]
+# Ceiling, not a lag: `kotlin` below fully supports AGP 8.5.2–9.1.0 only, so AGP and Kotlin move together.
 agp = "9.1.1"
 kotlin = "2.4.10"
 ktlint-plugin = "14.2.0"
@@ -14,20 +15,20 @@ bcv = "0.18.1"
 # BCV's ABI worker needs these at runtime; also declared in buildSrc/build.gradle.kts.
 # `kotlin-metadata` must track the `kotlin` version above.
 kotlin-metadata = "2.4.10"
-asm = "9.9"
+asm = "9.10.1"
 
 
 coroutines = "1.11.0"
 
 compose-bom = "2026.06.01"
 
-androidx-webkit = "1.16.0"
+androidx-webkit = "1.17.0"
 
 # Not the latest: `compileSdk` is 36 here, and androidx artifacts built against 37 fail with `minCompileSdk`.
 # androidx.lifecycle is deliberately not declared: it arrives as an api dep of activity; 2.11.0 needs compileSdk 37.
 androidx-activity = "1.13.0"
 
-androidx-annotation = "1.9.1"
+androidx-annotation = "1.10.0"
 
 # `compileOnly` on :frak-sdk for androidx.core.app.OnNewIntentProvider, so it stays out of the POM
 # and the module keeps its zero-runtime-dependency promise. 1.19.0 needs compileSdk 37.

@@ -26,6 +26,6 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.10")
 
     // Transitive through AGP today; declared so an AGP bump can't break the ABI gate.
-    implementation("org.ow2.asm:asm:9.9")
-    implementation("org.ow2.asm:asm-tree:9.9")
+    implementation("org.ow2.asm:asm:9.10.1")
+    implementation("org.ow2.asm:asm-tree:9.10.1")
 }
