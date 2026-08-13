@@ -35,7 +35,6 @@
     "sdk/ios/Sources/FrakSDK/FrakClient.swift": 7,
     "sdk/ios/Sources/FrakSDK/Net/HTTPClient.swift": 5,
     "sdk/ios/Sources/FrakSDK/Net/JSONDecoding.swift": 2,
-    "sdk/ios/Sources/FrakSDK/Net/URLQuery.swift": 2,
     "sdk/ios/Sources/FrakSDK/Rewards/ProductDetailsQueryEncoder.swift": 2,
     "sdk/ios/Sources/FrakSDK/Rewards/RewardRepository.swift": 2,
     "sdk/ios/Sources/FrakSDK/RewardsAPI.swift": 1,

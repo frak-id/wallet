@@ -50,10 +50,10 @@ export const mergeTokenKeys = {
  *     `sdk/core/src/actions/getMergeToken.ts` produces. Reusing
  *     `sdkIdentity.proofs.merge` from `resolved-config` would 403 — that one
  *     binds `SHA-256(mergeToken)`, for the `execute` side.
- *  2. `frak-merge-v1`'s window is ±2 min, but a modal stays open for as long
- *     as the user takes, so a proof signed at open time is routinely expired
- *     by the time the user clicks. Signing lazily isn't possible, so this
- *     needs a wider window for the empty-binding initiate case.
+ *  2. `frak-merge-v1`'s window is 10 min, which a modal left open for longer
+ *     than that still outlives: a proof signed at open time expires while the
+ *     user reads. Signing lazily isn't possible, so the empty-binding initiate
+ *     case may still need its own window.
  */
 export function mergeTokenQueryOptions(args: {
     merchantId: string | undefined;

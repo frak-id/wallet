@@ -143,6 +143,9 @@ export const userMerchantApi = new Elysia({ prefix: "/merchant" })
             },
         }
     )
+    // Additive, not a replacement: a scoped limiter applies to every route registered after
+    // it, so the routes below are charged to this bucket AND the 60 one above. The effective
+    // budget here is therefore 60/min per IP, shared with `/resolve`. See `index.test.ts`.
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 90 }))
     .get(
         "/estimated-rewards",

@@ -119,7 +119,9 @@ server-side origin check. Only the sharing page needs a web view.
   `selectBestReward` the web uses — one source of truth for money. `lang` is accepted by
   `resolve` but not by `estimated-rewards`: locale is currency-driven (`eur→fr-FR`,
   `usd→en-US`, `gbp→en-GB`).
-- Rate limits: 60/min on `merchant/resolve`, 90/min on `estimated-rewards`, in-memory per
+- Rate limits: 60/min on `merchant/resolve`. `estimated-rewards` declares 90/min but is also
+  charged to the 60 bucket registered ahead of it, so its effective budget is 60/min per IP,
+  shared with `resolve` — pinned by `index.test.ts`. In-memory per
   pod (effective limit is N× replicas).
 - Idempotency: `sharing` interactions carry `idempotencyKey` (stamped at enqueue, never
   per attempt) plus `sharingTimestamp`. `arrival` doesn't need one — it's naturally

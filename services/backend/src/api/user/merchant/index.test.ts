@@ -334,6 +334,39 @@ describe("merchant route rate limiters — distinct maxRequests", () => {
         expect(calls).toEqual(["resolve", "estimated-rewards", "explorer"]);
     });
 
+    it("charges a route to every limiter registered before it, not just its own", async () => {
+        const calls: string[] = [];
+        const app = new Elysia()
+            .use(
+                fakeLimiter(
+                    "resolve",
+                    { windowMs: 60_000, maxRequests: 60 },
+                    () => calls.push("resolve")
+                )
+            )
+            .get("/merchant/resolve", () => "ok")
+            .use(
+                fakeLimiter(
+                    "estimated-rewards",
+                    { windowMs: 60_000, maxRequests: 90 },
+                    () => calls.push("estimated-rewards")
+                )
+            )
+            .get("/merchant/estimated-rewards", () => "ok");
+
+        await app.handle(new Request("http://localhost/merchant/resolve"));
+        const afterResolve = [...calls];
+        calls.length = 0;
+        await app.handle(
+            new Request("http://localhost/merchant/estimated-rewards")
+        );
+
+        expect(afterResolve).toEqual(["resolve"]);
+        // Both, in the production registration order: the effective budget for
+        // estimated-rewards is therefore the smaller of the two, 60/min per IP.
+        expect(calls).toEqual(["resolve", "estimated-rewards"]);
+    });
+
     it("collapses into one bucket when two limiters share the same config", async () => {
         const calls: string[] = [];
         const app = new Elysia()
