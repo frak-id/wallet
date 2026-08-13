@@ -4,7 +4,7 @@
 
 This document supersedes nothing. It sits next to [`06-open-findings.md`](./06-open-findings.md) and, in §6, challenges it.
 
-**Revised four times.** §0 records two team corrections. §9 reviews the 12 commits that landed after the first pass. §10 and §11 review the remediation branch `fix/native-sdk-alpha-audit` across four rounds — **including two findings this audit got wrong and now retracts (§10.1, §11.3), and one regression the latest batch introduced (§11.4)**.
+**Revised five times.** §0 records two team corrections. §9 reviews the 12 commits that landed after the first pass. §10-§11 review the remediation branch across four rounds — including two findings this audit got wrong and now retracts (§10.1, §11.3). **§12 closes it out: the branch merged to `dev` as `a6b739770`, and the regression §11.4 raised was fixed before the merge.**
 
 ---
 
@@ -215,7 +215,7 @@ Proof timestamps are raw wall-clock. The `frak-merge-v1` window is ±2 min again
 
 `78c96b8` fixed two real bugs and, in doing so, deleted the only escape hatch for a refused presentation without replacing it — and the tier-3 path calls it while the sheet is mid-presentation, which is exactly when UIKit refuses. Separately, `teardown()` does no `dispose` and no `onResult`: live sheet stranded on the skeleton, `WKWebView` leaked.
 
-### 3.10 UIKit/ObjC merchants cannot use `FrakSDKUI` at all
+### 3.10 ~~UIKit/ObjC merchants cannot use `FrakSDKUI` at all~~ — **CLOSED, see §12.2**
 
 The only public entry point is a SwiftUI `ViewModifier`, and **no public declaration in the package is `@objc`**. Large retail apps are frequently UIKit-and-ObjC. A scoping decision, not a bug — but it must be a *stated* one, in the README, before a merchant finds out in week two.
 
@@ -514,7 +514,7 @@ The severity grade was also too high, and the mechanism I missed is real: `WALLE
 
 Two things the withdrawal over-narrows, worth keeping at medium: past value migrates, not only future attribution; and the victim is silently locked out of ever binding their own wallet to that id.
 
-### 11.4 The one thing to fix before merge
+### 11.4 The one thing to fix before merge — **fixed before the merge, see §12.1**
 
 **`7a673da17` implements §3.3's fresh-install fix without §3.3's guard, and the result is reachable with two unauthenticated POSTs.**
 
@@ -543,3 +543,30 @@ Round 4 repeats round 2's shape: the Android half lands, the iOS half is thinner
 - `12-alpha-audit-response.md`'s §1 table now contradicts its own §8 on five blocker/high rows, and §3.1 still carries both numbers the branch itself disproved (46%, and "R8 has never run" — the latter still live in `06-open-findings.md:25`, the team's own register repeating a claim the team refuted).
 
 This is the same failure §10.4 named and that §6 accuses the register of, now on its third instance. The fix has not changed: record *how* each row was verified — `read` / `executed` / `on-device` / `asserted` — and let "partial" be a legal status. A branch that closes eleven findings honestly reads better than one that claims fourteen.
+
+---
+
+## 12. Merged — `a6b739770`
+
+`fix/native-sdk-alpha-audit` merged to `dev` as `a6b739770`, 17 commits. Four of them landed **after** §11 was written and answer it directly. Re-verified against merged `dev`.
+
+### 12.1 §11.4 was fixed before the merge
+
+`98d424362 fix(backend): require a proof to create the merge target, not just to merge` implements the guard §3.3 asked for and §11.4 said was missing. Creation is now inside the proven branch; a proofless absent target is `TARGET_NOT_FOUND` again and the route re-declares the 404 (`AnonymousMergeOrchestrator.ts:212-241`).
+
+Two things make this the right shape rather than just a revert. It checks the four real callers and costs each of them nothing — both `MergeSender`s hold the row rather than send proofless, so the native fresh-install path is *always* on the proven branch, and `migrateLegacyIdentity` sends no proof but always targets an id that already exists, because having history is why it is being migrated. And it states the two residuals rather than implying them: `initiateMerge`'s auto-create arm has always had the same shape for `sourceAnonymousId` (the pre-existing door, still open, needs its own decision), and an id that *exists* but has never latched is still foldable without a proof — the documented fail-open of the rollout. Those are the same two qualifications §11.4 raised. Nothing is being papered over.
+
+### 12.2 The other three
+
+- **`39090b0ef` — §3.10 closed.** `FrakSharing(presentingFrom:configuration:onResult:)` gives iOS the UIKit entry point Android has had since the start, as a shell over the existing `SharingPresenter`, so both entry points share one session state machine, one pooled `WKWebView` and one result contract. The framing correction is right too: this was never an Objective-C problem, it was a presentation-API one that locked out UIKit apps written in Swift.
+- **`1d557772a` — the harness sweep's cheap half.** Every log line that printed green for something the SDK does not promise is now honest: "queued for delivery (enqueue-then-send)" instead of "tracked successfully" (`TrackingApi`'s own KDoc says a purchase succeeds once *durable*, not once delivered), and Android's `SharingResult.Shared` demoted to INFO "chooser opened", because `NativeShare` returns `startActivity().isSuccess` and the same green line meant two different things per platform.
+- **`087231df4` — the blind-spot sweep's standout item, executed.** Sixteen `*Async` methods frozen in `frak-sdk.api` with zero call sites outside the SDK's own Kotlin tests; `JavaInterop.java` now compiles and runs them on an RMX3511. **It found three things no Kotlin call site could have produced** — chiefly that `FrakResult.Failure` is `FrakResult<Nothing>`, so Java sees it raw while `Success` stays generic and a Java merchant must write an unchecked cast. That is the sweep's thesis proven in one commit: the finding was not "untested", it was "unreachable", and reaching it produced new findings immediately.
+- **`7b4d7e77c`** brings `06-open-findings.md` back in line with the tree, closing 9.2 and 9.4 among others. Its own diagnosis is the honest one: only one of sixteen commits had touched the register, and it was the third.
+
+### 12.3 Where this leaves the alpha
+
+Of §2's six P0s: **2.1 closed on Android** (`AppLauncher.kt:40`, package-pinned), **2.2 withdrawn** (§11.3), **2.3 closed for the documented path** with the `onActivityCreated`-only gap in §11.5 still open, **2.4 diagnosed precisely and deliberately not fixed** (both candidate designs turn on whether `postVisualStateCallback` fires for a fragment-activated warm document — a device question), **2.5/2.6 partly narrowed**. §3.1 and §3.8 are closed; §3.10 is closed.
+
+What still has no owner: the §4 ABI list (rows 2, 3, 6, 7, 8, 9, 10 — free now, impossible after the first tag), §2.4, §3.4's locale, §3.2c's Android outbox re-drive, and the §11.5 partials. The `12-alpha-audit-response.md` internal contradictions listed in §11.5 were partly addressed by `7b4d7e77c`; the rest are doc hygiene, not risk.
+
+**The most valuable thing to do next is not another audit.** It is the rest of [`harness-blind-spots.md`](./audit-2026-08-13/review-fix-branch/harness-blind-spots.md)'s priority list. `087231df4` took one item off it and found three new defects in an afternoon; eighteen remain, each with the cheapest change that makes it reachable. A finding that no harness can reach is not a finding anyone will fix by reading harder.
