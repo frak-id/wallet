@@ -60,4 +60,29 @@ struct InstallLinksTests {
     func pointsAtTheAppStoreListing() {
         #expect(InstallLinks.appStore() == "https://apps.apple.com/app/id6759159306")
     }
+
+    @Test("builds the universal-link form of the deep link, over the wallet's own origin")
+    func buildsTheUniversalLink() {
+        #expect(
+            InstallLinks.universalLink(
+                walletOrigin: "https://wallet.frak.id",
+                merchantId: Self.merchantId,
+                anonymousId: Self.clientId
+            )
+                == "https://wallet.frak.id/install?m=\(Self.merchantId)&a=\(Self.clientId)"
+        )
+    }
+
+    @Test("carries the proof as a fragment, matching the deep link's own field name")
+    func universalLinkCarriesTheProofAsAFragment() {
+        #expect(
+            InstallLinks.universalLink(
+                walletOrigin: "https://wallet.frak.id",
+                merchantId: Self.merchantId,
+                anonymousId: Self.clientId,
+                installProof: "AQR-_x"
+            )
+                == "https://wallet.frak.id/install?m=\(Self.merchantId)&a=\(Self.clientId)#p=AQR-_x"
+        )
+    }
 }

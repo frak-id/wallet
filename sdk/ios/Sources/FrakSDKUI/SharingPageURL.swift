@@ -112,4 +112,50 @@ enum SharingPageURL {
         if confirmed { fragment += "&view=confirmation" }
         return fragment
     }
+
+    /// Adds `sid`/`probe` to an `installPageURL` result, which ends in `#p=<proof>` only when a
+    /// proof was minted. Without one there is no fragment yet, and appending `&` would put both
+    /// keys in the query string where the page's fragment parser never sees them.
+    static func installPageProbed(_ page: String, sid: String, probe: ProbeStatus) -> String {
+        page + (page.contains("#") ? "&" : "#")
+            + "sid=" + PercentEncoding.encode(sid)
+            + "&probe=" + probe.rawValue
+    }
+
+    /// The same-document rewrite on detection. A full re-emit, never a delta: `InstallView`
+    /// resolves the proof out of the hash, and a bare `#installed=1` would erase it.
+    static func installDetectedFragment(
+        proof: String?,
+        sid: String,
+        probe: ProbeStatus,
+        elapsedMillis: Int,
+        surface: InstallSurface
+    ) -> String {
+        var fragment = "#"
+        if let proof { fragment += "p=" + PercentEncoding.encode(proof) + "&" }
+        fragment += "sid=" + PercentEncoding.encode(sid)
+        fragment += "&probe=" + probe.rawValue
+        fragment += "&installed=1"
+        fragment += "&dt=" + String(elapsedMillis)
+        fragment += "&via=" + surface.rawValue
+        return fragment
+    }
+}
+
+extension ProbeStatus {
+    fileprivate var rawValue: String {
+        switch self {
+        case .ok: "ok"
+        case .undeclared: "undeclared"
+        case .disabled: "disabled"
+        }
+    }
+}
+
+/// Which store surface the user was looking at when the probe detected the wallet. Not
+/// `FrakInstallPresentation` itself: this rides the fragment as a short, stable wire value the
+/// page reads directly.
+enum InstallSurface: String, Sendable {
+    case overlay
+    case product
 }

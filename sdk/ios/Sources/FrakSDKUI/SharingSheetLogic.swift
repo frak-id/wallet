@@ -139,8 +139,6 @@ func isAppStoreListing(_ url: URL) -> Bool {
 /// `activityType` is UIKit's, and is nil only when the sheet was dismissed without picking a
 /// target. Either one counts, which still keeps a cancelled chooser out.
 ///
-/// Android attributes every raised chooser — `startActivity` tells it nothing — so it is looser.
-///
 /// - Parameters:
 ///   - activityType: `UIActivity.ActivityType.rawValue`, or nil when nothing was picked.
 ///   - completed: the extension's own claim.
@@ -248,6 +246,9 @@ public enum FrakSharingDefaults {
     /// The store page, not the overlay: it reports whether it drew, it can be styled through a
     /// custom product page, and it hands the sheet back when the user closes it.
     public static let install: FrakInstallPresentation = .storeProductPage
+
+    /// Follows the opt-in `isFrakAppInstalled()` already requires; see `FrakSharingConfiguration`.
+    public static let detectInstall = true
 }
 
 /// The range a caller-supplied `heightFraction` is clamped into.

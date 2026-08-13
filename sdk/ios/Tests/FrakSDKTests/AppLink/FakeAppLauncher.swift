@@ -8,6 +8,7 @@ final class FakeAppLauncher: AppLauncher, @unchecked Sendable {
     private let openable: Set<String>
     private let opensSucceed: Bool
     private let probeAnswers: Bool
+    private let universalLinksSucceed: Bool
     private var seen: [String] = []
 
     /// - Parameters:
@@ -16,10 +17,18 @@ final class FakeAppLauncher: AppLauncher, @unchecked Sendable {
     ///   - probeAnswers: whether `canOpen` is allowed to answer true. False models a merchant
     ///     who never added the wallet scheme to `LSApplicationQueriesSchemes`, where
     ///     `canOpenURL` reports false even though `open` would launch the app fine.
-    init(openableSchemes: Set<String> = [], opensSucceed: Bool = true, probeAnswers: Bool = true) {
+    ///   - universalLinksSucceed: whether `openUniversalLink` succeeds. False models a device with
+    ///     no app registered for the domain, or a user who disabled universal links for it.
+    init(
+        openableSchemes: Set<String> = [],
+        opensSucceed: Bool = true,
+        probeAnswers: Bool = true,
+        universalLinksSucceed: Bool = false
+    ) {
         self.openable = openableSchemes
         self.opensSucceed = opensSucceed
         self.probeAnswers = probeAnswers
+        self.universalLinksSucceed = universalLinksSucceed
     }
 
     var opened: [String] {
@@ -30,11 +39,16 @@ final class FakeAppLauncher: AppLauncher, @unchecked Sendable {
 
     func canOpen(_ url: String) async -> Bool {
         // `openable` and `probeAnswers` are immutable, so no lock is needed — and `NSLock`
-        // is unavailable from an async context under Swift 6.
+        // is unavailable from an async context.
         return probeAnswers && handles(url)
     }
 
     func open(_ url: String) async -> Bool {
+        return record(url)
+    }
+
+    func openUniversalLink(_ url: String) async -> Bool {
+        guard universalLinksSucceed else { return false }
         return record(url)
     }
 

@@ -23,6 +23,9 @@ actor DefaultFrakClient {
     /// Flushes the outbox the moment a merchant resolves, rather than waiting for the next
     /// `track()` or process launch. Retained so `shutdown()` can cancel it.
     private var configFlushTask: Task<Void, Never>?
+    /// Warns once per process, not once per probe: an unattended install detector polling every
+    /// second would otherwise flood the merchant's console with the same diagnostic.
+    private var loggedUndeclaredScheme = false
     #if canImport(UIKit)
         /// The only drain trigger besides launch, so a merge token whose first drain fails waits
         /// for the next launch against a 60-minute server TTL. Never `UIApplication.shared`.
@@ -359,24 +362,63 @@ actor DefaultFrakClient {
     }
 
     func isFrakAppInstalled() async -> Bool {
-        await launcher.canOpen("\(settings.env.walletScheme)://")
+        guard walletSchemeStatus() == .ok else { return false }
+        return await launcher.canOpen("\(settings.env.walletScheme)://")
+    }
+
+    /// Whether `canOpenURL` can answer for the wallet's scheme at all, from the merchant's own
+    /// `LSApplicationQueriesSchemes` rather than a probe that cannot tell "undeclared" apart from
+    /// "not installed". `FrakSDKUI`'s install detector gates its poll on this, so it never starts
+    /// against a scheme that can only ever answer false, and warns once when it would.
+    func walletSchemeStatus() -> ProbeStatus {
+        #if canImport(UIKit)
+            let declared = QueriedSchemes.declaredInMainBundle()
+            if QueriedSchemes.isAtCap(declared) {
+                logger.warn(
+                    "LSApplicationQueriesSchemes has \(declared.count) entries, at or past the "
+                        + "~50-scheme cap canOpenURL is documented to enforce. "
+                        + "\(settings.env.walletScheme) may be ignored."
+                )
+            }
+            let status = QueriedSchemes.status(for: settings.env.walletScheme, declared: declared)
+            if status == .undeclared, !loggedUndeclaredScheme {
+                loggedUndeclaredScheme = true
+                logger.error(
+                    "\(settings.env.walletScheme) is missing from LSApplicationQueriesSchemes. "
+                        + "isFrakAppInstalled() and the install sheet's post-install detection "
+                        + "will answer false/never fire; the universal-link and install-code "
+                        + "handoffs are unaffected."
+                )
+            }
+            return status
+        #else
+            return .ok
+        #endif
     }
 
     func openFrakApp() async -> OpenAppResult {
         guard let install = try? await merchantIdentity.pair(.optional) else { return .failed }
 
-        // Attempted, not gated on the probe: `canOpenURL` answers false when the merchant forgot
-        // `LSApplicationQueriesSchemes`, which the SDK cannot inject, while `open(_:)` is not
-        // gated by that list and answers false for an unhandled scheme anyway.
+        // Null when the enclave cannot sign, which `/install` degrades past rather than blocks on.
+        let installProof = await identity.signProof(.install, merchantId: install.merchantId)
+
+        // Opens silently and needs no LSApplicationQueriesSchemes; the scheme below recovers
+        // when the user has turned universal links off for this domain.
+        let universalLink = InstallLinks.universalLink(
+            walletOrigin: settings.env.wallet,
+            merchantId: install.merchantId,
+            anonymousId: install.anonymousId,
+            installProof: installProof
+        )
+        if await launcher.openUniversalLink(universalLink) {
+            return .openedApp
+        }
+
         let deepLink = InstallLinks.deepLink(
             scheme: settings.env.walletScheme,
             merchantId: install.merchantId,
             anonymousId: install.anonymousId,
-            // The App Store fallback below carries nothing — iOS has no Play-style install
-            // referrer — so this link is the only place attribution can ride on an
-            // already-installed device. Null when the enclave cannot sign, which `/install`
-            // degrades past rather than blocks on.
-            installProof: await identity.signProof(.install, merchantId: install.merchantId)
+            installProof: installProof
         )
         if await launcher.open(deepLink) {
             return .openedApp

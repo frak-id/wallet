@@ -89,6 +89,12 @@ install step raises — an `SKStoreProductViewController` page (the default) or 
 }
 ```
 
+While that surface is up, the sheet polls for the wallet becoming installable and hands off
+deterministically — no install code needed — reporting `.walletOpened`. Set
+`detectInstall: false` to keep the store surface without the polling; the same
+`LSApplicationQueriesSchemes` entry `isFrakAppInstalled()` already needs is what makes either
+one work at all.
+
 ### Inbound referral links
 
 There is no automatic deep-link handling — a library cannot observe your `Scene` or

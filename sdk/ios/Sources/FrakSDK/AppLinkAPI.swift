@@ -21,6 +21,13 @@ public struct AppLinkAPI: Sendable {
         await core.isFrakAppInstalled()
     }
 
+    /// Whether the wallet's scheme is declared in `LSApplicationQueriesSchemes` at all.
+    /// `FrakSDKUI`'s install detector uses this to decide whether to poll; not merchant API.
+    @_spi(FrakInternal)
+    public func walletSchemeStatus() async -> ProbeStatus {
+        await core.walletSchemeStatus()
+    }
+
     public func openFrakApp() async -> OpenAppResult {
         await core.openFrakApp()
     }

@@ -77,7 +77,7 @@ Inbound deep links have no automatic handling — wire `appLink.handleReferral(_
 
 ## Status
 
-The table above is implemented and covered by 476 Swift Testing tests under
+The table above is implemented and covered by 490 Swift Testing tests under
 `sdk/ios/Tests`. The FrakContext v2 codec and the signed proof byte layout are
 asserted against the golden fixtures in `sdk/core/src/{identity,context}/fixtures/`,
 shared with the Kotlin and TypeScript suites.
