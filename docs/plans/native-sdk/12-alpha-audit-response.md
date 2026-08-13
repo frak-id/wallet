@@ -31,16 +31,41 @@ document reporting runs that never occurred — should not be adopted wholesale.
 
 ---
 
+## 0. Decisions taken (2026-08-13)
+
+Three of the audit's blocker/high rows are resolved by a decision rather than a patch. Recorded here
+because each one changes what the rows below are worth.
+
+**`?fmt=` ships in the alpha.** So §3.3 stops being optional: `merge/execute` 404s on a fresh
+install today, and the flow shipping means the get-or-create has to land, with the proof gate, in
+the order the audit gives. §2.2's origin question is now live rather than theoretical.
+
+**§2.1's install-proof leak is not a leak.** The proof is a signature over the anonymous id. Anyone
+who intercepts it can verify that this anonymous id produced it; nobody can forge one for an
+anonymous id they do not hold the key for. That is the design working, not failing, and the audit
+graded it as a secret when it is a public attestation. **Downgraded from blocker.**
+
+One residual worth a sentence, because it is a different failure than the one graded: the proof is
+single-use server-side, so a hostile app that claims `frakwallet://` first can *consume* it. That
+costs the user their install attribution, silently — `openFrakApp` reports `OpenedApp` either way.
+That is an attribution-integrity bug, not a confidentiality one, and `setPackage` still fixes it for
+one line. Left to you at that severity.
+
+**`SharingSheetStateTest` hitting production is acceptable.** The backend absorbs the load. Noted so
+the next reader does not re-file it: the row stays open in the audit and is closed here by decision.
+
+---
+
 ## 1. Blocker / high — verified, not fixed
 
 ### Confirmed, and the fix is one line — do these first
 
 | # | Finding | Status | The fix |
 |---|---|---|---|
-| §2.1 | **Android leaks the install proof to any app claiming `frakwallet://`** | **Confirmed.** `AppLauncher.open()` fires a bare `ACTION_VIEW`; `DefaultFrakClient.openFrakApp()` hands it `frakwallet://install?…&p=<30-day bearer proof>` and reports `OpenedApp` on success, so a hijack is invisible | Split `open()` into `openWallet(url, packageId)` (with `setPackage`) and `openStore(url)`. `settings.env.walletPackageId` is already in scope one line up, `<queries>` is already in the manifest. **iOS cannot be fixed this way** — no bundle-id targeting for custom schemes — so iOS needs the handoff moved to a Universal Link on `wallet.frak.id/install`, which already exists as the fallback |
+| §2.1 | ~~**Android leaks the install proof**~~ **— downgraded, see §0.** The remaining bug is attribution theft, not disclosure | **Confirmed as behaviour.** `AppLauncher.open()` fires a bare `ACTION_VIEW`; `DefaultFrakClient.openFrakApp()` hands it `frakwallet://install?…&p=<30-day bearer proof>` and reports `OpenedApp` on success, so a hijack is invisible | Split `open()` into `openWallet(url, packageId)` (with `setPackage`) and `openStore(url)`. `settings.env.walletPackageId` is already in scope one line up, `<queries>` is already in the manifest. **iOS cannot be fixed this way** — no bundle-id targeting for custom schemes — so iOS needs the handoff moved to a Universal Link on `wallet.frak.id/install`, which already exists as the fallback |
 | §3.5 | **iOS `SharingWebViewPool.warm(_:)` has no `lent` guard** | **Confirmed** by reading; not reproducible without a simulator | `guard !lent` in `warm`. One line |
 | §3.8a | **Unused `StateFlow` import, "so ktlint/CI must be red"** | **Half confirmed, and the other half is worse.** The import was genuinely unused — I deleted it in commit 1. But `bun run --cwd sdk/android lint` was **green with it present**: ktlint 1.8.0 as configured does not flag unused imports. So CI is not red, and the gate does not do what four documents assume it does | Either accept it and stop citing ktlint as an unused-import gate, or add a rule. Worth 20 minutes: this is the finding that "validates or invalidates every *the suite is green* claim", and the answer is that the suite is green *and* the gate is weaker than advertised |
-| §3.8b | **A unit test initialises the real SDK against production** | **Confirmed.** `SharingSheetStateTest.@Before` calls `Frak.initialize(context, FrakConfig.Builder(uuid).build())`; `frakConfig()` in `SharingInputFixtures.kt:58` sets no environment, so it defaults to `Production` and `initialize` starts a live config resolve to `https://backend.frak.id`. Every CI run and every local `bun run --cwd sdk/android test` does this. No `shutdown()` in `@After` | Point the fixture at `FrakEnvironment.Custom` on loopback (already allowlisted) — two lines — and add the `Frak.resetForTesting()` seam `T2` has been asking for |
+| §3.8b | **A unit test initialises the real SDK against production** | **Confirmed, and accepted** — see §0. **Confirmed.** `SharingSheetStateTest.@Before` calls `Frak.initialize(context, FrakConfig.Builder(uuid).build())`; `frakConfig()` in `SharingInputFixtures.kt:58` sets no environment, so it defaults to `Production` and `initialize` starts a live config resolve to `https://backend.frak.id`. Every CI run and every local `bun run --cwd sdk/android test` does this. No `shutdown()` in `@After` | Point the fixture at `FrakEnvironment.Custom` on loopback (already allowlisted) — two lines — and add the `Frak.resetForTesting()` seam `T2` has been asking for |
 | §4.3 | **Retry hint is milliseconds on Android, seconds on iOS** | **Confirmed** (`FrakError.BackingOff(retryAfterMillis)` vs `.backingOff(retryAfter:)`) | Free to fix before the first tag, impossible after |
 
 ### Confirmed, needs a decision (not a patch)
@@ -122,8 +147,8 @@ six parity rows were in scope and went unmentioned.
 1. ~~**Android, one run.**~~ **Done — see §4.**
 2. ~~**iOS, one run.**~~ **Done — see §5.**
 
-**One thing needs 20 minutes and no device:** decide whether `?fmt=` ships in the alpha at all
-(§2.2). It gates §3.3, which gates the merge flow working on a fresh install.
+~~**One thing needs 20 minutes and no device.**~~ Decided: `?fmt=` ships. See §0 — that promotes
+§3.3 and §2.2 from "decide" to "do", and they must land together.
 
 
 ---
