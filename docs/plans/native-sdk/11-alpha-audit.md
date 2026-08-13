@@ -4,7 +4,7 @@
 
 This document supersedes nothing. It sits next to [`06-open-findings.md`](./06-open-findings.md) and, in §6, challenges it.
 
-**Revised three times.** §0 records two team corrections. §9 reviews the 12 commits that landed after the first pass. **§10 reviews the remediation branch `fix/native-sdk-alpha-audit` — and retracts this audit's own worst error, which §10.1 explains.**
+**Revised four times.** §0 records two team corrections. §9 reviews the 12 commits that landed after the first pass. §10 and §11 review the remediation branch `fix/native-sdk-alpha-audit` across four rounds — **including two findings this audit got wrong and now retracts (§10.1, §11.3), and one regression the latest batch introduced (§11.4)**.
 
 ---
 
@@ -69,13 +69,13 @@ Any app on the device declaring an `<intent-filter>` for scheme `frakwallet` rec
 
 *Register status: NEW. §4 closed "the WebView starting arbitrary activities (3.1)"; this is the SDK core launching one.*
 
-### 2.2 Inbound `?fmt=` merge is auto-executed with no origin check — **security**
+### 2.2 ~~Inbound `?fmt=` merge is auto-executed with no origin check~~ — **WITHDRAWN, see §11.3**
 
 The SDK signs and executes an attacker-supplied merge token arriving on any link, with no origin validation and no user interaction. This is 2.1 from the other direction: identity capture by link. Full chain in `audit-2026-08-13/security-privacy.md` F2.
 
 Note the interaction with §3.3: today `TARGET_NOT_FOUND` is accidentally limiting the blast radius. **Do not remove that 404 without adding the proof gate described in §3.3**, or this finding gets materially worse.
 
-> **Fix:** bind the merge token to an origin the SDK can verify, or require a user-visible confirmation. **Complexity: medium.** If it cannot land in the alpha window, **disable `?fmt=` handling for the alpha** — the README already says the flow is unsupported until `ROLLOUT-STEP-3`.
+> **Withdrawn in §11.3.** The prescribed fix cannot be built for this flow — the redeeming id does not exist when the token is minted — and `WALLET_CONFLICT` bounds the damage to wallet-less users, making this attribution theft rather than identity capture. The audit graded it P0; medium is right. **The residual is real but small, and §11.4 is where the same trust boundary actually needs work.**
 
 ### 2.3 `DeepLinkHandling.Automatic` — the default — misses every warm-start referral link
 
@@ -161,7 +161,7 @@ The tell that this is an oversight rather than a decision: `MergeSender` handles
 
 > **Fix:** (a) return `.hold` on a null `clientId` and **stamp the current id at drain time** — `currentClientId` is already injected into the outbox and the device is unlocked by then, so the event survives *and* gets attributed (`.dropped`, matching `MergeSender`, is the one-line version; `.hold` is strictly better). (b) `.rejected → continue`. (c) mirror iOS's foreground hook via `ProcessLifecycleOwner`, plus a `delay(backoff.remainingMillis)` retry after a `Retryable`. **Complexity: small each.**
 
-### 3.3 The backend merge get-or-create — and the guard it must keep
+### 3.3 The backend merge get-or-create — and the guard it must keep · **shipped WITHOUT the guard, see §11.4**
 
 `POST /user/identity/merge/execute` returns `TARGET_NOT_FOUND` unless the target anonymous id already has an identity-graph node (`AnonymousMergeOrchestrator.ts:219-230`). Native enqueues the merge before anything creates one, and never calls `/identity/ensure`, which is what creates it on web. On a fresh install — the exact case `?fmt=` exists for — it is rejected, retried 3×, dropped.
 
@@ -417,7 +417,7 @@ Nothing in §7 is retired; two things are added and one is reordered.
 
 ## 10. Review of `fix/native-sdk-alpha-audit`
 
-Four commits on top of `f1dc693`, 88 files, +1427/−377: `052e44c` (iOS test), `96024ee` (SDK medium/low correctness), `f6ff19a` (backend + wallet), `d88272d` (docs/register corrections). Three read-only reviews in [`review-fix-branch/`](./audit-2026-08-13/review-fix-branch/).
+The branch's **first four** commits, on top of `f1dc693`: `052e44c` (iOS test), `96024ee` (SDK medium/low correctness), `f6ff19a` (backend + wallet), `d88272d` (docs/register corrections) — 88 files, +1427/−377. **§11 covers the eight that followed.** Eight read-only reviews in [`review-fix-branch/`](./audit-2026-08-13/review-fix-branch/).
 
 **Scope is declared and correct:** the branch takes the **medium/low/nit band only** and says so. Every P0 in §2 is deliberately untouched — `AppLauncher.kt` still has no `setPackage`, `DeepLinkObserver` still reads `activity.intent`. Judge it on its own scope, which is what follows.
 
@@ -476,3 +476,70 @@ The rest of `d88272d` — recounted test numbers with the date they were measure
 `12-alpha-audit-response.md` says *"Everything medium/low/nit was fixed here."* That is not true of the parity report — F5, F7, F9, F10, F12 and F13 are untouched and absent from its own "deliberately not fixed" table — nor of android-sharing-sheet F7/F8/F9, where the cheap half of each landed and the half that was the finding did not.
 
 This is the same failure the audit committed in §10.1 and the register commits throughout: a summary line that is *directionally* true and *literally* false, written at the moment of most confidence. The cheap fix is the one §6 already recommends — say how each row was verified, and by what. A "fixed" that means "the easy half, on one platform, untested" costs more than an honest "partial", because the next person reads the summary and not the diff.
+
+---
+
+## 11. Rounds 3 and 4 — device runs, then the blocker batch
+
+`fix/native-sdk-alpha-audit` grew from 4 commits to 12. Reviews in [`review-fix-branch/`](./audit-2026-08-13/review-fix-branch/) (8 reports). §10 covered the first four; this covers the rest.
+
+### 11.1 Round 3 — the two things I said would most change this report
+
+`55e3f93f0` committed `isMinifyEnabled = true` + `isShrinkResources = true` on the Android harness and drove it on an RMX3511 (Android 16). `6cd61d665` ran the sheet on an iPhone 15 and declared landscape.
+
+**§3.1 is closed.** Not because R8 ran — it already had — but because the config is now committed, so a minified run is reproducible from a clean checkout. 254 SDK classes reach R8, 23 are shaken out, no `missing_rules.txt`, nothing pasted into the app's rules. **And my specific worry was disproved**: `SharingHost`'s `ViewModelProvider(activity)[SharingViewModel::class.java]` survives — R8 renamed the class to `g01` and it still instantiated, because a `::class.java` literal is *traced*, not resolved by name. The call I named as likeliest casualty was already correct. Note there is still no CI gate; a committed config plus one manual run is not the same as enforcement.
+
+The iOS run falsified the change it was built to falsify (`.onDisappear` does not misfire when a view is merely covered) and produced an unlooked-for second result: one `WebContent` process across every open, so §3.5's missing `lent` guard did not bite. The commit is careful to say that proves the happy path, not the race. Correct — and the guard is still worth adding.
+
+**One challenge back, and it lands.** `6cd61d665` builds its closing thesis on "the Android harness never enables predictive back". That is very likely **wrong**: the harness is `targetSdk = 36` (`example/native-android/app/build.gradle.kts:17`), and predictive back is default-on for apps targeting 35+ — `enableOnBackInvokedCallback` became opt-*out*. So predictive back was on during the run, the gesture-dismiss result is more trustworthy than the commit claims, and nobody should "fix" the manifest. The *defect class* is real regardless — the sweep below found seven other instances.
+
+**The highest-value artifact of the whole audit came out of this round.** `6cd61d665` asked for a sweep of both harness manifests for other quietly-excluded cases; [`harness-blind-spots.md`](./audit-2026-08-13/review-fix-branch/harness-blind-spots.md) delivers it: **19 findings currently unreachable by any amount of device testing with the harnesses as committed**, each with the cheapest change that makes it reachable. Highlights: the entire Java `*Async` interop surface — frozen in the ratified ABI dump — has **zero call sites anywhere outside the SDK's own tests**; `setTrackingEnabled`, `resetAnonymousId` and `Frak.shutdown` have zero call sites under `example/`; `heightFraction` is never called; the `@Composable build()` overload has no call site at all, which is a second barrier to §3.6 beyond the missing `NavHost`. And §2.3's harness log still prints `LogType.SUCCESS` for the failure case. That list, worked cheapest-first, is worth more than any further static audit.
+
+### 11.2 Round 4 — what lands
+
+- **§2.1 on Android: complete.** The wallet rung is package-pinned; the store rung deliberately is not (correct — it is a different app); `ActivityNotFoundException` still falls through.
+- **§2.3: fixed for the documented path.** `OnNewIntentProvider` is wired, with the `activity.intent` read kept as fallback.
+- **§4 row 1: the cleanest work on the branch.** Exactly the nine reward constructors leave `frak-sdk.api`, source annotations match the dump 1:1, nothing else moved. The `!` is real and free — nothing is published.
+- **§3.8: answered, and I was right about the mechanism.** `1cdf7aa99` explains it: **ktlint 1.7 disabled `no-unused-imports` by default** (removing a wrongly-flagged import produces non-compiling code), and 2.0 deletes the rule outright. So the gate was green on exactly the thing four documents credited it with. Re-enabled via `.editorconfig`; it immediately found **two more** genuine unused imports. My finding offered a disjunction — "either CI is red or the lint step is not doing what everyone believes" — and the second horn was correct.
+- **§10.3 nginx: complete.** All seven `add_header` sites plus the Dockerfile. `wallet.frak.id/` is no longer framable.
+- **§10.3 `TRIM_MEMORY`: the guard is right in both directions now, with four tests.**
+
+### 11.3 §2.2 — I was wrong; the withdrawal is accepted
+
+`388b8c5b3` withdraws my §2.2 (`?fmt=` auto-merge, graded P0 "identity capture by link"). **The withdrawal is correct on the part that matters and I accept it.**
+
+My prescribed fix — bind the merge token to a verifiable origin — **cannot be built for the flow that ships `?fmt=`**. It exists for the in-app-browser escape: a token is minted in Instagram's web view bound to source A, the system browser then creates a *new* id B which redeems it. B does not exist at mint time. Binding the target at mint is impossible by construction; the bearer shape *is* the requirement for bridging two contexts that share no storage.
+
+The severity grade was also too high, and the mechanism I missed is real: `WALLET_CONFLICT` (`IdentityOrchestrator.ts:85-91`, two throw sites, regression-tested) refuses a merge between groups holding *different* wallets, so every onboarded user is already protected. The attacker gains only against a wallet-less victim, scoped to one merchant. **Attribution theft, not identity takeover.** Medium is defensible; P0 was not.
+
+Two things the withdrawal over-narrows, worth keeping at medium: past value migrates, not only future attribution; and the victim is silently locked out of ever binding their own wallet to that id.
+
+### 11.4 The one thing to fix before merge
+
+**`7a673da17` implements §3.3's fresh-install fix without §3.3's guard, and the result is reachable with two unauthenticated POSTs.**
+
+The audit made the guard a precondition: auto-create the target *only* inside the proof-verified branch. What shipped calls `resolve()` unconditionally (`AnonymousMergeOrchestrator.ts:211-221`), outside any proof branch. Combined with two facts already in the tree:
+
+- `enforceLatchedProof` **fails open for any unlatched id** — proof absent, node not latched, allow (`latchedProof.ts:60-73`). A node that has just been conjured is by definition unlatched.
+- **`/user/identity/merge/execute` has no authentication at all** — the handler destructures only `{ body }` (`api/user/identity/merge.ts:63-104`), and `/initiate`'s wallet auth is explicitly optional for anonymous callers (`merge.ts:37-40`).
+
+So: POST `/initiate` with any UUID as `sourceAnonymousId` → get a token; POST `/execute` with that token and a victim's `anonymousId` and no proof → the target is created on demand and folded into the attacker's group. No SDK, no link, no victim device, no interaction. Rate-limited at 20/min.
+
+Two qualifications, so the grade is honest. First — **and this cuts against the audit** — the 404 was never *the* guard: `initiateMerge`'s documented auto-create arm has always folded an arbitrary non-existent `sourceAnonymousId` into a caller's group with no proof. This opens a second door to a room that already had one, and my §3.3 blast-radius framing was incomplete. Second, the prize is bounded by exactly the mechanisms §11.3 credits — `WALLET_CONFLICT` plus merchant scope — so it is attribution theft against wallet-less users, and it needs a *known* anonymousId (122 bits, not enumerable; but it leaks via §2.1's intent path and S11's query string).
+
+Net: **not a P0, but a real regression in this batch**, because it removes the one precondition that made the fix safe. The gate costs native nothing — native signs from day one. Also unraised anywhere: this is now **unauthenticated unbounded record creation**, a DB-growth vector independent of the attribution question.
+
+The commit justifies the omission by pointing at §2.2's withdrawal. That is a different finding on a different trust boundary: §2.2 is about a link reaching a victim's device; this needs no device at all.
+
+### 11.5 Partial closes, and the pattern that keeps recurring
+
+Round 4 repeats round 2's shape: the Android half lands, the iOS half is thinner than announced, and the difference is not always disclosed.
+
+- **§2.3** is fixed only for `Frak.initialize` from `Application.onCreate`. The listener is subscribed solely from `onActivityCreated`, so a merchant initialising from an Activity reproduces the original bug **in silence**. And `Frak.shutdown()` leaves stale `onNewIntent` listeners attached, so a re-`initialize` double-tracks.
+- **`compileOnly(androidx.core)`** buys a zero-dependency POM but **breaks R8 for exactly the androidx-free merchant the fallback was written for** — the commit's claim that such an app "falls back" is false under minification. This is the first thing the newly-reproducible minified harness should be pointed at.
+- **§4 row 1's iOS twin closes 3 of 9**: two of the five iOS reward types are enums whose cases cannot be `@_spi`'d. The response doc calls this "to match"; it is not.
+- **§4 row 3** (retry hint ms vs s) was renamed, not unified. **§4 row 2** is still open and this was the commit to do it in.
+- **§10.3's `SharingLinkBuilder.build` bare null: skipped entirely and not listed as skipped.** iOS custom-data bounds: skipped and *dropped from* the disclosure table. One commit-message bullet is simply false — `InstallLinks.swift` is untouched by every commit on the branch.
+- `12-alpha-audit-response.md`'s §1 table now contradicts its own §8 on five blocker/high rows, and §3.1 still carries both numbers the branch itself disproved (46%, and "R8 has never run" — the latter still live in `06-open-findings.md:25`, the team's own register repeating a claim the team refuted).
+
+This is the same failure §10.4 named and that §6 accuses the register of, now on its third instance. The fix has not changed: record *how* each row was verified — `read` / `executed` / `on-device` / `asserted` — and let "partial" be a legal status. A branch that closes eleven findings honestly reads better than one that claims fourteen.
