@@ -4,7 +4,7 @@
 
 This document supersedes nothing. It sits next to [`06-open-findings.md`](./06-open-findings.md) and, in §6, challenges it.
 
-**Revised twice.** §0 records two team corrections that moved conclusions. **§9 reviews the 12 commits that landed after the first pass** — one of which performed, on Frak's own harness, exactly the consumer break §4 row 6 predicted.
+**Revised three times.** §0 records two team corrections. §9 reviews the 12 commits that landed after the first pass. **§10 reviews the remediation branch `fix/native-sdk-alpha-audit` — and retracts this audit's own worst error, which §10.1 explains.**
 
 ---
 
@@ -132,13 +132,13 @@ Add: the iOS quickstart snippet **does not compile** (missing `try`); the iOS RE
 
 Re-ranked after §0(b): the purchase path is the money path, and everything on it moves up.
 
-### 3.1 Nothing in this repo has ever run R8 — **build-release**
+### 3.1 ~~Nothing in this repo has ever run R8~~ → No minified build is verified to *work* — **corrected, see §10.1**
 
-Both `consumer-rules.pro` files are empty and assert in prose that nothing is reflective. That is false: `SharingHost.kt:461` does `ViewModelProvider(activity)[SharingViewModel::class.java]`, which is reflective instantiation. (androidx-lifecycle ships its own keep rule, so this probably survives — *probably* is the problem.) The one harness that could prove it sets `isMinifyEnabled = false` (`example/native-android/app/build.gradle.kts:29`). My Moulinex ships R8 full mode.
+**This finding's headline was wrong and is retracted.** R8 *has* run: `32836c217` (2026-08-07) attributed every class through R8's `mapping.txt` in a minified `example/native-android` release APK and measured the SDK at 60 KB of executable code, with 46% of its classes shaken out by the empty `consumer-rules.pro`. The audit missed it because it ran in a **shallow clone** — see §10.1.
 
-Per §0(a) this is the single largest thing device testing could never have covered: every device run to date has been a debug build.
+What survives, narrowed: that run measured **size**, not behaviour. Nothing has ever *executed* a minified build, `example/native-android/app/build.gradle.kts:29` is still `isMinifyEnabled = false`, and no gate keeps it that way. `SharingHost.kt:461` does `ViewModelProvider(activity)[SharingViewModel::class.java]` — reflective instantiation, probably covered by androidx-lifecycle's own keep rule, never verified at runtime. A size attribution cannot tell you whether `SharingViewModel` still resolves.
 
-> **Fix:** flip the harness to `isMinifyEnabled = true` + full mode and run it. One afternoon. Whatever it finds is a field crash you didn't ship.
+> **Fix:** flip the harness to `isMinifyEnabled = true` + full mode and *run the app*, exercising the sheet. One afternoon. **Complexity: small.**
 
 ### 3.2 The purchase path can stall behind a row that can never succeed
 
@@ -276,7 +276,7 @@ Its **numbers, coverage claims, three "closed" rows and its device-testing statu
 
 | Claim | Reality |
 |---|---|
-| `checkDexSizeBudget` is part of the green `check`; `09` §5b reports it "was run and was red at **321 KB**" | **The task does not exist and never has.** `git log -S` finds no commit. `frak.sdk.dexBudgetKb` is in no `gradle.properties`. This is the one place the register reports an *executed measurement* that provably did not happen — it contaminates every other "verified this pass" line. Cited in 5 documents including `sdk/AGENTS.md:66`. |
+| ~~`checkDexSizeBudget` … does not exist and never has~~ | **RETRACTED — this row was the audit's own worst error.** The task existed and was deliberately removed in `32836c217`, with a measurement behind it. The audit's `git log -S` returned nothing because the audit ran in a **shallow clone**. The register was right; the audit was wrong. See §10.1. What survives is only that six documents still described the gate as *wired* long after it was retired — a stale-doc finding, not a fabricated-measurement one. |
 | "iOS **396** tests in 42 suites"; "Android **451** (321 + 130)" | **473 in 51 suites**, and **514**. Both were already wrong at the register's own last commit. "A real count off the test XML this pass" is not what happened. |
 | 9.1 **Closed** | Its fix (`AttributionLedger`, `abandonGrace`, `selfUntilSettled`) was **reverted**; none of those identifiers exist in the tree. The revert is buried mid-paragraph inside a §4 "Closed" bullet. |
 | 9.16 **Closed** | The mechanism it describes (`pendingLaunch`/`pendingReports`) is **absent**; the presenter was redesigned instead, with no revert note. |
@@ -412,3 +412,67 @@ Nothing in §7 is retired; two things are added and one is reordered.
 - **Add:** bound and cancel `InstallProbe` — ceiling, single poll chain, `generation` invalidated in `stop()` — before any of it runs on a device.
 - **Add:** fix the install-page CTA `href` and assert it in the test.
 - **Note for §5's reliability tiering / §4 row 10:** `significance` collapsing a session to one arm is now actively losing the share event. Worth deciding alongside the queue-tier question, since both are "the SDK decided what mattered and told the merchant one thing."
+
+---
+
+## 10. Review of `fix/native-sdk-alpha-audit`
+
+Four commits on top of `f1dc693`, 88 files, +1427/−377: `052e44c` (iOS test), `96024ee` (SDK medium/low correctness), `f6ff19a` (backend + wallet), `d88272d` (docs/register corrections). Three read-only reviews in [`review-fix-branch/`](./audit-2026-08-13/review-fix-branch/).
+
+**Scope is declared and correct:** the branch takes the **medium/low/nit band only** and says so. Every P0 in §2 is deliberately untouched — `AppLauncher.kt` still has no `setPackage`, `DeepLinkObserver` still reads `activity.intent`. Judge it on its own scope, which is what follows.
+
+**Verdict: mergeable for an alpha.** The work is real and mostly correct. The reservations are (a) three fixes announced as "both platforms" that are Android-only, (b) one genuine regression, (c) one pre-existing security bug the branch walked past while fixing its neighbour, and (d) five claims that shipped with no test.
+
+### 10.1 First, the audit was wrong — and this is the important part
+
+`d88272d` corrects two of this audit's claims, and **it is right on both.**
+
+**`checkDexSizeBudget` existed.** It was deliberately removed in `32836c217` (2026-08-07) because it gated *unminified d8 output*: attributing every class through R8's `mapping.txt` in a minified harness APK put the SDK at 60 KB of executable code against the 479 KB the gate watched, with the gate sitting at 318/384 KB. It was wrong in both directions and was retired with a measurement behind it. **R8 has therefore run**, once, in that commit. §3.1 and §6 are corrected above.
+
+**The cause was mine, and it is worth recording as a method failure rather than a detail.** The audit ran in a worktree cut from a **shallow clone — 11 commits**. `git log -S` and `git blame` were blind past the graft point. I noticed the shallow clone early, and then did not propagate that constraint into the agent briefs: they were told "no toolchain", never "no history". So every finding of the form *"this never happened"* was unfalsifiable by construction, and one of them was asserted as fact in the section of the document whose entire subject is *other people asserting things they had not executed*. That is precisely the failure mode §6 accuses the register of, committed by the audit, in the paragraph making the accusation.
+
+Two corrections to the correction, so the record is exact:
+
+- The reviewers confirmed the audit's error more sharply than the branch does: `32ecd20`, the commit the audit named as the string's sole origin, contains **zero occurrences of it**. The audit did not merely miss a commit; its search could not see the repository.
+- **R8 having run is not the same as a minified build being verified to work.** That run measured size. `example/native-android/app/build.gradle.kts:29` is still `isMinifyEnabled = false`, nothing executes a minified build, and no gate keeps it that way. §3.1 stands in that narrowed form and is still worth an afternoon.
+
+The rest of `d88272d` — recounted test numbers with the date they were measured, revert notes on 9.1/9.16, the `AtomicBoolean` correction, README fixes — checks out. Residual doc drift is listed in the per-area reports (`06` still lists the dex budget inside `check`; `09` §5b's `321 KB`→`318 KB` rewrite contradicts the commit that produced the measurement).
+
+### 10.2 What genuinely lands
+
+- **`.rejected → continue`** on **both** platforms, each with a test that pins the property. The purchase queue no longer stalls behind a poison row. This was §3.2b, the highest-value item in the band.
+- **Drain-time `clientId` stamping + `.hold`**, both platforms, tested. §3.2a closed.
+- **`percentDecode` is now byte-based, rejects a signed escape, and maps `+` to space** — and the reviewer *executed* Node's `URLSearchParams` rather than trusting the commit message: the web reference really does form-decode `+`, `fCtx` is base64url (`-_`, no `+`), `fmt` is a JWT, and native never decodes a fragment. **The riskiest change in the branch is correct.** Register 9.2 and the unfiled signed-escape bug are closed on both platforms.
+- **`UrlQueryTest.kt` is new (86 lines)** — the zero-coverage gap on the file carrying 9.2 is closed.
+- **Exact-case key match wins**, both platforms, matching the TS, tested on both.
+- **The unused `StateFlow` import is gone.** §3.8's first half is resolved.
+- **nginx headers** on `/sharing` and `/install` — the semantics claim is accurate and all six are re-declared in both blocks.
+- **`bindI18nStore: "added"`** genuinely fixes an English device rendering the French fallback. Note this is *not* §3.4: native still forwards no locale at all, so a German device still gets French. §3.4 remains open.
+- Backend: the merge window widening, the `sharingTimestamp` bound, the `isDuplicate` comment, and the `ROLLOUT.md` correction all land mechanically.
+
+### 10.3 What does not fully land
+
+**The one I would fix before merge — the nginx fix is one-sixth applied.** `f6ff19a` re-declared the six security headers in the two blocks the audit named. The same `add_header`-inheritance bug is live in four more blocks of the same file, including the nested `location ~ \.html$` inside `location /` (`apps/wallet/nginx.conf:186-193`) that serves **the SPA's own `index.html`**. That block declares four `add_header` directives — including `X-Content-Type-Options`, so the pattern was half-understood — and therefore drops `X-Frame-Options`, `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy` and COOP. **`wallet.frak.id/` is framable by any origin.** That is a bigger exposure than the finding it was fixing: clickjacking on the wallet itself is worth more than on the sharing sheet. Same fix, four more blocks.
+
+**A regression: the warm WebView is destroyed on every home-press and never rebuilt.** `SharingHost.kt:492-495` trims the pool at `TRIM_MEMORY_UI_HIDDEN`, which is not a pressure signal — it fires whenever the UI goes to background. `SharingWebViewPool.trim()` nulls `pooled` *and* `warmUrl`. Nothing re-warms: `SharingHost` overrides only `onCleared` and `onDestroy`, and the sole `warm()` caller is a `LaunchedEffect` keyed on a `remember`ed value. The KDoc asserts "the next `warm` rebuilds it"; there is no next `warm`. So: open a product screen, press Home, come back, tap Share → cold boot inside the 5 s deadline, and **every subsequent share in that process is cold too**. The guard also skips `RUNNING_LOW`/`RUNNING_CRITICAL`, so it holds the renderer during the foreground pressure the audit's own fix sketch named. Fix: `onStart(owner) { if (warmRequested) warm() }`, and lower the guard.
+
+**Three fixes announced as "both platforms" are Android-only:** `ServerClock` (§3.7), the queue byte cap and custom-data bounds, and `resetAnonymousId` awaiting its purge. `12-alpha-audit-response.md:51` is honest about the first; the commit message is not, and the other two are undisclosed. Each opens a new parity gap on a list (register 9.15) the audit already flagged as growing.
+
+**`ServerClock` is half-built,** and it is the highest-risk new component:
+- It adopts any `Date` header above a 2025 floor with **no upper bound** — a proxy sending `Date: 2100` skews every proof for the process. The comment claims "only a date that could plausibly be now is trusted"; only one side is checked.
+- It is **not persisted**, so every cold start runs on the device clock until the first response — and the 30-day install proof can be minted in that window.
+- Its KDoc cites a "2-minute" merge window that **this same branch changed to 10 minutes**.
+- Its only test exercises the class in isolation; nothing pins that `HttpClient` feeds it or `signProof` reads it, and `AnonymousIdStore.kt:46` defaults it, so a mis-wire degrades silently to the device clock.
+- The backend half widened the **past** side only: `MAX_FUTURE_SKEW_SECONDS = 60` is untouched. The audit's literal headline — *"a device 61 s **fast** fails every proof"* — is unaddressed server-side, and entirely unaddressed on iOS, which got no `ServerClock`. That is the whole population the fix was for.
+
+**The merge-window widening rests on two justifications the code contradicts.** The bound token is a stateless 60-minute JWT with no replay cache, not the single-use short-lived token the message describes; and a queued retry never consumed the window, because the proof is minted per attempt.
+
+**Five claims shipped with no test:** the byte cap, the data bounds, the 20-row checkpoint, the drain coalescing, `resetAnonymousId`'s await, the `merchantId` UUID check, and `claimArrival`. The 20-row checkpoint is a full file read + rewrite, so a long drain now does ~50 of them — a net performance regression against the audit's own F5.
+
+**Smaller, but each real:** `SharingLinkBuilder.build` returns a bare `null` for a non-http(s) base, contradicting the published `buildLink` contract on both platforms and surfacing to the merchant as "no anonymous id or merchant" — a lie. The new rate-limit test does not import the production module and cannot fail if the registration order changes. `sharingTimestamp` is bounded but `referralTimestamp`, the other half of the same `::int` join, is not. `EXTRA_SUBJECT` and the memory-pressure release are Android-only, so an emailed share now differs by platform. A regression assertion was deleted under a commit message reading only "chore: fix ios sdk test".
+
+### 10.4 One process note
+
+`12-alpha-audit-response.md` says *"Everything medium/low/nit was fixed here."* That is not true of the parity report — F5, F7, F9, F10, F12 and F13 are untouched and absent from its own "deliberately not fixed" table — nor of android-sharing-sheet F7/F8/F9, where the cheap half of each landed and the half that was the finding did not.
+
+This is the same failure the audit committed in §10.1 and the register commits throughout: a summary line that is *directionally* true and *literally* false, written at the moment of most confidence. The cheap fix is the one §6 already recommends — say how each row was verified, and by what. A "fixed" that means "the easy half, on one platform, untested" costs more than an honest "partial", because the next person reads the summary and not the diff.
