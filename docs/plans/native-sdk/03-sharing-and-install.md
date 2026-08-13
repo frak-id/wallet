@@ -473,25 +473,45 @@ detection has to *dismiss the store surface*, not merely repaint behind it. On t
 variant it is worse than a race, because `position: .bottom` is a banner sitting exactly where the
 install page's footer CTA is — a repaint underneath it is invisible.
 
-#### The detector: one sink, three triggers
+#### The detector: owned by the model, two triggers
 
-`StoreInvite` is the seam. The detector brackets `present()` and `dismiss()`, so it is written
-once and neither variant special-cases it in `SharingSheetModel`; the product page's
-`productViewControllerDidFinish` reaches it as an optional protocol hook, not as a branch in the
-model.
+**`StoreInvite` is not the seam, and bracketing `present()`/`dismiss()` is a blocker.**
+`StoreProductPageInvite.productViewControllerDidFinish` *calls* `dismiss()`, so on the
+`.storeProductPage` default a user who taps GET, watches it install and then closes the page by
+hand would stop the poll before it ever answered — the exact case this section calls likely. Three
+more lifetimes disagree with the surface: `present()` is `async` and can burn the whole 5 s load
+deadline before returning, both invites return `true` early when already presenting (so a second
+tap would start a second poll), and `release()` calls `dismiss()` unconditionally even though the
+overlay is meant to survive a sheet close once `.installStarted` is reported.
 
-That callback is not a substitute for polling. It fires on *dismissal*, not on install, and a user
-can install and sit there — and on the `.storeProductPage` default, which is the full-screen
-modal, sitting there is the likely case. Polling is required for both variants; the callback is
-one opportunistic extra edge.
+So `InstallProbe` is a separate `@MainActor` type owned by `SharingSheetModel`, and
+`StoreInvite.dismiss()` is what it *calls on success*, not what bounds it.
+
+| Model event | Probe |
+|---|---|
+| `onPageAction(.install)`, after `report(.installStarted)` | `start()` |
+| `didDetectInstall()` | one-shot: `dismiss()` the invite, write the fragment, `stop()` |
+| `release()` | `stop()`, **before** `storeInvite.dismiss()` |
+
+Start at the install claim rather than at `present()`: it is synchronous, already guarded by
+`claim(.install)` so re-entrancy is solved where it is already solved, and it precedes the product
+page's load deadline instead of trailing it. Cancellation is a `Task` held in the probe and
+cancelled in `stop()`, mirroring the model's existing `deadline` — never a `Timer`, which `Task`
+semantics do not cancel and which would outlive a disposed model. Capture `sessionId` at `start()`
+and compare before writing: the probe is the one component whose callback can land after the
+pooled view has been rebound.
 
 | Trigger | Covers |
 |---|---|
-| poll timer between `present()` and `dismiss()` | both variants — the app never backgrounds |
+| poll timer | both variants — the app never backgrounds |
 | `willEnterForegroundNotification` | the App Store app, Mac Catalyst, any path that did background |
-| `productViewControllerDidFinish` | `.storeProductPage` only, opportunistic |
 
-All three feed one idempotent `didDetectInstall()`.
+`productViewControllerDidFinish` is deliberately **not** a third trigger. It already means
+"dismiss"; overloading it to also mean "an install may have happened" conflates two unrelated
+facts, and under model ownership the poll is still running when the product page closes, so the
+foreground trigger and the timer already cover it.
+
+Both feed one idempotent `didDetectInstall()`.
 
 **Polling is not a shortcut, it is the whole API.** iOS emits no notification when another app is
 installed, `SKOverlayDelegate` has presentation and dismissal callbacks and nothing else, and
@@ -536,9 +556,9 @@ FrakSharingConfiguration(
 ```
 
 `detectInstall` sits beside `install` on `FrakSharingConfiguration`, **not** inside
-`FrakInstallPresentation`. The detector brackets `StoreInvite.present()`/`dismiss()` and is
-identical for both variants, and `willEnterForegroundNotification` is not a surface concern at
-all — a per-variant knob would have to be written twice and set twice to mean one thing. Named for
+`FrakInstallPresentation`. The detector is owned by the model and is identical for both variants,
+and `willEnterForegroundNotification` is not a surface concern at all — a per-variant knob would
+have to be written twice and set twice to mean one thing. Named for
 the outcome rather than the mechanism: a merchant is deciding whether the SDK notices an install,
 not whether it uses a timer. iOS-only, like `install` itself; Android's referrer makes it moot.
 
@@ -673,11 +693,28 @@ install, and the `willEnterForeground` trigger catches the return regardless.
 #### The channel is a fragment, like every other inbound state change
 
 ```
+install-page load (full navigation, fragment already present)
+  <install page>#p=<proof>&sid=<sid>&probe=<ok|disabled|undeclared>
+
 didDetectInstall()
   1. dismiss the store surface       storeInvite.dismiss()   ← one call, either variant
-  2. load <install page>#p=<proof>&sid=<sid>&installed=1   ← same-document, off webView.url
-  3. page: hashchange → CTA state flips
+  2. load <install page>#p=…&sid=…&probe=…&installed=1&dt=<ms>&via=<overlay|product>
+                                     ← same-document, off webView.url
+  3. page: hashchange → CTA state flips, `install_detected` emitted with dt/via
 ```
+
+`installPageURL` already returns a URL ending in `#p=<proof>`, so FrakSDKUI **appends** to that
+fragment (`&probe=…`) and never writes a second `#`. `probe` rides the fragment rather than a
+query param for a layering reason: `installPageURL` is `AppLinkAPI` in **FrakSDK**, `detectInstall`
+is `FrakSharingConfiguration` in **FrakSDKUI**, and FrakSDK cannot depend upward. Threading it
+through the URL builder would push a FrakSDKUI concept into a public signature that Android
+mirrors — and so into the Android ABI gate — for a concept Android does not have.
+
+Facts travel, events do not: **neither native SDK has an analytics sink.** There is no `trackEvent`
+equivalent anywhere in `sdk/ios/Sources` or `sdk/android`; every product event is emitted by the
+hosted page. So the SDK carries `dt`, `via` and `probe`, and the page emits `install_detected` and
+`install_probe_unavailable` from them. The `.error` log line is the exception and stays native —
+`FrakLogger` exists and `Frak.initialize` owns one.
 
 §2's rule holds: inbound is the URL, and on a view already on its page that is
 `activationFragment`. No bridge — `WKScriptMessageHandler` would need an origin check, an Android
@@ -745,8 +782,10 @@ API on both platforms, so it lands with an `apiDump` on the Android side.
 
 #### Still open
 
-- **Instrumentation sizes the cadence, and nothing else can.** `install_detected` with elapsed-ms
-  since the surface was raised and which surface it was, plus `install_open_clicked`. The elapsed
+- **Instrumentation sizes the cadence, and nothing else can.** All three events are emitted by the
+  page, from facts the SDK carried: `install_detected` (`elapsed_ms` from `dt`, `surface` from
+  `via`), `install_probe_unavailable` (`reason` from `probe`), and `install_open_wallet_clicked`
+  on the installed-state CTA. The elapsed
   distribution is the only evidence for whether the 30 s / 120 s knees are in the right place; the
   5 s tail is unbounded by design, so the risk is a knee too early rather than a ceiling too low.
 - **Android needs none of this** — Play foregrounds its own app and the referrer is deterministic
