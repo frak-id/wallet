@@ -38,7 +38,7 @@ because each one changes what the rows below are worth.
 
 **`?fmt=` ships in the alpha.** So §3.3 stops being optional: `merge/execute` 404s on a fresh
 install today, and the flow shipping means the get-or-create has to land, with the proof gate, in
-the order the audit gives. §2.2's origin question is now live rather than theoretical.
+the order the audit gives. §2.2 was investigated properly as part of that and **dropped** — see §7.
 
 **§2.1's install-proof leak is not a leak.** The proof is a signature over the anonymous id. Anyone
 who intercepts it can verify that this anonymous id produced it; nobody can forge one for an
@@ -72,12 +72,12 @@ the next reader does not re-file it: the row stays open in the audit and is clos
 
 | # | Finding | Assessment |
 |---|---|---|
-| §2.2 | **Inbound `?fmt=` merge is auto-executed with no origin check** | **Confirmed.** `handleReferralLink` signs and queues a merge for any token on any inbound link, with no user interaction. Note the interaction the audit flags: `TARGET_NOT_FOUND` is currently limiting the blast radius, so **§3.3 must not land without a proof gate**. Widening the `frak-merge-v1` window to 10 min (commit 2) does not change this — the token still binds the proof. The real options are unchanged: bind the token to a verifiable origin, require a confirmation, or turn `?fmt=` off for the alpha. The README already says the flow is unsupported until `ROLLOUT-STEP-3`, so turning it off costs nothing |
+| §2.2 | **Inbound `?fmt=` merge is auto-executed with no origin check** | **Behaviour confirmed, severity rejected, recommendation withdrawn — see §7.** The audit's fix ("bind the token to a verifiable origin") cannot be built for the flow that uses this, and the blast radius is bounded by two mechanisms the audit did not account for |
 | §2.3 | **`DeepLinkHandling.Automatic` misses every warm-start referral** | **Confirmed by reading**, and I did not fix it because the fix has a shape choice: `OnNewIntentProvider.addOnNewIntentListener` (androidx, correct, but assumes `ComponentActivity`) versus documenting `setIntent()`. I did the documentation half — `sdk/android/README.md` now tells merchants to call `setIntent(intent)` — and left the SDK-side listener to you. The harness's `onNewIntent` still prints a green SUCCESS line for the failing path; **that is the highest-value thing in this whole audit to fix**, because it is what made the defect survive months of device testing |
 | §2.4 | **A page that loads but never renders leaves the sheet blank forever** | **Confirmed.** Also confirmed the sibling point: the native↔web contract has no gate. I did not add a `ready` action because it is a wallet-side + SDK-side protocol change on the one surface with a frozen-binary consumer. Note commit 1 removed the retry ladder's dead cache-only rung, so the deadline now has ~900 ms more headroom, which narrows but does not close this |
 | §3.1 | **"Nothing in this repo has ever run R8"** | **Refuted, and now closed.** Run on a device 2026-08-13 (see §4). **Refuted before that too:** `32836c217` (2026-08-07) attributed every class through R8's `mapping.txt` in a **minified `example/native-android` release APK** — that measurement is why the dex budget was deleted, and it found the SDK lands as 60 KB of executable code with R8 shaking out 46% of its classes. So R8 has run, once, and the empty `consumer-rules.pro` survived it. What is still true and still worth doing: the harness's *committed* config is `isMinifyEnabled = false` (`app/build.gradle.kts:29`), so no R8 run is reproducible from a clean checkout, and `SharingHost.kt`'s `ViewModelProvider(activity)[SharingViewModel::class.java]` is reflective and was never exercised through a minified sheet |
 | §3.2c | **Android never re-drives the outbox** | **Confirmed, and partly mitigated.** Commit 1 fixed §3.2a and §3.2b (stamping and `continue`), so a stalled queue no longer blocks purchases — but there is still no foreground hook, so a purchase tracked in a tunnel waits for the next `track()` or process restart. `ProcessLifecycleOwner` costs a new `androidx.lifecycle-process` dependency on `:frak-sdk`, which is currently dependency-free apart from coroutines. **That is the decision**, not the code |
-| §3.3 | **Backend `merge/execute` 404s on a fresh install** | **Confirmed.** I did not implement the proof-gated get-or-create because it is the load-bearing security change in the audit and it must land with §2.2, not before it. The sequencing the audit gives is right, including moving `markProofSeen` after `findGroupByIdentity` |
+| §3.3 | **Backend `merge/execute` 404s on a fresh install** | **Confirmed and fixed.** The audit's sequencing warning was predicated on §2.2 being a live escalation; §7 shows it is not, so the get-or-create lands on its own |
 | §3.6 | **The Compose build site orphans a live sheet** | **Confirmed by reading** — `FrakSharing.kt:96` is a literally empty `onDispose { }` against an Activity-scoped host. Unreachable in the harness. Fixing it blind risks re-introducing `07` §2.1's opposite bug (a torn-down sheet that never reports), so this wants the two-destination `NavHost` harness screen first |
 | §3.7 | **Clock assumptions** | **Confirmed, and half fixed.** Commit 1 adds `ServerClock` on Android: proofs are now stamped from the backend's `Date` header. Commit 2 widens `frak-merge-v1` from 2 to 10 minutes server-side, which helps every client. **iOS still stamps from the device clock** — porting `ServerClock` to `HTTPClient`/`AnonymousIdStore` is the remaining half and is mechanical |
 | §3.9 | **iOS `NativeShare.share` can suspend forever; `teardown()` abandons a live session** | **Second half fixed** (commit 1: `.onDisappear` now reports before tearing down, and `share()`/`copy()` refuse to run after the tier-3 fallback). **First half not fixed**: restoring an escape hatch for a refused presentation needs the simulator to tell a refusal from a slow presentation |
@@ -147,8 +147,8 @@ six parity rows were in scope and went unmentioned.
 1. ~~**Android, one run.**~~ **Done — see §4.**
 2. ~~**iOS, one run.**~~ **Done — see §5.**
 
-~~**One thing needs 20 minutes and no device.**~~ Decided: `?fmt=` ships. See §0 — that promotes
-§3.3 and §2.2 from "decide" to "do", and they must land together.
+~~**One thing needs 20 minutes and no device.**~~ Decided: `?fmt=` ships, §3.3 is done, and §2.2 is
+withdrawn (§7).
 
 
 ---
@@ -294,3 +294,113 @@ passed 5/5 on re-run. It asserts `attempts == 1` with a 50 ms deadline against a
 floor — a 2× wall-clock margin, on a machine that was concurrently running a Gradle build. Not
 fixed: I could not reproduce it and therefore do not know whether it failed with 0 attempts or 2,
 and the two point at opposite fixes. Named here so the next person to see it has the context.
+
+
+---
+
+## 7. §2.2 — behaviour confirmed, recommendation withdrawn
+
+The audit grades the inbound `?fmt=` merge as a blocker and asks for the token to be "bound to a
+verifiable origin". After tracing the flow end to end: the behaviour is real, the grade is too high,
+and **the recommended fix cannot be built.** Recorded at length because the recommendation is
+plausible enough that the next reader will otherwise re-derive it.
+
+### The token is a bearer token by design, not by oversight
+
+The flow that uses `?fmt=` is the in-app-browser escape (`InAppBrowserToast`, `Banner`,
+`ExplorerDetail`):
+
+1. The user is inside Instagram's web view with anonymous id **A**.
+2. The wallet mints a token bound to source **A** and appends `?fmt=` to the URL.
+3. The system browser opens that URL, and a **new** anonymous id **B** is created there.
+4. **B** redeems the token; A and B merge.
+
+**B does not exist when the token is minted.** Binding the target at mint time — the obvious fix,
+and the one this document previously recommended — is impossible for the only flow that ships this.
+The two contexts share no storage; bridging them is the entire purpose. `AnonymousMergeService`
+signs `sourceGroupId` / `sourceAnonymousId` and nothing about the target, and that is correct.
+
+Native *could* bind, since `openFrakApp` puts the device's anonymous id on the outbound leg. That
+would be a native-only fix to a web-shaped problem, on the platform with zero users.
+
+### The blast radius is bounded by two mechanisms the audit does not mention
+
+- **`WALLET_CONFLICT`.** `IdentityOrchestrator.associate()` refuses a merge between two groups that
+  both hold a wallet. Every onboarded user is already protected.
+- **Anchor direction.** The attacker only *gains* if the merged group anchors on their wallet, which
+  requires the victim to be wallet-less. A victim *with* a wallet and an attacker without one means
+  the attacker donates their identity to the victim.
+- **Merchant scope.** `sourceMerchantId !== merchantId` is a `MERCHANT_MISMATCH`, so a token buys
+  attribution at one merchant, not an account.
+
+So the at-risk population is **tracked-but-not-yet-onboarded users**, and the prize is their future
+attribution at a single merchant — the users with the least accrued value. Native exposure today is
+zero. The attack is phishing-grade to execute and silent when it lands, which is why it is worth
+writing down, but it is attribution theft, not the identity takeover the grade implies.
+
+### What is worth doing, when the backend is next open
+
+Neither is urgent and neither needs the SDK:
+
+1. **Make the token single-use.** It is a stateless JWT, so today it is replayable without limit for
+   its whole life. Recording redemption bounds one token to one victim.
+2. **Cut the 60-minute TTL.** Redemption happens within seconds in the real flow; 2–5 minutes costs
+   nothing and shrinks the window by an order of magnitude.
+
+A confirmation prompt is the only robust answer to a bearer token, and it is a product decision, not
+a defect fix. **Do not re-file "bind the token to an origin".**
+
+
+---
+
+## 8. Second work batch — what landed, and the one thing that did not
+
+### Landed
+
+| Row | What changed |
+|---|---|
+| **§3.3** | `executeMerge` get-or-creates the target through `IdentityOrchestrator.resolve`, which is race-safe (concurrent redemptions contend on the node's unique constraint and the loser rolls its empty group back). `TARGET_NOT_FOUND` is gone. **`markProofSeen` moved after the resolve** — it is a no-op on a missing node, so latching a brand-new id there silently did nothing. Two tests, one of them asserting the call *order* |
+| **§2.3** | `DeepLinkObserver` subscribes to `OnNewIntentProvider` instead of re-reading `activity.intent`, which returns the launch intent forever unless the merchant calls `setIntent`. androidx.core is `compileOnly`, so the POM keeps its zero-runtime-dependency promise and an app without androidx degrades to the old path. Four tests |
+| **§2.3 (harness)** | The example app called an inbound link `SUCCESS` in `onNewIntent` while asserting SDK handling it could not observe. It now calls `setIntent` and logs what it can actually see. **This is the lie that let the bug survive months of device testing** |
+| **§4.3** | iOS `backingOff(retryAfter:)` → `backingOff(retryAfterSeconds:)`. The real finding was internal: the same enum already had `server(retryAfterSeconds:)`, so iOS disagreed with itself |
+| **§3.5** | `SharingWebViewPool.warm` guards `!lent`. Warming a lent view navigates the sheet the user is looking at back to the merchant page |
+| **§2.1 residual** | `AppLauncher.open` takes a `packageId`. The wallet handoff is pinned; the store link deliberately is not, since choosing is the point. Test pins both halves |
+| **§4 row 1** | The nine reward read-model constructors are out of `frak-sdk.api` — verified as a pure nine-line deletion with nothing else moved. iOS's three initialisers got `@_spi(FrakInternal)` to match |
+| **iOS 15 layout** | See below |
+| **F15 dark mode** | Not a sheet defect. Confirmed with the wallet team and in the tree: there is no `prefers-color-scheme` anywhere in `/sharing` or `/install` either. The sheet's light chrome matches the page it hosts. Whether the *product* gets dark mode is one decision across three surfaces, not an Android sheet bug |
+
+### iOS 15 stays supported, and now looks right
+
+iOS 15 has no `presentationDetents`, so a `.sheet` there is always full height. The fallback shrank
+the **content** to `heightFraction` inside that full-height sheet, leaving the page in the top half
+and an opaque band of nothing below — and `presentationBackground(.clear)` is 16.4+, so that band
+could not even be made transparent.
+
+Now iOS 15 gets a full-height sheet with the page filling it. Same page, no dead space. Given iOS 15
+covers 98.2% of devices against iOS 16's 96.2%, raising the floor to delete the branch was the wrong
+trade; the branch just needed to degrade honestly.
+
+### §2.4 — investigated, and deliberately **not** fixed
+
+The gap is real and I can name it exactly: `SharingSheetState.onPageReady()` (document-finished)
+calls `settleContent()`, which completes the `contentSettled` deferred that `awaitLoadDeadline`
+waits on. `onLoadDeadline()` then returns early on `if (pageLoaded)`. So **a document that finishes
+and never paints satisfies the tap-to-content budget**, and the sheet stays blank forever. The
+machinery to fix it already exists and is unused for this: `pageVisible`, driven by
+`postVisualStateCallback`, which is a genuine paint signal.
+
+I implemented the obvious fix — settle on paint, gate the deadline on `pageVisible` — and **reverted
+it**, because it broke this, which is deliberate and documented:
+
+> `an activated page is not abandoned to tier 3 when ready never arrives` — "`ready` rides two
+> requestAnimationFrames, and a WebView produces no frames until the sheet has attached it and drawn
+> it — so on a cold start this is the path that used to raise the chooser over a page that was
+> already there."
+
+So paint-as-the-criterion risks tier-3 firing over a page that is on screen and fine, which is a
+worse failure than the one being fixed and is exactly the regression that test was added to catch.
+The two candidate designs — a short secondary paint grace after document-finished, or treating an
+activated warm document as already painted — both turn on whether `postVisualStateCallback`
+reliably fires for a fragment-activated warm document, which I cannot answer without a device.
+
+Left open, with the diagnosis recorded, rather than guessed at. §2.4 was in the review band anyway.
