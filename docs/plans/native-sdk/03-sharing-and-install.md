@@ -385,8 +385,8 @@ the backend's 30-day window measures from.
   both are reached through the internal `StoreInvite` protocol, so the model's install path
   does not know which one it has:
   - `.storeProductPage` (default) — an `SKStoreProductViewController` on a `UIWindow` of its
-    own, one level above the sheet's. It reports whether it loaded, accepts a custom product
-    page id, and hands the sheet back untouched on close.
+    own, one level above the sheet's. It reports whether it loaded, and hands the sheet back
+    untouched on close.
     **The window is the whole design, and it was arrived at the expensive way.** The original
     note here said this surface "fails presenting alongside an already-up
     `UISheetPresentationController`", which was overridden on the theory that presenting from
@@ -402,10 +402,18 @@ the backend's 30-day window measures from.
   - `.overlay` — the `SKOverlay` banner on the sheet's `UIWindowScene`, which installs in
     place without covering the sheet, and reports nothing at all: a wrong id silently draws
     nothing.
-  - Both accept the App Analytics `campaignToken`/`providerToken` and a
-    `customProductPageId`; the overlay also carries `position` and `userDismissible`. The
-    app id stays a constant (`StoreInvites.walletAppStoreId`) — the merchant never picks
-    which app is installed, only how it is offered.
+  - **Neither carries App Store attribution, deliberately.** `campaignToken`, `providerToken`
+    and `customProductPageIdentifier` were exposed on both surfaces and then removed: all
+    three resolve inside the App Store Connect account of *the app being presented*, which is
+    the wallet's. A merchant cannot author a custom product page for `id.frak.wallet`, cannot
+    read the App Analytics campaign they would be tagging, and `providerToken` is by Apple's
+    own definition "the developer that created the app being presented". Setting
+    `ct = frak-<merchantSlug>` is still worth doing for aggregate ASC reporting, but as
+    something the SDK derives from the resolved merchant — see *Not the store's own campaign
+    tokens* below for why it is not a transport either way.
+  - The overlay carries `position` and `userDismissible`, which are about the merchant's own
+    screen. The app id stays a constant (`StoreInvites.walletAppStoreId`) — the merchant never
+    picks which app is installed, only how it is offered.
   - The product page falls back to `openFrakApp()` when `loadProduct` fails or takes longer
     than 5 s. The overlay has no such signal, so it falls back only when there is no
     foreground scene, or on Mac Catalyst where `SKOverlay` does not exist.

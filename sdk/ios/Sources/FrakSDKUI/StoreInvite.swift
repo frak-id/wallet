@@ -23,8 +23,8 @@
 
         static func make(_ presentation: FrakInstallPresentation) -> any StoreInvite {
             switch presentation {
-            case .storeProductPage(let options):
-                return StoreProductPageInvite(options)
+            case .storeProductPage:
+                return StoreProductPageInvite()
             case .overlay(let options):
                 return StoreOverlayInvite(options)
             }

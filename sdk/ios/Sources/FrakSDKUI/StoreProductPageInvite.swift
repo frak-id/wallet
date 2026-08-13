@@ -15,13 +15,8 @@
         /// user tapped Install and is looking at an unchanged page for the whole of it.
         private static let loadDeadline: TimeInterval = 5
 
-        private let options: FrakInstallPresentation.StoreProductPage
         private var window: UIWindow?
         private var loading: CheckedContinuation<Bool, Never>?
-
-        init(_ options: FrakInstallPresentation.StoreProductPage) {
-            self.options = options
-        }
 
         /// Answers false when the product could not be loaded, or when there is no scene to build
         /// a window in. Loads before presenting: presenting first puts up a blank page that never
@@ -109,21 +104,11 @@
 
         private func parameters() -> [String: Any] {
             // An `NSNumber`, not the string the overlay's `appIdentifier` takes.
-            var parameters: [String: Any] = [
+            [
                 SKStoreProductParameterITunesItemIdentifier: NSNumber(
                     value: Int(StoreInvites.walletAppStoreId) ?? 0
                 )
             ]
-            if let campaignToken = options.campaignToken {
-                parameters[SKStoreProductParameterCampaignToken] = campaignToken
-            }
-            if let providerToken = options.providerToken {
-                parameters[SKStoreProductParameterProviderToken] = providerToken
-            }
-            if let customProductPageId = options.customProductPageId {
-                parameters[SKStoreProductParameterCustomProductPageIdentifier] = customProductPageId
-            }
-            return parameters
         }
     }
 #endif

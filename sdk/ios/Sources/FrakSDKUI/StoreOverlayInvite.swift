@@ -49,11 +49,6 @@
                     position: options.position.skOverlayPosition
                 )
                 configuration.userDismissible = options.userDismissible
-                configuration.campaignToken = options.campaignToken
-                configuration.providerToken = options.providerToken
-                if let customProductPageId = options.customProductPageId {
-                    configuration.customProductPageIdentifier = customProductPageId
-                }
                 return configuration
             }
         #endif
