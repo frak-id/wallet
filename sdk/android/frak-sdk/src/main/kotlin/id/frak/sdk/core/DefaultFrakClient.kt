@@ -334,7 +334,9 @@ internal class DefaultFrakClient(
                     anonymousId = anonymousId,
                     installProof = proof,
                 )
-            if (launcher.open(deepLink)) {
+            // Pinned to the wallet's package: an app that also claims the scheme must not be able
+            // to answer this and consume the single-use proof.
+            if (launcher.open(deepLink, settings.env.walletPackageId)) {
                 return@frakCall OpenAppResult.OpenedApp
             }
 

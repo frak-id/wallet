@@ -8,7 +8,7 @@ struct FrakErrorTests {
     private static let allErrors: [FrakError] = [
         .notInitialized,
         .network(underlying: URLError(.notConnectedToInternet)),
-        .backingOff(retryAfter: 1.5),
+        .backingOff(retryAfterSeconds: 1.5),
         .server(status: 500, code: nil, retryAfterSeconds: nil),
         .decoding(message: "bad body"),
         .trackingDisabled,

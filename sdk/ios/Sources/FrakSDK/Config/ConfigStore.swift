@@ -149,7 +149,7 @@ actor ConfigStore {
         // than let a retry loop become a flood.
         if let retryAfter = backoff.remaining(key) {
             if let fallback = readCache(key) { return fallback.config }
-            throw FrakError.backingOff(retryAfter: retryAfter)
+            throw FrakError.backingOff(retryAfterSeconds: retryAfter)
         }
 
         return try await singleFlight.run(key) { try await self.fetch(key, query: query) }

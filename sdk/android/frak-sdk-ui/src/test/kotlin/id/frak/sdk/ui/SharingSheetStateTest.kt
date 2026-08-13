@@ -1,3 +1,5 @@
+@file:OptIn(InternalFrakApi::class)
+
 package id.frak.sdk.ui
 
 import android.app.Application
@@ -7,6 +9,7 @@ import android.os.Looper.getMainLooper
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import id.frak.sdk.Frak
+import id.frak.sdk.InternalFrakApi
 import id.frak.sdk.OpenAppResult
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.rewards.BestReward

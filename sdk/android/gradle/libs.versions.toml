@@ -29,6 +29,10 @@ androidx-activity = "1.13.0"
 
 androidx-annotation = "1.9.1"
 
+# `compileOnly` on :frak-sdk for androidx.core.app.OnNewIntentProvider, so it stays out of the POM
+# and the module keeps its zero-runtime-dependency promise. 1.19.0 needs compileSdk 37.
+androidx-core = "1.18.0"
+
 junit = "4.13.2"
 # Test-only. Do not drop it as "org.json ships with Android": unit tests compile against the stubbed
 # `android.jar`, whose methods throw `Method ... not mocked`; the real artifact shadows the stub.
@@ -51,6 +55,7 @@ compose-material3 = { module = "androidx.compose.material3:material3" }
 androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "androidx-webkit" }
 androidx-activity = { module = "androidx.activity:activity", version.ref = "androidx-activity" }
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidx-annotation" }
+androidx-core = { module = "androidx.core:core", version.ref = "androidx-core" }
 
 junit = { module = "junit:junit", version.ref = "junit" }
 json = { module = "org.json:json", version.ref = "json" }

@@ -8,7 +8,7 @@ public enum FrakError: Error, Sendable {
     case network(underlying: any Error)
     /// This resource is in a backoff window, so nothing was sent — unlike `network`, where a
     /// request was attempted. Any cached copy is served in preference to raising this.
-    case backingOff(retryAfter: TimeInterval)
+    case backingOff(retryAfterSeconds: TimeInterval)
     /// The backend answered with a non-2xx status.
     case server(status: Int, code: String?, retryAfterSeconds: Int?)
     /// A 2xx response arrived but could not be read as the shape we expect.
@@ -62,8 +62,8 @@ extension FrakError: LocalizedError {
             return "Frak is not initialized. Call Frak.initialize(_:) before using the client."
         case .network(let underlying):
             return "Frak network request failed: \(underlying.localizedDescription)"
-        case .backingOff(let retryAfter):
-            return "Frak is backing off after repeated failures; retry in \(Int(retryAfter * 1000))ms."
+        case .backingOff(let retryAfterSeconds):
+            return "Frak is backing off after repeated failures; retry in \(Int(retryAfterSeconds * 1000))ms."
         case .server(let status, let code, let retryAfterSeconds):
             var message = "Frak backend returned HTTP \(status)"
             if let code {

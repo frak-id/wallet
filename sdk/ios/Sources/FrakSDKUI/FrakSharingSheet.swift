@@ -221,9 +221,9 @@
     /// Sizes the sheet to `fraction` of the height available to it and shows the grabber. A
     /// modifier rather than an inline `if #available`, for the same reason as `SheetBackground`.
     ///
-    /// `.fraction` measures against the largest detent, so it already accounts for the sheet's
-    /// top inset and for Slide Over/Split View on iPad. iOS 15 has no detents, so there the
-    /// content is what shrinks.
+    /// `.fraction` measures against the largest detent, so it already accounts for the sheet's top
+    /// inset and for Slide Over/Split View on iPad. iOS 15 has no detents and its sheet is always
+    /// full height, so the page fills it rather than being shrunk inside it.
     private struct SharingSheetChrome: ViewModifier {
         let fraction: CGFloat
         func body(content: Content) -> some View {
@@ -232,9 +232,7 @@
                     .presentationDetents([.fraction(fraction)])
                     .presentationDragIndicator(.visible)
             } else {
-                GeometryReader { proxy in
-                    content.frame(height: proxy.size.height * fraction)
-                }
+                content
             }
         }
     }

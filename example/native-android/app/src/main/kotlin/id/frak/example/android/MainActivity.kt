@@ -236,12 +236,19 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        // Android does not do this for you, and without it `activity.intent` returns the launch
+        // intent forever — the stale read that hid the warm-start bug from every device pass.
+        setIntent(intent)
         intent.dataString?.let { url -> logInboundIntent(url) }
     }
 
-    /** Automatic mode already dispatched `handleReferral`; calling it again would double-track. */
+    /**
+     * Reports arrival at the activity, which is all this callback can honestly observe. Whether the
+     * SDK tracked it is a separate question that only Debug info answers, so this is not a SUCCESS.
+     */
     private fun logInboundIntent(url: String) {
-        addLog("Inbound link reached the activity (SDK auto-handles it): $url", LogType.SUCCESS)
+        addLog("Inbound link reached the activity: $url", LogType.INFO)
+        addLog("Check Debug info to confirm the SDK tracked the arrival.", LogType.INFO)
     }
 
     /** Share #1: no products at all — the link falls back to the merchant homepage. */

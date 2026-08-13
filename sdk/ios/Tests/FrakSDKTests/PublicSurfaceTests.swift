@@ -23,24 +23,8 @@ private final class RecordingLogSink: FrakLogSink, @unchecked Sendable {
 
 @Suite("Public surface")
 struct PublicSurfaceTests {
-    @Test("the public reward and config models are constructible outside the module")
+    @Test("the public config models are constructible outside the module")
     func modelsAreConstructibleOutsideTheModule() {
-        let amount = TokenAmount(amount: 1000, eurAmount: 10, usdAmount: 11, gbpAmount: 9)
-        let tier = RewardTier.amount(minValue: 0, maxValue: 100, amount: amount)
-        let reward = EstimatedReward.fixed(amount: amount)
-        let campaign = Campaign(
-            campaignId: "c1",
-            name: "Summer",
-            interactionTypeKey: "purchase",
-            referrer: reward
-        )
-        let best = BestReward(formatted: "10\u{00a0}€", payoutType: "fixed")
-        let scopedBest = BestReward(
-            formatted: "10\u{00a0}€",
-            payoutType: "fixed",
-            isProductScoped: true,
-            matchedProducts: [ProductDetails(sku: "SHOE-42")]
-        )
         let config = FrakResolvedConfig(
             merchantId: "m1",
             name: "Acme",
@@ -49,13 +33,6 @@ struct PublicSurfaceTests {
             currency: .eur
         )
 
-        #expect(tier.minValue == 0)
-        #expect(campaign.referrer == reward)
-        #expect(best.payoutType == "fixed")
-        #expect(best.isProductScoped == false)
-        #expect(best.matchedProducts == nil)
-        #expect(scopedBest.isProductScoped)
-        #expect(scopedBest.matchedProducts == [ProductDetails(sku: "SHOE-42")])
         #expect(config.merchantId == "m1")
     }
 
@@ -116,10 +93,6 @@ struct PublicSurfaceTests {
 
     @Test("all the constructed models compare equal to an identical value")
     func modelsAreEquatable() {
-        let amount = TokenAmount(amount: 1000, eurAmount: 10, usdAmount: 11, gbpAmount: 9)
-        #expect(amount == TokenAmount(amount: 1000, eurAmount: 10, usdAmount: 11, gbpAmount: 9))
-        #expect(amount != TokenAmount(amount: 1, eurAmount: 10, usdAmount: 11, gbpAmount: 9))
-
         let config = FrakConfig(merchantId: "m1", metadata: FrakMetadata(name: "Acme"))
         #expect(config == FrakConfig(merchantId: "m1", metadata: FrakMetadata(name: "Acme")))
     }

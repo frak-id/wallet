@@ -190,6 +190,24 @@ class DefaultFrakClientTest {
         }
 
     @Test
+    fun `the wallet handoff is pinned to the wallet package, the store link is not`() =
+        runTest {
+            val client = newClient(testScheduler)
+            transport.respond(200, BODY)
+            advanceUntilIdle()
+
+            assertEquals(OpenAppResult.OpenedStore, client.openFrakApp())
+            assertEquals(null, launcher.openedPackages.single())
+
+            launcher.opened.clear()
+            launcher.openedPackages.clear()
+            launcher.openableSchemes = setOf(FrakEnvironment.Production.walletScheme)
+
+            assertEquals(OpenAppResult.OpenedApp, client.openFrakApp())
+            assertEquals(FrakEnvironment.Production.walletPackageId, launcher.openedPackages.single())
+        }
+
+    @Test
     fun `opens the wallet on a launch that works even when the probe says it is absent`() =
         runTest {
             val client = newClient(testScheduler)
