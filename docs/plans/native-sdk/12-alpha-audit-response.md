@@ -184,9 +184,15 @@ What this actually proves, given it is the first time any of it has run minified
 
 Two unrelated things the run surfaced, neither SDK-caused, both cheap:
 
-- The harness never sets `android:enableOnBackInvokedCallback="true"`, so predictive back is off in
-  the one app used to validate back-dismissal of the sheet. Worth setting before trusting any
-  gesture-dismiss result.
+- ~~The harness never sets `android:enableOnBackInvokedCallback="true"`, so predictive back is off
+  in the one app used to validate back-dismissal of the sheet.~~ **Wrong, withdrawn.** The audit
+  challenged this and is right: the harness is `targetSdk = 36`, and for apps targeting Android 16
+  the default value of `android:enableOnBackInvokedCallback` is `true` — `onBackPressed` and
+  `KEYCODE_BACK` are not even dispatched any more (developer.android.com, *Behavior changes: apps
+  targeting Android 16 or higher*, read 2026-08-14). The device runs Android 16, so predictive back
+  **was** enabled for the whole run. The gap I claimed did not exist; the defect class the audit
+  raises is still real, but this was not an instance of it, and the run is evidence *for* the
+  gesture path rather than silent about it.
 - `W/Parcel: Expecting binder but got null!` and a burst of `tile memory limits exceeded` from
   Chromium under the sheet. Vendor/WebView noise on this SoC, not ours, but it is the shape of thing
   that would be misread as an SDK bug later, so it is written down here.
@@ -223,8 +229,9 @@ The two things this run was for:
 **The harness could not rotate, and that was the harness.** `Info.plist` was
 `UISupportedInterfaceOrientations` = portrait only, so the sheet's safe-area handling in landscape —
 the notch-on-the-side case — was untestable in the one app that drives the SDK. Landscape is now
-declared and the case passes. This is the same class of gap as Android's missing
-`enableOnBackInvokedCallback`: the harness quietly excluded a case, and nobody could see that the
+declared and the case passes. It is the only confirmed instance of that class — the Android
+`enableOnBackInvokedCallback` case I paired it with turned out not to be one (see §4) — and the
+point survives its exemplar: the harness quietly excluded a case, and nobody could see that the
 case had never run.
 
 **Still not covered:** warm-start deep links (§2.3), which need the `onNewIntent`/`onOpenURL` path
@@ -404,3 +411,65 @@ activated warm document as already painted — both turn on whether `postVisualS
 reliably fires for a fragment-activated warm document, which I cannot answer without a device.
 
 Left open, with the diagnosis recorded, rather than guessed at. §2.4 was in the review band anyway.
+
+---
+
+## §9 — Review round 5: a regression this branch introduced, and a claim of mine withdrawn
+
+`4d6daa50f` on `audit/native-sdk-alpha`. Two items land against this branch rather than against the
+tree, and the first is the more serious thing found in the whole exchange, because *I* wrote it.
+
+### §9.1 — `merge/execute` could conjure an arbitrary `anonymousId` (fixed)
+
+**The audit is right, the finding is accepted in full, and it is fixed.** `7a673da17` implemented
+§3.3's fresh-install fix and left out §3.3's guard. Verified by reading, not taken on trust:
+
+- `enforceLatchedProof` returns `false` — continue — for any id that has never latched, and an
+  absent node has no `proofSeenAt`, so the no-proof arm falls straight through
+  (`latchedProof.ts:60-73`).
+- `resolve()` then ran **unconditionally**, get-or-creating whatever id was named.
+- `POST /merge/execute` has no authentication of any kind, and `POST /merge/initiate` accepts a bare
+  `sourceAnonymousId` with `withOptionalWalletOrSdkAuthent` (`merge.ts:10-40, 63-103`).
+
+So two unauthenticated POSTs folded any named id into the caller's group — no SDK, no link, no
+victim device — and created the record if it did not exist. That second half is also unauthenticated
+unbounded row creation. Rate limit is 20/min.
+
+**The fix is the audit's own prescription**, and the reason it is the right one is that it costs the
+real callers nothing. Checked all four:
+
+| Caller | Sends a proof? | Target exists? | After the fix |
+| --- | --- | --- | --- |
+| Android `MergeSender.kt:36-43` | always — `Hold`s the row rather than send without | may not | creates, as before |
+| iOS `MergeSender.swift:39-48` | always — same `guard` | may not | creates, as before |
+| `migrateLegacyIdentity.ts:82-95` | **never** — a legacy id predates the device key and cannot sign | **always** — it is being migrated *because* it has history | merges, as before |
+| attacker | no | no | `404 TARGET_NOT_FOUND` |
+
+Creation is now gated on `proofPresented`; an absent target without a proof is `TARGET_NOT_FOUND`
+again, and the route re-declares `404`. Two tests: one asserts the absent-and-proofless case throws
+and that neither `resolve` nor `associate` is reached, one asserts the proven branch still creates.
+`bun run test` — **5591 passed**, executed.
+
+Two corrections that cut against the audit's framing, both of which it made itself and I confirm:
+
+- **The 404 was never the guard.** `initiateMerge`'s auto-create arm has always folded an arbitrary
+  non-existent `sourceAnonymousId` into the caller's group with no proof
+  (`AnonymousMergeOrchestrator.ts:122-150`). This branch opened a second door to a room that already
+  had one. That door is still open and is **not** fixed here — it is pre-existing, out of this
+  branch's band, and needs its own decision.
+- **The residual is unchanged, not closed.** An id that exists and has never latched is still
+  foldable without a proof. That is the documented fail-open of the rollout, not a regression.
+
+Also self-resolved: the audit's P7 — `merge.test.ts`'s `TARGET_NOT_FOUND` case was dead because no
+production path could emit that code. It can again, so the test covers something real.
+
+### §9.2 — my `enableOnBackInvokedCallback` claim was wrong (withdrawn)
+
+I reported that the Android harness never enables predictive back, and used it as the second exemplar
+of "the harness hides cases". The audit challenged it and the audit is right. The harness is
+`targetSdk = 36`, and for apps targeting Android 16 the default of
+`android:enableOnBackInvokedCallback` is `true`, with `onBackPressed` and `KEYCODE_BACK` no longer
+dispatched at all. The device runs Android 16. Predictive back was enabled for the entire run.
+
+Withdrawn at §4. The defect class stands and the iOS portrait-only finding stands; this exemplar
+does not, and the run is quiet evidence *for* the gesture path rather than silent about it.

@@ -234,6 +234,11 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
                 groupId: "group-target",
                 isNew: false,
             });
+            // The proofless path reads this instead of `resolve`: an existing
+            // target is a merge, an absent one is a create it may not do.
+            ctx.identityRepository.findGroupByIdentity.mockResolvedValue({
+                id: "group-target",
+            });
             ctx.identityOrchestrator.associate.mockResolvedValue({
                 finalGroupId: "group-target",
                 merged: true,
@@ -371,6 +376,47 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
                 "group-source",
                 "group-created"
             );
+        });
+
+        it("refuses to conjure an absent target when no proof is presented", async () => {
+            const ctx = makeOrchestrator();
+            setupSuccessfulExecute(ctx);
+            ctx.identityRepository.findNodeByIdentity.mockResolvedValue(null);
+            ctx.identityRepository.findGroupByIdentity.mockResolvedValue(null);
+
+            await expect(
+                ctx.orchestrator.executeMerge({
+                    mergeToken: MERGE_TOKEN,
+                    targetAnonymousId: "never-existed",
+                    merchantId: MERCHANT_ID,
+                })
+            ).rejects.toMatchObject({ code: "TARGET_NOT_FOUND", status: 404 });
+
+            expect(ctx.identityOrchestrator.resolve).not.toHaveBeenCalled();
+            expect(ctx.identityOrchestrator.associate).not.toHaveBeenCalled();
+        });
+
+        it("creates an absent target only on the proven branch", async () => {
+            const ctx = makeOrchestrator();
+            setupSuccessfulExecute(ctx);
+            ctx.identityRepository.findGroupByIdentity.mockResolvedValue(null);
+            ctx.identityOrchestrator.resolve.mockResolvedValue({
+                groupId: "group-created",
+                isNew: true,
+            });
+            ctx.identityProofService.verify.mockResolvedValue({ valid: true });
+            ctx.identityProofService.hashMergeToken.mockReturnValue(
+                new Uint8Array(32)
+            );
+
+            await ctx.orchestrator.executeMerge({
+                mergeToken: MERGE_TOKEN,
+                targetAnonymousId: "never-existed",
+                merchantId: MERCHANT_ID,
+                proof: "valid-proof",
+            });
+
+            expect(ctx.identityOrchestrator.resolve).toHaveBeenCalled();
         });
 
         it("latches a brand-new id, which needs the node to exist first", async () => {

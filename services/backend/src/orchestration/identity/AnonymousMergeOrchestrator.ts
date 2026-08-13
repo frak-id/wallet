@@ -187,7 +187,8 @@ export class AnonymousMergeOrchestrator {
          * replay cache — a stolen proof is useless without the exact,
          * 60-min-lived token it was signed alongside. Required only once
          * this id has ever latched — unlatched ids, including legacy ones,
-         * keep working as merge targets.
+         * keep working as merge targets, but only ones that already exist:
+         * creating the target is what a proof buys.
          */
         proof?: string;
     }): Promise<{ finalGroupId: string; merged: boolean }> {
@@ -208,17 +209,38 @@ export class AnonymousMergeOrchestrator {
                 merchantId,
             });
 
-        // Get-or-create, not find-or-404. A native SDK signs its merge proof
-        // from a device that has never sent an interaction, so the target node
-        // legitimately does not exist yet and the flow's first act is to make
-        // it. `resolve` is race-safe: two concurrent redemptions contend on the
+        // Get-or-create, but only for a caller that proved possession of the
+        // target's key. A native SDK signs its merge proof from a device that
+        // has never sent an interaction, so the target legitimately does not
+        // exist yet and the flow's first act is to make it. Without a proof,
+        // creating one would let any caller name an arbitrary id and have it
+        // conjured into their group — both routes here are unauthenticated.
+        // `resolve` is race-safe: two concurrent redemptions contend on the
         // node's unique constraint and the loser rolls its empty group back.
-        const { groupId: targetGroupId } =
-            await this.identityOrchestrator.resolve({
-                type: "anonymous_fingerprint",
-                value: targetAnonymousId,
-                merchantId,
-            });
+        const targetGroupId = proofPresented
+            ? (
+                  await this.identityOrchestrator.resolve({
+                      type: "anonymous_fingerprint",
+                      value: targetAnonymousId,
+                      merchantId,
+                  })
+              ).groupId
+            : (
+                  await this.identityRepository.findGroupByIdentity({
+                      type: "anonymous_fingerprint",
+                      value: targetAnonymousId,
+                      merchantId,
+                  })
+              )?.id;
+        if (!targetGroupId) {
+            // Proofless and absent. Legacy migration lands here only if its
+            // legacy id never existed, which is not a case it can produce.
+            throw HttpError.notFound(
+                "TARGET_NOT_FOUND",
+                "targetAnonymousId does not exist; a proof is required to create it"
+            );
+        }
+
 
         // After `resolve`, never before: `markProofSeen` is a no-op when the
         // node is absent, so latching a brand-new id here silently did nothing.
