@@ -4,7 +4,7 @@ import id.frak.sdk.core.FrakError
 
 /**
  * How a sharing session ended. A session can produce several; the callback
- * reports only the most significant: install > shared/copied > dismissed.
+ * reports only the most significant: walletOpened > install > shared/copied > dismissed.
  */
 public sealed interface SharingResult {
     /**
@@ -19,6 +19,7 @@ public sealed interface SharingResult {
         SHARED("shared"),
         COPIED("copied"),
         INSTALL_STARTED("installStarted"),
+        WALLET_OPENED("walletOpened"),
         DISMISSED("dismissed"),
         FAILED("failed"),
     }
@@ -45,6 +46,11 @@ public sealed interface SharingResult {
         override val kind: Kind get() = Kind.INSTALL_STARTED
     }
 
+    /** The wallet was already installed and [id.frak.sdk.AppLinkApi.openFrakApp] opened it. */
+    public object WalletOpened : SharingResult {
+        override val kind: Kind get() = Kind.WALLET_OPENED
+    }
+
     public object Dismissed : SharingResult {
         override val kind: Kind get() = Kind.DISMISSED
     }
@@ -64,4 +70,5 @@ internal val SharingResult.significance: Int
             is SharingResult.Dismissed -> 1
             is SharingResult.Shared, is SharingResult.Copied -> 2
             is SharingResult.InstallStarted -> 3
+            is SharingResult.WalletOpened -> 4
         }
