@@ -29,6 +29,12 @@ internal class UrlQuery private constructor(
         )?.second
             ?.let(::percentDecode)
 
+    /**
+     * Exact-key lookup, for parameters the web client reads through `URLSearchParams.get`. `fCtx`
+     * tolerates mangled casing; `fmt` authorises an identity merge, so it matches web or not at all.
+     */
+    fun getExact(key: String): String? = parameters.firstOrNull { it.first == key }?.second?.let(::percentDecode)
+
     fun remove(key: String): UrlQuery =
         apply {
             parameters.removeAll { it.first.equals(key, ignoreCase = true) }

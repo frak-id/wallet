@@ -17,7 +17,7 @@ actor IdentityMerge {
     }
 
     static func parseToken(_ url: String) -> String? {
-        URLQuery.parse(url)?.value(for: tokenKey).flatMap { $0.isEmpty ? nil : $0 }
+        URLQuery.parse(url)?.exactValue(for: tokenKey).flatMap { $0.isEmpty ? nil : $0 }
     }
 
     /// The bytes a merge proof signs over. Shared with `MergeSender` so the queued wire post and

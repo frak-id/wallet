@@ -104,5 +104,8 @@ COPY --from=app-builder /app/apps/wallet/dist /usr/share/nginx/html
 # own $uri/$http_* are left untouched. MONERIUM_API_HOST is set per-stage on
 # the pod via Pulumi.
 COPY apps/wallet/nginx.conf /etc/nginx/templates/default.conf.template
+# Not a template: `include`d by nginx.conf from every block that declares an
+# `add_header` of its own, since that suppresses inheritance of the rest.
+COPY apps/wallet/nginx-security-headers.conf /etc/nginx/security-headers.conf
 ENV NGINX_ENVSUBST_FILTER='^MONERIUM_'
 EXPOSE 80

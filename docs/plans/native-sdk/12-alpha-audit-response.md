@@ -2,9 +2,15 @@
 
 **Date:** 2026-08-13 · **Branch:** `fix/native-sdk-alpha-audit` · **Audit:** [`11-alpha-audit.md`](./11-alpha-audit.md) and [`audit-2026-08-13/`](./audit-2026-08-13/) (branch `audit/native-sdk-alpha`, 198 findings)
 
-Split by the audit's own severity tags. Everything **medium / low / nit** was fixed here, in three
-commits. Everything **blocker / high** was verified against the tree and is reported below rather
-than changed — those need a decision, a device, or both.
+Split by the audit's own severity tags. **Most** of the medium / low / nit band was fixed here;
+§2.1 lists every row in that band that was not, because an earlier draft of this document claimed
+the band was closed and that was false. Everything **blocker / high** was verified against the tree
+and is reported below rather than changed — those need a decision, a device, or both.
+
+Each fixed row carries how it was verified: **executed** (a test or a command proves it),
+**device** (driven on real hardware), or **read** (inspection only). A fix that means "the easy
+half, one platform, untested" is worse than an honest "partial", because the next reader reads the
+summary and not the diff.
 
 Unlike the audit, this pass had the toolchain: JDK 17, Android SDK, Swift 6.3 / Xcode 26.5, bun.
 Every claim below is executed, not read, unless it says otherwise.
@@ -62,7 +68,7 @@ stamping on **both** platforms, the `?fmt=`/`fCtx` percent-decoding divergence, 
 
 ---
 
-## 2. Medium / low / nit — fixed
+## 2. Medium / low / nit
 
 Three commits, grouped by surface. Every one of them is green under the repo's own gates:
 `bun run format && bun run lint && bun run typecheck && bun run test` (5587 tests),
@@ -72,6 +78,23 @@ Three commits, grouped by surface. Every one of them is green under the repo's o
 1. **`fix(sdk)`** — delivery, identity, URL handling and both sharing sheets.
 2. **`fix(backend,wallet)`** — proof window, rate-limit accounting, nginx security headers, i18n.
 3. **`docs`** — the register, the compass files, both merchant READMEs, and four CI/tooling gaps.
+
+### 2.1 Not fixed — the honest list
+
+Corrected after review. Three items were announced as "both platforms" and are **Android-only**;
+six parity rows were in scope and went unmentioned.
+
+| Row | State | Why |
+|---|---|---|
+| parity F5 — base64url strictness: a one-char `fCtx` corruption decodes on web, is dropped on native | **Not fixed** | Native is the stricter one. Loosening it to match web means accepting a payload we know is corrupt; the right direction is tightening web, which is not this branch |
+| parity F7 — the only uppercase-UUID vector sits on an op both native suites skip | **Not fixed** | A test-vector gap, not a defect. Belongs with the golden-proof work |
+| parity F9 — `/sharing` + `/install` param asymmetry | **Not fixed** | Needs the wallet side to agree on the canonical set first |
+| parity F10 — `--frak-host-*` CSS vars are three hand-mirrored literals, and iOS leans on the TS fallbacks | **Not fixed** | The fix is a shared source of truth, which is a build-step change |
+| parity F12 — `?fmt=` read case-insensitively on native, case-sensitively on web | **Fixed** (executed) | `getExact`/`exactValue` added on both platforms, with tests. `fCtx` keeps the case-insensitive fallback, which *is* the web behaviour; `fmt` authorises a merge, so it now matches web or not at all |
+| parity F13 — the iOS App Store link ignores the environment; Android's Play link does not | **Not fixed, and should not be** | There is exactly one App Store listing (`id6759159306`); no development listing exists to point at. Android's Play URL for `id.frak.wallet.dev` is equally unresolvable. Documented rather than faked |
+| `ServerClock` | **Android only** | Announced as a clock fix; iOS still stamps proofs from the device clock. The backend's ±60 s *future* bound is the tight one, and widening the merge window to 10 min bought slack on the past side only — so a fast iOS device still signs proofs the server rejects. This is the largest remaining gap in the band |
+| Queue byte cap (`MAX_BYTES`) | **Android only** | iOS has the row cap but no byte budget |
+| `resetAnonymousId` awaiting `purge()` | **Fixed on both** (executed) | Was Android-only; iOS detached it in a `Task`, so a caller that reset and then read was told the queue was clear when it was not |
 
 ### Deliberately not fixed, with reasons
 
@@ -182,3 +205,67 @@ case had never run.
 **Still not covered:** warm-start deep links (§2.3), which need the `onNewIntent`/`onOpenURL` path
 settled first, and `SKOverlay` (§3.9/F6), which needs a delegate before "silent" can be told from
 "failed".
+
+
+---
+
+## 6. Second review round — what it found, and what it cost
+
+The audit author reviewed this branch (`b9699a685`, §10 of `11-alpha-audit.md`). Three findings
+landed; all three are fixed above or below. Recorded here because two of them are mine.
+
+**The nginx fix was one-sixth applied, and the worst instance was the one I did not touch.**
+Reproduced against `nginx:1.29.1-alpine` on the real config, before and after:
+
+```
+BEFORE          /            all 6 present
+                /index.html  MISSING: X-Frame-Options X-XSS-Protection Referrer-Policy
+                             Permissions-Policy Cross-Origin-Opener-Policy
+                /sharing     all 6 present     ← what the earlier commit fixed
+                /sw.js       MISSING: all 6
+                /app.css     MISSING: all 6
+AFTER           every route  all 6 present
+```
+
+One precision the reviewer's write-up did not have: `/` was always fine, because `location ~ \.html$`
+matches the request URI and not the resolved file. It is `/index.html` — the same document, reachable
+directly — that shipped framable. The exposure is real and the reasoning about `add_header`
+inheritance was exactly right.
+
+The fix is `include /etc/nginx/security-headers.conf` at all seven sites rather than a fifth verbatim
+copy. Repetition is what caused this: the previous commit's own comment said "keep in step with the
+block above", which is a rule no one can follow across six blocks.
+
+**A regression I introduced: the warm WebView died on every home press.** `TRIM_MEMORY_UI_HIDDEN` is
+a lifecycle signal, not memory pressure — it fires whenever the UI backgrounds. Worse, the predicate
+was wrong in *both* directions: `level >= TRIM_MEMORY_UI_HIDDEN` also silently ignored
+`TRIM_MEMORY_RUNNING_LOW` and `RUNNING_CRITICAL`, which are genuine foreground pressure. Now
+`isMemoryPressure(level)`, pinned by four tests naming the exact levels. The reviewer's severity call
+was right: `present()` does re-warm, so nothing breaks — every share after a home press was simply
+cold, against a 5 s deadline.
+
+**The summary overclaimed.** Fixed in §2.1, which now lists every unfixed row in the declared band
+and marks the three "both platforms" claims that were Android-only. This was the same failure the
+audit's §6 identifies in the register and that the reviewer committed in §10.1: a summary that is
+directionally true and literally false, written at peak confidence.
+
+### Their correction to my correction, accepted
+
+R8 having *run* is not a minified build being *verified to work*. That was fair when written; commit
+`55e3f93f0` closes it — the harness now ships `isMinifyEnabled = true`, the config is committed, and
+it has been driven on a device (§4).
+
+### The root cause of the dex-budget error, from their side
+
+The audit worktree was a **shallow clone of 11 commits**, so `git log -S` could not see past the
+graft point. Every "this never happened" finding was unfalsifiable by construction. Worth recording
+as a process rule: *an absence claim requires `git log` on a full clone, and the claim should state
+which it ran on.*
+
+### Observed and not fixed
+
+`sdk/ios` test `overallDeadlineSpansRetryBackoff` (suite `HTTPClient`) failed once in six runs, then
+passed 5/5 on re-run. It asserts `attempts == 1` with a 50 ms deadline against a 100 ms backoff
+floor — a 2× wall-clock margin, on a machine that was concurrently running a Gradle build. Not
+fixed: I could not reproduce it and therefore do not know whether it failed with 0 attempts or 2,
+and the two point at opposite fixes. Named here so the next person to see it has the context.

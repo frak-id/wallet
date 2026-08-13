@@ -83,4 +83,16 @@ class UrlQueryTest {
     fun `keeps a valueless parameter valueless`() {
         assertEquals("https://acme.example/p?flag", UrlQuery.parse("https://acme.example/p?flag")!!.toString())
     }
+
+    @Test
+    fun `getExact does not fall back to another casing`() {
+        val query = UrlQuery.parse("https://acme.example/p?FMT=token")!!
+        assertEquals("token", query.get("fmt"))
+        assertNull(query.getExact("fmt"))
+    }
+
+    @Test
+    fun `getExact still decodes the value it matches`() {
+        assertEquals("a b", UrlQuery.parse("https://acme.example/p?fmt=a%20b")!!.getExact("fmt"))
+    }
 }

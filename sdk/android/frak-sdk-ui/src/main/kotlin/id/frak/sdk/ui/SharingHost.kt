@@ -485,12 +485,14 @@ internal class SharingHost private constructor(
 
     /**
      * A warm `WebView` is a whole renderer process held for a tap that may never come. Released on
-     * the first real pressure signal; the next [warm] rebuilds it, and a lent view is never taken.
+     * real memory pressure; a lent view is never taken, and the next [present] warms again — cold,
+     * which is why `TRIM_MEMORY_UI_HIDDEN` must not reach here. It is a lifecycle signal, not
+     * pressure: it fires on every home press, and trimming there makes every later share cold.
      */
     private val memoryCallbacks =
         object : ComponentCallbacks2 {
             override fun onTrimMemory(level: Int) {
-                if (level < ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) return
+                if (!isMemoryPressure(level)) return
                 onMainThread { pool?.trim() }
             }
 
@@ -516,6 +518,14 @@ internal class SharingHost private constructor(
             return retained.host
                 ?: SharingHost(activity.applicationContext).also { retained.host = it }
         }
+
+        /**
+         * `TRIM_MEMORY_UI_HIDDEN` sorts between the running and background levels but means "your UI
+         * went away", so a `>=` test both catches it and misses the running-low levels below it.
+         */
+        fun isMemoryPressure(level: Int): Boolean =
+            level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW &&
+                level != ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN
     }
 }
 

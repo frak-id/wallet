@@ -150,11 +150,10 @@ actor DefaultFrakClient {
     @discardableResult
     func resetAnonymousId() async -> Bool {
         let erased = await identity.reset()
-        // Purged so an event captured under the dead id doesn't re-link the identity the user
-        // just asked to be forgotten. Best-effort; the drain loop's stale-id check is the real
-        // guarantee.
-        let tracker = self.tracker
-        Task { await tracker.purge() }
+        // Purged so an event captured under the dead id doesn't re-link the identity the user just
+        // asked to be forgotten. Awaited: a caller that resets and then reads has been told the
+        // queue is clear, and detaching this made that a lie under any real drain.
+        await tracker.purge()
         return erased
     }
 

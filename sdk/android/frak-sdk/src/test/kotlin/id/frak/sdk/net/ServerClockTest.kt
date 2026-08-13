@@ -35,6 +35,8 @@ class ServerClockTest {
         val clock = clock()
         clock.observe(0)
         clock.observe(1_000_000_000_000L)
+        clock.observe(Long.MAX_VALUE)
+        clock.observe(4_200_000_000_000L)
 
         assertEquals(device / 1000, clock.nowSeconds())
     }

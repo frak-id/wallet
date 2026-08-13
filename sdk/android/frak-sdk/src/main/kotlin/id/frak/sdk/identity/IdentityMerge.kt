@@ -34,7 +34,7 @@ internal class IdentityMerge {
         const val TOKEN_KEY: String = "fmt"
         const val MERGE_EXECUTE_PATH: String = "/user/identity/merge/execute"
 
-        fun parseToken(url: String): String? = UrlQuery.parse(url)?.get(TOKEN_KEY)?.takeIf { it.isNotEmpty() }
+        fun parseToken(url: String): String? = UrlQuery.parse(url)?.getExact(TOKEN_KEY)?.takeIf { it.isNotEmpty() }
 
         /** UTF-8, matching `IdentityProofService.hashMergeToken`. Binds the proof to this token, not just this merchant. */
         fun binding(mergeToken: String): ByteArray =

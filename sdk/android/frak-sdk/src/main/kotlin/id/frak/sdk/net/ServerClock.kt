@@ -6,7 +6,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * The backend's clock, learned from the `Date` header of any response, for stamping identity
  * proofs. The backend rejects a proof more than 60 s in its future, and a merge proof outside a
- * 2-minute window, so an unsynchronised device clock invalidates every signature it makes.
+ * 10-minute window, so an unsynchronised device clock invalidates every signature it makes. The
+ * future bound is the tight one: widening the merge window only bought slack on the past side.
  */
 internal class ServerClock(
     private val wallClock: () -> Long = System::currentTimeMillis,
@@ -27,6 +28,7 @@ internal class ServerClock(
         // A garbage `Date` would skew every proof this device signs, so only a date that could
         // plausibly be now is trusted. The origin is ours over TLS; this guards a broken proxy.
         if (serverMillis < EARLIEST_PLAUSIBLE_MILLIS) return
+        if (serverMillis > LATEST_PLAUSIBLE_MILLIS) return
         val offset = serverMillis - wallClock()
         offsetMillis = offset
         if (offset > -DRIFT_WARN_MILLIS && offset < DRIFT_WARN_MILLIS) return
@@ -43,5 +45,8 @@ internal class ServerClock(
 
         /** 2025-01-01. Anything below is a broken header, not a clock this SDK should adopt. */
         const val EARLIEST_PLAUSIBLE_MILLIS = 1_735_689_600_000L
+
+        /** 2100-01-01. A far-future `Date` is as broken as a far-past one, and skews proofs the way the server actually rejects. */
+        const val LATEST_PLAUSIBLE_MILLIS = 4_102_444_800_000L
     }
 }

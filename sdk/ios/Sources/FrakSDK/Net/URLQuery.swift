@@ -53,6 +53,12 @@ struct URLQuery {
         return match.map { Self.percentDecode($0.value) }
     }
 
+    /// Exact-key lookup, for parameters the web client reads through `URLSearchParams.get`. `fCtx`
+    /// tolerates mangled casing; `fmt` authorises an identity merge, so it matches web or not at all.
+    func exactValue(for key: String) -> String? {
+        parameters.first { $0.key == key }.map { Self.percentDecode($0.value) }
+    }
+
     mutating func remove(_ key: String) {
         parameters.removeAll { $0.key.caseInsensitiveCompare(key) == .orderedSame }
     }

@@ -28,6 +28,19 @@ struct URLQueryTests {
         #expect(query.value(for: "fCtx") == "real")
     }
 
+    @Test("exactValue does not fall back to another casing")
+    func exactValueIsCaseSensitive() throws {
+        let query = try #require(URLQuery.parse("https://acme.example/p?FMT=token"))
+        #expect(query.value(for: "fmt") == "token")
+        #expect(query.exactValue(for: "fmt") == nil)
+    }
+
+    @Test("exactValue still decodes the value it matches")
+    func exactValueDecodes() throws {
+        let query = try #require(URLQuery.parse("https://acme.example/p?fmt=a%20b"))
+        #expect(query.exactValue(for: "fmt") == "a b")
+    }
+
     @Test("leaves a malformed escape as written rather than dropping the value")
     func toleratesAMalformedEscape() throws {
         let query = try #require(URLQuery.parse("https://acme.example/p?a=100%zz"))
