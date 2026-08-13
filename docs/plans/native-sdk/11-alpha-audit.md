@@ -4,6 +4,26 @@
 
 This document supersedes nothing. It sits next to [`06-open-findings.md`](./06-open-findings.md) and, in §6, challenges it.
 
+**Revised after review** (see §0 for what changed and why). Two team corrections moved conclusions: Android *has* been device-tested since day one, and sharing interactions are analytics rather than reward-bearing.
+
+---
+
+## 0. Corrections from review
+
+Two facts the tree does not record, both of which change rankings:
+
+**(a) Android has been tested on a device since day one.** iOS device testing started 2026-08-12. The audit inferred "no Android device pass" from `README.md` §Status and `06` T3/D2b — that is a **doc-accuracy finding against those files**, not a fact about the process. `README.md` §Status, `06` T3 and `06` D2b all need rewriting; they currently understate Android and (since `0c978b1`) overstate nothing about iOS either.
+
+The correction *sharpens* one finding rather than softening it — see §2.3: the warm-start deep-link defect survived months of device testing because **the harness reproduces it and prints a success message.** What device testing against your own harness structurally cannot catch:
+
+- anything **the harness itself does wrong** (§2.3);
+- anything only a **release/minified** build does — R8 has never run anywhere (§3.1);
+- anything only a **merchant's app architecture** triggers — the harness is single-screen with no `NavHost`, so §3.6 is unreachable in it.
+
+So "do an Android device pass" is the wrong ask. The right ask is: **run the harness once as a minified release build, and once with a two-destination `NavHost`.**
+
+**(b) Sharing interactions are analytics, not rewards. Purchases are the reward-bearing event.** This demotes every share-attribution finding to a data-comparability concern and promotes everything on the purchase path. Re-ranked throughout; see §3.2, §3.3 and §5's new *reliability tiering* item.
+
 ---
 
 ## 1. Verdict
@@ -12,19 +32,17 @@ This document supersedes nothing. It sits next to [`06-open-findings.md`](./06-o
 
 The engineering is genuinely good — better than most first-party SDKs at v0. The proof-of-possession wire format is byte-identical across TypeScript, Kotlin, Swift *and* the backend verifier (independently re-derived from first principles by one auditor). The durable outbox's reconcile/row-id/hold machinery is careful. The HTTP clients are bounded on every axis. The ABI gate is real, hand-rolled around an AGP 9 hole, and its dumps are committed and internally consistent. The privacy manifests are thought through rather than copy-pasted.
 
-What is not ready is everything that only executes **on a device, in a merchant's app, against a store artifact**. That is exactly the set nobody has run, and it is where all four blockers live. Three of the four are cheap.
-
-The single most important structural fact: **the iOS sharing sheet had its first device/simulator QA in the last 24 hours (`0c978b1`, `5a50e20`, `ade62d1`, `78c96b8`) and that pass found six real defects, several of them "the sheet is visibly broken" class.** The Android sheet has had *no* equivalent pass. There is no reason to expect a different defect rate. Budget for it.
+What is not ready is everything that only executes **in a merchant's app, against a minified release build, against a store artifact**. Device testing has been real; it has been device testing of *the harness*, in debug, on one screen. Every P0 below lives in the gap between that and a merchant.
 
 | Axis | State |
 |---|---|
-| Correctness (core) | Strong. Two silent-loss paths (§2.3, §3.2) and a clock assumption (§3.7). |
-| Correctness (sharing sheet) | Weak on both platforms, for the same reason: the window/host layer has no test that constructs it, and only iOS has been on a device. |
+| Correctness (core) | Strong. One head-of-line-blocking class that reaches purchases (§3.2), and a clock assumption (§3.7). |
+| Correctness (sharing sheet) | Weaker than the core on both platforms — the window/host layer has no test that constructs it, and its failure modes are the ones a harness cannot produce. |
 | Security | One blocker (§2.1), one high (§2.2). Both are trust-boundary design, not crypto. The crypto is fine. |
-| UX | Unmeasured. Locale is broken by default (§3.4), accessibility is absent, and the "loaded but blank" path has no exit (§2.4). |
+| UX | Locale is broken by default (§3.4), accessibility is absent, and the "loaded but blank" path has no exit (§2.4). |
 | Merchant setup | **The weakest axis.** A merchant cannot obtain either artifact, gets silence by default, and the one mandatory onboarding step is documented in the wrong file (§2.5). |
 | Build / release | Plumbing is ahead of the register's own account of it, but nothing minified or published has ever been built or consumed (§3.1). |
-| Docs accuracy | `06-open-findings.md` is right about code and wrong about numbers, coverage and three "closed" rows (§6). |
+| Docs accuracy | `06-open-findings.md` is right about code and wrong about numbers, coverage, three "closed" rows and the device-testing status (§6). |
 
 ---
 
@@ -51,21 +69,37 @@ Any app on the device declaring an `<intent-filter>` for scheme `frakwallet` rec
 
 *Register status: NEW. §4 closed "the WebView starting arbitrary activities (3.1)"; this is the SDK core launching one.*
 
-### 2.2 Inbound `?fmt=` merge is auto-executed with no origin check — **security, small fix**
+### 2.2 Inbound `?fmt=` merge is auto-executed with no origin check — **security**
 
-The SDK signs and executes an attacker-supplied merge token arriving on any link, with no origin validation and no user interaction. This is 2.1 from the other direction: identity capture by link. See `audit-2026-08-13/security-privacy.md` F2 for the full chain.
+The SDK signs and executes an attacker-supplied merge token arriving on any link, with no origin validation and no user interaction. This is 2.1 from the other direction: identity capture by link. Full chain in `audit-2026-08-13/security-privacy.md` F2.
 
-> **Fix:** bind the merge token to an origin the SDK can verify, or require a user-visible confirmation. **Complexity: medium.** If it cannot be fixed in the alpha window, **disable `?fmt=` handling in the alpha** — the README already says the flow is unsupported until `ROLLOUT-STEP-3`.
+Note the interaction with §3.3: today `TARGET_NOT_FOUND` is accidentally limiting the blast radius. **Do not remove that 404 without adding the proof gate described in §3.3**, or this finding gets materially worse.
+
+> **Fix:** bind the merge token to an origin the SDK can verify, or require a user-visible confirmation. **Complexity: medium.** If it cannot land in the alpha window, **disable `?fmt=` handling for the alpha** — the README already says the flow is unsupported until `ROLLOUT-STEP-3`.
 
 ### 2.3 `DeepLinkHandling.Automatic` — the default — misses every warm-start referral link
 
-`DeepLinkObserver.consume()` reads `activity.intent` (`applink/DeepLinkObserver.kt:23-29`). Android does **not** update `getIntent()` on `onNewIntent`; the host must call `setIntent()`. So on a `singleTask`/`singleTop` activity — what every app that handles deep links uses — the observer re-reads the stale *launch* intent, sees its own `HANDLED_EXTRA`, and returns.
+`DeepLinkObserver.consume()` reads `activity.intent` (`applink/DeepLinkObserver.kt:23-29`). Android does **not** update `getIntent()` on `onNewIntent`; the host must call `setIntent()`. So on a `singleTask`/`singleTop` activity — what every app that handles deep links uses — the observer re-reads the stale *launch* intent, sees its own `HANDLED_EXTRA`, and returns. The KDoc at `DeepLinkObserver.kt:8-11` asserts the opposite.
 
-The KDoc at `DeepLinkObserver.kt:8-11` asserts the opposite. `sdk/android/README.md` never mentions `setIntent`. **The project's own harness gets it wrong** (`example/native-android/.../MainActivity.kt:237-242`, on a `singleTask` activity), which is precisely why "inbound deep links have run nowhere" has hidden it.
+**Why device testing did not catch this.** The harness is `singleTask` (`example/native-android/app/src/main/AndroidManifest.xml:18`), never calls `setIntent(intent)`, and its `onNewIntent` prints a green success line for the failure case:
 
-Cold start works. A manual test tries cold start first. Every referral that lands on an already-running app is lost, silently, with no log.
+```kotlin
+// MainActivity.kt:237-245
+override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    intent.dataString?.let { url -> logInboundIntent(url) }   // no setIntent(intent)
+}
+/** Automatic mode already dispatched `handleReferral`; calling it again would double-track. */
+private fun logInboundIntent(url: String) {
+    addLog("Inbound link reached the activity (SDK auto-handles it): $url", LogType.SUCCESS)
+}
+```
 
-> **Fix:** register `OnNewIntentProvider.addOnNewIntentListener` (available on any `ComponentActivity`) in `onActivityCreated`, keeping the current read as fallback; document `setIntent(intent)` for non-androidx hosts; fix the harness. **Complexity: small.**
+A tester warm-starts a link, reads `SUCCESS`, and moves on. The SDK dispatched nothing. Cold start genuinely works, so every other check passes. **This is the clearest instance in the audit of a harness manufacturing confidence.**
+
+`sdk/android/README.md` never mentions `setIntent`. Every referral landing on an already-running app is lost, silently, with no log.
+
+> **Fix:** register `OnNewIntentProvider.addOnNewIntentListener` (available on any `ComponentActivity`) in `onActivityCreated`, keeping the current read as fallback; document `setIntent(intent)` for non-androidx hosts; **and make the harness assert rather than narrate** — it should log a failure when the SDK did not dispatch. **Complexity: small.**
 
 ### 2.4 A wallet page that loads but never renders leaves the sheet blank forever
 
@@ -94,68 +128,102 @@ Add: the iOS quickstart snippet **does not compile** (missing `try`); the iOS RE
 
 ---
 
-## 3. P1 — fix inside the alpha window, before a second merchant
+## 3. P1 — fix inside the alpha window
 
-Ranked. Each is real, evidenced, and none blocks the first design-partner install.
+Re-ranked after §0(b): the purchase path is the money path, and everything on it moves up.
 
-### 3.1 Nothing in this repo has ever run R8 — **build-release, high**
+### 3.1 Nothing in this repo has ever run R8 — **build-release**
 
 Both `consumer-rules.pro` files are empty and assert in prose that nothing is reflective. That is false: `SharingHost.kt:461` does `ViewModelProvider(activity)[SharingViewModel::class.java]`, which is reflective instantiation. (androidx-lifecycle ships its own keep rule, so this probably survives — *probably* is the problem.) The one harness that could prove it sets `isMinifyEnabled = false` (`example/native-android/app/build.gradle.kts:29`). My Moulinex ships R8 full mode.
+
+Per §0(a) this is the single largest thing device testing could never have covered: every device run to date has been a debug build.
+
 > **Fix:** flip the harness to `isMinifyEnabled = true` + full mode and run it. One afternoon. Whatever it finds is a field crash you didn't ship.
 
-### 3.2 Two silent event-loss paths, one per platform, both on the revenue path
+### 3.2 The purchase path can stall behind a row that can never succeed
 
-- **Android:** nothing ever re-drives the outbox. Three drivers exist, all enqueue-triggered, plus one at `init`. No timer, no foreground hook, no connectivity callback. iOS has a `willEnterForeground` hook; Android has none. A purchase tracked in a tunnel sits in `frak-events.jsonl` until the process restarts — or 14 days pass and it is dropped. (`tracking/EventOutbox.kt:69,86,111`, `core/DefaultFrakClient.kt:163,169`)
-- **iOS (and Android):** a row captured with `clientId == nil` — device not yet unlocked after reboot, or one keystore failure — is *uploaded anyway*, the backend answers 401 (`sdkIdentity.ts:140-144`), the drain classifies 401 as `.rejected` and **`break`s**, so every good event behind it waits three passes before the orphans are discarded. `MergeSender` already does the right thing for the same input, so the policy is inconsistent within one layer.
-> **Fix:** foreground + backoff-expiry flush on Android; treat a nil `clientId` as `.hold` (the mechanism exists for a missing merchantId) and stamp the id at drain time. **Complexity: small each.**
+Two distinct defects that compound. Both reach **purchases**, which per §0(b) is the only reward-bearing event.
 
-### 3.3 Android reports `Shared` — and bills a signed `sharing` interaction — when the chooser merely *opened*
+**(a) A row captured with `clientId == null` blocks the queue.** `clientId` is stamped at capture from `identity.anonymousId()`, which is nullable — null when the identity store cannot be read (before first unlock after reboot; iOS file protection is `.completeUntilFirstUserAuthentication`) or when key minting fails. Capture is deliberately not gated on it (`EventOutbox.swift:35-37`: gating capture "would drop it entirely"). Then:
 
-`NativeShare.share()` returns `startActivity(...).isSuccess` (`frak-sdk-ui/.../NativeShare.kt:26`). Open the chooser, press Back, repeat: each raise attributes a share. iOS is now the stricter of the two (`78c96b8` made it require a non-nil `activityType`), so **the same user action pays out differently per platform**, and the Android side is a user-controlled loop. `EXTRA_CHOSEN_COMPONENT` via an `IntentSender` has been available since API 22; minSdk is 24.
-> **Fix:** `Intent.createChooser(send, title, pendingIntent.intentSender)` + a receiver. **Complexity: small.** This is an economics bug, not a cosmetics bug.
+1. `clientIdHeaders(row)` **omits** `x-frak-client-id` (`RowSender.swift:17-19`, `RowSender.kt:21-22`);
+2. the backend requires it → **401** (`sdkIdentity.ts:140-144`);
+3. `classify()` maps 401 → `.rejected` (only 429/5xx are retryable);
+4. `.rejected` → failure++ **and `break`** (`EventOutbox.swift:299-307`, `EventOutbox.kt:201-203`).
+
+Consequences, worst last: the design intent is not achieved — the comment says the row "lands unattributed", but the backend *rejects* it, so you pay the disk write and the request for nothing; the 3-failure cap is spent on a request that can never succeed; and, critically, **the queue is FIFO and `break` stops the whole drain**, so one such row at position 1 blocks every good event behind it — including purchases — for three full drain passes. Combined with (c) below, "three drain passes" can mean three app launches.
+
+The tell that this is an oversight rather than a decision: `MergeSender` handles the identical input correctly in the same layer — `MergeSender.kt:25` / `MergeSender.swift:17-20`, with the comment *"drop it rather than spend the failure cap on a request that can't succeed."*
+
+**(b) `.rejected` should `continue`, not `break` — both platforms.** This is the higher-value half. A rejection is a verdict on *that row*; `break` is correct for `.retryable` (the backend is down, stop trying) and wrong for `.rejected`. One word, and it removes head-of-line blocking for **every** future reject-shaped bug, not just this one. Today any single poison row stalls the purchase queue behind it.
+
+**(c) Android never re-drives the outbox.** Three flush drivers exist, all enqueue-triggered, plus one at `init` (`tracking/EventOutbox.kt:69,86,111`, `core/DefaultFrakClient.kt:163,169`). No timer, no foreground hook, no connectivity callback. iOS has `willEnterForegroundNotification` (`DefaultFrakClient.swift:123-132`); Android has nothing. A purchase tracked in a tunnel sits in `frak-events.jsonl` until the process restarts — or 14 days pass and it is dropped.
+
+> **Fix:** (a) return `.hold` on a null `clientId` and **stamp the current id at drain time** — `currentClientId` is already injected into the outbox and the device is unlocked by then, so the event survives *and* gets attributed (`.dropped`, matching `MergeSender`, is the one-line version; `.hold` is strictly better). (b) `.rejected → continue`. (c) mirror iOS's foreground hook via `ProcessLifecycleOwner`, plus a `delay(backoff.remainingMillis)` retry after a `Retryable`. **Complexity: small each.**
+
+### 3.3 The backend merge get-or-create — and the guard it must keep
+
+`POST /user/identity/merge/execute` returns `TARGET_NOT_FOUND` unless the target anonymous id already has an identity-graph node (`AnonymousMergeOrchestrator.ts:219-230`). Native enqueues the merge before anything creates one, and never calls `/identity/ensure`, which is what creates it on web. On a fresh install — the exact case `?fmt=` exists for — it is rejected, retried 3×, dropped.
+
+**Agreed direction: fix it backend-side, do not reorder the queue.** Ordering dependencies between independently-retried durable rows are exactly what you don't want, and native has no `ensure` call by design.
+
+**But there is a load-bearing accident to preserve.** From `AnonymousMergeOrchestrator.ts:204-212`: *"The target node already exists here — `findGroupByIdentity` below hard-fails with TARGET_NOT_FOUND otherwise — so unlike the initiate arm the latch can be written straight away."* And from the `proof` docstring at `:188-191`: *"Required only once this id has ever latched — **unlatched ids, including legacy ones, keep working as merge targets**."*
+
+A freshly auto-created node is by definition unlatched, so proof enforcement is skipped for it. **Naive get-or-create means anyone can name any `anonymousId` as a merge target, have it conjured, and fold it into their own group with no proof** — the 404 is currently an accidental guard against §2.2's attack.
+
+> **Fix:** auto-create the target **only inside the proof-verified branch**:
+> ```
+> validateToken(mergeToken, merchantId)
+>   → findGroupByIdentity(target)
+>       ├── found     → existing path unchanged
+>       └── not found → require a valid frak-merge-v1 proof for `target`
+>                       ├── valid → create node, markProofSeen, associate
+>                       └── else  → keep TARGET_NOT_FOUND
+> ```
+> This costs native nothing (native signs from day one) and is a step *toward* `ROLLOUT-STEP-3`: new ids become proof-mandatory immediately while legacy unlatched ids keep working. Also move `markProofSeen` to after the node exists — today it is written before `findGroupByIdentity`, and that ordering stops being safe the moment the 404 goes away. **Complexity: small.**
 
 ### 3.4 Every non-`en`/`fr` device gets a **French** sharing sheet, and the merchant cannot override it
 
 Neither `SharingPageUrl.kt` nor `SharingPageURL.swift` forwards a locale (grep: zero matches), and `fallbackLng` is `"fr"` (`packages/wallet-shared/src/i18n/config.test.ts:27`). A German user of a French appliance brand's app gets a French sheet. There is no theming and no localisation knob at all — the entire sheet API is `heightFraction`.
+
 > **Fix:** forward `Locale.getDefault()` / `Locale.preferredLanguages` as a param and read it page-side. **Complexity: trivial.**
 
 ### 3.5 iOS `SharingWebViewPool.warm(_:)` has no `lent` guard
 
-`warmView` checks `lent`; `prepare()` checks `pooled == nil`; `warm(_:)` checks **only `destroyed`** (`SharingWebViewPool.swift:44-58`). A warm-up task that finishes *after* a tap rebinds and re-navigates the web view the live sheet is holding. That is the **first share of every app session** — the exact path a merchant demo takes. Result: ~5 s of pulsing skeleton, then the raw OS chooser.
-> **Fix:** `guard !lent` in `warm`. **Complexity: trivial.** Ships with a device pass, not without one.
+`warmView` checks `lent`; `prepare()` checks `pooled == nil`; `warm(_:)` checks **only `destroyed`** (`SharingWebViewPool.swift:44-58`). A warm-up task finishing *after* a tap rebinds and re-navigates the web view the live sheet is holding — the **first share of every app session**. Result: ~5 s of pulsing skeleton, then the raw OS chooser.
+
+> **Fix:** `guard !lent` in `warm`. **Complexity: trivial.**
 
 ### 3.6 The Compose build site orphans a live Android sheet
 
 `FrakSharing.Builder.build()`'s `DisposableEffect` has an empty `onDispose` (`frak-sdk-ui/.../FrakSharing.kt:95`) while the dialog is owned by an Activity-scoped `SharingHost`. Navigate away with Compose Navigation and the sheet stays on screen over the new destination; `onResult` fires into a dead composition. `07` §2.1's bug (a torn-down sheet never reporting) was traded for a stuck one.
 
-### 3.7 `merge/execute` 404s on a fresh install — the `?fmt=` flow is dead on arrival
+**Unreachable in the harness**, which is single-screen with no `NavHost` — see §0(a). Add a two-destination harness screen and this reproduces immediately.
 
-`POST /user/identity/merge/execute` returns `TARGET_NOT_FOUND` unless the target anonymous id already has an identity-graph node. Native enqueues the merge *before* anything creates one, and never calls `/identity/ensure`, which is what creates it on web. On a fresh install — the exact case `?fmt=` exists for — it is rejected, retried 3×, dropped. Referral arrival still lands; the wallet↔app identity link does not.
-> Combined with 2.2, the honest alpha answer is probably: **turn `?fmt=` off and say so.**
+### 3.7 Clock assumptions: a device 61 s fast fails every proof
 
-### 3.8 Clock assumptions: a device 61 s fast fails every proof
+Proof timestamps are raw wall-clock. The `frak-merge-v1` window is ±2 min against an unsynchronised device clock, and a rejection is not retryable. On a device with a drifted clock, nothing works and nothing says why. Reaches purchases via the proof on the tracking path.
 
-Proof timestamps are raw wall-clock. The `frak-merge-v1` window is ±2 min against an unsynchronised device clock, and a rejection is not retryable. On a device with a drifted clock, nothing works and nothing says why.
+### 3.8 Android CI should be red right now, and one unit test calls production
 
-### 3.9 Android CI should be red right now, and one unit test calls production
+- `core/DefaultFrakClient.kt:39` imports `kotlinx.coroutines.flow.StateFlow`; there is no other occurrence in the file, not even in KDoc. ktlint's `no-unused-imports` is standard and not disabled in `.editorconfig`. `apps.yaml`'s `android-sdk` job runs `lint` as its first step. **Either CI is red on `dev`, or the lint step is not doing what everyone believes it is.** Five minutes to check, and it validates or invalidates every "the suite is green" claim in `06`.
+- `SharingSheetStateTest.kt:42-46` calls `Frak.initialize(context, FrakConfig.Builder(uuid).build())` in `@Before`. That defaults to `FrakEnvironment.Production`, and `Frak.initialize` starts a real config resolve — **a live HTTPS GET to `https://backend.frak.id` from a JVM unit test, every CI run** — with no `shutdown()` in `@After` (Android has no reset seam), leaking a `SupervisorJob`, lifecycle callbacks and a queue file into the four other Robolectric classes in the module.
 
-- `sdk/android/frak-sdk/src/main/kotlin/id/frak/sdk/core/DefaultFrakClient.kt:39` imports `kotlinx.coroutines.flow.StateFlow`; there is no other occurrence in the file, not even in KDoc. ktlint's `no-unused-imports` is standard and not disabled in `.editorconfig`. `apps.yaml`'s `android-sdk` job runs `lint` as its first step. **Either CI is red on `dev` or the lint step is not doing what everyone believes it is.** Check this first — it is five minutes and it invalidates or confirms every "the suite is green" claim in `06`.
-- `SharingSheetStateTest.kt:42-46` calls `Frak.initialize(context, FrakConfig.Builder(uuid).build())` in `@Before`. That defaults to `FrakEnvironment.Production` and `Frak.initialize` starts a real config resolve — **a live HTTPS GET to `https://backend.frak.id` from a JVM unit test, every CI run** — with no `shutdown()` in `@After` (Android has no reset seam), leaking a `SupervisorJob`, lifecycle callbacks and a queue file into the four other Robolectric classes in the module.
 > **Fix:** point the fixture at a loopback `FrakEnvironment.Custom` (already allowlisted) and add the `Frak.resetForTesting()` seam `T2` has been asking for.
 
-### 3.10 iOS: `NativeShare.share` can suspend forever, and `SharingPresenter.teardown()` abandons a live session
+### 3.9 iOS: `NativeShare.share` can suspend forever, and `SharingPresenter.teardown()` abandons a live session
 
 `78c96b8` fixed two real bugs and, in doing so, deleted the only escape hatch for a refused presentation without replacing it — and the tier-3 path calls it while the sheet is mid-presentation, which is exactly when UIKit refuses. Separately, `teardown()` does no `dispose` and no `onResult`: live sheet stranded on the skeleton, `WKWebView` leaked.
 
-### 3.11 UIKit/ObjC merchants cannot use `FrakSDKUI` at all
+### 3.10 UIKit/ObjC merchants cannot use `FrakSDKUI` at all
 
-The only public entry point is a SwiftUI `ViewModifier`, and **no public declaration in the package is `@objc`**. Large retail apps are frequently UIKit-and-ObjC. This is a scoping decision, not a bug — but it must be a *stated* one, in the README, before a merchant discovers it in week two.
+The only public entry point is a SwiftUI `ViewModifier`, and **no public declaration in the package is `@objc`**. Large retail apps are frequently UIKit-and-ObjC. A scoping decision, not a bug — but it must be a *stated* one, in the README, before a merchant finds out in week two.
 
 ---
 
 ## 4. ABI / irreversibility — decide before the first published artifact
 
-These are cheap today and expensive-to-impossible after `id.frak.sdk:core:0.1.0` exists. Rank them above everything in §3 that isn't a P0, because §3 can be fixed in a patch and these cannot.
+Cheap today, expensive-to-impossible after `id.frak.sdk:core:0.1.0` exists. Rank these above everything in §3 that isn't a P0: §3 can be fixed in a patch, these cannot.
 
 | # | Item | Why now |
 |---|---|---|
@@ -163,77 +231,98 @@ These are cheap today and expensive-to-impossible after `id.frak.sdk:core:0.1.0`
 | 2 | `rewards.best` takes a `RewardRequest` on Android and four defaulted params on iOS | The two SDKs are not the same API on the hottest read path. Pick one now. (register 9.15, still open) |
 | 3 | Retry hint is **milliseconds on Android, seconds on iOS** (`FrakError.BackingOff` vs `.backingOff`) | A unit divergence in a public error payload. Free to fix now. |
 | 4 | No retryable/fatal axis on `FrakError`, and iOS's `LocalizedError` conformance advertises raw diagnostics as user-facing | Merchants will show these strings to users. |
-| 5 | `tracking.purchase(String, String, String)` — three unlabeled Strings on the revenue path, frozen at `frak-sdk.api:82` | Trivially mis-ordered, permanently. |
+| 5 | `tracking.purchase(String, String, String)` — three unlabeled Strings **on the reward-bearing path**, frozen at `frak-sdk.api:82` | Trivially mis-ordered, permanently. Promoted by §0(b): this is the money call. |
 | 6 | `FrakContext` is a versioned public hierarchy with no discriminator and no unknown arm, **on both platforms** | V3 will be a consumer break. A2 fixed this for `FrakError`/`SharingResult`/`Interaction` and stopped. |
 | 7 | `resetAnonymousId()`'s `Boolean` is a documented cross-platform contract iOS cannot honour (returns `true` while the delete can silently fail) | Either make it honest or make it `Void`. |
 | 8 | `heightFraction` **throws on Android, clamps on iOS** | Same input, different program. |
-| 9 | Equality/`Hashable` split across 8 types (wider than register 9.9 records) | Adding equality later is a behaviour change with an unchanged descriptor — i.e. invisible to the ABI gate. |
+| 9 | Equality/`Hashable` split across 8 types (wider than register 9.9 records) | Adding equality later is a behaviour change with an unchanged descriptor — invisible to the ABI gate. |
+| 10 | **The on-disk queue row format** | New in this revision. See §5's reliability-tiering item: if purchases are ever to get their own failure budget or drain, the row needs to carry a tier. Changing the format after merchants have rows on disk means writing a migration for a file you cannot inspect. |
 
 ---
 
 ## 5. P2 / P3 — the long tail
 
-Full detail in the per-area reports. Themes only:
+### Demoted by §0(b): share attribution is analytics, not economics
+
+**Android reports `Shared` — and records a `sharing` interaction — when the chooser merely *opened*.** `NativeShare.share()` returns `startActivity(...).isSuccess` (`frak-sdk-ui/.../NativeShare.kt:26`). iOS is now the stricter of the two (`78c96b8` requires a non-nil `activityType`).
+
+No longer a rewards bug — but it does not vanish, it changes shape into a **data-comparability** one, and a nastier one than it looks: Android's inflation is a **user-controllable loop** (open chooser, back, repeat). Any funnel or merchant dashboard built on share counts will show Android outperforming iOS for a reason that is not real, and the gap grows with engagement. Same for `06`'s 9.1 (`.dismissed` reported over a real share): an undercount in analytics, not lost rewards.
+
+> **Fix:** `Intent.createChooser(send, title, pendingIntent.intentSender)` + a receiver reading `EXTRA_CHOSEN_COMPONENT` (API 22+; minSdk is 24). **Complexity: small. Priority: P2.**
+
+### New, promoted by §0(b): purchases and analytics share one reliability tier
+
+`PurchaseSender` and `InteractionSender` are peers in one FIFO with one shared 3-failure cap and one shared backoff key. An analytics row can therefore delay, and (until §3.2b) block, a reward-bearing purchase. If purchases are the money path they deserve a different tier: a separate failure budget, a higher retry ceiling, and ideally their own drain.
+
+This is the architectural version of §3.2 and it is **worth deciding before the queue row format freezes on disk** — see §4 row 10. Fixing §3.2b makes it non-urgent; it does not make it wrong.
+
+### Themes
 
 - **Performance.** Android re-reads and re-parses the whole queue file on every `track()`; no drain coalescing (iOS has it). A warm `WebView` per Activity, warmed eagerly, never released under memory pressure. The eager-JS budget measures under half of a cold share's bytes; on 3G the sheet is lost entirely.
 - **Accessibility.** Neither sheet announces itself. TalkBack reads the hidden page behind the Android skeleton. Nothing is stated about Dynamic Type, RTL, or the iOS 15 layout branch (which is visibly wrong, and iOS 15 is the declared floor).
 - **Observability, for the merchant.** No correlation id, no delivery signal, no queue-depth accessor, no debug mode. "Did my event arrive?" is unanswerable, and `Success` is returned for events that will never be delivered.
 - **Observability, for Frak.** The SDK version header is logged and nothing else — no kill switch, and Android and iOS are indistinguishable on the wire. For a fleet of *frozen binaries*, that is the thing you will wish you had.
-- **Testability, for the merchant.** `FrakClient` is a `final` class behind a singleton. There is no fake, no protocol, no staging mode. A merchant cannot unit-test their own integration.
-- **Parity drift with the web SDK.** `FrakContextManager.update()` re-serialises the merchant's whole query (`%20`→`+`, `~`→`%7E`, IDN punycoding) where both native ports deliberately do not — so a link built in the app and one built by the same merchant's website byte-differ, and nothing would notice. Plus ≥8 named input divergences across the three hand-ported `queryParams`/`mergeAttribution` implementations, with no shared corpus. `golden-sharing-links.json` remains the highest-leverage un-built artifact in the programme.
-- **Android `UrlQuery.kt` has zero direct test coverage** while iOS has `URLQueryTests.swift` — and it is the file carrying register 9.2 *plus* an unfiled second bug: Kotlin's `toIntOrNull(16)` accepts a sign, so `%-f` decodes to byte `0xF1` on Android and stays literal on iOS.
+- **Testability, for the merchant.** `FrakClient` is a `final` class behind a singleton. No fake, no protocol, no staging mode. A merchant cannot unit-test their own integration.
+- **Parity drift with the web SDK.** `FrakContextManager.update()` re-serialises the merchant's whole query (`%20`→`+`, `~`→`%7E`, IDN punycoding) where both native ports deliberately do not — a link built in the app and one built by the same merchant's website byte-differ, and nothing would notice. Plus ≥8 named input divergences across the three hand-ported `queryParams`/`mergeAttribution` implementations, with no shared corpus. `golden-sharing-links.json` remains the highest-leverage un-built artifact in the programme.
+- **Android `UrlQuery.kt` has zero direct test coverage** while iOS has `URLQueryTests.swift` — and it carries register 9.2 *plus* an unfiled second bug: Kotlin's `toIntOrNull(16)` accepts a sign, so `%-f` decodes to byte `0xF1` on Android and stays literal on iOS.
 
 ---
 
 ## 6. `06-open-findings.md` — challenged
 
-The register's **code-level** claims hold up remarkably well. Every load-bearing "Closed" row that can be checked by reading source is genuinely closed: the ABI dumps are committed and consistent (`PercentEncoding` and both `@InternalFrakApi` version constants really are absent; exactly one synthetic `<init>` survives, on `FrakError`), no public declaration in either Android module carries a default argument, the `SharingResult.Kind`/`FrakError.Kind` wire strings match byte-for-byte across platforms, the backup-rules files and their manifest pointer are gone, and the drain-time foreign-merchant check exists on both platforms. The proof envelope is three-way byte-identical — **verified independently**, including the Kotlin-hex-parse vs Swift-`UUID(uuidString:)` question, which is confirmed identical for uppercase input too.
+The register's **code-level** claims hold up remarkably well. Every load-bearing "Closed" row checkable by reading source is genuinely closed: the ABI dumps are committed and consistent (`PercentEncoding` and both `@InternalFrakApi` version constants really are absent; exactly one synthetic `<init>` survives, on `FrakError`), no public declaration in either Android module carries a default argument, the `SharingResult.Kind`/`FrakError.Kind` wire strings match byte-for-byte across platforms, the backup-rules files and their manifest pointer are gone, and the drain-time foreign-merchant check exists on both platforms. The proof envelope is three-way byte-identical — **verified independently**, including the Kotlin-hex-parse vs Swift-`UUID(uuidString:)` question, confirmed identical for uppercase input too.
 
-Its **numbers, coverage claims and three "closed" rows** do not hold.
+Its **numbers, coverage claims, three "closed" rows and its device-testing status** do not hold.
 
 | Claim | Reality |
 |---|---|
-| `checkDexSizeBudget` is part of the green `check`; `09` §5b reports it "was run and was red at **321 KB**" | **The task does not exist and never has.** `git log -S` finds no commit. `frak.sdk.dexBudgetKb` is in no `gradle.properties`. This is the one place the register reports an *executed measurement* that provably did not happen — and it contaminates the credibility of every other "verified this pass" line. Cited in 5 documents including `sdk/AGENTS.md:66`. |
+| `checkDexSizeBudget` is part of the green `check`; `09` §5b reports it "was run and was red at **321 KB**" | **The task does not exist and never has.** `git log -S` finds no commit. `frak.sdk.dexBudgetKb` is in no `gradle.properties`. This is the one place the register reports an *executed measurement* that provably did not happen — it contaminates every other "verified this pass" line. Cited in 5 documents including `sdk/AGENTS.md:66`. |
 | "iOS **396** tests in 42 suites"; "Android **451** (321 + 130)" | **473 in 51 suites**, and **514**. Both were already wrong at the register's own last commit. "A real count off the test XML this pass" is not what happened. |
-| 9.1 **Closed** | Its fix (`AttributionLedger`, `abandonGrace`, `selfUntilSettled`) was **reverted**; none of those identifiers exist in the tree. The revert is buried mid-paragraph inside a §4 "Closed" bullet. Both platforms knowingly report `.dismissed` over a share that happened. |
-| 9.16 **Closed** | The mechanism it describes (`pendingLaunch`/`pendingReports`) is **absent**; the presenter was redesigned instead, with no revert note at all. |
+| 9.1 **Closed** | Its fix (`AttributionLedger`, `abandonGrace`, `selfUntilSettled`) was **reverted**; none of those identifiers exist in the tree. The revert is buried mid-paragraph inside a §4 "Closed" bullet. |
+| 9.16 **Closed** | The mechanism it describes (`pendingLaunch`/`pendingReports`) is **absent**; the presenter was redesigned instead, with no revert note. |
 | 9.13 cites an `AtomicBoolean` fix as the thing that has no regression test | **There is no atomic anywhere in `frak-sdk-ui`.** |
 | 9.14 "branch-only" | The branch is on `dev`. The defect is live at `SharingHost.kt:157-161`. A real merchant callback is dropped. |
-| 8.2's "1,847 lines with zero coverage" and its per-file figures | **2,083 lines**; five of six per-file figures are wrong. It also cites `AttributionLedgerTests` as the proof that 9.1 is covered — that suite does not exist. |
+| 8.2's "1,847 lines with zero coverage" and its per-file figures | **2,083 lines**; five of six per-file figures are wrong. It cites `AttributionLedgerTests` as proof 9.1 is covered — that suite does not exist. |
+| **T3 / D2b / README §Status: Android's on-device evidence is "one manual pass"** | **False.** Android has been device-tested since day one (§0a). The register understates it, and has done so long enough that the understatement became a planning input. |
+| README §Status: "iOS has had no device or simulator pass at all" | **False since `0c978b1`.** `03-sharing-and-install.md:250` also claims a simulator XCUITest pass while no XCUITest target exists in the repo. |
 | §3.7's "303 lines (478 raw)" | 325 / 507. |
 | A7's "eighteen twins for fifteen members" | Seventeen for seventeen. |
-| README §Status: "iOS has had no device or simulator pass at all" | **False since yesterday.** Four commits are explicitly device/simulator QA, with measurements on an iPhone 15 and an iOS 26 simulator. `03-sharing-and-install.md:250` also claims a simulator XCUITest pass while no XCUITest target exists in the repo. |
 | A6 / `AGENTS.md` "publishing is broken by Dokka" | Fixed in code; the compass files still say it is broken. |
 | 1.2b "dex budget is now part of CI" | One third false (see row 1). |
 | "`@InternalFrakApi`'s first and so far only use" | Three sites on Android, two on iOS. |
 
-**And one class of problem the register's prose actively hides:** three rows are marked *closed* or *accepted with rationale* while the thing they describe is absent from the tree (9.1, 9.16, 9.13's atomic). A reader auditing by grep would conclude the register is unreliable; a reader auditing by reading would conclude the opposite. Both are half right, and that is the worst possible state for a document whose entire purpose is to be the thing you trust instead of re-reading the code.
+**One class of problem the prose actively hides:** three rows are marked *closed* or *accepted with rationale* while the thing they describe is absent from the tree (9.1, 9.16, 9.13's atomic). A reader auditing by grep concludes the register is unreliable; a reader auditing by reading concludes the opposite. Both are half right, which is the worst possible state for a document whose purpose is to be trusted *instead of* re-reading the code.
 
-> **Recommendation:** freeze `06` as a historical register, and move the live list to a table with a column that says *how the row was last verified* — `read` / `executed` / `on-device` / `asserted`. Almost every wrong claim above is an `asserted` masquerading as an `executed`.
+**And the mirror-image problem, new in this revision:** the device-testing rows are wrong in the *other* direction — they understate what has been verified. That is not harmless. `T3`, `D2b` and README §Status were read by this audit as fact and produced a wrong recommendation until the team corrected it. A register that undersells is as expensive as one that oversells.
+
+> **Recommendation:** freeze `06` as a historical register and move the live list to a table with a column for *how the row was last verified* — `read` / `executed` / `on-device` / `asserted` — plus a date. Nearly every wrong claim above is an `asserted` masquerading as an `executed`, or an `on-device` never written down.
 
 ---
 
 ## 7. What I would actually do
 
 **Week 1 — the gate.**
-1. Run `bun run --cwd sdk/android lint` (5 min). Resolve §3.9's unused import either way. *This tells you whether CI means anything.*
+1. Run `bun run --cwd sdk/android lint` (5 min). Resolve §3.8's unused import either way. *This tells you whether CI means anything.*
 2. `setPackage()` on the Android handoff (§2.1). One line, one test.
-3. Disable `?fmt=` for the alpha (§2.2 + §3.7), and say so in the README.
-4. `OnNewIntentProvider` for deep links + fix the harness (§2.3).
-5. Locale param (§3.4). Trivial, and it is the first thing a French appliance brand's German user sees.
-6. Point `SharingSheetStateTest` at loopback (§3.9). Stop calling production from CI.
-7. Flip the harness to R8 full mode and fix what falls out (§3.1).
+3. `.rejected → continue` on both platforms, plus `.hold` + drain-time id stamping for null `clientId` (§3.2a/b). Smallest change with the largest purchase-path payoff.
+4. Backend merge get-or-create, **proof-gated** (§3.3).
+5. Decide `?fmt=`: origin check, or off for the alpha (§2.2). Do not remove the 404 before §3.3 lands.
+6. `OnNewIntentProvider` for deep links, and **make the harness assert instead of narrate** (§2.3).
+7. Android foreground flush hook (§3.2c). Locale param (§3.4). `guard !lent` (§3.5).
+8. Point `SharingSheetStateTest` at loopback (§3.8). Stop calling production from CI.
 
-**Week 2 — the two things only a device can tell you.**
-8. **A full Android sharing-sheet device pass**, run the way the iOS one was. Budget for six defects; iOS found six. Do this before anything cosmetic.
-9. The readiness-signal fix for the blank sheet (§2.4), verified on that pass.
-10. The merchant README day (§2.5/§2.6) — dependency snippet, allow-listing, `logLevel`, manifest checklist, a snippet that compiles.
+**Week 2 — the two things the harness cannot currently show you.**
+9. **Run the harness as a minified release build** (§3.1) and fix what falls out.
+10. **Add a two-destination `NavHost` to the harness** and reproduce §3.6.
+11. The readiness-signal fix for the blank sheet (§2.4).
+12. The merchant README day (§2.5/§2.6) — dependency snippet, allow-listing, `logLevel`, manifest checklist, a snippet that compiles.
 
 **Before you cut the tag.**
-11. Decide §4 items 1–5. They are the only irreversible ones on the list.
-12. Tag `0.1.0-alpha.1` on both platforms *at the same version*, and make one external consumer build against the published artifact — not the composite/path dependency the harnesses use, which masks exactly the failures publishing introduces.
+13. Decide §4 items 1–5 and 10. Only irreversible ones on the list.
+14. Tag `0.1.0-alpha.1` on both platforms *at the same version*, and make one external consumer build against the **published artifact** — not the composite/path dependency the harnesses use, which masks exactly the failures publishing introduces.
+15. Correct `06` T3/D2b and README §Status while the facts are fresh (§6).
 
-**Deliberately deferred, with a note in the README rather than a fix.** UIKit/ObjC support; theming; the merchant test seam; accessibility beyond "it does not crash"; `golden-sharing-links.json`. All real, none of them the reason an alpha fails.
+**Deliberately deferred, with a README note rather than a fix.** UIKit/ObjC support; theming; the merchant test seam; accessibility beyond "it does not crash"; per-tier queue reliability (§5) unless §4 row 10 forces the format decision now; `golden-sharing-links.json`.
 
 ---
 
@@ -255,4 +344,6 @@ Its **numbers, coverage claims and three "closed" rows** do not hold.
 | [`tests-and-coverage.md`](./audit-2026-08-13/tests-and-coverage.md) | 18 | a unit test calls production; the façade has zero coverage |
 | [`register-challenge.md`](./audit-2026-08-13/register-challenge.md) | 14 | `checkDexSizeBudget` does not exist |
 
-**Not verifiable here:** anything needing a compiler, an emulator, a simulator or a network. No JDK, no Android SDK, no Swift toolchain was available. Every claim above is source-read. The three that would most change this report if executed: the ktlint run (§3.9), an R8 build (§3.1), and an Android device pass on the sheet (§7.8).
+**Not verifiable here:** anything needing a compiler, an emulator, a simulator or a network. No JDK, no Android SDK, no Swift toolchain was available; every claim is source-read. The per-area reports in `audit-2026-08-13/` are as their authors wrote them and have **not** been revised for §0 — where one of them says Android has no device coverage, §0(a) overrides it.
+
+The three checks that would most change this report if executed: the ktlint run (§3.8), a minified release build of the harness (§3.1), and a `NavHost` harness screen (§3.6).
