@@ -2,6 +2,43 @@
 
 Gradle multi-module library project for the Frak native Android SDK. It is not an app: there is nothing to install and nothing to launch, so no command here needs a device or an emulator.
 
+This file is contributor-facing. The section below is the only merchant-facing part of it, and it is the whole integration.
+
+## For merchants
+
+**Before anything else: Frak must allow-list your application id against your merchant id.** Ask us to do it. Until it is done every call fails with `MerchantResolutionFailed` — and `tracking.purchase` still returns `Success`, because tracking is queued and best-effort, so the failure is invisible unless you turn logging up.
+
+**Nothing is published yet.** There is no `mavenCentral()` coordinate to depend on today; talk to us. When there is, it is:
+
+```kotlin
+dependencies {
+    implementation("id.frak.sdk:core:<version>")
+    // Only if you show the sharing sheet. Brings Compose (ui, foundation, material3),
+    // androidx.activity and androidx.webkit onto your runtime classpath.
+    implementation("id.frak.sdk:ui:<version>")
+}
+```
+
+Consumer floors: `minSdk 24`, JVM target 17, Kotlin metadata at language level 2.2 (so a Kotlin 2.2+ compiler), AGP 8.2+. `:frak-sdk-ui`'s `@Composable build()` overload needs you to declare Compose yourself — it is an `implementation` dependency here, not `api`.
+
+```kotlin
+// Application.onCreate
+Frak.initialize(
+    this,
+    FrakConfig.Builder("your-merchant-id")
+        // Defaults to NONE. Every diagnostic the SDK writes, including the two failures
+        // above, is dropped on the floor until you raise this.
+        .logLevel(FrakLogLevel.DEBUG)
+        .build(),
+)
+```
+
+Manifest checklist — the SDK's own manifest already merges in `INTERNET` and the `<queries>` entry for the wallet package, so there is nothing to add for those. What you must supply:
+
+- An `<intent-filter>` for the `https` domain your share links point at (Android App Links, plus `assetlinks.json` on that domain), or an inbound referral never reaches your app at all.
+- `Frak.initialize` in your **default process** only.
+- With `DeepLinkHandling.Automatic` (the default) on a `singleTask`/`singleTop` activity, call `setIntent(intent)` in `onNewIntent` — Android does not update `getIntent()` for you, and without it every warm-start referral is silently lost.
+
 ## Build, test, lint
 
 From the repo root:
@@ -42,7 +79,7 @@ Split so a merchant taking only tracking never pulls in a web view. `minSdk 24`,
 
 | Package | Contains |
 | --- | --- |
-| `core/` | `FrakConfig`, `FrakEnvironment`, `DefaultFrakClient`, `FrakError`, `FrakResult`, `FrakLogger`, `Base64Url` |
+| `core/` | `FrakConfig`, `FrakEnvironment`, `DefaultFrakClient`, `FrakError`, `FrakResult`, `Base64Url` |
 | `net/` | `HttpClient` (`HttpURLConnection`), `JsonReader`, `UrlQuery`, `PercentEncoding` |
 | `identity/` | `AnonymousIdStore`, `ProofCodec`, `DeviceKey`, `AndroidKeystoreDeviceKeyStore` |
 | `config/` | `ConfigStore` (SWR cache), `FrakResolvedConfig`, `ResolvedConfigDecoder`, `MerchantQuery`, `SingleFlight`, `Backoff`, `KeyValueStore` |
@@ -69,7 +106,8 @@ Entry point: `Frak.initialize`, `Frak.client`, `Frak.clientOrNull`, `Frak.isInit
 | `tracking` | `track`, `purchase` (+ `trackAsync`, `purchaseAsync`) |
 | `appLink` | `handleReferral`, `isFrakAppInstalled`, `openFrakApp`, `installPageUrl` (+ an `*Async` for each except `isFrakAppInstalled`, which never suspended) |
 
-Supporting public types: `FrakContext`, `SharingRequest`, `SharingProduct`, `ProductDetails`, `RewardRequest`, `AttributionParams`, `Interaction`, `FrakResult`, `OpenAppResult`, `DeepLinkHandling`, `FrakLogSink`, `FrakConfig`, `FrakEnvironment`, `FrakMetadata`, `FrakError`, `FrakLogger`.
+Supporting public types: `FrakContext`, `SharingRequest`, `SharingProduct`, `ProductDetails`, `RewardRequest`, `AttributionParams`, `Interaction`, `FrakResult`, `OpenAppResult`, `DeepLinkHandling`, `FrakLogSink`, `FrakConfig`, `FrakEnvironment`, `FrakMetadata`, `FrakError`. (`FrakLogger` is **not** public — it is `internal` and absent
+from the ratified `.api` dump; `FrakLogSink` above is the merchant-facing half.)
 
 Resolved-config model, publicly *readable* in full (placements, component copy, translations, attribution): `FrakResolvedConfig`, `ResolvedSdkConfig`, `ResolvedPlacement`, `ResolvedComponents`, `ButtonShareConfig`, `ButtonWalletConfig`, `OpenInAppConfig`, `PostPurchaseConfig`, `BannerConfig`, `AttributionDefaults`. Every constructor in that tree is `internal`: it is a read model the SDK hands you from `config.resolve()`, and a public constructor would freeze an arity the backend keeps adding fields to — see "Binary compatibility" below. `FrakResolvedConfig.displayName`/`displayLogoUrl` are derived properties that resolve the `sdkConfig`-over-top-level precedence once, so a caller never writes that fold itself. `display`-prefixed deliberately: a derived getter must not squat on the name a future top-level wire field would want, since repointing one is a behaviour change with an unchanged JVM descriptor that no `.api` dump could catch.
 
@@ -121,7 +159,7 @@ Nothing on the public surface carries a Kotlin default argument any more. `Confi
 
 ### Java
 
-Every suspending member of `FrakClient` and its five namespaces has a `CompletableFuture` twin named `*Async`, plus `Frak.shutdownAsync()` — eighteen twins for fifteen members, since three of those members are overload pairs and the twins mirror them. Kotlin callers use the `suspend` form; a Java caller cannot name a `Continuation`, so before the twins they could call none of them.
+Every suspending member of `FrakClient` and its five namespaces has a `CompletableFuture` twin named `*Async`, plus `Frak.shutdownAsync()` — seventeen twins, one per member; `grep Async frak-sdk/api/frak-sdk.api` is the count. Kotlin callers use the `suspend` form; a Java caller cannot name a `Continuation`, so before the twins they could call none of them.
 
 ```java
 Frak.getClient().getRewards()
@@ -133,7 +171,9 @@ The twins are the same work on the same `SupervisorJob` that `Frak.shutdown()` c
 
 **Never `get()` or `join()` a twin on the main thread.** Completion needs a main-looper turn and a blocked main thread never gives one, so the future never completes — a deterministic ANR, not a race. Register a continuation (`thenAccept`, `whenComplete`), or block on a background thread.
 
-A twin called after `Frak.shutdown()` returns an already-cancelled future rather than hanging. `Frak.shutdownAsync()` is the one twin on its own scope — it cannot use the one it is cancelling — and it returns immediately, so `shutdownAsync(); initialize(…)` back-to-back races the teardown; sequence the second call off the future.
+Java callers reach teardown as `Frak.shutdownAsync()`; `Frak.shutdown()` is a suspending
+member and so the one entry point that is not `@JvmStatic`. A twin called after
+`Frak.shutdown()` returns an already-cancelled future rather than hanging. `Frak.shutdownAsync()` is the one twin on its own scope — it cannot use the one it is cancelling — and it returns immediately, so `shutdownAsync(); initialize(…)` back-to-back races the teardown; sequence the second call off the future.
 
 Twins mirror their suspending member's return type: `resolveAsync` completes exceptionally with the same `FrakError` that `resolve` throws (wrapped in `CompletionException`, as any future would), and `trackAsync` returns `CompletableFuture<FrakResult<Unit>>` because `track` returns `FrakResult<Unit>`. There is no second result type layered over the future. Two exceptions return `CompletableFuture<Void>`: `setTrackingEnabledAsync` and `shutdownAsync`, because `kotlin.Unit` on a Java signature is noise.
 
@@ -163,9 +203,9 @@ val sharing = remember { FrakSharing.Builder(::onShareResult) }.build()
 
 ## Status
 
-The MVP surface above is implemented and covered by ~435 JVM unit tests (`grep -rc '@Test' frak-sdk*/src/test -r --include=*.kt | awk -F: '{s+=$2} END {print s}'`), plus Robolectric coverage in `frak-sdk-ui` for the sharing sheet's sequencing (tier 3 fallback, the 1.5s latency budget, tier 2's cache-only retry, web view origin pinning).
+The MVP surface above is implemented and covered by 536 JVM unit tests as of 2026-08-13 (392 in `frak-sdk`, 144 in `frak-sdk-ui`; count them off `*/build/test-results/testDebugUnitTest/*.xml`, not by grepping `@Test`), including Robolectric coverage in `frak-sdk-ui` for the sharing sheet's sequencing (tier 3 fallback, the 1.5s latency budget, the retry ladder, web view origin pinning).
 
-One Android device pass (SM-G998B, Android 15) has exercised `initialize`, the wallet-installed probe, `config.resolve` and `rewards.best`. The sharing sheet, the install handoff and inbound deep links have not run on a device, and neither has the `ComponentDialog` host that replaced `ModalBottomSheet` — no rotation pass, no leak check, no edge-to-edge pass against a `targetSdk 35`-or-later host. `.github/workflows/apps.yaml` lints, builds and unit-tests this SDK on every push and PR touching `sdk/android/**`, but it does **not** build `example/native-android`: nothing in CI compiles the harness, so a broken harness call site does not go red. There is no publish path. The binary-compatibility gate is wired (`apiCheck`, part of `check`) but its first `api/*.api` dumps are not committed, so `check` is red until they are — see "Binary compatibility" below.
+Android has been driven on a device (SM-G998B, Android 15) throughout development — `initialize`, the wallet-installed probe, `config.resolve` and `rewards.best`. That is device testing of `example/native-android`, in a **debug** build, on a single screen, so it cannot see anything the harness itself gets wrong, anything only R8 does (`isMinifyEnabled = false` there), or anything only a multi-destination `NavHost` triggers. The sharing sheet, the install handoff and inbound deep links have not run on a device, and neither has the `ComponentDialog` host that replaced `ModalBottomSheet` — no rotation pass, no leak check, no edge-to-edge pass against a `targetSdk 35`-or-later host. `.github/workflows/apps.yaml` lints, builds and unit-tests this SDK on every push and PR touching `sdk/android/**`, but it does **not** build `example/native-android`: nothing in CI compiles the harness, so a broken harness call site does not go red. There is no publish path exercised end to end. The binary-compatibility gate is wired and **ratified**: both `api/*.api` dumps are committed, `apiCheck` runs in CI, and `check` is green — see "Binary compatibility" below.
 
 `example/native-android` builds against the real artifacts via a Gradle composite build (`includeBuild("../../sdk/android")` with an explicit `dependencySubstitution`, since Gradle's automatic substitution derives coordinates from `project.group` plus the Gradle module name and so looks for `id.frak.sdk:frak-sdk`, not the published `id.frak.sdk:core`). It exercises `Frak.initialize`, `.appLink`, `.config.resolve`, `.tracking.purchase` and `.rewards.best` through the SDK's public API — a source checkout, not a published artifact.
 

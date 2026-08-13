@@ -23,10 +23,10 @@ Two per platform, so a merchant taking only tracking never pulls in a web view.
 | Namespace | `id.frak.sdk` | module `FrakSDK` |
 | Distribution | Maven Central (Portal) | SPM — `05` §3 |
 
-Budget: 256 KB of dex per platform, enforced on Android (`frak.sdk.dexBudgetKb` /
-`checkDexSizeBudget`, wired into `check`), by nothing on iOS. Declared Swift tools
-version is 5.9 while sources use Swift 6-only syntax and no target sets
-`swiftSettings` — `06-open-findings.md` §1.
+Budget: 256 KB of dex per platform, enforced by nothing on either. `frak.sdk.dexBudgetKb` /
+`checkDexSizeBudget` were retired in `32836c217` — they measured unminified d8 output, which is
+about seven times what R8 actually keeps. Declared Swift tools version is 6.0 with `.swiftLanguageMode(.v6)` on every target, so a
+merchant's own resolve gets the strict concurrency CI does.
 
 ```
 FrakSDK

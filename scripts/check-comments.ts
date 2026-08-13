@@ -17,8 +17,12 @@ const DEFAULT_ROOTS = [
     "sdk/android/frak-sdk-ui/src",
     "sdk/ios/Sources",
     "sdk/ios/Tests",
+    // The manifests, not just the sources: `Package.swift` is a Swift file that sits one
+    // directory above `Sources` and was outside every root this list used to name.
+    "sdk/ios/Package.swift",
     "example/native-android/app/src",
     "example/native-ios/Sources",
+    "example/native-ios/Package.swift",
 ];
 
 /** Comment text lines allowed per block; opening and closing delimiters do not count. */

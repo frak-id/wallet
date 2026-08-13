@@ -247,8 +247,9 @@ already promoted the session and a late build has nothing to hand a page to. Onl
 are retried (`sharingBuildIsWorthRetrying`) — a misconfiguration retried three times is three
 times the wait for the same answer. **Android has no equivalent yet.**
 
-**One simulator pass has now run, on the dismissal flows only** (iOS 26, XCUITest driving
-tap-outside / drag-down / reopen against the harness). Every *number* in the Android section above
+**No simulator UI pass has run.** This paragraph used to claim one, driven by XCUITest; there is
+no XCUITest target in `example/native-ios/project.yml` or anywhere else in the repo, and no
+workflow invokes `xcodebuild test`. Manual device testing of the sheet started on 2026-08-12. Every *number* in the Android section above
 is still Android's. `swift build` at the iOS-simulator triple and the host-run suites remain the
 only evidence for the rest; `SharingWebViewPool`, `SharingSheetModel` and `SharingWebView` are
 behind `#if canImport(UIKit)` and therefore compile-checked only. The logic that could be pulled

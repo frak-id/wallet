@@ -145,12 +145,24 @@ jobs:
         with:
           build-root-directory: sdk/android
           cache-read-only: ${{ github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/main' }}
+          # `validateDistributionUrl` in gradle-wrapper.properties checks the URL is
+          # well-formed, not the bytes. This checks the wrapper jar against Gradle's
+          # published hashes, which matters most in the pipeline holding the signing key.
+          validate-wrappers: true
 
       - uses: oven-sh/setup-bun@v2
+
+      - name: "📦 Install (bun)"
+        run: bun install --frozen-lockfile
 
       # ktlint resolves through Gradle, so there is nothing to `brew install` here.
       - name: "📏 Lint (ktlint)"
         run: bun run --cwd sdk/android lint
+
+      # The only gate on the Kotlin/Swift comment budget; biome cannot parse either
+      # language, so nothing else in CI runs it.
+      - name: "🗒️ Comment budget"
+        run: bun run lint:comments
 
       # `assembleRelease` IS the typecheck: it compiles every source set with
       # `explicitApi()` enforced. There is no separate typecheck task to add.

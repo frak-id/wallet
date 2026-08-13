@@ -194,7 +194,7 @@ public object Frak {
         if (application == null) {
             logger.error(
                 "DeepLinkHandling.Automatic needs an Application context. " +
-                    "Inbound referral links will be ignored; call handleReferralLink from your own router.",
+                    "Inbound referral links will be ignored; call client.appLink.handleReferral(url) from your own router.",
             )
             return null
         }

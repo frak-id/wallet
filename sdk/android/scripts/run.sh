@@ -21,8 +21,21 @@ die() {
 	exit 1
 }
 
+# `:frak-sdk-ui` pins its test launcher to Java 17 and `settings.gradle.kts` registers no
+# toolchain resolver, so a contributor whose only JDK is 21 gets "No matching toolchain".
+require_jdk_17() {
+	local home="${JAVA_HOME:-}"
+	[ -n "$home" ] || return 0
+	case "$("$home/bin/java" -version 2>&1 | head -1)" in
+	*\"17.*) return 0 ;;
+	esac
+	log "warning: JAVA_HOME is not a JDK 17. :frak-sdk-ui pins its test launcher to 17 and this"
+	log "         build provisions no toolchain, so tests may fail with 'No matching toolchain'."
+}
+
 # Gradle reads ANDROID_HOME directly; without it `assembleRelease` fails with "SDK location not found".
 resolve_sdk() {
+	require_jdk_17
 	local sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 	[ -d "$sdk" ] || die "Android SDK not found. Set ANDROID_HOME, or install via Android Studio."
 	export ANDROID_HOME="$sdk"

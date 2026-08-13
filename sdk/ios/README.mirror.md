@@ -12,9 +12,11 @@ Xcode → File → Add Package Dependencies → `https://github.com/frak-id/frak
 
 Or in a `Package.swift`:
 
+No tag exists yet, so pin the branch until the first release is cut:
+
 ```swift
 dependencies: [
-    .package(url: "https://github.com/frak-id/frak-ios-sdk.git", exact: "0.1.0-alpha.1")
+    .package(url: "https://github.com/frak-id/frak-ios-sdk.git", branch: "main")
 ],
 targets: [
     .target(name: "YourApp", dependencies: [
@@ -35,6 +37,13 @@ The dependency never runs the other way, so taking `FrakSDK` alone links no web 
 **Requires iOS 15+ and Xcode 16+.** The Xcode floor comes from the manifest declaring
 Swift 6 language mode, so your build compiles this package the same way its CI does.
 
+## Before your first call
+
+**Frak must allow-list your bundle id against your merchant id.** Ask us to do it before you
+integrate. Until it is done every call fails with `merchantResolutionFailed` — and
+`tracking.purchase` still returns success, because tracking is queued and best-effort, so the
+failure is silent unless you turn logging on (below).
+
 ## Quickstart
 
 ```swift
@@ -43,7 +52,10 @@ import FrakSDK
 Frak.initialize(
     FrakConfig(
         merchantId: "your-merchant-id",
-        metadata: FrakMetadata(name: "Your App", currency: .eur)
+        metadata: FrakMetadata(name: "Your App", currency: .eur),
+        // Default is `.none`. Every diagnostic the SDK writes — including the two above —
+        // is dropped on the floor until you raise this.
+        logLevel: .debug
     )
 )
 ```
@@ -51,8 +63,12 @@ Frak.initialize(
 `Frak.client` is throwing-synchronous; every namespace member on it is `async`:
 
 ```swift
-let reward = await Frak.clientOrNull?.rewards.best(...)
-try await Frak.client.tracking.purchase(...)
+// `try`, because both the `client` getter and `best` throw.
+let reward = try await Frak.clientOrNull?.rewards.best(targetInteraction: "purchase")
+// `purchase` does not throw — it returns a Result — but the `client` getter still does.
+let outcome = try await Frak.client.tracking.purchase(
+    customerId: "c", orderId: "o", token: "t"
+)
 ```
 
 ### Sharing sheet
@@ -102,6 +118,47 @@ There is no automatic deep-link handling — a library cannot observe your `Scen
 
 ```swift
 .onOpenURL { url in
+    Task { await Frak.clientOrNull?.appLink.handleReferral(url) }
+}
+```
+
+## Info.plist and entitlements
+
+Three things the SDK cannot do for you. Skip them and the failures are silent.
+
+**`LSApplicationQueriesSchemes`.** Without it `isFrakAppInstalled()` is permanently false,
+the install handoff never prefers the app over the store, and the console fills with
+`canOpenURL: failed`:
+
+```xml
+<key>LSApplicationQueriesSchemes</key>
+<array>
+    <string>frakwallet</string>
+</array>
+```
+
+**Associated Domains, plus an `apple-app-site-association` on your domain.** The share links
+this SDK builds are `https://` links on *your* domain. Without the entitlement they open
+Safari instead of your app, and no arrival is ever tracked:
+
+```
+applinks:yourdomain.example
+```
+
+**`.onOpenURL` only works in the SwiftUI `App` lifecycle.** There it receives universal links as
+well as custom schemes, so the one handler above covers both. If your app still uses a UIKit
+`AppDelegate`/`SceneDelegate`, it never fires — route both entry points yourself:
+
+```swift
+func scene(_ scene: UIScene, openURLContexts contexts: Set<UIOpenURLContext>) {
+    guard let url = contexts.first?.url else { return }
+    Task { await Frak.clientOrNull?.appLink.handleReferral(url) }
+}
+
+func scene(_ scene: UIScene, continue activity: NSUserActivity) {
+    guard activity.activityType == NSUserActivityTypeBrowsingWeb,
+        let url = activity.webpageURL
+    else { return }
     Task { await Frak.clientOrNull?.appLink.handleReferral(url) }
 }
 ```

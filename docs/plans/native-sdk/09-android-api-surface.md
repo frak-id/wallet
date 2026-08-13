@@ -226,7 +226,7 @@ is exiting, and dropping the block on that path would leave a future suspended f
 and re-dispatches so the coroutine resumes and finishes, which is what `kotlinx-coroutines-android`'s own
 `HandlerContext` does.
 
-Still owed: `checkDexSizeBudget` has not been run against this. Eighteen twins plus their suspend-lambda
+Still owed: a dex budget over the minified-APK attribution — the unminified one was retired in `32836c217`. Seventeen twins plus their suspend-lambda
 classes, `MainThreadDispatcher`, and `RewardRequest`'s three classes is roughly twenty-two new classes
 against a 256 KB budget. If it goes red that is a signal about the twin count, not a reason to raise the
 budget.
@@ -709,18 +709,15 @@ Added by the step-2 review, in the order they become unfixable:
   answers are in §5a above: `PercentEncoding` absent (so `nonPublicMarkers` fired), the `@Composable`
   overload present with its `(Composer, Int)` tail, and one `synthetic <init>` — on `FrakError`, for
   a reason §0 had wrong.
-- **~~`checkDexSizeBudget` has not run since before step 1.~~ Run, and it was red.** `:frak-sdk`
-  measured **321 KB against the 256 KB budget**; `:frak-sdk-ui` came in at 162 KB. The budget is now
-  384 KB, set against the first measured number rather than a guess — the full reasoning and the
-  150 → 256 → 384 history is in `sdk/android/gradle.properties`.
+- **~~`checkDexSizeBudget` has not run since before step 1.~~ Run, and it was red — and the gate has
+  since been retired.** `:frak-sdk` measured **318 KB**, `:frak-sdk-ui` 161 KB, and the budget was
+  raised to 384 KB against that first measured number. `32836c217` then deleted the whole thing:
+  the task gated *unminified* d8 output, and attributing every class through R8's `mapping.txt` in a
+  minified `example/native-android` release APK put the SDK at 60 KB of executable code. A gate that
+  reports 318 KB for something that lands as 60 KB is wrong in both directions.
 
-  **This bullet's diagnosis was wrong and the correction matters more than the number.** It said a
-  red budget is "a signal about the `*Async` twin count, which is an ABI question". Measured, the
-  eighteen twins are 44 KB of 915 KB of class bytes — about 5%, roughly 16 KB dexed. Deleting every
-  one of them would not have closed a 65 KB gap, and would have deleted the Java async story §2
-  exists to provide. The weight is spread across core (211 KB), config (164 KB), tracking (120 KB),
-  rewards (102 KB), net (83 KB), identity (63 KB) and sharing (49 KB), with no fat component. So this
-  was never an ABI question and did not need to block the dump.
+  The diagnosis correction still stands: a red budget would not have been a signal about the
+  `*Async` twin count, so it was never an ABI question and did not need to block the dump.
 - **A2's remaining sealed hierarchies.** `FrakError`, `FrakEnvironment`, `RewardTier` and
   `SharingResult` are still exhaustively matchable, and `FrakError`/`SharingResult` are the two a
   merchant genuinely does match on — so the `Interaction` fix (§4) is not available to them. The dump
