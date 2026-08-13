@@ -26,11 +26,15 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            // Debug-signed so `installRelease` works without a keystore. This is the harness,
+            // not a shippable artifact.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
