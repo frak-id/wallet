@@ -1,10 +1,10 @@
 # Native SDK — first-alpha audit
 
-**Date:** 2026-08-13 · **Tree:** `origin/dev` @ `c0a0cec` · **Method:** 13 parallel read-only audits, no toolchain available (no JDK, no Android SDK, no Swift) — every claim is source-read and cited `path:line`. 191 findings; per-area reports in [`audit-2026-08-13/`](./audit-2026-08-13/).
+**Date:** 2026-08-13 · **Tree:** `origin/dev` @ `f1dc693` (first pass ran at `c0a0cec`) · **Method:** 13 parallel read-only audits, then 3 more over the delta. No toolchain available (no JDK, no Android SDK, no Swift) — every claim is source-read and cited `path:line`. 191 findings in the first pass, 23 more in the delta; per-area reports in [`audit-2026-08-13/`](./audit-2026-08-13/) and [`audit-2026-08-13/delta-f1dc693/`](./audit-2026-08-13/delta-f1dc693/).
 
 This document supersedes nothing. It sits next to [`06-open-findings.md`](./06-open-findings.md) and, in §6, challenges it.
 
-**Revised after review** (see §0 for what changed and why). Two team corrections moved conclusions: Android *has* been device-tested since day one, and sharing interactions are analytics rather than reward-bearing.
+**Revised twice.** §0 records two team corrections that moved conclusions. **§9 reviews the 12 commits that landed after the first pass** — one of which performed, on Frak's own harness, exactly the consumer break §4 row 6 predicted.
 
 ---
 
@@ -232,7 +232,7 @@ Cheap today, expensive-to-impossible after `id.frak.sdk:core:0.1.0` exists. Rank
 | 3 | Retry hint is **milliseconds on Android, seconds on iOS** (`FrakError.BackingOff` vs `.backingOff`) | A unit divergence in a public error payload. Free to fix now. |
 | 4 | No retryable/fatal axis on `FrakError`, and iOS's `LocalizedError` conformance advertises raw diagnostics as user-facing | Merchants will show these strings to users. |
 | 5 | `tracking.purchase(String, String, String)` — three unlabeled Strings **on the reward-bearing path**, frozen at `frak-sdk.api:82` | Trivially mis-ordered, permanently. Promoted by §0(b): this is the money call. |
-| 6 | `FrakContext` is a versioned public hierarchy with no discriminator and no unknown arm, **on both platforms** | V3 will be a consumer break. A2 fixed this for `FrakError`/`SharingResult`/`Interaction` and stopped. |
+| 6 | `FrakContext` is a versioned public hierarchy with no discriminator and no unknown arm, **on both platforms** — and `SharingResult`, which the register certified as narrowed-and-safe, **grew a sixth arm five days later** | **No longer hypothetical. `eccb8c2` proved it on Frak's own consumer**: adding `SharingResult.WalletOpened` forced a one-line edit to `example/native-android/.../MainActivity.kt:303` to keep the harness's `when` compiling. A merchant who had shipped against a published `0.1.0` gets worse than a compile error — Kotlin lowers an exhaustive `when` with an implicit `else -> throw NoWhenBranchMatchedException()`, so an **already-installed binary crashes at runtime** the first time the SDK hands it the new arm. On iOS the enum is public and non-frozen, so it is a hard source break for every merchant on the next recompile. The `Kind` discriminator did not prevent either; it was never able to. See §9.2. |
 | 7 | `resetAnonymousId()`'s `Boolean` is a documented cross-platform contract iOS cannot honour (returns `true` while the delete can silently fail) | Either make it honest or make it `Void`. |
 | 8 | `heightFraction` **throws on Android, clamps on iOS** | Same input, different program. |
 | 9 | Equality/`Hashable` split across 8 types (wider than register 9.9 records) | Adding equality later is a behaviour change with an unchanged descriptor — invisible to the ABI gate. |
@@ -343,7 +343,72 @@ Its **numbers, coverage claims, three "closed" rows and its device-testing statu
 | [`public-api-ergonomics.md`](./audit-2026-08-13/public-api-ergonomics.md) | 16 | the §4 irreversibility list |
 | [`tests-and-coverage.md`](./audit-2026-08-13/tests-and-coverage.md) | 18 | a unit test calls production; the façade has zero coverage |
 | [`register-challenge.md`](./audit-2026-08-13/register-challenge.md) | 14 | `checkDexSizeBudget` does not exist |
+| [`delta-f1dc693/regression-sweep.md`](./audit-2026-08-13/delta-f1dc693/regression-sweep.md) | status table | 13 of 16 P0+P1 untouched; every Android P0 open |
+| [`delta-f1dc693/abi-parity-and-contract.md`](./audit-2026-08-13/delta-f1dc693/abi-parity-and-contract.md) | 10 | the `SharingResult` break; `/install` grew to 10 iOS-only keys |
+| [`delta-f1dc693/ios-install-detection.md`](./audit-2026-08-13/delta-f1dc693/ios-install-detection.md) | 13 | a third `InstallProbe` leak; 330 lines that execute nowhere |
 
 **Not verifiable here:** anything needing a compiler, an emulator, a simulator or a network. No JDK, no Android SDK, no Swift toolchain was available; every claim is source-read. The per-area reports in `audit-2026-08-13/` are as their authors wrote them and have **not** been revised for §0 — where one of them says Android has no device coverage, §0(a) overrides it.
 
 The three checks that would most change this report if executed: the ktlint run (§3.8), a minified release build of the harness (§3.1), and a `NavHost` harness screen (§3.6).
+
+---
+
+## 9. Delta review — `c0a0cec` → `f1dc693`
+
+Twelve commits landed after the first pass: an iOS App Store surface rework (`0e74a65`, `beba204`, `e79484a`, `2537681`), iOS post-install detection (`ec0f7c6`, `5e67088`, `b68f989`, `48d7e2c`), `SharingResult.walletOpened` on Android (`eccb8c2`), and the wallet install page's installed-state UI (`3a8da9b`). ~2000 lines. Three read-only reviews in [`delta-f1dc693/`](./audit-2026-08-13/delta-f1dc693/); 23 new findings.
+
+### 9.1 Net verdict
+
+**No worse, and not meaningfully closer to alpha.** Of the 16 P0+P1 items, **one is half-fixed**, **two are partly mitigated**, and **thirteen are untouched — including every Android P0**. Meanwhile the delta added ~330 lines of new UIKit-gated install machinery that **no test executes anywhere** (`InstallProbeTests.swift:8-11` says so in its own doc comment), and grew the ungated `/install` wire contract from 6 keys to 10.
+
+The week-1 list in §7 — `setPackage()`, `.rejected → continue`, `OnNewIntentProvider`, loopback the test, run ktlint — is about a day of work and none of it was started. That is the whole gap between this tree and a shippable alpha, and the delta spent its 2000 lines elsewhere.
+
+**Closed or partly closed:**
+
+| Prior finding | Status | Proof |
+|---|---|---|
+| `ios-sharing-sheet` F3 — `teardown()` abandons a session, leaks the `WKWebView` | **Leak half closed** | `SharingPresentation.swift:272` now calls `dispose()` (`48d7e2c`). The no-`onResult` half is open. |
+| `ios-sharing-sheet` F6 — `StoreOverlay` reports success it cannot observe | **Half closed** | Default surface moved from fire-and-forget `SKOverlay` to `SKStoreProductViewController`, which observes the load and falls back. But `StoreOverlayInvite` **reproduces F6 verbatim** for merchants who pick the overlay. |
+| §2.1 iOS half — custom-scheme handoff is hijackable | **Partly mitigated** | `DefaultFrakClient.swift:378-387` puts a universal-link rung *ahead* of the custom scheme. Android's half — the actual blocker — is untouched. |
+| §2.6 — `LSApplicationQueriesSchemes` undocumented | **Partly narrowed** | It now appears in `README.mirror.md`. Once, in a sub-clause, **with no value given** and still no Associated Domains guidance. |
+
+**Explicitly re-checked and still open:** §2.1 Android (`AppLauncher.kt` unchanged), §2.2, §2.3, §2.4, §2.5, §3.1, §3.2 (all three parts), §3.3, §3.4, §3.5 (`warm()` still has no `guard !lent`), §3.6, §3.7, §3.8 — **the unused `StateFlow` import is still at `DefaultFrakClient.kt:39` after 12 more commits and a merge to `dev`**, and `SharingSheetStateTest.kt:43-46` still calls `Frak.initialize` with a Production env — §3.9's `NativeShare` half, §3.10, and all ten §4 rows.
+
+### 9.2 `SharingResult` grew a sixth arm — the predicted break, executed
+
+`eccb8c2` adds `WalletOpened` to a public sealed hierarchy on Android and `.walletOpened` to a public enum on iOS, and edits the committed dump (`frak-sdk-ui.api`). Details and consequences are in §4 row 6, which this commit converted from a prediction into a demonstration.
+
+Three things worth keeping:
+
+- **The `Kind` discriminator did not help, and structurally cannot.** `06`'s A2 narrowed `SharingResult` by adding `Kind` so a merchant matching on `.kind` with an `else` survives. True — and irrelevant to a merchant matching on the *hierarchy*, which is the ergonomic thing to do and what Frak's own harness does.
+- **The doc comment predicted its own violation.** `SharingResult.swift:17-18`: *"A `switch` over `Kind` with a `default` survives a new case; an exhaustive `switch` over the result does not."* Written, then triggered five days later.
+- **Parity is genuinely correct here**: `"walletOpened"` on both sides, same `significance` integer, `Kind` in the same position. The engineering is fine. The *policy* is the finding.
+
+Free today, because nothing is published. That is the entire argument for deciding §4 before the tag rather than after.
+
+### 9.3 New findings worth acting on
+
+Full set in the delta reports. The ones that change plans:
+
+**High — `InstallProbe` has a third leak the "closed two probe leaks" commit did not close.** `stop()` never invalidates `generation`, so a `start()` suspended across teardown restarts the probe on a released model (`delta-f1dc693/ios-install-detection.md` N1). Alongside it: the foreground observer forks an extra, uncancellable poll chain on every foreground (N2), `scheduleNextPoll` overwrites `poll` without cancelling it, and the probe has **no ceiling** — the shipped code and `03-sharing-and-install.md` disagree about what bounds it (N5). A repeating poll with no ceiling inside a sheet is a battery and lifecycle trap, and 330 of the 399 new lines cannot execute anywhere.
+
+**Medium, and a live shipped bug — the "Open the wallet" CTA points at the App Store.** `3a8da9b` tells the user *"Frak is installed — Open Frak & claim €X"* and the anchor navigates to `apps.apple.com/…/id6759159306`. The `onClick` never calls `preventDefault()`, so `ExternalLink` falls through to the default navigation. It works *inside* the iOS sheet only because `SharingSheetModel.swift:353-366` intercepts any App Store link and re-routes it — **by interception, not by intent**. Opened in Safari, in Tauri, or from any future host, an installed user is sent to the store page for the app they already have. The new test asserts the label and the analytics event, never the `href`.
+
+**Medium — `walletOpened` sits at the top of the significance ladder, so it masks a real share.** `record` keeps the max and `finish` reports `best ?: result`, so a user who taps the store link (wallet already installed → `record(WalletOpened)`, sheet stays open) and *then* actually shares gets `.walletOpened` delivered to the merchant. The share — the highest-value event in the sheet — never reaches `onResult`. Rewards are unaffected (the `sharing` interaction still fires, and per §0(b) that path is analytics anyway), but the merchant's own funnel is wrong. `installStarted` already outranked `shared` before this delta, so the class of defect is older; this raises the ceiling and puts a far more reachable event above the share. Ranking a hand-off above a conversion inverts the business value — and the deeper fix is to stop collapsing a session to one arm at all.
+
+**Medium — `dismiss()` during an in-flight `present()` is a no-op**, so the App Store page appears seconds after the sheet is gone, on a window nothing owns (N3); and a previous load's 5 s deadline settles the *next* load's continuation, so a second store tap within 5 s reports failure (N4).
+
+**Medium — the parity gap widened.** iOS gained four public symbols and one replaced modifier signature — `FrakSharingConfiguration`, `FrakInstallPresentation`, `detectInstall`, `FrakSharingDefaults.install` — with no Android twin and no recorded decision. Android gained one arm iOS already had. `frakSharingSheet(heightFraction:)` was **removed with no deprecated overload**. Register 9.15's list is longer than it was.
+
+**Medium — `/install` is now an iOS-shaped page.** The contract grew from 6 keys to 10 (`probe`, `installed`, `dt`, `via`), all iOS-only: Android has no `InstallProbe` and sends none of them. The page cannot tell an Android binary from a broken iOS one. No version signal was added — and unlike `/sharing`, `/install` does not even carry `sdkVersion`. This is §2.4's frozen-binary risk, made bigger by exactly the amount this delta added. Two independent parsers of the same fragment now exist, and `probe=undeclared` conflates a merchant misconfiguration with an internal race (N9).
+
+**Low but telling — the `LSApplicationQueriesSchemes` diagnostic is silent at the default log level**, and its "warn once" guard covers the wrong statement (`delta-f1dc693/ios-install-detection.md` N8). The delta built a detector for the exact misconfiguration §2.6 is about, and then routed its output into `FrakLogLevel.none`. That is §2.5 item 2 compounding: new diagnostics keep being written into a logger that is off by default.
+
+### 9.4 What this changes about the plan
+
+Nothing in §7 is retired; two things are added and one is reordered.
+
+- **§7 item 13 (decide the §4 ABI list) moves up, above the week-2 block.** The delta demonstrated the cost of deferring it, and each further arm added before the tag makes the decision more expensive to reverse.
+- **Add:** bound and cancel `InstallProbe` — ceiling, single poll chain, `generation` invalidated in `stop()` — before any of it runs on a device.
+- **Add:** fix the install-page CTA `href` and assert it in the test.
+- **Note for §5's reliability tiering / §4 row 10:** `significance` collapsing a session to one arm is now actively losing the share event. Worth deciding alongside the queue-tier question, since both are "the SDK decided what mattered and told the merchant one thing."
