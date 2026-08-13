@@ -91,7 +91,7 @@ Gradle invocation — Gradle rejects the undeclared implicit dependency; `run.sh
 `explicitApi()` catches a newly-public symbol; only the dump catches a breaking change to an existing one.
 The wiring is hand-rolled in `buildSrc` because binary-compatibility-validator registers nothing for an
 AGP 9 Android library and its documented replacement is unavailable for the same reason — see
-`docs/plans/native-sdk/09-android-api-surface.md` §5a, which is also the record of the Builder /
+`docs/plans/native-sdk/decisions.md` §2.4, which is also the record of the Builder /
 `*Async` / `Interaction` reshaping that gate freezes.
 
 ## See Also
