@@ -32,7 +32,10 @@ public enum FrakInstallPresentation: Sendable, Hashable {
 
     public static var overlay: Self { .overlay(Overlay()) }
 
-    /// Where the banner sits on the merchant's own screen, and whether it can be swiped away.
+    /// Where the banner sits on the merchant's own screen.
+    ///
+    /// A struct rather than a bare associated value so a later knob is additive: adding a
+    /// defaulted property cannot break a caller, adding a case parameter can.
     public struct Overlay: Sendable, Hashable {
         /// Mirrors `SKOverlay.Position`, which does not exist on Mac Catalyst.
         public enum Position: Sendable, Hashable {
@@ -41,11 +44,9 @@ public enum FrakInstallPresentation: Sendable, Hashable {
         }
 
         public var position: Position
-        public var userDismissible: Bool
 
-        public init(position: Position = .bottom, userDismissible: Bool = true) {
+        public init(position: Position = .bottom) {
             self.position = position
-            self.userDismissible = userDismissible
         }
     }
 }

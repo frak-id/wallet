@@ -19,11 +19,9 @@ struct FrakSharingConfigurationTests {
         #expect(FrakInstallPresentation.overlay == .overlay(.init()))
     }
 
-    @Test("an overlay defaults to the bottom position and stays user-dismissible")
+    @Test("an overlay defaults to the bottom position")
     func overlayDefaults() {
-        let overlay = FrakInstallPresentation.Overlay()
-        #expect(overlay.position == .bottom)
-        #expect(overlay.userDismissible)
+        #expect(FrakInstallPresentation.Overlay().position == .bottom)
     }
 
     @Test("the two surfaces are never equal, whatever the overlay's options")

@@ -411,9 +411,12 @@ the backend's 30-day window measures from.
     `ct = frak-<merchantSlug>` is still worth doing for aggregate ASC reporting, but as
     something the SDK derives from the resolved merchant — see *Not the store's own campaign
     tokens* below for why it is not a transport either way.
-  - The overlay carries `position` and `userDismissible`, which are about the merchant's own
-    screen. The app id stays a constant (`StoreInvites.walletAppStoreId`) — the merchant never
-    picks which app is installed, only how it is offered.
+  - The overlay carries `position` and nothing else. `userDismissible` went the same way as the
+    tokens, for a different reason: its default already lets the user swipe the banner away, so
+    the only value a merchant could set pins a store banner over their own UI — and in this flow
+    it buys nothing, since the sheet's `release()` takes the overlay down regardless. The app id
+    stays a constant (`StoreInvites.walletAppStoreId`) — the merchant never picks which app is
+    installed, only how it is offered.
   - The product page falls back to `openFrakApp()` when `loadProduct` fails or takes longer
     than 5 s. The overlay has no such signal, so it falls back only when there is no
     foreground scene, or on Mac Catalyst where `SKOverlay` does not exist.

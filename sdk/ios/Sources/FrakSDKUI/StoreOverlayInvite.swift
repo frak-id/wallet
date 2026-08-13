@@ -43,13 +43,13 @@
         }
 
         #if !targetEnvironment(macCatalyst)
+            /// `userDismissible` is left at StoreKit's own default, which lets the user swipe the
+            /// banner away. The alternative pins a store banner over the merchant's UI.
             private func configuration() -> SKOverlay.AppConfiguration {
-                let configuration = SKOverlay.AppConfiguration(
+                SKOverlay.AppConfiguration(
                     appIdentifier: StoreInvites.walletAppStoreId,
                     position: options.position.skOverlayPosition
                 )
-                configuration.userDismissible = options.userDismissible
-                return configuration
             }
         #endif
     }
