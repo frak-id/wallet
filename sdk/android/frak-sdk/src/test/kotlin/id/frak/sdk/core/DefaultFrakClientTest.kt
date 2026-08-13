@@ -18,7 +18,6 @@ import id.frak.sdk.tracking.Interaction
 import id.frak.sdk.tracking.InteractionSender
 import id.frak.sdk.tracking.MergeSender
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
