@@ -31,7 +31,7 @@ public struct Interaction: Sendable, Hashable {
         )
     }
 
-    // sharingTimestamp nil is stamped at capture, so a retry later still reports when shared.
+    // sharingTimestamp is Unix SECONDS; nil is stamped at capture, so a retry still reports when shared.
     public static func sharing(sharingTimestamp: Int64? = nil, purchaseId: String? = nil) -> Interaction {
         Interaction(kind: .sharing(sharingTimestamp: sharingTimestamp, purchaseId: purchaseId))
     }

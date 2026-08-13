@@ -24,6 +24,13 @@ class SharingPageUrlTest {
     }
 
     @Test
+    fun `strips non-ascii digits the wallet's ascii-only pattern would reject`() {
+        // Devanagari 1-2-3: Character.isDigit accepts them, the wallet's `[a-z0-9._-]` does not.
+        assertEquals("frak-app", SharingPageUrl.returnScheme("\u0967\u0968\u0969"))
+        assertTrue(walletPattern.matches(SharingPageUrl.returnScheme("com.acme.\u0967app")))
+    }
+
+    @Test
     fun `falls back rather than emitting a bare prefix`() {
         assertTrue(walletPattern.matches(SharingPageUrl.returnScheme("///")))
     }

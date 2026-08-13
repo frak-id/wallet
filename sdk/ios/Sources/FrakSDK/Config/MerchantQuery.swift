@@ -40,6 +40,13 @@ enum MerchantQuery: Sendable {
             return .bundleId(bundleId: bundleId, lang: lang)
         }
         if let merchantId = config.merchantId?.trimmed, !merchantId.isEmpty {
+            // Checked here, not left to the backend: a non-UUID comes back as a bare 422 whose
+            // body the SDK deliberately does not log, so the merchant sees no cause.
+            guard UUID(uuidString: merchantId) != nil else {
+                throw FrakError.merchantResolutionFailed(
+                    reason: "FrakConfig.merchantId must be a UUID, got: \(merchantId)"
+                )
+            }
             return .id(merchantId: merchantId, lang: lang)
         }
         throw FrakError.merchantResolutionFailed(

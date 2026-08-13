@@ -2,15 +2,19 @@ package id.frak.sdk.ui
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.webkit.ConsoleMessage
 import android.webkit.CookieManager
 import android.webkit.RenderProcessGoneDetail
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -123,9 +127,8 @@ internal class SharingWebViewHandle(
 
     /** Points the view at a session. Resets per-load state; see [SharingWebViewBinding]. */
     fun bind(binding: SharingWebViewBinding) {
-        // A session torn down while its cache-only retry rung was in flight leaves the view pinned
-        // to LOAD_CACHE_ONLY, and the next load — the pool's own re-warm, or the next sheet — would
-        // silently inherit it and fail on anything not already cached.
+        // Belt and braces: nothing sets a non-default cache mode any more, and a pinned one would
+        // be inherited silently by the pool's re-warm and by every later sheet.
         view.settings.cacheMode = WebSettings.LOAD_DEFAULT
         client.binding = binding
     }
@@ -182,6 +185,10 @@ internal fun createSharingWebView(
     returnScheme: String,
 ): SharingWebViewHandle {
     val client = SharingWebViewClient(walletOrigin = walletOrigin, returnScheme = returnScheme)
+    // Gated on the host app's own debuggable flag, not on a Frak log level: `setWebContentsDebuggingEnabled`
+    // is process-global and exposes the wallet session to anything that can reach the ADB socket.
+    val debuggable = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    if (debuggable) WebView.setWebContentsDebuggingEnabled(true)
     val view =
         WebView(context).apply {
             // Explicit MATCH_PARENT: a wrap-content WebView reports a 0 viewport height to Blink,
@@ -210,6 +217,9 @@ internal fun createSharingWebView(
             CookieManager.getInstance().setAcceptThirdPartyCookies(this, false)
 
             webViewClient = client
+            // The page is the only thing in the sheet that can fail silently; without this a
+            // merchant debugging a blank sheet has no signal at all.
+            if (debuggable) webChromeClient = SharingConsoleClient()
         }
 
     // Registered on the view, not per load, so every wallet-origin document it shows is styled.
@@ -220,6 +230,17 @@ internal fun createSharingWebView(
     // only way back from it to the state a renderer crash invalidates.
     return SharingWebViewHandle(view = view, client = client).also {
         client.onRendererGone = it::onRendererGone
+    }
+}
+
+/** Console forwarder for a debuggable host build. Returns true so the default logcat line is not also emitted. */
+private class SharingConsoleClient : WebChromeClient() {
+    override fun onConsoleMessage(message: ConsoleMessage): Boolean {
+        Log.d(
+            "FrakSharing",
+            "page: ${message.message()} (${message.sourceId()}:${message.lineNumber()})",
+        )
+        return true
     }
 }
 
@@ -347,7 +368,6 @@ internal class SharingWebViewClient(
         // The ladder is NOT reset here: rungs belong to a document, not to an attempt at it, so a
         // load that only succeeded on its retry must not hand a later failure a full budget again.
         pendingMainFrameUrl = null
-        view.settings.cacheMode = WebSettings.LOAD_DEFAULT // Undo handleMainFrameFailure's cache-only mode.
         val settledBinding = binding
         settledBinding.onPageReady()
 
@@ -392,9 +412,9 @@ internal class SharingWebViewClient(
         error.errorCode == WebViewClient.ERROR_HOST_LOOKUP || error.errorCode == WebViewClient.ERROR_CONNECT
 
     /**
-     * A main-frame failure gets the rest of [RETRY_LADDER] before tier 3. Network rungs first,
-     * because a transient failure is what a retry is for; the cache-only rung last, which is the
-     * only thing that can answer for a device that went offline on a page it has seen before.
+     * A main-frame failure gets the rest of [RETRY_LADDER] before tier 3. All rungs are network
+     * rungs: the hosted document is served `no-store`, so it is never in the HTTP cache and a
+     * cache-only attempt cannot answer — an unreachable network goes straight to tier 3.
      */
     private fun handleMainFrameFailure(
         view: WebView,
@@ -417,23 +437,22 @@ internal class SharingWebViewClient(
             ladderUrl = url
             retryCount = 0
         }
-        if (unreachable) retryCount = maxOf(retryCount, RETRY_LADDER.lastIndex)
-        val rung = RETRY_LADDER.getOrNull(retryCount)
-        if (rung == null) {
+        // Nothing to retry against, and no cached copy to fall back on.
+        if (unreachable) {
+            giveUp(view)
+            return
+        }
+        val delayMillis = RETRY_LADDER.getOrNull(retryCount)
+        if (delayMillis == null) {
             giveUp(view)
             return
         }
         retryCount++
         retryPending = true
-        // Undelayed when nothing is reachable: the cache answers or it does not, and the sheet is
-        // holding a skeleton over this either way.
-        scheduleRetry(if (unreachable) 0L else rung.delayMillis) {
-            view.settings.cacheMode = if (rung.cacheOnly) WebSettings.LOAD_CACHE_ONLY else WebSettings.LOAD_DEFAULT
-            view.loadUrl(url)
-        }
+        scheduleRetry(delayMillis) { view.loadUrl(url) }
     }
 
-    /** The ladder is spent. Unpins the cache first: this view outlives the session that failed on it. */
+    /** The ladder is spent. */
     private fun giveUp(view: WebView) {
         view.settings.cacheMode = WebSettings.LOAD_DEFAULT
         settled = true
@@ -483,21 +502,11 @@ internal class SharingWebViewClient(
         return true
     }
 
-    /** One rung of [RETRY_LADDER]: how long to wait, and what to allow the attempt to read. */
-    private class Rung(
-        val delayMillis: Long,
-        val cacheOnly: Boolean,
-    )
-
     private companion object {
         /**
-         * What a main-frame failure gets before tier 3. Two rungs, sized to fit inside the sheet's
-         * own load budget alongside the attempts themselves — a third would only ever expire it.
+         * Delays a main-frame failure gets before tier 3, in order. Two rungs, sized to fit inside
+         * the sheet's own load budget alongside the attempts themselves — a third would expire it.
          */
-        val RETRY_LADDER =
-            listOf(
-                Rung(delayMillis = 300L, cacheOnly = false),
-                Rung(delayMillis = 900L, cacheOnly = true),
-            )
+        val RETRY_LADDER = listOf(300L, 900L)
     }
 }

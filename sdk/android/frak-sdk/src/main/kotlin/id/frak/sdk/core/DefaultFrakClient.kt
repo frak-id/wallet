@@ -15,6 +15,8 @@ import id.frak.sdk.identity.MerchantIdentity
 import id.frak.sdk.identity.MerchantPolicy
 import id.frak.sdk.identity.ProofOp
 import id.frak.sdk.net.HttpClient
+import id.frak.sdk.net.ServerClock
+import id.frak.sdk.net.UrlQuery
 import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.rewards.Campaign
 import id.frak.sdk.rewards.RewardAudience
@@ -36,7 +38,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.future.future
@@ -58,11 +59,14 @@ internal class DefaultFrakClient(
     private val ioDispatcher: CoroutineDispatcher = defaultIoDispatcher(),
     /** What the Java `*Async` twins complete on. See [MainThreadDispatcher]. */
     private val mainDispatcher: CoroutineDispatcher = MainThreadDispatcher,
+    /** Must be the instance [identity] holds, or a corrected clock never reaches the signing path. */
+    serverClock: ServerClock = ServerClock(logger = logger),
     http: HttpClient =
         HttpClient(
             baseUrl = settings.env.backend,
             ioDispatcher = defaultNetworkDispatcher(),
             logger = logger,
+            serverClock = serverClock,
         ),
 ) {
     /** Outlives the caller that started the work. SupervisorJob isolates a failed revalidation. */
@@ -115,9 +119,9 @@ internal class DefaultFrakClient(
     suspend fun resetAnonymousId(): Boolean {
         // Only purge on confirmed erasure, or events queued for a still-current id are lost.
         val erased = identity.reset()
-        if (erased) {
-            scope.launch { tracker.purge() }
-        }
+        // Awaited, not detached: a detached purge can land after the caller has already tracked
+        // under the new id, and would then erase that event too.
+        if (erased) tracker.purge()
         return erased
     }
 
@@ -274,6 +278,10 @@ internal class DefaultFrakClient(
             logger.info("Ignoring a self- or foreign-merchant referral link.")
             return true
         }
+
+        // One link, one arrival, however many routers hand it to us.
+        val raw = UrlQuery.parse(url)?.get(SharingLinkBuilder.CONTEXT_KEY)
+        if (raw == null || !merge.claimArrival(raw)) return true
 
         try {
             track(ReferralArrival.arrivalFrom(context))

@@ -9,7 +9,8 @@ public struct ConfigAPI: Sendable {
         get async { await core.currentConfig }
     }
 
-    /// Multicast, replays latest value to new subscribers.
+    /// Multicast. Emits on a network resolve that changed the config, and replays the last such
+    /// value; a warm start served from a fresh cache emits nothing, so read `current` first.
     public var updates: AsyncStream<FrakResolvedConfig> {
         get async { await core.configUpdates }
     }

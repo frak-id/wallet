@@ -195,6 +195,9 @@
 
         func share() async {
             guard let session else { return }
+            // The tier-3 fallback races a page action that arrives in the same turn; without this
+            // a chooser it already raised is stacked under a second one, and both attribute.
+            guard !fellBack, !closed else { return }
             guard claim(.share) else { return }
             // The OS chooser covers the sheet for the whole of this call, so it cannot be
             // dismissed underneath one.
@@ -214,6 +217,7 @@
         /// its confirmation screen, and navigating on top would tear down the document mid-toast.
         func copy() async {
             guard let session else { return }
+            guard !fellBack, !closed else { return }
             guard claim(.copy) else { return }
             // No chooser covers this one, so a swipe can land inside `trackSharing()` and report
             // `.dismissed` over the `.copied` it is about to produce — a local queue append behind
@@ -221,6 +225,8 @@
             await trackSharing()
             NativeShare.copy(session.link)
             report(.copied(link: session.link))
+            // Released, unlike share(): the page keeps its Copy button live on the same screen.
+            claimed.remove(.copy)
         }
 
         func onPageReady() {

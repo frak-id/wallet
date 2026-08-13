@@ -17,7 +17,10 @@ internal object SharingPageUrl {
         val sanitised =
             packageId
                 .lowercase()
-                .filter { it.isDigit() || it in 'a'..'z' || it in ".-_" }
+                // `it.code < 128` because Kotlin's `isDigit` is `Character.isDigit`, i.e. any
+                // Unicode Nd — and the wallet's own pattern is ASCII-only, so a Devanagari digit
+                // would survive here and be rejected there, dropping every callback.
+                .filter { it.code < 128 && (it.isDigit() || it in 'a'..'z' || it in ".-_") }
                 .take(MAX_SCHEME_SUFFIX)
         return "frak-" + sanitised.ifEmpty { "app" } // Guards an id made entirely of rejected characters.
     }

@@ -38,7 +38,7 @@ struct HTTPClientTests {
     func sendsExpectedHeaders() async throws {
         let client = makeClient { request in
             #expect(request.value(forHTTPHeaderField: "Accept") == "application/json")
-            #expect(request.value(forHTTPHeaderField: FrakSDKVersion.headerName) == FrakSDKVersion.current)
+            #expect(request.value(forHTTPHeaderField: FrakSDKVersion.headerName) == FrakSDKVersion.headerValue)
             return StubResponse(status: 200, body: "{}")
         }
 

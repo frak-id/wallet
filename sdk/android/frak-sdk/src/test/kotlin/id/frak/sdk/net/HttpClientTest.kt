@@ -228,7 +228,7 @@ class HttpClientTest {
             transport.respond(200, "{}")
             newClient().get("/x")
 
-            assertEquals(FrakSdkVersion.CURRENT, transport.requests.single().headers[FrakSdkVersion.HEADER_NAME])
+            assertEquals(FrakSdkVersion.HEADER_VALUE, transport.requests.single().headers[FrakSdkVersion.HEADER_NAME])
         }
 
     @Test

@@ -1,5 +1,6 @@
 package id.frak.sdk.ui
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -39,6 +40,11 @@ internal class SharingSheetState(
     private val scope: CoroutineScope,
     /** The application context; the web view gets an Activity one from [SharingWebViewPool]. */
     private val context: Context,
+    /**
+     * What starts an Activity: the attached one when there is one, so the chooser and outbound
+     * links join the merchant's task instead of opening a second entry in recents.
+     */
+    private val launchContext: () -> Context = { context },
     private val sessionId: String,
     onFinished: (SharingResult) -> Unit,
     /**
@@ -275,7 +281,7 @@ internal class SharingSheetState(
         val active = session ?: return
         if (!claim(SharingPageAction.Share)) return
         outcome.launch {
-            if (!NativeShare.share(context, active.link, active.shareTitle)) {
+            if (!NativeShare.share(launchContext(), active.link, active.shareTitle)) {
                 // Released here, unlike the success path: no chooser came up, so the user can retry.
                 claimed.remove(SharingPageAction.Share)
                 return@launch
@@ -297,9 +303,15 @@ internal class SharingSheetState(
         val active = session ?: return
         if (!claim(SharingPageAction.Copy)) return
         outcome.launch {
-            track()
-            NativeShare.copy(context, active.link)
-            outcome.record(SharingResult.Copied(active.link))
+            try {
+                track()
+                NativeShare.copy(context, active.link)
+                outcome.record(SharingResult.Copied(active.link))
+            } finally {
+                // Released, unlike share(): the page keeps its Copy button enabled and stays on
+                // the sharing view, so a second tap must not be a silent no-op.
+                claimed.remove(SharingPageAction.Copy)
+            }
         }
     }
 
@@ -422,7 +434,7 @@ internal class SharingSheetState(
         fellBack = true
         outcome.launch {
             // Same rule as share(): pays out after the chooser, not before.
-            val shared = NativeShare.share(context, active.link, active.shareTitle)
+            val shared = NativeShare.share(launchContext(), active.link, active.shareTitle)
             if (shared) track()
             finish(if (shared) SharingResult.Shared(active.link) else SharingResult.Dismissed)
         }
@@ -445,8 +457,11 @@ internal class SharingSheetState(
             }
             return
         }
-        val intent = Intent(Intent.ACTION_VIEW, parsed).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        runCatching { context.startActivity(intent) }
+        val launcher = launchContext()
+        val intent = Intent(Intent.ACTION_VIEW, parsed)
+        // See NativeShare.share: NEW_TASK is only right when there is no task to join.
+        if (launcher !is Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { launcher.startActivity(intent) }
     }
 
     /** Read off the URL rather than assumed: dev and production ship different package ids. */

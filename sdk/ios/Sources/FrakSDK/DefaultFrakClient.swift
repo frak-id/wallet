@@ -183,6 +183,7 @@ actor DefaultFrakClient {
     /// Covers only what this client retains: `ConfigStore` revalidation, `RewardRepository`, the
     /// purge and the eager mint can still touch the network after this returns.
     func shutdown() async {
+        await configStore.finishSubscribers()
         startupTask?.cancel()
         startupTask = nil
         configFlushTask?.cancel()
@@ -334,6 +335,13 @@ actor DefaultFrakClient {
         )
         if ignore {
             logger.info("Ignoring a self- or foreign-merchant referral link.")
+            return true
+        }
+
+        // One link, one arrival: `.onOpenURL` fans out to every view that registers it.
+        guard let raw = URLQuery.parse(url)?.value(for: SharingLinkBuilder.contextKey),
+            await merge.claimArrival(raw)
+        else {
             return true
         }
 

@@ -2,6 +2,7 @@ package id.frak.sdk
 
 import android.app.Application
 import android.content.Context
+import android.os.Build
 import id.frak.sdk.applink.AndroidAppLauncher
 import id.frak.sdk.applink.DeepLinkObserver
 import id.frak.sdk.config.SharedPreferencesStore
@@ -16,6 +17,7 @@ import id.frak.sdk.core.TrackingConsent
 import id.frak.sdk.core.defaultIoDispatcher
 import id.frak.sdk.identity.AndroidKeystoreDeviceKeyStore
 import id.frak.sdk.identity.AnonymousIdStore
+import id.frak.sdk.net.ServerClock
 import id.frak.sdk.sharing.FrakContext
 import id.frak.sdk.sharing.SharingLinkBuilder
 import id.frak.sdk.tracking.EventQueue
@@ -69,6 +71,9 @@ public object Frak {
             (effective.env as? FrakEnvironment.Custom)?.rejectionReason?.let { reason ->
                 logger.error("FrakEnvironment.Custom: $reason Requests will fail with FrakError.Network.")
             }
+            // Held by the queue's file provider and the launcher: an Activity would outlive its window.
+            val appContext = context.applicationContext ?: context
+            warnIfNotMainProcess(appContext, logger)
             // Shared by queue and client: two limitedParallelism(2) views would double the IO budget.
             val ioDispatcher = defaultIoDispatcher()
             // Separate prefs file from the config cache: a corrupt write must not take identity with it.
@@ -81,6 +86,8 @@ public object Frak {
                     logger = logger,
                     ioDispatcher = ioDispatcher,
                 )
+            // ONE instance too: the HTTP client learns the offset, the identity store stamps with it.
+            val serverClock = ServerClock(logger = logger)
             val newCore =
                 DefaultFrakClient(
                     settings = effective,
@@ -88,7 +95,7 @@ public object Frak {
                     // noBackupFilesDir: queued events must never be replayed from a backup/transfer.
                     queue =
                         EventQueue(
-                            file = File(context.noBackupFilesDir, EVENT_QUEUE_FILE_NAME),
+                            fileProvider = { File(appContext.noBackupFilesDir, EVENT_QUEUE_FILE_NAME) },
                             logger = logger,
                             ioDispatcher = ioDispatcher,
                         ),
@@ -100,11 +107,13 @@ public object Frak {
                             merchantMarker = effective.merchantId ?: effective.packageId.orEmpty(),
                             consent = consent,
                             ioDispatcher = ioDispatcher,
+                            serverClock = serverClock,
                         ),
                     consent = consent,
                     launcher = AndroidAppLauncher(context),
                     logger = logger,
                     ioDispatcher = ioDispatcher,
+                    serverClock = serverClock,
                 )
             // Built before the session is published and registered after it: a callback that fired
             // against a half-built session would drop the link it was handed.
@@ -192,6 +201,25 @@ public object Frak {
         // Client owns the guard/tracking; this only reports that a link was seen. Reads the session
         // at call time, so a link arriving after [shutdown] reports nowhere instead of to a dead client.
         return application to DeepLinkObserver { url -> session?.core?.handleReferralLinkInBackground(url) }
+    }
+
+    /**
+     * The identity keypair, the consent flag and the queue file are all process-local: a second
+     * process gets its own anonymous id and races the same queue file. Reported, not blocked —
+     * a merchant may have a good reason, and the SDK cannot know which process is the right one.
+     */
+    private fun warnIfNotMainProcess(
+        context: Context,
+        logger: FrakLogger,
+    ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return
+        val process = Application.getProcessName() ?: return
+        if (process == context.packageName) return
+        logger.error(
+            "Frak.initialize ran in process '$process', not the default one. " +
+                "Initialize the SDK in your main process only: a second process mints its own " +
+                "anonymous id and corrupts the shared event queue.",
+        )
     }
 
     private fun FrakConfig.withPackageIdFrom(context: Context): FrakConfig {

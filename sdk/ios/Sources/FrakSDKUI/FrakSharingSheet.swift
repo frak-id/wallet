@@ -58,7 +58,12 @@
                 // dismissal — see `SharingPresenter.presentation`. This one runs before SwiftUI
                 // presents anything, so it cannot resurrect a finished session.
                 .onAppear { if isPresented { launch() } }
-                .onDisappear { presenter.teardown() }
+                // `finish` first: a surface leaving with a session still live is an outcome the
+                // merchant is owed, and `teardown` alone reports nothing.
+                .onDisappear {
+                    finish()
+                    presenter.teardown()
+                }
                 // The tap. Synchronous, and deliberately not `.task(id:)`, which would run after
                 // SwiftUI had begun presenting: the sheet's content is built from
                 // `presenter.presentation`, so a late launch builds the *previous* session and then
@@ -126,6 +131,10 @@
                 SharingSheetGrabStrip()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Without `.isModal` VoiceOver keeps reading the merchant's screen behind the sheet.
+            // No label of our own: this module ships no resources, and the page names itself.
+            .accessibilityElement(children: .contain)
+            .accessibilityAddTraits(.isModal)
             // Full bleed: the page insets its own footer from `env(safe-area-inset-bottom)`, so
             // honouring the safe area here shows the sheet through as a band under the CTA.
             .ignoresSafeArea()

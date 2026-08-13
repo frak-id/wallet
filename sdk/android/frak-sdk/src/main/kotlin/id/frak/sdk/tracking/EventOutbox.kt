@@ -10,6 +10,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Queues tracked events and drains them oldest first: enqueue is durable, sending is best-effort
@@ -53,6 +54,9 @@ internal class EventOutbox(
     /** One drain at a time. A second concurrent flush would reorder the queue it is draining. */
     private val flushMutex = Mutex()
 
+    /** [IDLE] / [DRAINING] / [DRAIN_AGAIN]; see [scheduleFlush]. */
+    private val drainState = AtomicInteger(IDLE)
+
     /**
      * Returns once the event is durable, not once delivered: the drain is detached onto [scope].
      *
@@ -66,7 +70,7 @@ internal class EventOutbox(
     ) {
         val key = (interaction.kind as? Interaction.Kind.Custom)?.idempotencyKey ?: newKey()
         enqueue(InteractionSender.KIND, interactionPayload(interaction, key), clientId, merchantId, key)
-        scope.launch { flush() }
+        scheduleFlush()
     }
 
     /** Same contract as [track]. Idempotency key never reaches the wire; backend dedupes on `(orderId, token)`. */
@@ -83,11 +87,53 @@ internal class EventOutbox(
                 .put("orderId", orderId)
                 .put("token", token)
         enqueue(PurchaseSender.KIND, payload, clientId, merchantId, newKey())
-        scope.launch { flush() }
+        scheduleFlush()
     }
 
     // No shutdown(): every drain is launched on the client's scope, which
     // DefaultFrakClient.shutdown() cancels and joins.
+
+    /**
+     * Collapses a burst of enqueues into one drain, mirroring iOS's `drainTask`/`drainAgain`: a
+     * request arriving while a drain runs re-runs it once at the end, instead of launching one
+     * coroutine per event that then serialise on [flushMutex] and re-read the file each time.
+     *
+     * A cancellation leaves this at [DRAINING] — the only canceller is `shutdown()`, after which
+     * nothing enqueues again.
+     */
+    private fun scheduleFlush() {
+        while (true) {
+            when (drainState.get()) {
+                IDLE -> {
+                    if (drainState.compareAndSet(IDLE, DRAINING)) {
+                        scope.launch {
+                            try {
+                                do {
+                                    drainState.set(DRAINING)
+                                    flush()
+                                } while (!drainState.compareAndSet(DRAINING, IDLE))
+                            } catch (failure: Throwable) {
+                                // Reset before rethrowing: the client's handler logs this and the
+                                // process survives, and a state left at DRAINING would turn every
+                                // later enqueue into a silent no-op.
+                                drainState.set(IDLE)
+                                throw failure
+                            }
+                        }
+                        return
+                    }
+                }
+
+                DRAINING -> {
+                    if (drainState.compareAndSet(DRAINING, DRAIN_AGAIN)) return
+                }
+
+                else -> {
+                    return
+                }
+            }
+        }
+    }
 
     /** Called on anonymous id reset: an event captured under the dead id must never be emitted. */
     suspend fun purge() {
@@ -108,7 +154,7 @@ internal class EventOutbox(
         // with it; without this, every cold start on the same intent would queue it again.
         if (isQueued(MergeSender.KIND, mergeToken)) return
         enqueue(MergeSender.KIND, JSONObject(), anonymousId, merchantId, mergeToken)
-        scope.launch { flush() }
+        scheduleFlush()
     }
 
     /** [idempotencyKey] is the token itself for a merge row; it never reaches the wire from there. */
@@ -140,9 +186,9 @@ internal class EventOutbox(
     }
 
     /**
-     * Sends oldest first, stopping (not skipping) at the first failure to keep FIFO order — except
-     * a permanently-rejected event, dropped after [MAX_FAILURES], and an unrecognised kind or one
-     * already delivered, both of which skip ahead. Network I/O happens outside [queueMutex], and
+     * Sends oldest first, stopping at a transient failure or a hold to keep FIFO order, and
+     * skipping ahead past anything whose verdict concerns that row alone: a rejection, an
+     * unrecognised kind, one already delivered. Network I/O happens outside [queueMutex], and
      * the file is reconciled against a fresh read so a mid-flush append isn't lost.
      */
     suspend fun flush() {
@@ -162,7 +208,17 @@ internal class EventOutbox(
             val retried = mutableMapOf<Long, QueuedRow>()
             val ctx = sendContext()
 
-            for (event in pending) {
+            // A kill mid-drain replays whatever this pass has sent but not yet written down, so
+            // the accumulator is checkpointed rather than held for the whole backlog.
+            suspend fun checkpoint() {
+                if (delivered.isEmpty() && retried.isEmpty()) return
+                queueMutex.withLock { queue.reconcile(delivered.toSet(), retried.toMap(), now()) }
+                delivered.clear()
+                retried.clear()
+            }
+
+            for ((index, event) in pending.withIndex()) {
+                if (index > 0 && index % RECONCILE_EVERY == 0) checkpoint()
                 // break, not return: falling through to reconcile prevents a re-send when a
                 // concurrent purge's file delete silently fails.
                 if (!trackingAllowed()) {
@@ -181,15 +237,29 @@ internal class EventOutbox(
                     continue
                 }
 
-                when (val outcome = sender.deliver(event, ctx)) {
+                // Stamped at drain, not left null: capture deliberately does not gate on an id
+                // (a locked device has none yet), and a row sent without `x-frak-client-id` is a
+                // guaranteed 401 that would spend the failure cap and land unattributed.
+                val row =
+                    if (event.clientId == null &&
+                        currentClientId != null
+                    ) {
+                        event.withClientId(currentClientId)
+                    } else {
+                        event
+                    }
+
+                val outcome =
+                    if (row.clientId == null) DeliveryOutcome.Hold else sender.deliver(row, ctx)
+                when (outcome) {
                     is DeliveryOutcome.Delivered -> {
                         backoff.recordSuccess(BACKOFF_KEY)
-                        delivered += event.rowId
+                        delivered += row.rowId
                         continue
                     }
 
                     is DeliveryOutcome.Dropped -> {
-                        delivered += event.rowId
+                        delivered += row.rowId
                         continue
                     }
 
@@ -199,28 +269,31 @@ internal class EventOutbox(
                     }
 
                     is DeliveryOutcome.Rejected -> {
-                        recordRetry(event, delivered, retried, "the backend rejected it")
-                        break
+                        // continue, not break: a rejection is a verdict on this row alone, and
+                        // one poison row must not stall every event queued behind it.
+                        recordRetry(row, delivered, retried, "the backend rejected it")
+                        continue
                     }
 
                     is DeliveryOutcome.Hold -> {
-                        if (event.heldSince == null) {
-                            retried[event.rowId] = event.withHeldSince(now())
+                        if (row.heldSince == null) {
+                            retried[row.rowId] = row.withHeldSince(now())
                             break
                         }
-                        val heldFor = now() - event.heldSince
+                        val heldFor = now() - row.heldSince
                         if (heldFor <= sender.holdTimeoutMillis) break
                         // continue, not break: dropping the dead row is the point, and the rows
                         // behind it must get their turn in this same drain.
-                        logger.warn("Dropping a '${event.kind}' row held ${heldFor}ms with no resolvable inputs.")
-                        delivered += event.rowId
+                        logger.warn("Dropping a '${row.kind}' row held ${heldFor}ms with no resolvable inputs.")
+                        delivered += row.rowId
                         continue
                     }
                 }
             }
 
             // One EventQueue-owned hop: a read()-then-replace() from here would erase an event
-            // appended between the two suspending calls.
+            // appended between the two suspending calls. Unconditional even when the accumulator
+            // is empty: expired or unreadable rows may still be on disk.
             queueMutex.withLock {
                 queue.reconcile(delivered, retried, now())
             }
@@ -294,12 +367,22 @@ internal class EventOutbox(
             }
 
             is Interaction.Kind.Custom -> {
-                // Not validated here: the route's schema is the authority, and a rejection is a 4xx.
+                // Shape is not validated here — the route's schema is the authority and a
+                // rejection is a 4xx — but size is: an unbounded map lands verbatim in a durable
+                // file whose only other cap is a row count.
                 val data = JSONObject()
-                kind.data.forEach { (key, value) -> data.put(key, value) }
+                kind.data.entries.take(MAX_CUSTOM_ENTRIES).forEach { (key, value) ->
+                    data.put(key.take(MAX_CUSTOM_FIELD_LENGTH), value.take(MAX_CUSTOM_FIELD_LENGTH))
+                }
+                if (kind.data.size > MAX_CUSTOM_ENTRIES) {
+                    logger.warn(
+                        "A custom interaction carried ${kind.data.size} data entries; " +
+                            "only the first $MAX_CUSTOM_ENTRIES are queued.",
+                    )
+                }
                 JSONObject()
                     .put("type", "custom")
-                    .put("customType", kind.customType)
+                    .put("customType", kind.customType.take(MAX_CUSTOM_FIELD_LENGTH))
                     .put("data", data)
                     .put("idempotencyKey", idempotencyKey)
             }
@@ -308,5 +391,16 @@ internal class EventOutbox(
     private companion object {
         const val MAX_FAILURES = 3
         const val BACKOFF_KEY = "track"
+
+        /** Rows between mid-drain reconciles. Bounds a duplicate replay to this many rows, at one file rewrite each. */
+        const val RECONCILE_EVERY = 20
+
+        /** Bounds on a custom interaction's payload, so one call cannot fill the queue file on its own. */
+        const val MAX_CUSTOM_ENTRIES = 32
+        const val MAX_CUSTOM_FIELD_LENGTH = 512
+
+        const val IDLE = 0
+        const val DRAINING = 1
+        const val DRAIN_AGAIN = 2
     }
 }

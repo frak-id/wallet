@@ -15,7 +15,14 @@ Three things leave the device, and only three.
 | `customerId`, `orderId`, checkout `token` | Financial info → **Purchase history** | App functionality | `tracking.purchase` |
 
 **Not** declared, because the SDK does not touch them: advertising ID, `ANDROID_ID`,
-Install Referrer, location, contacts, device or other IDs.
+location, contacts, device or other IDs.
+
+**Install Referrer** is the one exception worth stating precisely: the SDK never *reads* it,
+and declares no `com.android.installreferrer` dependency. It does *write* one — handing off
+to the Play listing (`appLink.openFrakApp()` when the wallet is not installed) appends
+`referrer=merchantId=…&anonymousId=…&proof=…`, so the wallet app can reconnect the identity
+after install. That is the same anonymous id and install proof already declared above, on
+the same legal basis; nothing new is collected, and nothing is read back on this side.
 
 ### Why "User IDs" and not "Device or other IDs"
 

@@ -101,6 +101,15 @@ actor ConfigStore {
         subscribers.removeValue(forKey: id)
     }
 
+    /// Ends every `updates` stream. Called from `DefaultFrakClient.shutdown`, which otherwise
+    /// leaves a merchant's `for await` suspended forever against a client that is gone.
+    func finishSubscribers() {
+        for continuation in subscribers.values {
+            continuation.finish()
+        }
+        subscribers.removeAll()
+    }
+
     /// Minted at the start of `fetch`, before the network call, and compared again at publish
     /// time. Minting at start records the order fetches were intended in, which is what
     /// matters — a counter read at publish time would order by completion, exactly what a

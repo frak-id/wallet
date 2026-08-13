@@ -1,16 +1,10 @@
 import Foundation
 
-/// Minimal query-string editing over a URL string.
-///
-/// Not `URLComponents`, which offers no way to edit one parameter without re-serialising
-/// the whole query through an encoder that re-encodes what is already encoded. Only what
-/// the SDK actually needs: read, set and remove a parameter, preserving everything else
-/// exactly as the merchant wrote it.
-///
-/// Existing parameters are never re-encoded. A merchant's URL is theirs, and normalising
-/// it would silently change links they have already published. One exception, which no
-/// server distinguishes: a parameter with an empty value loses its `=`, so `?a=&b=1`
-/// round-trips as `?a&b=1`.
+/// Minimal query-string editing over a URL string. Not `URLComponents`, which cannot edit one
+/// parameter without re-serialising the whole query through an encoder that re-encodes what is
+/// already encoded — and a merchant's published links must not change under them. One exception,
+/// which no server distinguishes: an empty value loses its `=`, so `?a=&b=1` round-trips as
+/// `?a&b=1`.
 struct URLQuery {
     private let base: String
     private let fragment: String
@@ -48,15 +42,15 @@ struct URLQuery {
         return URLQuery(base: String(base), fragment: String(fragment), parameters: parameters)
     }
 
-    /// The decoded value at `key`, or nil.
-    ///
-    /// Case-insensitive on the key: some channels lowercase query keys in transit, so
-    /// `fCtx` can arrive as `fctx`. Percent-decoded on the value, because a channel that
-    /// re-encodes a link turns `-` into `%2D` and the base64url payload would then fail to
-    /// decode — the web reads these through `URLSearchParams`, which decodes first.
+    /// The decoded value at `key`, or nil. Case-folded because channels lowercase query keys in
+    /// transit, but an exact match wins, so `?fctx=stale&fCtx=real` resolves to `real`. The value
+    /// is percent-decoded because a channel that re-encodes a link turns `-` into `%2D` and the
+    /// base64url payload would then fail to decode. Mirrors `utils/url/queryParams.ts`.
     func value(for key: String) -> String? {
-        parameters.first { $0.key.caseInsensitiveCompare(key) == .orderedSame }
-            .map { Self.percentDecode($0.value) }
+        let match =
+            parameters.first { $0.key == key }
+            ?? parameters.first { $0.key.caseInsensitiveCompare(key) == .orderedSame }
+        return match.map { Self.percentDecode($0.value) }
     }
 
     mutating func remove(_ key: String) {
@@ -88,8 +82,10 @@ struct URLQuery {
     }
 
     /// Tolerant by design: a malformed escape is left as written rather than dropping the value.
+    /// `+` decodes to a space, as `URLSearchParams` does, so a merchant's own link reads the same
+    /// here as it does on the web.
     static func percentDecode(_ value: String) -> String {
-        guard value.contains("%") else { return value }
+        guard value.contains("%") || value.contains("+") else { return value }
         let characters = Array(value.utf8)
         var bytes: [UInt8] = []
         bytes.reserveCapacity(characters.count)
@@ -100,6 +96,9 @@ struct URLQuery {
             {
                 bytes.append(high << 4 | low)
                 index += 3
+            } else if characters[index] == UInt8(ascii: "+") {
+                bytes.append(UInt8(ascii: " "))
+                index += 1
             } else {
                 bytes.append(characters[index])
                 index += 1

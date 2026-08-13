@@ -58,9 +58,9 @@ public class Interaction internal constructor(
         public fun sharing(purchaseId: String?): Interaction = sharing(sharingTimestamp = null, purchaseId = purchaseId)
 
         /**
-         * A share with an explicit timestamp and/or the purchase it followed. A null [sharingTimestamp]
-         * is stamped at enqueue, so a queued event reports when the share happened rather than when it
-         * was delivered.
+         * A share with an explicit timestamp and/or the purchase it followed. [sharingTimestamp] is
+         * Unix SECONDS; null is stamped at enqueue, so a queued event reports when the share
+         * happened rather than when it was delivered.
          */
         @JvmStatic
         public fun sharing(

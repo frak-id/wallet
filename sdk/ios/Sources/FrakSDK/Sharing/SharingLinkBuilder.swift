@@ -11,7 +11,7 @@ enum SharingLinkBuilder {
     /// Applied when nothing else names a source, so a link is never unattributed.
     private static let defaultSource = "frak"
 
-    /// Nil when `baseURL` is not a URL, or the context carries no identity to encode.
+    /// Nil when `baseURL` is not an http(s) URL, or the context carries no identity to encode.
     static func build(
         baseURL: String,
         context: FrakContext.V2,
@@ -19,7 +19,11 @@ enum SharingLinkBuilder {
         defaults: AttributionDefaults?,
         productUtmContent: String? = nil
     ) -> String? {
-        guard var url = URLQuery.parse(baseURL), let encoded = FrakContextCodec.compress(context) else {
+        // Scheme-checked, not just parseable: `URLQuery` accepts any `scheme://`, and a share
+        // link is handed to the OS chooser — a vendor scheme would resolve there.
+        guard isWebURL(baseURL), var url = URLQuery.parse(baseURL),
+            let encoded = FrakContextCodec.compress(context)
+        else {
             return nil
         }
 
@@ -43,6 +47,11 @@ enum SharingLinkBuilder {
     }
 
     /// The referral context in `url`, or nil when it carries none.
+    private static func isWebURL(_ url: String) -> Bool {
+        let lowered = url.lowercased()
+        return lowered.hasPrefix("https://") || lowered.hasPrefix("http://")
+    }
+
     static func parse(_ url: String) -> FrakContext? {
         URLQuery.parse(url)?.value(for: contextKey).flatMap(FrakContextCodec.decompress)
     }

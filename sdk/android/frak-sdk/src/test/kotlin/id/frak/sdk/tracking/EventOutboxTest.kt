@@ -112,6 +112,27 @@ class EventOutboxTest {
         }
 
     @Test
+    fun `stamps a row captured before any id existed at drain time`() =
+        runTest {
+            transport.respond(200, """{"success":true}""")
+            tracker().track(MERCHANT_ID, null, Interaction.sharing())
+
+            assertEquals(CLIENT_ID, transport.requests.single().headers["x-frak-client-id"])
+            assertTrue(queue.read(now).isEmpty())
+        }
+
+    @Test
+    fun `holds a row captured before any id existed rather than posting it header-less`() =
+        runTest {
+            currentClientId = null
+            transport.respond(200, """{"success":true}""")
+            tracker().track(MERCHANT_ID, null, Interaction.sharing())
+
+            assertTrue(transport.requests.isEmpty())
+            assertEquals(0, queue.read(now).single().failures)
+        }
+
+    @Test
     fun `keeps the capture timestamp and the idempotency key across a retry`() =
         runTest {
             transport.fail(IOException("offline"))
@@ -170,14 +191,26 @@ class EventOutboxTest {
             val tracker = tracker()
             transport.respond(422, """{"success":false,"code":"BAD"}""")
             tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.custom("poison"))
-            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.custom("healthy"))
 
             repeat(3) {
                 now += Backoff.MAX_DELAY_MILLIS
                 tracker.flush()
             }
 
-            assertEquals(listOf("healthy"), queue.read(now).map { it.payload.getString("customType") })
+            assertTrue(queue.read(now).isEmpty())
+        }
+
+    @Test
+    fun `a rejected row does not stall the rows queued behind it`() =
+        runTest {
+            val tracker = tracker()
+            transport.respond(422, """{"success":false,"code":"BAD"}""")
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.custom("poison"))
+
+            transport.respondEach(422, 200)
+            tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.custom("healthy"))
+
+            assertEquals(listOf("poison"), queue.read(now).map { it.payload.getString("customType") })
         }
 
     @Test

@@ -54,11 +54,11 @@ struct HTTPClient: Sendable {
     /// actually fires there, where here it is `Deadline.run`.
     static let overallDeadlineSeconds: TimeInterval = 20
 
-    /// Set well above `overallDeadlineSeconds` so neither can ever be the mechanism that
-    /// actually ends a request — `Deadline.run` always wins first. Not `.infinity`/unset: this
-    /// still bounds the pathological case of `Deadline.run`'s own cancellation failing to
-    /// unblock a wedged `URLSessionTask`.
-    private static let sessionBackstopSeconds: TimeInterval = 60
+    /// Set above `overallDeadlineSeconds` so neither can ever be the mechanism that actually
+    /// ends a request — `Deadline.run` always wins first. Not `.infinity`/unset: this bounds the
+    /// abandoned-socket tail when `Deadline.run`'s own cancellation fails to unblock a wedged
+    /// `URLSessionTask`, so it sits just above the deadline rather than at three times it.
+    private static let sessionBackstopSeconds: TimeInterval = 30
 
     static let defaultSession: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
@@ -277,7 +277,7 @@ struct HTTPClient: Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue(FrakSDKVersion.current, forHTTPHeaderField: FrakSDKVersion.headerName)
+        request.setValue(FrakSDKVersion.headerValue, forHTTPHeaderField: FrakSDKVersion.headerName)
         return request
     }
 }

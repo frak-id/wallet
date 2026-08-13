@@ -39,6 +39,10 @@ internal class QueuedRow(
     fun withHeldSince(millis: Long): QueuedRow =
         QueuedRow(idempotencyKey, kind, payload, clientId, merchantId, capturedAtMillis, failures, rowId, millis)
 
+    /** Attributes a row captured before any id could be minted. Only ever called on a row whose [clientId] is null. */
+    fun withClientId(newClientId: String): QueuedRow =
+        QueuedRow(idempotencyKey, kind, payload, newClientId, merchantId, capturedAtMillis, failures, rowId, heldSince)
+
     fun toJson(): JSONObject =
         JSONObject()
             .put("r", rowId)
@@ -89,10 +93,22 @@ internal class QueuedRow(
  * `queueMutex`, which is also what makes a read-then-write pair atomic.
  */
 internal class EventQueue(
-    private val file: File,
+    fileProvider: () -> File,
     private val logger: FrakLogger,
     private val ioDispatcher: CoroutineDispatcher,
 ) {
+    constructor(
+        file: File,
+        logger: FrakLogger,
+        ioDispatcher: CoroutineDispatcher,
+    ) : this({ file }, logger, ioDispatcher)
+
+    /**
+     * Resolved on first use, which is always inside [ioDispatcher]: `Context.getNoBackupFilesDir()`
+     * stats and mkdirs on the calling thread, and `Frak.initialize` promises to do no I/O.
+     */
+    private val file: File by lazy(fileProvider)
+
     /**
      * Next id for an appended row. [UNSEEDED] means "not yet read from disk"; [seedRowIdIfNeeded]
      * resolves that above [nextMigrationRowId]'s reserved block.
@@ -177,7 +193,10 @@ internal class EventQueue(
 
         val events = migrated.filter { now - it.capturedAtMillis <= MAX_AGE_MILLIS }
         // takeLast: oldest dropped first, a fresh event is more likely to still matter.
-        val bounded = if (events.size > MAX_EVENTS) events.takeLast(MAX_EVENTS) else events
+        val byCount = if (events.size > MAX_EVENTS) events.takeLast(MAX_EVENTS) else events
+        // A row count is not a size: big custom payloads fill the disk long before they fill
+        // 1000 rows. Real bytes, not `String.length`, which is UTF-16 units.
+        val bounded = if (file.length() > MAX_BYTES) withinByteBudget(byCount) else byCount
 
         // Migration, the bounds and unparseable rows all want a rewrite; do it once, and leave a
         // file with nothing to change untouched.
@@ -203,6 +222,25 @@ internal class EventQueue(
         // file.
         liveRowCount = present.size
         return ReadOutcome(bounded, durable = true)
+    }
+
+    /** Newest first until the budget runs out, then back to oldest-first order. Always keeps at least one row. */
+    private fun withinByteBudget(events: List<QueuedRow>): List<QueuedRow> {
+        var remaining = MAX_BYTES
+        val kept = ArrayDeque<QueuedRow>()
+        for (event in events.asReversed()) {
+            remaining -= event
+                .toJson()
+                .toString()
+                .toByteArray(Charsets.UTF_8)
+                .size + 1
+            if (remaining < 0 && kept.isNotEmpty()) break
+            kept.addFirst(event)
+        }
+        if (kept.size < events.size) {
+            logger.warn("Trimmed ${events.size - kept.size} queued events over the ${MAX_BYTES}-byte queue budget.")
+        }
+        return kept
     }
 
     /**
@@ -234,7 +272,9 @@ internal class EventQueue(
      * instead of retrying the same failing write on every append.
      */
     private fun trimIfOverflowing(now: Long) {
-        if (++liveRowCount <= nextTrimAt) return
+        // The `length()` stat is one syscall per append on [ioDispatcher], and it is what stops a
+        // row count from reporting a healthy queue while the file itself has run away.
+        if (++liveRowCount <= nextTrimAt && file.length() <= MAX_BYTES) return
         readLocked(now)
         nextTrimAt = maxOf(MAX_EVENTS, liveRowCount) + MAX_EVENTS_SLACK
     }
@@ -334,6 +374,9 @@ internal class EventQueue(
     companion object {
         const val MAX_AGE_MILLIS: Long = 14L * 24 * 60 * 60 * 1000
         const val MAX_EVENTS: Int = 1000
+
+        /** Second cap, on bytes: [MAX_EVENTS] alone bounds nothing when the rows carry custom payloads. */
+        const val MAX_BYTES: Long = 2L * 1024 * 1024
 
         /**
          * How far past [MAX_EVENTS] the file may run before [append] trims it back: one O(N) pass

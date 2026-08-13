@@ -36,6 +36,8 @@ internal class HttpClient(
     private val open: (URL) -> HttpURLConnection = { it.openConnection() as HttpURLConnection },
     // Built as a DefaultFrakClient constructor default, before its init body runs; null is silent.
     private val logger: FrakLogger? = null,
+    /** Fed the `Date` header of every response; null when nothing in this client's tree signs proofs. */
+    private val serverClock: ServerClock? = null,
 ) {
     data class Response(
         val status: Int,
@@ -165,7 +167,7 @@ internal class HttpClient(
         instanceFollowRedirects = false
         useCaches = false
         setRequestProperty("Accept", "application/json")
-        setRequestProperty(FrakSdkVersion.HEADER_NAME, FrakSdkVersion.CURRENT)
+        setRequestProperty(FrakSdkVersion.HEADER_NAME, FrakSdkVersion.HEADER_VALUE)
         headers.forEach { (name, value) -> setRequestProperty(name, value) }
 
         if (body != null) {
@@ -177,6 +179,8 @@ internal class HttpClient(
         }
 
         val status = responseCode
+        // Free on every response, and the only clock the SDK can trust for proof timestamps.
+        serverClock?.observe(getHeaderFieldDate("Date", 0L))
         // Fail fast on an advertised size; the read below caps chunked or lying responses too.
         if (contentLengthLong > MAX_RESPONSE_BODY_BYTES) {
             // Nothing was read, so disconnect() is the only way back to a clean pooled state.

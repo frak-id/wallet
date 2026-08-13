@@ -2,7 +2,12 @@ package id.frak.sdk.applink
 
 import android.app.Activity
 import android.app.Application
+import android.content.Intent
 import android.os.Bundle
+import id.frak.sdk.identity.IdentityMerge
+import id.frak.sdk.net.UrlQuery
+import id.frak.sdk.sharing.SharingLinkBuilder
+import java.util.WeakHashMap
 
 /**
  * Watches host activities for an inbound `fCtx` link. Both `onActivityCreated` and
@@ -22,9 +27,13 @@ internal class DeepLinkObserver(
 
     private fun consume(activity: Activity) {
         val intent = activity.intent ?: return
-        if (intent.getBooleanExtra(HANDLED_EXTRA, false)) return
         val url = intent.data?.toString() ?: return
-        intent.putExtra(HANDLED_EXTRA, true)
+        // Every activity's data URI reaches here, including a `content://` from a share target
+        // and the merchant's own schemes. Only a link that carries something for us is consumed.
+        if (!carriesFrakParams(url)) return
+        // Identity-keyed and weak, not an extra on the intent: the intent belongs to the merchant,
+        // may be re-parcelled, and an unknown extra can break their own equality or logging.
+        if (handled.put(intent, Unit) != null) return
         onLink(url)
     }
 
@@ -41,7 +50,11 @@ internal class DeepLinkObserver(
 
     override fun onActivityDestroyed(activity: Activity) = Unit
 
-    private companion object {
-        const val HANDLED_EXTRA = "id.frak.sdk.deeplink.handled"
+    private fun carriesFrakParams(url: String): Boolean {
+        val query = UrlQuery.parse(url) ?: return false
+        return query.get(SharingLinkBuilder.CONTEXT_KEY) != null || query.get(IdentityMerge.TOKEN_KEY) != null
     }
+
+    /** `Intent` does not override `equals`, so this is identity-keyed; weak so a finished activity's intent is collectable. */
+    private val handled = WeakHashMap<Intent, Unit>()
 }

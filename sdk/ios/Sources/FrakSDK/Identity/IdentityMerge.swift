@@ -10,6 +10,7 @@ actor IdentityMerge {
 
     private let logger: FrakLogger
     private var consumed: Set<String> = []
+    private var arrivals: Set<String> = []
 
     init(logger: FrakLogger) {
         self.logger = logger
@@ -37,11 +38,15 @@ actor IdentityMerge {
         return try? JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys])
     }
 
-    /// Burns a merge token once: true the first time, false on any repeat, including an empty
-    /// token. In-memory only — `EventOutbox.isQueued` is what survives a process restart; this
-    /// closes the reentrancy race between two same-process `handleReferralLink` calls that a
-    /// disk check can't, because both could read "not queued yet" before either enqueues.
+    /// Burns a merge token once. In-memory only — `EventOutbox.isQueued` survives a restart, this
+    /// closes the race two same-process `handleReferralLink` calls win against a disk check.
     func claim(_ mergeToken: String) -> Bool {
         !mergeToken.isEmpty && consumed.insert(mergeToken).inserted
+    }
+
+    /// The arrival half of `claim`: SwiftUI delivers `.onOpenURL` to every view registering the
+    /// modifier, so one tap reaches here many times and each would track its own arrival.
+    func claimArrival(_ context: String) -> Bool {
+        !context.isEmpty && arrivals.insert(context).inserted
     }
 }

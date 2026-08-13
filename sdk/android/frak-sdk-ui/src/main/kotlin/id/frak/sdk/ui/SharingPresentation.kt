@@ -61,6 +61,7 @@ internal class SharingPresentation(
         fun start(
             pool: SharingWebViewPool,
             context: Context,
+            launchContext: () -> Context,
             scope: CoroutineScope,
             request: SharingRequest,
             onFinished: (SharingResult) -> Unit,
@@ -81,6 +82,7 @@ internal class SharingPresentation(
                     // the sheet that started it.
                     scope = scope,
                     context = context,
+                    launchContext = launchContext,
                     sessionId = sessionId,
                     onFinished = onFinished,
                     activationBaseUrl = activationBaseUrl,

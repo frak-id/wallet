@@ -99,6 +99,13 @@ struct QueuedRow: Codable, Sendable, Hashable {
         return copy
     }
 
+    /// Attributes a row captured before any id could be minted. Only called when `clientId` is nil.
+    func withClientId(_ newClientId: String) -> QueuedRow {
+        var copy = self
+        copy.clientId = newClientId
+        return copy
+    }
+
     /// A no-op if already stamped is the caller's job, not this one's.
     func withHeldSince(_ date: Date) -> QueuedRow {
         var copy = self
