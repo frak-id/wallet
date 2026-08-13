@@ -124,8 +124,8 @@ unzip -p app-debug.apk classes3.dex | strings | grep -o "Lid/frak/sdk/[A-Za-z]*A
 **Next, in order:**
 
 1. Q1/Q2/Q3 are answered, and `09`'s five steps have all landed with the dumps committed. Q4–Q7 are still open; Q4 (`FrakLogSink`, where a throwing sink takes down the host process on iOS) is the one that is cheaper before publication than after.
-2. Swift 6 mode in `Package.swift` and Android Lint are both done. An iOS device/simulator pass to match Android's is not.
-3. CI jobs and publish paths (§3, §4) both exist now — gated on both SDKs having run on a device. Android has, iOS has not.
+2. Swift 6 mode in `Package.swift` and Android Lint are both done. **The iOS device pass has now happened** (iPhone 15, 2026-08-13): the sheet opens, shares, and reuses one `WebContent` process across repeated opens.
+3. CI jobs and publish paths (§3, §4) both exist now — that gate is met: **both SDKs have run on a device**, Android in a minified R8 build.
 4. The correctness waves in `06-open-findings.md`, both platforms per PR.
 5. Drive the remaining validation questions below through the harnesses.
 6. RN TurboModule wrapper + Expo config plugin; Flutter if merchant demand justifies it.
