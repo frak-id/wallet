@@ -193,17 +193,36 @@ export class AnonymousMergeOrchestrator {
     }): Promise<{ finalGroupId: string; merged: boolean }> {
         const { mergeToken, targetAnonymousId, merchantId, proof } = params;
 
-        if (
-            await this.enforceProof({
-                anonymousId: targetAnonymousId,
+        // Verified before anything is created or merged. The latch write it
+        // authorises is deferred until the target node exists — see below.
+        const proofPresented = await this.enforceProof({
+            anonymousId: targetAnonymousId,
+            merchantId,
+            proof,
+            binding: this.identityProofService.hashMergeToken(mergeToken),
+        });
+
+        const { sourceGroupId } =
+            await this.anonymousMergeService.validateToken({
+                mergeToken,
                 merchantId,
-                proof,
-                binding: this.identityProofService.hashMergeToken(mergeToken),
-            })
-        ) {
-            // The target node already exists here — `findGroupByIdentity`
-            // below hard-fails with TARGET_NOT_FOUND otherwise — so unlike
-            // the initiate arm the latch can be written straight away.
+            });
+
+        // Get-or-create, not find-or-404. A native SDK signs its merge proof
+        // from a device that has never sent an interaction, so the target node
+        // legitimately does not exist yet and the flow's first act is to make
+        // it. `resolve` is race-safe: two concurrent redemptions contend on the
+        // node's unique constraint and the loser rolls its empty group back.
+        const { groupId: targetGroupId } =
+            await this.identityOrchestrator.resolve({
+                type: "anonymous_fingerprint",
+                value: targetAnonymousId,
+                merchantId,
+            });
+
+        // After `resolve`, never before: `markProofSeen` is a no-op when the
+        // node is absent, so latching a brand-new id here silently did nothing.
+        if (proofPresented) {
             await this.identityRepository.markProofSeen({
                 type: "anonymous_fingerprint",
                 value: targetAnonymousId,
@@ -211,37 +230,20 @@ export class AnonymousMergeOrchestrator {
             });
         }
 
-        const { sourceGroupId } =
-            await this.anonymousMergeService.validateToken({
-                mergeToken,
-                merchantId,
-            });
-        const targetGroup = await this.identityRepository.findGroupByIdentity({
-            type: "anonymous_fingerprint",
-            value: targetAnonymousId,
-            merchantId,
-        });
-
-        if (!targetGroup) {
-            throw HttpError.notFound(
-                "TARGET_NOT_FOUND",
-                "Target anonymous identity not found"
-            );
-        }
         // Delegate to IdentityOrchestrator.associate() which handles
         // idempotency, wallet conflict detection (throws HttpError), weight-
         // based anchor determination, merge execution, and cache invalidation.
         const { finalGroupId, merged } =
             await this.identityOrchestrator.associate(
                 sourceGroupId,
-                targetGroup.id
+                targetGroupId
             );
 
         if (merged) {
             log.info(
                 {
                     sourceGroupId,
-                    targetGroupId: targetGroup.id,
+                    targetGroupId,
                     finalGroupId,
                 },
                 "Anonymous identity groups merged successfully"
