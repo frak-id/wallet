@@ -226,6 +226,7 @@ class MainActivity : ComponentActivity() {
                         onShareProduct = ::shareProduct,
                         onShareCollection = ::shareCollection,
                         onSimulateDeepLink = { scope.launch { simulateDeepLink() } },
+                        onRunJavaInterop = { JavaInterop.exercise { line -> addLog(line, LogType.INFO) } },
                         onOrderCompleted = { scope.launch { completeOrder() } },
                         onRefreshDebugInfo = { scope.launch { refreshDebugInfo(log = true) } },
                     )
@@ -304,11 +305,18 @@ class MainActivity : ComponentActivity() {
 
     private fun logSharingResult(result: SharingResult) {
         when (result) {
-            is SharingResult.Shared -> addLog("Reward link shared: ${result.link}", LogType.SUCCESS)
+            // Android cannot see what the user picked: NativeShare returns startActivity().isSuccess,
+            // so this fires when the chooser opens. iOS reports the same case only on a real share.
+            is SharingResult.Shared -> addLog("Share chooser opened for: ${result.link}", LogType.INFO)
+
             is SharingResult.Copied -> addLog("Reward link copied to clipboard: ${result.link}", LogType.SUCCESS)
+
             SharingResult.InstallStarted -> addLog("Wallet install flow started by the sharing sheet.", LogType.INFO)
+
             SharingResult.WalletOpened -> addLog("Wallet opened directly; identity handed off.", LogType.SUCCESS)
+
             SharingResult.Dismissed -> addLog("Sharing sheet dismissed by user.", LogType.INFO)
+
             is SharingResult.Failed -> addLog("Sharing failed: ${result.error.message}", LogType.ERROR)
         }
     }
@@ -337,7 +345,7 @@ class MainActivity : ComponentActivity() {
                 )
         ) {
             is FrakResult.Success -> {
-                addLog("Order $orderId tracked successfully.", LogType.SUCCESS)
+                addLog("Order $orderId queued for delivery (enqueue-then-send).", LogType.SUCCESS)
             }
 
             is FrakResult.Failure -> {
@@ -451,6 +459,7 @@ fun MerchantAppScreen(
     onShareProduct: (ProductItem) -> Unit,
     onShareCollection: () -> Unit,
     onSimulateDeepLink: () -> Unit,
+    onRunJavaInterop: () -> Unit,
     onOrderCompleted: () -> Unit,
     onRefreshDebugInfo: () -> Unit,
 ) {
@@ -514,6 +523,7 @@ fun MerchantAppScreen(
                     debugRows = debugRows,
                     isDebugRefreshing = isDebugRefreshing,
                     onSimulateDeepLink = onSimulateDeepLink,
+                    onRunJavaInterop = onRunJavaInterop,
                     onOrderCompleted = onOrderCompleted,
                     onRefreshDebugInfo = onRefreshDebugInfo,
                 )
@@ -694,6 +704,7 @@ fun CheckoutToolsView(
     debugRows: List<DebugRow>,
     isDebugRefreshing: Boolean,
     onSimulateDeepLink: () -> Unit,
+    onRunJavaInterop: () -> Unit,
     onOrderCompleted: () -> Unit,
     onRefreshDebugInfo: () -> Unit,
 ) {
@@ -760,6 +771,10 @@ fun CheckoutToolsView(
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(onClick = onSimulateDeepLink, modifier = Modifier.fillMaxWidth()) {
                         Text("Simulate Inbound fCtx Link")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(onClick = onRunJavaInterop, modifier = Modifier.fillMaxWidth()) {
+                        Text("Run Java interop probe")
                     }
                 }
             }

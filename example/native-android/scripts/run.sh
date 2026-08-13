@@ -16,6 +16,10 @@ set -euo pipefail
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PACKAGE_ID="id.frak.example.android"
 ACTIVITY="$PACKAGE_ID/.MainActivity"
+# `Frak` is FrakLogger's tag in :frak-sdk; `FrakSharing` is a separate one in
+# :frak-sdk-ui, and filtering on `Frak` alone drops every sheet warning. The
+# last two catch the crashes and WebView errors the SDK never sees.
+LOG_TAGS=(Frak FrakSharing AndroidRuntime:E chromium:E)
 
 log() { echo "[native-android] $*"; }
 die() {
@@ -107,16 +111,14 @@ do_run() {
 
 	log "Running. Streaming SDK logs (Ctrl-C to stop)..."
 	adb logcat -c 2>/dev/null || true
-	# Tag comes from FrakLogger's TAG constant in :frak-sdk.
-	adb logcat -s Frak
+	adb logcat -s "${LOG_TAGS[@]}"
 }
 
 do_logs() {
 	resolve_sdk
 	require_adb
 	device_online || die "No device attached."
-	# Tag comes from FrakLogger's TAG constant in :frak-sdk.
-	adb logcat -s Frak
+	adb logcat -s "${LOG_TAGS[@]}"
 }
 
 # ktlint comes from the Gradle plugin: first run downloads it, then it's cached.

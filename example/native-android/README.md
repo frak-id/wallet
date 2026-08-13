@@ -12,7 +12,7 @@ Jetpack Compose app that exercises:
 - `Frak.client.rewards.best(RewardRequest { targetInteraction = "purchase"; products = ... })` for a single catalog-wide reward, and `FrakSharing.Builder(::onResult).build(this)` — the plain-Activity build site, not the `@Composable` one — for the sharing sheet
 - the three sharing scopes, one button each: **store** (no `products` and no `link`, so the link falls back to the merchant homepage), **product** (one `SharingProduct` with `imageUrl` and `ProductDetails`), **collection** (all three products, each illustrated, under an explicit collection `link`)
 - `Frak.client.tracking.purchase(customerId, orderId, token)` on order confirmation
-- inbound deep links via Android intent filters (cold and warm start), plus a manual `appLink.handleReferral(url)` trigger for testing
+- inbound deep links via Android intent filters — **cold start is exercised; warm start (`onNewIntent`) has never been run on a device** — plus a manual `appLink.handleReferral(url)` trigger for testing
 - an SDK debug panel in the *Checkout & Tools* tab, read back from the live client: SDK version, environment and its wallet/backend origins, configured vs. resolved merchant id, `anonymousId()`, `isTrackingEnabled()`, `isFrakAppInstalled()` and the resolved merchant's name, domain, currency, language and placements
 - wallet-detection `<queries>` and the `INTERNET` permission come from `:frak-sdk`'s own manifest, folded in by the manifest merger
 
@@ -50,6 +50,12 @@ There is no separate typecheck step — `assembleDebug` is it.
 adb shell am start -a android.intent.action.VIEW -d "https://example-merchant.com/product?fCtx=test_token_123" id.frak.example.android
 ```
 
-With `DeepLinkHandling.Automatic` configured, the SDK's own `ActivityLifecycleCallbacks` picks up the intent and calls `appLink.handleReferral` itself; the app only logs that the intent arrived.
+With `DeepLinkHandling.Automatic` configured, the SDK's own `ActivityLifecycleCallbacks` picks up the
+intent and calls `appLink.handleReferral` itself; the app only logs that the intent arrived, which is
+all it can honestly observe. Open **Debug info** to confirm the SDK actually tracked it.
+
+Run that command while the app is already running and you are testing the *warm* path, which is a
+different code path (`OnNewIntentProvider`) and the one with no device evidence. The harness logs
+`INFO` there rather than a green tick for exactly that reason.
 
 `example-merchant.com` is a placeholder domain with no `assetlinks.json`, so App Links verification will not pass — that is expected here.

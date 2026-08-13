@@ -2,9 +2,10 @@
 
 Referral tracking and rewards for iOS apps. Zero third-party dependencies.
 
-> **Pre-release.** This package has not had a device or simulator pass. The sharing
-> sheet and the install handoff have never been exercised outside a test suite. Pin an
-> exact version and expect breaking changes until 1.0.
+> **Pre-release.** The sharing sheet has had one device pass (iPhone 15, iOS 26, 2026-08-13):
+> it opens, shares, and pools one web-content process across repeated opens. The install
+> handoff has never been exercised outside a test suite, and no run has happened below
+> iOS 26. Pin an exact version and expect breaking changes until 1.0.
 
 ## What is supported
 
