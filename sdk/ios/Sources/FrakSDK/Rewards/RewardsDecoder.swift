@@ -98,12 +98,12 @@ private struct RewardTierWire: Decodable {
         let maxValue = container.decodeForgiving(Double.self, forKey: .maxValue)
         if let percent = container.decodeForgiving(Double.self, forKey: .percent) {
             value = .percentage(minValue: minValue, maxValue: maxValue, percent: percent)
+        } else if let amount = try container.decodeForgivingObject(TokenAmountWire.self, forKey: .amount) {
+            value = .amount(minValue: minValue, maxValue: maxValue, amount: amount.value)
         } else {
-            value = .amount(
-                minValue: minValue,
-                maxValue: maxValue,
-                amount: try container.decode(TokenAmountWire.self, forKey: .amount).value
-            )
+            // A tier decodes inside `tiered`'s array, so throwing here would fail the entire
+            // reward over one band — the opposite of what `.unknown` exists to prevent.
+            value = .unknown(minValue: minValue, maxValue: maxValue)
         }
     }
 }

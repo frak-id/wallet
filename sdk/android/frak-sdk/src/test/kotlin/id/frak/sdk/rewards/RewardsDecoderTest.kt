@@ -4,6 +4,7 @@ import id.frak.sdk.core.FrakError
 import id.frak.sdk.net.JsonReader
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -79,6 +80,43 @@ class RewardsDecoderTest {
         // merchant with nothing configured.
         assertTrue("expected Unknown, got $referrer", referrer is EstimatedReward.Unknown)
         assertEquals("quantum", (referrer as EstimatedReward.Unknown).payoutType)
+    }
+
+    @Test
+    fun `a tier that is neither a percentage nor an amount degrades, keeping the tiers around it`() {
+        val body =
+            """
+            {"rewards":[{"campaignId":"c","name":"Tiered","interactionTypeKey":"purchase","conditions":[],
+             "referrer":{"payoutType":"tiered","tierField":"total","tiers":[
+               {"minValue":0,"maxValue":10,"quantumPayout":{"units":3}},
+               {"minValue":10,"percent":5}]}}]}
+            """.trimIndent()
+
+        val referrer =
+            RewardsDecoder
+                .decode(body)
+                .campaigns
+                .first()
+                .referrer as EstimatedReward.Tiered
+
+        // A tier decodes inside the array, so a throw on one band takes the others with it.
+        assertEquals(2, referrer.tiers.size)
+        assertTrue("first tier is Unknown, got ${referrer.tiers[0]}", referrer.tiers[0] is RewardTier.Unknown)
+        assertEquals(0.0, referrer.tiers[0].minValue, 0.0)
+        assertEquals(10.0, referrer.tiers[0].maxValue!!, 0.0)
+        assertTrue("second tier still decodes", referrer.tiers[1] is RewardTier.Percentage)
+    }
+
+    @Test
+    fun `a malformed amount object still fails, so a degraded tier never hides a broken one`() {
+        val body =
+            """
+            {"rewards":[{"campaignId":"c","name":"Tiered","interactionTypeKey":"purchase","conditions":[],
+             "referrer":{"payoutType":"tiered","tierField":"total","tiers":[
+               {"minValue":0,"amount":{"amount":"not-a-number"}}]}}]}
+            """.trimIndent()
+
+        assertThrows(FrakError.Decoding::class.java) { RewardsDecoder.decode(body) }
     }
 
     @Test

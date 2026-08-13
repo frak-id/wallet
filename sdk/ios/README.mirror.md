@@ -82,7 +82,7 @@ Frak.initialize(
 
 ```swift
 // `try`, because both the `client` getter and `best` throw.
-let reward = try await Frak.clientOrNull?.rewards.best(targetInteraction: "purchase")
+let reward = try await Frak.clientOrNull?.rewards.best(RewardRequest(targetInteraction: "purchase"))
 // `purchase` does not throw — it returns a Result — but the `client` getter still does.
 let outcome = try await Frak.client.tracking.purchase(
     customerId: "c", orderId: "o", token: "t"

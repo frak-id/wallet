@@ -80,6 +80,58 @@ struct RewardsDecoderTests {
         #expect(minAmount == nil)
     }
 
+    @Test("an empty product list is sent as absent, matching how Android maps RewardRequest")
+    func emptyProductsAreAbsentOnTheWire() {
+        #expect(RewardRequest().wireProducts == nil)
+        #expect(RewardRequest(products: []).wireProducts == nil)
+        #expect(RewardRequest(products: [ProductDetails(productId: "p")]).wireProducts?.count == 1)
+    }
+
+    @Test("a tier that is neither a percentage nor an amount degrades, keeping the tiers around it")
+    func unknownTierDegrades() throws {
+        let body = """
+            {"rewards":[{"campaignId":"c","name":"Tiered","interactionTypeKey":"purchase","conditions":[],
+            "referrer":{"payoutType":"tiered","tierField":"total","tiers":[
+            {"minValue":0,"maxValue":10,"quantumPayout":{"units":3}},
+            {"minValue":10,"percent":5}]}}]}
+            """
+
+        let referrer = try #require(try RewardsDecoder.decode(Data(body.utf8)).campaigns.first?.referrer)
+        guard case .tiered(_, let tiers) = referrer else {
+            Issue.record("expected .tiered")
+            return
+        }
+
+        // Throwing here would fail the entire reward over one band, since a tier decodes inside
+        // the array.
+        #expect(tiers.count == 2)
+        guard case .unknown(let minValue, let maxValue) = tiers[0] else {
+            Issue.record("expected first tier to be .unknown, got \(tiers[0])")
+            return
+        }
+        #expect(minValue == 0)
+        #expect(maxValue == 10)
+        guard case .percentage = tiers[1] else {
+            Issue.record("expected second tier to still decode")
+            return
+        }
+    }
+
+    @Test("a malformed amount object still fails, so a degraded tier never hides a broken one")
+    func malformedTierAmountStillThrows() {
+        let body = """
+            {"rewards":[{"campaignId":"c","name":"Tiered","interactionTypeKey":"purchase","conditions":[],
+            "referrer":{"payoutType":"tiered","tierField":"total","tiers":[
+            {"minValue":0,"amount":{"amount":"not-a-number"}}]}}]}
+            """
+
+        // decodeForgivingObject, not decodeForgiving: absent or not-an-object degrades, a
+        // malformed object still throws, which is what Kotlin's JsonReader.obj does.
+        #expect(throws: (any Error).self) {
+            try RewardsDecoder.decode(Data(body.utf8))
+        }
+    }
+
     @Test("decodes tiered rewards, discriminating tiers on the presence of percent")
     func decodesTieredRewards() throws {
         let referrer = try #require(try RewardsDecoder.decode(Data(Self.tieredResponse.utf8)).campaigns.first?.referrer)
@@ -125,7 +177,7 @@ struct RewardsDecoderTests {
     func unknownPayoutTypeDegrades() throws {
         let body = """
             {"rewards":[{"campaignId":"c","name":"New","interactionTypeKey":"purchase",
-             "conditions":[],"referrer":{"payoutType":"quantum","somethingNew":1}}]}
+            "conditions":[],"referrer":{"payoutType":"quantum","somethingNew":1}}]}
             """
 
         let referrer = try #require(try RewardsDecoder.decode(Data(body.utf8)).campaigns.first?.referrer)
@@ -141,7 +193,7 @@ struct RewardsDecoderTests {
     func missingPayoutTypeIsDecodingError() {
         let body = """
             {"rewards":[{"campaignId":"c","name":"N","interactionTypeKey":"purchase",
-             "conditions":[],"referrer":{"somethingNew":1}}]}
+            "conditions":[],"referrer":{"somethingNew":1}}]}
             """
 
         do {
@@ -214,7 +266,7 @@ struct RewardsDecoderTests {
     func malformedMatchedProductEntryIsSkipped() throws {
         let body = """
             {"rewards":[],"best":{"formatted":"12€","payoutType":"fixed",
-             "matchedProducts":[42,{"sku":"SHOE-42"}]}}
+            "matchedProducts":[42,{"sku":"SHOE-42"}]}}
             """
 
         let best = try #require(try RewardsDecoder.decode(Data(body.utf8)).best)
@@ -260,7 +312,7 @@ struct RewardsDecoderTests {
     func wrongTypedOptionalScalarDegradesToNil() throws {
         let body = """
             {"rewards":[{"campaignId":"c","name":"N","interactionTypeKey":"purchase",
-             "defaultLockupSeconds":"not-a-number"}]}
+            "defaultLockupSeconds":"not-a-number"}]}
             """
 
         let campaign = try #require(try RewardsDecoder.decode(Data(body.utf8)).campaigns.first)
@@ -281,8 +333,8 @@ struct RewardsDecoderTests {
     func malformedArrayEntryIsSkipped() throws {
         let body = """
             {"rewards":[
-              42,
-              {"campaignId":"c1","name":"Good","interactionTypeKey":"purchase"}
+            42,
+            {"campaignId":"c1","name":"Good","interactionTypeKey":"purchase"}
             ]}
             """
 
@@ -322,8 +374,8 @@ struct RewardsDecoderTests {
     func wrongTypedRequiredFieldNestedInRequiredObjectStillThrows() {
         let body = """
             {"rewards":[{"campaignId":"c","name":"N","interactionTypeKey":"purchase",
-             "referrer":{"payoutType":"fixed",
-               "amount":{"amount":"nope","eurAmount":1,"usdAmount":1,"gbpAmount":1}}}]}
+            "referrer":{"payoutType":"fixed",
+            "amount":{"amount":"nope","eurAmount":1,"usdAmount":1,"gbpAmount":1}}}]}
             """
 
         do {
@@ -353,7 +405,7 @@ struct RewardsDecoderTests {
     func zeroFiatAmountsArePreserved() throws {
         let body = """
             {"rewards":[{"campaignId":"c","name":"N","interactionTypeKey":"purchase","conditions":[],
-             "referrer":{"payoutType":"fixed","amount":{"amount":100,"eurAmount":0,"usdAmount":0,"gbpAmount":0}}}]}
+            "referrer":{"payoutType":"fixed","amount":{"amount":100,"eurAmount":0,"usdAmount":0,"gbpAmount":0}}}]}
             """
 
         guard
@@ -375,8 +427,8 @@ extension RewardsDecoderTests {
     func matchedProductsFieldIsForgiving() throws {
         let body = """
             {"rewards":[{"campaignId":"c","name":"N","interactionTypeKey":"purchase","conditions":[]}],
-             "best":{"formatted":"5 €","payoutType":"fixed","isProductScoped":true,
-             "matchedProducts":[{"sku":"SHOE-42","quantity":"not-a-number"}]}}
+            "best":{"formatted":"5 €","payoutType":"fixed","isProductScoped":true,
+            "matchedProducts":[{"sku":"SHOE-42","quantity":"not-a-number"}]}}
             """
 
         let result = try RewardsDecoder.decode(Data(body.utf8))
@@ -393,7 +445,7 @@ extension RewardsDecoderTests {
     func emptyMatchedProductsIsNil() throws {
         let body = """
             {"rewards":[],"best":{"formatted":"5 €","payoutType":"fixed","isProductScoped":false,
-             "matchedProducts":[]}}
+            "matchedProducts":[]}}
             """
 
         #expect(try RewardsDecoder.decode(Data(body.utf8)).best?.matchedProducts == nil)

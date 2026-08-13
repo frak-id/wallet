@@ -37,7 +37,6 @@
     "sdk/ios/Sources/FrakSDK/Net/JSONDecoding.swift": 2,
     "sdk/ios/Sources/FrakSDK/Rewards/ProductDetailsQueryEncoder.swift": 2,
     "sdk/ios/Sources/FrakSDK/Rewards/RewardRepository.swift": 2,
-    "sdk/ios/Sources/FrakSDK/RewardsAPI.swift": 1,
     "sdk/ios/Sources/FrakSDK/Sharing/FrakContextCodec.swift": 1,
     "sdk/ios/Tests/FrakSDKTests/Config/ConfigStoreTests.swift": 3,
     "sdk/ios/Tests/FrakSDKTests/Config/ResolvedConfigDecoderTests.swift": 2,

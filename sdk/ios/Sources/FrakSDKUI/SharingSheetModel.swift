@@ -121,7 +121,9 @@
             bestReward: @escaping @Sendable (String?, [ProductDetails]) async -> BestReward? = {
                 targetInteraction,
                 products in
-                try? await (try? Frak.client)?.rewards.best(targetInteraction: targetInteraction, products: products)
+                try? await (try? Frak.client)?.rewards.best(
+                    RewardRequest(targetInteraction: targetInteraction, products: products)
+                )
             },
             track: @escaping @Sendable (Interaction) async -> Result<Void, FrakError> = {
                 await (try? Frak.client)?.tracking.track($0) ?? .failure(.notInitialized)

@@ -24,17 +24,20 @@ public struct TokenAmount: Sendable, Hashable {
 public enum RewardTier: Sendable, Hashable {
     case amount(minValue: Double, maxValue: Double?, amount: TokenAmount)
     case percentage(minValue: Double, maxValue: Double?, percent: Double)
+    /// A tier shape this binary does not know, so one unrecognised band cannot fail the whole
+    /// reward. The twin of `EstimatedReward.unknown`; the bounds are what every tier carries.
+    case unknown(minValue: Double, maxValue: Double?)
 
     public var minValue: Double {
         switch self {
-        case .amount(let minValue, _, _), .percentage(let minValue, _, _):
+        case .amount(let minValue, _, _), .percentage(let minValue, _, _), .unknown(let minValue, _):
             return minValue
         }
     }
 
     public var maxValue: Double? {
         switch self {
-        case .amount(_, let maxValue, _), .percentage(_, let maxValue, _):
+        case .amount(_, let maxValue, _), .percentage(_, let maxValue, _), .unknown(_, let maxValue):
             return maxValue
         }
     }

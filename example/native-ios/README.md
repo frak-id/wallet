@@ -9,7 +9,7 @@ Configured with `env: .development` and a real merchant id (`0a799880-ba54-4276-
 SwiftUI app that exercises:
 
 - SDK init via `Frak.initialize(FrakConfig(...))` in the `App`'s `init()`
-- `client.rewards.best(targetInteraction:products:)` for a single catalog-wide reward, and the `.frakSharingSheet(isPresented:request:onResult:)` view modifier from `FrakSDKUI`, logging every `SharingResult` case
+- `client.rewards.best(_:forceRefresh:)` for a single catalog-wide reward, and the `.frakSharingSheet(isPresented:request:onResult:)` view modifier from `FrakSDKUI`, logging every `SharingResult` case
 - the three sharing scopes, one button each: **store** (no `products` and no `link`, so the link falls back to the merchant homepage), **product** (one `SharingProduct` with `imageURL` and `ProductDetails`), **collection** (all three products, each illustrated, under an explicit collection `link`)
 - `client.tracking.purchase(customerId:orderId:token:)` on order confirmation
 - inbound deep links via `CFBundleURLTypes` and `.onOpenURL`, routed to `client.appLink.handleReferral(_:)` — mandatory on iOS, since `DeepLinkHandling` here only has `.manual`/`.disabled`, with no `.automatic` counterpart to Android's `ActivityLifecycleCallbacks`

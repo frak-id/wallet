@@ -589,6 +589,14 @@ public final class id/frak/sdk/rewards/RewardTier$Percentage : id/frak/sdk/rewar
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class id/frak/sdk/rewards/RewardTier$Unknown : id/frak/sdk/rewards/RewardTier {
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getMaxValue ()Ljava/lang/Double;
+	public fun getMinValue ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class id/frak/sdk/rewards/TokenAmount {
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAmount ()D

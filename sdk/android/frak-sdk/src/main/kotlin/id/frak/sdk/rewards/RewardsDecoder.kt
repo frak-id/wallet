@@ -87,8 +87,12 @@ internal object RewardsDecoder {
         val percent = JsonReader.finiteDouble(source, "percent", CONTEXT)
         percent?.let { return RewardTier.Percentage(minValue, maxValue, it) }
 
-        val amount = decodeTokenAmount(JsonReader.requireObject(source, "amount", CONTEXT))
-        return RewardTier.Amount(minValue, maxValue, amount)
+        // Degraded, not thrown: a tier is decoded inside `Tiered`'s array, so a shape this build
+        // does not know would otherwise fail the entire reward — which is the opposite of what
+        // `EstimatedReward.Unknown` exists to prevent.
+        val amount = JsonReader.obj(source, "amount")?.let(::decodeTokenAmount)
+        return amount?.let { RewardTier.Amount(minValue, maxValue, it) }
+            ?: RewardTier.Unknown(minValue, maxValue)
     }
 
     // requireFiniteDouble, not requireDouble: a NaN/Infinity amount is parseable JSON but never

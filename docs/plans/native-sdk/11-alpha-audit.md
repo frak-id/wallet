@@ -230,7 +230,7 @@ Cheap today, expensive-to-impossible after `id.frak.sdk:core:0.1.0` exists. Rank
 | # | Item | Why now |
 |---|---|---|
 | 1 | **Reward read models still publish their constructors** into `frak-sdk.api` (`:298,313,345,414,435`) | A3/D7 applied `internal` constructors to `config/` and `sharing/` and **never reached `rewards/`**. Any new backend reward field is then a merchant-breaking change forever. The register says this policy completed. It did not. |
-| 2 | `rewards.best` takes a `RewardRequest` on Android and four defaulted params on iOS | The two SDKs are not the same API on the hottest read path. Pick one now. (register 9.15, still open) |
+| ~~2~~ | ~~`rewards.best` takes a `RewardRequest` on Android and four defaulted params on iOS~~ **CLOSED (§12.5)** | The two SDKs are not the same API on the hottest read path. Pick one now. (register 9.15, still open) |
 | 3 | Retry hint is **milliseconds on Android, seconds on iOS** (`FrakError.BackingOff` vs `.backingOff`) | A unit divergence in a public error payload. Free to fix now. |
 | 4 | No retryable/fatal axis on `FrakError`, and iOS's `LocalizedError` conformance advertises raw diagnostics as user-facing | Merchants will show these strings to users. |
 | 5 | `tracking.purchase(String, String, String)` — three unlabeled Strings **on the reward-bearing path**, frozen at `frak-sdk.api:82` | Trivially mis-ordered, permanently. Promoted by §0(b): this is the money call. |
@@ -635,3 +635,45 @@ running.
 The ABI delta is three lines: `language` added to the Android builder, and `BackingOff`'s
 constructor and getter re-typed. Verified with `apiDump`; `check`, both suites and both harnesses
 green.
+
+### 12.5 The reward surface
+
+§4 row 1 was closed earlier by moving nine reward constructors behind `@InternalFrakApi`. Two rows
+were left, and looking at them turned up a third that no report had filed.
+
+**The unfiled one, and the reason it matters most.** `EstimatedReward` has an `Unknown` arm and its
+decoder ends `else -> Unknown(payoutType)`, so a payout type newer than the binary degrades.
+`RewardTier` — decoded from the same response, by the same decoder, twenty lines away — had **no such
+arm**: `decodeTier` discriminated on the presence of `percent` and otherwise called
+`requireObject("amount")`, which throws. A tier decodes *inside* `Tiered`'s array, so one
+unrecognised band failed the **entire reward**, not just that band. iOS was identical, and
+contradicted the policy stated three lines below it in its own file: *"Required fields still fail
+decode; every optional degrades to nil so one reshaped field cannot take down the whole rewards call
+on a frozen merchant binary."*
+
+`RewardTier.Unknown(minValue, maxValue)` now exists on both, carrying the two fields every tier has.
+The boundary is deliberate and pinned on both platforms: absent or not-an-object degrades, a
+**malformed** object still throws. On iOS that meant `decodeForgivingObject`, not `decodeForgiving` —
+the latter swallows everything and would have made iOS quietly more forgiving than Kotlin's
+`JsonReader.obj`, which is the exact parity drift §3.7 keeps warning about.
+
+**Row 2 — one shape for `best`.** iOS took four defaulted parameters where Android takes a
+`RewardRequest`; even the grouping differed, since Android splits `forceRefresh` out of the request
+and iOS had it inline. iOS now has `RewardRequest` too, and `best(_:forceRefresh:)` matches Android
+member for member. Android's mapping is mirrored exactly, including the detail its own comment
+records — `products` is a non-optional list on the request and is sent as *absent* when empty,
+because the core encodes empty and absent identically.
+
+The direction is worth stating: iOS adopted Android's shape rather than the reverse. Android cannot
+adopt iOS's — a Kotlin default argument is a binary break, which is why `RewardRequest` exists at all
+— so the choice was between one API and two, and the constraint only points one way.
+
+**What is still open on rewards.** Row 6's `FrakContext`/`SharingResult` hierarchies are untouched
+and remain the highest-value ABI item: an added arm crashes an already-installed merchant binary
+through Kotlin's implicit `NoWhenBranchMatchedException`, which no `Kind` discriminator prevents.
+`RewardTier` is now immune to that for *decode* reasons — an unknown tier becomes `Unknown` rather
+than a new arm — but the hierarchy itself is still sealed and still matchable.
+
+`sdk/android/README.md` also claimed the reward models keep plain `public` constructors whose arity
+is frozen on commit. Both halves stopped being true when they moved behind `@InternalFrakApi` and
+left the dump.

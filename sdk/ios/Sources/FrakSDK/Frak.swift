@@ -5,7 +5,7 @@ import Foundation
 /// ```swift
 /// Frak.initialize(FrakConfig(merchantId: "...", metadata: FrakMetadata(name: "Acme")))
 ///
-/// let reward = try await Frak.client.rewards.best(targetInteraction: "purchase")
+/// let reward = try await Frak.client.rewards.best(RewardRequest(targetInteraction: "purchase"))
 /// ```
 public enum Frak {
     private static let lock = NSLock()

@@ -86,6 +86,27 @@ public sealed class RewardTier {
                 return result
             }
         }
+
+    /**
+     * A tier shape this build does not know, kept so one unrecognised band cannot fail the whole
+     * reward. Mirrors [EstimatedReward.Unknown]; the bounds are the fields every tier carries.
+     */
+    public class Unknown
+        @InternalFrakApi
+        public constructor(
+            override val minValue: Double,
+            override val maxValue: Double?,
+        ) : RewardTier() {
+            override fun toString(): String = "RewardTier.Unknown(minValue=$minValue, maxValue=$maxValue)"
+
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other !is Unknown) return false
+                return minValue == other.minValue && maxValue == other.maxValue
+            }
+
+            override fun hashCode(): Int = 31 * minValue.hashCode() + (maxValue?.hashCode() ?: 0)
+        }
 }
 
 /** What a campaign pays out. [Percentage] has no concrete amount so it's suppressed from display. */

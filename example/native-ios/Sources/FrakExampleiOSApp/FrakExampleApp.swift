@@ -373,9 +373,11 @@ struct FrakExampleApp: App {
         }
         do {
             let best = try await client.rewards.best(
-                // Matches SharingRequest.targetInteraction used by handleShareProduct.
-                targetInteraction: "purchase",
-                products: sampleProducts.map { ProductDetails(productId: $0.id, name: $0.title) }
+                RewardRequest(
+                    // Matches SharingRequest.targetInteraction used by handleShareProduct.
+                    targetInteraction: "purchase",
+                    products: sampleProducts.map { ProductDetails(productId: $0.id, name: $0.title) }
+                )
             )
             if let best {
                 catalogReward = .loaded(best)
