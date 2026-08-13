@@ -67,8 +67,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
-    implementation("id.frak.sdk:core:0.0.1")
-    implementation("id.frak.sdk:ui:0.0.1")
+    implementation("id.frak.sdk:core:1.0.0-beta.1")
+    implementation("id.frak.sdk:ui:1.0.0-beta.1")
 
     testImplementation("junit:junit:4.13.2")
 }

@@ -29,11 +29,12 @@ Xcode → File → Add Package Dependencies → `https://github.com/frak-id/frak
 
 Or in a `Package.swift`:
 
-No tag exists yet, so pin the branch until the first release is cut:
+This is a prerelease, so pin it exactly. A `from:` bound against a prerelease rolls forward
+across later betas, and `from: "1.0.0"` would not resolve this tag at all:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/frak-id/frak-ios-sdk.git", branch: "main")
+    .package(url: "https://github.com/frak-id/frak-ios-sdk.git", exact: "1.0.0-beta.1")
 ],
 targets: [
     .target(name: "YourApp", dependencies: [

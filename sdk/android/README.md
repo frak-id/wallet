@@ -258,7 +258,7 @@ Get the case wrong and nothing fails: `isRequired = signingKey != null` makes si
 
 ```bash
 bun run --cwd sdk/android publishLocal
-cat ~/.m2/repository/id/frak/sdk/core/0.0.1/core-0.0.1.pom
+cat ~/.m2/repository/id/frak/sdk/core/1.0.0-beta.1/core-1.0.0-beta.1.pom
 ```
 
 The POM contents are Central-valid already — `buildSrc/src/main/kotlin/frak-publish.gradle.kts` is a convention plugin applied by both modules (licence, developers, SCM, sources/javadoc jars), only the transport is missing.
@@ -295,6 +295,6 @@ The shape being frozen was decided in five reviewed steps — `docs/plans/native
 
 - ~~The committed `api/*.api` dumps.~~ **Done** — both are committed and `apiCheck` passes in CI. What `docs/plans/native-sdk/09-android-api-surface.md` still lists as open is now *frozen* rather than pending: fixes to those items have to be additive or they are a break.
 - The `-javadoc` jar is a **stub**, on both artifacts. AGP's `withJavadocJar()` runs a bundled Dokka whose relocated ASM predates the `PermittedSubclasses` attribute, so it throws on the first `sealed` type it reads as a binary — which is every publish of `:frak-sdk-ui`, since that module sees `:frak-sdk` as a jar. Central requires the artifact to exist and never opens it, and the sources jar carries the KDoc an IDE actually reads. Detail and the reason a modern Dokka is not reachable from here: finding A6 in `docs/plans/native-sdk/06-open-findings.md`.
-- Generating the real GPG key and wiring the Portal repository — neither has started. The `id.frak.sdk` namespace is claimed, which is why the coordinates are `id.frak.sdk:core`/`:ui` and not `id.frak:frak-sdk`: Sonatype grants authorization downwards only, so a verified `id.frak.sdk` covers `id.frak.sdk.*` and never the `id.frak` parent.
+- ~~Generating the real GPG key and wiring the Portal repository.~~ **Done** — the signing key is on a keyserver and lives in the `ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY` secrets, and `.github/workflows/release-android-sdk.yml` builds, signs, verifies and uploads the bundle. The `id.frak.sdk` namespace is claimed, which is why the coordinates are `id.frak.sdk:core`/`:ui` and not `id.frak:frak-sdk`: Sonatype grants authorization downwards only, so a verified `id.frak.sdk` covers `id.frak.sdk.*` and never the `id.frak` parent.
 - A device pass covering the sharing sheet, the install handoff and inbound deep links — publishing an artifact nothing has run is how you burn a version number.
 - A CI job that builds `example/native-android`. `.github/workflows/apps.yaml` already lints, builds and unit-tests the SDK itself (see "Testing" above); nothing compiles the harness, so a broken harness call site does not go red.
