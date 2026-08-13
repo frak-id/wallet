@@ -97,10 +97,7 @@ Three commits, grouped by surface. Every one of them is green under the repo's o
 
 
 1. ~~**Android, one run.**~~ **Done — see §4.**
-2. **iOS, one run:** the sheet, twice — once shared, once navigated away from mid-sheet. Commit 1
-   changed `.onDisappear` to report before tearing down, which is the one change in this branch
-   that could plausibly misfire (a `NavigationStack` push fires `onDisappear` too). If a push
-   produces a spurious `.dismissed`, tell me and I will gate it on a real teardown instead.
+2. ~~**iOS, one run.**~~ **Done — see §5.**
 
 **One thing needs 20 minutes and no device:** decide whether `?fmt=` ships in the alpha at all
 (§2.2). It gates §3.3, which gates the merge flow working on a fresh install.
@@ -149,3 +146,39 @@ Two unrelated things the run surfaced, neither SDK-caused, both cheap:
 **Still not covered by this run:** the two-destination `NavHost` case (§3.6 — the empty `onDispose`
 cannot be reached from a single-screen harness), and warm-start deep links (§2.3), which need the
 `onNewIntent` path fixed before a device run would mean anything.
+
+
+---
+
+## 5. Device run — iOS on an iPhone 15 (2026-08-13)
+
+First time any of this has run on iOS hardware. Built and installed with real signing, driven
+through: the sheet shared, the sheet dismissed by swipe, **the sheet covered rather than closed**,
+copy-and-paste, the install handoff, two consecutive opens, backgrounding with the sheet open, and
+landscape.
+
+**Result: clean.** One app process for the whole session — no crash, no restart, no jetsam kill.
+
+The two things this run was for:
+
+- **`.onDisappear` does not misfire.** Commit 1 changed it to report the result *before* tearing the
+  session down, and the risk was that `onDisappear` also fires when a view is merely covered. It
+  does not produce a spurious `.dismissed`: a share reports a share, a swipe-dismiss reports one
+  `dismissed`, and covering the sheet reports nothing and leaves it alive. This was the single most
+  likely regression in the branch, and it is not one.
+- **`SharingWebViewPool` genuinely reuses its renderer.** Our app spawned exactly **one**
+  `WebContent` process (pid 1121) across every open, confirmed by attributing every renderer in the
+  log to its parent — the other three belong to `SharingUIService`, i.e. the system share sheet, not
+  us. So the missing `lent` guard in `warm(_:)` (§3.5) did not bite here. Still worth adding: this
+  proves the happy path, not the race.
+
+**The harness could not rotate, and that was the harness.** `Info.plist` was
+`UISupportedInterfaceOrientations` = portrait only, so the sheet's safe-area handling in landscape —
+the notch-on-the-side case — was untestable in the one app that drives the SDK. Landscape is now
+declared and the case passes. This is the same class of gap as Android's missing
+`enableOnBackInvokedCallback`: the harness quietly excluded a case, and nobody could see that the
+case had never run.
+
+**Still not covered:** warm-start deep links (§2.3), which need the `onNewIntent`/`onOpenURL` path
+settled first, and `SKOverlay` (§3.9/F6), which needs a delegate before "silent" can be told from
+"failed".
