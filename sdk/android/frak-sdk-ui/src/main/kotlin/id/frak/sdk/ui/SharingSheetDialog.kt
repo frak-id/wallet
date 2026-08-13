@@ -2,13 +2,13 @@ package id.frak.sdk.ui
 
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.os.Build
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.ComponentDialog
 import androidx.activity.OnBackPressedCallback
+import androidx.core.view.WindowCompat
 
 /**
  * The window the sheet lives in. Everything configured here exists to stop the platform drawing
@@ -50,20 +50,12 @@ private fun android.view.Window.applySheetWindowStyle() {
     // FLAG_DIM_BEHIND is deliberately not set: a window dim is constant, so it would pop in and
     // out while the sheet is still sliding. The scrim is drawn in the composition instead.
     setDimAmount(0f)
-    // Otherwise both bar backgrounds fall to the platform theme's opaque black while the sheet
-    // is up — a flash at both ends of every share. Deprecated since API 35, but the only lever
-    // for 24..34. Icon appearance is left alone: light icons already read against the scrim.
-    @Suppress("DEPRECATION")
-    run {
-        // Without this flag the two colour setters below are silently ignored:
-        // `Theme_Translucent_NoTitleBar` never sets `windowDrawsSystemBarBackgrounds`.
-        addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-        statusBarColor = Color.TRANSPARENT
-        navigationBarColor = Color.TRANSPARENT
-    }
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-        // A Dialog is a child window with no independent `windowOptOutEdgeToEdgeEnforcement`, so
-        // on Android 15+ it must cooperate with the host's insets contract rather than opt out.
-        setDecorFitsSystemWindows(false)
-    }
+    // Must precede enableEdgeToEdge, which sets the bar colours:
+    // `Theme_Translucent_NoTitleBar` leaves `windowDrawsSystemBarBackgrounds` unset, and without
+    // it those setters are ignored, so both bars stay opaque black while the sheet is up.
+    addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+    // Transparent bars and cutout handling down to API 16. A Dialog is a child window with no
+    // independent `windowOptOutEdgeToEdgeEnforcement`, so on Android 15+ it cooperates with the
+    // host's insets contract rather than opting out. Light icons already read against the scrim.
+    WindowCompat.enableEdgeToEdge(this)
 }

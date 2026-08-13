@@ -540,7 +540,11 @@ internal class SharingHost private constructor(
         /**
          * `TRIM_MEMORY_UI_HIDDEN` sorts between the running and background levels but means "your UI
          * went away", so a `>=` test both catches it and misses the running-low levels below it.
+         *
+         * The running levels are deprecated and stop being dispatched on API 35+, where
+         * `TRIM_MEMORY_BACKGROUND` is the only pressure signal left above this threshold.
          */
+        @Suppress("DEPRECATION")
         fun isMemoryPressure(level: Int): Boolean =
             level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW &&
                 level != ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN

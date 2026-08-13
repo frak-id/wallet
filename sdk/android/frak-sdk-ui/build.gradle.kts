@@ -54,6 +54,10 @@ dependencies {
     // `FrakSharing.Builder.build(...)`, and `ComponentDialog` (the sheet's window) ships with it.
     api(libs.androidx.activity)
 
+    // `WindowCompat.enableEdgeToEdge` only, which needs 1.18.0. Declared rather than taken from
+    // activity's `api`, so the sheet's window styling does not break on an activity bump.
+    implementation(libs.androidx.core)
+
     // `@MainThread` only. CLASS retention, so consumers need nothing at runtime.
     implementation(libs.androidx.annotation)
 
