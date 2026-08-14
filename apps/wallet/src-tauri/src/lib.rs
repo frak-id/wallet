@@ -2,6 +2,11 @@
 pub fn run() {
     let mut builder = tauri::Builder::default();
 
+    // The OTA plugin swaps the context's asset resolver, so it must be built
+    // from the context before anything else consumes it. `run` below takes the
+    // returned context, not a second `generate_context!()`.
+    let (ota_plugin, context) = tauri_plugin_ota_updater::init(tauri::generate_context!());
+
     // IMPORTANT: tauri_plugin_frak_firebase MUST initialize FIRST on mobile so
     // Crashlytics' NSException + Mach signal handlers are armed before any
     // other plugin can crash during setup. The Rust panic hook also lives in
@@ -13,6 +18,9 @@ pub fn run() {
     }
 
     builder = builder
+        // Registered after Crashlytics so a panic in its setup is captured, and
+        // before the rest so the asset swap is live for the first webview load.
+        .plugin(ota_plugin)
         .plugin(tauri_plugin_safe_area_insets::init())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init());
@@ -50,6 +58,6 @@ pub fn run() {
             }
             Ok(())
         })
-        .run(tauri::generate_context!())
+        .run(context)
         .expect("error while running tauri application");
 }

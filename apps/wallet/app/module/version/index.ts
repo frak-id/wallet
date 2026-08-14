@@ -3,6 +3,7 @@
  *
  * Soft updates: `frak-updater` Tauri plugin (iTunes Lookup on iOS, Play
  * Core FLEXIBLE flow on Android). Hard updates: backend `minVersion` floor
- * exposed at `GET /common/version`.
+ * exposed at `GET /common/version`. OTA: CrabNebula `ota-updater` plugin
+ * swaps the web assets without a store release.
  */
 export { VersionGate } from "./component/VersionGate";

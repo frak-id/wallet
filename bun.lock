@@ -227,6 +227,7 @@
       "name": "@frak-labs/nexus-wallet",
       "version": "1.0.93",
       "dependencies": {
+        "@crabnebula/plugin-ota-updater": "^2.0.1",
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/client": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
@@ -266,6 +267,7 @@
         "zustand": "catalog:",
       },
       "devDependencies": {
+        "@crabnebula/ota-updater": "^0.1.9",
         "@frak-labs/backend-elysia": "workspace:*",
         "@frak-labs/test-foundation": "workspace:*",
         "@noble/curves": "catalog:",
@@ -555,7 +557,7 @@
     },
     "sdk/android": {
       "name": "@frak-labs-sdk/native-android",
-      "version": "0.0.1",
+      "version": "1.0.0-beta.2",
     },
     "sdk/components": {
       "name": "@frak-labs/components",
@@ -621,7 +623,7 @@
     },
     "sdk/ios": {
       "name": "@frak-labs-sdk/native-ios",
-      "version": "0.0.1",
+      "version": "1.0.0-beta.2",
     },
     "sdk/legacy": {
       "name": "@frak-labs/nexus-sdk",
@@ -1016,6 +1018,22 @@
     "@changesets/write": ["@changesets/write@0.4.0", "", { "dependencies": { "@changesets/types": "^6.1.0", "fs-extra": "^7.0.1", "human-id": "^4.1.1", "prettier": "^2.7.1" } }, "sha512-CdTLvIOPiCNuH71pyDu3rA+Q0n65cmAbXnwWH84rKGiFumFzkmHNT8KHTMEchcxN+Kl8I54xGUhJ7l3E7X396Q=="],
 
     "@colors/colors": ["@colors/colors@1.5.0", "", {}, "sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ=="],
+
+    "@crabnebula/ota-updater": ["@crabnebula/ota-updater@0.1.9", "", { "optionalDependencies": { "@crabnebula/ota-updater-darwin-arm64": "0.1.9", "@crabnebula/ota-updater-darwin-x64": "0.1.9", "@crabnebula/ota-updater-linux-arm64-gnu": "0.1.9", "@crabnebula/ota-updater-linux-x64-gnu": "0.1.9", "@crabnebula/ota-updater-win32-arm64-msvc": "0.1.9", "@crabnebula/ota-updater-win32-x64-msvc": "0.1.9" }, "bin": { "ota-updater": "cli.js" } }, "sha512-6AaEfojVLjEyCse86RofP9Qlax7hNIzPiHE0LNtFQbIRtq/HNeonfa1O+V9eSTQLnnF7y6qwO+GnD3w24j01wg=="],
+
+    "@crabnebula/ota-updater-darwin-arm64": ["@crabnebula/ota-updater-darwin-arm64@0.1.9", "", { "os": "darwin", "cpu": "arm64" }, "sha512-fOnzdJ9CG5MYDrMMBC8hfIl9p+R7/5AZEHV2bRQmp7NvGQn8/btfJ4lG7SIb+g2xkk1J3o16zmyBbNyvI9ViVw=="],
+
+    "@crabnebula/ota-updater-darwin-x64": ["@crabnebula/ota-updater-darwin-x64@0.1.9", "", { "os": "darwin", "cpu": "x64" }, "sha512-YyetAPaid+3TlG3Vj84FH+Br0MvQucNI7NkWa3zZjOaIPwThns4XU3gqSEMhz1t1gOQZQjXvaY5omQEkZo2wOw=="],
+
+    "@crabnebula/ota-updater-linux-arm64-gnu": ["@crabnebula/ota-updater-linux-arm64-gnu@0.1.9", "", { "os": "linux", "cpu": "arm64" }, "sha512-yT84SD5BiscVTdXrjxBXQft8ZGaKMKDNkM3IAUpf0E95uEZCm4xVfp/ZgLr+SMd87tdvon1duaxG54j6UKuIGg=="],
+
+    "@crabnebula/ota-updater-linux-x64-gnu": ["@crabnebula/ota-updater-linux-x64-gnu@0.1.9", "", { "os": "linux", "cpu": "x64" }, "sha512-39hth2j2A1TJIpWKzvXI+xH3pZlfbOa8KRUNqs3aJ+TqvWet9TATrjTrlbz5R4brdKEg6ukA787BqpFqyU1AAw=="],
+
+    "@crabnebula/ota-updater-win32-arm64-msvc": ["@crabnebula/ota-updater-win32-arm64-msvc@0.1.9", "", { "os": "win32", "cpu": "arm64" }, "sha512-uJ0ijYjoCd3QRHztqEBjoTAzTUFvCO24/Jo1MIS4xA1/BInu4cDypemyPWSNB8lUjIEseUNN1k3D/81N4mWPYw=="],
+
+    "@crabnebula/ota-updater-win32-x64-msvc": ["@crabnebula/ota-updater-win32-x64-msvc@0.1.9", "", { "os": "win32", "cpu": "x64" }, "sha512-7Y4JxXWWOm2i2JHcBWNVhfAWCCByzk7mbQhGd9rpDAqNQAJ6Ni2Pp9chOweMtp+xZvce2dDlc//juvUXEo6+ug=="],
+
+    "@crabnebula/plugin-ota-updater": ["@crabnebula/plugin-ota-updater@2.0.1", "", { "dependencies": { "@tauri-apps/api": "2.0.0" } }, "sha512-uXYEVH/qanTRlCOuWZc29oEv3JFiZWWHh25x31k+1f5S56RbJd0FW1RQxkYQNThwXx3u2wHK8G5Zashj9SZLFQ=="],
 
     "@csstools/color-helpers": ["@csstools/color-helpers@6.1.0", "", {}, "sha512-064IFJdjTfUqnjpCVpMOdbr8FLQBhinbZj6yRv2An2E41O/pLEXqfFRWqGq/SxlE5PEUYTlvWsG2r8MswAVvkg=="],
 
@@ -4002,6 +4020,8 @@
     "@changesets/apply-release-plan/prettier": ["prettier@2.8.8", "", { "bin": { "prettier": "bin-prettier.js" } }, "sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q=="],
 
     "@changesets/write/prettier": ["prettier@2.8.8", "", { "bin": { "prettier": "bin-prettier.js" } }, "sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q=="],
+
+    "@crabnebula/plugin-ota-updater/@tauri-apps/api": ["@tauri-apps/api@2.0.0", "", {}, "sha512-moKgCp2EX7X5GiOx/G/bmoEpkFQVVmyS98UaJU4xUVzan+E1BdwlAKcbip+cGldshYOqL4JSwAEN1OkRXeug0Q=="],
 
     "@esbuild-kit/core-utils/esbuild": ["esbuild@0.18.20", "", { "optionalDependencies": { "@esbuild/android-arm": "0.18.20", "@esbuild/android-arm64": "0.18.20", "@esbuild/android-x64": "0.18.20", "@esbuild/darwin-arm64": "0.18.20", "@esbuild/darwin-x64": "0.18.20", "@esbuild/freebsd-arm64": "0.18.20", "@esbuild/freebsd-x64": "0.18.20", "@esbuild/linux-arm": "0.18.20", "@esbuild/linux-arm64": "0.18.20", "@esbuild/linux-ia32": "0.18.20", "@esbuild/linux-loong64": "0.18.20", "@esbuild/linux-mips64el": "0.18.20", "@esbuild/linux-ppc64": "0.18.20", "@esbuild/linux-riscv64": "0.18.20", "@esbuild/linux-s390x": "0.18.20", "@esbuild/linux-x64": "0.18.20", "@esbuild/netbsd-x64": "0.18.20", "@esbuild/openbsd-x64": "0.18.20", "@esbuild/sunos-x64": "0.18.20", "@esbuild/win32-arm64": "0.18.20", "@esbuild/win32-ia32": "0.18.20", "@esbuild/win32-x64": "0.18.20" }, "bin": { "esbuild": "bin/esbuild" } }, "sha512-ceqxoedUrcayh7Y7ZX6NdbbDzGROiyVBgC4PriJThBKSVPWnnFHZAkfI1lJT8QFkOwH4qOS2SJkS4wvpGl8BpA=="],
 

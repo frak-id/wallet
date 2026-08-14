@@ -50,6 +50,7 @@
     "tauri:icons": "./src-tauri/icons/sources/regenerate.sh"
   },
   "dependencies": {
+    "@crabnebula/plugin-ota-updater": "^2.0.1",
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/client": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
@@ -89,6 +90,7 @@
     "zustand": "catalog:"
   },
   "devDependencies": {
+    "@crabnebula/ota-updater": "^0.1.9",
     "@frak-labs/backend-elysia": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
     "@noble/curves": "catalog:",

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useOtaUpdate } from "../hook/useOtaUpdate";
 import { useVersionGate } from "../hook/useVersionGate";
 import { HardUpdateGate } from "./HardUpdateGate";
 import { SoftUpdatePrompt } from "./SoftUpdatePrompt";
@@ -15,6 +16,9 @@ import { SoftUpdatePrompt } from "./SoftUpdatePrompt";
  */
 export function VersionGate() {
     const state = useVersionGate();
+    // Stages OTA web assets for the next cold start. Rendered nothing, but
+    // this is the only mount that runs on every Tauri session.
+    useOtaUpdate();
     const [dismissedFor, setDismissedFor] = useState<string | null>(null);
     const [progressDismissed, setProgressDismissed] = useState(false);
 

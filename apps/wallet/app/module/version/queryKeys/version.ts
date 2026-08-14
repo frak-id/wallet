@@ -18,6 +18,12 @@ export namespace versionKey {
     export const nativeStatus = [base, "native-status"] as const;
 
     /**
+     * CrabNebula OTA pass for the web assets. Downloads a full bundle when one
+     * is pending, so this is deliberately never refetched on focus.
+     */
+    export const otaStatus = [base, "ota-status"] as const;
+
+    /**
      * Mutation: deep-link to the platform store from the hard-update gate.
      */
     export const openStore = [base, "open-store"] as const;

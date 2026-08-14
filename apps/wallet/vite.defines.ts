@@ -51,8 +51,22 @@ export async function getDefineProps({
 
     const appVersion = process.env.COMMIT_HASH ?? walletPackage.version;
 
+    const stage = getSstResource("STAGE") ?? "dev";
+
+    // OTA channel for this exact artifact. Deliberately built from
+    // `walletPackage.version` rather than `appVersion`: the latter collapses to
+    // `COMMIT_HASH` on web deploys, and a channel keyed by commit would never
+    // match the installed binary. Platform is folded in because `__IS_IOS__` /
+    // `__IS_ANDROID__` are baked in, stage because `BACKEND_URL` is, and version
+    // because the JS↔Rust command surface is only valid for the binary it
+    // shipped with. `null` on web and on any non-mobile build disables OTA.
+    const otaPlatform = isTauriIos ? "ios" : isTauriAndroid ? "android" : null;
+    const otaChannel = otaPlatform
+        ? `${stage}-${otaPlatform}-${walletPackage.version}`
+        : null;
+
     return {
-        "process.env.STAGE": JSON.stringify(getSstResource("STAGE") ?? "dev"),
+        "process.env.STAGE": JSON.stringify(stage),
         "process.env.BACKEND_URL": JSON.stringify(backendUrl),
         "process.env.ERPC_URL": JSON.stringify(
             getSstResource("ERPC_URL") ??
@@ -79,6 +93,7 @@ export async function getDefineProps({
         __IS_TAURI__: JSON.stringify(isTauri),
         __IS_IOS__: JSON.stringify(isTauriIos),
         __IS_ANDROID__: JSON.stringify(isTauriAndroid),
+        __OTA_CHANNEL__: JSON.stringify(otaChannel),
         "process.env.APP_VERSION": JSON.stringify(appVersion),
         "process.env.FRAK_WALLET_URL": JSON.stringify(
             sandboxEnv.walletUrl ??

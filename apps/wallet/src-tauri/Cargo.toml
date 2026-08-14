@@ -36,6 +36,11 @@ tauri-plugin-frak-share = { path = "plugins/tauri-plugin-frak-share" }
 tauri-plugin-frak-firebase = { path = "plugins/tauri-plugin-frak-firebase" }
 tauri-plugin-frak-updater = { path = "plugins/tauri-plugin-frak-updater" }
 tauri-plugin-clipboard-manager = "2"
+# CrabNebula OTA: swaps the embedded web assets at boot. `rustls-tls` avoids
+# linking OpenSSL into the iOS/Android builds, which have no system OpenSSL.
+tauri-plugin-ota-updater = { version = "2.0.8", default-features = false, features = [
+    "rustls-tls",
+] }
 
 # Android-only: share + fs plugins for file sharing (needed for recovery file download)
 [target.'cfg(target_os = "android")'.dependencies]
