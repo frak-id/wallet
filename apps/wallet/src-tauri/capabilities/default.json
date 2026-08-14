@@ -18,6 +18,7 @@
         "clipboard-manager:allow-read-text",
         "recovery-hint:default",
         "frak-updater:default",
-        "frak-glass:default"
+        "frak-glass:default",
+        "ota-updater:default"
     ]
 }

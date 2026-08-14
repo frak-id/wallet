@@ -1,0 +1,196 @@
+name: "📡 Ship Wallet OTA"
+
+# Frontend-only hotfix for an ALREADY-RELEASED wallet version, shipped through
+# CrabNebula Cloud without a store review.
+#
+# Run this workflow FROM A BRANCH CUT OFF THE RELEASE TAG:
+#
+#   git checkout -b hotfix/ota-1.0.94 app-1.0.94
+#   <fix the web assets, push the branch>
+#   Actions → "Ship Wallet OTA" → run on hotfix/ota-1.0.94
+#   then merge the fix forward into dev separately
+#
+# Ship from the hotfix branch itself, BEFORE merging forward: once the fix is
+# merged into dev it carries every unreleased change with it, and the guard
+# below will (correctly) refuse to publish.
+#
+# Branching off the tag is what keeps this safe: it makes it impossible to pick
+# up unreleased work from `dev` that needs a newer binary. The guard step below
+# enforces that mechanically.
+#
+# The store release workflow (`tauri-mobile-release.yml`) deliberately does NOT
+# publish an OTA baseline. An empty channel makes the plugin's boot check a
+# cheap 404; publishing assets identical to the embedded ones would instead
+# make every fresh install download the whole archive on first launch, on the
+# blocking boot path.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "SST stage (dev = TestFlight/internal, prod = production)"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+        default: dev
+      platform:
+        description: "Which installed binaries to patch"
+        required: true
+        type: choice
+        options:
+          - both
+          - ios
+          - android
+        default: both
+      notes:
+        description: "Release notes shown in CrabNebula Cloud"
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.stage }}
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  CI: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  guard:
+    name: "🛡️ Verify OTA-safe"
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: "📥 Checkout"
+        uses: actions/checkout@v6
+        with:
+          # Full history + tags: the guard diffs this tree against the tag.
+          fetch-depth: 0
+
+      # An OTA bundle can only ever replace web assets. Anything under
+      # `src-tauri/` — Rust, `capabilities/`, `tauri.conf.json` — is compiled
+      # into the installed binary and CANNOT be shipped this way. A device that
+      # pulled assets calling a command, or relying on a capability, that its
+      # binary lacks is broken until the user takes a store update.
+      #
+      # Diffing against the release tag rather than the release PR is what makes
+      # this exact instead of heuristic: relative to the bytes actually shipped,
+      # any `src-tauri/` diff is unambiguously a violation.
+      - name: "🛡️ Check the tree is OTA-safe"
+        id: check
+        run: |
+          set -euo pipefail
+          VERSION=$(jq -r '.version' apps/wallet/package.json)
+          TAG="app-$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          if ! git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::Tag $TAG does not exist. OTA can only patch a version that actually shipped — cut this branch from a release tag."
+            exit 1
+          fi
+
+          if ! git merge-base --is-ancestor "$TAG" HEAD; then
+            echo "::error::HEAD does not descend from $TAG. Re-cut this branch with: git checkout -b <branch> $TAG"
+            exit 1
+          fi
+
+          if ! git diff --quiet "$TAG" HEAD -- apps/wallet/src-tauri; then
+            echo "::error::Native changes since $TAG — this needs a store release, not an OTA:"
+            git diff --name-only "$TAG" HEAD -- apps/wallet/src-tauri | sed 's/^/  /'
+            exit 1
+          fi
+
+          echo "[ci] $TAG → HEAD is web-assets-only, safe to ship over the air"
+
+  upload:
+    name: "📡 ${{ matrix.platform }} ${{ needs.guard.outputs.version }} → ${{ inputs.stage }}"
+    needs: guard
+    runs-on: ubuntu-latest
+    strategy:
+      # Sequential: both legs run `ota-updater upload` against the same Cloud
+      # app and the CLI makes no concurrency guarantee.
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        platform: ${{ inputs.platform == 'both' && fromJSON('["ios","android"]') || fromJSON(format('["{0}"]', inputs.platform)) }}
+
+    steps:
+      - name: "📥 Checkout"
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: "🟢 Setup Node"
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: "🧅 Setup Bun"
+        uses: oven-sh/setup-bun@v2
+
+      - name: "💾 Cache Bun modules"
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: "📦 Install dependencies"
+        run: bun install --frozen-lockfile
+
+      - name: "🏗️ Build SDK packages"
+        run: bun run build:sdk
+
+      - name: "👥 Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
+          aws-region: eu-west-1
+          retry-max-attempts: 5
+
+      # Mirrors `beforeBuildCommand` in tauri.conf.json EXACTLY. `bun run build`
+      # is wrong here: it also emits the service worker and the standalone
+      # /sharing + /install pages, which the binary never embedded, so the OTA
+      # bundle would not match the asset set it replaces.
+      # TAURI_ENV_PLATFORM drives __IS_IOS__ / __IS_ANDROID__ and, with STAGE,
+      # the __OTA_CHANNEL__ define this bundle will be published under.
+      - name: "🏗️ Build wallet frontend"
+        run: |
+          sst shell --stage "$STAGE" --print-logs -- bash -c \
+            "cd apps/wallet && NODE_ENV=production TAURI_CLI_RUNNING=1 TAURI_ENV_PLATFORM=$PLATFORM vite build"
+        env:
+          STAGE: ${{ inputs.stage }}
+          FRAK_VARIANT: ${{ inputs.stage }}
+          PLATFORM: ${{ matrix.platform }}
+
+      # Channel must match __OTA_CHANNEL__ from vite.defines.ts, or the bundle
+      # lands where no device is listening.
+      - name: "📡 Upload OTA bundle"
+        working-directory: apps/wallet
+        run: |
+          set -euo pipefail
+          CHANNEL="$STAGE-$PLATFORM-$VERSION"
+          echo "[ci] publishing to channel $CHANNEL"
+          ARGS=(--channel "$CHANNEL")
+          if [ -n "$NOTES" ]; then
+            ARGS+=(--notes "$NOTES")
+          fi
+          bunx ota-updater upload "${ARGS[@]}"
+        env:
+          STAGE: ${{ inputs.stage }}
+          PLATFORM: ${{ matrix.platform }}
+          VERSION: ${{ needs.guard.outputs.version }}
+          NOTES: ${{ inputs.notes }}
+          PRIVATE_KEY: ${{ secrets.OTA_SIGNING_PRIVATE_KEY }}
+          PRIVATE_KEY_PASSWORD: ${{ secrets.OTA_SIGNING_PRIVATE_KEY_PASSWORD }}
+          CN_API_KEY: ${{ secrets.CN_API_KEY }}
