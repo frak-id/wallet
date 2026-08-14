@@ -258,7 +258,7 @@ Get the case wrong and nothing fails: `isRequired = signingKey != null` makes si
 
 ```bash
 bun run --cwd sdk/android publishLocal
-cat ~/.m2/repository/id/frak/sdk/core/1.0.0-beta.1/core-1.0.0-beta.1.pom
+cat ~/.m2/repository/id/frak/sdk/core/1.0.0-beta.2/core-1.0.0-beta.2.pom
 ```
 
 The POM contents are Central-valid already — `buildSrc/src/main/kotlin/frak-publish.gradle.kts` is a convention plugin applied by both modules (licence, developers, SCM, sources/javadoc jars), only the transport is missing.

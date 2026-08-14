@@ -1,6 +1,6 @@
 public enum FrakSDKVersion {
     // Kept in sync by hand with package.json until a release pipeline owns both.
-    public static let current: String = "1.0.0-beta.1"
+    public static let current: String = "1.0.0-beta.2"
 
     // `@_spi` is Swift's twin of Android's `@InternalFrakApi`: it works here (rather than plain
     // `internal`) because this package is distributed as source through SwiftPM, so a consumer

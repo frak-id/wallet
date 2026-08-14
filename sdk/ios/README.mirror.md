@@ -34,7 +34,7 @@ across later betas, and `from: "1.0.0"` would not resolve this tag at all:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/frak-id/frak-ios-sdk.git", exact: "1.0.0-beta.1")
+    .package(url: "https://github.com/frak-id/frak-ios-sdk.git", exact: "1.0.0-beta.2")
 ],
 targets: [
     .target(name: "YourApp", dependencies: [
