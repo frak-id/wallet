@@ -179,7 +179,10 @@ internal class SharingSessionBuilder(
         val title =
             interpolateProductName(
                 request.shareTitle?.takeIf { it.isNotBlank() }
-                    ?: request.products.firstOrNull()?.title?.takeIf { it.isNotBlank() }
+                    ?: request.products
+                        .firstOrNull()
+                        ?.title
+                        ?.takeIf { it.isNotBlank() }
                     ?: defaults.title,
                 name,
             )

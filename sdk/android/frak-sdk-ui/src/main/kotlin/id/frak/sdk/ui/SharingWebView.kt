@@ -70,11 +70,7 @@ internal sealed interface SharingPageAction {
 
                 // Blank decodes to null, so it falls through to the session's own copy rather
                 // than suppressing it with an empty subject.
-                "share" ->
-                    Share(
-                        title = title?.trim()?.takeIf { it.isNotEmpty() },
-                        text = text?.trim()?.takeIf { it.isNotEmpty() },
-                    )
+                "share" -> Share(blankToNull(title), blankToNull(text))
 
                 "copy" -> Copy
 
@@ -87,6 +83,8 @@ internal sealed interface SharingPageAction {
 
                 else -> null
             }
+
+        private fun blankToNull(value: String?): String? = value?.trim()?.takeIf { it.isNotEmpty() }
     }
 }
 

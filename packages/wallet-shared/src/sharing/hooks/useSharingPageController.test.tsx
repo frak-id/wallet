@@ -6,6 +6,7 @@ import { trackEvent } from "../../common/analytics";
 import {
     type SharingOutcomes,
     type SharingPageControllerInput,
+    type SharingResolvedShareData,
     useSharingPageController,
 } from "./useSharingPageController";
 
@@ -594,7 +595,7 @@ describe("share payload sanitization", () => {
     });
 
     it("clips an over-budget product title to the wire budget", () => {
-        const share = vi.fn(() => true);
+        const share = vi.fn((_data: SharingResolvedShareData) => true);
         const { result } = setup(
             { share },
             {
@@ -606,9 +607,7 @@ describe("share payload sanitization", () => {
 
         act(() => result.current.actions.onShare());
 
-        const { title } = share.mock.calls[0][0] as unknown as {
-            title: string;
-        };
+        const { title } = share.mock.calls[0][0];
         expect(title.length).toBe(120);
         expect(title.endsWith("…")).toBe(true);
     });

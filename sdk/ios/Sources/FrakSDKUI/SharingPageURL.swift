@@ -1,5 +1,4 @@
 import Foundation
-
 @_spi(FrakInternal) import FrakSDK
 
 // Hosted /sharing URL the sheet's web view loads. No bridge back to native: state
