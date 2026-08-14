@@ -26,6 +26,12 @@
         }
     },
     "plugins": {
+        "ota-updater": {
+            "orgSlug": "frak-labs",
+            "appSlug": "frak-wallet",
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDRFMjFCRjc0MjRGOURFQ0MKUldUTTN2a2tkTDhoVHFoOStKWnFCTmxmVnhUK1N0K2x1bTIxYzZxdVV0TmwvdTdqdW5mM0hzL1IK",
+            "channel": "unset"
+        },
         "deep-link": {
             "mobile": [
                 {
