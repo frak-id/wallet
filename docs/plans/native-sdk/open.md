@@ -81,7 +81,7 @@ Open, tracked, knowingly not being worked.
 | — | `FrakSdkVersion.kt`'s KDoc points at a `version` in `build.gradle.kts` that does not exist | Android |
 | — | Merchant-facing gaps deferred with a README note: no test seam, no theming story, no install-handoff documentation | both |
 | — | Dark mode: does the sheet follow the system setting? A product decision, not a defect | both |
-| — | iOS's native share payload is a bare URL with no text or image. Closing it needs cross-surface `SharingView` changes | both |
+| A3 | No merchant UI for `sharing.title` / `sharing.text`. They are API-settable only until someone builds the editor in `apps/business`, at which point the typed `components.shareSheet` question reopens — see `decisions.md` §4.9 | both |
 
 ## 6. Performance
 

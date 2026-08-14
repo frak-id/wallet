@@ -349,6 +349,65 @@ clipboard write.
 whether the share completed. True completion needs an `ActivityResultLauncher`, which is a public
 API change. Currently optimistic.
 
+### 4.9 The OS share sheet's copy comes from the page, not the SDK
+
+The sheet hands the OS chooser a resolved title/text/image instead of a bare URL. Two decisions sit
+underneath, and both are cheap to keep and expensive to undo.
+
+**Reuse `sharing.title` / `sharing.text`, do not add a typed `components.shareSheet` block.** Zero
+backend schema work, zero decoder work, and web and native resolve from one source of truth. The cost
+is that these keys have no editor in `apps/business` and there is no dedicated preview-image field —
+the image falls back through the product, then `sdkConfig.logoUrl`.
+
+**The page resolves the payload; the SDK only resolves on tier 3.** The page already owns product
+selection, i18next interpolation and the merchant config, so resolving natively would duplicate three
+things that then drift. Tier 3 is the exception because there is no page — config resolution is
+exactly what failed on that path.
+
+Precedence, applied in `useSharingPageController` to web and native alike: per-call `SharingRequest`
+override → selected product (`title`, `imageUrl`) → merchant `translations["sharing.*"]` → bundled
+`common.json`. Normalise `""` to `undefined` rather than relying on `??`, or an empty product title
+shadows the translation beneath it.
+
+The `t` wrapper's `productName: appName` binding stays as it is: it binds the *merchant* name, not the
+product title. Since the product step already sits above the translation step, a product-scoped share
+takes its title from the override and a merchant with no products keeps its existing copy byte-for-byte.
+
+### 4.10 No Android preview thumbnail, and no golden fixture for the payload
+
+**No thumbnail on Android.** A `ClipData` thumbnail renders in the system chooser process, which
+cannot read our files without an SDK-owned FileProvider — an `<application>` block in every merchant
+manifest, for a tile that never leaves the sharer's device. `shareImage` stays on the wire for iOS,
+where `LPLinkMetadata` uses it.
+
+**No cross-platform golden fixture.** Pinning the page-resolved and tier-3 payloads to each other
+would assert something false: tier 3 has no merchant copy *by design*. The corpus in §4 of
+`contract.md` exists for wire formats where a byte-level disagreement is silent and unrecoverable,
+and this is not one. A per-platform unit test that tier 3 prefers the product title over null is the
+right size.
+
+### 4.11 No merchant hook for customising the share
+
+Adding methods to `FrakSharing.Builder` is purely additive, so deferring forecloses nothing — and
+designing extension points before the default has had a device pass is backwards. Recorded because
+the obvious implementation is the wrong one.
+
+**Do not expose the platform object.** `(Intent) -> Unit` / `(UIActivityViewController) -> Void` is
+the tempting shape and it fails three ways. It publishes the *mechanism* as contract, so under
+`explicitApi()` + `apiDump` with merchant binaries frozen at store submission, `ACTION_SEND` +
+`createChooser` could never be replaced. It lets a merchant break an invariant they cannot see —
+`share()` fires reward-bearing tracking when the chooser opens, so appending a hashtag to `EXTRA_TEXT`
+can drop the `fCtx` and still trigger payout on a share attributing to nobody. And on iOS it
+deadlocks: `NativeShare.share` awaits a continuation resumed from `completionWithItemsHandler`, which
+is the first thing a merchant would overwrite.
+
+**If it is ever needed, the shape is a takeover, not a mutation** — `(SharingPayload) -> Boolean`
+over `link`/`title`/`text`/`imageUrl`, no platform types, identical on both platforms, where true
+means the merchant handled it and the sheet still records the interaction. That is the contract the
+page already runs on one layer down, where `outcomes.share?.()` returns "handed off". Note also that
+a DIY path exists today: `client.sharing.buildLink()` is public and fully local, minus the sheet's UI,
+the install handoff and the tracking.
+
 ## 5. Build, release and distribution
 
 ### 5.1 Apache-2.0, native only
