@@ -35,6 +35,7 @@
     "changeset": "changeset",
     "changeset:release": "bun run --cwd packages/rpc publish && bun publish --tolerate-republish --cwd packages/rpc && dirs=(core legacy react components); for d in ${dirs[@]}; do bun run --cwd sdk/${d} publish && bun publish --tolerate-republish --cwd sdk/${d}; done",
     "changeset:version": "changeset version && bun install --lockfile-only",
+    "check:native-versions": "bun scripts/native-version.ts check",
     "clean": "rimraf .sst/dist/ .sst/artifacts/",
     "deploy": "sst deploy --stage dev",
     "deploy:example": "sst deploy --stage example",

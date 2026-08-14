@@ -16,6 +16,7 @@ bun run --cwd sdk/ios build    # compile against the iOS simulator SDK
 bun run --cwd sdk/ios test     # compile for iOS, then run the suites
 bun run --cwd sdk/ios lint     # swift-format lint (strict)
 bun run --cwd sdk/ios format   # swift-format rewrite in place
+bun run --cwd sdk/ios check:version   # every version site + the CHANGELOG section
 ```
 
 These wrap `scripts/run.sh`, which owns the real invocations. `xcframework` is also
@@ -23,13 +24,23 @@ defined but not implemented — it exits 1 with the intended outline in the comm
 above `do_xcframework()`.
 
 `mirror-stage <dir>` lays out what the SwiftPM mirror publishes: `Sources/`,
-`Package.swift`, `LICENSE`, and `README.mirror.md` as `README.md`. Merchants cannot
+`Package.swift`, `LICENSE`, `CHANGELOG.md`, and `README.mirror.md` as `README.md`. Merchants cannot
 consume this package from the monorepo — SwiftPM reads `Package.swift` from a repo root
 only — so releases go to [`frak-id/frak-ios-sdk`](https://github.com/frak-id/frak-ios-sdk)
 via `.github/workflows/release-ios-sdk.yml`, triggered by an `ios-v*` tag. `Tests/` is
 deliberately absent from the payload: `GoldenFixtures` reads the corpus out of
 `sdk/core`, so a mirrored suite could never pass. `README.mirror.md` is the merchant-facing
 README and this file is the contributor-facing one; they are meant to diverge.
+
+**Cutting a release.** One commit moves all three version sites — `FrakSDKVersion.current`,
+`package.json`, and the `exact:` pin in `README.mirror.md` — and promotes `[Unreleased]` in
+`CHANGELOG.md` to the version being cut; pushing `ios-v<version>` runs the workflow. It checks
+those sites against each other and against the tag on a Linux runner, then lints, builds and
+tests the released tree on macOS *before* anything reaches the mirror, because the mirror
+refuses to retag a published version. It then pushes, opens a GitHub release whose body is that
+CHANGELOG section, and resolves the published package as a merchant would. Android releases on
+its own tag and its own cadence; nothing pairs them, deliberately, so either can take a hotfix
+alone. `scripts/native-version.ts` at the monorepo root owns the site list for both.
 
 `swift build` under Swift 6 strict concurrency is the typecheck: there is no separate
 `tsc`-equivalent step. A bare `swift build` without the flags `run.sh` supplies targets

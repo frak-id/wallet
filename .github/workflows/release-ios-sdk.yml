@@ -8,10 +8,15 @@
 # The mirror is a snapshot, not a history: one orphan commit per release, force-pushed.
 # `git subtree split` was the alternative and buys nothing here — nobody bisects an SDK
 # mirror, and subtree's cost scales with this monorepo's 204 MiB pack for a 492 KB result.
+# The GitHub release on this repo, quoting sdk/ios/CHANGELOG.md, is where the history lives.
 #
 # Tag convention: `ios-v0.1.0-alpha.1` here becomes `0.1.0-alpha.1` on the mirror. The
 # prefix keeps iOS releases out of the JS train's tag namespace; the mirror gets bare
 # semver because that is what SwiftPM reads as a version.
+#
+# Four jobs, cheapest first: `guard` rejects a bad tag on Linux before `verify` spends a
+# 10x-billed macOS runner, and `verify` proves the tree compiles before `publish` writes a
+# tag nobody can take back.
 name: Release iOS SDK
 
 on:
@@ -27,10 +32,10 @@ on:
         type: boolean
         default: true
 
-# A second release racing the first would force-push main out from under it.
 permissions:
   contents: read
 
+# A second release racing the first would force-push main out from under it.
 concurrency:
   group: release-ios-sdk
   cancel-in-progress: false
@@ -39,14 +44,15 @@ env:
   MIRROR: git@github.com:frak-id/frak-ios-sdk.git
 
 jobs:
-  publish:
-    name: "🍏 iOS SDK · Publish to the SwiftPM mirror"
+  # Everything that can say no without a build, on the cheap runner.
+  guard:
+    name: "🍏 iOS SDK · Check the tag and the version sites"
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.resolve.outputs.version }}
-      pushed: ${{ steps.push.outputs.pushed }}
     steps:
       - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
 
       - name: "🔢 Resolve the version"
         id: resolve
@@ -57,22 +63,65 @@ jobs:
             version="${GITHUB_REF_NAME#ios-v}"
           fi
           # Semver with an optional prerelease. A malformed tag reaching the mirror is
-          # uncorrectable: 05-build-and-release.md §3 forbids retagging a published version.
+          # uncorrectable: a published version is never retagged, only superseded.
           if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
             echo "::error::'$version' is not a semver version" && exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      # run.sh's own gate only proves FrakSDKVersion.current == package.json. Neither knows
-      # about the tag, so a correctly-synced pair can still ship under the wrong coordinate.
+      # Every file carrying the version, against each other and against the CHANGELOG.
+      # None of them knows about the tag, so the tag is checked separately below.
+      - name: "🔒 Check the version sites and the CHANGELOG"
+        run: bun scripts/native-version.ts check ios
+
       - name: "🔒 Check the tag against FrakSDKVersion.current"
         run: |
-          declared=$(grep -E 'public static let current: String = "' \
-            sdk/ios/Sources/FrakSDK/FrakSDKVersion.swift |
-            sed -E 's/.*current: String = "([^"]*)".*/\1/')
+          declared=$(bun scripts/native-version.ts version ios)
           if [ "$declared" != "${{ steps.resolve.outputs.version }}" ]; then
             echo "::error::tag says ${{ steps.resolve.outputs.version }}, FrakSDKVersion.current says $declared" && exit 1
           fi
+
+  # apps.yaml runs these on every PR touching sdk/ios, but a tag can be cut from any commit
+  # and a published version cannot be withdrawn — so they run again on the exact released tree.
+  # macOS is unavoidable: `swift format` and the iphonesimulator SDK both come from Xcode.
+  verify:
+    name: "🍏 iOS SDK · Lint, build & test the released tree"
+    needs: guard
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+
+      - name: "💾 Cache SwiftPM build"
+        uses: actions/cache@v5
+        with:
+          path: sdk/ios/.build
+          key: ${{ runner.os }}-spm-frak-sdk-${{ hashFiles('sdk/ios/Package.swift', 'sdk/ios/Sources/**', 'sdk/ios/Tests/**') }}
+          restore-keys: ${{ runner.os }}-spm-frak-sdk-
+
+      - name: "📏 Lint (swift-format, strict)"
+        run: bun run --cwd sdk/ios lint
+
+      # Cross-compiles against the iphonesimulator SDK under Swift 6 strict concurrency. A
+      # bare `swift build` would compile this package as macOS and prove nothing about iOS.
+      - name: "🔨 Build (iOS simulator triple, Swift 6)"
+        run: bun run --cwd sdk/ios build
+
+      - name: "🧪 Tests"
+        run: bun run --cwd sdk/ios test
+
+  publish:
+    name: "🍏 iOS SDK · Publish to the SwiftPM mirror"
+    needs: [guard, verify]
+    runs-on: ubuntu-latest
+    permissions:
+      # The GitHub release, and the ios-v tag it creates on a workflow_dispatch run.
+      contents: write
+    outputs:
+      pushed: ${{ steps.push.outputs.pushed }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
 
       - name: "📦 Stage the mirror payload"
         run: sdk/ios/scripts/run.sh mirror-stage "$RUNNER_TEMP/mirror"
@@ -88,7 +137,7 @@ jobs:
       - name: "🚀 Push to the mirror"
         id: push
         env:
-          VERSION: ${{ steps.resolve.outputs.version }}
+          VERSION: ${{ needs.guard.outputs.version }}
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
         run: |
           cd "$RUNNER_TEMP/mirror"
@@ -107,8 +156,8 @@ jobs:
             exit 0
           fi
 
-          # A published version is immutable (05 §3). Refuse rather than clobber a tag a
-          # merchant may already have pinned in Package.resolved.
+          # A published version is immutable. Refuse rather than clobber a tag a merchant
+          # may already have pinned in Package.resolved.
           if git ls-remote --tags "$MIRROR" "refs/tags/$VERSION" | grep -q .; then
             echo "::error::$VERSION is already tagged on the mirror; bump instead of retagging" && exit 1
           fi
@@ -117,19 +166,49 @@ jobs:
           git push "$MIRROR" "$VERSION"
           echo "pushed=true" >> "$GITHUB_OUTPUT"
 
+      # After the push: the mirror is the artifact, and a release pointing at a tag that does
+      # not exist would be the worse failure.
+      - name: "📝 Extract the release notes"
+        if: steps.push.outputs.pushed == 'true'
+        env:
+          VERSION: ${{ needs.guard.outputs.version }}
+        run: |
+          {
+            bun scripts/native-version.ts notes ios
+            echo ""
+            echo "---"
+            echo ""
+            echo "Add it with SwiftPM — a prerelease has to be pinned exactly:"
+            echo ""
+            echo '```swift'
+            echo ".package(url: \"https://github.com/frak-id/frak-ios-sdk.git\", exact: \"$VERSION\")"
+            echo '```'
+          } > "$RUNNER_TEMP/notes.md"
+
+      # On a tag push the tag already exists; on a workflow_dispatch run this creates it at
+      # the released SHA, so every published version is reachable from this repo too.
+      - name: "🏷️ Create the GitHub release"
+        if: steps.push.outputs.pushed == 'true'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: "ios-v${{ needs.guard.outputs.version }}"
+          name: "iOS SDK ${{ needs.guard.outputs.version }}"
+          body_path: ${{ runner.temp }}/notes.md
+          prerelease: ${{ contains(needs.guard.outputs.version, '-') }}
+
   # The only thing that ever exercises the merchant spelling. example/native-ios uses a
   # SwiftPM *path* dependency and always will, so without this nothing proves the published
   # form resolves — the first person to find out would otherwise be a merchant.
   # macOS because the package targets Apple platforms; billed at 10x, but only on a release.
-  verify:
+  verify-published:
     name: "🍏 iOS SDK · Resolve the published package"
-    needs: publish
+    needs: [guard, publish]
     if: needs.publish.outputs.pushed == 'true'
     runs-on: macos-26
     steps:
       - name: "🔍 Resolve and build as a merchant would"
         env:
-          VERSION: ${{ needs.publish.outputs.version }}
+          VERSION: ${{ needs.guard.outputs.version }}
         run: |
           mkdir -p consumer/Sources/App && cd consumer
           cat > Package.swift <<EOF

@@ -408,6 +408,29 @@ a merchant's binary freezes at store submission, so a JS-style patch cadence is 
 `package.json` files are `private` and in `.changeset/config.json` `ignore`; they exist only to
 dispatch to `scripts/run.sh`.
 
+Independent means independent: no gate compares the Android version to the iOS one, and neither
+release workflow triggers the other. They have matched so far because they were cut together, not
+because anything enforces it — and that is the point, since either platform must be able to take a
+hotfix alone.
+
+What Changesets does buy, and what replaces it. Changesets owns three things for the JS packages:
+the version bump, the CHANGELOG, and the publish. Here the bump is by hand — one commit, all sites,
+gated — and the publish is the tag workflow. The CHANGELOG is `sdk/{android,ios}/CHANGELOG.md` in
+Keep a Changelog format, written by hand under `[Unreleased]` and promoted by the release commit.
+It is not decoration: `scripts/native-version.ts` fails the release if the version being cut has no
+section, and both workflows publish that section as the GitHub release body. The iOS one also ships
+inside the mirror payload, where it is the only history a merchant can see — each mirror release is
+a single force-pushed orphan commit.
+
+The version sites are gated as one set, per platform, from `scripts/native-version.ts`: five files
+on Android (`gradle.properties`, `FrakSdkVersion.kt`, `package.json`, the harness coordinates, and
+the README twice — the merchant integration snippet and the `publishLocal` path) and three on iOS
+(`FrakSDKVersion.swift`, `package.json`, the `exact:` pin in `README.mirror.md`). The list lives at
+the monorepo root rather than in Gradle or `run.sh` because one Android site is outside that
+package, and because a per-platform copy is the thing that drifts. Extraction failing is a failure
+rather than a pass — a site that changed shape would otherwise compare empty to empty and gate
+nothing.
+
 ### 5.6 No Turborepo, no codegen of `FrakClient`
 
 Native builds are plain Bun scripts and CI jobs. OpenAPI generates Kotlin and Swift *models* only —
