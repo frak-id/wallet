@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Frak User API",
-    "version": "0.0.28",
+    "version": "0.0.29",
     "description": "User-facing Frak API consumed by the native SDKs (iOS and Android). Covers wallet sessions, interactions tracking, merchant information and reward estimation."
   },
   "servers": [
@@ -378,6 +378,33 @@
           },
           "403": {
             "description": "Response for status 403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Response for status 404",
             "content": {
               "application/json": {
                 "schema": {
@@ -3439,7 +3466,20 @@
                         "type": "string"
                       },
                       "sharingTimestamp": {
-                        "type": "number"
+                        "minimum": 0,
+                        "maximum": 2147483647,
+                        "anyOf": [
+                          {
+                            "format": "integer",
+                            "default": 0,
+                            "type": "string"
+                          },
+                          {
+                            "minimum": 0,
+                            "maximum": 2147483647,
+                            "type": "integer"
+                          }
+                        ]
                       },
                       "purchaseId": {
                         "minLength": 1,
@@ -3540,7 +3580,20 @@
                         "type": "string"
                       },
                       "sharingTimestamp": {
-                        "type": "number"
+                        "minimum": 0,
+                        "maximum": 2147483647,
+                        "anyOf": [
+                          {
+                            "format": "integer",
+                            "default": 0,
+                            "type": "string"
+                          },
+                          {
+                            "minimum": 0,
+                            "maximum": 2147483647,
+                            "type": "integer"
+                          }
+                        ]
                       },
                       "purchaseId": {
                         "minLength": 1,
@@ -3641,7 +3694,20 @@
                         "type": "string"
                       },
                       "sharingTimestamp": {
-                        "type": "number"
+                        "minimum": 0,
+                        "maximum": 2147483647,
+                        "anyOf": [
+                          {
+                            "format": "integer",
+                            "default": 0,
+                            "type": "string"
+                          },
+                          {
+                            "minimum": 0,
+                            "maximum": 2147483647,
+                            "type": "integer"
+                          }
+                        ]
                       },
                       "purchaseId": {
                         "minLength": 1,
@@ -3952,9 +4018,6 @@
                       "type": "string"
                     },
                     "pendingWebhook": {
-                      "type": "boolean"
-                    },
-                    "merged": {
                       "type": "boolean"
                     }
                   }
@@ -6505,6 +6568,16 @@
                       }
                     }
                   }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Response for status 401",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }

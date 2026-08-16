@@ -62,9 +62,6 @@ export const trackPurchaseRoute = new Elysia().post(
                     customerId,
                     orderId,
                     token: body.token,
-                    // Reachable with an unauthenticated x-frak-client-id —
-                    // never merge identity groups from here.
-                    merge: false,
                 }
             );
 
@@ -76,14 +73,13 @@ export const trackPurchaseRoute = new Elysia().post(
         response: {
             // Mirrors `ClaimPurchaseResult`: the two arms of `claimPurchase`
             // return disjoint optional fields — `pendingWebhook` when only a
-            // claim row was written, `purchaseId` + `merged` when an existing
-            // purchase was reconciled.
+            // claim row was written, `purchaseId` when an existing purchase
+            // was reconciled.
             200: t.Object({
                 success: t.Boolean(),
                 identityGroupId: t.String(),
                 purchaseId: t.Optional(t.String()),
                 pendingWebhook: t.Optional(t.Boolean()),
-                merged: t.Optional(t.Boolean()),
             }),
             // 400 covers both the `resolveSdkIdentityNodes` failure (client id
             // without a merchantId) and the explicit guard below it: the body

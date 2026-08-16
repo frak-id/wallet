@@ -202,6 +202,7 @@ export class IdentityRepository {
                 eq(identityNodesTable.identityType, "anonymous_fingerprint"),
                 eq(identityNodesTable.merchantId, params.merchantId)
             ),
+            orderBy: (nodes, { asc }) => [asc(nodes.createdAt)],
         });
         return node?.identityValue ?? null;
     }
