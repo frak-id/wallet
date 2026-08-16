@@ -663,8 +663,7 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "merchantId",
-                  "anonymousId"
+                  "merchantId"
                 ],
                 "properties": {
                   "merchantId": {
@@ -672,6 +671,9 @@
                     "type": "string"
                   },
                   "anonymousId": {
+                    "type": "string"
+                  },
+                  "checkoutToken": {
                     "type": "string"
                   },
                   "proof": {
@@ -684,8 +686,7 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "merchantId",
-                  "anonymousId"
+                  "merchantId"
                 ],
                 "properties": {
                   "merchantId": {
@@ -693,6 +694,9 @@
                     "type": "string"
                   },
                   "anonymousId": {
+                    "type": "string"
+                  },
+                  "checkoutToken": {
                     "type": "string"
                   },
                   "proof": {
@@ -705,8 +709,7 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "merchantId",
-                  "anonymousId"
+                  "merchantId"
                 ],
                 "properties": {
                   "merchantId": {
@@ -714,6 +717,9 @@
                     "type": "string"
                   },
                   "anonymousId": {
+                    "type": "string"
+                  },
+                  "checkoutToken": {
                     "type": "string"
                   },
                   "proof": {
@@ -740,6 +746,60 @@
                       "type": "string"
                     },
                     "expiresAt": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for status 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Response for status 404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": false,
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
                       "type": "string"
                     }
                   }
@@ -806,10 +866,8 @@
                   "type": "object",
                   "required": [
                     "merchantId",
-                    "anonymousId",
                     "merchant",
-                    "hasWallet",
-                    "ticket"
+                    "hasWallet"
                   ],
                   "properties": {
                     "merchantId": {
@@ -837,6 +895,10 @@
                       "type": "boolean"
                     },
                     "ticket": {
+                      "type": "string"
+                    },
+                    "outcome": {
+                      "const": "UNRESOLVED",
                       "type": "string"
                     }
                   }

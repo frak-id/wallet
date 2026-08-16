@@ -110,4 +110,34 @@ describe("useResolveInstallCode", () => {
             ).toBeUndefined();
         });
     });
+
+    test("queues nothing when the backend reports an UNRESOLVED outcome", async ({
+        queryWrapper,
+    }) => {
+        mockResolvePost.mockResolvedValue({
+            data: {
+                merchantId: "merchant-3",
+                merchant,
+                hasWallet: false,
+                outcome: "UNRESOLVED",
+            },
+            error: null,
+        });
+
+        const { useResolveInstallCode } = await import(
+            "./useResolveInstallCode"
+        );
+        const { result } = renderHook(() => useResolveInstallCode(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        result.current.resolve("UNRES1");
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+        expect(pendingActionsStore.getState().getValidActions()).toHaveLength(
+            0
+        );
+    });
 });

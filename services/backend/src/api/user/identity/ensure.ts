@@ -8,6 +8,7 @@ import {
 import { HttpError, t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { IdentityContext } from "../../../domain/identity";
+import { assertNotMintingServerMintedId } from "../../../domain/identity/schemas/serverMintedId";
 import { OrchestrationContext } from "../../../orchestration/context";
 import {
     enforceLatchedProof,
@@ -94,6 +95,12 @@ async function resolveWalletEnsureAnonymousId(params: {
         );
     }
 
+    await assertNotMintingServerMintedId({
+        value: bodyAnonymousId,
+        merchantId,
+        identityRepository: IdentityContext.repositories.identity,
+    });
+
     // op is `frak-install-v1`, not `frak-ensure-v1`: the wallet holds no
     // signing key, so it can never produce an ensure proof. This is the
     // install-v1 proof carried via the `#p=` fragment / Play referrer /
@@ -145,6 +152,12 @@ async function resolveSdkEnsureAnonymousId(params: {
     proof?: string;
 }): Promise<string> {
     const { merchantId, anonymousId, proof } = params;
+
+    await assertNotMintingServerMintedId({
+        value: anonymousId,
+        merchantId,
+        identityRepository: IdentityContext.repositories.identity,
+    });
 
     const proofVerified = await enforceEnsureProof({
         anonymousId,

@@ -70,6 +70,15 @@ export type IdentityCredentialClass =
     | "absent_latched"
     | "absent_unlatched";
 
+/**
+ * Outcome of the Gate 2 checkout-token ladder. The `checkout_token` share of
+ * `generate` is a bucket-D cutover condition, so it needs its own series.
+ */
+export type InstallCredentialOutcome = "resolved" | "deferred" | "unresolved";
+
+/** Which route ran the ladder: `generate` mints, `resolve` redeems. */
+export type InstallCredentialCallSite = "generate" | "resolve";
+
 export type IdentityEnsureArm =
     | "wallet_ticket"
     | "wallet_bare"
@@ -130,6 +139,22 @@ const identityMergeExecuteWalletSourceUnprovenTotal = register(
     })
 );
 
+const installCredentialClaimArmTotal = register(
+    new Counter({
+        name: "install_credential_claim_arm_total",
+        help: "Install-credential resolutions served by the forgeable pending-claim arm, by merchant and call site",
+        labelNames: ["merchant", "call_site"] as const,
+    })
+);
+
+const installCredentialOutcomeTotal = register(
+    new Counter({
+        name: "install_credential_outcome_total",
+        help: "Outcome of the Gate 2 checkout-token ladder, by call site",
+        labelNames: ["outcome", "call_site"] as const,
+    })
+);
+
 export const infraMetrics = {
     advisoryLockAcquired(lock: string) {
         advisoryLockTotal.inc({ lock, outcome: "acquired" });
@@ -173,5 +198,17 @@ export const infraMetrics = {
     },
     identityMergeExecuteWalletSourceUnproven(merchant: string) {
         identityMergeExecuteWalletSourceUnprovenTotal.inc({ merchant });
+    },
+    installCredentialClaimArm(
+        merchant: string,
+        callSite: InstallCredentialCallSite
+    ) {
+        installCredentialClaimArmTotal.inc({ merchant, call_site: callSite });
+    },
+    installCredentialOutcome(
+        outcome: InstallCredentialOutcome,
+        callSite: InstallCredentialCallSite
+    ) {
+        installCredentialOutcomeTotal.inc({ outcome, call_site: callSite });
     },
 };

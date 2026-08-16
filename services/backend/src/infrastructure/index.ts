@@ -51,6 +51,8 @@ export {
     httpMetrics,
     type IdentityCredentialClass,
     type IdentityEnsureArm,
+    type InstallCredentialCallSite,
+    type InstallCredentialOutcome,
     infraMetrics,
     metricsContentType,
     registry,

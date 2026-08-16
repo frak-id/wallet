@@ -342,4 +342,33 @@ describe("InstallView — install-code branch, post-install detection", () => {
             expect.anything()
         );
     });
+
+    test("a refused credential renders the download CTA, never the error", async ({
+        queryWrapper,
+    }) => {
+        mockGenerateCode.mockResolvedValue({
+            data: null,
+            error: { status: 404, value: { code: "MERCHANT_NOT_CONFIGURED" } },
+        });
+
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(
+                screen.getByText("installCode.codelessTitle")
+            ).toBeInTheDocument()
+        );
+        expect(screen.getByText("installCode.download")).toBeInTheDocument();
+        expect(screen.queryByText("installCode.error")).not.toBeInTheDocument();
+        expect(
+            screen.queryByText("installCode.infoTitle")
+        ).not.toBeInTheDocument();
+    });
 });

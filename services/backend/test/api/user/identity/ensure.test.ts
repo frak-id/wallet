@@ -400,6 +400,80 @@ describe("POST /identity/ensure — resolution order", () => {
         expect(mockResolveAndAssociate).not.toHaveBeenCalled();
     });
 
+    it("rejects a body id minting into the server-minted namespace", async () => {
+        walletAuthed();
+        mockFindNodeByIdentity.mockResolvedValue(null);
+
+        const response = await postEnsure({
+            merchantId: MERCHANT_ID,
+            anonymousId: "frakmint_stolen",
+        });
+
+        expect(response.status).toBe(400);
+        const data = await response.json();
+        expect(data.code).toBe("RESERVED_IDENTITY");
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+    });
+
+    it("accepts a body id naming an existing server-minted node", async () => {
+        walletAuthed();
+        mockFindNodeByIdentity.mockResolvedValue({ proofSeenAt: null });
+
+        const response = await postEnsure({
+            merchantId: MERCHANT_ID,
+            anonymousId: "frakmint_materialised",
+        });
+
+        expect(response.status).toBe(200);
+        expect(mockResolveAndAssociate).toHaveBeenCalledWith([
+            { type: "wallet", value: WALLET_ADDRESS },
+            {
+                type: "anonymous_fingerprint",
+                value: "frakmint_materialised",
+                merchantId: MERCHANT_ID,
+            },
+        ]);
+    });
+
+    it("never checks the namespace on the ticket arm", async () => {
+        walletAuthed();
+        mockVerifyTicket.mockResolvedValue({
+            merchantId: MERCHANT_ID,
+            anonymousId: "frakmint_from_ticket",
+        });
+        mockFindNodeByIdentity.mockResolvedValue(null);
+
+        const response = await postEnsure({
+            merchantId: MERCHANT_ID,
+            ticket: "valid-ticket",
+        });
+
+        expect(response.status).toBe(200);
+        expect(mockFindNodeByIdentity).not.toHaveBeenCalled();
+    });
+
+    it("routes a header-only wallet caller into the wallet arm and guards it", async () => {
+        walletAuthed();
+        mockFindNodeByIdentity.mockResolvedValue(null);
+
+        const response = await identityEnsureRoutes.handle(
+            new Request("http://localhost/ensure", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-wallet-auth": "valid-wallet-jwt",
+                    "x-frak-client-id": "frakmint_stolen",
+                },
+                body: JSON.stringify({ merchantId: MERCHANT_ID }),
+            })
+        );
+
+        expect(response.status).toBe(400);
+        const data = await response.json();
+        expect(data.code).toBe("RESERVED_IDENTITY");
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+    });
+
     it("none of ticket/proof+anonymousId/anonymousId supplied: clean 4xx, not a crash", async () => {
         walletAuthed();
 
@@ -462,6 +536,34 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): latch-gat
             })
         );
     }
+
+    it("rejects a header id minting into the server-minted namespace", async () => {
+        walletAuthed();
+        mockFindNodeByIdentity.mockResolvedValue(null);
+
+        const response = await postEnsureViaHeader(
+            { merchantId: MERCHANT_ID },
+            "frakmint_stolen"
+        );
+
+        expect(response.status).toBe(400);
+        const data = await response.json();
+        expect(data.code).toBe("RESERVED_IDENTITY");
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+    });
+
+    it("accepts a header id naming an existing server-minted node", async () => {
+        walletAuthed();
+        mockFindNodeByIdentity.mockResolvedValue({ proofSeenAt: null });
+
+        const response = await postEnsureViaHeader(
+            { merchantId: MERCHANT_ID },
+            "frakmint_materialised"
+        );
+
+        expect(response.status).toBe(200);
+        expect(mockResolveAndAssociate).toHaveBeenCalled();
+    });
 
     it("allows an unlatched id with no proof at all", async () => {
         walletAuthed();

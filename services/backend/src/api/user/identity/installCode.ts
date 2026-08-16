@@ -2,8 +2,51 @@ import { infraMetrics, rateLimitMiddleware } from "@backend-infrastructure";
 import { HttpError, t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { IdentityContext } from "../../../domain/identity/context";
+import type { InstallCodeCredential } from "../../../domain/identity/repositories/InstallCodeRepository";
+import { assertNotMintingServerMintedId } from "../../../domain/identity/schemas/serverMintedId";
 import { MerchantContext } from "../../../domain/merchant/context";
+import { OrchestrationContext } from "../../../orchestration/context";
 import { verifyProofUnenforced } from "../../../orchestration/identity/latchedProof";
+
+async function mintCode(
+    merchantId: string,
+    credential: InstallCodeCredential
+): Promise<{ code: string; expiresAt: string }> {
+    const result = await IdentityContext.services.installCode.generate({
+        merchantId,
+        credential,
+    });
+    return {
+        code: result.code,
+        expiresAt: new Date(result.expiresAt).toISOString(),
+    };
+}
+
+/**
+ * Runs the Gate 2 ladder. A miss is deferred rather than fatal: a late or
+ * failed webhook must never stop a legitimate buyer getting a code.
+ */
+async function resolveCheckoutTokenCredential(params: {
+    merchantId: string;
+    checkoutToken: string;
+}): Promise<InstallCodeCredential> {
+    const resolution =
+        await OrchestrationContext.orchestrators.installCredential.resolveForGenerate(
+            params
+        );
+    if (resolution.outcome === "unresolved") {
+        throw HttpError.notFound(
+            "MERCHANT_NOT_CONFIGURED",
+            "Merchant has no purchase webhook configured"
+        );
+    }
+    return {
+        kind: "checkoutToken",
+        checkoutToken: params.checkoutToken,
+        anonymousId:
+            resolution.outcome === "resolved" ? resolution.anonymousId : null,
+    };
+}
 
 const installCodeGenerateRoute = new Elysia()
     .use(
@@ -16,7 +59,35 @@ const installCodeGenerateRoute = new Elysia()
     .post(
         "/generate",
         async ({ body }) => {
-            const { merchantId, anonymousId, proof } = body;
+            const { merchantId, anonymousId, checkoutToken, proof } = body;
+
+            if (anonymousId && checkoutToken) {
+                throw HttpError.badRequest(
+                    "AMBIGUOUS_CREDENTIAL",
+                    "Present either anonymousId or checkoutToken, not both"
+                );
+            }
+
+            if (checkoutToken) {
+                const credential = await resolveCheckoutTokenCredential({
+                    merchantId,
+                    checkoutToken,
+                });
+                return mintCode(merchantId, credential);
+            }
+
+            if (!anonymousId) {
+                throw HttpError.badRequest(
+                    "MISSING_CREDENTIAL",
+                    "Either anonymousId or checkoutToken is required"
+                );
+            }
+
+            await assertNotMintingServerMintedId({
+                value: anonymousId,
+                merchantId,
+                identityRepository: IdentityContext.repositories.identity,
+            });
 
             // Verify when present, never require one: this route is also
             // reachable from the wallet's own sharing page, whose install link
@@ -55,19 +126,15 @@ const installCodeGenerateRoute = new Elysia()
                 );
             }
 
-            const result = await IdentityContext.services.installCode.generate({
-                merchantId,
-                anonymousId,
-            });
-            return {
-                code: result.code,
-                expiresAt: new Date(result.expiresAt).toISOString(),
-            };
+            return mintCode(merchantId, { kind: "anonymous", anonymousId });
         },
         {
             body: t.Object({
                 merchantId: t.String({ format: "uuid" }),
-                anonymousId: t.String(),
+                anonymousId: t.Optional(t.String()),
+                // Shopify checkout token: the credential for buyers whose
+                // surface holds an order and no keypair.
+                checkoutToken: t.Optional(t.String()),
                 // frak-install-v1 proof: optional, verified when present,
                 // never required.
                 proof: t.Optional(t.String()),
@@ -77,9 +144,36 @@ const installCodeGenerateRoute = new Elysia()
                     code: t.String(),
                     expiresAt: t.String(),
                 }),
+                400: t.ErrorResponse,
+                404: t.ErrorResponse,
             },
         }
     );
+
+/**
+ * This route is unauthenticated, so deferred resolution must never be a lookup
+ * on caller input. The caller presents a 6-char code; the row it names was
+ * bound to `(merchantId, checkoutToken)` by a prior `generate`, and the ladder
+ * re-runs on that stored token only. There is no caller-named `anonymousId` to
+ * fall back to, and there must never be one.
+ */
+async function resolveRowAnonymousId(row: {
+    merchantId: string;
+    anonymousId: string | null;
+    checkoutToken: string | null;
+}): Promise<string | null> {
+    if (row.anonymousId) {
+        return row.anonymousId;
+    }
+    if (!row.checkoutToken) {
+        return null;
+    }
+    const deferred =
+        await OrchestrationContext.orchestrators.installCredential.resolveDeferred(
+            { merchantId: row.merchantId, checkoutToken: row.checkoutToken }
+        );
+    return deferred?.anonymousId ?? null;
+}
 
 const installCodeResolveRoute = new Elysia()
     .use(
@@ -92,18 +186,15 @@ const installCodeResolveRoute = new Elysia()
     .post(
         "/resolve",
         async ({ body }) => {
-            const { merchantId, anonymousId } =
+            const installCode =
                 await IdentityContext.services.installCode.resolve({
                     code: body.code,
                 });
+            const { merchantId } = installCode;
 
-            const [merchant, identityGroup] = await Promise.all([
+            const [merchant, anonymousId] = await Promise.all([
                 MerchantContext.repositories.merchant.findById(merchantId),
-                IdentityContext.repositories.identity.findGroupByIdentity({
-                    type: "anonymous_fingerprint",
-                    value: anonymousId,
-                    merchantId,
-                }),
+                resolveRowAnonymousId(installCode),
             ]);
 
             if (!merchant) {
@@ -112,6 +203,28 @@ const installCodeResolveRoute = new Elysia()
                     "Merchant not found"
                 );
             }
+            const merchantInfo = {
+                name: merchant.name,
+                domain: merchant.domain,
+            };
+
+            if (!anonymousId) {
+                return {
+                    merchantId,
+                    merchant: merchantInfo,
+                    hasWallet: false,
+                    outcome: "UNRESOLVED" as const,
+                };
+            }
+
+            const identityGroup =
+                await IdentityContext.repositories.identity.findGroupByIdentity(
+                    {
+                        type: "anonymous_fingerprint",
+                        value: anonymousId,
+                        merchantId,
+                    }
+                );
 
             let hasWallet = false;
             if (identityGroup) {
@@ -137,10 +250,7 @@ const installCodeResolveRoute = new Elysia()
             return {
                 merchantId,
                 anonymousId,
-                merchant: {
-                    name: merchant.name,
-                    domain: merchant.domain,
-                },
+                merchant: merchantInfo,
                 hasWallet,
                 ticket,
             };
@@ -152,13 +262,15 @@ const installCodeResolveRoute = new Elysia()
             response: {
                 200: t.Object({
                     merchantId: t.String(),
-                    anonymousId: t.String(),
+                    anonymousId: t.Optional(t.String()),
                     merchant: t.Object({
                         name: t.String(),
                         domain: t.String(),
                     }),
                     hasWallet: t.Boolean(),
-                    ticket: t.String(),
+                    // Minted or omitted as a pair with `anonymousId`.
+                    ticket: t.Optional(t.String()),
+                    outcome: t.Optional(t.Literal("UNRESOLVED")),
                 }),
                 404: t.ErrorResponse,
             },

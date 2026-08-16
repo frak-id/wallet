@@ -59,6 +59,7 @@ describe("fireEnsureActions — retry classification", () => {
         "PROOF_REQUIRED",
         "PROOF_OR_TOKEN_REQUIRED",
         "MISSING_ANONYMOUS_ID",
+        "RESERVED_IDENTITY",
     ])(
         "drops a queued action on %s without raising the toast",
         async (code) => {

@@ -797,6 +797,8 @@
     "installCode": {
         "title": "Don't lose your {{ estimatedReward }}!\nCopy this code",
         "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
+        "codelessTitle": "Don't lose your {{ estimatedReward }}!",
+        "codelessDescription": "Download the app and log in to claim your rewards.",
         "copyCode": "Copy the code",
         "codeCopied": "Code copied!",
         "loading": "Generating your code...",

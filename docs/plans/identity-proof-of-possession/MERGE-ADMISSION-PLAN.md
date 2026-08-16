@@ -320,7 +320,7 @@ generation for a legitimate buyer.
    server-to-server webhook path. Covers S1 and S2.
 2. **Degrade to a pending `purchase_claims` row** on `(merchant_id, purchase_token)`, with a
    `log.warn` carrying `{merchantId, purchaseToken, claimAge}` **and a dedicated counter**
-   `install_credential_claim_arm{merchant}`. Covers S5, the pixel-before-webhook case the union
+   `install_credential_claim_arm_total{merchant,call_site}`. Covers S5, the pixel-before-webhook case the union
    exists to serve. A claim row is written by the unauthenticated `/user/track/purchase`
    (`PurchaseLinkingOrchestrator.ts:118-131`, no existence check on `(orderId, token)`) and is
    therefore **forgeable** — G20. Resolved-first is what shrinks the attacker's usable window from
@@ -392,8 +392,8 @@ short of a manual `UPDATE`. So the write must be **findable and reversible witho
   through `findGroupByIdentity`, `findNodeByIdentity`, `markProofSeen` and `addNode`;
   `identity_value` is `text` with the unique key on `(identity_type, identity_value, merchant_id)`,
   so it cannot collide with a derived UUID or a legacy id. Find:
-  `… WHERE identity_value LIKE 'frakmint_%' AND proof_seen_at IS NOT NULL`. Reverse:
-  `UPDATE identity_nodes SET proof_seen_at = NULL WHERE identity_value LIKE 'frakmint_%'` — one
+  `… WHERE identity_value LIKE 'frakmint\_%' ESCAPE E'\\' AND proof_seen_at IS NOT NULL`. Reverse:
+  `UPDATE identity_nodes SET proof_seen_at = NULL WHERE identity_value LIKE 'frakmint\_%' ESCAPE E'\\'` — one
   statement, no migration, no downtime. It also survives the column's eventual retirement, which
   is what makes OQ9 answerable without a new column.
 - **A distinct repository method** (`latchServerMintedProof`), not `markProofSeen`. `markProofSeen`
@@ -618,7 +618,7 @@ net-deleting because T1.3 removes a merge primitive rather than gating one.
 | # | Item | Closes | Files touched | LoC +/− | Release | Backend-only? | Proof of UX-neutrality |
 |---|---|---|---|---|---|---|---|
 | T2.5 | **Gate 2 Phase A**: the `{merchantId, checkoutToken}` arm, the resolved-first ladder of §3 (resolved purchase → counted claim → materialisation → deferral → `UNRESOLVED`), then the four wallet edits that carry `checkoutToken` from `/sharing` to `/install` | **G12**, and the delivery vehicle for **B1** | `domain/identity/db/schema.ts`, `InstallCodeRepository.ts` (73-line hand-written CTE at `:24-96`), `InstallCodeService.ts`, **new** `orchestration/identity/InstallCredentialOrchestrator.ts`, `api/user/identity/installCode.ts`, `PurchaseClaimRepository.ts` (new finder + index), wallet `/sharing` → `/install` hop | +302/−0 EST | backend, then wallet **+ DB2** | no — four wallet edits | Purely additive: it only *adds* a second way to mint a code. Nothing that mints today stops minting. The `generate` route does not become strict here — that is T3.3, in bucket D |
-| T1.14 | **Latch the server-minted id.** `proof_seen_at` written at attribution for an id materialised through the Shopify checkout-token path, via a **distinct** `latchServerMintedProof` repository method, behind a `frakmint_` value prefix, with one structured log line at the write | hardening: makes those ids non-absorbable on every merge path | `IdentityRepository.ts` (new method), `orchestration/identity/InstallCredentialOrchestrator.ts` | +25/−0 EST | backend deploy | **yes** | Safe **only** for the server-minted id (§3): no key for it can exist anywhere, and install-code never reads the latch — `installCode.ts:20-45` verifies a proof only when present, `:69-137` mints unconditionally, and `ensure.ts:53-73` short-circuits on `ticket` before any latch read. **Never latch a caller-supplied id on this path:** `markProofSeen` never clears, ~70% of ids traversing it are unmigrated, and each would take a permanent 403. Findable with `LIKE 'frakmint_%'`, reversible with one `UPDATE`, no schema change |
+| T1.14 | **Latch the server-minted id.** `proof_seen_at` written at attribution for an id materialised through the Shopify checkout-token path, via a **distinct** `latchServerMintedProof` repository method, behind a `frakmint_` value prefix, with one structured log line at the write | hardening: makes those ids non-absorbable on every merge path | `IdentityRepository.ts` (new method), `orchestration/identity/InstallCredentialOrchestrator.ts` | +25/−0 EST | backend deploy | **yes** | Safe **only** for the server-minted id (§3): no key for it can exist anywhere, and install-code never reads the latch — `installCode.ts:20-45` verifies a proof only when present, `:69-137` mints unconditionally, and `ensure.ts:53-73` short-circuits on `ticket` before any latch read. **Never latch a caller-supplied id on this path:** `markProofSeen` never clears, ~70% of ids traversing it are unmigrated, and each would take a permanent 403. Findable with `LIKE 'frakmint\_%' ESCAPE E'\\'`, reversible with one `UPDATE`, no schema change |
 
 **Bucket C totals — source ≈ +327 / −0. One migration (DB2).** One backend deploy plus one wallet
 deploy. No SDK dependency, no flip.
@@ -867,7 +867,7 @@ wild**. This is why T3.8 needs 30 days of dual-accept and why T3.2's write-off w
 | Item | Verdict |
 |---|---|
 | T1.1–T1.3, T1.5–T1.13 | **Clean.** Code-only, revertible — with one rider: T1.3 also moves `user-openapi.json`, which is regenerated by `bun run --cwd services/backend openapi:generate`, never hand-reverted |
-| T1.14 | **Reversible by one statement**, by design: `UPDATE identity_nodes SET proof_seen_at = NULL WHERE identity_value LIKE 'frakmint_%'`. That is the entire reason for the prefix |
+| T1.14 | **Reversible by one statement**, by design: `UPDATE identity_nodes SET proof_seen_at = NULL WHERE identity_value LIKE 'frakmint\_%' ESCAPE E'\\'`. That is the entire reason for the prefix |
 | T2.5 | **Irreversible once one deferred row exists** — a rolled-back build whose Drizzle schema declares `anonymous_id` `notNull` reads `null` and 500s on the response schema |
 | T2.3, T3.11, T3.1a, T3.2–T3.4 | Code-only, cleanly revertible — but attribution lost in the window is unrecoverable, and reverting still needs a full deploy |
 | T3.1b | Code-only and revertible, **but the loss is not.** Every legacy migration refused while it is live is a user's association gone for good; reverting restores the route, not the merges |
@@ -914,7 +914,7 @@ Flip on counters, not on a date — and the counters differ by bucket.
 **Bucket D** needs only its own plumbing to be quiet: `merge_initiate_proofless{source}` (T1.13, a listener event) at
 zero on all three sources before T3.1a; `identity_ensure_arm_total{arm="wallet_bare"}` at or near zero before T3.2;
 `merge_execute_target_source{source="fallback"}` at or near zero before T3.4; Gate 2 live with a non-zero
-`checkout_token` share on Shopify merchants and `install_credential_claim_arm` bounded before T3.3.
+`checkout_token` share on Shopify merchants and `install_credential_claim_arm_total` bounded before T3.3.
 Those are days-to-weeks numbers, driven by deploys this team controls.
 
 **Bucket E** is the only population gate. `identity_merge_execute_credential_total{class="absent_unlatched"}`,

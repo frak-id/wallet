@@ -1,9 +1,13 @@
 import { db, type PgRunner, type PgTx } from "@backend-infrastructure";
-import { and, eq, isNull, ne } from "drizzle-orm";
+import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address } from "viem";
 import { identityGroupsTable, identityNodesTable } from "../db/schema";
 import type { IdentityType } from "../schemas";
+import { SERVER_MINTED_ID_PREFIX } from "../schemas/serverMintedId";
+
+/** `_` is a LIKE wildcard: unescaped, the prefix also matches `frakmintX…`. */
+const SERVER_MINTED_ID_LIKE = `${SERVER_MINTED_ID_PREFIX.replace("_", "\\_")}%`;
 
 type IdentityGroupSelect = typeof identityGroupsTable.$inferSelect;
 type IdentityNodeSelect = typeof identityNodesTable.$inferSelect;
@@ -192,11 +196,14 @@ export class IdentityRepository {
         return wallet;
     }
 
-    async findAnonymousFingerprint(params: {
-        groupId: string;
-        merchantId: string;
-    }): Promise<string | null> {
-        const node = await db.query.identityNodesTable.findFirst({
+    async findAnonymousFingerprint(
+        params: {
+            groupId: string;
+            merchantId: string;
+        },
+        runner: PgRunner = db
+    ): Promise<string | null> {
+        const node = await runner.query.identityNodesTable.findFirst({
             where: and(
                 eq(identityNodesTable.groupId, params.groupId),
                 eq(identityNodesTable.identityType, "anonymous_fingerprint"),
@@ -205,6 +212,31 @@ export class IdentityRepository {
             orderBy: (nodes, { asc }) => [asc(nodes.createdAt)],
         });
         return node?.identityValue ?? null;
+    }
+
+    /**
+     * Latch a server-minted `frakmint_` anonymous id. No key for it can exist
+     * anywhere, so latching it can never lock out a legitimate signer.
+     */
+    async latchServerMintedProof(
+        params: { value: string; merchantId: string },
+        runner: PgRunner = db
+    ): Promise<void> {
+        await runner
+            .update(identityNodesTable)
+            .set({ proofSeenAt: new Date() })
+            .where(
+                and(
+                    eq(
+                        identityNodesTable.identityType,
+                        "anonymous_fingerprint"
+                    ),
+                    eq(identityNodesTable.identityValue, params.value),
+                    sql`${identityNodesTable.identityValue} LIKE ${SERVER_MINTED_ID_LIKE} ESCAPE E'\\\\'`,
+                    eq(identityNodesTable.merchantId, params.merchantId),
+                    isNull(identityNodesTable.proofSeenAt)
+                )
+            );
     }
 
     /**

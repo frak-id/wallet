@@ -1,3 +1,4 @@
+import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IdentityRepository } from "./IdentityRepository";
 
@@ -65,5 +66,64 @@ describe("IdentityRepository.findAnonymousFingerprint", () => {
         });
 
         expect(value).toBe("anon-older");
+    });
+});
+
+/**
+ * The prefix is what makes latching a server-minted id safe, so the predicate
+ * that enforces it is asserted on the rendered SQL rather than on the mock.
+ */
+describe("IdentityRepository.latchServerMintedProof", () => {
+    function captureWhere() {
+        const captured: { condition?: unknown } = {};
+        const runner = {
+            update: () => ({
+                set: () => ({
+                    where: (condition: unknown) => {
+                        captured.condition = condition;
+                        return Promise.resolve();
+                    },
+                }),
+            }),
+        };
+        return { captured, runner };
+    }
+
+    it("escapes the underscore so `frakmintX…` cannot match the prefix", async () => {
+        const { captured, runner } = captureWhere();
+
+        await new IdentityRepository().latchServerMintedProof(
+            { value: "frakmint_abc", merchantId: "merchant-1" },
+            runner as never
+        );
+
+        const query = new PgDialect().sqlToQuery(captured.condition as never);
+        expect(query.sql).toContain("ESCAPE E'\\\\'");
+        expect(query.params).toContain("frakmint\\_%");
+    });
+
+    it("still binds the exact value, so the prefix alone never selects a row", async () => {
+        const { captured, runner } = captureWhere();
+
+        await new IdentityRepository().latchServerMintedProof(
+            { value: "frakmint_abc", merchantId: "merchant-1" },
+            runner as never
+        );
+
+        const query = new PgDialect().sqlToQuery(captured.condition as never);
+        expect(query.params).toContain("frakmint_abc");
+    });
+
+    it("keeps the prefix predicate for a value that does not carry it", async () => {
+        const { captured, runner } = captureWhere();
+
+        await new IdentityRepository().latchServerMintedProof(
+            { value: "anon-1", merchantId: "merchant-1" },
+            runner as never
+        );
+
+        const query = new PgDialect().sqlToQuery(captured.condition as never);
+        expect(query.params).toContain("frakmint\\_%");
+        expect(query.params).toContain("anon-1");
     });
 });

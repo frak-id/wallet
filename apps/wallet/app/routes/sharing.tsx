@@ -37,6 +37,27 @@ export const Route = createFileRoute("/sharing")({
     component: WalletSharingPage,
 });
 
+/**
+ * The `/install` search this route hands over. Exported for direct testing:
+ * dropping a credential here is silent, and the standalone entrypoint cannot
+ * catch it because it navigates by URL instead.
+ */
+export function toInstallSearch({
+    merchantId,
+    clientId,
+    checkoutToken,
+}: {
+    merchantId?: string;
+    clientId?: string;
+    checkoutToken?: string;
+}) {
+    return {
+        m: merchantId,
+        a: clientId ?? undefined,
+        checkoutToken: checkoutToken ?? undefined,
+    };
+}
+
 function WalletSharingPage() {
     const search = Route.useSearch();
     const navigate = useNavigate();
@@ -45,16 +66,14 @@ function WalletSharingPage() {
     // `outcomes`, whose callbacks are in turn memoised on it.
     const navigation = useMemo(
         () => ({
-            toInstall: ({
-                merchantId,
-                clientId,
-            }: {
+            toInstall: (params: {
                 merchantId?: string;
                 clientId?: string;
+                checkoutToken?: string;
             }) =>
                 navigate({
                     to: "/install",
-                    search: { m: merchantId, a: clientId ?? undefined },
+                    search: toInstallSearch(params),
                 }),
             toWallet: () => navigate({ to: "/wallet", replace: true }),
         }),

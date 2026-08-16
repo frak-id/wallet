@@ -797,6 +797,8 @@
     "installCode": {
         "title": "Ne perds pas tes {{ estimatedReward }} !\nCopie ce code",
         "description": "Colle-le à l'ouverture de l'app. Il te permettra de récupérer tes gains une fois connecté·e.",
+        "codelessTitle": "Ne perds pas tes {{ estimatedReward }} !",
+        "codelessDescription": "Télécharge l'app et connecte-toi pour récupérer tes gains.",
         "copyCode": "Copier le code",
         "codeCopied": "Code copié !",
         "loading": "Génération de ton code...",

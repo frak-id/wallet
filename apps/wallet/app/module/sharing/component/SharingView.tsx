@@ -23,10 +23,11 @@ import { useSharingIdentity } from "@/module/sharing/useSharingIdentity";
  * document navigations instead.
  */
 export type SharingNavigation = {
-    /** Go to the install page for this merchant/client pair. */
+    /** Go to the install page, carrying whichever credential this page holds. */
     toInstall: (params: {
         merchantId?: string;
         clientId?: string;
+        checkoutToken?: string;
         /** Absolute URL built by `buildInstallUrl`, for surfaces without a router. */
         installUrl: string;
     }) => void;
@@ -94,9 +95,9 @@ export function SharingView({
     // No `#p=` proof here, unlike the listener's builder: this page has no SDK
     // keypair to sign with.
     const installUrl = useMemo(() => {
-        if (!(merchantId && clientId)) return null;
-        return buildInstallUrl({ merchantId, clientId });
-    }, [merchantId, clientId]);
+        if (!merchantId) return null;
+        return buildInstallUrl({ merchantId, clientId, checkoutToken });
+    }, [merchantId, clientId, checkoutToken]);
 
     const controller = useSharingPageController({
         merchantId,
@@ -147,7 +148,12 @@ export function SharingView({
                 // hand control back to the SDK.
                 if (returnToHost("install")) return;
                 if (!installUrl) return;
-                navigation.toInstall({ merchantId, clientId, installUrl });
+                navigation.toInstall({
+                    merchantId,
+                    clientId,
+                    checkoutToken,
+                    installUrl,
+                });
             },
         },
     });

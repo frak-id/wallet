@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { parseInstallSearch } from "@/module/install/params";
 import { resetHostResults } from "@/module/sharing/host/bridge";
-import { Route } from "./sharing";
+import { Route, toInstallSearch } from "./sharing";
 
 const beforeLoad = Route.options.beforeLoad as (ctx: {
     search: Record<string, unknown>;
@@ -69,5 +70,50 @@ describe("/sharing host error hand-off", () => {
     it("rethrows anything that is not the guard's own error", () => {
         const other = new Error("something else");
         expect(() => errorComponent({ error: other })).toThrow(other);
+    });
+});
+
+describe("/sharing → /install forwarding", () => {
+    it("carries the checkout token so a Shopify install stays attributed", () => {
+        expect(
+            toInstallSearch({
+                merchantId: "merchant-1",
+                checkoutToken: "tok-1",
+            })
+        ).toEqual({ m: "merchant-1", a: undefined, checkoutToken: "tok-1" });
+    });
+
+    it("carries both credentials when the page resolved a clientId too", () => {
+        expect(
+            toInstallSearch({
+                merchantId: "merchant-1",
+                clientId: "client-1",
+                checkoutToken: "tok-1",
+            })
+        ).toEqual({
+            m: "merchant-1",
+            a: "client-1",
+            checkoutToken: "tok-1",
+        });
+    });
+
+    it("stays undefined-valued rather than empty-string when nothing is known", () => {
+        expect(toInstallSearch({})).toEqual({
+            m: undefined,
+            a: undefined,
+            checkoutToken: undefined,
+        });
+    });
+
+    it("hands `/install` a search object its own parser accepts unchanged", () => {
+        const search = toInstallSearch({
+            merchantId: "merchant-1",
+            checkoutToken: "tok-1",
+        });
+
+        expect(parseInstallSearch(search)).toMatchObject({
+            m: "merchant-1",
+            checkoutToken: "tok-1",
+        });
     });
 });

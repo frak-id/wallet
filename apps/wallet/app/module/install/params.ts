@@ -7,6 +7,8 @@ import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme
 export type InstallSearch = {
     m?: string;
     a?: string;
+    /** Shopify credential forwarded from `/sharing`, when there is no `a`. */
+    checkoutToken?: string;
     /** `frak-install-v1` proof, when a fragment could not carry it. See `resolveInstallProof`. */
     p?: string;
     /** `native` means a host embedded this page, so it draws no chrome of its own. */
@@ -28,6 +30,10 @@ export function parseInstallSearch(
     return {
         m: typeof search.m === "string" ? search.m : undefined,
         a: typeof search.a === "string" ? search.a : undefined,
+        checkoutToken:
+            typeof search.checkoutToken === "string"
+                ? search.checkoutToken
+                : undefined,
         p: typeof search.p === "string" ? search.p : undefined,
         embed: decodeHostEmbed(search.embed),
         // Sanitised: the page navigates to whatever scheme this carries; an

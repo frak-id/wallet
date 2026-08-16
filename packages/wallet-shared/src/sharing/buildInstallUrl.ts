@@ -1,27 +1,36 @@
 import { PLAY_STORE_URL } from "../common/utils/storeUrls";
 
 /**
- * Build the `/install` link.
+ * Build the `/install` link, or `null` when no credential is available.
  *
- * `m`/`a` stay search params — non-sensitive routing info the install-code
- * backend needs server-side. The `frak-install-v1` proof is appended as a
- * URL fragment (`#p=`), never a search param: fragments aren't sent to
- * servers, keeping the proof out of access logs, `Referer` headers, and
- * analytics auto-capture.
+ * `m`/`a`/`checkoutToken` stay search params — the install-code backend reads
+ * them server-side. The `frak-install-v1` proof goes in the `#p=` fragment
+ * instead, which no server, `Referer` header or analytics capture ever sees.
  */
 export function buildInstallUrl({
     baseUrl = "",
     merchantId,
     clientId,
+    checkoutToken,
     installProof,
 }: {
     /** Omit for a same-origin link. */
     baseUrl?: string;
     merchantId: string;
-    clientId: string;
+    clientId?: string;
+    /** Shopify credential, for a buyer whose surface holds an order and no client id. */
+    checkoutToken?: string;
     installProof?: string;
-}): string {
-    const url = `${baseUrl}/install?m=${encodeURIComponent(merchantId)}&a=${encodeURIComponent(clientId)}`;
+}): string | null {
+    if (!(clientId || checkoutToken)) return null;
+
+    const params = [`m=${encodeURIComponent(merchantId)}`];
+    if (clientId) params.push(`a=${encodeURIComponent(clientId)}`);
+    if (checkoutToken) {
+        params.push(`checkoutToken=${encodeURIComponent(checkoutToken)}`);
+    }
+
+    const url = `${baseUrl}/install?${params.join("&")}`;
     return installProof ? `${url}#p=${encodeURIComponent(installProof)}` : url;
 }
 

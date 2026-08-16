@@ -4,6 +4,8 @@ export { httpMetrics } from "./httpMetrics";
 export {
     type IdentityCredentialClass,
     type IdentityEnsureArm,
+    type InstallCredentialCallSite,
+    type InstallCredentialOutcome,
     infraMetrics,
 } from "./infraMetrics";
 export {

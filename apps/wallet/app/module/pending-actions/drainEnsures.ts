@@ -29,6 +29,7 @@ const MISSING_CREDENTIAL_CODES = [
     "PROOF_REQUIRED",
     "PROOF_OR_TOKEN_REQUIRED",
     "MISSING_ANONYMOUS_ID",
+    "RESERVED_IDENTITY",
 ] as const;
 
 function errorCode(error: unknown): string | undefined {
