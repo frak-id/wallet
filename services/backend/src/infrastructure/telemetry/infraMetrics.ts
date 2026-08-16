@@ -58,6 +58,78 @@ const identityProofCheckedTotal = register(
     })
 );
 
+/**
+ * The credential a caller presented on an identity admission route,
+ * classified as the answer that route will give once its proof requirement
+ * becomes mandatory. `absent_unlatched` is the would-403 population: allowed
+ * today, refused after the flip.
+ */
+export type IdentityCredentialClass =
+    | "proven"
+    | "invalid"
+    | "absent_latched"
+    | "absent_unlatched";
+
+export type IdentityEnsureArm =
+    | "wallet_ticket"
+    | "wallet_bare"
+    | "wallet_proof"
+    | "sdk";
+
+/**
+ * No `merchant` label: `merchantId` arrives unvalidated in the body of an
+ * unauthenticated route and the emission necessarily precedes `validateToken`,
+ * so labelling it would let any caller mint unbounded series. The per-merchant
+ * cut comes from the `absent_unlatched` log line instead.
+ */
+const identityMergeExecuteCredentialTotal = register(
+    new Counter({
+        name: "identity_merge_execute_credential_total",
+        help: "Credential class presented on /user/identity/merge/execute",
+        labelNames: ["class"] as const,
+    })
+);
+
+const identityMergeInitiateCredentialTotal = register(
+    new Counter({
+        name: "identity_merge_initiate_credential_total",
+        help: "Credential class presented on /user/identity/merge/initiate's anonymous-source arm",
+        labelNames: ["class"] as const,
+    })
+);
+
+const identityInstallCodeGenerateCredentialTotal = register(
+    new Counter({
+        name: "identity_install_code_generate_credential_total",
+        help: "Credential class presented on /user/identity/install-code/generate",
+        labelNames: ["class"] as const,
+    })
+);
+
+const identityEnsureArmTotal = register(
+    new Counter({
+        name: "identity_ensure_arm_total",
+        help: "Arm taken on /user/identity/ensure and the credential class it presented",
+        labelNames: ["arm", "class"] as const,
+    })
+);
+
+const identityWalletConflictTotal = register(
+    new Counter({
+        name: "identity_wallet_conflict_total",
+        help: "Refused merges between identity groups carrying different wallets, by the flow that hit it",
+        labelNames: ["source"] as const,
+    })
+);
+
+const identityMergeExecuteWalletSourceUnprovenTotal = register(
+    new Counter({
+        name: "identity_merge_execute_wallet_source_unproven_total",
+        help: "Merge executions redeeming a wallet-session-minted token with no target proof, by merchant",
+        labelNames: ["merchant"] as const,
+    })
+);
+
 export const infraMetrics = {
     advisoryLockAcquired(lock: string) {
         advisoryLockTotal.inc({ lock, outcome: "acquired" });
@@ -76,5 +148,30 @@ export const infraMetrics = {
     },
     identityProofChecked(op: string, outcome: "valid" | "invalid") {
         identityProofCheckedTotal.inc({ op, outcome });
+    },
+    identityMergeExecuteCredential(credentialClass: IdentityCredentialClass) {
+        identityMergeExecuteCredentialTotal.inc({ class: credentialClass });
+    },
+    identityMergeInitiateCredential(credentialClass: IdentityCredentialClass) {
+        identityMergeInitiateCredentialTotal.inc({ class: credentialClass });
+    },
+    identityInstallCodeGenerateCredential(
+        credentialClass: IdentityCredentialClass
+    ) {
+        identityInstallCodeGenerateCredentialTotal.inc({
+            class: credentialClass,
+        });
+    },
+    identityEnsureArm(
+        arm: IdentityEnsureArm,
+        credentialClass: IdentityCredentialClass | "n/a"
+    ) {
+        identityEnsureArmTotal.inc({ arm, class: credentialClass });
+    },
+    identityWalletConflict(source: string) {
+        identityWalletConflictTotal.inc({ source });
+    },
+    identityMergeExecuteWalletSourceUnproven(merchant: string) {
+        identityMergeExecuteWalletSourceUnprovenTotal.inc({ merchant });
     },
 };

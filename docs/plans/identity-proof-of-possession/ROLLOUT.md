@@ -1,20 +1,39 @@
 # Rollout — identity proof-of-possession
 
-Everything is shipped and permissive. What remains is making the wallet-facing arms
-mandatory, which is gated on the store binary.
+Everything is shipped and permissive. What remains is making the admission routes require a
+proof unconditionally. The scheduled work lives in
+[`MERGE-ADMISSION-PLAN.md`](./MERGE-ADMISSION-PLAN.md); this file is the marker inventory and
+the per-route state.
 
 ```
 grep -rn "ROLLOUT-STEP-3" --include=*.ts --include=*.tsx .
 ```
 
-## Why it is gated
+## What gates it — and what does not
 
-`apps/wallet` builds both the web app and the Tauri store binary from the same source. Web
-deploys in minutes and the SDK ships via jsDelivr `@latest` in hours, but an installed
-binary sits behind store review *and* a user opting into the update — weeks to never.
+**The store binary does not gate this any more.** It is propagated. That closes the store-approval
+dependency and nothing else; three separate blockers remain, and they are per-route.
 
-So anything the binary touches must keep working unchanged until `minVersion` excludes
-every old build.
+**`apps/wallet`'s own `/sharing` → `/install` path holds no key and never will.** The comment at
+`ensure.ts:78` claims the bare arm is "kept only because the installed Tauri binary POSTs exactly
+this shape". That premise is false: the currently-deployed **wallet web build** lands on the same
+arm with neither credential, via `SharingView.tsx:94-99` (in-file: *"this page has no SDK keypair
+to sign with"*) → `routes/sharing.tsx:55-57` → `InstallView.tsx` → `drainEnsures.ts`. The wallet
+origin holds no keypair, so this is permanent, not a propagation delay. A wallet-side change has
+to stop forwarding `a=` before the arm can be deleted.
+
+**The marker set is incomplete (AID-018).** A second, unmarked door into the same bypass is the
+header fallback at `ensure.ts:213-225`: any wallet-session caller sending only `x-frak-client-id`
+is routed into `resolveWalletEnsureAnonymousId` with a caller-named id, and there is no
+`ROLLOUT-STEP-3` marker anywhere near it. Deleting `ensure.ts:78-88` and stopping there leaves
+**G1 fully open**.
+
+**SDK propagation gates nothing.** The CDN default is `@latest` and the listener URL is
+unversioned, so the exposure is a 1–2 hour rollout deadzone, not a population.
+
+**`/merge/execute` is the one genuine population gate**, and what it waits for is the legacy-id
+population ageing out — not a binary, not `minVersion`. Its target *is* the keyless legacy id by
+definition.
 
 ## Current state
 
@@ -27,11 +46,16 @@ latched before:
 
 These three share one policy function, `enforceLatchedProof`.
 
-**Permissive** — everything the binary touches, plus:
+**Permissive:**
 
-- `/identity/ensure`, wallet arm. An old binary POSTs `{merchantId, anonymousId}` with
-  neither ticket nor proof. A new one also forwards the install proof when the flow carried
-  one; it is verified and logged, never required.
+- `/identity/ensure`, wallet arm. Three shapes, and they are not equivalent. The **ticket**
+  branch is a receipt for a credential presented at `generate` and stays. The `frak-install-v1`
+  **proof** branch verifies and latches a real proof — it is the landing site for Keystore- and
+  Secure-Enclave-signed native installs and for the Play install referrer, both of which reach
+  `ensure` directly and never touch `install-code/generate`; it is kept and made mandatory. Only
+  the proofless **bare-id** variant and the `x-frak-client-id` header fallback are deleted. The
+  bare variant is reached by the deployed wallet web build, not only by an old binary — see
+  above.
 - `install-code/generate`. Reachable with no proof from the wallet's own sharing page,
   whose `clientId` comes from a URL param or a backend lookup rather than a signing key.
   Nothing there can sign, so requiring a proof would break the arm rather than secure it.
@@ -45,17 +69,20 @@ session.
 
 ## Prerequisites
 
-**1. The submitted binary must contain the client half** — reading the `#p=` fragment and
-carrying the ticket. Without it there is nothing for `minVersion` to gate to, and a full
-review cycle is burned arriving back here.
+**1. A wallet release must stop the keyless `/sharing` → `/install` hop forwarding `a=`**, and
+the 7-day pending-ensure queue must drain behind it. That, not the store binary, is what the
+bare arm waits on. Ship the retry classification (`drainEnsures#isNonRetryable`) at least one
+wallet release earlier, or every stale old-shape action retries on every launch for a full week.
 
 **2. `TODO(merge-initiate-proof)` must be closed.** The listener's modal / embedded-wallet
 path still calls `/merge/initiate` with no proof at all, so those ids never latch.
 Enforcing before this is fixed 403s that flow for *every* client, not just legacy ones.
 
-**3. The legacy → derived migration must have drained.** It runs on each client's next
-visit, so this is a matter of elapsed time and return traffic — worth measuring rather than
-assuming. Do not flip on the strength of this alone; (2) matters just as much.
+**3. The legacy → derived migration must have drained — for `/merge/execute` only.** It runs on
+each client's next visit, so a user who never returns is never migrated and the curve asymptotes
+rather than reaching zero. The exit criterion is
+`identity_merge_execute_credential_total{class="absent_unlatched"}` per merchant trending to
+approximately zero, never a date. No other route waits on this.
 
 **4. Migrations must be applied before the branch is deployed anywhere.**
 `findNodeByIdentity` and `markProofSeen` name `proof_seen_at` explicitly, so against a
@@ -64,25 +91,40 @@ proof-absent `/merge/execute` 500s instead of returning 200. The column ships in
 `prod/0020_gigantic_black_crow.sql`, `dev/0040_yummy_amphibian.sql` and
 `local/0035_natural_carlie_cooper.sql`; confirm each is applied, not just generated.
 
-## Step 3 — after store approval
+## Step 3 — the flips
 
-1. Confirm approval on **both** platforms.
-2. Bump `MIN_VERSION_IOS` / `MIN_VERSION_ANDROID` (env, read by
-   `api/common/version.ts`, needs a pod restart) to the version containing the client half.
-   `VersionGate`/`HardUpdateGate` then hard-blocks anything older.
-3. Only now flip the wallet arms to mandatory — `ROLLOUT-STEP-3` marks each site.
-4. Delete the bare-`anonymousId` arm of `/identity/ensure`. At the same time decide whether
-   the forwarded install proof becomes sufficient on its own, or must be exchanged for a
-   ticket first: it is redundant with the open bare arm today, and stops being redundant
-   the moment that arm goes.
+The three flips are **not coupled**; they have different prerequisites and only one has a
+population gate. Do not schedule them together.
 
-> Do not do 3 before 2. Store approval alone does not guarantee no installed binary is
-> still on the old path — users update on their own schedule.
+1. **`/merge/initiate`.** Give the listener a proof it can present (the SDK signs an
+   empty-binding `frak-merge-v1` and carries it on `resolved-config`), have the listener refuse
+   without one, then make `proof` required on the backend's anon-source arm. Gate: the
+   proofless-initiate counters flat on all three sources.
+2. **`/identity/ensure`.** Ship the wallet release from prerequisite 1, let the 7-day queue
+   drain, then in one deploy make the SDK arm's `proof` required, make the `frak-install-v1`
+   branch mandatory, and delete **both** proofless doors — the bare-id variant *and* the
+   `x-frak-client-id` header fallback. Deleting only the first leaves G1 fully open (AID-018).
+   Gate: `identity_ensure_arm_total{arm="wallet_bare"}` at or near zero.
+3. **`/merge/execute`, alone and last.** Gate: prerequisite 3's counter, never a date. Firing it
+   writes off the permanent legacy tail — that is a human decision, not a threshold.
+
+`install-code/generate` becomes a union body (proof required on the SDK arm, `checkoutToken` on
+the order-derived arm) once the Shopify credential path exists. Its codeless-CTA wallet release
+must ship **before or with** it, never after.
+
+The `ensure.ts:101` marker — "should the install proof be exchanged for a ticket?" — is a
+decision, not a dependency, and it is taken: keep accepting the install proof directly. A leaked
+install proof costs one id its attribution, which is far cheaper than the two-call attack the
+flips close. Record it and delete the marker.
+
+> `MIN_VERSION_IOS` / `MIN_VERSION_ANDROID` remain useful for hard-blocking old builds, but no
+> flip above is gated on them.
 
 ## What stays permissive forever
 
-Legacy ids can never produce a proof and are baked into published `fCtx` links. They stay
-resolvable, remain usable as merge targets, and never latch. Accepted, not a gap.
+Legacy ids can never produce a proof and are baked into published `fCtx` links, so they stay
+**resolvable** indefinitely and never latch. They stop being usable as merge *targets* the moment
+`/merge/execute` flips — that is the write-off flip 3 above makes explicit, not an oversight.
 
 ## Later: an optional `frak-track-v1`
 

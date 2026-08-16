@@ -98,9 +98,14 @@ contract for any future native implementation.
 
 | Op | Window | Why |
 |---|---|---|
-| `frak-merge-v1` | ±2 min, binds `SHA-256(mergeToken)` | Asserts ownership of a free-form body param on an unauthenticated route, so a leak is direct theft. Binding the token makes a stolen proof useless without it, and removes the need for a replay cache. The flow is machine-speed. |
-| `frak-ensure-v1` | 90 days | Share → install → forget → reopen next week → register. A tight cap would silently drop attribution for exactly the users this protects. |
+| `frak-merge-v1` | 10 min; binds `SHA-256(mergeToken)` on `execute`, **empty on `initiate`** | Asserts ownership of a free-form body param on an unauthenticated route, so a leak is direct theft. Binding the token makes a stolen proof useless without it, and removes the need for a replay cache. The flow is machine-speed. `initiate` cannot bind the token it has not minted yet — that binding stays empty and is an accepted risk. |
+| `frak-ensure-v1` | 30 days | Share → install → forget → reopen next week → register. A tight cap would silently drop attribution for exactly the users this protects. |
 | `frak-install-v1` | 30 days | Travels in a URL fragment and the Play referrer, so it is minted on the sharer's device and consumed days later on another one. Capped rather than uncapped because it is the leakiest proof in the system. |
+| `frak-sso-v1` | 10 min | Travels in a URL with no server-issued nonce, so the window is the only thing bounding replay of a captured URL. Covers a passkey ceremony plus a retry. |
+
+Windows are backward-looking from `ts`, with a 60-second allowance for a future-dated clock
+(`MAX_FUTURE_SKEW_SECONDS`). The numbers above are `PROOF_WINDOW_SECONDS` in
+`IdentityProofService.ts` — change one and change this table.
 
 ### Two signing backends
 
@@ -146,9 +151,10 @@ client's next visit migrates it, folding the old id into the derived one.
   for all three merge/ensure arms rather than three hand-written checks.
 - **Proof transport with no new RPC methods.** The SDK pushes proofs as additive parameters
   on calls it already makes; the listener forwards them without interpreting them. The
-  install proof travels as a `#p=` URL fragment (never a search param — fragments are not
-  sent to servers, keeping it out of access logs and `Referer` headers) and as a Play
-  referrer key.
+  install proof travels as a `#p=` URL fragment (fragments are not sent to servers, keeping it
+  out of access logs and `Referer` headers) and as a Play referrer key. The fragment rule is
+  the install proof's, not a global one: the `frak-sso-v1` proof rides in a **search** param
+  and is not stripped from the URL afterwards (AID-008).
 - **Closed merge surfaces.** The unauthenticated pairing `originNode` merge was deleted
   outright; webhook purchase attribution became first-writer-wins; the SSO merge was kept
   but proof-gated with a new `frak-sso-v1` op, since it carries a real capability —
@@ -161,9 +167,13 @@ client's next visit migrates it, folding the old id into the derived one.
 
 Schema: `identity_nodes.proof_seen_at`, `install_codes.attempts`
 (`drizzle/local/0035`, `drizzle/dev/0040`). `device_pairing.origin_node` dropped
-(`local/0036`, folded into `dev/0040`). **`prod` still needs its generated migration.**
+(`local/0036`, folded into `dev/0040`). `prod` has its migration too —
+`drizzle/prod/0020_gigantic_black_crow.sql`.
 
 ## 4. What remains
 
-Making the wallet arms mandatory, gated on the store binary being live and `minVersion`
-excluding older builds. See [`ROLLOUT.md`](./ROLLOUT.md).
+Making the admission routes require a proof unconditionally. **The store binary is not the
+gate** — it is propagated, and what actually blocks each route differs per route: a wallet-side
+path that holds no key, one listener release, and for `/merge/execute` alone, the legacy-id
+population ageing out. See [`ROLLOUT.md`](./ROLLOUT.md) for the per-route state and
+[`MERGE-ADMISSION-PLAN.md`](./MERGE-ADMISSION-PLAN.md) for the scheduled work.

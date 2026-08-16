@@ -5,6 +5,7 @@ import {
     type RpcClient,
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
+import { sha256 } from "@noble/hashes/sha2.js";
 import { OpenPanel } from "@openpanel/web";
 import { getClientIdAsync } from "../config/clientId";
 import { setEnvironment } from "../config/environment";
@@ -329,13 +330,21 @@ function updateOpenPanelMerchantProps(
 }
 
 async function hashMergeToken(token: string): Promise<Uint8Array | undefined> {
-    if (typeof crypto === "undefined" || !crypto.subtle) return undefined;
+    const encoded = new TextEncoder().encode(token);
+    if (typeof crypto !== "undefined" && crypto.subtle) {
+        try {
+            const digest = await crypto.subtle.digest(
+                "SHA-256",
+                encoded as BufferSource
+            );
+            return new Uint8Array(digest);
+        } catch {}
+    }
+    // WebCrypto is absent on non-secure-context merchant pages, where
+    // `signProof` still signs via pure JS — so the binding must not be the
+    // thing that drops the merge proof.
     try {
-        const digest = await crypto.subtle.digest(
-            "SHA-256",
-            new TextEncoder().encode(token) as BufferSource
-        );
-        return new Uint8Array(digest);
+        return sha256(encoded);
     } catch {
         return undefined;
     }

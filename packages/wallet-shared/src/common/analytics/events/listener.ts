@@ -8,9 +8,22 @@ export type InAppBrowserRedirectTarget =
     | "sd-iframe-clipboard"
     | "window";
 
+export type MergeInitiateProoflessSource =
+    | "rpc"
+    | "listener_modal"
+    | "embedded_wallet";
+
+export type MergeExecuteTargetSource = "proven" | "fallback";
+
 export type ListenerMiscEventMap = {
     sdk_cleaned_up: undefined;
     in_app_browser_redirected: {
         target: InAppBrowserRedirectTarget;
+    };
+    merge_initiate_proofless: {
+        source: MergeInitiateProoflessSource;
+    };
+    merge_execute_target_source: {
+        source: MergeExecuteTargetSource;
     };
 };

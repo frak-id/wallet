@@ -224,12 +224,14 @@ function resolveMergeTarget(
 ): { targetAnonymousId?: string; proof?: string } {
     const provenId = extractSdkProvenId(sdkIdentity);
     if (provenId) {
+        trackEvent("merge_execute_target_source", { source: "proven" });
         return {
             targetAnonymousId: provenId,
             proof: extractSdkProof(sdkIdentity, "merge"),
         };
     }
     // ROLLOUT-STEP-3: unproven fallback — see the function doc above.
+    trackEvent("merge_execute_target_source", { source: "fallback" });
     return { targetAnonymousId: fallbackId ?? undefined };
 }
 

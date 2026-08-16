@@ -49,6 +49,8 @@ export {
     businessMetrics,
     cronMetrics,
     httpMetrics,
+    type IdentityCredentialClass,
+    type IdentityEnsureArm,
     infraMetrics,
     metricsContentType,
     registry,

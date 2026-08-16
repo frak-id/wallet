@@ -4,6 +4,12 @@ import { mergePreviewRoutes } from "./preview";
 import { mergeSettleRoutes } from "./settle";
 
 export const mergeRoutes = new Elysia({ prefix: "/merge" })
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 5 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "wallet-merge",
+            windowMs: 60_000,
+            maxRequests: 5,
+        })
+    )
     .use(mergePreviewRoutes)
     .use(mergeSettleRoutes);

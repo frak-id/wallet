@@ -124,6 +124,19 @@ function loadPrivateKey(): Uint8Array | null {
 }
 
 /**
+ * Persist a key/id pair. A write failure (quota, disabled storage) must not
+ * reach `ensureIdentityKey`'s catch: the key in hand is valid, and clearing
+ * it there would leave the next visit treating a derived id as legacy.
+ */
+function persistIdentity(entries: [key: string, value: string][]): void {
+    try {
+        for (const [key, value] of entries) {
+            localStorage.setItem(key, value);
+        }
+    } catch {}
+}
+
+/**
  * Load the persisted key/id pair, generating a fresh key when neither
  * exists. Enforces the atomicity invariant: a stored id that doesn't match
  * its key is never trusted over the key. On mismatch or a missing half, the
@@ -152,50 +165,55 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
 
     const storedId = localStorage.getItem(CLIENT_ID_KEY);
 
+    let existingKey: Uint8Array | null;
+    let privateKey: Uint8Array;
+    let derivedId: string;
+    // Only key load, keygen and derivation are guarded: those are the
+    // failures a stored key cannot survive. Storage writes are not, and
+    // must never land here.
     try {
-        const existingKey = loadPrivateKey();
-        const privateKey = existingKey ?? pureJsP256.utils.randomSecretKey();
-        const derivedId = await deriveClientId(publicKeyFor(privateKey));
-
-        if (existingKey) {
-            // Atomicity: the key is authoritative. A missing or mismatched
-            // stored id is silently corrected, never trusted.
-            if (storedId !== derivedId) {
-                localStorage.setItem(CLIENT_ID_KEY, derivedId);
-            }
-            // Re-report a legacy id whose merge never confirmed, so the
-            // caller retries it on this visit.
-            const pendingLegacyId = getPendingLegacyId();
-            return {
-                clientId: derivedId,
-                ...(pendingLegacyId && { pendingLegacyId }),
-            };
-        }
-
-        // No key but an existing id ⇒ pre-derivation client being migrated.
-        // Derive its provable id now, before the caller boots the iframe.
-        // Record the legacy id first: if the page dies between these writes,
-        // the marker is durable and the merge retries next visit — the
-        // reverse order could lose it entirely.
-        if (storedId) {
-            localStorage.setItem(CLIENT_ID_LEGACY_KEY, storedId);
-        }
-
-        // Store key and id together — never one without the other.
-        localStorage.setItem(CLIENT_KEY_KEY, bytesToHex(privateKey));
-        localStorage.setItem(CLIENT_ID_KEY, derivedId);
-
-        return {
-            clientId: derivedId,
-            ...(storedId && { pendingLegacyId: storedId }),
-        };
+        existingKey = loadPrivateKey();
+        privateKey = existingKey ?? pureJsP256.utils.randomSecretKey();
+        derivedId = await deriveClientId(publicKeyFor(privateKey));
     } catch (error) {
-        // Keygen failed, or the stored key was unusable. Clear it so the
-        // next visit regenerates cleanly, then rethrow.
         localStorage.removeItem(CLIENT_KEY_KEY);
         publicKeyCache = null;
         throw error;
     }
+
+    if (existingKey) {
+        // Atomicity: the key is authoritative. A missing or mismatched
+        // stored id is silently corrected, never trusted.
+        if (storedId !== derivedId) {
+            persistIdentity([[CLIENT_ID_KEY, derivedId]]);
+        }
+        // Re-report a legacy id whose merge never confirmed, so the
+        // caller retries it on this visit.
+        const pendingLegacyId = getPendingLegacyId();
+        return {
+            clientId: derivedId,
+            ...(pendingLegacyId && { pendingLegacyId }),
+        };
+    }
+
+    // No key but an existing id ⇒ pre-derivation client being migrated.
+    // Derive its provable id now, before the caller boots the iframe.
+    // Record the legacy id first: if the page dies between these writes,
+    // the marker is durable and the merge retries next visit — the
+    // reverse order could lose it entirely.
+    persistIdentity([
+        ...(storedId
+            ? ([[CLIENT_ID_LEGACY_KEY, storedId]] as [string, string][])
+            : []),
+        // Key and id together — never one without the other.
+        [CLIENT_KEY_KEY, bytesToHex(privateKey)],
+        [CLIENT_ID_KEY, derivedId],
+    ]);
+
+    return {
+        clientId: derivedId,
+        ...(storedId && { pendingLegacyId: storedId }),
+    };
 }
 
 /**

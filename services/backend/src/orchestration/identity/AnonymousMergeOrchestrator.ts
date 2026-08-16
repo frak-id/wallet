@@ -1,4 +1,8 @@
-import { log } from "@backend-infrastructure";
+import {
+    type IdentityCredentialClass,
+    infraMetrics,
+    log,
+} from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { Address } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
@@ -41,8 +45,10 @@ export class AnonymousMergeOrchestrator {
         proof?: string;
         binding: Uint8Array;
         context?: string;
+        onClass: (credentialClass: IdentityCredentialClass) => void;
     }): Promise<boolean> {
-        const { anonymousId, merchantId, proof, binding, context } = params;
+        const { anonymousId, merchantId, proof, binding, context, onClass } =
+            params;
         return enforceLatchedProof({
             op: "frak-merge-v1",
             anonymousId,
@@ -52,6 +58,7 @@ export class AnonymousMergeOrchestrator {
             context: context ?? "merge execute (Phase 4a: enforced)",
             identityProofService: this.identityProofService,
             identityRepository: this.identityRepository,
+            onClass,
         });
     }
 
@@ -126,6 +133,21 @@ export class AnonymousMergeOrchestrator {
                   proof,
                   binding: new Uint8Array(0),
                   context: "merge initiate (latch-gated)",
+                  onClass: (credentialClass) => {
+                      infraMetrics.identityMergeInitiateCredential(
+                          credentialClass
+                      );
+                      if (credentialClass === "absent_unlatched") {
+                          log.info(
+                              {
+                                  merchantId,
+                                  sourceAnonymousId,
+                                  route: "merge/initiate",
+                              },
+                              "Merge admission would be refused once proof is mandatory"
+                          );
+                      }
+                  },
               })
             : false;
 
@@ -201,13 +223,37 @@ export class AnonymousMergeOrchestrator {
             merchantId,
             proof,
             binding: this.identityProofService.hashMergeToken(mergeToken),
+            onClass: (credentialClass) => {
+                infraMetrics.identityMergeExecuteCredential(credentialClass);
+                if (credentialClass === "absent_unlatched") {
+                    log.info(
+                        {
+                            merchantId,
+                            targetAnonymousId,
+                            route: "merge/execute",
+                        },
+                        "Merge admission would be refused once proof is mandatory"
+                    );
+                }
+            },
         });
 
-        const { sourceGroupId } =
+        const { sourceGroupId, sourceWalletAddress } =
             await this.anonymousMergeService.validateToken({
                 mergeToken,
                 merchantId,
             });
+
+        // Alarm only, never a gate: `/merge/initiate` accepts a
+        // `sourceAnonymousId` alongside a wallet session, so an attacker
+        // presenting their own proven id never trips this.
+        if (sourceWalletAddress && !proofPresented) {
+            infraMetrics.identityMergeExecuteWalletSourceUnproven(merchantId);
+            log.warn(
+                { merchantId, targetAnonymousId, sourceWalletAddress },
+                "Merge execute redeemed a wallet-session token with no target proof"
+            );
+        }
 
         // Get-or-create, but only for a caller that proved possession of the
         // target's key. A native SDK signs its merge proof from a device that

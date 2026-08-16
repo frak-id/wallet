@@ -1,4 +1,6 @@
 import {
+    type IdentityCredentialClass,
+    infraMetrics,
     log,
     rateLimitMiddleware,
     sessionContext,
@@ -26,6 +28,7 @@ async function enforceEnsureProof(params: {
     proof?: string;
     op: "frak-ensure-v1" | "frak-install-v1";
     context: string;
+    onClass: (credentialClass: IdentityCredentialClass) => void;
 }): Promise<boolean> {
     return enforceLatchedProof({
         ...params,
@@ -72,6 +75,9 @@ async function resolveWalletEnsureAnonymousId(params: {
                 "Ticket does not match provided anonymousId"
             );
         }
+        // The ticket authenticates its own id, so this arm has no credential
+        // class in the proof taxonomy at all.
+        infraMetrics.identityEnsureArm("wallet_ticket", "n/a");
         return resolved.anonymousId;
     }
 
@@ -109,6 +115,8 @@ async function resolveWalletEnsureAnonymousId(params: {
             merchantId,
             anonymousId: bodyAnonymousId,
             identityProofService: IdentityContext.services.identityProof,
+            onClass: (credentialClass) =>
+                infraMetrics.identityEnsureArm("wallet_proof", credentialClass),
         });
         if (proofVerified) {
             await IdentityContext.repositories.identity.markProofSeen({
@@ -117,8 +125,10 @@ async function resolveWalletEnsureAnonymousId(params: {
                 merchantId,
             });
         }
+        return bodyAnonymousId;
     }
 
+    infraMetrics.identityEnsureArm("wallet_bare", "absent_unlatched");
     return bodyAnonymousId;
 }
 
@@ -142,6 +152,8 @@ async function resolveSdkEnsureAnonymousId(params: {
         proof,
         op: "frak-ensure-v1",
         context: "ensure SDK arm",
+        onClass: (credentialClass) =>
+            infraMetrics.identityEnsureArm("sdk", credentialClass),
     });
 
     // Gated on `proofVerified`: latching an id that never actually proved
@@ -241,7 +253,13 @@ async function resolveEnsureAnonymousId(params: {
  */
 export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
     .use(sessionContext)
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "identity-ensure",
+            windowMs: 60_000,
+            maxRequests: 10,
+        })
+    )
     .post(
         "",
         async ({
@@ -304,6 +322,7 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
                     err instanceof HttpError &&
                     err.code === "WALLET_CONFLICT"
                 ) {
+                    infraMetrics.identityWalletConflict("ensure");
                     log.warn(
                         {
                             walletAddress: walletSession.address,

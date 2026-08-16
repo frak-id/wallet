@@ -1,5 +1,13 @@
+import type { MergeInitiateProoflessSource } from "../common/analytics";
+import { trackEvent } from "../common/analytics";
 import { authenticatedBackendApi } from "../common/api/backendClient";
 import { queryOptions } from "../common/utils/queryOptions";
+
+/**
+ * Which caller is asking for a merge token. `wallet_explorer` is the
+ * authenticated arm and is never counted as proofless.
+ */
+export type MergeTokenSource = MergeInitiateProoflessSource | "wallet_explorer";
 
 /**
  * Query keys for identity merge tokens.
@@ -9,11 +17,13 @@ export const mergeTokenKeys = {
     byParams: (args: {
         merchantId: string | undefined;
         sourceAnonymousId?: string | undefined;
+        source: MergeTokenSource;
     }) =>
         [
             ...mergeTokenKeys.all,
             args.merchantId ?? "no-merchant",
             args.sourceAnonymousId ?? "wallet-auth",
+            args.source,
         ] as const,
 };
 
@@ -39,31 +49,23 @@ export const mergeTokenKeys = {
  * it can never latch and stays on the backend's fail-open path
  * (`AnonymousMergeOrchestrator.enforceProof`). It must carry one before that
  * arm is made unconditionally mandatory (ROLLOUT-STEP-3), or the listener's
- * in-app-browser escape 403s outright.
- *
- * Deferred deliberately, not overlooked: the only consumers (listener modal,
- * embedded wallet) have no production merchant today, and the wallet-app
- * explorer arm is unaffected since it's authenticated by session instead.
- *
- * Two real constraints when this is picked up:
- *  1. The proof must be `frak-merge-v1` with an EMPTY binding, as
- *     `sdk/core/src/actions/getMergeToken.ts` produces. Reusing
- *     `sdkIdentity.proofs.merge` from `resolved-config` would 403 — that one
- *     binds `SHA-256(mergeToken)`, for the `execute` side.
- *  2. `frak-merge-v1`'s window is 10 min, which a modal left open for longer
- *     than that still outlives: a proof signed at open time expires while the
- *     user reads. Signing lazily isn't possible, so the empty-binding initiate
- *     case may still need its own window.
+ * in-app-browser escape 403s outright. The proof must be `frak-merge-v1` with
+ * an EMPTY binding: `sdkIdentity.proofs.merge` binds `SHA-256(mergeToken)` and
+ * would 403 here.
  */
 export function mergeTokenQueryOptions(args: {
     merchantId: string | undefined;
     sourceAnonymousId?: string | undefined;
+    source: MergeTokenSource;
 }) {
-    const { merchantId, sourceAnonymousId } = args;
+    const { merchantId, sourceAnonymousId, source } = args;
     return queryOptions({
         queryKey: mergeTokenKeys.byParams(args),
         queryFn: async (): Promise<string | null> => {
             if (!merchantId) return null;
+            if (sourceAnonymousId && source !== "wallet_explorer") {
+                trackEvent("merge_initiate_proofless", { source });
+            }
             const { data } =
                 await authenticatedBackendApi.user.identity.merge.initiate.post(
                     {

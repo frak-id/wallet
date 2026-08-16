@@ -20,10 +20,25 @@ type EnsureAction = Extract<PendingAction, { type: "ensure" }>;
  */
 const WALLET_ALREADY_LINKED = "WALLET_ALREADY_LINKED";
 
+/**
+ * Codes a queued action can never satisfy on a later launch: the stored
+ * shape lacks a credential the route now demands, and nothing on the retry
+ * path can mint one.
+ */
+const MISSING_CREDENTIAL_CODES = [
+    "PROOF_REQUIRED",
+    "PROOF_OR_TOKEN_REQUIRED",
+    "MISSING_ANONYMOUS_ID",
+] as const;
+
+function errorCode(error: unknown): string | undefined {
+    return (error as { value?: { code?: string } } | undefined)?.value?.code;
+}
+
 function isNonRetryable(error: unknown): boolean {
-    const code = (error as { value?: { code?: string } } | undefined)?.value
-        ?.code;
-    return code === WALLET_ALREADY_LINKED;
+    const code = errorCode(error);
+    if (code === WALLET_ALREADY_LINKED) return true;
+    return MISSING_CREDENTIAL_CODES.some((known) => known === code);
 }
 
 /**
@@ -40,8 +55,8 @@ export function queuePendingAction(
 
 /**
  * Fire every ensure action in `actions`, fire-and-forget: a failure keeps the
- * action queued for the next launch, except a non-retryable
- * `WALLET_ALREADY_LINKED` which is dropped immediately.
+ * action queued for the next launch, except a non-retryable one which is
+ * dropped immediately.
  *
  * Router-free on purpose — the standalone `/install` entrypoint has no
  * TanStack Router, and this is the only half of the pending-actions drain it
@@ -83,7 +98,11 @@ export function fireEnsureActions(
                     // Stop the retry loop instead of silently no-oping on
                     // every future app launch.
                     store.removeAction(action.id);
-                    ensureConflictStore.getState().raise();
+                    // The toast copy names a wallet conflict, so only that
+                    // code may raise it.
+                    if (errorCode(err) === WALLET_ALREADY_LINKED) {
+                        ensureConflictStore.getState().raise();
+                    }
                 }
             }
         );

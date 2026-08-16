@@ -1,4 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const resolveMerchantId = vi.hoisted(() => vi.fn());
+
+vi.mock("../config/sdkConfigStore", () => ({
+    sdkConfigStore: { resolveMerchantId },
+}));
+
 import { initClientId } from "../config/clientId";
 import * as signModule from "../identity/sign";
 import type { FrakClient } from "../types";
@@ -20,6 +27,7 @@ function makeClient(
 describe("getMergeToken", () => {
     beforeEach(() => {
         localStorage.clear();
+        resolveMerchantId.mockResolvedValue(MERCHANT_ID);
     });
 
     afterEach(() => {
@@ -58,6 +66,45 @@ describe("getMergeToken", () => {
                 params: undefined,
             })
         );
+    });
+
+    it("signs over the resolved merchant id, not config.metadata", async () => {
+        clearAllCache();
+        await initClientId();
+        const request = vi.fn().mockResolvedValue("merge-token");
+        const signProofSpy = vi.spyOn(signModule, "signProof");
+
+        // No merchantId on the client config at all: the resolved one is
+        // the only source, and a proof must still be produced.
+        await getMergeToken(makeClient(request), { cacheTime: 0 });
+
+        expect(resolveMerchantId).toHaveBeenCalled();
+        expect(signProofSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                op: "frak-merge-v1",
+                merchantId: MERCHANT_ID,
+            })
+        );
+
+        signProofSpy.mockRestore();
+        clearAllCache();
+    });
+
+    it("sends no params when the merchant id cannot be resolved", async () => {
+        clearAllCache();
+        await initClientId();
+        resolveMerchantId.mockResolvedValue(undefined);
+        const request = vi.fn().mockResolvedValue(null);
+
+        await getMergeToken(makeClient(request), { cacheTime: 0 });
+
+        expect(request).toHaveBeenCalledWith(
+            expect.objectContaining({
+                method: "frak_getMergeToken",
+                params: undefined,
+            })
+        );
+        clearAllCache();
     });
 
     it("does not sign again on a cache hit", async () => {

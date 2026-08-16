@@ -58,6 +58,13 @@ vi.mock("../../../../src/orchestration/context", () => ({
  * the auth header off `request` directly, same as `ensure.ts` already does
  * for `x-frak-client-id`.
  */
+const { mockInfraMetrics } = vi.hoisted(() => ({
+    mockInfraMetrics: {
+        identityEnsureArm: vi.fn(),
+        identityProofChecked: vi.fn(),
+    },
+}));
+
 vi.mock("@backend-infrastructure", () => {
     class UnauthorizedError extends Error {}
     const testSessionContext = new Elysia({ name: "Macro.session.test" })
@@ -102,6 +109,7 @@ vi.mock("@backend-infrastructure", () => {
         log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
         rateLimitMiddleware: () => new Elysia({ name: "Mock.rateLimit" }),
         sessionContext: testSessionContext,
+        infraMetrics: mockInfraMetrics,
     };
 });
 

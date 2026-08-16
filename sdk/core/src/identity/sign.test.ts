@@ -120,6 +120,44 @@ describe("sign", () => {
             expect(retry.pendingLegacyId).toBe("some-id");
         });
 
+        it("keeps a valid key when a storage write fails (quota)", async () => {
+            const first = await ensureIdentityKey();
+            const storedKey = localStorage.getItem("frak-client-key");
+            // A mismatched id forces the corrective write, which now fails.
+            localStorage.setItem("frak-client-id", "stale-mismatched-id");
+            const setItem = vi
+                .spyOn(Storage.prototype, "setItem")
+                .mockImplementation(() => {
+                    throw new Error("QuotaExceededError");
+                });
+
+            try {
+                const second = await ensureIdentityKey();
+                expect(second.clientId).toBe(first.clientId);
+            } finally {
+                setItem.mockRestore();
+            }
+
+            // The key is untouched: destroying it here would make the user's
+            // own derived id look legacy on the next visit.
+            expect(localStorage.getItem("frak-client-key")).toBe(storedKey);
+        });
+
+        it("does not throw when the first-visit write fails", async () => {
+            const setItem = vi
+                .spyOn(Storage.prototype, "setItem")
+                .mockImplementation(() => {
+                    throw new Error("QuotaExceededError");
+                });
+
+            try {
+                const result = await ensureIdentityKey();
+                expect(result.clientId).toBeTruthy();
+            } finally {
+                setItem.mockRestore();
+            }
+        });
+
         it("rejects when no entropy source exists, never returning an unprovable id", async () => {
             vi.stubGlobal("crypto", {});
 

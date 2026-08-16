@@ -104,7 +104,10 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     // queryOptions — only runs when a wallet session exists; otherwise the
     // title link falls back to plain UTMs.
     const { data: mergeToken } = useQuery({
-        ...mergeTokenQueryOptions({ merchantId: merchant.id }),
+        ...mergeTokenQueryOptions({
+            merchantId: merchant.id,
+            source: "wallet_explorer",
+        }),
         enabled: !!walletAddress,
     });
 

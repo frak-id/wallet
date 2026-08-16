@@ -5,7 +5,13 @@ import { OrchestrationContext } from "../../../orchestration/context";
 
 export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
     .use(sessionContext)
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 20 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "identity-merge",
+            windowMs: 60_000,
+            maxRequests: 20,
+        })
+    )
     .post(
         "/initiate",
         async ({ body, walletSession }) => {

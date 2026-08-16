@@ -5,6 +5,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 // ---------------------------------------------------------------------------
 
 const mockInitiatePost = vi.fn();
+const mockTrackEvent = vi.fn();
+
+vi.mock("@frak-labs/wallet-shared/common/analytics", () => ({
+    trackEvent: (...args: unknown[]) => mockTrackEvent(...args),
+}));
 
 vi.mock("@frak-labs/wallet-shared/common/api/backendClient", () => ({
     authenticatedBackendApi: {
@@ -44,6 +49,7 @@ describe("createGetMergeTokenHandler", () => {
             merchantId: "merchant-1",
             proof: "the-proof",
         });
+        expect(mockTrackEvent).not.toHaveBeenCalled();
     });
 
     test("sends proof: undefined (no explicit value) when params are absent, matching legacy SDK behaviour", async () => {
@@ -66,6 +72,33 @@ describe("createGetMergeTokenHandler", () => {
                 merchantId: "merchant-1",
             })
         );
+    });
+
+    test("counts a proofless call and still forwards it", async () => {
+        mockInitiatePost.mockResolvedValue({ data: { mergeToken: "tok" } });
+        const handler = createGetMergeTokenHandler();
+
+        const result = await handler(undefined, CONTEXT);
+
+        expect(mockTrackEvent).toHaveBeenCalledExactlyOnceWith(
+            "merge_initiate_proofless",
+            { source: "rpc" }
+        );
+        expect(mockInitiatePost).toHaveBeenCalledTimes(1);
+        expect(result).toBe("tok");
+    });
+
+    test("does not count when merchantId or clientId is missing", async () => {
+        const handler = createGetMergeTokenHandler();
+
+        await handler(undefined, {
+            merchantId: undefined,
+            clientId: "client-1",
+        } as unknown as Parameters<
+            ReturnType<typeof createGetMergeTokenHandler>
+        >[1]);
+
+        expect(mockTrackEvent).not.toHaveBeenCalled();
     });
 
     test("returns null when merchantId or clientId is missing", async () => {

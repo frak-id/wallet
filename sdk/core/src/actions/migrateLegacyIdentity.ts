@@ -1,6 +1,37 @@
 import { getBackendUrl } from "../config/environment";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { clearPendingLegacyId, signProof } from "../identity/sign";
+import { sdkVersionHeaders } from "../utils/sdkVersionHeader";
+
+/**
+ * Error codes naming a credential the caller could hold later. Refusing on
+ * one of these says the request was inadmissible, not that the migration is
+ * impossible, so the marker survives for a future visit to retry.
+ */
+const RECOVERABLE_ERROR_CODES = new Set([
+    "PROOF_REQUIRED",
+    "PROOF_OR_TOKEN_REQUIRED",
+    "MISSING_ANONYMOUS_ID",
+]);
+
+/**
+ * Whether a failed merge response leaves the legacy id worth retrying. A 403
+ * is admission control, which a later visit may satisfy; other 4xx are
+ * terminal for this pairing and drop the marker rather than loop forever.
+ */
+async function isRecoverableFailure(response: Response): Promise<boolean> {
+    if (response.status >= 500) return true;
+    if (response.status === 403) return true;
+    try {
+        const body = (await response.clone().json()) as { code?: string };
+        return (
+            typeof body.code === "string" &&
+            RECOVERABLE_ERROR_CODES.has(body.code)
+        );
+    } catch {
+        return false;
+    }
+}
 
 /**
  * Fold a pre-derivation (legacy) anonymous id into the derived id that
@@ -57,6 +88,7 @@ export async function migrateLegacyIdentity({
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json",
+                    ...sdkVersionHeaders(),
                 },
                 body: JSON.stringify({
                     sourceAnonymousId: derivedId,
@@ -66,11 +98,9 @@ export async function migrateLegacyIdentity({
             }
         );
         if (!initiateResponse.ok) {
-            // 4xx: this migration can never succeed as posed (e.g. the
-            // derived id is latched to a different key), so drop the marker
-            // rather than loop forever. 5xx/network falls to the catch
-            // below and retries.
-            if (initiateResponse.status < 500) clearPendingLegacyId();
+            if (!(await isRecoverableFailure(initiateResponse))) {
+                clearPendingLegacyId();
+            }
             return;
         }
 
@@ -86,6 +116,7 @@ export async function migrateLegacyIdentity({
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json",
+                    ...sdkVersionHeaders(),
                 },
                 body: JSON.stringify({
                     mergeToken,
@@ -102,7 +133,9 @@ export async function migrateLegacyIdentity({
             clearPendingLegacyId();
             return;
         }
-        if (executeResponse.status < 500) clearPendingLegacyId();
+        if (!(await isRecoverableFailure(executeResponse))) {
+            clearPendingLegacyId();
+        }
     } catch {
         // Transient (offline, DNS, 5xx). The marker stays, so the next
         // visit retries.

@@ -1,5 +1,6 @@
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import type { RpcPromiseHandler } from "@frak-labs/frame-connector";
+import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import type { WalletRpcContext } from "@/module/types/context";
 
@@ -24,6 +25,9 @@ export function createGetMergeTokenHandler(): OnGetMergeToken {
         // params, so this is `undefined` and gets dropped by the body
         // serialiser — request stays byte-identical to before.
         const proof = params?.[0];
+        if (!proof) {
+            trackEvent("merge_initiate_proofless", { source: "rpc" });
+        }
         const { data } =
             await authenticatedBackendApi.user.identity.merge.initiate.post({
                 sourceAnonymousId: clientId,

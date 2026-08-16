@@ -1,4 +1,4 @@
-import { rateLimitMiddleware } from "@backend-infrastructure";
+import { infraMetrics, rateLimitMiddleware } from "@backend-infrastructure";
 import { HttpError, t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { IdentityContext } from "../../../domain/identity/context";
@@ -6,7 +6,13 @@ import { MerchantContext } from "../../../domain/merchant/context";
 import { verifyProofUnenforced } from "../../../orchestration/identity/latchedProof";
 
 const installCodeGenerateRoute = new Elysia()
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 5 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "identity-install-code-generate",
+            windowMs: 60_000,
+            maxRequests: 5,
+        })
+    )
     .post(
         "/generate",
         async ({ body }) => {
@@ -28,6 +34,10 @@ const installCodeGenerateRoute = new Elysia()
                     anonymousId,
                     identityProofService:
                         IdentityContext.services.identityProof,
+                    onClass: (credentialClass) =>
+                        infraMetrics.identityInstallCodeGenerateCredential(
+                            credentialClass
+                        ),
                 });
                 if (proofVerified) {
                     await IdentityContext.repositories.identity.markProofSeen({
@@ -36,6 +46,13 @@ const installCodeGenerateRoute = new Elysia()
                         merchantId,
                     });
                 }
+            } else {
+                // This route never reads the latch, so a proofless call for an
+                // already-latched id is counted here too: the class overstates
+                // "would still work" and understates `absent_latched`.
+                infraMetrics.identityInstallCodeGenerateCredential(
+                    "absent_unlatched"
+                );
             }
 
             const result = await IdentityContext.services.installCode.generate({
@@ -65,7 +82,13 @@ const installCodeGenerateRoute = new Elysia()
     );
 
 const installCodeResolveRoute = new Elysia()
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "identity-install-code-resolve",
+            windowMs: 60_000,
+            maxRequests: 10,
+        })
+    )
     .post(
         "/resolve",
         async ({ body }) => {

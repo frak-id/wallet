@@ -108,14 +108,61 @@ describe("migrateLegacyIdentity", () => {
         expect(getPendingLegacyId()).toBe(LEGACY_ID);
     });
 
-    it("drops the marker on a 4xx, which retrying can never fix", async () => {
+    it("drops the marker on a terminal 4xx, which retrying can never fix", async () => {
         const { derivedId } = await migratingClient();
-        fetchSpy.mockResolvedValueOnce({ ok: false, status: 403 });
+        fetchSpy.mockResolvedValueOnce({
+            ok: false,
+            status: 404,
+            clone: () => ({ json: async () => ({}) }),
+        });
 
         await migrateLegacyIdentity({ legacyId: LEGACY_ID, derivedId });
 
         expect(fetchSpy).toHaveBeenCalledTimes(1);
         expect(getPendingLegacyId()).toBeUndefined();
+    });
+
+    it("keeps the marker when initiate 403s, so a later visit can retry", async () => {
+        const { derivedId } = await migratingClient();
+        fetchSpy.mockResolvedValueOnce({
+            ok: false,
+            status: 403,
+            clone: () => ({ json: async () => ({ code: "PROOF_REQUIRED" }) }),
+        });
+
+        await migrateLegacyIdentity({ legacyId: LEGACY_ID, derivedId });
+
+        expect(getPendingLegacyId()).toBe(LEGACY_ID);
+    });
+
+    it("keeps the marker when execute 403s", async () => {
+        const { derivedId } = await migratingClient();
+        fetchSpy
+            .mockResolvedValueOnce(okJson({ mergeToken: "merge-token-abc" }))
+            .mockResolvedValueOnce({
+                ok: false,
+                status: 403,
+                clone: () => ({ json: async () => ({}) }),
+            });
+
+        await migrateLegacyIdentity({ legacyId: LEGACY_ID, derivedId });
+
+        expect(getPendingLegacyId()).toBe(LEGACY_ID);
+    });
+
+    it("keeps the marker on a recoverable error code carried by a 400", async () => {
+        const { derivedId } = await migratingClient();
+        fetchSpy.mockResolvedValueOnce({
+            ok: false,
+            status: 400,
+            clone: () => ({
+                json: async () => ({ code: "MISSING_ANONYMOUS_ID" }),
+            }),
+        });
+
+        await migrateLegacyIdentity({ legacyId: LEGACY_ID, derivedId });
+
+        expect(getPendingLegacyId()).toBe(LEGACY_ID);
     });
 
     it("never merges an id into itself", async () => {
