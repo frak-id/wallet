@@ -606,10 +606,12 @@ deploy, one web SDK release, one wallet/listener release. Nothing waits on a sto
 
 | # | Item | Closes | Files touched | LoC +/− | Release | Backend-only? | Blast radius and the test that pins today's behaviour |
 |---|---|---|---|---|---|---|---|
-| T1.3 | **B2.** Make `merge` a required param of `PurchaseLinkingOrchestrator.claimPurchase` (`:22` `merge?:` → `merge:`, `:87` `params.merge ?? true` → `params.merge`), and correct the doc block at `:14-21` which names `PurchaseWebhookOrchestrator` as the default's consumer — that class never calls this method. Add one line at the `merge:true` branch marking it as having no live caller | **G16** | `orchestration/PurchaseLinkingOrchestrator.ts`, `api/user/track/purchase.ts` | +5/−5 EST (the param change itself is +2/−1 COUNTED) | backend deploy | **yes** | **Zero production behaviour change, compile-enforced.** One production caller, `api/user/track/purchase.ts:58-69`, already passes `merge: false` at `:67`; the other five `claimPurchase` hits are `PurchaseLinkingOrchestrator.test.ts:71,104,135,165,199`. **Keep the arms.** Deleting them is strictly larger for the same end state: it removes the `associate` branch at `:177-191`, forces `rebindExisting` to a literal `false`, makes `ClaimPurchaseResult.merged` (`:31`) permanently false — which is an optional field in the route response schema at `purchase.ts:83` — and deletes the two tests in the `"merge: true / default"` describe (`:161-206`). With the param required the arms are dead-but-typed and still covered; deleting them later is easier, because the type change already proved there is exactly one caller. A green `bun run typecheck` **is** that proof |
+| T1.3 | **B2.** **Delete** `merge` from `PurchaseLinkingOrchestrator.claimPurchase` and every arm it selects. Removed: `merge?: boolean` (`:24`) and its doc line (`:17`, block `:16-23`); `const merge = params.merge ?? true` (`:87`); the `if (merge)` branch calling `resolveAndAssociate` (`:91-95`) — only the `resolveForAttribution` else-branch survives; `rebindExisting: merge` (`:130`) becomes a literal `false`, so first-claim-wins is structural rather than conditional; the `merge: boolean` parameter of `reconcileWithExistingPurchase` (`:153`) and its `else` merge branch (`:177-196`) — only the keep-stored-attribution path with its `log.warn` survives. `alreadyMerged` collapses, `ClaimPurchaseResult.merged` (`:32`) becomes permanently `false` and is removed, and with it the `merged` field of the `/track/purchase` 200 schema (`api/user/track/purchase.ts:86`), the comment above it (`:77-80`) and the caller's now-redundant `merge: false` (`:67`) | **G16** | `orchestration/PurchaseLinkingOrchestrator.ts`, `api/user/track/purchase.ts`, `services/backend/user-openapi.json` | +6/−57 COUNTED source; −3 generated (`user-openapi.json`); −63 tests — **a net removal** | backend deploy | **yes** | **Zero production behaviour change, and the unsafe shape becomes unrepresentable.** The single live caller, `api/user/track/purchase.ts:58-69`, already passes `merge: false` at `:67`, so the surviving path is byte-identical for it; the other five `claimPurchase` hits are `PurchaseLinkingOrchestrator.test.ts:71,104,135,165,199`. **Delete rather than require.** A required param still lets a future caller pass `true` and reopen the merge path; deleting makes the unsafe behaviour unrepresentable rather than merely unused — the same principle this plan applies to not leaving a request field a refactor could trust instead of the proof. It also stops `identityOrchestrator.associate` being reachable from the purchase path **at all**, which is a real narrowing of merge surface, not a tidy-up. **Two different `merged` fields exist in the exported spec — drop the right one.** `user-openapi.json:3957` is the optional field on the `/track/purchase` 200, beside `purchaseId` and `pendingWebhook`: that is the one dropped. `user-openapi.json:310-318` is on the `/merge/execute` 200, listed in `required` alongside `finalGroupId`, and is the merge result of a live route contract whose callers are `migrateLegacyIdentity.ts:82-96` and native `MergeSender` — **it stays, untouched.** **No consumer, verified rather than asserted:** nothing reads the track/purchase `merged` anywhere — checked across `sdk/core`, `apps/listener`, `packages/wallet-shared`, `sdk/android`, `sdk/ios`, `plugins/`, `example/` and `apps/business`; every apparent hit is an unrelated local variable or prose. **Regenerate the spec in the same change:** `services/backend/package.json` carries `openapi:generate` and `openapi:check`, and `check` runs generate then `git diff --exit-code user-openapi.json`, so a stale committed spec fails CI. A green `bun run typecheck` **is** the proof that exactly one production caller existed |
 | T1.12 | **B1.** Materialise the merchant-scoped anonymous node in the **Shopify credential path only** — Gate 2's ladder step 3 (T2.5) — with a server-minted id, minted only when the lookup returns none, in the same unit of work. **Ship with it, not after it:** `orderBy: asc(createdAt)` on `IdentityRepository.findAnonymousFingerprint` (`:195-207`, an unordered `findFirst`) | **B1**; unblocks `order-client` for wallet-bearing Shopify buyers | `IdentityRepository.ts` (the `orderBy`), plus the materialisation inside T2.5's new `InstallCredentialOrchestrator.ts` | +3/−1 COUNTED for the `orderBy`; the materialisation is counted in T2.5 | backend deploy (ships with bucket C) | **yes** | **Do not fix it in `resolveForAttribution`.** That would add a `findGroupByIdentity` + `createGroup`/`addNode` to **every** `track/interaction`, **every** `track/purchase` and **every** `referral-status` `GET`, writing a **caller-supplied, unauthenticated** `x-frak-client-id` value at the QPS of the tracking surface — a G17 security regression, not a bug fix. It would also break the write-discipline invariant pinned at `IdentityOrchestrator.test.ts:88-90` (`toHaveBeenCalledTimes(1)` → `2`) and the comment at `:86-87`, and falsify the doc block at `IdentityOrchestrator.ts:171-174`. Option 2 changes **no existing test**: the security invariant at `:85,:94-99` and the second test at `:102-129` stay green, and `sdkIdentity.test.ts:101` counts the orchestrator call, not the repo call. Without the `orderBy`, a group holding two anon nodes returns a nondeterministic id to `/sharing` |
 
-**Bucket B totals — source ≈ +8 / −6 (net +2).** No migration, no client release, both backend-only.
+**Bucket B totals — source ≈ +9 / −58 (net −49), plus −3 generated lines in `user-openapi.json`
+and ≈−63 test lines.** No migration, no client release, both backend-only. The bucket is
+net-deleting because T1.3 removes a merge primitive rather than gating one.
 
 ### Bucket C — Shopify checkout-token work, lands immediately
 
@@ -683,7 +685,7 @@ a legacy node. (Deriving "latched" from the group rather than the node was consi
 it would 403 a proven user who then installs through the keyless wallet-sharing path.)
 
 **Bucket E totals — source ≈ +14 / −29 (net −15).** No migration, no client release, backend-only.
-The only bucket that closes **G2**, and the only one that is net-deleting.
+The only bucket that closes **G2**; net-deleting, as bucket B also is.
 
 ### Dropped from this programme
 
@@ -703,20 +705,23 @@ Kept as a table so every id in the map still resolves to a decision rather than 
 | | Added | Removed | Net |
 |---|---|---|---|
 | **Bucket A** source | ~229 | ~17 | **+212** |
-| **Bucket B** source | ~8 | ~6 | **+2** |
+| **Bucket B** source | ~9 | ~58 | **−49** |
 | **Bucket C** source | ~327 | ~0 | **+327** |
 | **Bucket D** source | ~366 | ~142 | **+224** |
 | **Bucket E** source | ~14 | ~29 | **−15** |
-| **Hand-written source, all buckets** | **~944** | **~194** | **+750** |
-| Tests | ~1,255 | ~520 | **+735** |
+| **Hand-written source, all buckets** | **~945** | **~246** | **+699** |
+| Tests | ~1,255 | ~583 | **+672** |
 | Docs (`README.md` §2 corrected; `ROLLOUT.md` corrected, not retired) | ~30 | ~40 | **−10** |
 | SQL migration files (1–2 migrations × 3 folders) | ~18 | 0 | +18 |
 | Generated drizzle snapshots (up to 2 × 3 = 6 files; `dev/meta/0040_snapshot.json` is 3,575 lines, `prod/meta/0020_snapshot.json` 3,603) | ~21,500 | 0 | +21,500 |
+| Generated OpenAPI (`services/backend/user-openapi.json`, T1.3 only — regenerated, never hand-edited) | 0 | ~3 | **−3** |
 
-**The programme is a net addition of roughly +750 hand-written source lines and +735 test lines.**
-Only bucket E is net-deleting; the large deletion (T3.9, −334) moved to a later round. The generated
-snapshot cost dropped by two thirds because five of six migrations are gone, and dropping T2.4 removed
-the last golden-fixture regeneration from the programme.
+**The programme is a net addition of roughly +699 hand-written source lines and +672 test lines.**
+Buckets **B** and **E** are net-deleting — B because T1.3 is a removal rather than a param tightening; the
+large deletion (T3.9, −334) moved to a later round. The generated snapshot cost dropped by two thirds
+because five of six migrations are gone, and dropping T2.4 removed the last golden-fixture
+regeneration from the programme. The only generated artefact moving outside drizzle is
+`user-openapi.json`, at T1.3, and it is regenerated by `openapi:generate` rather than edited.
 
 ### Test impact
 
@@ -727,7 +732,7 @@ the last golden-fixture regeneration from the programme.
 | `test/api/user/identity/merge.test.ts` (337) | ~7 of 12 cases ⇒ ~−120/+130, split across T3.1a (initiate body) and T3.1b (execute body) | EST |
 | `IdentityOrchestrator.test.ts` (409) | **unchanged.** T3.9 is out of scope, so `:276`/`:338`'s `markProofSeen` assertions stand; and B1 is fixed in Gate 2, so the write-discipline assertions at `:86-93` stay green. Run it as the green baseline before touching §3 | COUNTED |
 | `walletConflict.test.ts` (183), `mergeTieBreak.test.ts` (109) | **pass unmodified** — zero references to `markProofSeen`, `proofSeenAt` or the latch | COUNTED |
-| `PurchaseLinkingOrchestrator.test.ts` | **unchanged by T1.3** — all five `claimPurchase` call sites (`:71,104,135,165,199`) already pass `merge` explicitly, and the `"merge: true / default"` describe (`:161-206`) keeps covering the retained arms. A green `bun run typecheck` is the proof that exactly one production caller exists | COUNTED |
+| `PurchaseLinkingOrchestrator.test.ts` (216) | **T1.3 deletes cases, not just arguments.** The whole `"merge: true / default"` describe (`:157-215`, 2 cases) is deleted with the arms it covered; of the five `claimPurchase` call sites (`:71,104,135,165,199`) the two inside that describe go with it and the three survivors lose their `merge: false` argument, `expect(result.merged).toBe(false)` (`:149`) goes with the removed field, and the surviving describe is renamed — there is no longer a param to name. ⇒ ~−63/+1, raw case count **5 → 3**. **Read the count drop as intended, not as lost coverage:** the deleted cases asserted merging behaviour that no longer exists to regress, and the surviving describe still pins every remaining branch, including the keep-stored-attribution `log.warn` path. A green `bun run typecheck` is the proof that exactly one production caller existed | COUNTED |
 | `test/api/user/identity/installCode.test.ts` (252) | Gate 2's cases: **resolved purchase beats a conflicting claim row** (the new explicit ordering), webhook-late (claim row only, counter emitted), webhook-never (deferred row, generation must not fail), S3/S4 materialisation with no merge, deterministic `findAnonymousFingerprint` with two anon nodes in one group, `frakmint_` prefix + latch on the minted id only, `{merchantId, checkoutToken, anonymousId}` → 400, reuse on `(merchantId, checkoutToken)`, `UNRESOLVED` with no ticket minted | EST |
 | New: request-level limiter suite over the composed `identityApi` | mirrors `api/user/track/index.test.ts`, ~+90 | EST |
 | `useOnGetMergeToken.test.ts`, `mergeTokenQueryOptions` tests | T1.13's counter on the proofless path; then T2.3's stored `mergeSource` proof (both key shapes accepted) and the deletion of the proofless arm; then T3.11's `null` return | EST |
@@ -855,7 +860,7 @@ wild**. This is why T3.8 needs 30 days of dual-accept and why T3.2's write-off w
 
 | Item | Verdict |
 |---|---|
-| T1.1–T1.3, T1.5–T1.13 | **Clean.** Code-only, revertible |
+| T1.1–T1.3, T1.5–T1.13 | **Clean.** Code-only, revertible — with one rider: T1.3 also moves `user-openapi.json`, which is regenerated by `bun run --cwd services/backend openapi:generate`, never hand-reverted |
 | T1.14 | **Reversible by one statement**, by design: `UPDATE identity_nodes SET proof_seen_at = NULL WHERE identity_value LIKE 'frakmint_%'`. That is the entire reason for the prefix |
 | T2.5 | **Irreversible once one deferred row exists** — a rolled-back build whose Drizzle schema declares `anonymous_id` `notNull` reads `null` and 500s on the response schema |
 | T2.3, T3.11, T3.1a, T3.2–T3.4 | Code-only, cleanly revertible — but attribution lost in the window is unrecoverable, and reverting still needs a full deploy |
