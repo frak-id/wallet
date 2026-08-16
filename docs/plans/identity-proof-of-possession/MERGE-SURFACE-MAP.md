@@ -15,8 +15,10 @@ Rows marked **SUSPECTED** are inference; everything else was read in the file ci
 [`ROLLOUT.md`](./ROLLOUT.md); it is the only thing either document calls a "step". Merge points are
 `M1`–`M20`, gaps are `G1`–`G28`, correctness defects are `B1`–`B2`, audit findings are `AID-*`, and
 work items keep their `T1.x` / `T2.x` / `T3.x` ids from `MERGE-ADMISSION-PLAN.md`. That plan now
-groups those items into four buckets (A–D) instead of three tiers; the ids did not move, so every
-reference below still resolves.
+groups those items into five buckets (A–E) instead of three tiers. Two id notes, so every reference
+below still resolves: `T3.1` split into **`T3.1a`** (`/merge/initiate`, bucket D) and **`T3.1b`**
+(`/merge/execute`, bucket E), and **`T2.4` was deleted** — AID-005 closes as a side effect of the
+flips and needs no dedicated work (G27 below).
 
 ---
 
@@ -98,12 +100,12 @@ live caller today.
 
 | ID | Merge point | Links what to what | App / context | Code anchor | Notes |
 |---|---|---|---|---|---|
-| **M1** | `POST /user/identity/ensure` — SDK arm | anon → wallet | merchant-site SDK, after `watchWalletStatus` sees a connected wallet | `api/user/identity/ensure.ts#resolveSdkEnsureAnonymousId:132`; merge via `IdentityOrchestrator.resolveAndAssociate:118`. Client: `sdk/core/src/actions/ensureIdentity.ts:56-74` | The current SDK always signs `frak-ensure-v1` and omits it only when `signProof` returns `null`; **old SDK versions omit the field entirely**, which is what keeps the arm proof-optional |
+| **M1** | `POST /user/identity/ensure` — SDK arm | anon → wallet | merchant-site SDK, after `watchWalletStatus` sees a connected wallet | `api/user/identity/ensure.ts#resolveSdkEnsureAnonymousId:132`; merge via `IdentityOrchestrator.resolveAndAssociate:118`. Client: `sdk/core/src/actions/ensureIdentity.ts:56-74` | The SDK signs `frak-ensure-v1` on every call and omits it only when `signProof` returns `null` (`ensureIdentity.ts:56`). The subject is `x-frak-client-id`, which is the **derived** id from the first load (`migrateLegacyIdentity.ts:10-13`), so what keeps the arm proof-optional is the schema, not any client population |
 | **M2** | `POST /user/identity/ensure` — wallet arm, **ticket** branch | anon → wallet | wallet app after redeeming an install code | `ensure.ts#resolveWalletEnsureAnonymousId:46`, ticket branch `:56` (`InstallCodeService.verifyTicket`) | Short-circuits with `return resolved.anonymousId` **before any latch read**. The ticket is minted by M-x1 below |
 | **M3** | `POST /user/identity/ensure` — wallet arm, **bare id** | anon → wallet | wallet Tauri binary, deep link, Play referrer, hosted `/install`, **and the wallet's own `/sharing` → `/install` hop** | `ensure.ts:78-88` (the proofless variant) and the header fallback `:213-225`; the separate `frak-install-v1` branch at `:105-120` is the *attested* arm and is not part of this row | The bare variant verifies nothing and the latch is **never read**. Strictly weaker than `/merge/execute`. The in-file comment at `:78-80` ("kept only because the installed Tauri binary POSTs exactly this shape") is **wrong**: `SharingView.tsx:94-99` → `routes/sharing.tsx:55-57` → `InstallView.tsx:150-172` → `drainEnsures.ts:104-109` reaches it from the *current* web build with neither credential, structurally — that page holds no keypair |
 | **M4** | `POST /user/identity/merge/initiate` — anon-source arm | anon → wallet | SDK, listener modal, embedded wallet | `api/user/identity/merge.ts:9` → `AnonymousMergeOrchestrator.initiateMerge:75`, merge at `:150` | **Side effect.** The stated purpose is minting a token; `resolveAndAssociate([wallet, anon])` runs first and merges the caller's wallet group into whatever `sourceAnonymousId` resolves to. The ordering is acknowledged in-file at `:99-106`. Three live callers, three different proof postures — see the readiness table in the plan §7 |
 | **M5** | `POST /user/identity/merge/initiate` — wallet-session arm | — (no group write) | wallet app explorer, listener | `merge.ts:9`; `apps/wallet/.../ExplorerDetail/index.tsx:107` | Not a merge itself. Mints the token that M6 consumes, authenticated by session. Listed because it is the source half of the two-proof flow and the source of AID-020's token |
-| **M6** | `POST /user/identity/merge/execute` (**unauthenticated**) | anon → anon, or wallet-group → anon | any caller; legitimately the in-app-browser escape, the explorer hop, legacy migration, native inbound `fmt` | `merge.ts:63` → `AnonymousMergeOrchestrator.executeMerge:180`; target resolution ternary at `:231-241` | The proof *authorises creation* of the target; an already-existing unlatched target is admitted with no proof at all (`TARGET_NOT_FOUND` at `:239` only when the row is absent). `sdk/core/src/actions/migrateLegacyIdentity.ts:82-96` sends `{mergeToken, targetAnonymousId, merchantId}` and **no proof**, which is why this route waits on SDK propagation |
+| **M6** | `POST /user/identity/merge/execute` (**unauthenticated**) | anon → anon, or wallet-group → anon | any caller; legitimately the in-app-browser escape, the explorer hop, legacy migration, native inbound `fmt` | `merge.ts:63` → `AnonymousMergeOrchestrator.executeMerge:180`; target resolution ternary at `:231-241` | The proof *authorises creation* of the target; an already-existing unlatched target is admitted with no proof at all (`TARGET_NOT_FOUND` at `:239` only when the row is absent). `sdk/core/src/actions/migrateLegacyIdentity.ts:82-96` sends `{mergeToken, targetAnonymousId, merchantId}` and **no proof — and cannot**: its target is the legacy id, which has no key. That is why this route, alone in the system, waits on the legacy-id population aging out (plan §6, bucket E) rather than on any client release |
 
 **Adjacent, not merge points — but they supply every input above.** Kept in the map so the surface
 is closed.
@@ -190,16 +192,17 @@ no key for into a body field or header and have the backend act on it?**
 that the wallet binary is propagated — which is less than its own markers claim. The right column is
 `MERGE-ADMISSION-PLAN.md` in full: proof mandatory on the four admission routes with the body id
 demoted to untrusted-input-that-must-match, deletion of `ensure`'s proofless bare variant, Gate 2 for
-the keyless Shopify surfaces, and the credential-lifetime work.
+the keyless Shopify surfaces, and the credential-lifetime work. **Only one row in that column waits on
+a population** — M6 — because only its subject can be an unprovable legacy id.
 
 | ID | Today | After `ROLLOUT-STEP-3`, as it can actually be executed | After `MERGE-ADMISSION-PLAN.md` |
 |---|---|---|---|
-| M1 | **YES** | **YES** — untouched. `ROLLOUT-STEP-3` addresses the *wallet* arm; the SDK arm stays latch-gated and is blocked on SDK propagation, because old SDK versions omit `proof` entirely | **no** (T3.2: `frak-ensure-v1` required; the header id must match it) |
+| M1 | **YES** | **YES** — untouched. `ROLLOUT-STEP-3` addresses the *wallet* arm; the SDK arm stays latch-gated because its schema still marks `proof` optional, not because any live client omits it | **no** (T3.2, bucket D, ships now: `frak-ensure-v1` required; the header id must match it) |
 | M2 | **YES** | **YES** — the ticket becomes the *sole* wallet-arm credential, and its `sub` still came from a caller-named id at `install-code/generate`, which `ROLLOUT-STEP-3` does not touch | **no** for naming an id (T3.3 + Gate 2 decide the credential at `generate`). A stolen *code* is still a capture of that id until T3.5/T2.6 land |
 | M3 | **YES** | **YES — corrected.** `ROLLOUT-STEP-3` does **not** close this row. `ensure.ts:78`'s premise ("kept only because the installed Tauri binary POSTs exactly this shape") is false: the wallet's own `/sharing` → `/install` hop lands on the bare arm with neither credential from the *current* web build, and that page can never sign — it holds no keypair (`SharingView.tsx:94-99`). The unmarked header fallback at `:213-225` is a second door. Item 4 of `ROLLOUT.md`'s step-3 list is not executable as written | **no** — T3.2 deletes `:78-88` **and** `:213-225`, makes the `frak-install-v1` branch at `:105-120` mandatory, and stops the wallet sharing page forwarding an `a=` it holds no credential for |
-| M4 | **YES** | **YES** — untouched. `AnonymousMergeOrchestrator.ts:112` marks this arm as *revisit*; its `TODO(merge-initiate-proof)` at `:117-121` says "the SDK's RPC path already sends one", which is true of the **current** SDK only. `useOnGetMergeToken.ts:23-30` forwards `params?.[0]`, `undefined` on old SDKs; `mergeTokenQueryOptions.ts:68-74` sends none ever and can never sign locally | **no** (T3.1: `proof` required whenever `sourceAnonymousId` is present), after T3.11 has the listener refuse proofless calls and T1.13's counter reads zero |
+| M4 | **YES** | **YES** — untouched. `AnonymousMergeOrchestrator.ts:112` marks this arm as *revisit*; its `TODO(merge-initiate-proof)` at `:117-121` says "the SDK's RPC path already sends one", which holds for every live SDK once **T1.7** lands — `getMergeToken.ts:32-39` signs at call time, but over `metadata.merchantId ?? ""` today, so the proof is `null` (G23/AID-009). The residue is `mergeTokenQueryOptions.ts:68-74`, which sends none ever and can never sign locally | **no** (T3.1a, bucket D: `proof` required whenever `sourceAnonymousId` is present), after T2.3 gives the listener an SDK-signed `proofs.mergeSource` to present (plan §2.1) and T3.11 refuses without one. **Not blocked on SDK propagation** |
 | M5 | no | no | no |
-| M6 | **YES** | **YES** — untouched. `/merge/execute` is not a wallet arm; no `ROLLOUT-STEP-3` marker flips its target gating | **no** (T3.1, in the same deploy as M4's arm — flipping one leaves the merge capturable from the other direction), and only after T2.4 gives `migrateLegacyIdentity` a proof it can send |
+| M6 | **YES** | **YES** — untouched. `/merge/execute` is not a wallet arm; no `ROLLOUT-STEP-3` marker flips its target gating | **no** (T3.1b, **bucket E, alone**) — the one flip with a population gate: `targetAnonymousId` on a migration *is* the legacy id, so it waits for `merge_execute_credential{class=absent_unlatched}` ≈0, with a permanent tail written off at flip time. M4's arm flips earlier and does not close this row |
 | M7 | **YES** | **YES** | **YES** — explicitly out of scope; `/track/*` must stay usable by keyless clients. B1 is fixed in the Shopify credential path, not here |
 | M8 | **YES** (latent) | **YES** | **YES** for the merging arms as a shape; T1.3 makes `merge` a required param so no caller reaches them by default |
 | M9 | **YES** | **YES** | **YES** — G14, filed separately |
@@ -213,10 +216,11 @@ the keyless Shopify surfaces, and the credential-lifetime work.
 **Read the middle column carefully.** `ROLLOUT-STEP-3` closes **no row on its own**. The binary is
 propagated, which retires the *store-approval* dependency and unblocks the wallet-only marker work
 (`installCode.ts:105`, the four pending-action markers, the two `latchedProof.ts` doc/log tails), but
-the bare arm survives on a wallet-side path nobody had scoped and on an unmarked header fallback, and
-every `/merge/*` marker is blocked on SDK propagation instead. Anything that describes
-`ROLLOUT-STEP-3` as closing the merge surface is describing an M3 closure that its own markers cannot
-deliver.
+the bare arm survives on a wallet-side path nobody had scoped and on an unmarked header fallback.
+Anything that describes `ROLLOUT-STEP-3` as closing the merge surface is describing an M3 closure that
+its own markers cannot deliver. The `/merge/*` markers are **not** blocked on SDK propagation either:
+`initiate`'s markers clear as soon as the listener carries an SDK-signed proof (plan §2.1), and
+`execute`'s clear when the legacy population has drained.
 
 **And one thing that is *not* on this table: the "require a target proof when the merge token came
 from a wallet session" branch.** It reads as a cheap P0 for AID-020 and it is not one. It is
@@ -232,18 +236,18 @@ outcome. It belongs in the programme as **alarm-only instrumentation** (T2.2), n
 | ID | Merge points | What the attacker gains | Sev | Tracked as → owner | Remediation |
 |---|---|---|---|---|---|
 | **G1** | M3 | Capture of **any** anon id, latched or not, in one call, with only the attacker's own wallet session. No token, no code, no proof | **Blocker** | AID-002 (recorded "closed by ROLLOUT-STEP-3"; that recording is wrong — see Q2) → **T3.2**, sized by T1.1's `ensure_arm{wallet_bare}` | Delete the proofless bare-id variant (`ensure.ts:78-88`) and the header fallback (`:213-225`); keep the `frak-install-v1` branch at `:105-120` and make it mandatory; stop the wallet `/sharing` page forwarding an `a=` it cannot attest |
-| **G2** | M6 | Capture of any existing unlatched id in two calls, one of them the attacker's own legitimate `initiate` | Critical | **AID-020** → **T3.1**; T2.2 alarms only | `proof` required on `execute` and on `initiate`'s anon-source arm in the same deploy. The wallet-session-arm predicate is bypassable and must not be shipped as a gate |
+| **G2** | M6 | Capture of any existing unlatched id in two calls, one of them the attacker's own legitimate `initiate` | Critical | **AID-020** → **T3.1b** (bucket E) for the target half, **T3.1a** (bucket D) for the source half; T2.2 alarms only | `proof` required on `execute`. `initiate`'s anon-source arm flips first and independently — it no longer waits for `execute`, because its subject is always the derived id. The wallet-session-arm predicate is bypassable and must not be shipped as a gate |
 | **G3** | M2, M-x1 | Three unauthenticated calls launder a named id into an install ticket that bypasses the latch; one code yields up to 20 tickets, each 7 days | Critical | **AID-001** + **AID-019** → **T3.3** (admission half), **T2.6**/**T3.5** (residual) | Credential decided synchronously at `generate` — `{merchantId, anonymousId, proof}` or Gate 2's `{merchantId, checkoutToken}`, a bare `anonymousId` rejected 400 — then single-resolve codes and a **1–2 hour** ticket. Single-use tickets are dropped from this programme as an accepted risk |
 | **G4** | M5, M6 | A captured `?fmt=` is a 60-minute **unlimited-use** group-capture capability | High | **AID-003** → **T3.6** (TTL only) | Cut the TTL, with the native 60-min hold cut in the same release. Token **consumption** (`jti`/`consumed_at`) is dropped from this programme as an accepted risk: replay requires capturing the token first, and sniffing/phishing is a more sophisticated attack than the one the burn would close |
 | **G5** | M1 | A captured `frak-ensure-v1` is a 30-day bearer that links that id to *the attacker's* wallet | High | **AID-017** → **T3.8** | Bind the wallet address or the SDK JWT `jti`; cut the window. Needs a 30-day dual-accept window |
 | **G6** | M11, M12 | A captured SSO URL, within 10 minutes, merges the victim's anon id into a wallet the attacker creates. `WALLET_CONFLICT` does not fire — the victim is pre-install | High | **AID-008** (transport); the unbound binding itself untracked → **T3.8** for the binding, transport half unowned | Put the wallet or credential id in the signed binding; `history.replaceState` after `setSsoContext` |
 | **G7** | M4, M5 | A captured 10-minute initiate proof mints a token *for the victim's group*, redeemable into a target the attacker controls | High | **AID-003**(b) → **accepted risk, this round** | It **cannot** be filled with the hash of the token it mints: the client signs before the request and the token does not exist until after enforcement runs (`enforceProof:123`, `generateToken:165`). It needs a server nonce or a two-phase mint — both are dropped here. The 10-minute window is accepted as-is: capturing a live proof inside it is a sniffing or phishing attack, strictly more sophisticated than the naming attack T3.1 closes |
-| **G8** | M1, M3, M6 | Latch bypass by case: a mixed-case victim id misses `findNodeByIdentity`, so `enforceLatchedProof` fails open and M1/M3 create the shadow node and merge it | Medium | **AID-006** → **closed by mandatory proof (T3.1/T3.2)**; no migration, no item of its own | **No backfill.** Derived ids are lowercase by construction — `deriveClientIdFromHash` emits through `bytesToHex` (`canonical.ts:177,187-189`) — so mixed case can only arrive from a caller, and mandatory proof closes that dodge: `IdentityProofService.ts:145` lowercases **both** sides of the comparison and the caller must hold the key. Normalising `anonymous_fingerprint` on write is still available as a **no-backfill hygiene item**; it is not a security fix and must not be shipped with a destructive `UPDATE` |
+| **G8** | M1, M3, M6 | Latch bypass by case: a mixed-case victim id misses `findNodeByIdentity`, so `enforceLatchedProof` fails open and M1/M3 create the shadow node and merge it | Medium | **AID-006** → **closed by mandatory proof (T3.1a/T3.1b/T3.2)**; no migration, no item of its own | **No backfill.** Derived ids are lowercase by construction — `deriveClientIdFromHash` emits through `bytesToHex` (`canonical.ts:177,187-189`) — so mixed case can only arrive from a caller, and mandatory proof closes that dodge: `IdentityProofService.ts:145` lowercases **both** sides of the comparison and the caller must hold the key. Normalising `anonymous_fingerprint` on write is still available as a **no-backfill hygiene item**; it is not a security fix and must not be shipped with a destructive `UPDATE` |
 | **G9** | M13, M14, M-x3 | Permanent squat of any un-claimed email (global unique slot), denial of the real owner's verification, and an email → `{wallet, authenticatorIds}` disclosure | Medium | untracked → **out of scope for this programme, filed separately** (plan §9) | Never write an email node before verification; gate the `merge` disclosure on `verifiedAt !== null`. Product decision already taken: keep the address pending, prompt informationally on the wallet home page, invite verification from the profile page |
 | **G10** | M6 | The listener posts `/merge/execute` with a URL-param `clientId` and **no proof**, and the trust gate that unlocks it is self-asserted from the same untrusted postMessage | High | untracked → **T3.4** | Delete the `iframeClientId ?? clientIdStore` fallback (and fix the proven-id branch that also sends no proof); resolve `allowedDomains` server-side |
-| **G11** | M4 | Listener-modal and embedded-wallet ids **can never latch**, because the wallet origin holds no key — this is what keeps the latch permanently fail-open for them | High | `TODO(merge-initiate-proof)` → **T3.11** (refuse), **T2.3** (plumb a proof, only if needed) | The listener is reachable in one wallet deploy and reaches 100% of embedded merchant pages regardless of merchant SDK version, so **refusing** locally is strictly cheaper than a backend 403: same `null` result, no round trip, no rate-limit burn. Plumbing an SDK-supplied empty-binding `frak-merge-v1` (T2.3) is the fallback if T1.13's counter shows real traffic |
+| **G11** | M4 | Listener-modal and embedded-wallet ids **can never latch**, because the wallet origin holds no key — this is what keeps the latch permanently fail-open for them | High | `TODO(merge-initiate-proof)` → **T2.3** (plumb the proof), then **T3.11** (refuse without it) | The SDK signs an empty-binding `frak-merge-v1` and carries it on `resolved-config` as `proofs.mergeSource`, re-pushed fresh on `visibilitychange`; the listener stores the latest and mints the token lazily, only when an embed or the toast displays (plan §2.1). Then it refuses locally when no proof is present — strictly cheaper than a backend 403: same `null` result, no round trip, no rate-limit burn |
 | **G12** | M2, M-x1 | The wallet-originated share → install chain is keyless end to end with a caller-named id, which is what makes a proof-mandatory `generate` impossible today | High | **AID-001**'s client half → **T2.5** | Gate 2 (order-derived credential) + carry `checkoutToken` through `/sharing` → `/install`, where `SharingView.tsx:98` currently drops it |
-| **G13** | M6, M19 | `?fmt=` is consumed from the page URL with nothing attesting who minted it; a link on any page folds the visitor's group into the attacker's | Med-High | **AID-012** (adjacent) → **T3.1** for the source half; the minting-context binding unowned | Bind the token to its minting context; refuse a token whose source group is unrelated to the presented merchant |
+| **G13** | M6, M19 | `?fmt=` is consumed from the page URL with nothing attesting who minted it; a link on any page folds the visitor's group into the attacker's | Med-High | **AID-012** (adjacent) → **T3.1a** for the source half; the minting-context binding unowned | Bind the token to its minting context; refuse a token whose source group is unrelated to the presented merchant |
 | **G14** | M9 | Redirection of a real, HMAC-signed order's attribution, its referral chain and its `asset_logs` to a buyer-chosen group — and it **beats** the SDK claim when the webhook lands first | High | no owner — separate plan; the Magento instance is recorded nowhere else | Resolve-only against a group that already proved that id, else hold the purchase; never create a node; never adopt a wallet-bearing group |
 | **G15** | all | Group membership **is** the payout instruction: 60-day accrual backlog, hourly settlement, no lockup that bounds an attacker. This is what turns every row above into money | High | untracked → **out of scope for this programme, filed separately** (plan §9) | Bind `asset_logs` to the wallet resolved at reward creation, or quarantine settlement after a group's first wallet node appears. Assessed as the **highest value-per-unit-of-risk item on the table** and therefore given its own plan rather than a row in this one |
 | **G16** | M8 | `const merge = params.merge ?? true` — the safe behaviour rests on one call site remembering `merge:false` | Low-Med | untracked → **T1.3** (= **B2**) | Make `merge` a required param. Keep the arms: with the param required they are dead-but-typed, still covered by two tests, and deleting them is strictly easier once the type change has proved there is exactly one caller |
@@ -257,7 +261,7 @@ outcome. It belongs in the programme as **alarm-only instrumentation** (T2.2), n
 | **G24** | M3 | A 30-day `frak-install-v1` left in the URL lands in nginx logs, history and `document.referrer` — the install-side twin of AID-008 | Medium | untracked → no owner; ride the client release | `history.replaceState` immediately after `resolveInstallProof`, for both the fragment and the search param |
 | **G25** | all merge rows | `weightCache` is not invalidated on wallet attach, so `WALLET_CONFLICT` can read stale state and two wallet-bearing groups can merge — widening every capture above | Medium | **AID-010** → **T2.8** | Invalidate weight on wallet attach, or read `hasWallet` live |
 | **G26** | M-x4 | An identity merge transfers `merchants.owner_wallet` and `merchant_admins`. `linkWalletToFingerprint` wraps everything in `try/catch` and only `log.error`s, so a `WALLET_CONFLICT` at login — *someone else already claimed this id* — is indistinguishable from a DB hiccup | Medium | untracked → **T1.2** | Distinct counter/alert on the conflict branch (`ensure.ts` already does this properly); review whether merchant ownership should move with an identity merge at all |
-| **G27** | M6 | The legacy anonymous node survives migration as a permanently unlatched alias pointing at a now-proven group, so `enforceLatchedProof` fails open on it forever | High | **AID-005** → **T2.4** | `frak-migrate-v1` signed over **both** ids, plus a durable first-writer-wins marker on the legacy node. `proof_seen_at` is retained for this round, so the marker survives; a durable replacement must be decided before the retirement round (plan OQ9) |
+| **G27** | M6 | The legacy anonymous node survives migration as a permanently unlatched alias pointing at a now-proven group, so `enforceLatchedProof` fails open on it forever | High | **AID-005** → **closed by the flips; no dedicated work, no owner needed** | **Nothing to build.** The node is repointed rather than deleted on purpose, so published `fCtx` links keep resolving — but once a route requires a proof, *naming* that legacy id requires a proof **for** it, which nobody can produce. The alias goes from freely claimable to unclaimable, piecewise as each arm flips (T3.1a, T3.2, T3.3, then T3.1b). No new column, no semantic change, nothing written onto a legacy node. A `frak-migrate-v1` proof would **not** help: it is signed by the *new* key and attests nothing about the keyless legacy id |
 | **G28** | M17 | `GET /pairings/find/:id` is unauthenticated and returns `pairingCode`, so a leaked `pairingId` lets an attacker join a victim's desktop pairing with their own wallet — session fixation, **no graph effect** | Low | untracked → **T2.9** | Require `withWalletAuthent` and **keep** returning `pairingCode`: the wallet auto-fills that code today, so dropping it would force the user to type it |
 
 ### Correctness defects
@@ -275,7 +279,9 @@ file list, LoC, release requirement, prerequisite and proof of UX-neutrality for
 marked *no owner* are real and unscheduled: G14 and G18 (each needs its own plan), G17, G21, G22 and
 G24. Gaps marked *accepted risk* (G7, G20) and *out of scope, filed separately* (G9, G15) are
 decisions, recorded in the plan §9 and §10 — not omissions. Buckets A–C close no admission gap on
-their own: G1, G2, G3, G10, G11 and G12 all need a bucket-D flip.
+their own: G1, G3, G10, G11, G12 and G2's source half need a **bucket-D** flip, all of which ship now
+or shortly; only G2's target half needs **bucket E**, and only because `/merge/execute`'s subject is
+the legacy id. G27/AID-005 has no item at all — it closes as a side effect of those flips.
 
 ### Per-gap detail
 
@@ -307,14 +313,17 @@ a live journey, while remaining trivially bypassable by an id that has never lat
 *Fix:* `proof` required on `execute` **and** on `initiate`'s anon-source arm in the same deploy. The
 body ids stay on the wire; `IdentityProofService.check` already rejects `id_mismatch`, so requiring
 the proof buys what removing the field would buy and does not break the published native SDKs.
-*Backend-only:* yes. *Client release:* no, for the flip itself — but it must not be flipped until the
-proofless callers stop calling (see G11 and T3.11). *Migration:* no.
+*Backend-only:* yes. *Client release:* no, for either flip. `initiate`'s arm (T3.1a) waits only for
+the listener to carry a proof and then refuse without one (G11, T2.3, T3.11); `execute` (T3.1b) waits
+for the legacy population. *Migration:* no.
 *Not a fix:* "require a target proof when the token was minted from a wallet session". `merge.ts:19-24`
 passes both `sourceAnonymousId` and `sourceWalletAddress`, so an attacker with their own proven id
 never trips the branch. Ship it as an alarm (T2.2), not a gate.
-*Does NOT close:* the legacy-migration shape, which must move to `frak-migrate-v1` (T2.4) first or
-every migration 403s on flip day — `migrateLegacyIdentity.ts:82-96` sends no proof on `execute` at
-all; and it does not touch M3, which reaches the same outcome in one call.
+*Does NOT close:* nothing rescues the legacy-migration shape — `migrateLegacyIdentity.ts:82-96` sends
+no proof on `execute` and no client can produce one for a keyless id, so every remaining migration
+403s on flip day. That is bucket E's accepted write-off, gated on
+`merge_execute_credential{class=absent_unlatched}` ≈0 and never on a date. It also does not touch M3,
+which reaches the same outcome in one call.
 
 **G3 — install-ticket laundering.**
 *Fix:* the credential class is decided synchronously at `generate` — `{merchantId, anonymousId, proof}`
@@ -339,7 +348,7 @@ two-phase mint — a new route shape and a round trip on the modal path.
 *Decision:* accepted as-is. The 10-minute window is short, and exploiting it requires capturing a
 live proof — a sniffing or phishing attack, categorically more sophisticated than the caller-names-an-id
 attack this programme closes. Revisit only if the modal round trip becomes free for another reason.
-*Does NOT close:* nothing else depends on it; T3.1 makes the proof mandatory without filling the
+*Does NOT close:* nothing else depends on it; T3.1a makes the proof mandatory without filling the
 binding, and says so.
 
 **G8 — case normalisation on the latch read.**
@@ -356,17 +365,19 @@ the raw value (`domain/identity/db/schema.ts:80-82`, `nullsNotDistinct`), so a c
 *Does NOT close:* nothing depends on it either way.
 
 **G10 — the listener's unproven merge target.**
-*Fix:* delete the `fallbackId ?? undefined` branch and require `sdkIdentity.anonymousId` **plus**
-`sdkIdentity.proofs.merge`, dropping the merge silently when either is missing — and fix the
-proven-id branch at `lifecycleHandler.ts:225-231`, which also sends no proof when
-`sdkIdentity.proofs.merge` is absent while `anonymousId` is present. Separately, have the listener
+*Fix:* delete the `fallbackId ?? undefined` branch and require `sdkIdentity.anonymousId` **plus** the
+execute-side proof (`sdkIdentity.proofs.mergeExecute`, renamed from `proofs.merge` by T2.3), dropping
+the merge silently when either is missing — and fix the proven-id branch at
+`lifecycleHandler.ts:225-231`, which also sends no proof when that key is absent while `anonymousId`
+is present. Separately, have the listener
 resolve the merchant config itself and gate on the backend's `allowedDomains` rather than the
 caller's copy.
 *Backend-only:* no — listener release. *Migration:* none.
 *Does NOT close:* the backend still accepts unproven targets from any other caller; this removes one
-client, not the admission policy. Merchants pinned to a bundle predating `sdkIdentity` on
-`resolved-config` lose the in-app-browser escape permanently, and that population is unmeasured until
-`merge_execute_target_source{proven,fallback}` ships.
+client, not the admission policy. Anything whose `resolved-config` payload predates `sdkIdentity`
+loses the in-app-browser escape permanently; that population is assumed empty (everything points at
+`@latest`) but is unmeasured until `merge_execute_target_source{proven,fallback}` ships, which is why
+T3.4 gates on that counter and not on a date.
 
 **G11 — the listener can never sign, and can refuse instead.**
 *Fix:* the listener URL is built unversioned — `` `${walletUrl}/listener` `` (`iframeHelper.ts:119-120`)
@@ -380,11 +391,17 @@ without a token; `iframeLifecycleManager.ts:85-92` omits `?fmt=`), but zero roun
 *Measure first:* T1.13 counts proofless calls at both listener call sites before anything refuses.
 `mergeTokenQueryOptions`'s "no production merchant today" claim is undated and unmeasured; the counter
 exists so flip day does not rest on an assertion.
-*Do not "carry a proof" locally:* `signProof` and `frak-client-key` grep to **zero** hits across
-`apps/**` and `packages/**`. The key is in merchant-origin `localStorage`; the listener runs on the
-wallet origin. Reusing `sdkIdentity.proofs.merge` from `resolved-config` would 403 — that one binds
-`SHA-256(mergeToken)` (`mergeTokenQueryOptions.ts:43-46`). Only T2.3's SDK+RPC plumbing can do it,
-and it is worth building only if the counter says so.
+*Mint lazily:* the token is minted only when an embed or the in-app-browser toast actually displays,
+never on init — a token per init is an unconsumed 60-minute bearer credential (G4/AID-003) plus
+backend load for nothing. Signing is cheap; minting is not.
+*Do not "carry a proof" locally — carry the SDK's:* `signProof` and `frak-client-key` grep to **zero**
+hits across `apps/**` and `packages/**`. The key is in merchant-origin `localStorage`; the listener
+runs on the wallet origin. Reusing the existing `sdkIdentity.proofs.merge` would 403 — that one binds
+`SHA-256(mergeToken)` and is the **execute**-side proof, which is why it is renamed
+`proofs.mergeExecute`. T2.3 adds a second, empty-binding `proofs.mergeSource` next to it, re-pushed
+fresh on `visibilitychange` — free, because `sendLifecycleConfig` is already sent twice and chained
+(`createIFrameFrakClient.ts:498-503`) with last-write-wins on the listener. No new `ProofOp`, no
+window change, no golden-fixture regeneration.
 
 **G14 — buyer-writable purchase identity.**
 *Fix:* demote the cart attribute to resolve-only against a group whose node already has
@@ -468,13 +485,17 @@ pattern `getWalletForGroup` (`:170-178`) already documents.
   plausibly impossible on iOS/Safari under storage partitioning.
 - Whether cross-device install is a real journey. No route, param, string, doc or test frames the
   code as desktop → phone, and no telemetry distinguishes the cases.
-- Whether any production merchant pins a CDN tag old enough to matter. There is **no SDK version
-  signal at the RPC boundary at all** — `sdkVersion` / `minVersion` across `apps/listener/**` returns one
-  doc comment, and `packages/rpc` has no version field — so presence-of-proof is the only gateable
-  signal, and counting proofless calls (T1.13) is the only viable readiness measurement. T1.10 adds a
-  header for new SDKs; `version=unknown` will be the number for exactly the population being sized.
+- Whether any production merchant pins a CDN tag old enough to matter. **Decided rather than
+  measured:** everything points at `@latest`, so the working assumption is that no old SDK version is
+  live and the exposure is a 1–2 hour rollout deadzone — which is why the listener tolerates both
+  proof key shapes for one deploy window instead of forever (plan §2.1). It stays unverifiable here:
+  there is **no SDK version signal at the RPC boundary at all** — `sdkVersion` / `minVersion` across
+  `apps/listener/**` returns one doc comment, and `packages/rpc` has no version field — so
+  presence-of-proof (T1.13) remains the only measurement, and T1.10's header can never describe the
+  population it would be sizing.
 - Whether `mergeTokenQueryOptions` has a production merchant. Its own doc block says no; the claim is
-  undated and unmeasured. T1.13 exists to answer it with data before flip day.
+  undated and unmeasured. It no longer gates anything — its proofless call is deleted outright by
+  T2.3 — but T1.13 still counts it, so the deadzone can be watched draining.
 - Whether the `proof_seen_at` migration is **applied** in every environment. The artefact exists
   (`services/bootstrap/drizzle/prod/0020_gigantic_black_crow.sql`, alongside `dev/0040` and
   `local/0035`); application is an ops check this repo cannot answer. If the column is missing
@@ -528,9 +549,13 @@ pattern `getWalletForGroup` (`:170-178`) already documents.
 - **`install-code/generate` remains a complete latch bypass for any known `anonymousId`** until T3.3.
   It dominates the forged-claim chain, and it is the reason G20's acceptance is not "the chain is
   safe".
-- **Permanently unprovable ids.** Legacy and non-UUID-shaped ids can never sign. Under mandatory
-  proof they can never be a merge source or target again, and the group becomes unpayable rather than
-  merely unattributed. That is a write-off decision and it belongs to a human (plan OQ1).
+- **Permanently unprovable ids, on `/merge/execute` only.** Legacy and non-UUID-shaped ids can never
+  sign, and the client id is never one of them — it is flipped to the derived id before the iframe
+  exists (`migrateLegacyIdentity.ts:10-13`). The exposure is the migration *target*: under mandatory
+  proof those ids can never be a merge target again and the group becomes unpayable rather than merely
+  unattributed. The tail is **permanent** — an id only migrates when its user returns — so the flip is
+  gated on `merge_execute_credential{class=absent_unlatched}` ≈0 and never on a date, and firing it is
+  the moment the remainder is written off. That is a human decision (plan OQ1, bucket E).
 - **Gate 2 admits ids that have a key.** A Shopify buyer whose merchant also runs the web SDK holds a
   key-holding id that Gate 2 admits without a signature. Recommended as acceptable, not as closed
   (plan OQ2).
