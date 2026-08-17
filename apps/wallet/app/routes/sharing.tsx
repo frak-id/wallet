@@ -44,16 +44,16 @@ export const Route = createFileRoute("/sharing")({
  */
 export function toInstallSearch({
     merchantId,
-    clientId,
     checkoutToken,
 }: {
     merchantId?: string;
-    clientId?: string;
     checkoutToken?: string;
 }) {
+    // No `a=`: this page holds no keypair, so an id forwarded from here can
+    // never carry a proof and would be refused once ensure demands one.
+    // `checkoutToken` stays — Gate 2 derives its id from the order instead.
     return {
         m: merchantId,
-        a: clientId ?? undefined,
         checkoutToken: checkoutToken ?? undefined,
     };
 }
@@ -68,7 +68,6 @@ function WalletSharingPage() {
         () => ({
             toInstall: (params: {
                 merchantId?: string;
-                clientId?: string;
                 checkoutToken?: string;
             }) =>
                 navigate({

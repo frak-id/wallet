@@ -327,9 +327,12 @@ function InstallCodeView({
         proof,
     });
 
-    // The credential was refused rather than the call failing: the store link
-    // below is the whole surface, so this must never render as an error.
-    const codeless = codeQueryStatus === "success" && !data?.code;
+    // No credential to mint from, or one the backend refused. Either way the
+    // store link below is the whole surface, so this must never render as an
+    // error, and never as a "copy this code" hero with no code beneath it.
+    const codeless =
+        !(anonymousId || checkoutToken) ||
+        (codeQueryStatus === "success" && !data?.code);
 
     const activation = useInstallActivation(true);
     const installed = activation?.installed === "1";

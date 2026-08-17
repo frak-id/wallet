@@ -4,8 +4,12 @@
 
 import { common as commonKeys, error, sharing } from "./common.json";
 import { sdk } from "./customized.json";
-import { installCode } from "./translation.json";
+import {
+    common as commonTree,
+    installCode,
+    pendingActions,
+} from "./translation.json";
 
-export const translation = { installCode };
+export const translation = { installCode, pendingActions, common: commonTree };
 export const common = { common: commonKeys, error, sharing };
 export const customized = { sdk };

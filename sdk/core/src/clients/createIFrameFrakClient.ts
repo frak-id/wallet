@@ -131,8 +131,16 @@ export async function createIFrameFrakClient({
     // Setup heartbeat
     const stopHeartbeat = setupHeartbeat(rpcClient, lifecycleManager);
 
+    // Assigned by `postConnectionSetup`, which runs after `destroy` is built.
+    let stopFreshnessRepush: (() => void) | undefined;
+    // `destroy` can win the race against setup, and the teardown it needs does
+    // not exist yet at that point.
+    let destroyed = false;
+
     const destroy = async () => {
+        destroyed = true;
         stopHeartbeat();
+        stopFreshnessRepush?.();
         rpcClient.cleanup();
         iframe.remove();
         clearAllCache();
@@ -224,7 +232,13 @@ export async function createIFrameFrakClient({
         openPanel,
         clientId: resolvedClientId,
     })
-        .then(() => {})
+        .then((stopRepush) => {
+            if (destroyed) {
+                stopRepush();
+                return;
+            }
+            stopFreshnessRepush = stopRepush;
+        })
         .catch((err) => {
             contextSent.reject(err);
             throw err;
@@ -351,12 +365,13 @@ async function hashMergeToken(token: string): Promise<Uint8Array | undefined> {
 }
 
 /**
- * Produce the two named, domain-separated proofs carried on `resolved-config`.
+ * Produce the named, domain-separated proofs carried on `resolved-config`.
  * Never throws and never blocks the handshake: `signProof` resolves to
  * `null` (never rejects) when no key is available.
  *
- * `merge` is only produced when a pending merge token exists, bound to
- * `SHA-256(mergeToken)`, signed after the token is known.
+ * The execute-side proof is emitted under both `merge` and `mergeExecute`:
+ * the SDK and the listener deploy on pipelines that fire concurrently, so
+ * either key may be the one a live listener reads.
  *
  * ROLLOUT-STEP-1: `proofs.install` travels on `resolved-config` and the
  * listener forwards it into the `/install` URL as a `#p=` fragment — the
@@ -371,25 +386,25 @@ async function buildSdkIdentity({
     anonymousId: string;
     pendingMergeToken?: string;
 }): Promise<
-    | { anonymousId: string; proofs: { merge?: string; install?: string } }
+    | {
+          anonymousId: string;
+          proofs: {
+              merge?: string;
+              mergeExecute?: string;
+              mergeSource?: string;
+              install?: string;
+          };
+      }
     | undefined
 > {
+    // No binding could be produced (e.g. no WebCrypto on an HTTP merchant
+    // page) but a token is pending — omit the execute proof rather than sign
+    // over the wrong binding.
     const mergeBinding = pendingMergeToken
         ? await hashMergeToken(pendingMergeToken)
         : undefined;
-    // No binding could be produced (e.g. no WebCrypto on an HTTP merchant
-    // page) but a token is pending — omit the merge proof rather than sign
-    // over the wrong binding.
-    if (pendingMergeToken && !mergeBinding) {
-        const install = await signProof({
-            op: "frak-install-v1",
-            merchantId,
-            anonymousId,
-        });
-        return install ? { anonymousId, proofs: { install } } : undefined;
-    }
 
-    const [merge, install] = await Promise.all([
+    const [mergeExecute, mergeSource, install] = await Promise.all([
         mergeBinding
             ? signProof({
                   op: "frak-merge-v1",
@@ -398,25 +413,30 @@ async function buildSdkIdentity({
                   binding: mergeBinding,
               })
             : Promise.resolve(null),
+        // Empty binding, so it is signable before any token exists — which is
+        // the point: `/merge/initiate` is what mints the token.
+        signProof({ op: "frak-merge-v1", merchantId, anonymousId }),
         signProof({ op: "frak-install-v1", merchantId, anonymousId }),
     ]);
 
-    if (!merge && !install) return undefined;
+    if (!mergeExecute && !mergeSource && !install) return undefined;
 
     return {
         anonymousId,
         proofs: {
-            ...(merge && { merge }),
+            ...(mergeExecute && { merge: mergeExecute, mergeExecute }),
+            ...(mergeSource && { mergeSource }),
             ...(install && { install }),
         },
     };
 }
 
 /**
- * Perform the post connection setup
+ * Perform the post connection setup.
  * @param config - SDK configuration
  * @param rpcClient - RPC client to send lifecycle events
  * @param lifecycleManager - Lifecycle manager to track connection
+ * @returns a teardown for the freshness listener it installs
  */
 async function postConnectionSetup({
     config,
@@ -435,7 +455,7 @@ async function postConnectionSetup({
     openPanel: OpenPanel | undefined;
     /** Resolved once by the caller — see `createIFrameFrakClient`. */
     clientId: string | undefined;
-}): Promise<void> {
+}): Promise<() => void> {
     await lifecycleManager.isConnected;
 
     setupSsoUrlListener(rpcClient, lifecycleManager.isConnected);
@@ -624,4 +644,45 @@ async function postConnectionSetup({
             reason: "asset_push",
         });
     }
+
+    return setupProofFreshnessRepush(sendLifecycleConfig);
+}
+
+/** Half of `frak-merge-v1`'s 600 s window, so a stored proof is never stale. */
+const PROOF_REPUSH_INTERVAL_MS = 5 * 60 * 1000;
+
+/** Focus churn (app switching, tab flicking, bfcache) must not sign per event. */
+const PROOF_REPUSH_MIN_INTERVAL_MS = 60 * 1000;
+
+/**
+ * Keep `proofs.mergeSource` fresh. The listener's modal and embed arms read
+ * the stored proof after arbitrary dwell, so a tab that never hides would
+ * otherwise present one past its window. The listener is last-write-wins.
+ */
+function setupProofFreshnessRepush(
+    sendLifecycleConfig: (resolved: SdkResolvedConfig) => Promise<void>
+): () => void {
+    if (typeof document === "undefined") return () => {};
+
+    let lastRepushAt = 0;
+
+    const repush = (throttled: boolean) => {
+        if (document.visibilityState !== "visible") return;
+        if (!sdkConfigStore.isResolved) return;
+        const now = Date.now();
+        if (throttled && now - lastRepushAt < PROOF_REPUSH_MIN_INTERVAL_MS) {
+            return;
+        }
+        lastRepushAt = now;
+        void sendLifecycleConfig(sdkConfigStore.getConfig());
+    };
+
+    const onVisibilityChange = () => repush(true);
+    const timer = setInterval(() => repush(false), PROOF_REPUSH_INTERVAL_MS);
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+        clearInterval(timer);
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
 }

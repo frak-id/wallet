@@ -60,6 +60,8 @@ describe("fireEnsureActions — retry classification", () => {
         "PROOF_OR_TOKEN_REQUIRED",
         "MISSING_ANONYMOUS_ID",
         "RESERVED_IDENTITY",
+        "PROOF_INVALID",
+        "INVALID_TICKET",
     ])(
         "drops a queued action on %s without raising the toast",
         async (code) => {
@@ -105,5 +107,41 @@ describe("fireEnsureActions — retry classification", () => {
 
         expect(mockRemoveAction).toHaveBeenCalledWith("action-1");
         expect(mockRaise).not.toHaveBeenCalled();
+    });
+});
+describe("fireEnsureActions — request body", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockEnsurePost.mockResolvedValue({ error: undefined });
+    });
+
+    test("sends the ticket alone when the action names no id", async () => {
+        const ticketOnly: PendingAction = {
+            id: "action-2",
+            type: "ensure",
+            merchantId: "merchant-1",
+            ticket: "signed-ticket-jwt",
+            createdAt: Date.now(),
+            expiresAt: Date.now() + 60_000,
+        };
+
+        fireEnsureActions([ticketOnly]);
+        await flush();
+
+        expect(mockEnsurePost).toHaveBeenCalledWith({
+            merchantId: "merchant-1",
+            ticket: "signed-ticket-jwt",
+        });
+        expect(mockRemoveAction).toHaveBeenCalledWith("action-2");
+    });
+
+    test("still sends a stored anonymousId on an old-shape action", async () => {
+        fireEnsureActions([ACTION]);
+        await flush();
+
+        expect(mockEnsurePost).toHaveBeenCalledWith({
+            merchantId: "merchant-1",
+            anonymousId: "anon-1",
+        });
     });
 });

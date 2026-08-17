@@ -122,6 +122,25 @@ describe("buildInstallUrl checkoutToken", () => {
             })
         ).toBeNull();
     });
+
+    test("builds a merchant-only link when the caller opts in", () => {
+        expect(
+            buildInstallUrl({
+                merchantId: "merchant-1",
+                allowCredentialless: true,
+            })
+        ).toBe("/install?m=merchant-1");
+    });
+
+    test("still carries the checkout token when the caller opts in", () => {
+        expect(
+            buildInstallUrl({
+                merchantId: "merchant-1",
+                checkoutToken: "tok-1",
+                allowCredentialless: true,
+            })
+        ).toBe("/install?m=merchant-1&checkoutToken=tok-1");
+    });
 });
 
 describe("buildPlayStoreInstallUrl", () => {

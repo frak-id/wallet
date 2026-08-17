@@ -79,6 +79,13 @@ export type InstallCredentialOutcome = "resolved" | "deferred" | "unresolved";
 /** Which route ran the ladder: `generate` mints, `resolve` redeems. */
 export type InstallCredentialCallSite = "generate" | "resolve";
 
+/**
+ * Verdict of the claim-age bound. `undated` is expected to stay at zero: the
+ * column is `DEFAULT now()` and no writer passes an explicit null, so it is
+ * only reachable if some future writer starts doing so.
+ */
+export type InstallClaimAgeVerdict = "fresh" | "expired" | "undated";
+
 export type IdentityEnsureArm =
     | "wallet_ticket"
     | "wallet_bare"
@@ -147,6 +154,14 @@ const installCredentialClaimArmTotal = register(
     })
 );
 
+const installClaimAgeTotal = register(
+    new Counter({
+        name: "install_claim_age_total",
+        help: "Claim-age bound verdicts on the forgeable pending-claim arm, by call site",
+        labelNames: ["verdict", "call_site"] as const,
+    })
+);
+
 const installCredentialOutcomeTotal = register(
     new Counter({
         name: "install_credential_outcome_total",
@@ -210,5 +225,11 @@ export const infraMetrics = {
         callSite: InstallCredentialCallSite
     ) {
         installCredentialOutcomeTotal.inc({ outcome, call_site: callSite });
+    },
+    installClaimAge(
+        verdict: InstallClaimAgeVerdict,
+        callSite: InstallCredentialCallSite
+    ) {
+        installClaimAgeTotal.inc({ verdict, call_site: callSite });
     },
 };

@@ -97,8 +97,9 @@ const installCodeGenerateRoute = new Elysia()
             // The code path's later ensure carries a ticket and no proof, so
             // this is its only chance to latch. Gated on success —
             // `markProofSeen` never clears.
+            let proofVerified = false;
             if (proof) {
-                const proofVerified = await verifyProofUnenforced({
+                proofVerified = await verifyProofUnenforced({
                     op: "frak-install-v1",
                     proof,
                     merchantId,
@@ -126,6 +127,22 @@ const installCodeGenerateRoute = new Elysia()
                 );
             }
 
+            // After the verification above, so the counter observes every
+            // request including the ones this refuses. The Gate 2 token arm
+            // returned earlier and is never gated — its credential is
+            // derived server-side from the order.
+            if (!proofVerified) {
+                throw proof
+                    ? HttpError.forbidden(
+                          "PROOF_INVALID",
+                          "The supplied proof is not valid for this identity"
+                      )
+                    : HttpError.forbidden(
+                          "PROOF_REQUIRED",
+                          "A proof of possession is required to generate an install code"
+                      );
+            }
+
             return mintCode(merchantId, { kind: "anonymous", anonymousId });
         },
         {
@@ -135,8 +152,9 @@ const installCodeGenerateRoute = new Elysia()
                 // Shopify checkout token: the credential for buyers whose
                 // surface holds an order and no keypair.
                 checkoutToken: t.Optional(t.String()),
-                // frak-install-v1 proof: optional, verified when present,
-                // never required.
+                // frak-install-v1 proof, mandatory on the anonymousId arm.
+                // Optional here because the Gate 2 checkoutToken arm carries
+                // none, and a required field would 422 it.
                 proof: t.Optional(t.String()),
             }),
             response: {
@@ -145,6 +163,9 @@ const installCodeGenerateRoute = new Elysia()
                     expiresAt: t.String(),
                 }),
                 400: t.ErrorResponse,
+                // PROOF_REQUIRED (none supplied) or PROOF_INVALID (supplied
+                // but unverifiable), once the generate flip is enabled.
+                403: t.ErrorResponse,
                 404: t.ErrorResponse,
             },
         }
@@ -238,9 +259,10 @@ const installCodeResolveRoute = new Elysia()
             // Minted unconditionally from the row's anonymousId, regardless
             // of whether `generate` carried a proof.
             //
-            // ROLLOUT-STEP-3: `anonymousId` stays in this response for old
-            // binaries that ignore `ticket`. Drop it, and the dual-arm
-            // handling in /identity/ensure, once minVersion excludes them.
+            // ROLLOUT-STEP-3: the current wallet no longer reads `anonymousId`
+            // from this response, so only old binaries that ignore `ticket`
+            // still need it. Dropping the field is the remaining backend-only
+            // deploy, and it must follow the wallet, never lead it.
             const ticket =
                 await IdentityContext.services.installCode.mintTicket({
                     merchantId,

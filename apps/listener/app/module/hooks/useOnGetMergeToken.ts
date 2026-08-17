@@ -18,15 +18,20 @@ type OnGetMergeToken = RpcPromiseHandler<
  */
 export function createGetMergeTokenHandler(): OnGetMergeToken {
     return async (params, context) => {
-        const { merchantId, clientId } = context;
+        const { merchantId, clientId, mergeSourceProof } = context;
         if (!clientId || !merchantId) return null;
 
-        // `params[0]` carries the SDK's frak-merge-v1 proof. Old SDKs send no
-        // params, so this is `undefined` and gets dropped by the body
-        // serialiser — request stays byte-identical to before.
-        const proof = params?.[0];
+        // `params[0]` carries the SDK's frak-merge-v1 proof. An SDK too old to
+        // send it may still have pushed one on `resolved-config`, so fall back
+        // to the stored empty-binding proof before counting this as proofless.
+        const proof = params?.[0] || mergeSourceProof;
         if (!proof) {
+            // Counted before the return: no request reaches the backend, so
+            // this event is the only way to see the refused population.
             trackEvent("merge_initiate_proofless", { source: "rpc" });
+            // `getMergeToken` already treats null as "no escape token", so the
+            // escape still redirects — it just carries no `?fmt=`.
+            return null;
         }
         const { data } =
             await authenticatedBackendApi.user.identity.merge.initiate.post({

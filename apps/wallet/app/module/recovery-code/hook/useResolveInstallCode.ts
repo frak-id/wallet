@@ -9,7 +9,10 @@ import { installCodeKey } from "@/module/recovery-code/queryKeys/install-code";
 
 type ResolveResult = {
     merchantId: string;
-    /** Absent together with `ticket` when the outcome is `UNRESOLVED`. */
+    /**
+     * Still sent by the backend, deliberately unread: the ticket authenticates
+     * its own id, and the field is dropped in a later backend-only deploy.
+     */
     anonymousId?: string;
     merchant: { name: string; domain: string };
     /** Optional defensively: an old backend or a rollback never sends one. */
@@ -54,16 +57,13 @@ export function useResolveInstallCode(
             });
             setInstallSource("install_code");
 
-            // An `UNRESOLVED` row names no identity, so there is nothing to
-            // ensure; queueing one would retry for the store's full 7-day TTL.
-            //
-            // No `proof` on the resolved arm: the ticket, minted from the
-            // code's row, is this path's credential.
-            if (data.anonymousId) {
+            // The ticket IS the credential here: it resolves its own id
+            // server-side and 400s on a mismatch. An `UNRESOLVED` row mints
+            // none, so queueing one would retry for the store's full TTL.
+            if (data.ticket) {
                 pendingActionsStore.getState().addAction({
                     type: "ensure",
                     merchantId: data.merchantId,
-                    anonymousId: data.anonymousId,
                     merchant: data.merchant,
                     ticket: data.ticket,
                 });

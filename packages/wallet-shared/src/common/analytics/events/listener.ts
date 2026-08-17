@@ -13,7 +13,15 @@ export type MergeInitiateProoflessSource =
     | "listener_modal"
     | "embedded_wallet";
 
-export type MergeExecuteTargetSource = "proven" | "fallback";
+/**
+ * `proven` is a proven id carrying its execute-side proof; `proven_unproven` is
+ * the same id with the proof missing, which the backend admits only while the
+ * id has never latched. `fallback` names no proven id at all.
+ */
+export type MergeExecuteTargetSource =
+    | "proven"
+    | "proven_unproven"
+    | "fallback";
 
 export type ListenerMiscEventMap = {
     sdk_cleaned_up: undefined;

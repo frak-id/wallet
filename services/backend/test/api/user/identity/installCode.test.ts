@@ -91,10 +91,7 @@ describe("Install Code Routes API", () => {
     });
 
     describe("POST /install-code/generate", () => {
-        it("generates a code from the old shape (no proof)", async () => {
-            const expiresAt = new Date(Date.now() + 60_000);
-            mockGenerate.mockResolvedValue({ code: "ABC123", expiresAt });
-
+        it("refuses the old proofless shape", async () => {
             const response = await installCodeRoutes.handle(
                 new Request("http://localhost/install-code/generate", {
                     method: "POST",
@@ -106,18 +103,15 @@ describe("Install Code Routes API", () => {
                 })
             );
 
-            expect(response.status).toBe(200);
-            expect(mockProofVerify).not.toHaveBeenCalled();
-            expect(mockMarkProofSeen).not.toHaveBeenCalled();
-            expect(mockGenerate).toHaveBeenCalledWith({
-                merchantId: MERCHANT_ID,
-                credential: { kind: "anonymous", anonymousId: "anon-1" },
+            expect(response.status).toBe(403);
+            expect(await response.json()).toMatchObject({
+                code: "PROOF_REQUIRED",
             });
+            expect(mockMarkProofSeen).not.toHaveBeenCalled();
+            expect(mockGenerate).not.toHaveBeenCalled();
         });
 
-        it("verifies and observes a proof without gating generation on it", async () => {
-            const expiresAt = new Date(Date.now() + 60_000);
-            mockGenerate.mockResolvedValue({ code: "ABC123", expiresAt });
+        it("refuses an invalid proof, having actually verified it", async () => {
             mockProofVerify.mockResolvedValue({
                 valid: false,
                 reason: "bad_signature",
@@ -135,9 +129,12 @@ describe("Install Code Routes API", () => {
                 })
             );
 
-            // Accept-and-observe: an invalid proof still yields a 200 and a
-            // generated code — `generate` gates nothing yet.
-            expect(response.status).toBe(200);
+            // PROOF_INVALID, not PROOF_REQUIRED: refused because verification
+            // ran and failed, which is a different population from no proof.
+            expect(response.status).toBe(403);
+            expect(await response.json()).toMatchObject({
+                code: "PROOF_INVALID",
+            });
             expect(mockProofVerify).toHaveBeenCalledWith(
                 expect.objectContaining({
                     op: "frak-install-v1",
@@ -146,10 +143,7 @@ describe("Install Code Routes API", () => {
                     anonymousId: "anon-1",
                 })
             );
-            expect(mockGenerate).toHaveBeenCalledWith({
-                merchantId: MERCHANT_ID,
-                credential: { kind: "anonymous", anonymousId: "anon-1" },
-            });
+            expect(mockGenerate).not.toHaveBeenCalled();
             // Never latch on a failed proof — `markProofSeen` never clears.
             expect(mockMarkProofSeen).not.toHaveBeenCalled();
         });
@@ -316,10 +310,11 @@ describe("Install Code Routes API", () => {
             expect(mockGenerate).not.toHaveBeenCalled();
         });
 
-        it("mints for an id naming an existing server-minted node", async () => {
+        it("mints for a proven id naming an existing server-minted node", async () => {
             const expiresAt = new Date(Date.now() + 60_000);
             mockFindNodeByIdentity.mockResolvedValue({ proofSeenAt: null });
             mockGenerate.mockResolvedValue({ code: "ABC123", expiresAt });
+            mockProofVerify.mockResolvedValue({ valid: true });
 
             const response = await installCodeRoutes.handle(
                 new Request("http://localhost/install-code/generate", {
@@ -328,6 +323,7 @@ describe("Install Code Routes API", () => {
                     body: JSON.stringify({
                         merchantId: MERCHANT_ID,
                         anonymousId: "frakmint_materialised",
+                        proof: "a-valid-proof",
                     }),
                 })
             );
@@ -497,6 +493,107 @@ describe("Install Code Routes API", () => {
                 outcome: "UNRESOLVED",
             });
             expect(mockMintTicket).not.toHaveBeenCalled();
+        });
+    });
+});
+
+describe("POST /install-code/generate — mandatory proof", () => {
+    beforeEach(() => {
+        mockGenerate.mockReset();
+        mockProofVerify.mockReset();
+        mockMarkProofSeen.mockReset();
+        mockResolveForGenerate.mockReset();
+        mockFindNodeByIdentity.mockReset();
+    });
+
+    async function postGenerate(body: Record<string, unknown>) {
+        return installCodeRoutes.handle(
+            new Request("http://localhost/install-code/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            })
+        );
+    }
+
+    it("refuses a proofless anonymous id", async () => {
+        const response = await postGenerate({
+            merchantId: MERCHANT_ID,
+            anonymousId: "anon-1",
+        });
+
+        expect(response.status).toBe(403);
+        expect(await response.json()).toMatchObject({
+            code: "PROOF_REQUIRED",
+        });
+        expect(mockGenerate).not.toHaveBeenCalled();
+    });
+
+    it("mints for a valid proof", async () => {
+        mockProofVerify.mockResolvedValue({ valid: true });
+        mockGenerate.mockResolvedValue({
+            code: "ABC123",
+            expiresAt: new Date(Date.now() + 60_000),
+        });
+
+        const response = await postGenerate({
+            merchantId: MERCHANT_ID,
+            anonymousId: "anon-1",
+            proof: "a-valid-proof",
+        });
+
+        expect(response.status).toBe(200);
+        expect(mockMarkProofSeen).toHaveBeenCalled();
+    });
+
+    it("refuses an invalid proof as PROOF_INVALID, having verified it", async () => {
+        mockProofVerify.mockResolvedValue({
+            valid: false,
+            reason: "bad_signature",
+        });
+
+        const response = await postGenerate({
+            merchantId: MERCHANT_ID,
+            anonymousId: "anon-1",
+            proof: "a-bad-proof",
+        });
+
+        expect(response.status).toBe(403);
+        // Distinct from PROOF_REQUIRED: a supplied-but-bad proof is a different
+        // population from no proof at all, and only verification separates them.
+        expect(await response.json()).toMatchObject({
+            code: "PROOF_INVALID",
+        });
+        expect(mockProofVerify).toHaveBeenCalled();
+        expect(mockGenerate).not.toHaveBeenCalled();
+    });
+
+    it("mints on the checkout-token arm, which carries no proof", async () => {
+        mockResolveForGenerate.mockResolvedValue({
+            outcome: "resolved",
+            anonymousId: "anon-from-order",
+        });
+        mockGenerate.mockResolvedValue({
+            code: "ABC123",
+            expiresAt: new Date(Date.now() + 60_000),
+        });
+
+        const response = await postGenerate({
+            merchantId: MERCHANT_ID,
+            checkoutToken: "tok-1",
+        });
+
+        // Gate 2 derives its id server-side, so the mandatory-proof rule that
+        // guards a caller-presented id must never reach this arm.
+        expect(response.status).toBe(200);
+    });
+
+    it("400s a body carrying neither credential", async () => {
+        const response = await postGenerate({ merchantId: MERCHANT_ID });
+
+        expect(response.status).toBe(400);
+        expect(await response.json()).toMatchObject({
+            code: "MISSING_CREDENTIAL",
         });
     });
 });

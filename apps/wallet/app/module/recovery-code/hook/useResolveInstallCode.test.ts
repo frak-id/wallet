@@ -77,7 +77,39 @@ describe("useResolveInstallCode", () => {
         });
     });
 
-    test("stays on anonymousId when the response has no ticket (old backend / rollback)", async ({
+    test("ignores the response anonymousId, queueing the ticket alone", async ({
+        queryWrapper,
+    }) => {
+        mockResolvePost.mockResolvedValue({
+            data: {
+                merchantId: "merchant-1",
+                anonymousId: "anon-1",
+                merchant,
+                hasWallet: false,
+                ticket: "signed-ticket-jwt",
+            },
+            error: null,
+        });
+
+        const { useResolveInstallCode } = await import(
+            "./useResolveInstallCode"
+        );
+        const { result } = renderHook(() => useResolveInstallCode(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        result.current.resolve("ABC123");
+
+        await waitFor(() => {
+            const [action] = pendingActionsStore.getState().getValidActions();
+            expect(action).toBeDefined();
+            expect(
+                action?.type === "ensure" ? action.anonymousId : "unset"
+            ).toBeUndefined();
+        });
+    });
+
+    test("queues nothing when the response carries no ticket", async ({
         queryWrapper,
     }) => {
         mockResolvePost.mockResolvedValue({
@@ -100,15 +132,11 @@ describe("useResolveInstallCode", () => {
         result.current.resolve("XYZ789");
 
         await waitFor(() => {
-            const [action] = pendingActionsStore.getState().getValidActions();
-            expect(action).toBeDefined();
-            expect(
-                action?.type === "ensure" ? action.anonymousId : undefined
-            ).toBe("anon-2");
-            expect(
-                action?.type === "ensure" ? action.ticket : "unset"
-            ).toBeUndefined();
+            expect(result.current.isSuccess).toBe(true);
         });
+        expect(pendingActionsStore.getState().getValidActions()).toHaveLength(
+            0
+        );
     });
 
     test("queues nothing when the backend reports an UNRESOLVED outcome", async ({

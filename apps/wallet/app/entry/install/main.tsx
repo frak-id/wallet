@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { InstallView } from "@/module/install/component/InstallView";
 import { parseInstallSearch } from "@/module/install/params";
+import { EnsureConflictToast } from "@/module/pending-actions/component/EnsureConflictToast";
 import {
     bootstrapStandalonePage,
     reportBootstrapFailure,
@@ -29,14 +30,18 @@ function ProcessingLayout({ children }: { children: ReactNode }) {
 }
 
 bootstrapStandalonePage(
-    <InstallView
-        search={search}
-        navigation={{
-            // No router: both exits hand over to the SPA, which owns
-            // everything past the install handoff.
-            toWallet: () => window.location.replace("/wallet"),
-            toRegister: () => window.location.replace("/register"),
-        }}
-        processingLayout={ProcessingLayout}
-    />
+    <>
+        <InstallView
+            search={search}
+            navigation={{
+                // No router: both exits hand over to the SPA, which owns
+                // everything past the install handoff.
+                toWallet: () => window.location.replace("/wallet"),
+                toRegister: () => window.location.replace("/register"),
+            }}
+            processingLayout={ProcessingLayout}
+        />
+        {/* This page fires the ensure, so the conflict must land here too. */}
+        <EnsureConflictToast />
+    </>
 ).catch(reportBootstrapFailure);

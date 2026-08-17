@@ -3,7 +3,8 @@ import { CANDIDATE_BATCH_SIZE, generateCandidates } from "@backend-utils";
 import { and, eq, gt, lt, sql } from "drizzle-orm";
 import { installCodesTable } from "../db/schema";
 
-const CODE_TTL_HOURS = 72;
+/** How long a minted install code stays redeemable. */
+export const CODE_TTL_HOURS = 72;
 
 /**
  * Max resolve attempts against a single install code, durable across pod replicas unlike

@@ -1,146 +1,183 @@
 # Rollout — identity proof-of-possession
 
-Everything is shipped and permissive. What remains is making the admission routes require a
-proof unconditionally. The scheduled work lives in
-[`MERGE-ADMISSION-PLAN.md`](./MERGE-ADMISSION-PLAN.md); this file is the marker inventory and
-the per-route state.
+**Every flip is on.** Buckets A–D are in the tree and enforcing; there is no switch left to throw.
+The work itself lives in [`MERGE-ADMISSION-PLAN.md`](./MERGE-ADMISSION-PLAN.md) and what shipped is
+recorded in [`PROGRESS.md`](./PROGRESS.md); this file is what to watch after the deploy, and the
+marker inventory.
 
 ```
 grep -rn "ROLLOUT-STEP-3" --include=*.ts --include=*.tsx .
 ```
 
+## Why there is nothing to flip
+
+Bucket D first shipped behind four env kill switches and three build-time constants, all defaulting
+to today's behaviour, because §8 says flip on a counter and no counter had been deployed. That was
+reversed: **the switches cost ~900 lines — 770 of them tests proving both settings behave — to guard
+a decision the error log already shows.** A refused request answers `403` or `400` with a named code,
+per route, in data that already exists. The counters stay; they measure, they no longer gate.
+
+**A schema flip is not the alternative, and was measured rather than assumed.** `proof` cannot be
+flatly required on any of these routes — each has a legitimately proofless arm — and a discriminated
+union body is actively dangerous: Elysia strips unknown properties *before* validation, so
+`{merchantId, sourceAnonymousId}` with no proof matches the looser variant, `sourceAnonymousId` is
+silently dropped, and an anon-source request succeeds as a wallet-session one. Enforcement lives in
+the handler.
+
+## What to watch after the deploy
+
+| Signal | Means |
+|---|---|
+| `403 PROOF_REQUIRED` on `/merge/initiate` | an anon-source caller with no proof. Should be ~0: the listener now refuses before sending |
+| `403 PROOF_REQUIRED` / `PROOF_INVALID` on `/identity/ensure` | SDK arm unproven, or a bad install proof |
+| `400 PROOF_OR_TOKEN_REQUIRED` on `/identity/ensure` | the bare wallet arm. **Expect a burst on deploy day** — see below |
+| `403` on `install-code/generate` | the anonymous arm without a valid proof. The wallet renders the codeless CTA, not an error |
+| `merge_initiate_proofless{source}` | client-side refusals. This is the **only** view of them — no request reaches the backend |
+| `merge_execute_target_source{fallback,proven_unproven}` | merges the listener now declines to attempt. Same: client-side only |
+| `identity_merge_execute_credential_total{class="absent_unlatched"}` | unchanged. Still bucket E's exit criterion |
+
+**Expect a `PROOF_OR_TOKEN_REQUIRED` burst on deploy day, and expect it to decay.** §7 wanted the
+"no more `a=`" wallet release live and its 7-day pending-ensure queue drained *before* the bare arm
+refused; all of it lands in one deploy instead. Queued actions written by the currently deployed
+wallet carry neither ticket nor proof, so they take a `400`. They drop on first attempt rather than
+retrying — every refusal code is in `drainEnsures`' non-retryable set — so the burst should fall to
+the floor within the store's 7-day TTL and never recover. If it does not decay, something is still
+minting credential-less ensures and that is the bug to chase.
+
+`/merge/execute` is untouched and must stay that way until bucket E. The code enforces that
+structurally: `enforceProof` takes a required `refuseUnproven`, `initiateMerge` passes `true`,
+`executeMerge` passes `false` with T3.1b named at the call site.
+
+## Configuration that is still owed
+
+[`deploy-env.patch`](./deploy-env.patch) carries the workflow hunk this branch could not push —
+writing `.github/workflows/**` needs a token scope the release credential lacks. It no longer
+contains any flip; what is left is `MIN_VERSION_IOS`/`MIN_VERSION_ANDROID` (read by
+`infra/gcp/secrets.ts` and set nowhere, so silently `0.0.0` since they were written) and the two
+credential TTLs.
+
+```
+git apply docs/plans/identity-proof-of-possession/deploy-env.patch
+git rm docs/plans/identity-proof-of-possession/deploy-env.patch
+```
+
+Nothing is broken until it lands: `secrets.ts` forwards each variable with the same default. What is
+missing is the ability to change one without editing the workflow. The guard test reads the patch
+while it exists, so a variable added and forgotten in both places is still a red build.
+
 ## What gates it — and what does not
 
-**The store binary does not gate this any more.** It is propagated. That closes the store-approval
-dependency and nothing else; three separate blockers remain, and they are per-route.
+**The store binary does not gate this.** It is propagated. That closed the store-approval
+dependency and nothing else.
 
-**`apps/wallet`'s own `/sharing` → `/install` path holds no key and never will.** The comment at
-`ensure.ts:78` claims the bare arm is "kept only because the installed Tauri binary POSTs exactly
-this shape". That premise is false: the currently-deployed **wallet web build** lands on the same
-arm with neither credential, via `SharingView.tsx:94-99` (in-file: *"this page has no SDK keypair
-to sign with"*) → `routes/sharing.tsx:55-57` → `InstallView.tsx` → `drainEnsures.ts`. The wallet
-origin holds no keypair, so this is permanent, not a propagation delay. A wallet-side change has
-to stop forwarding `a=` before the arm can be deleted.
+**`apps/wallet`'s own `/sharing` → `/install` path holds no key and never will.** That was the
+premise the bare arm's old comment got wrong: it is not an old Tauri binary, it is the currently
+deployed web build, and the wallet origin has no keypair to sign with. **Resolved in bucket D** —
+`SharingView` no longer forwards `a=`, so nothing on that page produces a credential-less ensure.
+The install hop itself stays live and codeless: the page still links to `/install?m=…`, which
+renders the download CTA with no code rather than an error.
 
-**The marker set is incomplete (AID-018).** A second, unmarked door into the same bypass is the
-header fallback at `ensure.ts:213-225`: any wallet-session caller sending only `x-frak-client-id`
-is routed into `resolveWalletEnsureAnonymousId` with a caller-named id, and there is no
-`ROLLOUT-STEP-3` marker anywhere near it. Deleting `ensure.ts:78-88` and stopping there leaves
-**G1 fully open**.
+**The marker set used to be incomplete (AID-018).** The second, unmarked door was the
+`x-frak-client-id` header fallback, which routes a wallet-session caller into the wallet arm with a
+caller-named id. It is **not deleted**, deliberately: it lands on the same bare exit that now
+refuses, so one throw shuts both doors, and deleting the header→body promotion would break a header
+caller that *does* carry a proof.
 
-**SDK propagation gates nothing.** The CDN default is `@latest` and the listener URL is
-unversioned, so the exposure is a 1–2 hour rollout deadzone, not a population.
+**SDK propagation gates nothing.** The CDN default is `@latest` and the listener URL is unversioned,
+so the exposure is a 1–2 hour rollout deadzone, not a population. Bucket D removed even that for the
+proof rename: the SDK emits the execute proof under **both** `proofs.merge` and
+`proofs.mergeExecute`, so neither pipeline can lose the race.
 
 **`/merge/execute` is the one genuine population gate**, and what it waits for is the legacy-id
 population ageing out — not a binary, not `minVersion`. Its target *is* the keyless legacy id by
 definition.
 
-## Current state
+## Current state, per route
 
-**Latch-gated** — proof present ⇒ verified; proof absent ⇒ allowed unless that id has
-latched before:
+**Mandatory proof** — verified when present, refused when absent:
 
-- `/merge/execute`
-- `/merge/initiate`, `sourceAnonymousId` arm
-- `/identity/ensure`, SDK arm
+- `/merge/initiate`, `sourceAnonymousId` arm — `403 PROOF_REQUIRED`
+- `/identity/ensure`, SDK arm — `403 PROOF_REQUIRED`
+- `/identity/ensure`, wallet arm — `400 PROOF_OR_TOKEN_REQUIRED` at the bare exit,
+  `403 PROOF_INVALID` for a bad install proof
+- `install-code/generate`, anonymous arm — `403 PROOF_REQUIRED` / `PROOF_INVALID`
 
-These three share one policy function, `enforceLatchedProof`.
+**Still latch-gated, deliberately:** `/merge/execute`. Proof present ⇒ verified; absent ⇒ allowed
+unless that id has latched before. It is bucket E and its subject *is* the keyless legacy id.
 
-**Permissive:**
+**Never gated, and staying that way:**
 
-- `/identity/ensure`, wallet arm. Three shapes, and they are not equivalent. The **ticket**
-  branch is a receipt for a credential presented at `generate` and stays. The `frak-install-v1`
-  **proof** branch verifies and latches a real proof — it is the landing site for Keystore- and
-  Secure-Enclave-signed native installs and for the Play install referrer, both of which reach
-  `ensure` directly and never touch `install-code/generate`; it is kept and made mandatory. Only
-  the proofless **bare-id** variant and the `x-frak-client-id` header fallback are deleted. The
-  bare variant is reached by the deployed wallet web build, not only by an old binary — see
-  above.
-- `install-code/generate`. Reachable with no proof from the wallet's own sharing page,
-  whose `clientId` comes from a URL param or a backend lookup rather than a signing key.
-  Nothing there can sign, so requiring a proof would break the arm rather than secure it.
-  Its protection is the ticket `resolve` mints.
-- `install-code/resolve`. The binary reads the response; `ticket` is additive and the
-  `anonymousId` arm must keep working.
-- `/track/*`, unsigned by design. See below.
+- `/identity/ensure`'s **ticket** branch — a receipt for a credential already presented at
+  `generate`. Its id is server-derived and may legitimately be a `frakmint_` one.
+- `install-code/generate`'s **`checkoutToken`** arm — Gate 2 derives the id from the order
+  server-side, so there is nothing for a caller to prove. A refusal on the sibling arm renders the
+  wallet's codeless CTA, not *"Failed to generate code. Please refresh."*
+- `/merge/initiate`'s **wallet-session** arm — authenticated by session.
+- `/track/*` — unsigned by design. See below.
 
-**Never gated:** the wallet-session arm of `/merge/initiate` — already authenticated by
-session.
+`install-code/resolve` is unchanged: the current wallet no longer reads `anonymousId` from the 200
+(T3.7), only pre-ticket binaries do, and the backend stops sending it in a later backend-only
+deploy — that order, never the reverse, so the persisted store stays readable by a rolled-back
+build.
 
-## Prerequisites
+## Still owed
 
-**1. A wallet release must stop the keyless `/sharing` → `/install` hop forwarding `a=`**, and
-the 7-day pending-ensure queue must drain behind it. That, not the store binary, is what the
-bare arm waits on. Ship the retry classification (`drainEnsures#isNonRetryable`) at least one
-wallet release earlier, or every stale old-shape action retries on every launch for a full week.
+**1. DB2 must be applied to `local`, `dev` and `prod`.** It is the DB team's, recorded verbatim at
+[`DB2.sql`](./DB2.sql), and it gates the **backend image**: `install_codes` is selected with a full
+column list, so against a database missing `checkout_token` every `install-code/generate` and every
+`install-code/resolve` raises `42703` — both arms, not only the new one. The only ordering the
+infrastructure guarantees is `bootstrapJob` → backend.
 
-**2. `TODO(merge-initiate-proof)` must be closed.** The listener's modal / embedded-wallet
-path still calls `/merge/initiate` with no proof at all, so those ids never latch.
-Enforcing before this is fixed 403s that flow for *every* client, not just legacy ones.
+**2. `deploy-env.patch`**, for the reason above — no flip depends on it any more, but
+`MIN_VERSION_*` and the two TTLs remain unsettable until it lands.
 
-**3. The legacy → derived migration must have drained — for `/merge/execute` only.** It runs on
-each client's next visit, so a user who never returns is never migrated and the curve asymptotes
-rather than reaching zero. The exit criterion is
+**3. The legacy → derived migration must drain — for `/merge/execute` only.** It runs on each
+client's next visit, so a user who never returns is never migrated and the curve asymptotes rather
+than reaching zero. The exit criterion is
 `identity_merge_execute_credential_total{class="absent_unlatched"}` per merchant trending to
-approximately zero, never a date. No other route waits on this.
+approximately zero, never a date. Nothing else waits on it.
 
-**4. Migrations must be applied before the branch is deployed anywhere.**
-`findNodeByIdentity` and `markProofSeen` name `proof_seen_at` explicitly, so against a
-database missing the column Postgres raises `42703` and the query throws — every
-proof-absent `/merge/execute` 500s instead of returning 200. The column ships in
-`prod/0020_gigantic_black_crow.sql`, `dev/0040_yummy_amphibian.sql` and
-`local/0035_natural_carlie_cooper.sql`; confirm each is applied, not just generated.
+## Order
 
-## Step 3 — the flips
+Everything except bucket E is live in one deploy. What is left is a single decision, and it is the
+one the whole programme was shaped around:
 
-The three flips are **not coupled**; they have different prerequisites and only one has a
-population gate. Do not schedule them together.
+**`/merge/execute`, alone and last.** Firing T3.1b writes off the permanent legacy tail — ids of
+users who never return, which never migrate at any horizon. That is a human decision on a counter,
+never a date, and its code is not written.
 
-1. **`/merge/initiate`.** Give the listener a proof it can present (the SDK signs an
-   empty-binding `frak-merge-v1` and carries it on `resolved-config`), have the listener refuse
-   without one, then make `proof` required on the backend's anon-source arm. Gate: the
-   proofless-initiate counters flat on all three sources.
-2. **`/identity/ensure`.** Ship the wallet release from prerequisite 1, let the 7-day queue
-   drain, then in one deploy make the SDK arm's `proof` required, make the `frak-install-v1`
-   branch mandatory, and delete **both** proofless doors — the bare-id variant *and* the
-   `x-frak-client-id` header fallback. Deleting only the first leaves G1 fully open (AID-018).
-   Gate: `identity_ensure_arm_total{arm="wallet_bare"}` at or near zero.
-3. **`/merge/execute`, alone and last.** Gate: prerequisite 3's counter, never a date. Firing it
-   writes off the permanent legacy tail — that is a human decision, not a threshold.
+The `ensure.ts` marker — "should the install proof be exchanged for a ticket?" — is a decision, not
+a dependency, and it is taken: keep accepting the install proof directly. A leaked install proof
+costs one id its attribution, far cheaper than the two-call attack the flips close. It is live now
+that the bare exit refuses, since the proof is a sufficient credential.
 
-`install-code/generate` becomes a union body (proof required on the SDK arm, `checkoutToken` on
-the order-derived arm) once the Shopify credential path exists. Its codeless-CTA wallet release
-must ship **before or with** it, never after.
-
-The `ensure.ts:101` marker — "should the install proof be exchanged for a ticket?" — is a
-decision, not a dependency, and it is taken: keep accepting the install proof directly. A leaked
-install proof costs one id its attribution, which is far cheaper than the two-call attack the
-flips close. Record it and delete the marker.
-
-> `MIN_VERSION_IOS` / `MIN_VERSION_ANDROID` remain useful for hard-blocking old builds, but no
-> flip above is gated on them.
+> `MIN_VERSION_IOS` / `MIN_VERSION_ANDROID` remain useful for hard-blocking old builds, but no flip
+> above is gated on them. They are read by `infra/gcp/secrets.ts` and set nowhere, so both have
+> silently been `0.0.0` since they were written; `deploy-env.patch` fixes that. A test asserts every
+> env var `secrets.ts` reads is set by the workflow, and that every var the backend reads is
+> forwarded by `secrets.ts`.
 
 ## What stays permissive forever
 
 Legacy ids can never produce a proof and are baked into published `fCtx` links, so they stay
 **resolvable** indefinitely and never latch. They stop being usable as merge *targets* the moment
-`/merge/execute` flips — that is the write-off flip 3 above makes explicit, not an oversight.
+`/merge/execute` flips — that is the write-off bucket E makes explicit, not an oversight.
 
 ## Later: an optional `frak-track-v1`
 
 Not part of this rollout — it gates nothing, so it has no flip day.
 
-`/track/*` is unsigned because tracking must work for every client, including keyless legacy
-ids. The idea is an **optional** proof alongside a tracked interaction: never required, verified
-when present, a weak humanity/non-bot signal. The value is that it is not a gate — a bot can omit
-it, but then it is distinguishable.
+`/track/*` is unsigned because tracking must work for every client, including keyless legacy ids.
+The idea is an **optional** proof alongside a tracked interaction: never required, verified when
+present, a weak humanity/non-bot signal. The value is that it is not a gate — a bot can omit it, but
+then it is distinguishable.
 
 Three things to settle first:
 
-- **Binding.** The interaction's idempotency key is the obvious candidate, which would also make
-  a captured proof useless for any other event. `arrival` carries no idempotency key today.
-- **Window.** Shorter than install's 30 days, but events are queued offline and drained later, so
-  it has to cover a realistic backlog rather than a request-response round trip.
+- **Binding.** The interaction's idempotency key is the obvious candidate, which would also make a
+  captured proof useless for any other event. `arrival` carries no idempotency key today.
+- **Window.** Shorter than install's 30 days, but events are queued offline and drained later, so it
+  has to cover a realistic backlog rather than a request-response round trip.
 - **Cost.** One ECDSA sign per event, on the native queue's drain path as well as the browser's.
   Measure before choosing per-event over per-drain.
 

@@ -7,6 +7,7 @@ vi.mock("@backend-infrastructure", () => ({
     infraMetrics: {
         installCredentialClaimArm: vi.fn(),
         installCredentialOutcome: vi.fn(),
+        installClaimAge: vi.fn(),
     },
 }));
 
@@ -157,6 +158,112 @@ describe("InstallCredentialOrchestrator.resolveForGenerate", () => {
             MERCHANT_ID,
             "generate"
         );
+        expect(infraMetrics.installClaimAge).toHaveBeenCalledWith(
+            "undated",
+            "generate"
+        );
+    });
+
+    it("accepts a claim inside the age bound and counts it fresh", async () => {
+        const { infraMetrics } = await import("@backend-infrastructure");
+        ctx.purchaseRepository.findByMerchantAndCheckoutToken.mockResolvedValue(
+            null
+        );
+        ctx.purchaseClaimRepository.findByMerchantAndToken.mockResolvedValue({
+            claimingIdentityGroupId: "claim-group",
+            createdAt: new Date(Date.now() - 60_000),
+        });
+        ctx.identityRepository.findAnonymousFingerprint.mockResolvedValue(
+            "anon-claim"
+        );
+
+        const result = await ctx.orchestrator.resolveForGenerate({
+            merchantId: MERCHANT_ID,
+            checkoutToken: CHECKOUT_TOKEN,
+        });
+
+        expect(result).toEqual({
+            outcome: "resolved",
+            anonymousId: "anon-claim",
+        });
+        expect(infraMetrics.installClaimAge).toHaveBeenCalledWith(
+            "fresh",
+            "generate"
+        );
+    });
+
+    it("refuses a claim past the age bound and falls through to deferral", async () => {
+        const { infraMetrics } = await import("@backend-infrastructure");
+        ctx.purchaseRepository.findByMerchantAndCheckoutToken.mockResolvedValue(
+            null
+        );
+        ctx.purchaseClaimRepository.findByMerchantAndToken.mockResolvedValue({
+            claimingIdentityGroupId: "attacker-group",
+            createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+        });
+
+        const result = await ctx.orchestrator.resolveForGenerate({
+            merchantId: MERCHANT_ID,
+            checkoutToken: CHECKOUT_TOKEN,
+        });
+
+        expect(result).toEqual({ outcome: "deferred" });
+        expect(infraMetrics.installClaimAge).toHaveBeenCalledWith(
+            "expired",
+            "generate"
+        );
+        expect(infraMetrics.installCredentialClaimArm).not.toHaveBeenCalled();
+        expect(
+            ctx.identityRepository.findAnonymousFingerprint
+        ).not.toHaveBeenCalled();
+    });
+
+    it("accepts at resolve a claim the generate bound would refuse", async () => {
+        const { infraMetrics } = await import("@backend-infrastructure");
+        ctx.purchaseRepository.findByMerchantAndCheckoutToken.mockResolvedValue(
+            null
+        );
+        ctx.purchaseClaimRepository.findByMerchantAndToken.mockResolvedValue({
+            claimingIdentityGroupId: "claim-group",
+            createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+        });
+        ctx.identityRepository.findAnonymousFingerprint.mockResolvedValue(
+            "anon-claim"
+        );
+
+        const result = await ctx.orchestrator.resolveDeferred({
+            merchantId: MERCHANT_ID,
+            checkoutToken: CHECKOUT_TOKEN,
+        });
+
+        expect(result).toEqual({ anonymousId: "anon-claim" });
+        expect(infraMetrics.installClaimAge).toHaveBeenCalledWith(
+            "fresh",
+            "resolve"
+        );
+    });
+
+    it("refuses at resolve a claim older than the install code itself", async () => {
+        const { infraMetrics } = await import("@backend-infrastructure");
+        ctx.purchaseRepository.findByMerchantAndCheckoutToken.mockResolvedValue(
+            null
+        );
+        ctx.purchaseClaimRepository.findByMerchantAndToken.mockResolvedValue({
+            claimingIdentityGroupId: "attacker-group",
+            createdAt: new Date(Date.now() - 73 * 60 * 60 * 1000),
+        });
+
+        const result = await ctx.orchestrator.resolveDeferred({
+            merchantId: MERCHANT_ID,
+            checkoutToken: CHECKOUT_TOKEN,
+        });
+
+        expect(result).toBeNull();
+        expect(infraMetrics.installClaimAge).toHaveBeenCalledWith(
+            "expired",
+            "resolve"
+        );
+        expect(infraMetrics.installCredentialClaimArm).not.toHaveBeenCalled();
     });
 
     it("defers when neither a purchase nor a claim exists", async () => {

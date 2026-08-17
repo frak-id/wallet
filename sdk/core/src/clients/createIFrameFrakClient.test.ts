@@ -16,6 +16,11 @@ vi.mock("./ssoUrlListener", () => ({
     setupSsoUrlListener: vi.fn(),
 }));
 
+const mockSha256 = vi.fn();
+vi.mock("@noble/hashes/sha2.js", () => ({
+    sha256: (...args: unknown[]) => mockSha256(...args),
+}));
+
 vi.mock("./transports/iframeLifecycleManager", () => ({
     createIFrameLifecycleManager: vi.fn(() => ({
         isConnected: Promise.resolve(true),
@@ -46,6 +51,7 @@ vi.mock("../config/sdkConfigStore", () => ({
     sdkConfigStore: {
         setCacheScope: vi.fn(),
         reset: vi.fn(),
+        clearCache: vi.fn(),
         // Stale-but-present cache: both SWR branches in
         // `postConnectionSetup` fire (cached send + fresh send).
         get isResolved() {
@@ -73,6 +79,12 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
     beforeEach(async () => {
         vi.clearAllMocks();
         localStorage.clear();
+
+        // Real hashing by default; only the unhashable-binding case overrides it.
+        const { sha256: realSha256 } = await vi.importActual<
+            typeof import("@noble/hashes/sha2.js")
+        >("@noble/hashes/sha2.js");
+        mockSha256.mockImplementation(realSha256);
 
         currentConfig = {
             isResolved: true,
@@ -217,6 +229,303 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
             timeout: 1000,
         });
         expect(sendsWhenReleased).toBeGreaterThan(0);
+    });
+
+    test("emits the execute proof under both merge and mergeExecute, and a distinct mergeSource", async () => {
+        const { signProof } = await import("../identity/sign");
+        vi.mocked(signProof).mockImplementation(async (params) =>
+            params.binding ? "execute-proof" : `${params.op}-empty-binding`
+        );
+        Object.defineProperty(window, "location", {
+            value: new URL("https://merchant.example.com/?fmt=merge-token-123"),
+            writable: true,
+        });
+
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+
+        void createIFrameFrakClient({
+            config: baseConfig(),
+            iframe: makeIframe(),
+        });
+        await vi.waitFor(() => expect(resolveFreshConfig).toBeDefined());
+        await Promise.resolve();
+        await Promise.resolve();
+        resolveFreshConfig({
+            merchantId: "fresh-merchant",
+            domain: "fresh.example.com",
+            allowedDomains: [],
+        });
+
+        await vi.waitFor(() => {
+            expect(resolvedConfigCalls()).toHaveLength(2);
+        });
+
+        const { proofs } = resolvedConfigCalls()[0].data.sdkIdentity;
+        expect(proofs.merge).toBe("execute-proof");
+        expect(proofs.mergeExecute).toBe("execute-proof");
+        expect(proofs.mergeSource).toBe("frak-merge-v1-empty-binding");
+    });
+
+    test("omits both execute keys when the binding cannot be hashed, keeping mergeSource", async () => {
+        const { signProof } = await import("../identity/sign");
+        vi.mocked(signProof).mockImplementation(async (params) =>
+            params.binding ? "execute-proof" : `${params.op}-empty-binding`
+        );
+        // No binding is producible: WebCrypto rejects and the pure-JS
+        // fallback throws, which is the "never sign over the wrong
+        // binding" hazard.
+        mockSha256.mockImplementation(() => {
+            throw new Error("no hashing available");
+        });
+        const subtle = crypto.subtle;
+        Object.defineProperty(crypto, "subtle", {
+            value: {
+                digest: () => Promise.reject(new Error("insecure context")),
+            },
+            configurable: true,
+        });
+        Object.defineProperty(window, "location", {
+            value: new URL("https://merchant.example.com/?fmt=merge-token-123"),
+            writable: true,
+        });
+
+        try {
+            const { createIFrameFrakClient } = await import(
+                "./createIFrameFrakClient"
+            );
+
+            void createIFrameFrakClient({
+                config: baseConfig(),
+                iframe: makeIframe(),
+            });
+            await vi.waitFor(() => expect(resolveFreshConfig).toBeDefined());
+            await Promise.resolve();
+            await Promise.resolve();
+            resolveFreshConfig({
+                merchantId: "fresh-merchant",
+                domain: "fresh.example.com",
+                allowedDomains: [],
+            });
+
+            await vi.waitFor(() => {
+                expect(resolvedConfigCalls()).toHaveLength(2);
+            });
+
+            const { proofs } = resolvedConfigCalls()[0].data.sdkIdentity;
+            expect(proofs.merge).toBeUndefined();
+            expect(proofs.mergeExecute).toBeUndefined();
+            expect(proofs.mergeSource).toBe("frak-merge-v1-empty-binding");
+        } finally {
+            Object.defineProperty(crypto, "subtle", {
+                value: subtle,
+                configurable: true,
+            });
+        }
+    });
+
+    test("removes the freshness listener when destroy wins the race against setup", async () => {
+        const addSpy = vi.spyOn(document, "addEventListener");
+        const removeSpy = vi.spyOn(document, "removeEventListener");
+
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+
+        const client = await createIFrameFrakClient({
+            config: baseConfig(),
+            iframe: makeIframe(),
+        });
+        await vi.waitFor(() => expect(resolveFreshConfig).toBeDefined());
+
+        // Destroy while `postConnectionSetup` is still pending: the teardown
+        // it returns does not exist yet at this point.
+        await client.destroy();
+        resolveFreshConfig({
+            merchantId: "fresh-merchant",
+            domain: "fresh.example.com",
+            allowedDomains: [],
+        });
+        await client.waitForSetup;
+
+        const added = addSpy.mock.calls.filter(
+            ([type]) => type === "visibilitychange"
+        );
+        const removed = removeSpy.mock.calls.filter(
+            ([type]) => type === "visibilitychange"
+        );
+        expect(added).toHaveLength(1);
+        expect(removed).toHaveLength(1);
+        expect(removed[0][1]).toBe(added[0][1]);
+
+        addSpy.mockRestore();
+        removeSpy.mockRestore();
+    });
+
+    test("signs mergeSource even with no pending merge token", async () => {
+        const { signProof } = await import("../identity/sign");
+        vi.mocked(signProof).mockImplementation(async (params) =>
+            params.binding ? "execute-proof" : `${params.op}-empty-binding`
+        );
+
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+
+        void createIFrameFrakClient({
+            config: baseConfig(),
+            iframe: makeIframe(),
+        });
+        await vi.waitFor(() => expect(resolveFreshConfig).toBeDefined());
+        await Promise.resolve();
+        await Promise.resolve();
+        resolveFreshConfig({
+            merchantId: "fresh-merchant",
+            domain: "fresh.example.com",
+            allowedDomains: [],
+        });
+
+        await vi.waitFor(() => {
+            expect(resolvedConfigCalls()).toHaveLength(2);
+        });
+
+        const { proofs } = resolvedConfigCalls()[0].data.sdkIdentity;
+        expect(proofs.mergeSource).toBe("frak-merge-v1-empty-binding");
+        expect(proofs.merge).toBeUndefined();
+        expect(proofs.mergeExecute).toBeUndefined();
+    });
+
+    test("re-pushes a fresh mergeSource on visibilitychange without resurrecting the merge token", async () => {
+        const { signProof } = await import("../identity/sign");
+        let signCount = 0;
+        vi.mocked(signProof).mockImplementation(async (params) => {
+            if (params.binding) return "execute-proof";
+            signCount++;
+            return `source-proof-${signCount}`;
+        });
+        Object.defineProperty(window, "location", {
+            value: new URL("https://merchant.example.com/?fmt=merge-token-123"),
+            writable: true,
+        });
+
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+
+        void createIFrameFrakClient({
+            config: baseConfig(),
+            iframe: makeIframe(),
+        });
+        await vi.waitFor(() => expect(resolveFreshConfig).toBeDefined());
+        await Promise.resolve();
+        await Promise.resolve();
+        resolveFreshConfig({
+            merchantId: "fresh-merchant",
+            domain: "fresh.example.com",
+            allowedDomains: [],
+        });
+
+        await vi.waitFor(() => {
+            expect(resolvedConfigCalls()).toHaveLength(2);
+        });
+        const beforeRepush = resolvedConfigCalls().length;
+
+        Object.defineProperty(document, "visibilityState", {
+            value: "visible",
+            configurable: true,
+        });
+        document.dispatchEvent(new Event("visibilitychange"));
+
+        await vi.waitFor(() => {
+            expect(resolvedConfigCalls().length).toBeGreaterThan(beforeRepush);
+        });
+
+        const repush = resolvedConfigCalls().at(-1);
+        expect(repush.data.pendingMergeToken).toBeUndefined();
+        expect(repush.data.sdkIdentity.proofs.mergeSource).not.toBe(
+            "source-proof-1"
+        );
+    });
+
+    test("throttles focus churn, then re-pushes on the freshness timer", async () => {
+        vi.useFakeTimers();
+        try {
+            const { createIFrameFrakClient } = await import(
+                "./createIFrameFrakClient"
+            );
+
+            void createIFrameFrakClient({
+                config: baseConfig(),
+                iframe: makeIframe(),
+            });
+            await vi.waitFor(() => expect(resolveFreshConfig).toBeDefined());
+            resolveFreshConfig({
+                merchantId: "fresh-merchant",
+                domain: "fresh.example.com",
+                allowedDomains: [],
+            });
+            await vi.waitFor(() => {
+                expect(resolvedConfigCalls()).toHaveLength(2);
+            });
+
+            Object.defineProperty(document, "visibilityState", {
+                value: "visible",
+                configurable: true,
+            });
+
+            document.dispatchEvent(new Event("visibilitychange"));
+            await vi.waitFor(() => {
+                expect(resolvedConfigCalls()).toHaveLength(3);
+            });
+
+            // Second transition inside the throttle window: no extra signature.
+            // Drained the same way a real re-push settles, so an unthrottled
+            // send would be observed here.
+            document.dispatchEvent(new Event("visibilitychange"));
+            await vi.advanceTimersByTimeAsync(100);
+            expect(resolvedConfigCalls()).toHaveLength(3);
+
+            // The timer keeps the stored proof inside its 600 s window even
+            // on a tab that never hides.
+            await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
+            expect(resolvedConfigCalls().length).toBeGreaterThan(3);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("ignores a visibilitychange that leaves the tab hidden", async () => {
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+
+        void createIFrameFrakClient({
+            config: baseConfig(),
+            iframe: makeIframe(),
+        });
+        await vi.waitFor(() => expect(resolveFreshConfig).toBeDefined());
+        await Promise.resolve();
+        await Promise.resolve();
+        resolveFreshConfig({
+            merchantId: "fresh-merchant",
+            domain: "fresh.example.com",
+            allowedDomains: [],
+        });
+
+        await vi.waitFor(() => {
+            expect(resolvedConfigCalls()).toHaveLength(2);
+        });
+        const beforeRepush = resolvedConfigCalls().length;
+
+        Object.defineProperty(document, "visibilityState", {
+            value: "hidden",
+            configurable: true,
+        });
+        document.dispatchEvent(new Event("visibilitychange"));
+        await Promise.resolve();
+
+        expect(resolvedConfigCalls()).toHaveLength(beforeRepush);
     });
 
     test("only the first sendLifecycleConfig call carries the pending merge token", async () => {

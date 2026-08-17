@@ -78,8 +78,12 @@ type ResolvedConfigEvent = {
         sdkIdentity?: {
             anonymousId: string;
             proofs: {
-                /** `frak-merge-v1` — binds SHA-256(mergeToken). */
+                /** `frak-merge-v1`, binds SHA-256(mergeToken). Alias of `mergeExecute`. */
                 merge?: string;
+                /** `frak-merge-v1`, binds SHA-256(mergeToken). Redeems a merge token. */
+                mergeExecute?: string;
+                /** `frak-merge-v1`, empty binding. Mints one at `/merge/initiate`. */
+                mergeSource?: string;
                 /** `frak-install-v1` — binds merchantId only. */
                 install?: string;
             };

@@ -40,12 +40,9 @@ async function enforceEnsureProof(params: {
 }
 
 /**
- * Wallet arm — the anonymousId comes from the body or a ticket. Stays
- * permissive because the installed binary sends neither ticket nor proof: a
- * proof is verified and logged when present, never required.
- *
- * ROLLOUT-STEP-3: make ticket-or-proof mandatory once minVersion excludes
- * those binaries.
+ * Wallet arm — the anonymousId comes from the body or a ticket. A ticket or a
+ * valid `frak-install-v1` proof is mandatory: both routes into this function
+ * land on the one credential-less exit below, which refuses.
  */
 async function resolveWalletEnsureAnonymousId(params: {
     merchantId: string;
@@ -82,10 +79,6 @@ async function resolveWalletEnsureAnonymousId(params: {
         return resolved.anonymousId;
     }
 
-    // ROLLOUT-STEP-3: legacy bearer arm — a raw id with nothing proving it
-    // belongs to the caller, kept only because the installed Tauri binary
-    // POSTs exactly this shape.
-    //
     // Unreachable today (only called when `ticket || bodyAnonymousId`);
     // kept as a defensive guard.
     if (!bodyAnonymousId) {
@@ -132,19 +125,31 @@ async function resolveWalletEnsureAnonymousId(params: {
                 merchantId,
             });
         }
+        // Refused here rather than falling through to the bare exit, which
+        // would admit an invalid proof as though none had been sent.
+        if (!proofVerified) {
+            throw HttpError.forbidden(
+                "PROOF_INVALID",
+                "The supplied install proof is not valid for this identity"
+            );
+        }
         return bodyAnonymousId;
     }
 
+    // Counted before the throw: this is how the refused population stays
+    // visible now that the credential-less exit is closed.
     infraMetrics.identityEnsureArm("wallet_bare", "absent_unlatched");
-    return bodyAnonymousId;
+    throw HttpError.badRequest(
+        "PROOF_OR_TOKEN_REQUIRED",
+        "An install ticket or a proof of possession is required"
+    );
 }
 
 /**
  * SDK arm — anonymousId comes from the `x-frak-client-id` header, never the
- * body. Latch-gated, not unconditionally mandatory: legacy clients with no
- * key can never sign, so a hard requirement would silently lose their
- * attribution forever. Same policy as `/merge/execute`: proof present →
- * verify; proof absent → allow unless this id has ever latched.
+ * body. A `frak-ensure-v1` proof is mandatory: the subject is always the
+ * derived id, which `migrateLegacyIdentity` flips to before the iframe
+ * exists, so it is always signable.
  */
 async function resolveSdkEnsureAnonymousId(params: {
     merchantId: string;
@@ -178,6 +183,15 @@ async function resolveSdkEnsureAnonymousId(params: {
             value: anonymousId,
             merchantId,
         });
+    }
+
+    // After `enforceEnsureProof`, which has already verified and counted, so
+    // the counter observes every request including the ones this refuses.
+    if (!proofVerified) {
+        throw HttpError.forbidden(
+            "PROOF_REQUIRED",
+            "A proof of possession is required for this identity"
+        );
     }
 
     return anonymousId;
@@ -243,6 +257,9 @@ async function resolveEnsureAnonymousId(params: {
         );
     }
 
+    // Kept: the wallet arm now demands a credential, so a header id is no
+    // longer a proofless door and a header caller that DOES carry a proof
+    // would break if this promotion were deleted.
     return resolveWalletEnsureAnonymousId({
         merchantId,
         bodyAnonymousId: anonymousId,
@@ -389,9 +406,10 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
                 // Install ticket. Authenticates its own anonymousId —
                 // takes priority over `proof`/`anonymousId`.
                 ticket: t.Optional(t.String()),
-                // Latch-gated on the SDK arm (frak-ensure-v1); verified and
-                // logged but never required on the wallet arm until
-                // ROLLOUT-STEP-3.
+                // frak-ensure-v1 on the SDK arm, frak-install-v1 on the
+                // wallet arm, mandatory on both. Optional here because the
+                // wallet ticket branch presents no proof at all and a
+                // required field would 422 it.
                 proof: t.Optional(t.String()),
             }),
             response: {

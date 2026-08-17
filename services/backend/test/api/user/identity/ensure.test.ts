@@ -170,7 +170,7 @@ describe("POST /identity/ensure — the live Tauri binary's request shape", () =
         });
     });
 
-    it("succeeds with both auth headers, a client-id header, and a bare body anonymousId", async () => {
+    it("refuses both auth headers, a client-id header, and a bare body anonymousId", async () => {
         walletAuthed();
 
         const response = await identityEnsureRoutes.handle(
@@ -189,16 +189,12 @@ describe("POST /identity/ensure — the live Tauri binary's request shape", () =
             })
         );
 
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(400);
+        expect(await response.json()).toMatchObject({
+            code: "PROOF_OR_TOKEN_REQUIRED",
+        });
         expect(mockProofVerify).not.toHaveBeenCalled();
-        expect(mockResolveAndAssociate).toHaveBeenCalledWith([
-            { type: "wallet", value: WALLET_ADDRESS },
-            {
-                type: "anonymous_fingerprint",
-                value: "anon-body",
-                merchantId: MERCHANT_ID,
-            },
-        ]);
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
     });
 });
 
@@ -226,7 +222,7 @@ describe("POST /identity/ensure — resolution order", () => {
         });
     });
 
-    it("old shape: bare anonymousId, no ticket, no proof — unchanged", async () => {
+    it("old shape: bare anonymousId, no ticket, no proof — now refused", async () => {
         walletAuthed();
 
         const response = await postEnsure({
@@ -234,20 +230,16 @@ describe("POST /identity/ensure — resolution order", () => {
             anonymousId: "anon-legacy",
         });
 
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(400);
+        expect(await response.json()).toMatchObject({
+            code: "PROOF_OR_TOKEN_REQUIRED",
+        });
         expect(mockVerifyTicket).not.toHaveBeenCalled();
         expect(mockProofVerify).not.toHaveBeenCalled();
-        expect(mockResolveAndAssociate).toHaveBeenCalledWith([
-            { type: "wallet", value: WALLET_ADDRESS },
-            {
-                type: "anonymous_fingerprint",
-                value: "anon-legacy",
-                merchantId: MERCHANT_ID,
-            },
-        ]);
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
     });
 
-    it("proof + anonymousId arm: verifies as frak-install-v1, observes, never rejects on invalid proof", async () => {
+    it("proof + anonymousId arm: verifies as frak-install-v1 and rejects an invalid one", async () => {
         // The wallet arm can only ever receive a `frak-install-v1` proof (the
         // `#p=` / Play-referrer / pending-action one) — the wallet has no
         // signing key and can never produce a `frak-ensure-v1` proof.
@@ -264,7 +256,13 @@ describe("POST /identity/ensure — resolution order", () => {
             proof: "some-proof",
         });
 
-        expect(response.status).toBe(200);
+        // PROOF_INVALID, not the bare arm's PROOF_OR_TOKEN_REQUIRED: refused
+        // because verification ran and failed. Falling through to the bare
+        // exit would admit a bad proof as though none had been sent.
+        expect(response.status).toBe(403);
+        expect(await response.json()).toMatchObject({
+            code: "PROOF_INVALID",
+        });
         expect(mockVerifyTicket).not.toHaveBeenCalled();
         expect(mockProofVerify).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -274,7 +272,7 @@ describe("POST /identity/ensure — resolution order", () => {
                 anonymousId: "anon-1",
             })
         );
-        expect(mockResolveAndAssociate).toHaveBeenCalled();
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
         // Never latch on a failed proof — `markProofSeen` never clears.
         expect(mockMarkProofSeen).not.toHaveBeenCalled();
     });
@@ -415,13 +413,15 @@ describe("POST /identity/ensure — resolution order", () => {
         expect(mockResolveAndAssociate).not.toHaveBeenCalled();
     });
 
-    it("accepts a body id naming an existing server-minted node", async () => {
+    it("accepts a proven body id naming an existing server-minted node", async () => {
         walletAuthed();
         mockFindNodeByIdentity.mockResolvedValue({ proofSeenAt: null });
+        mockProofVerify.mockResolvedValue({ valid: true });
 
         const response = await postEnsure({
             merchantId: MERCHANT_ID,
             anonymousId: "frakmint_materialised",
+            proof: "a-valid-proof",
         });
 
         expect(response.status).toBe(200);
@@ -552,12 +552,13 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): latch-gat
         expect(mockResolveAndAssociate).not.toHaveBeenCalled();
     });
 
-    it("accepts a header id naming an existing server-minted node", async () => {
+    it("accepts a proven header id naming an existing server-minted node", async () => {
         walletAuthed();
         mockFindNodeByIdentity.mockResolvedValue({ proofSeenAt: null });
+        mockProofVerify.mockResolvedValue({ valid: true });
 
         const response = await postEnsureViaHeader(
-            { merchantId: MERCHANT_ID },
+            { merchantId: MERCHANT_ID, proof: "a-valid-proof" },
             "frakmint_materialised"
         );
 
@@ -565,7 +566,7 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): latch-gat
         expect(mockResolveAndAssociate).toHaveBeenCalled();
     });
 
-    it("allows an unlatched id with no proof at all", async () => {
+    it("refuses an unlatched id with no proof at all", async () => {
         walletAuthed();
         mockFindNodeByIdentity.mockResolvedValue({ proofSeenAt: null });
 
@@ -574,17 +575,13 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): latch-gat
             "anon-sdk"
         );
 
-        expect(response.status).toBe(200);
-        expect(mockProofVerify).not.toHaveBeenCalled();
-        expect(mockFindNodeByIdentity).toHaveBeenCalledWith({
-            type: "anonymous_fingerprint",
-            value: "anon-sdk",
-            merchantId: MERCHANT_ID,
+        expect(response.status).toBe(403);
+        expect(await response.json()).toMatchObject({
+            code: "PROOF_REQUIRED",
         });
-        expect(mockResolveAndAssociate).toHaveBeenCalled();
-        // 🔴 No proof was ever presented (fail-open branch) — the latch must
-        // NOT be written. Writing it here would permanently lock this id out
-        // of ever ensuring again without a key it may not have.
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+        // No proof was presented, so the latch must NOT be written — that
+        // would permanently lock this id out of ever ensuring again.
         expect(mockMarkProofSeen).not.toHaveBeenCalled();
     });
 
@@ -775,5 +772,178 @@ describe("POST /identity/ensure — wallet arm verifies against the real Identit
 
         expect(response.status).toBe(200);
         expect(mockResolveAndAssociate).toHaveBeenCalled();
+    });
+});
+
+describe("POST /identity/ensure — mandatory credential", () => {
+    beforeEach(() => {
+        mockVerifyTicket.mockReset();
+        mockProofVerify.mockReset();
+        mockProofVerifyOrThrow.mockReset();
+        mockProofVerifyOrThrow.mockImplementation(async (params: unknown) => {
+            const result = await mockProofVerify(params);
+            if (!result?.valid) {
+                throw HttpError.forbidden(
+                    "PROOF_INVALID",
+                    "Identity proof failed verification"
+                );
+            }
+        });
+        mockResolveAndAssociate.mockReset();
+        mockWalletVerify.mockReset();
+        mockFindNodeByIdentity.mockReset();
+        mockMarkProofSeen.mockReset();
+        mockResolveAndAssociate.mockResolvedValue({
+            finalGroupId: "group-1",
+            merged: true,
+        });
+    });
+
+    async function postViaHeaderOnly(clientId: string) {
+        return identityEnsureRoutes.handle(
+            new Request("http://localhost/ensure", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-wallet-auth": "valid-wallet-jwt",
+                    "x-frak-client-id": clientId,
+                },
+                body: JSON.stringify({ merchantId: MERCHANT_ID }),
+            })
+        );
+    }
+
+    it("refuses the bare wallet arm", async () => {
+        walletAuthed();
+
+        const response = await postEnsure({
+            merchantId: MERCHANT_ID,
+            anonymousId: "anon-bare",
+        });
+
+        expect(response.status).toBe(400);
+        expect(await response.json()).toMatchObject({
+            code: "PROOF_OR_TOKEN_REQUIRED",
+        });
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+    });
+
+    it("closes the header fall-through by the same exit", async () => {
+        walletAuthed();
+
+        const response = await postViaHeaderOnly("anon-from-header");
+
+        expect(response.status).toBe(400);
+        expect(await response.json()).toMatchObject({
+            code: "PROOF_OR_TOKEN_REQUIRED",
+        });
+    });
+
+    it("leaves the ticket branch untouched", async () => {
+        walletAuthed();
+        mockVerifyTicket.mockResolvedValue({
+            merchantId: MERCHANT_ID,
+            anonymousId: "anon-from-ticket",
+        });
+
+        const response = await postEnsure({
+            merchantId: MERCHANT_ID,
+            ticket: "a-valid-ticket",
+        });
+
+        expect(response.status).toBe(200);
+        expect(mockResolveAndAssociate).toHaveBeenCalled();
+    });
+
+    it("keeps admitting a valid install proof", async () => {
+        walletAuthed();
+        mockProofVerify.mockResolvedValue({ valid: true });
+
+        const response = await postEnsure({
+            merchantId: MERCHANT_ID,
+            anonymousId: "anon-proven",
+            proof: "a-valid-proof",
+        });
+
+        expect(response.status).toBe(200);
+        expect(mockMarkProofSeen).toHaveBeenCalled();
+    });
+
+    it("refuses an invalid install proof rather than falling through to bare", async () => {
+        walletAuthed();
+        mockProofVerify.mockResolvedValue({
+            valid: false,
+            reason: "bad_signature",
+        });
+
+        const response = await postEnsure({
+            merchantId: MERCHANT_ID,
+            anonymousId: "anon-bad-proof",
+            proof: "a-bad-proof",
+        });
+
+        expect(response.status).toBe(403);
+        expect(await response.json()).toMatchObject({ code: "PROOF_INVALID" });
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+    });
+
+    it("refuses a proofless SDK caller", async () => {
+        mockWalletVerify.mockResolvedValueOnce({ address: WALLET_ADDRESS });
+        mockFindNodeByIdentity.mockResolvedValue({ proofSeenAt: null });
+
+        const response = await identityEnsureRoutes.handle(
+            new Request("http://localhost/ensure", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-wallet-sdk-auth": "valid-sdk-jwt",
+                    "x-frak-client-id": "sdk-anon",
+                },
+                body: JSON.stringify({ merchantId: MERCHANT_ID }),
+            })
+        );
+
+        expect(response.status).toBe(403);
+        expect(await response.json()).toMatchObject({
+            code: "PROOF_REQUIRED",
+        });
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+    });
+
+    it("403s an invalid SDK proof as PROOF_INVALID, having verified it", async () => {
+        mockWalletVerify.mockResolvedValueOnce({ address: WALLET_ADDRESS });
+        mockProofVerify.mockResolvedValue({
+            valid: false,
+            reason: "bad_signature",
+        });
+        mockProofVerifyOrThrow.mockImplementation(async (params: unknown) => {
+            const result = await mockProofVerify(params);
+            if (!result?.valid) {
+                throw HttpError.forbidden(
+                    "PROOF_INVALID",
+                    "Identity proof failed verification"
+                );
+            }
+        });
+
+        const response = await identityEnsureRoutes.handle(
+            new Request("http://localhost/ensure", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-wallet-sdk-auth": "valid-sdk-jwt",
+                    "x-frak-client-id": "sdk-anon",
+                },
+                body: JSON.stringify({
+                    merchantId: MERCHANT_ID,
+                    proof: "a-bad-proof",
+                }),
+            })
+        );
+
+        expect(response.status).toBe(403);
+        // Refused because verification RAN and failed — a different
+        // population from the proofless one above.
+        expect(mockProofVerify).toHaveBeenCalled();
     });
 });

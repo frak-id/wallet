@@ -52,29 +52,49 @@ describe("createGetMergeTokenHandler", () => {
         expect(mockTrackEvent).not.toHaveBeenCalled();
     });
 
-    test("sends proof: undefined (no explicit value) when params are absent, matching legacy SDK behaviour", async () => {
+    test("refuses a legacy SDK that sends no proof at all", async () => {
         mockInitiatePost.mockResolvedValue({ data: { mergeToken: "tok" } });
         const handler = createGetMergeTokenHandler();
 
         const result = await handler(undefined, CONTEXT);
 
+        expect(result).toBeNull();
+        expect(mockInitiatePost).not.toHaveBeenCalled();
+    });
+
+    test("falls back to the stored mergeSource proof when the RPC param is absent", async () => {
+        mockInitiatePost.mockResolvedValue({ data: { mergeToken: "tok" } });
+        const handler = createGetMergeTokenHandler();
+
+        const result = await handler(undefined, {
+            ...CONTEXT,
+            mergeSourceProof: "stored-source-proof",
+        } as Parameters<ReturnType<typeof createGetMergeTokenHandler>>[1]);
+
         expect(result).toBe("tok");
-        const body = mockInitiatePost.mock.calls[0][0];
-        expect(body).toEqual({
+        expect(mockInitiatePost).toHaveBeenCalledWith({
             sourceAnonymousId: "client-1",
             merchantId: "merchant-1",
-            proof: undefined,
+            proof: "stored-source-proof",
         });
-        // undefined-valued keys serialise identically to omitted keys.
-        expect(JSON.stringify(body)).toBe(
-            JSON.stringify({
-                sourceAnonymousId: "client-1",
-                merchantId: "merchant-1",
-            })
+        expect(mockTrackEvent).not.toHaveBeenCalled();
+    });
+
+    test("prefers the RPC param over the stored proof", async () => {
+        mockInitiatePost.mockResolvedValue({ data: { mergeToken: "tok" } });
+        const handler = createGetMergeTokenHandler();
+
+        await handler(["fresh-rpc-proof"], {
+            ...CONTEXT,
+            mergeSourceProof: "stored-source-proof",
+        } as Parameters<ReturnType<typeof createGetMergeTokenHandler>>[1]);
+
+        expect(mockInitiatePost).toHaveBeenCalledWith(
+            expect.objectContaining({ proof: "fresh-rpc-proof" })
         );
     });
 
-    test("counts a proofless call and still forwards it", async () => {
+    test("counts a proofless call and refuses it", async () => {
         mockInitiatePost.mockResolvedValue({ data: { mergeToken: "tok" } });
         const handler = createGetMergeTokenHandler();
 
@@ -84,8 +104,8 @@ describe("createGetMergeTokenHandler", () => {
             "merge_initiate_proofless",
             { source: "rpc" }
         );
-        expect(mockInitiatePost).toHaveBeenCalledTimes(1);
-        expect(result).toBe("tok");
+        expect(mockInitiatePost).not.toHaveBeenCalled();
+        expect(result).toBeNull();
     });
 
     test("does not count when merchantId or clientId is missing", async () => {

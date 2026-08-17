@@ -23,13 +23,16 @@ const WALLET_ALREADY_LINKED = "WALLET_ALREADY_LINKED";
 /**
  * Codes a queued action can never satisfy on a later launch: the stored
  * shape lacks a credential the route now demands, and nothing on the retry
- * path can mint one.
+ * path can mint one. The wallet holds no signing key, so a rejected proof
+ * and an expired ticket are as terminal as an absent one.
  */
 const MISSING_CREDENTIAL_CODES = [
     "PROOF_REQUIRED",
     "PROOF_OR_TOKEN_REQUIRED",
     "MISSING_ANONYMOUS_ID",
     "RESERVED_IDENTITY",
+    "PROOF_INVALID",
+    "INVALID_TICKET",
 ] as const;
 
 function errorCode(error: unknown): string | undefined {
@@ -117,13 +120,13 @@ export function fireEnsureActions(
  * failure.
  */
 async function executeEnsure(action: EnsureAction): Promise<void> {
-    // `merchantId`/`anonymousId` always sent, `ticket` and `proof` added on
-    // top when present. The backend resolves ticket -> proof+anonymousId ->
-    // bare anonymousId, so an old-shape action with neither still works.
-    // ROLLOUT-STEP-3.
+    // The backend resolves ticket -> proof+anonymousId -> bare anonymousId.
+    // Once ENSURE_BARE_ARM_ENABLED is disabled the bare arm answers 400
+    // PROOF_OR_TOKEN_REQUIRED and the proof arm 403 PROOF_INVALID; both are
+    // non-retryable, so a stale action drops instead of burning its full TTL.
     const { error } = await authenticatedBackendApi.user.identity.ensure.post({
         merchantId: action.merchantId,
-        anonymousId: action.anonymousId,
+        ...(action.anonymousId && { anonymousId: action.anonymousId }),
         ...(action.ticket && { ticket: action.ticket }),
         ...(action.proof && { proof: action.proof }),
     });

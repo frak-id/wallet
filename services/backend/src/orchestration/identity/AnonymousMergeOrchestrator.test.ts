@@ -72,11 +72,28 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
     });
 
     describe("initiateMerge — sourceAnonymousId branch (latch-gated)", () => {
-        it("allows an unlatched legacy/derived sourceAnonymousId with no proof at all", async () => {
+        it("refuses a proofless unlatched source", async () => {
             const ctx = makeOrchestrator();
             ctx.identityRepository.findNodeByIdentity.mockResolvedValue({
                 proofSeenAt: null,
             });
+
+            await expect(
+                ctx.orchestrator.initiateMerge({
+                    merchantId: MERCHANT_ID,
+                    sourceAnonymousId: "legacy-id",
+                })
+            ).rejects.toMatchObject({ code: "PROOF_REQUIRED", status: 403 });
+
+            expect(
+                ctx.identityOrchestrator.resolveAndAssociate
+            ).not.toHaveBeenCalled();
+            expect(ctx.identityRepository.markProofSeen).not.toHaveBeenCalled();
+        });
+
+        it("still admits a valid proof", async () => {
+            const ctx = makeOrchestrator();
+            ctx.identityProofService.verify.mockResolvedValue({ valid: true });
             ctx.identityOrchestrator.resolveAndAssociate.mockResolvedValue({
                 finalGroupId: "group-1",
             });
@@ -88,18 +105,32 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
             await expect(
                 ctx.orchestrator.initiateMerge({
                     merchantId: MERCHANT_ID,
-                    sourceAnonymousId: "legacy-id",
+                    sourceAnonymousId: "derived-id",
+                    proof: "a-valid-proof",
                 })
             ).resolves.toMatchObject({ mergeToken: MERGE_TOKEN });
 
-            expect(
-                ctx.identityOrchestrator.resolveAndAssociate
-            ).toHaveBeenCalled();
-            expect(ctx.identityProofService.verify).not.toHaveBeenCalled();
-            // No proof was presented (fail-open branch), so the latch must
-            // NOT be written — that would permanently lock this legacy id
-            // out of ever being a merge source again.
-            expect(ctx.identityRepository.markProofSeen).not.toHaveBeenCalled();
+            expect(ctx.identityRepository.markProofSeen).toHaveBeenCalled();
+        });
+
+        it("refuses an invalid proof as PROOF_INVALID, not PROOF_REQUIRED", async () => {
+            const ctx = makeOrchestrator();
+            ctx.identityProofService.verify.mockResolvedValue({
+                valid: false,
+                reason: "bad_signature",
+            });
+
+            await expect(
+                ctx.orchestrator.initiateMerge({
+                    merchantId: MERCHANT_ID,
+                    sourceAnonymousId: "some-id",
+                    proof: "a-bad-proof",
+                })
+            ).rejects.toMatchObject({ code: "PROOF_INVALID", status: 403 });
+
+            // Refused because verification RAN and failed, not because the
+            // credential was absent. Collapsing the two makes a refusal lie.
+            expect(ctx.identityProofService.verify).toHaveBeenCalled();
         });
 
         it("rejects a LATCHED sourceAnonymousId with no proof", async () => {

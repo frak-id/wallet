@@ -13,6 +13,7 @@ export function buildInstallUrl({
     clientId,
     checkoutToken,
     installProof,
+    allowCredentialless = false,
 }: {
     /** Omit for a same-origin link. */
     baseUrl?: string;
@@ -21,8 +22,14 @@ export function buildInstallUrl({
     /** Shopify credential, for a buyer whose surface holds an order and no client id. */
     checkoutToken?: string;
     installProof?: string;
+    /**
+     * Build a merchant-only link instead of returning `null`. The destination
+     * then renders the store CTA with no code, which is the whole surface for
+     * a page that holds no credential to mint one from.
+     */
+    allowCredentialless?: boolean;
 }): string | null {
-    if (!(clientId || checkoutToken)) return null;
+    if (!(clientId || checkoutToken || allowCredentialless)) return null;
 
     const params = [`m=${encodeURIComponent(merchantId)}`];
     if (clientId) params.push(`a=${encodeURIComponent(clientId)}`);

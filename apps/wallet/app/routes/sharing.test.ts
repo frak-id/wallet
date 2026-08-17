@@ -80,27 +80,21 @@ describe("/sharing → /install forwarding", () => {
                 merchantId: "merchant-1",
                 checkoutToken: "tok-1",
             })
-        ).toEqual({ m: "merchant-1", a: undefined, checkoutToken: "tok-1" });
+        ).toEqual({ m: "merchant-1", checkoutToken: "tok-1" });
     });
 
-    it("carries both credentials when the page resolved a clientId too", () => {
+    it("never forwards an `a=` this page holds no credential for", () => {
         expect(
             toInstallSearch({
                 merchantId: "merchant-1",
-                clientId: "client-1",
                 checkoutToken: "tok-1",
             })
-        ).toEqual({
-            m: "merchant-1",
-            a: "client-1",
-            checkoutToken: "tok-1",
-        });
+        ).not.toHaveProperty("a");
     });
 
     it("stays undefined-valued rather than empty-string when nothing is known", () => {
         expect(toInstallSearch({})).toEqual({
             m: undefined,
-            a: undefined,
             checkoutToken: undefined,
         });
     });

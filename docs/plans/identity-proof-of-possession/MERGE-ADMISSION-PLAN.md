@@ -783,20 +783,21 @@ on releases that reach every embedded merchant page on the next wallet deploy. `
 only route still waiting, and what it waits for is the legacy-id population (§6, bucket E) — not
 client propagation, not a store binary, not `minVersion`.
 
-### The 16 `ROLLOUT-STEP-3` markers, classified
+### The `ROLLOUT-STEP-3` markers, classified
 
-10 non-doc files, 16 occurrences.
+The set started at 16 occurrences across 10 non-doc files. Bucket D retired half of them by
+shipping the work they named. **8 occurrences across 6 non-doc files remain**, and every one is now
+gated on a flag or a counter rather than on a release — regenerate this table with
+`grep -rn "ROLLOUT-STEP-3" --include=*.ts --include=*.tsx .` after any change.
 
 | Marker | Classification |
 |---|---|
-| `ensure.ts:43`, `:78`, `:362` (3) | **Blocked on a wallet-side change, not on the binary** — the `/sharing` hop and the header fallback. Owned by T3.2 |
-| `ensure.ts:101` ("should the install proof be exchanged for a ticket?") | **Closable now — it is a decision, not a dependency.** Answered: keep direct acceptance (§10, accepted proof leak). Record the decision, delete the marker |
-| `installCode.ts:105` (`anonymousId` kept for old binaries) | **Closable now, wallet-only, two deploys.** No SDK involvement. Owned by T3.7 |
-| `pending-actions/types.ts:22`, `drainEnsures.ts:103`, `pendingActionsStore.ts:37`, `:46`, `pendingActionsStore.test.ts:29` (5) | **Wallet-only, gated on the bare arm going.** Same deploy as T3.2 |
-| `lifecycleHandler.ts:217`, `:232` (2) | **Not blocked on SDK propagation.** The fallback exists for a `resolved-config` payload with no signed `sdkIdentity`, which D1 treats as an empty population — but it is unmeasured, so the gate is `merge_execute_target_source{source}` (a listener event, not a backend counter) ≈0. Owned by T3.4 |
-| `AnonymousMergeOrchestrator.ts:112` (+ `TODO(merge-initiate-proof)` `:117-121`) | **Blocked only on the listener's own call.** The TODO's claim that "the SDK's RPC path already sends one" holds for every live SDK; the residue is `mergeTokenQueryOptions`, which T2.3 supplies. Owned by T2.3 → T3.11 → T3.1a |
-| `mergeTokenQueryOptions.ts:41` | **Blocked on nothing but the missing proof**, which T2.3 supplies from the SDK. Owned by T2.3, then T3.11's refusal. Its in-file note about the 10-minute window is answered by re-pushing (§2.1) |
-| `latchedProof.ts:80`, `:118` (2) | Cosmetic tails; they follow the last arm to flip |
+| `ensure.ts` — the bare wallet exit (1) | **Closed.** The `/sharing` hop no longer forwards `a=` and the exit now throws `PROOF_OR_TOKEN_REQUIRED` unconditionally. The header fall-through lands on this same exit, so it needs no marker of its own. The marker survives only until the dead branch is deleted |
+| `ensure.ts` — "should the install proof be exchanged for a ticket?" (1) | **A decision, not a dependency.** Answered: keep direct acceptance (§10, accepted proof leak). It becomes live the moment the bare exit closes, since the proof then becomes a sufficient credential |
+| `installCode.ts` — `anonymousId` on `resolve`'s 200 (1) | **Half done.** T3.7 shipped the wallet's read; the backend stops sending it in a later deploy, in that order |
+| `pending-actions/types.ts`, `pendingActionsStore.ts`, `pendingActionsStore.test.ts` (3) | **Live until the queue drains.** The bare arm now refuses, so these run dry over the store's 7-day TTL. Every refusal code the route can produce — `PROOF_OR_TOKEN_REQUIRED`, `PROOF_REQUIRED`, `PROOF_INVALID`, `MISSING_ANONYMOUS_ID`, `RESERVED_IDENTITY`, `INVALID_TICKET` — is non-retryable in `drainEnsures`, which is what stops a stale action retrying for its full TTL |
+| `latchedProof.ts` (2) | Cosmetic tails; they follow the last arm to flip |
+| **Retired by bucket D** | `AnonymousMergeOrchestrator.ts` + its `TODO(merge-initiate-proof)` (T2.3 supplied the proof and the arm now refuses without one); `mergeTokenQueryOptions.ts` (same); `lifecycleHandler.ts` ×2 (T3.4 landed, both arms refuse); `drainEnsures.ts` (deleted, not reworded) |
 
 ### Per-route readiness
 
@@ -892,13 +893,15 @@ captured at module load (`api/common/version.ts`, needs a pod restart).
    The shape already exists as `verifyProofUnenforced` (`latchedProof.ts:79-123`), and it is the only
    thing that converts an undecidable cutover condition into a measured would-403 rate per merchant
    per caller. It stays for this whole round, because the latch stays.
-2. **Four separate env kill switches, read per request** (not at module load):
-   `MERGE_INITIATE_PROOF_REQUIRED`, `MERGE_EXECUTE_PROOF_REQUIRED`, `ENSURE_SDK_PROOF_REQUIRED`,
-   `ENSURE_BARE_ARM_ENABLED`. One flag is wrong, and one shared merge flag is wrong too: the two merge
-   arms are now separate items in separate buckets (T3.1a, T3.1b) with very different blast radii and
-   revert urgency. They must be plumbed through
-   `infra/gcp/secrets.ts` **and set in `deploy.yml`**, or they revert on the next deploy (the same
-   defect that already makes `MIN_VERSION_IOS/ANDROID` silently reset to `0.0.0`).
+2. **~~Four separate env kill switches, read per request~~ — SUPERSEDED, and the reasoning was
+   wrong.** The flips shipped this way once and the machinery was deleted: it cost ~900 lines,
+   770 of them tests proving both settings behave, to guard a decision the error log already
+   shows. A refused request answers `403`/`400` with a named code, per route, in data that already
+   exists. Enforcement is unconditional and the counters went back to measuring.
+   Note also that the schema flip this document proposes throughout is **not implementable** —
+   each route has a legitimately proofless arm, and Elysia strips unknown properties before
+   validation, so a discriminated union body silently matches the looser variant and drops the
+   field that selects the strict arm. Enforcement belongs in the handler.
 3. **T3.5 cannot have a client-side kill switch.** `INSTALL_TICKET_TTL_MS` is compiled into the wallet
    bundle and the store binary. Make the *server* ticket TTL an env value, decouple it from
    `pendingActionsStore`, and enforce `clientTTL ≥ serverTTL`.

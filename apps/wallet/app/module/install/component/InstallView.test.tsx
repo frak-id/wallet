@@ -371,4 +371,29 @@ describe("InstallView — install-code branch, post-install detection", () => {
             screen.queryByText("installCode.infoTitle")
         ).not.toBeInTheDocument();
     });
+
+    test("no credential at all renders the download CTA, never a codeless code view", async ({
+        queryWrapper,
+    }) => {
+        render(
+            <InstallView
+                search={{ m: "merchant-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(
+                screen.getByText("installCode.codelessTitle")
+            ).toBeInTheDocument()
+        );
+        expect(screen.getByText("installCode.download")).toBeInTheDocument();
+        expect(screen.queryByText("installCode.title")).not.toBeInTheDocument();
+        expect(
+            screen.queryByText("installCode.infoTitle")
+        ).not.toBeInTheDocument();
+        expect(mockGenerateCode).not.toHaveBeenCalled();
+    });
 });

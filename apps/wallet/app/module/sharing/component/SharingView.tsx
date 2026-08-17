@@ -26,7 +26,7 @@ export type SharingNavigation = {
     /** Go to the install page, carrying whichever credential this page holds. */
     toInstall: (params: {
         merchantId?: string;
-        clientId?: string;
+        // No `clientId`: this page holds no keypair, so it never carries one.
         checkoutToken?: string;
         /** Absolute URL built by `buildInstallUrl`, for surfaces without a router. */
         installUrl: string;
@@ -92,12 +92,18 @@ export function SharingView({
     // Branding falls back to the merchant config unless the caller overrode it.
     const { data: config } = useMerchantResolvedConfig({ merchantId });
 
-    // No `#p=` proof here, unlike the listener's builder: this page has no SDK
-    // keypair to sign with.
+    // Neither credential travels from here: this page has no SDK keypair, so
+    // it can sign no `#p=` proof, and an unprovable `a=` is refused once
+    // ensure demands one. Gate 2's `checkoutToken` is the exception. The link
+    // is still built without either, or the store CTA behind it goes dead.
     const installUrl = useMemo(() => {
         if (!merchantId) return null;
-        return buildInstallUrl({ merchantId, clientId, checkoutToken });
-    }, [merchantId, clientId, checkoutToken]);
+        return buildInstallUrl({
+            merchantId,
+            checkoutToken,
+            allowCredentialless: true,
+        });
+    }, [merchantId, checkoutToken]);
 
     const controller = useSharingPageController({
         merchantId,
@@ -150,7 +156,6 @@ export function SharingView({
                 if (!installUrl) return;
                 navigation.toInstall({
                     merchantId,
-                    clientId,
                     checkoutToken,
                     installUrl,
                 });

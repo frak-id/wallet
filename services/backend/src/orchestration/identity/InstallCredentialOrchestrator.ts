@@ -5,9 +5,25 @@ import {
     log,
 } from "@backend-infrastructure";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
+import { CODE_TTL_HOURS } from "../../domain/identity/repositories/InstallCodeRepository";
 import { SERVER_MINTED_ID_PREFIX } from "../../domain/identity/schemas/serverMintedId";
 import type { PurchaseClaimRepository } from "../../domain/purchases/repositories/PurchaseClaimRepository";
 import type { PurchaseRepository } from "../../domain/purchases/repositories/PurchaseRepository";
+
+/**
+ * How long a pending `purchase_claims` row may still serve as a credential.
+ *
+ * At `generate` the claim only covers the pixel-before-webhook race, whose
+ * normal latency is seconds; the webhook then deletes the row on reconcile, so
+ * anything still pending an hour later is a failed webhook rather than a race —
+ * and that row is forgeable, since the tracking route writes it unauthenticated.
+ * At `resolve` the buyer has been to a store and back, so the bound is the
+ * code's own TTL: a code that outlived it cannot be presented at all.
+ */
+const CLAIM_MAX_AGE_MS: Record<InstallCredentialCallSite, number> = {
+    generate: 60 * 60 * 1000,
+    resolve: CODE_TTL_HOURS * 60 * 60 * 1000,
+};
 
 /**
  * Outcome of resolving a Shopify checkout token: an id, a `deferred` retry at
@@ -131,15 +147,29 @@ export class InstallCredentialOrchestrator {
             return null;
         }
 
+        const claimAge = claim.createdAt
+            ? Date.now() - claim.createdAt.getTime()
+            : null;
+        if (claimAge !== null && claimAge > CLAIM_MAX_AGE_MS[callSite]) {
+            infraMetrics.installClaimAge("expired", callSite);
+            log.warn(
+                { merchantId, purchaseToken: checkoutToken, claimAge },
+                "Refused a purchase claim past the age bound"
+            );
+            return null;
+        }
+        // A null `created_at` is unreachable for rows Postgres wrote: the
+        // column defaults to now() and no writer overrides it. Accepted and
+        // counted rather than refused, so a legitimate buyer never pays for a
+        // typing artefact — the counter is what would prove otherwise.
+        infraMetrics.installClaimAge(
+            claimAge === null ? "undated" : "fresh",
+            callSite
+        );
+
         infraMetrics.installCredentialClaimArm(merchantId, callSite);
         log.warn(
-            {
-                merchantId,
-                purchaseToken: checkoutToken,
-                claimAge: claim.createdAt
-                    ? Date.now() - claim.createdAt.getTime()
-                    : null,
-            },
+            { merchantId, purchaseToken: checkoutToken, claimAge },
             "Install credential resolved from an unvalidated purchase claim"
         );
         return claim.claimingIdentityGroupId;
