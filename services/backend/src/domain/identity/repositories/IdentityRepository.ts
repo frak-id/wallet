@@ -33,13 +33,12 @@ export class IdentityRepository {
     });
 
     private normalizeValue(type: IdentityType, value: string): string {
-        if (type === "wallet") {
-            return value.toLowerCase();
-        }
         if (type === "email") {
             return value.trim().toLowerCase();
         }
-        return value;
+        // `anonymous_fingerprint` is compared case-insensitively against the
+        // key-derived id, so raw casing would persist one identity as two nodes.
+        return value.toLowerCase();
     }
 
     private buildIdentityCacheKey(

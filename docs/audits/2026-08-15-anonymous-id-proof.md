@@ -4,8 +4,10 @@
 
 ## Status — remediated 2026-08-18
 
-**Every P0 and every High in this report is closed, except AID-017.** The programme that closed
-them is recorded in
+**Both criticals and every P0 but AID-017 are closed.** Of the rest, AID-003, AID-008,
+AID-013, AID-015 and AID-017 are open, and AID-005 is open by design — it is the population
+`/merge/execute` is deliberately left unflipped for. The programme that closed the others is
+recorded in
 [`../plans/identity-proof-of-possession/README.md`](../plans/identity-proof-of-possession/README.md),
 which is the authoritative document for what remains open and for the invariants that must not be
 undone. The surface map and admission plan this file used to point at are deleted; their `G*` gap
@@ -41,16 +43,16 @@ cite them still resolve. Status is current.
 | AID-001 | Critical | **P0-now** | Unauthenticated `install-code/generate`+`resolve` launders any `anonymousId` into an install ticket whose branch in `ensure` never reads the latch | **Closed.** `generate`'s anonymous arm requires a valid proof, so a ticket is only ever minted for a proven id or a server-derived one |
 | AID-020 | Critical | **P0-now** | Any wallet can claim an arbitrary unlatched `anonymousId` via `merge/initiate`+`merge/execute` in two calls, with no proof and no install code | **Closed at step 1.** `/merge/initiate`'s anon-source arm refuses without a proof, breaking the chain before `execute` is reached |
 | AID-003 | High | P1-next | Merge tokens are never consumed: a captured `?fmt=` is a 60-min unlimited-use group-capture capability | **Open.** Reach now requires a proof to obtain, which bounds who can mint one, but a captured token is still replayable for its TTL |
-| AID-004 | High | P1-next | A `localStorage` quota error deletes a valid private key, then migration silently orphans the identity | **Open.** Client-side, untouched |
+| AID-004 | High | P1-next | A `localStorage` quota error deletes a valid private key, then migration silently orphans the identity | **Closed.** `persistIdentity` sits outside `ensureIdentityKey`'s guarded block, so a write failure never reaches the catch that clears the key; the legacy marker is written before the key/id pair, and `pendingLegacyId` is returned from memory whether or not the write landed, so the merge retries next visit. Two regression tests pin both halves |
 | AID-005 | High | P1-next | The legacy id survives migration as a permanently unlatched alias for a latched identity | **Open by design.** This is the population `/merge/execute` is deliberately left unflipped for |
 | AID-018 | High | **P0-now** | The `ROLLOUT-STEP-3` marker set is incomplete: three backend sites carrying the same bypass have no marker | **Closed.** The unmarked door was the `x-frak-client-id` header fall-through; it lands on the same bare exit, which now refuses |
-| AID-006 | Medium | P1-next | `anonymous_fingerprint` is case-normalised for proof verification but not for persistence | **Open.** `IdentityRepository#normalizeValue` still passes it through unchanged |
+| AID-006 | Medium | P1-next | `anonymous_fingerprint` is case-normalised for proof verification but not for persistence | **Closed.** `IdentityRepository#normalizeValue` now lower-cases it, and that one method governs both lookup and persist. Safe because ids are lowercase by construction — `deriveClientIdFromHash` builds them from `bytesToHex`, and server-minted ones from `crypto.randomUUID()` |
 | AID-007 | Medium | P1-next | Three identity limiters share `name`+`seed` and collapse into one bucket | **Closed.** Distinct buckets: `identity-ensure`, `identity-merge`, `identity-install-code-generate`, `identity-install-code-resolve` |
 | AID-008 | Medium | P1-next | The `frak-sso-v1` proof rides in a search param and is never stripped from the URL | **Open.** Client-side, untouched |
 | AID-009 | Medium | P1-next | `getMergeToken` signs over `config.metadata.merchantId`, not the resolved one | **Closed.** The handler reads the resolved `merchantId` off the listener context |
 | AID-010 | Medium | P1-next | `weightCache` is not invalidated on wallet attach, so `WALLET_CONFLICT` can read stale state | **Closed.** Invalidation had already shipped; the finding was stale when written |
 | AID-011 | Medium | P2-when-picked-up | `WALLET_ALREADY_LINKED` is unreportable on the standalone `/install` surface | **Closed.** Conflict surface added, bundle delta measured against the eager budget |
-| AID-012 | Medium | P1-next | Inbound `fmt` is consume-on-read with new hard-failure modes and no retry | **Open.** Client-side, untouched |
+| AID-012 | Medium | P1-next | Inbound `fmt` is consume-on-read with new hard-failure modes and no retry | **Mostly closed.** The redemption itself now retries a network failure or a 5xx twice (~5 s) in `lifecycleHandler`, where the HTTP status is actually observable; a 4xx is never retried, so a new refusal code cannot become retryable by omission. Safe to repeat because the token is not consumed server-side (AID-003). Residual: a page closed mid-backoff, and the SDK→listener `postMessage` hop, which has no ack — both need a durable queue, which would put a replayable group-capture token at rest on disk |
 | AID-019 | Medium | P1-next | The install ticket is 7-day, non-single-use, and one code yields up to 20 tickets | **Partly closed, partly accepted.** TTL is env-driven and clamped; multi-use is now a recorded decision in `jwt.ts` — a burn-set deadlocks the wallet's retry loop. The 20-per-code fan-out stands |
 | AID-013 | Low | P2-when-picked-up | No test pins cross-merchant proof scoping (property holds; coverage does not) | **Open.** Still the cheapest item outstanding |
 | AID-014 | Low | P1-next | Every validity window in `README.md` is wrong, and the fragment-only rule is absolute where the code is not | **Closed.** That README was rewritten; windows are no longer restated where they can drift |

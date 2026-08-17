@@ -1,5 +1,6 @@
 import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { IdentityType } from "../schemas";
 import { IdentityRepository } from "./IdentityRepository";
 
 const { anonymousNodes, findFirstMock } = vi.hoisted(() => {
@@ -125,5 +126,39 @@ describe("IdentityRepository.latchServerMintedProof", () => {
         const query = new PgDialect().sqlToQuery(captured.condition as never);
         expect(query.params).toContain("frakmint\\_%");
         expect(query.params).toContain("anon-1");
+    });
+});
+
+describe("IdentityRepository.findGroupByIdentity", () => {
+    beforeEach(() => {
+        anonymousNodes.length = 0;
+        findFirstMock.mockClear();
+    });
+
+    async function capturedWhereFor(type: IdentityType, value: string) {
+        await new IdentityRepository().findGroupByIdentity({
+            type,
+            value,
+            merchantId: "merchant-1",
+        });
+        const [options] = findFirstMock.mock.calls.at(-1) ?? [];
+        return new PgDialect().sqlToQuery(
+            (options as unknown as { where: unknown }).where as never
+        );
+    }
+
+    it("lower-cases an anonymous fingerprint, so one id cannot persist as two nodes", async () => {
+        const query = await capturedWhereFor(
+            "anonymous_fingerprint",
+            "7F3A9B21-4C5D-4E6F-8A9B-0C1D2E3F4A5B"
+        );
+
+        expect(query.params).toContain("7f3a9b21-4c5d-4e6f-8a9b-0c1d2e3f4a5b");
+    });
+
+    it("still trims an email", async () => {
+        const query = await capturedWhereFor("email", "  Bob@Example.COM ");
+
+        expect(query.params).toContain("bob@example.com");
     });
 });

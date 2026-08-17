@@ -38,10 +38,10 @@ proven** — precisely the pre-install population holding unsettled attribution.
 | 3 | **`/merge/execute` proof (T3.1b)** | The deliberate exception. See §3 |
 | 4 | **`anonymousId` off `install-code/resolve`'s 200** | The wallet half shipped: the current wallet no longer reads it. The backend stops sending it in a later backend-only deploy — that order, never the reverse, so the persisted store stays readable by a rolled-back build |
 | 5 | **AID-017 — bind `frak-ensure-v1`** | Its binding is empty, making it a 30-day bearer credential. Changing a signed message needs ~30 days of dual-accept across two native store binaries. Real, scheduled, not urgent |
-| 6 | **AID-006 — case-fold `anonymous_fingerprint` on persist** | `IdentityProofService` compares `anonymousId.toLowerCase()`, but `IdentityRepository#normalizeValue` passes `anonymous_fingerprint` through unchanged. A mixed-case id therefore verifies but stores as a distinct row. Unmeasured whether any client emits one |
+| 6 | **AID-012 — the last mile of `fmt` retry** | The redemption retries a blip, but only while the page lives. A page closed mid-backoff still loses the merge, and the SDK→listener `postMessage` hop has no ack at all, so a send that never arrives is invisible to both sides. Closing either needs a durable queue, and the thing being queued is a token that stays replayable for 60 minutes — putting it at rest on disk makes AID-003 worse. Do these two together or not at all |
 | 7 | **AID-003 / AID-019 — credential reuse windows** | A merge token is a 60-minute unlimited-use group-capture capability if captured; an install ticket is 7-day multi-use and one code yields up to 20. `jwt.ts` records the reasoning for the ticket (a burn-set deadlocks the wallet's retry loop). The merge token has no such defence and no ticket |
 | 8 | **AID-013 — no cross-merchant proof-scoping test** | The property holds and is load-bearing; nothing pins it. Cheapest item on this list |
-| 9 | **AID-004, AID-005, AID-008, AID-012, AID-015** | Client-side and codec findings, untouched by this programme. See the audit record |
+| 9 | **AID-005, AID-008, AID-015** | Client-side and codec findings, untouched by this programme. See the audit record |
 
 ## 3. The one route that must not be flipped
 

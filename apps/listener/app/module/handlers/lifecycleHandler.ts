@@ -235,10 +235,70 @@ function resolveMergeTarget(sdkIdentity: unknown): {
     return {};
 }
 
+/** Two retries, ~5s total: long enough for a blip, short enough to outlive. */
+const MERGE_RETRY_DELAYS_MS = [1_000, 4_000];
+
+type MergeBody = {
+    mergeToken: string;
+    targetAnonymousId: string;
+    merchantId: string;
+    proof?: string;
+};
+
+/**
+ * One redemption attempt. A 4xx is the backend's decision and is reported as
+ * final, so a new refusal code cannot become retryable by omission; only a
+ * network failure or a 5xx is worth another try.
+ */
+async function attemptMerge(
+    body: MergeBody
+): Promise<{ retryable: boolean; errorType?: string }> {
+    try {
+        const { error } =
+            await authenticatedBackendApi.user.identity.merge.execute.post(
+                body
+            );
+        if (!error) return { retryable: false };
+
+        const status = (error as { status?: number }).status;
+        return {
+            retryable: status === undefined || status >= 500,
+            errorType:
+                (error as { value?: { code?: string } })?.value?.code ??
+                "unknown",
+        };
+    } catch (error) {
+        return {
+            retryable: true,
+            errorType: error instanceof Error ? error.name : "unknown",
+        };
+    }
+}
+
+/** The token stays replayable for its TTL, which is what makes a repeat safe. */
+async function postMergeWithRetry(
+    body: MergeBody
+): Promise<string | undefined> {
+    for (let attempt = 0; ; attempt++) {
+        const { retryable, errorType } = await attemptMerge(body);
+        if (!errorType) return undefined;
+
+        if (!retryable || attempt >= MERGE_RETRY_DELAYS_MS.length) {
+            if (retryable) {
+                console.warn("Unable to merge client identities", errorType);
+            }
+            return errorType;
+        }
+        await new Promise((resolve) =>
+            setTimeout(resolve, MERGE_RETRY_DELAYS_MS[attempt])
+        );
+    }
+}
+
 /**
  * Redeem the `?fmt=` merge token the in-app-browser escape carried over.
  * Fire-and-forget: the escape already happened, so a failure costs the merge
- * hop and nothing the user can see.
+ * hop and nothing the user can see — which is why it retries a blip first.
  */
 function executeInAppRedirectMerge(
     pendingMergeToken: string,
@@ -259,35 +319,24 @@ function executeInAppRedirectMerge(
         return;
     }
 
-    authenticatedBackendApi.user.identity.merge.execute
-        .post({
-            mergeToken: pendingMergeToken,
-            targetAnonymousId,
-            merchantId,
-            proof,
-        })
-        .then(({ error }) => {
-            if (error) {
-                trackEvent("identity_ensure_failed", {
-                    source: "inapp_redirect",
-                    error_type:
-                        (error as { value?: { code?: string } })?.value?.code ??
-                        "unknown",
-                });
-                return;
-            }
-            trackEvent("identity_ensure_succeeded", {
-                source: "inapp_redirect",
-                duration_ms: Date.now() - startedAt,
-            });
-        })
-        .catch((error) => {
+    postMergeWithRetry({
+        mergeToken: pendingMergeToken,
+        targetAnonymousId,
+        merchantId,
+        proof,
+    }).then((errorType) => {
+        if (errorType) {
             trackEvent("identity_ensure_failed", {
                 source: "inapp_redirect",
-                error_type: error instanceof Error ? error.name : "unknown",
+                error_type: errorType,
             });
-            console.warn("Unable to merge client identities", error);
+            return;
+        }
+        trackEvent("identity_ensure_succeeded", {
+            source: "inapp_redirect",
+            duration_ms: Date.now() - startedAt,
         });
+    });
 }
 
 async function handleResolvedConfig(

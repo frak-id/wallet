@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks — must be declared before any imports from the module under
@@ -416,6 +416,86 @@ describe("clientLifecycleHandler — resolved-config", () => {
         expect(mockTrackEvent).toHaveBeenCalledWith("identity_ensure_failed", {
             source: "inapp_redirect",
             error_type: "no_merge_target",
+        });
+    });
+});
+
+describe("clientLifecycleHandler — merge redemption retry", () => {
+    function provenData() {
+        return baseData({
+            pendingMergeToken: "the-merge-token",
+            sdkAnonymousId: "sdk-anon-id",
+            sdkIdentity: {
+                anonymousId: "sdk-anon-id",
+                proofs: { merge: "the-merge-proof" },
+            },
+        });
+    }
+
+    async function redeem() {
+        await clientLifecycleHandler(
+            { clientLifecycle: "resolved-config", data: provenData() },
+            CONTEXT
+        );
+        await vi.advanceTimersByTimeAsync(10_000);
+    }
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    test("retries a 5xx and reports the success that follows it", async () => {
+        mockMergeExecutePost
+            .mockResolvedValueOnce({ error: { status: 503 } })
+            .mockResolvedValueOnce({ error: undefined });
+
+        await redeem();
+
+        expect(mockMergeExecutePost).toHaveBeenCalledTimes(2);
+        expect(mockTrackEvent).toHaveBeenCalledWith(
+            "identity_ensure_succeeded",
+            expect.objectContaining({ source: "inapp_redirect" })
+        );
+    });
+
+    test("retries a thrown network failure", async () => {
+        mockMergeExecutePost
+            .mockRejectedValueOnce(new Error("NetworkError"))
+            .mockResolvedValueOnce({ error: undefined });
+
+        await redeem();
+
+        expect(mockMergeExecutePost).toHaveBeenCalledTimes(2);
+    });
+
+    test("never retries a 4xx, so a refusal stays one request", async () => {
+        mockMergeExecutePost.mockResolvedValue({
+            error: { status: 403, value: { code: "PROOF_REQUIRED" } },
+        });
+
+        await redeem();
+
+        expect(mockMergeExecutePost).toHaveBeenCalledTimes(1);
+        expect(mockTrackEvent).toHaveBeenCalledWith("identity_ensure_failed", {
+            source: "inapp_redirect",
+            error_type: "PROOF_REQUIRED",
+        });
+    });
+
+    test("gives up after the bounded retries rather than looping", async () => {
+        mockMergeExecutePost.mockResolvedValue({ error: { status: 500 } });
+
+        await redeem();
+
+        expect(mockMergeExecutePost).toHaveBeenCalledTimes(3);
+        expect(mockTrackEvent).toHaveBeenCalledWith("identity_ensure_failed", {
+            source: "inapp_redirect",
+            error_type: "unknown",
         });
     });
 });
