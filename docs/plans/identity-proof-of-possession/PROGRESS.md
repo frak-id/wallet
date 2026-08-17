@@ -318,6 +318,13 @@ load-bearing now for a simpler reason: it is what makes the counter a count of w
 rather than of what survived. Every arm still pins that an **invalid** proof is refused because
 verification ran, not because the credential was absent.
 
+That is also why the bare arm reports `class="absent"` and not `absent_unlatched`. Everywhere else
+those two names are decided by an actual latch read; the bare arm refuses without doing one, and a
+latched id reaches it too — a stale queued action for an id that has since proved itself. Emitting
+`absent_unlatched` there would assert a fact nothing checked, and adding the lookup would buy a
+database read on a refusal path for a number nobody acts on. The ticket arm's `n/a` is the same
+kind of honesty: a receipt is not a credential class.
+
 
 ### The `ensure` door inventory, and why one throw closes three
 

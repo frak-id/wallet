@@ -93,6 +93,13 @@ export type IdentityEnsureArm =
     | "sdk";
 
 /**
+ * `n/a` is the ticket arm, whose receipt is not a credential class. `absent`
+ * is the bare arm, which refuses without reading a latch — so it may not claim
+ * `absent_unlatched`, a latched id reaches it too.
+ */
+export type IdentityEnsureArmClass = IdentityCredentialClass | "n/a" | "absent";
+
+/**
  * No `merchant` label: `merchantId` arrives unvalidated in the body of an
  * unauthenticated route and the emission necessarily precedes `validateToken`,
  * so labelling it would let any caller mint unbounded series. The per-merchant
@@ -204,7 +211,7 @@ export const infraMetrics = {
     },
     identityEnsureArm(
         arm: IdentityEnsureArm,
-        credentialClass: IdentityCredentialClass | "n/a"
+        credentialClass: IdentityEnsureArmClass
     ) {
         identityEnsureArmTotal.inc({ arm, class: credentialClass });
     },

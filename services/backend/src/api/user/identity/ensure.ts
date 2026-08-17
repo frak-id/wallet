@@ -137,8 +137,10 @@ async function resolveWalletEnsureAnonymousId(params: {
     }
 
     // Counted before the throw: this is how the refused population stays
-    // visible now that the credential-less exit is closed.
-    infraMetrics.identityEnsureArm("wallet_bare", "absent_unlatched");
+    // visible now that the credential-less exit is closed. Not
+    // `absent_unlatched` — no latch is read here, and a latched id lands here
+    // too.
+    infraMetrics.identityEnsureArm("wallet_bare", "absent");
     throw HttpError.badRequest(
         "PROOF_OR_TOKEN_REQUIRED",
         "An install ticket or a proof of possession is required"

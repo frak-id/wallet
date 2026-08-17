@@ -241,7 +241,7 @@ describe("POST /identity/ensure — resolution order", () => {
         expect(mockResolveAndAssociate).not.toHaveBeenCalled();
         expect(mockInfraMetrics.identityEnsureArm).toHaveBeenCalledWith(
             "wallet_bare",
-            "absent_unlatched"
+            "absent"
         );
     });
 
@@ -528,7 +528,7 @@ describe("POST /identity/ensure — resolution order", () => {
         });
         expect(mockInfraMetrics.identityEnsureArm).toHaveBeenCalledWith(
             "wallet_bare",
-            "absent_unlatched"
+            "absent"
         );
     });
 });
