@@ -71,6 +71,17 @@ vi.mock("../../../../src/orchestration/context", () => ({
     },
 }));
 
+const { mockInfraMetrics } = vi.hoisted(() => ({
+    mockInfraMetrics: {
+        identityInstallCodeGenerateCredential: vi.fn(),
+    },
+}));
+
+vi.mock("@backend-infrastructure", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("@backend-infrastructure")>()),
+    infraMetrics: mockInfraMetrics,
+}));
+
 import { installCodeRoutes } from "../../../../src/api/user/identity/installCode";
 
 const MERCHANT_ID = "550e8400-e29b-41d4-a716-446655440000";
@@ -504,6 +515,7 @@ describe("POST /install-code/generate — mandatory proof", () => {
         mockMarkProofSeen.mockReset();
         mockResolveForGenerate.mockReset();
         mockFindNodeByIdentity.mockReset();
+        mockInfraMetrics.identityInstallCodeGenerateCredential.mockReset();
     });
 
     async function postGenerate(body: Record<string, unknown>) {
@@ -527,6 +539,9 @@ describe("POST /install-code/generate — mandatory proof", () => {
             code: "PROOF_REQUIRED",
         });
         expect(mockGenerate).not.toHaveBeenCalled();
+        expect(
+            mockInfraMetrics.identityInstallCodeGenerateCredential
+        ).toHaveBeenCalledWith("absent_unlatched");
     });
 
     it("mints for a valid proof", async () => {
@@ -544,6 +559,9 @@ describe("POST /install-code/generate — mandatory proof", () => {
 
         expect(response.status).toBe(200);
         expect(mockMarkProofSeen).toHaveBeenCalled();
+        expect(
+            mockInfraMetrics.identityInstallCodeGenerateCredential
+        ).toHaveBeenCalledWith("proven");
     });
 
     it("refuses an invalid proof as PROOF_INVALID, having verified it", async () => {
@@ -566,6 +584,12 @@ describe("POST /install-code/generate — mandatory proof", () => {
         });
         expect(mockProofVerify).toHaveBeenCalled();
         expect(mockGenerate).not.toHaveBeenCalled();
+        expect(
+            mockInfraMetrics.identityInstallCodeGenerateCredential
+        ).toHaveBeenCalledWith("invalid");
+        expect(
+            mockInfraMetrics.identityInstallCodeGenerateCredential
+        ).not.toHaveBeenCalledWith("absent_unlatched");
     });
 
     it("mints on the checkout-token arm, which carries no proof", async () => {
@@ -586,6 +610,9 @@ describe("POST /install-code/generate — mandatory proof", () => {
         // Gate 2 derives its id server-side, so the mandatory-proof rule that
         // guards a caller-presented id must never reach this arm.
         expect(response.status).toBe(200);
+        expect(
+            mockInfraMetrics.identityInstallCodeGenerateCredential
+        ).not.toHaveBeenCalled();
     });
 
     it("400s a body carrying neither credential", async () => {

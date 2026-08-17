@@ -6,6 +6,19 @@ import type { IdentityProofService } from "../../domain/identity/services/Identi
 import { AnonymousMergeOrchestrator } from "./AnonymousMergeOrchestrator";
 import type { IdentityOrchestrator } from "./IdentityOrchestrator";
 
+const { mockInfraMetrics } = vi.hoisted(() => ({
+    mockInfraMetrics: {
+        identityMergeInitiateCredential: vi.fn(),
+        identityMergeExecuteCredential: vi.fn(),
+        identityMergeExecuteWalletSourceUnproven: vi.fn(),
+    },
+}));
+
+vi.mock("@backend-infrastructure", () => ({
+    log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+    infraMetrics: mockInfraMetrics,
+}));
+
 /**
  * `initiateMerge`'s `sourceAnonymousId` arm is LATCH-GATED: a valid proof,
  * when present, is verified; when absent, the id is allowed unless it has
@@ -69,6 +82,9 @@ function makeOrchestrator() {
 describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockInfraMetrics.identityMergeInitiateCredential.mockReset();
+        mockInfraMetrics.identityMergeExecuteCredential.mockReset();
+        mockInfraMetrics.identityMergeExecuteWalletSourceUnproven.mockReset();
     });
 
     describe("initiateMerge — sourceAnonymousId branch (latch-gated)", () => {
@@ -89,6 +105,9 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
                 ctx.identityOrchestrator.resolveAndAssociate
             ).not.toHaveBeenCalled();
             expect(ctx.identityRepository.markProofSeen).not.toHaveBeenCalled();
+            expect(
+                mockInfraMetrics.identityMergeInitiateCredential
+            ).toHaveBeenCalledWith("absent_unlatched");
         });
 
         it("still admits a valid proof", async () => {
@@ -111,6 +130,9 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
             ).resolves.toMatchObject({ mergeToken: MERGE_TOKEN });
 
             expect(ctx.identityRepository.markProofSeen).toHaveBeenCalled();
+            expect(
+                mockInfraMetrics.identityMergeInitiateCredential
+            ).toHaveBeenCalledWith("proven");
         });
 
         it("refuses an invalid proof as PROOF_INVALID, not PROOF_REQUIRED", async () => {
@@ -131,6 +153,12 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
             // Refused because verification RAN and failed, not because the
             // credential was absent. Collapsing the two makes a refusal lie.
             expect(ctx.identityProofService.verify).toHaveBeenCalled();
+            expect(
+                mockInfraMetrics.identityMergeInitiateCredential
+            ).toHaveBeenCalledWith("invalid");
+            expect(
+                mockInfraMetrics.identityMergeInitiateCredential
+            ).not.toHaveBeenCalledWith("absent_unlatched");
         });
 
         it("rejects a LATCHED sourceAnonymousId with no proof", async () => {
@@ -300,6 +328,11 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
                 value: "legacy-id",
                 merchantId: MERCHANT_ID,
             });
+            // This series is bucket E's exit criterion: it must count the
+            // admitted proofless target, not only the refused ones.
+            expect(
+                mockInfraMetrics.identityMergeExecuteCredential
+            ).toHaveBeenCalledWith("absent_unlatched");
         });
 
         it("rejects a latched target id when no proof is supplied", async () => {
@@ -319,6 +352,9 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
             expect(
                 ctx.anonymousMergeService.validateToken
             ).not.toHaveBeenCalled();
+            expect(
+                mockInfraMetrics.identityMergeExecuteCredential
+            ).toHaveBeenCalledWith("absent_latched");
         });
 
         it("rejects an invalid proof even when the id is unlatched", async () => {
@@ -345,6 +381,58 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
                 ctx.identityRepository.findNodeByIdentity
             ).not.toHaveBeenCalled();
             expect(ctx.identityRepository.markProofSeen).not.toHaveBeenCalled();
+            expect(
+                mockInfraMetrics.identityMergeExecuteCredential
+            ).toHaveBeenCalledWith("invalid");
+            expect(
+                mockInfraMetrics.identityMergeExecuteCredential
+            ).not.toHaveBeenCalledWith("absent_unlatched");
+        });
+
+        it("alarms when a wallet-session token is redeemed with no target proof", async () => {
+            const ctx = makeOrchestrator();
+            setupSuccessfulExecute(ctx);
+            ctx.anonymousMergeService.validateToken.mockResolvedValue({
+                sourceGroupId: "group-source",
+                sourceWalletAddress: "0xabc",
+            });
+            ctx.identityRepository.findNodeByIdentity.mockResolvedValue({
+                proofSeenAt: null,
+            });
+
+            await ctx.orchestrator.executeMerge({
+                mergeToken: MERGE_TOKEN,
+                targetAnonymousId: "legacy-id",
+                merchantId: MERCHANT_ID,
+            });
+
+            expect(
+                mockInfraMetrics.identityMergeExecuteWalletSourceUnproven
+            ).toHaveBeenCalledWith(MERCHANT_ID);
+        });
+
+        it("stays quiet when the wallet-session token's target proved itself", async () => {
+            const ctx = makeOrchestrator();
+            setupSuccessfulExecute(ctx);
+            ctx.anonymousMergeService.validateToken.mockResolvedValue({
+                sourceGroupId: "group-source",
+                sourceWalletAddress: "0xabc",
+            });
+            ctx.identityProofService.verify.mockResolvedValue({ valid: true });
+            ctx.identityProofService.hashMergeToken.mockReturnValue(
+                new Uint8Array(32)
+            );
+
+            await ctx.orchestrator.executeMerge({
+                mergeToken: MERGE_TOKEN,
+                targetAnonymousId: "proven-id",
+                merchantId: MERCHANT_ID,
+                proof: "a-valid-proof",
+            });
+
+            expect(
+                mockInfraMetrics.identityMergeExecuteWalletSourceUnproven
+            ).not.toHaveBeenCalled();
         });
 
         it("is idempotent: a repeat valid proof does not error and re-latches harmlessly", async () => {

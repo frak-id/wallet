@@ -6,9 +6,9 @@
 | Bucket | State | Commit |
 |---|---|---|
 | **A** — security holes needing no flip | **done, fully verified** | `ca9b4d341` |
-| **B** — the two correctness bugs | **done, fully verified** | `7b4f91127` |
-| **C** — Shopify checkout-token work (Gate 2 Phase A) | **done, fully verified; waits on DB2** — see §3 | `5c480379a`, `e7bfb594b` |
-| **D** — the plumbing and the provable flips | **done, enforcing** — see §4b/§4c | `699ad186d`, `c8ab55882`, `6b64ba689` |
+| **B** — the two correctness bugs | **done, fully verified** | `97ae336e9` |
+| **C** — Shopify checkout-token work (Gate 2 Phase A) | **done, fully verified; waits on DB2** — see §3 | `6b4995320` |
+| **D** — the plumbing and the provable flips | **done, enforcing** — see §4b/§4c | `8cdd4b8e4` |
 | **E** — `/merge/execute`, alone | **deliberately out of scope**, counter-gated | — |
 
 ---
@@ -116,22 +116,22 @@ alarm-only wallet-source counter; T2.9 auth on `GET /pairings/find/:id`.
 proof latches the id via `markProofSeen` which never clears, and T1.6's old catch would
 destroy the key of a just-latched id on a quota error, leaving a permanent 403.
 
-### Bucket B — `7b4f91127`
+### Bucket B — `97ae336e9`
 T1.3 deletes the `merge` parameter from `PurchaseLinkingOrchestrator.claimPurchase` (making
 `identityOrchestrator.associate` unreachable from the purchase path) and drops the
 `/track/purchase` 200's `merged`; T1.12 adds `orderBy: asc(createdAt)` to
 `findAnonymousFingerprint`.
 
-### Bucket C — `5c480379a`, then `e7bfb594b`
+### Bucket C — `6b4995320`
 DB2 (**owed by the DB team**, not in this repo), the `checkoutToken` credential arm end to end, `InstallCredentialOrchestrator`
 with the resolved-first ladder, T1.14's server-minted latched id, and the `/sharing` → `/install`
-client hop. `e7bfb594b` removed the generated migrations, recorded the DDL at [`DB2.sql`](./DB2.sql)
-and closed two review rounds over the first commit. Detail in §3.
+client hop. It also removed the generated migrations, recording the DDL at [`DB2.sql`](./DB2.sql),
+and absorbed two review rounds. Detail in §3.
 
-### Bucket D — `699ad186d`, `c8ab55882`, `6b64ba689`
-T2.3's consent plumbing; the three backend flips behind per-request kill switches; the two client
-refusals behind build-time constants; the TTL decoupling; T3.7's wallet half; AID-011. Detail in
-§4b and §4c. A later round deleted the kill switches and turned every refusal on.
+### Bucket D — `8cdd4b8e4`
+T2.3's consent plumbing; the three backend flips; the three client refusals; the TTL decoupling;
+T3.7's wallet half; AID-011. All of it enforcing — it shipped once behind per-request kill switches
+and build-time constants, and a later round in the same commit deleted them. Detail in §4b and §4c.
 
 ---
 
@@ -224,20 +224,20 @@ on. §4b and §4c carry the detail; this is the index.
 
 | Row | State | Where |
 |---|---|---|
-| **T2.3** merge-token consent plumbing | **shipped, enforcing** — purely additive on the wire | `699ad186d` |
-| **T3.11** listener refuses proofless `initiate` | **shipped, enforcing** | `6b64ba689`, §4c |
-| **T3.1a** `proof` required on `/merge/initiate` | **shipped, enforcing** | `c8ab55882`, §4b |
-| **T3.2** `/identity/ensure`, both arms | **shipped, enforcing** — including its wallet prerequisite, `a=` no longer forwarded | `c8ab55882`, §4b |
-| **T3.3** `install-code/generate` strict | **shipped, enforcing** — with the claim-age bound and the codeless CTA | `c8ab55882`, §4b |
-| **T3.4** `resolveMergeTarget` | **shipped, enforcing** — both halves | `6b64ba689`, §4c |
-| **T3.5** install-ticket TTL | **decoupled and env-driven; value unchanged** | `6b64ba689`, §4c |
-| **T3.6** merge-token TTL | **env-driven; value unchanged, deliberately** — native `MergeSender` mirrors it | `6b64ba689`, §4c |
-| **T3.7** `anonymousId` off `resolve`'s 200 | **wallet half shipped**; the backend half is owed, in that order | `6b64ba689`, §4c |
+| **T2.3** merge-token consent plumbing | **shipped, enforcing** — purely additive on the wire | `8cdd4b8e4` |
+| **T3.11** listener refuses proofless `initiate` | **shipped, enforcing** | `8cdd4b8e4`, §4c |
+| **T3.1a** `proof` required on `/merge/initiate` | **shipped, enforcing** | `8cdd4b8e4`, §4b |
+| **T3.2** `/identity/ensure`, both arms | **shipped, enforcing** — including its wallet prerequisite, `a=` no longer forwarded | `8cdd4b8e4`, §4b |
+| **T3.3** `install-code/generate` strict | **shipped, enforcing** — with the claim-age bound and the codeless CTA | `8cdd4b8e4`, §4b |
+| **T3.4** `resolveMergeTarget` | **shipped, enforcing** — both halves | `8cdd4b8e4`, §4c |
+| **T3.5** install-ticket TTL | **decoupled and env-driven; value unchanged** | `8cdd4b8e4`, §4c |
+| **T3.6** merge-token TTL | **env-driven; value unchanged, deliberately** — native `MergeSender` mirrors it | `8cdd4b8e4`, §4c |
+| **T3.7** `anonymousId` off `resolve`'s 200 | **wallet half shipped**; the backend half is owed, in that order | `8cdd4b8e4`, §4c |
 | **T2.6** install-code single-resolve | **DROPPED** — needs DB3, DDL is the DB team's, OQ4 unmeasured | §4c |
 | **T3.8** fill the empty bindings | **deferred** — changes a signed message, needs 30 days of dual-accept | §4c |
 | **T3.10** post-install recovery CTA | **deferred** — new optional surface, gated on OQ4 | §4c |
 | **T2.8** `weightCache` invalidation | **already shipped** — §1's "still owed" was stale | §4c |
-| **AID-011** conflict surface on `/install` | **shipped, enforcing**, with the bundle delta measured | `6b64ba689`, §4c |
+| **AID-011** conflict surface on `/install` | **shipped, enforcing**, with the bundle delta measured | `8cdd4b8e4`, §4c |
 
 **The one ordering this does not honour**, stated so nobody discovers it in a graph: §7 wanted the
 "no more `a=`" wallet release live and its 7-day pending-ensure queue drained *before* the bare arm

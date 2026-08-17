@@ -503,8 +503,8 @@ pattern `getWalletForGroup` (`:170-178`) already documents.
 - The live attribution cost of dropping `a=` from the wallet `/sharing` → `/install` hop (G1's
   smallest fix). SUSPECTED near-zero — the SDK arm covers the same link from the merchant origin,
   proof-carrying — but not measured.
-- Commits `833c5a23d` and `6296ffe63` were not inspected directly; both were verified against the
-  current tree state and their committed regression tests instead. `6ace7b678` and `5bf8e3d64` were
+- Commits `97ae336e9` and `97ae336e9` were not inspected directly; both were verified against the
+  current tree state and their committed regression tests instead. `97ae336e9` and `ca9b4d341` were
   not inspectable and are unreferenced in the tree.
 
 **Inferred rather than verified.**

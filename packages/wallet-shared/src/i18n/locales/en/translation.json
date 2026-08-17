@@ -786,6 +786,7 @@
         "error": {
             "invalid": "Incorrect or expired code, check the code copied from wallet.frak.id",
             "alreadyLinked": "This code has already been used.",
+            "unresolved": "This code isn't linked to a purchase yet. Try again in a few minutes.",
             "generic": "Something went wrong, please try again."
         },
         "success": {

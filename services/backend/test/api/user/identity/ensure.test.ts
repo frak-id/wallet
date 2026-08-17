@@ -164,6 +164,7 @@ describe("POST /identity/ensure — the live Tauri binary's request shape", () =
         });
         mockResolveAndAssociate.mockReset();
         mockWalletVerify.mockReset();
+        mockInfraMetrics.identityEnsureArm.mockReset();
         mockResolveAndAssociate.mockResolvedValue({
             finalGroupId: "group-1",
             merged: true,
@@ -216,6 +217,7 @@ describe("POST /identity/ensure — resolution order", () => {
         mockResolveAndAssociate.mockReset();
         mockMarkProofSeen.mockReset();
         mockWalletVerify.mockReset();
+        mockInfraMetrics.identityEnsureArm.mockReset();
         mockResolveAndAssociate.mockResolvedValue({
             finalGroupId: "group-1",
             merged: true,
@@ -237,6 +239,10 @@ describe("POST /identity/ensure — resolution order", () => {
         expect(mockVerifyTicket).not.toHaveBeenCalled();
         expect(mockProofVerify).not.toHaveBeenCalled();
         expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+        expect(mockInfraMetrics.identityEnsureArm).toHaveBeenCalledWith(
+            "wallet_bare",
+            "absent_unlatched"
+        );
     });
 
     it("proof + anonymousId arm: verifies as frak-install-v1 and rejects an invalid one", async () => {
@@ -275,6 +281,14 @@ describe("POST /identity/ensure — resolution order", () => {
         expect(mockResolveAndAssociate).not.toHaveBeenCalled();
         // Never latch on a failed proof — `markProofSeen` never clears.
         expect(mockMarkProofSeen).not.toHaveBeenCalled();
+        expect(mockInfraMetrics.identityEnsureArm).toHaveBeenCalledWith(
+            "wallet_proof",
+            "invalid"
+        );
+        expect(mockInfraMetrics.identityEnsureArm).not.toHaveBeenCalledWith(
+            "wallet_proof",
+            "absent_unlatched"
+        );
     });
 
     it("proof + anonymousId arm: accepts a valid frak-install-v1 proof", async () => {
@@ -302,6 +316,10 @@ describe("POST /identity/ensure — resolution order", () => {
             value: "anon-2",
             merchantId: MERCHANT_ID,
         });
+        expect(mockInfraMetrics.identityEnsureArm).toHaveBeenCalledWith(
+            "wallet_proof",
+            "proven"
+        );
     });
 
     it("ticket arm takes priority: authenticates anonymousId from the ticket, skips the proof arm", async () => {
@@ -327,6 +345,10 @@ describe("POST /identity/ensure — resolution order", () => {
                 merchantId: MERCHANT_ID,
             },
         ]);
+        expect(mockInfraMetrics.identityEnsureArm).toHaveBeenCalledWith(
+            "wallet_ticket",
+            "n/a"
+        );
     });
 
     it("ticket + matching anonymousId: allowed", async () => {
@@ -483,6 +505,32 @@ describe("POST /identity/ensure — resolution order", () => {
         const data = await response.json();
         expect(data.code).toBe("MISSING_ANONYMOUS_ID");
     });
+
+    it("counts the header fall-through as wallet_bare, same as the body id", async () => {
+        walletAuthed();
+        mockFindNodeByIdentity.mockResolvedValue(null);
+
+        const response = await identityEnsureRoutes.handle(
+            new Request("http://localhost/ensure", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-wallet-auth": "valid-wallet-jwt",
+                    "x-frak-client-id": "anon-from-header",
+                },
+                body: JSON.stringify({ merchantId: MERCHANT_ID }),
+            })
+        );
+
+        expect(response.status).toBe(400);
+        expect(await response.json()).toMatchObject({
+            code: "PROOF_OR_TOKEN_REQUIRED",
+        });
+        expect(mockInfraMetrics.identityEnsureArm).toHaveBeenCalledWith(
+            "wallet_bare",
+            "absent_unlatched"
+        );
+    });
 });
 
 /**
@@ -511,6 +559,7 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): latch-gat
         mockWalletVerify.mockReset();
         mockFindNodeByIdentity.mockReset();
         mockMarkProofSeen.mockReset();
+        mockInfraMetrics.identityEnsureArm.mockReset();
         mockResolveAndAssociate.mockResolvedValue({
             finalGroupId: "group-1",
             merged: true,
@@ -583,6 +632,10 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): latch-gat
         // No proof was presented, so the latch must NOT be written — that
         // would permanently lock this id out of ever ensuring again.
         expect(mockMarkProofSeen).not.toHaveBeenCalled();
+        expect(mockInfraMetrics.identityEnsureArm).toHaveBeenCalledWith(
+            "sdk",
+            "absent_unlatched"
+        );
     });
 
     it("rejects a LATCHED id with no proof", async () => {
@@ -602,6 +655,10 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): latch-gat
         expect(mockProofVerify).not.toHaveBeenCalled();
         expect(mockResolveAndAssociate).not.toHaveBeenCalled();
         expect(mockMarkProofSeen).not.toHaveBeenCalled();
+        expect(mockInfraMetrics.identityEnsureArm).toHaveBeenCalledWith(
+            "sdk",
+            "absent_latched"
+        );
     });
 
     it("rejects an invalid proof", async () => {
@@ -628,6 +685,14 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): latch-gat
             })
         );
         expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+        expect(mockInfraMetrics.identityEnsureArm).toHaveBeenCalledWith(
+            "sdk",
+            "invalid"
+        );
+        expect(mockInfraMetrics.identityEnsureArm).not.toHaveBeenCalledWith(
+            "sdk",
+            "absent_unlatched"
+        );
     });
 
     it("accepts a valid proof and latches the id", async () => {
@@ -653,6 +718,10 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): latch-gat
             value: "anon-sdk",
             merchantId: MERCHANT_ID,
         });
+        expect(mockInfraMetrics.identityEnsureArm).toHaveBeenCalledWith(
+            "sdk",
+            "proven"
+        );
     });
 
     it("a latched id presenting a proof that fails verification still rejects", async () => {
@@ -793,6 +862,7 @@ describe("POST /identity/ensure — mandatory credential", () => {
         mockWalletVerify.mockReset();
         mockFindNodeByIdentity.mockReset();
         mockMarkProofSeen.mockReset();
+        mockInfraMetrics.identityEnsureArm.mockReset();
         mockResolveAndAssociate.mockResolvedValue({
             finalGroupId: "group-1",
             merged: true,
