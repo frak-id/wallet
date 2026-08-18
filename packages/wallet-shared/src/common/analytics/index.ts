@@ -23,7 +23,6 @@ export type {
     ListenerMiscEventMap,
     ListenerTxEventMap,
     MergeExecuteTargetSource,
-    MergeInitiateProoflessSource,
     ModalDismissSource,
     ModalEventMap,
     MoneriumCallbackOutcome,

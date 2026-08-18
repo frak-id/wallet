@@ -149,7 +149,6 @@ export {
     supportedLngs,
 } from "./i18n";
 export {
-    type MergeTokenSource,
     mergeTokenKeys,
     mergeTokenQueryOptions,
 } from "./identity";

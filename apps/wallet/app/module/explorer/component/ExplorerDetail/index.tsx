@@ -106,7 +106,6 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const { data: mergeToken } = useQuery({
         ...mergeTokenQueryOptions({
             merchantId: merchant.id,
-            source: "wallet_explorer",
         }),
         enabled: !!walletAddress,
     });

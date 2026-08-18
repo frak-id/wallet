@@ -80,7 +80,7 @@ function ListenerModalInner({
     usePersistentPairingClient();
     const [isOpen, setIsOpen] = useState(true);
     const [logoFailed, setLogoFailed] = useState(false);
-    const getMergeToken = useGetMergeToken("listener_modal");
+    const getMergeToken = useGetMergeToken();
     const parentUrl = useStore(
         resolvingContextStore,
         (s) => s.context?.sourceUrl

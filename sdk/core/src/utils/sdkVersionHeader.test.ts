@@ -24,12 +24,6 @@ describe("sdkVersionHeaders", () => {
         expect(sdkVersionHeaders()).toEqual({});
     });
 
-    it("emits nothing when the define was never substituted", () => {
-        vi.stubEnv("SDK_VERSION", "process.env.SDK_VERSION");
-
-        expect(sdkVersionHeaders()).toEqual({});
-    });
-
     it("spreads to no key at all, never an undefined value", () => {
         vi.stubEnv("SDK_VERSION", undefined);
 

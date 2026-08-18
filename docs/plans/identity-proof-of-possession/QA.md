@@ -19,7 +19,7 @@ landed, the counter moved on the arm you expected.
 | # | Step | Why |
 |---|---|---|
 | 0.1 | `git checkout bun.lock && bun install && bun run test` | `react` is not hoisted in a drifted checkout, so **every React/DOM suite fails** with `React.act is not a function` and the wallet/listener tests covering these flows are dark. Cheapest coverage available |
-| 0.2 | Apply [`DB2.sql`](./DB2.sql) **tier 1** | Without `checkout_token`, every `install-code/generate` and `install-code/resolve` raises `42703`. Nothing below runs |
+| 0.2 | Confirm the target schema has `install_codes.checkout_token` | Migration `dev/0043` (`local/0039`) adds it. `drizzle/prod/` does not have it yet. Without the column, every `install-code/generate` and `install-code/resolve` raises `42703` and nothing below runs |
 | 0.3 | Confirm `proof_seen_at` exists in the target environment | If the column is missing anywhere, every proof-absent merge 500s |
 | 0.4 | `curl localhost:9464/metrics` responds | Separate internal port (`METRICS_PORT`, default 9464), never routed by the ingress. Several assertions below read it |
 
@@ -34,7 +34,7 @@ landed, the counter moved on the arm you expected.
 | 1.3 | **Proof freshness — the visibility half** | Background the tab >11 min, foreground it, trigger | Still merges |
 | 1.4 | **Legacy migration still works** | Seed a legacy id into merchant-origin `localStorage`, load the page | Merge lands **with no proof**. `/merge/execute` is deliberately unflipped (README §3); a 403 here is a real bug |
 | 1.5 | **Keyless client degrades, not breaks** | Delete `frak-client-key` from merchant-origin `localStorage` so `signProof` returns null | Clean refusal or CTA. No hang, no crash, no error dialog |
-| 1.6 | **The `mergeExecute ?? merge` alias** | Make the SDK emit only the old `merge` key | Listener still reads it. This is the deploy-skew path: SDK ships via Changesets, backend/wallet/listener via one `sst deploy`, and nothing orders them |
+| 1.6 | **The execute proof key** | Confirm the SDK emits `proofs.merge` and the listener reads that key | Only one key on the wire. A payload carrying any other name must merge nothing rather than silently pass |
 | 1.7 | **`fmt` redemption survives a blip** | Fail `/merge/execute` with a 5xx or kill the network for ~2 s during the escape, then restore | The merge still lands, within ~5 s and two retries. Then check the other half: a **4xx must stay one request** — retrying a refusal would turn a decision into a storm |
 
 New refusal codes to expect and recognise: `PROOF_REQUIRED`, `PROOF_INVALID`,
@@ -75,8 +75,8 @@ No emulator or simulator exists in CI, so 3.3–3.5 are hand-only by constructio
 
 ## 4. UI / UX — three new visible states
 
-Everything else that moved is plumbing (`useGetMergeToken("listener_modal")` and friends are
-counter call-site labels, not renders). All three below ship with `en` **and** `fr`.
+Everything else that moved is plumbing (`useGetMergeToken()` and friends carry no
+render). All three below ship with `en` **and** `fr`.
 
 | # | State | Trigger | Pass |
 |---|---|---|---|
@@ -112,6 +112,6 @@ After exercising §1 and §2, assert:
 
 | Gap | Why |
 |---|---|
-| The DB layer | The `frakmint_` guard, the DB2 `CHECK` and the reuse CTE **never execute real SQL** — the orchestrator test mocks the transaction away. Only case 2.6 touches them |
+| The DB layer | The `frakmint_` guard, the `install_codes_credential_present` `CHECK` and the reuse CTE **never execute real SQL** — the orchestrator test mocks the transaction away. Only case 2.6 touches them |
 | Native | No emulator, no simulator, host/JVM tests only |
 | Composed HTTP layer | Nearly all backend coverage is unit-level against orchestrators; the most serious findings in the audit were route-wiring mistakes no unit test could catch |

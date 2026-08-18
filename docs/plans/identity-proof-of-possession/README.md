@@ -33,15 +33,14 @@ proven** — precisely the pre-install population holding unsettled attribution.
 
 | # | Item | Why it is not done |
 |---|---|---|
-| 1 | **DB2** — [`DB2.sql`](./DB2.sql) | DDL is the DB team's. Tier 1 is two instant statements and **blocks the backend image**: without `checkout_token` every `install-code/generate` and `install-code/resolve` raises `42703`. Tier 2 is online and can follow whenever |
-| 2 | **`deploy-env.patch`** | Writing `.github/workflows/**` needs a token scope the release credential lacks. Carries `MIN_VERSION_IOS`/`MIN_VERSION_ANDROID` — read by `infra/gcp/secrets.ts`, set nowhere, so silently `0.0.0` since they were written — and the two credential TTLs. Nothing is broken until it lands; what is missing is the ability to *change* those values without editing the workflow |
-| 3 | **`/merge/execute` proof (T3.1b)** | The deliberate exception. See §3 |
-| 4 | **`anonymousId` off `install-code/resolve`'s 200** | The wallet half shipped: the current wallet no longer reads it. The backend stops sending it in a later backend-only deploy — that order, never the reverse, so the persisted store stays readable by a rolled-back build |
-| 5 | **AID-017 — bind `frak-ensure-v1`** | Its binding is empty, making it a 30-day bearer credential. Changing a signed message needs ~30 days of dual-accept across two native store binaries. Real, scheduled, not urgent |
-| 6 | **AID-012 — the last mile of `fmt` retry** | The redemption retries a blip, but only while the page lives. A page closed mid-backoff still loses the merge, and the SDK→listener `postMessage` hop has no ack at all, so a send that never arrives is invisible to both sides. Closing either needs a durable queue, and the thing being queued is a token that stays replayable for 60 minutes — putting it at rest on disk makes AID-003 worse. Do these two together or not at all |
-| 7 | **AID-003 / AID-019 — credential reuse windows** | A merge token is a 60-minute unlimited-use group-capture capability if captured; an install ticket is 7-day multi-use and one code yields up to 20. `jwt.ts` records the reasoning for the ticket (a burn-set deadlocks the wallet's retry loop). The merge token has no such defence and no ticket |
-| 8 | **AID-013 — no cross-merchant proof-scoping test** | The property holds and is load-bearing; nothing pins it. Cheapest item on this list |
-| 9 | **AID-005, AID-008, AID-015** | Client-side and codec findings, untouched by this programme. See the audit record |
+| 1 | **Prod migration for `checkout_token`** | `local/0039` and `dev/0043` are generated and committed; `drizzle/prod/` is still at `0020`. `InstallCodeRepository` names `checkout_token` in raw SQL, so a prod backend on the old schema raises `42703` on every `install-code/generate` and `install-code/resolve`. Generated on `dev` alongside the other prod migrations coming later — **must land before this reaches `main`** |
+| 2 | **`/merge/execute` proof (T3.1b)** | The deliberate exception. See §3 |
+| 3 | **`anonymousId` off `install-code/resolve`'s 200** | The wallet half shipped: the current wallet no longer reads it. The backend stops sending it in a later backend-only deploy — that order, never the reverse, so the persisted store stays readable by a rolled-back build |
+| 4 | **AID-017 — bind `frak-ensure-v1`** | Its binding is empty, making it a 30-day bearer credential. Changing a signed message needs ~30 days of dual-accept across two native store binaries. Real, scheduled, not urgent |
+| 5 | **AID-012 — the last mile of `fmt` retry** | The redemption retries a blip, but only while the page lives. A page closed mid-backoff still loses the merge, and the SDK→listener `postMessage` hop has no ack at all, so a send that never arrives is invisible to both sides. Closing either needs a durable queue, and the thing being queued is a token that stays replayable for 60 minutes — putting it at rest on disk makes AID-003 worse. Do these two together or not at all |
+| 6 | **AID-003 / AID-019 — credential reuse windows** | A merge token is a 60-minute unlimited-use group-capture capability if captured; an install ticket is 7-day multi-use and one code yields up to 20. `jwt.ts` records the reasoning for the ticket (a burn-set deadlocks the wallet's retry loop). The merge token has no such defence and no ticket |
+| 7 | **AID-013 — no cross-merchant proof-scoping test** | The property holds and is load-bearing; nothing pins it. Cheapest item on this list |
+| 8 | **AID-005, AID-008, AID-015** | Client-side and codec findings, untouched by this programme. See the audit record |
 
 ## 3. The one route that must not be flipped
 
@@ -70,7 +69,7 @@ Legacy ids stay **resolvable** forever regardless; they only stop being usable a
 | `403 PROOF_REQUIRED` on `/merge/initiate` | An anon-source caller with no proof. Should be ~0: the listener refuses before sending |
 | `403 PROOF_REQUIRED` / `PROOF_INVALID` on `/identity/ensure` | SDK arm unproven, or a bad install proof |
 | `403` on `install-code/generate` | The anonymous arm without a valid proof. The wallet renders the codeless CTA, not an error |
-| `merge_initiate_proofless{source}` | Client-side refusals. The **only** view of them — no request reaches the backend |
+| `merge_initiate_proofless` | Client-side refusals. The **only** view of them — no request reaches the backend |
 | `merge_execute_target_source{fallback,proven_unproven}` | Merges the listener declines to attempt. Client-side only, same reason |
 
 **The deploy-day burst is expected and must decay.** The original sequencing wanted the wallet
@@ -118,8 +117,10 @@ were deleted. The counters stayed — they measure, they no longer gate.
 - **`install-code/generate` prefers `checkoutToken` over `anonymousId`.** The id reaching that page
   comes from a buyer-writable cart attribute; the token is derived from the order server-side. Get
   this backwards and Gate 2 ships inert.
-- **The SDK emits the execute proof under both `proofs.merge` and `proofs.mergeExecute`.** The SST
-  and SDK pipelines fire concurrently, so neither can be made to lose the race.
+- **The execute-side proof keeps its released key, `proofs.merge`.** The symmetric `mergeExecute`
+  name was reverted before shipping: the SST and SDK pipelines fire concurrently, so renaming the
+  one key a live listener reads would have dropped every in-app-browser merge until the CDN caught
+  up. `mergeSource` is new and has no such constraint.
 - **`ROLLOUT-STEP-3` markers** remain in six source files. They mark the bare-arm code that is now
   unreachable-by-policy but not yet deleted, and the one open decision recorded at `ensure.ts`:
   whether the install proof should keep being accepted directly or be exchanged for a ticket. It is

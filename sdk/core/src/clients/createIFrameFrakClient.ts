@@ -369,10 +369,6 @@ async function hashMergeToken(token: string): Promise<Uint8Array | undefined> {
  * Never throws and never blocks the handshake: `signProof` resolves to
  * `null` (never rejects) when no key is available.
  *
- * The execute-side proof is emitted under both `merge` and `mergeExecute`:
- * the SDK and the listener deploy on pipelines that fire concurrently, so
- * either key may be the one a live listener reads.
- *
  * ROLLOUT-STEP-1: `proofs.install` travels on `resolved-config` and the
  * listener forwards it into the `/install` URL as a `#p=` fragment — the
  * wallet's install route still needs to read it and send it to the backend.
@@ -390,7 +386,6 @@ async function buildSdkIdentity({
           anonymousId: string;
           proofs: {
               merge?: string;
-              mergeExecute?: string;
               mergeSource?: string;
               install?: string;
           };
@@ -404,7 +399,7 @@ async function buildSdkIdentity({
         ? await hashMergeToken(pendingMergeToken)
         : undefined;
 
-    const [mergeExecute, mergeSource, install] = await Promise.all([
+    const [merge, mergeSource, install] = await Promise.all([
         mergeBinding
             ? signProof({
                   op: "frak-merge-v1",
@@ -419,12 +414,12 @@ async function buildSdkIdentity({
         signProof({ op: "frak-install-v1", merchantId, anonymousId }),
     ]);
 
-    if (!mergeExecute && !mergeSource && !install) return undefined;
+    if (!merge && !mergeSource && !install) return undefined;
 
     return {
         anonymousId,
         proofs: {
-            ...(mergeExecute && { merge: mergeExecute, mergeExecute }),
+            ...(merge && { merge }),
             ...(mergeSource && { mergeSource }),
             ...(install && { install }),
         },

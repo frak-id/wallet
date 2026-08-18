@@ -8,11 +8,6 @@ export type InAppBrowserRedirectTarget =
     | "sd-iframe-clipboard"
     | "window";
 
-export type MergeInitiateProoflessSource =
-    | "rpc"
-    | "listener_modal"
-    | "embedded_wallet";
-
 /**
  * `proven` is a proven id carrying its execute-side proof; `proven_unproven` is
  * the same id with the proof missing, which the backend admits only while the
@@ -28,9 +23,9 @@ export type ListenerMiscEventMap = {
     in_app_browser_redirected: {
         target: InAppBrowserRedirectTarget;
     };
-    merge_initiate_proofless: {
-        source: MergeInitiateProoflessSource;
-    };
+    // Every surface refuses for one reason — the SDK pushed no `mergeSource`
+    // proof — so the surface is not worth a dimension.
+    merge_initiate_proofless: undefined;
     merge_execute_target_source: {
         source: MergeExecuteTargetSource;
     };

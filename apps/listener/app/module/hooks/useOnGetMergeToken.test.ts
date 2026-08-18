@@ -101,8 +101,7 @@ describe("createGetMergeTokenHandler", () => {
         const result = await handler(undefined, CONTEXT);
 
         expect(mockTrackEvent).toHaveBeenCalledExactlyOnceWith(
-            "merge_initiate_proofless",
-            { source: "rpc" }
+            "merge_initiate_proofless"
         );
         expect(mockInitiatePost).not.toHaveBeenCalled();
         expect(result).toBeNull();

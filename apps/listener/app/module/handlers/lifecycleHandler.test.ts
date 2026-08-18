@@ -195,13 +195,13 @@ describe("clientLifecycleHandler — resolved-config", () => {
         }
     );
 
-    test("accepts the renamed mergeExecute key", async () => {
+    test("ignores an unknown proof key rather than treating it as the merge proof", async () => {
         const data = baseData({
             pendingMergeToken: "the-merge-token",
             sdkAnonymousId: "sdk-anon-id",
             sdkIdentity: {
                 anonymousId: "sdk-anon-id",
-                proofs: { mergeExecute: "the-merge-proof" },
+                proofs: { mergeExecute: "not-a-key-we-read" },
             },
         });
 
@@ -210,32 +210,7 @@ describe("clientLifecycleHandler — resolved-config", () => {
             CONTEXT
         );
 
-        expect(mockMergeExecutePost).toHaveBeenCalledWith(
-            expect.objectContaining({ proof: "the-merge-proof" })
-        );
-    });
-
-    test("prefers mergeExecute when an SDK emits both key shapes", async () => {
-        const data = baseData({
-            pendingMergeToken: "the-merge-token",
-            sdkAnonymousId: "sdk-anon-id",
-            sdkIdentity: {
-                anonymousId: "sdk-anon-id",
-                proofs: {
-                    merge: "aliased-proof",
-                    mergeExecute: "aliased-proof",
-                },
-            },
-        });
-
-        await clientLifecycleHandler(
-            { clientLifecycle: "resolved-config", data },
-            CONTEXT
-        );
-
-        expect(mockMergeExecutePost).toHaveBeenCalledWith(
-            expect.objectContaining({ proof: "aliased-proof" })
-        );
+        expect(mockMergeExecutePost).not.toHaveBeenCalled();
     });
 
     test("stores sdkIdentity.proofs.mergeSource on the context for the mint path", async () => {
@@ -346,7 +321,7 @@ describe("clientLifecycleHandler — resolved-config", () => {
             sdkAnonymousId: "sdk-anon-id",
             sdkIdentity: {
                 anonymousId: "sdk-anon-id",
-                proofs: { mergeExecute: "the-merge-proof" },
+                proofs: { merge: "the-merge-proof" },
             },
         });
 

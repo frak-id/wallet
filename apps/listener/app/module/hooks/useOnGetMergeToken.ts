@@ -28,7 +28,7 @@ export function createGetMergeTokenHandler(): OnGetMergeToken {
         if (!proof) {
             // Counted before the return: no request reaches the backend, so
             // this event is the only way to see the refused population.
-            trackEvent("merge_initiate_proofless", { source: "rpc" });
+            trackEvent("merge_initiate_proofless");
             // `getMergeToken` already treats null as "no escape token", so the
             // escape still redirects — it just carries no `?fmt=`.
             return null;

@@ -1,11 +1,10 @@
-import type { MergeTokenSource } from "@frak-labs/wallet-shared/identity";
 import { mergeTokenQueryOptions } from "@frak-labs/wallet-shared/identity";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useStore } from "zustand";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
-export function useGetMergeToken(source: MergeTokenSource) {
+export function useGetMergeToken() {
     const context = useStore(resolvingContextStore, (state) => state.context);
     const clientId = context?.clientId;
     const merchantId = context?.merchantId;
@@ -15,7 +14,6 @@ export function useGetMergeToken(source: MergeTokenSource) {
         mergeTokenQueryOptions({
             merchantId,
             sourceAnonymousId: clientId,
-            source,
             proof,
         })
     );

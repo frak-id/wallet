@@ -184,7 +184,7 @@ function isValidResolvedConfigPayload(data: unknown): data is {
  */
 function extractSdkProof(
     sdkIdentity: unknown,
-    key: "merge" | "mergeExecute" | "mergeSource" | "install"
+    key: "merge" | "mergeSource" | "install"
 ): string | undefined {
     if (!sdkIdentity || typeof sdkIdentity !== "object") return undefined;
     const proofs = (sdkIdentity as Record<string, unknown>).proofs;
@@ -218,11 +218,7 @@ function resolveMergeTarget(sdkIdentity: unknown): {
 } {
     const provenId = extractSdkProvenId(sdkIdentity);
     if (provenId) {
-        // Either key carries the same execute-side proof; an SDK older than
-        // the rename only sets `merge`.
-        const proof =
-            extractSdkProof(sdkIdentity, "mergeExecute") ??
-            extractSdkProof(sdkIdentity, "merge");
+        const proof = extractSdkProof(sdkIdentity, "merge");
         trackEvent("merge_execute_target_source", {
             source: proof ? "proven" : "proven_unproven",
         });

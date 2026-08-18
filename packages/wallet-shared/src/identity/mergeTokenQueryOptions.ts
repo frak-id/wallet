@@ -1,13 +1,6 @@
-import type { MergeInitiateProoflessSource } from "../common/analytics";
 import { trackEvent } from "../common/analytics";
 import { authenticatedBackendApi } from "../common/api/backendClient";
 import { queryOptions } from "../common/utils/queryOptions";
-
-/**
- * Which caller is asking for a merge token. `wallet_explorer` is the
- * authenticated arm and is never counted as proofless.
- */
-export type MergeTokenSource = MergeInitiateProoflessSource | "wallet_explorer";
 
 /**
  * Query keys for identity merge tokens.
@@ -17,14 +10,12 @@ export const mergeTokenKeys = {
     byParams: (args: {
         merchantId: string | undefined;
         sourceAnonymousId?: string | undefined;
-        source: MergeTokenSource;
         proof?: string | undefined;
     }) =>
         [
             ...mergeTokenKeys.all,
             args.merchantId ?? "no-merchant",
             args.sourceAnonymousId ?? "wallet-auth",
-            args.source,
             // Presence only: a query key is serialised into devtools and any
             // persisted cache, and a proof is bearer material.
             args.proof ? "proven" : "proofless",
@@ -51,30 +42,27 @@ export const mergeTokenKeys = {
  *
  * The `sourceAnonymousId` arm carries `proof` when the SDK pushed one on
  * `resolved-config` (`sdkIdentity.proofs.mergeSource`). It is `frak-merge-v1`
- * with an EMPTY binding — `mergeExecute` binds `SHA-256(mergeToken)` and would
- * 403 here. Naming a `sourceAnonymousId` without one is refused outright.
+ * with an EMPTY binding — the execute-side proof binds `SHA-256(mergeToken)`
+ * and would 403 here. Naming a `sourceAnonymousId` without one is refused
+ * outright.
  */
 export function mergeTokenQueryOptions(args: {
     merchantId: string | undefined;
     sourceAnonymousId?: string | undefined;
-    source: MergeTokenSource;
     proof?: string | undefined;
 }) {
-    const { merchantId, sourceAnonymousId, source, proof } = args;
+    const { merchantId, sourceAnonymousId, proof } = args;
     return queryOptions({
         queryKey: mergeTokenKeys.byParams(args),
         queryFn: async (): Promise<string | null> => {
             if (!merchantId) return null;
-            // The refusal is field-based like the backend's, which enforces on
+            // Field-based like the backend's, which enforces on
             // `sourceAnonymousId` alone — the only thing it can trust. The
-            // counter stays source-based: its type excludes `wallet_explorer`,
-            // whose session is its attestation.
+            // wallet-auth arm names none, so its session is its attestation.
             if (sourceAnonymousId && !proof) {
                 // Counted before the return: no request reaches the backend, so
                 // this event is the only way to see the refused population.
-                if (source !== "wallet_explorer") {
-                    trackEvent("merge_initiate_proofless", { source });
-                }
+                trackEvent("merge_initiate_proofless");
                 // The listener holds no key, so a refusal here costs one hop of
                 // attribution and surfaces no error: the caller reads `null`.
                 return null;

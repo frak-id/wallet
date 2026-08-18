@@ -64,7 +64,7 @@ function ListenerWalletInner() {
  */
 function CurrentEmbeddedViewComponent() {
     const session = sessionStore.getState().session;
-    const getMergeToken = useGetMergeToken("embedded_wallet");
+    const getMergeToken = useGetMergeToken();
     const parentUrl = useStore(
         resolvingContextStore,
         (s) => s.context?.sourceUrl

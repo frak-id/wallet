@@ -1,8 +1,5 @@
 import { t } from "@backend-utils";
-import {
-    INSTALL_TICKET_CLIENT_TTL_MS,
-    INSTALL_TICKET_SERVER_TTL_MS,
-} from "@frak-labs/app-essentials/constants/installTicket";
+import { INSTALL_TICKET_TTL_MS } from "@frak-labs/app-essentials/constants/installTicket";
 import { getSchemaValidator, type Static, type TSchema } from "elysia";
 
 import {
@@ -21,43 +18,6 @@ import { BusinessInvitationTokenDto } from "../../domain/business-auth/models/Bu
 import { AnonymousMergeTokenDto } from "../../domain/identity/models/AnonymousMergeTokenDto";
 import { InstallTicketDto } from "../../domain/identity/models/InstallTicketDto";
 import { OriginResumeTokenDto } from "../../domain/pairing/models/OriginResumeTokenDto";
-import { log } from "./logger";
-
-/**
- * Read a TTL override on every sign, so cutting one never waits on a pod
- * restart. A missing or unparseable value falls back to the shipped default.
- */
-function ttlSecondsFromEnv(
-    name: string,
-    fallbackSeconds: number
-): () => number {
-    return () => {
-        const parsed = Number(process.env[name]);
-        return Number.isFinite(parsed) && parsed > 0 ? parsed : fallbackSeconds;
-    };
-}
-
-/**
- * The wallet prunes the pending action carrying the ticket at
- * `INSTALL_TICKET_CLIENT_TTL_MS`, and that value is compiled into the store
- * binary. A longer server TTL is therefore bearer material nothing will ever
- * redeem, so it is clamped rather than trusted.
- */
-function installTicketTtlSeconds(): number {
-    const ceiling = INSTALL_TICKET_CLIENT_TTL_MS / 1000;
-    const requested = ttlSecondsFromEnv(
-        "INSTALL_TICKET_TTL_SECONDS",
-        INSTALL_TICKET_SERVER_TTL_MS / 1000
-    )();
-    if (requested > ceiling) {
-        log.warn(
-            { requested, ceiling },
-            "INSTALL_TICKET_TTL_SECONDS exceeds the wallet's store TTL; clamping"
-        );
-        return ceiling;
-    }
-    return requested;
-}
 
 export namespace JwtContext {
     export const wallet = buildJwtContext({
@@ -89,24 +49,20 @@ export namespace JwtContext {
         // `MergeSender.kt`'s `holdTimeoutMillis` mirrors this value and ships
         // in a store binary, so cutting it here alone drops native merge rows
         // at 401 — move both together.
-        expirationDelayInSecond: ttlSecondsFromEnv(
-            "MERGE_TOKEN_TTL_SECONDS",
-            60 * 60
-        ),
+        expirationDelayInSecond: 60 * 60,
         iss: "frak-identity",
     });
     /**
      * Install ticket — minted unconditionally by `install-code/resolve`,
-     * consumed by `/identity/ensure`. `INSTALL_TICKET_TTL_SECONDS` may cut it
-     * below the shipped default freely; raising it past the wallet's
-     * `INSTALL_TICKET_CLIENT_TTL_MS` is the unsafe direction and is clamped.
+     * consumed by `/identity/ensure`. Its TTL is mirrored by the wallet's
+     * pending-action store, which prunes the ticket at the same value.
      * Not single-use — a burn-set would deadlock the wallet's retry loop.
      */
     export const installTicket = buildJwtContext({
         secret: process.env.JWT_SDK_SECRET as string,
         schema: InstallTicketDto,
         aud: "install-ticket",
-        expirationDelayInSecond: installTicketTtlSeconds,
+        expirationDelayInSecond: INSTALL_TICKET_TTL_MS / 1000,
         iss: "frak-identity",
     });
     /**
@@ -165,10 +121,8 @@ interface JWTOption<Schema extends TSchema | undefined = undefined>
     schema?: Schema;
     /**
      * Potential epxiration delay in seconds if exp isn't provided.
-     * A function is resolved per sign, so an env-driven TTL never needs a
-     * pod restart to take effect.
      */
-    expirationDelayInSecond?: number | (() => number);
+    expirationDelayInSecond?: number;
 
     /**
      * JWT Not Before
@@ -266,13 +220,12 @@ function buildJwtContext<const Schema extends TSchema | undefined = undefined>({
             if (nbf) jwt = jwt.setNotBefore(nbf);
 
             // Set the expiration time
-            const delay =
-                typeof expirationDelayInSecond === "function"
-                    ? expirationDelayInSecond()
-                    : expirationDelayInSecond;
-            if (exp || delay) {
+            if (exp || expirationDelayInSecond) {
                 const expiration =
-                    exp ?? Math.floor(Date.now() / 1000 + (delay ?? 0));
+                    exp ??
+                    Math.floor(
+                        Date.now() / 1000 + (expirationDelayInSecond ?? 0)
+                    );
                 jwt.setExpirationTime(expiration);
             }
 

@@ -231,7 +231,7 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
         expect(sendsWhenReleased).toBeGreaterThan(0);
     });
 
-    test("emits the execute proof under both merge and mergeExecute, and a distinct mergeSource", async () => {
+    test("emits the execute proof under merge, and a distinct mergeSource", async () => {
         const { signProof } = await import("../identity/sign");
         vi.mocked(signProof).mockImplementation(async (params) =>
             params.binding ? "execute-proof" : `${params.op}-empty-binding`
@@ -264,11 +264,10 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
 
         const { proofs } = resolvedConfigCalls()[0].data.sdkIdentity;
         expect(proofs.merge).toBe("execute-proof");
-        expect(proofs.mergeExecute).toBe("execute-proof");
         expect(proofs.mergeSource).toBe("frak-merge-v1-empty-binding");
     });
 
-    test("omits both execute keys when the binding cannot be hashed, keeping mergeSource", async () => {
+    test("omits the execute key when the binding cannot be hashed, keeping mergeSource", async () => {
         const { signProof } = await import("../identity/sign");
         vi.mocked(signProof).mockImplementation(async (params) =>
             params.binding ? "execute-proof" : `${params.op}-empty-binding`
@@ -315,7 +314,6 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
 
             const { proofs } = resolvedConfigCalls()[0].data.sdkIdentity;
             expect(proofs.merge).toBeUndefined();
-            expect(proofs.mergeExecute).toBeUndefined();
             expect(proofs.mergeSource).toBe("frak-merge-v1-empty-binding");
         } finally {
             Object.defineProperty(crypto, "subtle", {
@@ -393,7 +391,6 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
         const { proofs } = resolvedConfigCalls()[0].data.sdkIdentity;
         expect(proofs.mergeSource).toBe("frak-merge-v1-empty-binding");
         expect(proofs.merge).toBeUndefined();
-        expect(proofs.mergeExecute).toBeUndefined();
     });
 
     test("re-pushes a fresh mergeSource on visibilitychange without resurrecting the merge token", async () => {

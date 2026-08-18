@@ -1,4 +1,4 @@
-import { INSTALL_TICKET_CLIENT_TTL_MS } from "@frak-labs/app-essentials/constants/installTicket";
+import { INSTALL_TICKET_TTL_MS } from "@frak-labs/app-essentials/constants/installTicket";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
@@ -7,9 +7,7 @@ import type {
 } from "@/module/pending-actions/types";
 
 const DEFAULT_NAV_TTL_MS = 10 * 60 * 1000; // 10 minutes
-// Must stay >= the server's ticket TTL, or the store drops a still-valid
-// ticket before the wallet has drained it.
-const DEFAULT_ENSURE_TTL_MS = INSTALL_TICKET_CLIENT_TTL_MS;
+const DEFAULT_ENSURE_TTL_MS = INSTALL_TICKET_TTL_MS;
 
 type PendingActionsState = {
     actions: PendingAction[];
