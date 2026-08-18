@@ -1,3 +1,4 @@
+import { mockWebLocks } from "@frak-labs/test-foundation";
 import { p256 } from "@noble/curves/nist.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildProofMessage, decodeProof } from "./canonical";
@@ -19,6 +20,7 @@ describe("sign", () => {
         // `stubGlobal` survives `restoreAllMocks`; the no-entropy test stubs
         // `crypto` away and would otherwise break every subsequent test.
         vi.unstubAllGlobals();
+        Reflect.deleteProperty(navigator, "locks");
     });
 
     describe("ensureIdentityKey", () => {
@@ -195,6 +197,20 @@ describe("sign", () => {
                     configurable: true,
                 });
             }
+        });
+
+        it("generates one key when two SDK instances race a first visit", async () => {
+            mockWebLocks();
+
+            const [first, second] = await Promise.all([
+                ensureIdentityKey(),
+                ensureIdentityKey(),
+            ]);
+
+            // A second keygen would leave the loser reporting an id the
+            // stored key no longer derives, so its proofs cover nothing.
+            expect(second.clientId).toBe(first.clientId);
+            expect(localStorage.getItem("frak-client-id")).toBe(first.clientId);
         });
     });
 

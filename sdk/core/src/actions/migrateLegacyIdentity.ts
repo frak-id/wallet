@@ -1,6 +1,11 @@
 import { getBackendUrl } from "../config/environment";
 import { sdkConfigStore } from "../config/sdkConfigStore";
-import { clearPendingLegacyId, signProof } from "../identity/sign";
+import {
+    clearPendingLegacyId,
+    getPendingLegacyId,
+    signProof,
+} from "../identity/sign";
+import { withBrowserLock } from "../utils/browser/withBrowserLock";
 import { sdkVersionHeaders } from "../utils/sdkVersionHeader";
 
 /**
@@ -32,6 +37,8 @@ async function isRecoverableFailure(response: Response): Promise<boolean> {
         return false;
     }
 }
+
+const MIGRATION_LOCK_NAME = "frak-legacy-merge";
 
 /**
  * Fold a pre-derivation (legacy) anonymous id into the derived id that
@@ -65,6 +72,26 @@ export async function migrateLegacyIdentity({
         return;
     }
 
+    // At most one instance merges; the losers have nothing left to do.
+    await withBrowserLock(
+        MIGRATION_LOCK_NAME,
+        async () => {
+            // Re-read under the lock: a sibling may have confirmed the merge
+            // while this one queued, and the marker is the shared truth.
+            if (getPendingLegacyId() !== legacyId) return;
+            await runMerge({ legacyId, derivedId });
+        },
+        { ifAvailable: true }
+    );
+}
+
+async function runMerge({
+    legacyId,
+    derivedId,
+}: {
+    legacyId: string;
+    derivedId: string;
+}): Promise<void> {
     try {
         const merchantId = await sdkConfigStore.resolveMerchantId();
         if (!merchantId) return;

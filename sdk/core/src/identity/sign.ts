@@ -13,6 +13,7 @@
 
 import { p256 as pureJsP256 } from "@noble/curves/nist.js";
 import { p256 as webCryptoP256 } from "@noble/curves/webcrypto.js";
+import { withBrowserLock } from "../utils/browser/withBrowserLock";
 import {
     buildProofMessage,
     bytesToHex,
@@ -21,6 +22,8 @@ import {
 } from "./canonical";
 import { deriveClientId } from "./derive";
 import type { ProofOp } from "./types";
+
+const IDENTITY_KEY_LOCK_NAME = "frak-identity-key";
 
 const CLIENT_ID_KEY = "frak-client-id";
 const CLIENT_KEY_KEY = "frak-client-key";
@@ -163,6 +166,13 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
         );
     }
 
+    // Serialised across SDK instances: two copies racing a first visit would
+    // each generate a key and both write, and the loser would then sign with
+    // the winner's stored key — proofs for an id it never reports.
+    return withBrowserLock(IDENTITY_KEY_LOCK_NAME, loadOrCreateIdentity);
+}
+
+async function loadOrCreateIdentity(): Promise<IdentityKeyMaterial> {
     const storedId = localStorage.getItem(CLIENT_ID_KEY);
 
     let existingKey: Uint8Array | null;
