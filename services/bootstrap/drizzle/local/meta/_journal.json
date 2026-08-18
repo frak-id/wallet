@@ -274,6 +274,13 @@
             "when": 1785490907508,
             "tag": "0038_funny_veda",
             "breakpoints": true
+        },
+        {
+            "idx": 39,
+            "version": "7",
+            "when": 1786987206611,
+            "tag": "0039_gorgeous_virginia_dare",
+            "breakpoints": true
         }
     ]
 }

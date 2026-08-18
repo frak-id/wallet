@@ -555,7 +555,7 @@
     },
     "sdk/android": {
       "name": "@frak-labs-sdk/native-android",
-      "version": "0.0.1",
+      "version": "1.0.0-beta.2",
     },
     "sdk/components": {
       "name": "@frak-labs/components",
@@ -621,7 +621,7 @@
     },
     "sdk/ios": {
       "name": "@frak-labs-sdk/native-ios",
-      "version": "0.0.1",
+      "version": "1.0.0-beta.2",
     },
     "sdk/legacy": {
       "name": "@frak-labs/nexus-sdk",
