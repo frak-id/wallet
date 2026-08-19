@@ -40,6 +40,7 @@ export type {
 export type {
     InAppBrowserRedirectTarget,
     ListenerMiscEventMap,
+    MergeExecuteTargetSource,
 } from "./listener";
 export type {
     ModalDismissSource,

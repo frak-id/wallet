@@ -99,6 +99,7 @@ describe("standalone /install search", () => {
         ).toEqual({
             m: "merchant-1",
             a: "client-1",
+            checkoutToken: undefined,
             p: undefined,
             embed: undefined,
             returnScheme: undefined,
@@ -117,6 +118,7 @@ describe("standalone /install search", () => {
         ).toEqual({
             m: "merchant-1",
             a: "client-1",
+            checkoutToken: undefined,
             p: "proof-abc",
             embed: "native",
             returnScheme: "frak-id.frak.demo",
@@ -129,5 +131,21 @@ describe("standalone /install search", () => {
             searchParamsFromLocation("?returnScheme=some-banking-app")
         );
         expect(search.returnScheme).toBeUndefined();
+    });
+
+    test("decodes the token-only link a Shopify buyer lands on", () => {
+        expect(
+            parseInstallSearch(
+                searchParamsFromLocation("?m=merchant-1&checkoutToken=tok%2F1")
+            )
+        ).toEqual({
+            m: "merchant-1",
+            a: undefined,
+            checkoutToken: "tok/1",
+            p: undefined,
+            embed: undefined,
+            returnScheme: undefined,
+            sid: undefined,
+        });
     });
 });

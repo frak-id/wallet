@@ -10,7 +10,6 @@ import {
 } from "@frak-labs/wallet-shared/common/analytics";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
-import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
 import type { SdkSession, Session } from "@frak-labs/wallet-shared/types";
 import {
     enqueueI18nOverride,
@@ -185,7 +184,7 @@ function isValidResolvedConfigPayload(data: unknown): data is {
  */
 function extractSdkProof(
     sdkIdentity: unknown,
-    key: "merge" | "install"
+    key: "merge" | "mergeSource" | "install"
 ): string | undefined {
     if (!sdkIdentity || typeof sdkIdentity !== "object") return undefined;
     const proofs = (sdkIdentity as Record<string, unknown>).proofs;
@@ -210,27 +209,130 @@ function extractSdkProvenId(sdkIdentity: unknown): string | undefined {
  * Pick the merge target and the proof that covers it.
  *
  * A proof only verifies against the exact id it was signed over, so the
- * target must be that id. When they can't be reconciled the merge still
- * goes out unproven — the backend accepts an unproven target as long as it
- * has never latched, and 403s only once that id has proven itself before.
- *
- * ROLLOUT-STEP-3: delete the `fallbackId ?? undefined` fallback below once
- * `minVersion` excludes every binary that can still reach this path
- * unproven; legacy clients depend on it for in-app-browser attribution.
+ * target must be that id, and anything else is refused. Each of the three
+ * outcomes is still counted, so the refused population stays measurable.
  */
-function resolveMergeTarget(
-    sdkIdentity: unknown,
-    fallbackId: string | null | undefined
-): { targetAnonymousId?: string; proof?: string } {
+function resolveMergeTarget(sdkIdentity: unknown): {
+    targetAnonymousId?: string;
+    proof?: string;
+} {
     const provenId = extractSdkProvenId(sdkIdentity);
     if (provenId) {
+        const proof = extractSdkProof(sdkIdentity, "merge");
+        trackEvent("merge_execute_target_source", {
+            source: proof ? "proven" : "proven_unproven",
+        });
+        if (!proof) {
+            return {};
+        }
+        return { targetAnonymousId: provenId, proof };
+    }
+    trackEvent("merge_execute_target_source", { source: "fallback" });
+    return {};
+}
+
+/** Two retries, ~5s total: long enough for a blip, short enough to outlive. */
+const MERGE_RETRY_DELAYS_MS = [1_000, 4_000];
+
+type MergeBody = {
+    mergeToken: string;
+    targetAnonymousId: string;
+    merchantId: string;
+    proof?: string;
+};
+
+/**
+ * One redemption attempt. A 4xx is the backend's decision and is reported as
+ * final, so a new refusal code cannot become retryable by omission; only a
+ * network failure or a 5xx is worth another try.
+ */
+async function attemptMerge(
+    body: MergeBody
+): Promise<{ retryable: boolean; errorType?: string }> {
+    try {
+        const { error } =
+            await authenticatedBackendApi.user.identity.merge.execute.post(
+                body
+            );
+        if (!error) return { retryable: false };
+
+        const status = (error as { status?: number }).status;
         return {
-            targetAnonymousId: provenId,
-            proof: extractSdkProof(sdkIdentity, "merge"),
+            retryable: status === undefined || status >= 500,
+            errorType:
+                (error as { value?: { code?: string } })?.value?.code ??
+                "unknown",
+        };
+    } catch (error) {
+        return {
+            retryable: true,
+            errorType: error instanceof Error ? error.name : "unknown",
         };
     }
-    // ROLLOUT-STEP-3: unproven fallback — see the function doc above.
-    return { targetAnonymousId: fallbackId ?? undefined };
+}
+
+/** The token stays replayable for its TTL, which is what makes a repeat safe. */
+async function postMergeWithRetry(
+    body: MergeBody
+): Promise<string | undefined> {
+    for (let attempt = 0; ; attempt++) {
+        const { retryable, errorType } = await attemptMerge(body);
+        if (!errorType) return undefined;
+
+        if (!retryable || attempt >= MERGE_RETRY_DELAYS_MS.length) {
+            if (retryable) {
+                console.warn("Unable to merge client identities", errorType);
+            }
+            return errorType;
+        }
+        await new Promise((resolve) =>
+            setTimeout(resolve, MERGE_RETRY_DELAYS_MS[attempt])
+        );
+    }
+}
+
+/**
+ * Redeem the `?fmt=` merge token the in-app-browser escape carried over.
+ * Fire-and-forget: the escape already happened, so a failure costs the merge
+ * hop and nothing the user can see — which is why it retries a blip first.
+ */
+function executeInAppRedirectMerge(
+    pendingMergeToken: string,
+    merchantId: string,
+    sdkIdentity: unknown
+): void {
+    // Emitted before the target is resolved, so every `identity_ensure_failed`
+    // below has a matching `executed` and the ratio cannot exceed 1.
+    const startedAt = Date.now();
+    trackEvent("identity_ensure_executed", { source: "inapp_redirect" });
+
+    const { targetAnonymousId, proof } = resolveMergeTarget(sdkIdentity);
+    if (!targetAnonymousId) {
+        trackEvent("identity_ensure_failed", {
+            source: "inapp_redirect",
+            error_type: "no_merge_target",
+        });
+        return;
+    }
+
+    postMergeWithRetry({
+        mergeToken: pendingMergeToken,
+        targetAnonymousId,
+        merchantId,
+        proof,
+    }).then((errorType) => {
+        if (errorType) {
+            trackEvent("identity_ensure_failed", {
+                source: "inapp_redirect",
+                error_type: errorType,
+            });
+            return;
+        }
+        trackEvent("identity_ensure_succeeded", {
+            source: "inapp_redirect",
+            duration_ms: Date.now() - startedAt,
+        });
+    });
 }
 
 async function handleResolvedConfig(
@@ -282,12 +384,14 @@ async function handleResolvedConfig(
     }
 
     const installProof = extractSdkProof(data.sdkIdentity, "install");
+    const mergeSourceProof = extractSdkProof(data.sdkIdentity, "mergeSource");
     store.setContext({
         merchantId: data.merchantId,
         origin: parsedOrigin,
         sourceUrl: data.sourceUrl,
         ...(iframeClientId && { clientId: iframeClientId }),
         ...(installProof && { installProof }),
+        ...(mergeSourceProof && { mergeSourceProof }),
     });
 
     // Stitch SDK ↔ listener funnels: if the SDK propagated its persistent
@@ -307,50 +411,11 @@ async function handleResolvedConfig(
         data.merchantId &&
         currentTrust === "verified"
     ) {
-        const { targetAnonymousId, proof: mergeProof } = resolveMergeTarget(
-            data.sdkIdentity,
-            iframeClientId ?? clientIdStore.getState().clientId
+        executeInAppRedirectMerge(
+            data.pendingMergeToken,
+            data.merchantId,
+            data.sdkIdentity
         );
-        if (targetAnonymousId) {
-            // `fmt` token is produced by the in-app-browser escape flow
-            // (see `InAppBrowserToast`). Tagging the merge outcome with
-            // source="inapp_redirect" lets us compute merge success rate
-            // for users who bounced out of in-app browsers.
-            const startedAt = Date.now();
-            trackEvent("identity_ensure_executed", {
-                source: "inapp_redirect",
-            });
-            authenticatedBackendApi.user.identity.merge.execute
-                .post({
-                    mergeToken: data.pendingMergeToken,
-                    targetAnonymousId,
-                    merchantId: data.merchantId,
-                    proof: mergeProof,
-                })
-                .then(({ error }) => {
-                    if (error) {
-                        trackEvent("identity_ensure_failed", {
-                            source: "inapp_redirect",
-                            error_type:
-                                (error as { value?: { code?: string } })?.value
-                                    ?.code ?? "unknown",
-                        });
-                        return;
-                    }
-                    trackEvent("identity_ensure_succeeded", {
-                        source: "inapp_redirect",
-                        duration_ms: Date.now() - startedAt,
-                    });
-                })
-                .catch((error) => {
-                    trackEvent("identity_ensure_failed", {
-                        source: "inapp_redirect",
-                        error_type:
-                            error instanceof Error ? error.name : "unknown",
-                    });
-                    console.warn("Unable to merge client identities", error);
-                });
-        }
     }
 
     if (!data.sdkConfig) return;

@@ -1,169 +1,134 @@
 # Identity proof-of-possession
 
-Bind every anonymous identity to a device-held P-256 keypair, so only the device that owns
-an anonymous id can act on it.
+Bind every anonymous identity to a device-held P-256 keypair, so only the device that owns an
+anonymous id can act on it.
 
-**Status:** shipped and permissive. The remaining work is making the wallet arms mandatory
-once the store binary is live — see [`ROLLOUT.md`](./ROLLOUT.md).
+**Status: shipped and enforcing.** Every route that could be talked into acting on an
+`anonymousId` the caller does not hold a key for now refuses, unconditionally, with one exception
+named below. This file is the only remaining document for the programme: what is still open, and
+what a reader needs in order not to undo it. The planning documents that got it here (the surface
+map, the admission plan, the progress log and the flip runbook) are deleted — everything in them
+was either executed, recorded here, or wrong.
 
 **Blocks:** native SDK work ([`../native-sdk/`](../native-sdk/)).
 
 ---
 
-## 1. Why
+## 1. Why it exists
 
-`anonymousId` (the `clientId`) is **not secret**. Every share link publishes it: it rides
-as field `c` of the FrakContext, base64url-encoded into `?fCtx=`. Two unauthenticated
-endpoints also hand it out directly (`install-code/resolve`, `order-client`).
+`anonymousId` (the `clientId`) is **not secret**. Every share link publishes it: it rides as field
+`c` of the FrakContext, base64url-encoded into `?fCtx=`. Two unauthenticated endpoints hand it out
+directly (`install-code/resolve`, `order-client`).
 
-Yet the merge machinery treated naming an id as proof of owning it, on routes with no
-session auth. One request was enough:
+The merge machinery nonetheless treated *naming* an id as proof of *owning* it, on routes with no
+session auth. And it is money, not bookkeeping: `SettlementOrchestrator` resolves the payout wallet
+through the identity group, so whoever captures the group is the one paid.
 
-```http
-POST /user/track/interaction
-x-frak-client-id: <victim's clientId, decoded from any share link>
-x-wallet-sdk-auth: <attacker's own wallet JWT — legitimately obtained>
-{ "type": "arrival", "merchantId": "…" }
-```
+The cryptographic core was never the problem. `IdentityProofService#check` derives the id from the
+public key inside the proof and compares it to the id the caller claimed, rejecting `id_mismatch`
+before the signature is checked. The defect was that the latch **failed open on ids that had never
+proven** — precisely the pre-install population holding unsettled attribution.
 
-Nodes resolve to `[wallet=attacker, anonymous_fingerprint=victim]` → two groups → wallet
-priority anchors on the attacker (a pre-install victim has no wallet) → the victim's group
-is merged away.
+## 2. What is still open
 
-Rewards attach to an **identity group**, not a wallet, and the wallet is resolved at
-settlement, with lockups up to 150 days. So rewards the victim already earned but that had
-not settled paid out to the attacker. `/merge/initiate` + `/merge/execute` reached the same
-place with equally little authentication.
-
-The fix has to work for a user who lands on a merchant site and shares immediately, before
-any wallet exists — that pre-install sharer is exactly who was exposed.
-
-## 2. How
-
-### The id is derived from the keypair
-
-```
-keypair  = P-256 (ECDSA, SHA-256)
-clientId = uuid_from(SHA-256(pubkey_raw_uncompressed)[0..16])
-```
-
-RFC-4122 version and variant bits are set on bytes 6 and 8, so the result is a valid UUID
-and the FrakContext v2 codec's 16-byte field is unchanged — no new wire format, no broken
-published links.
-
-Identity is therefore self-authenticating: recompute the id from the public key and check
-it matches. No key table, no bind endpoint, no trust-on-first-use race. Verification is
-stateless.
-
-A registry mapping `anonymousId → pubkey` was considered and rejected: the bind would have
-to happen on the first proof-carrying call, but those all fire late, so a brand-new user's
-id is published in a share link before anything binds it — claimable by whoever harvests
-the link first. Derivation has no such window; the id *is* the proof from the instant it
-exists.
-
-Truncating to 128 bits is fine here. What matters is second-preimage resistance — hitting
-a *specific* existing id — at a work factor of ~2¹²² after the 6 constant bits.
-
-### Where the key lives
-
-`sdk/core`, on the **merchant origin**, next to the id it derives — the id is born, used
-and published there. `localStorage` is origin-scoped, so the key is inherently
-per-merchant: one merchant, one keypair, one id, no cross-merchant correlation to engineer
-around.
-
-The listener's `clientIdStore` is a **cache**, overwritten from the SDK-supplied
-`?clientId=` param on every load. It is never a second identity.
-
-### Timestamped signatures, no round-trip
-
-```
-msg  = "frak-<op>-v1" ‖ merchantId ‖ anonymousId ‖ <op binding> ‖ ts
-sig  = ECDSA_P256_SHA256(privKey, msg)
-wire = base64url({ v: 1, pk, ts, sig })
-```
-
-Verify: derive the id from `pk` and check it matches the claim, verify `sig` over the
-recomposed message, check `ts` against the op's window.
-
-Every field is fixed width with no length prefixes, so the layout is unambiguous by
-construction and a native port is byte copies at constant offsets rather than a parser.
-Ops are domain-separated so a merge proof can never be replayed as an ensure proof, and
-every security-relevant parameter is bound, not just `ts`.
-
-The frozen layout lives in `sdk/core/src/identity/canonical.ts`, with golden fixtures under
-`sdk/core/src/identity/fixtures/` that the backend verifier tests against — that is the
-contract for any future native implementation.
-
-### Validity windows are per-op
-
-| Op | Window | Why |
+| # | Item | Why it is not done |
 |---|---|---|
-| `frak-merge-v1` | ±2 min, binds `SHA-256(mergeToken)` | Asserts ownership of a free-form body param on an unauthenticated route, so a leak is direct theft. Binding the token makes a stolen proof useless without it, and removes the need for a replay cache. The flow is machine-speed. |
-| `frak-ensure-v1` | 90 days | Share → install → forget → reopen next week → register. A tight cap would silently drop attribution for exactly the users this protects. |
-| `frak-install-v1` | 30 days | Travels in a URL fragment and the Play referrer, so it is minted on the sharer's device and consumed days later on another one. Capped rather than uncapped because it is the leakiest proof in the system. |
+| 1 | **Prod migration for `checkout_token`** | `local/0039` and `dev/0043` are generated and committed; `drizzle/prod/` is still at `0020`. `InstallCodeRepository` names `checkout_token` in raw SQL, so a prod backend on the old schema raises `42703` on every `install-code/generate` and `install-code/resolve`. Generated on `dev` alongside the other prod migrations coming later — **must land before this reaches `main`** |
+| 2 | **`/merge/execute` proof (T3.1b)** | The deliberate exception. See §3 |
+| 3 | **`anonymousId` off `install-code/resolve`'s 200** | The wallet half shipped: the current wallet no longer reads it. The backend stops sending it in a later backend-only deploy — that order, never the reverse, so the persisted store stays readable by a rolled-back build |
+| 4 | **AID-017 — bind `frak-ensure-v1`** | Its binding is empty, making it a 30-day bearer credential. Changing a signed message needs ~30 days of dual-accept across two native store binaries. Real, scheduled, not urgent |
+| 5 | **AID-012 — the last mile of `fmt` retry** | The redemption retries a blip, but only while the page lives. A page closed mid-backoff still loses the merge, and the SDK→listener `postMessage` hop has no ack at all, so a send that never arrives is invisible to both sides. Closing either needs a durable queue, and the thing being queued is a token that stays replayable for 60 minutes — putting it at rest on disk makes AID-003 worse. Do these two together or not at all |
+| 6 | **AID-003 / AID-019 — credential reuse windows** | A merge token is a 60-minute unlimited-use group-capture capability if captured; an install ticket is 7-day multi-use and one code yields up to 20. `jwt.ts` records the reasoning for the ticket (a burn-set deadlocks the wallet's retry loop). The merge token has no such defence and no ticket |
+| 7 | **AID-013 — no cross-merchant proof-scoping test** | The property holds and is load-bearing; nothing pins it. Cheapest item on this list |
+| 8 | **AID-005, AID-008, AID-015** | Client-side and codec findings, untouched by this programme. See the audit record |
 
-### Two signing backends
+## 3. The one route that must not be flipped
 
-WebCrypto when usable, `@noble/curves` pure JS otherwise, both over the same raw 32-byte
-secret. The pure-JS path is required, not a nicety: WebCrypto is unavailable in
-non-secure contexts. Both agree byte-for-byte on the message.
+`/merge/execute` still admits an unproven **target** when that id has never latched. That is
+deliberate: its subject *is* the keyless legacy id, baked into published `fCtx` links that can
+never produce a proof. Flipping it writes off the permanent legacy tail — users who never return
+and therefore never migrate.
 
-Key and id are stored together and the **key is authoritative**: a missing or mismatched
-id is rewritten from the key, and an unusable key regenerates both. An id that outlives
-its key would be latched and unusable.
+The code enforces the exception structurally rather than by convention. `enforceProof` takes a
+**required** `refuseUnproven` boolean; `initiateMerge` passes `true`, `executeMerge` passes `false`
+with T3.1b named at the call site. Deleting the parameter to "simplify" flips it silently, so it is
+a compile error instead.
 
-### The `proof_seen_at` latch
+Its exit criterion is `identity_merge_execute_credential_total{class="absent_unlatched"}` per
+merchant trending to approximately zero — a counter, never a date. The migration runs on each
+client's next visit, so the curve asymptotes and never reaches zero. Firing it is a human decision
+about writing off the tail, not a threshold being crossed.
 
-A derived id and a legacy id are both just UUIDs, so the backend cannot tell them apart by
-inspection. "Require a proof" would have to be a global flag day, and until it flipped
-every new derived id stayed as claimable as a legacy one.
+Legacy ids stay **resolvable** forever regardless; they only stop being usable as merge *targets*.
 
-One nullable timestamp on `identity_nodes` fixes it. Set it the first time a node presents
-a valid proof; once latched, that id requires a proof in either merge role, forever.
+## 4. What to watch after the deploy
 
-It is a one-bit ratchet that only increases strictness, set from a self-authenticating
-proof: an attacker cannot set it without the key and cannot clear it at all. Enforcement
-becomes continuous and per-identity instead of a flag day, and legacy ids keep working
-with no special-casing — they simply never latch.
+| Signal | Means |
+|---|---|
+| `400 PROOF_OR_TOKEN_REQUIRED` on `/identity/ensure` | The bare wallet arm. **Expect a burst on deploy day** — see below |
+| `403 PROOF_REQUIRED` on `/merge/initiate` | An anon-source caller with no proof. Should be ~0: the listener refuses before sending |
+| `403 PROOF_REQUIRED` / `PROOF_INVALID` on `/identity/ensure` | SDK arm unproven, or a bad install proof |
+| `403` on `install-code/generate` | The anonymous arm without a valid proof. The wallet renders the codeless CTA, not an error |
+| `merge_initiate_proofless` | Client-side refusals. The **only** view of them — no request reaches the backend |
+| `merge_execute_target_source{fallback,proven_unproven}` | Merges the listener declines to attempt. Client-side only, same reason |
 
-**The latch is only ever written after a proof actually verified.** Latching an id that was
-merely allowed through on the fail-open path would lock it out permanently the moment it
-tried to sign, and the latch never clears. Every call site has a regression test for this.
+**The deploy-day burst is expected and must decay.** The original sequencing wanted the wallet
+release that stops forwarding `a=` live, and its 7-day pending-ensure queue drained, *before* the
+bare arm started refusing. All of it lands in one deploy instead, so queued actions written by the
+currently deployed wallet — carrying neither ticket nor proof — take a `400`. They drop on first
+attempt rather than retrying, because every refusal code is in `drainEnsures`' non-retryable set,
+so the burst should fall to the floor within the store's 7-day TTL and never recover. What those
+users lose is the pre-install attribution that action carried: not the install, not the wallet,
+nothing on screen. **If it does not decay, something is still minting credential-less ensures** —
+that is the bug to chase, not a reason to revert.
 
-### Legacy ids stay broken, deliberately
+## 5. Two things not to re-propose
 
-Ids minted before derivation have no key and can never sign. They are baked into published
-`fCtx` links, so they stay resolvable indefinitely and remain usable as merge *targets*.
-There is no fix beyond shipping derivation early so the population stops growing; a
-client's next visit migrates it, folding the old id into the derived one.
+**A schema flip does not work here.** "Make `proof` required in the route schema" is the obvious
+simplification and it was measured, not assumed. Two independent reasons: every one of these routes
+has a legitimately proofless arm (wallet-session on `initiate`, the Gate 2 token arm on `generate`,
+the ticket arm on `ensure`), so `proof` cannot be flatly required; and a discriminated-union body is
+worse than useless, because Elysia strips unknown properties **before** validation — so
+`{merchantId, sourceAnonymousId}` with no proof matches the looser variant, `sourceAnonymousId` is
+silently dropped, and an anon-source request succeeds as a wallet-session one with a `200`.
+Confirmed against the live version, with and without `additionalProperties: false`. Enforcement
+belongs in the handler.
 
-## 3. What shipped
+**Kill switches are not worth it here.** These flips shipped once behind four per-request env flags
+and three build-time constants. That cost ~900 lines, of which ~770 were tests whose only job was
+to prove both settings behave, to guard a decision the error log already shows: a refused request
+answers `403`/`400` with a named code, per route, per merchant, in data that already exists. They
+were deleted. The counters stayed — they measure, they no longer gate.
 
-- **Derivation + signing** in `sdk/core/src/identity/` — `canonical.ts` (frozen layout),
-  `sign.ts` (key lifecycle, both backends), `derive.ts`, golden fixtures.
-- **Verification** in `services/backend/src/domain/identity/services/IdentityProofService.ts`,
-  with the shared latch policy in `orchestration/identity/latchedProof.ts` — one function
-  for all three merge/ensure arms rather than three hand-written checks.
-- **Proof transport with no new RPC methods.** The SDK pushes proofs as additive parameters
-  on calls it already makes; the listener forwards them without interpreting them. The
-  install proof travels as a `#p=` URL fragment (never a search param — fragments are not
-  sent to servers, keeping it out of access logs and `Referer` headers) and as a Play
-  referrer key.
-- **Closed merge surfaces.** The unauthenticated pairing `originNode` merge was deleted
-  outright; webhook purchase attribution became first-writer-wins; the SSO merge was kept
-  but proof-gated with a new `frak-sso-v1` op, since it carries a real capability —
-  linking a referee's anonymous reward history to the wallet they create via SSO.
-- **`track/*` rate limiting** — previously none at all, on the route that made the
-  one-request attack possible.
-- **Install flow** — 6-char codes with an attempt cap enforced atomically, exchanged for a
-  short-lived install ticket.
-- **Migration** for pre-derivation clients, running on each client's next visit.
+## 6. Invariants a future change can silently break
 
-Schema: `identity_nodes.proof_seen_at`, `install_codes.attempts`
-(`drizzle/local/0035`, `drizzle/dev/0040`). `device_pairing.origin_node` dropped
-(`local/0036`, folded into `dev/0040`). **`prod` still needs its generated migration.**
+- **The counter emission precedes the throw.** On every arm. It is what makes the series a count of
+  what *arrived* rather than what survived, and on the client it is the only record that a refusal
+  happened at all.
+- **The bare `ensure` arm reports `class="absent"`, not `absent_unlatched`.** It refuses without
+  reading a latch, and a latched id reaches it routinely. Everywhere else those two names are
+  decided by an actual latch read.
+- **`ensure`'s `frak-install-v1` branch refuses an *invalid* proof** rather than falling through to
+  the bare exit. Without that, closing the bare arm would refuse a caller who sends nothing while
+  still admitting one who sends garbage.
+- **The header→body promotion (`x-frak-client-id`) is kept.** It lands on the same bare exit, so it
+  is no longer a proofless door, and deleting it would break a header caller that *does* carry a
+  proof.
+- **`install-code/generate` prefers `checkoutToken` over `anonymousId`.** The id reaching that page
+  comes from a buyer-writable cart attribute; the token is derived from the order server-side. Get
+  this backwards and Gate 2 ships inert.
+- **The execute-side proof keeps its released key, `proofs.merge`.** The symmetric `mergeExecute`
+  name was reverted before shipping: the SST and SDK pipelines fire concurrently, so renaming the
+  one key a live listener reads would have dropped every in-app-browser merge until the CDN caught
+  up. `mergeSource` is new and has no such constraint.
+- **`ROLLOUT-STEP-3` markers** remain in six source files. They mark the bare-arm code that is now
+  unreachable-by-policy but not yet deleted, and the one open decision recorded at `ensure.ts`:
+  whether the install proof should keep being accepted directly or be exchanged for a ticket. It is
+  taken — keep accepting it — because a leaked install proof costs one id its attribution, far less
+  than the two-call capture the flips closed.
 
-## 4. What remains
+## 7. Audit record
 
-Making the wallet arms mandatory, gated on the store binary being live and `minVersion`
-excluding older builds. See [`ROLLOUT.md`](./ROLLOUT.md).
+[`../../audits/2026-08-15-anonymous-id-proof.md`](../../audits/2026-08-15-anonymous-id-proof.md)
+holds the finding ids, severities and per-finding status. Other audit reports cite those numbers,
+so it is kept as a record rather than folded in here.

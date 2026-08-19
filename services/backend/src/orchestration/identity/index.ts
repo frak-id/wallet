@@ -7,6 +7,10 @@ export { IdentityMergeService } from "./IdentityMergeService";
 export { IdentityOrchestrator } from "./IdentityOrchestrator";
 export { IdentityWeightService } from "./IdentityWeightService";
 export {
+    InstallCredentialOrchestrator,
+    type InstallCredentialResolution,
+} from "./InstallCredentialOrchestrator";
+export {
     RecoveryClaimOrchestrator,
     type RecoveryClaimParams,
     type RecoveryClaimResult,

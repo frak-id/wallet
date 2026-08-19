@@ -156,3 +156,86 @@ export function setupListenerDomMocks(options?: {
     mockWindowOrigin(origin);
     mockDocumentReferrer(referrer);
 }
+
+/**
+ * Mock navigator.locks with a real exclusive Web Locks implementation.
+ *
+ * jsdom/happy-dom ship no `LockManager`, so code guarding cross-instance work
+ * runs unsynchronised and races stay invisible. Waiters queue FIFO;
+ * `ifAvailable` callers are handed `null` instead of waiting, like the spec.
+ *
+ * @param target - Object to define `locks` on (default: `navigator`)
+ *
+ * @example
+ * ```typescript
+ * mockWebLocks();
+ * await Promise.all([doOnce(), doOnce()]); // second one is refused
+ * ```
+ */
+export function mockWebLocks(target: object = navigator) {
+    const held = new Map<string, Promise<unknown>>();
+
+    type RequestOptions = { ifAvailable?: boolean; signal?: AbortSignal };
+
+    function abortError() {
+        return new DOMException("The request was aborted", "AbortError");
+    }
+
+    // A waiter aborted before it is granted rejects, and never runs.
+    async function waitFor(holder: Promise<unknown>, signal?: AbortSignal) {
+        if (!signal) {
+            await holder;
+            return;
+        }
+        let onAbort: (() => void) | undefined;
+        try {
+            await Promise.race([
+                holder,
+                new Promise((_resolve, reject) => {
+                    if (signal.aborted) {
+                        reject(abortError());
+                        return;
+                    }
+                    onAbort = () => reject(abortError());
+                    signal.addEventListener("abort", onAbort);
+                }),
+            ]);
+        } finally {
+            if (onAbort) signal.removeEventListener("abort", onAbort);
+        }
+    }
+
+    async function request(
+        name: string,
+        options: RequestOptions | ((lock: unknown) => unknown),
+        callback?: (lock: unknown) => unknown
+    ) {
+        const run = callback ?? (options as (lock: unknown) => unknown);
+        const opts = callback ? (options as RequestOptions) : {};
+
+        const holder = held.get(name);
+        if (holder) {
+            if (opts.ifAvailable) return run(null);
+            await waitFor(holder, opts.signal);
+        }
+
+        const released = (async () => {
+            try {
+                return await run({ name, mode: "exclusive" });
+            } finally {
+                held.delete(name);
+            }
+        })();
+        held.set(
+            name,
+            released.catch(() => undefined)
+        );
+        return released;
+    }
+
+    Object.defineProperty(target, "locks", {
+        value: { request },
+        writable: true,
+        configurable: true,
+    });
+}

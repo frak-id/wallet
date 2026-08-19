@@ -119,6 +119,10 @@ export const purchaseClaimsTable = pgTable(
         index("purchase_claims_identity_group_idx").on(
             table.claimingIdentityGroupId
         ),
+        index("purchase_claims_merchant_token_idx").on(
+            table.merchantId,
+            table.purchaseToken
+        ),
     ]
 );
 

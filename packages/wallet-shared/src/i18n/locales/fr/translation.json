@@ -786,6 +786,7 @@
         "error": {
             "invalid": "Code incorrect ou expiré, vérifie le code copié depuis wallet.frak.id",
             "alreadyLinked": "Ce code a déjà été utilisé.",
+            "unresolved": "Ce code n'est pas encore lié à un achat. Réessaie dans quelques minutes.",
             "generic": "Une erreur est survenue, réessaie."
         },
         "success": {
@@ -797,6 +798,8 @@
     "installCode": {
         "title": "Ne perds pas tes {{ estimatedReward }} !\nCopie ce code",
         "description": "Colle-le à l'ouverture de l'app. Il te permettra de récupérer tes gains une fois connecté·e.",
+        "codelessTitle": "Ne perds pas tes {{ estimatedReward }} !",
+        "codelessDescription": "Télécharge l'app et connecte-toi pour récupérer tes gains.",
         "copyCode": "Copier le code",
         "codeCopied": "Code copié !",
         "loading": "Génération de ton code...",

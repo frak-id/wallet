@@ -75,7 +75,7 @@ export function InstallView({
     navigation: InstallNavigation;
     processingLayout: React.ComponentType<{ children: React.ReactNode }>;
 }) {
-    const { m, a, p, embed, returnScheme, sid } = search;
+    const { m, a, checkoutToken, p, embed, returnScheme, sid } = search;
     // Read once, and forwarded to both views whichever shell is running.
     const proof = useMemo(
         () => resolveInstallProof(window.location.hash, p),
@@ -88,16 +88,18 @@ export function InstallView({
         trackEvent("install_page_viewed", {
             merchant_id: m,
             has_anonymous_id: Boolean(a),
+            has_checkout_token: Boolean(checkoutToken),
             has_install_proof: Boolean(proof),
             view: shouldShowCodeView ? "code" : "processing",
         });
-    }, [m, a, proof, shouldShowCodeView]);
+    }, [m, a, checkoutToken, proof, shouldShowCodeView]);
 
     if (shouldShowCodeView) {
         return (
             <InstallCodeView
                 m={m}
                 a={a}
+                checkoutToken={checkoutToken}
                 proof={proof}
                 embed={embed}
                 returnScheme={returnScheme}
@@ -111,6 +113,7 @@ export function InstallView({
         <InstallProcessing
             m={m}
             a={a}
+            checkoutToken={checkoutToken}
             proof={proof}
             navigation={navigation}
             layout={ProcessingLayout}
@@ -135,6 +138,7 @@ function sleep(ms: number): Promise<void> {
 function InstallProcessing({
     m: merchantId,
     a: anonymousId,
+    checkoutToken,
     proof,
     navigation,
     layout: Layout,
@@ -156,6 +160,9 @@ function InstallProcessing({
         trackEvent("install_processing_triggered", {
             is_logged_in: isLoggedIn,
             has_ensure_action: Boolean(ensureAction),
+            // This branch cannot resolve a token to an id, so a Shopify buyer
+            // who already has the wallet loses that attribution here.
+            has_checkout_token: Boolean(checkoutToken),
             has_install_proof: Boolean(proof),
         });
 
@@ -168,7 +175,7 @@ function InstallProcessing({
             if (ensureAction) queuePendingAction(ensureAction);
             sleep(MIN_PROCESSING_MS).then(() => navigation.toRegister());
         }
-    }, [merchantId, anonymousId, proof, navigation]);
+    }, [merchantId, anonymousId, checkoutToken, proof, navigation]);
 
     return (
         <Layout>
@@ -206,9 +213,84 @@ function merchantInfoQueryOptions(merchantId?: string) {
     });
 }
 
+function InstallCodeHero({
+    t,
+    installed,
+    codeless,
+}: {
+    t: (key: string, options?: Record<string, unknown>) => string;
+    installed: boolean;
+    codeless: boolean;
+}) {
+    if (installed) {
+        return (
+            <>
+                <Badge variant="success" className={styles.installedBadge}>
+                    {t("installCode.installedTitle")}
+                </Badge>
+                <Text as="h1" variant="heading2" className={styles.title}>
+                    {t("installCode.installedHeadline")}
+                </Text>
+            </>
+        );
+    }
+
+    return (
+        <>
+            <Text as="h1" variant="heading2" className={styles.title}>
+                {t(
+                    codeless ? "installCode.codelessTitle" : "installCode.title"
+                )}
+            </Text>
+            <Text variant="bodySmall" color="secondary">
+                {t(
+                    codeless
+                        ? "installCode.codelessDescription"
+                        : "installCode.description"
+                )}
+            </Text>
+        </>
+    );
+}
+
+function InstallCodeInfoCard({
+    t,
+}: {
+    t: (key: string, options?: Record<string, unknown>) => string;
+}) {
+    return (
+        <Card variant="secondary" padding="compact" className={styles.infoCard}>
+            <Inline space="s" alignY="top" wrap={false}>
+                <Info size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+                <Stack space="xxs">
+                    <Text variant="heading4" weight="medium">
+                        {t("installCode.infoTitle")}
+                    </Text>
+                    <Text variant="bodySmall" color="secondary">
+                        <Trans
+                            i18nKey="installCode.infoDescription"
+                            components={{
+                                1: (
+                                    <Text
+                                        as="span"
+                                        variant="bodySmall"
+                                        weight="medium"
+                                        color="action"
+                                    />
+                                ),
+                            }}
+                        />
+                    </Text>
+                </Stack>
+            </Inline>
+        </Card>
+    );
+}
+
 function InstallCodeView({
     m: merchantId,
     a: anonymousId,
+    checkoutToken,
     proof,
     embed,
     returnScheme,
@@ -241,8 +323,16 @@ function InstallCodeView({
     } = useGenerateInstallCode({
         merchantId,
         anonymousId,
+        checkoutToken,
         proof,
     });
+
+    // No credential to mint from, or one the backend refused. Either way the
+    // store link below is the whole surface, so this must never render as an
+    // error, and never as a "copy this code" hero with no code beneath it.
+    const codeless =
+        !(anonymousId || checkoutToken) ||
+        (codeQueryStatus === "success" && !data?.code);
 
     const activation = useInstallActivation(true);
     const installed = activation?.installed === "1";
@@ -376,36 +466,11 @@ function InstallCodeView({
 
             <main className={styles.main}>
                 <section className={styles.heroSection}>
-                    {installed ? (
-                        <>
-                            <Badge
-                                variant="success"
-                                className={styles.installedBadge}
-                            >
-                                {t("installCode.installedTitle")}
-                            </Badge>
-                            <Text
-                                as="h1"
-                                variant="heading2"
-                                className={styles.title}
-                            >
-                                {t("installCode.installedHeadline")}
-                            </Text>
-                        </>
-                    ) : (
-                        <>
-                            <Text
-                                as="h1"
-                                variant="heading2"
-                                className={styles.title}
-                            >
-                                {t("installCode.title")}
-                            </Text>
-                            <Text variant="bodySmall" color="secondary">
-                                {t("installCode.description")}
-                            </Text>
-                        </>
-                    )}
+                    <InstallCodeHero
+                        t={t}
+                        installed={installed}
+                        codeless={codeless}
+                    />
                 </section>
 
                 {isLoading && (
@@ -452,35 +517,8 @@ function InstallCodeView({
                 )}
             </main>
 
-            <Card
-                variant="secondary"
-                padding="compact"
-                className={styles.infoCard}
-            >
-                <Inline space="s" alignY="top" wrap={false}>
-                    <Info size={18} style={{ flexShrink: 0, marginTop: 2 }} />
-                    <Stack space="xxs">
-                        <Text variant="heading4" weight="medium">
-                            {t("installCode.infoTitle")}
-                        </Text>
-                        <Text variant="bodySmall" color="secondary">
-                            <Trans
-                                i18nKey="installCode.infoDescription"
-                                components={{
-                                    1: (
-                                        <Text
-                                            as="span"
-                                            variant="bodySmall"
-                                            weight="medium"
-                                            color="action"
-                                        />
-                                    ),
-                                }}
-                            />
-                        </Text>
-                    </Stack>
-                </Inline>
-            </Card>
+            {/* Both strings are about pasting a code that does not exist here. */}
+            {!codeless && <InstallCodeInfoCard t={t} />}
 
             <footer className={styles.footer}>
                 <ExternalLink

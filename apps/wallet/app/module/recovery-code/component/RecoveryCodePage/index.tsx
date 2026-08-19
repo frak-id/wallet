@@ -13,6 +13,7 @@ export function RecoveryCodePage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [code, setCode] = useState("");
+    const [unresolved, setUnresolved] = useState(false);
     const openModal = modalStore((s) => s.openModal);
 
     const {
@@ -31,6 +32,7 @@ export function RecoveryCodePage() {
     const handleCodeChange = useCallback(
         (value: string) => {
             setCode(value);
+            setUnresolved(false);
             if (error) resetMutation();
         },
         [error, resetMutation]
@@ -42,6 +44,12 @@ export function RecoveryCodePage() {
         trackEvent("install_code_submitted");
         try {
             const result = await resolveAsync(code);
+            // An `UNRESOLVED` code queues no ensure action, so announcing a
+            // recovered referral would be a lie.
+            if (result.outcome === "UNRESOLVED") {
+                setUnresolved(true);
+                return;
+            }
             openModal({
                 id: "recoveryCodeSuccess",
                 merchant: result.merchant,
@@ -51,7 +59,11 @@ export function RecoveryCodePage() {
         }
     }, [isComplete, isPending, code, resolveAsync, openModal]);
 
-    const errorMessage = error ? t("recoveryCode.error.invalid") : undefined;
+    const errorMessage = error
+        ? t("recoveryCode.error.invalid")
+        : unresolved
+          ? t("recoveryCode.error.unresolved")
+          : undefined;
 
     return (
         <FlowStepScreen

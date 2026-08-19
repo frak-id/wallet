@@ -8,11 +8,13 @@ export function useGetMergeToken() {
     const context = useStore(resolvingContextStore, (state) => state.context);
     const clientId = context?.clientId;
     const merchantId = context?.merchantId;
+    const proof = context?.mergeSourceProof;
 
     const { data, refetch } = useQuery(
         mergeTokenQueryOptions({
             merchantId,
             sourceAnonymousId: clientId,
+            proof,
         })
     );
 

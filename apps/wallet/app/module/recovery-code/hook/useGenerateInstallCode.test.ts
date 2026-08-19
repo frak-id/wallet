@@ -56,6 +56,125 @@ describe("useGenerateInstallCode", () => {
         });
     });
 
+    test("fires on a token-only call, where there is no anonymousId at all", async ({
+        queryWrapper,
+    }) => {
+        const { useGenerateInstallCode } = await import(
+            "./useGenerateInstallCode"
+        );
+        renderHook(
+            () =>
+                useGenerateInstallCode({
+                    merchantId: "merchant-3",
+                    checkoutToken: "tok-3",
+                }),
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() => {
+            expect(mockGeneratePost).toHaveBeenCalledWith({
+                merchantId: "merchant-3",
+                checkoutToken: "tok-3",
+            });
+        });
+    });
+
+    test("prefers the order-derived token over the buyer-writable id", async ({
+        queryWrapper,
+    }) => {
+        const { useGenerateInstallCode } = await import(
+            "./useGenerateInstallCode"
+        );
+        renderHook(
+            () =>
+                useGenerateInstallCode({
+                    merchantId: "merchant-4",
+                    anonymousId: "anon-4",
+                    checkoutToken: "tok-4",
+                    proof: "install-proof",
+                }),
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() => {
+            expect(mockGeneratePost).toHaveBeenCalledWith({
+                merchantId: "merchant-4",
+                checkoutToken: "tok-4",
+            });
+        });
+    });
+
+    test("resolves to null on a refused credential instead of throwing", async ({
+        queryWrapper,
+    }) => {
+        mockGeneratePost.mockResolvedValue({
+            data: null,
+            error: { status: 404, value: { code: "MERCHANT_NOT_CONFIGURED" } },
+        });
+        const { useGenerateInstallCode } = await import(
+            "./useGenerateInstallCode"
+        );
+        const { result } = renderHook(
+            () =>
+                useGenerateInstallCode({
+                    merchantId: "merchant-6",
+                    checkoutToken: "tok-6",
+                }),
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() => {
+            expect(result.current.status).toBe("success");
+        });
+        expect(result.current.data).toBeNull();
+        expect(result.current.error).toBeNull();
+    });
+
+    test("still surfaces a server failure as an error", async ({
+        queryWrapper,
+    }) => {
+        mockGeneratePost.mockResolvedValue({
+            data: null,
+            error: { status: 500, value: null },
+        });
+        const { useGenerateInstallCode } = await import(
+            "./useGenerateInstallCode"
+        );
+        const { result } = renderHook(
+            () =>
+                useGenerateInstallCode({
+                    merchantId: "merchant-7",
+                    checkoutToken: "tok-7",
+                }),
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() => {
+            expect(result.current.status).toBe("error");
+        });
+    });
+
+    test("stays disabled with neither credential", async ({ queryWrapper }) => {
+        const { useGenerateInstallCode } = await import(
+            "./useGenerateInstallCode"
+        );
+        renderHook(() => useGenerateInstallCode({ merchantId: "merchant-5" }), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        expect(mockGeneratePost).not.toHaveBeenCalled();
+    });
+
+    test("keys a token-only call apart from an id-only one", async () => {
+        const { installCodeKey } = await import(
+            "@/module/recovery-code/queryKeys/install-code"
+        );
+        expect(
+            installCodeKey.generate("merchant-1", undefined, "tok-1")
+        ).not.toEqual(installCodeKey.generate("merchant-1", "anon-1"));
+    });
+
     test("degrades to no proof when the fragment was absent", async ({
         queryWrapper,
     }) => {

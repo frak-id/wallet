@@ -37,6 +37,9 @@ export type InstallEventMap = {
     // ---------------------------------------------------------------------
     install_page_viewed: MerchantMaybe & {
         has_anonymous_id: boolean;
+        // Gate 2's order-derived credential. Sizes the Shopify share of this
+        // surface, and the loss on the processing branch that drops it.
+        has_checkout_token: boolean;
         // Whether the `#p=` install-proof fragment survived the redirect
         // chain that led here. Purely diagnostic — attribution never
         // depends on this being true.
@@ -48,6 +51,9 @@ export type InstallEventMap = {
     install_processing_triggered: {
         is_logged_in: boolean;
         has_ensure_action: boolean;
+        // This branch cannot resolve a token to an id, so a true value here is
+        // an attribution loss rather than a credential.
+        has_checkout_token: boolean;
         has_install_proof: boolean;
     };
     install_code_displayed: MerchantMaybe;
@@ -103,6 +109,8 @@ export type InstallEventMap = {
     install_code_resolved: {
         has_wallet: boolean;
         merchant_domain: string;
+        /** `UNRESOLVED` means the code was valid but named no identity. */
+        outcome: "RESOLVED" | "UNRESOLVED";
     };
     install_code_resolve_failed: {
         error_code: string;

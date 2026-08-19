@@ -44,6 +44,11 @@ type IFrameResolvingContext = {
      * on the install link, never a search param.
      */
     installProof?: string;
+    /**
+     * `frak-merge-v1` proof with an EMPTY binding, for `/merge/initiate`.
+     * Re-pushed by the SDK on tab focus, so the latest write always wins.
+     */
+    mergeSourceProof?: string;
 };
 
 /**

@@ -522,6 +522,13 @@ vi.mock("@backend-infrastructure", () => ({
         advisoryLockHoldTimer: vi.fn(() => vi.fn()),
         rateLimitRejected: vi.fn(),
         domainEventEmitted: vi.fn(),
+        identityProofChecked: vi.fn(),
+        identityMergeExecuteCredential: vi.fn(),
+        identityMergeInitiateCredential: vi.fn(),
+        identityInstallCodeGenerateCredential: vi.fn(),
+        identityEnsureArm: vi.fn(),
+        identityWalletConflict: vi.fn(),
+        identityMergeExecuteWalletSourceUnproven: vi.fn(),
     },
     cronMetrics: {
         skipped: vi.fn(),

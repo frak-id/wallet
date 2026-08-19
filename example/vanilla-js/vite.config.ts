@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
     // In local development, use local loader directly
     // Otherwise, use CDN components.js (which loads from CDN)
     const scriptSrc = useLocal
-        ? `${bundleDir}/loader.js`
+        ? `/@fs${bundleDir}/loader.js`
         : "https://cdn.jsdelivr.net/npm/@frak-labs/components@beta/cdn/loader.js";
 
     return {
