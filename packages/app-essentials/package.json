@@ -54,6 +54,11 @@
       "types": "./src/constants/installTicket.ts",
       "import": "./src/constants/installTicket.ts",
       "default": "./src/constants/installTicket.ts"
+    },
+    "./constants/serverMintedId": {
+      "types": "./src/constants/serverMintedId.ts",
+      "import": "./src/constants/serverMintedId.ts",
+      "default": "./src/constants/serverMintedId.ts"
     }
   }
 }

@@ -3,6 +3,7 @@ import { openExternalUrl } from "@frak-labs/wallet-shared/common/utils/openExter
 import {
     buildInstallUrl,
     SharingPage,
+    useSharingIdentity,
     useSharingPageController,
 } from "@frak-labs/wallet-shared/sharing";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
@@ -15,7 +16,6 @@ import { isHostEmbedded } from "@/module/common/utils/hostEmbed";
 import { useHostBridge } from "@/module/sharing/host/useHostBridge";
 import { useActivationParams } from "@/module/sharing/params/fragment";
 import type { SharingSearch } from "@/module/sharing/params/table";
-import { useSharingIdentity } from "@/module/sharing/useSharingIdentity";
 
 /**
  * How this surface leaves the page. The SPA route hands over TanStack Router

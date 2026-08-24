@@ -20,6 +20,7 @@ export type {
 export { SharingPage } from "./component/SharingPage";
 // Hooks
 export { useShareLink } from "./hooks/useShareLink";
+export { useSharingIdentity } from "./hooks/useSharingIdentity";
 export type {
     SharingOutcomes,
     SharingPageControllerInput,

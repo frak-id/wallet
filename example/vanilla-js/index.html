@@ -349,6 +349,21 @@
             image-url="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%230043EF'/><text x='50' y='66' font-size='52' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>F</text></svg>"
         ></frak-post-purchase>
     </div>
+
+    <h3 class="test-section__subtitle">Live card with an order token (<code>token</code>)</h3>
+    <p class="test-section__note">
+        Not a preview, so the CTA is live: clicking it opens the sharing page and
+        forwards <code>token</code> as the <code>checkoutToken</code>, which is how
+        a buyer with no <code>frak-client-id</code> still gets an install link.
+        Renders only once the SDK resolves a referral status.
+    </p>
+    <div class="component-row">
+        <frak-post-purchase
+            customer-id="demo-customer-1"
+            order-id="demo-order-1"
+            token="demo-checkout-token-1"
+        ></frak-post-purchase>
+    </div>
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
