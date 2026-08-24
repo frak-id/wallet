@@ -63,17 +63,6 @@
         .page-title {
             color: #fff;
         }
-        frak-button-share .override {
-            background-color: black;
-            color: white;
-        }
-        frak-button-wallet .override {
-            background-color: black;
-        }
-        frak-open-in-app .override {
-            background-color: black;
-            color: white;
-        }
 
         /* Merge Token Demo Styles */
         .merge-demo {
@@ -132,18 +121,6 @@
         .status-box .warn { color: #fa0; }
         .status-box .error { color: #f55; }
         .status-box .success { color: #4CAF50; }
-        .token-display {
-            background: #1e2127;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 10px;
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 0.75rem;
-            color: #888;
-            max-height: 60px;
-            overflow-y: auto;
-        }
         .current-id {
             color: #4CAF50;
             font-family: monospace;
@@ -220,18 +197,6 @@
             font-size: 0.8rem;
             min-width: 120px;
         }
-        .cascade-info {
-            background: #1e2127;
-            border-radius: 8px;
-            padding: 12px;
-            margin-top: 10px;
-            font-family: monospace;
-            font-size: 0.8rem;
-            color: #888;
-            line-height: 1.6;
-        }
-        .cascade-info .high { color: #4CAF50; }
-        .cascade-info .low { color: #666; }
 
         /* Share Link Sample Styles */
         .share-link-row {
@@ -492,17 +457,13 @@
         social app browsers (Instagram, TikTok) to external browsers via SSO/OAuth flows.
     </p>
 
-    <p class="merge-demo__text"><strong>Note:</strong> Token generation requires backend running with a merchant configured for "localhost".</p>
+    <p class="merge-demo__text"><strong>Note:</strong> Arriving with a <code>?fmt=</code> merge token in the URL is logged below; the listener processes it and links the identities.</p>
 
     <p class="merge-demo__text"><strong>Your anonymousId:</strong> <span id="current-client-id" class="current-id">Loading...</span></p>
 
     <div>
-        <button id="btn-generate-token" class="merge-demo__button">Generate Merge Token</button>
-        <button id="btn-simulate-redirect" class="merge-demo__button merge-demo__button--secondary">Simulate Redirect</button>
         <button id="btn-clear-id" class="merge-demo__button merge-demo__button--secondary">Clear ID (New Identity)</button>
     </div>
-
-    <div id="token-display" class="token-display" style="display: none;"></div>
 
     <div id="merge-status" class="status-box">
         <div class="info">[Ready] Merge token demo initialized</div>
