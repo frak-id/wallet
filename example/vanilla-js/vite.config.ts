@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { isRunningLocally } from "@frak-labs/app-essentials/utils/env";
 import { defineConfig } from "vite";
@@ -19,19 +20,24 @@ export default defineConfig(({ mode }) => {
         ? `/@fs${bundleDir}/loader.js`
         : "https://cdn.jsdelivr.net/npm/@frak-labs/components@beta/cdn/loader.js";
 
+    // The page boots the SDK from this bundle alone; a missing one 404s silently.
+    if (useLocal && !existsSync(`${bundleDir}/loader.js`)) {
+        throw new Error(
+            `Missing ${bundleDir}/loader.js — run \`bun run build:sdk\` first.`
+        );
+    }
+
     return {
         server: {
             port: 3013,
         },
         publicDir: "public",
-        // This example consumes the SDK from source (`customConditions:
-        // ["development"]`), so the `process.env.*` reads that tsdown
-        // substitutes at publish time are still live here. `constants.ts`
-        // reads one at module scope, which throws `process is not defined`
-        // on import unless it is substituted.
+        // Consuming the SDK from source leaves its `process.env` reads unsubstituted.
         define: {
-            "process.env.DEEP_LINK_SCHEME": JSON.stringify("frakwallet://"),
-            "process.env.SDK_VERSION": JSON.stringify("dev"),
+            "process.env": JSON.stringify({
+                DEEP_LINK_SCHEME: "frakwallet://",
+                SDK_VERSION: "dev",
+            }),
         },
         plugins: [
             createHtmlPlugin({

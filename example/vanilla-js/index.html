@@ -45,6 +45,10 @@
             const sdkScript = document.createElement('script');
             sdkScript.type = 'module';
             sdkScript.src = '<%- sdkScriptSrc %>';
+            // Without this a 404 is silent: no client ever lands and every action hangs.
+            sdkScript.onerror = () => {
+                console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+            };
             document.head.appendChild(sdkScript);
         })();
     </script>
