@@ -3,7 +3,7 @@
 # Listener iframe app — self-contained multi-stage build. See apps/wallet/Dockerfile
 # for the full caching-strategy commentary.
 
-ARG BUN_VERSION=1.3.11
+ARG BUN_VERSION=1.4.0
 
 FROM oven/bun:${BUN_VERSION} AS tooling
 RUN --mount=type=cache,id=apt-cache,target=/var/cache/apt,sharing=locked \
