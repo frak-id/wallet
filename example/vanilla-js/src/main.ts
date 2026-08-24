@@ -425,16 +425,7 @@ function bindTestButtons() {
     void bindNativeShareButtons();
 }
 
-async function init() {
-    if (!process.env.USE_CDN) {
-        await Promise.all([
-            import("@frak-labs/components/dist/buttonWallet.js"),
-            import("@frak-labs/components/dist/buttonShare.js"),
-            import("@frak-labs/components/dist/openInApp.js"),
-            import("@frak-labs/components/dist/postPurchase.js"),
-        ]);
-    }
-
+function init() {
     void updateClientIdDisplay();
     checkForMergeToken();
     bindTestButtons();

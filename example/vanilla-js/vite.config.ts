@@ -24,8 +24,14 @@ export default defineConfig(({ mode }) => {
             port: 3013,
         },
         publicDir: "public",
+        // This example consumes the SDK from source (`customConditions:
+        // ["development"]`), so the `process.env.*` reads that tsdown
+        // substitutes at publish time are still live here. `constants.ts`
+        // reads one at module scope, which throws `process is not defined`
+        // on import unless it is substituted.
         define: {
-            "process.env.USE_CDN": JSON.stringify(mode !== "development"),
+            "process.env.DEEP_LINK_SCHEME": JSON.stringify("frakwallet://"),
+            "process.env.SDK_VERSION": JSON.stringify("dev"),
         },
         plugins: [
             createHtmlPlugin({
