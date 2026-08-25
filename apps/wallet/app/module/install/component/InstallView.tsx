@@ -25,6 +25,7 @@ import {
     PLAY_STORE_URL,
 } from "@frak-labs/wallet-shared/common/utils/storeUrls";
 import { buildPlayStoreInstallUrl } from "@frak-labs/wallet-shared/sharing";
+import type { Translate } from "@frak-labs/wallet-shared/types";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -218,7 +219,7 @@ function InstallCodeHero({
     installed,
     codeless,
 }: {
-    t: (key: string, options?: Record<string, unknown>) => string;
+    t: Translate;
     installed: boolean;
     codeless: boolean;
 }) {
@@ -253,11 +254,7 @@ function InstallCodeHero({
     );
 }
 
-function InstallCodeInfoCard({
-    t,
-}: {
-    t: (key: string, options?: Record<string, unknown>) => string;
-}) {
+function InstallCodeInfoCard({ t }: { t: Translate }) {
     return (
         <Card variant="secondary" padding="compact" className={styles.infoCard}>
             <Inline space="s" alignY="top" wrap={false}>
@@ -309,8 +306,8 @@ function InstallCodeView({
     });
     const estimatedReward = reward?.formatted;
 
-    const t = useCallback(
-        (key: string, options?: Record<string, unknown>) =>
+    const t = useCallback<Translate>(
+        (key, options) =>
             rawT(key, { ...options, estimatedReward: estimatedReward ?? "" }),
         [rawT, estimatedReward]
     );
