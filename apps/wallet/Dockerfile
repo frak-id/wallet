@@ -97,7 +97,7 @@ RUN find dist -type f \
     | xargs -0 -P "$(nproc)" -n 32 gzip -9 -k && \
     echo "Pre-compressed $(find dist -name '*.gz' | wc -l) files"
 
-FROM nginx:1.29.1-alpine
+FROM nginx:1.31.4-alpine
 COPY --from=app-builder /app/apps/wallet/dist /usr/share/nginx/html
 # nginx envsubst on /etc/nginx/templates/*.template at container startup; the
 # NGINX_ENVSUBST_FILTER scopes substitution to MONERIUM_* env vars so nginx's

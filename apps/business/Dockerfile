@@ -71,7 +71,7 @@ RUN find dist -type f \
     | xargs -0 -P "$(nproc)" -n 32 gzip -9 -k && \
     echo "Pre-compressed $(find dist -name '*.gz' | wc -l) files"
 
-FROM nginx:1.29.1-alpine
+FROM nginx:1.31.4-alpine
 COPY --from=app-builder /app/apps/business/dist /usr/share/nginx/html
 COPY apps/business/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
