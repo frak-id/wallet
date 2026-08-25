@@ -48,6 +48,12 @@ export type DisplaySharingPageParamsType = {
      */
     link?: string;
     /**
+     * Opaque per-order token (Shopify's checkout token, or a plugin equivalent).
+     * Lets the sharing page derive an identity from the order when the caller's
+     * own `clientId` is missing, so the install CTA still carries a credential.
+     */
+    checkoutToken?: string;
+    /**
      * Optional attribution overrides for the outbound sharing URL.
      *
      * When provided (even as an empty object), Frak adds `utm_source=frak` alongside

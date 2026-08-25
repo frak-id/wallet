@@ -28,7 +28,7 @@ Native adds six additive params; absent, the page renders exactly as before.
 | `r=` | optional | seeded reward, display-only, validated by `sanitizeSeededReward` |
 | `sdkv=` | recommended | SDK version, logged only — drives nothing, see §5 |
 | `preload=1` | pool only | fires `sharing_page_preloaded` instead of `sharing_page_viewed` |
-| `checkoutToken` | never sent by native | Shopify-only fallback |
+| `checkoutToken` | never sent by native | order-derived fallback — sent by the Shopify checkout extension and by `<frak-post-purchase>` on any platform |
 | `redirectUrl` | unused in native mode | |
 
 Unknown params are dropped, not rejected, and a test pins it — an older page tolerates a newer SDK.

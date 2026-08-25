@@ -32,6 +32,7 @@ cdn
 
 # Native Android / iOS builds
 example/native-android/.gradle/
+example/native-android/.kotlin/
 example/native-android/**/build/
 example/native-ios/.build/
 example/native-ios/.swiftpm/
