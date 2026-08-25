@@ -24,6 +24,10 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     };
 });
 
+/**
+ * Every test imports the hook dynamically: a static import would bind the
+ * module before `vi.mock` above has replaced `authenticatedBackendApi`.
+ */
 describe("useGenerateInstallCode", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -145,6 +149,8 @@ describe("useGenerateInstallCode", () => {
                 useGenerateInstallCode({
                     merchantId: "merchant-7",
                     checkoutToken: "tok-7",
+                    // Assert the terminal state, not the backoff schedule.
+                    retry: false,
                 }),
             { wrapper: queryWrapper.wrapper }
         );
@@ -152,6 +158,59 @@ describe("useGenerateInstallCode", () => {
         await waitFor(() => {
             expect(result.current.status).toBe("error");
         });
+    });
+
+    test("retries a 5xx on the production default and resolves with the retry's code", async ({
+        queryWrapper,
+    }) => {
+        mockGeneratePost
+            .mockResolvedValueOnce({ data: null, error: { status: 503 } })
+            .mockResolvedValueOnce({
+                data: { code: "RETRY123", expiresAt: "2026-01-01T00:00:00Z" },
+                error: null,
+            });
+        const { useGenerateInstallCode } = await import(
+            "./useGenerateInstallCode"
+        );
+        const { result } = renderHook(
+            () =>
+                useGenerateInstallCode({
+                    merchantId: "merchant-8",
+                    checkoutToken: "tok-8",
+                    // No `retry` override: this asserts the shipped default.
+                }),
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() => expect(result.current.status).toBe("success"), {
+            timeout: 5000,
+        });
+        expect(result.current.data?.code).toBe("RETRY123");
+        expect(mockGeneratePost).toHaveBeenCalledTimes(2);
+    });
+
+    test("never retries a 4xx, so a refusal stays one request", async ({
+        queryWrapper,
+    }) => {
+        mockGeneratePost.mockResolvedValue({
+            data: null,
+            error: { status: 404, value: { code: "MERCHANT_NOT_CONFIGURED" } },
+        });
+        const { useGenerateInstallCode } = await import(
+            "./useGenerateInstallCode"
+        );
+        const { result } = renderHook(
+            () =>
+                useGenerateInstallCode({
+                    merchantId: "merchant-9",
+                    checkoutToken: "tok-9",
+                }),
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() => expect(result.current.status).toBe("success"));
+        expect(result.current.data).toBeNull();
+        expect(mockGeneratePost).toHaveBeenCalledTimes(1);
     });
 
     test("stays disabled with neither credential", async ({ queryWrapper }) => {

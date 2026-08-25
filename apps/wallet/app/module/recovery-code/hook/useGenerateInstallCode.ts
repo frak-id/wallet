@@ -16,6 +16,7 @@ export function useGenerateInstallCode({
     anonymousId,
     checkoutToken,
     proof,
+    retry = 3,
 }: {
     merchantId?: string;
     anonymousId?: string;
@@ -23,6 +24,8 @@ export function useGenerateInstallCode({
     checkoutToken?: string;
     /** frak-install-v1 proof, read from the `#p=` fragment. */
     proof?: string;
+    /** Attempts after the first, for 5xx/network only. Tests pass `false`. */
+    retry?: number | false;
 }) {
     const hasCredential = !!anonymousId || !!checkoutToken;
 
@@ -54,10 +57,27 @@ export function useGenerateInstallCode({
             if (status && status >= 400 && status < 500) {
                 return null;
             }
-            throw new Error("Failed to generate install code");
+            // Status rides on the message: it is the only failure signal left
+            // now the view renders no error, and `.name` is always "Error".
+            throw new Error(
+                `Failed to generate install code (${status ?? "network"})`
+            );
         },
         enabled: !!merchantId && hasCredential,
         // Each generate mints a new row (no upsert on merchantId+anonymousId): a refetch would show a code the pasteboard doesn't hold, and burns rate-limit budget on refocus.
         staleTime: Number.POSITIVE_INFINITY,
+        // Pinned here rather than left to the host client: the standalone
+        // `/install` entrypoint defaults to `retry: 1` while the SPA takes
+        // react-query's 3, and this mint runs in a mobile web view on cellular
+        // mid-install. Only 5xx/network reach this; a 4xx returned null above.
+        retry,
+        // Capped at 2s: the default doubling spends 7s on a spinner before the
+        // user sees the download CTA, which costs more than the code is worth.
+        retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 2000),
+        // `staleTime` alone does not hold an errored query: it has no data, so
+        // it reports stale and a focus/reconnect would re-mint all four
+        // attempts. Backgrounding a web view mid-install is the common case.
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
     });
 }

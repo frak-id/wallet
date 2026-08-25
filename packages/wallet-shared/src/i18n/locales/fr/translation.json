@@ -803,7 +803,6 @@
         "copyCode": "Copier le code",
         "codeCopied": "Code copié !",
         "loading": "Génération de ton code...",
-        "error": "Échec de la génération du code. Rafraîchis la page.",
         "infoTitle": "Code valable 3 jours",
         "infoDescription": "À l'ouverture de l'app, appuie sur <1>\"J'ai un code de récupération\"</1>.",
         "download": "Télécharger l'app",

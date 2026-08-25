@@ -803,7 +803,6 @@
         "copyCode": "Copy the code",
         "codeCopied": "Code copied!",
         "loading": "Generating your code...",
-        "error": "Failed to generate code. Please refresh.",
         "infoTitle": "Code valid for 3 days",
         "infoDescription": "When opening the app, tap <1>\"I have a recovery code\"</1>.",
         "download": "Download the app",
