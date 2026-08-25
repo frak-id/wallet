@@ -38,7 +38,7 @@
                 <field id="wallet_url" translate="label" type="text" sortOrder="10"
                        showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Wallet URL</label>
-                    <comment>Default: https://wallet.frak.id</comment>
+                    <comment>Default: https://wallet.frak.id. Set together with Backend URL — clearing either one falls both back to production.</comment>
                 </field>
                 <field id="components_url" translate="label" type="text" sortOrder="20"
                        showInDefault="1" showInWebsite="1" showInStore="1">
@@ -48,7 +48,7 @@
                 <field id="backend_url" translate="label" type="text" sortOrder="30"
                        showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Backend URL</label>
-                    <comment>Default: https://backend.frak.id</comment>
+                    <comment>Default: https://backend.frak.id. Set together with Wallet URL — clearing either one falls both back to production.</comment>
                 </field>
             </group>
 

@@ -127,7 +127,7 @@ class WebhookSenderTest extends TestCase
 
         $this->config->method("getMerchantId")->with(1)->willReturn(null);
         $this->config->method("getWebhookSecret")->with(1)->willReturn("secret-key");
-        $this->config->method("getBackendUrl")->with(1)->willReturn("https://backend.frak.id");
+        $this->mockEnvironment(1, "https://backend.frak.id");
 
         $this->logger->expects(self::once())->method("warning");
         $this->clientFactory->expects(self::never())->method("create");
@@ -146,7 +146,7 @@ class WebhookSenderTest extends TestCase
 
         $this->config->method("getMerchantId")->with(1)->willReturn("merchant-1");
         $this->config->method("getWebhookSecret")->with(1)->willReturn(null);
-        $this->config->method("getBackendUrl")->with(1)->willReturn("https://backend.frak.id");
+        $this->mockEnvironment(1, "https://backend.frak.id");
 
         $this->logger->expects(self::once())->method("warning");
         $this->clientFactory->expects(self::never())->method("create");
@@ -205,7 +205,22 @@ class WebhookSenderTest extends TestCase
     {
         $this->config->method("getMerchantId")->with($storeId)->willReturn($merchantId);
         $this->config->method("getWebhookSecret")->with($storeId)->willReturn($secret);
-        $this->config->method("getBackendUrl")->with($storeId)->willReturn($backendUrl);
+        $this->mockEnvironment($storeId, $backendUrl);
+    }
+
+    /**
+     * Mock the resolved origin pair for a given store
+     *
+     * @param int $storeId
+     * @param string $backendUrl
+     * @return void
+     */
+    private function mockEnvironment(int $storeId, string $backendUrl): void
+    {
+        $this->config
+            ->method("getEnvironment")
+            ->with($storeId)
+            ->willReturn(["wallet" => Config::DEFAULT_WALLET_URL, "backend" => $backendUrl]);
     }
 
     /**
