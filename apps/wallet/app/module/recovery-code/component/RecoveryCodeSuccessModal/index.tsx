@@ -2,14 +2,12 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { ResponsiveModal } from "@frak-labs/design-system/components/ResponsiveModal";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CircleCheckIcon } from "@frak-labs/design-system/icons";
-import { useNavigate } from "@tanstack/react-router";
-import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import * as styles from "./index.css";
 
 type RecoveryCodeSuccessModalProps = {
     onClose: () => void;
-    merchant?: { name: string; domain: string };
+    merchant?: { name: string; domain?: string };
 };
 
 export function RecoveryCodeSuccessModal({
@@ -17,19 +15,12 @@ export function RecoveryCodeSuccessModal({
     merchant,
 }: RecoveryCodeSuccessModalProps) {
     const { t } = useTranslation();
-    const navigate = useNavigate();
-
-    const handleClose = useCallback(() => {
-        onClose();
-        // Navigate back to register to continue the onboarding
-        navigate({ to: "/register", replace: true });
-    }, [onClose, navigate]);
 
     return (
         <ResponsiveModal
             open={true}
             onOpenChange={(open) => {
-                if (!open) handleClose();
+                if (!open) onClose();
             }}
             title={t("recoveryCode.success.title")}
             description={t("recoveryCode.success.description")}

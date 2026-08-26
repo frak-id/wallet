@@ -53,11 +53,12 @@ export function RecoveryCodePage() {
             openModal({
                 id: "recoveryCodeSuccess",
                 merchant: result.merchant,
+                onExit: () => navigate({ to: "/register", replace: true }),
             });
         } catch {
             // Error is captured by the mutation state
         }
-    }, [isComplete, isPending, code, resolveAsync, openModal]);
+    }, [isComplete, isPending, code, resolveAsync, openModal, navigate]);
 
     const errorMessage = error
         ? t("recoveryCode.error.invalid")

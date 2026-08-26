@@ -14,7 +14,11 @@
  */
 
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
-import { type RewardHistoryItem, trackEvent } from "@frak-labs/wallet-shared";
+import {
+    type RewardHistoryItem,
+    recordError,
+    trackEvent,
+} from "@frak-labs/wallet-shared";
 import { create } from "zustand";
 import type { MoneriumOrder } from "@/module/monerium/utils/moneriumTypes";
 
@@ -33,7 +37,11 @@ type ModalState =
     | { id: "keypass"; onAuthSuccess: () => void; email?: string }
     | {
           id: "recoveryCodeSuccess";
-          merchant?: { name: string; domain: string };
+          merchant?: { name: string; domain?: string };
+          /** Runs on dismissal, however it arrives — see `closeModal`. The
+           * onboarding flows continue to `/register`, the install handoff
+           * exits to `/wallet`. */
+          onExit: () => void;
       }
     | { id: "moneriumBankFlow" }
     | { id: "moneriumOrderDetail"; order: MoneriumOrder }
@@ -74,27 +82,79 @@ type ModalStore = {
     modal: ModalState | null;
     openModal: (modal: ModalState) => void;
     closeModal: () => void;
+    /**
+     * Clears every modal without running any opener's exit. For a navigation
+     * that is already going where the caller wants: an exit here would fire a
+     * second, competing one. Dismissal is `closeModal`.
+     */
+    dismissAll: () => void;
 };
+
+/**
+ * A variant whose opener owns the exit must have it run exactly once,
+ * whatever removed it — its own button, a pop, a same-id replacement, or
+ * eviction from a full stack. Collected during the update and fired after
+ * it commits: running one inside the updater lets whatever it triggers be
+ * clobbered by the very `set` that is still returning.
+ */
+function exitOf(modal: ModalState | null | undefined): (() => void) | null {
+    return modal?.id === "recoveryCodeSuccess" ? modal.onExit : null;
+}
+
+/** Fires after the update commits, never inside the updater. */
+function settleExits(modals: (ModalState | null | undefined)[]) {
+    for (const modal of modals) {
+        const exit = exitOf(modal);
+        if (!exit) continue;
+        queueMicrotask(() => {
+            try {
+                exit();
+            } catch (error) {
+                // A throwing exit would otherwise surface as a context-free
+                // uncaught error one turn removed from its opener.
+                recordError(error, { context: { modal_exit: modal?.id } });
+            }
+        });
+    }
+}
+
+/**
+ * The stack the given modal leaves behind, plus every entry that fell out
+ * of it — a same-id duplicate, or the oldest once the depth cap is hit.
+ */
+function restack(
+    state: { modal: ModalState | null; stack: ModalState[] },
+    next: ModalState
+) {
+    const duplicates = state.stack.filter((m) => m.id === next.id);
+    const kept = state.stack.filter((m) => m.id !== next.id);
+    const pushed = state.modal ? [...kept, state.modal] : kept;
+    return {
+        stack: pushed.slice(-maxStackDepth),
+        dropped: [...duplicates, ...pushed.slice(0, -maxStackDepth)],
+    };
+}
 
 export const modalStore = create<ModalStore>()((set) => ({
     stack: [],
     modal: null,
     openModal: (modal) =>
         set((state) => {
-            // If reopening the same modal, just refresh its data
+            // Reopening the same modal refreshes its data; the outgoing
+            // state is gone either way, so its exit is owed.
             if (state.modal?.id === modal.id) {
+                settleExits([state.modal]);
                 return { modal };
             }
-            // Remove duplicate from stack if present
-            const filtered = state.stack.filter((m) => m.id !== modal.id);
-            // Push current modal to stack
-            const newStack = state.modal
-                ? [...filtered, state.modal].slice(-maxStackDepth)
-                : filtered;
-            return { modal, stack: newStack };
+
+            const { stack, dropped } = restack(state, modal);
+            settleExits(dropped);
+            return { modal, stack };
         }),
     closeModal: () =>
         set((state) => {
+            settleExits([state.modal]);
+
             if (state.stack.length === 0) {
                 return { modal: null, stack: [] };
             }
@@ -102,6 +162,7 @@ export const modalStore = create<ModalStore>()((set) => ({
             const previous = newStack.pop() ?? null;
             return { modal: previous, stack: newStack };
         }),
+    dismissAll: () => set({ modal: null, stack: [] }),
 }));
 
 /**

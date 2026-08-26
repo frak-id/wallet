@@ -153,9 +153,10 @@ function RegisterPage() {
             openModal({
                 id: "recoveryCodeSuccess",
                 merchant: referrerData.merchant,
+                onExit: () => navigate({ to: "/register", replace: true }),
             });
         }
-    }, [referrerData, openModal]);
+    }, [referrerData, openModal, navigate]);
 
     const advanceAfterKeypass = useCallback(() => {
         closeModal();
