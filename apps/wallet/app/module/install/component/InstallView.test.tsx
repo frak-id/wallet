@@ -1,5 +1,6 @@
 /** @jsxImportSource react */
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
+import { onlineManager } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 // `vi` must come from "vitest" directly: `vi.mock` is hoisted above module
 // imports, so routing it through the fixtures module would reference an
@@ -47,6 +48,12 @@ vi.mock("@frak-labs/wallet-shared/common/analytics", async (importOriginal) => {
         >();
     return { ...actual, trackEvent: mockTrackEvent, recordError: vi.fn() };
 });
+
+/**
+ * Every assertion in this file matches raw i18n keys: the setup chain loads no
+ * resources, so i18next echoes the key back instead of resolving it. Wiring
+ * real locale data into that setup breaks all of them at once, not one.
+ */
 
 function Layout({ children }: { children: React.ReactNode }) {
     return <div data-testid="processing-layout">{children}</div>;
@@ -198,9 +205,14 @@ describe("InstallView — install-code branch, post-install detection", () => {
             { wrapper: queryWrapper.wrapper }
         );
 
+        // The info card lands with the minted code; the download CTA renders
+        // before it, so waiting on that would race the mint.
         await waitFor(() =>
-            expect(screen.getByText("installCode.download")).toBeInTheDocument()
+            expect(
+                screen.getByText("installCode.infoTitle")
+            ).toBeInTheDocument()
         );
+        expect(screen.getByText("installCode.download")).toBeInTheDocument();
         expect(
             screen.queryByText("installCode.installedTitle")
         ).not.toBeInTheDocument();
@@ -262,7 +274,7 @@ describe("InstallView — install-code branch, post-install detection", () => {
         });
     });
 
-    test("the collapsed code stays hidden until the toggle is tapped", async ({
+    test("the collapsed code and its info card stay hidden until the toggle is tapped", async ({
         queryWrapper,
     }) => {
         window.location.hash = "#installed=1&dt=100&via=product";
@@ -282,12 +294,16 @@ describe("InstallView — install-code branch, post-install detection", () => {
             ).toBeInTheDocument()
         );
         expect(screen.queryByText("A B C D 1 2")).not.toBeInTheDocument();
+        expect(
+            screen.queryByText("installCode.infoTitle")
+        ).not.toBeInTheDocument();
 
         fireEvent.click(screen.getByText("installCode.installedCodeToggle"));
 
         await waitFor(() =>
             expect(screen.getByText("A B C D 1 2")).toBeInTheDocument()
         );
+        expect(screen.getByText("installCode.infoTitle")).toBeInTheDocument();
     });
 
     test("probe: disabled fires install_probe_unavailable once, before any hashchange", async ({
@@ -372,6 +388,43 @@ describe("InstallView — install-code branch, post-install detection", () => {
         ).not.toBeInTheDocument();
     });
 
+    test("a 5xx whose retries are exhausted renders the download CTA, never an error", async ({
+        queryWrapper,
+    }) => {
+        mockGenerateCode.mockResolvedValue({
+            data: null,
+            error: { status: 503, value: null },
+        });
+
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        // Four attempts against the hook's capped backoff (~3.5s) before the
+        // query goes terminal; the view owns the hook, so retry can't be
+        // disabled from here.
+        await waitFor(
+            () =>
+                expect(
+                    screen.getByText("installCode.codelessTitle")
+                ).toBeInTheDocument(),
+            { timeout: 10_000 }
+        );
+        expect(screen.getByText("installCode.download")).toBeInTheDocument();
+        expect(screen.queryByText("installCode.title")).not.toBeInTheDocument();
+        // A reinstated error branch shows up as this literal (see the raw-key
+        // note above `Layout`).
+        expect(screen.queryByText("installCode.error")).not.toBeInTheDocument();
+        expect(
+            screen.queryByText("installCode.infoTitle")
+        ).not.toBeInTheDocument();
+    });
+
     test("no credential at all renders the download CTA, never a codeless code view", async ({
         queryWrapper,
     }) => {
@@ -395,5 +448,45 @@ describe("InstallView — install-code branch, post-install detection", () => {
             screen.queryByText("installCode.infoTitle")
         ).not.toBeInTheDocument();
         expect(mockGenerateCode).not.toHaveBeenCalled();
+    });
+
+    test("an offline-paused mint renders the codeless hero, not a code hero with no code", async ({
+        queryWrapper,
+    }) => {
+        // A paused fetch reports neither `error` nor `isLoading`, so without
+        // the `fetchStatus` guard the hero asks for a code that never arrives.
+        // `onlineManager`, not `navigator.onLine`: react-query reads its own
+        // manager, and setting it false is what pauses a pending fetch.
+        onlineManager.setOnline(false);
+        // Never settles: the query must be pending so `fetchStatus` is what
+        // decides the render, not a resolved or rejected result.
+        mockGenerateCode.mockImplementation(
+            () => Promise.withResolvers<never>().promise
+        );
+
+        try {
+            render(
+                <InstallView
+                    search={{ m: "merchant-1", a: "anon-1" }}
+                    navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                    processingLayout={Layout}
+                />,
+                { wrapper: queryWrapper.wrapper }
+            );
+
+            await waitFor(() =>
+                expect(
+                    screen.getByText("installCode.codelessTitle")
+                ).toBeInTheDocument()
+            );
+            expect(
+                screen.queryByText("installCode.title")
+            ).not.toBeInTheDocument();
+            expect(
+                screen.getByText("installCode.download")
+            ).toBeInTheDocument();
+        } finally {
+            onlineManager.setOnline(true);
+        }
     });
 });

@@ -25,6 +25,7 @@ import {
     PLAY_STORE_URL,
 } from "@frak-labs/wallet-shared/common/utils/storeUrls";
 import { buildPlayStoreInstallUrl } from "@frak-labs/wallet-shared/sharing";
+import type { Translate } from "@frak-labs/wallet-shared/types";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -218,7 +219,7 @@ function InstallCodeHero({
     installed,
     codeless,
 }: {
-    t: (key: string, options?: Record<string, unknown>) => string;
+    t: Translate;
     installed: boolean;
     codeless: boolean;
 }) {
@@ -253,11 +254,7 @@ function InstallCodeHero({
     );
 }
 
-function InstallCodeInfoCard({
-    t,
-}: {
-    t: (key: string, options?: Record<string, unknown>) => string;
-}) {
+function InstallCodeInfoCard({ t }: { t: Translate }) {
     return (
         <Card variant="secondary" padding="compact" className={styles.infoCard}>
             <Inline space="s" alignY="top" wrap={false}>
@@ -309,8 +306,8 @@ function InstallCodeView({
     });
     const estimatedReward = reward?.formatted;
 
-    const t = useCallback(
-        (key: string, options?: Record<string, unknown>) =>
+    const t = useCallback<Translate>(
+        (key, options) =>
             rawT(key, { ...options, estimatedReward: estimatedReward ?? "" }),
         [rawT, estimatedReward]
     );
@@ -320,6 +317,7 @@ function InstallCodeView({
         isLoading,
         error,
         status: codeQueryStatus,
+        fetchStatus: codeFetchStatus,
     } = useGenerateInstallCode({
         merchantId,
         anonymousId,
@@ -327,15 +325,24 @@ function InstallCodeView({
         proof,
     });
 
-    // No credential to mint from, or one the backend refused. Either way the
-    // store link below is the whole surface, so this must never render as an
-    // error, and never as a "copy this code" hero with no code beneath it.
+    // No credential to mint from, one the backend refused, a mint that failed
+    // for good, or one paused offline — the last has no spinner either, since
+    // `isLoading` needs `isFetching`. Either way the store link below is the
+    // whole surface, so this must never render as an error, and never as a
+    // "copy this code" hero with no code beneath it.
     const codeless =
         !(anonymousId || checkoutToken) ||
+        codeQueryStatus === "error" ||
+        codeFetchStatus === "paused" ||
         (codeQueryStatus === "success" && !data?.code);
 
     const activation = useInstallActivation(true);
     const installed = activation?.installed === "1";
+
+    // The code on screen right now: none until it mints, and the installed
+    // state keeps it collapsed behind the toggle.
+    const visibleCode =
+        installed && !showCodeAfterInstall ? undefined : data?.code;
 
     // `install_code_displayed` fires once per successful generation,
     // `install_code_generation_failed` fires on transition into error state.
@@ -352,7 +359,8 @@ function InstallCodeView({
             reportedErrorRef.current = true;
             trackEvent("install_code_generation_failed", {
                 merchant_id: merchantId,
-                error_type: error instanceof Error ? error.name : "unknown",
+                // `.name` is always "Error"; the message carries the status.
+                error_type: error instanceof Error ? error.message : "unknown",
             });
         } else if (codeQueryStatus !== "error") {
             reportedErrorRef.current = false;
@@ -482,13 +490,7 @@ function InstallCodeView({
                     </Stack>
                 )}
 
-                {error && (
-                    <Text variant="bodySmall" color="error" align="center">
-                        {t("installCode.error")}
-                    </Text>
-                )}
-
-                {data?.code && installed && !showCodeAfterInstall && (
+                {data?.code && !visibleCode && (
                     <button
                         type="button"
                         className={styles.installedCodeToggle}
@@ -498,9 +500,9 @@ function InstallCodeView({
                     </button>
                 )}
 
-                {data?.code && (!installed || showCodeAfterInstall) && (
+                {visibleCode && (
                     <Stack space="m" align="center">
-                        <CodeInput value={data.code} mode="alphanumeric" />
+                        <CodeInput value={visibleCode} mode="alphanumeric" />
                         <Button
                             size="large"
                             fontSize="s"
@@ -517,8 +519,7 @@ function InstallCodeView({
                 )}
             </main>
 
-            {/* Both strings are about pasting a code that does not exist here. */}
-            {!codeless && <InstallCodeInfoCard t={t} />}
+            {visibleCode && <InstallCodeInfoCard t={t} />}
 
             <footer className={styles.footer}>
                 <ExternalLink

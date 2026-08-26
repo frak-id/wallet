@@ -1,5 +1,11 @@
 {
-  "include": ["**/*.ts", "**/*.tsx", "app/routeTree.gen.ts", "../../types/**/*.d.ts"],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "app/routeTree.gen.ts",
+    "../../types/**/*.d.ts",
+    "../../packages/wallet-shared/src/types/i18n/*.d.ts"
+  ],
   "exclude": ["public/sw.js"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022", "webworker"],

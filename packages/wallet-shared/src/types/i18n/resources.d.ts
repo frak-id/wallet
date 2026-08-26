@@ -506,10 +506,11 @@ export default interface Resources {
     },
     "installCode": {
       "codeCopied": "Code copied!",
+      "codelessDescription": "Download the app and log in to claim your rewards.",
+      "codelessTitle": "Don't lose your {{estimatedReward}}!",
       "copyCode": "Copy the code",
       "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
       "download": "Download the app",
-      "error": "Failed to generate code. Please refresh.",
       "infoDescription": "When opening the app, tap <1>\"I have a recovery code\"</1>.",
       "infoTitle": "Code valid for 3 days",
       "installedCodeToggle": "Or enter this code manually",
@@ -743,7 +744,8 @@ export default interface Resources {
       "error": {
         "alreadyLinked": "This code has already been used.",
         "generic": "Something went wrong, please try again.",
-        "invalid": "Incorrect or expired code, check the code copied from wallet.frak.id"
+        "invalid": "Incorrect or expired code, check the code copied from wallet.frak.id",
+        "unresolved": "This code isn't linked to a purchase yet. Try again in a few minutes."
       },
       "paste": "Paste the code",
       "success": {

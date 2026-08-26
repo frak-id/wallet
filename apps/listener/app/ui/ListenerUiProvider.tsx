@@ -27,7 +27,11 @@ import {
  */
 type TranslationOptions = Omit<TOptions, "context"> & { context?: string };
 
+/** Keys resolvable in this app: it registers `customized` + `common` only. */
+type ListenerKey = TranslationKey<"customized" | "common">;
+
 import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared/common/hook/useFormattedEstimatedReward";
+import type { TranslationKey } from "@frak-labs/wallet-shared/types";
 import {
     createContext,
     type PropsWithChildren,
@@ -112,7 +116,9 @@ type UIContext = {
     clearRequest: () => void;
     translation: {
         lang?: "en" | "fr";
-        t: (key: string, options?: TranslationOptions) => string;
+        // Scoped to the namespaces this app registers below; `translation` is
+        // deliberately absent from its bundle and would render as raw text.
+        t: (key: ListenerKey, options?: TranslationOptions) => string;
         i18n: i18n;
     };
 };
@@ -331,7 +337,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
         // Note: context variables (productName, productOrigin, estimatedReward) are already
         // provided via defaultVariables in the cloneInstance call above
         const rawT = i18n.getFixedT(lang, null);
-        const t = (key: string, options?: TranslationOptions): string =>
+        const t = (key: ListenerKey, options?: TranslationOptions): string =>
             rawT(key, options);
         return { lang, i18n, t };
     }, [
