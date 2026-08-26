@@ -515,10 +515,12 @@ export default interface Resources {
       "infoTitle": "Code valid for 3 days",
       "installedCodeToggle": "Or enter this code manually",
       "installedHeadline": "You're all set. Open the app to claim {{estimatedReward}}.",
-      "installedTitle": "Frak is installed",
+      "installedMerchant": "Connected to {{merchantName}}",
       "loading": "Generating your code...",
       "openWallet": "Open Frak & claim {{estimatedReward}}",
+      "openWalletCta": "Open my wallet",
       "processing": "Setting up your wallet...",
+      "processingDone": "Your wallet is ready",
       "title": "Don't lose your {{estimatedReward}}!\nCopy this code"
     },
     "monerium": {

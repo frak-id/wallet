@@ -1,13 +1,14 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
-import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
+import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
+    CircleCheckIcon,
     CloseIcon,
     CopyIcon,
     LogoFrakWithName,
@@ -26,7 +27,7 @@ import {
 } from "@frak-labs/wallet-shared/common/utils/storeUrls";
 import { buildPlayStoreInstallUrl } from "@frak-labs/wallet-shared/sharing";
 import type { Translate } from "@frak-labs/wallet-shared/types";
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -128,72 +129,34 @@ export function InstallView({
 
 const MIN_PROCESSING_MS = 500;
 
+/**
+ * Ceiling on anything the confirmation merely *decorates* itself with. An
+ * offline react-query fetch is paused, not rejected, so it settles neither
+ * way; only a bound keeps the exit reachable.
+ */
+const MERCHANT_LOOKUP_TIMEOUT_MS = 1500;
+
+/**
+ * How long the confirmation waits before leaving on the user's behalf. It is
+ * the only exit from this page, and `ResponsiveModal` draws no close button,
+ * so an idle user would otherwise sit there. Long enough to read the merchant
+ * name and tap the CTA first.
+ */
+const CONFIRMATION_IDLE_EXIT_MS = 10_000;
+
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Brief processing screen around the ensure call, then on to `/wallet` or
- * `/register`. Always shown for at least MIN_PROCESSING_MS to avoid a flash.
- */
-function InstallProcessing({
-    m: merchantId,
-    a: anonymousId,
-    checkoutToken,
-    proof,
-    navigation,
-    layout: Layout,
-}: InstallSearch & {
-    proof?: string;
-    navigation: InstallNavigation;
-    layout: React.ComponentType<{ children: React.ReactNode }>;
-}) {
-    const { t } = useTranslation();
-
-    useEffect(() => {
-        const ensureAction = buildInstallProcessingEnsureAction({
-            merchantId,
-            anonymousId,
-            proof,
-        });
-
-        const isLoggedIn = !!getSafeSession()?.token;
-        trackEvent("install_processing_triggered", {
-            is_logged_in: isLoggedIn,
-            has_ensure_action: Boolean(ensureAction),
-            // This branch cannot resolve a token to an id, so a Shopify buyer
-            // who already has the wallet loses that attribution here.
-            has_checkout_token: Boolean(checkoutToken),
-            has_install_proof: Boolean(proof),
-        });
-
-        if (isLoggedIn) {
-            // Ensures are fire-and-forget and navigation is never delegated
-            // here, so the router-free half of the drain is all this needs.
-            fireEnsureActions(queuePendingAction(ensureAction), ensureAction);
-            sleep(MIN_PROCESSING_MS).then(() => navigation.toWallet());
-        } else {
-            if (ensureAction) queuePendingAction(ensureAction);
-            sleep(MIN_PROCESSING_MS).then(() => navigation.toRegister());
-        }
-    }, [merchantId, anonymousId, checkoutToken, proof, navigation]);
-
-    return (
-        <Layout>
-            <Stack space={"l"} align={"center"}>
-                <Spinner />
-                <Text variant="bodySmall" color="secondary">
-                    {t("installCode.processing")}
-                </Text>
-            </Stack>
-        </Layout>
-    );
+/** Resolves `null` rather than hanging when `work` outlives `ms`. */
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T | null> {
+    return Promise.race([work, sleep(ms).then(() => null)]);
 }
 
-// ---------------------------------------------------------------------------
-//  Install code view — web only, when the user needs to download the app
-// ---------------------------------------------------------------------------
-
+/**
+ * Lightweight merchant lookup, shared by both branches: the processing screen
+ * names the merchant in its confirmation, the code screen draws its logo.
+ */
 function merchantInfoQueryOptions(merchantId?: string) {
     return queryOptions({
         queryKey: merchantKey.info(merchantId),
@@ -214,24 +177,196 @@ function merchantInfoQueryOptions(merchantId?: string) {
     });
 }
 
+/**
+ * Brief processing screen around the ensure call. A logged-in Tauri visitor
+ * carrying a merchant id ends on a confirmation and leaves when it is
+ * dismissed; every other arm auto-exits after MIN_PROCESSING_MS.
+ */
+function InstallProcessing({
+    m: merchantId,
+    a: anonymousId,
+    checkoutToken,
+    proof,
+    navigation,
+    layout: Layout,
+}: InstallSearch & {
+    proof?: string;
+    navigation: InstallNavigation;
+    layout: React.ComponentType<{ children: React.ReactNode }>;
+}) {
+    const { t } = useTranslation();
+    const queryClient = useQueryClient();
+    // The confirmation sits over this screen, so a spinner still claiming
+    // "setting up" contradicts it. Flips once the handoff is done.
+    const [settled, setSettled] = useState(false);
+
+    // `ModalOutlet` lives in the SPA root only, so the standalone entrypoint
+    // has nowhere to render a confirmation. Gating on Tauri keeps that surface
+    // — a logged-in web visitor also reaches this branch — on the auto-exit.
+    const confirms = IS_TAURI && !!merchantId;
+
+    useEffect(() => {
+        const ensureAction = buildInstallProcessingEnsureAction({
+            merchantId,
+            anonymousId,
+            proof,
+        });
+
+        const isLoggedIn = !!getSafeSession()?.token;
+        trackEvent("install_processing_triggered", {
+            is_logged_in: isLoggedIn,
+            has_ensure_action: Boolean(ensureAction),
+            // This branch cannot resolve a token to an id, so a Shopify buyer
+            // who already has the wallet loses that attribution here.
+            has_checkout_token: Boolean(checkoutToken),
+            has_install_proof: Boolean(proof),
+        });
+
+        // Every arm below settles asynchronously; none may act once the
+        // screen is gone.
+        let cancelled = false;
+        let idleExit: number | undefined;
+
+        if (!isLoggedIn) {
+            if (ensureAction) queuePendingAction(ensureAction);
+            sleep(MIN_PROCESSING_MS).then(() => {
+                if (!cancelled) navigation.toRegister();
+            });
+            return () => {
+                cancelled = true;
+            };
+        }
+
+        // Ensures are fire-and-forget and navigation is never delegated
+        // here, so the router-free half of the drain is all this needs.
+        fireEnsureActions(queuePendingAction(ensureAction), ensureAction);
+
+        if (!confirms) {
+            sleep(MIN_PROCESSING_MS).then(() => {
+                if (!cancelled) navigation.toWallet();
+            });
+            return () => {
+                cancelled = true;
+            };
+        }
+
+        // The confirmation owns the exit from here; dismissing it is what
+        // leaves the page. The merchant name is worth a bounded wait — a cold
+        // cache resolves slower than the dwell — but nothing here may gate the
+        // exit: an offline query is paused, so it neither resolves nor
+        // rejects, and awaiting it unbounded strands the user on the spinner.
+        Promise.all([
+            sleep(MIN_PROCESSING_MS),
+            withTimeout(
+                queryClient
+                    .ensureQueryData(merchantInfoQueryOptions(merchantId))
+                    .catch(() => null),
+                MERCHANT_LOOKUP_TIMEOUT_MS
+            ),
+            // Kept out of the standalone chunk, which has no `ModalOutlet`
+            // and would otherwise pay for the store and its analytics
+            // subscription.
+            withTimeout(
+                import("@/module/stores/modalStore").catch(() => null),
+                MERCHANT_LOOKUP_TIMEOUT_MS
+            ),
+        ]).then(([, merchant, store]) => {
+            if (cancelled) return;
+            // No store means no confirmation is possible; leaving is the one
+            // behaviour this screen must never fail to do.
+            if (!store) {
+                navigation.toWallet();
+                return;
+            }
+            const name = merchant?.name;
+            setSettled(true);
+            const { modalStore } = store;
+            modalStore.getState().openModal({
+                id: "recoveryCodeSuccess",
+                merchant: name ? { name } : undefined,
+                onExit: () => navigation.toWallet(),
+                actionLabel: t("installCode.openWalletCta"),
+            });
+
+            // Backstop: this modal is the only way off the page, so an idle
+            // user must not be stranded. Long enough to read and act first —
+            // dismissing early leaves nothing for this to close, and the
+            // store fires `onExit` once whichever path wins.
+            idleExit = window.setTimeout(() => {
+                if (modalStore.getState().modal?.id === "recoveryCodeSuccess") {
+                    modalStore.getState().closeModal();
+                }
+            }, CONFIRMATION_IDLE_EXIT_MS);
+        });
+        return () => {
+            cancelled = true;
+            if (idleExit) window.clearTimeout(idleExit);
+        };
+    }, [
+        merchantId,
+        anonymousId,
+        checkoutToken,
+        proof,
+        navigation,
+        confirms,
+        queryClient,
+    ]);
+
+    return (
+        <Layout>
+            <Stack space={"l"} align={"center"}>
+                {settled ? (
+                    <IconCircle size="lg" tone="action">
+                        <CircleCheckIcon width={28} height={28} />
+                    </IconCircle>
+                ) : (
+                    <Spinner />
+                )}
+                <Text variant="bodySmall" color="secondary">
+                    {t(
+                        settled
+                            ? "installCode.processingDone"
+                            : "installCode.processing"
+                    )}
+                </Text>
+            </Stack>
+        </Layout>
+    );
+}
+
+// ---------------------------------------------------------------------------
+//  Install code view — web only, when the user needs to download the app
+// ---------------------------------------------------------------------------
+
 function InstallCodeHero({
     t,
     installed,
     codeless,
+    merchantName,
 }: {
     t: Translate;
     installed: boolean;
     codeless: boolean;
+    merchantName?: string;
 }) {
     if (installed) {
         return (
             <>
-                <Badge variant="success" className={styles.installedBadge}>
-                    {t("installCode.installedTitle")}
-                </Badge>
+                <IconCircle
+                    size="lg"
+                    tone="action"
+                    className={styles.installedIcon}
+                >
+                    <CircleCheckIcon width={28} height={28} />
+                </IconCircle>
                 <Text as="h1" variant="heading2" className={styles.title}>
                     {t("installCode.installedHeadline")}
                 </Text>
+                {merchantName && (
+                    <Text variant="bodySmall" color="secondary">
+                        {t("installCode.installedMerchant", { merchantName })}
+                    </Text>
+                )}
             </>
         );
     }
@@ -478,6 +613,7 @@ function InstallCodeView({
                         t={t}
                         installed={installed}
                         codeless={codeless}
+                        merchantName={merchantInfo?.name}
                     />
                 </section>
 

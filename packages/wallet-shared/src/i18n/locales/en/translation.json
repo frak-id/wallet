@@ -807,7 +807,9 @@
         "infoDescription": "When opening the app, tap <1>\"I have a recovery code\"</1>.",
         "download": "Download the app",
         "processing": "Setting up your wallet...",
-        "installedTitle": "Frak is installed",
+        "processingDone": "Your wallet is ready",
+        "openWalletCta": "Open my wallet",
+        "installedMerchant": "Connected to {{ merchantName }}",
         "installedCodeToggle": "Or enter this code manually",
         "openWallet": "Open Frak & claim {{ estimatedReward }}",
         "installedHeadline": "You're all set. Open the app to claim {{ estimatedReward }}."
