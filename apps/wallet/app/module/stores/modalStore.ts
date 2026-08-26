@@ -42,6 +42,9 @@ type ModalState =
            * onboarding flows continue to `/register`, the install handoff
            * exits to `/wallet`. */
           onExit: () => void;
+          /** Label for an explicit dismiss button, where nothing else on the
+           * page offers a way out. */
+          actionLabel?: string;
       }
     | { id: "moneriumBankFlow" }
     | { id: "moneriumOrderDetail"; order: MoneriumOrder }

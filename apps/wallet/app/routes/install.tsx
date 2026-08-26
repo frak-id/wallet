@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { InstallView } from "@/module/install/component/InstallView";
 import { parseInstallSearch } from "@/module/install/params";
+import * as styles from "./install.css";
 
 /**
  * In-app `/install`, used by Tauri and by any client-side navigation.
@@ -32,7 +33,19 @@ function InstallPage() {
         <InstallView
             search={search}
             navigation={navigation}
-            processingLayout={PageLayout}
+            processingLayout={ProcessingLayout}
         />
+    );
+}
+
+/**
+ * `PageLayout` inside the status-bar inset this route does not inherit — it
+ * sits outside `AppShell`, which is what reserves it everywhere else.
+ */
+function ProcessingLayout({ children }: { children: ReactNode }) {
+    return (
+        <div className={styles.safeTop}>
+            <PageLayout>{children}</PageLayout>
+        </div>
     );
 }

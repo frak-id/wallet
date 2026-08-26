@@ -7,6 +7,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 // uninitialized binding.
 import { vi } from "vitest";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
+import { modalStore } from "@/module/stores/modalStore";
 import {
     afterEach,
     beforeEach,
@@ -18,11 +19,35 @@ import { InstallView } from "./InstallView";
 
 // `vi.hoisted` because the factory below runs while `InstallView` is being
 // imported, which is before a plain `const` would have been initialised.
-const { mockEnsurePost, mockGenerateCode, mockTrackEvent } = vi.hoisted(() => ({
+const {
+    mockEnsurePost,
+    mockGenerateCode,
+    mockTrackEvent,
+    mockIsTauri,
+    mockResolveMerchant,
+} = vi.hoisted(() => ({
     mockEnsurePost: vi.fn(),
     mockGenerateCode: vi.fn(),
     mockTrackEvent: vi.fn(),
+    mockIsTauri: vi.fn(() => false),
+    mockResolveMerchant: vi.fn(),
 }));
+
+// `IS_TAURI` is a build-time literal in the app and a runtime probe under
+// jsdom, where it is always false. The confirmation arm is Tauri-only, so it
+// is unreachable without this.
+vi.mock("@frak-labs/app-essentials/utils/platform", async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import("@frak-labs/app-essentials/utils/platform")
+        >();
+    return {
+        ...actual,
+        get IS_TAURI() {
+            return mockIsTauri();
+        },
+    };
+});
 
 vi.mock("@frak-labs/wallet-shared/common/api/backendClient", () => ({
     authenticatedBackendApi: {
@@ -32,7 +57,7 @@ vi.mock("@frak-labs/wallet-shared/common/api/backendClient", () => ({
                 "install-code": { generate: { post: mockGenerateCode } },
             },
             merchant: {
-                resolve: { get: vi.fn().mockResolvedValue({ data: null }) },
+                resolve: { get: mockResolveMerchant },
                 "estimated-rewards": {
                     get: vi.fn().mockResolvedValue({ data: { rewards: [] } }),
                 },
@@ -68,6 +93,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 describe("InstallView — processing branch", () => {
     beforeEach(({ mockSession }) => {
         vi.clearAllMocks();
+        mockResolveMerchant.mockResolvedValue({ data: null });
         mockEnsurePost.mockResolvedValue({ error: null });
         mockGenerateCode.mockResolvedValue({
             data: {
@@ -175,9 +201,307 @@ describe("InstallView — processing branch", () => {
     });
 });
 
+describe("InstallView — processing branch, Tauri confirmation", () => {
+    beforeEach(({ mockSession }) => {
+        vi.clearAllMocks();
+        mockResolveMerchant.mockResolvedValue({ data: null });
+        mockEnsurePost.mockResolvedValue({ error: null });
+        pendingActionsStore.getState().clearAll();
+        modalStore.setState({ modal: null, stack: [] });
+        sessionStore.getState().setSession(mockSession);
+        mockIsTauri.mockReturnValue(true);
+    });
+
+    afterEach(() => {
+        pendingActionsStore.getState().clearAll();
+        sessionStore.getState().clearSession();
+        modalStore.setState({ modal: null, stack: [] });
+        mockIsTauri.mockReturnValue(false);
+    });
+
+    test("holds the page and opens the confirmation instead of navigating", async ({
+        queryWrapper,
+    }) => {
+        const toWallet = vi.fn();
+
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet, toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() => expect(mockEnsurePost).toHaveBeenCalled());
+        await waitFor(() =>
+            expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess")
+        );
+        expect(toWallet).not.toHaveBeenCalled();
+    });
+
+    test("the confirmation carries an explicit way out", async ({
+        queryWrapper,
+    }) => {
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess")
+        );
+
+        const modal = modalStore.getState().modal;
+        if (modal?.id !== "recoveryCodeSuccess") throw new Error("no modal");
+        // `ResponsiveModal` draws no close affordance, so without this the
+        // only exits are swipe, backdrop or hardware back.
+        expect(modal.actionLabel).toBe("installCode.openWalletCta");
+    });
+
+    test("an idle user is not stranded on the confirmation", async ({
+        queryWrapper,
+    }) => {
+        vi.useFakeTimers({ shouldAdvanceTime: true });
+        const toWallet = vi.fn();
+
+        try {
+            render(
+                <InstallView
+                    search={{ m: "merchant-1", a: "anon-1" }}
+                    navigation={{ toWallet, toRegister: vi.fn() }}
+                    processingLayout={Layout}
+                />,
+                { wrapper: queryWrapper.wrapper }
+            );
+
+            await waitFor(() =>
+                expect(modalStore.getState().modal?.id).toBe(
+                    "recoveryCodeSuccess"
+                )
+            );
+
+            await vi.advanceTimersByTimeAsync(11_000);
+
+            expect(toWallet).toHaveBeenCalledTimes(1);
+            expect(modalStore.getState().modal).toBeNull();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("the processing screen stops claiming setup once the confirmation opens", async ({
+        queryWrapper,
+    }) => {
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        expect(screen.getByText("installCode.processing")).toBeInTheDocument();
+
+        // The confirmation sits over this screen; a spinner still saying
+        // "setting up" would contradict it.
+        await waitFor(() =>
+            expect(
+                screen.getByText("installCode.processingDone")
+            ).toBeInTheDocument()
+        );
+        expect(
+            screen.queryByText("installCode.processing")
+        ).not.toBeInTheDocument();
+    });
+
+    test("the confirmation's exit hands over to the wallet exactly once", async ({
+        queryWrapper,
+    }) => {
+        const toWallet = vi.fn();
+
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet, toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess")
+        );
+
+        const modal = modalStore.getState().modal;
+        if (modal?.id !== "recoveryCodeSuccess") throw new Error("no modal");
+        modal.onExit();
+
+        expect(toWallet).toHaveBeenCalledTimes(1);
+    });
+
+    test("a resolved merchant is carried into the confirmation", async ({
+        queryWrapper,
+    }) => {
+        mockResolveMerchant.mockResolvedValue({
+            data: { name: "Nike", domain: "nike.com" },
+        });
+
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess")
+        );
+
+        const modal = modalStore.getState().modal;
+        if (modal?.id !== "recoveryCodeSuccess") throw new Error("no modal");
+        expect(modal.merchant?.name).toBe("Nike");
+    });
+
+    test("closing the confirmation from outside it still hands over", async ({
+        queryWrapper,
+    }) => {
+        const toWallet = vi.fn();
+
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet, toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess")
+        );
+
+        // What `useHardwareBack` does on Android back: pops the store
+        // directly, never touching the modal component.
+        modalStore.getState().closeModal();
+
+        // Exits settle after the update commits, never inside it.
+        await waitFor(() => expect(toWallet).toHaveBeenCalledTimes(1));
+        expect(modalStore.getState().modal).toBeNull();
+    });
+
+    test("an offline merchant lookup still reaches the confirmation", async ({
+        queryWrapper,
+    }) => {
+        // A paused fetch settles neither way, so an unbounded await here is
+        // a dead end: this screen's exit must never depend on the network.
+        onlineManager.setOnline(false);
+        mockResolveMerchant.mockImplementation(
+            () => Promise.withResolvers<never>().promise
+        );
+        const toWallet = vi.fn();
+
+        try {
+            render(
+                <InstallView
+                    search={{ m: "merchant-1", a: "anon-1" }}
+                    navigation={{ toWallet, toRegister: vi.fn() }}
+                    processingLayout={Layout}
+                />,
+                { wrapper: queryWrapper.wrapper }
+            );
+
+            // Past the lookup bound, not merely past the dwell.
+            await waitFor(
+                () =>
+                    expect(modalStore.getState().modal?.id).toBe(
+                        "recoveryCodeSuccess"
+                    ),
+                { timeout: 4000 }
+            );
+
+            const modal = modalStore.getState().modal;
+            if (modal?.id !== "recoveryCodeSuccess")
+                throw new Error("no modal");
+            expect(modal.merchant).toBeUndefined();
+
+            modal.onExit();
+            expect(toWallet).toHaveBeenCalledTimes(1);
+        } finally {
+            onlineManager.setOnline(true);
+        }
+    });
+
+    test("an unresolved merchant still confirms, without a merchant name", async ({
+        queryWrapper,
+    }) => {
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess")
+        );
+
+        const modal = modalStore.getState().modal;
+        if (modal?.id !== "recoveryCodeSuccess") throw new Error("no modal");
+        expect(modal.merchant).toBeUndefined();
+    });
+
+    test("without a merchant id it auto-navigates, opening no confirmation", async ({
+        queryWrapper,
+    }) => {
+        const toWallet = vi.fn();
+
+        render(
+            <InstallView
+                search={{ a: "anon-1" }}
+                navigation={{ toWallet, toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() => expect(toWallet).toHaveBeenCalled());
+        expect(modalStore.getState().modal).toBeNull();
+    });
+
+    test("off Tauri the same visitor auto-navigates, opening no confirmation", async ({
+        queryWrapper,
+    }) => {
+        mockIsTauri.mockReturnValue(false);
+        const toWallet = vi.fn();
+
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet, toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() => expect(toWallet).toHaveBeenCalled());
+        expect(modalStore.getState().modal).toBeNull();
+    });
+});
+
 describe("InstallView — install-code branch, post-install detection", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockResolveMerchant.mockResolvedValue({ data: null });
         mockGenerateCode.mockResolvedValue({
             data: {
                 code: "ABCD1234",
@@ -214,7 +538,7 @@ describe("InstallView — install-code branch, post-install detection", () => {
         );
         expect(screen.getByText("installCode.download")).toBeInTheDocument();
         expect(
-            screen.queryByText("installCode.installedTitle")
+            screen.queryByText("installCode.installedHeadline")
         ).not.toBeInTheDocument();
         expect(mockTrackEvent).not.toHaveBeenCalledWith(
             "install_detected",
@@ -248,7 +572,7 @@ describe("InstallView — install-code branch, post-install detection", () => {
             ).toBeInTheDocument()
         );
         expect(
-            screen.getByText("installCode.installedTitle")
+            screen.getByText("installCode.installedHeadline")
         ).toBeInTheDocument();
 
         await waitFor(() =>

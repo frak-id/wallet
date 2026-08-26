@@ -807,7 +807,9 @@
         "infoDescription": "À l'ouverture de l'app, appuie sur <1>\"J'ai un code de récupération\"</1>.",
         "download": "Télécharger l'app",
         "processing": "Configuration de ton porte-monnaie...",
-        "installedTitle": "Frak est installé",
+        "processingDone": "Ton porte-monnaie est prêt",
+        "openWalletCta": "Ouvrir mon porte-monnaie",
+        "installedMerchant": "Connecté à {{ merchantName }}",
         "installedCodeToggle": "Ou saisis ce code manuellement",
         "openWallet": "Ouvre Frak et récupère {{ estimatedReward }}",
         "installedHeadline": "C'est prêt. Ouvre l'app pour récupérer {{ estimatedReward }}."

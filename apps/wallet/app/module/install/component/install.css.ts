@@ -76,8 +76,17 @@ export const heroSection = style({
     gap: alias.spacing.xs,
 });
 
+/** The hero's children are centred text; the installed state's icon disc has
+ * a fixed width and needs centring on its own. */
+export const installedIcon = style({
+    alignSelf: "center",
+});
+
 export const title = style({
     whiteSpace: "pre-line",
+    // The installed headline is a full sentence, unlike the two-line code
+    // titles this class was written for: without a wrap it runs off-screen.
+    overflowWrap: "anywhere",
 });
 
 export const copyButton = style({
@@ -146,10 +155,6 @@ export const downloadButton = style({
     ":visited": {
         color: vars.text.onAction,
     },
-});
-
-export const installedBadge = style({
-    alignSelf: "center",
 });
 
 export const installedCodeToggle = style({
