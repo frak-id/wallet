@@ -47,7 +47,8 @@
     "tauri:android:build": "sst shell -- tauri android build",
     "tauri:android:build:dev": "./scripts/build-android-dev.sh",
     "tauri:version": "./scripts/sync-version.sh",
-    "tauri:icons": "./src-tauri/icons/sources/regenerate.sh"
+    "tauri:icons": "./src-tauri/icons/sources/regenerate.sh",
+    "generate:routes": "bun run scripts/generate-routes.ts"
   },
   "dependencies": {
     "@frak-labs/app-essentials": "workspace:*",
@@ -117,6 +118,7 @@
     "vite": "catalog:",
     "vite-plugin-mkcert": "catalog:",
     "vite-plugin-remove-console": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@tanstack/router-generator": "catalog:"
   }
 }

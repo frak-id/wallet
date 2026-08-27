@@ -1,5 +1,8 @@
 import { transform, type Url } from "lightningcss";
 
+// Deliberately not BROWSER_TARGET from dev-tooling: that is build tooling and
+// this is a runtime service. This lowers merchant-supplied CSS, so it stays
+// intentionally wider than the wallet's own floor.
 const cssTargets = {
     chrome: 100 << 16,
     safari: 14 << 16,

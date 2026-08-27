@@ -77,6 +77,38 @@ jobs:
       - name: "🧪 Unit tests"
         run: bun run test:sdk
 
+  # ── Types ───────────────────────────────────────────────
+  typecheck:
+    name: "🔎 Typecheck"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.ts == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      # The SDK build is required, not an optimisation: only `apps/listener`
+      # declares `customConditions: ["development"]`, so every other consumer
+      # resolves `@frak-labs/core-sdk` to `sdk/core/dist/*.d.ts`. That output is
+      # gitignored and no install hook creates it, so a clean checkout without
+      # this step fails with unresolved-module errors across wallet, business
+      # and shopify.
+      - name: "🔨 Build the SDK"
+        run: bun run build:sdk
+      # `apps/wallet/app/routeTree.gen.ts` is gitignored and written by the
+      # tanstackRouter vite plugin, so a clean checkout does not have it and
+      # every wallet route fails to resolve. `apps/business` commits its
+      # equivalent, which is why only the wallet needs this. Codegen only —
+      # a full build here would spend minutes and report a bundle regression
+      # under a job named "Typecheck".
+      - name: "🔨 Generate the wallet route tree"
+        run: bun run --cwd apps/wallet generate:routes
+      # Enforces the ES2022 browser floor: an above-floor API in any of the
+      # browser-shipped packages that declare a typecheck script fails here.
+      - name: "🔎 Typecheck"
+        run: bun run typecheck
+
   # ── Listener ────────────────────────────────────────────
   listener-eager-budget:
     name: "📏 Listener · Eager bundle budget"

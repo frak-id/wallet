@@ -8,7 +8,9 @@ import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import removeConsole from "vite-plugin-remove-console";
 import {
+    assertBundleEsVersion,
     assertEagerBundleBudget,
+    BROWSER_TARGET,
     getSandboxEnv,
     getSstResource,
     inlineFontFaces,
@@ -345,6 +347,13 @@ export default defineConfig(async () => {
                 budgetGzip: EAGER_JS_BUDGET_GZIP,
                 assertHtml: assertNoLazyCssLeak,
             }),
+            assertBundleEsVersion({
+                subdir: "assets",
+                // @radix-ui/react-collection defines `toSorted` on its own
+                // `OrderedDict extends Map`, not `Array.prototype`; es-check
+                // matches property names without receiver analysis.
+                ignore: { features: "ArrayToSorted", in: "ui-vendor" },
+            }),
         ],
         server: {
             port: 3002,
@@ -380,7 +389,7 @@ export default defineConfig(async () => {
                     return deps.filter((d) => !lazyDepRe.test(d));
                 },
             },
-            target: "baseline-widely-available",
+            target: BROWSER_TARGET,
             // Coarse per-chunk warning only: kept just above the largest legit
             // lazy chunk (blockchain-vendor ~285 KB) to avoid routine noise on
             // intentionally heavy lazy chunks. The KPI that matters — the eager

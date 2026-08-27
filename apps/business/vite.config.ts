@@ -5,6 +5,7 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig, type UserConfig } from "vite";
 import removeConsole from "vite-plugin-remove-console";
 import {
+    assertBundleEsVersion,
     assertEagerBundleBudget,
     getSandboxEnv,
     getSstResource,
@@ -155,6 +156,20 @@ export default defineConfig(async () => {
             assertEagerBundleBudget({
                 budgetGzip: EAGER_JS_BUDGET_GZIP,
                 enforce: false,
+            }),
+            // No `build.target` pin here, so JS keeps vite's default
+            // (safari16.4) while CSS compiles at 15.4 via lightningCssConfig.
+            // The asymmetry is deliberate: the 15.4 floor comes from wallet
+            // traffic, and pinning this dashboard to it costs ~14 KB gz of
+            // class-field lowering and breaks its eager budget, for browsers
+            // it does not need. The gate still runs, so an above-floor API
+            // cannot ship unnoticed.
+            assertBundleEsVersion({
+                subdir: "assets",
+                // @radix-ui/react-collection defines `toSorted` on its own
+                // `OrderedDict extends Map`, not `Array.prototype`; es-check
+                // matches property names without receiver analysis.
+                ignore: { features: "ArrayToSorted", in: "ui-vendor" },
             }),
         ],
         resolve: {
