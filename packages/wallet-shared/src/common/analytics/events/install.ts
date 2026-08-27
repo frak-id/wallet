@@ -60,7 +60,12 @@ export type InstallEventMap = {
     install_code_generation_failed: MerchantMaybe & {
         error_type: string;
     };
-    install_code_copied: MerchantMaybe;
+    install_code_copied: MerchantMaybe & {
+        // Whether a native host took the code. Its own write supersedes the
+        // page's, so a true value here means the clipboard entry carries an
+        // expiry and is marked sensitive.
+        handed_off: boolean;
+    };
     install_store_clicked: MerchantMaybe & {
         store: InstallStore;
         has_referrer: boolean;

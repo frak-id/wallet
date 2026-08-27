@@ -10,6 +10,13 @@ import { RETURN_SCHEME, recordHostResults } from "../mocks/nativeHost";
  * channel as `action=code`. A logged-out web visitor gets the same screen.
  */
 
+declare global {
+    interface Window {
+        /** Clipboard writes counted by the host-handoff spec. */
+        __writes?: number;
+    }
+}
+
 const VIEWPORTS = {
     iphone: { width: 390, height: 844 },
     /** The tablet case: a host sheet is full-bleed at every width. */
@@ -169,6 +176,63 @@ test.describe("Install page — host bridge", () => {
             .poll(() => results.join(" "))
             .toContain(`action=code&sid=s1&value=${INSTALL_CODE}`);
         await expect.poll(() => results.join(" ")).toContain("exp=");
+    });
+
+    test("hands the code over even when the clipboard write fails", async ({
+        page,
+        context,
+        injectAuthState,
+    }) => {
+        const results = recordHostResults(page);
+        await mockInstallCode(page);
+        // `writeText` rejects on a denied permission, a non-secure context or
+        // an unfocused document — the last is routine in an iOS web view. The
+        // handoff is what the button is for inside a host, so it must not be
+        // taken down with the local write.
+        await context.clearPermissions();
+        await openLoggedOut(page, installUrl(), injectAuthState);
+        await settle(page);
+
+        await page
+            .getByRole("button", { name: /copier|copy/i })
+            .first()
+            .click();
+
+        await expect
+            .poll(() => results.join(" "))
+            .toContain(`action=code&sid=s1&value=${INSTALL_CODE}`);
+    });
+
+    test("leaves the host's clipboard entry alone", async ({
+        page,
+        injectAuthState,
+    }) => {
+        const results = recordHostResults(page);
+        await mockInstallCode(page);
+        await openLoggedOut(page, installUrl(), injectAuthState);
+        await page.evaluate(() => {
+            window.__writes = 0;
+            const clipboard = navigator.clipboard;
+            const write = clipboard.writeText.bind(clipboard);
+            clipboard.writeText = (text: string) => {
+                window.__writes = (window.__writes ?? 0) + 1;
+                return write(text);
+            };
+        });
+        await settle(page);
+
+        await page
+            .getByRole("button", { name: /copier|copy/i })
+            .first()
+            .click();
+        await expect
+            .poll(() => results.join(" "))
+            .toContain(`action=code&sid=s1&value=${INSTALL_CODE}`);
+
+        // The host writes the same code marked sensitive and, on iOS,
+        // expiring. A plain write landing after would replace that entry with
+        // an unprotected one.
+        expect(await page.evaluate(() => window.__writes)).toBe(0);
     });
 
     test("sends nothing without a return scheme", async ({

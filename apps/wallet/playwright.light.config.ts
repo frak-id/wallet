@@ -12,7 +12,9 @@ const SPA_BASE_URL =
 
 /** Port `serve-standalone.ts` listens on; must agree with its own default. */
 const STANDALONE_PORT = Number(process.env.STANDALONE_PORT ?? 3100);
-const STANDALONE_BASE_URL = `http://localhost:${STANDALONE_PORT}`;
+// `127.0.0.1`, not `localhost`: the server binds loopback v4, and a host
+// resolving `localhost` to `::1` first would fail to connect.
+const STANDALONE_BASE_URL = `http://127.0.0.1:${STANDALONE_PORT}`;
 
 /** Specs driving the standalone bundle rather than the SPA. */
 const STANDALONE_SPECS = ["**/sharing.check.ts", "**/install.check.ts"];
@@ -76,12 +78,13 @@ export default defineConfig({
         },
     ],
 
-    // Always started: `reuseExistingServer` already makes the warm local case
-    // free, and sniffing argv to skip it misreads `--project=spa` and breaks
-    // outright when both projects are selected.
+    // The build runs in `globalSetup`, not here: `reuseExistingServer` skips
+    // this whole command when something already listens, which would let the
+    // specs assert against a bundle older than the source they cover.
+    globalSetup: join(__dirname, "tests-light", "build-standalone.ts"),
+
     webServer: {
-        command:
-            "bun run build:standalone && bun tests-light/serve-standalone.ts",
+        command: "bun tests-light/serve-standalone.ts",
         url: STANDALONE_BASE_URL,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

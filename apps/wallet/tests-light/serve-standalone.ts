@@ -19,6 +19,9 @@ function assetUrl(pathname: string): URL | null {
 }
 
 Bun.serve({
+    // Loopback only: `dist/` carries sourcemaps and build-time inlined config,
+    // and the wildcard bind would offer them to the whole network.
+    hostname: "127.0.0.1",
     port: PORT,
     async fetch(request) {
         const { pathname } = new URL(request.url);

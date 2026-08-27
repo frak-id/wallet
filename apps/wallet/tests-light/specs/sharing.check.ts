@@ -117,7 +117,20 @@ test.describe("Sharing page — native sheet", () => {
         await open(page, sharingUrl({}, { native: false }));
         await settle(page);
 
-        // Tablet card treatment: the case a chromeless regression would break.
+        // The other half of the fix: a plain web visit keeps the centred card,
+        // so the host opt-out must not leak into it.
+        const card = await page.getByRole("dialog").evaluate((el) => {
+            const style = getComputedStyle(el);
+            return {
+                width: Math.round(el.getBoundingClientRect().width),
+                radius: style.borderTopLeftRadius,
+                shadow: style.boxShadow,
+            };
+        });
+        expect(card.width).toBeLessThan(VIEWPORTS.ipad.width);
+        expect(card.radius).not.toBe("0px");
+        expect(card.shadow).not.toBe("none");
+
         await shoot(page, "sharing-web-ipad.png");
     });
 });
@@ -293,6 +306,13 @@ test.describe("Sharing page — degraded", () => {
 });
 
 test.describe("Sharing page — locale", () => {
+    // The card tagline, which interpolates the amount, so each locale asserts
+    // the other is absent: a French fallback under `lng=en` is the failure.
+    const TAGLINE = {
+        en: new RegExp(`Earn ${REFERRER_REWARD_EUR}`),
+        fr: new RegExp(`Gagnez ${REFERRER_REWARD_EUR}`),
+    } as const;
+
     for (const lng of ["en", "fr"] as const) {
         test(`renders ${lng} when the host asks for it`, async ({ page }) => {
             await page.setViewportSize(VIEWPORTS.iphone);
@@ -301,6 +321,10 @@ test.describe("Sharing page — locale", () => {
             // never re-renders.
             await open(page, sharingUrl({ lng }));
             await settle(page);
+
+            const other = lng === "en" ? "fr" : "en";
+            await expect(page.getByText(TAGLINE[lng])).toBeVisible();
+            await expect(page.getByText(TAGLINE[other])).toHaveCount(0);
 
             await shoot(page, `sharing-locale-${lng}.png`);
         });

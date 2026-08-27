@@ -529,14 +529,14 @@ function InstallCodeView({
 
     /**
      * Hands the code to the native host, which can give the pasteboard entry an
-     * expiry and `localOnly`; this page cannot. No-op without a `returnScheme`.
+     * expiry and `localOnly`; this page cannot. Returns whether a host took it.
      * From a user gesture only: `assign()` to a custom scheme raises the OS
      * "open in app?" sheet, whose blur/refocus would retrigger an effect.
      */
     const handOverCode = useCallback(() => {
-        if (!data?.code) return;
+        if (!data?.code) return false;
         const expiresAt = new Date(data.expiresAt).getTime();
-        sendHostResult({
+        return sendHostResult({
             scheme: returnScheme,
             action: "code",
             sid,
@@ -565,11 +565,28 @@ function InstallCodeView({
 
     const handleCopy = useCallback(async () => {
         if (!data?.code) return;
-        await navigator.clipboard.writeText(data.code);
-        // Where there is a host, its write supersedes this one: same code, but
-        // marked sensitive and given an expiry.
-        handOverCode();
-        trackEvent("install_code_copied", { merchant_id: merchantId });
+
+        // Ahead of the local write, which rejects on a denied permission, a
+        // non-secure context or an unfocused document — routine in a web view,
+        // and inside a host the handoff is what the button is for.
+        const handedOff = handOverCode();
+
+        // Only when no host took it: the host writes the same code marked
+        // sensitive and, on iOS, expiring, and a plain write landing after
+        // would replace that entry with an unprotected one.
+        const copied =
+            handedOff ||
+            (await navigator.clipboard
+                .writeText(data.code)
+                .then(() => true)
+                .catch(() => false));
+
+        if (!copied) return;
+
+        trackEvent("install_code_copied", {
+            merchant_id: merchantId,
+            handed_off: handedOff,
+        });
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     }, [data?.code, merchantId, handOverCode]);
