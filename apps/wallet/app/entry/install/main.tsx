@@ -6,6 +6,7 @@ import {
     bootstrapStandalonePage,
     reportBootstrapFailure,
 } from "../shared/bootstrap";
+import { markHostEmbedded } from "../shared/hostEmbed";
 import { searchParamsFromLocation } from "../shared/search";
 import * as styles from "./processingLayout.css";
 
@@ -19,6 +20,8 @@ import * as styles from "./processingLayout.css";
  */
 
 const search = parseInstallSearch(searchParamsFromLocation());
+
+markHostEmbedded(search.embed);
 
 /**
  * Stand-in for the SPA's `PageLayout`, which belongs to the wallet shell (safe
