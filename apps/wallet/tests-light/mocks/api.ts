@@ -38,9 +38,31 @@ async function mockRemoteImages(page: Page, baseURL?: string) {
     );
 }
 
+/**
+ * Ids the FrakContext v2 codec accepts. It rejects anything that is not a
+ * lower-case UUID (`sdk/core/src/context/frakContextV2Codec.ts`) by returning
+ * a null link, which no assertion sees: the CTAs stay enabled through
+ * `canHandOff` and every local-path branch goes unexercised. Asserted at load
+ * so a bad fixture is a hard failure rather than silent dead coverage.
+ */
+export const MERCHANT_ID = "550e8400-e29b-41d4-a716-446655440000";
+export const CLIENT_ID = "550e8400-e29b-41d4-a716-446655440001";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+for (const [name, id] of [
+    ["MERCHANT_ID", MERCHANT_ID],
+    ["CLIENT_ID", CLIENT_ID],
+] as const) {
+    if (!UUID.test(id)) {
+        throw new Error(
+            `${name} must be a lower-case UUID or the sharing link silently resolves to null: ${id}`
+        );
+    }
+}
+
 /** Merchant identity the sharing page renders when no `appName` overrides it. */
 const merchantResolveFixture = {
-    merchantId: "0x1234",
+    merchantId: MERCHANT_ID,
     productId: "0xabcd",
     name: "Acme Store",
     domain: "acme.example.com",

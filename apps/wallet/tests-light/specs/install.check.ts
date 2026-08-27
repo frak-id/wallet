@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "../fixtures";
+import { CLIENT_ID, MERCHANT_ID } from "../mocks/api";
 import { RETURN_SCHEME, recordHostResults } from "../mocks/nativeHost";
 
 /**
@@ -28,8 +29,8 @@ const INSTALL_CODE = "LOLA10";
 /** Mirrors the `/install` URL the SDK builds after an install tap. */
 function installUrl(overrides: Record<string, string | undefined> = {}) {
     const params = new URLSearchParams({
-        m: "0x1234",
-        a: "anon-abc",
+        m: MERCHANT_ID,
+        a: CLIENT_ID,
         embed: "native",
         returnScheme: RETURN_SCHEME,
         sid: "s1",

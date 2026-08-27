@@ -1,6 +1,11 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "../fixtures";
-import { REFERRER_REWARD_EUR } from "../mocks/api";
+import {
+    CLIENT_ID,
+    MERCHANT_ID,
+    mockDefaultApiRoutes,
+    REFERRER_REWARD_EUR,
+} from "../mocks/api";
 import { RETURN_SCHEME, recordHostResults } from "../mocks/nativeHost";
 
 /**
@@ -48,12 +53,12 @@ function sharingUrl(
     { native = true }: { native?: boolean } = {}
 ) {
     const params = new URLSearchParams({
-        merchantId: "0x1234",
+        merchantId: MERCHANT_ID,
         link: "https://acme.example.com",
     });
     if (native) {
         params.set("embed", "native");
-        params.set("clientId", "client-abc");
+        params.set("clientId", CLIENT_ID);
         params.set("returnScheme", RETURN_SCHEME);
         params.set("sid", "s1");
         params.set("sdkVersion", "1.0.0-beta.1");
@@ -249,6 +254,40 @@ test.describe("Sharing page — host bridge", () => {
         expect(await page.evaluate(() => window.__documentToken)).toBeDefined();
         await expect(page.locator("footer button")).toHaveCount(2);
     });
+
+    test("fills the clipboard even when nothing answers the scheme", async ({
+        browser,
+    }) => {
+        // Its own context: `confirmation.ts` keeps one record per origin, and
+        // the clipboard is shared within one too, so a sibling's copy would
+        // satisfy a weaker assertion than this.
+        const baseURL = test.info().project.use.baseURL;
+        const context = await browser.newContext({
+            baseURL,
+            viewport: VIEWPORTS.iphone,
+            permissions: ["clipboard-read", "clipboard-write"],
+        });
+        const page = await context.newPage();
+        // Same origin the project uses, so first-party assets are not swapped
+        // for the placeholder pixel.
+        await mockDefaultApiRoutes(page, baseURL);
+
+        await page.goto(sharingUrl(), { waitUntil: "commit" });
+        await page
+            .locator("footer button")
+            .last()
+            .waitFor({ state: "visible" });
+        await page.getByRole("button", { name: /copier|copy/i }).click();
+
+        // A shared link carries `returnScheme` into an ordinary browser, where
+        // nothing intercepts it — and the page cannot tell, so its own write is
+        // the only thing that leaves the user with a link.
+        await expect
+            .poll(() => page.evaluate(() => navigator.clipboard.readText()))
+            .toContain("fCtx=");
+
+        await context.close();
+    });
 });
 
 test.describe("Sharing page — confirmation", () => {
@@ -272,11 +311,20 @@ test.describe("Sharing page — degraded", () => {
         page,
     }) => {
         await page.setViewportSize(VIEWPORTS.iphone);
-        // No `returnScheme`: `canHandOff` is false, and a web view without
-        // `navigator.share` leaves the page with only Copy.
+        // Removed rather than assumed: desktop Chromium happens not to expose
+        // `share`, so this passed on an environmental fact it never stated —
+        // and would go red for a browser change rather than a regression.
+        await page.addInitScript(() => {
+            Object.defineProperty(navigator, "share", { value: undefined });
+        });
+        // With no `returnScheme` either, `canHandOff` is false and nothing is
+        // left to service a share, so the footer keeps only Copy.
         await open(page, sharingUrl({ returnScheme: undefined }));
         await settle(page);
 
+        expect(await page.evaluate(() => typeof navigator.share)).toBe(
+            "undefined"
+        );
         await expect(page.locator("footer button")).toHaveCount(1);
         await expect(
             page.getByRole("button", { name: /copier|copy/i })
