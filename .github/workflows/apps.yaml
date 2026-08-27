@@ -28,6 +28,7 @@ jobs:
       ts: ${{ steps.filter.outputs.ts }}
       android: ${{ steps.filter.outputs.android }}
       ios: ${{ steps.filter.outputs.ios }}
+      walletPages: ${{ steps.filter.outputs.walletPages }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v4
@@ -49,6 +50,18 @@ jobs:
               - '.github/workflows/apps.yaml'
             ios:
               - 'sdk/ios/**'
+              - '.github/workflows/apps.yaml'
+            # `/sharing` and `/install` are assembled from three places: the wallet's
+            # entrypoints, `wallet-shared` (which owns `SharingPage`, its tablet card
+            # rule and the install copy) and the design system (the `body` centering the
+            # host opt-out cancels). A filter missing any one of them lets the guarded
+            # rule change without running its guard.
+            walletPages:
+              - 'apps/wallet/**'
+              - 'packages/wallet-shared/**'
+              - 'packages/design-system/**'
+              - 'sdk/core/**'
+              - 'bun.lock'
               - '.github/workflows/apps.yaml'
 
   # ── TypeScript SDK ──────────────────────────────────────
@@ -135,6 +148,56 @@ jobs:
       # shipping on every iframe boot.
       - name: "📏 Build listener & assert eager budget"
         run: bun run --cwd apps/listener build
+
+  # ── Wallet standalone pages ─────────────────────────────
+  # `/sharing` and `/install` are what the iOS and Android SDKs render inside their
+  # sharing sheet, and neither SDK runs on a device or a simulator anywhere in CI. This
+  # is the only executed coverage that surface has.
+  #
+  # Behaviour only, deliberately: the screenshot baselines carry a platform suffix and
+  # are gitignored, so `ignoreSnapshots` leaves every `toHaveScreenshot` a no-op here.
+  # The assertions that matter — layout width, the `data-embed` tag, the return-channel
+  # URLs, locale copy — all run without a baseline, which is why they were written that
+  # way. Pixel comparison stays a local opt-in (`bun run test:light:pixels`).
+  wallet-pages:
+    name: "🖼️ Wallet pages · Native sheet behaviour"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.walletPages == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      # Guards the guards: a spec whose only assertion is a screenshot proves
+      # nothing on a run with `ignoreSnapshots` on, which is every run here.
+      # Scoped to the two specs this job runs; `pages.check.ts` predates the
+      # rule and is screenshot-only throughout.
+      - name: "🔎 Assert the specs assert something"
+        run: bun apps/wallet/tests-light/assert-real-assertions.ts sharing.check.ts install.check.ts
+      # Both go through the workspace, not `bunx`: `bunx playwright` resolves
+      # `playwright@latest` from the registry, so the browser install and the
+      # runner can end up on different versions. Chromium only — the config
+      # declares one browser, and the standalone bundle is built by the suite's
+      # own `globalSetup`.
+      - name: "🌐 Install Chromium"
+        run: bun run --cwd apps/wallet test:light:install
+      # `--project standalone` skips `pages.check.ts`, which needs a running SPA
+      # (dev server plus SST) that this job deliberately does not start.
+      # `STANDALONE_HOST` widens the server's loopback-only default: the runner
+      # is a disposable container, so there is no LAN to expose `dist/` to, and
+      # loopback is not reachable across its network namespace.
+      - name: "🧪 Native sheet behaviour"
+        run: bun run --cwd apps/wallet test:light -- --project standalone
+        env:
+          STANDALONE_HOST: 0.0.0.0
+      - name: "📄 Upload report on failure"
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wallet-pages-report
+          path: apps/wallet/playwright-report/
+          retention-days: 7
 
   # ── Android SDK ─────────────────────────────────────────
   # First CI coverage this package has ever had; treat a red run here as real until

@@ -10,10 +10,12 @@ const SPA_BASE_URL =
         ? "http://localhost:3001"
         : "https://localhost:3000");
 
-/** Port `serve-standalone.ts` listens on; must agree with its own default. */
+/** Port must agree with `serve-standalone.ts`, which reads the same var. */
 const STANDALONE_PORT = Number(process.env.STANDALONE_PORT ?? 3100);
-// `127.0.0.1`, not `localhost`: the server binds loopback v4, and a host
-// resolving `localhost` to `::1` first would fail to connect.
+// The address Playwright connects to, which is not always the one the server
+// binds: CI binds `0.0.0.0` (loopback does not cross a container's network
+// namespace) but must still be reached at a concrete address. `127.0.0.1`
+// rather than `localhost`, which can resolve to `::1` first.
 const STANDALONE_BASE_URL = `http://127.0.0.1:${STANDALONE_PORT}`;
 
 /** Specs driving the standalone bundle rather than the SPA. */
@@ -77,18 +79,24 @@ export default defineConfig({
             },
         },
     ],
-
-    // The build runs in `globalSetup`, not here: `reuseExistingServer` skips
-    // this whole command when something already listens, which would let the
-    // specs assert against a bundle older than the source they cover.
-    globalSetup: join(__dirname, "tests-light", "build-standalone.ts"),
+    // No `globalSetup` for the build: Playwright runs it *after* `webServer`,
+    // so a fresh checkout would serve 404s until the readiness poll gave up.
+    // `serve-standalone.ts` builds before it listens instead.
 
     webServer: {
         command: "bun tests-light/serve-standalone.ts",
-        url: STANDALONE_BASE_URL,
+        // A served route, not the bare origin: `/` is a 404 here (only
+        // `/sharing` and `/install` are documents), and Playwright waits on a
+        // 4xx until it times out. Passes locally only because
+        // `reuseExistingServer` skips the wait.
+        url: `${STANDALONE_BASE_URL}/sharing`,
         reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
-        stdout: "ignore",
+        // Covers a cold `build:standalone`, which now runs inside the command.
+        timeout: 180_000,
+        // Surfaced, not ignored: a server that fails to boot otherwise reports
+        // only "Timed out waiting 120000ms".
+        stdout: "pipe",
+        stderr: "pipe",
     },
 
     use: {

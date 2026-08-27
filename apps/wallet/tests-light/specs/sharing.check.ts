@@ -262,6 +262,11 @@ test.describe("Sharing page — degraded", () => {
         await open(page, sharingUrl({ returnScheme: undefined }));
         await settle(page);
 
+        await expect(page.locator("footer button")).toHaveCount(1);
+        await expect(
+            page.getByRole("button", { name: /copier|copy/i })
+        ).toBeVisible();
+
         await shoot(page, "sharing-no-return-scheme.png");
     });
 
@@ -284,6 +289,10 @@ test.describe("Sharing page — degraded", () => {
         );
         await open(page, sharingUrl());
         await settle(page);
+
+        // The link is local, so both CTAs stay usable without the config.
+        await expect(page.locator("footer button")).toHaveCount(2);
+        await expect(page.locator("footer button").last()).toBeEnabled();
 
         await shoot(page, "sharing-config-failed.png");
     });
