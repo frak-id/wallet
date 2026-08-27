@@ -61,9 +61,10 @@ export type InstallEventMap = {
         error_type: string;
     };
     install_code_copied: MerchantMaybe & {
-        // Whether a native host took the code. Its own write supersedes the
-        // page's, so a true value here means the clipboard entry carries an
-        // expiry and is marked sensitive.
+        // Whether a return scheme was present to hand the code to, not whether
+        // a host took it: the navigation is fire-and-forget and cannot be
+        // acknowledged. A shared link opened in an ordinary browser carries the
+        // scheme and reports true.
         handed_off: boolean;
     };
     install_store_clicked: MerchantMaybe & {

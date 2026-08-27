@@ -566,26 +566,27 @@ function InstallCodeView({
     const handleCopy = useCallback(async () => {
         if (!data?.code) return;
 
-        // Ahead of the local write, which rejects on a denied permission, a
-        // non-secure context or an unfocused document — routine in a web view,
-        // and inside a host the handoff is what the button is for.
-        const handedOff = handOverCode();
+        // Isolated: `writeText` rejects on a denied permission, a non-secure
+        // context or an unfocused document, and none of those should stop the
+        // handoff below.
+        const copied = await navigator.clipboard
+            .writeText(data.code)
+            .then(() => true)
+            .catch(() => false);
 
-        // Only when no host took it: the host writes the same code marked
-        // sensitive and, on iOS, expiring, and a plain write landing after
-        // would replace that entry with an unprotected one.
-        const copied =
-            handedOff ||
-            (await navigator.clipboard
-                .writeText(data.code)
-                .then(() => true)
-                .catch(() => false));
+        // After the local write, never before: a host writes the same code
+        // marked sensitive and, on iOS, expiring, and whichever write lands
+        // last is the one the user pastes.
+        const offered = handOverCode();
 
-        if (!copied) return;
+        // `offered` only means a return scheme was present — a fire-and-forget
+        // scheme navigation cannot be acknowledged — so it is not proof the
+        // clipboard holds anything. Only the local write is.
+        if (!(copied || offered)) return;
 
         trackEvent("install_code_copied", {
             merchant_id: merchantId,
-            handed_off: handedOff,
+            handed_off: offered,
         });
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);

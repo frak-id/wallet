@@ -11,6 +11,13 @@ import { RETURN_SCHEME, recordHostResults } from "../mocks/nativeHost";
  * contract `SharingPageUrl` builds, at the viewports a sheet presents.
  */
 
+declare global {
+    interface Window {
+        /** Set by the copy spec; a reload wipes it. */
+        __documentToken?: number;
+    }
+}
+
 /** Viewports a native sheet actually presents this page at. */
 const VIEWPORTS = {
     iphone: { width: 390, height: 844 },
@@ -227,12 +234,20 @@ test.describe("Sharing page — host bridge", () => {
         await open(page, sharingUrl());
         await settle(page);
 
+        // Survives a same-document update and dies on a reload, so it is what
+        // separates the two. Asserting the URL cannot: this test navigated to
+        // it, and nothing here rewrites it.
+        await page.evaluate(() => {
+            window.__documentToken = Math.random();
+        });
+
         await page.getByRole("button", { name: /copier|copy/i }).click();
         await expect.poll(() => results.join(" ")).toContain("action=copy");
 
         // A copy must not reload into the confirmation screen: the host has
         // already toasted, and a reload would tear that down mid-toast.
-        expect(page.url()).not.toContain("view=confirmation");
+        expect(await page.evaluate(() => window.__documentToken)).toBeDefined();
+        await expect(page.locator("footer button")).toHaveCount(2);
     });
 });
 

@@ -29,13 +29,12 @@ const build = spawnSync("bun", ["run", "build:standalone"], {
 });
 if (build.status !== 0) throw new Error("build:standalone failed");
 
+// `new URL` normalises rather than throwing, so `%2e%2e` resolves outside
+// `dist/`. Browsers collapse that before it is sent, but this is the only
+// thing standing between a raw client and the repo.
 function assetUrl(pathname: string): URL | null {
-    try {
-        return new URL(`.${pathname}`, DIST);
-    } catch {
-        // An encoded slash makes this unrepresentable as a file path.
-        return null;
-    }
+    const url = new URL(`.${pathname}`, DIST);
+    return url.href.startsWith(DIST.href) ? url : null;
 }
 
 Bun.serve({

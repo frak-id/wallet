@@ -12,8 +12,8 @@ import { RETURN_SCHEME, recordHostResults } from "../mocks/nativeHost";
 
 declare global {
     interface Window {
-        /** Clipboard writes counted by the host-handoff spec. */
-        __writes?: number;
+        /** When the page's own clipboard write happened, in epoch ms. */
+        __writeAt?: number;
     }
 }
 
@@ -203,36 +203,65 @@ test.describe("Install page — host bridge", () => {
             .toContain(`action=code&sid=s1&value=${INSTALL_CODE}`);
     });
 
-    test("leaves the host's clipboard entry alone", async ({
+    test("writes locally before handing over, so the host's entry wins", async ({
         page,
         injectAuthState,
     }) => {
-        const results = recordHostResults(page);
         await mockInstallCode(page);
         await openLoggedOut(page, installUrl(), injectAuthState);
+        // `location.assign` is non-configurable, so the handoff cannot be
+        // intercepted in-page; timestamp the write and compare against when
+        // the scheme navigation reaches Playwright instead.
         await page.evaluate(() => {
-            window.__writes = 0;
             const clipboard = navigator.clipboard;
             const write = clipboard.writeText.bind(clipboard);
             clipboard.writeText = (text: string) => {
-                window.__writes = (window.__writes ?? 0) + 1;
+                window.__writeAt ??= performance.timeOrigin + performance.now();
                 return write(text);
             };
         });
+
+        const handoffAt = page
+            .waitForRequest((r) => r.url().startsWith(`${RETURN_SCHEME}://`))
+            .then(() => Date.now());
+
+        await settle(page);
+        await page
+            .getByRole("button", { name: /copier|copy/i })
+            .first()
+            .click();
+
+        const handoff = await handoffAt;
+        const write = await page.evaluate(() => window.__writeAt);
+
+        // Whichever write lands last is the one the user pastes, and the
+        // host's is marked sensitive and, on iOS, expiring. So the page's
+        // plain write has to go first.
+        expect(write).toBeDefined();
+        expect(write ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(handoff);
+    });
+
+    test("still fills the clipboard when nothing answers the scheme", async ({
+        page,
+        injectAuthState,
+    }) => {
+        await mockInstallCode(page);
+        // A shared `/install` link carries `returnScheme` into an ordinary
+        // browser, where no host intercepts it. `sendHostResult` cannot tell
+        // the difference, so the local write is the only thing that can leave
+        // the user with a code.
+        await openLoggedOut(page, installUrl(), injectAuthState);
         await settle(page);
 
         await page
             .getByRole("button", { name: /copier|copy/i })
             .first()
             .click();
-        await expect
-            .poll(() => results.join(" "))
-            .toContain(`action=code&sid=s1&value=${INSTALL_CODE}`);
 
-        // The host writes the same code marked sensitive and, on iOS,
-        // expiring. A plain write landing after would replace that entry with
-        // an unprotected one.
-        expect(await page.evaluate(() => window.__writes)).toBe(0);
+        await expect(page.getByText(INSTALL_CODE).first()).toBeVisible();
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+            INSTALL_CODE
+        );
     });
 
     test("sends nothing without a return scheme", async ({

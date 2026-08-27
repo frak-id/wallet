@@ -14,17 +14,28 @@ export const RETURN_SCHEME = "frak-test";
 export function recordHostResults(page: Page): string[] {
     const results: string[] = [];
 
-    // `request` and `framenavigated` both fire for one navigation. Only the
-    // immediate repeat is that pair — `share` and `copy` are genuinely
-    // repeatable, so an identical URL later is a real second press.
-    const capture = (url: string) => {
-        if (url.startsWith(`${RETURN_SCHEME}://`) && results.at(-1) !== url) {
-            results.push(url);
-        }
-    };
+    // Both events fire for one navigation, so `framenavigated` is only a
+    // duplicate when `request` already recorded that exact URL for the same
+    // navigation. Deduping by value instead would swallow a real second press:
+    // `share` and `copy` are repeatable and produce identical URLs.
+    let lastRequested: string | null = null;
 
-    page.on("request", (request) => capture(request.url()));
-    page.on("framenavigated", (frame) => capture(frame.url()));
+    page.on("request", (request) => {
+        const url = request.url();
+        if (!url.startsWith(`${RETURN_SCHEME}://`)) return;
+        lastRequested = url;
+        results.push(url);
+    });
+
+    page.on("framenavigated", (frame) => {
+        const url = frame.url();
+        if (!url.startsWith(`${RETURN_SCHEME}://`)) return;
+        if (url === lastRequested) {
+            lastRequested = null;
+            return;
+        }
+        results.push(url);
+    });
 
     return results;
 }
