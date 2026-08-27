@@ -14,8 +14,10 @@ type SharingLinkProps = {
 };
 
 /**
- * Set when a native host took the action over and served it with the link IT
- * built. `link` is then absent: this page never sees the string the user got.
+ * Set when a return scheme was present to hand the action to — not proof a
+ * host took it, since a scheme navigation cannot be acknowledged. `link` is
+ * independent: it carries whatever this page wrote, and a host may have
+ * replaced it with one built from its own state.
  */
 type HandedOff = { handed_off?: boolean };
 

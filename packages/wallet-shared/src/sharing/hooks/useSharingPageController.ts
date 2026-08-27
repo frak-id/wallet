@@ -266,20 +266,26 @@ export function useSharingPageController({
     }, [outcomes, sharingLink, triggerSharing, source, merchantId]);
 
     const onCopy = useCallback(() => {
+        // Ahead of the hand-off, and unconditionally: `outcomes.copy` reports
+        // that a return scheme was present, not that a host answered it, so a
+        // shared link opened in an ordinary browser would otherwise toast over
+        // an untouched clipboard. A host that does answer writes its own link
+        // after this one and wins, which is the outcome it tracked.
+        const wroteLocally = sharingLink !== null;
+        if (sharingLink) copy(sharingLink);
+
         const handedOff = outcomes.copy?.() ?? false;
-        // A host with nothing to hand off still needs a link of our own.
-        if (!(handedOff || sharingLink)) return;
-        if (!handedOff && sharingLink) copy(sharingLink);
+        if (!(handedOff || wroteLocally)) return;
 
         // Fired even when the copy was handed off: this funnel event and the
         // host SDK's interaction measure different things, do not de-duplicate.
         trackEvent("sharing_link_copied", {
             source,
             merchant_id: merchantId,
-            // Omitted on a hand-off: the host wrote its own link to the
-            // clipboard and this page never sees that string, so reporting
-            // ours would attribute the copy to a URL the user never got.
-            link: handedOff ? undefined : (sharingLink ?? undefined),
+            // Reported when this page wrote it, which is observable, rather
+            // than gated on `handedOff`, which is not: a host may or may not
+            // have replaced it, and either way this is the link we put there.
+            link: wroteLocally ? (sharingLink ?? undefined) : undefined,
             handed_off: handedOff,
         });
         outcomes.recordSharing?.();
