@@ -12,10 +12,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -216,7 +219,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(colorScheme = FrakColorScheme) {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    // The activity draws edge to edge, so without this the
+                    // title sits under the status bar and the log pane under
+                    // the gesture bar. The sheet insets itself.
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .windowInsetsPadding(WindowInsets.safeDrawing),
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     val scope = rememberCoroutineScope()
