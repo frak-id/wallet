@@ -8,6 +8,7 @@
   "module": "src/index.ts",
   "main": "./src/index.ts",
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "test": "vitest"
   },
   "dependencies": {
@@ -17,7 +18,8 @@
     "@frak-labs/test-foundation": "workspace:*",
     "@vitest/ui": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@typescript/native": "catalog:"
   },
   "exports": {
     ".": {

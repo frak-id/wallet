@@ -119,6 +119,7 @@
     "preact": "^10.29.7",
     "@preact/preset-vite": "^2.10.6",
     "@tanstack/react-router": "1.170.18",
+    "@tanstack/router-generator": "1.167.21",
     "@tanstack/router-plugin": "1.168.23",
     "@tanstack/react-router-devtools": "1.167.0",
     "ox": "^0.14.33",

@@ -404,7 +404,7 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         // a dead end: this screen's exit must never depend on the network.
         onlineManager.setOnline(false);
         mockResolveMerchant.mockImplementation(
-            () => Promise.withResolvers<never>().promise
+            () => new Promise<never>(() => {})
         );
         const toWallet = vi.fn();
 
@@ -784,9 +784,7 @@ describe("InstallView — install-code branch, post-install detection", () => {
         onlineManager.setOnline(false);
         // Never settles: the query must be pending so `fetchStatus` is what
         // decides the render, not a resolved or rejected result.
-        mockGenerateCode.mockImplementation(
-            () => Promise.withResolvers<never>().promise
-        );
+        mockGenerateCode.mockImplementation(() => new Promise<never>(() => {}));
 
         try {
             render(

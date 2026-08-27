@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+    assertBundleEsVersion,
     assertEagerBundleBudget,
     collectEagerClosure,
     preconnectOrigins,
@@ -11,6 +12,10 @@ import {
 
 type WriteBundlePlugin = {
     writeBundle: (options: { dir?: string }) => void;
+};
+
+type AsyncWriteBundlePlugin = {
+    writeBundle: (options: { dir?: string }) => Promise<void>;
 };
 
 describe("collectEagerClosure", () => {
@@ -248,5 +253,127 @@ describe("preconnectOrigins", () => {
 
         expect(tags).toHaveLength(1);
         expect(tags[0].attrs.href).toBe("https://good.example.test");
+    });
+});
+
+describe("assertBundleEsVersion", () => {
+    let dir: string;
+
+    const write = (source: string) => {
+        fsSync.mkdirSync(path.join(dir, "standalone"), { recursive: true });
+        fsSync.writeFileSync(
+            path.join(dir, "standalone", "chunk.js"),
+            source,
+            "utf-8"
+        );
+    };
+
+    const run = async (enforce = true) => {
+        const plugin = assertBundleEsVersion({
+            subdir: "standalone",
+            enforce,
+        }) as unknown as AsyncWriteBundlePlugin;
+        await plugin.writeBundle({ dir });
+    };
+
+    beforeEach(() => {
+        dir = fsSync.mkdtempSync(path.join(tmpdir(), "dev-tooling-esver-"));
+    });
+
+    afterEach(() => {
+        rmSync(dir, { recursive: true, force: true });
+    });
+
+    it("rejects an ES2024 stdlib call the type layer cannot catch", async () => {
+        write("export const p = Promise.withResolvers().promise;\n");
+        await expect(run()).rejects.toThrow(/above the es2022 floor/);
+    });
+
+    it("rejects an ES2023 array method", async () => {
+        write("export const x = [3, 1, 2].toSorted();\n");
+        await expect(run()).rejects.toThrow(/above the es2022 floor/);
+    });
+
+    it("rejects syntax the bundler emits verbatim below target", async () => {
+        write("using handle = getHandle();\nexport const y = handle;\n");
+        await expect(run()).rejects.toThrow(/above the es2022 floor/);
+    });
+
+    it("accepts ES2022-and-below APIs", async () => {
+        write(
+            "export const a = Object.hasOwn({}, 'k');\nexport const b = [1].at(-1);\nexport const c = new Error('x', { cause: 'y' });\n"
+        );
+        await expect(run()).resolves.toBeUndefined();
+    });
+
+    it("accepts ESM import/export syntax", async () => {
+        write("import { x } from './other.js';\nexport const y = x;\n");
+        await expect(run()).resolves.toBeUndefined();
+    });
+
+    it("logs without throwing when enforce is false", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        write("export const x = [3, 1, 2].toSorted();\n");
+        await expect(run(false)).resolves.toBeUndefined();
+        expect(warn).toHaveBeenCalledWith(
+            expect.stringContaining("above the es2022 floor")
+        );
+        warn.mockRestore();
+    });
+
+    it("fails rather than passing when the scanned dir is missing", async () => {
+        await expect(run()).rejects.toThrow(/cannot read/);
+    });
+
+    it("rejects above-floor syntax the stdlib pass cannot see", async () => {
+        write("export const r = /[\\p{ASCII}]/v;\n");
+        await expect(run()).rejects.toThrow(/above the es2022 floor/);
+    });
+
+    it("exempts an ignored name only in the chunks it is scoped to", async () => {
+        fsSync.mkdirSync(path.join(dir, "standalone"), { recursive: true });
+        fsSync.writeFileSync(
+            path.join(dir, "standalone", "ui-vendor.js"),
+            "export const x = coll.toSorted(cmp);\n",
+            "utf-8"
+        );
+        const plugin = assertBundleEsVersion({
+            subdir: "standalone",
+            ignore: { features: "ArrayToSorted", in: "ui-vendor" },
+        }) as unknown as AsyncWriteBundlePlugin;
+        await expect(plugin.writeBundle({ dir })).resolves.toBeUndefined();
+    });
+
+    it("still rejects an ignored name outside the scoped chunks", async () => {
+        fsSync.mkdirSync(path.join(dir, "standalone"), { recursive: true });
+        fsSync.writeFileSync(
+            path.join(dir, "standalone", "app.js"),
+            "export const x = [3, 1, 2].toSorted();\n",
+            "utf-8"
+        );
+        const plugin = assertBundleEsVersion({
+            subdir: "standalone",
+            ignore: { features: "ArrayToSorted", in: "ui-vendor" },
+        }) as unknown as AsyncWriteBundlePlugin;
+        await expect(plugin.writeBundle({ dir })).rejects.toThrow(
+            /above the es2022 floor/
+        );
+    });
+
+    it("fails rather than passing when the subdir holds no JS", async () => {
+        fsSync.mkdirSync(path.join(dir, "standalone"), { recursive: true });
+        await expect(run()).rejects.toThrow(/nothing was checked/);
+    });
+
+    it("scans nested chunk directories", async () => {
+        fsSync.mkdirSync(path.join(dir, "standalone", "nested"), {
+            recursive: true,
+        });
+        fsSync.writeFileSync(
+            path.join(dir, "standalone", "nested", "deep.js"),
+            "export const x = [3, 1, 2].toSorted();\n",
+            "utf-8"
+        );
+        await expect(run()).rejects.toThrow(/above the es2022 floor/);
     });
 });

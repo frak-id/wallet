@@ -9,12 +9,15 @@ import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import removeConsole from "vite-plugin-remove-console";
 import {
+    assertBundleEsVersion,
+    BROWSER_TARGET,
     inlineFontFaces,
     lightningCssConfig,
     onwarn,
     preconnectOrigins,
     stripAbiInternalType,
 } from "../../packages/dev-tooling";
+import { routerGenerationOptions } from "./router.options";
 import { getDefineProps, readDefine } from "./vite.defines";
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
@@ -40,19 +43,6 @@ const isWatch = process.argv.includes("--watch") || process.argv.includes("-w");
 const chunkSizeWarningLimit = isTauri ? 500 : 300;
 // Drop Rolldown debug info in prod (smaller maps), keep full in dev.
 const attachDebugInfo: "full" | "none" = isProd ? "none" : "full";
-
-// Routes whose only purpose is to host nested child routes via `<Outlet/>`.
-// They look like leaf routes from `routeId` alone, but their files are
-// 9-line layout shells. Listed explicitly so TanStack Router's
-// `autoCodeSplitting` skips them — saves one ~210 B lazy chunk per route.
-// Verify with: `rg '<Outlet ?/>' apps/wallet/app/routes`.
-const PURE_OUTLET_PARENT_ROUTES = new Set([
-    "/_wallet/_protected/wallet",
-    "/_wallet/_protected/profile",
-    "/_wallet/_protected/settings",
-    "/_wallet/_protected-fullscreen/profile/referral",
-    "/_wallet/_protected-fullscreen/profile/recovery",
-]);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -323,6 +313,9 @@ export default defineConfig(
                 },
                 publicDir: false,
                 build: {
+                    // Deliberately below BROWSER_TARGET: an IIFE lib build
+                    // emitted to public/, outside typecheck and outside the
+                    // standalone pass the ES-version gate inspects.
                     target: "ES2020",
                     lib: {
                         name: "WalletServiceWorker",
@@ -341,38 +334,7 @@ export default defineConfig(
             ...baseConfig,
             css: lightningCssConfig,
             plugins: [
-                tanstackRouter({
-                    routesDirectory: "./app/routes",
-                    generatedRouteTree: "./app/routeTree.gen.ts",
-                    // Per-route lazy chunks. The `feature-*` groups in
-                    // `buildChunkGroups` re-coalesce these into one chunk
-                    // per feature so each navigation is a single fetch.
-                    autoCodeSplitting: true,
-                    routeFileIgnorePattern: "\\.css\\.ts$",
-                    // Per-route splitting policy. We disable splitting for
-                    // pure-`<Outlet/>` layouts so they don't each produce a
-                    // 200–300 B chunk that is downloaded eagerly with the
-                    // child route anyway. Inlining them into the static
-                    // route tree adds ~1 KB to the entry chunk in exchange
-                    // for ~10 fewer HTTP requests.
-                    codeSplittingOptions: {
-                        splitBehavior: ({ routeId }) => {
-                            // Filename-prefix layouts (TanStack convention).
-                            const lastSegment = routeId.split("/").pop() ?? "";
-                            if (lastSegment.startsWith("_")) return [];
-                            // Parent routes that just render `<Outlet/>` to
-                            // host nested children. TanStack's plugin can't
-                            // detect this from `routeId` alone; the list is
-                            // verified by greppping for `<Outlet />` in the
-                            // route files.
-                            if (PURE_OUTLET_PARENT_ROUTES.has(routeId)) {
-                                return [];
-                            }
-                            // Default: split the component into a lazy chunk.
-                            return undefined;
-                        },
-                    },
-                }),
+                tanstackRouter(routerGenerationOptions),
                 viteReact(),
                 vanillaExtractPlugin(),
                 // Skip HTTPS for Tauri dev (simulators don't trust self-signed certs) and sandbox (proxy handles TLS)
@@ -414,6 +376,14 @@ export default defineConfig(
                             crossorigin: "anonymous",
                         },
                     ],
+                }),
+                assertBundleEsVersion({
+                    subdir: "assets",
+                    // @radix-ui/react-collection defines `toSorted` on its own
+                    // `OrderedDict extends Map`, not `Array.prototype`;
+                    // es-check matches property names without receiver
+                    // analysis.
+                    ignore: { features: "ArrayToSorted", in: "ui-vendor" },
                 }),
             ],
             resolve: {
@@ -507,7 +477,7 @@ export default defineConfig(
                 // (~5 KB gz). One stylesheet is simpler, fewer requests, and
                 // matches Tauri's preferred pattern (single Rust IPC fetch).
                 cssCodeSplit: false,
-                target: "baseline-widely-available",
+                target: BROWSER_TARGET,
                 chunkSizeWarningLimit,
                 minify: true,
                 sourcemap: !isProd,
