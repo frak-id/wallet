@@ -811,4 +811,67 @@ describe("InstallView — install-code branch, post-install detection", () => {
             onlineManager.setOnline(true);
         }
     });
+
+    test("writes the code itself when no host claims the clipboard", async ({
+        queryWrapper,
+    }) => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(screen.getByText("installCode.copyCode")).toBeInTheDocument()
+        );
+        fireEvent.click(screen.getByText("installCode.copyCode"));
+
+        await waitFor(() => expect(writeText).toHaveBeenCalledWith("ABCD1234"));
+        vi.unstubAllGlobals();
+    });
+
+    test("leaves the clipboard to a host that claims it", async ({
+        queryWrapper,
+    }) => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+
+        render(
+            <InstallView
+                search={{
+                    m: "merchant-1",
+                    a: "anon-1",
+                    embed: "native",
+                    returnScheme: "frak-com.acme.app",
+                    sid: "s1",
+                    clip: "host",
+                }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(screen.getByText("installCode.copyCode")).toBeInTheDocument()
+        );
+        fireEvent.click(screen.getByText("installCode.copyCode"));
+
+        // The host writes the same code marked sensitive; a plain write here
+        // would land after it and lose that, which is what the system previews.
+        await waitFor(() =>
+            expect(mockTrackEvent).toHaveBeenCalledWith(
+                "install_code_copied",
+                expect.objectContaining({ handed_off: true })
+            )
+        );
+        expect(writeText).not.toHaveBeenCalled();
+        vi.unstubAllGlobals();
+    });
 });

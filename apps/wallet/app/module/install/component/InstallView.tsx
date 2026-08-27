@@ -77,7 +77,7 @@ export function InstallView({
     navigation: InstallNavigation;
     processingLayout: React.ComponentType<{ children: React.ReactNode }>;
 }) {
-    const { m, a, checkoutToken, p, embed, returnScheme, sid } = search;
+    const { m, a, checkoutToken, p, embed, returnScheme, sid, clip } = search;
     // Read once, and forwarded to both views whichever shell is running.
     const proof = useMemo(
         () => resolveInstallProof(window.location.hash, p),
@@ -106,6 +106,7 @@ export function InstallView({
                 embed={embed}
                 returnScheme={returnScheme}
                 sid={sid}
+                clip={clip}
             />
         );
     }
@@ -427,6 +428,7 @@ function InstallCodeView({
     embed,
     returnScheme,
     sid,
+    clip,
 }: InstallSearch & { proof?: string }) {
     const { t: rawT } = useTranslation();
     const [copied, setCopied] = useState(false);
@@ -566,22 +568,27 @@ function InstallCodeView({
     const handleCopy = useCallback(async () => {
         if (!data?.code) return;
 
-        // Isolated: `writeText` rejects on a denied permission, a non-secure
-        // context or an unfocused document, and none of those should stop the
-        // handoff below.
-        const copied = await navigator.clipboard
-            .writeText(data.code)
-            .then(() => true)
-            .catch(() => false);
+        // The host writes the code itself when it says so, marked sensitive
+        // and — on iOS — expiring. Writing here too would land a plain copy
+        // after its marked one and lose both protections, and no signal comes
+        // back in time to prevent that, so the declaration is on the URL.
+        const hostOwnsClipboard = clip === "host";
 
-        // After the local write, never before: a host writes the same code
-        // marked sensitive and, on iOS, expiring, and whichever write lands
-        // last is the one the user pastes.
+        // Isolated: `writeText` rejects on a denied permission, a non-secure
+        // context or an unfocused document, none of which should stop the
+        // handoff below.
+        const copied =
+            hostOwnsClipboard ||
+            (await navigator.clipboard
+                .writeText(data.code)
+                .then(() => true)
+                .catch(() => false));
+
         const offered = handOverCode();
 
         // `offered` only means a return scheme was present — a fire-and-forget
-        // scheme navigation cannot be acknowledged — so it is not proof the
-        // clipboard holds anything. Only the local write is.
+        // scheme navigation cannot be acknowledged — so on its own it is not
+        // proof the clipboard holds anything.
         if (!(copied || offered)) return;
 
         trackEvent("install_code_copied", {
@@ -590,7 +597,7 @@ function InstallCodeView({
         });
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-    }, [data?.code, merchantId, handOverCode]);
+    }, [data?.code, merchantId, handOverCode, clip]);
 
     return (
         <div

@@ -17,6 +17,13 @@ export type InstallSearch = {
     returnScheme?: string;
     /** The host's correlation token, echoed back with any result. */
     sid?: string;
+    /**
+     * `host` means the SDK writes the install code to the clipboard itself,
+     * marked sensitive and — on iOS — expiring, so this page must not also
+     * write it. Both writes land, and a plain one arriving last is what the
+     * system previews.
+     */
+    clip?: "host";
 };
 
 /**
@@ -41,6 +48,9 @@ export function parseInstallSearch(
         // scheme launcher.
         returnScheme: sanitizeReturnScheme(search.returnScheme),
         sid: typeof search.sid === "string" ? search.sid : undefined,
+        // A closed set, like `embed`: anything unrecognised means no host owns
+        // the clipboard, which is the safe reading — this page still writes.
+        clip: search.clip === "host" ? "host" : undefined,
     };
 }
 

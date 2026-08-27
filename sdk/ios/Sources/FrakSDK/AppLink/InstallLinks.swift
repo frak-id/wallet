@@ -44,10 +44,10 @@ enum InstallLinks {
     }
 
     /// The wallet's hosted install page (install code plus store link) — what the sharing sheet
-    /// navigates to, as opposed to the store listing `appStore()` returns.
-    ///
-    /// The proof rides in the fragment, matching the wallet's own `buildInstallUrl`;
-    /// `returnScheme`/`sessionId` let the page hand the install code back.
+    /// navigates to, as opposed to the store listing `appStore()` returns. The proof rides in the
+    /// fragment; `returnScheme`/`sessionId` let the page hand the code back. `clip=host` stops the
+    /// page writing the code too: both writes land, and a plain one arriving after this SDK's
+    /// `localOnly` and expiring write replaces it.
     static func installPage(
         walletOrigin: String,
         merchantId: String,
@@ -57,7 +57,7 @@ enum InstallLinks {
         proof: String?
     ) -> String {
         let url =
-            "\(walletOrigin)/install?embed=native"
+            "\(walletOrigin)/install?embed=native&clip=host"
             + "&m=\(PercentEncoding.encode(merchantId))"
             + "&a=\(PercentEncoding.encode(anonymousId))"
             + "&returnScheme=\(PercentEncoding.encode(returnScheme))"
