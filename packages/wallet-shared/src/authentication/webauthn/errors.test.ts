@@ -315,6 +315,73 @@ describe("classifyWebauthnError — iOS envelope", () => {
     });
 });
 
+const POLICY_DENIAL =
+    "The 'publickey-credentials-get' feature is not enabled in this document. Permissions Policy may be used to delegate Web Authentication capabilities to cross-origin child frames.";
+
+describe("classifyWebauthnError — permissions policy", () => {
+    it("classifies the denial as permissions-policy, beating the cancelled fallback", () => {
+        const err = webError("NotAllowedError", POLICY_DENIAL);
+        const result = classifyWebauthnError(err);
+        expect(result.kind).toBe("permissions-policy");
+        expect(result.retryable).toBe(false);
+        expect(isReportableWebauthnError(err)).toBe(true);
+        expect(isUserCancellation(err)).toBe(false);
+    });
+
+    it("classifies the create-token denial the same way", () => {
+        expect(
+            classifyWebauthnError(
+                webError(
+                    "NotAllowedError",
+                    POLICY_DENIAL.replace(
+                        "publickey-credentials-get",
+                        "publickey-credentials-create"
+                    )
+                )
+            ).kind
+        ).toBe("permissions-policy");
+    });
+
+    it("requires both signals: a non-WebAuthn policy denial stays out of the bucket", () => {
+        expect(
+            classifyWebauthnError(
+                webError(
+                    "NotAllowedError",
+                    "The 'camera' feature is not enabled in this document."
+                )
+            ).kind
+        ).toBe("cancelled");
+    });
+
+    it("requires both signals: incidental token prose stays cancelled", () => {
+        expect(
+            classifyWebauthnError(
+                webError(
+                    "NotAllowedError",
+                    "The request was cancelled while handling publickey-credentials-get"
+                )
+            ).kind
+        ).toBe("cancelled");
+    });
+
+    it("keeps SecurityError ahead of the policy bucket", () => {
+        expect(
+            classifyWebauthnError(webError("SecurityError", POLICY_DENIAL)).kind
+        ).toBe("security");
+    });
+
+    it("exposes the kind as an analytics breadcrumb", () => {
+        expect(
+            webauthnErrorContext(webError("NotAllowedError", POLICY_DENIAL))
+        ).toEqual({
+            webauthn_error_kind: "permissions-policy",
+            webauthn_error_name: "NotAllowedError",
+            gps_code: undefined,
+            webauthn_retryable: false,
+        });
+    });
+});
+
 describe("classifier-derived predicates", () => {
     it("isUserCancellation only matches cancellations", () => {
         expect(isUserCancellation(webError("NotAllowedError"))).toBe(true);
@@ -342,6 +409,11 @@ describe("classifier-derived predicates", () => {
         expect(isReportableWebauthnError(webError("NotSupportedError"))).toBe(
             true
         );
+        expect(
+            isReportableWebauthnError(
+                webError("NotAllowedError", POLICY_DENIAL)
+            )
+        ).toBe(true);
         expect(isReportableWebauthnError(webError("NotAllowedError"))).toBe(
             false
         );
