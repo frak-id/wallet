@@ -3,12 +3,17 @@
 // the reference the lazy `es-check` import is an implicit `any` in every
 // consumer.
 /// <reference path="./es-check.d.ts" />
-import type { Dirent } from "node:fs";
 import { readFileSync } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { gzipSync } from "node:zlib";
 import type { HtmlTagDescriptor, Plugin, Rollup } from "vite";
+import type { AssertEsVersionOptions } from "./es-version";
+import {
+    assertEsVersion,
+    BROWSER_TARGET_ECMA,
+    BROWSER_TARGET_SAFARI,
+} from "./es-version";
 
 export function onwarn(
     warning: Rollup.RollupLog,
@@ -42,24 +47,8 @@ export function onwarn(
     warn(warning);
 }
 
-/**
- * The supported browser floor for every wallet-facing bundle.
- *
- * Derived 2026-08-26 from OpenPanel: `browser is Safari` + `origin is
- * https://wallet.frak.id`, range `Last 12 months`, reading the full Browser
- * Version distribution via the search box. 205 sessions sit at 15.4-15.6.8,
- * 17 below 15.4, 2 at 14.x. A 15.4 floor covers the 205 and needs no
- * polyfill: 15.4 is exactly where `Object.hasOwn` and `Array.prototype.at`
- * shipped.
- *
- * When re-deriving, read the FULL version list, not the top-15 ranking — the
- * tail is the whole decision, and searching for "14" also matches "17.14".
- *
- * Pinned rather than `baseline-widely-available` because that alias moves:
- * it was safari16 under vite 7 and is safari16.4 under vite 8, and it changed
- * once already inside an unrelated bundler migration.
- */
-const BROWSER_TARGET_SAFARI = "safari15.4";
+// Re-exported so every existing import site keeps resolving from this module.
+export { BROWSER_TARGET_ECMA, BROWSER_TARGET_SAFARI };
 
 // Mutable by design: vite's `build.target` type rejects a readonly array.
 export const BROWSER_TARGET: string[] = [
@@ -68,13 +57,6 @@ export const BROWSER_TARGET: string[] = [
     "edge111",
     "firefox114",
 ];
-
-/**
- * The ECMAScript floor matching {@link BROWSER_TARGET}, for the emitted-output
- * gate. Every ES2022 stdlib API is available at Safari 15.4; ES2023 methods
- * (`toSorted`, `toReversed`, `with`) are Safari 16 and stay out.
- */
-export const BROWSER_TARGET_ECMA = "es2022";
 
 /**
  * {@link BROWSER_TARGET} in Lightning CSS's packed-integer encoding,
@@ -340,140 +322,63 @@ export type AssertBundleEsVersionOptions = {
      * {@link AssertEagerBundleBudgetOptions.enforce}.
      */
     enforce?: boolean;
+    /** @see AssertEsVersionOptions.ignore */
+    ignore?: AssertEsVersionOptions["ignore"];
     /**
-     * A scoped exemption. Both halves are required together, so an exemption
-     * can never silently apply bundle-wide: `features` is the comma-separated
-     * es-check feature list (a string, not an array), and `in` is a substring
-     * matching the chunks it applies to, e.g. `"ui-vendor"`.
-     *
-     * Detection is property-NAME matching with no receiver analysis, so a
-     * library class defining its own `toSorted`/`at`/`replaceAll` method is
-     * reported as if it called the Array or String builtin. Only exempt a
-     * name after reading the emitted chunk and confirming the receiver is not
-     * the builtin.
+     * Restricts the gate to the named build environments, for a config whose
+     * one plugin instance sees more than one — React Router's
+     * `v8_viteEnvironmentApi` builds client and server in turn. A name that
+     * matches no configured environment throws rather than passing: vite
+     * drops an unapplied plugin silently, which would remove the gate.
      */
-    ignore?: { features: string; in: string };
+    environments?: string[];
 };
-
-/**
- * Every emitted `.js` under `root`, recursively.
- *
- * Throws rather than returning empty: a missing directory means a
- * misconfigured `subdir`, and a gate that passes silently on zero files is
- * worse than no gate.
- */
-async function collectEmittedJs(root: string): Promise<string[]> {
-    let entries: Dirent[];
-    try {
-        entries = await fs.readdir(root, {
-            recursive: true,
-            withFileTypes: true,
-        });
-    } catch (error) {
-        throw new Error(
-            `[es-version] cannot read ${root} — check the \`subdir\` option (${(error as Error).message})`
-        );
-    }
-
-    const files = entries
-        .filter((entry) => entry.isFile() && entry.name.endsWith(".js"))
-        .map((entry) => path.join(entry.parentPath, entry.name));
-
-    if (files.length === 0) {
-        throw new Error(
-            `[es-version] no .js found under ${root} — nothing was checked`
-        );
-    }
-    return files;
-}
 
 /**
  * Build-time plugin factory: reject emitted chunks that use syntax or stdlib
  * APIs above {@link BROWSER_TARGET_ECMA}.
  *
- * This is the only layer that sees what actually ships. `lib` cannot reject
- * an ambient interface augmentation (`bun-types` merges `withResolvers` onto
- * `PromiseConstructor`), `skipLibCheck` hides dependency `.d.ts`, and the
- * bundler `target` lowers what it can but emits the rest verbatim — a `using`
- * declaration survives a `safari15.4` target with no warning.
+ * A thin adapter over {@link assertEsVersion}: it resolves `dir` + `subdir`
+ * into the core's `root` and applies the environment guard. Every decision
+ * about what counts as above-floor lives in the core, so this gate and the
+ * standalone post-build check cannot disagree.
  */
 export function assertBundleEsVersion(
     options: AssertBundleEsVersionOptions = {}
 ): Plugin {
-    const { subdir, enforce = true, ignore } = options;
+    const { subdir, enforce = true, ignore, environments } = options;
 
     return {
         name: "frak:assert-bundle-es-version",
         apply: "build" as const,
+        ...(environments && {
+            // Vite's resolveEnvironmentPlugins drops a plugin whose predicate
+            // returns false, with no warning — so a typo would delete the gate
+            // from every environment and still report a green build.
+            configResolved(config: { environments?: Record<string, unknown> }) {
+                const known = Object.keys(config.environments ?? {});
+                // `[]` is truthy, so without this an empty list would install
+                // a predicate false for every name — the silent drop again.
+                const missing = environments.length
+                    ? environments.filter((n) => !known.includes(n))
+                    : ["(empty list)"];
+                if (missing.length > 0) {
+                    throw new Error(
+                        `[es-version] no such build environment: ${missing.join(", ")}. Configured: ${known.join(", ") || "(none)"}.`
+                    );
+                }
+            },
+            applyToEnvironment: (environment: { name: string }) =>
+                environments.includes(environment.name),
+        }),
         // writeBundle for the same reason as the budget gate: every chunk is
         // final and on disk.
         async writeBundle(buildOptions: { dir?: string }) {
             const dir = buildOptions.dir;
             if (!dir) return;
+
             const root = subdir ? path.join(dir, subdir) : dir;
-
-            const files = await collectEmittedJs(root);
-
-            // The exemption applies only to the chunks it names, so a genuine
-            // builtin call anywhere else still fails.
-            const exempt = ignore
-                ? files.filter((f) => path.basename(f).includes(ignore.in))
-                : [];
-            const strict = files.filter((f) => !exempt.includes(f));
-
-            const stdlibPass = (group: string[], withIgnore: boolean) => ({
-                files: group,
-                ecmaVersion: BROWSER_TARGET_ECMA,
-                // Without `module` every ESM chunk fails on its own
-                // `import`/`export`.
-                module: true,
-                // `checkFeatures` detects above-floor API names, but it also
-                // raises the parser to the latest ES version, so it cannot
-                // police syntax — hence the syntax pass below.
-                checkFeatures: true,
-                ...(withIgnore && ignore ? { ignore: ignore.features } : {}),
-            });
-
-            // Lazy: this module is imported by every vite config, which every
-            // vitest run loads. A static import pulls es-check (plus acorn and
-            // fast-glob) into test startup for a gate that only runs at build
-            // time — measured ~106 ms per config load.
-            const { runChecks } = await import("es-check");
-            const result = runChecks(
-                [
-                    ...(strict.length ? [stdlibPass(strict, false)] : []),
-                    ...(exempt.length ? [stdlibPass(exempt, true)] : []),
-                    {
-                        files,
-                        ecmaVersion: BROWSER_TARGET_ECMA,
-                        module: true,
-                        // Syntax pass: parses AT the floor, so anything the
-                        // bundler emitted verbatim above it (import
-                        // attributes, the RegExp `v` flag, `using`) fails here.
-                        checkFeatures: false,
-                    },
-                ],
-                // Without this es-check calls `process.exit` and kills the build.
-                { isNodeAPI: true }
-            );
-            if (result.success) {
-                console.log(
-                    `\n[es-version] ${files.length} chunks parse at ${BROWSER_TARGET_ECMA}`
-                );
-                return;
-            }
-
-            const detail = `Emitted JS is above the ${BROWSER_TARGET_ECMA} floor (${BROWSER_TARGET_SAFARI}):\n${result.errors
-                .map((e) => {
-                    const features = e.err?.features?.join(", ");
-                    return `  ${e.file ?? "?"}: ${features ?? e.err?.message ?? "above-floor syntax"}`;
-                })
-                .join("\n")}`;
-            if (!enforce) {
-                console.warn(`[es-version] ${detail}`);
-                return;
-            }
-            throw new Error(detail);
+            await assertEsVersion({ root, enforce, ignore });
         },
     };
 }

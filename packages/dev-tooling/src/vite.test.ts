@@ -259,22 +259,13 @@ describe("preconnectOrigins", () => {
 describe("assertBundleEsVersion", () => {
     let dir: string;
 
-    const write = (source: string) => {
-        fsSync.mkdirSync(path.join(dir, "standalone"), { recursive: true });
-        fsSync.writeFileSync(
-            path.join(dir, "standalone", "chunk.js"),
-            source,
-            "utf-8"
-        );
+    const write = (source: string, ...segments: string[]) => {
+        const target = path.join(dir, ...segments);
+        fsSync.mkdirSync(path.dirname(target), { recursive: true });
+        fsSync.writeFileSync(target, source, "utf-8");
     };
 
-    const run = async (enforce = true) => {
-        const plugin = assertBundleEsVersion({
-            subdir: "standalone",
-            enforce,
-        }) as unknown as AsyncWriteBundlePlugin;
-        await plugin.writeBundle({ dir });
-    };
+    const violation = "export const x = [3, 1, 2].toSorted();\n";
 
     beforeEach(() => {
         dir = fsSync.mkdtempSync(path.join(tmpdir(), "dev-tooling-esver-"));
@@ -284,96 +275,102 @@ describe("assertBundleEsVersion", () => {
         rmSync(dir, { recursive: true, force: true });
     });
 
-    it("rejects an ES2024 stdlib call the type layer cannot catch", async () => {
-        write("export const p = Promise.withResolvers().promise;\n");
-        await expect(run()).rejects.toThrow(/above the es2022 floor/);
-    });
-
-    it("rejects an ES2023 array method", async () => {
-        write("export const x = [3, 1, 2].toSorted();\n");
-        await expect(run()).rejects.toThrow(/above the es2022 floor/);
-    });
-
-    it("rejects syntax the bundler emits verbatim below target", async () => {
-        write("using handle = getHandle();\nexport const y = handle;\n");
-        await expect(run()).rejects.toThrow(/above the es2022 floor/);
-    });
-
-    it("accepts ES2022-and-below APIs", async () => {
-        write(
-            "export const a = Object.hasOwn({}, 'k');\nexport const b = [1].at(-1);\nexport const c = new Error('x', { cause: 'y' });\n"
-        );
-        await expect(run()).resolves.toBeUndefined();
-    });
-
-    it("accepts ESM import/export syntax", async () => {
-        write("import { x } from './other.js';\nexport const y = x;\n");
-        await expect(run()).resolves.toBeUndefined();
-    });
-
-    it("logs without throwing when enforce is false", async () => {
-        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-        write("export const x = [3, 1, 2].toSorted();\n");
-        await expect(run(false)).resolves.toBeUndefined();
-        expect(warn).toHaveBeenCalledWith(
-            expect.stringContaining("above the es2022 floor")
-        );
-        warn.mockRestore();
-    });
-
-    it("fails rather than passing when the scanned dir is missing", async () => {
-        await expect(run()).rejects.toThrow(/cannot read/);
-    });
-
-    it("rejects above-floor syntax the stdlib pass cannot see", async () => {
-        write("export const r = /[\\p{ASCII}]/v;\n");
-        await expect(run()).rejects.toThrow(/above the es2022 floor/);
-    });
-
-    it("exempts an ignored name only in the chunks it is scoped to", async () => {
-        fsSync.mkdirSync(path.join(dir, "standalone"), { recursive: true });
-        fsSync.writeFileSync(
-            path.join(dir, "standalone", "ui-vendor.js"),
-            "export const x = coll.toSorted(cmp);\n",
-            "utf-8"
-        );
+    it("scans the subdir under the emitted dir", async () => {
+        write(violation, "standalone", "chunk.js");
         const plugin = assertBundleEsVersion({
             subdir: "standalone",
-            ignore: { features: "ArrayToSorted", in: "ui-vendor" },
-        }) as unknown as AsyncWriteBundlePlugin;
-        await expect(plugin.writeBundle({ dir })).resolves.toBeUndefined();
-    });
-
-    it("still rejects an ignored name outside the scoped chunks", async () => {
-        fsSync.mkdirSync(path.join(dir, "standalone"), { recursive: true });
-        fsSync.writeFileSync(
-            path.join(dir, "standalone", "app.js"),
-            "export const x = [3, 1, 2].toSorted();\n",
-            "utf-8"
-        );
-        const plugin = assertBundleEsVersion({
-            subdir: "standalone",
-            ignore: { features: "ArrayToSorted", in: "ui-vendor" },
         }) as unknown as AsyncWriteBundlePlugin;
         await expect(plugin.writeBundle({ dir })).rejects.toThrow(
             /above the es2022 floor/
         );
     });
 
-    it("fails rather than passing when the subdir holds no JS", async () => {
-        fsSync.mkdirSync(path.join(dir, "standalone"), { recursive: true });
-        await expect(run()).rejects.toThrow(/nothing was checked/);
+    it("scans the emitted dir itself when no subdir is given", async () => {
+        write(violation, "chunk.js");
+        const plugin =
+            assertBundleEsVersion() as unknown as AsyncWriteBundlePlugin;
+        await expect(plugin.writeBundle({ dir })).rejects.toThrow(
+            /above the es2022 floor/
+        );
     });
 
-    it("scans nested chunk directories", async () => {
-        fsSync.mkdirSync(path.join(dir, "standalone", "nested"), {
-            recursive: true,
-        });
-        fsSync.writeFileSync(
-            path.join(dir, "standalone", "nested", "deep.js"),
-            "export const x = [3, 1, 2].toSorted();\n",
-            "utf-8"
-        );
-        await expect(run()).rejects.toThrow(/above the es2022 floor/);
+    it("returns without scanning when the build reports no dir", async () => {
+        const plugin =
+            assertBundleEsVersion() as unknown as AsyncWriteBundlePlugin;
+        await expect(plugin.writeBundle({})).resolves.toBeUndefined();
+    });
+
+    it("declares no environment filter when none is configured", () => {
+        expect(assertBundleEsVersion().applyToEnvironment).toBeUndefined();
+    });
+
+    const resolve = (
+        environments: string[],
+        known: string[] = ["client", "ssr"]
+    ) => {
+        const hook = assertBundleEsVersion({ subdir: "assets", environments })
+            .configResolved as
+            | ((config: { environments: Record<string, unknown> }) => void)
+            | undefined;
+        if (typeof hook !== "function") {
+            throw new Error("expected a configResolved hook");
+        }
+        return () =>
+            hook({
+                environments: Object.fromEntries(known.map((n) => [n, {}])),
+            });
+    };
+
+    it("rejects an environment name no build declares", () => {
+        // Vite drops an unapplied plugin silently, so a typo would remove the
+        // gate from every environment and still report a green build.
+        expect(resolve(["cleint"])).toThrow(/no such build environment/);
+        expect(resolve(["cleint"])).toThrow(/client, ssr/);
+    });
+
+    it("rejects an empty environment list", () => {
+        // `[]` is truthy, so it would otherwise install a predicate that is
+        // false for every environment — the same silent drop.
+        expect(resolve([])).toThrow(/no such build environment/);
+    });
+
+    it("accepts a name the build declares", () => {
+        expect(resolve(["client"])).not.toThrow();
+    });
+
+    it("filters environments through vite rather than at scan time", () => {
+        // Declarative on purpose: vite resolves this, so a name matching
+        // nothing yields no plugin. A runtime guard would instead skip
+        // silently and report success for a gate that never ran.
+        const apply = assertBundleEsVersion({
+            subdir: "assets",
+            environments: ["client"],
+        }).applyToEnvironment;
+        if (typeof apply !== "function") {
+            throw new Error("expected an applyToEnvironment predicate");
+        }
+        expect(apply({ name: "client" } as never)).toBe(true);
+        expect(apply({ name: "ssr" } as never)).toBe(false);
+    });
+
+    it("forwards enforce to the core", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        write(violation, "assets", "chunk.js");
+        const plugin = assertBundleEsVersion({
+            subdir: "assets",
+            enforce: false,
+        }) as unknown as AsyncWriteBundlePlugin;
+        await expect(plugin.writeBundle({ dir })).resolves.toBeUndefined();
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining("chunk.js"));
+        warn.mockRestore();
+    });
+
+    it("forwards ignore to the core", async () => {
+        write(violation, "assets", "ui-vendor.js");
+        const plugin = assertBundleEsVersion({
+            subdir: "assets",
+            ignore: { features: "ArrayToSorted", in: "ui-vendor" },
+        }) as unknown as AsyncWriteBundlePlugin;
+        await expect(plugin.writeBundle({ dir })).resolves.toBeUndefined();
     });
 });
