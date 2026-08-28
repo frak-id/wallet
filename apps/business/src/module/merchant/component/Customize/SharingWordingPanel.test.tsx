@@ -1,5 +1,5 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("react-i18next", () => ({
@@ -11,31 +11,47 @@ vi.mock("@/module/merchant/hook/useMerchantUpdate", () => ({
     useMerchantUpdate: () => ({ mutateAsync: editSdkConfig, isSuccess: false }),
 }));
 
-type SectionSubmit = (values: unknown) => Promise<unknown>;
-const registerSection = vi.fn<(key: string, onValid: SectionSubmit) => void>();
-const onDirtyChange = vi.fn();
-vi.mock("../saveRegistry", () => ({
-    useCustomizeSection: (
-        key: string,
-        form: { formState: { isDirty: boolean } },
-        onValid: (values: unknown) => Promise<unknown>
-    ) => {
-        registerSection(key, onValid);
-        onDirtyChange(key, form.formState.isDirty);
-    },
-}));
-
+import { CustomizeSaveProvider } from "../saveRegistry";
 import { SHARING_PRESETS } from "./presets";
 import { SharingWordingPanel } from "./SharingWordingPanel";
+import { SECTION_KEYS } from "./sections";
+
+/**
+ * The real `useCustomizeSection` runs here — only the mutation is mocked, so
+ * the fireEvent -> RHF -> handleSubmit -> codec -> PUT chain is exercised whole.
+ */
+const sections = new Map<string, () => Promise<void>>();
+const dirty: Record<string, boolean> = {};
 
 function renderPanel(translations?: SdkConfig["translations"]) {
+    sections.clear();
+    for (const key of Object.keys(dirty)) delete dirty[key];
     return render(
-        <SharingWordingPanel
-            merchantId="merchant-1"
-            sdkConfig={{ translations } as SdkConfig}
-            shopName="Nowa"
-        />
+        <CustomizeSaveProvider
+            value={{
+                registerSection: (key, submit) => {
+                    sections.set(key, submit);
+                    return () => sections.delete(key);
+                },
+                onDirtyChange: (key, isDirty) => {
+                    dirty[key] = isDirty;
+                },
+            }}
+        >
+            <SharingWordingPanel
+                merchantId="merchant-1"
+                sdkConfig={{ translations } as SdkConfig}
+                shopName="Nowa"
+            />
+        </CustomizeSaveProvider>
     );
+}
+
+/** Drive the page-level Save exactly as `useSectionedSave` does. */
+async function save() {
+    const submit = sections.get(SECTION_KEYS.sharing);
+    if (!submit) throw new Error("sharing section never registered");
+    await act(() => submit());
 }
 
 describe("SharingWordingPanel", () => {
@@ -76,8 +92,8 @@ describe("SharingWordingPanel", () => {
         ).toHaveValue("Stored title");
     });
 
-    // The `default` tier wins the backend cascade, so a preset must clear it or
-    // the copy just picked stays invisible.
+    // The backend resolves `{ ...default, ...lang }`, so a stale `default` only
+    // shows for a language the preset left unwritten — copy nobody chose.
     it("clears the default tier when a preset is picked", () => {
         renderPanel({ default: { "sharing.title": "Stored title" } });
         fireEvent.click(screen.getAllByRole("radio")[1]);
@@ -88,37 +104,73 @@ describe("SharingWordingPanel", () => {
 
     it("registers itself with the page-level save under its own key", () => {
         renderPanel();
-        expect(registerSection).toHaveBeenCalledWith(
-            "default-sharing",
-            expect.any(Function)
-        );
+        expect(sections.has(SECTION_KEYS.sharing)).toBe(true);
     });
 
     it("reports itself dirty once a field is edited", () => {
         renderPanel();
-        onDirtyChange.mockClear();
+        expect(dirty[SECTION_KEYS.sharing]).toBe(false);
         fireEvent.change(
             screen.getByLabelText("customize.sharing.fields.text.label"),
             { target: { value: "Edited" } }
         );
-        expect(onDirtyChange).toHaveBeenLastCalledWith("default-sharing", true);
+        expect(dirty[SECTION_KEYS.sharing]).toBe(true);
     });
 
-    it("saves the edited tier as a translation key", async () => {
+    // Drives the whole chain from the typed value, not a hand-built fixture:
+    // what the merchant edits is what reaches the mutation body.
+    it("saves what was typed, as a translation key", async () => {
         renderPanel();
         fireEvent.change(
             screen.getByLabelText("customize.sharing.fields.title.label"),
             { target: { value: "My share title" } }
         );
-        const lastCall = registerSection.mock.lastCall;
-        if (!lastCall) throw new Error("section was never registered");
-        const [, onValid] = lastCall;
-        await onValid({
-            title: { default: "My share title", en: "", fr: "" },
-            text: { default: "", en: "", fr: "" },
-        });
+        await save();
         expect(editSdkConfig).toHaveBeenCalledWith({
             translations: { default: { "sharing.title": "My share title" } },
         });
+    });
+
+    it("writes both languages when a preset is picked", async () => {
+        renderPanel();
+        fireEvent.click(screen.getAllByRole("radio")[1]);
+        await save();
+        const preset = SHARING_PRESETS[1];
+        expect(editSdkConfig).toHaveBeenCalledWith({
+            translations: {
+                en: {
+                    "sharing.title": preset.en.title.replace(
+                        /\{Brand\}/g,
+                        "Nowa"
+                    ),
+                    "sharing.text": preset.en.text.replace(
+                        /\{Brand\}/g,
+                        "Nowa"
+                    ),
+                },
+                fr: {
+                    "sharing.title": preset.fr.title.replace(
+                        /\{Brand\}/g,
+                        "Nowa"
+                    ),
+                    "sharing.text": preset.fr.text.replace(
+                        /\{Brand\}/g,
+                        "Nowa"
+                    ),
+                },
+            },
+        });
+    });
+
+    // The defect the codec's null return exists for: an absent key leaves the
+    // route's stored dictionary untouched, so the clear must serialise.
+    it("sends null when every field is cleared", async () => {
+        renderPanel({ default: { "sharing.title": "Stored title" } });
+        fireEvent.change(
+            screen.getByLabelText("customize.sharing.fields.title.label"),
+            { target: { value: "" } }
+        );
+        await save();
+        expect(editSdkConfig).toHaveBeenCalledWith({ translations: null });
     });
 });

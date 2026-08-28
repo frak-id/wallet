@@ -32,12 +32,14 @@ export function translationsToSharingValues(
 /**
  * Editable tier inputs -> stored translations, preserving every key this form
  * does not own. A blank tier deletes its entry rather than storing `""`, which
- * i18next would resolve as a real (empty) override instead of falling through.
+ * i18next resolves as a real override. Empty returns `null`, never `undefined`:
+ * `JSON.stringify` drops undefined and the route then keeps the old dictionary
+ * (`sdkConfig.ts:55`), while `null` reaches its cleanup filter and deletes.
  */
 export function sharingValuesToTranslations(
     values: SharingWordingFormValues,
     existing: SdkConfig["translations"]
-): Translations | undefined {
+): Translations | null {
     const next: Translations = {};
 
     for (const lang of SUPPORTED_WORDING_LANGS) {
@@ -53,5 +55,5 @@ export function sharingValuesToTranslations(
         if (Object.keys(overrides).length > 0) next[lang] = overrides;
     }
 
-    return Object.keys(next).length > 0 ? next : undefined;
+    return Object.keys(next).length > 0 ? next : null;
 }

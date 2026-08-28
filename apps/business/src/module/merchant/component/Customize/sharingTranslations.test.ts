@@ -76,7 +76,19 @@ describe("sharingValuesToTranslations", () => {
             sharingValuesToTranslations(blank, {
                 en: { "sharing.title": "Previous" },
             })
-        ).toBeUndefined();
+        ).toBeNull();
+    });
+
+    // `undefined` would be dropped by JSON.stringify, and the route keeps the
+    // stored dictionary when the key is absent — the clear would silently revert.
+    it("returns null rather than undefined so the clear reaches the route", () => {
+        const cleared = sharingValuesToTranslations(blank, {
+            en: { "sharing.title": "Previous" },
+        });
+        expect(cleared).toBeNull();
+        expect(JSON.stringify({ translations: cleared })).toContain(
+            '"translations":null'
+        );
     });
 
     it("drops a tier that becomes empty but keeps its siblings", () => {
@@ -149,8 +161,10 @@ describe("sharing presets", () => {
         );
     });
 
-    // Index 0 must stay byte-identical to the bundled wallet copy, so picking
-    // it stores exactly what an unconfigured merchant already renders.
+    // Index 0 must stay byte-identical to the bundled wallet copy, so picking it
+    // stores what an unconfigured merchant already renders. These are literals,
+    // not an import: `wallet-shared` is off-limits to business (root AGENTS.md).
+    // So this catches a careless edit here, NOT drift in the wallet — see FRA-295.
     it("pins index 0 to the wallet's bundled default", () => {
         expect(SHARING_PRESETS[0].en.title).toBe("{{productName}} invite link");
         expect(SHARING_PRESETS[0].fr.title).toBe(
@@ -175,16 +189,50 @@ describe("sharing presets", () => {
         }
     });
 
-    it("matches a stored title back to its preset after brand substitution", () => {
-        const stored = SHARING_PRESETS[1].en.title.replace(
-            /\{Brand\}/g,
-            "Nowa"
-        );
-        expect(matchSharingPreset(stored, "Nowa")).toBe(1);
+    const branded = (text: string, shop: string) =>
+        text.replace(/\{Brand\}/g, shop);
+
+    it("matches a stored preset back after brand substitution", () => {
+        const preset = SHARING_PRESETS[1];
+        expect(
+            matchSharingPreset(
+                branded(preset.en.title, "Nowa"),
+                branded(preset.en.text, "Nowa"),
+                "Nowa"
+            )
+        ).toBe(1);
+    });
+
+    // A preset writes both slots, so matching the title alone would leave the
+    // radio selected over copy the merchant has since rewritten.
+    it("deselects once either slot is customised", () => {
+        const preset = SHARING_PRESETS[1];
+        expect(
+            matchSharingPreset(
+                branded(preset.en.title, "Nowa"),
+                "My own text",
+                "Nowa"
+            )
+        ).toBeNull();
+    });
+
+    // `shopName` is empty while the merchant query loads; substitution then
+    // leaves padding that must not defeat the comparison.
+    it("matches despite the padding an empty shop name leaves", () => {
+        const preset = SHARING_PRESETS[1];
+        expect(
+            matchSharingPreset(
+                branded(preset.en.title, "").trim(),
+                branded(preset.en.text, "").trim(),
+                ""
+            )
+        ).toBe(1);
     });
 
     it("reports custom wording as unmatched", () => {
-        expect(matchSharingPreset("Something bespoke", "Nowa")).toBeNull();
-        expect(matchSharingPreset("", "Nowa")).toBeNull();
+        expect(
+            matchSharingPreset("Something bespoke", "Also bespoke", "Nowa")
+        ).toBeNull();
+        expect(matchSharingPreset("", "", "Nowa")).toBeNull();
     });
 });

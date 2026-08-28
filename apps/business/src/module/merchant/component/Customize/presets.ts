@@ -241,16 +241,23 @@ export function matchBannerPreset(
     return index === -1 ? null : index;
 }
 
-// Matched on the canonical `en` title, brand-substituted like the banner: a
-// preset writes both languages and both slots, so the title alone identifies it.
+// Both slots, both sides trimmed, like `matchBannerPreset`: a preset writes
+// title and text together, so title alone would keep the radio selected after a
+// merchant edits only the text. An empty `shopName` — reachable while the
+// merchant query loads — leaves substitution padding that must not defeat the
+// comparison.
 export function matchSharingPreset(
     enTitle: string,
+    enText: string,
     shopName: string
 ): number | null {
-    const trimmed = enTitle.trim();
-    if (!trimmed) return null;
+    const trimmedTitle = enTitle.trim();
+    const trimmedText = enText.trim();
+    if (!trimmedTitle || !trimmedText) return null;
     const index = SHARING_PRESETS.findIndex(
-        (preset) => applyBrand(preset.en.title, shopName) === trimmed
+        (preset) =>
+            applyBrand(preset.en.title, shopName).trim() === trimmedTitle &&
+            applyBrand(preset.en.text, shopName).trim() === trimmedText
     );
     return index === -1 ? null : index;
 }

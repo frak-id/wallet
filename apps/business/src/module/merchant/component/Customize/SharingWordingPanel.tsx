@@ -1,14 +1,11 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Input } from "@frak-labs/design-system/components/Input";
-import {
-    RadioGroup,
-    RadioGroupItem,
-} from "@frak-labs/design-system/components/RadioGroup";
+import { RadioGroup } from "@frak-labs/design-system/components/RadioGroup";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { Tiles } from "@frak-labs/design-system/components/Tiles";
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { EditField } from "@/module/forms/EditField";
@@ -23,11 +20,13 @@ import {
     matchSharingPreset,
     SHARING_PRESETS,
 } from "./presets";
+import { SECTION_KEYS } from "./sections";
 import {
     sharingValuesToTranslations,
     translationsToSharingValues,
 } from "./sharingTranslations";
 import type { SharingWordingFormValues, WordingLang } from "./types";
+import { PresetRow } from "./WordingPresets";
 
 /**
  * Editor for the copy the OS share sheet shows (`sharing.title` /
@@ -75,7 +74,7 @@ export function SharingWordingPanel({
         [editSdkConfig, sdkConfig.translations]
     );
 
-    useCustomizeSection("default-sharing", form, onSubmit);
+    useCustomizeSection(SECTION_KEYS.sharing, form, onSubmit);
 
     return (
         <Form {...form}>
@@ -155,8 +154,10 @@ export function SharingWordingPanel({
 
 /**
  * Curated wording choices. Picking one writes en + fr for both slots and
- * clears the `default` tier, which would otherwise win the cascade and hide
- * the copy just chosen.
+ * clears the `default` tier: the backend resolves `{ ...default, ...lang }`
+ * (`MerchantResolveService.mergeTranslations`), so a leftover `default` only
+ * surfaces for a language the preset did not write — leaving the merchant with
+ * copy they did not choose.
  */
 function SharingPresets({
     form,
@@ -165,8 +166,9 @@ function SharingPresets({
     form: UseFormReturn<SharingWordingFormValues>;
     shopName: string;
 }) {
-    const currentEn = String(form.watch("title.en") ?? "");
-    const selected = matchSharingPreset(currentEn, shopName);
+    const currentTitle = String(form.watch("title.en") ?? "");
+    const currentText = String(form.watch("text.en") ?? "");
+    const selected = matchSharingPreset(currentTitle, currentText, shopName);
 
     return (
         <RadioGroup
@@ -211,23 +213,5 @@ function SharingPresets({
                 ))}
             </Tiles>
         </RadioGroup>
-    );
-}
-
-function PresetRow({
-    value,
-    children,
-}: {
-    value: string;
-    children: React.ReactNode;
-}) {
-    const id = useId();
-    return (
-        <div className={styles.presetRow}>
-            <RadioGroupItem id={id} value={value} size="l" />
-            <label htmlFor={id} className={styles.radioRowLabel}>
-                {children}
-            </label>
-        </div>
     );
 }
