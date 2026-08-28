@@ -62,6 +62,17 @@ function buildChunkGroups() {
             priority: 25,
             minShareCount: 1,
         },
+        // `@radix-ui/react-collection` alone, above `ui-vendor` so it claims
+        // the package first. Its `OrderedDict extends Map` declares a
+        // `toSorted` method es-check reads as `Array.prototype.toSorted`;
+        // isolating it keeps the exemption off lucide-react, cmdk and
+        // react-hook-form, where a genuine above-floor call would be masked.
+        {
+            name: "radix-collection",
+            test: /node_modules[\\/]@radix-ui[\\/]react-collection[\\/]/,
+            priority: 32,
+            minShareCount: 1,
+        },
         {
             name: "ui-vendor",
             test: /node_modules[\\/](@radix-ui|lucide-react|cmdk|react-hook-form)/,
@@ -169,7 +180,10 @@ export default defineConfig(async () => {
                 // @radix-ui/react-collection defines `toSorted` on its own
                 // `OrderedDict extends Map`, not `Array.prototype`; es-check
                 // matches property names without receiver analysis.
-                ignore: { features: "ArrayToSorted", in: "ui-vendor" },
+                ignore: {
+                    features: "ArrayToSorted",
+                    in: "radix-collection",
+                },
             }),
         ],
         resolve: {
