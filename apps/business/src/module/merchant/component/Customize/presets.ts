@@ -139,6 +139,61 @@ export const BANNER_PRESETS: readonly LocalizedBannerPreset[] = [
     },
 ];
 
+/**
+ * Copy for the OS share sheet (`sharing.title` / `sharing.text`), written to
+ * `sdkConfig.translations` rather than `components`. `{{productName}}` is the
+ * SDK's own binding for the merchant name; `{Brand}` is substituted here, so a
+ * preset never ships both for the same slot.
+ */
+export type SharingPreset = { title: string; text: string };
+export type LocalizedSharingPreset = Record<PresetLang, SharingPreset>;
+
+export const SHARING_PRESETS: readonly LocalizedSharingPreset[] = [
+    // Index 0 is the bundled default copy, verbatim from
+    // `wallet-shared/i18n/locales/*/common.json` — a merchant who picks it
+    // stores what an unconfigured merchant already renders.
+    {
+        en: {
+            title: "{{productName}} invite link",
+            text: "Discover this amazing product!",
+        },
+        fr: {
+            title: "Lien d'invitation {{productName}}",
+            text: "Découvrez ce produit incroyable !",
+        },
+    },
+    {
+        en: {
+            title: "A gift from {Brand}",
+            text: "I found this and thought of you — take a look.",
+        },
+        fr: {
+            title: "Un cadeau de la part de {Brand}",
+            text: "Je suis tombé·e là-dessus et j'ai pensé à toi — jette un œil.",
+        },
+    },
+    {
+        en: {
+            title: "{Brand}, recommended by a friend",
+            text: "Have a look at what I picked out for you.",
+        },
+        fr: {
+            title: "{Brand}, recommandé par un ami",
+            text: "Regarde ce que j'ai déniché pour toi.",
+        },
+    },
+    {
+        en: {
+            title: "My pick from {Brand}",
+            text: "Worth a look — tell me what you think.",
+        },
+        fr: {
+            title: "Ma sélection chez {Brand}",
+            text: "Ça vaut le coup d'œil — dis-moi ce que tu en penses.",
+        },
+    },
+];
+
 export function applyBrand(text: string, shopName: string): string {
     return text.replace(/\{Brand\}/g, shopName);
 }
@@ -184,6 +239,33 @@ export function matchBannerPreset(
             applyBrand(preset.en.description, shopName) === trimmedDescription
     );
     return index === -1 ? null : index;
+}
+
+// Matched on the canonical `en` title, brand-substituted like the banner: a
+// preset writes both languages and both slots, so the title alone identifies it.
+export function matchSharingPreset(
+    enTitle: string,
+    shopName: string
+): number | null {
+    const trimmed = enTitle.trim();
+    if (!trimmed) return null;
+    const index = SHARING_PRESETS.findIndex(
+        (preset) => applyBrand(preset.en.title, shopName) === trimmed
+    );
+    return index === -1 ? null : index;
+}
+
+/**
+ * Preview label for a sharing preset. Substitutes both interpolation styles so
+ * a merchant reads their own name rather than a raw token: `{Brand}` is
+ * resolved before storing, `{{productName}}` stays in the stored value and is
+ * interpolated by the SDK, and neither should surface in the picker.
+ */
+export function formatSharingPreview(text: string, shopName: string): string {
+    return applyBrand(text, shopName).replace(
+        /\{\{\s*productName\s*\}\}/g,
+        shopName
+    );
 }
 
 /** Render a stored preset value for display, with a sample reward amount. */

@@ -18,7 +18,14 @@ import { PlacementCustomization } from "./PlacementCustomization";
 import { PlacementSelector } from "./PlacementSelector";
 import { SaveFooter } from "./SaveFooter";
 import { SdkIdentityPanel } from "./SdkIdentityPanel";
+import { SharingWordingPanel } from "./SharingWordingPanel";
 import { getSdkConfig } from "./utils";
+
+/** Sections rendered above the placement selector, so they survive a tab change. */
+const ALWAYS_MOUNTED_SECTIONS: Record<string, true> = {
+    identity: true,
+    "default-sharing": true,
+};
 
 export function CustomizePage({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
@@ -49,12 +56,13 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
         isSuccess: isCreatePlacementSuccess,
     } = useMerchantUpdate({ merchantId, target: "sdk-config" });
 
-    // Identity stays mounted across selector changes; only the customization
-    // sections below the selector unmount (and lose their edits).
+    // Identity and share wording stay mounted across selector changes; only
+    // the customization sections below the selector unmount (and lose their
+    // edits), so only those should arm the tab-change discard prompt.
     const hasUnsavedSectionChanges = useMemo(
         () =>
             Object.entries(dirtySections).some(
-                ([key, isDirty]) => isDirty && key !== "identity"
+                ([key, isDirty]) => isDirty && !ALWAYS_MOUNTED_SECTIONS[key]
             ),
         [dirtySections]
     );
@@ -119,6 +127,12 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
                     <SdkIdentityPanel
                         merchantId={merchantId}
                         sdkConfig={sdkConfig}
+                    />
+
+                    <SharingWordingPanel
+                        merchantId={merchantId}
+                        sdkConfig={sdkConfig}
+                        shopName={merchant?.name ?? ""}
                     />
 
                     <PlacementSelector
