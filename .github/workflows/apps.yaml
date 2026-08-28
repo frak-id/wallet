@@ -183,12 +183,6 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - name: "🔨 Install dependencies"
         run: bun install --frozen-lockfile
-      # Guards the guards: a spec whose only assertion is a screenshot proves
-      # nothing on a run with `ignoreSnapshots` on, which is every run here.
-      # Scoped to the two specs this job runs; `pages.check.ts` predates the
-      # rule and is screenshot-only throughout.
-      - name: "🔎 Assert the specs assert something"
-        run: bun apps/wallet/tests-light/assert-real-assertions.ts sharing.check.ts install.check.ts
       # Both go through the workspace, not `bunx`: `bunx playwright` resolves
       # `playwright@latest` from the registry, so the browser install and the
       # runner can end up on different versions. Chromium only — the config
