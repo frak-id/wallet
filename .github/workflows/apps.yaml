@@ -3,9 +3,9 @@ name: "✅ CI: Apps & SDK"
 on:
   push:
     branches: [main, dev]
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'bun.lock', '.github/workflows/apps.yaml']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
   pull_request:
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'bun.lock', '.github/workflows/apps.yaml']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
 
 # Newer pushes to the same ref cancel in-flight runs.
 concurrency:
@@ -41,6 +41,10 @@ jobs:
               - 'apps/**'
               - 'packages/**'
               - 'sdk/**'
+              # The gate scripts and their npm entrypoints: without these a
+              # change to a check never triggers the job that runs it.
+              - 'scripts/**'
+              - 'package.json'
               - '!sdk/android/**'
               - '!sdk/ios/**'
               - 'bun.lock'
@@ -101,6 +105,12 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - name: "🔨 Install dependencies"
         run: bun install --frozen-lockfile
+      # Reads config text only, so it runs before the build: target drift
+      # should not wait minutes on an SDK build it does not need. Root
+      # `bun run lint` runs in no workflow, so this needs its own step here
+      # rather than riding along with the lint chain.
+      - name: "🔎 ES target drift"
+        run: bun run check:es-targets
       # The SDK build is required, not an optimisation: only `apps/listener`
       # declares `customConditions: ["development"]`, so every other consumer
       # resolves `@frak-labs/core-sdk` to `sdk/core/dist/*.d.ts`. That output is
@@ -109,6 +119,10 @@ jobs:
       # and shopify.
       - name: "🔨 Build the SDK"
         run: bun run build:sdk
+      # The only place in CI where dist/ and cdn/ exist — they are gitignored,
+      # so this check has to follow the build rather than stand as its own job.
+      - name: "🔎 Emitted ES version"
+        run: bun run check:es-output
       # `apps/wallet/app/routeTree.gen.ts` is gitignored and written by the
       # tanstackRouter vite plugin, so a clean checkout does not have it and
       # every wallet route fails to resolve. `apps/business` commits its

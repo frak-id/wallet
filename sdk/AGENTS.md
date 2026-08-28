@@ -19,13 +19,13 @@ Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **str
 ## Build System (tsdown / Rolldown)
 
 - **NPM**: `{ format: ["esm", "cjs"], outDir: "dist", dts: true }`
-- **CDN**: `{ format: "iife", globalName: "FrakSDK", outDir: "cdn", noExternal: [/.*/] }` — fully self-contained bundle
+- **CDN**: `{ format: "iife", globalName: "FrakSDK", outDir: "cdn", deps: { alwaysBundle: [/.*/] } }` — fully self-contained bundle. `sdk/legacy` is the exception: same IIFE shape, `NexusSDK` global, but it emits to `dist/bundle`, so a `sdk/*/cdn` glob misses a bundle merchants load from jsdelivr.
 - **`development` export condition**: apps in this monorepo consume `src/index.ts` directly (no rebuild in dev loop)
 
 ## Non-Obvious Patterns
 
 - **Build order is a hard requirement** — downstream packages typecheck against upstream build outputs.
-- **CDN `noExternal: [/.*/]`** means every dep (viem, TanStack Query, etc.) ships inside the bundle. Size discipline matters.
+- **CDN `deps.alwaysBundle: [/.*/]`** means every dep (viem, TanStack Query, etc.) ships inside the bundle. Size discipline matters, and so does the ES floor: it is one parse unit, so one above-floor construct anywhere breaks the whole file on an old browser.
 - **Adding a new action is a 4-step sequence** (do not skip):
   1. Add type in `sdk/core/src/types/rpc/*.ts`, extend `IFrameRpcSchema`
   2. Implement in `sdk/core/src/actions/<name>.ts` (pure function, `client: FrakClient`)

@@ -1,0 +1,8 @@
+{
+    "extends": "../tsconfig.json",
+    "include": [
+        "check-es-version.ts",
+        "bun.d.ts",
+        "../packages/dev-tooling/src/**/*.ts"
+    ]
+}
