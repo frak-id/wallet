@@ -1,16 +1,6 @@
 import { HttpError } from "@backend-utils";
+import { isServerMintedId } from "@frak-labs/app-essentials/constants/serverMintedId";
 import type { IdentityRepository } from "../repositories/IdentityRepository";
-
-/**
- * Namespace reserved for ids the backend mints itself (Gate 2's materialised
- * anonymous node). The value carries an unguessable UUID suffix and the latch
- * predicate matches it exactly, which is what makes latching one safe.
- */
-export const SERVER_MINTED_ID_PREFIX = "frakmint_";
-
-export function isServerMintedId(value: string): boolean {
-    return value.startsWith(SERVER_MINTED_ID_PREFIX);
-}
 
 /**
  * Reject a caller *minting* a node in the reserved namespace. Naming one that

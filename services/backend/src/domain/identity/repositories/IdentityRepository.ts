@@ -1,10 +1,10 @@
 import { db, type PgRunner, type PgTx } from "@backend-infrastructure";
+import { SERVER_MINTED_ID_PREFIX } from "@frak-labs/app-essentials/constants/serverMintedId";
 import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address } from "viem";
 import { identityGroupsTable, identityNodesTable } from "../db/schema";
 import type { IdentityType } from "../schemas";
-import { SERVER_MINTED_ID_PREFIX } from "../schemas/serverMintedId";
 
 /** `_` is a LIKE wildcard: unescaped, the prefix also matches `frakmintX…`. */
 const SERVER_MINTED_ID_LIKE = `${SERVER_MINTED_ID_PREFIX.replace("_", "\\_")}%`;

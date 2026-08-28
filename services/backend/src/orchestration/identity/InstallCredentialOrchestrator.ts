@@ -4,9 +4,9 @@ import {
     infraMetrics,
     log,
 } from "@backend-infrastructure";
+import { SERVER_MINTED_ID_PREFIX } from "@frak-labs/app-essentials/constants/serverMintedId";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import { CODE_TTL_HOURS } from "../../domain/identity/repositories/InstallCodeRepository";
-import { SERVER_MINTED_ID_PREFIX } from "../../domain/identity/schemas/serverMintedId";
 import type { PurchaseClaimRepository } from "../../domain/purchases/repositories/PurchaseClaimRepository";
 import type { PurchaseRepository } from "../../domain/purchases/repositories/PurchaseRepository";
 
