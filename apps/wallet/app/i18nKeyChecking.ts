@@ -1,4 +1,7 @@
-import type { TranslationKey } from "@frak-labs/wallet-shared/types";
+import type {
+    DefaultTranslationKey,
+    TranslationKey,
+} from "@frak-labs/wallet-shared/types";
 
 /**
  * Fails the build if this app's `tsconfig.json` `include` stops pulling in the
@@ -12,4 +15,9 @@ import type { TranslationKey } from "@frak-labs/wallet-shared/types";
 type Assert<T extends true> = T;
 export type I18nKeysAreChecked = Assert<
     string extends TranslationKey ? false : true
+>;
+
+/** Fails the build if `defaultNS` names a namespace absent from `Resources`. */
+export type I18nDefaultKeysAreChecked = Assert<
+    string extends DefaultTranslationKey ? false : true
 >;

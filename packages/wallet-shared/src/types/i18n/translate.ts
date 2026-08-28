@@ -14,6 +14,16 @@ export type TranslationKey<Namespace extends I18nNamespace = I18nNamespace> =
     ParseKeys<Namespace>;
 
 /**
+ * The key type a bare `useTranslation()` produces, resolved through
+ * `defaultNS` rather than an explicit namespace.
+ *
+ * Separate from `TranslationKey` because a `defaultNS` naming a namespace
+ * absent from `Resources` degrades this to `string` while the explicit-
+ * namespace union above stays checked.
+ */
+export type DefaultTranslationKey = ParseKeys;
+
+/**
  * A `t` narrowed by a caller that injects interpolation values of its own.
  *
  * Defaults to every namespace because `fallbackNS` resolves across all three
@@ -23,6 +33,19 @@ export type TranslationKey<Namespace extends I18nNamespace = I18nNamespace> =
  */
 export type Translate<Namespace extends I18nNamespace = I18nNamespace> = (
     key: TranslationKey<Namespace>,
+    options?: Record<string, unknown>
+) => string;
+
+/**
+ * A bare `useTranslation()`'s `t`, flattened to a plain signature.
+ *
+ * Components passing `t` to a child take this rather than
+ * `ReturnType<typeof useTranslation>["t"]`: the overloaded `TFunction`
+ * exceeds the instantiation-depth limit once keys are checked, and its
+ * return type is not assignable to `ReactNode`.
+ */
+export type DefaultTranslate = (
+    key: DefaultTranslationKey,
     options?: Record<string, unknown>
 ) => string;
 
@@ -37,4 +60,9 @@ export type Translate<Namespace extends I18nNamespace = I18nNamespace> = (
 type Assert<T extends true> = T;
 export type I18nKeysAreChecked = Assert<
     string extends TranslationKey ? false : true
+>;
+
+/** Fails the build if `defaultNS` names a namespace absent from `Resources`. */
+export type I18nDefaultKeysAreChecked = Assert<
+    string extends DefaultTranslationKey ? false : true
 >;

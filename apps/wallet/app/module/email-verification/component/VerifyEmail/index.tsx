@@ -1,4 +1,5 @@
 import { EMAIL_VERIFICATION } from "@frak-labs/app-essentials/constants/emailVerification";
+import type { VerifyEmailResponse } from "@frak-labs/backend-elysia/api/schemas";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -52,10 +53,22 @@ type VerifyEmailProps = {
     startInChangeEmail?: boolean;
 };
 
+/**
+ * Verify statuses that render as an inline code error, plus the transport
+ * failure. `verified`/`alreadyVerified` are successes and `conflict` hands
+ * off to the merge flow, so none of them has an `error.*` locale entry.
+ */
+type VerifyErrorKey =
+    | Exclude<
+          VerifyEmailResponse["status"],
+          "verified" | "alreadyVerified" | "conflict"
+      >
+    | "network";
+
 function resolveVerifyErrorKey(mutation: {
-    data?: { status: string };
+    data?: VerifyEmailResponse;
     isError: boolean;
-}): string | undefined {
+}): VerifyErrorKey | undefined {
     const status = mutation.data?.status;
     if (
         status &&
@@ -72,7 +85,7 @@ function resolveVerifyErrorKey(mutation: {
 
 function shouldShowAutoVerifyLoading(params: {
     initialCode?: string;
-    verifyErrorKey?: string;
+    verifyErrorKey?: VerifyErrorKey;
     isPending: boolean;
     hasData: boolean;
     isError: boolean;

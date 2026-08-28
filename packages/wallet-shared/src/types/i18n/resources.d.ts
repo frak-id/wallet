@@ -788,6 +788,7 @@ export default interface Resources {
         "viewAll": "View all"
       },
       "status": {
+        "bank_depleted": "Awaiting funding by the brand",
         "cancelled": "Cancelled",
         "consumed": "Consumed",
         "expired": "Expired",

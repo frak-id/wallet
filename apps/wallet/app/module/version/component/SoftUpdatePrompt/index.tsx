@@ -4,6 +4,7 @@ import { Card } from "@frak-labs/design-system/components/Card";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckIcon } from "@frak-labs/design-system/icons";
+import type { DefaultTranslate } from "@frak-labs/wallet-shared/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -74,8 +75,6 @@ export function SoftUpdatePrompt(props: SoftUpdatePromptProps) {
     return <DownloadedBanner t={t} />;
 }
 
-type Translate = ReturnType<typeof useTranslation>["t"];
-
 /**
  * `useMutation` (vs a local `useState(busy)`) gives us a real `isPending`,
  * isolation from unmount races (the `await` resolves after the gate may
@@ -86,7 +85,7 @@ function AvailableBanner({
     t,
 }: {
     onDismiss: () => void;
-    t: Translate;
+    t: DefaultTranslate;
 }) {
     const queryClient = useQueryClient();
     // Consecutive launch failures, so we can escalate to the store listing
@@ -173,7 +172,7 @@ function AvailableBanner({
     );
 }
 
-function DownloadedBanner({ t }: { t: Translate }) {
+function DownloadedBanner({ t }: { t: DefaultTranslate }) {
     const queryClient = useQueryClient();
     const complete = useMutation({
         mutationKey: versionKey.completeSoftUpdate,

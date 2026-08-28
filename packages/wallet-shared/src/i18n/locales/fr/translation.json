@@ -892,6 +892,7 @@
     "reward": {
         "status": {
             "pending": "En attente de validation par la marque",
+            "bank_depleted": "En attente de financement par la marque",
             "processing": "En cours de traitement",
             "settled": "À collecter",
             "consumed": "Consommé",

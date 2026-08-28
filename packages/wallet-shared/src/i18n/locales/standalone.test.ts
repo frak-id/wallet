@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import { describe, expect, it } from "vitest";
+import type { DefaultTranslationKey } from "../../types";
 import { defaultNS, fallbackLng, supportedLngs } from "../config";
 
 /**
@@ -10,7 +11,7 @@ const REQUIRED_KEYS = [
     "installCode.title",
     "pendingActions.walletAlreadyLinked",
     "common.close",
-];
+] as const satisfies readonly DefaultTranslationKey[];
 
 async function standaloneInstance(lng: "en" | "fr") {
     const { translation, customized, common } =

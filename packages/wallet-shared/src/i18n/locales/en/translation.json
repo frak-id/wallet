@@ -893,6 +893,7 @@
     "reward": {
         "status": {
             "pending": "Awaiting validation by the brand",
+            "bank_depleted": "Awaiting funding by the brand",
             "processing": "Processing",
             "settled": "To collect",
             "consumed": "Consumed",
