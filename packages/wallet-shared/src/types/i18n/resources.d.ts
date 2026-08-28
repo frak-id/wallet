@@ -699,7 +699,6 @@ export default interface Resources {
       },
       "notification": {
         "description": "Get notified as soon as money is credited to your wallet.",
-        "descriptionHighlight": "Track your rewards in real time.",
         "enable": "Yes, notify me",
         "skip": "Later",
         "title": "Don't miss any reward!"
