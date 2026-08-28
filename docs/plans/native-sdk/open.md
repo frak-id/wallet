@@ -10,6 +10,32 @@ suspect — that was the failure mode of the register this replaces.
 Verification vocabulary, used in the tables: **read** (inspection only), **executed** (a test or
 command proves it), **device** (driven on real hardware).
 
+## 0. Where this work is tracked
+
+Linear tracks **product-facing** native work: a merchant-visible feature, or a defect with a reported
+symptom. This file and [`next.md`](./next.md) own **engineering** items — ABI decisions, parity gaps,
+test structure, and the unpinned surfaces in §9. Neither list is a subset of the other, and most of
+this file is in neither a sprint queue nor anyone's inbox.
+
+The split is recorded because it was previously undeclared, and that cost a duplicate: FRA-307 is
+§8's `overallDeadlineSpansRetryBackoff` row, filed from a CI failure by someone who had no reason to
+read this file. Search here before filing a native issue; when one is filed anyway, put its id on the
+row so the duplicate is visible from both directions.
+
+Open Linear issues at 2026-08-28 (`linear_list_issues`, all non-closed FRA), and where each lands:
+
+| Issue | Row |
+|---|---|
+| FRA-307 — flaky iOS deadline test | §8, `overallDeadlineSpansRetryBackoff` — **duplicate** |
+| FRA-295 — better sharing preview | §5, the bare-URL share payload. The `apps/business` editor half is product work and has no row |
+| FRA-291 — resolve identity + balance | none — a new surface, not a gap in what ships |
+| FRA-292 — prebuilt native components | [`next.md`](./next.md) §8. Its stated gate ("first usage") is looser than the real one — §6 here, a WebView sharing-performance measurement nobody has taken |
+
+Nothing else here has a Linear issue. That is deliberate rather than backlog: an item gated on a
+device tier or an owner decision is not actionable in a sprint queue. The ones that *are* actionable
+are ordered in [`next.md`](./next.md) — §1 most of all, whose cost rises the moment a merchant
+integrates `1.0.0-beta.1`.
+
 ## 1. ABI — the window has changed
 
 `1.0.0-beta.1` is published on Maven Central and the SwiftPM mirror. These items were tracked as
@@ -113,8 +139,8 @@ Open, tracked, knowingly not being worked.
 | 9.3t | Android's `ResolvedConfigDecoderTest` never supplies a good and a bad placement together — the test that would catch the bug this row exists for is unwritten. iOS closed it | Android |
 | 8.3, 8.6, 8.9 | A guard that cannot fail (`FrakContextCodecTest.kt:38-42` compares a count against the same filtered list that produced it); no iOS redirect/cache/`Accept-Encoding` assertions where Android has both; no concurrent-queue-writer test on either platform | both |
 | — | `SharingSheetStateTest` initialises the real SDK against the production backend and makes a live HTTPS GET every CI run, with no shutdown or reset. **Accepted by decision** — "the backend absorbs the load" | Android |
-| — | `overallDeadlineSpansRetryBackoff` flaked once in six runs. Unreproduced, unfixed, two plausible and opposite causes | iOS |
-| — | Harness gaps with zero call sites under `example/`: `setTrackingEnabled`, `resetAnonymousId`, `Frak.shutdown`, `heightFraction`, and the `@Composable build()` overload | both |
+| FRA-307 | `overallDeadlineSpansRetryBackoff` flaked once in six runs when written; CI then failed it on `dev @ a530c5f` with `attempts.value == 0`, so the cause is now known — 50 ms expires before `StubURLProtocol` is entered. Fix in the issue | iOS |
+| — | Harness gaps with zero call sites in `example/` source (`.kt`/`.swift`, verified 2026-08-28): `setTrackingEnabled`, `resetAnonymousId`, `Frak.shutdown`, `heightFraction`, and the `@Composable build()` overload. `example/native-android` also has no `NavHost`, which is why §4's Compose `onDispose` row cannot be reproduced | both |
 
 ## 9. The unpinned surfaces
 
