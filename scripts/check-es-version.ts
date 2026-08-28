@@ -7,6 +7,7 @@
 import { readFileSync } from "node:fs";
 import { glob } from "node:fs/promises";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
     assertEsVersion,
     BROWSER_TARGET_ECMA,
@@ -15,7 +16,9 @@ import {
 
 // Anchored to the script, not the caller: every path below is repo-relative,
 // and a run from anywhere else would report five configs as deleted.
-const REPO_ROOT = path.join(import.meta.dir, "..");
+// `import.meta.url` rather than Bun's `dir`, so the module also imports under
+// a plain node runtime.
+const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 /**
  * One entry per tsdown config, holding both its `target` count and where its
@@ -23,7 +26,7 @@ const REPO_ROOT = path.join(import.meta.dir, "..");
  * scan while its output goes unparsed. Both are cross-checked against the
  * config source, since a registry that only agrees with itself gates nothing.
  */
-type ConfigSite = {
+export type ConfigSite = {
     file: string;
     targets: number;
     outDirs: string[];
@@ -96,6 +99,58 @@ async function discoverConfigs(): Promise<string[]> {
     return found.sort();
 }
 
+/**
+ * Every way one config can fail, given its source. Pure so it can be tested
+ * without a repo on disk: this is the logic that decides whether a build
+ * ships ungated, and the script it lives in guards the publish path.
+ */
+export function auditConfig(site: ConfigSite, source: string): string[] {
+    const failures: string[] = [];
+
+    const found = [...source.matchAll(TARGET_PATTERN)].map((m) => m[1]);
+    if (found.length !== site.targets) {
+        return [
+            `${site.file}: expected ${site.targets} target(s) (${site.why}), found ${found.length}.\n` +
+                "   The config changed shape — update CONFIG_SITES in scripts/check-es-version.ts.",
+        ];
+    }
+
+    const wrong = found.filter((v) => v !== BROWSER_TARGET_ECMA);
+    if (wrong.length > 0) {
+        failures.push(
+            `${site.file}: target ${wrong.map((v) => `"${v}"`).join(", ")} — the floor is "${BROWSER_TARGET_ECMA}" (${site.why}).`
+        );
+    }
+
+    // Registering a config is not enough: its outputs have to match what the
+    // config actually emits, or a build ships unparsed while both the target
+    // count and the registry agree with themselves.
+    const pkg = path.dirname(site.file);
+    const declared = [...source.matchAll(OUT_DIR_PATTERN)]
+        .map((m) => path.join(pkg, m[1].replace(/^\.\//, "")))
+        .sort();
+    const registeredDirs = [...site.outDirs].sort();
+    if (declared.join("|") !== registeredDirs.join("|")) {
+        failures.push(
+            `${site.file}: emits [${declared.join(", ") || "none"}] but CONFIG_SITES registers [${registeredDirs.join(", ")}].\n` +
+                "   Every emitted directory must be listed, or its output ships unparsed."
+        );
+    }
+
+    return failures;
+}
+
+/** Configs on disk that no registry entry claims. */
+export function unregisteredConfigs(
+    discovered: string[],
+    sites: ConfigSite[] = CONFIG_SITES
+): string[] {
+    const registered: Record<string, true> = Object.fromEntries(
+        sites.map((s) => [s.file, true])
+    );
+    return discovered.filter((f) => !registered[f]);
+}
+
 async function checkTargets(): Promise<void> {
     const failures: string[] = [];
 
@@ -109,43 +164,10 @@ async function checkTargets(): Promise<void> {
             );
             continue;
         }
-        const found = [...source.matchAll(TARGET_PATTERN)].map((m) => m[1]);
-        if (found.length !== site.targets) {
-            failures.push(
-                `${site.file}: expected ${site.targets} target(s) (${site.why}), found ${found.length}.\n` +
-                    "   The config changed shape — update CONFIG_SITES in scripts/check-es-version.ts."
-            );
-            continue;
-        }
-        const wrong = found.filter((v) => v !== BROWSER_TARGET_ECMA);
-        if (wrong.length > 0) {
-            failures.push(
-                `${site.file}: target ${wrong.map((v) => `"${v}"`).join(", ")} — the floor is "${BROWSER_TARGET_ECMA}" (${site.why}).`
-            );
-        }
-
-        // Registering a config is not enough: its outputs have to match what
-        // the config actually emits, or a build ships unparsed while both the
-        // target count and the registry agree with themselves.
-        const pkg = path.dirname(site.file);
-        const declared = [...source.matchAll(OUT_DIR_PATTERN)]
-            .map((m) => path.join(pkg, m[1].replace(/^\.\//, "")))
-            .sort();
-        const registeredDirs = [...site.outDirs].sort();
-        if (declared.join("|") !== registeredDirs.join("|")) {
-            failures.push(
-                `${site.file}: emits [${declared.join(", ") || "none"}] but CONFIG_SITES registers [${registeredDirs.join(", ")}].\n` +
-                    "   Every emitted directory must be listed, or its output ships unparsed."
-            );
-        }
+        failures.push(...auditConfig(site, source));
     }
 
-    const registered: Record<string, true> = Object.fromEntries(
-        CONFIG_SITES.map((s) => [s.file, true])
-    );
-    const unregistered = (await discoverConfigs()).filter(
-        (f) => !registered[f]
-    );
+    const unregistered = unregisteredConfigs(await discoverConfigs());
     if (unregistered.length > 0) {
         failures.push(
             `unregistered tsdown config(s):\n${unregistered.map((f) => `   ${f}`).join("\n")}\n` +
@@ -198,19 +220,22 @@ async function checkOutput(): Promise<void> {
     );
 }
 
-// No default: the two subcommands check different things, and defaulting a
-// bare invocation to the cheap one would report green having parsed nothing.
-const [command] = process.argv.slice(2);
+// Guarded so the module can be imported by its test without dispatching. No
+// default subcommand: the two check different things, and defaulting a bare
+// invocation to the cheap one would report green having parsed nothing.
+if (import.meta.main) {
+    const [command] = process.argv.slice(2);
 
-switch (command) {
-    case "targets":
-        await checkTargets();
-        break;
-    case "output":
-        await checkOutput();
-        break;
-    default:
-        die(
-            `Expected a subcommand: targets or output${command ? ` (got "${command}")` : ""}.`
-        );
+    switch (command) {
+        case "targets":
+            await checkTargets();
+            break;
+        case "output":
+            await checkOutput();
+            break;
+        default:
+            die(
+                `Expected a subcommand: targets or output${command ? ` (got "${command}")` : ""}.`
+            );
+    }
 }

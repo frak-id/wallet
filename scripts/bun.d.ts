@@ -4,4 +4,6 @@
 interface ImportMeta {
     /** Absolute path of the directory holding this module. */
     readonly dir: string;
+    /** True when this module is the entrypoint, not an import. */
+    readonly main: boolean;
 }
