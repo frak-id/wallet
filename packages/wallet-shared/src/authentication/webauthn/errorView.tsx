@@ -96,6 +96,12 @@ function viewForKind(kind: WebauthnErrorKind, isAuth: boolean): ViewShape {
                 icon: <ExclamationTriangleIcon {...iconProps} />,
                 baseKey: "error.webauthn.unsupported",
             };
+        case "permissions-policy":
+            return {
+                tone: "danger",
+                icon: <ExclamationTriangleIcon {...iconProps} />,
+                baseKey: "error.webauthn.permissionsPolicy",
+            };
         case "cancelled":
             return {
                 tone: "warning",

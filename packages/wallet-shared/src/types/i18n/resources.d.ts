@@ -28,6 +28,10 @@ export default interface Resources {
           "message": "The passkey prompt was closed or timed out before the operation completed.",
           "title": "Authentication cancelled"
         },
+        "permissionsPolicy": {
+          "message": "A browser extension or security policy blocked the passkey request. Disable your password manager extension for this site, or try a private window.",
+          "title": "Passkey blocked"
+        },
         "retry": "Try again",
         "syncFailed": {
           "message": "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device - not a problem with your account.",

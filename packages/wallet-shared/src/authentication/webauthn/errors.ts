@@ -22,6 +22,7 @@
 
 export type WebauthnErrorKind =
     | "cancelled" // user dismissed / timed out — soft, retryable
+    | "permissions-policy" // frame not allowed to run WebAuthn (delegation missing, or an extension's own gate)
     | "sync-failed" // GPM "folsom" sync/decrypt failure (50162/50161/50191)
     | "no-screen-lock" // device has no PIN/biometric lock (50166 / ConstraintError)
     | "already-registered" // excludeCredentials match (InvalidStateError / 50157)
@@ -43,11 +44,12 @@ export type WebauthnError = {
 };
 
 /** Kinds worth a Crashlytics non-fatal — developer-actionable, not user/env noise. */
-const REPORTABLE_KINDS = new Set<WebauthnErrorKind>([
-    "unsupported",
-    "security",
-    "unknown",
-]);
+const REPORTABLE_KINDS: Partial<Record<WebauthnErrorKind, true>> = {
+    unsupported: true,
+    security: true,
+    "permissions-policy": true,
+    unknown: true,
+};
 
 const GPS_CODE_PATTERN = /\[(\d{5})\]/;
 
@@ -216,6 +218,17 @@ function kindFromSignals(
     )
         return { kind: "unsupported", retryable: false };
     if (name === "SecurityError") return { kind: "security", retryable: false };
+    // Permissions Policy denial, worded identically by Chrome and by
+    // password-manager extensions that wrap `navigator.credentials` and gate it
+    // themselves. Sentence AND feature token are both required: either alone
+    // also matches a non-WebAuthn denial or incidental prose. Locale-stable, and
+    // it must win over `cancelled` — the ceremony never ran, nobody dismissed it.
+    if (
+        haystack.includes("feature is not enabled in this document") &&
+        (haystack.includes("publickey-credentials-get") ||
+            haystack.includes("publickey-credentials-create"))
+    )
+        return { kind: "permissions-policy", retryable: false };
     // User dismissed/aborted, or a transient concurrency interruption
     // (TYPE_USER_CANCELED / TYPE_INTERRUPTED) — soft, retryable, not reported.
     if (
@@ -260,7 +273,7 @@ export function isAuthenticatorAlreadyRegistered(error: unknown): boolean {
 
 /** True when the failure is a developer-actionable bug worth a Crashlytics non-fatal. */
 export function isReportableWebauthnError(error: unknown): boolean {
-    return REPORTABLE_KINDS.has(classifyWebauthnError(error).kind);
+    return REPORTABLE_KINDS[classifyWebauthnError(error).kind] === true;
 }
 
 /** Analytics breadcrumb fields derived from a WebAuthn failure. */
