@@ -315,7 +315,7 @@ All SDK packages use tsdown (powered by Rolldown) for building both NPM and CDN 
 - **Format flexibility**: IIFE with `globalName` for browser globals (FrakSDK, NexusSDK)
 - **CSS modules**: Lightning CSS + custom plugins for CSS handling
 - **JSX transformation**: Preact JSX via `esbuildOptions.jsx` configuration
-- **Dependency bundling**: `noExternal: [/.*/]` bundles all dependencies for CDN
+- **Dependency bundling**: `deps.alwaysBundle: [/.*/]` bundles all dependencies for CDN
 
 ## Important Notes
 

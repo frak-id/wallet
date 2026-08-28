@@ -40,6 +40,11 @@ jobs:
         env:
           CDN_TAG: beta
 
+      # These artifacts go to npm and jsdelivr, so this is the last point the
+      # floor can be enforced before merchants download them.
+      - name: "🔎 Emitted ES version"
+        run: bun run check:es-output
+
       - name: "🏷️ Generate beta version with content hash"
         id: version
         run: |

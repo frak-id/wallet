@@ -20,7 +20,7 @@ Framework-agnostic core SDK (111 public exports). Dual build: NPM (`dist/`, ESM+
 - **Framework-agnostic rule**: NO React/Preact/Vue code here — that belongs in `sdk/react` or `sdk/components`.
 - **Pure actions**: no side effects outside `client.request`. Tree-shakeable named exports only.
 - **Adding an action requires schema update**: always extend `IFrameRpcSchema` first, or the RPC is not typed end-to-end.
-- **CDN bundle is `noExternal: [/.*/]`**: viem + all deps inline. Be conscious of size on every change.
+- **CDN bundle is `deps.alwaysBundle: [/.*/]`**: viem + all deps inline. Be conscious of size on every change, and of the ES floor — it is one parse unit.
 - **Client is singleton per iframe**: prefer `setupClient` once; don't instantiate repeatedly.
 
 ## See Also
