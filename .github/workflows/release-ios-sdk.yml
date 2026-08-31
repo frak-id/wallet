@@ -157,13 +157,17 @@ jobs:
           fi
 
           # A published version is immutable. Refuse rather than clobber a tag a merchant
-          # may already have pinned in Package.resolved.
+          # may already have pinned in Package.resolved. This check races the push, so the
+          # refspec below carries the real guarantee: main is forced, the tag never is, and
+          # git refuses an existing tag on its own.
           if git ls-remote --tags "$MIRROR" "refs/tags/$VERSION" | grep -q .; then
             echo "::error::$VERSION is already tagged on the mirror; bump instead of retagging" && exit 1
           fi
 
-          git push --force "$MIRROR" main
-          git push "$MIRROR" "$VERSION"
+          # One ref transaction, so the tag cannot land without the commit it names, and a
+          # refused tag rolls main back instead of leaving the mirror advertising a version
+          # that does not resolve.
+          git push --atomic "$MIRROR" "+main:refs/heads/main" "refs/tags/$VERSION"
           echo "pushed=true" >> "$GITHUB_OUTPUT"
 
       # After the push: the mirror is the artifact, and a release pointing at a tag that does

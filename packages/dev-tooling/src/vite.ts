@@ -1,8 +1,19 @@
+// Load-bearing, not redundant: consuming apps compile this file through their
+// own tsconfig, whose `include` does not cover this package's `src`. Without
+// the reference the lazy `es-check` import is an implicit `any` in every
+// consumer.
+/// <reference path="./es-check.d.ts" />
 import { readFileSync } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { gzipSync } from "node:zlib";
 import type { HtmlTagDescriptor, Plugin, Rollup } from "vite";
+import type { AssertEsVersionOptions } from "./es-version";
+import {
+    assertEsVersion,
+    BROWSER_TARGET_ECMA,
+    BROWSER_TARGET_SAFARI,
+} from "./es-version";
 
 export function onwarn(
     warning: Rollup.RollupLog,
@@ -36,6 +47,29 @@ export function onwarn(
     warn(warning);
 }
 
+// Re-exported so every existing import site keeps resolving from this module.
+export { BROWSER_TARGET_ECMA, BROWSER_TARGET_SAFARI };
+
+// Mutable by design: vite's `build.target` type rejects a readonly array.
+export const BROWSER_TARGET: string[] = [
+    BROWSER_TARGET_SAFARI,
+    "chrome111",
+    "edge111",
+    "firefox114",
+];
+
+/**
+ * {@link BROWSER_TARGET} in Lightning CSS's packed-integer encoding,
+ * `(major << 16) | (minor << 8) | patch`. A bare `safari: 15.4` is silently
+ * wrong here — the value must be packed.
+ */
+const LIGHTNINGCSS_TARGETS = {
+    chrome: 111 << 16,
+    edge: 111 << 16,
+    firefox: 114 << 16,
+    safari: (15 << 16) | (4 << 8),
+};
+
 /**
  * Shared Lightning CSS configuration for all Vite-based apps in the monorepo.
  * Provides consistent CSS processing with optimal performance and modern features.
@@ -60,15 +94,9 @@ export const lightningCssConfig = {
             dashedIdents: false,
         },
         /**
-         * Browser targets aligned with "baseline-widely-available"
-         * Ensures broad compatibility while enabling modern CSS features
+         * Browser targets, packed from the shared floor.
          */
-        targets: {
-            chrome: 100,
-            edge: 100,
-            firefox: 91,
-            safari: 14,
-        },
+        targets: LIGHTNINGCSS_TARGETS,
         /**
          * Enable modern CSS draft features
          * - nesting: Native CSS nesting support (replaces postcss-preset-env)
@@ -278,6 +306,79 @@ export function assertEagerBundleBudget(
                     assertHtml,
                 });
             }
+        },
+    };
+}
+
+export type AssertBundleEsVersionOptions = {
+    /**
+     * Directory under the build output whose `.js` files are checked,
+     * e.g. `"standalone"`. Omit to check every `.js` under the output dir.
+     */
+    subdir?: string;
+    /**
+     * Whether a violation fails the build. Defaults to `true`. `false` logs
+     * the offending files and continues, matching
+     * {@link AssertEagerBundleBudgetOptions.enforce}.
+     */
+    enforce?: boolean;
+    /** @see AssertEsVersionOptions.ignore */
+    ignore?: AssertEsVersionOptions["ignore"];
+    /**
+     * Restricts the gate to the named build environments, for a config whose
+     * one plugin instance sees more than one — React Router's
+     * `v8_viteEnvironmentApi` builds client and server in turn. A name that
+     * matches no configured environment throws rather than passing: vite
+     * drops an unapplied plugin silently, which would remove the gate.
+     */
+    environments?: string[];
+};
+
+/**
+ * Build-time plugin factory: reject emitted chunks that use syntax or stdlib
+ * APIs above {@link BROWSER_TARGET_ECMA}.
+ *
+ * A thin adapter over {@link assertEsVersion}: it resolves `dir` + `subdir`
+ * into the core's `root` and applies the environment guard. Every decision
+ * about what counts as above-floor lives in the core, so this gate and the
+ * standalone post-build check cannot disagree.
+ */
+export function assertBundleEsVersion(
+    options: AssertBundleEsVersionOptions = {}
+): Plugin {
+    const { subdir, enforce = true, ignore, environments } = options;
+
+    return {
+        name: "frak:assert-bundle-es-version",
+        apply: "build" as const,
+        ...(environments && {
+            // Vite's resolveEnvironmentPlugins drops a plugin whose predicate
+            // returns false, with no warning — so a typo would delete the gate
+            // from every environment and still report a green build.
+            configResolved(config: { environments?: Record<string, unknown> }) {
+                const known = Object.keys(config.environments ?? {});
+                // `[]` is truthy, so without this an empty list would install
+                // a predicate false for every name — the silent drop again.
+                const missing = environments.length
+                    ? environments.filter((n) => !known.includes(n))
+                    : ["(empty list)"];
+                if (missing.length > 0) {
+                    throw new Error(
+                        `[es-version] no such build environment: ${missing.join(", ")}. Configured: ${known.join(", ") || "(none)"}.`
+                    );
+                }
+            },
+            applyToEnvironment: (environment: { name: string }) =>
+                environments.includes(environment.name),
+        }),
+        // writeBundle for the same reason as the budget gate: every chunk is
+        // final and on disk.
+        async writeBundle(buildOptions: { dir?: string }) {
+            const dir = buildOptions.dir;
+            if (!dir) return;
+
+            const root = subdir ? path.join(dir, subdir) : dir;
+            await assertEsVersion({ root, enforce, ignore });
         },
     };
 }

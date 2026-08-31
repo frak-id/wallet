@@ -5,7 +5,13 @@ import { OrchestrationContext } from "../../../orchestration/context";
 
 export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
     .use(sessionContext)
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 20 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "identity-merge",
+            windowMs: 60_000,
+            maxRequests: 20,
+        })
+    )
     .post(
         "/initiate",
         async ({ body, walletSession }) => {
@@ -41,11 +47,10 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
             body: t.Object({
                 sourceAnonymousId: t.Optional(t.String()),
                 merchantId: t.String({ format: "uuid" }),
-                // frak-merge-v1 proof binding sourceAnonymousId. Latch-gated
-                // whenever sourceAnonymousId is supplied — legacy ids, which
-                // can never sign, keep working as merge sources until they
-                // first latch. The wallet-session arm (no sourceAnonymousId)
-                // is untouched.
+                // frak-merge-v1 proof binding sourceAnonymousId, mandatory
+                // whenever sourceAnonymousId is supplied. Optional here
+                // because the wallet-session arm sends neither field and a
+                // required one would 422 it; the handler enforces the pairing.
                 proof: t.Optional(t.String()),
             }),
             response: {

@@ -1,4 +1,4 @@
-import { log } from "@backend-infrastructure";
+import { type IdentityCredentialClass, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { ProofOp } from "@frak-labs/core-sdk/identity";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
@@ -33,6 +33,8 @@ export async function enforceLatchedProof(params: {
     context: string;
     identityProofService: IdentityProofService;
     identityRepository: IdentityRepository;
+    /** Called exactly once per call, before any throw. */
+    onClass: (credentialClass: IdentityCredentialClass) => void;
 }): Promise<boolean> {
     const {
         op,
@@ -43,17 +45,24 @@ export async function enforceLatchedProof(params: {
         context,
         identityProofService,
         identityRepository,
+        onClass,
     } = params;
 
     if (proof) {
-        await identityProofService.verifyOrThrow({
-            op,
-            context,
-            proof,
-            merchantId,
-            anonymousId,
-            binding,
-        });
+        try {
+            await identityProofService.verifyOrThrow({
+                op,
+                context,
+                proof,
+                merchantId,
+                anonymousId,
+                binding,
+            });
+        } catch (err) {
+            onClass("invalid");
+            throw err;
+        }
+        onClass("proven");
         return true;
     }
 
@@ -63,6 +72,7 @@ export async function enforceLatchedProof(params: {
         merchantId,
     });
     if (node?.proofSeenAt) {
+        onClass("absent_latched");
         throw HttpError.forbidden(
             "PROOF_REQUIRED",
             "This identity has previously proven possession of its key and now requires a proof on every merge"
@@ -70,6 +80,7 @@ export async function enforceLatchedProof(params: {
     }
     // Unlatched — legacy id, or a derived id that has never proven itself
     // yet. Fail-open, matching today's pre-proof behaviour.
+    onClass("absent_unlatched");
     return false;
 }
 
@@ -94,6 +105,8 @@ export async function verifyProofUnenforced(params: {
     proof: string;
     binding?: Uint8Array;
     identityProofService: IdentityProofService;
+    /** Called exactly once per call; absence never reaches here. */
+    onClass: (credentialClass: IdentityCredentialClass) => void;
 }): Promise<boolean> {
     const {
         op,
@@ -102,6 +115,7 @@ export async function verifyProofUnenforced(params: {
         proof,
         binding,
         identityProofService,
+        onClass,
     } = params;
 
     const result = await identityProofService.verify({
@@ -113,11 +127,14 @@ export async function verifyProofUnenforced(params: {
     });
 
     if (!result.valid) {
+        onClass("invalid");
         log.info(
             { op, merchantId, anonymousId, reason: result.reason },
             "Identity proof present but invalid (verified, not enforced — ROLLOUT-STEP-3)"
         );
+        return false;
     }
 
-    return result.valid;
+    onClass("proven");
+    return true;
 }

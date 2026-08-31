@@ -153,14 +153,26 @@ describe("outcome hand-off", () => {
         );
     });
 
-    it("does not write the clipboard when the host takes the copy", () => {
-        const copyOutcome = vi.fn(() => true);
+    it("writes the clipboard before offering the copy to a host", () => {
+        // `outcomes.copy` reports that a return scheme was present, not that a
+        // host answered it, so skipping the local write on its say-so toasts
+        // over an untouched clipboard in an ordinary browser. Both writes
+        // carry a link, and a host's lands after this one.
+        const order: string[] = [];
+        const copyOutcome = vi.fn(() => {
+            order.push("handoff");
+            return true;
+        });
+        vi.mocked(copy).mockImplementation(() => {
+            order.push("write");
+        });
         const { result } = setup({ copy: copyOutcome });
 
         act(() => result.current.actions.onCopy());
 
         expect(copyOutcome).toHaveBeenCalled();
-        expect(copy).not.toHaveBeenCalled();
+        expect(copy).toHaveBeenCalled();
+        expect(order).toEqual(["write", "handoff"]);
     });
 
     it("still shows the confirmation after a handed-off copy", () => {
@@ -407,16 +419,20 @@ describe("the copied event", () => {
         );
     });
 
-    it("reports no link when the host wrote the clipboard", () => {
-        // The host copies its own link, which this page never sees — reporting
-        // ours would attribute the copy to a URL the user never got.
+    it("reports the link it wrote, even when a host was offered it", () => {
+        // `handed_off` only means a return scheme was present; it is not proof
+        // a host answered. The link this page wrote is observable, so it is
+        // reported either way.
         const { result } = setup({ copy: () => true });
 
         act(() => result.current.actions.onCopy());
 
         expect(trackEvent).toHaveBeenCalledWith(
             "sharing_link_copied",
-            expect.objectContaining({ link: undefined, handed_off: true })
+            expect.objectContaining({
+                link: expect.stringContaining("acme.example"),
+                handed_off: true,
+            })
         );
     });
 

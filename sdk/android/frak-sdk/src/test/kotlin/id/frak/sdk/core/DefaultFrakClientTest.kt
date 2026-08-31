@@ -235,7 +235,7 @@ class DefaultFrakClientTest {
             assertEquals(
                 true,
                 page?.startsWith(
-                    "https://wallet.frak.id/install?embed=native&m=$MERCHANT_ID&a=$anonymousId" +
+                    "https://wallet.frak.id/install?embed=native&clip=host&m=$MERCHANT_ID&a=$anonymousId" +
                         "&returnScheme=frak-com.acme.app&sid=session-1",
                 ),
             )

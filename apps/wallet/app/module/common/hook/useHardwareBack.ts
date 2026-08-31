@@ -28,19 +28,22 @@ export function useHardwareBack() {
             const state = modalStore.getState();
             if (!state.modal) return false;
 
-            // Close the topmost modal as a side effect of any navigation
-            // while one is open — leaving stale overlays hovering over a
-            // freshly-navigated route is broken UX.
-            state.closeModal();
+            // BACK: closing the modal IS the user's intent, so dismiss it —
+            // running the opener's exit — and block the history change so
+            // back doesn't also navigate away.
+            if (action === "BACK") {
+                state.closeModal();
+                return true;
+            }
 
-            // BACK: closing the modal IS the user's intent; block the
-            // actual history change so back doesn't also navigate away.
             // PUSH/REPLACE/FORWARD/GO (e.g. deep-link handlers calling
-            // `router.navigate`): let the navigation proceed — returning
-            // true here would silently drop it in @tanstack/history's
-            // `tryNavigation`, which is exactly the deep-link-arrived-but-
-            // route-didn't-change bug we're fixing.
-            return action === "BACK";
+            // `router.navigate`): the navigation is already going where the
+            // caller wants, so clear the overlay without running any exit —
+            // that would fire a second, competing navigation. Returning true
+            // here would instead silently drop the push in
+            // @tanstack/history's `tryNavigation`.
+            state.dismissAll();
+            return false;
         },
         enableBeforeUnload: false,
         disabled: !hasModal,

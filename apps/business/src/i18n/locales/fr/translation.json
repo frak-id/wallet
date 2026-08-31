@@ -1948,6 +1948,20 @@
                 "confirm": "Supprimer l'emplacement"
             }
         },
+        "sharing": {
+            "title": "Message de partage",
+            "description": "Le titre et le texte affichés quand un visiteur partage via son téléphone ou sa messagerie.",
+            "fields": {
+                "title": {
+                    "label": "Titre du partage",
+                    "hint": "Sert d'objet dans les e-mails et d'en-tête dans l'aperçu."
+                },
+                "text": {
+                    "label": "Message de partage",
+                    "hint": "Accompagne le lien partagé."
+                }
+            }
+        },
         "components": {
             "title": "Réglages par défaut des composants",
             "description": "Choisissez la formulation qui correspond le mieux à votre marque pour chaque composant.",

@@ -1,6 +1,9 @@
 import { JwtContext, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
-import type { InstallCodeRepository } from "../repositories/InstallCodeRepository";
+import type {
+    InstallCodeCredential,
+    InstallCodeRepository,
+} from "../repositories/InstallCodeRepository";
 
 export class InstallCodeService {
     constructor(
@@ -9,7 +12,7 @@ export class InstallCodeService {
 
     async generate(params: {
         merchantId: string;
-        anonymousId: string;
+        credential: InstallCodeCredential;
     }): Promise<{ code: string; expiresAt: Date }> {
         const installCode = await this.installCodeRepository.create(params);
 
@@ -21,7 +24,7 @@ export class InstallCodeService {
         log.info(
             {
                 merchantId: params.merchantId,
-                anonymousId: params.anonymousId,
+                anonymousId: installCode.anonymousId,
                 reused: installCode.reused,
             },
             installCode.reused
@@ -35,9 +38,11 @@ export class InstallCodeService {
         };
     }
 
-    async resolve(params: {
-        code: string;
-    }): Promise<{ merchantId: string; anonymousId: string }> {
+    async resolve(params: { code: string }): Promise<{
+        merchantId: string;
+        anonymousId: string | null;
+        checkoutToken: string | null;
+    }> {
         const installCode = await this.installCodeRepository.findByCode(
             params.code
         );
@@ -52,6 +57,7 @@ export class InstallCodeService {
         return {
             merchantId: installCode.merchantId,
             anonymousId: installCode.anonymousId,
+            checkoutToken: installCode.checkoutToken,
         };
     }
 

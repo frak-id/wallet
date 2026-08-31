@@ -20,10 +20,29 @@ type EnsureAction = Extract<PendingAction, { type: "ensure" }>;
  */
 const WALLET_ALREADY_LINKED = "WALLET_ALREADY_LINKED";
 
+/**
+ * Codes a queued action can never satisfy on a later launch: the stored
+ * shape lacks a credential the route now demands, and nothing on the retry
+ * path can mint one. The wallet holds no signing key, so a rejected proof
+ * and an expired ticket are as terminal as an absent one.
+ */
+const MISSING_CREDENTIAL_CODES = [
+    "PROOF_REQUIRED",
+    "PROOF_OR_TOKEN_REQUIRED",
+    "MISSING_ANONYMOUS_ID",
+    "RESERVED_IDENTITY",
+    "PROOF_INVALID",
+    "INVALID_TICKET",
+] as const;
+
+function errorCode(error: unknown): string | undefined {
+    return (error as { value?: { code?: string } } | undefined)?.value?.code;
+}
+
 function isNonRetryable(error: unknown): boolean {
-    const code = (error as { value?: { code?: string } } | undefined)?.value
-        ?.code;
-    return code === WALLET_ALREADY_LINKED;
+    const code = errorCode(error);
+    if (code === WALLET_ALREADY_LINKED) return true;
+    return MISSING_CREDENTIAL_CODES.some((known) => known === code);
 }
 
 /**
@@ -40,8 +59,8 @@ export function queuePendingAction(
 
 /**
  * Fire every ensure action in `actions`, fire-and-forget: a failure keeps the
- * action queued for the next launch, except a non-retryable
- * `WALLET_ALREADY_LINKED` which is dropped immediately.
+ * action queued for the next launch, except a non-retryable one which is
+ * dropped immediately.
  *
  * Router-free on purpose — the standalone `/install` entrypoint has no
  * TanStack Router, and this is the only half of the pending-actions drain it
@@ -83,7 +102,11 @@ export function fireEnsureActions(
                     // Stop the retry loop instead of silently no-oping on
                     // every future app launch.
                     store.removeAction(action.id);
-                    ensureConflictStore.getState().raise();
+                    // The toast copy names a wallet conflict, so only that
+                    // code may raise it.
+                    if (errorCode(err) === WALLET_ALREADY_LINKED) {
+                        ensureConflictStore.getState().raise();
+                    }
                 }
             }
         );
@@ -97,13 +120,13 @@ export function fireEnsureActions(
  * failure.
  */
 async function executeEnsure(action: EnsureAction): Promise<void> {
-    // `merchantId`/`anonymousId` always sent, `ticket` and `proof` added on
-    // top when present. The backend resolves ticket -> proof+anonymousId ->
-    // bare anonymousId, so an old-shape action with neither still works.
-    // ROLLOUT-STEP-3.
+    // The backend resolves ticket -> proof+anonymousId -> bare anonymousId.
+    // Once ENSURE_BARE_ARM_ENABLED is disabled the bare arm answers 400
+    // PROOF_OR_TOKEN_REQUIRED and the proof arm 403 PROOF_INVALID; both are
+    // non-retryable, so a stale action drops instead of burning its full TTL.
     const { error } = await authenticatedBackendApi.user.identity.ensure.post({
         merchantId: action.merchantId,
-        anonymousId: action.anonymousId,
+        ...(action.anonymousId && { anonymousId: action.anonymousId }),
         ...(action.ticket && { ticket: action.ticket }),
         ...(action.proof && { proof: action.proof }),
     });

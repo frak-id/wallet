@@ -37,7 +37,9 @@
     "test:e2e:dev:codegen": "TARGET_ENV=dev playwright codegen wallet-dev.frak.id",
     "test:light": "playwright test --config playwright.light.config.ts",
     "test:light:ui": "playwright test --config playwright.light.config.ts --ui",
-    "test:light:update": "playwright test --config playwright.light.config.ts --update-snapshots",
+    "test:light:pixels": "LIGHT_SNAPSHOTS=1 playwright test --config playwright.light.config.ts",
+    "test:light:update": "LIGHT_SNAPSHOTS=1 playwright test --config playwright.light.config.ts --update-snapshots",
+    "test:light:install": "playwright install --with-deps chromium",
     "tauri": "tauri",
     "tauri:ios:dev": "sst dev ./scripts/tauri-dev.sh ios",
     "tauri:ios:build": "sst shell -- tauri ios build",
@@ -47,7 +49,8 @@
     "tauri:android:build": "sst shell -- tauri android build",
     "tauri:android:build:dev": "./scripts/build-android-dev.sh",
     "tauri:version": "./scripts/sync-version.sh",
-    "tauri:icons": "./src-tauri/icons/sources/regenerate.sh"
+    "tauri:icons": "./src-tauri/icons/sources/regenerate.sh",
+    "generate:routes": "bun run scripts/generate-routes.ts"
   },
   "dependencies": {
     "@frak-labs/app-essentials": "workspace:*",
@@ -117,6 +120,7 @@
     "vite": "catalog:",
     "vite-plugin-mkcert": "catalog:",
     "vite-plugin-remove-console": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@tanstack/router-generator": "catalog:"
   }
 }

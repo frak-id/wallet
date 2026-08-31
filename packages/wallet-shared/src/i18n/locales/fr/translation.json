@@ -786,6 +786,7 @@
         "error": {
             "invalid": "Code incorrect ou expiré, vérifie le code copié depuis wallet.frak.id",
             "alreadyLinked": "Ce code a déjà été utilisé.",
+            "unresolved": "Ce code n'est pas encore lié à un achat. Réessaie dans quelques minutes.",
             "generic": "Une erreur est survenue, réessaie."
         },
         "success": {
@@ -797,15 +798,18 @@
     "installCode": {
         "title": "Ne perds pas tes {{ estimatedReward }} !\nCopie ce code",
         "description": "Colle-le à l'ouverture de l'app. Il te permettra de récupérer tes gains une fois connecté·e.",
+        "codelessTitle": "Ne perds pas tes {{ estimatedReward }} !",
+        "codelessDescription": "Télécharge l'app et connecte-toi pour récupérer tes gains.",
         "copyCode": "Copier le code",
         "codeCopied": "Code copié !",
         "loading": "Génération de ton code...",
-        "error": "Échec de la génération du code. Rafraîchis la page.",
         "infoTitle": "Code valable 3 jours",
         "infoDescription": "À l'ouverture de l'app, appuie sur <1>\"J'ai un code de récupération\"</1>.",
         "download": "Télécharger l'app",
         "processing": "Configuration de ton porte-monnaie...",
-        "installedTitle": "Frak est installé",
+        "processingDone": "Ton porte-monnaie est prêt",
+        "openWalletCta": "Ouvrir mon porte-monnaie",
+        "installedMerchant": "Connecté à {{ merchantName }}",
         "installedCodeToggle": "Ou saisis ce code manuellement",
         "openWallet": "Ouvre Frak et récupère {{ estimatedReward }}",
         "installedHeadline": "C'est prêt. Ouvre l'app pour récupérer {{ estimatedReward }}."
@@ -888,6 +892,7 @@
     "reward": {
         "status": {
             "pending": "En attente de validation par la marque",
+            "bank_depleted": "En attente de financement par la marque",
             "processing": "En cours de traitement",
             "settled": "À collecter",
             "consumed": "Consommé",

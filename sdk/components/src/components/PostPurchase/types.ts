@@ -16,7 +16,9 @@ export type PostPurchaseProps = {
      */
     orderId?: string;
     /**
-     * Checkout token for purchase tracking fallback.
+     * Opaque per-order token. Feeds purchase tracking, and travels to the
+     * sharing page so the install CTA still carries a credential when the
+     * anonymous id is unavailable.
      */
     token?: string;
     /**

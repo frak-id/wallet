@@ -1,7 +1,9 @@
+import { buildInstallUrl } from "@frak-labs/wallet-shared/sharing";
 import { describe, expect, test } from "@/tests/vitest-fixtures";
 import {
     buildInstallProcessingEnsureAction,
     parseInstallProofFragment,
+    parseInstallSearch,
     resolveInstallProof,
 } from "./params";
 
@@ -141,5 +143,47 @@ describe("Play referrer string — literal-string dual-arm contract", () => {
         expect(legacyParams.get("merchantId")).toBe("merchant-1");
         expect(legacyParams.get("anonymousId")).toBe("anon-1");
         expect(legacyParams.get("proof")).toBeNull();
+    });
+});
+
+describe("checkoutToken across the /sharing → /install hop", () => {
+    const parseUrl = (url: string) =>
+        parseInstallSearch(
+            Object.fromEntries(
+                new URL(url, "https://wallet.frak.id").searchParams
+            )
+        );
+
+    test("a token-only link survives buildInstallUrl → parseInstallSearch", () => {
+        const url = buildInstallUrl({
+            merchantId: "merchant-1",
+            checkoutToken: "tok/1",
+        });
+
+        expect(parseUrl(String(url))).toMatchObject({
+            m: "merchant-1",
+            a: undefined,
+            checkoutToken: "tok/1",
+        });
+    });
+
+    test("both credentials survive together", () => {
+        const url = buildInstallUrl({
+            merchantId: "merchant-1",
+            clientId: "client-1",
+            checkoutToken: "tok-1",
+        });
+
+        expect(parseUrl(String(url))).toMatchObject({
+            m: "merchant-1",
+            a: "client-1",
+            checkoutToken: "tok-1",
+        });
+    });
+
+    test("a non-string token is dropped rather than trusted", () => {
+        expect(
+            parseInstallSearch({ checkoutToken: 42 }).checkoutToken
+        ).toBeUndefined();
     });
 });

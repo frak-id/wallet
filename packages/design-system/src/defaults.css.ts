@@ -41,12 +41,18 @@ globalStyle("body", {
     },
 });
 
-/** Native (Tauri) shells must fill the device, so drop the desktop centering. */
-globalStyle(':root[data-platform="tauri"] body', {
-    "@media": {
-        [`(min-width: ${tablet}px)`]: {
-            display: "block",
-            minHeight: "unset",
+/**
+ * A native shell owns the window, so drop the desktop centering: Tauri fills
+ * the device, and a host's sheet is full-bleed at every width.
+ */
+globalStyle(
+    ':root[data-platform="tauri"] body, :root[data-embed="native"] body',
+    {
+        "@media": {
+            [`(min-width: ${tablet}px)`]: {
+                display: "block",
+                minHeight: "unset",
+            },
         },
-    },
-});
+    }
+);

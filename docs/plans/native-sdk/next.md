@@ -3,7 +3,9 @@
 Ordered. Each item names its precondition, so anything with an unmet precondition can be skipped
 without re-deriving why.
 
-Detail on any item is in [`open.md`](./open.md); this file is sequencing only.
+Detail on any item is in [`open.md`](./open.md); this file is sequencing only. Neither file is
+mirrored into Linear — [`open.md`](./open.md) §0 records which tracker owns what, and why searching
+here first is not optional.
 
 ## Where the line is
 

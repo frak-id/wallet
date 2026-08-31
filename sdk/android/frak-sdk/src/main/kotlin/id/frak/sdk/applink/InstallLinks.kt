@@ -47,7 +47,9 @@ internal object InstallLinks {
     /**
      * The wallet's hosted install page: shows the install code and the store link, unlike
      * [playStore] which is the store listing itself. The proof rides in the fragment so it never
-     * reaches a server, and `embed=native` is the same marker `/sharing` reads.
+     * reaches a server, and `embed=native` is the same marker `/sharing` reads. `clip=host` stops
+     * the page writing the code too: both writes land, and a plain one arriving after this SDK's
+     * `EXTRA_IS_SENSITIVE` write is the one the system previews.
      */
     fun installPage(
         walletOrigin: String,
@@ -58,7 +60,7 @@ internal object InstallLinks {
         proof: String?,
     ): String {
         val url =
-            "$walletOrigin/install?embed=native" +
+            "$walletOrigin/install?embed=native&clip=host" +
                 "&m=${PercentEncoding.encode(merchantId)}" +
                 "&a=${PercentEncoding.encode(anonymousId)}" +
                 "&returnScheme=${PercentEncoding.encode(returnScheme)}" +

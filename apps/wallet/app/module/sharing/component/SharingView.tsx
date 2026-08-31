@@ -4,6 +4,7 @@ import { translationKeyPathToObject } from "@frak-labs/wallet-shared/common/util
 import {
     buildInstallUrl,
     SharingPage,
+    useSharingIdentity,
     useSharingPageController,
 } from "@frak-labs/wallet-shared/sharing";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
@@ -16,7 +17,6 @@ import { isHostEmbedded } from "@/module/common/utils/hostEmbed";
 import { useHostBridge } from "@/module/sharing/host/useHostBridge";
 import { useActivationParams } from "@/module/sharing/params/fragment";
 import type { SharingSearch } from "@/module/sharing/params/table";
-import { useSharingIdentity } from "@/module/sharing/useSharingIdentity";
 
 /**
  * How this surface leaves the page. The SPA route hands over TanStack Router
@@ -24,10 +24,11 @@ import { useSharingIdentity } from "@/module/sharing/useSharingIdentity";
  * document navigations instead.
  */
 export type SharingNavigation = {
-    /** Go to the install page for this merchant/client pair. */
+    /** Go to the install page, carrying whichever credential this page holds. */
     toInstall: (params: {
         merchantId?: string;
-        clientId?: string;
+        // No `clientId`: this page holds no keypair, so it never carries one.
+        checkoutToken?: string;
         /** Absolute URL built by `buildInstallUrl`, for surfaces without a router. */
         installUrl: string;
     }) => void;
@@ -124,12 +125,18 @@ export function SharingView({
         return scoped.getFixedT(lng, null);
     }, [config?.sdkConfig?.translations, i18n, i18n.resolvedLanguage]);
 
-    // No `#p=` proof here, unlike the listener's builder: this page has no SDK
-    // keypair to sign with.
+    // Neither credential travels from here: this page has no SDK keypair, so
+    // it can sign no `#p=` proof, and an unprovable `a=` is refused once
+    // ensure demands one. Gate 2's `checkoutToken` is the exception. The link
+    // is still built without either, or the store CTA behind it goes dead.
     const installUrl = useMemo(() => {
-        if (!(merchantId && clientId)) return null;
-        return buildInstallUrl({ merchantId, clientId });
-    }, [merchantId, clientId]);
+        if (!merchantId) return null;
+        return buildInstallUrl({
+            merchantId,
+            checkoutToken,
+            allowCredentialless: true,
+        });
+    }, [merchantId, checkoutToken]);
 
     const controller = useSharingPageController({
         merchantId,
@@ -188,7 +195,11 @@ export function SharingView({
                 // hand control back to the SDK.
                 if (returnToHost("install")) return;
                 if (!installUrl) return;
-                navigation.toInstall({ merchantId, clientId, installUrl });
+                navigation.toInstall({
+                    merchantId,
+                    checkoutToken,
+                    installUrl,
+                });
             },
         },
     });

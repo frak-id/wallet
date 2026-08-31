@@ -4,9 +4,10 @@ import { Trans } from "react-i18next";
 import * as styles from "../index.css";
 import notificationBell from "../notification_bell.webp";
 import notificationIcon from "../notification_icon.svg";
+import type { NotificationWelcomeSlide } from "../utils/types";
 
 type NotificationSlideProps = {
-    actionI18nKey: string;
+    actionI18nKey: NotificationWelcomeSlide["actionI18nKey"];
     title: string;
 };
 

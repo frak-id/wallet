@@ -1,9 +1,13 @@
 import { db, type PgRunner, type PgTx } from "@backend-infrastructure";
-import { and, eq, isNull, ne } from "drizzle-orm";
+import { SERVER_MINTED_ID_PREFIX } from "@frak-labs/app-essentials/constants/serverMintedId";
+import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address } from "viem";
 import { identityGroupsTable, identityNodesTable } from "../db/schema";
 import type { IdentityType } from "../schemas";
+
+/** `_` is a LIKE wildcard: unescaped, the prefix also matches `frakmintX…`. */
+const SERVER_MINTED_ID_LIKE = `${SERVER_MINTED_ID_PREFIX.replace("_", "\\_")}%`;
 
 type IdentityGroupSelect = typeof identityGroupsTable.$inferSelect;
 type IdentityNodeSelect = typeof identityNodesTable.$inferSelect;
@@ -29,13 +33,12 @@ export class IdentityRepository {
     });
 
     private normalizeValue(type: IdentityType, value: string): string {
-        if (type === "wallet") {
-            return value.toLowerCase();
-        }
         if (type === "email") {
             return value.trim().toLowerCase();
         }
-        return value;
+        // `anonymous_fingerprint` is compared case-insensitively against the
+        // key-derived id, so raw casing would persist one identity as two nodes.
+        return value.toLowerCase();
     }
 
     private buildIdentityCacheKey(
@@ -192,18 +195,47 @@ export class IdentityRepository {
         return wallet;
     }
 
-    async findAnonymousFingerprint(params: {
-        groupId: string;
-        merchantId: string;
-    }): Promise<string | null> {
-        const node = await db.query.identityNodesTable.findFirst({
+    async findAnonymousFingerprint(
+        params: {
+            groupId: string;
+            merchantId: string;
+        },
+        runner: PgRunner = db
+    ): Promise<string | null> {
+        const node = await runner.query.identityNodesTable.findFirst({
             where: and(
                 eq(identityNodesTable.groupId, params.groupId),
                 eq(identityNodesTable.identityType, "anonymous_fingerprint"),
                 eq(identityNodesTable.merchantId, params.merchantId)
             ),
+            orderBy: (nodes, { asc }) => [asc(nodes.createdAt)],
         });
         return node?.identityValue ?? null;
+    }
+
+    /**
+     * Latch a server-minted `frakmint_` anonymous id. No key for it can exist
+     * anywhere, so latching it can never lock out a legitimate signer.
+     */
+    async latchServerMintedProof(
+        params: { value: string; merchantId: string },
+        runner: PgRunner = db
+    ): Promise<void> {
+        await runner
+            .update(identityNodesTable)
+            .set({ proofSeenAt: new Date() })
+            .where(
+                and(
+                    eq(
+                        identityNodesTable.identityType,
+                        "anonymous_fingerprint"
+                    ),
+                    eq(identityNodesTable.identityValue, params.value),
+                    sql`${identityNodesTable.identityValue} LIKE ${SERVER_MINTED_ID_LIKE} ESCAPE E'\\\\'`,
+                    eq(identityNodesTable.merchantId, params.merchantId),
+                    isNull(identityNodesTable.proofSeenAt)
+                )
+            );
     }
 
     /**

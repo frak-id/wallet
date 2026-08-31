@@ -1,3 +1,4 @@
+import { mockWebLocks } from "@frak-labs/test-foundation";
 import { p256 } from "@noble/curves/nist.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildProofMessage, decodeProof } from "./canonical";
@@ -19,6 +20,7 @@ describe("sign", () => {
         // `stubGlobal` survives `restoreAllMocks`; the no-entropy test stubs
         // `crypto` away and would otherwise break every subsequent test.
         vi.unstubAllGlobals();
+        Reflect.deleteProperty(navigator, "locks");
     });
 
     describe("ensureIdentityKey", () => {
@@ -120,6 +122,44 @@ describe("sign", () => {
             expect(retry.pendingLegacyId).toBe("some-id");
         });
 
+        it("keeps a valid key when a storage write fails (quota)", async () => {
+            const first = await ensureIdentityKey();
+            const storedKey = localStorage.getItem("frak-client-key");
+            // A mismatched id forces the corrective write, which now fails.
+            localStorage.setItem("frak-client-id", "stale-mismatched-id");
+            const setItem = vi
+                .spyOn(Storage.prototype, "setItem")
+                .mockImplementation(() => {
+                    throw new Error("QuotaExceededError");
+                });
+
+            try {
+                const second = await ensureIdentityKey();
+                expect(second.clientId).toBe(first.clientId);
+            } finally {
+                setItem.mockRestore();
+            }
+
+            // The key is untouched: destroying it here would make the user's
+            // own derived id look legacy on the next visit.
+            expect(localStorage.getItem("frak-client-key")).toBe(storedKey);
+        });
+
+        it("does not throw when the first-visit write fails", async () => {
+            const setItem = vi
+                .spyOn(Storage.prototype, "setItem")
+                .mockImplementation(() => {
+                    throw new Error("QuotaExceededError");
+                });
+
+            try {
+                const result = await ensureIdentityKey();
+                expect(result.clientId).toBeTruthy();
+            } finally {
+                setItem.mockRestore();
+            }
+        });
+
         it("rejects when no entropy source exists, never returning an unprovable id", async () => {
             vi.stubGlobal("crypto", {});
 
@@ -157,6 +197,20 @@ describe("sign", () => {
                     configurable: true,
                 });
             }
+        });
+
+        it("generates one key when two SDK instances race a first visit", async () => {
+            mockWebLocks();
+
+            const [first, second] = await Promise.all([
+                ensureIdentityKey(),
+                ensureIdentityKey(),
+            ]);
+
+            // A second keygen would leave the loser reporting an id the
+            // stored key no longer derives, so its proofs cover nothing.
+            expect(second.clientId).toBe(first.clientId);
+            expect(localStorage.getItem("frak-client-id")).toBe(first.clientId);
         });
     });
 

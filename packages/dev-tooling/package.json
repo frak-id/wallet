@@ -7,6 +7,7 @@
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "test": "vitest"
   },
   "exports": {
@@ -17,6 +18,10 @@
     "@vitest/ui": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@typescript/native": "catalog:"
+  },
+  "dependencies": {
+    "es-check": "^9.6.4"
   }
 }

@@ -15,6 +15,13 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The install code no longer lands on the pasteboard unprotected.** The install page wrote it
+  too, and that plain write landed after the SDK's `localOnly` + `expirationDate` one, replacing
+  it. The install URL now carries `clip=host`, telling the page the SDK owns the pasteboard. An
+  older wallet page ignores it and behaves as before.
+
 ## [1.0.0-beta.2] - 2026-08-14
 
 ### Added

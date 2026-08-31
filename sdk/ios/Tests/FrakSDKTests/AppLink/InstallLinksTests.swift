@@ -49,11 +49,27 @@ struct InstallLinksTests {
         )
 
         #expect(
-            url == "https://wallet.frak.id/install?embed=native&m=\(Self.merchantId)"
+            url == "https://wallet.frak.id/install?embed=native&clip=host&m=\(Self.merchantId)"
                 + "&a=\(Self.clientId)&returnScheme=frak-com.acme.app&sid=session-1"
         )
         // iOS injects no chrome: a SwiftUI `.sheet` already clips to the system radius.
         #expect(!url.contains("cornerRadius"))
+    }
+
+    @Test("claims the clipboard so the page does not write the code unmarked")
+    func claimsTheClipboard() {
+        let url = InstallLinks.installPage(
+            walletOrigin: "https://wallet.frak.id",
+            merchantId: Self.merchantId,
+            anonymousId: Self.clientId,
+            returnScheme: "frak-com.acme.app",
+            sessionId: "session-1",
+            proof: nil
+        )
+
+        // Both writes land, and a plain one arriving last is the one that survives, so the page
+        // has to be told up front rather than acknowledged afterwards.
+        #expect(url.contains("clip=host"))
     }
 
     @Test("points at the wallet's App Store listing")

@@ -1,11 +1,14 @@
 import type { EstimatedReward, SharingPageProduct } from "@frak-labs/core-sdk";
 import type { RewardAmountParts } from "@frak-labs/core-sdk/rewards";
+import type { Translate } from "../../../types/i18n/translate";
 
-/** Translation function — each consumer provides its own. */
-export type SharingT = (
-    key: string,
-    options?: Record<string, unknown>
-) => string;
+/**
+ * Translation function — each consumer provides its own, injecting the reward
+ * and merchant interpolations. Scoped to the two namespaces the listener
+ * registers: a `translation` key would compile but render as raw text there,
+ * since that bundle is kept out of the listener's module graph.
+ */
+export type SharingT = Translate<"customized" | "common">;
 
 export type SharingMerchant = {
     name: string;

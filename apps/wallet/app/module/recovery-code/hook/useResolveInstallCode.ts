@@ -9,18 +9,22 @@ import { installCodeKey } from "@/module/recovery-code/queryKeys/install-code";
 
 type ResolveResult = {
     merchantId: string;
-    anonymousId: string;
+    /**
+     * Still sent by the backend, deliberately unread: the ticket authenticates
+     * its own id, and the field is dropped in a later backend-only deploy.
+     */
+    anonymousId?: string;
     merchant: { name: string; domain: string };
-    /** Install ticket. Optional here defensively — old backends or a
-     * rollback never send it, and the pending action must still be built
-     * from `anonymousId` alone in that case. */
+    /** Optional defensively: an old backend or a rollback never sends one. */
     ticket?: string;
+    /** The code named a row whose credential the backend could not resolve. */
+    outcome?: "UNRESOLVED";
 };
 
 /**
- * Hook to resolve an install code via the backend.
- * On success, adds a pending ensure action to `pendingActionsStore`
- * so the anonymous identity will be merged with the wallet after auth.
+ * Hook to resolve an install code via the backend. A resolved code queues a
+ * pending ensure action so its anonymous identity is merged after auth; an
+ * `UNRESOLVED` one queues nothing and leaves the page on its download CTA.
  */
 export function useResolveInstallCode(
     options?: UseMutationOptions<ResolveResult, Error, string>
@@ -49,23 +53,21 @@ export function useResolveInstallCode(
             trackEvent("install_code_resolved", {
                 has_wallet: Boolean(data.hasWallet),
                 merchant_domain: data.merchant.domain,
+                outcome: data.outcome ?? "RESOLVED",
             });
             setInstallSource("install_code");
 
-            // Add ensure action for post-auth identity merge. `ticket` is
-            // carried when present; `anonymousId` stays populated so the
-            // store remains readable by a rolled-back build.
-            //
-            // No `proof` here: `install-code/resolve` never returns a
-            // `frak-install-v1` proof — the ticket, minted unconditionally
-            // from the code's row, is this path's credential.
-            pendingActionsStore.getState().addAction({
-                type: "ensure",
-                merchantId: data.merchantId,
-                anonymousId: data.anonymousId,
-                merchant: data.merchant,
-                ticket: data.ticket,
-            });
+            // The ticket IS the credential here: it resolves its own id
+            // server-side and 400s on a mismatch. An `UNRESOLVED` row mints
+            // none, so queueing one would retry for the store's full TTL.
+            if (data.ticket) {
+                pendingActionsStore.getState().addAction({
+                    type: "ensure",
+                    merchantId: data.merchantId,
+                    merchant: data.merchant,
+                    ticket: data.ticket,
+                });
+            }
 
             return data;
         },

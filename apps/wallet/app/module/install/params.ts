@@ -7,6 +7,8 @@ import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme
 export type InstallSearch = {
     m?: string;
     a?: string;
+    /** Shopify credential forwarded from `/sharing`, when there is no `a`. */
+    checkoutToken?: string;
     /** `frak-install-v1` proof, when a fragment could not carry it. See `resolveInstallProof`. */
     p?: string;
     /** `native` means a host embedded this page, so it draws no chrome of its own. */
@@ -15,6 +17,13 @@ export type InstallSearch = {
     returnScheme?: string;
     /** The host's correlation token, echoed back with any result. */
     sid?: string;
+    /**
+     * `host` means the SDK writes the install code to the clipboard itself,
+     * marked sensitive and — on iOS — expiring, so this page must not also
+     * write it. Both writes land, and a plain one arriving last is what the
+     * system previews.
+     */
+    clip?: "host";
 };
 
 /**
@@ -28,6 +37,10 @@ export function parseInstallSearch(
     return {
         m: typeof search.m === "string" ? search.m : undefined,
         a: typeof search.a === "string" ? search.a : undefined,
+        checkoutToken:
+            typeof search.checkoutToken === "string"
+                ? search.checkoutToken
+                : undefined,
         p: typeof search.p === "string" ? search.p : undefined,
         embed: decodeHostEmbed(search.embed),
         // Sanitised: the page navigates to whatever scheme this carries; an
@@ -35,6 +48,9 @@ export function parseInstallSearch(
         // scheme launcher.
         returnScheme: sanitizeReturnScheme(search.returnScheme),
         sid: typeof search.sid === "string" ? search.sid : undefined,
+        // A closed set, like `embed`: anything unrecognised means no host owns
+        // the clipboard, which is the safe reading — this page still writes.
+        clip: search.clip === "host" ? "host" : undefined,
     };
 }
 

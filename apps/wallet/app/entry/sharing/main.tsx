@@ -9,6 +9,7 @@ import {
     bootstrapStandalonePage,
     reportBootstrapFailure,
 } from "../shared/bootstrap";
+import { markHostEmbedded } from "../shared/hostEmbed";
 import { searchParamsFromLocation } from "../shared/search";
 
 /**
@@ -24,6 +25,8 @@ import { searchParamsFromLocation } from "../shared/search";
 // the very same table the route's `validateSearch` uses, so a param can never
 // mean one thing here and another there.
 const search = parseSharingSearch(searchParamsFromLocation());
+
+markHostEmbedded(search.embed);
 
 /**
  * The SPA route rejects this launch in `beforeLoad` and reports it from its

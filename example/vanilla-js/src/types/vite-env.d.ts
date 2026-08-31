@@ -10,6 +10,5 @@ declare global {
             core?: typeof import("@frak-labs/core-sdk/bundle");
             modalWalletConfig?: unknown;
         };
-        frakSetupInProgress?: boolean;
     }
 }

@@ -41,12 +41,29 @@ class InstallLinksTest {
             )
 
         assertEquals(
-            "https://wallet.frak.id/install?embed=native&m=$MERCHANT_ID&a=$CLIENT_ID" +
+            "https://wallet.frak.id/install?embed=native&clip=host&m=$MERCHANT_ID&a=$CLIENT_ID" +
                 "&returnScheme=frak-com.acme.app&sid=session-1",
             url,
         )
         // Presentation reaches the page as CSS custom properties injected by origin, not as params.
         assertEquals(false, url.contains("cornerRadius"))
+    }
+
+    @Test
+    fun `claims the clipboard so the page does not write the code unmarked`() {
+        val url =
+            InstallLinks.installPage(
+                walletOrigin = "https://wallet.frak.id",
+                merchantId = MERCHANT_ID,
+                anonymousId = CLIENT_ID,
+                returnScheme = "frak-com.acme.app",
+                sessionId = "session-1",
+                proof = null,
+            )
+
+        // Both writes land, and a plain one arriving last is what the system previews, so the
+        // page has to be told up front rather than acknowledged afterwards.
+        assertEquals(true, url.contains("clip=host"))
     }
 
     @Test

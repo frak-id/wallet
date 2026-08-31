@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import { InstallView } from "@/module/install/component/InstallView";
 import { parseInstallSearch } from "@/module/install/params";
+import { EnsureConflictToast } from "@/module/pending-actions/component/EnsureConflictToast";
 import {
     bootstrapStandalonePage,
     reportBootstrapFailure,
 } from "../shared/bootstrap";
+import { markHostEmbedded } from "../shared/hostEmbed";
 import { searchParamsFromLocation } from "../shared/search";
 import * as styles from "./processingLayout.css";
 
@@ -19,6 +21,8 @@ import * as styles from "./processingLayout.css";
 
 const search = parseInstallSearch(searchParamsFromLocation());
 
+markHostEmbedded(search.embed);
+
 /**
  * Stand-in for the SPA's `PageLayout`, which belongs to the wallet shell (safe
  * areas, headers, footers, scroll restoration). The processing screen is a
@@ -29,14 +33,18 @@ function ProcessingLayout({ children }: { children: ReactNode }) {
 }
 
 bootstrapStandalonePage(
-    <InstallView
-        search={search}
-        navigation={{
-            // No router: both exits hand over to the SPA, which owns
-            // everything past the install handoff.
-            toWallet: () => window.location.replace("/wallet"),
-            toRegister: () => window.location.replace("/register"),
-        }}
-        processingLayout={ProcessingLayout}
-    />
+    <>
+        <InstallView
+            search={search}
+            navigation={{
+                // No router: both exits hand over to the SPA, which owns
+                // everything past the install handoff.
+                toWallet: () => window.location.replace("/wallet"),
+                toRegister: () => window.location.replace("/register"),
+            }}
+            processingLayout={ProcessingLayout}
+        />
+        {/* This page fires the ensure, so the conflict must land here too. */}
+        <EnsureConflictToast />
+    </>
 ).catch(reportBootstrapFailure);

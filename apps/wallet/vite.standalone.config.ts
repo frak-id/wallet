@@ -7,7 +7,9 @@ import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
 import removeConsole from "vite-plugin-remove-console";
 import {
+    assertBundleEsVersion,
     assertEagerBundleBudget,
+    BROWSER_TARGET,
     inlineFontFaces,
     lightningCssConfig,
     onwarn,
@@ -163,6 +165,16 @@ export default defineConfig(async (): Promise<UserConfig> => {
                 budgetGzip: EAGER_JS_BUDGET_GZIP,
                 htmlFiles: ["sharing.html", "install.html"],
             }),
+            assertBundleEsVersion({
+                subdir: "standalone",
+                // @radix-ui/react-collection defines `toSorted` as a method on
+                // its own `OrderedDict extends Map`, not `Array.prototype`.
+                // es-check matches property names without receiver analysis.
+                ignore: {
+                    features: "ArrayToSorted",
+                    in: "standalone-radix-collection",
+                },
+            }),
         ],
         build: {
             outDir: "dist",
@@ -175,7 +187,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
             // SPA's 89 KB stylesheet to render a share sheet is exactly the
             // waste this build exists to remove.
             cssCodeSplit: true,
-            target: "baseline-widely-available",
+            target: BROWSER_TARGET,
             minify: true,
             sourcemap: !isProd,
             chunkSizeWarningLimit: 150,
@@ -241,6 +253,21 @@ export default defineConfig(async (): Promise<UserConfig> => {
                                 name: "i18n-en",
                                 test: /[\\/]i18n[\\/]locales[\\/]en[\\/]/,
                                 priority: 15,
+                                minShareCount: 1,
+                            },
+                            // `@radix-ui/react-collection` only, split out
+                            // even though one page uses it. Left inline its
+                            // `OrderedDict.toSorted` lands in the 88 KB
+                            // first-party entry chunk, and the exemption that
+                            // requires would blanket every line of
+                            // first-party sharing code — on one of the two
+                            // pages this floor exists to protect. Narrow to
+                            // the one package so `/install` does not download
+                            // the rest of Radix to buy that isolation.
+                            {
+                                name: "standalone-radix-collection",
+                                test: /[\\/]node_modules[\\/]@radix-ui[\\/]react-collection[\\/]/,
+                                priority: 12,
                                 minShareCount: 1,
                             },
                             {

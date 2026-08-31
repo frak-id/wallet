@@ -3,9 +3,9 @@ name: "✅ CI: Apps & SDK"
 on:
   push:
     branches: [main, dev]
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'bun.lock', '.github/workflows/apps.yaml']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
   pull_request:
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'bun.lock', '.github/workflows/apps.yaml']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
 
 # Newer pushes to the same ref cancel in-flight runs.
 concurrency:
@@ -28,6 +28,7 @@ jobs:
       ts: ${{ steps.filter.outputs.ts }}
       android: ${{ steps.filter.outputs.android }}
       ios: ${{ steps.filter.outputs.ios }}
+      walletPages: ${{ steps.filter.outputs.walletPages }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v4
@@ -40,6 +41,10 @@ jobs:
               - 'apps/**'
               - 'packages/**'
               - 'sdk/**'
+              # The gate scripts and their npm entrypoints: without these a
+              # change to a check never triggers the job that runs it.
+              - 'scripts/**'
+              - 'package.json'
               - '!sdk/android/**'
               - '!sdk/ios/**'
               - 'bun.lock'
@@ -49,6 +54,18 @@ jobs:
               - '.github/workflows/apps.yaml'
             ios:
               - 'sdk/ios/**'
+              - '.github/workflows/apps.yaml'
+            # `/sharing` and `/install` are assembled from three places: the wallet's
+            # entrypoints, `wallet-shared` (which owns `SharingPage`, its tablet card
+            # rule and the install copy) and the design system (the `body` centering the
+            # host opt-out cancels). A filter missing any one of them lets the guarded
+            # rule change without running its guard.
+            walletPages:
+              - 'apps/wallet/**'
+              - 'packages/wallet-shared/**'
+              - 'packages/design-system/**'
+              - 'sdk/core/**'
+              - 'bun.lock'
               - '.github/workflows/apps.yaml'
 
   # ── TypeScript SDK ──────────────────────────────────────
@@ -77,6 +94,42 @@ jobs:
       - name: "🧪 Unit tests"
         run: bun run test:sdk
 
+  # ── Types ───────────────────────────────────────────────
+  typecheck:
+    name: "🔎 Typecheck"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.ts == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      # The SDK build is required, not an optimisation: only `apps/listener`
+      # declares `customConditions: ["development"]`, so every other consumer
+      # resolves `@frak-labs/core-sdk` to `sdk/core/dist/*.d.ts`. That output is
+      # gitignored and no install hook creates it, so a clean checkout without
+      # this step fails with unresolved-module errors across wallet, business
+      # and shopify.
+      - name: "🔨 Build the SDK"
+        run: bun run build:sdk
+      # The only place in CI where dist/ and cdn/ exist — they are gitignored,
+      # so this check has to follow the build rather than stand as its own job.
+      - name: "🔎 Emitted ES version"
+        run: bun run check:es-output
+      # `apps/wallet/app/routeTree.gen.ts` is gitignored and written by the
+      # tanstackRouter vite plugin, so a clean checkout does not have it and
+      # every wallet route fails to resolve. `apps/business` commits its
+      # equivalent, which is why only the wallet needs this. Codegen only —
+      # a full build here would spend minutes and report a bundle regression
+      # under a job named "Typecheck".
+      - name: "🔨 Generate the wallet route tree"
+        run: bun run --cwd apps/wallet generate:routes
+      # Enforces the ES2022 browser floor: an above-floor API in any of the
+      # browser-shipped packages that declare a typecheck script fails here.
+      - name: "🔎 Typecheck"
+        run: bun run typecheck
+
   # ── Listener ────────────────────────────────────────────
   listener-eager-budget:
     name: "📏 Listener · Eager bundle budget"
@@ -103,6 +156,50 @@ jobs:
       # shipping on every iframe boot.
       - name: "📏 Build listener & assert eager budget"
         run: bun run --cwd apps/listener build
+
+  # ── Wallet standalone pages ─────────────────────────────
+  # `/sharing` and `/install` are what the iOS and Android SDKs render inside their
+  # sharing sheet, and neither SDK runs on a device or a simulator anywhere in CI. This
+  # is the only executed coverage that surface has.
+  #
+  # Behaviour only, deliberately: the screenshot baselines carry a platform suffix and
+  # are gitignored, so `ignoreSnapshots` leaves every `toHaveScreenshot` a no-op here.
+  # The assertions that matter — layout width, the `data-embed` tag, the return-channel
+  # URLs, locale copy — all run without a baseline, which is why they were written that
+  # way. Pixel comparison stays a local opt-in (`bun run test:light:pixels`).
+  wallet-pages:
+    name: "🖼️ Wallet pages · Native sheet behaviour"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.walletPages == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      # Both go through the workspace, not `bunx`: `bunx playwright` resolves
+      # `playwright@latest` from the registry, so the browser install and the
+      # runner can end up on different versions. Chromium only — the config
+      # declares one browser, and the standalone bundle is built by the suite's
+      # own `globalSetup`.
+      - name: "🌐 Install Chromium"
+        run: bun run --cwd apps/wallet test:light:install
+      # `--project standalone` skips `pages.check.ts`, which needs a running SPA
+      # (dev server plus SST) that this job deliberately does not start.
+      # `STANDALONE_HOST` widens the server's loopback-only default: the runner
+      # is a disposable container, so there is no LAN to expose `dist/` to, and
+      # loopback is not reachable across its network namespace.
+      - name: "🧪 Native sheet behaviour"
+        run: bun run --cwd apps/wallet test:light -- --project standalone
+        env:
+          STANDALONE_HOST: 0.0.0.0
+      - name: "📄 Upload report on failure"
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wallet-pages-report
+          path: apps/wallet/playwright-report/
+          retention-days: 7
 
   # ── Android SDK ─────────────────────────────────────────
   # First CI coverage this package has ever had; treat a red run here as real until

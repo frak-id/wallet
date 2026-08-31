@@ -26,7 +26,7 @@ const queryClient = new QueryClient({
         queries: {
             gcTime: Number.POSITIVE_INFINITY,
             staleTime: 60 * 1000, // 1 minute
-            // Enable prefetching during the page render, for snappier UI / data
+            // Prefetch in render — gone upstream in 5.102.2, hence the exact 5.101.4 catalog pin.
             experimental_prefetchInRender: true,
         },
     },

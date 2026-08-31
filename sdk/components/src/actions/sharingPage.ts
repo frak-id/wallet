@@ -23,6 +23,11 @@ export type OpenSharingPageOptions = {
      * array is treated the same as `undefined` — no card section is shown.
      */
     products?: SharingPageProduct[];
+    /**
+     * Opaque per-order token, forwarded so the sharing page can derive an
+     * identity from the order when no `clientId` is available.
+     */
+    checkoutToken?: string;
 };
 
 export async function openSharingPage(
@@ -41,6 +46,9 @@ export async function openSharingPage(
             ...(options?.link && { link: options.link }),
             ...(options?.products?.length && {
                 products: options.products,
+            }),
+            ...(options?.checkoutToken && {
+                checkoutToken: options.checkoutToken,
             }),
             ...(targetInteraction && {
                 metadata: { targetInteraction },

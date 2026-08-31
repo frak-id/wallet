@@ -31,7 +31,7 @@ Native adds six additive params; absent, the page renders exactly as before.
 | `r=` | optional | seeded reward, display-only, validated by `sanitizeSeededReward` |
 | `sdkv=` | recommended | SDK version, logged only — drives nothing, see §5 |
 | `preload=1` | pool only | fires `sharing_page_preloaded` instead of `sharing_page_viewed` |
-| `checkoutToken` | never sent by native | Shopify-only fallback |
+| `checkoutToken` | never sent by native | order-derived fallback — sent by the Shopify checkout extension and by `<frak-post-purchase>` on any platform |
 | `redirectUrl` | unused in native mode | |
 
 Unknown params are dropped, not rejected, and a test pins it — an older page tolerates a newer SDK.
@@ -134,6 +134,17 @@ is absent. Under native the SDK owns the whole install step; the page has no sig
   release** — the QuickType suggestion is the real mechanism.
 - **The SDK must never read the pasteboard.** Reading raises a banner and, since iOS 16, a
   permission prompt. Writing raises nothing.
+- **`clip=host` means the SDK owns the clipboard, and the page must not write.** Both writes land
+  and the last one wins, so a plain `writeText` arriving after the SDK's strips what makes the
+  SDK's worth having: `EXTRA_IS_SENSITIVE` on Android, `localOnly` + `expirationDate` on iOS. The
+  code then shows in the system paste preview, which is what it is marked to avoid.
+- **Why a param and not an ack.** The page writes first and the SDK writes when it receives
+  `action=code`, so any "I took it" signal arrives after the damage. Navigation is gesture-bound
+  (§1.2), so the page cannot ask first either. Declaring the capability on the URL is what makes
+  the decision available before the tap.
+- An older page ignores `clip` and writes anyway — the code still reaches the clipboard, only
+  unmarked. An older SDK sends no `clip`, and the page writes as it always did. Both directions
+  degrade to today's behaviour rather than to a broken one.
 
 ## 3. Backend endpoints
 

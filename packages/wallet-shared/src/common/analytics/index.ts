@@ -22,6 +22,7 @@ export type {
     InstallStore,
     ListenerMiscEventMap,
     ListenerTxEventMap,
+    MergeExecuteTargetSource,
     ModalDismissSource,
     ModalEventMap,
     MoneriumCallbackOutcome,

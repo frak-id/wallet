@@ -1,10 +1,10 @@
-import {
-    authenticatedBackendApi,
-    clientIdStore,
-    sharingKey,
-} from "@frak-labs/wallet-shared";
+import { isServerMintedId } from "@frak-labs/app-essentials/constants/serverMintedId";
 import { useQuery } from "@tanstack/react-query";
 import { useStore } from "zustand";
+import { authenticatedBackendApi } from "../../common/api/backendClient";
+import { getErrorStatus } from "../../common/api/errors";
+import { clientIdStore } from "../../stores/clientIdStore";
+import { sharingKey } from "../queryKeys";
 
 /**
  * Resolve which anonymous client this page acts for: the `clientId` param, then
@@ -40,15 +40,27 @@ export function useSharingIdentity({
                 query: { merchantId, checkoutToken },
             });
             if (error) throw error;
-            return data.clientId;
+
+            // A server-minted id is keyless, and the FrakContext v2 codec
+            // encodes UUIDs only, so one cannot ride a share link: keeping it
+            // would swap a null link for an id that dies inside the encoder.
+            // Backend-side this is a 404; discarding it here needs no deploy.
+            return isServerMintedId(data.clientId) ? null : data.clientId;
         },
         enabled:
             mayResolveIdentity &&
             !immediateClientId &&
             !!merchantId &&
             !!checkoutToken,
-        retry: 5,
-        retryDelay: 300,
+        // A 404 is the webhook-not-landed race, worth a few tries; a 5xx is a
+        // deploy blip, worth one. Everything else is terminal — a 429 above
+        // all, since retrying it only deepens the 10/min bucket it reports.
+        retry: (failureCount, error) => {
+            const status = getErrorStatus(error);
+            if (status === 404) return failureCount < 3;
+            return status !== undefined && status >= 500 && failureCount < 2;
+        },
+        retryDelay: (attempt) => 300 * 2 ** attempt,
     });
 
     return immediateClientId ?? resolvedClientId ?? undefined;

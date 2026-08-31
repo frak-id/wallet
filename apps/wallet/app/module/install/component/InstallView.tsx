@@ -1,13 +1,14 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
-import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
+import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
+    CircleCheckIcon,
     CloseIcon,
     CopyIcon,
     LogoFrakWithName,
@@ -25,7 +26,8 @@ import {
     PLAY_STORE_URL,
 } from "@frak-labs/wallet-shared/common/utils/storeUrls";
 import { buildPlayStoreInstallUrl } from "@frak-labs/wallet-shared/sharing";
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import type { Translate } from "@frak-labs/wallet-shared/types";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -75,7 +77,7 @@ export function InstallView({
     navigation: InstallNavigation;
     processingLayout: React.ComponentType<{ children: React.ReactNode }>;
 }) {
-    const { m, a, p, embed, returnScheme, sid } = search;
+    const { m, a, checkoutToken, p, embed, returnScheme, sid, clip } = search;
     // Read once, and forwarded to both views whichever shell is running.
     const proof = useMemo(
         () => resolveInstallProof(window.location.hash, p),
@@ -88,20 +90,23 @@ export function InstallView({
         trackEvent("install_page_viewed", {
             merchant_id: m,
             has_anonymous_id: Boolean(a),
+            has_checkout_token: Boolean(checkoutToken),
             has_install_proof: Boolean(proof),
             view: shouldShowCodeView ? "code" : "processing",
         });
-    }, [m, a, proof, shouldShowCodeView]);
+    }, [m, a, checkoutToken, proof, shouldShowCodeView]);
 
     if (shouldShowCodeView) {
         return (
             <InstallCodeView
                 m={m}
                 a={a}
+                checkoutToken={checkoutToken}
                 proof={proof}
                 embed={embed}
                 returnScheme={returnScheme}
                 sid={sid}
+                clip={clip}
             />
         );
     }
@@ -111,6 +116,7 @@ export function InstallView({
         <InstallProcessing
             m={m}
             a={a}
+            checkoutToken={checkoutToken}
             proof={proof}
             navigation={navigation}
             layout={ProcessingLayout}
@@ -124,68 +130,34 @@ export function InstallView({
 
 const MIN_PROCESSING_MS = 500;
 
+/**
+ * Ceiling on anything the confirmation merely *decorates* itself with. An
+ * offline react-query fetch is paused, not rejected, so it settles neither
+ * way; only a bound keeps the exit reachable.
+ */
+const MERCHANT_LOOKUP_TIMEOUT_MS = 1500;
+
+/**
+ * How long the confirmation waits before leaving on the user's behalf. It is
+ * the only exit from this page, and `ResponsiveModal` draws no close button,
+ * so an idle user would otherwise sit there. Long enough to read the merchant
+ * name and tap the CTA first.
+ */
+const CONFIRMATION_IDLE_EXIT_MS = 10_000;
+
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Brief processing screen around the ensure call, then on to `/wallet` or
- * `/register`. Always shown for at least MIN_PROCESSING_MS to avoid a flash.
- */
-function InstallProcessing({
-    m: merchantId,
-    a: anonymousId,
-    proof,
-    navigation,
-    layout: Layout,
-}: InstallSearch & {
-    proof?: string;
-    navigation: InstallNavigation;
-    layout: React.ComponentType<{ children: React.ReactNode }>;
-}) {
-    const { t } = useTranslation();
-
-    useEffect(() => {
-        const ensureAction = buildInstallProcessingEnsureAction({
-            merchantId,
-            anonymousId,
-            proof,
-        });
-
-        const isLoggedIn = !!getSafeSession()?.token;
-        trackEvent("install_processing_triggered", {
-            is_logged_in: isLoggedIn,
-            has_ensure_action: Boolean(ensureAction),
-            has_install_proof: Boolean(proof),
-        });
-
-        if (isLoggedIn) {
-            // Ensures are fire-and-forget and navigation is never delegated
-            // here, so the router-free half of the drain is all this needs.
-            fireEnsureActions(queuePendingAction(ensureAction), ensureAction);
-            sleep(MIN_PROCESSING_MS).then(() => navigation.toWallet());
-        } else {
-            if (ensureAction) queuePendingAction(ensureAction);
-            sleep(MIN_PROCESSING_MS).then(() => navigation.toRegister());
-        }
-    }, [merchantId, anonymousId, proof, navigation]);
-
-    return (
-        <Layout>
-            <Stack space={"l"} align={"center"}>
-                <Spinner />
-                <Text variant="bodySmall" color="secondary">
-                    {t("installCode.processing")}
-                </Text>
-            </Stack>
-        </Layout>
-    );
+/** Resolves `null` rather than hanging when `work` outlives `ms`. */
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T | null> {
+    return Promise.race([work, sleep(ms).then(() => null)]);
 }
 
-// ---------------------------------------------------------------------------
-//  Install code view — web only, when the user needs to download the app
-// ---------------------------------------------------------------------------
-
+/**
+ * Lightweight merchant lookup, shared by both branches: the processing screen
+ * names the merchant in its confirmation, the code screen draws its logo.
+ */
 function merchantInfoQueryOptions(merchantId?: string) {
     return queryOptions({
         queryKey: merchantKey.info(merchantId),
@@ -206,13 +178,257 @@ function merchantInfoQueryOptions(merchantId?: string) {
     });
 }
 
+/**
+ * Brief processing screen around the ensure call. A logged-in Tauri visitor
+ * carrying a merchant id ends on a confirmation and leaves when it is
+ * dismissed; every other arm auto-exits after MIN_PROCESSING_MS.
+ */
+function InstallProcessing({
+    m: merchantId,
+    a: anonymousId,
+    checkoutToken,
+    proof,
+    navigation,
+    layout: Layout,
+}: InstallSearch & {
+    proof?: string;
+    navigation: InstallNavigation;
+    layout: React.ComponentType<{ children: React.ReactNode }>;
+}) {
+    const { t } = useTranslation();
+    const queryClient = useQueryClient();
+    // The confirmation sits over this screen, so a spinner still claiming
+    // "setting up" contradicts it. Flips once the handoff is done.
+    const [settled, setSettled] = useState(false);
+
+    // `ModalOutlet` lives in the SPA root only, so the standalone entrypoint
+    // has nowhere to render a confirmation. Gating on Tauri keeps that surface
+    // — a logged-in web visitor also reaches this branch — on the auto-exit.
+    const confirms = IS_TAURI && !!merchantId;
+
+    useEffect(() => {
+        const ensureAction = buildInstallProcessingEnsureAction({
+            merchantId,
+            anonymousId,
+            proof,
+        });
+
+        const isLoggedIn = !!getSafeSession()?.token;
+        trackEvent("install_processing_triggered", {
+            is_logged_in: isLoggedIn,
+            has_ensure_action: Boolean(ensureAction),
+            // This branch cannot resolve a token to an id, so a Shopify buyer
+            // who already has the wallet loses that attribution here.
+            has_checkout_token: Boolean(checkoutToken),
+            has_install_proof: Boolean(proof),
+        });
+
+        // Every arm below settles asynchronously; none may act once the
+        // screen is gone.
+        let cancelled = false;
+        let idleExit: number | undefined;
+
+        if (!isLoggedIn) {
+            if (ensureAction) queuePendingAction(ensureAction);
+            sleep(MIN_PROCESSING_MS).then(() => {
+                if (!cancelled) navigation.toRegister();
+            });
+            return () => {
+                cancelled = true;
+            };
+        }
+
+        // Ensures are fire-and-forget and navigation is never delegated
+        // here, so the router-free half of the drain is all this needs.
+        fireEnsureActions(queuePendingAction(ensureAction), ensureAction);
+
+        if (!confirms) {
+            sleep(MIN_PROCESSING_MS).then(() => {
+                if (!cancelled) navigation.toWallet();
+            });
+            return () => {
+                cancelled = true;
+            };
+        }
+
+        // The confirmation owns the exit from here; dismissing it is what
+        // leaves the page. The merchant name is worth a bounded wait — a cold
+        // cache resolves slower than the dwell — but nothing here may gate the
+        // exit: an offline query is paused, so it neither resolves nor
+        // rejects, and awaiting it unbounded strands the user on the spinner.
+        Promise.all([
+            sleep(MIN_PROCESSING_MS),
+            withTimeout(
+                queryClient
+                    .ensureQueryData(merchantInfoQueryOptions(merchantId))
+                    .catch(() => null),
+                MERCHANT_LOOKUP_TIMEOUT_MS
+            ),
+            // Kept out of the standalone chunk, which has no `ModalOutlet`
+            // and would otherwise pay for the store and its analytics
+            // subscription.
+            withTimeout(
+                import("@/module/stores/modalStore").catch(() => null),
+                MERCHANT_LOOKUP_TIMEOUT_MS
+            ),
+        ]).then(([, merchant, store]) => {
+            if (cancelled) return;
+            // No store means no confirmation is possible; leaving is the one
+            // behaviour this screen must never fail to do.
+            if (!store) {
+                navigation.toWallet();
+                return;
+            }
+            const name = merchant?.name;
+            setSettled(true);
+            const { modalStore } = store;
+            modalStore.getState().openModal({
+                id: "recoveryCodeSuccess",
+                merchant: name ? { name } : undefined,
+                onExit: () => navigation.toWallet(),
+                actionLabel: t("installCode.openWalletCta"),
+            });
+
+            // Backstop: this modal is the only way off the page, so an idle
+            // user must not be stranded. Long enough to read and act first —
+            // dismissing early leaves nothing for this to close, and the
+            // store fires `onExit` once whichever path wins.
+            idleExit = window.setTimeout(() => {
+                if (modalStore.getState().modal?.id === "recoveryCodeSuccess") {
+                    modalStore.getState().closeModal();
+                }
+            }, CONFIRMATION_IDLE_EXIT_MS);
+        });
+        return () => {
+            cancelled = true;
+            if (idleExit) window.clearTimeout(idleExit);
+        };
+    }, [
+        merchantId,
+        anonymousId,
+        checkoutToken,
+        proof,
+        navigation,
+        confirms,
+        queryClient,
+    ]);
+
+    return (
+        <Layout>
+            <Stack space={"l"} align={"center"}>
+                {settled ? (
+                    <IconCircle size="lg" tone="action">
+                        <CircleCheckIcon width={28} height={28} />
+                    </IconCircle>
+                ) : (
+                    <Spinner />
+                )}
+                <Text variant="bodySmall" color="secondary">
+                    {t(
+                        settled
+                            ? "installCode.processingDone"
+                            : "installCode.processing"
+                    )}
+                </Text>
+            </Stack>
+        </Layout>
+    );
+}
+
+// ---------------------------------------------------------------------------
+//  Install code view — web only, when the user needs to download the app
+// ---------------------------------------------------------------------------
+
+function InstallCodeHero({
+    t,
+    installed,
+    codeless,
+    merchantName,
+}: {
+    t: Translate;
+    installed: boolean;
+    codeless: boolean;
+    merchantName?: string;
+}) {
+    if (installed) {
+        return (
+            <>
+                <IconCircle
+                    size="lg"
+                    tone="action"
+                    className={styles.installedIcon}
+                >
+                    <CircleCheckIcon width={28} height={28} />
+                </IconCircle>
+                <Text as="h1" variant="heading2" className={styles.title}>
+                    {t("installCode.installedHeadline")}
+                </Text>
+                {merchantName && (
+                    <Text variant="bodySmall" color="secondary">
+                        {t("installCode.installedMerchant", { merchantName })}
+                    </Text>
+                )}
+            </>
+        );
+    }
+
+    return (
+        <>
+            <Text as="h1" variant="heading2" className={styles.title}>
+                {t(
+                    codeless ? "installCode.codelessTitle" : "installCode.title"
+                )}
+            </Text>
+            <Text variant="bodySmall" color="secondary">
+                {t(
+                    codeless
+                        ? "installCode.codelessDescription"
+                        : "installCode.description"
+                )}
+            </Text>
+        </>
+    );
+}
+
+function InstallCodeInfoCard({ t }: { t: Translate }) {
+    return (
+        <Card variant="secondary" padding="compact" className={styles.infoCard}>
+            <Inline space="s" alignY="top" wrap={false}>
+                <Info size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+                <Stack space="xxs">
+                    <Text variant="heading4" weight="medium">
+                        {t("installCode.infoTitle")}
+                    </Text>
+                    <Text variant="bodySmall" color="secondary">
+                        <Trans
+                            i18nKey="installCode.infoDescription"
+                            components={{
+                                1: (
+                                    <Text
+                                        as="span"
+                                        variant="bodySmall"
+                                        weight="medium"
+                                        color="action"
+                                    />
+                                ),
+                            }}
+                        />
+                    </Text>
+                </Stack>
+            </Inline>
+        </Card>
+    );
+}
+
 function InstallCodeView({
     m: merchantId,
     a: anonymousId,
+    checkoutToken,
     proof,
     embed,
     returnScheme,
     sid,
+    clip,
 }: InstallSearch & { proof?: string }) {
     const { t: rawT } = useTranslation();
     const [copied, setCopied] = useState(false);
@@ -227,8 +443,8 @@ function InstallCodeView({
     });
     const estimatedReward = reward?.formatted;
 
-    const t = useCallback(
-        (key: string, options?: Record<string, unknown>) =>
+    const t = useCallback<Translate>(
+        (key, options) =>
             rawT(key, { ...options, estimatedReward: estimatedReward ?? "" }),
         [rawT, estimatedReward]
     );
@@ -238,14 +454,32 @@ function InstallCodeView({
         isLoading,
         error,
         status: codeQueryStatus,
+        fetchStatus: codeFetchStatus,
     } = useGenerateInstallCode({
         merchantId,
         anonymousId,
+        checkoutToken,
         proof,
     });
 
+    // No credential to mint from, one the backend refused, a mint that failed
+    // for good, or one paused offline — the last has no spinner either, since
+    // `isLoading` needs `isFetching`. Either way the store link below is the
+    // whole surface, so this must never render as an error, and never as a
+    // "copy this code" hero with no code beneath it.
+    const codeless =
+        !(anonymousId || checkoutToken) ||
+        codeQueryStatus === "error" ||
+        codeFetchStatus === "paused" ||
+        (codeQueryStatus === "success" && !data?.code);
+
     const activation = useInstallActivation(true);
     const installed = activation?.installed === "1";
+
+    // The code on screen right now: none until it mints, and the installed
+    // state keeps it collapsed behind the toggle.
+    const visibleCode =
+        installed && !showCodeAfterInstall ? undefined : data?.code;
 
     // `install_code_displayed` fires once per successful generation,
     // `install_code_generation_failed` fires on transition into error state.
@@ -262,7 +496,8 @@ function InstallCodeView({
             reportedErrorRef.current = true;
             trackEvent("install_code_generation_failed", {
                 merchant_id: merchantId,
-                error_type: error instanceof Error ? error.name : "unknown",
+                // `.name` is always "Error"; the message carries the status.
+                error_type: error instanceof Error ? error.message : "unknown",
             });
         } else if (codeQueryStatus !== "error") {
             reportedErrorRef.current = false;
@@ -296,14 +531,14 @@ function InstallCodeView({
 
     /**
      * Hands the code to the native host, which can give the pasteboard entry an
-     * expiry and `localOnly`; this page cannot. No-op without a `returnScheme`.
+     * expiry and `localOnly`; this page cannot. Returns whether a host took it.
      * From a user gesture only: `assign()` to a custom scheme raises the OS
      * "open in app?" sheet, whose blur/refocus would retrigger an effect.
      */
     const handOverCode = useCallback(() => {
-        if (!data?.code) return;
+        if (!data?.code) return false;
         const expiresAt = new Date(data.expiresAt).getTime();
-        sendHostResult({
+        return sendHostResult({
             scheme: returnScheme,
             action: "code",
             sid,
@@ -332,14 +567,37 @@ function InstallCodeView({
 
     const handleCopy = useCallback(async () => {
         if (!data?.code) return;
-        await navigator.clipboard.writeText(data.code);
-        // Where there is a host, its write supersedes this one: same code, but
-        // marked sensitive and given an expiry.
-        handOverCode();
-        trackEvent("install_code_copied", { merchant_id: merchantId });
+
+        // The host writes the code itself when it says so, marked sensitive
+        // and — on iOS — expiring. Writing here too would land a plain copy
+        // after its marked one and lose both protections, and no signal comes
+        // back in time to prevent that, so the declaration is on the URL.
+        const hostOwnsClipboard = clip === "host";
+
+        // Isolated: `writeText` rejects on a denied permission, a non-secure
+        // context or an unfocused document, none of which should stop the
+        // handoff below.
+        const copied =
+            hostOwnsClipboard ||
+            (await navigator.clipboard
+                .writeText(data.code)
+                .then(() => true)
+                .catch(() => false));
+
+        const offered = handOverCode();
+
+        // `offered` only means a return scheme was present — a fire-and-forget
+        // scheme navigation cannot be acknowledged — so on its own it is not
+        // proof the clipboard holds anything.
+        if (!(copied || offered)) return;
+
+        trackEvent("install_code_copied", {
+            merchant_id: merchantId,
+            handed_off: offered,
+        });
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-    }, [data?.code, merchantId, handOverCode]);
+    }, [data?.code, merchantId, handOverCode, clip]);
 
     return (
         <div
@@ -376,36 +634,12 @@ function InstallCodeView({
 
             <main className={styles.main}>
                 <section className={styles.heroSection}>
-                    {installed ? (
-                        <>
-                            <Badge
-                                variant="success"
-                                className={styles.installedBadge}
-                            >
-                                {t("installCode.installedTitle")}
-                            </Badge>
-                            <Text
-                                as="h1"
-                                variant="heading2"
-                                className={styles.title}
-                            >
-                                {t("installCode.installedHeadline")}
-                            </Text>
-                        </>
-                    ) : (
-                        <>
-                            <Text
-                                as="h1"
-                                variant="heading2"
-                                className={styles.title}
-                            >
-                                {t("installCode.title")}
-                            </Text>
-                            <Text variant="bodySmall" color="secondary">
-                                {t("installCode.description")}
-                            </Text>
-                        </>
-                    )}
+                    <InstallCodeHero
+                        t={t}
+                        installed={installed}
+                        codeless={codeless}
+                        merchantName={merchantInfo?.name}
+                    />
                 </section>
 
                 {isLoading && (
@@ -417,13 +651,7 @@ function InstallCodeView({
                     </Stack>
                 )}
 
-                {error && (
-                    <Text variant="bodySmall" color="error" align="center">
-                        {t("installCode.error")}
-                    </Text>
-                )}
-
-                {data?.code && installed && !showCodeAfterInstall && (
+                {data?.code && !visibleCode && (
                     <button
                         type="button"
                         className={styles.installedCodeToggle}
@@ -433,9 +661,9 @@ function InstallCodeView({
                     </button>
                 )}
 
-                {data?.code && (!installed || showCodeAfterInstall) && (
+                {visibleCode && (
                     <Stack space="m" align="center">
-                        <CodeInput value={data.code} mode="alphanumeric" />
+                        <CodeInput value={visibleCode} mode="alphanumeric" />
                         <Button
                             size="large"
                             fontSize="s"
@@ -452,35 +680,7 @@ function InstallCodeView({
                 )}
             </main>
 
-            <Card
-                variant="secondary"
-                padding="compact"
-                className={styles.infoCard}
-            >
-                <Inline space="s" alignY="top" wrap={false}>
-                    <Info size={18} style={{ flexShrink: 0, marginTop: 2 }} />
-                    <Stack space="xxs">
-                        <Text variant="heading4" weight="medium">
-                            {t("installCode.infoTitle")}
-                        </Text>
-                        <Text variant="bodySmall" color="secondary">
-                            <Trans
-                                i18nKey="installCode.infoDescription"
-                                components={{
-                                    1: (
-                                        <Text
-                                            as="span"
-                                            variant="bodySmall"
-                                            weight="medium"
-                                            color="action"
-                                        />
-                                    ),
-                                }}
-                            />
-                        </Text>
-                    </Stack>
-                </Inline>
-            </Card>
+            {visibleCode && <InstallCodeInfoCard t={t} />}
 
             <footer className={styles.footer}>
                 <ExternalLink

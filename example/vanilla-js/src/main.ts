@@ -68,15 +68,14 @@ function waitForClient(): Promise<FrakClient> {
         return Promise.resolve(window.FrakSetup.client);
     }
     return new Promise((resolve) => {
-        window.addEventListener(
-            "frak:client",
-            () => {
-                if (window.FrakSetup?.client) {
-                    resolve(window.FrakSetup.client);
-                }
-            },
-            { once: true }
-        );
+        // Keep listening until a client actually lands — the event can fire first.
+        const onClient = () => {
+            const client = window.FrakSetup?.client;
+            if (!client) return;
+            window.removeEventListener("frak:client", onClient);
+            resolve(client);
+        };
+        window.addEventListener("frak:client", onClient);
     });
 }
 
@@ -425,16 +424,7 @@ function bindTestButtons() {
     void bindNativeShareButtons();
 }
 
-async function init() {
-    if (!process.env.USE_CDN) {
-        await Promise.all([
-            import("@frak-labs/components/dist/buttonWallet.js"),
-            import("@frak-labs/components/dist/buttonShare.js"),
-            import("@frak-labs/components/dist/openInApp.js"),
-            import("@frak-labs/components/dist/postPurchase.js"),
-        ]);
-    }
-
+function init() {
     void updateClientIdDisplay();
     checkForMergeToken();
     bindTestButtons();

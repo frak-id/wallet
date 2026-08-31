@@ -3,7 +3,8 @@ import { CANDIDATE_BATCH_SIZE, generateCandidates } from "@backend-utils";
 import { and, eq, gt, lt, sql } from "drizzle-orm";
 import { installCodesTable } from "../db/schema";
 
-const CODE_TTL_HOURS = 72;
+/** How long a minted install code stays redeemable. */
+export const CODE_TTL_HOURS = 72;
 
 /**
  * Max resolve attempts against a single install code, durable across pod replicas unlike
@@ -16,18 +17,38 @@ const REUSE_MIN_REMAINING_HOURS = 6;
 
 type InstallCodeSelect = typeof installCodesTable.$inferSelect;
 
+/**
+ * The credential a code is minted against. A union rather than two optional
+ * fields so "neither present" is unrepresentable rather than a CHECK violation.
+ */
+export type InstallCodeCredential =
+    | { kind: "anonymous"; anonymousId: string }
+    | {
+          kind: "checkoutToken";
+          checkoutToken: string;
+          anonymousId: string | null;
+      };
+
 export class InstallCodeRepository {
     /**
-     * The live code for `(merchantId, anonymousId)`, minting one only when there is none usable.
+     * The live code for the presented credential, minting one only when there is none usable.
      * Reuse never extends `expires_at`, which would keep one credential alive indefinitely.
      * Exhausted rows are excluded: exhaustion happens in the app, so a reload is the only
      * recovery.
      */
     async create(params: {
         merchantId: string;
-        anonymousId: string;
+        credential: InstallCodeCredential;
     }): Promise<InstallCodeSelect & { reused: boolean }> {
-        const { merchantId, anonymousId } = params;
+        const { merchantId, credential } = params;
+
+        // Either identifier matches, so a deferred row minted before the
+        // webhook landed is still reused once the ladder resolves its id.
+        const anonymousId = credential.anonymousId;
+        const checkoutToken =
+            credential.kind === "checkoutToken"
+                ? credential.checkoutToken
+                : null;
 
         const candidates = generateCandidates();
 
@@ -42,7 +63,8 @@ export class InstallCodeRepository {
             id: string;
             code: string;
             merchant_id: string;
-            anonymous_id: string;
+            anonymous_id: string | null;
+            checkout_token: string | null;
             created_at: Date;
             expires_at: Date;
             attempts: number;
@@ -51,7 +73,10 @@ export class InstallCodeRepository {
             WITH reusable AS (
                 SELECT * FROM install_codes
                 WHERE merchant_id = ${merchantId}::uuid
-                  AND anonymous_id = ${anonymousId}
+                  AND (
+                        (${anonymousId}::text IS NOT NULL AND anonymous_id = ${anonymousId}::text)
+                     OR (${checkoutToken}::text IS NOT NULL AND checkout_token = ${checkoutToken}::text)
+                      )
                   AND expires_at > now() + ${REUSE_MIN_REMAINING_HOURS} * interval '1 hour'
                   AND attempts < ${MAX_RESOLVE_ATTEMPTS}
                 ORDER BY expires_at DESC
@@ -59,8 +84,8 @@ export class InstallCodeRepository {
             ),
             candidates(code) AS (VALUES ${values}),
             minted AS (
-                INSERT INTO install_codes (code, merchant_id, anonymous_id, expires_at)
-                SELECT c.code, ${merchantId}::uuid, ${anonymousId}, now() + ${CODE_TTL_HOURS} * interval '1 hour'
+                INSERT INTO install_codes (code, merchant_id, anonymous_id, checkout_token, expires_at)
+                SELECT c.code, ${merchantId}::uuid, ${anonymousId}::text, ${checkoutToken}::text, now() + ${CODE_TTL_HOURS} * interval '1 hour'
                 FROM candidates c
                 WHERE NOT EXISTS (
                     SELECT 1 FROM install_codes ic WHERE ic.code = c.code
@@ -87,6 +112,7 @@ export class InstallCodeRepository {
             code: row.code,
             merchantId: row.merchant_id,
             anonymousId: row.anonymous_id,
+            checkoutToken: row.checkout_token,
             createdAt: row.created_at,
             expiresAt: row.expires_at,
             attempts: row.attempts,

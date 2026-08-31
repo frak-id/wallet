@@ -1,4 +1,8 @@
-import { log } from "@backend-infrastructure";
+import {
+    type IdentityCredentialClass,
+    infraMetrics,
+    log,
+} from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { Address } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
@@ -41,9 +45,24 @@ export class AnonymousMergeOrchestrator {
         proof?: string;
         binding: Uint8Array;
         context?: string;
+        onClass: (credentialClass: IdentityCredentialClass) => void;
+        /**
+         * Whether an unproven id is refused. `initiateMerge` passes `true`;
+         * `executeMerge` passes `false` until T3.1b (bucket E) flips it.
+         * Required, not optional: an omitted value must be a compile error.
+         */
+        refuseUnproven: boolean;
     }): Promise<boolean> {
-        const { anonymousId, merchantId, proof, binding, context } = params;
-        return enforceLatchedProof({
+        const {
+            anonymousId,
+            merchantId,
+            proof,
+            binding,
+            context,
+            onClass,
+            refuseUnproven,
+        } = params;
+        const proofPresented = await enforceLatchedProof({
             op: "frak-merge-v1",
             anonymousId,
             merchantId,
@@ -52,7 +71,19 @@ export class AnonymousMergeOrchestrator {
             context: context ?? "merge execute (Phase 4a: enforced)",
             identityProofService: this.identityProofService,
             identityRepository: this.identityRepository,
+            onClass,
         });
+
+        // Sits after `enforceLatchedProof`, which has already verified,
+        // classified and counted — so the counter observes every request,
+        // including the ones this refuses.
+        if (!proofPresented && refuseUnproven) {
+            throw HttpError.forbidden(
+                "PROOF_REQUIRED",
+                "A proof of possession is required for this identity"
+            );
+        }
+        return proofPresented;
     }
 
     /**
@@ -77,12 +108,11 @@ export class AnonymousMergeOrchestrator {
         sourceAnonymousId?: string;
         sourceWalletAddress?: Address;
         /**
-         * `frak-merge-v1` proof binding `sourceAnonymousId`. Latch-gated
-         * whenever `sourceAnonymousId` is supplied: verified when present,
-         * required only once this id has ever latched. A legacy id — or a
-         * derived id that has simply never signed yet — keeps working
-         * without one. The wallet arm (no `sourceAnonymousId`) is already
-         * authenticated by session and never gated at all.
+         * `frak-merge-v1` proof binding `sourceAnonymousId`. Mandatory
+         * whenever `sourceAnonymousId` is supplied — its subject is always a
+         * derived id, which is always signable. The wallet arm (no
+         * `sourceAnonymousId`) is already authenticated by session and is
+         * never gated at all.
          */
         proof?: string;
     }): Promise<{ mergeToken: string; expiresAt: Date }> {
@@ -101,24 +131,10 @@ export class AnonymousMergeOrchestrator {
         // sourceAnonymousId resolves to, so an unverified id must never
         // reach it.
         //
-        // Latch-gated, not unconditionally mandatory: a legacy id (no key,
-        // can never sign) must still be usable as a merge source until it
-        // has proven itself once. Same policy as `executeMerge`: proof
-        // present → verify (invalid ⇒ 403 PROOF_INVALID); proof absent → 403
-        // only if this id has ever latched, else allow. The wallet-session
-        // arm (no `sourceAnonymousId`) is untouched — authenticated by
-        // session, never by this check.
-        //
-        // ROLLOUT-STEP-3: revisit whether this arm should become
-        // unconditionally mandatory once the wallet binary and legacy SDK
-        // population have aged out.
-        //
-        // TODO(merge-initiate-proof): one production caller still sends no
-        // proof here — the listener's modal / embedded-wallet path, via
-        // `mergeTokenQueryOptions`. Those ids can therefore never latch. That
-        // caller must send a proof before this arm is made mandatory, or the
-        // in-app-browser escape 403s outright. The SDK's RPC path
-        // (`useOnGetMergeToken`) already sends one.
+        // Mandatory: proof present → verify (invalid ⇒ 403 PROOF_INVALID);
+        // absent ⇒ 403 PROOF_REQUIRED. The subject is `sourceAnonymousId`,
+        // always the derived id and always signable, so nothing legitimate
+        // is cut off. The wallet-session arm is untouched.
         const sourceProofPresented = sourceAnonymousId
             ? await this.enforceProof({
                   anonymousId: sourceAnonymousId,
@@ -126,6 +142,22 @@ export class AnonymousMergeOrchestrator {
                   proof,
                   binding: new Uint8Array(0),
                   context: "merge initiate (latch-gated)",
+                  onClass: (credentialClass) => {
+                      infraMetrics.identityMergeInitiateCredential(
+                          credentialClass
+                      );
+                      if (credentialClass === "absent_unlatched") {
+                          log.info(
+                              {
+                                  merchantId,
+                                  sourceAnonymousId,
+                                  route: "merge/initiate",
+                              },
+                              "Merge admission refused: proofless and proof is mandatory"
+                          );
+                      }
+                  },
+                  refuseUnproven: true,
               })
             : false;
 
@@ -201,13 +233,41 @@ export class AnonymousMergeOrchestrator {
             merchantId,
             proof,
             binding: this.identityProofService.hashMergeToken(mergeToken),
+            onClass: (credentialClass) => {
+                infraMetrics.identityMergeExecuteCredential(credentialClass);
+                if (credentialClass === "absent_unlatched") {
+                    log.info(
+                        {
+                            merchantId,
+                            targetAnonymousId,
+                            route: "merge/execute",
+                            refused: false,
+                        },
+                        "Merge admission would be refused once proof is mandatory"
+                    );
+                }
+            },
+            // T3.1b (bucket E) is what flips this arm; until then the target
+            // stays latch-gated and this must stay explicitly false.
+            refuseUnproven: false,
         });
 
-        const { sourceGroupId } =
+        const { sourceGroupId, sourceWalletAddress } =
             await this.anonymousMergeService.validateToken({
                 mergeToken,
                 merchantId,
             });
+
+        // Alarm only, never a gate: `/merge/initiate` accepts a
+        // `sourceAnonymousId` alongside a wallet session, so an attacker
+        // presenting their own proven id never trips this.
+        if (sourceWalletAddress && !proofPresented) {
+            infraMetrics.identityMergeExecuteWalletSourceUnproven(merchantId);
+            log.warn(
+                { merchantId, targetAnonymousId, sourceWalletAddress },
+                "Merge execute redeemed a wallet-session token with no target proof"
+            );
+        }
 
         // Get-or-create, but only for a caller that proved possession of the
         // target's key. A native SDK signs its merge proof from a device that

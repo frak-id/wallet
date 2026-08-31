@@ -3,6 +3,7 @@ import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
 import { beforeAll, describe, expect, it } from "vitest";
 import en from "../../../i18n/locales/en/customized.json";
+import type { DefaultTranslationKey } from "../../../types";
 import { getStep2Context, Steps } from "./Steps";
 import type { SharingReward } from "./types";
 
@@ -16,7 +17,7 @@ beforeAll(async () => {
     });
 });
 
-const t = (key: string, options?: Record<string, unknown>) =>
+const t = (key: DefaultTranslationKey, options?: Record<string, unknown>) =>
     i18next.t(key, options ?? {}) as string;
 
 const ready = (extra: Partial<Extract<SharingReward, { status: "ready" }>>) =>
