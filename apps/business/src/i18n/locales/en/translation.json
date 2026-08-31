@@ -1948,6 +1948,20 @@
                 "confirm": "Delete placement"
             }
         },
+        "sharing": {
+            "title": "Share message",
+            "description": "The title and text shown when a visitor shares through their phone or messaging app.",
+            "fields": {
+                "title": {
+                    "label": "Share title",
+                    "hint": "Used as the subject in email and as the preview header."
+                },
+                "text": {
+                    "label": "Share message",
+                    "hint": "Sent alongside the shared link."
+                }
+            }
+        },
         "components": {
             "title": "Global component defaults",
             "description": "Choose the wording that best matches your brand for each component.",
