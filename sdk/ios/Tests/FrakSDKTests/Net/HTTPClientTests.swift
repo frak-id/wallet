@@ -243,14 +243,29 @@ struct HTTPClientTests {
             }
             throw StubHangs()
         }
-        // Under the retry's 100ms backoff floor on purpose: the deadline must fire during the sleep.
-        let client = HTTPClient(baseURL: "https://\(host)", session: session, overallDeadlineSeconds: 0.05)
+        // The deadline must fire during the backoff, so it sits between the two: well above the
+        // worst dispatch latency under a loaded parallel suite (~175ms), and well below the
+        // backoff. Both margins are ~10x, so neither edge is a race. The override is what buys
+        // that room: against the production 100ms floor, no deadline clears dispatch and stays
+        // under the floor at once.
+        let client = HTTPClient(
+            baseURL: "https://\(host)",
+            session: session,
+            overallDeadlineSeconds: 0.5,
+            retryBackoffSecondsOverride: 5
+        )
 
         await #expect(throws: FrakError.self) {
             _ = try await client.get("/slow")
         }
 
-        #expect(attempts.value == 1)
+        #expect(
+            attempts.value == 1,
+            """
+            got \(attempts.value) attempts: 0 means the deadline fired before the first attempt \
+            reached the stub, 2 means the retry ran under its own deadline instead of the shared one
+            """
+        )
     }
 
     @Test("cancelling the caller surfaces CancellationError even with a request in flight")
