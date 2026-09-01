@@ -777,16 +777,16 @@
         },
         "confirmAction": "Confirm with {{type}}"
     },
-    "recoveryCode": {
-        "title": "Recover your code",
-        "description": "Paste the code copied from wallet.frak.id to recover your earnings.",
+    "rewardCode": {
+        "title": "Enter your reward code",
+        "description": "Paste the reward code you copied from wallet.frak.id to claim your earnings.",
         "paste": "Paste the code",
         "validate": "Validate the code",
-        "codeLabel": "Recovery code",
+        "codeLabel": "Reward code",
         "error": {
-            "invalid": "Incorrect or expired code, check the code copied from wallet.frak.id",
-            "alreadyLinked": "This code has already been used.",
-            "unresolved": "This code isn't linked to a purchase yet. Try again in a few minutes.",
+            "invalid": "Incorrect or expired reward code, check the code copied from wallet.frak.id",
+            "alreadyLinked": "This reward code has already been used.",
+            "unresolved": "This reward code isn't linked to a purchase yet. Try again in a few minutes.",
             "generic": "Something went wrong, please try again."
         },
         "success": {
@@ -796,15 +796,15 @@
         }
     },
     "installCode": {
-        "title": "Don't lose your {{ estimatedReward }}!\nCopy this code",
+        "title": "Don't lose your {{ estimatedReward }}!\nCopy your reward code",
         "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
         "codelessTitle": "Don't lose your {{ estimatedReward }}!",
         "codelessDescription": "Download the app and log in to claim your rewards.",
         "copyCode": "Copy the code",
-        "codeCopied": "Code copied!",
-        "loading": "Generating your code...",
+        "codeCopied": "Reward code copied!",
+        "loading": "Generating your reward code...",
         "infoTitle": "Code valid for 3 days",
-        "infoDescription": "When opening the app, tap <1>\"I have a recovery code\"</1>.",
+        "infoDescription": "When opening the app, tap <1>\"I have a reward code\"</1>.",
         "download": "Download the app",
         "processing": "Setting up your wallet...",
         "processingDone": "Your wallet is ready",
@@ -822,7 +822,7 @@
         "continue": "Continue",
         "activateSecureSpace": "Activate my secure space",
         "alreadyHaveAccount": "Already have an account?",
-        "recoveryCode": "I have a recovery code",
+        "rewardCode": "I have a reward code",
         "steps": {
             "one": {
                 "title": "Earn money by recommending",

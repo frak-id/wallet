@@ -28,7 +28,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 function typeCode(code: string) {
-    fireEvent.change(screen.getByLabelText("recoveryCode.codeLabel"), {
+    fireEvent.change(screen.getByLabelText("rewardCode.codeLabel"), {
         target: { value: code },
     });
 }
@@ -54,11 +54,11 @@ describe("RecoveryCodePage", () => {
 
         render(<RecoveryCodePage />, { wrapper: queryWrapper.wrapper });
         typeCode("ABC123");
-        fireEvent.click(screen.getByText("recoveryCode.validate"));
+        fireEvent.click(screen.getByText("rewardCode.validate"));
 
         await waitFor(() => expect(mockResolvePost).toHaveBeenCalled());
         expect(openModal).not.toHaveBeenCalled();
-        await screen.findByText("recoveryCode.error.unresolved");
+        await screen.findByText("rewardCode.error.unresolved");
     });
 
     test("a resolved code opens the success modal", async ({
@@ -76,7 +76,7 @@ describe("RecoveryCodePage", () => {
 
         render(<RecoveryCodePage />, { wrapper: queryWrapper.wrapper });
         typeCode("ABC123");
-        fireEvent.click(screen.getByText("recoveryCode.validate"));
+        fireEvent.click(screen.getByText("rewardCode.validate"));
 
         await waitFor(() =>
             expect(openModal).toHaveBeenCalledWith(

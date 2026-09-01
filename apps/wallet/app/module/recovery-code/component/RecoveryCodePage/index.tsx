@@ -61,16 +61,16 @@ export function RecoveryCodePage() {
     }, [isComplete, isPending, code, resolveAsync, openModal, navigate]);
 
     const errorMessage = error
-        ? t("recoveryCode.error.invalid")
+        ? t("rewardCode.error.invalid")
         : unresolved
-          ? t("recoveryCode.error.unresolved")
+          ? t("rewardCode.error.unresolved")
           : undefined;
 
     return (
         <FlowStepScreen
             fixedViewport
-            title={t("recoveryCode.title")}
-            description={t("recoveryCode.description")}
+            title={t("rewardCode.title")}
+            description={t("rewardCode.description")}
             onBack={() => navigate({ to: "/register", replace: true })}
             footer={
                 <Button
@@ -78,7 +78,7 @@ export function RecoveryCodePage() {
                     disabled={!isComplete}
                     loading={isPending}
                 >
-                    {t("recoveryCode.validate")}
+                    {t("rewardCode.validate")}
                 </Button>
             }
         >
@@ -86,8 +86,8 @@ export function RecoveryCodePage() {
                 length={CODE_LENGTH}
                 mode="alphanumeric"
                 onChange={handleCodeChange}
-                label={t("recoveryCode.codeLabel")}
-                pasteLabel={t("recoveryCode.paste")}
+                label={t("rewardCode.codeLabel")}
+                pasteLabel={t("rewardCode.paste")}
                 error={errorMessage}
                 // Sole input on this screen, so focusing on arrival costs the
                 // user nothing and saves a tap. On iOS it also surfaces a code

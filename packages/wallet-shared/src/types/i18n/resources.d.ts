@@ -509,23 +509,23 @@ export default interface Resources {
       }
     },
     "installCode": {
-      "codeCopied": "Code copied!",
+      "codeCopied": "Reward code copied!",
       "codelessDescription": "Download the app and log in to claim your rewards.",
       "codelessTitle": "Don't lose your {{estimatedReward}}!",
       "copyCode": "Copy the code",
       "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
       "download": "Download the app",
-      "infoDescription": "When opening the app, tap <1>\"I have a recovery code\"</1>.",
+      "infoDescription": "When opening the app, tap <1>\"I have a reward code\"</1>.",
       "infoTitle": "Code valid for 3 days",
       "installedCodeToggle": "Or enter this code manually",
       "installedHeadline": "You're all set. Open the app to claim {{estimatedReward}}.",
       "installedMerchant": "Connected to {{merchantName}}",
-      "loading": "Generating your code...",
+      "loading": "Generating your reward code...",
       "openWallet": "Open Frak & claim {{estimatedReward}}",
       "openWalletCta": "Open my wallet",
       "processing": "Setting up your wallet...",
       "processingDone": "Your wallet is ready",
-      "title": "Don't lose your {{estimatedReward}}!\nCopy this code"
+      "title": "Don't lose your {{estimatedReward}}!\nCopy your reward code"
     },
     "monerium": {
       "account": "Monerium Account",
@@ -707,7 +707,6 @@ export default interface Resources {
         "skip": "Later",
         "title": "Don't miss any reward!"
       },
-      "recoveryCode": "I have a recovery code",
       "referral": {
         "appliedToast": "Referral code applied",
         "description": "Got a creator code? Enter it here. Otherwise, you can skip this step.",
@@ -717,6 +716,7 @@ export default interface Resources {
         "submitCta": "Apply code",
         "title": "Add a referral code"
       },
+      "rewardCode": "I have a reward code",
       "start": "Get started",
       "steps": {
         "one": {
@@ -742,24 +742,6 @@ export default interface Resources {
     },
     "pendingActions": {
       "walletAlreadyLinked": "This referral link is already linked to another wallet."
-    },
-    "recoveryCode": {
-      "codeLabel": "Recovery code",
-      "description": "Paste the code copied from wallet.frak.id to recover your earnings.",
-      "error": {
-        "alreadyLinked": "This code has already been used.",
-        "generic": "Something went wrong, please try again.",
-        "invalid": "Incorrect or expired code, check the code copied from wallet.frak.id",
-        "unresolved": "This code isn't linked to a purchase yet. Try again in a few minutes."
-      },
-      "paste": "Paste the code",
-      "success": {
-        "description": "You'll receive a notification as soon as a friend purchases via your link.",
-        "merchantInfo": "Connected to {{merchantName}}",
-        "title": "Your referral link has been found!"
-      },
-      "title": "Recover your code",
-      "validate": "Validate the code"
     },
     "reward": {
       "detail": {
@@ -806,6 +788,24 @@ export default interface Resources {
         "referral": "Referral",
         "unknown": "Reward"
       }
+    },
+    "rewardCode": {
+      "codeLabel": "Reward code",
+      "description": "Paste the reward code you copied from wallet.frak.id to claim your earnings.",
+      "error": {
+        "alreadyLinked": "This reward code has already been used.",
+        "generic": "Something went wrong, please try again.",
+        "invalid": "Incorrect or expired reward code, check the code copied from wallet.frak.id",
+        "unresolved": "This reward code isn't linked to a purchase yet. Try again in a few minutes."
+      },
+      "paste": "Paste the code",
+      "success": {
+        "description": "You'll receive a notification as soon as a friend purchases via your link.",
+        "merchantInfo": "Connected to {{merchantName}}",
+        "title": "Your referral link has been found!"
+      },
+      "title": "Enter your reward code",
+      "validate": "Validate the code"
     },
     "version": {
       "hardUpdate": {

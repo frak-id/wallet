@@ -30,8 +30,8 @@ export function RecoveryCodeSuccessModal({
             onOpenChange={(open) => {
                 if (!open) onClose();
             }}
-            title={t("recoveryCode.success.title")}
-            description={t("recoveryCode.success.description")}
+            title={t("rewardCode.success.title")}
+            description={t("rewardCode.success.description")}
         >
             <Box
                 display={"flex"}
@@ -42,14 +42,14 @@ export function RecoveryCodeSuccessModal({
             >
                 <CircleCheckIcon className={styles.successIcon} />
                 <Text variant="heading2" weight="semiBold">
-                    {t("recoveryCode.success.title")}
+                    {t("rewardCode.success.title")}
                 </Text>
                 <Text variant="bodySmall" weight="medium" color="secondary">
-                    {t("recoveryCode.success.description")}
+                    {t("rewardCode.success.description")}
                 </Text>
                 {merchant && (
                     <Text variant="bodySmall" weight="semiBold">
-                        {t("recoveryCode.success.merchantInfo", {
+                        {t("rewardCode.success.merchantInfo", {
                             merchantName: merchant.name,
                         })}
                     </Text>
