@@ -72,5 +72,11 @@ export function isPublicHost(host: string): boolean {
     if (normalized.includes(":") || normalized.startsWith("[")) {
         return !isPrivateIPv6(normalized);
     }
+    // A single-label host is a LAN name (`router`, `intranet`) or a search-domain completion,
+    // never a public one. https-only makes it hard to exploit, not safe to allow.
+    if (!normalized.includes(".")) return false;
+    if (normalized.endsWith(".home.arpa") || normalized.endsWith(".lan")) {
+        return false;
+    }
     return true;
 }

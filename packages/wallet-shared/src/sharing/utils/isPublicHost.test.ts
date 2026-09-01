@@ -48,6 +48,15 @@ describe("isPublicHost", () => {
         }
     });
 
+    it("rejects single-label hosts, which resolve on the LAN", () => {
+        // The exact targets the Tauri fetcher must not be pointed at: a search-domain
+        // completion reaches the user's own network.
+        for (const host of ["router", "intranet", "nas", "printer.home.arpa", "box.lan"]) {
+            expect(isPublicHost(host)).toBe(false);
+        }
+        expect(isPublicHost("cdn.example.com")).toBe(true);
+    });
+
     it("rejects private IPv6, bracketed or bare", () => {
         for (const host of [
             "::1",

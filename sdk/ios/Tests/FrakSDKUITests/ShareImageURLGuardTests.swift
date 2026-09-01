@@ -59,6 +59,17 @@ struct ShareImageURLGuardTests {
         #expect(isFetchableShareImageURL(try url("https://localhost.cdn.example.com/x.png")))
     }
 
+    @Test("single-label hosts are rejected, since they resolve on the LAN")
+    func singleLabelHostsAreRejected() throws {
+        // This SDK performs the fetch, so a search-domain completion would reach the
+        // user's own network from inside the merchant's app.
+        #expect(!isFetchableShareImageURL(try url("https://router/x.png")))
+        #expect(!isFetchableShareImageURL(try url("https://intranet/x.png")))
+        #expect(!isFetchableShareImageURL(try url("https://printer.home.arpa/x.png")))
+        #expect(!isFetchableShareImageURL(try url("https://box.lan/x.png")))
+        #expect(isFetchableShareImageURL(try url("https://cdn.example.com/x.png")))
+    }
+
     @Test("0.0.0.0/8 is rejected, since Darwin routes it to loopback")
     func unspecifiedAddressIsRejected() throws {
         #expect(!isFetchableShareImageURL(try url("https://0.0.0.0/x.png")))
