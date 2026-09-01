@@ -74,7 +74,7 @@ export function SharingView({
         view,
     } = { ...search, ...activation };
 
-    const { i18n } = useTranslation();
+    const { i18n, t: rawT } = useTranslation();
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
 
     const embedded = isHostEmbedded(embed);
@@ -100,12 +100,10 @@ export function SharingView({
     // into a page-lifetime singleton, so one merchant's overrides would outlive them and
     // land on the next. Building it during render also keeps `t` in step with the config,
     // which a store mutation would not — nothing re-renders on one.
-    const t = useMemo(() => {
-        const lng = i18n.resolvedLanguage ?? i18n.language;
+    const scopedT = useMemo(() => {
         const translations = config?.sdkConfig?.translations;
-        if (!translations || Object.keys(translations).length === 0) {
-            return i18n.getFixedT(lng, null);
-        }
+        if (!translations || Object.keys(translations).length === 0) return null;
+        const lng = i18n.resolvedLanguage ?? i18n.language;
         const scoped = i18n.cloneInstance({
             lng,
             // Without this the clone shares the parent's store and the merge is still global.
@@ -124,6 +122,12 @@ export function SharingView({
         );
         return scoped.getFixedT(lng, null);
     }, [config?.sdkConfig?.translations, i18n, i18n.resolvedLanguage]);
+
+    // The hook's own `t` when there is nothing to merge: it re-renders on
+    // `bindI18nStore: "added"`, and the English bundle is fetched after
+    // `languageChanged`. A captured `getFixedT` holds the store from before that lands and
+    // leaves the page on the French fallback.
+    const t = scopedT ?? rawT;
 
     // Neither credential travels from here: this page has no SDK keypair, so
     // it can sign no `#p=` proof, and an unprovable `a=` is refused once
