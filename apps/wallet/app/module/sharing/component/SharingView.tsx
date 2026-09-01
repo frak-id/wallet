@@ -1,9 +1,9 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { openExternalUrl } from "@frak-labs/wallet-shared/common/utils/openExternalUrl";
-import { translationKeyPathToObject } from "@frak-labs/wallet-shared/common/utils/translationKeyPathToObject";
 import {
     buildInstallUrl,
     SharingPage,
+    type SharingT,
     useSharingIdentity,
     useSharingPageController,
 } from "@frak-labs/wallet-shared/sharing";
@@ -74,7 +74,7 @@ export function SharingView({
         view,
     } = { ...search, ...activation };
 
-    const { i18n, t: rawT } = useTranslation();
+    const { i18n, t: liveT } = useTranslation();
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
 
     const embedded = isHostEmbedded(embed);
@@ -96,38 +96,32 @@ export function SharingView({
     // Branding falls back to the merchant config unless the caller overrode it.
     const { data: config } = useMerchantResolvedConfig({ merchantId });
 
-    // Merged into a clone, never the shared instance: `addResourceBundle` deep-merges
-    // into a page-lifetime singleton, so one merchant's overrides would outlive them and
-    // land on the next. Building it during render also keeps `t` in step with the config,
-    // which a store mutation would not — nothing re-renders on one.
-    const scopedT = useMemo(() => {
+    // A merchant's overrides are resolved here rather than merged into i18next. Merging needs a
+    // per-merchant instance, and `cloneInstance({ forkResourceStore: true })` does not give one:
+    // it shares the nested namespace objects, so a deep `addResourceBundle` writes through to
+    // the page-lifetime singleton and the next merchant reads the previous one's copy.
+    //
+    // Only the overridden key skips i18next; everything else goes through `liveT`, keeping the
+    // `customized` -> `common` chain and the re-render on a lazily fetched locale. An override
+    // is interpolated but not resolved, so a `$t(...)` inside one now renders literally —
+    // plurals and context were never expressible, since both need key suffixes.
+    const t = useMemo<SharingT>(() => {
         const translations = config?.sdkConfig?.translations;
-        if (!translations || Object.keys(translations).length === 0) return null;
-        const lng = i18n.resolvedLanguage ?? i18n.language;
-        const scoped = i18n.cloneInstance({
-            lng,
-            // Without this the clone shares the parent's store and the merge is still global.
-            forkResourceStore: true,
-            // Nothing to fetch once the store is forked: init synchronously rather than
-            // racing an async init queued behind this render.
-            initAsync: false,
-            partialBundledLanguages: false,
-        });
-        scoped.addResourceBundle(
-            lng,
-            "customized",
-            translationKeyPathToObject(translations),
-            true,
-            true
-        );
-        return scoped.getFixedT(lng, null);
-    }, [config?.sdkConfig?.translations, i18n, i18n.resolvedLanguage]);
-
-    // The hook's own `t` when there is nothing to merge: it re-renders on
-    // `bindI18nStore: "added"`, and the English bundle is fetched after
-    // `languageChanged`. A captured `getFixedT` holds the store from before that lands and
-    // leaves the page on the French fallback.
-    const t = scopedT ?? rawT;
+        if (!translations || Object.keys(translations).length === 0) {
+            return liveT;
+        }
+        const overridden: SharingT = (key, options) => {
+            const override = translations[key];
+            if (typeof override !== "string") return liveT(key, options);
+            return i18n.services.interpolator.interpolate(
+                override,
+                options ?? {},
+                i18n.resolvedLanguage ?? i18n.language,
+                i18n.options.interpolation ?? {}
+            );
+        };
+        return overridden;
+    }, [config?.sdkConfig?.translations, i18n, liveT]);
 
     // Neither credential travels from here: this page has no SDK keypair, so
     // it can sign no `#p=` proof, and an unprovable `a=` is refused once
