@@ -87,14 +87,13 @@ Rules:
 something better than a bare URL:
 
 ```
-frak-<pkg>://result?action=share&sid=…&title=…&text=…&image=…&rect=x,y,w,h
+frak-<pkg>://result?action=share&sid=…&title=…&text=…&image=…
 ```
 
 Every field is optional and absent means the pre-payload behaviour — the session's own tier-3 copy.
 **Empty-string values decode to null, not `""`**: an empty `EXTRA_SUBJECT` is worse than an absent
-one. `rect` is CSS pixels relative to the viewport, four comma-separated integers, iOS-only for the
-iPad popover anchor; Android drops it at the parser rather than carrying a dead field. Dedupe needs
-no change — `REPEATABLE_ACTIONS` already contains `share`, so `sentActions` never keys on the payload.
+one. Dedupe needs no change — `REPEATABLE_ACTIONS` already contains `share`, so `sentActions` never
+keys on the payload.
 
 Caps are enforced once, page-side at resolution, so web, Tauri and native all see the same string:
 `title` 120, `text` 280, `image` 512. Worst case ≈ 1.6 KB percent-encoded, inside every relevant

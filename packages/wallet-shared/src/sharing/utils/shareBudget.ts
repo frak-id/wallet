@@ -7,16 +7,19 @@ export const SHARE_BUDGET = {
 
 const ELLIPSIS = "…";
 
+/** Built once: constructing a segmenter costs more than the walk it serves. */
+const segmenter =
+    typeof Intl?.Segmenter === "function"
+        ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
+        : undefined;
+
 /** Grapheme clusters where available: a naive `slice` cuts inside a surrogate pair. */
 function* graphemes(value: string): Generator<string> {
-    if (typeof Intl?.Segmenter === "function") {
-        const segmenter = new Intl.Segmenter(undefined, {
-            granularity: "grapheme",
-        });
-        for (const { segment } of segmenter.segment(value)) yield segment;
+    if (!segmenter) {
+        yield* value;
         return;
     }
-    yield* value;
+    for (const { segment } of segmenter.segment(value)) yield segment;
 }
 
 /** Clips `value` to `max` characters, ellipsis included in the budget. */

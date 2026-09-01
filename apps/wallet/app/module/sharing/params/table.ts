@@ -63,6 +63,12 @@ const cappedStr =
         return truncateForShare(value, maxLength);
     };
 
+/**
+ * The `/sharing` param contract, read by both the query string and the
+ * activation fragment. `merchantId`, `clientId`, `link`, `appName`, `logoUrl`,
+ * `products`, `checkoutToken`, `redirectUrl`, `returnScheme` and `sid` are live
+ * host/Shopify params: renaming or tightening one is a behaviour change.
+ */
 export const SHARING_PARAMS = {
     merchantId: { decode: str, transport: "query" },
     clientId: { decode: str, transport: "query" },
