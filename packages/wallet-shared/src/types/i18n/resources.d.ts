@@ -198,25 +198,20 @@ export default interface Resources {
     "sdk": {
       "modal": {
         "dismiss": {
-          "primaryAction": "Continue browsing",
-          "primaryAction_sharing": "Share without being paid"
+          "primaryAction": "Continue browsing"
         },
         "final": {
           "description": "You've successfully completed all the steps.",
           "description_reward": "Check your earnings at any time on [wallet.frak.id](https://wallet.frak.id). You too can share with your friends, all your shares that lead to clicks, registrations or purchases generate new earnings!",
-          "description_sharing": "Your wallet has been created to receive your **{{productName}}** reward for sharing. To find your wallet, go to [wallet.frak.id](https://wallet.frak.id).",
           "dismissed": {
-            "description": "All good",
-            "description_sharing": "Share this article."
+            "description": "All good"
           },
           "title": "Success",
-          "title_reward": "Gains",
-          "title_sharing": "Share"
+          "title_reward": "Gains"
         },
         "login": {
           "description": "Login to your Frak account to get the best experience on **{{productName}}**",
           "description_reward": "{{productName}} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
-          "description_sharing": "{{productName}} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.",
           "primaryAction": "Create my account in 30 sec",
           "secondaryAction": "Use a QR code",
           "success": "Connection successful",

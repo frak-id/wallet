@@ -9,7 +9,7 @@ Checkout our documentation for more information's about the usage:
 
 ## API Surface
 
-The Core SDK exports 111 functions, types, and utilities organized into four categories:
+The Core SDK exports 119 functions, types, and utilities organized into four categories:
 
 ### Client
 

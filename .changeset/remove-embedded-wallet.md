@@ -2,6 +2,7 @@
 "@frak-labs/core-sdk": major
 "@frak-labs/react-sdk": major
 "@frak-labs/components": major
+"@frak-labs/nexus-sdk": patch
 ---
 
 Remove the embedded wallet and the modal's sharing step. Every share surface now goes through the sharing page.
@@ -15,7 +16,7 @@ The drawer the listener rendered over the partner site is gone, along with the R
 Nothing has to change on the merchant side:
 
 - `<frak-button-wallet>` keeps working. It opens the sharing page now, so the tag, its attributes and its Magento/legacy integrations are untouched.
-- `<frak-button-share click-action="embedded-wallet">` keeps working and lands on the sharing page, exactly like the retired `"share-modal"` value already did. `clickAction` is typed `"sharing-page"` from now on, but any string is still accepted at runtime, and the resolved value is still reported on the `share_button_clicked` event so you can see which merchants are still on a legacy config. With the embedded wallet gone the setting has no alternative left to select, so the WordPress and PrestaShop plugins stop emitting it entirely.
+- `<frak-button-share click-action="embedded-wallet">` keeps working and lands on the sharing page, exactly like the retired `"share-modal"` value already did. `clickAction` no longer selects a surface — every click opens the sharing page — so it stays typed to accept any string and the resolved value is still reported on the `share_button_clicked` event, which is how you find merchants still on a legacy config. With the embedded wallet gone the setting has no alternative left to select, so the WordPress and PrestaShop plugins stop emitting it entirely.
 - `window.FrakSetup.modalWalletConfig` is deprecated and narrowed to `{ metadata?: { position?: "left" | "right" } }`. Only the button position is still read, so integrations that inject it (Magento) keep their configured anchor.
 
 Stored merchant configs are left alone: the backend still accepts and emits `clickAction: "embedded-wallet"` and `components.buttonWallet`, both of which now resolve to the sharing page.
@@ -28,3 +29,7 @@ This part is a breaking change, hence the major:
 - `FinalActionType` no longer has its `sharing` variant; a `final` step takes `{ key: "reward" }`. Passing `{ key: "sharing" }` to `displayModal()` is now a type error rather than a silently dead path.
 
 The modal's login, SIWE and transaction steps are unchanged, as are `sendTransaction()` and `siweAuthenticate()`, which build their own steps and never touched the final one.
+
+A partner bundle cached before this release can still send `{ key: "sharing" }` over RPC. The listener coerces any non-reward final action to the reward screen on the way in, so such a call renders the reward screen rather than pairing sharing copy with a dismiss button.
+
+`@frak-labs/nexus-sdk` takes a patch: its Gapianne integration drops an unreachable wallet-button helper and a stale i18n override.

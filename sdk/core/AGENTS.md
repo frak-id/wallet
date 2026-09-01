@@ -1,6 +1,6 @@
 # sdk/core — Compass
 
-Framework-agnostic core SDK (111 public exports). Dual build: NPM (`dist/`, ESM+CJS+types) and CDN (`cdn/bundle.js`, IIFE, `window.FrakSDK`).
+Framework-agnostic core SDK (119 public exports). Dual build: NPM (`dist/`, ESM+CJS+types) and CDN (`cdn/bundle.js`, IIFE, `window.FrakSDK`).
 
 ## Key Files
 - `src/index.ts` — main barrel

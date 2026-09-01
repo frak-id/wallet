@@ -35,10 +35,6 @@ function mapModalMetadata(
             metadata.dismissActionTxt
         );
         resultMap.set(
-            "sdk.modal.dismiss.primaryAction_sharing",
-            metadata.dismissActionTxt
-        );
-        resultMap.set(
             "sdk.modal.dismiss.primaryAction_reward",
             metadata.dismissActionTxt
         );
@@ -78,15 +74,10 @@ function addMetadataToMap(
 
     if (title) {
         map.set(`sdk.modal.${key}.title`, title);
-        map.set(`sdk.modal.${key}.title_sharing`, title);
         map.set(`sdk.modal.${key}.title_reward`, title);
     }
     if (description) {
         map.set(`sdk.modal.${key}.description`, replaceReward(description));
-        map.set(
-            `sdk.modal.${key}.description_sharing`,
-            replaceReward(description)
-        );
         map.set(
             `sdk.modal.${key}.description_reward`,
             replaceReward(description)
@@ -94,15 +85,10 @@ function addMetadataToMap(
     }
     if (primaryActionText) {
         map.set(`sdk.modal.${key}.primaryAction`, primaryActionText);
-        map.set(`sdk.modal.${key}.primaryAction_sharing`, primaryActionText);
         map.set(`sdk.modal.${key}.primaryAction_reward`, primaryActionText);
     }
     if (secondaryActionText) {
         map.set(`sdk.modal.${key}.secondaryAction`, secondaryActionText);
-        map.set(
-            `sdk.modal.${key}.secondaryAction_sharing`,
-            secondaryActionText
-        );
         map.set(`sdk.modal.${key}.secondaryAction_reward`, secondaryActionText);
     }
 }

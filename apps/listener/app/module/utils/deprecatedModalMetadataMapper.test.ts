@@ -37,9 +37,9 @@ describe("mapDeprecatedModalMetadata", () => {
             expect(result["sdk.modal.dismiss.primaryAction"]).toBe(
                 "Maybe later"
             );
-            expect(result["sdk.modal.dismiss.primaryAction_sharing"]).toBe(
-                "Maybe later"
-            );
+            expect(
+                result["sdk.modal.dismiss.primaryAction_sharing"]
+            ).toBeUndefined();
             expect(result["sdk.modal.dismiss.primaryAction_reward"]).toBe(
                 "Maybe later"
             );
@@ -57,7 +57,7 @@ describe("mapDeprecatedModalMetadata", () => {
             };
             const result = mapDeprecatedModalMetadata(request as any);
             expect(result["sdk.modal.login.title"]).toBe("Welcome");
-            expect(result["sdk.modal.login.title_sharing"]).toBe("Welcome");
+            expect(result["sdk.modal.login.title_sharing"]).toBeUndefined();
             expect(result["sdk.modal.login.title_reward"]).toBe("Welcome");
         });
 
@@ -79,9 +79,9 @@ describe("mapDeprecatedModalMetadata", () => {
             expect(result["sdk.modal.login.description"]).toBe(
                 "Get {{ estimatedReward }} reward"
             );
-            expect(result["sdk.modal.login.description_sharing"]).toBe(
-                "Get {{ estimatedReward }} reward"
-            );
+            expect(
+                result["sdk.modal.login.description_sharing"]
+            ).toBeUndefined();
             expect(result["sdk.modal.login.description_reward"]).toBe(
                 "Get {{ estimatedReward }} reward"
             );
@@ -103,9 +103,9 @@ describe("mapDeprecatedModalMetadata", () => {
             };
             const result = mapDeprecatedModalMetadata(request as any);
             expect(result["sdk.modal.login.primaryAction"]).toBe("Continue");
-            expect(result["sdk.modal.login.primaryAction_sharing"]).toBe(
-                "Continue"
-            );
+            expect(
+                result["sdk.modal.login.primaryAction_sharing"]
+            ).toBeUndefined();
             expect(result["sdk.modal.login.primaryAction_reward"]).toBe(
                 "Continue"
             );
@@ -127,9 +127,9 @@ describe("mapDeprecatedModalMetadata", () => {
             };
             const result = mapDeprecatedModalMetadata(request as any);
             expect(result["sdk.modal.login.secondaryAction"]).toBe("Skip");
-            expect(result["sdk.modal.login.secondaryAction_sharing"]).toBe(
-                "Skip"
-            );
+            expect(
+                result["sdk.modal.login.secondaryAction_sharing"]
+            ).toBeUndefined();
             expect(result["sdk.modal.login.secondaryAction_reward"]).toBe(
                 "Skip"
             );
@@ -155,9 +155,9 @@ describe("mapDeprecatedModalMetadata", () => {
             expect(result["sdk.modal.login.dismissed.title"]).toBe(
                 "Dismissed Title"
             );
-            expect(result["sdk.modal.login.dismissed.title_sharing"]).toBe(
-                "Dismissed Title"
-            );
+            expect(
+                result["sdk.modal.login.dismissed.title_sharing"]
+            ).toBeUndefined();
             expect(result["sdk.modal.login.dismissed.title_reward"]).toBe(
                 "Dismissed Title"
             );
@@ -166,7 +166,7 @@ describe("mapDeprecatedModalMetadata", () => {
             );
             expect(
                 result["sdk.modal.login.dismissed.description_sharing"]
-            ).toBe("You dismissed with {{ estimatedReward }}");
+            ).toBeUndefined();
             expect(result["sdk.modal.login.dismissed.description_reward"]).toBe(
                 "You dismissed with {{ estimatedReward }}"
             );

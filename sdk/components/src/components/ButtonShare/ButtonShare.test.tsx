@@ -6,7 +6,6 @@ import * as useClientReadyHook from "@/hooks/useClientReady";
 import * as useLangHook from "@/hooks/useLang";
 import * as useRewardHook from "@/hooks/useReward";
 import { ButtonShare } from "./ButtonShare";
-import type { ButtonShareProps } from "./types";
 
 // Mock the hooks
 vi.mock("@/hooks/useClientReady", () => ({
@@ -170,14 +169,7 @@ describe.sequential("ButtonShare", () => {
             // Both values were retired in favour of `displaySharingPage`;
             // existing merchant configs still ship those strings so the
             // component must gracefully fall through to the sharing-page UI.
-            render(
-                <ButtonShare
-                    // string value that is no longer in the typed union.
-                    clickAction={
-                        legacyClickAction as ButtonShareProps["clickAction"]
-                    }
-                />
-            );
+            render(<ButtonShare clickAction={legacyClickAction} />);
             const button = screen.getByRole("button");
 
             fireEvent.click(button);

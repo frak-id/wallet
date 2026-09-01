@@ -10,12 +10,16 @@ type PostPurchaseVariant = "referrer" | "referee";
 /**
  * Resolved click action reported with `share_button_clicked`.
  *
- * `"share-modal"` and `"embedded-wallet"` are retired surfaces: merchant
- * configs predating the migration still carry those values and every one of
- * them now routes to the sharing page, so the literals stay to keep the
- * reported value faithful to the stored config.
+ * Every click now opens the sharing page, so this only describes the stored
+ * merchant config. The named values are the ones the product has shipped;
+ * arbitrary strings stay accepted so a config predating the migration is
+ * reported faithfully rather than coerced.
  */
-type ShareClickAction = "share-modal" | "embedded-wallet" | "sharing-page";
+type ShareClickAction =
+    | "share-modal"
+    | "embedded-wallet"
+    | "sharing-page"
+    | (string & {});
 
 export type SdkComponentEventMap = {
     // Share button — click carries the resolved action + reward presence so
