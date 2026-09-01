@@ -17,7 +17,10 @@ internal object SharingPageUrl {
         val sanitised =
             packageId
                 .lowercase()
-                .filter { it.isDigit() || it in 'a'..'z' || it in ".-_" }
+                // `it.code < 128` because Kotlin's `isDigit` is `Character.isDigit`, i.e. any
+                // Unicode Nd — and the wallet's own pattern is ASCII-only, so a Devanagari digit
+                // would survive here and be rejected there, dropping every callback.
+                .filter { it.code < 128 && (it.isDigit() || it in 'a'..'z' || it in ".-_") }
                 .take(MAX_SCHEME_SUFFIX)
         return "frak-" + sanitised.ifEmpty { "app" } // Guards an id made entirely of rejected characters.
     }
@@ -36,7 +39,12 @@ internal object SharingPageUrl {
         products: String? = null,
         seededReward: String? = null,
         confirmed: Boolean = false,
+        /** BCP-47. `lng` is what the page's language detector reads first, ahead of `navigator`. */
+        language: String? = null,
         // No presentation params: the sheet's chrome is injected per web view by [SharingHostStyle].
+        shareTitle: String? = null,
+        shareText: String? = null,
+        shareImage: String? = null,
     ): String =
         buildString {
             append(walletOrigin).append("/sharing?embed=native")
@@ -50,11 +58,15 @@ internal object SharingPageUrl {
                 FrakSdkVersion.QUERY_PARAMETER_NAME,
             ).append('=')
                 .append(PercentEncoding.encode(FrakSdkVersion.CURRENT))
+            language?.let { append("&lng=").append(PercentEncoding.encode(it)) }
             appName?.let { append("&appName=").append(PercentEncoding.encode(it)) }
             logoUrl?.let { append("&logoUrl=").append(PercentEncoding.encode(it)) }
             link?.let { append("&link=").append(PercentEncoding.encode(it)) }
             products?.let { append("&products=").append(PercentEncoding.encode(it)) }
             seededReward?.let { append("&seedReward=").append(PercentEncoding.encode(it)) }
+            shareTitle?.let { append("&shareTitle=").append(PercentEncoding.encode(it)) }
+            shareText?.let { append("&shareText=").append(PercentEncoding.encode(it)) }
+            shareImage?.let { append("&shareImage=").append(PercentEncoding.encode(it)) }
             if (confirmed) append("&view=confirmation")
         }
 
@@ -69,6 +81,7 @@ internal object SharingPageUrl {
         packageId: String,
         appName: String? = null,
         logoUrl: String? = null,
+        language: String? = null,
     ): String =
         buildString {
             append(walletOrigin).append("/sharing?embed=native&state=warm")
@@ -80,6 +93,7 @@ internal object SharingPageUrl {
                 .append(FrakSdkVersion.QUERY_PARAMETER_NAME)
                 .append('=')
                 .append(PercentEncoding.encode(FrakSdkVersion.CURRENT))
+            language?.let { append("&lng=").append(PercentEncoding.encode(it)) }
             appName?.let { append("&appName=").append(PercentEncoding.encode(it)) }
             logoUrl?.let { append("&logoUrl=").append(PercentEncoding.encode(it)) }
         }
@@ -89,6 +103,7 @@ internal object SharingPageUrl {
      * the page is not remounted. Only keys with something to say are written: the page spreads this
      * over the warm URL's own params, so an empty value would erase the config value under it.
      */
+    @Suppress("LongParameterList")
     fun activationFragment(
         sessionId: String,
         link: String? = null,
@@ -96,6 +111,9 @@ internal object SharingPageUrl {
         logoUrl: String? = null,
         seededReward: String? = null,
         confirmed: Boolean = false,
+        shareTitle: String? = null,
+        shareText: String? = null,
+        shareImage: String? = null,
     ): String =
         buildString {
             append("#sid=").append(PercentEncoding.encode(sessionId))
@@ -106,6 +124,9 @@ internal object SharingPageUrl {
             // Only when the request overrode it; otherwise the warm URL's config value stands.
             logoUrl?.let { append("&logoUrl=").append(PercentEncoding.encode(it)) }
             seededReward?.let { append("&seedReward=").append(PercentEncoding.encode(it)) }
+            shareTitle?.let { append("&shareTitle=").append(PercentEncoding.encode(it)) }
+            shareText?.let { append("&shareText=").append(PercentEncoding.encode(it)) }
+            shareImage?.let { append("&shareImage=").append(PercentEncoding.encode(it)) }
             if (confirmed) append("&view=confirmation")
         }
 

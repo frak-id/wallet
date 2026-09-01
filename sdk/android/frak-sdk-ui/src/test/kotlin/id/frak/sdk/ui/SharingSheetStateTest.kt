@@ -1,12 +1,17 @@
+@file:OptIn(InternalFrakApi::class)
+
 package id.frak.sdk.ui
 
 import android.app.Application
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.os.Looper.getMainLooper
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import id.frak.sdk.Frak
+import id.frak.sdk.InternalFrakApi
+import id.frak.sdk.OpenAppResult
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.rewards.BestReward
 import kotlinx.coroutines.CompletableDeferred
@@ -373,6 +378,69 @@ class SharingSheetStateTest {
         }
 
     @Test
+    fun `an activated page is not abandoned to tier 3 when ready never arrives`() =
+        runTest {
+            val client = FakeSharingClient()
+            var result: SharingResult? = null
+            val probe = newState(client)
+            probe.prepare(sharingRequest())
+            advanceUntilIdle()
+            val warmBase = requireNotNull(probe.session?.warmBaseUrl)
+
+            val state = newState(client, activationBaseUrl = warmBase) { result = it }
+            state.prepare(sharingRequest())
+            val gate = launchDeadline(state)
+            runCurrent()
+            val view = WebView(context)
+            view.loadUrl(warmBase)
+            state.attach(view)
+            shadowOf(getMainLooper()).idle()
+
+            // Deliberately no page action. `ready` rides two requestAnimationFrames, and a WebView
+            // produces no frames until the sheet has attached it and drawn it — so on a cold start
+            // this is the path that used to raise the chooser over a page that was already there.
+            advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
+            advanceUntilIdle()
+
+            assertTrue("only a finished document can be activated", state.pageLoaded)
+            assertNull("tier 3 must not fire over a document that is already loaded", result)
+            assertEquals("and must not share behind the user's back", 0, client.trackCount)
+            gate.join()
+        }
+
+    @Test
+    fun `a share from an activated page settles the budget instead of racing it`() =
+        runTest {
+            val client = FakeSharingClient()
+            val results = mutableListOf<SharingResult>()
+            // Never attached, so the activation navigation that would record a finished document
+            // has not run: a share is the only thing here that can settle the budget.
+            val state = newState(client, activationBaseUrl = NORMALISED_WARM_URL) { results += it }
+
+            state.prepare(sharingRequest())
+            val gate = launchDeadline(state)
+            // runCurrent, not advanceUntilIdle: the latter would also fire the deadline under test.
+            runCurrent()
+            state.onPageAction(SharingPageAction.Share(title = null, text = null))
+            advanceUntilIdle()
+
+            advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
+            advanceUntilIdle()
+
+            assertFalse("no document was finished on this state", state.pageLoaded)
+            assertEquals("the deadline must not raise a second chooser", 1, client.trackCount)
+            // Still open on its confirmation screen: a deadline that fired would have shared,
+            // reported and closed the sheet under the chooser the user is looking at.
+            assertTrue("the sheet must outlive the budget it already met", results.isEmpty())
+
+            state.dismiss()
+            advanceUntilIdle()
+            assertEquals(1, results.size)
+            assertTrue("was: ${results.first()}", results.first() is SharingResult.Shared)
+            gate.join()
+        }
+
+    @Test
     fun `the deadline and a page error together still fall back only once`() =
         runTest {
             val client = FakeSharingClient()
@@ -499,6 +567,113 @@ class SharingSheetStateTest {
         }
 
     @Test
+    fun `an installed wallet is deep linked instead of shown the install page`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.walletInstalled = true
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            assertEquals("the deep link carries the identity itself", 1, client.openFrakAppCount)
+            assertEquals(
+                "an install code has nothing to reconnect on a device that already has the wallet",
+                0,
+                client.installPageUrlCount,
+            )
+            assertEquals(SharingResult.WalletOpened, result)
+        }
+
+    @Test
+    fun `a probe the merchant's manifest refused still reaches the install page`() =
+        runTest {
+            val client = FakeSharingClient()
+            // What a missing `<queries>` entry looks like from here: installed, answered false.
+            client.walletInstalled = false
+            val state = newState(client) {}
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            val view = WebView(context)
+            state.attach(view)
+
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            assertEquals("a refused probe must degrade, never block", client.installPage, shadowOf(view).lastLoadedUrl)
+            assertEquals(0, client.openFrakAppCount)
+        }
+
+    @Test
+    fun `a deep link nothing handles falls through to the install page`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.walletInstalled = true
+            // The probe said yes and the launch still found no handler — the page is the fallback.
+            client.openAppResult = OpenAppResult.Failed
+            val state = newState(client) {}
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            val view = WebView(context)
+            state.attach(view)
+
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            assertEquals(1, client.openFrakAppCount)
+            assertEquals(client.installPage, shadowOf(view).lastLoadedUrl)
+        }
+
+    @Test
+    fun `a second install tap does not fetch a second install page`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client) {}
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            // The page's footer stays tappable across the whole native round trip, so both taps
+            // land before the first fetch returns.
+            state.onPageAction(SharingPageAction.Install)
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            assertEquals("two taps must not race two install pages", 1, client.installPageUrlCount)
+        }
+
+    @Test
+    fun `share again reopens the install guard`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client) {}
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+            state.onPageAction(SharingPageAction.ShareAgain)
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            assertEquals(
+                "the user is back on a page that offers Install again",
+                2,
+                client.installPageUrlCount,
+            )
+        }
+
+    @Test
     fun `a renderer crash after the page loaded does not raise a chooser`() =
         runTest {
             val client = FakeSharingClient()
@@ -534,7 +709,8 @@ class SharingSheetStateTest {
         runTest {
             val app = ApplicationProvider.getApplicationContext<Application>()
             val client = FakeSharingClient()
-            val state = newState(client)
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
 
             state.openExternally(
                 "https://play.google.com/store/apps/details?id=id.frak.wallet&referrer=merchantId%3Dm",
@@ -543,6 +719,28 @@ class SharingSheetStateTest {
 
             assertEquals("the deep link must be tried first", 1, client.openFrakAppCount)
             assertNull("Play must not be opened over the handoff", shadowOf(app).nextStartedActivity)
+            assertNull("the sheet stays open, so nothing is reported yet", result)
+
+            state.dismiss()
+
+            assertEquals(SharingResult.WalletOpened, result)
+        }
+
+    @Test
+    fun `a store listing handoff that finds no handler reports nothing`() =
+        runTest {
+            val client = FakeSharingClient()
+            client.openAppResult = OpenAppResult.Failed
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
+
+            state.openExternally(
+                "https://play.google.com/store/apps/details?id=id.frak.wallet&referrer=merchantId%3Dm",
+            )
+            advanceUntilIdle()
+            state.dismiss()
+
+            assertEquals(SharingResult.Dismissed, result)
         }
 
     @Test
@@ -600,7 +798,7 @@ class SharingSheetStateTest {
             advanceUntilIdle()
             state.attach(WebView(context))
 
-            state.onPageAction(SharingPageAction.Share)
+            state.onPageAction(SharingPageAction.Share(title = null, text = null))
             advanceUntilIdle()
             state.dismiss()
             advanceUntilIdle()
@@ -672,8 +870,8 @@ class SharingSheetStateTest {
             advanceUntilIdle()
             state.attach(WebView(context))
 
-            state.onPageAction(SharingPageAction.Share)
-            state.onPageAction(SharingPageAction.Share)
+            state.onPageAction(SharingPageAction.Share(title = null, text = null))
+            state.onPageAction(SharingPageAction.Share(title = null, text = null))
             advanceUntilIdle()
 
             assertEquals("one share must bill one interaction", 1, client.trackCount)
@@ -913,7 +1111,8 @@ class SharingSheetStateTest {
 
             state.prepare(sharingRequest())
             launchDeadline(state)
-            advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
+            // Past the page budget but short of the build one, which is the longer of the two.
+            advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS + 1)
             runCurrent()
             assertTrue("the page deadline alone cannot rescue a hung build", results.isEmpty())
 
@@ -1011,16 +1210,180 @@ class SharingSheetStateTest {
         }
 
     @Test
-    fun `an activated sheet shows the warm page instead of covering it`() =
+    fun `an activated sheet stays covered until the page paints`() =
         runTest {
             val client = FakeSharingClient()
 
+            // A warm view has never been in a window, so its finished document has drawn nothing.
             val activated = newState(client, activationBaseUrl = NORMALISED_WARM_URL)
-            assertTrue("nothing to cover", activated.pageVisible)
+            assertFalse("a warm document is not a painted one", activated.pageVisible)
 
             val cold = newState(client)
             assertFalse("a cold view really is blank, and must stay covered", cold.pageVisible)
+
+            activated.onPageAction(SharingPageAction.Ready)
+            assertTrue("the activation's own ready is what uncovers it", activated.pageVisible)
         }
+
+    @Test
+    fun `a page action is a paint signal, except a refusal to render`() =
+        runTest {
+            val client = FakeSharingClient()
+
+            // The skeleton has no max-hold timer any more: a user driving the document is the
+            // evidence that replaced it.
+            val driven = newState(client)
+            driven.onPageAction(SharingPageAction.Copy)
+            assertTrue("a user cannot tap a page that is not on screen", driven.pageVisible)
+
+            val refused = newState(client)
+            refused.onPageAction(SharingPageAction.Error)
+            assertFalse("the page saying it rendered nothing must not uncover it", refused.pageVisible)
+        }
+
+    @Test
+    fun `a page-bearing session that never loads still shares localised text`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            client.metadataNameValue = "Kettle"
+            val state = newState(client)
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            assertTrue("precondition: build succeeded with a page", state.session?.hasPage == true)
+
+            val gate = launchDeadline(state)
+            advanceUntilIdle()
+
+            val send = sentShareIntent(app)
+            assertEquals(
+                "the body must carry the tier-3 copy, not a bare link",
+                "Discover this amazing product!\n\n${client.link}",
+                send?.getStringExtra(Intent.EXTRA_TEXT),
+            )
+            assertEquals("Kettle invite link", send?.getStringExtra(Intent.EXTRA_SUBJECT))
+            gate.join()
+        }
+
+    @Test
+    fun `the page's share payload becomes the chooser's extras`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share(title = "Kettle deal", text = "Grab it!"))
+            advanceUntilIdle()
+
+            val send = sentShareIntent(app)
+            assertEquals("text/plain", send?.type)
+            assertEquals("Grab it!\n\n${client.link}", send?.getStringExtra(Intent.EXTRA_TEXT))
+            assertEquals("Kettle deal", send?.getStringExtra(Intent.EXTRA_SUBJECT))
+            assertEquals("Kettle deal", send?.getStringExtra(Intent.EXTRA_TITLE))
+        }
+
+    @Test
+    fun `a payload with no text falls back to the session's copy, not a bare link`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share(title = "Kettle deal", text = null))
+            advanceUntilIdle()
+
+            val send = sentShareIntent(app)
+            assertEquals(
+                "Discover this amazing product!\n\n${client.link}",
+                send?.getStringExtra(Intent.EXTRA_TEXT),
+            )
+        }
+
+    @Test
+    fun `a blank payload falls back to the session's own copy`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            client.metadataNameValue = "Kettle"
+            val state = newState(client)
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share(title = " ", text = "   "))
+            advanceUntilIdle()
+
+            val send = sentShareIntent(app)
+            assertEquals(
+                "a blank body must not suppress the session's copy, nor leave empty lines",
+                "Discover this amazing product!\n\n${client.link}",
+                send?.getStringExtra(Intent.EXTRA_TEXT),
+            )
+            assertEquals(
+                "a blank title must fall through, not become an empty subject",
+                "Kettle invite link",
+                send?.getStringExtra(Intent.EXTRA_SUBJECT),
+            )
+        }
+
+    @Test
+    fun `an over-budget payload is clipped with an ellipsis`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share(title = "\u00e9".repeat(200), text = null))
+            advanceUntilIdle()
+
+            val subject = sentShareIntent(app)?.getStringExtra(Intent.EXTRA_SUBJECT)
+            assertNotNull("precondition: a subject was set", subject)
+            assertEquals("the title must be clipped to its budget", 120, subject?.length ?: 0)
+            assertTrue("and marked as clipped", subject?.endsWith("\u2026") == true)
+        }
+
+    @Test
+    fun `the chooser flags the new task and hides its own header`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(sharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share(title = "Kettle deal", text = null))
+            advanceUntilIdle()
+
+            val chooser = shadowOf(app).nextStartedActivity
+            assertTrue(
+                "the chooser leaves the sheet's task",
+                (chooser?.flags ?: 0) and Intent.FLAG_ACTIVITY_NEW_TASK != 0,
+            )
+            assertNull(
+                "the share title is not the chooser's header",
+                chooser?.getStringExtra(Intent.EXTRA_TITLE),
+            )
+        }
+
+    /** The `ACTION_SEND` the chooser wraps, which is where every extra actually lives. */
+    private fun sentShareIntent(app: Application): Intent? =
+        shadowOf(app).nextStartedActivity?.getParcelableExtra(Intent.EXTRA_INTENT)
 
     private fun TestScope.launchDeadline(state: SharingSheetState) =
         launch { state.awaitLoadDeadline(SHEET_LOAD_DEADLINE_MILLIS) }
@@ -1033,9 +1396,9 @@ class SharingSheetStateTest {
             "https://wallet.frak.id/sharing?embed=native&state=warm&view=share"
 
         /** Mirrors `SharingPresentation`'s own constant. */
-        const val SHEET_LOAD_DEADLINE_MILLIS = 1_500L
+        const val SHEET_LOAD_DEADLINE_MILLIS = 5_000L
 
-        /** Mirrors `SharingSheetState`'s own private constant. */
+        /** Mirrors `SharingSessionBuilder`'s own private constant. */
         const val BUILD_DEADLINE_MILLIS = 8_000L
     }
 }

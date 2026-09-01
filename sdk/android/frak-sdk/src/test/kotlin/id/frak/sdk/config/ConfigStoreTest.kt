@@ -305,7 +305,8 @@ class ConfigStoreTest {
 
             repeat(3) {
                 val failure = runCatching { configStore.resolve(query, forceRefresh = false) }.exceptionOrNull()
-                assertTrue("expected Network, got $failure", failure is FrakError.Network)
+                assertTrue("expected BackingOff, got $failure", failure is FrakError.BackingOff)
+                assertTrue("the window is still open", (failure as FrakError.BackingOff).retryAfterSeconds > 0.0)
             }
 
             assertEquals(afterFirst, transport.requests.size)

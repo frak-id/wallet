@@ -24,6 +24,13 @@ class SharingPageUrlTest {
     }
 
     @Test
+    fun `strips non-ascii digits the wallet's ascii-only pattern would reject`() {
+        // Devanagari 1-2-3: Character.isDigit accepts them, the wallet's `[a-z0-9._-]` does not.
+        assertEquals("frak-app", SharingPageUrl.returnScheme("\u0967\u0968\u0969"))
+        assertTrue(walletPattern.matches(SharingPageUrl.returnScheme("com.acme.\u0967app")))
+    }
+
+    @Test
     fun `falls back rather than emitting a bare prefix`() {
         assertTrue(walletPattern.matches(SharingPageUrl.returnScheme("///")))
     }
@@ -110,6 +117,107 @@ class SharingPageUrlTest {
                 confirmed = true,
             )
         assertTrue(url.endsWith("&view=confirmation"))
+    }
+
+    @Test
+    fun `the language tag reaches the page as lng, on both the tap URL and the warm URL`() {
+        val built =
+            SharingPageUrl.build(
+                walletOrigin = "https://wallet.frak.id",
+                merchantId = MERCHANT_ID,
+                clientId = CLIENT_ID,
+                packageId = "com.acme.app",
+                sessionId = "1",
+                language = "fr-CA",
+            )
+        val warmed =
+            SharingPageUrl.warm(
+                walletOrigin = "https://wallet.frak.id",
+                merchantId = MERCHANT_ID,
+                clientId = CLIENT_ID,
+                packageId = "com.acme.app",
+                language = "fr-CA",
+            )
+        assertTrue(built.contains("&lng=fr-CA"))
+        assertTrue(warmed.contains("&lng=fr-CA"))
+    }
+
+    @Test
+    fun `no language writes no lng, so the page falls back to its own detection`() {
+        val url =
+            SharingPageUrl.build(
+                walletOrigin = "https://wallet.frak.id",
+                merchantId = MERCHANT_ID,
+                clientId = CLIENT_ID,
+                packageId = "com.acme.app",
+                sessionId = "1",
+            )
+        assertTrue(!url.contains("lng="))
+    }
+
+    @Test
+    fun `a warm URL built with one language does not match one built with another`() {
+        fun warm(language: String?) =
+            SharingPageUrl.warm(
+                walletOrigin = "https://wallet.frak.id",
+                merchantId = MERCHANT_ID,
+                clientId = CLIENT_ID,
+                packageId = "com.acme.app",
+                language = language,
+            )
+        // The session compares these strings to decide whether it can activate a warm view, so a
+        // language that changes between warm and tap must cost the warm view, never the language.
+        assertTrue(warm("en") != warm("fr"))
+        assertTrue(warm("en") == warm("en"))
+    }
+
+    @Test
+    fun `carries the share override params, percent-encoded`() {
+        val url =
+            SharingPageUrl.build(
+                walletOrigin = "https://wallet.frak.id",
+                merchantId = MERCHANT_ID,
+                clientId = CLIENT_ID,
+                packageId = "com.acme.app",
+                sessionId = "1",
+                shareTitle = "Kettle deal",
+                shareText = "Grab it!",
+                shareImage = "https://cdn.example.com/p.png",
+            )
+        assertTrue(url.contains("&shareTitle=Kettle%20deal"))
+        assertTrue(url.contains("&shareText=Grab%20it%21"))
+        assertTrue(url.contains("&shareImage=https%3A%2F%2Fcdn.example.com%2Fp.png"))
+    }
+
+    @Test
+    fun `omits share override params entirely when the request had none`() {
+        val url = SharingPageUrl.build("https://wallet.frak.id", MERCHANT_ID, CLIENT_ID, "com.acme.app", "1")
+        assertFalse(url.contains("shareTitle"))
+        assertFalse(url.contains("shareText"))
+        assertFalse(url.contains("shareImage"))
+    }
+
+    @Test
+    fun `the activation fragment carries the same share override params`() {
+        val fragment =
+            SharingPageUrl.activationFragment(
+                sessionId = "1",
+                shareTitle = "Kettle deal",
+                shareText = "Grab it!",
+                shareImage = "https://cdn.example.com/p.png",
+            )
+        assertTrue(fragment.contains("&shareTitle=Kettle%20deal"))
+        assertTrue(fragment.contains("&shareText=Grab%20it%21"))
+        assertTrue(fragment.contains("&shareImage=https%3A%2F%2Fcdn.example.com%2Fp.png"))
+    }
+
+    @Test
+    fun `an unset share override does not erase the warm page's own value`() {
+        // An absent param falls through to the warm URL's own params instead of overwriting them with nothing.
+        val fragment = SharingPageUrl.activationFragment(sessionId = "1")
+        assertFalse(fragment.contains("shareTitle"))
+        assertFalse(fragment.contains("shareText"))
+        assertFalse(fragment.contains("shareImage"))
     }
 
     private companion object {

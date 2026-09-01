@@ -8,6 +8,7 @@
   "module": "src/index.ts",
   "main": "./src/index.ts",
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "test": "vitest"
   },
   "dependencies": {
@@ -17,7 +18,8 @@
     "@frak-labs/test-foundation": "workspace:*",
     "@vitest/ui": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@typescript/native": "catalog:"
   },
   "exports": {
     ".": {
@@ -54,6 +56,11 @@
       "types": "./src/constants/installTicket.ts",
       "import": "./src/constants/installTicket.ts",
       "default": "./src/constants/installTicket.ts"
+    },
+    "./constants/serverMintedId": {
+      "types": "./src/constants/serverMintedId.ts",
+      "import": "./src/constants/serverMintedId.ts",
+      "default": "./src/constants/serverMintedId.ts"
     }
   }
 }

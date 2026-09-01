@@ -9,30 +9,20 @@
     @MainActor
     final class SharingPresentation {
         let model: SharingSheetModel
-        let webView: SharingWebView
+        /// Swapped when recovery rebuilds the engine, so the sheet presents the new one.
+        private(set) var webView: SharingWebView
 
         private let pool: SharingWebViewPool
         private var preparation: Task<Void, Never>?
         private var disposed = false
-        private var settled = false
-
-        /// A strong reference to itself, held only across a deferred teardown.
-        ///
-        /// `SharingPresenter.finish` nils its own `presentation` before calling `dispose`, and the
-        /// completion `dispose` hands to the model captures `self` weakly — so on the deferred path
-        /// nothing else is left holding this presentation, it deallocates, and the completion finds
-        /// itself gone. That silently drops the merchant's `onResult` and leaves
-        /// `SharingPresenter.disposing` stuck true, wedging every later sheet: the exact failure the
-        /// deferral exists to prevent, in exactly the case it exists for. `settle` clears this, and
-        /// `abandonGrace` guarantees `settle` runs, so the cycle is bounded rather than a leak.
-        private var selfUntilSettled: SharingPresentation?
-
-        /// How long a teardown waits for an in-flight attribution before closing the outcome
-        /// channel anyway. Only a hung `NativeShare` chooser ever reaches it.
-        private static let abandonGrace: TimeInterval = 5
 
         /// Whether a sheet took ownership; decides which teardown signal disposes this.
         private(set) var wasPresented = false
+
+        /// Whether SwiftUI has taken the web view out of the hierarchy, and whether the pool has
+        /// had it back. The two are separate because either can happen first.
+        private var contentDismantled = false
+        private var reclaimed = false
 
         private init(model: SharingSheetModel, webView: SharingWebView, pool: SharingWebViewPool) {
             self.model = model
@@ -44,73 +34,56 @@
             wasPresented = true
         }
 
-        /// Idempotent, and deliberately not driven by `.onDisappear`, which also fires when a
-        /// `UIActivityViewController` covers the sheet.
-        ///
-        /// - Parameter onSettled: called exactly once — synchronously if nothing was resolving, or
-        ///   later once `SharingSheetModel.abandon(onSettled:)` decides it can proceed. The model
-        ///   and the pooled web view are released immediately either way; only the outcome channel
-        ///   waits, which is the whole of what a deferred outcome needs.
-        func dispose(onSettled: @escaping () -> Void) {
-            guard !disposed else {
-                onSettled()
-                return
-            }
-            disposed = true
-            // Cancel first, regardless of what `abandon` decides below: this is the *other*
-            // protection dispose has always given, for a stale build's own `prepare()` task, not
-            // for share/copy/fallback. Cancelling it early stops it from resuming into a build
-            // this presentation no longer wants, cooperative cancellation notwithstanding.
-            preparation?.cancel()
-            preparation = nil
-            // Resources go back now, not when the deferral settles, which is also all Android's
-            // `abandon` defers — the `Dismissed` report, never the teardown. That distinction is
-            // load-bearing here: `NativeShare.share()` can hang when a chooser is accepted and then
-            // torn down (its own doc says so), and a hang that also held the pooled web view would
-            // leave it marked lent forever, handing every later session a cold one. An in-flight
-            // attribution needs none of this — `copy()` and `fallBack(to:)` never touch the web
-            // view, and `share()`'s post-share `confirm()` navigation is moot on a sheet already gone.
-            model.release()
-            pool.release(webView)
-            // Set before asking, since `abandon` may settle synchronously and clear it again.
-            selfUntilSettled = self
-            model.abandon { [weak self] in
-                self?.settle(onSettled)
-            }
-            // Bound the wait for the same hang. Unbounded, it would cost the merchant this
-            // session's `onResult` entirely and leave `SharingPresenter.disposing` stuck true, so
-            // the sheet could never open again — a worse failure than the `.dismissed` race 9.1
-            // is about. Comfortably longer than a chooser plus the tracking call behind it.
-            guard !settled else { return }
-            Task { @MainActor [weak self] in
-                try? await Task.sleep(nanoseconds: UInt64(Self.abandonGrace * 1_000_000_000))
-                self?.settle(onSettled)
-            }
+        /// SwiftUI has taken this session's web view off screen for good.
+        func onContentDismantled() {
+            contentDismantled = true
+            reclaimWebView()
         }
 
-        /// One-shot: whichever of the deferral and its bound arrives first closes the session.
+        /// Hands the pooled view back, at most once, and never before this session is done with it.
         ///
-        /// Nilling the callbacks is what stops a stale, cancelled build from a previous session
-        /// writing into whatever session replaced it. It waits, unlike the release above: this is
-        /// the channel a deferred real outcome still has to travel down.
-        private func settle(_ onSettled: () -> Void) {
-            guard !settled else { return }
-            settled = true
+        /// The presenter calls this itself before starting the next session: SwiftUI dismantles a
+        /// closed sheet's content *after* the next sheet is already up, so a dismantle left to its
+        /// own timing can arrive once the pool has re-lent this very view — and `release` detaches
+        /// it and re-warms it, which strands the live sheet on its skeleton showing warm content.
+        func reclaimWebView() {
+            guard disposed, !reclaimed else { return }
+            reclaimed = true
+            pool.release(webView)
+        }
+
+        /// Ends the session. Idempotent, and deliberately not driven by `.onDisappear`, which also
+        /// fires when a `UIActivityViewController` covers the sheet.
+        ///
+        /// Synchronous: an outcome still resolving loses to the `.dismissed` the caller is about to
+        /// report. That race is a local queue append behind the dismissal animation, and Android
+        /// accepts the same one on its gesture path.
+        func dispose() {
+            guard !disposed else { return }
+            disposed = true
+            // Stops a stale build resuming into a session this presentation has dropped,
+            // cooperative cancellation notwithstanding.
+            preparation?.cancel()
+            preparation = nil
+            model.release()
+            // A presented sheet still has frames to draw with this view in them, so its own
+            // container hands it back from `dismantleUIView`. One that never appeared has no
+            // container to do that, and one already dismantled has nothing left to wait for.
+            if !wasPresented || contentDismantled { reclaimWebView() }
+            // Severs the session: `share()`/`copy()`/`fallBack(to:)` are un-cancelled tasks that
+            // outlive the sheet, and their closures write the presenter's `best` and flip its
+            // `isPresented` — which by now may belong to the next session.
             model.onOutcome = nil
             model.onClose = nil
-            // Moved to a local before the property is cleared: `selfUntilSettled` may hold the last
-            // reference to `self`, and releasing it inline would deallocate this object while it is
-            // still running. `withExtendedLifetime` keeps it past `onSettled`, which the optimizer
-            // is otherwise free to release before.
-            let keepAlive = selfUntilSettled
-            selfUntilSettled = nil
-            onSettled()
-            withExtendedLifetime(keepAlive) {}
         }
 
         static func start(
             pool: SharingWebViewPool,
             request: SharingRequest,
+            install: FrakInstallPresentation,
+            detectInstall: Bool,
+            language: String?,
+            imageCache: SharingImagePreviewCache,
             onOutcome: @escaping (SharingResult) -> Void,
             onClose: @escaping () -> Void
         ) -> SharingPresentation {
@@ -131,31 +104,42 @@
             let model = SharingSheetModel(
                 sessionId: sessionId,
                 trace: trace,
-                activationBaseURL: activationBaseURL
+                activationBaseURL: activationBaseURL,
+                install: install,
+                detectInstall: detectInstall,
+                language: language,
+                imageCache: imageCache
             )
             model.onOutcome = onOutcome
             model.onClose = onClose
 
-            webView.bind(
+            let binding = { [weak model] in
                 SharingWebViewBinding(
                     sessionId: sessionId,
-                    onAction: { [weak model] in model?.onPageAction($0) },
-                    onPageReady: { [weak model] in
+                    onAction: { model?.onPageAction($0) },
+                    onPageReady: {
                         trace.mark("document finished")
                         model?.onPageReady()
                     },
-                    onLoadFailed: { [weak model] in
+                    onLoadFailed: {
                         trace.mark("load FAILED")
                         model?.onPageUnavailable()
                     },
-                    onOpenExternal: { [weak model] in model?.openExternally($0) }
+                    onOpenExternal: { model?.openExternally($0) }
                 )
-            )
+            }
+            webView.bind(binding())
 
             // Attach before start: whichever finishes second issues the navigation.
             model.attach(webView)
 
             let presentation = SharingPresentation(model: model, webView: webView, pool: pool)
+            // The same binding: the fresh engine reports to this session, not a warm one.
+            model.onRebuildEngine = { [weak presentation] in
+                guard let presentation, let rebuilt = pool.rebuild(binding()) else { return nil }
+                presentation.webView = rebuilt
+                return rebuilt
+            }
             presentation.preparation = Task { await model.start(request) }
             return presentation
         }
@@ -167,27 +151,50 @@
     /// and the sheet's own `onAppear` can re-ask without risk.
     @MainActor
     final class SharingPresenter: ObservableObject {
+        /// Where the session is in its life. One value rather than a `launched`/`active` pair,
+        /// which could spell states that do not exist.
+        private enum Phase {
+            case idle
+            case live(SharingPresentation)
+            /// Launched, but the pool refused it, so its failure is already reported. Not `idle`:
+            /// it still owes exactly one `finish`, and must not report twice.
+            case reported
+        }
+
+        /// Written by the modifier's `body`, not captured by the observer: `onChange` runs the
+        /// action registered by the *previous* render, which would share the previous request.
+        var pendingRequest = SharingRequest()
+
+        /// Deliberately **not** cleared when a session ends: `@Published`, so finishing inside
+        /// SwiftUI's dismissal transaction would re-present the sheet.
         @Published private(set) var presentation: SharingPresentation?
 
+        private var phase: Phase = .idle
         private var pool: SharingWebViewPool?
-        private var launched = false
-        /// True from the moment `finish(onSettled:)` defers to an in-flight attribution until
-        /// that attribution's own completion actually tears the presentation down. Without this,
-        /// `launched` already reads false during the deferral (see `finish`), and a launch in
-        /// that window would hand a fresh model the same `best`/`isPresented` state the deferred
-        /// one is still about to write into.
-        private var disposing = false
+        /// Shared with every session this presenter starts, so a warmed logo is instant at the tap.
+        private let imageCache = SharingImagePreviewCache()
 
-        /// Warms the data the sheet needs before it can build a URL at all, then the page itself.
+        /// The BCP-47 tag the pool was warmed on, so a re-drive rebuilds the identical URL.
+        private var warmLanguage: String?
+
+        /// Warms the sheet: first the engine, then the data it needs to build a URL, then the page.
         ///
         /// Driven by attaching the `frakSharingSheet` modifier, which is the only control: iOS has
         /// no other warm entry point, so a merchant does not call this by hand. The reward is not
         /// warmed: its cache key includes the request's products, which are unknown here.
-        func warm() async {
+        func warm(language: String? = nil) async {
             guard Frak.isInitialized, let client = try? Frak.client else { return }
+            // Latched: `launch` rebuilds this URL and compares it string-for-string, and the
+            // modifier's own warm call has no configuration to hand.
+            if let language { warmLanguage = language }
             let trace = SharingTrace()
             let walletOrigin = client.environment.wallet
             let bundleId = Bundle.main.bundleIdentifier ?? ""
+
+            // Ahead of both awaits, and the reason `prepare` is split off `warm(_:)`: booting the
+            // engine needs only the origin, while the URL is two round trips away.
+            poolIfPossible()?.prepare()
+            trace.mark("warm engine ready")
 
             guard let clientId = await client.anonymousId else { return }
             trace.mark("warm identity ready")
@@ -197,6 +204,11 @@
             guard let config = try? await client.config.resolve() else { return }
             trace.mark("warm config ready")
 
+            // Only starts the fetch; `warm()` never waits on the image.
+            if let logoURL = config.displayLogoURL, let url = URL(string: logoURL) {
+                await imageCache.prefetch(url)
+            }
+
             poolIfPossible()?
                 .warm(
                     SharingPageURL.warm(
@@ -205,7 +217,8 @@
                         clientId: clientId,
                         bundleId: bundleId,
                         appName: config.displayName,
-                        logoURL: config.displayLogoURL
+                        logoURL: config.displayLogoURL,
+                        language: warmLanguage
                     )
                 )
         }
@@ -213,30 +226,46 @@
         /// Starts the session. A second call while one is up is a no-op rather than a replacement.
         func launch(
             _ request: SharingRequest,
+            install: FrakInstallPresentation,
+            detectInstall: Bool,
+            language: String?,
             onOutcome: @escaping (SharingResult) -> Void,
             onClose: @escaping () -> Void
         ) {
-            // `launched`, not `presentation == nil`: a launch that could not build one has still
-            // reported its failure, and must not report it twice. `disposing` closes the same
-            // gap while a previous session's dismissal is still deferred to an in-flight
-            // attribution — see the property's own doc.
-            guard !launched, !disposing else { return }
-            launched = true
+            warmLanguage = language
+            switch phase {
+            case .live, .reported:
+                // Already up. Both the merchant's binding and the modifier's own `onAppear` ask.
+                return
+            case .idle:
+                // In order, before `acquire` below: the previous session's sheet content may not
+                // be dismantled yet, and a dismantle landing after the next session has taken the
+                // same view yanks it out from under a live sheet. No-op once it has already run.
+                presentation?.reclaimWebView()
+            }
             guard let pool = poolIfPossible() else {
+                phase = .reported
                 onOutcome(.failed(.notInitialized))
                 onClose()
                 return
             }
-            presentation = SharingPresentation.start(
+            let started = SharingPresentation.start(
                 pool: pool,
                 request: request,
+                install: install,
+                detectInstall: detectInstall,
+                language: language,
+                imageCache: imageCache,
                 onOutcome: onOutcome,
                 onClose: onClose
             )
+            phase = .live(started)
+            presentation = started
         }
 
         func onPresented() {
-            presentation?.onPresented()
+            guard case .live(let current) = phase else { return }
+            current.onPresented()
         }
 
         /// The sheet has gone.
@@ -244,29 +273,38 @@
         /// - Parameters:
         ///   - onlyIfUnpresented: pass true from the `isPresented` change, which fires before the
         ///     dismissal animation; a presented sheet is left to `onDismiss`.
-        ///   - onSettled: the merchant-visible report. Called synchronously unless a share/copy/
-        ///     fallback attribution is still resolving, in which case `SharingPresentation.dispose`
-        ///     defers it — see that method's doc. Never called at all when this call itself is a
-        ///     no-op (not launched, or `onlyIfUnpresented` with a presented sheet still up).
-        func finish(onlyIfUnpresented: Bool = false, onSettled: @escaping () -> Void) {
-            guard launched else { return }
-            if onlyIfUnpresented, presentation?.wasPresented == true { return }
-            launched = false
-            guard let current = presentation else {
-                presentation = nil
-                onSettled()
+        ///   - onSettled: the merchant-visible report, called synchronously. Not called on a no-op.
+        func finish(onlyIfUnpresented: Bool = false, onSettled: () -> Void) {
+            switch phase {
+            case .idle:
                 return
-            }
-            presentation = nil
-            disposing = true
-            current.dispose { [weak self] in
-                self?.disposing = false
+            case .reported:
+                phase = .idle
+                onSettled()
+            case .live(let current):
+                if onlyIfUnpresented, current.wasPresented { return }
+                // `presentation` is deliberately left pointing at this session — see its doc. The
+                // sheet is on its way out and still rendering the page it showed; the next
+                // `launch` replaces it.
+                phase = .idle
+                current.dispose()
                 onSettled()
             }
         }
 
         /// The share surface has left the screen; the pooled view's timers and process go with it.
         func teardown() {
+            // A session goes with the surface.
+            phase = .idle
+            // A surface can go while the session is still live — a merchant navigating away from
+            // the presenting screen — and only `dispose` stops the install probe and takes the
+            // store surface down. Idempotent, so a sheet that already dismissed pays nothing.
+            presentation?.dispose()
+            // Ahead of `destroy()`, which refuses to drop a view the pool still thinks is lent.
+            presentation?.reclaimWebView()
+            // The one place `presentation` is cleared: the surface is gone, so nothing is
+            // rendering it and no sheet transaction is in flight to disturb.
+            presentation = nil
             pool?.destroy()
             pool = nil
         }

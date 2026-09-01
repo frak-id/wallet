@@ -29,6 +29,8 @@ export type {
 export type {
     InstallEventMap,
     InstallPageView,
+    InstallProbeSurface,
+    InstallProbeUnavailableReason,
     InstallReferrerMissingReason,
     InstallSource,
     InstallStore,
@@ -36,6 +38,7 @@ export type {
 export type {
     InAppBrowserRedirectTarget,
     ListenerMiscEventMap,
+    MergeExecuteTargetSource,
 } from "./listener";
 export type {
     ModalDismissSource,

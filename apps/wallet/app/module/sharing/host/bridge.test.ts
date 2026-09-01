@@ -91,6 +91,63 @@ describe("buildHostResultUrl — the code action", () => {
     });
 });
 
+describe("buildHostResultUrl — the share action", () => {
+    it("carries the resolved title, text and image", () => {
+        expect(
+            buildHostResultUrl({
+                scheme: "frak-acme",
+                action: "share",
+                sid: "s1",
+                share: {
+                    title: "Kettle deal",
+                    text: "Grab it",
+                    image: "https://cdn.example.com/p.png",
+                },
+            })
+        ).toBe(
+            "frak-acme://result?action=share&sid=s1&title=Kettle+deal&text=Grab+it&image=https%3A%2F%2Fcdn.example.com%2Fp.png"
+        );
+    });
+
+    it("omits every field the payload did not carry", () => {
+        expect(
+            buildHostResultUrl({
+                scheme: "frak-acme",
+                action: "share",
+                sid: "s1",
+                share: {},
+            })
+        ).toBe("frak-acme://result?action=share&sid=s1");
+        expect(
+            buildHostResultUrl({
+                scheme: "frak-acme",
+                action: "share",
+                sid: "s1",
+            })
+        ).toBe("frak-acme://result?action=share&sid=s1");
+    });
+
+    it("never puts a share payload on any other action", () => {
+        expect(
+            buildHostResultUrl({
+                scheme: "frak-acme",
+                action: "dismiss",
+                share: { title: "Leaked" },
+            })
+        ).toBe("frak-acme://result?action=dismiss");
+    });
+
+    it("escapes payload values so they cannot inject extra params", () => {
+        expect(
+            buildHostResultUrl({
+                scheme: "frak-acme",
+                action: "share",
+                share: { title: "a&action=dismiss" },
+            })
+        ).toBe("frak-acme://result?action=share&title=a%26action%3Ddismiss");
+    });
+});
+
 describe("sendHostResult", () => {
     let assign: ReturnType<typeof vi.fn>;
 
@@ -139,6 +196,38 @@ describe("sendHostResult", () => {
         expect(assign).toHaveBeenCalledTimes(2);
     });
 
+    it("lets the next sheet repeat an outcome the previous one already sent", () => {
+        // A pooled web view hands the same document to the next presentation, so
+        // this module's state outlives the session that filled it. Keyed by
+        // action alone, the second sheet's Install tap died here.
+        expect(
+            sendHostResult({
+                scheme: "frak-acme",
+                action: "install",
+                sid: "s1",
+            })
+        ).toBe(true);
+        sendHostResult({ scheme: "frak-acme", action: "install", sid: "s2" });
+
+        expect(assign).toHaveBeenCalledTimes(2);
+        expect(assign).toHaveBeenLastCalledWith(
+            "frak-acme://result?action=install&sid=s2"
+        );
+    });
+
+    it("still refuses a second tap inside one sheet", () => {
+        const args = {
+            scheme: "frak-acme",
+            action: "install",
+            sid: "s1",
+        } as const;
+
+        sendHostResult(args);
+        sendHostResult(args);
+
+        expect(assign).toHaveBeenCalledTimes(1);
+    });
+
     it("lets a regenerated code through, but not the same one twice", () => {
         expect(
             sendHostResult({
@@ -170,5 +259,18 @@ describe("sendHostResult", () => {
     it("reports no host to hand off to, so callers keep their web behaviour", () => {
         expect(sendHostResult({ action: "dismiss" })).toBe(false);
         expect(assign).not.toHaveBeenCalled();
+    });
+
+    it("carries the share payload through to the host", () => {
+        sendHostResult({
+            scheme: "frak-acme",
+            action: "share",
+            sid: "s1",
+            share: { title: "Kettle deal", text: "Grab it" },
+        });
+
+        expect(assign).toHaveBeenCalledWith(
+            "frak-acme://result?action=share&sid=s1&title=Kettle+deal&text=Grab+it"
+        );
     });
 });

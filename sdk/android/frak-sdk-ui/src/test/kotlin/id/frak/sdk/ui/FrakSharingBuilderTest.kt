@@ -1,11 +1,23 @@
 package id.frak.sdk.ui
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
-import org.junit.Assert.assertThrows
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
 class FrakSharingBuilderTest {
     private fun builder() = FrakSharing.Builder { }
+
+    /** The builder keeps no readable copy, so the clamp is asserted through what it passes on. */
+    private fun fractionOf(builder: FrakSharing.Builder): Float {
+        val field = FrakSharing.Builder::class.java.getDeclaredField("heightFraction")
+        field.isAccessible = true
+        return field.getFloat(builder)
+    }
 
     @Test
     fun `heightFraction returns the same builder so calls chain`() {
@@ -14,34 +26,29 @@ class FrakSharingBuilderTest {
     }
 
     @Test
-    fun `the range's own bounds are accepted`() {
-        builder().heightFraction(FrakSharingDefaults.MIN_HEIGHT_FRACTION)
-        builder().heightFraction(FrakSharingDefaults.MAX_HEIGHT_FRACTION)
+    fun `the range's own bounds are accepted unchanged`() {
+        assertEquals(
+            FrakSharingDefaults.MIN_HEIGHT_FRACTION,
+            fractionOf(builder().heightFraction(FrakSharingDefaults.MIN_HEIGHT_FRACTION)),
+            0f,
+        )
+        assertEquals(
+            FrakSharingDefaults.MAX_HEIGHT_FRACTION,
+            fractionOf(builder().heightFraction(FrakSharingDefaults.MAX_HEIGHT_FRACTION)),
+            0f,
+        )
     }
 
     @Test
-    fun `the default is itself inside the accepted range`() {
-        builder().heightFraction(FrakSharingDefaults.HEIGHT_FRACTION)
+    fun `a fraction outside the range is clamped, not thrown, so it matches iOS`() {
+        assertEquals(FrakSharingDefaults.MIN_HEIGHT_FRACTION, fractionOf(builder().heightFraction(0.1f)), 0f)
+        assertEquals(FrakSharingDefaults.MAX_HEIGHT_FRACTION, fractionOf(builder().heightFraction(2f)), 0f)
     }
 
     @Test
-    fun `a fraction below the range is rejected loudly`() {
-        assertThrows(IllegalArgumentException::class.java) { builder().heightFraction(0.1f) }
-    }
-
-    @Test
-    fun `a fraction above the range is rejected loudly`() {
-        assertThrows(IllegalArgumentException::class.java) { builder().heightFraction(2f) }
-    }
-
-    @Test
-    fun `a non-finite fraction is rejected`() {
-        assertThrows(IllegalArgumentException::class.java) { builder().heightFraction(Float.NaN) }
-        assertThrows(IllegalArgumentException::class.java) {
-            builder().heightFraction(Float.POSITIVE_INFINITY)
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            builder().heightFraction(Float.NEGATIVE_INFINITY)
+    fun `a non-finite fraction falls back to the default rather than reaching fillMaxHeight`() {
+        for (bad in listOf(Float.NaN, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY)) {
+            assertEquals(FrakSharingDefaults.HEIGHT_FRACTION, fractionOf(builder().heightFraction(bad)), 0f)
         }
     }
 }

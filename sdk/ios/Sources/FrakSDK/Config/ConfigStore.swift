@@ -101,6 +101,15 @@ actor ConfigStore {
         subscribers.removeValue(forKey: id)
     }
 
+    /// Ends every `updates` stream. Called from `DefaultFrakClient.shutdown`, which otherwise
+    /// leaves a merchant's `for await` suspended forever against a client that is gone.
+    func finishSubscribers() {
+        for continuation in subscribers.values {
+            continuation.finish()
+        }
+        subscribers.removeAll()
+    }
+
     /// Minted at the start of `fetch`, before the network call, and compared again at publish
     /// time. Minting at start records the order fetches were intended in, which is what
     /// matters — a counter read at publish time would order by completion, exactly what a
@@ -138,9 +147,9 @@ actor ConfigStore {
         // Backing off, so dialling again would only reproduce the same failure. Any
         // cached copy beats that, including under forceRefresh. With none, fail rather
         // than let a retry loop become a flood.
-        if backoff.isBackingOff(key) {
+        if let retryAfter = backoff.remaining(key) {
             if let fallback = readCache(key) { return fallback.config }
-            throw FrakError.network(underlying: Backoff.BackingOff(what: "merchant config fetch"))
+            throw FrakError.backingOff(retryAfterSeconds: retryAfter)
         }
 
         return try await singleFlight.run(key) { try await self.fetch(key, query: query) }

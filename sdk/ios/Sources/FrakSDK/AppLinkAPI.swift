@@ -21,18 +21,27 @@ public struct AppLinkAPI: Sendable {
         await core.isFrakAppInstalled()
     }
 
+    /// Whether the wallet's scheme is declared in `LSApplicationQueriesSchemes` at all.
+    /// `FrakSDKUI`'s install detector uses this to decide whether to poll; not merchant API.
+    @_spi(FrakInternal)
+    public func walletSchemeStatus() async -> ProbeStatus {
+        await core.walletSchemeStatus()
+    }
+
     public func openFrakApp() async -> OpenAppResult {
         await core.openFrakApp()
     }
 
-    /// The wallet's hosted install page for this device, or nil without an identity or a
-    /// merchant to resolve.
+    /// The wallet's hosted install page for this device.
     ///
     /// Not the store listing — `openFrakApp()` handles that handoff itself. This page shows the
     /// install code that carries attribution across an install, plus the store link, and it
     /// carries a freshly minted `frak-install-v1` proof. The sharing sheet navigates to it in
     /// place, so the user never leaves the merchant app to reach it.
-    public func installPageURL(returnScheme: String, sessionId: String) async -> String? {
-        await core.installPageURL(returnScheme: returnScheme, sessionId: sessionId)
+    ///
+    /// - Throws: `FrakError` when the page cannot be minted: tracking is disabled, the device
+    ///   refused key material, or no merchant could be resolved.
+    public func installPageURL(returnScheme: String, sessionId: String) async throws -> String {
+        try await core.installPageURL(returnScheme: returnScheme, sessionId: sessionId)
     }
 }

@@ -1,3 +1,4 @@
+import Foundation
 @_spi(FrakInternal) import FrakSDK
 
 // Hosted /sharing URL the sheet's web view loads. No bridge back to native: state
@@ -9,7 +10,36 @@ enum SharingPageURL {
     /// navigation from the warm page cannot be attributed to whichever session binds next.
     static let warmSessionId = "warm"
 
+    /// Puts an activated page back where `warm(...)` left it, as a same-document fragment change.
+    /// `state=warm` is spelled out because a fragment omitting it defaults to `live`; the rest is
+    /// omitted, the query params being frozen at document load.
+    static let warmFragment = "#sid=" + warmSessionId + "&state=warm"
+
     private static let maxSchemeSuffix = 60
+
+    /// Capped on the way out as well as on the page's way in: an uncapped merchant string can
+    /// push the whole URL past the WebView's limit, which loses every param, not just this one.
+    private static func shareParams(
+        title: String?,
+        text: String?,
+        imageURL: String?
+    ) -> [(String, String?)] {
+        [
+            ("shareTitle", nonEmpty(title).map { $0.clippedForShare(to: shareTitleLimit) }),
+            ("shareText", nonEmpty(text).map { $0.clippedForShare(to: shareTextLimit) }),
+            // Dropped rather than clipped: a truncated URL is not a weaker URL, it is a broken one.
+            ("shareImage", nonEmpty(imageURL).flatMap(sharingOutboundImageURL)),
+        ]
+    }
+
+    /// https-only and inside the wire budget, matching what the page will accept.
+    private static func sharingOutboundImageURL(_ value: String) -> String? {
+        guard value.utf16.count <= shareImageLimit,
+            let url = URL(string: value),
+            url.scheme == "https"
+        else { return nil }
+        return value
+    }
 
     // Must match wallet's ^frak-[a-z0-9._-]{1,60}$ or callbacks silently drop.
     static func returnScheme(bundleId: String) -> String {
@@ -34,7 +64,12 @@ enum SharingPageURL {
         logoURL: String? = nil,
         link: String? = nil,
         products: String? = nil,
-        seededReward: String? = nil
+        seededReward: String? = nil,
+        /// BCP-47. `lng` is what the page's language detector reads first, ahead of `navigator`.
+        language: String? = nil,
+        shareTitle: String? = nil,
+        shareText: String? = nil,
+        shareImageURL: String? = nil
     ) -> String {
         var url = "\(walletOrigin)/sharing?embed=native"
         url += "&merchantId=" + PercentEncoding.encode(merchantId)
@@ -43,9 +78,10 @@ enum SharingPageURL {
         url += "&sid=" + PercentEncoding.encode(sessionId)
         url += "&\(FrakSDKVersion.queryParameterName)=" + PercentEncoding.encode(FrakSDKVersion.current)
         for (key, value) in [
+            ("lng", language),
             ("appName", appName), ("logoUrl", logoURL), ("link", link),
             ("products", products), ("seedReward", seededReward),
-        ] {
+        ] + shareParams(title: shareTitle, text: shareText, imageURL: shareImageURL) {
             if let value {
                 url += "&\(key)=" + PercentEncoding.encode(value)
             }
@@ -63,7 +99,8 @@ enum SharingPageURL {
         clientId: String,
         bundleId: String,
         appName: String? = nil,
-        logoURL: String? = nil
+        logoURL: String? = nil,
+        language: String? = nil
     ) -> String {
         var url = "\(walletOrigin)/sharing?embed=native&state=warm"
         url += "&merchantId=" + PercentEncoding.encode(merchantId)
@@ -71,7 +108,7 @@ enum SharingPageURL {
         url += "&returnScheme=" + PercentEncoding.encode(returnScheme(bundleId: bundleId))
         url += "&sid=" + warmSessionId
         url += "&\(FrakSDKVersion.queryParameterName)=" + PercentEncoding.encode(FrakSDKVersion.current)
-        for (key, value) in [("appName", appName), ("logoUrl", logoURL)] {
+        for (key, value) in [("lng", language), ("appName", appName), ("logoUrl", logoURL)] {
             if let value {
                 url += "&\(key)=" + PercentEncoding.encode(value)
             }
@@ -90,6 +127,9 @@ enum SharingPageURL {
         products: String? = nil,
         logoURL: String? = nil,
         seededReward: String? = nil,
+        shareTitle: String? = nil,
+        shareText: String? = nil,
+        shareImageURL: String? = nil,
         confirmed: Bool = false
     ) -> String {
         var fragment = "#sid=" + PercentEncoding.encode(sessionId)
@@ -99,7 +139,7 @@ enum SharingPageURL {
             // `logoUrl` only when the request overrode it; otherwise the warm URL's config
             // value stands.
             ("link", link), ("products", products), ("logoUrl", logoURL), ("seedReward", seededReward),
-        ] {
+        ] + shareParams(title: shareTitle, text: shareText, imageURL: shareImageURL) {
             if let value {
                 fragment += "&\(key)=" + PercentEncoding.encode(value)
             }
@@ -107,4 +147,50 @@ enum SharingPageURL {
         if confirmed { fragment += "&view=confirmation" }
         return fragment
     }
+
+    /// Adds `sid`/`probe` to an `installPageURL` result, which ends in `#p=<proof>` only when a
+    /// proof was minted. Without one there is no fragment yet, and appending `&` would put both
+    /// keys in the query string where the page's fragment parser never sees them.
+    static func installPageProbed(_ page: String, sid: String, probe: ProbeStatus) -> String {
+        page + (page.contains("#") ? "&" : "#")
+            + "sid=" + PercentEncoding.encode(sid)
+            + "&probe=" + probe.rawValue
+    }
+
+    /// The same-document rewrite on detection. A full re-emit, never a delta: `InstallView`
+    /// resolves the proof out of the hash, and a bare `#installed=1` would erase it.
+    static func installDetectedFragment(
+        proof: String?,
+        sid: String,
+        probe: ProbeStatus,
+        elapsedMillis: Int,
+        surface: InstallSurface
+    ) -> String {
+        var fragment = "#"
+        if let proof { fragment += "p=" + PercentEncoding.encode(proof) + "&" }
+        fragment += "sid=" + PercentEncoding.encode(sid)
+        fragment += "&probe=" + probe.rawValue
+        fragment += "&installed=1"
+        fragment += "&dt=" + String(elapsedMillis)
+        fragment += "&via=" + surface.rawValue
+        return fragment
+    }
+}
+
+extension ProbeStatus {
+    fileprivate var rawValue: String {
+        switch self {
+        case .ok: "ok"
+        case .undeclared: "undeclared"
+        case .disabled: "disabled"
+        }
+    }
+}
+
+/// Which store surface the user was looking at when the probe detected the wallet. Not
+/// `FrakInstallPresentation` itself: this rides the fragment as a short, stable wire value the
+/// page reads directly.
+enum InstallSurface: String, Sendable {
+    case overlay
+    case product
 }

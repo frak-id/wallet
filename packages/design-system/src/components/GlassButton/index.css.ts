@@ -35,7 +35,7 @@ export const glassIcon = style({
 });
 
 // The vendor rule uses `blur(var(--frost-blur-radius))`, which Lightning CSS
-// (Safari 14 target) strips as invalid. Re-declared here with the static value
+// (the Safari floor) strips as invalid. Re-declared here with the static value
 // (frostBlurRadius is a constant 3) so it ships in build-time CSS — a runtime
 // <style> tag would be blocked by the Tauri production CSP. Only the
 // unprefixed property: Lightning CSS adds the `-webkit-` prefix itself, and

@@ -9,6 +9,5 @@ declare global {
             config?: FrakWalletSdkConfig;
             core?: typeof import("@frak-labs/core-sdk/bundle");
         };
-        frakSetupInProgress?: boolean;
     }
 }

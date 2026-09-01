@@ -2,43 +2,6 @@
     import SwiftUI
     import WebKit
 
-    /// What the hosted page can tell the host, over the intercepted return-scheme navigation.
-    enum SharingPageAction: Equatable {
-        case install
-        case dismiss
-        case shareAgain
-        /// The page's own Share button — an ask, not a report: the host signs the interaction.
-        case share
-        case copy
-        case error
-        /// The page has painted. iOS's only paint signal: WebKit exposes no public
-        /// `postVisualStateCallback`, and a fragment activation fires no `didFinish` at all.
-        case ready
-        case code(value: String, expiresAt: Date?)
-
-        /// Unknown actions are nil, not a failure: the page may ship one before the SDK reads it.
-        static func from(action: String, value: String?, exp: String?) -> SharingPageAction? {
-            switch action {
-            case "install": return .install
-            case "dismiss": return .dismiss
-            case "shareAgain": return .shareAgain
-            case "share": return .share
-            case "copy": return .copy
-            case "error": return .error
-            case "ready": return .ready
-            case "code":
-                guard let value, !value.isEmpty else { return nil }
-                // `Int64`, not `Double`: has to agree with Kotlin's `toLongOrNull`, which rejects
-                // "NaN"/"inf".
-                let expiresAt = exp.flatMap(Int64.init).map {
-                    Date(timeIntervalSince1970: TimeInterval($0))
-                }
-                return .code(value: value, expiresAt: expiresAt)
-            default: return nil
-            }
-        }
-    }
-
     /// One sheet's worth of wiring for a `SharingWebView`. Split from the view so a pooled view
     /// can outlive a sheet; rebinding also resets the view's per-load state.
     struct SharingWebViewBinding {
@@ -87,10 +50,20 @@
         /// activating on top of a half-loaded document would leave the page stuck where it got to.
         private(set) var documentReady = false
 
-        /// The last main-frame URL asked for, so a cache-only retry has something to retry.
+        /// Jetsammed content process, not loaded since. WebKit gives the view a new process on the
+        /// next load, so this only tells `SharingWebViewPool` its warm URL is stale.
+        private(set) var rendererGone = false
+
+        /// The last main-frame URL asked for, so a retry has something to retry.
         private var requested: URL?
-        /// At most one retry per binding.
-        private var retried = false
+        /// Rungs of `retryLadder` already spent on the document in `ladderURL`.
+        private var retryCount = 0
+        /// Which document the spent rungs belong to. A session navigates more than once — the
+        /// install page, and the confirmation screen — and a fresh document has not failed yet.
+        private var ladderURL: URL?
+        /// The scheduled retry, held so a rebind can cancel one that would navigate the next
+        /// session's view.
+        private var pendingRetry: Task<Void, Never>?
         /// Set between issuing the retry and it starting, so the original load's duplicate
         /// failure callbacks are not read as the retry failing too.
         private var retryPending = false
@@ -114,7 +87,10 @@
             configuration.websiteDataStore = .default()
             configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
 
-            self.view = WKWebView(frame: .zero, configuration: configuration)
+            // Screen-sized, not `.zero`: a warm view is never in a window, and at 0x0 the page's
+            // whole first layout — every `innerWidth`, media query and container query — is made
+            // against a degenerate viewport it then has to recover from when the sheet shows it.
+            self.view = WKWebView(frame: Self.warmFrame(), configuration: configuration)
             self.origin = URL(string: walletOrigin)
             self.returnScheme = returnScheme
             self.binding = binding
@@ -125,6 +101,12 @@
             view.isOpaque = false
             view.backgroundColor = .clear
             view.navigationDelegate = self
+            #if DEBUG
+                if #available(iOS 16.4, *) {
+                    // The hosted page is the one part of the sheet that can fail silently.
+                    view.isInspectable = true
+                }
+            #endif
 
             // The view fills the sheet, home indicator included, and the page insets its own
             // footer from `env(safe-area-inset-bottom)`. Any other behaviour insets the document
@@ -135,11 +117,22 @@
             view.scrollView.bounces = false
         }
 
+        /// A plausible viewport for a view that is not in a window yet. The constant is a
+        /// mid-range iPhone; only its non-degeneracy matters, since the sheet resizes the view.
+        static func warmFrame() -> CGRect {
+            let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+            return scene?.screen.bounds ?? CGRect(x: 0, y: 0, width: 390, height: 844)
+        }
+
         /// Points the view at a session. Resets per-load state; see `SharingWebViewBinding`.
         func bind(_ binding: SharingWebViewBinding) {
             self.binding = binding
+            // Before the counters: a retry booked by the previous session would otherwise navigate
+            // this view to that session's URL, on a pool that has already moved on.
+            cancelPendingRetry()
             requested = nil
-            retried = false
+            retryCount = 0
+            ladderURL = nil
             retryPending = false
             settled = false
             navigationFailed = false
@@ -155,6 +148,8 @@
         func load(_ url: URL, baseURL: String? = nil) {
             loadedBaseURL = (baseURL ?? url.absoluteString).components(separatedBy: "#")[0]
             documentReady = false
+            // This load is what gives a jetsammed view its new content process back.
+            rendererGone = false
             requested = url
             view.load(URLRequest(url: url))
         }
@@ -164,17 +159,14 @@
         }
 
         /// Performs a `SharingNavigation`. The activation case hangs its fragment off
-        /// `WKWebView.url`, not off the URL we warmed with: the page's router rewrites its own
-        /// search params on load. A fragment-only load fires no `didFinish`.
+        /// `WKWebView.url` rather than off the URL we warmed with, so it stays correct if the two
+        /// ever diverge. A fragment-only load fires no `didFinish`.
         func navigate(_ navigation: SharingNavigation) {
             switch navigation {
             case .load(let url):
                 load(url)
             case .activate(let fragment, let fullURL):
-                guard
-                    let committed = view.url?.absoluteString.components(separatedBy: "#")[0],
-                    let target = URL(string: committed + fragment)
-                else {
+                guard let target = fragmentTarget(fragment) else {
                     // No committed URL means no document to hang a fragment off; load the page.
                     load(fullURL)
                     return
@@ -185,12 +177,32 @@
             }
         }
 
+        /// Puts this view's page back to its warm params after a session moved them. Same document,
+        /// so `loadedBaseURL` and `documentReady` keep describing it and the next session can
+        /// activate on top instead of loading.
+        func resetToWarm() {
+            guard let target = fragmentTarget(SharingPageURL.warmFragment) else { return }
+            view.load(URLRequest(url: target))
+        }
+
+        /// `fragment` hung off whatever document is committed, or nil when there is none.
+        private func fragmentTarget(_ fragment: String) -> URL? {
+            guard let committed = view.url?.absoluteString.components(separatedBy: "#")[0] else {
+                return nil
+            }
+            return URL(string: committed + fragment)
+        }
+
         func stopLoading() {
             view.stopLoading()
         }
 
         /// Retires the view for good: the delegate is dropped, so nothing can reach a binding after.
         func destroy() {
+            // The pool reaches here without rebinding — a dead pool releasing a lent view, or
+            // destroying a warm one — so the binding's own cancellation does not cover it, and a
+            // booked retry would keep the view alive to load a page nobody will see.
+            cancelPendingRetry()
             view.navigationDelegate = nil
             view.stopLoading()
         }
@@ -205,29 +217,89 @@
         }
 
         private func queryValue(_ url: URL, _ name: String) -> String? {
-            URLComponents(url: url, resolvingAgainstBaseURL: false)?
-                .queryItems?
-                .first { $0.name == name }?
-                .value
+            sharingQueryValue(url, name)
         }
 
-        private func handleMainFrameFailure() {
+        /// A main-frame failure gets the rest of `retryLadder` before tier 3. Every rung is a
+        /// network rung: the hosted document is served `no-store`, so it is never in the HTTP
+        /// cache and a cache-only attempt cannot answer.
+        ///
+        /// - Parameter unreachable: the network itself did not answer, so another attempt over it
+        ///   is pointless and there is no cached copy to read instead — tier 3 now.
+        private func handleMainFrameFailure(unreachable: Bool) {
             // The warm load failing after this view was lent to a sheet: not the sheet's page.
             guard navigationOwnedByBinding else { return }
             // Before the `settled` guard: a later error document's `didFinish` must not report readiness.
             navigationFailed = true
             guard !settled else { return }
+            // Duplicate callback for the failure that already booked the next rung.
             guard !retryPending else { return }
-            guard !retried, let requested else {
-                settled = true
-                binding.onLoadFailed()
+            guard let requested else {
+                giveUp()
                 return
             }
-            // Tier 2: the document may still be in the HTTP cache with no network.
-            retried = true
+            // A document this ladder has not been spent on yet gets the whole thing.
+            if requested != ladderURL {
+                ladderURL = requested
+                retryCount = 0
+            }
+            guard !unreachable, retryCount < Self.retryLadder.count else {
+                giveUp()
+                return
+            }
+            let delay = Self.retryLadder[retryCount]
+            retryCount += 1
             retryPending = true
-            view.load(URLRequest(url: requested, cachePolicy: .returnCacheDataDontLoad))
+            scheduleRetry(after: delay) { [weak self] in
+                guard let self else { return }
+                view.load(URLRequest(url: requested, cachePolicy: .useProtocolCachePolicy))
+            }
         }
+
+        /// The ladder is spent.
+        private func giveUp() {
+            settled = true
+            binding.onLoadFailed()
+        }
+
+        private func scheduleRetry(
+            after delay: TimeInterval,
+            _ navigate: @escaping @MainActor () -> Void
+        ) {
+            cancelPendingRetry()
+            pendingRetry = Task { @MainActor [weak self] in
+                if delay > 0 {
+                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                }
+                // Outside the delay branch on purpose: `Task.cancel()` is cooperative, and the
+                // undelayed rung is the one most likely to race a rebind. A `Task` does not run
+                // inline, so a synchronous `bind()` on the same turn can cancel this before it
+                // starts — and without this check it would navigate a view the pool reassigned.
+                guard !Task.isCancelled else { return }
+                self?.pendingRetry = nil
+                self?.retryPending = false
+                navigate()
+            }
+        }
+
+        private func cancelPendingRetry() {
+            pendingRetry?.cancel()
+            pendingRetry = nil
+        }
+
+        /// The network itself did not answer, so another attempt over it is pointless.
+        private func isUnreachable(_ error: any Error) -> Bool {
+            let error = error as NSError
+            guard error.domain == NSURLErrorDomain else { return false }
+            return error.code == NSURLErrorNotConnectedToInternet
+                || error.code == NSURLErrorCannotFindHost
+                || error.code == NSURLErrorCannotConnectToHost
+                || error.code == NSURLErrorDNSLookupFailed
+        }
+
+        /// Delays a main-frame failure gets before tier 3, in order. Two rungs, sized to fit
+        /// inside the sheet's own load budget alongside the attempts themselves.
+        private static let retryLadder: [TimeInterval] = [0.3, 0.9]
 
         /// A navigation this code cancelled, which WebKit reports as a load failure.
         private func isCancellation(_ error: any Error) -> Bool {
@@ -279,7 +351,10 @@
                     let action = SharingPageAction.from(
                         action: name,
                         value: queryValue(url, "value"),
-                        exp: queryValue(url, "exp")
+                        exp: queryValue(url, "exp"),
+                        shareTitle: queryValue(url, "title"),
+                        shareText: queryValue(url, "text"),
+                        shareImage: queryValue(url, "image")
                     )
                 {
                     binding.onAction(action)
@@ -321,7 +396,8 @@
             // `.allow`, not `.cancel`: cancelling surfaces as a cancellation error that
             // `isCancellation` filters out. `navigationFailed` suppresses the `didFinish`.
             decisionHandler(.allow)
-            handleMainFrameFailure()
+            // An answer, however bad, means the network is there; this is the retryable kind.
+            handleMainFrameFailure(unreachable: false)
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -333,7 +409,7 @@
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: any Error) {
             guard !isCancellation(error) else { return }
-            handleMainFrameFailure()
+            handleMainFrameFailure(unreachable: isUnreachable(error))
         }
 
         func webView(
@@ -342,7 +418,7 @@
             withError error: any Error
         ) {
             guard !isCancellation(error) else { return }
-            handleMainFrameFailure()
+            handleMainFrameFailure(unreachable: isUnreachable(error))
         }
 
         /// A jetsammed content process leaves a blank view and fires nothing else.
@@ -350,6 +426,10 @@
             // Ahead of the `settled` guard: a jetsammed renderer leaves nothing on screen, so a
             // pooled view still claiming `documentReady` would activate into a dead renderer.
             documentReady = false
+            // Tells the pool its warm URL describes nothing on screen.
+            rendererGone = true
+            // A booked retry would only navigate a view with nothing behind it.
+            cancelPendingRetry()
             guard !settled else { return }
             settled = true
             binding.onLoadFailed()
@@ -359,11 +439,41 @@
     /// Puts an already-built `SharingWebView` on screen; the sheet's model owns it, not SwiftUI.
     struct SharingWebViewContainer: UIViewRepresentable {
         let webView: SharingWebView
+        /// Called once SwiftUI has actually taken this view out of the hierarchy — not from
+        /// `onDismiss`, which still has frames to draw and would empty the closing sheet.
+        let onDismantled: () -> Void
 
-        func makeUIView(context: Context) -> WKWebView {
-            webView.view
+        func makeCoordinator() -> Coordinator {
+            Coordinator(onDismantled: onDismantled)
         }
 
-        func updateUIView(_ uiView: WKWebView, context: Context) {}
+        /// The engine itself, not a host wrapping it: SwiftUI builds this representable twice when
+        /// `SharingPresenter.presentation` swaps, and a host would have to *move* the engine into
+        /// the second one, leaving the on-screen first one empty.
+        func makeUIView(context: Context) -> WKWebView {
+            return webView.view
+        }
+
+        /// Sizes the engine to the host SwiftUI gave it: the view is pooled, so it arrives
+        /// carrying whatever frame and autoresizing state its last presentation left it.
+        func updateUIView(_ uiView: WKWebView, context: Context) {
+            uiView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            guard let host = uiView.superview, uiView.frame != host.bounds else { return }
+            uiView.frame = host.bounds
+        }
+
+        static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
+            coordinator.onDismantled()
+        }
+
+        /// Carries the callback, which `dismantleUIView` cannot reach any other way — it is
+        /// static, and the representable value is gone by the time it runs.
+        final class Coordinator {
+            let onDismantled: () -> Void
+
+            init(onDismantled: @escaping () -> Void) {
+                self.onDismantled = onDismantled
+            }
+        }
     }
 #endif

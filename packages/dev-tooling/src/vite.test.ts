@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+    assertBundleEsVersion,
     assertEagerBundleBudget,
     collectEagerClosure,
     preconnectOrigins,
@@ -11,6 +12,10 @@ import {
 
 type WriteBundlePlugin = {
     writeBundle: (options: { dir?: string }) => void;
+};
+
+type AsyncWriteBundlePlugin = {
+    writeBundle: (options: { dir?: string }) => Promise<void>;
 };
 
 describe("collectEagerClosure", () => {
@@ -248,5 +253,124 @@ describe("preconnectOrigins", () => {
 
         expect(tags).toHaveLength(1);
         expect(tags[0].attrs.href).toBe("https://good.example.test");
+    });
+});
+
+describe("assertBundleEsVersion", () => {
+    let dir: string;
+
+    const write = (source: string, ...segments: string[]) => {
+        const target = path.join(dir, ...segments);
+        fsSync.mkdirSync(path.dirname(target), { recursive: true });
+        fsSync.writeFileSync(target, source, "utf-8");
+    };
+
+    const violation = "export const x = [3, 1, 2].toSorted();\n";
+
+    beforeEach(() => {
+        dir = fsSync.mkdtempSync(path.join(tmpdir(), "dev-tooling-esver-"));
+    });
+
+    afterEach(() => {
+        rmSync(dir, { recursive: true, force: true });
+    });
+
+    it("scans the subdir under the emitted dir", async () => {
+        write(violation, "standalone", "chunk.js");
+        const plugin = assertBundleEsVersion({
+            subdir: "standalone",
+        }) as unknown as AsyncWriteBundlePlugin;
+        await expect(plugin.writeBundle({ dir })).rejects.toThrow(
+            /above the es2022 floor/
+        );
+    });
+
+    it("scans the emitted dir itself when no subdir is given", async () => {
+        write(violation, "chunk.js");
+        const plugin =
+            assertBundleEsVersion() as unknown as AsyncWriteBundlePlugin;
+        await expect(plugin.writeBundle({ dir })).rejects.toThrow(
+            /above the es2022 floor/
+        );
+    });
+
+    it("returns without scanning when the build reports no dir", async () => {
+        const plugin =
+            assertBundleEsVersion() as unknown as AsyncWriteBundlePlugin;
+        await expect(plugin.writeBundle({})).resolves.toBeUndefined();
+    });
+
+    it("declares no environment filter when none is configured", () => {
+        expect(assertBundleEsVersion().applyToEnvironment).toBeUndefined();
+    });
+
+    const resolve = (
+        environments: string[],
+        known: string[] = ["client", "ssr"]
+    ) => {
+        const hook = assertBundleEsVersion({ subdir: "assets", environments })
+            .configResolved as
+            | ((config: { environments: Record<string, unknown> }) => void)
+            | undefined;
+        if (typeof hook !== "function") {
+            throw new Error("expected a configResolved hook");
+        }
+        return () =>
+            hook({
+                environments: Object.fromEntries(known.map((n) => [n, {}])),
+            });
+    };
+
+    it("rejects an environment name no build declares", () => {
+        // Vite drops an unapplied plugin silently, so a typo would remove the
+        // gate from every environment and still report a green build.
+        expect(resolve(["cleint"])).toThrow(/no such build environment/);
+        expect(resolve(["cleint"])).toThrow(/client, ssr/);
+    });
+
+    it("rejects an empty environment list", () => {
+        // `[]` is truthy, so it would otherwise install a predicate that is
+        // false for every environment — the same silent drop.
+        expect(resolve([])).toThrow(/no such build environment/);
+    });
+
+    it("accepts a name the build declares", () => {
+        expect(resolve(["client"])).not.toThrow();
+    });
+
+    it("filters environments through vite rather than at scan time", () => {
+        // Declarative on purpose: vite resolves this, so a name matching
+        // nothing yields no plugin. A runtime guard would instead skip
+        // silently and report success for a gate that never ran.
+        const apply = assertBundleEsVersion({
+            subdir: "assets",
+            environments: ["client"],
+        }).applyToEnvironment;
+        if (typeof apply !== "function") {
+            throw new Error("expected an applyToEnvironment predicate");
+        }
+        expect(apply({ name: "client" } as never)).toBe(true);
+        expect(apply({ name: "ssr" } as never)).toBe(false);
+    });
+
+    it("forwards enforce to the core", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        write(violation, "assets", "chunk.js");
+        const plugin = assertBundleEsVersion({
+            subdir: "assets",
+            enforce: false,
+        }) as unknown as AsyncWriteBundlePlugin;
+        await expect(plugin.writeBundle({ dir })).resolves.toBeUndefined();
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining("chunk.js"));
+        warn.mockRestore();
+    });
+
+    it("forwards ignore to the core", async () => {
+        write(violation, "assets", "ui-vendor.js");
+        const plugin = assertBundleEsVersion({
+            subdir: "assets",
+            ignore: { features: "ArrayToSorted", in: "ui-vendor" },
+        }) as unknown as AsyncWriteBundlePlugin;
+        await expect(plugin.writeBundle({ dir })).resolves.toBeUndefined();
     });
 });

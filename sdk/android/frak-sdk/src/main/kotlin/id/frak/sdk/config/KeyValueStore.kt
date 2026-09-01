@@ -34,12 +34,14 @@ internal class SharedPreferencesStore(
         key: String,
         value: String,
     ) {
-        // apply, not commit: a write lost to a process kill just costs one extra network call.
-        preferences.edit().putString(key, value).apply()
+        // commit, not apply: this store also holds the consent decision, and a withdrawal lost to
+        // a process kill is the one write here that cannot be recovered by asking again. Every
+        // caller is already on the IO dispatcher, and there are two keys, both cold-path.
+        preferences.edit().putString(key, value).commit()
     }
 
     override fun remove(key: String) {
-        preferences.edit().remove(key).apply()
+        preferences.edit().remove(key).commit()
     }
 
     companion object {

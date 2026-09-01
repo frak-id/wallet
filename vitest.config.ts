@@ -46,6 +46,9 @@ export default defineConfig({
 
             // Services: backend
             "services/*/vitest.config.ts",
+
+            // Root-level gate scripts
+            "scripts/vitest.config.ts",
         ],
     },
 });

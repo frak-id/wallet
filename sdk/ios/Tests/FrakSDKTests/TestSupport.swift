@@ -80,6 +80,17 @@ final class Counter: @unchecked Sendable {
     }
 }
 
+/// Waits until `condition` holds, or the timeout expires. Bounds only the failure case, so a
+/// passing test never pays the timeout and a broken one still reports rather than hanging.
+func waitUntil(timeoutSeconds: TimeInterval = 2, _ condition: () async -> Bool) async -> Bool {
+    let deadline = Date().addingTimeInterval(timeoutSeconds)
+    while Date() < deadline {
+        if await condition() { return true }
+        try? await Task.sleep(nanoseconds: 5_000_000)
+    }
+    return await condition()
+}
+
 extension URLRequest {
     /// The request body as `URLProtocol` actually sees it: `URLSession` moves `httpBody` into
     /// `httpBodyStream` before a protocol handler runs; reading `httpBody` alone silently

@@ -300,16 +300,43 @@ public final class id/frak/sdk/core/FrakEnvironment$Production : id/frak/sdk/cor
 }
 
 public abstract class id/frak/sdk/core/FrakError : java/lang/Exception {
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lid/frak/sdk/core/FrakError$Kind;Ljava/lang/String;Ljava/lang/Throwable;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getKind ()Lid/frak/sdk/core/FrakError$Kind;
 }
 
 public final class id/frak/sdk/core/FrakError$AlreadyPresenting : id/frak/sdk/core/FrakError {
 	public fun <init> ()V
 }
 
+public final class id/frak/sdk/core/FrakError$BackingOff : id/frak/sdk/core/FrakError {
+	public fun <init> (D)V
+	public final fun getRetryAfterSeconds ()D
+}
+
 public final class id/frak/sdk/core/FrakError$Decoding : id/frak/sdk/core/FrakError {
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public final class id/frak/sdk/core/FrakError$InternalFailure : id/frak/sdk/core/FrakError {
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public final class id/frak/sdk/core/FrakError$Kind : java/lang/Enum {
+	public static final field ALREADY_PRESENTING Lid/frak/sdk/core/FrakError$Kind;
+	public static final field BACKING_OFF Lid/frak/sdk/core/FrakError$Kind;
+	public static final field DECODING Lid/frak/sdk/core/FrakError$Kind;
+	public static final field INTERNAL_FAILURE Lid/frak/sdk/core/FrakError$Kind;
+	public static final field MERCHANT_RESOLUTION_FAILED Lid/frak/sdk/core/FrakError$Kind;
+	public static final field NETWORK Lid/frak/sdk/core/FrakError$Kind;
+	public static final field NOT_INITIALIZED Lid/frak/sdk/core/FrakError$Kind;
+	public static final field SERVER Lid/frak/sdk/core/FrakError$Kind;
+	public static final field TRACKING_DISABLED Lid/frak/sdk/core/FrakError$Kind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getWireValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lid/frak/sdk/core/FrakError$Kind;
+	public static fun values ()[Lid/frak/sdk/core/FrakError$Kind;
 }
 
 public final class id/frak/sdk/core/FrakError$MerchantResolutionFailed : id/frak/sdk/core/FrakError {
@@ -441,7 +468,6 @@ public final class id/frak/sdk/core/ProductDetailsKt {
 }
 
 public final class id/frak/sdk/rewards/BestReward {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Double;Ljava/lang/Double;ZLjava/util/List;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getFormatted ()Ljava/lang/String;
 	public final fun getLockupDurationDays ()Ljava/lang/Double;
@@ -455,7 +481,6 @@ public final class id/frak/sdk/rewards/BestReward {
 }
 
 public final class id/frak/sdk/rewards/Campaign {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lid/frak/sdk/rewards/EstimatedReward;Lid/frak/sdk/rewards/EstimatedReward;Ljava/lang/Double;Ljava/lang/Double;Ljava/lang/String;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCampaignId ()Ljava/lang/String;
 	public final fun getDefaultLockupSeconds ()Ljava/lang/Double;
@@ -473,7 +498,6 @@ public abstract class id/frak/sdk/rewards/EstimatedReward {
 }
 
 public final class id/frak/sdk/rewards/EstimatedReward$Fixed : id/frak/sdk/rewards/EstimatedReward {
-	public fun <init> (Lid/frak/sdk/rewards/TokenAmount;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAmount ()Lid/frak/sdk/rewards/TokenAmount;
 	public fun hashCode ()I
@@ -481,7 +505,6 @@ public final class id/frak/sdk/rewards/EstimatedReward$Fixed : id/frak/sdk/rewar
 }
 
 public final class id/frak/sdk/rewards/EstimatedReward$Percentage : id/frak/sdk/rewards/EstimatedReward {
-	public fun <init> (DLjava/lang/String;Lid/frak/sdk/rewards/TokenAmount;Lid/frak/sdk/rewards/TokenAmount;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getMaxAmount ()Lid/frak/sdk/rewards/TokenAmount;
 	public final fun getMinAmount ()Lid/frak/sdk/rewards/TokenAmount;
@@ -492,7 +515,6 @@ public final class id/frak/sdk/rewards/EstimatedReward$Percentage : id/frak/sdk/
 }
 
 public final class id/frak/sdk/rewards/EstimatedReward$Tiered : id/frak/sdk/rewards/EstimatedReward {
-	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getTierField ()Ljava/lang/String;
 	public final fun getTiers ()Ljava/util/List;
@@ -501,7 +523,6 @@ public final class id/frak/sdk/rewards/EstimatedReward$Tiered : id/frak/sdk/rewa
 }
 
 public final class id/frak/sdk/rewards/EstimatedReward$Unknown : id/frak/sdk/rewards/EstimatedReward {
-	public fun <init> (Ljava/lang/String;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getPayoutType ()Ljava/lang/String;
 	public fun hashCode ()I
@@ -551,7 +572,6 @@ public abstract class id/frak/sdk/rewards/RewardTier {
 }
 
 public final class id/frak/sdk/rewards/RewardTier$Amount : id/frak/sdk/rewards/RewardTier {
-	public fun <init> (DLjava/lang/Double;Lid/frak/sdk/rewards/TokenAmount;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAmount ()Lid/frak/sdk/rewards/TokenAmount;
 	public fun getMaxValue ()Ljava/lang/Double;
@@ -561,7 +581,6 @@ public final class id/frak/sdk/rewards/RewardTier$Amount : id/frak/sdk/rewards/R
 }
 
 public final class id/frak/sdk/rewards/RewardTier$Percentage : id/frak/sdk/rewards/RewardTier {
-	public fun <init> (DLjava/lang/Double;D)V
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getMaxValue ()Ljava/lang/Double;
 	public fun getMinValue ()D
@@ -570,8 +589,15 @@ public final class id/frak/sdk/rewards/RewardTier$Percentage : id/frak/sdk/rewar
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class id/frak/sdk/rewards/RewardTier$Unknown : id/frak/sdk/rewards/RewardTier {
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getMaxValue ()Ljava/lang/Double;
+	public fun getMinValue ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class id/frak/sdk/rewards/TokenAmount {
-	public fun <init> (DDDD)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAmount ()D
 	public final fun getEurAmount ()D
@@ -672,6 +698,9 @@ public final class id/frak/sdk/sharing/SharingRequest {
 	public final fun getLogoUrl ()Ljava/lang/String;
 	public final fun getPlacement ()Ljava/lang/String;
 	public final fun getProducts ()Ljava/util/List;
+	public final fun getShareImageUrl ()Ljava/lang/String;
+	public final fun getShareText ()Ljava/lang/String;
+	public final fun getShareTitle ()Ljava/lang/String;
 	public final fun getTargetInteraction ()Ljava/lang/String;
 }
 
@@ -685,6 +714,9 @@ public final class id/frak/sdk/sharing/SharingRequest$Builder {
 	public final fun getLogoUrl ()Ljava/lang/String;
 	public final fun getPlacement ()Ljava/lang/String;
 	public final fun getProducts ()Ljava/util/List;
+	public final fun getShareImageUrl ()Ljava/lang/String;
+	public final fun getShareText ()Ljava/lang/String;
+	public final fun getShareTitle ()Ljava/lang/String;
 	public final fun getTargetInteraction ()Ljava/lang/String;
 	public final fun link (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
 	public final fun logoUrl (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
@@ -695,7 +727,13 @@ public final class id/frak/sdk/sharing/SharingRequest$Builder {
 	public final fun setLogoUrl (Ljava/lang/String;)V
 	public final fun setPlacement (Ljava/lang/String;)V
 	public final fun setProducts (Ljava/util/List;)V
+	public final fun setShareImageUrl (Ljava/lang/String;)V
+	public final fun setShareText (Ljava/lang/String;)V
+	public final fun setShareTitle (Ljava/lang/String;)V
 	public final fun setTargetInteraction (Ljava/lang/String;)V
+	public final fun shareImageUrl (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
+	public final fun shareText (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
+	public final fun shareTitle (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
 	public final fun targetInteraction (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
 }
 

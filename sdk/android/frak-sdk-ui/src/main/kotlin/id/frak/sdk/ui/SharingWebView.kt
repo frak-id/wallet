@@ -2,13 +2,19 @@ package id.frak.sdk.ui
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.webkit.ConsoleMessage
 import android.webkit.CookieManager
 import android.webkit.RenderProcessGoneDetail
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -24,8 +30,14 @@ internal sealed interface SharingPageAction {
 
     data object ShareAgain : SharingPageAction
 
-    /** The page asking the host to share: navigator.share does not exist in an Android WebView. */
-    data object Share : SharingPageAction
+    /**
+     * The page asking the host to share: navigator.share does not exist in an Android WebView.
+     * `image` is never parsed — Android ships no preview thumbnail.
+     */
+    data class Share(
+        val title: String?,
+        val text: String?,
+    ) : SharingPageAction
 
     data object Copy : SharingPageAction
 
@@ -46,6 +58,8 @@ internal sealed interface SharingPageAction {
             action: String?,
             value: String? = null,
             exp: String? = null,
+            title: String? = null,
+            text: String? = null,
         ): SharingPageAction? =
             when (action) {
                 "install" -> Install
@@ -54,7 +68,9 @@ internal sealed interface SharingPageAction {
 
                 "shareAgain" -> ShareAgain
 
-                "share" -> Share
+                // Blank decodes to null, so it falls through to the session's own copy rather
+                // than suppressing it with an empty subject.
+                "share" -> Share(blankToNull(title), blankToNull(text))
 
                 "copy" -> Copy
 
@@ -67,6 +83,8 @@ internal sealed interface SharingPageAction {
 
                 else -> null
             }
+
+        private fun blankToNull(value: String?): String? = value?.trim()?.takeIf { it.isNotEmpty() }
     }
 }
 
@@ -101,8 +119,29 @@ internal class SharingWebViewHandle(
     var documentReady: Boolean = false
         private set
 
+    /**
+     * This view's render process was reclaimed or crashed. Terminal: Android's contract is that a
+     * `WebView` whose renderer is gone is unusable for good, so [SharingWebViewPool] discards it
+     * rather than loading into it again.
+     */
+    var rendererGone: Boolean = false
+        private set
+
+    /**
+     * Called from [SharingWebViewClient.onRenderProcessGone], which cannot reach this handle
+     * itself. Clearing [documentReady] is what stops the next sheet activating by fragment into a
+     * document that no longer exists.
+     */
+    fun onRendererGone() {
+        rendererGone = true
+        documentReady = false
+    }
+
     /** Points the view at a session. Resets per-load state; see [SharingWebViewBinding]. */
     fun bind(binding: SharingWebViewBinding) {
+        // Belt and braces: nothing sets a non-default cache mode any more, and a pinned one would
+        // be inherited silently by the pool's re-warm and by every later sheet.
+        view.settings.cacheMode = WebSettings.LOAD_DEFAULT
         client.binding = binding
     }
 
@@ -137,6 +176,12 @@ internal class SharingWebViewHandle(
     }
 
     fun destroy() {
+        // The client can be holding a retry scheduled against this view. It is posted to the main
+        // looper, not to the view's own queue, so nothing else stops it — and `loadUrl` after
+        // `destroy()` takes the merchant's process down. The pool reaches here without rebinding
+        // first (a dead pool releasing a lent view, or destroying a warm one), so the binding
+        // setter's own cancellation does not cover this.
+        client.cancelPendingRetry()
         view.destroy()
     }
 }
@@ -152,6 +197,10 @@ internal fun createSharingWebView(
     returnScheme: String,
 ): SharingWebViewHandle {
     val client = SharingWebViewClient(walletOrigin = walletOrigin, returnScheme = returnScheme)
+    // Gated on the host app's own debuggable flag, not on a Frak log level: `setWebContentsDebuggingEnabled`
+    // is process-global and exposes the wallet session to anything that can reach the ADB socket.
+    val debuggable = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    if (debuggable) WebView.setWebContentsDebuggingEnabled(true)
     val view =
         WebView(context).apply {
             // Explicit MATCH_PARENT: a wrap-content WebView reports a 0 viewport height to Blink,
@@ -180,13 +229,31 @@ internal fun createSharingWebView(
             CookieManager.getInstance().setAcceptThirdPartyCookies(this, false)
 
             webViewClient = client
+            // The page is the only thing in the sheet that can fail silently; without this a
+            // merchant debugging a blank sheet has no signal at all.
+            if (debuggable) webChromeClient = SharingConsoleClient()
         }
 
     // Registered on the view, not per load, so every wallet-origin document it shows is styled.
     // Result unused: the page's own CSS fallbacks are the degraded rendering.
     SharingHostStyle.install(view = view, walletOrigin = walletOrigin, topRadiusDp = SHEET_CORNER_RADIUS_DP)
 
-    return SharingWebViewHandle(view = view, client = client)
+    // Wired after construction rather than passed in: the client is built first, and this is the
+    // only way back from it to the state a renderer crash invalidates.
+    return SharingWebViewHandle(view = view, client = client).also {
+        client.onRendererGone = it::onRendererGone
+    }
+}
+
+/** Console forwarder for a debuggable host build. Returns true so the default logcat line is not also emitted. */
+private class SharingConsoleClient : WebChromeClient() {
+    override fun onConsoleMessage(message: ConsoleMessage): Boolean {
+        Log.d(
+            "FrakSharing",
+            "page: ${message.message()} (${message.sourceId()}:${message.lineNumber()})",
+        )
+        return true
+    }
 }
 
 internal class SharingWebViewClient(
@@ -195,12 +262,26 @@ internal class SharingWebViewClient(
 ) : WebViewClient() {
     private val origin: Uri = Uri.parse(walletOrigin)
 
+    /** Where a backed-off retry is posted. See [scheduleRetry] for why it is not the view's own queue. */
+    private val handler = Handler(Looper.getMainLooper())
+
+    /**
+     * Told when this view's render process dies. Set once per view, not per binding: a renderer
+     * crash outlives whichever session was using it, and the [SharingWebViewHandle] holding the
+     * state it invalidates is not reachable from here.
+     */
+    var onRendererGone: () -> Unit = {}
+
     /** Whose session this view is currently serving. Rebinding clears every field below. */
     var binding: SharingWebViewBinding = SharingWebViewBinding.Warm
         set(value) {
             field = value
+            // Before the counters: a retry booked by the previous session would otherwise navigate
+            // this view to that session's URL, on a pool that has already moved on.
+            cancelPendingRetry()
             pendingMainFrameUrl = null
-            retried = false
+            retryCount = 0
+            ladderUrl = null
             retryPending = false
             settled = false
             navigationFailed = false
@@ -213,8 +294,18 @@ internal class SharingWebViewClient(
     /** Main-frame URL currently in flight, captured in [onPageStarted]; null once resolved. */
     private var pendingMainFrameUrl: String? = null
 
-    /** At most one cache-only retry per binding. */
-    private var retried = false
+    /** Rungs of [RETRY_LADDER] already spent on the document in [ladderUrl]. */
+    private var retryCount = 0
+
+    /**
+     * Which document the spent rungs belong to. A session navigates more than once — the install
+     * page, and the confirmation screen — and a fresh document has not failed yet, so it must not
+     * inherit a budget the sharing page spent.
+     */
+    private var ladderUrl: String? = null
+
+    /** The scheduled retry, held so a rebind can cancel one that would navigate the next session's view. */
+    private var pendingRetry: Runnable? = null
 
     /** So a duplicate error callback for the same failure is not read as the retry itself failing. */
     private var retryPending = false
@@ -250,6 +341,8 @@ internal class SharingWebViewClient(
                         action = url.getQueryParameter("action"),
                         value = url.getQueryParameter("value"),
                         exp = url.getQueryParameter("exp"),
+                        title = url.getQueryParameter("title"),
+                        text = url.getQueryParameter("text"),
                     )?.let(binding.onAction)
             }
             return true
@@ -286,9 +379,9 @@ internal class SharingWebViewClient(
         if (!navigationOwnedByBinding) return
         // Android delivers this for its own error page too, in the same load cycle.
         if (navigationFailed) return
-        // `retried` is NOT reset: one retry per binding for the sheet's whole lifetime.
+        // The ladder is NOT reset here: rungs belong to a document, not to an attempt at it, so a
+        // load that only succeeded on its retry must not hand a later failure a full budget again.
         pendingMainFrameUrl = null
-        view.settings.cacheMode = WebSettings.LOAD_DEFAULT // Undo handleMainFrameFailure's cache-only mode.
         val settledBinding = binding
         settledBinding.onPageReady()
 
@@ -313,7 +406,7 @@ internal class SharingWebViewClient(
         error: WebResourceError,
     ) {
         // Sub-resource failures degrade on their own; only the document matters.
-        if (request.isForMainFrame) handleMainFrameFailure(view)
+        if (request.isForMainFrame) handleMainFrameFailure(view, unreachable = isUnreachable(error))
     }
 
     override fun onReceivedHttpError(
@@ -321,36 +414,88 @@ internal class SharingWebViewClient(
         request: WebResourceRequest,
         errorResponse: WebResourceResponse,
     ) {
-        if (request.isForMainFrame) handleMainFrameFailure(view)
+        // An answer, however bad, means the network is there; this is the retryable kind.
+        if (request.isForMainFrame) handleMainFrameFailure(view, unreachable = false)
     }
 
-    /** One cache-only retry so a live-but-erroring or offline-but-visited-before load can still paint. */
-    private fun handleMainFrameFailure(view: WebView) {
+    /**
+     * The network itself did not answer. Another attempt over it is pointless, so the ladder skips
+     * straight to its cache-only rung rather than spending the sheet's budget on a dead radio.
+     */
+    private fun isUnreachable(error: WebResourceError): Boolean =
+        error.errorCode == WebViewClient.ERROR_HOST_LOOKUP || error.errorCode == WebViewClient.ERROR_CONNECT
+
+    /**
+     * A main-frame failure gets the rest of [RETRY_LADDER] before tier 3. All rungs are network
+     * rungs: the hosted document is served `no-store`, so it is never in the HTTP cache and a
+     * cache-only attempt cannot answer — an unreachable network goes straight to tier 3.
+     */
+    private fun handleMainFrameFailure(
+        view: WebView,
+        unreachable: Boolean,
+    ) {
         // The warm load failing after this view was lent to a sheet.
         if (!navigationOwnedByBinding) return
         // Before the `settled` guard: a later error page's onPageFinished must not report readiness.
         navigationFailed = true
         if (settled) return
+        // Duplicate callback for the failure that already booked the next rung.
+        if (retryPending) return
         val url = pendingMainFrameUrl
-        // Duplicate callback for the failure that already triggered the retry.
-        if (retryPending) {
-            return
-        }
-        if (retried) {
-            view.settings.cacheMode = WebSettings.LOAD_DEFAULT
-            settled = true
-            binding.onLoadFailed()
-            return
-        }
         if (url == null) {
-            settled = true
-            binding.onLoadFailed()
+            giveUp(view)
             return
         }
-        retried = true
+        // A document this ladder has not been spent on yet gets the whole thing.
+        if (url != ladderUrl) {
+            ladderUrl = url
+            retryCount = 0
+        }
+        // Nothing to retry against, and no cached copy to fall back on.
+        if (unreachable) {
+            giveUp(view)
+            return
+        }
+        val delayMillis = RETRY_LADDER.getOrNull(retryCount)
+        if (delayMillis == null) {
+            giveUp(view)
+            return
+        }
+        retryCount++
         retryPending = true
-        view.settings.cacheMode = WebSettings.LOAD_CACHE_ONLY
-        view.loadUrl(url)
+        scheduleRetry(delayMillis) { view.loadUrl(url) }
+    }
+
+    /** The ladder is spent. */
+    private fun giveUp(view: WebView) {
+        view.settings.cacheMode = WebSettings.LOAD_DEFAULT
+        settled = true
+        binding.onLoadFailed()
+    }
+
+    /**
+     * Posted to the main looper rather than through [WebView.postDelayed]: the pooled view can be
+     * detached here, and a `View`'s own queue parks runnables until it is attached to a window.
+     */
+    private fun scheduleRetry(
+        delayMillis: Long,
+        navigate: () -> Unit,
+    ) {
+        cancelPendingRetry()
+        val runnable =
+            Runnable {
+                pendingRetry = null
+                retryPending = false
+                navigate()
+            }
+        pendingRetry = runnable
+        handler.postDelayed(runnable, delayMillis)
+    }
+
+    /** Also reached from [SharingWebViewHandle.destroy], which is not a rebind. */
+    fun cancelPendingRetry() {
+        pendingRetry?.let(handler::removeCallbacks)
+        pendingRetry = null
     }
 
     override fun onRenderProcessGone(
@@ -358,10 +503,24 @@ internal class SharingWebViewClient(
         detail: RenderProcessGoneDetail,
     ): Boolean {
         // MUST return true — false lets the framework kill the host app, not just the sheet.
+        // Reported before the `settled` guard below: the view is unusable whether or not this
+        // binding still has a failure to report.
+        onRendererGone()
+        // A view whose renderer is gone cannot load anything, so a booked retry would only navigate
+        // a corpse and keep the sheet waiting on it.
+        cancelPendingRetry()
         if (!settled) {
             settled = true
             binding.onLoadFailed()
         }
         return true
+    }
+
+    private companion object {
+        /**
+         * Delays a main-frame failure gets before tier 3, in order. Two rungs, sized to fit inside
+         * the sheet's own load budget alongside the attempts themselves — a third would expire it.
+         */
+        val RETRY_LADDER = listOf(300L, 900L)
     }
 }

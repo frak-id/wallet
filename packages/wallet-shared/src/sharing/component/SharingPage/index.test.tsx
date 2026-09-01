@@ -30,7 +30,7 @@ const baseProps: SharingPageProps = {
     sharingLink: null,
     installUrl: null,
     reward: { status: "ready" },
-    share: { canShare: true, isSharing: false },
+    share: { canShare: true, isSharing: false, canAct: true },
     t,
     actions: {
         onShare: () => {},

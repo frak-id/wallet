@@ -20,6 +20,7 @@ export type {
 export { SharingPage } from "./component/SharingPage";
 // Hooks
 export { useShareLink } from "./hooks/useShareLink";
+export { useSharingIdentity } from "./hooks/useSharingIdentity";
 export type {
     SharingOutcomes,
     SharingPageControllerInput,
@@ -33,4 +34,7 @@ export {
     clearConfirmation,
     getSavedConfirmation,
     saveConfirmation,
+    sharingConfirmationScope,
 } from "./utils/confirmation";
+export { sanitizeShareImage } from "./utils/sanitizeShareImage";
+export { SHARE_BUDGET, truncateForShare } from "./utils/shareBudget";

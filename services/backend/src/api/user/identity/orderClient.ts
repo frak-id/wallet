@@ -18,7 +18,13 @@ import { PurchasesContext } from "../../../domain/purchases/context";
  * headroom while cutting scan/enumeration throughput 3x.
  */
 export const orderClientRoute = new Elysia()
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "identity-order-client",
+            windowMs: 60_000,
+            maxRequests: 10,
+        })
+    )
     .get(
         "/order-client",
         async ({ query }) => {

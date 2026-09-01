@@ -2,7 +2,7 @@ import { db } from "@backend-infrastructure";
 import { and, eq } from "drizzle-orm";
 import { purchaseClaimsTable } from "../db/schema";
 
-type PurchaseClaim = typeof purchaseClaimsTable.$inferSelect;
+export type PurchaseClaim = typeof purchaseClaimsTable.$inferSelect;
 
 type ClaimKey = {
     merchantId: string;
@@ -70,6 +70,24 @@ export class PurchaseClaimRepository {
                 eq(purchaseClaimsTable.orderId, key.orderId),
                 eq(purchaseClaimsTable.purchaseToken, key.purchaseToken)
             ),
+        });
+        return result ?? null;
+    }
+
+    /**
+     * The oldest claim on `(merchantId, purchaseToken)`, for callers that hold
+     * no `orderId`. Oldest wins so concurrent claims resolve deterministically.
+     */
+    async findByMerchantAndToken(params: {
+        merchantId: string;
+        purchaseToken: string;
+    }): Promise<PurchaseClaim | null> {
+        const result = await db.query.purchaseClaimsTable.findFirst({
+            where: and(
+                eq(purchaseClaimsTable.merchantId, params.merchantId),
+                eq(purchaseClaimsTable.purchaseToken, params.purchaseToken)
+            ),
+            orderBy: (claims, { asc }) => [asc(claims.createdAt)],
         });
         return result ?? null;
     }

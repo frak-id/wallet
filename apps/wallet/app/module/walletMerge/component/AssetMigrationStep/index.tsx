@@ -3,6 +3,7 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { type ReactNode, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -100,7 +101,10 @@ export function AssetMigrationStep({
 
     // Title + description are state-driven so the screen reads correctly
     // in every state without juggling five JSX branches.
-    const { titleKey, descriptionKey } = (() => {
+    const { titleKey, descriptionKey } = ((): {
+        titleKey: DefaultTranslationKey;
+        descriptionKey: DefaultTranslationKey;
+    } => {
         if (summary.isLoading)
             return {
                 titleKey: "wallet.merge.migrate.loadingTitle",

@@ -1,0 +1,197 @@
+# Publishes id.frak.sdk:core and id.frak.sdk:ui to Maven Central via the Publisher Portal.
+#
+# The Portal takes a zipped Maven-layout tree over REST, not a Maven deploy — OSSRH, which would
+# have offered a repository URL, is decommissioned. Gradle builds the bundle (`centralBundle` in
+# sdk/android/build.gradle.kts) and this uploads it, so the token never enters a Gradle process.
+#
+# Both artifacts go up in ONE deployment. They ship in lockstep behind a `strictly` constraint, so
+# two deployments could land `ui` on Central pointing at a `core` that failed validation.
+#
+# Tag convention: `android-v0.1.0-alpha01` publishes version `0.1.0-alpha01`.
+#
+# A GitHub release quoting sdk/android/CHANGELOG.md goes up alongside the deployment, drafted while
+# the Portal deployment is still USER_MANAGED so both are published by the same hand.
+name: Release Android SDK
+
+on:
+  push:
+    tags: ["android-v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, without the android-v prefix"
+        required: true
+      publishing_type:
+        description: "USER_MANAGED validates and waits for a human; AUTOMATIC goes live and cannot be undone"
+        type: choice
+        options: [USER_MANAGED, AUTOMATIC]
+        default: USER_MANAGED
+      dry_run:
+        description: "Build and verify the bundle, but do not upload"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-android-sdk
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: "🤖 Android SDK · Publish to Maven Central"
+    runs-on: ubuntu-latest
+    permissions:
+      # The GitHub release, and the android-v tag it creates on a workflow_dispatch run.
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+
+      # AGP targets JVM 17; a newer JDK fails the toolchain check.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v4
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          build-root-directory: sdk/android
+          # This job holds the signing key and the Portal token; the wrapper jar it runs
+          # is worth verifying against Gradle's published hashes.
+          validate-wrappers: true
+
+      - name: "🔢 Resolve the version"
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#android-v}"
+          fi
+          # A published version is immutable on Central. A malformed one cannot be taken back.
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+            echo "::error::'$version' is not a semver version" && exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # Every file carrying the version, against each other and against the CHANGELOG. `check`
+      # below repeats this; it runs here first so a drifted release fails in seconds, not after
+      # a full Gradle build. None of those files knows about the tag, hence the second step.
+      - name: "🔒 Check the version sites and the CHANGELOG"
+        run: bun scripts/native-version.ts check android
+
+      - name: "🔒 Check the tag against frak.sdk.version"
+        run: |
+          declared=$(bun scripts/native-version.ts version android)
+          if [ "$declared" != "${{ steps.resolve.outputs.version }}" ]; then
+            echo "::error::tag says ${{ steps.resolve.outputs.version }}, gradle.properties says $declared" && exit 1
+          fi
+
+      - name: "🧪 Full check (ktlint, ABI gate, tests, lint, version drift)"
+        run: bun run --cwd sdk/android check
+
+      # GitHub uppercases secret NAMES; Gradle reads these env vars case-sensitively. Get the case
+      # wrong and nothing fails — signing is opt-in, so it would build an unsigned bundle and the
+      # Portal would be the first to notice. `checkCentralBundle` below is the backstop.
+      - name: "📦 Build and verify the deployment bundle"
+        env:
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
+        run: ./gradlew checkCentralBundle
+        working-directory: sdk/android
+
+      - name: "🚀 Upload to the Central Portal"
+        id: upload
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+          TYPE: ${{ inputs.publishing_type || 'USER_MANAGED' }}
+          USERNAME: ${{ secrets.CENTRAL_PORTAL_USERNAME }}
+          PASSWORD: ${{ secrets.CENTRAL_PORTAL_PASSWORD }}
+        run: |
+          auth=$(printf '%s:%s' "$USERNAME" "$PASSWORD" | base64 -w0)
+
+          id=$(curl -sS --fail-with-body -X POST \
+            "https://central.sonatype.com/api/v1/publisher/upload?name=frak-sdk-$VERSION&publishingType=$TYPE" \
+            -H "Authorization: Bearer $auth" \
+            -F "bundle=@sdk/android/build/central-bundle.zip")
+          echo "Deployment $id ($TYPE)"
+
+          # Poll rather than trust the upload: validation is asynchronous, and a FAILED deployment
+          # returns its reasons only here.
+          for _ in $(seq 1 60); do
+            sleep 10
+            body=$(curl -sS -X POST "https://central.sonatype.com/api/v1/publisher/status?id=$id" \
+              -H "Authorization: Bearer $auth")
+            state=$(printf '%s' "$body" | jq -r '.deploymentState')
+            echo "  $state"
+            case "$state" in
+              VALIDATED|PUBLISHED) break ;;
+              FAILED)
+                echo "::error::Portal validation failed"
+                printf '%s' "$body" | jq '.errors'
+                # Deliberately not dropped: a FAILED deployment keeps the files Sonatype support
+                # asks for, and it publishes nothing while it sits there.
+                exit 1
+                ;;
+            esac
+          done
+
+          # The loop ending is not the same as the loop succeeding: without this a deployment
+          # still PENDING after 600s exits 0 and the summary reports it as a release.
+          case "$state" in
+            VALIDATED|PUBLISHED) ;;
+            *)
+              echo "::error::Portal validation did not settle within 600s (last state: $state)"
+              exit 1
+              ;;
+          esac
+
+          {
+            echo "### Android SDK $VERSION"
+            echo ""
+            echo "- deployment: \`$id\` — **$state**"
+            printf '%s' "$body" | jq -r '.purls[] | "- `\(.)`"'
+            if [ "$state" = "VALIDATED" ]; then
+              echo ""
+              echo "Validated but **not published**. Release or drop it at"
+              echo "<https://central.sonatype.com/publishing/deployments>."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+
+      - name: "📝 Extract the release notes"
+        if: steps.upload.outputs.state != ''
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          {
+            bun scripts/native-version.ts notes android
+            echo ""
+            echo "---"
+            echo ""
+            echo "Add it with Gradle — both artifacts ship in lockstep:"
+            echo ""
+            echo '```kotlin'
+            echo "implementation(\"id.frak.sdk:core:$VERSION\")"
+            echo "implementation(\"id.frak.sdk:ui:$VERSION\")"
+            echo '```'
+          } > "$RUNNER_TEMP/notes.md"
+
+      # A USER_MANAGED deployment sits VALIDATED on the Portal until a human releases it, so the
+      # GitHub release is drafted rather than published: the same person publishes both, and a
+      # dropped deployment leaves a draft rather than a release for a version nobody can resolve.
+      # On a tag push the tag exists already; on a workflow_dispatch run this creates it.
+      - name: "🏷️ Create the GitHub release"
+        if: steps.upload.outputs.state != ''
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: "android-v${{ steps.resolve.outputs.version }}"
+          name: "Android SDK ${{ steps.resolve.outputs.version }}"
+          body_path: ${{ runner.temp }}/notes.md
+          prerelease: ${{ contains(steps.resolve.outputs.version, '-') }}
+          draft: ${{ steps.upload.outputs.state != 'PUBLISHED' }}

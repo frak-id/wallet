@@ -16,11 +16,31 @@ bun run --cwd sdk/ios build    # compile against the iOS simulator SDK
 bun run --cwd sdk/ios test     # compile for iOS, then run the suites
 bun run --cwd sdk/ios lint     # swift-format lint (strict)
 bun run --cwd sdk/ios format   # swift-format rewrite in place
+bun run --cwd sdk/ios check:version   # every version site + the CHANGELOG section
 ```
 
 These wrap `scripts/run.sh`, which owns the real invocations. `xcframework` is also
 defined but not implemented — it exits 1 with the intended outline in the comments
 above `do_xcframework()`.
+
+`mirror-stage <dir>` lays out what the SwiftPM mirror publishes: `Sources/`,
+`Package.swift`, `LICENSE`, `CHANGELOG.md`, and `README.mirror.md` as `README.md`. Merchants cannot
+consume this package from the monorepo — SwiftPM reads `Package.swift` from a repo root
+only — so releases go to [`frak-id/frak-ios-sdk`](https://github.com/frak-id/frak-ios-sdk)
+via `.github/workflows/release-ios-sdk.yml`, triggered by an `ios-v*` tag. `Tests/` is
+deliberately absent from the payload: `GoldenFixtures` reads the corpus out of
+`sdk/core`, so a mirrored suite could never pass. `README.mirror.md` is the merchant-facing
+README and this file is the contributor-facing one; they are meant to diverge.
+
+**Cutting a release.** One commit moves all three version sites — `FrakSDKVersion.current`,
+`package.json`, and the `exact:` pin in `README.mirror.md` — and promotes `[Unreleased]` in
+`CHANGELOG.md` to the version being cut; pushing `ios-v<version>` runs the workflow. It checks
+those sites against each other and against the tag on a Linux runner, then lints, builds and
+tests the released tree on macOS *before* anything reaches the mirror, because the mirror
+refuses to retag a published version. It then pushes, opens a GitHub release whose body is that
+CHANGELOG section, and resolves the published package as a merchant would. Android releases on
+its own tag and its own cadence; nothing pairs them, deliberately, so either can take a hotfix
+alone. `scripts/native-version.ts` at the monorepo root owns the site list for both.
 
 `swift build` under Swift 6 strict concurrency is the typecheck: there is no separate
 `tsc`-equivalent step. A bare `swift build` without the flags `run.sh` supplies targets
@@ -33,9 +53,15 @@ format`/`lint` here; rules live in `.swift-format`, copied from
 
 `Package.swift` declares no `dependencies` — zero third-party packages.
 
-## Public API surface
+## Internal layout
 
-| Target | Folder | Public API |
+Folders inside the two targets, and the main type in each. **Almost none of these are
+`public`** — the merchant-facing surface is `Frak`, `FrakClient` and its five namespaces,
+the input/read models they take and return, and `FrakSDKUI`'s two entry points —
+`.frakSharingSheet` for SwiftUI and `FrakSharing` for UIKit — plus `FrakSharingConfiguration`.
+Everything else below is `internal`.
+
+| Target | Folder | Main types |
 | --- | --- | --- |
 | `FrakSDK` | `Core` | `FrakConfig`, `FrakLogSink`, `FrakEnvironment`, `FrakMetadata`, `FrakError`, `FrakLogger`, `Base64URL`, `Hex` |
 | `FrakSDK` | `Net` | `HTTPClient` over `URLSession` (GET + POST), `JSONDecoding`, `URLQuery`, `PercentEncoding` |
@@ -43,10 +69,10 @@ format`/`lint` here; rules live in `.swift-format`, copied from
 | `FrakSDK` | `Rewards` | reward models, decoder, `RewardRepository` |
 | `FrakSDK` | `Identity` | `DeviceKey` (Secure Enclave P-256), `ProofCodec`, `AnonymousIdStore` |
 | `FrakSDK` | `Sharing` | `FrakContext`, `FrakContextCodec` (v2 binary), attribution merge, `SharingLinkBuilder` |
-| `FrakSDK` | `Tracking` | `Interaction`, `EventQueue` (durable JSONL), `InteractionTracker` |
+| `FrakSDK` | `Tracking` | `Interaction`, `EventQueue` (durable JSONL), `EventOutbox` |
 | `FrakSDK` | `AppLink` | `AppLauncher`, `InstallLinks`, `ReferralArrival` |
 | `FrakSDK` | (root) | `Frak`, `FrakClient`, `DefaultFrakClient` |
-| `FrakSDKUI` | — | `.frakSharingSheet` modifier: native share/copy with a three-tier fallback |
+| `FrakSDKUI` | — | `.frakSharingSheet` (SwiftUI) and `FrakSharing` (UIKit), both onto one `SharingPresenter`: native share/copy with a three-tier fallback, plus `FrakSharingConfiguration` for height and install surface |
 
 `Core/`, `Net/`, `Identity/`, etc. are folders inside the single `FrakSDK` target, not
 separate Swift modules — SwiftPM has no submodule concept, so they carry no
@@ -68,19 +94,25 @@ Inbound deep links have no automatic handling — wire `appLink.handleReferral(_
 
 ## Status
 
-The table above is implemented and covered by 257 Swift Testing tests under
-`sdk/ios/Tests`. The FrakContext v2 codec and the signed proof byte layout are
+The table above is implemented and covered by 499 Swift Testing tests under
+`sdk/ios/Tests`. That count is the *host* run and excludes every UIKit-dependent suite:
+`run.sh test` compiles the tests at the iOS simulator triple (stage 1) and then executes them
+on the host (stage 2), where `canImport(UIKit)` is false, so `InstallProbeTests` and
+`FrakSharingUIKitTests` are type-checked and never run. Executing them needs `xcodebuild test`
+against a simulator destination, which is deferred with the XCFramework work. The FrakContext v2 codec and the signed proof byte layout are
 asserted against the golden fixtures in `sdk/core/src/{identity,context}/fixtures/`,
 shared with the Kotlin and TypeScript suites.
 
-Not implemented: the 4-tier copy precedence (`copy(placement:component:)`), the
-install-code + pasteboard + `SKStoreProductViewController` handoff, and the
+Not implemented: the 4-tier copy precedence (`copy(placement:component:)`) and the
 XCFramework distribution path.
 
 `.github/workflows/apps.yaml`'s `ios-sdk` job runs `lint`, `build` and `test` on every
-`dev`/`main` push and PR touching `sdk/ios/**`. Nothing in it has run on a device or a
+`dev`/`main` push and PR touching `sdk/ios/**`. Nothing in CI has run on a device or a
 simulator — every claim above rests on suites executed on the host toolchain
-(`swift test`), not on `xcodebuild test` against a simulator destination.
+(`swift test`), not on `xcodebuild test` against a simulator destination. Manual device
+testing of the sharing sheet started on 2026-08-12; there is no XCUITest target anywhere in
+the repo, so any claim of a simulator UI-test pass elsewhere in `docs/plans/native-sdk/`
+is wrong.
 
 ## Toolchain notes
 
@@ -114,20 +146,35 @@ simulator — every claim above rests on suites executed on the host toolchain
   feeds the `x-frak-sdk-version` header and the `?sdkVersion=` query parameter, and must not
   move because a web package bumped.
 - `Sources/FrakSDK/PrivacyInfo.xcprivacy` (and `FrakSDKUI`'s own copy) must stay
-  current with what the code does. Since 1 May 2024, an SDK using a required-reason
-  API without declaring it in a privacy manifest gets the merchant's App Store upload
-  rejected with ITMS-91053 — the rejection lands on the merchant's binary, not ours.
+  current with what the code does. Two independent mechanisms live in that one file and
+  it is worth not confusing them: `NSPrivacyAccessedAPITypes` is scanned at upload and an
+  undeclared required-reason API rejects the merchant's build with ITMS-91053, while
+  `NSPrivacyCollectedDataTypes` feeds the privacy report behind the merchant's App Store
+  nutrition label and is not an upload gate. Getting the first wrong breaks releases;
+  getting the second wrong misdescribes the merchant's app.
   `Interaction.custom(_:data:)` carries an arbitrary `[String: String]` the SDK
   persists and transmits; a merchant who puts an email or user id in there makes the
   manifest incomplete for their own binary.
+- The anonymous id is declared as **User ID, not Device ID**. Apple's Device ID means the
+  advertising identifier or another device-level id; this one is installation-scoped,
+  unreadable by other apps and gone on uninstall, which puts it under "assigned user ID".
+  `NSPrivacyTracking` stays `false`: no ad network is in the SDK path (the affiliate
+  integration lives in the wallet app), and the cross-merchant linkage is user-initiated
+  and serves reward distribution rather than advertising measurement. Both calls are
+  argued in full in the manifest comments — revisit if an ad network ever enters the SDK
+  path.
+- **`track(_:)` and `trackPurchase(...)` no longer fail with `merchantResolutionFailed`.**
+  They enqueue durably first and resolve the merchant from cache only (`.cachedOnly`),
+  never over the network; an unresolved merchant lands on disk as a `nil` `merchantId` and
+  is filled in by the drain once one is available (from config, cache, or a later launch).
+  This is a public behaviour change from the old `.required` resolve, even though the
+  signature is unchanged: a caller checking for `.merchantResolutionFailed` from `track`
+  itself will no longer see it there.
 
 ## Open decisions before first publish
 
 - XCFramework build and signing are unbuilt. `bun run --cwd sdk/ios xcframework`
   exits 1; only source distribution via a SwiftPM path/git dependency works today.
-- No CI builds either native SDK.
-- The ATT/tracking declaration in `PrivacyInfo.xcprivacy`
-  (`NSPrivacyTracking`) is still open.
 - `golden-rewards.json`'s `format-amount` vectors are hand-copied as literals in
   `RewardsDecoderTests.swift` instead of loaded from the shared fixture corpus.
 - `PrivacyInfo.xcprivacy` propagation has not been validated against a real consumer

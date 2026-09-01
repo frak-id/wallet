@@ -10,9 +10,9 @@ import Foundation
 /// `Double`, not `Int`, for every numeric: the wire type is a JSON number and the backend
 /// compares numerically; an `Int` would silently truncate a fractional `unitPrice`.
 ///
-/// `Decodable` is hand-written in `RewardsDecoder.swift` rather than synthesized: the synthesized
-/// one throws on a present-but-wrong-typed value even for an `Optional` property, which would let
-/// one reshaped field inside `matchedProducts` take down the whole rewards response.
+/// Decoding lives on a private wire type in `RewardsDecoder.swift`: a synthesized `Decodable`
+/// throws on a present-but-wrong-typed value even for an `Optional` property, which would let one
+/// reshaped field inside `matchedProducts` take down the whole rewards response.
 public struct ProductDetails: Sendable, Hashable {
     public let productId: String?
     public let sku: String?

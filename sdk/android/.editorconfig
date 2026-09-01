@@ -26,3 +26,8 @@ ij_kotlin_allow_trailing_comma_on_call_site = true
 # would be a second file to keep in sync, and the exemption is a no-op on a
 # source set that carries no annotated declarations.
 ktlint_function_naming_ignore_when_annotated_with = Composable
+
+# Off by default since ktlint 1.7 (false positives when auto-removing), and gone in 2.0.
+# Enabled anyway: four documents cited it as the gate that catches an unused import, and
+# without it that claim was false.
+ktlint_standard_no-unused-imports = enabled

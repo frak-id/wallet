@@ -31,14 +31,23 @@ enum MerchantQuery: Sendable {
         }
     }
 
-    /// Picks the route for `config`: `merchantId` first, matching the backend's own precedence.
+    /// Picks the route: bundleId first, `merchantId` only without one. Querying by a configured
+    /// id can only echo it back — the backend resolves strict first-match — so routing by bundleId
+    /// is what lets the backend actually determine the merchant.
     static func from(_ config: FrakConfig) throws -> MerchantQuery {
         let lang = config.metadata.lang?.rawValue
-        if let merchantId = config.merchantId?.trimmed, !merchantId.isEmpty {
-            return .id(merchantId: merchantId, lang: lang)
-        }
         if let bundleId = config.bundleId?.trimmed, !bundleId.isEmpty {
             return .bundleId(bundleId: bundleId, lang: lang)
+        }
+        if let merchantId = config.merchantId?.trimmed, !merchantId.isEmpty {
+            // Checked here, not left to the backend: a non-UUID comes back as a bare 422 whose
+            // body the SDK deliberately does not log, so the merchant sees no cause.
+            guard UUID(uuidString: merchantId) != nil else {
+                throw FrakError.merchantResolutionFailed(
+                    reason: "FrakConfig.merchantId must be a UUID, got: \(merchantId)"
+                )
+            }
+            return .id(merchantId: merchantId, lang: lang)
         }
         throw FrakError.merchantResolutionFailed(
             reason: "FrakConfig carries neither a merchantId nor a bundleId. "

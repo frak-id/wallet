@@ -19,13 +19,13 @@ Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **str
 ## Build System (tsdown / Rolldown)
 
 - **NPM**: `{ format: ["esm", "cjs"], outDir: "dist", dts: true }`
-- **CDN**: `{ format: "iife", globalName: "FrakSDK", outDir: "cdn", noExternal: [/.*/] }` — fully self-contained bundle
+- **CDN**: `{ format: "iife", globalName: "FrakSDK", outDir: "cdn", deps: { alwaysBundle: [/.*/] } }` — fully self-contained bundle. `sdk/legacy` is the exception: same IIFE shape, `NexusSDK` global, but it emits to `dist/bundle`, so a `sdk/*/cdn` glob misses a bundle merchants load from jsdelivr.
 - **`development` export condition**: apps in this monorepo consume `src/index.ts` directly (no rebuild in dev loop)
 
 ## Non-Obvious Patterns
 
 - **Build order is a hard requirement** — downstream packages typecheck against upstream build outputs.
-- **CDN `noExternal: [/.*/]`** means every dep (viem, TanStack Query, etc.) ships inside the bundle. Size discipline matters.
+- **CDN `deps.alwaysBundle: [/.*/]`** means every dep (viem, TanStack Query, etc.) ships inside the bundle. Size discipline matters, and so does the ES floor: it is one parse unit, so one above-floor construct anywhere breaks the whole file on an old browser.
 - **Adding a new action is a 4-step sequence** (do not skip):
   1. Add type in `sdk/core/src/types/rpc/*.ts`, extend `IFrameRpcSchema`
   2. Implement in `sdk/core/src/actions/<name>.ts` (pure function, `client: FrakClient`)
@@ -53,31 +53,37 @@ Two artifacts per platform so a merchant taking only tracking never pulls in a w
 
 | | Android | iOS |
 | --- | --- | --- |
-| Core (UI-free) | `id.frak:frak-sdk` (`:frak-sdk`) | `FrakSDK` |
-| UI (web view) | `id.frak:frak-sdk-ui` (`:frak-sdk-ui`) | `FrakSDKUI` |
-| Build | Gradle 9.5.0, AGP 9.1.1, Kotlin 2.4.10 → language/API level 2.2, JVM target 17, `compileSdk 36` | SwiftPM, tools-version 5.9 |
+| Core (UI-free) | `id.frak.sdk:core` (`:frak-sdk`) | `FrakSDK` |
+| UI (web view) | `id.frak.sdk:ui` (`:frak-sdk-ui`) | `FrakSDKUI` |
+| Build | Gradle 9.5.0, AGP 9.1.1, Kotlin 2.4.10 → language/API level 2.2, JVM target 17, `compileSdk 36` | SwiftPM, tools-version 6.0, `.swiftLanguageMode(.v6)` on all four targets |
 | Minimum | `minSdk 24`, `explicitApi()` on | iOS 15 |
-| Registry | Maven Central Portal (not OSSRH — decommissioned), not yet wired | SPM only, no CocoaPods |
+| Registry | Maven Central Portal (not OSSRH — decommissioned). Namespace `id.frak.sdk` claimed, GPG key live, Portal token wired, `release-android-sdk.yml` on an `android-v*` tag. The Portal takes a zipped Maven tree over REST, so Gradle stages into a local `centralBundle` repo and the workflow uploads; both artifacts go in ONE deployment. `USER_MANAGED` by default | SPM only, no CocoaPods. Mirrored to [`frak-id/frak-ios-sdk`](https://github.com/frak-id/frak-ios-sdk) — SwiftPM reads `Package.swift` from a repo root only, so `sdk/ios` is unreachable to a merchant. `release-ios-sdk.yml` on an `ios-v*` tag |
+| Versioning | `frak.sdk.version` in `gradle.properties` is the source of truth for 5 files | `FrakSDKVersion.current` is the source of truth for 3 files |
+| Changelog | `sdk/android/CHANGELOG.md` | `sdk/ios/CHANGELOG.md`, also shipped in the mirror payload |
 
-- **MVP surface implemented on both platforms**, one Android device pass only — the sharing sheet, the install handoff and inbound deep links have run nowhere, iOS nowhere at all. See `sdk/{android,ios}/README.md`.
-- **CI lints/builds/tests both native SDKs, and there is still no publish path**: `.github/workflows/apps.yaml` runs `sdk/android` (ubuntu, JDK 17) and `sdk/ios` (macos-26) on every `dev`/`main` push and PR touching them. A `changes` job (`dorny/paths-filter`) gates each one, so an `apps/**`-only change never boots the 10×-billed macOS runner. **Android now runs `check` too** — `lint`, `build`, `test`, `apiCheck` and `check`, in that order. The narrower four are kept alongside `check` even though it subsumes them, so a failure is attributed by step name. That was previously skipped because Android Lint had never run and `apiCheck` was red without a dump; Android Lint has since run clean and both dumps are committed. Still no emulator or simulator anywhere. Publishing is **broken, not merely absent**: `publishToMavenLocal` fails in AGP's bundled Dokka, which cannot parse Kotlin 2.4 class files (A6 in `docs/plans/native-sdk/06-open-findings.md`), and `bun run --cwd sdk/ios xcframework` still exits 1.
+- **MVP surface implemented on both platforms.** Android has been device-tested throughout, iOS since 2026-08-12 — but only against `example/native-{android,ios}`, in debug, on one screen. Nothing has run as a minified release build, against a multi-destination navigation host, or against a published artifact. See `sdk/{android,ios}/README.md`.
+- **CI lints/builds/tests both native SDKs**: `.github/workflows/apps.yaml` runs `sdk/android` (ubuntu, JDK 17) and `sdk/ios` (macos-26) on every `dev`/`main` push and PR touching them. A `changes` job (`dorny/paths-filter`) gates each one, so an `apps/**`-only change never boots the 10×-billed macOS runner. **Android now runs `check` too** — `lint`, `build`, `test`, `apiCheck` and `check`, in that order. The narrower four are kept alongside `check` even though it subsumes them, so a failure is attributed by step name. That was previously skipped because Android Lint had never run and `apiCheck` was red without a dump; Android Lint has since run clean and both dumps are committed. Still no emulator or simulator anywhere. `bun run --cwd sdk/ios xcframework` still exits 1; source distribution via SwiftPM is what ships.
+- **Releasing is per-platform and by tag, and the two are not paired.** One commit moves every version site for that platform and promotes `[Unreleased]` in its `CHANGELOG.md`; `bun run check:native-versions` (`scripts/native-version.ts`, wired into `sdk/android check` and every `sdk/ios` `run.sh` subcommand) fails if any site drifted or the version has no CHANGELOG section. Pushing the tag re-checks all of it against the tag, publishes, and opens a GitHub release whose body is that section — drafted on Android while the Portal deployment is still `USER_MANAGED`. iOS lints, builds and tests the released tree on macOS *before* the mirror push, because a published version can never be retagged. Nothing compares the Android version to the iOS one: either must be able to take a hotfix alone.
 - **Three iOS divergences, each forced by the platform**: the anonymous id lives in `UserDefaults` (Keychain survives uninstall) in its own `id.frak.sdk.identity` suite, alongside the Secure Enclave's wrapped key blob; `DeepLinkHandling` has no `.automatic` case, because a library cannot observe a host's `Scene`/`AppDelegate` URL callbacks the way it can Android's `ActivityLifecycleCallbacks`; the install fallback is a plain App Store URL, so the identity handoff only completes when the wallet is already installed.
 - **The two wire formats are pinned to golden fixtures, not to each other.** The identity proof layout and the FrakContext v2 codec are asserted against `sdk/core/src/{identity,context}/fixtures/` on every platform. A port that does not assert against the corpus has not been ported.
-- **Android dex budget: 256 KB per artifact** (`sdk/android/gradle.properties`). The check measures each module's own `classes.jar`, so it is meaningful for `:frak-sdk` and vacuous for `:frak-sdk-ui`.
+- **Unused imports are gated on Android only.** ktlint disabled `no-unused-imports` by default in 1.7 and removes it in 2.0, so both `.editorconfig` files opt back in with `ktlint_standard_no-unused-imports = enabled`. Swift has no equivalent worth having: `swift-format`'s 43 rules do not include one, and SwiftLint's `unused_import` is an analyzer rule that needs a compiler log. Do not cite `swift format` as catching an unused import.
+- **There is no Android dex budget check any more, and R8 is now reproducible.** `checkDexSizeBudget` measured unminified d8 output and was retired in `32836c217`, which attributed the SDK through R8's `mapping.txt` at 60 KB of executable code against the 479 KB the gate watched. `example/native-android` now ships `isMinifyEnabled = true` + `isShrinkResources = true` on `release` (debug-signed, so `installRelease` needs no keystore), so `./gradlew :app:assembleRelease` reproduces that. Measured 2026-08-13 driving the full harness on a device: 254 SDK classes reach R8, 23 are shaken out, no `missing_rules.txt`, 1.1 MB APK. The empty `consumer-rules.pro` is what makes that possible — a blanket keep rule would end it.
 - **`:frak-sdk` has zero third-party runtime deps** bar `kotlinx-coroutines-core`, which is `api` because `suspend`/`StateFlow` are in the public surface. `:frak-sdk-ui` ships Compose (`implementation`) and `androidx.activity` (`api` — `ComponentActivity` is a `FrakSharing.Builder.build` parameter and `ComponentDialog` hosts the sheet's window); that dependency load is the reason the two artifacts are split. Note the asymmetry: the `@Composable build()` overload is public but `androidx.compose.runtime` is only `implementation`, so a consumer must declare Compose themselves to call it. `08-sharing-sheet-api.md` step C moves Compose out of the base artifact and would settle this. Both iOS targets are genuinely dependency-free.
 - **`explicitApi()` on Android is deliberate**: a merchant's binary freezes at store submission, so an accidentally-public helper is one we are stuck supporting forever.
 - **`Presenter` lives in the UI artifact, not `sharing/`** — `client.sharing.buildLink()` is 100% local and must stay callable without the web view.
 - **`FrakClient` is a sealed concrete class with five namespaces** (`config`, `rewards`, `sharing`, `tracking`, `appLink`), not an interface/protocol. Adding a member is additive on both platforms; nothing can substitute a fake for it, so `frak-sdk-ui`'s tests inject the narrow `SharingDependencies` interface and merchant tests should point `FrakEnvironment.Custom`/`.custom` at a stub server.
 - **No exported activity, no intent filter in the SDK manifest**: inbound `fCtx` is wired through `FrakConfig.deepLink`, so the merchant's own router keeps owning their links.
-- **`PrivacyInfo.xcprivacy` is a hard gate**: ITMS-91053 lands on the merchant's upload, not ours, and `FrakSDKUI` ships its own because it is separately consumable. Declared: `DeviceID`, `PurchaseHistory`, `ProductInteraction`, `UserID` on the core; `DeviceID` + `ProductInteraction` on the UI; `UserDefaults`/`CA92.1` as the only required-reason API, core only.
+- **`PrivacyInfo.xcprivacy` is a hard gate**: ITMS-91053 lands on the merchant's upload, not ours, and `FrakSDKUI` ships its own because it is separately consumable. Declared: `UserID`, `PurchaseHistory`, `ProductInteraction` on the core; `UserID` + `ProductInteraction` on the UI; `UserDefaults`/`CA92.1` as the only required-reason API, core only. Neither manifest declares `DeviceID` — the anonymous id is deliberately argued as a `UserID` (installation-scoped, gone on uninstall), never a device identifier; do not add the category without re-litigating that argument in the manifest comments.
+- **This is where the comment budget keeps breaking**: KDoc/`///` blocks here have twice grown back into design essays — rejected alternatives, "Android does X, we do Y", "this used to…". Both platforms doing the same thing is *not* a reason to narrate the other one in a doc comment; put the cross-platform argument in `docs/plans/native-sdk/` and link it if it matters. `bun run lint:comments` now fails the build on it (5 lines max, shorter than the code, nothing on `@Test`, no history verbs) — run it before you push, and see the root `AGENTS.md` for the rule behind it.
 
 ```bash
 bun run --cwd sdk/android build   # assembleRelease — no device, this is a library
 bun run --cwd sdk/android test    # JVM unit tests
-bun run --cwd sdk/android check   # ktlint, ABI gate, tests, Android Lint, version drift, dex budget
+bun run --cwd sdk/android check   # ktlint, ABI gate, tests, Android Lint, version drift
 bun run --cwd sdk/android apiDump # write api/*.api; the diff IS the ABI decision
 bun run --cwd sdk/ios build       # swift build at an explicit iOS-simulator triple
 bun run --cwd sdk/ios test        # two stages: compile at the iOS triple, then run on the host
+bun run check:native-versions     # every version site on both SDKs + their CHANGELOG sections
 bun run --filter '*/native-*' lint   # ktlint + swift-format across SDKs and harnesses
 ```
 
@@ -89,7 +95,7 @@ Gradle invocation — Gradle rejects the undeclared implicit dependency; `run.sh
 `explicitApi()` catches a newly-public symbol; only the dump catches a breaking change to an existing one.
 The wiring is hand-rolled in `buildSrc` because binary-compatibility-validator registers nothing for an
 AGP 9 Android library and its documented replacement is unavailable for the same reason — see
-`docs/plans/native-sdk/09-android-api-surface.md` §5a, which is also the record of the Builder /
+`docs/plans/native-sdk/decisions.md` §2.4, which is also the record of the Builder /
 `*Async` / `Interaction` reshaping that gate freezes.
 
 ## See Also

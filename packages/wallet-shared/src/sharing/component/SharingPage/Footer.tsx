@@ -9,12 +9,10 @@ import type { SharingActions, SharingShareState, SharingT } from "./types";
  */
 export function Footer({
     share,
-    sharingLink,
     actions,
     t,
 }: {
     share: SharingShareState;
-    sharingLink: string | null;
     actions: Pick<SharingActions, "onShare" | "onCopy">;
     t: SharingT;
 }) {
@@ -26,7 +24,7 @@ export function Footer({
                     size="large"
                     fontSize="s"
                     onClick={actions.onShare}
-                    disabled={share.isSharing || !sharingLink}
+                    disabled={share.isSharing || !share.canAct}
                     className={styles.shareButton}
                 >
                     {t("sharing.btn.share")}
@@ -38,7 +36,7 @@ export function Footer({
                 size="large"
                 fontSize="s"
                 onClick={actions.onCopy}
-                disabled={!sharingLink}
+                disabled={!share.canAct}
                 className={styles.copyButton}
             >
                 {t("sharing.btn.copy")}

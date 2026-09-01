@@ -7,7 +7,7 @@ Status: **planned, not implemented**. Six phases, each shippable on its own.
 > `SharingChrome.cornerRadius` — was removed after this was written. A query param is addressed to
 > a route, and the sheet has more than one: `/install` never received it and squared its corners
 > off mid-flow. The radius now arrives as CSS custom properties a native host injects into its own
-> web view, scoped to the wallet origin. See `native-sdk/07-sharing-sheet-audit.md` §1.1a. The rest
+> web view, scoped to the wallet origin. See `native-sdk/decisions.md` §4.6. The rest
 > of this document stands.
 
 Covers `apps/wallet/app/routes/sharing.tsx` (719 lines), the shared component tree in

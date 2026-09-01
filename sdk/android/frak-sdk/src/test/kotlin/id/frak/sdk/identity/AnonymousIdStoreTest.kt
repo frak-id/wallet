@@ -62,7 +62,7 @@ class AnonymousIdStoreTest {
         runTest {
             val keyStore = FakeDeviceKeyStore()
             assertNull(store(keyStore, trackingEnabled = false).anonymousId())
-            assertNull(store(keyStore, trackingEnabled = false).signProof(ProofOp.Ensure, MERCHANT_ID))
+            assertNull(store(keyStore, trackingEnabled = false).signProof(ProofOp.Install, MERCHANT_ID))
             assertEquals(0, keyStore.creations)
         }
 
@@ -71,7 +71,7 @@ class AnonymousIdStoreTest {
         runTest {
             val subject = store(FakeDeviceKeyStore(failOnCreate = true))
             assertNull(subject.anonymousId())
-            assertNull(subject.signProof(ProofOp.Ensure, MERCHANT_ID))
+            assertNull(subject.signProof(ProofOp.Install, MERCHANT_ID))
         }
 
     /**
@@ -172,7 +172,7 @@ class AnonymousIdStoreTest {
     fun `signs a proof the id can be checked against`() =
         runTest {
             val subject = store()
-            val proof = subject.signProof(ProofOp.Ensure, MERCHANT_ID, ts = 1_700_000_000)
+            val proof = subject.signProof(ProofOp.Install, MERCHANT_ID, ts = 1_700_000_000)
 
             // 138 raw bytes, unpadded base64url.
             assertEquals(184, proof?.length)

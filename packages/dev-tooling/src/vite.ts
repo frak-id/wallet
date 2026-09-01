@@ -1,8 +1,19 @@
+// Load-bearing, not redundant: consuming apps compile this file through their
+// own tsconfig, whose `include` does not cover this package's `src`. Without
+// the reference the lazy `es-check` import is an implicit `any` in every
+// consumer.
+/// <reference path="./es-check.d.ts" />
 import { readFileSync } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { gzipSync } from "node:zlib";
 import type { HtmlTagDescriptor, Plugin, Rollup } from "vite";
+import type { AssertEsVersionOptions } from "./es-version";
+import {
+    assertEsVersion,
+    BROWSER_TARGET_ECMA,
+    BROWSER_TARGET_SAFARI,
+} from "./es-version";
 
 export function onwarn(
     warning: Rollup.RollupLog,
@@ -36,6 +47,29 @@ export function onwarn(
     warn(warning);
 }
 
+// Re-exported so every existing import site keeps resolving from this module.
+export { BROWSER_TARGET_ECMA, BROWSER_TARGET_SAFARI };
+
+// Mutable by design: vite's `build.target` type rejects a readonly array.
+export const BROWSER_TARGET: string[] = [
+    BROWSER_TARGET_SAFARI,
+    "chrome111",
+    "edge111",
+    "firefox114",
+];
+
+/**
+ * {@link BROWSER_TARGET} in Lightning CSS's packed-integer encoding,
+ * `(major << 16) | (minor << 8) | patch`. A bare `safari: 15.4` is silently
+ * wrong here — the value must be packed.
+ */
+const LIGHTNINGCSS_TARGETS = {
+    chrome: 111 << 16,
+    edge: 111 << 16,
+    firefox: 114 << 16,
+    safari: (15 << 16) | (4 << 8),
+};
+
 /**
  * Shared Lightning CSS configuration for all Vite-based apps in the monorepo.
  * Provides consistent CSS processing with optimal performance and modern features.
@@ -60,15 +94,9 @@ export const lightningCssConfig = {
             dashedIdents: false,
         },
         /**
-         * Browser targets aligned with "baseline-widely-available"
-         * Ensures broad compatibility while enabling modern CSS features
+         * Browser targets, packed from the shared floor.
          */
-        targets: {
-            chrome: 100,
-            edge: 100,
-            firefox: 91,
-            safari: 14,
-        },
+        targets: LIGHTNINGCSS_TARGETS,
         /**
          * Enable modern CSS draft features
          * - nesting: Native CSS nesting support (replaces postcss-preset-env)
@@ -175,6 +203,9 @@ const STATIC_IMPORT_RE =
  * fetches the target on boot even if a `<link rel=modulepreload>` filter
  * strips it from the HTML preload list, so walking the closure from disk is
  * more reliable than trusting the preload list.
+ *
+ * Deps are resolved against the importing chunk's own directory, so the walk
+ * works for any `chunkFileNames` layout — `assets/`, `standalone/`, or a mix.
  */
 export function collectEagerClosure(
     dir: string,
@@ -194,8 +225,9 @@ export function collectEagerClosure(
             continue;
         }
         eager.set(key, code);
+        const chunkDir = path.posix.dirname(key);
         for (const m of code.toString("utf-8").matchAll(STATIC_IMPORT_RE)) {
-            const dep = `assets/${m[1]}`;
+            const dep = path.posix.join(chunkDir, m[1]);
             if (!eager.has(dep)) stack.push(dep);
         }
     }
@@ -216,11 +248,18 @@ export type AssertEagerBundleBudgetOptions = {
      */
     enforce?: boolean;
     /**
-     * Optional hook run with the final boot `index.html` source before the
-     * budget check, e.g. to assert no lazy-chunk CSS/JS leaked into the eager
-     * HTML. Throw from this hook to fail the build with a custom message.
+     * Optional hook run with each measured HTML source before the budget
+     * check, e.g. to assert no lazy-chunk CSS/JS leaked into the eager HTML.
+     * Throw from this hook to fail the build with a custom message.
      */
-    assertHtml?: (htmlSource: string) => void;
+    assertHtml?: (htmlSource: string, htmlFile: string) => void;
+    /**
+     * Entry HTML files to measure, relative to the output dir. Defaults to
+     * `["index.html"]`. Each file is walked and budgeted INDEPENDENTLY: in a
+     * multi-entry build the budget describes what one visitor downloads, not
+     * the sum across pages they will never all open.
+     */
+    htmlFiles?: string[];
 };
 
 /**
@@ -237,63 +276,169 @@ export type AssertEagerBundleBudgetOptions = {
 export function assertEagerBundleBudget(
     options: AssertEagerBundleBudgetOptions
 ): Plugin {
-    const { budgetGzip, assertHtml, enforce = true } = options;
-    const scriptRe = /<script\b[^>]*\bsrc="[^"]*?(assets\/[^"]+\.js)"/g;
+    const {
+        budgetGzip,
+        assertHtml,
+        enforce = true,
+        htmlFiles = ["index.html"],
+    } = options;
+    // Any output directory, not just `assets/`: a multi-entry build may route
+    // its chunks elsewhere (see the wallet's `standalone/` pass).
+    const scriptRe = /<script\b[^>]*\bsrc="\/?([^"]+\.js)"/g;
 
     return {
         name: "frak:assert-eager-bundle-budget",
         apply: "build" as const,
-        // writeBundle (post-write) so the final, fully-transformed index.html and
+        // writeBundle (post-write) so the final, fully-transformed HTML and
         // every chunk are on disk — avoids in-memory bundle timing/encoding edge
         // cases where the emitted HTML asset isn't yet a string in generateBundle.
         writeBundle(buildOptions: { dir?: string }) {
             const dir = buildOptions.dir;
             if (!dir) return;
 
-            let htmlSource: string;
-            try {
-                htmlSource = readFileSync(
-                    path.join(dir, "index.html"),
-                    "utf-8"
-                );
-            } catch {
-                return;
+            for (const htmlFile of htmlFiles) {
+                measureEntry({
+                    dir,
+                    htmlFile,
+                    scriptRe,
+                    budgetGzip,
+                    enforce,
+                    assertHtml,
+                });
             }
-
-            assertHtml?.(htmlSource);
-
-            const entries: string[] = [];
-            for (const m of htmlSource.matchAll(scriptRe)) entries.push(m[1]);
-
-            const eager = collectEagerClosure(dir, entries);
-
-            let totalGzip = 0;
-            const breakdown: string[] = [];
-            for (const [key, code] of eager) {
-                const gz = gzipSync(code).length;
-                totalGzip += gz;
-                breakdown.push(`  ${key}: ${(gz / 1024).toFixed(2)} KB gz`);
-            }
-
-            const totalKb = (totalGzip / 1024).toFixed(2);
-            const overBudget = totalGzip > budgetGzip;
-            console.log(
-                `\n[eager-budget] boot JS: ${totalKb} KB gz across ${eager.size} chunks (limit ${budgetGzip / 1024} KB)${
-                    overBudget && !enforce ? " — OVER BUDGET (warn-only)" : ""
-                }`
-            );
-            if (!overBudget) return;
-
-            const detail = `Eager boot JS budget exceeded: ${totalKb} KB gz > ${budgetGzip / 1024} KB.\n${breakdown
-                .sort()
-                .join("\n")}`;
-            if (!enforce) {
-                console.warn(`[eager-budget] ${detail}`);
-                return;
-            }
-            throw new Error(detail);
         },
     };
+}
+
+export type AssertBundleEsVersionOptions = {
+    /**
+     * Directory under the build output whose `.js` files are checked,
+     * e.g. `"standalone"`. Omit to check every `.js` under the output dir.
+     */
+    subdir?: string;
+    /**
+     * Whether a violation fails the build. Defaults to `true`. `false` logs
+     * the offending files and continues, matching
+     * {@link AssertEagerBundleBudgetOptions.enforce}.
+     */
+    enforce?: boolean;
+    /** @see AssertEsVersionOptions.ignore */
+    ignore?: AssertEsVersionOptions["ignore"];
+    /**
+     * Restricts the gate to the named build environments, for a config whose
+     * one plugin instance sees more than one — React Router's
+     * `v8_viteEnvironmentApi` builds client and server in turn. A name that
+     * matches no configured environment throws rather than passing: vite
+     * drops an unapplied plugin silently, which would remove the gate.
+     */
+    environments?: string[];
+};
+
+/**
+ * Build-time plugin factory: reject emitted chunks that use syntax or stdlib
+ * APIs above {@link BROWSER_TARGET_ECMA}.
+ *
+ * A thin adapter over {@link assertEsVersion}: it resolves `dir` + `subdir`
+ * into the core's `root` and applies the environment guard. Every decision
+ * about what counts as above-floor lives in the core, so this gate and the
+ * standalone post-build check cannot disagree.
+ */
+export function assertBundleEsVersion(
+    options: AssertBundleEsVersionOptions = {}
+): Plugin {
+    const { subdir, enforce = true, ignore, environments } = options;
+
+    return {
+        name: "frak:assert-bundle-es-version",
+        apply: "build" as const,
+        ...(environments && {
+            // Vite's resolveEnvironmentPlugins drops a plugin whose predicate
+            // returns false, with no warning — so a typo would delete the gate
+            // from every environment and still report a green build.
+            configResolved(config: { environments?: Record<string, unknown> }) {
+                const known = Object.keys(config.environments ?? {});
+                // `[]` is truthy, so without this an empty list would install
+                // a predicate false for every name — the silent drop again.
+                const missing = environments.length
+                    ? environments.filter((n) => !known.includes(n))
+                    : ["(empty list)"];
+                if (missing.length > 0) {
+                    throw new Error(
+                        `[es-version] no such build environment: ${missing.join(", ")}. Configured: ${known.join(", ") || "(none)"}.`
+                    );
+                }
+            },
+            applyToEnvironment: (environment: { name: string }) =>
+                environments.includes(environment.name),
+        }),
+        // writeBundle for the same reason as the budget gate: every chunk is
+        // final and on disk.
+        async writeBundle(buildOptions: { dir?: string }) {
+            const dir = buildOptions.dir;
+            if (!dir) return;
+
+            const root = subdir ? path.join(dir, subdir) : dir;
+            await assertEsVersion({ root, enforce, ignore });
+        },
+    };
+}
+
+/** One HTML entry, walked and budgeted on its own. */
+function measureEntry({
+    dir,
+    htmlFile,
+    scriptRe,
+    budgetGzip,
+    enforce,
+    assertHtml,
+}: {
+    dir: string;
+    htmlFile: string;
+    scriptRe: RegExp;
+    budgetGzip: number;
+    enforce: boolean;
+    assertHtml?: (htmlSource: string, htmlFile: string) => void;
+}) {
+    let htmlSource: string;
+    try {
+        htmlSource = readFileSync(path.join(dir, htmlFile), "utf-8");
+    } catch {
+        return;
+    }
+
+    assertHtml?.(htmlSource, htmlFile);
+
+    const entries: string[] = [];
+    // `matchAll` on a shared /g regex is safe: it clones the regex internally.
+    for (const m of htmlSource.matchAll(scriptRe)) entries.push(m[1]);
+
+    const eager = collectEagerClosure(dir, entries);
+
+    let totalGzip = 0;
+    const breakdown: string[] = [];
+    for (const [key, code] of eager) {
+        const gz = gzipSync(code).length;
+        totalGzip += gz;
+        breakdown.push(`  ${key}: ${(gz / 1024).toFixed(2)} KB gz`);
+    }
+
+    const totalKb = (totalGzip / 1024).toFixed(2);
+    const overBudget = totalGzip > budgetGzip;
+    console.log(
+        `\n[eager-budget] ${htmlFile} boot JS: ${totalKb} KB gz across ${eager.size} chunks (limit ${budgetGzip / 1024} KB)${
+            overBudget && !enforce ? " — OVER BUDGET (warn-only)" : ""
+        }`
+    );
+    if (!overBudget) return;
+
+    const detail = `Eager boot JS budget exceeded for ${htmlFile}: ${totalKb} KB gz > ${budgetGzip / 1024} KB.\n${breakdown
+        .sort()
+        .join("\n")}`;
+    if (!enforce) {
+        console.warn(`[eager-budget] ${detail}`);
+        return;
+    }
+    throw new Error(detail);
 }
 
 export type PreconnectOrigin = {

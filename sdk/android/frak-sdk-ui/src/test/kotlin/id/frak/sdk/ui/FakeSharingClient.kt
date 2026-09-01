@@ -3,6 +3,7 @@ package id.frak.sdk.ui
 import id.frak.sdk.OpenAppResult
 import id.frak.sdk.core.FrakEnvironment
 import id.frak.sdk.core.FrakError
+import id.frak.sdk.core.FrakLanguage
 import id.frak.sdk.core.FrakResult
 import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.rewards.BestReward
@@ -16,6 +17,14 @@ internal class FakeSharingClient : SharingDependencies {
     var link: String? = "https://acme.example/?fk=abc"
 
     var anonymousIdValue: String? = "a3f1c0de-0000-4000-8000-000000000000"
+
+    var metadataNameValue: String? = null
+
+    var metadataLangValue: FrakLanguage? = null
+
+    override fun metadataName(): String? = metadataNameValue
+
+    override fun metadataLang(): FrakLanguage? = metadataLangValue
 
     override suspend fun anonymousId(): String? = anonymousIdValue
 
@@ -73,10 +82,24 @@ internal class FakeSharingClient : SharingDependencies {
         return FrakResult.Success(Unit)
     }
 
+    /** The device's answer to the wallet probe; false is the un-merged-manifest case too. */
+    var walletInstalled: Boolean = false
+
+    /** Models `Frak.client` throwing once the merchant has shut the SDK down. */
+    var probeFailure: FrakError? = null
+
+    override fun isFrakAppInstalled(): Boolean {
+        probeFailure?.let { throw it }
+        return walletInstalled
+    }
+
+    /** Answered by [openFrakApp]; `Failed` models a deep link nothing on the device handles. */
+    var openAppResult: OpenAppResult = OpenAppResult.OpenedApp
+
     override suspend fun openFrakApp(): OpenAppResult {
         clientFailure?.let { throw it }
         openFrakAppCount++
-        return OpenAppResult.OpenedApp
+        return openAppResult
     }
 
     /** Null models "no identity or no merchant", the store-handoff fallback path. */

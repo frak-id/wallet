@@ -7,9 +7,10 @@ import os
 // - may be called concurrently from multiple threads (hence Sendable).
 // - calling back into Frak.client/isInitialized/initialize from a sink is not a deadlock
 //   (initialize's lock is released before any logging), but a reentrant log recurses unbounded.
-// - an uncaught trap inside it brings down the host process.
+// - a thrown error is swallowed, matching Android. A Swift *trap* still takes the host down;
+//   nothing can catch one, which is why `throws` is offered as the way to refuse a line.
 public protocol FrakLogSink: Sendable {
-    func log(level: FrakLogLevel, message: String, error: (any Error)?)
+    func log(level: FrakLogLevel, message: String, error: (any Error)?) throws
 }
 
 // Routes to FrakConfig.logSink if set, else os.Logger. Silent by default.
@@ -49,7 +50,8 @@ struct FrakLogger: Sendable {
         let resolvedError = error()
 
         if let sink {
-            sink.log(level: messageLevel, message: message, error: resolvedError)
+            // Swallowed: a merchant's sink must never crash this SDK's host, exactly as on Android.
+            try? sink.log(level: messageLevel, message: message, error: resolvedError)
             return
         }
 

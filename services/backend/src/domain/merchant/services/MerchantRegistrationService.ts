@@ -18,8 +18,7 @@ import type { MerchantRepository } from "../repositories/MerchantRepository";
  * into (via `useFrakBank`) instead of deploying a dedicated per-merchant bank.
  *
  * Deployed at a deterministic CREATE2 address (same on dev and prod) via
- * `scripts/deployFrakCampaignBank.ts`; see
- * docs/plans/takeads-affiliate-integration.md §10c.
+ * `scripts/deployFrakCampaignBank.ts`.
  */
 export const FRAK_SHARED_CAMPAIGN_BANK: Address =
     "0xd9e65b88B7ABA7c1312FED0CefF2098EB43a9B81";

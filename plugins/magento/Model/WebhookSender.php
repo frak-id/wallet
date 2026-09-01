@@ -33,7 +33,7 @@ class WebhookSender
     {
         $merchantId = $this->config->getMerchantId($order->getStoreId());
         $webhookSecret = $this->config->getWebhookSecret($order->getStoreId());
-        $backendUrl = $this->config->getBackendUrl($order->getStoreId());
+        $backendUrl = $this->config->getEnvironment($order->getStoreId())["backend"];
 
         if (!$merchantId || !$webhookSecret) {
             $this->logger->warning("[FrakSDK] Missing merchantId or webhook secret");
@@ -45,7 +45,7 @@ class WebhookSender
 
         $signature = base64_encode(hash_hmac("sha256", $body, $webhookSecret, true));
 
-        $url = rtrim($backendUrl ?? "", "/") . "/ext/merchant/" . $merchantId . "/webhook/magento";
+        $url = rtrim($backendUrl, "/") . "/ext/merchant/" . $merchantId . "/webhook/magento";
 
         $client = $this->clientFactory->create([
             "config" => [

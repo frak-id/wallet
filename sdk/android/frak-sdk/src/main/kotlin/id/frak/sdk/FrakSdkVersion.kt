@@ -7,12 +7,20 @@ package id.frak.sdk
 public object FrakSdkVersion {
     /** Keep in step with `frak.sdk.version` in `gradle.properties`; the build checks it. */
     @JvmStatic
-    public val CURRENT: String = "0.0.1"
+    public val CURRENT: String = "1.0.0-beta.2"
 
     /** Wire plumbing for `HttpClient`; not merchant API. */
     @JvmStatic
     @InternalFrakApi
     public val HEADER_NAME: String = "x-frak-sdk-version"
+
+    /**
+     * What [HEADER_NAME] carries. Platform-prefixed: the version alone is identical on both
+     * SDKs, so a fleet of frozen binaries is otherwise indistinguishable on the wire.
+     */
+    @JvmStatic
+    @InternalFrakApi
+    public val HEADER_VALUE: String = "android/$CURRENT"
 
     /** Wire plumbing for `:frak-sdk-ui`'s page URLs; not merchant API. */
     @JvmStatic

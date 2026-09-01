@@ -2,6 +2,7 @@ package id.frak.sdk
 
 import android.app.Application
 import android.content.Context
+import android.os.Build
 import id.frak.sdk.applink.AndroidAppLauncher
 import id.frak.sdk.applink.DeepLinkObserver
 import id.frak.sdk.config.SharedPreferencesStore
@@ -16,6 +17,7 @@ import id.frak.sdk.core.TrackingConsent
 import id.frak.sdk.core.defaultIoDispatcher
 import id.frak.sdk.identity.AndroidKeystoreDeviceKeyStore
 import id.frak.sdk.identity.AnonymousIdStore
+import id.frak.sdk.net.ServerClock
 import id.frak.sdk.sharing.FrakContext
 import id.frak.sdk.sharing.SharingLinkBuilder
 import id.frak.sdk.tracking.EventQueue
@@ -32,15 +34,19 @@ import java.util.concurrent.CompletableFuture
  * Java callers use `Frak.getClient()` and the `*Async` twin of every suspending member.
  */
 public object Frak {
-    @Volatile
-    private var core: DefaultFrakClient? = null
+    /**
+     * Everything one [initialize] built, swapped as a unit. Three separate fields let a reader
+     * observe half a teardown, and left the "these always move together" invariant to code review.
+     */
+    private class Session(
+        val core: DefaultFrakClient,
+        val client: FrakClient,
+        /** Kept so [shutdown] can unregister it; otherwise re-initializing double-handles inbound deep links. */
+        val observer: Pair<Application, Application.ActivityLifecycleCallbacks>?,
+    )
 
     @Volatile
-    private var instance: FrakClient? = null
-
-    /** Kept so [shutdown] can unregister it; otherwise re-initializing double-handles inbound deep links. */
-    @Volatile
-    private var deepLinkObserver: Pair<Application, Application.ActivityLifecycleCallbacks>? = null
+    private var session: Session? = null
 
     /** Non-blocking, does no I/O, never throws. Second call is a no-op; first config wins. */
     @JvmStatic
@@ -49,12 +55,12 @@ public object Frak {
         config: FrakConfig,
     ) {
         val logger = FrakLogger(config.logLevel, config.logSink)
-        if (core != null) {
+        if (session != null) {
             logger.warn("Frak.initialize was called more than once. The first configuration is kept.")
             return
         }
         synchronized(this) {
-            if (core != null) return
+            if (session != null) return
             val effective = config.withPackageIdFrom(context)
             if (effective.merchantId == null && effective.packageId == null) {
                 logger.error(
@@ -65,6 +71,9 @@ public object Frak {
             (effective.env as? FrakEnvironment.Custom)?.rejectionReason?.let { reason ->
                 logger.error("FrakEnvironment.Custom: $reason Requests will fail with FrakError.Network.")
             }
+            // Held by the queue's file provider and the launcher: an Activity would outlive its window.
+            val appContext = context.applicationContext ?: context
+            warnIfNotMainProcess(appContext, logger)
             // Shared by queue and client: two limitedParallelism(2) views would double the IO budget.
             val ioDispatcher = defaultIoDispatcher()
             // Separate prefs file from the config cache: a corrupt write must not take identity with it.
@@ -77,6 +86,8 @@ public object Frak {
                     logger = logger,
                     ioDispatcher = ioDispatcher,
                 )
+            // ONE instance too: the HTTP client learns the offset, the identity store stamps with it.
+            val serverClock = ServerClock(logger = logger)
             val newCore =
                 DefaultFrakClient(
                     settings = effective,
@@ -84,7 +95,7 @@ public object Frak {
                     // noBackupFilesDir: queued events must never be replayed from a backup/transfer.
                     queue =
                         EventQueue(
-                            file = File(context.noBackupFilesDir, EVENT_QUEUE_FILE_NAME),
+                            fileProvider = { File(appContext.noBackupFilesDir, EVENT_QUEUE_FILE_NAME) },
                             logger = logger,
                             ioDispatcher = ioDispatcher,
                         ),
@@ -96,15 +107,21 @@ public object Frak {
                             merchantMarker = effective.merchantId ?: effective.packageId.orEmpty(),
                             consent = consent,
                             ioDispatcher = ioDispatcher,
+                            serverClock = serverClock,
                         ),
                     consent = consent,
                     launcher = AndroidAppLauncher(context),
                     logger = logger,
                     ioDispatcher = ioDispatcher,
+                    serverClock = serverClock,
                 )
-            core = newCore
-            instance = FrakClient(newCore)
-            registerDeepLinkObserver(context, effective, logger)
+            // Built before the session is published and registered after it: a callback that fired
+            // against a half-built session would drop the link it was handed.
+            val registration = createDeepLinkObserver(context, effective, logger)
+            session = Session(core = newCore, client = FrakClient(newCore), observer = registration)
+            registration?.let { (application, callbacks) ->
+                application.registerActivityLifecycleCallbacks(callbacks)
+            }
             logger.info("Frak ${FrakSdkVersion.CURRENT} initialized.")
         }
     }
@@ -117,19 +134,16 @@ public object Frak {
     public suspend fun shutdown() {
         // State is read and cleared under the lock, then acted on outside it: `synchronized` must
         // never span a suspension point.
-        val (dying, observer) =
+        val dying =
             synchronized(this) {
-                val client = core
-                val registration = deepLinkObserver
-                core = null
-                instance = null
-                deepLinkObserver = null
-                client to registration
+                val current = session
+                session = null
+                current
             }
-        observer?.let { (application, callbacks) ->
+        dying?.observer?.let { (application, callbacks) ->
             application.unregisterActivityLifecycleCallbacks(callbacks)
         }
-        dying?.shutdown()
+        dying?.core?.shutdown()
     }
 
     /**
@@ -150,42 +164,62 @@ public object Frak {
     /** @throws FrakError.NotInitialized when [initialize] has not run. */
     @JvmStatic
     public val client: FrakClient
-        get() = instance ?: throw FrakError.NotInitialized()
+        get() = session?.client ?: throw FrakError.NotInitialized()
 
     /** Same as [client], but null instead of throwing. */
     @JvmStatic
     public val clientOrNull: FrakClient?
-        get() = instance
+        get() = session?.client
 
     /** Whether [initialize] has run. For merchants guarding optional integrations. */
     @JvmStatic
     public val isInitialized: Boolean
-        get() = instance != null
+        get() = session != null
 
     /** Pure and static; callable before [initialize]. Only decodes — does not track arrival. */
     @JvmStatic
     public fun parseReferralLink(url: String): FrakContext? = SharingLinkBuilder.parse(url)
 
-    /** Needs an `Application` to observe lifecycles; falls back to manual routing otherwise. */
-    private fun registerDeepLinkObserver(
+    /**
+     * Builds the observer without registering it, so [initialize] controls when it goes live.
+     * Needs an `Application` to observe lifecycles; falls back to manual routing otherwise.
+     */
+    private fun createDeepLinkObserver(
         context: Context,
         config: FrakConfig,
         logger: FrakLogger,
-    ) {
-        if (config.deepLink != DeepLinkHandling.Automatic) return
+    ): Pair<Application, Application.ActivityLifecycleCallbacks>? {
+        if (config.deepLink != DeepLinkHandling.Automatic) return null
         val application = context.applicationContext as? Application
         if (application == null) {
             logger.error(
                 "DeepLinkHandling.Automatic needs an Application context. " +
-                    "Inbound referral links will be ignored; call handleReferralLink from your own router.",
+                    "Inbound referral links will be ignored; call client.appLink.handleReferral(url) from your own router.",
             )
-            return
+            return null
         }
-        // Client owns the guard/tracking; this only reports that a link was seen.
-        val callbacks = DeepLinkObserver { url -> core?.handleReferralLinkInBackground(url) }
-        application.registerActivityLifecycleCallbacks(callbacks)
-        // Retained so [shutdown] can unregister it.
-        deepLinkObserver = application to callbacks
+        // Client owns the guard/tracking; this only reports that a link was seen. Reads the session
+        // at call time, so a link arriving after [shutdown] reports nowhere instead of to a dead client.
+        return application to DeepLinkObserver { url -> session?.core?.handleReferralLinkInBackground(url) }
+    }
+
+    /**
+     * The identity keypair, the consent flag and the queue file are all process-local: a second
+     * process gets its own anonymous id and races the same queue file. Reported, not blocked —
+     * a merchant may have a good reason, and the SDK cannot know which process is the right one.
+     */
+    private fun warnIfNotMainProcess(
+        context: Context,
+        logger: FrakLogger,
+    ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return
+        val process = Application.getProcessName() ?: return
+        if (process == context.packageName) return
+        logger.error(
+            "Frak.initialize ran in process '$process', not the default one. " +
+                "Initialize the SDK in your main process only: a second process mints its own " +
+                "anonymous id and corrupts the shared event queue.",
+        )
     }
 
     private fun FrakConfig.withPackageIdFrom(context: Context): FrakConfig {
@@ -193,7 +227,12 @@ public object Frak {
         return withPackageId(context.packageName)
     }
 
-    /** Matches the `path` in `frak_data_extraction_rules.xml`. */
+    /**
+     * Holds the merchant marker AND the consent decision, which is why this file is deliberately
+     * left in Auto Backup: a withdrawal must survive a device transfer. The identity itself is not
+     * in here — the keypair lives in `AndroidKeyStore` and cannot be backed up or transferred at
+     * all — so there is nothing here to exclude. See `PRIVACY.md`.
+     */
     private const val IDENTITY_FILE_NAME = "id.frak.sdk"
 
     private const val EVENT_QUEUE_FILE_NAME = "frak-events.jsonl"

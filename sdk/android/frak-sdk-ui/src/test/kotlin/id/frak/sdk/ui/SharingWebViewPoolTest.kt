@@ -2,12 +2,14 @@ package id.frak.sdk.ui
 
 import android.content.Context
 import android.net.Uri
+import android.webkit.FakeRenderProcessGoneDetail
 import android.webkit.WebResourceRequest
 import android.webkit.WebViewClient
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -169,6 +171,10 @@ class SharingWebViewPoolTest {
     private fun SharingWebViewHandle.client(): WebViewClient =
         requireNotNull(shadowOf(view).webViewClient) { "the factory must install a WebViewClient" }
 
+    private fun SharingWebViewHandle.crashRenderer() {
+        client().onRenderProcessGone(view, FakeRenderProcessGoneDetail())
+    }
+
     private fun SharingWebViewHandle.dispatchResult(
         sessionId: String,
         action: String,
@@ -217,6 +223,56 @@ class SharingWebViewPoolTest {
 
         assertTrue("a finished document is what makes a fragment free", handle.documentReady)
         assertEquals(WARM_URL, handle.loadedBaseUrl)
+    }
+
+    @Test
+    fun `a warm view whose renderer died is not offered to the next sheet`() {
+        val pool = pool()
+        pool.warm(WARM_URL)
+        pool.finishWarmLoad()
+        val dead = requireNotNull(pool.warmHandle)
+
+        dead.crashRenderer()
+
+        assertNull("a finished document behind a dead renderer is not a warm view", pool.warmHandle)
+
+        val handle = pool.acquire(binding())
+
+        assertNotSame("the next sheet must get a live view", dead.view, handle.view)
+        assertTrue("and the dead one is destroyed rather than pooled forever", shadowOf(dead.view).wasDestroyCalled())
+    }
+
+    @Test
+    fun `re-warming the same url after a renderer crash builds a new view`() {
+        val pool = pool()
+        pool.warm(WARM_URL)
+        pool.finishWarmLoad()
+        val dead = requireNotNull(pool.warmHandle)
+
+        dead.crashRenderer()
+        // The same URL the corpse is pooled against: the unchanged-URL short circuit must not
+        // be what decides whether a dead view is kept.
+        pool.warm(WARM_URL)
+
+        val warm = requireNotNull(pool.warmHandle)
+        assertNotSame(dead.view, warm.view)
+        assertEquals(WARM_URL, warm.loadedBaseUrl)
+    }
+
+    @Test
+    fun `a sheet handing back a view whose renderer died gets a fresh one warmed in its place`() {
+        val pool = pool()
+        pool.warm(WARM_URL)
+        pool.finishWarmLoad()
+        val handle = pool.acquire(binding())
+
+        handle.crashRenderer()
+        pool.release(handle)
+
+        assertTrue("the sheet's own view died with its renderer", shadowOf(handle.view).wasDestroyCalled())
+        val warm = requireNotNull(pool.warmHandle) { "the surface is still up, so it stays warm" }
+        assertNotSame(handle.view, warm.view)
+        assertEquals(WARM_URL, warm.loadedBaseUrl)
     }
 
     @Test

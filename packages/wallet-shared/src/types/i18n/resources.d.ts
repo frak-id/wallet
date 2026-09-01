@@ -28,6 +28,10 @@ export default interface Resources {
           "message": "The passkey prompt was closed or timed out before the operation completed.",
           "title": "Authentication cancelled"
         },
+        "permissionsPolicy": {
+          "message": "A browser extension or security policy blocked the passkey request. Disable your password manager extension for this site, or try a private window.",
+          "title": "Passkey blocked"
+        },
         "retry": "Try again",
         "syncFailed": {
           "message": "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device - not a problem with your account.",
@@ -492,14 +496,21 @@ export default interface Resources {
     },
     "installCode": {
       "codeCopied": "Code copied!",
+      "codelessDescription": "Download the app and log in to claim your rewards.",
+      "codelessTitle": "Don't lose your {{estimatedReward}}!",
       "copyCode": "Copy the code",
       "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
       "download": "Download the app",
-      "error": "Failed to generate code. Please refresh.",
       "infoDescription": "When opening the app, tap <1>\"I have a recovery code\"</1>.",
       "infoTitle": "Code valid for 3 days",
+      "installedCodeToggle": "Or enter this code manually",
+      "installedHeadline": "You're all set. Open the app to claim {{estimatedReward}}.",
+      "installedMerchant": "Connected to {{merchantName}}",
       "loading": "Generating your code...",
+      "openWallet": "Open Frak & claim {{estimatedReward}}",
+      "openWalletCta": "Open my wallet",
       "processing": "Setting up your wallet...",
+      "processingDone": "Your wallet is ready",
       "title": "Don't lose your {{estimatedReward}}!\nCopy this code"
     },
     "monerium": {
@@ -678,7 +689,6 @@ export default interface Resources {
       },
       "notification": {
         "description": "Get notified as soon as money is credited to your wallet.",
-        "descriptionHighlight": "Track your rewards in real time.",
         "enable": "Yes, notify me",
         "skip": "Later",
         "title": "Don't miss any reward!"
@@ -725,7 +735,8 @@ export default interface Resources {
       "error": {
         "alreadyLinked": "This code has already been used.",
         "generic": "Something went wrong, please try again.",
-        "invalid": "Incorrect or expired code, check the code copied from wallet.frak.id"
+        "invalid": "Incorrect or expired code, check the code copied from wallet.frak.id",
+        "unresolved": "This code isn't linked to a purchase yet. Try again in a few minutes."
       },
       "paste": "Paste the code",
       "success": {
@@ -766,6 +777,7 @@ export default interface Resources {
         "viewAll": "View all"
       },
       "status": {
+        "bank_depleted": "Awaiting funding by the brand",
         "cancelled": "Cancelled",
         "consumed": "Consumed",
         "expired": "Expired",

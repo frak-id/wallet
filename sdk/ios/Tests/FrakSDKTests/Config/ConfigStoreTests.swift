@@ -65,8 +65,11 @@ struct ConfigStoreTests {
         clock.current = Date(timeIntervalSince1970: 0)  // stepped backward: fetchedAt is now in the future
         _ = try await store.resolve(query(), forceRefresh: false)
 
-        try await Task.sleep(nanoseconds: 100_000_000)
-        #expect(log.count == 2, "a future-dated entry must revalidate, not read as fresh")
+        #expect(
+            await log.wait(forCount: 2),
+            "a future-dated entry must revalidate, not read as fresh"
+        )
+        #expect(log.count == 2, "exactly one revalidation, not a refresh loop")
     }
 
     @Test("a stale cache is served immediately and revalidated in the background")
@@ -85,8 +88,13 @@ struct ConfigStoreTests {
         let served = try await store.resolve(query(), forceRefresh: false)
         #expect(served.name == "Acme")
 
-        try await Task.sleep(nanoseconds: 100_000_000)
-        #expect(log.count == 2)
+        // The log records a request as it is dispatched, but the revalidated config is stored
+        // only once the response decodes. Waiting on the stored value covers that window; the
+        // log alone would let the read below land between the two.
+        let cacheQuery = try query()
+        let revalidated = await waitUntil { await store.currentConfig(cacheQuery)?.name == "Acme Renamed" }
+        #expect(revalidated, "the stale entry must revalidate behind the served value")
+        #expect(log.count == 2, "exactly one revalidation, not a refresh loop")
         #expect(try await store.resolve(query(), forceRefresh: false).name == "Acme Renamed")
     }
 
@@ -292,9 +300,13 @@ struct ConfigStoreTests {
         // First-launch-offline: the backoff is armed and there is no cache to fall back on.
         // Serving that by dialling anyway makes a retry loop one real request per call.
         for _ in 0..<3 {
-            await #expect(throws: FrakError.self) {
+            var thrown: FrakError?
+            do {
                 _ = try await store.resolve(query(), forceRefresh: false)
+            } catch let error as FrakError {
+                thrown = error
             }
+            #expect(try #require(thrown).kind == .backingOff)
         }
 
         #expect(log.count == afterFirst)

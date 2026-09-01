@@ -4,6 +4,10 @@ import Foundation
 protocol AppLauncher: Sendable {
     func canOpen(_ url: String) async -> Bool
     func open(_ url: String) async -> Bool
+
+    /// `open(_:)` restricted to a genuine universal link: opens silently, and answers false
+    /// rather than falling back to Safari, so a scheme fallback stays the caller's choice.
+    func openUniversalLink(_ url: String) async -> Bool
 }
 
 #if canImport(UIKit)
@@ -24,11 +28,18 @@ protocol AppLauncher: Sendable {
             guard let url = URL(string: url) else { return false }
             return await UIApplication.shared.open(url)
         }
+
+        @MainActor
+        func openUniversalLink(_ url: String) async -> Bool {
+            guard let url = URL(string: url) else { return false }
+            return await UIApplication.shared.open(url, options: [.universalLinksOnly: true])
+        }
     }
 #else
     // No UIApplication on the host toolchain (swift test's second stage).
     struct SystemAppLauncher: AppLauncher {
         func canOpen(_ url: String) async -> Bool { false }
         func open(_ url: String) async -> Bool { false }
+        func openUniversalLink(_ url: String) async -> Bool { false }
     }
 #endif

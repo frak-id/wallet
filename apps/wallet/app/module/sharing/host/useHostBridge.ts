@@ -1,9 +1,16 @@
 import { useCallback, useEffect } from "react";
-import { type HostResultAction, sendHostResult } from "./bridge";
+import {
+    type HostResultAction,
+    type HostShareResult,
+    sendHostResult,
+} from "./bridge";
 
 type HostBridge = {
     /** Returns `true` when the hand-off happened, so callers can fall back to web behaviour. */
-    returnToHost: (action: HostResultAction) => boolean;
+    returnToHost: (
+        action: HostResultAction,
+        share?: HostShareResult
+    ) => boolean;
     /** Gated on the return scheme: without one the host has no way to receive the ask. */
     canHandOff: boolean;
 };
@@ -36,8 +43,8 @@ export function useHostBridge({
     }, [warm, returnScheme, sid]);
 
     const returnToHost = useCallback(
-        (action: HostResultAction) =>
-            sendHostResult({ scheme: returnScheme, action, sid }),
+        (action: HostResultAction, share?: HostShareResult) =>
+            sendHostResult({ scheme: returnScheme, action, sid, share }),
         [returnScheme, sid]
     );
 

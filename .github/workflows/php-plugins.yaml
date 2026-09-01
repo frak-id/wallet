@@ -103,7 +103,7 @@ jobs:
       # subsequent runs skip the ~30 s clone + ~60 s `composer install` step.
       # The cache key is pinned to the exact PS tag so a tag bump invalidates
       # the cache automatically.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: plugins/prestashop/.cache/prestashop-core
           key: prestashop-core-8.2.6

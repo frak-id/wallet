@@ -206,68 +206,78 @@ struct SharingSheetLogicTests {
     }
 }
 
-@Suite("AttributionLedger")
-struct AttributionLedgerTests {
-    @Test("abandon with nothing in flight settles immediately")
-    func abandonWithNothingInFlightSettlesNow() {
-        var ledger = AttributionLedger()
-        let settlesNow = ledger.abandon()
-        #expect(settlesNow)
+@Suite("sharingChooserCompleted")
+struct SharingChooserCompletedTests {
+    @Test("an extension that picked a target counts, whatever it claims")
+    func pickedTargetCounts() {
+        // Message under-reports: `completed` false on a share that happened.
+        #expect(
+            sharingChooserCompleted(
+                activityType: "com.apple.UIKit.activity.Message",
+                completed: false,
+                failed: false
+            )
+        )
+        #expect(sharingChooserCompleted(activityType: "com.example.share", completed: true, failed: false))
     }
 
-    @Test("abandon while an attribution is resolving defers")
-    func abandonDefersToAnInFlightAttribution() {
-        var ledger = AttributionLedger()
-        ledger.begin()
-        let settlesNow = ledger.abandon()
-        #expect(!settlesNow)
+    @Test("a dismissed chooser is not a share")
+    func dismissedIsNotAShare() {
+        // Nothing picked: `activityType` is UIKit's own value and stays nil, so the two signals
+        // agree here and this is the case the predicate must keep out.
+        #expect(!sharingChooserCompleted(activityType: nil, completed: false, failed: false))
     }
 
-    @Test("the attribution that empties the ledger is the one that settles a deferred abandon")
-    func endReportsOnceTheLedgerEmpties() {
-        // The exact race 9.1 is about: a swipe (`abandon`) lands while `copy()`'s `begin()` is
-        // still open, so the dismissal must wait for `copy()`'s own `end()` instead of winning.
-        var ledger = AttributionLedger()
-        ledger.begin()
-        let settlesNow = ledger.abandon()
-        #expect(!settlesNow)
-        let settlesFromEnd = ledger.end()
-        #expect(settlesFromEnd)
+    @Test("an error is never a share, whatever else it says")
+    func errorIsNeverAShare() {
+        #expect(!sharingChooserCompleted(activityType: "com.example.share", completed: true, failed: true))
+        #expect(!sharingChooserCompleted(activityType: nil, completed: true, failed: true))
     }
 
-    @Test("end before any abandon is requested never settles")
-    func endWithNoAbandonNeverSettles() {
-        var ledger = AttributionLedger()
-        ledger.begin()
-        let settlesFromEnd = ledger.end()
-        #expect(!settlesFromEnd)
+    @Test("a claimed completion with no target still counts")
+    func claimedCompletionCounts() {
+        // `completed` is still a signal; refusing it here would trade one silent drop for another.
+        #expect(sharingChooserCompleted(activityType: nil, completed: true, failed: false))
+    }
+}
+
+@Suite("sharingExternalRoute")
+struct SharingExternalRouteTests {
+    private func route(_ string: String) throws -> SharingExternalRoute {
+        sharingExternalRoute(try #require(URL(string: string)))
     }
 
-    @Test("only the last of several in-flight attributions settles a deferred abandon")
-    func onlyTheLastAttributionSettles() {
-        // `share()` and `copy()` are independently guarded; nothing stops both being in flight
-        // at once.
-        var ledger = AttributionLedger()
-        ledger.begin()
-        ledger.begin()
-        let settlesNow = ledger.abandon()
-        #expect(!settlesNow)
-        let firstEnd = ledger.end()
-        #expect(!firstEnd)
-        let secondEnd = ledger.end()
-        #expect(secondEnd)
+    @Test("the wallet's listing is routed to the app handoff, not opened")
+    func walletListingIsRouted() throws {
+        // The link the web install page's download button actually carries.
+        #expect(try route("https://apps.apple.com/app/frak-wallet/id6759159306") == .walletStoreListing)
+        // Storefront-prefixed, which is what the App Store hands out on share.
+        #expect(try route("https://apps.apple.com/us/app/frak-wallet/id6759159306") == .walletStoreListing)
+        // Any id, not just the wallet's: the overlay is raised on a constant the URL cannot move.
+        #expect(try route("https://apps.apple.com/app/id1") == .walletStoreListing)
+        #expect(try route("HTTPS://APPS.APPLE.COM/app/id6759159306") == .walletStoreListing)
     }
 
-    @Test("abandon is idempotent to call twice while still deferred")
-    func abandonCalledTwiceStaysDeferred() {
-        var ledger = AttributionLedger()
-        ledger.begin()
-        let firstAbandon = ledger.abandon()
-        #expect(!firstAbandon)
-        let secondAbandon = ledger.abandon()
-        #expect(!secondAbandon)
-        let settlesFromEnd = ledger.end()
-        #expect(settlesFromEnd)
+    @Test("a merchant link is opened as-is")
+    func merchantLinkIsOpened() throws {
+        let url = try #require(URL(string: "https://shop.example.com/product"))
+        #expect(sharingExternalRoute(url) == .openURL(url))
+        // Apple's own domain, but not a listing: no `idNNN` component to find.
+        let story = try #require(URL(string: "https://apps.apple.com/us/story/something"))
+        #expect(sharingExternalRoute(story) == .openURL(story))
+        // `id` with no digits behind it is a path segment, not an app id.
+        let identity = try #require(URL(string: "https://apps.apple.com/app/identity"))
+        #expect(sharingExternalRoute(identity) == .openURL(identity))
+        // A look-alike host must not reach the overlay.
+        #expect(try route("https://apps.apple.com.evil.test/app/id6759159306") != .walletStoreListing)
+    }
+
+    @Test("anything but http(s) is dropped")
+    func customSchemesAreDropped() throws {
+        // An app-to-app launch the merchant never sanctioned, whatever the page asked for.
+        #expect(try route("frakwallet://install?m=m&a=a") == .ignore)
+        #expect(try route("itms-apps://apps.apple.com/app/id6759159306") == .ignore)
+        #expect(try route("javascript:alert(1)") == .ignore)
     }
 }
 
@@ -299,8 +309,7 @@ struct SharingPageProductsJSONTests {
         #expect(json.contains("\"utmContent\":\"kettle\""))
     }
 
-    /// `JSONSerialization` prints a bare `Double` at binary precision: `79.9` would go out as
-    /// `79.900000000000006`.
+    /// `JSONSerialization` prints a bare `Double` at binary precision: `79.9` as `79.900000000000006`.
     @Test("prices serialize the way JSON.stringify writes them, not at binary precision")
     func numbersMatchJSONStringify() throws {
         let json = try #require(
@@ -388,5 +397,149 @@ struct ClampedSharingHeightFractionTests {
     @Test("the public default itself is inside the clamp's own range")
     func defaultIsWithinRange() {
         #expect(clampedSharingHeightFraction(FrakSharingDefaults.heightFraction) == FrakSharingDefaults.heightFraction)
+    }
+}
+
+@Suite("sharing build retry ladder")
+struct SharingBuildRetryTests {
+    // Every kind below is one `SharingSheetModel.build` can actually raise.
+    @Test("a cold start's identity or link failure is retried")
+    func coldStartFailureIsRetried() {
+        // The enclave refused to mint a key — never cached, so the next attempt can succeed.
+        #expect(sharingBuildIsWorthRetrying(.internalFailure(message: "the device refused key material")))
+        // Nothing to link to yet, because the resolved config's homepage link has not landed.
+        #expect(sharingBuildIsWorthRetrying(.merchantResolutionFailed(reason: "nothing to link to")))
+        #expect(sharingBuildIsWorthRetrying(.network(underlying: URLError(.timedOut))))
+        #expect(sharingBuildIsWorthRetrying(.backingOff(retryAfterSeconds: 1)))
+        #expect(sharingBuildIsWorthRetrying(.server(status: 503, code: nil, retryAfterSeconds: nil)))
+        #expect(sharingBuildIsWorthRetrying(.decoding(message: "bad body")))
+    }
+
+    @Test("a decision the merchant already made is not retried")
+    func settledFailureIsNotRetried() {
+        // Both reach the ladder for real: `buildLink` raises `trackingDisabled` on a withdrawn
+        // consent, and `Frak.client` raises `notInitialized`. Retrying either just makes the user
+        // wait out the whole ladder for an answer that cannot change.
+        #expect(!sharingBuildIsWorthRetrying(.notInitialized))
+        #expect(!sharingBuildIsWorthRetrying(.trackingDisabled))
+        #expect(!sharingBuildIsWorthRetrying(.alreadyPresenting))
+    }
+
+    @Test("the ladder fits inside the tap-to-content deadline")
+    func ladderFitsInsideTheDeadline() {
+        // Otherwise the last attempt lands after the deadline has already raised the OS chooser,
+        // and the sheet holds a skeleton over a share that has moved on without it. Read from the
+        // constant, not a literal: tuning the budget must not silently outrun the ladder.
+        #expect(sharingBuildRetryDelays.reduce(0, +) < sharingPageLoadDeadline)
+        #expect(sharingBuildRetryDelays.allSatisfy { $0 > 0 })
+    }
+}
+
+@Suite("sharing activation expiry")
+struct SharingExpiryTests {
+    private static func expiry(
+        pageReported: Bool = false,
+        recoveryAttempted: Bool = false,
+        showingInstallPage: Bool = false,
+        fellBack: Bool = false,
+        closed: Bool = false
+    ) -> SharingExpiry {
+        sharingExpiry(
+            pageReported: pageReported,
+            recoveryAttempted: recoveryAttempted,
+            showingInstallPage: showingInstallPage,
+            fellBack: fellBack,
+            closed: closed
+        )
+    }
+    @Test("an activation the page never reported recovers")
+    func silentActivationRecovers() {
+        #expect(Self.expiry() == .recover)
+    }
+
+    @Test("a page that reported ready is left alone")
+    func reportedPageIsLeftAlone() {
+        // `didFinish` never reaches this predicate: only the page's own report clears it.
+        #expect(Self.expiry(pageReported: true) == .doNothing)
+        #expect(Self.expiry(pageReported: true, recoveryAttempted: true) == .doNothing)
+    }
+
+    @Test("a recovery that also went silent falls back")
+    func silentRecoveryFallsBack() {
+        #expect(Self.expiry(recoveryAttempted: true) == .fallBack)
+    }
+
+    @Test("a cold load that never reports is recovered too")
+    func coldLoadIsRecovered() {
+        // Observed on device: a third share opened a COLD view, `didFinish` arrived over an
+        // empty document at 60ms, and the sheet stranded with no budget left. `didFinish` lies
+        // on a full load exactly as it does on an activation, so both routes recover.
+        #expect(Self.expiry() == .recover)
+        #expect(Self.expiry(recoveryAttempted: true) == .fallBack)
+    }
+
+    @Test("the install page is left to its own failure path")
+    func installPageIsLeftAlone() {
+        #expect(Self.expiry(showingInstallPage: true) == .doNothing)
+    }
+
+    @Test("a settled session never recovers behind the user's back")
+    func settledSessionNeverRecovers() {
+        #expect(Self.expiry(fellBack: true) == .doNothing)
+        #expect(Self.expiry(closed: true) == .doNothing)
+        #expect(Self.expiry(recoveryAttempted: true, closed: true) == .doNothing)
+    }
+
+    @Test("each activation gets its own recovery, not one per session")
+    func recoveryBudgetIsPerActivation() {
+        // `shareAgain` and the install return both activate a different document. Carrying the
+        // session's spent budget into them would leave the next one with no recovery at all —
+        // the same silent-renderer hole this predicate exists to close.
+        #expect(Self.expiry(recoveryAttempted: false) == .recover)
+        #expect(Self.expiry(recoveryAttempted: true) == .fallBack)
+    }
+}
+
+@Suite("sharing activation watch")
+struct SharingWatchActivationTests {
+    private static func watch(
+        sessionActivated: Bool = false,
+        pageReported: Bool = false,
+        showingInstallPage: Bool = false,
+        fellBack: Bool = false,
+        closed: Bool = false
+    ) -> Bool {
+        sharingShouldWatchActivation(
+            sessionActivated: sessionActivated,
+            pageReported: pageReported,
+            showingInstallPage: showingInstallPage,
+            fellBack: fellBack,
+            closed: closed
+        )
+    }
+
+    @Test("the first activation off the warm document is watched")
+    func firstActivationIsWatched() {
+        // Deleting the arm makes this false: the silent-renderer hole reopens with no watchdog.
+        #expect(Self.watch())
+    }
+
+    @Test("a later activation in the same session is not watched")
+    func laterActivationIsNotWatched() {
+        // A confirmation or `shareAgain` re-runs no `ready` effect, so a budget armed here would
+        // expire and reload the unconfirmed page over the user's confirmation screen.
+        #expect(!Self.watch(sessionActivated: true))
+    }
+
+    @Test("a page that already reported needs no budget")
+    func reportedPageIsNotWatched() {
+        #expect(!Self.watch(pageReported: true))
+    }
+
+    @Test("the install page and settled sessions are never watched")
+    func nonSharingDocumentsAreNotWatched() {
+        #expect(!Self.watch(showingInstallPage: true))
+        #expect(!Self.watch(fellBack: true))
+        #expect(!Self.watch(closed: true))
     }
 }

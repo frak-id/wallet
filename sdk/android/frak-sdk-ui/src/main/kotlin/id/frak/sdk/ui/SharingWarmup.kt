@@ -4,15 +4,15 @@ import id.frak.sdk.Frak
 import id.frak.sdk.core.FrakError
 
 /**
- * Warms the identity and merchant config the sheet needs before it can build a page URL, then
- * answers that URL. Driven by an explicit [FrakSharing.warm]. Answers a URL rather
- * than warming the pool itself because this can resume with no Activity attached, and a `WebView`
- * must be built against a windowed context — [SharingHost] holds the answer until it has one.
+ * Warms the identity and merchant config the sheet needs, then answers a URL rather than warming
+ * the pool: this can resume with no Activity attached, and a `WebView` needs a windowed context.
  */
-internal suspend fun resolveWarmUrl(packageId: String): String? {
+internal suspend fun resolveWarmUrl(
+    packageId: String,
+    language: String?,
+): String? {
     if (!Frak.isInitialized) return null
 
-    val trace = SharingTrace()
     val client = Frak.client
     val walletOrigin = client.environment.wallet
 
@@ -22,12 +22,10 @@ internal suspend fun resolveWarmUrl(packageId: String): String? {
         try {
             // Already eager at initialize; awaiting only lands the sheet's read on a completed one.
             val clientId = client.anonymousId()
-            trace.mark("warm identity ready")
             clientId to client.config.resolve().toSharingMerchant()
         } catch (unavailable: FrakError) {
             null
         }
-    trace.mark("warm config ready")
     val clientId = identity?.first
     val merchant = identity?.second
 
@@ -41,5 +39,6 @@ internal suspend fun resolveWarmUrl(packageId: String): String? {
         packageId = packageId,
         appName = merchant.displayName,
         logoUrl = merchant.logoUrl,
+        language = language,
     )
 }

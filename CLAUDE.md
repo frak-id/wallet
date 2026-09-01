@@ -224,7 +224,7 @@ bun run changeset:release
 - Backend follows domain-driven design (`src/domain/*/` structure)
 - **State Management**: Zustand with persist middleware across all frontend apps (wallet, business, listener) for consistency and performance
 - **CSS Processing**: Lightning CSS (100x faster than PostCSS) for Vite apps with centralized config in `packages/dev-tooling/src/vite.ts`
-  - Targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+ (baseline-widely-available)
+  - Targets: Safari 15.4+, Chrome 111+, Edge 111+, Firefox 114+ — pinned via `BROWSER_TARGET` in `packages/dev-tooling/src/vite.ts`, never the moving `baseline-widely-available` alias
   - Features: CSS nesting, CSS Modules (camelCase), autoprefixing, minification
   - Apps using Lightning CSS: wallet, listener, business
 
@@ -315,7 +315,7 @@ All SDK packages use tsdown (powered by Rolldown) for building both NPM and CDN 
 - **Format flexibility**: IIFE with `globalName` for browser globals (FrakSDK, NexusSDK)
 - **CSS modules**: Lightning CSS + custom plugins for CSS handling
 - **JSX transformation**: Preact JSX via `esbuildOptions.jsx` configuration
-- **Dependency bundling**: `noExternal: [/.*/]` bundles all dependencies for CDN
+- **Dependency bundling**: `deps.alwaysBundle: [/.*/]` bundles all dependencies for CDN
 
 ## Important Notes
 
@@ -341,7 +341,7 @@ All SDK packages use tsdown (powered by Rolldown) for building both NPM and CDN 
 - **Module Architecture**: Wallet app organizes code by feature modules in `app/module/`, backend by domains in `src/domain/`
 - **WebAuthn + ERC-4337**: Core authentication flow combines WebAuthn passkeys with Account Abstraction smart wallets
 - **Multi-chain Support**: Viem abstractions enable seamless blockchain interactions across multiple networks
-- Vite aliased to `rolldown-vite` (`npm:rolldown-vite@^7.3.1`) — faster Rust-based bundler
+- Vite 8 bundles with rolldown natively — no `rolldown-vite` alias
 
 ## Harness: Frak Dev
 

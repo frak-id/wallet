@@ -3,6 +3,11 @@ import {
     decodeProductsParam,
     sanitizeSharingProducts,
 } from "@frak-labs/core-sdk";
+import {
+    SHARE_BUDGET,
+    sanitizeShareImage,
+    truncateForShare,
+} from "@frak-labs/wallet-shared/sharing";
 import { decodeHostEmbed } from "@/module/common/utils/hostEmbed";
 import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
 import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme";
@@ -47,6 +52,17 @@ const productList = (raw: unknown): SharingPageProduct[] | undefined => {
     return sanitizeSharingProducts(raw);
 };
 
+/** A non-empty string clipped to `maxLength`; truncating keeps the merchant's own copy. */
+const cappedStr =
+    (maxLength: number) =>
+    (raw: unknown): string | undefined => {
+        // `looseStr`, not `str`: search values are JSON-parsed, so an all-digit
+        // override would otherwise be dropped here but honoured by the standalone entry.
+        const value = looseStr(raw);
+        if (!value) return undefined;
+        return truncateForShare(value, maxLength);
+    };
+
 /**
  * The `/sharing` param contract, read by both the query string and the
  * activation fragment. `merchantId`, `clientId`, `link`, `appName`, `logoUrl`,
@@ -77,6 +93,15 @@ export const SHARING_PARAMS = {
 
     /** Pre-formatted reward headline from a host's cache, until the real query resolves. */
     seedReward: { decode: sanitizeSeededReward, transport: "both" },
+
+    /** Per-call share title override. */
+    shareTitle: { decode: cappedStr(SHARE_BUDGET.title), transport: "both" },
+
+    /** Per-call share body override. */
+    shareText: { decode: cappedStr(SHARE_BUDGET.text), transport: "both" },
+
+    /** Per-call preview image override. */
+    shareImage: { decode: sanitizeShareImage, transport: "both" },
 
     /**
      * `warm` means a host preloaded the page; it reports

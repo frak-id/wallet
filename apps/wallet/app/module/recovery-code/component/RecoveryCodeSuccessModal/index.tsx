@@ -1,35 +1,34 @@
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
 import { ResponsiveModal } from "@frak-labs/design-system/components/ResponsiveModal";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CircleCheckIcon } from "@frak-labs/design-system/icons";
-import { useNavigate } from "@tanstack/react-router";
-import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import * as styles from "./index.css";
 
 type RecoveryCodeSuccessModalProps = {
     onClose: () => void;
-    merchant?: { name: string; domain: string };
+    merchant?: { name: string; domain?: string };
+    /**
+     * Label for an explicit dismiss button. Supplied where this modal is the
+     * only way off the page behind it — `ResponsiveModal` draws no close
+     * affordance of its own, so without a label the exit is swipe-or-guess.
+     */
+    actionLabel?: string;
 };
 
 export function RecoveryCodeSuccessModal({
     onClose,
     merchant,
+    actionLabel,
 }: RecoveryCodeSuccessModalProps) {
     const { t } = useTranslation();
-    const navigate = useNavigate();
-
-    const handleClose = useCallback(() => {
-        onClose();
-        // Navigate back to register to continue the onboarding
-        navigate({ to: "/register", replace: true });
-    }, [onClose, navigate]);
 
     return (
         <ResponsiveModal
             open={true}
             onOpenChange={(open) => {
-                if (!open) handleClose();
+                if (!open) onClose();
             }}
             title={t("recoveryCode.success.title")}
             description={t("recoveryCode.success.description")}
@@ -54,6 +53,11 @@ export function RecoveryCodeSuccessModal({
                             merchantName: merchant.name,
                         })}
                     </Text>
+                )}
+                {actionLabel && (
+                    <Button size="large" width="full" onClick={onClose}>
+                        {actionLabel}
+                    </Button>
                 )}
             </Box>
         </ResponsiveModal>

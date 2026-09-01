@@ -34,7 +34,8 @@ export function SharingPage({
     merchant,
     view,
     chrome,
-    sharingLink,
+    // `sharingLink` is deliberately not read here: the CTAs' enabled state is
+    // `share.canAct`, which also covers a host servicing them with its own link.
     installUrl,
     reward,
     products,
@@ -137,12 +138,7 @@ export function SharingPage({
                     </nav>
                 </main>
 
-                <Footer
-                    share={share}
-                    sharingLink={sharingLink}
-                    actions={actions}
-                    t={t}
-                />
+                <Footer share={share} actions={actions} t={t} />
             </div>
         </div>
     );

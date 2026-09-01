@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { isRunningLocally } from "@frak-labs/app-essentials/utils/env";
 import { defineConfig } from "vite";
@@ -16,16 +17,27 @@ export default defineConfig(({ mode }) => {
     // In local development, use local loader directly
     // Otherwise, use CDN components.js (which loads from CDN)
     const scriptSrc = useLocal
-        ? `${bundleDir}/loader.js`
+        ? `/@fs${bundleDir}/loader.js`
         : "https://cdn.jsdelivr.net/npm/@frak-labs/components@beta/cdn/loader.js";
+
+    // The page boots the SDK from this bundle alone; a missing one 404s silently.
+    if (useLocal && !existsSync(`${bundleDir}/loader.js`)) {
+        throw new Error(
+            `Missing ${bundleDir}/loader.js — run \`bun run build:sdk\` first.`
+        );
+    }
 
     return {
         server: {
             port: 3013,
         },
         publicDir: "public",
+        // Consuming the SDK from source leaves its `process.env` reads unsubstituted.
         define: {
-            "process.env.USE_CDN": JSON.stringify(mode !== "development"),
+            "process.env": JSON.stringify({
+                DEEP_LINK_SCHEME: "frakwallet://",
+                SDK_VERSION: "dev",
+            }),
         },
         plugins: [
             createHtmlPlugin({

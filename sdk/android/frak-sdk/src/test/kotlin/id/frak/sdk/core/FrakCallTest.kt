@@ -37,10 +37,10 @@ class FrakCallTest {
     }
 
     @Test
-    fun `an unexpected throwable is wrapped rather than escaping`() {
+    fun `an unexpected throwable is wrapped as InternalFailure, not Decoding`() {
         val thrown = runCatching { frakCall { throw IllegalStateException("bug") } }.exceptionOrNull()
 
-        assertTrue("expected a FrakError, got $thrown", thrown is FrakError)
+        assertTrue("expected InternalFailure, got $thrown", thrown is FrakError.InternalFailure)
         assertTrue("the cause is preserved", thrown?.cause is IllegalStateException)
     }
 

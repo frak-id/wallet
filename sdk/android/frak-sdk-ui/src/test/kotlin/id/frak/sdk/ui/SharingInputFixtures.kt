@@ -13,6 +13,9 @@ internal fun sharingRequest(
     targetInteraction: String? = null,
     placement: String? = null,
     logoUrl: String? = null,
+    shareTitle: String? = null,
+    shareText: String? = null,
+    shareImageUrl: String? = null,
 ): SharingRequest =
     SharingRequest
         .Builder()
@@ -21,6 +24,9 @@ internal fun sharingRequest(
         .targetInteraction(targetInteraction)
         .placement(placement)
         .logoUrl(logoUrl)
+        .shareTitle(shareTitle)
+        .shareText(shareText)
+        .shareImageUrl(shareImageUrl)
         .build()
 
 internal fun sharingProduct(

@@ -50,6 +50,11 @@ describe("query params", () => {
         expect(fromUrl("?sid=abc123").sid).toBe("abc123");
     });
 
+    it("keeps an all-digit share override, which parses as a number", () => {
+        expect(fromUrl("?shareTitle=2024").shareTitle).toBe("2024");
+        expect(fromUrl("?shareText=2024").shareText).toBe("2024");
+    });
+
     it("drops a returnScheme that is not a valid frak scheme", () => {
         expect(fromUrl("?returnScheme=frak-acme").returnScheme).toBe(
             "frak-acme"
@@ -148,6 +153,67 @@ describe("products, in both encodings", () => {
     });
 });
 
+describe("share overrides", () => {
+    it("accepts a title and text within their caps", () => {
+        expect(
+            parseSharingSearch({ shareTitle: "Kettle deal" }).shareTitle
+        ).toBe("Kettle deal");
+        expect(
+            parseSharingSearch({ shareText: "Grab it before it's gone" })
+                .shareText
+        ).toBe("Grab it before it's gone");
+    });
+
+    it("clips a title or text past its cap instead of dropping it", () => {
+        const title = parseSharingSearch({
+            shareTitle: "a".repeat(121),
+        }).shareTitle;
+        expect(title).toHaveLength(120);
+        expect(title?.endsWith("…")).toBe(true);
+        expect(
+            parseSharingSearch({ shareTitle: "a".repeat(120) }).shareTitle
+        ).toBe("a".repeat(120));
+
+        const text = parseSharingSearch({
+            shareText: "a".repeat(281),
+        }).shareText;
+        expect(text).toHaveLength(280);
+        expect(text?.endsWith("…")).toBe(true);
+        expect(
+            parseSharingSearch({ shareText: "a".repeat(280) }).shareText
+        ).toBe("a".repeat(280));
+    });
+
+    it("drops an empty title or text rather than keeping a blank override", () => {
+        expect(
+            parseSharingSearch({ shareTitle: "" }).shareTitle
+        ).toBeUndefined();
+        expect(parseSharingSearch({ shareText: "" }).shareText).toBeUndefined();
+    });
+
+    it("accepts an https image and rejects everything else", () => {
+        expect(
+            parseSharingSearch({
+                shareImage: "https://cdn.example.com/p.png",
+            }).shareImage
+        ).toBe("https://cdn.example.com/p.png");
+        expect(
+            parseSharingSearch({ shareImage: "http://cdn.example.com/p.png" })
+                .shareImage
+        ).toBeUndefined();
+        expect(
+            parseSharingSearch({ shareImage: "not-a-url" }).shareImage
+        ).toBeUndefined();
+    });
+
+    it("are absent by default", () => {
+        const result = parseSharingSearch({});
+        expect(result.shareTitle).toBeUndefined();
+        expect(result.shareText).toBeUndefined();
+        expect(result.shareImage).toBeUndefined();
+    });
+});
+
 describe("activation fragment", () => {
     it("reads the per-tap params a warmed page is still missing", () => {
         const activation = parseSharingFragment(
@@ -230,5 +296,32 @@ describe("activation fragment", () => {
     it("treats an empty fragment as no activation at all", () => {
         expect(parseSharingFragment("")).toBeNull();
         expect(parseSharingFragment("#")).toBeNull();
+    });
+
+    it("carries the share overrides, exactly as the query string does", () => {
+        const activation = parseSharingFragment(
+            "#shareTitle=Kettle%20deal&shareText=Grab%20it&shareImage=https%3A%2F%2Fcdn.example.com%2Fp.png&sid=s1"
+        );
+        expect(activation).toMatchObject({
+            shareTitle: "Kettle deal",
+            shareText: "Grab it",
+            shareImage: "https://cdn.example.com/p.png",
+        });
+    });
+
+    it("omits a rejected share override rather than nulling it", () => {
+        const activation = parseSharingFragment(
+            "#shareImage=http://x/p.png&sid=s1"
+        );
+        expect(activation).not.toHaveProperty("shareImage");
+        expect(activation?.sid).toBe("s1");
+    });
+
+    it("clips an over-long override arriving by fragment", () => {
+        const activation = parseSharingFragment(
+            `#shareTitle=${"a".repeat(121)}&sid=s1`
+        );
+        expect(activation?.shareTitle).toHaveLength(120);
+        expect(activation?.sid).toBe("s1");
     });
 });

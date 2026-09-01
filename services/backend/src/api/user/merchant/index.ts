@@ -89,10 +89,13 @@ export function validatePackageIdPlatformPairing(query: {
 }
 
 export const userMerchantApi = new Elysia({ prefix: "/merchant" })
-    // `maxRequests` must stay distinct across every limiter in this tree
-    // (`exploreApi` uses 30): Elysia dedups plugins by name+seed, so identical
-    // configs collapse into a single shared bucket.
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 60 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "merchant",
+            windowMs: 60_000,
+            maxRequests: 60,
+        })
+    )
     .get(
         "/resolve",
         async ({
@@ -143,7 +146,16 @@ export const userMerchantApi = new Elysia({ prefix: "/merchant" })
             },
         }
     )
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 90 }))
+    // Additive, not a replacement: a scoped limiter applies to every route registered after
+    // it, so the routes below are charged to this bucket AND the 60 one above. The effective
+    // budget here is therefore 60/min per IP, shared with `/resolve`. See `index.test.ts`.
+    .use(
+        rateLimitMiddleware({
+            bucket: "merchant-public",
+            windowMs: 60_000,
+            maxRequests: 90,
+        })
+    )
     .get(
         "/estimated-rewards",
         async ({

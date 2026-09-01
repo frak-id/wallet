@@ -54,11 +54,11 @@ struct HTTPClient: Sendable {
     /// actually fires there, where here it is `Deadline.run`.
     static let overallDeadlineSeconds: TimeInterval = 20
 
-    /// Set well above `overallDeadlineSeconds` so neither can ever be the mechanism that
-    /// actually ends a request — `Deadline.run` always wins first. Not `.infinity`/unset: this
-    /// still bounds the pathological case of `Deadline.run`'s own cancellation failing to
-    /// unblock a wedged `URLSessionTask`.
-    private static let sessionBackstopSeconds: TimeInterval = 60
+    /// Set above `overallDeadlineSeconds` so neither can ever be the mechanism that actually
+    /// ends a request — `Deadline.run` always wins first. Not `.infinity`/unset: this bounds the
+    /// abandoned-socket tail when `Deadline.run`'s own cancellation fails to unblock a wedged
+    /// `URLSessionTask`, so it sits just above the deadline rather than at three times it.
+    private static let sessionBackstopSeconds: TimeInterval = 30
 
     static let defaultSession: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
@@ -73,6 +73,9 @@ struct HTTPClient: Sendable {
     private let session: URLSession
     private let overallDeadlineSeconds: TimeInterval
     private let redirectDelegate = NoRedirectDelegate()
+    // Overrides the jittered production backoff. Exists so a test can place the deadline far
+    // below the backoff and far above dispatch latency at once; nil everywhere in production.
+    private let retryBackoffSecondsOverride: TimeInterval?
     // Self-contained here rather than threaded through from DefaultFrakClient: HTTPClient is
     // constructed before that init has a fully-built FrakLogger to hand it. Defaults to nil —
     // silent — until a caller passes one in.
@@ -82,11 +85,13 @@ struct HTTPClient: Sendable {
         baseURL: String,
         session: URLSession = HTTPClient.defaultSession,
         overallDeadlineSeconds: TimeInterval = HTTPClient.overallDeadlineSeconds,
+        retryBackoffSecondsOverride: TimeInterval? = nil,
         logger: FrakLogger? = nil
     ) {
         self.baseURL = baseURL
         self.session = session
         self.overallDeadlineSeconds = overallDeadlineSeconds
+        self.retryBackoffSecondsOverride = retryBackoffSecondsOverride
         self.logger = logger
     }
 
@@ -159,7 +164,7 @@ struct HTTPClient: Sendable {
             // use, indistinguishable from a real failure. Safe only because this is GET-only.
             // Short, jittered delay: retrying instantly, in lockstep, across every client
             // affected by the same blip recreates the load spike that caused it.
-            try await Task.sleep(nanoseconds: Self.retryDelayNanoseconds())
+            try await Task.sleep(nanoseconds: retryDelayNanoseconds())
             return try await retry(request)
         } catch let error as URLError {
             // Not in isTransient's allowlist — e.g. a trust or TLS configuration failure.
@@ -175,7 +180,10 @@ struct HTTPClient: Sendable {
         }
     }
 
-    private static func retryDelayNanoseconds() -> UInt64 {
+    private func retryDelayNanoseconds() -> UInt64 {
+        if let retryBackoffSecondsOverride {
+            return UInt64(retryBackoffSecondsOverride * 1_000_000_000)
+        }
         let baseMilliseconds: UInt64 = 100
         let jitterMilliseconds = UInt64.random(in: 0...200)
         return (baseMilliseconds + jitterMilliseconds) * 1_000_000
@@ -277,7 +285,7 @@ struct HTTPClient: Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue(FrakSDKVersion.current, forHTTPHeaderField: FrakSDKVersion.headerName)
+        request.setValue(FrakSDKVersion.headerValue, forHTTPHeaderField: FrakSDKVersion.headerName)
         return request
     }
 }

@@ -68,8 +68,8 @@ actor RewardRepository {
             return entry.result
         }
 
-        if backoff.isBackingOff(backoffKey) {
-            throw FrakError.network(underlying: Backoff.BackingOff(what: "reward fetch"))
+        if let retryAfter = backoff.remaining(backoffKey) {
+            throw FrakError.backingOff(retryAfterSeconds: retryAfter)
         }
 
         return try await singleFlight.run(key) {

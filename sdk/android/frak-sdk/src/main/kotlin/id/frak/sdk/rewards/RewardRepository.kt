@@ -6,6 +6,7 @@ import id.frak.sdk.core.Base64Url
 import id.frak.sdk.core.FrakCurrency
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLogger
+import id.frak.sdk.core.MILLIS_PER_SECOND
 import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.net.HttpClient
 import id.frak.sdk.net.HttpClient.Companion.toServerError
@@ -75,8 +76,8 @@ internal class RewardRepository(
                 }?.let { return it.result }
         }
 
-        if (mutex.withLock { backoff.isBackingOff(backoffKey) }) {
-            throw FrakError.Network(IllegalStateException("backing off after repeated reward fetch failures"))
+        mutex.withLock { backoff.remainingMillis(backoffKey) }?.let {
+            throw FrakError.BackingOff(it / MILLIS_PER_SECOND)
         }
 
         return singleFlight.run(key) {

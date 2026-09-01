@@ -4,7 +4,7 @@
 # for the full caching-strategy commentary; the structure is intentionally identical
 # so the tooling/deps/sdk-builder layers dedupe at the blob level inside zot.
 
-ARG BUN_VERSION=1.3.11
+ARG BUN_VERSION=1.4.0
 
 FROM oven/bun:${BUN_VERSION} AS tooling
 RUN --mount=type=cache,id=apt-cache,target=/var/cache/apt,sharing=locked \
@@ -71,7 +71,7 @@ RUN find dist -type f \
     | xargs -0 -P "$(nproc)" -n 32 gzip -9 -k && \
     echo "Pre-compressed $(find dist -name '*.gz' | wc -l) files"
 
-FROM nginx:1.29.1-alpine
+FROM nginx:1.31.4-alpine
 COPY --from=app-builder /app/apps/business/dist /usr/share/nginx/html
 COPY apps/business/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80

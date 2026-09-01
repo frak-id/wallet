@@ -3,6 +3,7 @@ package id.frak.sdk.identity
 import id.frak.sdk.config.KeyValueStore
 import id.frak.sdk.core.FrakLogger
 import id.frak.sdk.core.TrackingConsent
+import id.frak.sdk.net.ServerClock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -41,6 +42,8 @@ internal class AnonymousIdStore(
      */
     private val consent: TrackingConsent,
     private val ioDispatcher: CoroutineDispatcher,
+    /** Must be the instance the [id.frak.sdk.net.HttpClient] feeds, or proofs are stamped from the device clock alone. */
+    private val serverClock: ServerClock = ServerClock(),
 ) {
     private class Identity(
         val key: DeviceKey,
@@ -74,12 +77,16 @@ internal class AnonymousIdStore(
     /** Awaits the in-flight or already-completed generation; never null purely on a timing race. */
     suspend fun anonymousId(): String? = current()?.id
 
-    /** Never throws; callers must treat proofs as always-optional. */
+    /**
+     * Never throws; callers must treat proofs as always-optional. [ts] is the server's clock when
+     * one has ever answered, not the device's: the backend rejects a proof more than 60 s in its
+     * future, and that rejection is not retryable.
+     */
     suspend fun signProof(
         op: ProofOp,
         merchantId: String,
         binding: ByteArray = ByteArray(0),
-        ts: Long = System.currentTimeMillis() / 1000,
+        ts: Long = serverClock.nowSeconds(),
     ): String? {
         val identity = current() ?: return null
         return try {

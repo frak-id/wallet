@@ -35,11 +35,12 @@ class EventQueueTest {
         capturedAt: Long = NOW,
         failures: Int = 0,
         rowId: Long = EventQueue.MISSING_ROW_ID,
-    ) = QueuedEvent(
+    ) = QueuedRow(
         idempotencyKey = key,
-        path = "/user/track/interaction",
-        body = JSONObject().put("type", "sharing").put("merchantId", MERCHANT_ID),
+        kind = "interaction",
+        payload = JSONObject().put("type", "sharing"),
         clientId = "256b1be3-2745-41d1-89d4-9121cc87bc45",
+        merchantId = MERCHANT_ID,
         capturedAtMillis = capturedAt,
         failures = failures,
         rowId = rowId,
@@ -53,10 +54,11 @@ class EventQueueTest {
         file.parentFile?.mkdirs()
         val line =
             JSONObject()
+                .put("kind", "interaction")
                 .put("k", key)
-                .put("p", "/user/track/interaction")
-                .put("b", JSONObject().put("type", "sharing").put("merchantId", MERCHANT_ID))
+                .put("payload", JSONObject().put("type", "sharing"))
                 .put("c", "256b1be3-2745-41d1-89d4-9121cc87bc45")
+                .put("m", MERCHANT_ID)
                 .put("t", capturedAt)
                 .put("f", 0)
                 .toString()
@@ -72,8 +74,8 @@ class EventQueueTest {
 
             val read = queue.read(NOW)
             assertEquals(listOf("a", "b"), read.map { it.idempotencyKey })
-            assertEquals("sharing", read.first().body.getString("type"))
-            assertEquals(MERCHANT_ID, read.first().body.getString("merchantId"))
+            assertEquals("sharing", read.first().payload.getString("type"))
+            assertEquals(MERCHANT_ID, read.first().merchantId)
         }
 
     @Test
@@ -81,7 +83,7 @@ class EventQueueTest {
         runTest {
             open()
             queue.append(event("a"))
-            file.appendText("""{"k":"b","p":"/user/tra""")
+            file.appendText("""{"k":"b","kind":"inte""")
 
             assertEquals(listOf("a"), queue.read(NOW).map { it.idempotencyKey })
         }
@@ -91,7 +93,7 @@ class EventQueueTest {
         runTest {
             open()
             queue.append(event("a"))
-            file.appendText("""{"k":"b","p":"/user/tra""")
+            file.appendText("""{"k":"b","kind":"inte""")
 
             // The partial line must be dropped from the file too, not just the parsed result,
             // or torn tails would accumulate on disk past the ceiling, one per mid-write kill.
@@ -234,9 +236,8 @@ class EventQueueTest {
             appendPreMigrationLine("old-a", capturedAt = NOW - 1)
             appendPreMigrationLine("old-b", capturedAt = NOW)
 
-            // No read() yet: append's own seed path (readExistingForSeed) must reserve one id
-            // per un-migrated row ahead of it, or "new" would take id 0 — the same id the later
-            // migration in read() assigns to "old-a".
+            // No read() yet: append's own seed path must reserve one id per un-migrated row ahead
+            // of it, or "new" would take the id read()'s migration later assigns to "old-a".
             queue.append(event("new"))
 
             val all = queue.read(NOW)
@@ -258,9 +259,8 @@ class EventQueueTest {
             val tempPath = File(file.parentFile, file.name + ".tmp")
             tempPath.mkdirs()
 
-            // read() must not signal the non-durable rewrite by returning an empty list: that
-            // would be indistinguishable from an empty queue, and InteractionTracker.flush's
-            // bare compaction would then delete a queue that is not actually empty.
+            // read() must not signal a non-durable rewrite with an empty list: that is
+            // indistinguishable from an empty queue, and the next flush would wipe it.
             val migrated = queue.read(NOW)
             assertEquals(listOf("old-a", "old-b"), migrated.map { it.idempotencyKey })
 
@@ -282,7 +282,7 @@ class EventQueueTest {
             val tempPath = File(file.parentFile, file.name + ".tmp")
             tempPath.mkdirs()
 
-            // The exact call InteractionTracker.flush makes after a drain: reconcile with
+            // The exact call EventOutbox.flush makes after a drain: reconcile with
             // nothing delivered, as if every send in this pass failed before reconcile ever ran.
             val result = queue.reconcile(delivered = emptySet(), retried = emptyMap(), now = NOW)
 
@@ -290,8 +290,7 @@ class EventQueueTest {
 
             tempPath.deleteRecursively()
             // ...and the file was never touched: reconcile must not compact against a read whose
-            // migration ids are not durable, or the next flush would silently wipe events still
-            // on disk.
+            // migration ids are not durable.
             assertEquals(listOf("old-a", "old-b"), queue.read(NOW).map { it.idempotencyKey })
         }
 
@@ -302,10 +301,10 @@ class EventQueueTest {
             queue.append(event("wire-check"))
             val stored = queue.read(NOW).single()
 
-            // rowId lives only in QueuedEvent.toJson() (the on-disk envelope) and never in
-            // .body, which is exactly what InteractionTracker.flush sends as the POST payload.
-            assertFalse(stored.body.toString().contains("\"r\""))
-            assertFalse(stored.body.has("r"))
+            // rowId lives only in QueuedRow.toJson() (the on-disk envelope) and never in
+            // .payload, which is exactly what a RowSender reads as the kind-specific facts.
+            assertFalse(stored.payload.toString().contains("\"r\""))
+            assertFalse(stored.payload.has("r"))
         }
 
     @Test
@@ -347,15 +346,13 @@ class EventQueueTest {
             queue.append(event("a"))
             queue.append(event("b"))
             val before = file.readBytes()
-            // Backdated deliberately: a skipped rewrite and a performed one produce byte-identical
-            // content, so mtime is the only thing that can tell them apart. An hour in the past
-            // cannot be reached by a rewrite that stamps `now`.
+            // Backdated deliberately: a skipped rewrite and a performed one are byte-identical, so
+            // mtime is the only thing that can tell them apart.
             val backdated = System.currentTimeMillis() - 3_600_000
             assertTrue("could not backdate the fixture", file.setLastModified(backdated))
 
-            // The whole-file rewrite is the expensive half of a flush; skipping it here is safe
-            // only because read() already persisted anything it changed, so `next` is
-            // byte-identical to disk.
+            // Skipping the whole-file rewrite is safe only because read() already persisted
+            // anything it changed, so `next` is byte-identical to disk.
             val result = queue.reconcile(delivered = emptySet(), retried = emptyMap(), now = NOW)
 
             assertEquals(listOf("a", "b"), result.map { it.idempotencyKey })
@@ -379,6 +376,29 @@ class EventQueueTest {
             )
 
             assertEquals(1, queue.read(NOW).single().failures)
+        }
+
+    @Test
+    fun `skips a row whose schema version is newer than this build understands`() =
+        runTest {
+            open()
+            file.parentFile?.mkdirs()
+            file.appendText(
+                JSONObject()
+                    .put("r", 0)
+                    .put("v", QueuedRow.SCHEMA_VERSION + 1)
+                    .put("kind", "interaction")
+                    .put("k", "future")
+                    .put("payload", JSONObject().put("type", "sharing"))
+                    .put("c", "256b1be3-2745-41d1-89d4-9121cc87bc45")
+                    .put("m", MERCHANT_ID)
+                    .put("t", NOW)
+                    .put("f", 0)
+                    .toString() + "\n",
+            )
+            queue.append(event("current"))
+
+            assertEquals(listOf("current"), queue.read(NOW).map { it.idempotencyKey })
         }
 
     private companion object {

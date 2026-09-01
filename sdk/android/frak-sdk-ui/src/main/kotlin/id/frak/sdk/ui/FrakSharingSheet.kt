@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,6 +37,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.dismiss
+import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -69,9 +70,13 @@ internal fun FrakSharingSheet(
         state.failure?.let(state::fail)
     }
 
-    // Bounds how long the skeleton may cover the page when no paint signal arrives.
+    // A finished document that produced no paint callback is uncovered on a short grace. There is
+    // deliberately no timer for the unfinished case: the web view is transparent, so lifting the
+    // skeleton off a page that has not painted shows the scrim through a hole rather than a page.
+    // A document that never arrives at all is ended by the load deadline, not uncovered.
     LaunchedEffect(state.pageLoaded) {
-        delay(if (state.pageLoaded) SKELETON_GRACE_MILLIS else SKELETON_MAX_HOLD_MILLIS)
+        if (!state.pageLoaded) return@LaunchedEffect
+        delay(SKELETON_GRACE_MILLIS)
         state.onPageVisible()
     }
 
@@ -136,10 +141,14 @@ internal fun FrakSharingSheet(
                     // Applied after `graphicsLayer` so it insets the children, not the box —
                     // otherwise a full-offset exit leaves a sliver parked over the nav bar. The
                     // dialog spans the display, so without this the page's CTA row is occluded.
-                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    // `safeDrawing`, not `navigationBars`: heightFraction(1f) is allowed, and at
+                    // that height the status bar and a display cutout occlude the page's header.
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
                     // No string of our own: this module ships no resources, and TalkBack localises
-                    // its own dismiss label.
+                    // its own dismiss label. The pane title is the merchant's own display name,
+                    // resolved at runtime, so it needs no resource either.
                     .semantics {
+                        state.session?.shareTitle?.let { paneTitle = it }
                         dismiss {
                             scope.launch { exit(offset, state, onExitStarted) }
                             true
@@ -148,7 +157,15 @@ internal fun FrakSharingSheet(
         ) {
             // Composed from the first frame: the pooled view is already warm, so the session's
             // load lands into a settled viewport instead of resizing under it.
-            AndroidView(modifier = Modifier.fillMaxSize(), factory = { handle.view })
+            AndroidView(
+                // The skeleton is drawn over the page, not instead of it, so without this
+                // TalkBack reads a page the user cannot see.
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .then(if (state.pageVisible) Modifier else Modifier.clearAndSetSemantics { }),
+                factory = { handle.view },
+            )
 
             // Renderer died after the page painted. The sheet stays up (see
             // SharingSheetState.onPageUnavailable), so paint an opaque surface in place of the
@@ -235,9 +252,6 @@ private fun SharingSheetGrabStrip(
         BottomSheetDefaults.DragHandle()
     }
 }
-
-/** Longest the skeleton may cover a page whose document hasn't even finished. */
-private const val SKELETON_MAX_HOLD_MILLIS = 2_500L
 
 /** Longest it may cover a finished document that produced no paint signal. */
 private const val SKELETON_GRACE_MILLIS = 400L

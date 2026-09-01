@@ -26,11 +26,15 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            // Debug-signed so `installRelease` works without a keystore. This is the harness,
+            // not a shippable artifact.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
@@ -63,8 +67,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
-    implementation("id.frak:frak-sdk:0.0.1")
-    implementation("id.frak:frak-sdk-ui:0.0.1")
+    implementation("id.frak.sdk:core:1.0.0-beta.2")
+    implementation("id.frak.sdk:ui:1.0.0-beta.2")
 
     testImplementation("junit:junit:4.13.2")
 }

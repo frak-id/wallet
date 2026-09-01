@@ -5,6 +5,7 @@
 package id.frak.sdk.net
 
 import id.frak.sdk.InternalFrakApi
+import id.frak.sdk.core.Hex
 
 /**
  * Minimal query-string editing over a URL string. Not `android.net.Uri` (throws on the JVM
@@ -16,12 +17,23 @@ internal class UrlQuery private constructor(
     private val fragment: String,
     private val parameters: MutableList<Pair<String, String>>,
 ) {
-    /** The key match is case-insensitive and the value is percent-decoded; channels mangle both. */
+    /**
+     * The value is percent-decoded, and the key match falls back to case-insensitive because
+     * channels mangle casing — but an exact match wins, so `?fctx=stale&fCtx=real` resolves to
+     * `real`, as `sdk/core/src/utils/url/queryParams.ts` does.
+     */
     fun get(key: String): String? =
-        parameters
-            .firstOrNull { it.first.equals(key, ignoreCase = true) }
-            ?.second
+        (
+            parameters.firstOrNull { it.first == key }
+                ?: parameters.firstOrNull { it.first.equals(key, ignoreCase = true) }
+        )?.second
             ?.let(::percentDecode)
+
+    /**
+     * Exact-key lookup, for parameters the web client reads through `URLSearchParams.get`. `fCtx`
+     * tolerates mangled casing; `fmt` authorises an identity merge, so it matches web or not at all.
+     */
+    fun getExact(key: String): String? = parameters.firstOrNull { it.first == key }?.second?.let(::percentDecode)
 
     fun remove(key: String): UrlQuery =
         apply {
@@ -60,6 +72,9 @@ internal class UrlQuery private constructor(
         }
 
     companion object {
+        private const val PERCENT_BYTE: Byte = '%'.code.toByte()
+        private const val PLUS_BYTE: Byte = '+'.code.toByte()
+
         /** Null when [url] has no scheme separator — anything else is treated as an opaque base. */
         fun parse(url: String): UrlQuery? {
             if (!url.contains("://")) return null
@@ -84,24 +99,52 @@ internal class UrlQuery private constructor(
             return UrlQuery(base, fragment, parameters)
         }
 
-        /** Tolerant by design: a malformed escape is left as written rather than dropping the value. */
+        /**
+         * Tolerant by design: a malformed escape is left as written rather than dropping the value.
+         * Decodes over UTF-8 bytes, so a non-ASCII character alongside an escape survives verbatim,
+         * and `+` decodes to a space as `URLSearchParams` does on the web.
+         */
         fun percentDecode(value: String): String {
-            if ('%' !in value) return value
-            val out = java.io.ByteArrayOutputStream(value.length)
+            if ('%' !in value && '+' !in value) return value
+            val bytes = value.toByteArray(Charsets.UTF_8)
+            val out = java.io.ByteArrayOutputStream(bytes.size)
             var index = 0
-            while (index < value.length) {
-                val char = value[index]
-                val hex = if (char == '%' && index + 2 < value.length) value.substring(index + 1, index + 3) else null
-                val byte = hex?.toIntOrNull(16)
-                if (byte == null) {
-                    out.write(char.code)
-                    index++
-                } else {
-                    out.write(byte)
-                    index += 3
+            while (index < bytes.size) {
+                val byte = bytes[index]
+                val decoded =
+                    if (byte == PERCENT_BYTE && index + 2 < bytes.size) {
+                        hexByte(bytes[index + 1], bytes[index + 2])
+                    } else {
+                        null
+                    }
+                when {
+                    decoded != null -> {
+                        out.write(decoded)
+                        index += 3
+                    }
+
+                    byte == PLUS_BYTE -> {
+                        out.write(' '.code)
+                        index++
+                    }
+
+                    else -> {
+                        out.write(byte.toInt())
+                        index++
+                    }
                 }
             }
             return out.toString(Charsets.UTF_8.name())
+        }
+
+        /** Null unless both bytes are ASCII hex digits: a `toIntOrNull(16)` here accepts a sign, so `%-1` decoded to `0xFF`. */
+        private fun hexByte(
+            high: Byte,
+            low: Byte,
+        ): Int? {
+            val highNibble = Hex.nibble(high.toInt().toChar()) ?: return null
+            val lowNibble = Hex.nibble(low.toInt().toChar()) ?: return null
+            return (highNibble shl 4) or lowNibble
         }
     }
 }

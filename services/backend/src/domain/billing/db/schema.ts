@@ -17,7 +17,7 @@ import type { BillingDocumentDetails, BillingDocumentKind } from "../schemas";
 
 /**
  * Discriminated billing document — covers deposit notes, withdraw bills and
- * monthly bills (see billing-feature-plan.md §3.2). VAT/fee breakdown is not
+ * monthly bills. VAT/fee breakdown is not
  * columnized: it is frozen into `details` at issue time, keyed by `kind`.
  *
  * Money columns use numeric(36,18) to match `asset_logs` token precision.

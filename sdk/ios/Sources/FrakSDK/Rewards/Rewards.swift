@@ -2,14 +2,14 @@
 ///
 /// Fiat fields are `0` when unpriced, not when the reward is worthless — prefer
 /// `BestReward.formatted`.
-public struct TokenAmount: Sendable, Decodable, Hashable {
+public struct TokenAmount: Sendable, Hashable {
     /// Raw token units. Non-zero even when every fiat field is zero.
     public let amount: Double
     public let eurAmount: Double
     public let usdAmount: Double
     public let gbpAmount: Double
 
-    public init(amount: Double, eurAmount: Double, usdAmount: Double, gbpAmount: Double) {
+    @_spi(FrakInternal) public init(amount: Double, eurAmount: Double, usdAmount: Double, gbpAmount: Double) {
         self.amount = amount
         self.eurAmount = eurAmount
         self.usdAmount = usdAmount
@@ -24,17 +24,20 @@ public struct TokenAmount: Sendable, Decodable, Hashable {
 public enum RewardTier: Sendable, Hashable {
     case amount(minValue: Double, maxValue: Double?, amount: TokenAmount)
     case percentage(minValue: Double, maxValue: Double?, percent: Double)
+    /// A tier shape this binary does not know, so one unrecognised band cannot fail the whole
+    /// reward. The twin of `EstimatedReward.unknown`; the bounds are what every tier carries.
+    case unknown(minValue: Double, maxValue: Double?)
 
     public var minValue: Double {
         switch self {
-        case .amount(let minValue, _, _), .percentage(let minValue, _, _):
+        case .amount(let minValue, _, _), .percentage(let minValue, _, _), .unknown(let minValue, _):
             return minValue
         }
     }
 
     public var maxValue: Double? {
         switch self {
-        case .amount(_, let maxValue, _), .percentage(_, let maxValue, _):
+        case .amount(_, let maxValue, _), .percentage(_, let maxValue, _), .unknown(_, let maxValue):
             return maxValue
         }
     }
@@ -52,7 +55,7 @@ public enum EstimatedReward: Sendable, Hashable {
 /// One active campaign, as returned by `GET /user/merchant/estimated-rewards`.
 ///
 /// Arrives sorted by campaign priority, descending; do not re-sort it.
-public struct Campaign: Sendable, Decodable, Hashable {
+public struct Campaign: Sendable, Hashable {
     public let campaignId: String
     public let name: String
     /// The interaction that triggers this campaign, e.g. `purchase`. Open on the wire.
@@ -66,7 +69,7 @@ public struct Campaign: Sendable, Decodable, Hashable {
     /// ISO-8601 expiry, or nil for a campaign that never expires.
     public let expiresAt: String?
 
-    public init(
+    @_spi(FrakInternal) public init(
         campaignId: String,
         name: String,
         interactionTypeKey: String,
@@ -92,7 +95,7 @@ public struct Campaign: Sendable, Decodable, Hashable {
 ///
 /// `formatted` contains a non-breaking space (U+00A0) before the currency symbol —
 /// render it as-is, never compare it against an ordinary-space string.
-public struct BestReward: Sendable, Decodable, Hashable {
+public struct BestReward: Sendable, Hashable {
     public let formatted: String
     /// Which shape `formatted` describes: `fixed`, `percentage` or `tiered`. A plain
     /// `String` so a payout type newer than this binary still decodes.
@@ -108,7 +111,7 @@ public struct BestReward: Sendable, Decodable, Hashable {
     /// scope. `nil` for an unscoped winner, or when no products were supplied.
     public let matchedProducts: [ProductDetails]?
 
-    public init(
+    @_spi(FrakInternal) public init(
         formatted: String,
         payoutType: String,
         minPurchaseAmount: String? = nil,

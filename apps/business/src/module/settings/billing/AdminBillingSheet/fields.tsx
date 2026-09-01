@@ -7,7 +7,7 @@ import { TX_HASH_PATTERN } from "../validation";
 
 /**
  * The three `FormField` blocks byte-identical across AddDepositSheet /
- * AddWithdrawSheet (billing-feature-fixes.md B6). Generic over the form's
+ * AddWithdrawSheet. Generic over the form's
  * value type via `Control<T>` + `FieldPath<T>` (react-hook-form's own
  * generics) so each sheet keeps its own strongly-typed field names — no
  * `as any`/`as unknown` cast needed at the call sites.

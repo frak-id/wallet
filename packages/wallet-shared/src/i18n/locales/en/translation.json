@@ -786,6 +786,7 @@
         "error": {
             "invalid": "Incorrect or expired code, check the code copied from wallet.frak.id",
             "alreadyLinked": "This code has already been used.",
+            "unresolved": "This code isn't linked to a purchase yet. Try again in a few minutes.",
             "generic": "Something went wrong, please try again."
         },
         "success": {
@@ -797,14 +798,21 @@
     "installCode": {
         "title": "Don't lose your {{ estimatedReward }}!\nCopy this code",
         "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
+        "codelessTitle": "Don't lose your {{ estimatedReward }}!",
+        "codelessDescription": "Download the app and log in to claim your rewards.",
         "copyCode": "Copy the code",
         "codeCopied": "Code copied!",
         "loading": "Generating your code...",
-        "error": "Failed to generate code. Please refresh.",
         "infoTitle": "Code valid for 3 days",
         "infoDescription": "When opening the app, tap <1>\"I have a recovery code\"</1>.",
         "download": "Download the app",
-        "processing": "Setting up your wallet..."
+        "processing": "Setting up your wallet...",
+        "processingDone": "Your wallet is ready",
+        "openWalletCta": "Open my wallet",
+        "installedMerchant": "Connected to {{ merchantName }}",
+        "installedCodeToggle": "Or enter this code manually",
+        "openWallet": "Open Frak & claim {{ estimatedReward }}",
+        "installedHeadline": "You're all set. Open the app to claim {{ estimatedReward }}."
     },
     "pendingActions": {
         "walletAlreadyLinked": "This referral link is already linked to another wallet."
@@ -861,7 +869,6 @@
         "notification": {
             "title": "Don't miss any reward!",
             "description": "Get notified as soon as money is credited to your wallet.",
-            "descriptionHighlight": "Track your rewards in real time.",
             "enable": "Yes, notify me",
             "skip": "Later"
         },
@@ -885,6 +892,7 @@
     "reward": {
         "status": {
             "pending": "Awaiting validation by the brand",
+            "bank_depleted": "Awaiting funding by the brand",
             "processing": "Processing",
             "settled": "To collect",
             "consumed": "Consumed",

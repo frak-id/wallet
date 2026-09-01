@@ -2,6 +2,7 @@ import { getClientIdAsync } from "../config/clientId";
 import { getBackendUrl } from "../config/environment";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { signProof } from "../identity/sign";
+import { sdkVersionHeaders } from "../utils/sdkVersionHeader";
 
 const ENSURE_STORAGE_PREFIX = "frak-identity-ensured-";
 
@@ -68,6 +69,7 @@ export async function ensureIdentity(interactionToken: string): Promise<void> {
                 "Content-Type": "application/json",
                 "x-wallet-sdk-auth": interactionToken,
                 "x-frak-client-id": clientId,
+                ...sdkVersionHeaders(),
             },
             body: JSON.stringify({
                 merchantId,

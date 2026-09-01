@@ -8,9 +8,8 @@ import androidx.webkit.WebViewFeature
 
 /**
  * Injects the sheet's chrome (top radius, surface colour) into the hosted page as CSS custom
- * properties. A document-start script rather than a query param, so it survives navigation to
- * other wallet routes. Both are set together: a radius without a transparent surface rounds
- * nothing.
+ * properties. A document-start script, not a query param, so it survives navigation to other
+ * wallet routes. Both are set together: a radius without a transparent surface rounds nothing.
  */
 internal object SharingHostStyle {
     /** Top-corner radius, as a CSS length. Consumed by the wallet's `containerChromeless` styles. */
@@ -56,7 +55,6 @@ internal object SharingHostStyle {
         }.isSuccess
     }
 
-    /** Shared with [SharingTrace] so one `adb logcat -s FrakSharing` catches both. */
     private const val TAG: String = "FrakSharing"
 
     /**

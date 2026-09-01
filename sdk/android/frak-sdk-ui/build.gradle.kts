@@ -36,7 +36,7 @@ dependencies {
     // The two ship in lockstep, but `api(project(...))` alone publishes a *required* version Gradle
     // may upgrade. A constraint, because a `ProjectDependency` has no `version {}` block.
     constraints {
-        api("id.frak:frak-sdk") {
+        api("id.frak.sdk:core") {
             version { strictly(providers.gradleProperty("frak.sdk.version").get()) }
             because(
                 "frak-sdk-ui compiles against @InternalFrakApi members of frak-sdk that the ABI " +
@@ -53,6 +53,10 @@ dependencies {
     // `api`, not `implementation`: `ComponentActivity` is a parameter of
     // `FrakSharing.Builder.build(...)`, and `ComponentDialog` (the sheet's window) ships with it.
     api(libs.androidx.activity)
+
+    // `WindowCompat.enableEdgeToEdge` only, which needs 1.18.0. Declared rather than taken from
+    // activity's `api`, so the sheet's window styling does not break on an activity bump.
+    implementation(libs.androidx.core)
 
     // `@MainThread` only. CLASS retention, so consumers need nothing at runtime.
     implementation(libs.androidx.annotation)

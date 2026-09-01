@@ -20,22 +20,30 @@ vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
 }));
 
-vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
+// Mocked at the deep specifiers `drainEnsures` actually imports, not at the
+// `@frak-labs/wallet-shared` barrel: the barrel mock stopped covering the
+// ensure path once the router-free half moved out of this hook.
+vi.mock("@frak-labs/wallet-shared/common/api/backendClient", () => ({
+    authenticatedBackendApi: {
+        user: {
+            identity: {
+                ensure: {
+                    post: mockEnsurePost,
+                },
+            },
+        },
+    },
+}));
+
+vi.mock("@frak-labs/wallet-shared/common/analytics", async (importOriginal) => {
     const actual =
-        await importOriginal<typeof import("@frak-labs/wallet-shared")>();
+        await importOriginal<
+            typeof import("@frak-labs/wallet-shared/common/analytics")
+        >();
     return {
         ...actual,
         trackEvent: vi.fn(),
         recordError: vi.fn(),
-        authenticatedBackendApi: {
-            user: {
-                identity: {
-                    ensure: {
-                        post: mockEnsurePost,
-                    },
-                },
-            },
-        },
     };
 });
 

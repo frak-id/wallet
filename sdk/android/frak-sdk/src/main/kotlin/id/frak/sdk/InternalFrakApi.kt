@@ -12,5 +12,12 @@ package id.frak.sdk
 @Retention(AnnotationRetention.BINARY)
 // PROPERTY as well as CLASS: `FrakSdkVersion`'s wire constants are members of an otherwise
 // merchant-facing object, so the marker has to land on the property, not the enclosing type.
-@Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
+// CONSTRUCTOR: the reward read models are merchant-facing types whose constructors are not, since
+// only the SDK decodes one from the backend.
+@Target(
+    AnnotationTarget.CLASS,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.CONSTRUCTOR,
+)
 public annotation class InternalFrakApi

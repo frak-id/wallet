@@ -44,7 +44,7 @@ struct AnonymousIdStoreTests {
         let store = makeStore(keyStore: keyStore, trackingEnabled: false)
 
         #expect(await store.anonymousId() == nil)
-        #expect(await store.signProof(.ensure, merchantId: Self.merchantId) == nil)
+        #expect(await store.signProof(.install, merchantId: Self.merchantId) == nil)
         #expect(keyStore.creations == 0)
     }
 
@@ -53,7 +53,7 @@ struct AnonymousIdStoreTests {
         let store = makeStore(keyStore: FakeDeviceKeyStore(failOnCreate: true))
 
         #expect(await store.anonymousId() == nil)
-        #expect(await store.signProof(.ensure, merchantId: Self.merchantId) == nil)
+        #expect(await store.signProof(.install, merchantId: Self.merchantId) == nil)
     }
 
     @Test("a keystore that recovers gets an id, without a restart")
@@ -84,6 +84,17 @@ struct AnonymousIdStoreTests {
         #expect(first != nil)
         #expect(first == second)
         #expect(keyStore.creations == 1)
+    }
+
+    @Test("a key store that cannot erase reports false rather than a rotation that did not happen")
+    func resetReportsARefusedErasure() async {
+        let keyStore = FakeDeviceKeyStore()
+        keyStore.refusesDeletion = true
+        let store = makeStore(keyStore: keyStore)
+
+        _ = await store.anonymousId()
+
+        #expect(await store.reset() == false)
     }
 
     @Test("reset mints a new identity")
@@ -127,7 +138,7 @@ struct AnonymousIdStoreTests {
     func signsACheckableProof() async throws {
         let store = makeStore(keyStore: FakeDeviceKeyStore())
 
-        let proof = try #require(await store.signProof(.ensure, merchantId: Self.merchantId, ts: 1_700_000_000))
+        let proof = try #require(await store.signProof(.install, merchantId: Self.merchantId, ts: 1_700_000_000))
         // 138 raw bytes — version, key, timestamp, signature — base64url without padding.
         #expect(proof.count == 184)
 
@@ -139,7 +150,7 @@ struct AnonymousIdStoreTests {
     @Test("refuses to sign for a merchant id that is not a uuid")
     func refusesToSignForANonUUIDMerchant() async {
         let store = makeStore(keyStore: FakeDeviceKeyStore())
-        #expect(await store.signProof(.ensure, merchantId: "not-a-uuid") == nil)
+        #expect(await store.signProof(.install, merchantId: "not-a-uuid") == nil)
     }
 
     @Test("a caller racing eager generation shares it instead of minting a second identity")

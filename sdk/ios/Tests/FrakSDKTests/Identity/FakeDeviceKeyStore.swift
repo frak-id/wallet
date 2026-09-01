@@ -10,9 +10,24 @@ final class FakeDeviceKeyStore: DeviceKeyStore, @unchecked Sendable {
     private var key: DeviceKey?
     private var mints = 0
     private var refuses: Bool
+    private var refusesDelete = false
 
     init(failOnCreate: Bool = false) {
         self.refuses = failOnCreate
+    }
+
+    /// Models a store that cannot erase — a full disk, or one not readable before first unlock.
+    var refusesDeletion: Bool {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return refusesDelete
+        }
+        set {
+            lock.lock()
+            defer { lock.unlock() }
+            refusesDelete = newValue
+        }
     }
 
     /// Settable: a test can model a keystore that refuses once, then recovers.
@@ -48,9 +63,10 @@ final class FakeDeviceKeyStore: DeviceKeyStore, @unchecked Sendable {
         return fresh
     }
 
-    func delete() {
+    func delete() -> Bool {
         lock.lock()
         defer { lock.unlock() }
         key = nil
+        return !refusesDelete
     }
 }

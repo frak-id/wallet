@@ -5,14 +5,15 @@ import Foundation
 /// ```swift
 /// Frak.initialize(FrakConfig(merchantId: "...", metadata: FrakMetadata(name: "Acme")))
 ///
-/// let reward = try await Frak.client.rewards.best(targetInteraction: "purchase")
+/// let reward = try await Frak.client.rewards.best(RewardRequest(targetInteraction: "purchase"))
 /// ```
 public enum Frak {
     private static let lock = NSLock()
     nonisolated(unsafe) private static var core: DefaultFrakClient?
     nonisolated(unsafe) private static var instance: FrakClient?
 
-    // Non-blocking, no I/O, never throws. Second call is a no-op; the first configuration wins.
+    // Never throws, and the only I/O is preparing the SDK's storage directory, which is memoised.
+    // Second call is a no-op; the first configuration wins.
     public static func initialize(_ config: FrakConfig) {
         let logger = FrakLogger(level: config.logLevel, sink: config.logSink)
         let effective = config.withBundleIdFromMainBundle()
@@ -23,6 +24,7 @@ public enum Frak {
         enum Outcome {
             case alreadyInitialized
             case missingStore
+            case missingIdentityStore
             case initialized
         }
 
@@ -35,16 +37,23 @@ public enum Frak {
             }
 
             guard let store = UserDefaultsStore(),
-                let identityStore = UserDefaultsStore(suiteName: UserDefaultsStore.identitySuiteName)
+                let consentStore = UserDefaultsStore(suiteName: UserDefaultsStore.consentSuiteName)
             else {
                 return .missingStore
+            }
+            // Key material and the marker guarding it go to a backup-excluded file, never a
+            // UserDefaults suite: a suite plist is carried to a restored device, which would
+            // clone this installation's identity onto it.
+            guard let identityStore = FileKeyValueStore.makeDefault(logger: logger) else {
+                return .missingIdentityStore
             }
 
             // One instance, shared by the client and the identity store: two would memoise the
             // persisted decision independently and drift the moment setTrackingEnabled is called.
-            // Lives in the identity suite, not the disposable config cache.
+            // The consent suite, not the disposable config cache, and not the identity file: a
+            // withdrawal is the one persisted value that must survive a restore.
             let consent = TrackingConsent(
-                store: identityStore,
+                store: consentStore,
                 configDefault: effective.trackingEnabled,
                 logger: logger
             )
@@ -52,7 +61,7 @@ public enum Frak {
                 settings: effective,
                 store: store,
                 identity: AnonymousIdStore(
-                    keyStore: PersistedDeviceKeyStore(store: identityStore),
+                    keyStore: PersistedDeviceKeyStore(store: identityStore, logger: logger),
                     store: identityStore,
                     logger: logger,
                     // App scope == merchant scope; regenerated if this ever changes.
@@ -80,6 +89,14 @@ public enum Frak {
                 )
             }
             logger.error("Frak could not open its UserDefaults suite. The SDK will not initialize.")
+        case .missingIdentityStore:
+            // Refuses rather than falling back to a location that is backed up or purgeable:
+            // the first would clone this identity onto a restored device, the second would
+            // report every purge as a brand-new user.
+            logger.error(
+                "Frak could not prepare its identity storage under Application Support. "
+                    + "The SDK will not initialize."
+            )
         case .initialized:
             if missingIdentity {
                 logger.error(

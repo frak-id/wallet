@@ -2,6 +2,7 @@ package id.frak.sdk.config
 
 import id.frak.sdk.core.FrakConfig
 import id.frak.sdk.core.FrakError
+import id.frak.sdk.core.Uuid
 
 /** Route to `GET /user/merchant/resolve`: explicit [ById] or resolved [ByPackageId]. */
 internal sealed interface MerchantQuery {
@@ -37,14 +38,27 @@ internal sealed interface MerchantQuery {
     companion object {
         const val ANDROID_PLATFORM: String = "android"
 
-        /** Picks the route: `merchantId` first, matching backend precedence. */
+        /**
+         * Picks the route: `packageId` first, `merchantId` only without one. Querying by a
+         * configured id can only echo it back — the backend resolves strict first-match — so
+         * routing by `packageId` is what lets the backend actually determine the merchant.
+         */
         fun from(config: FrakConfig): MerchantQuery {
             val lang = config.metadata.lang?.wireValue
-            val merchantId = config.merchantId?.trim()?.takeIf { it.isNotEmpty() }
-            if (merchantId != null) return ById(merchantId, lang)
-
             val packageId = config.packageId?.trim()?.takeIf { it.isNotEmpty() }
             if (packageId != null) return ByPackageId(packageId, lang)
+
+            val merchantId = config.merchantId?.trim()?.takeIf { it.isNotEmpty() }
+            if (merchantId != null) {
+                // Checked here, not left to the backend: a non-UUID comes back as a bare 422 the
+                // SDK deliberately does not log the body of, so the merchant sees no cause.
+                if (!Uuid.REGEX.matches(merchantId)) {
+                    throw FrakError.MerchantResolutionFailed(
+                        "FrakConfig.merchantId must be a UUID, got: $merchantId",
+                    )
+                }
+                return ById(merchantId, lang)
+            }
 
             throw FrakError.MerchantResolutionFailed(
                 "FrakConfig carries neither a merchantId nor a packageId. " +

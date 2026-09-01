@@ -1,3 +1,4 @@
+import { trackEvent } from "../common/analytics";
 import { authenticatedBackendApi } from "../common/api/backendClient";
 import { queryOptions } from "../common/utils/queryOptions";
 
@@ -9,11 +10,15 @@ export const mergeTokenKeys = {
     byParams: (args: {
         merchantId: string | undefined;
         sourceAnonymousId?: string | undefined;
+        proof?: string | undefined;
     }) =>
         [
             ...mergeTokenKeys.all,
             args.merchantId ?? "no-merchant",
             args.sourceAnonymousId ?? "wallet-auth",
+            // Presence only: a query key is serialised into devtools and any
+            // persisted cache, and a proof is bearer material.
+            args.proof ? "proven" : "proofless",
         ] as const,
 };
 
@@ -35,39 +40,38 @@ export const mergeTokenKeys = {
  * Consumers wrap this with `useQuery` and add their own `enabled` gate
  * (e.g. wallet-session presence) as needed.
  *
- * TODO(merge-initiate-proof): the `sourceAnonymousId` arm sends NO proof, so
- * it can never latch and stays on the backend's fail-open path
- * (`AnonymousMergeOrchestrator.enforceProof`). It must carry one before that
- * arm is made unconditionally mandatory (ROLLOUT-STEP-3), or the listener's
- * in-app-browser escape 403s outright.
- *
- * Deferred deliberately, not overlooked: the only consumer (the listener
- * modal) has no production merchant today, and the wallet-app
- * explorer arm is unaffected since it's authenticated by session instead.
- *
- * Two real constraints when this is picked up:
- *  1. The proof must be `frak-merge-v1` with an EMPTY binding, as
- *     `sdk/core/src/actions/getMergeToken.ts` produces. Reusing
- *     `sdkIdentity.proofs.merge` from `resolved-config` would 403 — that one
- *     binds `SHA-256(mergeToken)`, for the `execute` side.
- *  2. `frak-merge-v1`'s window is ±2 min, but a modal stays open for as long
- *     as the user takes, so a proof signed at open time is routinely expired
- *     by the time the user clicks. Signing lazily isn't possible, so this
- *     needs a wider window for the empty-binding initiate case.
+ * The `sourceAnonymousId` arm carries `proof` when the SDK pushed one on
+ * `resolved-config` (`sdkIdentity.proofs.mergeSource`). It is `frak-merge-v1`
+ * with an EMPTY binding — the execute-side proof binds `SHA-256(mergeToken)`
+ * and would 403 here. Naming a `sourceAnonymousId` without one is refused
+ * outright.
  */
 export function mergeTokenQueryOptions(args: {
     merchantId: string | undefined;
     sourceAnonymousId?: string | undefined;
+    proof?: string | undefined;
 }) {
-    const { merchantId, sourceAnonymousId } = args;
+    const { merchantId, sourceAnonymousId, proof } = args;
     return queryOptions({
         queryKey: mergeTokenKeys.byParams(args),
         queryFn: async (): Promise<string | null> => {
             if (!merchantId) return null;
+            // Field-based like the backend's, which enforces on
+            // `sourceAnonymousId` alone — the only thing it can trust. The
+            // wallet-auth arm names none, so its session is its attestation.
+            if (sourceAnonymousId && !proof) {
+                // Counted before the return: no request reaches the backend, so
+                // this event is the only way to see the refused population.
+                trackEvent("merge_initiate_proofless");
+                // The listener holds no key, so a refusal here costs one hop of
+                // attribution and surfaces no error: the caller reads `null`.
+                return null;
+            }
             const { data } =
                 await authenticatedBackendApi.user.identity.merge.initiate.post(
                     {
                         ...(sourceAnonymousId ? { sourceAnonymousId } : {}),
+                        ...(proof ? { proof } : {}),
                         merchantId,
                     }
                 );
@@ -78,5 +82,8 @@ export function mergeTokenQueryOptions(args: {
         // while the modal / page is open without hammering the endpoint.
         staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
+        // A merge token is a 60-minute bearer; persisting it would leave it
+        // rehydratable from storage long after it expired.
+        meta: { storable: false },
     });
 }

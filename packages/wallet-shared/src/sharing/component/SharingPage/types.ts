@@ -1,11 +1,14 @@
 import type { EstimatedReward, SharingPageProduct } from "@frak-labs/core-sdk";
 import type { RewardAmountParts } from "@frak-labs/core-sdk/rewards";
+import type { Translate } from "../../../types/i18n/translate";
 
-/** Translation function — each consumer provides its own. */
-export type SharingT = (
-    key: string,
-    options?: Record<string, unknown>
-) => string;
+/**
+ * Translation function — each consumer provides its own, injecting the reward
+ * and merchant interpolations. Scoped to the two namespaces the listener
+ * registers: a `translation` key would compile but render as raw text there,
+ * since that bundle is kept out of the listener's module graph.
+ */
+export type SharingT = Translate<"customized" | "common">;
 
 export type SharingMerchant = {
     name: string;
@@ -52,6 +55,11 @@ export type SharingShareState = {
     /** Web Share API available, or a host is listening for the hand-off. */
     canShare: boolean;
     isSharing: boolean;
+    /**
+     * Whether share/copy can be serviced at all: this page built a link, or a
+     * host will service the action with its own. Drives the CTAs' disabled state.
+     */
+    canAct: boolean;
 };
 
 export type SharingActions = {
@@ -69,7 +77,11 @@ export type SharingPageProps = {
     /** Which of the two screens to render. */
     view: "share" | "confirmation";
     chrome: SharingChrome;
-    /** Sharing link with Frak context encoded; when null, share/copy are disabled. */
+    /**
+     * The link this page built, with the Frak context encoded. Null when it could
+     * not build one — which does not by itself disable the CTAs, since a host may
+     * still service them; see `share.canAct`.
+     */
     sharingLink: string | null;
     installUrl: string | null;
     reward: SharingReward;

@@ -58,9 +58,10 @@ export const trackInteractionRoute = new Elysia().post(
             200: t.Object({
                 identityGroupId: t.String(),
                 interactionLogId: t.Union([t.String(), t.Null()]),
-                // The native SDK keys its retry/idempotency handling off this
-                // flag, so it must stay in the schema — undeclared properties
-                // are stripped from the response by Elysia, not just undocumented.
+                // Part of the published response contract for Eden/HTTP consumers, so it
+                // must stay in the schema — undeclared properties are stripped from the
+                // response by Elysia, not just undocumented. The native SDKs read only the
+                // status code, so nothing there depends on it.
                 isDuplicate: t.Boolean(),
                 // Only `buildTypeSpecificResponse("arrival", …)` contributes a
                 // field, and it is null when no referral link was registered.

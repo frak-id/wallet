@@ -1,3 +1,4 @@
+import Foundation
 @_spi(FrakInternal) import FrakSDK
 import Testing
 
@@ -157,22 +158,185 @@ struct SharingPageURLTests {
         #expect(!fragment.contains("confirmed"))
     }
 
+    @Test("an over-budget share override is capped before it reaches the url")
+    func shareOverridesAreCappedOnTheWayOut() throws {
+        let url = SharingPageURL.build(
+            walletOrigin: "https://wallet.frak.id",
+            merchantId: "m",
+            clientId: "c",
+            bundleId: "com.acme.app",
+            sessionId: "session-1",
+            shareTitle: String(repeating: "t", count: 400),
+            shareText: String(repeating: "b", count: 400)
+        )
+        let components = try #require(URLComponents(string: url))
+        let items = components.queryItems ?? []
+        let title = try #require(items.first { $0.name == "shareTitle" }?.value)
+        let text = try #require(items.first { $0.name == "shareText" }?.value)
+        #expect(title.utf16.count <= shareTitleLimit)
+        #expect(text.utf16.count <= shareTextLimit)
+        #expect(title.hasSuffix("…"))
+        #expect(text.hasSuffix("…"))
+    }
+
+    @Test("a non-https share image is dropped rather than sent for the page to reject")
+    func nonHTTPSShareImageIsDropped() {
+        let url = SharingPageURL.build(
+            walletOrigin: "https://wallet.frak.id",
+            merchantId: "m",
+            clientId: "c",
+            bundleId: "com.acme.app",
+            sessionId: "session-1",
+            shareImageURL: "http://cdn.example.com/p.png"
+        )
+        #expect(!url.contains("shareImage"))
+    }
+
+    @Test("a blank share override is absent, not an empty parameter")
+    func blankShareOverrideIsOmitted() {
+        let fragment = SharingPageURL.activationFragment(
+            sessionId: "session-1",
+            shareTitle: "   ",
+            shareText: "",
+            shareImageURL: "  "
+        )
+        #expect(fragment == "#sid=session-1&state=live")
+    }
+
+    @Test("the activation fragment caps its share overrides too")
+    func activationFragmentCapsShareOverrides() throws {
+        let fragment = SharingPageURL.activationFragment(
+            sessionId: "session-1",
+            shareText: String(repeating: "b", count: 400)
+        )
+        let query = String(fragment.dropFirst())
+        let components = try #require(URLComponents(string: "https://x.example/?" + query))
+        let text = try #require(components.queryItems?.first { $0.name == "shareText" }?.value)
+        #expect(text.utf16.count <= shareTextLimit)
+        #expect(text.hasSuffix("…"))
+    }
+
     @Test("every activation fragment starts a new session")
     func activationFragmentIsSessionScoped() {
         let first = SharingPageURL.activationFragment(sessionId: "session-1")
         let second = SharingPageURL.activationFragment(sessionId: "session-2")
         #expect(first != second)
     }
-}
 
-@Suite("SharingResult")
-struct SharingResultTests {
-    /// A session can produce several outcomes; the caller is told the most significant.
-    @Test("ranks install above a share, and a share above a dismissal")
-    func ranksOutcomes() {
-        #expect(SharingResult.installStarted.significance > SharingResult.shared(link: "l").significance)
-        #expect(SharingResult.shared(link: "l").significance > SharingResult.dismissed.significance)
-        #expect(SharingResult.copied(link: "l").significance == SharingResult.shared(link: "l").significance)
-        #expect(SharingResult.dismissed.significance > SharingResult.failed(.notInitialized).significance)
+    @Test("the probe keys append to a proof fragment installPageURL already returned")
+    func installPageProbedAppendsToAnExistingProof() {
+        let page = "https://wallet.frak.id/install?m=m1&a=a1#p=AQR-_x"
+        let probed = SharingPageURL.installPageProbed(page, sid: "session-1", probe: .ok)
+        #expect(probed == "https://wallet.frak.id/install?m=m1&a=a1#p=AQR-_x&sid=session-1&probe=ok")
+    }
+
+    @Test("the probe keys open a fragment when installPageURL carried no proof")
+    func installPageProbedWithNoProof() {
+        let page = "https://wallet.frak.id/install?m=m1&a=a1"
+        let probed = SharingPageURL.installPageProbed(page, sid: "session-1", probe: .undeclared)
+        #expect(probed == "https://wallet.frak.id/install?m=m1&a=a1#sid=session-1&probe=undeclared")
+    }
+
+    @Test("a merchant opt-out is spelled disabled, not undeclared")
+    func installPageProbedCarriesDisabled() {
+        let probed = SharingPageURL.installPageProbed(
+            "https://wallet.frak.id/install?m=m1",
+            sid: "s1",
+            probe: .disabled
+        )
+        #expect(probed.hasSuffix("#sid=s1&probe=disabled"))
+    }
+
+    @Test("the detection fragment carries every contract key")
+    func installDetectedFragmentCarriesEveryKey() {
+        let fragment = SharingPageURL.installDetectedFragment(
+            proof: "AQR-_x",
+            sid: "session-1",
+            probe: .ok,
+            elapsedMillis: 4200,
+            surface: .overlay
+        )
+        #expect(fragment == "#p=AQR-_x&sid=session-1&probe=ok&installed=1&dt=4200&via=overlay")
+    }
+
+    @Test("the detection fragment omits p entirely when there is no proof, never a bare p=")
+    func installDetectedFragmentOmitsAbsentProof() {
+        let fragment = SharingPageURL.installDetectedFragment(
+            proof: nil,
+            sid: "session-1",
+            probe: .undeclared,
+            elapsedMillis: 0,
+            surface: .product
+        )
+        #expect(fragment == "#sid=session-1&probe=undeclared&installed=1&dt=0&via=product")
+        #expect(!fragment.contains("p="))
+    }
+
+    @Test("the language tag reaches the page as lng, on both the tap URL and the warm URL")
+    func languageReachesBothURLs() {
+        let built = SharingPageURL.build(
+            walletOrigin: "https://wallet.frak.id",
+            merchantId: "merchant",
+            clientId: "client",
+            bundleId: "com.acme.app",
+            sessionId: "1",
+            language: "fr-CA"
+        )
+        let warmed = SharingPageURL.warm(
+            walletOrigin: "https://wallet.frak.id",
+            merchantId: "merchant",
+            clientId: "client",
+            bundleId: "com.acme.app",
+            language: "fr-CA"
+        )
+        #expect(built.contains("&lng=fr-CA"))
+        #expect(warmed.contains("&lng=fr-CA"))
+    }
+
+    @Test("no language writes no lng, so the page falls back to its own detection")
+    func absentLanguageWritesNothing() {
+        let url = SharingPageURL.build(
+            walletOrigin: "https://wallet.frak.id",
+            merchantId: "merchant",
+            clientId: "client",
+            bundleId: "com.acme.app",
+            sessionId: "1"
+        )
+        #expect(!url.contains("lng="))
+    }
+
+    @Test("a warm URL built with one language does not match one built with another")
+    func warmURLsDifferByLanguage() {
+        func warm(_ language: String?) -> String {
+            SharingPageURL.warm(
+                walletOrigin: "https://wallet.frak.id",
+                merchantId: "merchant",
+                clientId: "client",
+                bundleId: "com.acme.app",
+                language: language
+            )
+        }
+        // The session compares these strings to decide whether it can activate a warm view, so a
+        // language that changes between warm and tap must cost the warm view, never the language.
+        #expect(warm("en") != warm("fr"))
+        #expect(warm("en") == warm("en"))
+    }
+
+    @Test("configuration falls back to the device locale, never to nothing")
+    func configurationResolvesALanguage() {
+        #expect(FrakSharingConfiguration(language: "de").resolvedLanguage == "de")
+        #expect(!FrakSharingConfiguration().resolvedLanguage.isEmpty)
+    }
+
+    @Test("the detection fragment percent-encodes the proof")
+    func installDetectedFragmentEncodesTheProof() {
+        let fragment = SharingPageURL.installDetectedFragment(
+            proof: "a b",
+            sid: "session-1",
+            probe: .ok,
+            elapsedMillis: 1,
+            surface: .product
+        )
+        #expect(fragment.contains("p=a%20b"))
     }
 }

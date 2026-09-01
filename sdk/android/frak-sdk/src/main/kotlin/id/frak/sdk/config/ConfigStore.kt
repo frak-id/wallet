@@ -3,6 +3,7 @@ package id.frak.sdk.config
 import id.frak.sdk.FrakSdkVersion
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLogger
+import id.frak.sdk.core.MILLIS_PER_SECOND
 import id.frak.sdk.net.HttpClient
 import id.frak.sdk.net.HttpClient.Companion.toServerError
 import id.frak.sdk.net.JsonReader
@@ -93,9 +94,10 @@ internal class ConfigStore(
 
         // Backing off: any cached copy beats retrying, including under forceRefresh. With no cached
         // copy there is nothing to serve, so fail rather than let a retry loop become a flood.
-        if (mutex.withLock { backoff.isBackingOff(key) }) {
+        val backingOffFor = mutex.withLock { backoff.remainingMillis(key) }
+        if (backingOffFor != null) {
             readCache(key)?.let { return it.config }
-            throw FrakError.Network(IllegalStateException("backing off after repeated merchant config fetch failures"))
+            throw FrakError.BackingOff(backingOffFor / MILLIS_PER_SECOND)
         }
 
         return singleFlight.run(key) { fetch(key, query) }

@@ -38,7 +38,7 @@ struct HTTPClientTests {
     func sendsExpectedHeaders() async throws {
         let client = makeClient { request in
             #expect(request.value(forHTTPHeaderField: "Accept") == "application/json")
-            #expect(request.value(forHTTPHeaderField: FrakSDKVersion.headerName) == FrakSDKVersion.current)
+            #expect(request.value(forHTTPHeaderField: FrakSDKVersion.headerName) == FrakSDKVersion.headerValue)
             return StubResponse(status: 200, body: "{}")
         }
 
@@ -233,8 +233,8 @@ struct HTTPClientTests {
         }
     }
 
-    @Test("the overall deadline bounds a retried request rather than doubling the per-attempt wait")
-    func overallDeadlineBoundsRetriedRequest() async throws {
+    @Test("the overall deadline spans the retry backoff rather than giving each attempt its own")
+    func overallDeadlineSpansRetryBackoff() async throws {
         let attempts = Counter()
         let (session, host) = StubURLProtocol.makeSession()
         StubURLProtocol.handle(host: host) { _ in
@@ -243,18 +243,29 @@ struct HTTPClientTests {
             }
             throw StubHangs()
         }
-        // Comfortably above the retry's 100-300ms jittered delay so the second attempt is never
-        // starved by the delay itself, while still well under the 1s assertion below.
-        let client = HTTPClient(baseURL: "https://\(host)", session: session, overallDeadlineSeconds: 0.5)
+        // The deadline must fire during the backoff, so it sits between the two: well above the
+        // worst dispatch latency under a loaded parallel suite (~175ms), and well below the
+        // backoff. Both margins are ~10x, so neither edge is a race. The override is what buys
+        // that room: against the production 100ms floor, no deadline clears dispatch and stays
+        // under the floor at once.
+        let client = HTTPClient(
+            baseURL: "https://\(host)",
+            session: session,
+            overallDeadlineSeconds: 0.5,
+            retryBackoffSecondsOverride: 5
+        )
 
-        let start = Date()
         await #expect(throws: FrakError.self) {
             _ = try await client.get("/slow")
         }
-        let elapsed = Date().timeIntervalSince(start)
 
-        #expect(attempts.value == 2)
-        #expect(elapsed < 1)
+        #expect(
+            attempts.value == 1,
+            """
+            got \(attempts.value) attempts: 0 means the deadline fired before the first attempt \
+            reached the stub, 2 means the retry ran under its own deadline instead of the shared one
+            """
+        )
     }
 
     @Test("cancelling the caller surfaces CancellationError even with a request in flight")

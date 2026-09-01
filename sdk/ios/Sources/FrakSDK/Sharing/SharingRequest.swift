@@ -67,6 +67,10 @@ public struct SharingRequest: Sendable, Hashable {
     /// Where in the app the share was offered, e.g. `product-page`.
     public let placement: String?
     public let logoURL: String?
+    /// Per-call overrides for the OS share sheet's title/body/preview image; highest precedence.
+    public let shareTitle: String?
+    public let shareText: String?
+    public let shareImageURL: String?
 
     public init(
         link: String? = nil,
@@ -74,7 +78,10 @@ public struct SharingRequest: Sendable, Hashable {
         attribution: AttributionParams? = nil,
         targetInteraction: String? = nil,
         placement: String? = nil,
-        logoURL: String? = nil
+        logoURL: String? = nil,
+        shareTitle: String? = nil,
+        shareText: String? = nil,
+        shareImageURL: String? = nil
     ) {
         self.link = link
         self.products = products
@@ -82,5 +89,8 @@ public struct SharingRequest: Sendable, Hashable {
         self.targetInteraction = targetInteraction
         self.placement = placement
         self.logoURL = logoURL
+        self.shareTitle = shareTitle
+        self.shareText = shareText
+        self.shareImageURL = shareImageURL
     }
 }

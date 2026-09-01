@@ -150,7 +150,13 @@ function trustedErrorRedirectUrl(params: {
  * (`x-shopify-session-token`, §4.11, untouched).
  */
 export const shopifyAuthRoutes = new Elysia({ prefix: "/shopify" })
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 20 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "business-auth-shopify",
+            windowMs: 60_000,
+            maxRequests: 20,
+        })
+    )
     .get(
         "/authorize",
         ({ query: { shop, redirect }, cookie, request }) => {

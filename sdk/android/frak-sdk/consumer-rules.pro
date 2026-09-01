@@ -1,4 +1,4 @@
-# Consumer R8 / ProGuard rules for `id.frak:frak-sdk`.
+# Consumer R8 / ProGuard rules for `id.frak.sdk:core`.
 #
 # These rules ship inside the AAR (wired via `consumerProguardFiles` in build.gradle.kts). R8
 # reads them out of the artifact and merges them into the merchant app's configuration

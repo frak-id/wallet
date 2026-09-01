@@ -15,10 +15,18 @@
     <array/>
     <key>NSPrivacyCollectedDataTypes</key>
     <array>
-        <!-- SharingPageURL.build puts clientId (the anonymous id) and merchantId in the wallet page URL loaded in the sheet's WKWebView. -->
+        <!--
+          SharingPageURL.build puts clientId (the anonymous id) and merchantId in the wallet
+          page URL loaded in the sheet's WKWebView.
+
+          User ID, not Device ID: the anonymous id is an installation-scoped account
+          identifier, not a device-level one. Same reasoning as the core manifest, which
+          carries the long version. AppFunctionality only — building a share link is what
+          this module does; the reporting is declared under Product Interaction below.
+        -->
         <dict>
             <key>NSPrivacyCollectedDataType</key>
-            <string>NSPrivacyCollectedDataTypeDeviceID</string>
+            <string>NSPrivacyCollectedDataTypeUserID</string>
             <key>NSPrivacyCollectedDataTypeLinked</key>
             <true/>
             <key>NSPrivacyCollectedDataTypeTracking</key>
@@ -26,7 +34,6 @@
             <key>NSPrivacyCollectedDataTypePurposes</key>
             <array>
                 <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-                <string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
             </array>
         </dict>
         <!-- The sheet reports what the user did with the share via a `sharing` interaction. -->

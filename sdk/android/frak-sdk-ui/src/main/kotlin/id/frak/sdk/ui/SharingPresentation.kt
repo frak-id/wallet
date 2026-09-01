@@ -52,17 +52,21 @@ internal class SharingPresentation(
     }
 
     companion object {
-        /** Fallback threshold: past this, skip the page and fire the native share sheet directly. */
-        private const val PAGE_LOAD_DEADLINE_MILLIS = 1_500L
+        /**
+         * Past this, skip the page and fire the native share sheet directly. One budget
+         * covering build, navigation, load and first paint; measured paths run 540-1780ms.
+         */
+        private const val PAGE_LOAD_DEADLINE_MILLIS = 5_000L
 
         fun start(
             pool: SharingWebViewPool,
             context: Context,
+            launchContext: () -> Context,
             scope: CoroutineScope,
             request: SharingRequest,
+            language: String?,
             onFinished: (SharingResult) -> Unit,
         ): SharingPresentation {
-            val trace = SharingTrace()
             val sessionId = UUID.randomUUID().toString()
 
             // Taken before the state exists: whether this view is a finished warm page decides how
@@ -72,13 +76,6 @@ internal class SharingPresentation(
             // A fragment activation is only same-document if the document is actually there;
             // hanging one off a half-loaded page would strand the load.
             val activationBaseUrl = handle.loadedBaseUrl?.takeIf { handle.documentReady }
-            trace.mark(
-                when {
-                    activationBaseUrl != null -> "launch (warm view, ACTIVATING)"
-                    pool.hasWarmView -> "launch (warm view, still loading)"
-                    else -> "launch (COLD view)"
-                },
-            )
 
             val state =
                 SharingSheetState(
@@ -86,28 +83,20 @@ internal class SharingPresentation(
                     // the sheet that started it.
                     scope = scope,
                     context = context,
+                    launchContext = launchContext,
                     sessionId = sessionId,
                     onFinished = onFinished,
-                    trace = trace,
                     activationBaseUrl = activationBaseUrl,
+                    language = language,
                 )
 
             handle.bind(
                 SharingWebViewBinding(
                     sessionId = sessionId,
                     onAction = state::onPageAction,
-                    onPageReady = {
-                        trace.mark("document finished")
-                        state.onPageReady()
-                    },
-                    onPageVisible = {
-                        trace.mark("first paint")
-                        state.onPageVisible()
-                    },
-                    onLoadFailed = {
-                        trace.mark("load FAILED")
-                        state.onPageUnavailable()
-                    },
+                    onPageReady = state::onPageReady,
+                    onPageVisible = state::onPageVisible,
+                    onLoadFailed = state::onPageUnavailable,
                     onOpenExternal = state::openExternally,
                 ),
             )

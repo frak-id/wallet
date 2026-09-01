@@ -3,6 +3,7 @@ import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common";
 import {
     buildInstallUrl,
     SharingPage,
+    useSharingIdentity,
     useSharingPageController,
 } from "@frak-labs/wallet-shared/sharing";
 import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
@@ -33,7 +34,7 @@ export function ListenerSharingPage() {
         resolvingContextStore,
         (s) => s.backendSdkConfig?.currency
     );
-    const clientId = useStore(clientIdStore, (s) => s.clientId);
+    const sdkClientId = useStore(clientIdStore, (s) => s.clientId);
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const { mutate: trackSharing } = useTrackSharing();
 
@@ -43,15 +44,36 @@ export function ListenerSharingPage() {
         [currentRequest.params.products]
     );
 
+    // Same reason as `products`: an unvalidated RPC payload, typed but not
+    // checked, and it ends up in a URL.
+    const checkoutToken =
+        typeof currentRequest.params.checkoutToken === "string"
+            ? currentRequest.params.checkoutToken
+            : undefined;
+
+    // Falls back to the order when the SDK holds no id — a cleared or
+    // ad-blocked localStorage would otherwise leave the share link
+    // unattributed. `embedded: false` because no host supplies an identity
+    // here; the hook reads `clientIdStore` itself.
+    const clientId = useSharingIdentity({
+        merchantId,
+        checkoutToken,
+        embedded: false,
+    });
+
+    // An `a=` without a proof is refused by `install-code/generate`, so it is
+    // worth less than the token: only a proven id may travel, and the two are
+    // never sent together.
     const installUrl = useMemo(() => {
-        if (!(merchantId && clientId)) return null;
+        if (!merchantId) return null;
         return buildInstallUrl({
             baseUrl: window.location.origin,
             merchantId,
-            clientId,
-            installProof,
+            ...(sdkClientId && installProof
+                ? { clientId: sdkClientId, installProof }
+                : { checkoutToken }),
         });
-    }, [merchantId, clientId, installProof]);
+    }, [merchantId, sdkClientId, installProof, checkoutToken]);
 
     const hasResolvedRef = useRef(false);
 
@@ -68,7 +90,7 @@ export function ListenerSharingPage() {
 
     const controller = useSharingPageController({
         merchantId,
-        clientId: clientId ?? undefined,
+        clientId,
         wallet: walletAddress,
         link: currentRequest.params.link ?? sourceUrl,
         products,

@@ -14,12 +14,19 @@ internal class FakeAppLauncher(
 ) : AppLauncher {
     val opened: MutableList<String> = mutableListOf()
 
+    /** Parallel to [opened]: null means the launch was left open to any handler. */
+    val openedPackages: MutableList<String?> = mutableListOf()
+
     override fun isInstalled(packageId: String): Boolean = packageId in installedPackages
 
-    override fun open(url: String): Boolean {
+    override fun open(
+        url: String,
+        packageId: String?,
+    ): Boolean {
         if (!canOpen) return false
         if (!handles(url)) return false
         opened += url
+        openedPackages += packageId
         return true
     }
 

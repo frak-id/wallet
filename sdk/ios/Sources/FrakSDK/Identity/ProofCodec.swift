@@ -1,8 +1,9 @@
 import Foundation
 
-// Raw value is the domain separator prepended to signed bytes (frak-sso-v1 has no native caller).
+// Raw value is the domain separator prepended to signed bytes. Only what native can mint:
+// `frak-ensure-v1` needs a wallet session token no native client holds (the install deep link is
+// the equivalent) and there is no native SSO surface.
 enum ProofOp: String {
-    case ensure = "frak-ensure-v1"
     case install = "frak-install-v1"
     case merge = "frak-merge-v1"
 }

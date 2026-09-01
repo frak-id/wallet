@@ -22,7 +22,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -228,7 +227,7 @@ class HttpClientTest {
             transport.respond(200, "{}")
             newClient().get("/x")
 
-            assertEquals(FrakSdkVersion.CURRENT, transport.requests.single().headers[FrakSdkVersion.HEADER_NAME])
+            assertEquals(FrakSdkVersion.HEADER_VALUE, transport.requests.single().headers[FrakSdkVersion.HEADER_NAME])
         }
 
     @Test

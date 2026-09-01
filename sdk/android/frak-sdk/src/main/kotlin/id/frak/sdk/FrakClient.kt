@@ -2,17 +2,40 @@ package id.frak.sdk
 
 import id.frak.sdk.core.DefaultFrakClient
 import id.frak.sdk.core.FrakEnvironment
+import id.frak.sdk.core.FrakLanguage
 import java.util.concurrent.CompletableFuture
 
 /**
  * Everything the SDK can do. Obtained from [Frak.client]. Every suspending member has a `*Async`
  * twin returning a [CompletableFuture], since a Java caller cannot name a `Continuation`.
+ *
+ * How failure is signalled, one tier per kind of answer:
+ * - `T?` means **absence** — nothing was there, and that is a normal answer ([anonymousId],
+ *   [RewardsApi.best], [SharingApi.buildLink]'s null arm).
+ * - A sealed or enum type means **outcome** — several ends are all valid ([OpenAppResult]).
+ * - `Boolean` means **predicate** ([AppLinkApi.isFrakAppInstalled]).
+ * - A thrown [id.frak.sdk.core.FrakError] means **failure** — the call could have worked and did
+ *   not ([ConfigApi.resolve], [RewardsApi.campaigns], [SharingApi.buildLink],
+ *   [AppLinkApi.installPageUrl]). Through an `*Async` twin this arrives as a `CompletionException`
+ *   whose `cause` is the [id.frak.sdk.core.FrakError].
+ *
+ * [TrackingApi] is the one deliberate exception: it returns [id.frak.sdk.core.FrakResult] and never
+ * throws, because it is called from hot paths where a disabled-tracking refusal is expected rather
+ * than exceptional. A tier change is invisible to the ABI dump, so it needs a `!` commit.
  */
 public class FrakClient internal constructor(
     internal val core: DefaultFrakClient,
 ) {
     /** The stage this client talks to. Merchants never set it directly, see [id.frak.sdk.core.FrakConfig.env]. */
     public val environment: FrakEnvironment get() = core.environment
+
+    /** The merchant-supplied build-time name. `public` only so `:frak-sdk-ui` can read it across the module boundary. */
+    @InternalFrakApi
+    public val metadataName: String? get() = core.metadataName
+
+    /** The merchant-supplied build-time language, for the same tier-3 copy. See [metadataName]. */
+    @InternalFrakApi
+    public val metadataLang: FrakLanguage? get() = core.metadataLang
 
     /** Anonymous id, or null when tracking is disabled or the device refused key material. */
     public suspend fun anonymousId(): String? = core.anonymousId()
@@ -21,8 +44,11 @@ public class FrakClient internal constructor(
     public fun anonymousIdAsync(): CompletableFuture<String?> = core.asFuture { core.anonymousId() }
 
     /**
-     * Destroys the keypair so the next [anonymousId] mints a new identity. For GDPR erasure;
-     * does not delete history already attributed to the old id.
+     * Destroys the keypair so the next [anonymousId] mints a new identity.
+     *
+     * This is a local identity rotation, not an Art. 17 erasure: events already sent stay
+     * attributed to the old id on Frak's side. Route an actual erasure request to
+     * https://frak.id/account-deletion.
      *
      * @return false when the platform keystore refused to erase the key; the identity did not rotate.
      */

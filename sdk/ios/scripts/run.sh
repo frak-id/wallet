@@ -7,12 +7,14 @@
 #   bun run --cwd sdk/ios test          # swift test, same triple
 #   bun run --cwd sdk/ios lint          # swift-format lint (strict)
 #   bun run --cwd sdk/ios format        # swift-format rewrite in place
-#   bun run --cwd sdk/ios version       # FrakSDKVersion.current vs package.json (9.10)
+#   bun run --cwd sdk/ios version       # every version site + the CHANGELOG section
 #   bun run --cwd sdk/ios xcframework   # NOT IMPLEMENTED — see do_xcframework
+#   bun run --cwd sdk/ios mirror-stage <dir>  # lay out the SwiftPM mirror payload
 
 set -euo pipefail
 
 PKG_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(cd "$PKG_DIR/../.." && pwd)"
 
 # Logs go to stderr so stdout stays clean for anything that pipes this script.
 log() { echo "[sdk-ios] $*" >&2; }
@@ -54,35 +56,22 @@ set_ios_testing_flags() {
 	)
 }
 
-# FrakSDKVersion.current is sent on the wire (x-frak-sdk-version, ?sdkVersion=) and has no
-# release pipeline of its own yet, so it is kept in sync with package.json by hand. Android
-# has `checkSdkVersionMatchesArtifact` (`frak-publish.gradle.kts`) wired into `check` for the
-# same reason; this is that gate's iOS twin. 05-build-and-release.md §3 forbids retagging a
-# published version, so a drift caught after tagging ships uncorrectable — this must fail
-# loudly on either side being unreadable, not just on a mismatch, or a botched extraction
-# reads as an empty-equals-empty pass and the gate is worthless.
-# Sets SDK_VERSION. Matched on `current`'s own declaration line, not a line offset, so an
-# `@_spi`/doc comment on a neighbouring member (headerName, queryParameterName) can't shift it.
+# FrakSDKVersion.current rides on the wire (x-frak-sdk-version, ?sdkVersion=) and is one of three
+# files carrying this SDK's version — the mirror README pin being the one a merchant copies. The
+# list lives at the monorepo root in `scripts/native-version.ts`, shared with Android, whose own set
+# spans the harness. The mirror refuses to retag a published version, so drift caught after tagging
+# ships uncorrectable; this must fail on a site being unreadable, not only on a mismatch.
+# Sets SDK_VERSION.
 check_sdk_version() {
-	local version_file="$PKG_DIR/Sources/FrakSDK/FrakSDKVersion.swift"
-	local package_json="$PKG_DIR/package.json"
-	local declared package_version
+	command -v bun >/dev/null 2>&1 ||
+		die "bun is required to gate the version sites. See $REPO_ROOT/scripts/native-version.ts."
 
-	# || true on both extractions: set -euo pipefail would otherwise abort the script the
-	# moment grep finds no match, before the emptiness check below gets to die() with a
-	# readable message — the one silent-failure shape this gate must not have.
-	declared="$(grep -E 'public static let current: String = "' "$version_file" |
-		sed -E 's/.*current: String = "([^"]*)".*/\1/')" || true
-	[ -n "$declared" ] || die "Could not find FrakSDKVersion.current in $version_file"
+	# stdout carries the version below and nothing else, so the check's own report goes to stderr.
+	(cd "$REPO_ROOT" && bun scripts/native-version.ts check ios >&2) ||
+		die "version sites are out of step; fix them before staging a release."
 
-	package_version="$(grep -E '"version"[[:space:]]*:' "$package_json" | head -1 |
-		sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/')" || true
-	[ -n "$package_version" ] || die "Could not find \"version\" in $package_json"
-
-	[ "$declared" = "$package_version" ] ||
-		die "FrakSDKVersion.current is \"$declared\" but package.json version is \"$package_version\" — these must match. See finding 9.10 in docs/plans/native-sdk/06-open-findings.md."
-
-	SDK_VERSION="$declared"
+	SDK_VERSION="$(cd "$REPO_ROOT" && bun scripts/native-version.ts version ios)"
+	[ -n "$SDK_VERSION" ] || die "Could not read FrakSDKVersion.current"
 }
 
 do_build() {
@@ -134,7 +123,7 @@ do_format() {
 # full build/test cycle first.
 do_version() {
 	check_sdk_version
-	log "FrakSDKVersion.current matches package.json ($SDK_VERSION)."
+	log "Every version site is in step at $SDK_VERSION."
 }
 
 # NOT IMPLEMENTED. The shipped artifact will be a signed binary XCFramework referenced
@@ -182,6 +171,51 @@ The intended xcodebuild archive / -create-xcframework outline is in the comments
 do_xcframework() in $0."
 }
 
+# Lays out exactly what the SwiftPM mirror (frak-id/frak-ios-sdk) publishes, into $1.
+#
+# SwiftPM resolves a package by repo URL + tag and reads `Package.swift` from the repo
+# ROOT only, so this package cannot be consumed from `sdk/ios/` in the monorepo — hence a
+# mirror whose root is this directory's contents. Open upstream: swift-package-manager#5768.
+#
+# `Tests/` is deliberately NOT copied, and that is a correctness requirement rather than a
+# size one: `Tests/FrakSDKTests/Fixtures/GoldenFixtures.swift` loads the corpus from
+# `sdk/core/src/*/fixtures/*.json` by walking up to the monorepo root, and throws loudly
+# when it is absent. Mirrored, that suite could never pass. SwiftPM does not validate a
+# *dependency's* test-target paths, so `Package.swift` still declaring two `.testTarget`s
+# whose directories are missing costs a consumer nothing — verified by resolving a scratch
+# package against exactly this payload. It does mean `swift build` inside the mirror fails
+# with "invalid custom path 'Tests/FrakSDKTests'"; that is the mirror being un-developable
+# on purpose, and the README says so.
+#
+# README.mirror.md, not README.md: the monorepo README is written for contributors (bun
+# scripts, biome, a relative link into docs/plans/) and is wrong for a merchant.
+#
+# CHANGELOG.md ships as-is. Each release is one force-pushed orphan commit, so it is the only
+# history the mirror has, and it is what the GitHub release body quotes.
+do_mirror_stage() {
+	local out="${1:-}"
+	[ -n "$out" ] || die "mirror-stage needs a target directory: $0 mirror-stage <dir>"
+	cd "$PKG_DIR"
+	check_sdk_version
+
+	[ -d "$out" ] && die "refusing to write into an existing directory: $out"
+	mkdir -p "$out"
+
+	cp -R Sources "$out/"
+	cp Package.swift LICENSE CHANGELOG.md "$out/"
+	cp README.mirror.md "$out/README.md"
+
+	# The privacy manifests ride inside Sources/ as target resources; a missing one is an
+	# ITMS-91053 rejection on a merchant's binary, so fail here rather than at their upload.
+	local manifest
+	for manifest in FrakSDK FrakSDKUI; do
+		[ -f "$out/Sources/$manifest/PrivacyInfo.xcprivacy" ] ||
+			die "PrivacyInfo.xcprivacy missing from the staged $manifest target"
+	done
+
+	log "Staged the mirror payload for $SDK_VERSION in $out"
+}
+
 case "${1:-build}" in
 build) do_build ;;
 test) do_test ;;
@@ -189,15 +223,17 @@ lint) do_lint ;;
 format) do_format ;;
 version) do_version ;;
 xcframework) do_xcframework ;;
+mirror-stage) do_mirror_stage "${2:-}" ;;
 *)
-	echo "Usage: $0 {build|test|lint|format|version|xcframework}"
+	echo "Usage: $0 {build|test|lint|format|version|xcframework|mirror-stage <dir>}"
 	echo ""
-	echo "  build       - compile against the iOS simulator SDK (Swift 6 strict concurrency)"
-	echo "  test        - swift test, same triple"
-	echo "  lint        - swift-format lint (strict), no simulator"
-	echo "  format      - swift-format rewrite in place"
-	echo "  version     - checks FrakSDKVersion.current against package.json (9.10)"
-	echo "  xcframework - NOT IMPLEMENTED (05 §3) — exits 1 with the intended outline"
+	echo "  build        - compile against the iOS simulator SDK (Swift 6 strict concurrency)"
+	echo "  test         - swift test, same triple"
+	echo "  lint         - swift-format lint (strict), no simulator"
+	echo "  format       - swift-format rewrite in place"
+	echo "  version      - every file carrying the version, plus its CHANGELOG section"
+	echo "  xcframework  - NOT IMPLEMENTED (05 §3) — exits 1 with the intended outline"
+	echo "  mirror-stage - lay out the frak-ios-sdk mirror payload into <dir>"
 	exit 1
 	;;
 esac

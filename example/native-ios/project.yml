@@ -39,10 +39,18 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: id.frak.example.ios
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
-        # Ad-hoc signing: simulator builds need no provisioning profile or dev team.
+        # Signing is scoped by SDK so the two run paths stay independent.
+        # Simulator: ad-hoc, no provisioning profile or dev team, so `run`/`build`
+        # work on any checkout. Device: real signing, which xcodebuild cannot fake.
+        # `scripts/run.sh device` supplies DEVELOPMENT_TEAM and -allowProvisioningUpdates;
+        # leaving the team out here keeps a contributor's own team a one-var override.
         CODE_SIGN_IDENTITY: ""
         CODE_SIGNING_REQUIRED: "NO"
         CODE_SIGNING_ALLOWED: "NO"
+        CODE_SIGN_IDENTITY[sdk=iphoneos*]: "Apple Development"
+        CODE_SIGNING_REQUIRED[sdk=iphoneos*]: "YES"
+        CODE_SIGNING_ALLOWED[sdk=iphoneos*]: "YES"
+        CODE_SIGN_STYLE[sdk=iphoneos*]: Automatic
         # The real SDK must be Swift 6 strict-concurrency clean; hold the example app to it.
         SWIFT_VERSION: "6.0"
         ENABLE_USER_SCRIPT_SANDBOXING: "YES"

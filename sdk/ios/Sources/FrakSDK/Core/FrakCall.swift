@@ -13,6 +13,6 @@ func frakCall<T: Sendable>(
     } catch let error as FrakError {
         throw error
     } catch {
-        throw FrakError.decoding(message: "unexpected failure: \(error.localizedDescription)")
+        throw FrakError.internalFailure(message: "unexpected failure: \(error.localizedDescription)")
     }
 }

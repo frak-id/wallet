@@ -101,7 +101,7 @@ class ProofCodecTest {
     @Test
     fun `signs and verifies with a freshly generated key`() {
         val key = TestKeys.generate()
-        val message = ProofCodec.buildMessage(ProofOp.Ensure, MERCHANT_ID, ANONYMOUS_ID, ByteArray(0), 1_700_000_000)
+        val message = ProofCodec.buildMessage(ProofOp.Install, MERCHANT_ID, ANONYMOUS_ID, ByteArray(0), 1_700_000_000)
 
         val signature = key.sign(message)
         assertEquals(ProofCodec.SIG_BYTES, signature.size)
@@ -114,8 +114,8 @@ class ProofCodecTest {
 
     @Test
     fun `derives the same id for the same key regardless of uuid case`() {
-        val upper = ProofCodec.buildMessage(ProofOp.Ensure, MERCHANT_ID.uppercase(), ANONYMOUS_ID, ByteArray(0), 1)
-        val lower = ProofCodec.buildMessage(ProofOp.Ensure, MERCHANT_ID, ANONYMOUS_ID, ByteArray(0), 1)
+        val upper = ProofCodec.buildMessage(ProofOp.Install, MERCHANT_ID.uppercase(), ANONYMOUS_ID, ByteArray(0), 1)
+        val lower = ProofCodec.buildMessage(ProofOp.Install, MERCHANT_ID, ANONYMOUS_ID, ByteArray(0), 1)
         assertArrayEquals(lower, upper)
     }
 
@@ -129,7 +129,7 @@ class ProofCodecTest {
     @Test
     fun `rejects a malformed uuid`() {
         assertThrows(IllegalArgumentException::class.java) {
-            ProofCodec.buildMessage(ProofOp.Ensure, "not-a-uuid", ANONYMOUS_ID, ByteArray(0), 1)
+            ProofCodec.buildMessage(ProofOp.Install, "not-a-uuid", ANONYMOUS_ID, ByteArray(0), 1)
         }
     }
 
@@ -160,8 +160,9 @@ class ProofCodecTest {
 
     /**
      * Null for an op this SDK cannot mint. The corpus is shared with the web SDK, which also
-     * covers `frak-sso-v1`; native has no SSO surface, so `covered` above is what stops an
-     * unmapped op becoming a silent hole.
+     * covers `frak-sso-v1` (no native SSO surface) and `frak-ensure-v1` (needs a wallet session
+     * token no native client holds), so `covered` above is what stops an unmapped op becoming a
+     * silent hole.
      */
     private fun opOf(wireValue: String): ProofOp? = ProofOp.entries.firstOrNull { it.wireValue == wireValue }
 

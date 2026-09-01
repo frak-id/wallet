@@ -2,9 +2,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { trackEvent } from "../../common/analytics";
 import {
     type SharingOutcomes,
     type SharingPageControllerInput,
+    type SharingResolvedShareData,
     useSharingPageController,
 } from "./useSharingPageController";
 
@@ -22,12 +24,16 @@ vi.mock("../../common/hook/useFormattedEstimatedReward", () => ({
 }));
 
 const triggerSharing = vi.fn();
+let lastShareLinkArgs: unknown[] = [];
 vi.mock("./useShareLink", () => ({
-    useShareLink: () => ({
-        mutate: triggerSharing,
-        isPending: false,
-        canShare: false,
-    }),
+    useShareLink: (...args: unknown[]) => {
+        lastShareLinkArgs = args;
+        return {
+            mutate: triggerSharing,
+            isPending: false,
+            canShare: false,
+        };
+    },
 }));
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
@@ -96,14 +102,77 @@ describe("outcome hand-off", () => {
         expect(triggerSharing).toHaveBeenCalled();
     });
 
-    it("does not write the clipboard when the host takes the copy", () => {
-        const copyOutcome = vi.fn(() => true);
+    it("reports the tap when the host takes the share", () => {
+        // `useShareLink` never runs on this path, so without this the whole
+        // handed-off share funnel is invisible in OpenPanel.
+        const { result } = setup({ share: () => true });
+
+        act(() => result.current.actions.onShare());
+
+        expect(trackEvent).toHaveBeenCalledWith("sharing_link_started", {
+            source: "sharing_page_wallet",
+            merchant_id: merchantId,
+            handed_off: true,
+        });
+    });
+
+    it("reports a handed-off share even with no link of its own", () => {
+        const { result } = setup(
+            { share: () => true },
+            { clientId: undefined }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(result.current.sharingLink).toBeNull();
+        expect(trackEvent).toHaveBeenCalledWith(
+            "sharing_link_started",
+            expect.objectContaining({ handed_off: true })
+        );
+    });
+
+    it("records the interaction when the host takes the share", () => {
+        const recordSharing = vi.fn();
+        const { result } = setup({ share: () => true, recordSharing });
+
+        act(() => result.current.actions.onShare());
+
+        expect(recordSharing).toHaveBeenCalled();
+    });
+
+    it("leaves the local share to `useShareLink` to report", () => {
+        // The local path emits `sharing_link_started` from inside the mutation,
+        // which is mocked here — the controller must not double-fire it.
+        const { result } = setup({ share: () => false });
+
+        act(() => result.current.actions.onShare());
+
+        expect(trackEvent).not.toHaveBeenCalledWith(
+            "sharing_link_started",
+            expect.anything()
+        );
+    });
+
+    it("writes the clipboard before offering the copy to a host", () => {
+        // `outcomes.copy` reports that a return scheme was present, not that a
+        // host answered it, so skipping the local write on its say-so toasts
+        // over an untouched clipboard in an ordinary browser. Both writes
+        // carry a link, and a host's lands after this one.
+        const order: string[] = [];
+        const copyOutcome = vi.fn(() => {
+            order.push("handoff");
+            return true;
+        });
+        vi.mocked(copy).mockImplementation(() => {
+            order.push("write");
+        });
         const { result } = setup({ copy: copyOutcome });
 
         act(() => result.current.actions.onCopy());
 
         expect(copyOutcome).toHaveBeenCalled();
-        expect(copy).not.toHaveBeenCalled();
+        expect(copy).toHaveBeenCalled();
+        expect(order).toEqual(["write", "handoff"]);
     });
 
     it("still shows the confirmation after a handed-off copy", () => {
@@ -168,6 +237,94 @@ describe("confirmation lifecycle", () => {
         expect(shareAgain).toHaveBeenCalled();
     });
 
+    it("restores a confirmation for the share it was saved under", () => {
+        const products = [{ productId: "sku-1", title: "Kettle" }];
+        const first = setup({ copy: () => true }, { products });
+        act(() => first.result.current.actions.onCopy());
+        expect(first.result.current.view).toBe("confirmation");
+
+        // A pooled web view survives the sheet, so the next one re-reads this.
+        expect(setup({}, { products }).result.current.view).toBe(
+            "confirmation"
+        );
+    });
+
+    it("does not carry a confirmation over to a different share", () => {
+        const first = setup(
+            { copy: () => true },
+            { products: [{ productId: "sku-1", title: "Kettle" }] }
+        );
+        act(() => first.result.current.actions.onCopy());
+        expect(first.result.current.view).toBe("confirmation");
+
+        // Same merchant, same sharer, different product: a share the user has
+        // not made yet, so the success screen is not theirs to see.
+        const second = setup(
+            {},
+            { products: [{ productId: "sku-2", title: "Teapot" }] }
+        );
+        expect(second.result.current.view).toBe("share");
+    });
+
+    it("re-reads once the client id is minted", () => {
+        // `clientId` resolves asynchronously, so the scope the page first
+        // renders with is not the one the share was saved under.
+        const first = setup({ copy: () => true });
+        act(() => first.result.current.actions.onCopy());
+
+        const { result, rerender } = renderHook(
+            ({ id }: { id?: string }) =>
+                useSharingPageController({
+                    merchantId,
+                    clientId: id,
+                    link: "https://acme.example/kettle",
+                    merchant: { name: "Acme" },
+                    source: "sharing_page_wallet",
+                    installUrl: null,
+                    chrome: { mode: "full" },
+                    t: (key) => key,
+                    outcomes: { dismiss: vi.fn(), install: vi.fn() },
+                }),
+            { wrapper, initialProps: { id: undefined as string | undefined } }
+        );
+
+        expect(result.current.view).toBe("share");
+        rerender({ id: clientId });
+        expect(result.current.view).toBe("confirmation");
+    });
+
+    it("keeps a confirmation earned before the client id landed", () => {
+        // `buildSharingLink` takes a session wallet with no `clientId`, so the
+        // confirmation is reachable inside that window and the scope moves
+        // underneath it.
+        const { result, rerender } = renderHook(
+            ({ id }: { id?: string }) =>
+                useSharingPageController({
+                    merchantId,
+                    clientId: id,
+                    wallet: "0x0000000000000000000000000000000000000001",
+                    link: "https://acme.example/kettle",
+                    merchant: { name: "Acme" },
+                    source: "sharing_page_wallet",
+                    installUrl: null,
+                    chrome: { mode: "full" },
+                    t: (key) => key,
+                    outcomes: {
+                        dismiss: vi.fn(),
+                        install: vi.fn(),
+                        copy: () => true,
+                    },
+                }),
+            { wrapper, initialProps: { id: undefined as string | undefined } }
+        );
+
+        act(() => result.current.actions.onCopy());
+        expect(result.current.view).toBe("confirmation");
+
+        rerender({ id: clientId });
+        expect(result.current.view).toBe("confirmation");
+    });
+
     it("reports the completed action to the host", () => {
         const onConfirmed = vi.fn();
         const { result } = setup({ onConfirmed, copy: () => false });
@@ -221,7 +378,293 @@ describe("props it derives", () => {
         // `useShareLink` is mocked to `canShare: false`, as in an Android WebView
         expect(setup().result.current.share.canShare).toBe(false);
         expect(
-            setup({}, { canHandOffShare: true }).result.current.share.canShare
+            setup({}, { canHandOff: true }).result.current.share.canShare
         ).toBe(true);
+    });
+
+    it("can act while it has a link of its own", () => {
+        expect(setup().result.current.share.canAct).toBe(true);
+    });
+
+    it("cannot act with neither a link nor a host", () => {
+        // No clientId and no wallet: `buildSharingLink` returns null.
+        const { result } = setup({}, { clientId: undefined });
+
+        expect(result.current.sharingLink).toBeNull();
+        expect(result.current.share.canAct).toBe(false);
+    });
+
+    it("can act with no link of its own once a host is listening", () => {
+        // The host services share/copy with the link IT built; this page having
+        // none must not disable CTAs the host can fulfil.
+        const { result } = setup({}, { clientId: undefined, canHandOff: true });
+
+        expect(result.current.sharingLink).toBeNull();
+        expect(result.current.share.canAct).toBe(true);
+    });
+});
+
+describe("the copied event", () => {
+    it("reports the link when this page wrote the clipboard", () => {
+        const { result } = setup({ copy: () => false });
+
+        act(() => result.current.actions.onCopy());
+
+        expect(trackEvent).toHaveBeenCalledWith(
+            "sharing_link_copied",
+            expect.objectContaining({
+                link: expect.stringContaining("acme.example"),
+                handed_off: false,
+            })
+        );
+    });
+
+    it("reports the link it wrote, even when a host was offered it", () => {
+        // `handed_off` only means a return scheme was present; it is not proof
+        // a host answered. The link this page wrote is observable, so it is
+        // reported either way.
+        const { result } = setup({ copy: () => true });
+
+        act(() => result.current.actions.onCopy());
+
+        expect(trackEvent).toHaveBeenCalledWith(
+            "sharing_link_copied",
+            expect.objectContaining({
+                link: expect.stringContaining("acme.example"),
+                handed_off: true,
+            })
+        );
+    });
+
+    it("completes a handed-off copy even with no link of its own", () => {
+        const recordSharing = vi.fn();
+        const onConfirmed = vi.fn();
+        const { result } = setup(
+            { copy: () => true, recordSharing, onConfirmed },
+            { clientId: undefined }
+        );
+
+        act(() => result.current.actions.onCopy());
+
+        expect(result.current.sharingLink).toBeNull();
+        expect(copy).not.toHaveBeenCalled();
+        expect(recordSharing).toHaveBeenCalled();
+        expect(onConfirmed).toHaveBeenCalledWith("copied");
+        expect(result.current.view).toBe("confirmation");
+    });
+
+    it("does nothing with neither a link nor a host", () => {
+        const recordSharing = vi.fn();
+        const { result } = setup({ recordSharing }, { clientId: undefined });
+
+        act(() => result.current.actions.onCopy());
+
+        expect(copy).not.toHaveBeenCalled();
+        expect(trackEvent).not.toHaveBeenCalledWith(
+            "sharing_link_copied",
+            expect.anything()
+        );
+        expect(recordSharing).not.toHaveBeenCalled();
+        expect(result.current.view).toBe("share");
+    });
+});
+
+describe("share payload precedence", () => {
+    it("keeps today's copy byte-for-byte with no products and no overrides", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup({ share });
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({
+                title: "sharing.title",
+                text: "sharing.text",
+            })
+        );
+    });
+
+    it("prefers the per-call override over everything else", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup(
+            { share },
+            {
+                shareTitle: "Custom title",
+                shareText: "Custom text",
+                shareImage: "https://cdn.example.com/custom.png",
+                products: [
+                    {
+                        title: "Kettle",
+                        link: "https://acme.example/k",
+                        imageUrl: "https://cdn.example.com/kettle.png",
+                    },
+                ],
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({
+                title: "Custom title",
+                text: "Custom text",
+                imageUrl: "https://cdn.example.com/custom.png",
+            })
+        );
+    });
+
+    it("falls to the selected product when there is no per-call override", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup(
+            { share },
+            {
+                products: [
+                    {
+                        title: "Kettle",
+                        link: "https://acme.example/k",
+                        imageUrl: "https://cdn.example.com/kettle.png",
+                    },
+                ],
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({
+                title: "Kettle",
+                imageUrl: "https://cdn.example.com/kettle.png",
+            })
+        );
+    });
+
+    it("falls to the merchant logo when neither an override nor a product supplies an image", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup(
+            { share },
+            {
+                merchant: {
+                    name: "Acme",
+                    logoUrl: "https://cdn.example.com/logo.png",
+                },
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({
+                imageUrl: "https://cdn.example.com/logo.png",
+            })
+        );
+    });
+
+    it("treats an empty-string override as no override, not a blank value", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup(
+            { share },
+            {
+                shareTitle: "",
+                products: [{ title: "Kettle", link: "https://acme.example/k" }],
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({ title: "Kettle" })
+        );
+    });
+
+    it("passes the same precedence into the local useShareLink path", () => {
+        setup({}, { shareTitle: "Custom title", shareText: "Custom text" });
+
+        const [, shareData] = lastShareLinkArgs as [
+            unknown,
+            { title: string; text: string },
+        ];
+        expect(shareData.title).toBe("Custom title");
+        expect(shareData.text).toBe("Custom text");
+    });
+});
+
+describe("share payload sanitization", () => {
+    it("strips bidi overrides and control characters from a product title", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup(
+            { share },
+            {
+                products: [
+                    {
+                        title: "Kett\u202Ele\u0007r",
+                        link: "https://acme.example/k",
+                    },
+                ],
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({ title: "Kettler" })
+        );
+    });
+
+    it("clips an over-budget product title to the wire budget", () => {
+        const share = vi.fn((_data: SharingResolvedShareData) => true);
+        const { result } = setup(
+            { share },
+            {
+                products: [
+                    { title: "a".repeat(300), link: "https://acme.example/k" },
+                ],
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        const { title } = share.mock.calls[0][0];
+        expect(title.length).toBe(120);
+        expect(title.endsWith("…")).toBe(true);
+    });
+
+    it("flattens a blank line in a title to a single space", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup({ share }, { shareTitle: "A\n\n\nB" });
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({ title: "A B" })
+        );
+    });
+
+    it("drops a product image that is not a safe https URL", () => {
+        const share = vi.fn(() => true);
+        for (const imageUrl of [
+            "http://cdn.example.com/x.png",
+            "javascript:alert(1)",
+            "https://192.168.1.1/x.png",
+        ]) {
+            share.mockClear();
+            const { result } = setup(
+                { share },
+                {
+                    products: [
+                        {
+                            title: "Kettle",
+                            link: "https://acme.example/k",
+                            imageUrl,
+                        },
+                    ],
+                }
+            );
+
+            act(() => result.current.actions.onShare());
+
+            expect(share).toHaveBeenCalledWith(
+                expect.objectContaining({ imageUrl: undefined })
+            );
+        }
     });
 });

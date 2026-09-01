@@ -6,9 +6,18 @@ import Testing
 struct MerchantQueryTests {
     private static let merchantId = "b3d5e5b8-9b1a-4c0e-8f5a-1a2b3c4d5e6f"
 
-    @Test("a merchantId takes precedence over a bundleId")
-    func merchantIdTakesPrecedence() throws {
+    @Test("a bundleId takes precedence over a merchantId, so the backend determines the merchant")
+    func bundleIdTakesPrecedence() throws {
         let query = try MerchantQuery.from(FrakConfig(merchantId: Self.merchantId, bundleId: "com.example.app"))
+        let parameters = query.parameters
+
+        #expect((parameters["packageId"] ?? nil) == "com.example.app")
+        #expect((parameters["merchantId"] ?? nil) == nil)
+    }
+
+    @Test("a merchantId is used only when there is no bundleId to route by")
+    func merchantIdIsTheFallbackRoute() throws {
+        let query = try MerchantQuery.from(FrakConfig(merchantId: Self.merchantId))
         let parameters = query.parameters
 
         #expect((parameters["merchantId"] ?? nil) == Self.merchantId)

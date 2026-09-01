@@ -1,4 +1,4 @@
-import { db, log } from "@backend-infrastructure";
+import { db, infraMetrics, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { type Address, isAddressEqual } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
@@ -6,6 +6,26 @@ import type { IdentityProofService } from "../../domain/identity/services/Identi
 import type { IdentityMergeService } from "./IdentityMergeService";
 import type { IdentityWeightService } from "./IdentityWeightService";
 import type { AssociateResult, IdentityNode, ResolveResult } from "./types";
+
+/**
+ * A `WALLET_CONFLICT` here is a refused merge between two wallet-bearing
+ * groups, not a transient fault — it needs its own signal. Everything stays
+ * swallowed either way: an identity link failure must never block login.
+ */
+function reportLinkFailure(
+    err: unknown,
+    context: { walletAddress: Address; merchantId?: string }
+): void {
+    if (err instanceof HttpError && err.code === "WALLET_CONFLICT") {
+        infraMetrics.identityWalletConflict("link_wallet_to_fingerprint");
+        log.warn(
+            context,
+            "Refused to merge groups linked to different wallets while connecting wallet to identity"
+        );
+        return;
+    }
+    log.error({ err, ...context }, "Failed to connect wallet to identity");
+}
 
 export class IdentityOrchestrator {
     constructor(
@@ -278,10 +298,7 @@ export class IdentityOrchestrator {
                 }
             }
         } catch (err: unknown) {
-            log.error(
-                { err, walletAddress, merchantId },
-                "Failed to connect wallet to identity"
-            );
+            reportLinkFailure(err, { walletAddress, merchantId });
         }
     }
 }

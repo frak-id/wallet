@@ -25,20 +25,20 @@
       No <application> block, and deliberately no exported activity and no
       intent filter. Inbound `fCtx` handling is wired through
       `FrakConfig.deepLink` (Automatic via ActivityLifecycleCallbacks, or
-      Manual via `handleReferralLink(url)`), so the merchant's own activity
+      Manual via `appLink.handleReferral(url)`), so the merchant's own activity
       keeps owning the intent.
 
-      `frak_data_extraction_rules.xml` and `frak_full_backup_content.xml` are
-      NOT referenced from here: on `<application>`, both
-      `android:dataExtractionRules` (API 31+) and `android:fullBackupContent`
-      (API 24-30) are singular attributes and the manifest merger does not
-      union them, so a library cannot set either on behalf of its consumer.
-      Both ship as plain resources instead. Required merchant integration
-      step — see "Backup and device-transfer exclusion" in the SDK's README
-      for the `<application>` snippet and the `tools:replace` guidance.
-
-      TODO: a debug-build runtime assertion that these exclusions are actually
-      wired is not yet implemented.
+      No backup-exclusion rules ship here either, and the SDK asks nothing of
+      a merchant on that front. It used to ship
+      `frak_data_extraction_rules.xml` and `frak_full_backup_content.xml` for
+      merchants to reference; both were removed because excluding what they
+      excluded is wrong. The keypair lives in `AndroidKeyStore` and can never
+      be backed up or transferred, so the identity already regenerates on a
+      new device with no help. What those files DID exclude was
+      `id.frak.sdk.xml`, which holds the tracking-consent decision — and a
+      withdrawal has to survive a device transfer, not vanish with it. The
+      event queue is excluded where it matters, in `noBackupFilesDir`, which
+      needs no `<application>` attribute. See PRIVACY.md.
     -->
 
 </manifest>

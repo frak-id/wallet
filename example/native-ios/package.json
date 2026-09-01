@@ -4,6 +4,8 @@
     "private": true,
     "scripts": {
         "start": "./scripts/run.sh run",
+        "device": "./scripts/run.sh device",
+        "logs": "./scripts/run.sh logs",
         "build": "./scripts/run.sh build",
         "xcode": "./scripts/run.sh xcode",
         "lint": "./scripts/run.sh lint",

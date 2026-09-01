@@ -1,24 +1,32 @@
-type SecurityStepKey =
+/** Steps with a next action — each has `.title`/`.description`/`.cta` copy. */
+type ActionableStepKey =
     | "addEmail"
     | "verifyEmail"
     | "setupRecovery"
-    | "updateRecovery"
-    | "secured";
+    | "updateRecovery";
 
 type SecurityStepTarget =
     | "/profile/add-email"
     | "/profile/verify-email"
     | "/profile/recovery";
 
-export type SecurityStep = {
-    key: SecurityStepKey;
+type SecurityStepBase = {
     /** Completion shown on the bar + percentage label (0-100). */
     percent: number;
     /** Where the call-to-action button takes the user. */
     to: SecurityStepTarget;
-    /** Terminal state: nothing left to do, the wallet is fully protected. */
-    secured: boolean;
 };
+
+/**
+ * Discriminated on `secured` so a narrowed step proves which copy exists: the
+ * terminal state carries only `.description`, every other step carries the
+ * `.title`/`.cta` the card renders behind `!step.secured`.
+ */
+export type SecurityStep = SecurityStepBase &
+    (
+        | { key: ActionableStepKey; secured: false }
+        | { key: "secured"; secured: true }
+    );
 
 export type SecuritySignals = {
     hasEmail: boolean;

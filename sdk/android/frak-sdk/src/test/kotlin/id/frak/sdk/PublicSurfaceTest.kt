@@ -1,3 +1,5 @@
+@file:OptIn(InternalFrakApi::class)
+
 package id.frak.sdk
 
 import id.frak.sdk.core.FrakConfig
@@ -24,10 +26,14 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Every public input type and reward model is constructible through the real public API. */
+/**
+ * Every public *input* type is constructible through the real public API. Reward models are not:
+ * their constructors are `@InternalFrakApi`, since only the SDK decodes one from the backend, and
+ * this file opts in the way `:frak-sdk-ui` has to.
+ */
 class PublicSurfaceTest {
     @Test
-    fun `every public reward model is constructible`() {
+    fun `every reward model is constructible by the SDK, which is what decodes them`() {
         val amount = TokenAmount(amount = 1000.0, eurAmount = 10.0, usdAmount = 11.0, gbpAmount = 9.0)
         val tier = RewardTier.Amount(minValue = 0.0, maxValue = 100.0, amount = amount)
         val reward = EstimatedReward.Fixed(amount)
@@ -152,12 +158,18 @@ class PublicSurfaceTest {
                 .attribution(attributionParams)
                 .targetInteraction("purchase")
                 .placement("product-page")
+                .shareTitle("share-title")
+                .shareText("share-text")
+                .shareImageUrl("https://acme.example/share.png")
                 .build()
 
         assertEquals(listOf(product), request.products)
         assertEquals(attributionParams, request.attribution)
         assertEquals("purchase", request.targetInteraction)
         assertEquals("product-page", request.placement)
+        assertEquals("share-title", request.shareTitle)
+        assertEquals("share-text", request.shareText)
+        assertEquals("https://acme.example/share.png", request.shareImageUrl)
 
         val sugaredRequest =
             SharingRequest {
@@ -166,6 +178,9 @@ class PublicSurfaceTest {
                 attribution = attributionParams
                 targetInteraction = "purchase"
                 placement = "product-page"
+                shareTitle = "share-title"
+                shareText = "share-text"
+                shareImageUrl = "https://acme.example/share.png"
             }
 
         assertEquals(request.link, sugaredRequest.link)
@@ -174,6 +189,9 @@ class PublicSurfaceTest {
         assertEquals(request.targetInteraction, sugaredRequest.targetInteraction)
         assertEquals(request.placement, sugaredRequest.placement)
         assertEquals(request.logoUrl, sugaredRequest.logoUrl)
+        assertEquals(request.shareTitle, sugaredRequest.shareTitle)
+        assertEquals(request.shareText, sugaredRequest.shareText)
+        assertEquals(request.shareImageUrl, sugaredRequest.shareImageUrl)
 
         val bare = SharingRequest { }
         assertNull(bare.link)

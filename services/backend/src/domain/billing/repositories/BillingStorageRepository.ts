@@ -6,7 +6,7 @@ import { S3Client } from "bun";
  *
  * Unlike `MediaStorageRepository`, this bucket is NOT publicly readable —
  * downloads are proxied through an authenticated backend endpoint rather
- * than served via CDN/presigned URL (see billing-feature-plan.md §3.3).
+ * than served via CDN/presigned URL.
  * Bucket provisioning is handled by services/bootstrap (`ensure-buckets.ts`).
  */
 export class BillingStorageRepository {

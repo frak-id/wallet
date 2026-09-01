@@ -3,6 +3,10 @@ import Testing
 
 @testable import FrakSDK
 
+#if canImport(UIKit)
+    import UIKit
+#endif
+
 @Suite("DefaultFrakClient")
 struct FrakClientTests {
     private static let merchantId = "b3d5e5b8-9b1a-4c0e-8f5a-1a2b3c4d5e6f"
@@ -227,6 +231,20 @@ struct FrakClientTests {
         #expect(log.all.first?.value(forHTTPHeaderField: "x-frak-client-id") == nil)
     }
 
+    @Test("the config resolves eagerly at init, with nobody asking")
+    func configResolvesEagerlyAtInit() async throws {
+        let log = RequestLog()
+        let client = makeClient { request in
+            log.record(request)
+            return StubResponse(status: 200, body: Self.resolveBody)
+        }
+
+        // The warm cache is what lets a referral arrival on a cold start answer without blocking,
+        // and what lets the backend's merchant id win over a configured one.
+        #expect(await log.wait(forCount: 1))
+        await client.shutdown()
+    }
+
     @Test("setTrackingEnabled flips tracking at runtime, both ways")
     func setTrackingEnabledFlipsAtRuntime() async throws {
         let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
@@ -308,13 +326,18 @@ struct FrakClientTests {
         await client.shutdown()
         await client.shutdown()
 
-        // `track` still enqueues; the observable difference is whether a drain follows.
-        let before = log.count
+        // `track` still enqueues; the observable difference is whether a drain follows. Counted by
+        // path so the eager startup config resolve, which may land either side of shutdown, cannot
+        // be mistaken for one.
+        func trackRequestCount() -> Int {
+            log.all.filter { $0.url?.path.hasPrefix("/user/track/") == true }.count
+        }
+        let before = trackRequestCount()
         _ = await client.track(.custom("after-shutdown"))
 
         // Negative assertion, so give a drain every chance to happen before ruling it out.
-        _ = await log.wait(forCount: before + 1, timeoutSeconds: 0.3)
-        #expect(log.count == before)
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        #expect(trackRequestCount() == before)
     }
 
     @Test("resolveConfig, campaigns and bestReward have usable defaults")
@@ -357,10 +380,23 @@ struct FrakClientTests {
     }
 
     @Test("buildSharingLink yields nil with no base url to build from")
-    func buildSharingLinkNeedsABaseURL() async {
+    func buildSharingLinkNeedsABaseURL() async throws {
         let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
-        let link = await client.buildSharingLink(SharingRequest())
+        let link = try await client.buildSharingLink(SharingRequest())
         #expect(link == nil)
+    }
+
+    /// Nil means there was nothing to link to; a throw means a link could have been built.
+    @Test("buildSharingLink throws, rather than yielding nil, when tracking is off")
+    func buildSharingLinkThrowsWhenRefused() async {
+        let client = makeClient(config: FrakConfig(merchantId: Self.merchantId, trackingEnabled: false)) { _ in
+            StubResponse(status: 200, body: Self.resolveBody)
+        }
+        // `.kind`, not the case itself: FrakError is deliberately not Equatable.
+        let refused = await #expect(throws: FrakError.self) {
+            try await client.buildSharingLink(SharingRequest(link: "https://acme.example/p"))
+        }
+        #expect(refused?.kind == .trackingDisabled)
     }
 
     @Test("track refuses up front when tracking is disabled")
@@ -490,7 +526,7 @@ struct FrakClientTests {
         let withoutWallet = makeClient(launcher: absent) { _ in StubResponse(status: 200, body: Self.resolveBody) }
         let fellBack = await withoutWallet.openFrakApp()
         #expect(fellBack == .openedStore)
-        #expect(absent.opened == ["https://apps.apple.com/app/id6740261164"])
+        #expect(absent.opened == ["https://apps.apple.com/app/id6759159306"])
     }
 
     @Test("openFrakApp opens the wallet even when the merchant never declared the scheme")
@@ -520,13 +556,11 @@ struct FrakClientTests {
     func installPageURLCarriesAProof() async throws {
         let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
 
-        let page = try #require(
-            await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "session-1")
-        )
+        let page = try await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "session-1")
         let anonymousId = try #require(await client.anonymousId)
 
         let expected =
-            "https://wallet.frak.id/install?embed=native&m=\(Self.merchantId)&a=\(anonymousId)"
+            "https://wallet.frak.id/install?embed=native&clip=host&m=\(Self.merchantId)&a=\(anonymousId)"
             + "&returnScheme=frak-com.acme.app&sid=session-1"
         #expect(page.hasPrefix(expected))
 
@@ -542,6 +576,192 @@ struct FrakClientTests {
         let config = FrakConfig(merchantId: FrakClientTests.merchantId, trackingEnabled: false)
         let client = makeClient(config: config) { _ in StubResponse(status: 200, body: Self.resolveBody) }
 
-        #expect(await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "s1") == nil)
+        // Throws rather than answering nil: a caller refused an install page needs to know it was
+        // refused, not receive the same answer as "there was nothing to link to".
+        let refused = await #expect(throws: FrakError.self) {
+            try await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "s1")
+        }
+        #expect(refused?.kind == .trackingDisabled)
+    }
+
+    @Test("installPageURL propagates cancellation instead of collapsing it to merchantResolutionFailed")
+    func installPageURLPropagatesCancellation() async throws {
+        // No merchantId, so the merchant genuinely resolves and there is a request to cancel.
+        let client = makeClient(config: FrakConfig(bundleId: "com.acme.app")) { _ in throw StubHangs() }
+
+        let task = Task {
+            try await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "session-1")
+        }
+        try await Task.sleep(nanoseconds: 50_000_000)
+        task.cancel()
+
+        await #expect(throws: CancellationError.self) {
+            _ = try await task.value
+        }
+    }
+
+    /// Regression: bug 1.
+    @Test("track lands the event on disk with no cached merchant and no reachable network (bug 1)")
+    func trackDoesNotBlockOnAMerchantResolve() async throws {
+        let queueURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+            .appendingPathComponent(EventQueue.fileName)
+        let client = makeClient(config: FrakConfig(bundleId: "com.acme.app"), queueURL: queueURL) { _ in
+            throw URLError(.notConnectedToInternet)
+        }
+
+        let result = await client.track(.custom("cold-start"))
+
+        guard case .success = result else {
+            Issue.record("expected track to succeed with no merchant to resolve, got \(result)")
+            return
+        }
+        let rows = await EventQueue(fileURL: queueURL, logger: FrakLogger(level: .none)).read(now: Date())
+        #expect(rows.first?.merchantId == nil)
+    }
+
+    /// Regression: bug 2.
+    @Test("handleReferralLink durably queues an inbound merge with no cached merchant and no reachable network (bug 2)")
+    func mergeIsDurableWithoutANetworkResolve() async throws {
+        let queueURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+            .appendingPathComponent(EventQueue.fileName)
+        let client = makeClient(config: FrakConfig(bundleId: "com.acme.app"), queueURL: queueURL) { _ in
+            throw URLError(.notConnectedToInternet)
+        }
+
+        _ = await client.handleReferralLink("https://acme.example/p?fmt=merge-token-1")
+        // Lets the detached drain, which cannot succeed offline, settle before asserting.
+        try await Task.sleep(nanoseconds: 200_000_000)
+
+        let rows = await EventQueue(fileURL: queueURL, logger: FrakLogger(level: .none)).read(now: Date())
+        let merged = rows.first { $0.kind == "merge" }
+        #expect(merged?.idempotencyKey == "merge-token-1")
+        #expect(merged?.merchantId == nil)
+    }
+
+    // MARK: - drain triggers (fix 3)
+
+    @Test("a config update triggers a drain with no explicit flush call, and stops after shutdown")
+    func configUpdateTriggersADrain() async throws {
+        let queueURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+            .appendingPathComponent(EventQueue.fileName)
+        let networkUp = Flag(false)
+        let resolveCalls = Counter()
+        let requests = RequestLog()
+        let client = makeClient(config: FrakConfig(bundleId: "com.acme.app"), queueURL: queueURL) { request in
+            requests.record(request)
+            guard networkUp.value else { throw URLError(.notConnectedToInternet) }
+            guard request.url?.path == "/user/merchant/resolve" else { return StubResponse(status: 200, body: "{}") }
+            let n = resolveCalls.increment()
+            return StubResponse(
+                status: 200,
+                body: #"{"merchantId":"\#(Self.merchantId)","productId":"0x00","name":"Acme-\#(n)","#
+                    + #""domain":"acme.example","allowedDomains":["acme.example"]}"#
+            )
+        }
+
+        _ = await client.track(.custom("held-for-merchant"))
+        // Lets the offline auto-drain hold the row before the network comes up.
+        try await Task.sleep(nanoseconds: 200_000_000)
+
+        networkUp.value = true
+        // Retried rather than a single `try await`: the offline attempts above may have armed
+        // ConfigStore's own backoff, independent of the tracker's; this waits it out instead of
+        // racing it.
+        var resolvedOnce = false
+        var resolveWaited = 0
+        while !resolvedOnce, resolveWaited < 40 {
+            if (try? await client.resolveConfig(forceRefresh: true)) != nil { resolvedOnce = true }
+            if !resolvedOnce {
+                try await Task.sleep(nanoseconds: 50_000_000)
+                resolveWaited += 1
+            }
+        }
+        #expect(resolvedOnce, "resolveConfig should succeed once the network is back and backoff clears")
+
+        func trackHits() -> Int { requests.all.filter { $0.url?.path == "/user/track/interaction" }.count }
+        var waited = 0
+        while trackHits() == 0, waited < 400 {
+            try await Task.sleep(nanoseconds: 5_000_000)
+            waited += 1
+        }
+        #expect(trackHits() == 1, "a config update must flush a held row without an explicit flush() call")
+
+        await client.shutdown()
+        let afterFirstFlush = trackHits()
+
+        _ = await client.track(.custom("after-shutdown"))
+        _ = try? await client.resolveConfig(forceRefresh: true)
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        #expect(trackHits() == afterFirstFlush, "the config-update flush must not fire once the client is shut down")
+    }
+
+    #if canImport(UIKit)
+        /// Nothing else drains on app resume, so this is the biggest delivery-rate lever on iOS.
+        @Test("posting willEnterForeground triggers a drain, and stops after shutdown")
+        func foregroundNotificationTriggersADrain() async throws {
+            let queueURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString, isDirectory: true)
+                .appendingPathComponent(EventQueue.fileName)
+            let requests = RequestLog()
+            let client = makeClient(config: FrakConfig(bundleId: "com.acme.app"), queueURL: queueURL) { request in
+                requests.record(request)
+                throw URLError(.notConnectedToInternet)
+            }
+
+            func resolveAttempts() -> Int {
+                requests.all.filter { $0.url?.path == "/user/merchant/resolve" }.count
+            }
+
+            _ = await client.track(.custom("held-forever"))
+            var waited = 0
+            while resolveAttempts() == 0, waited < 400 {
+                try await Task.sleep(nanoseconds: 5_000_000)
+                waited += 1
+            }
+            let beforeForeground = resolveAttempts()
+            #expect(beforeForeground > 0)
+
+            NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+            waited = 0
+            while resolveAttempts() == beforeForeground, waited < 400 {
+                try await Task.sleep(nanoseconds: 5_000_000)
+                waited += 1
+            }
+            #expect(resolveAttempts() > beforeForeground, "the foreground notification must trigger a drain")
+
+            await client.shutdown()
+            let afterShutdown = resolveAttempts()
+            NotificationCenter.default.post(name: UIApplication.willEnterForegroundNotification, object: nil)
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            #expect(
+                resolveAttempts() == afterShutdown,
+                "the foreground hook must not fire once the client is shut down"
+            )
+        }
+    #endif
+
+    /// A mutable test flag, for a stub handler whose behaviour changes mid-test.
+    private final class Flag: @unchecked Sendable {
+        private let lock = NSLock()
+        private var stored: Bool
+
+        init(_ value: Bool) { stored = value }
+
+        var value: Bool {
+            get {
+                lock.lock()
+                defer { lock.unlock() }
+                return stored
+            }
+            set {
+                lock.lock()
+                stored = newValue
+                lock.unlock()
+            }
+        }
     }
 }
