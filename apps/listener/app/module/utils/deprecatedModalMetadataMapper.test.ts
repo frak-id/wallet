@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { UIRequest } from "@/ui/ListenerUiProvider";
 import { mapDeprecatedModalMetadata } from "./deprecatedModalMetadataMapper";
 
 describe("mapDeprecatedModalMetadata", () => {
@@ -171,7 +172,7 @@ describe("mapDeprecatedModalMetadata", () => {
             );
         });
 
-        it("should map sharing action options for 'final' step with action.key 'sharing'", () => {
+        it("no longer maps sharing options on a final step", () => {
             const request = {
                 type: "modal" as const,
                 appName: "test",
@@ -190,57 +191,14 @@ describe("mapDeprecatedModalMetadata", () => {
                 },
                 emitter: async () => {},
             };
-            const result = mapDeprecatedModalMetadata(request as any);
-            expect(result["sharing.title"]).toBe("Share your success");
-            expect(result["sharing.text"]).toBe("I just completed this");
-        });
-
-        it("should not map sharing for non-final steps", () => {
-            const request = {
-                type: "modal" as const,
-                appName: "test",
-                configMetadata: {},
-                steps: {
-                    login: {
-                        metadata: { title: "Login" },
-                        action: {
-                            key: "sharing",
-                            options: {
-                                popupTitle: "Should not map",
-                                text: "Should not map",
-                            },
-                        },
-                    },
-                },
-                emitter: async () => {},
-            };
-            const result = mapDeprecatedModalMetadata(request as any);
+            // The `sharing` action was removed from `FinalActionType`; this
+            // fixture reproduces a legacy payload the mapper must ignore.
+            const result = mapDeprecatedModalMetadata(
+                request as unknown as UIRequest
+            );
             expect(result["sharing.title"]).toBeUndefined();
             expect(result["sharing.text"]).toBeUndefined();
-        });
-
-        it("should not map sharing for final step with non-sharing action", () => {
-            const request = {
-                type: "modal" as const,
-                appName: "test",
-                configMetadata: {},
-                steps: {
-                    final: {
-                        metadata: { title: "Done" },
-                        action: {
-                            key: "other",
-                            options: {
-                                popupTitle: "Should not map",
-                                text: "Should not map",
-                            },
-                        },
-                    },
-                },
-                emitter: async () => {},
-            };
-            const result = mapDeprecatedModalMetadata(request as any);
-            expect(result["sharing.title"]).toBeUndefined();
-            expect(result["sharing.text"]).toBeUndefined();
+            expect(result["sdk.modal.final.title"]).toBe("Done");
         });
 
         it("should handle multiple steps", () => {
@@ -390,9 +348,9 @@ describe("mapDeprecatedModalMetadata", () => {
             expect(result["sdk.modal.final.title"]).toBe("Success");
             expect(result["sdk.modal.final.secondaryAction"]).toBe("Close");
 
-            // Sharing
-            expect(result["sharing.title"]).toBe("Share");
-            expect(result["sharing.text"]).toBe("I earned {REWARD}");
+            // The retired sharing action contributes no keys.
+            expect(result["sharing.title"]).toBeUndefined();
+            expect(result["sharing.text"]).toBeUndefined();
         });
     });
 });

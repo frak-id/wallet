@@ -3,9 +3,8 @@ import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 
 /**
- * Demo for the modal `final` step — logs the user in, then shows the final
- * step in either the `reward` (primary dismiss) or `sharing` (share/copy)
- * variant.
+ * Demo for the modal `final` step — logs the user in, then shows the reward
+ * screen with its primary dismiss action.
  */
 export function FinalStep() {
     const { mutate: displayModal, status, isPending } = useDisplayModal();
@@ -32,21 +31,7 @@ export function FinalStep() {
                     })
                 }
             >
-                Final — reward
-            </Button>{" "}
-            <Button
-                type={"button"}
-                disabled={isPending}
-                onClick={() =>
-                    displayModal({
-                        steps: {
-                            login: { allowSso: true },
-                            final: { action: { key: "sharing" } },
-                        },
-                    })
-                }
-            >
-                Final — sharing
+                Show final step
             </Button>
         </Panel>
     );

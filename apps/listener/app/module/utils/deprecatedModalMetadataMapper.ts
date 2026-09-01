@@ -57,21 +57,6 @@ function mapModalMetadata(
                 step.dismissedMetadata
             );
         }
-
-        // If that's a sharing step, add sharing metadata's
-        if (
-            key === "final" &&
-            "action" in step &&
-            step.action.key === "sharing"
-        ) {
-            const { popupTitle, text } = step.action.options ?? {};
-            if (popupTitle) {
-                resultMap.set("sharing.title", popupTitle);
-            }
-            if (text) {
-                resultMap.set("sharing.text", text);
-            }
-        }
     }
 
     return Object.fromEntries(resultMap);

@@ -104,47 +104,6 @@ describe("modalBuilder", () => {
         });
     });
 
-    describe("sharing step", () => {
-        it("should add sharing final step", () => {
-            const builder = modalBuilder(mockClient, {});
-            const withSharing = builder.sharing({
-                popupTitle: "Share!",
-                text: "Check this out",
-                link: "https://example.com",
-            });
-
-            expect(withSharing.params.steps.final).toEqual({
-                action: {
-                    key: "sharing",
-                    options: {
-                        popupTitle: "Share!",
-                        text: "Check this out",
-                        link: "https://example.com",
-                    },
-                },
-            });
-        });
-
-        it("should add sharing step with additional options", () => {
-            const builder = modalBuilder(mockClient, {});
-            const withSharing = builder.sharing(
-                { text: "Share text", link: "https://example.com" },
-                { autoSkip: false }
-            );
-
-            expect(withSharing.params.steps.final).toEqual({
-                autoSkip: false,
-                action: {
-                    key: "sharing",
-                    options: {
-                        text: "Share text",
-                        link: "https://example.com",
-                    },
-                },
-            });
-        });
-    });
-
     describe("chaining", () => {
         it("should chain sendTx and reward", () => {
             const builder = modalBuilder(mockClient, {});
@@ -159,23 +118,6 @@ describe("modalBuilder", () => {
             expect(chained.params.steps.sendTransaction).toBeDefined();
             expect(chained.params.steps.final).toEqual({
                 action: { key: "reward" },
-            });
-        });
-
-        it("should chain sendTx and sharing", () => {
-            const builder = modalBuilder(mockClient, {});
-            const chained = builder
-                .sendTx({
-                    tx: {
-                        to: "0x1234567890123456789012345678901234567890" as Address,
-                    },
-                })
-                .sharing({ link: "https://example.com" });
-
-            expect(chained.params.steps.sendTransaction).toBeDefined();
-            expect(chained.params.steps.final?.action).toEqual({
-                key: "sharing",
-                options: { link: "https://example.com" },
             });
         });
     });

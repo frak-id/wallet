@@ -51,6 +51,11 @@ export function asApiError(err: unknown): ApiError | null {
     };
 }
 
+/** Convenience: HTTP status of an eden error (or `undefined`). */
+export function getErrorStatus(err: unknown): number | undefined {
+    return asApiError(err)?.status;
+}
+
 /** Convenience: backend symbolic error code (or `undefined`). */
 export function getErrorCode(err: unknown): string | undefined {
     const code = asApiError(err)?.value?.code;

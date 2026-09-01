@@ -459,12 +459,7 @@ function CurrentModalStepComponent() {
                     />
                 );
             case "final":
-                return (
-                    <FinalModalStep
-                        params={currentStep.params}
-                        onFinish={currentStep.onResponse}
-                    />
-                );
+                return <FinalModalStep onFinish={currentStep.onResponse} />;
             default:
                 return <>Can't handle {stepKey} yet</>;
         }

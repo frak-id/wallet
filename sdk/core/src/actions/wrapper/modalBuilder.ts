@@ -1,6 +1,5 @@
 import type {
     DisplayModalParamsType,
-    FinalActionType,
     FinalModalStepType,
     FrakClient,
     LoginModalStepType,
@@ -34,16 +33,6 @@ export type ModalStepBuilder<
         options?: Omit<FinalModalStepType["params"], "action">
     ) => ModalStepBuilder<[...Steps, FinalModalStepType]>;
     /**
-     * Add a final step of type sharing to the modal
-     */
-    sharing: (
-        sharingOptions?: Extract<
-            FinalActionType,
-            { key: "sharing" }
-        >["options"],
-        options?: Omit<FinalModalStepType["params"], "action">
-    ) => ModalStepBuilder<[...Steps, FinalModalStepType]>;
-    /**
      * Display the modal
      * @param metadataOverride - Function returning optional metadata to override the current modal metadata
      * @param placement - Optional placement ID to associate with this modal display
@@ -71,22 +60,15 @@ export type ModalBuilder = ModalStepBuilder<[LoginModalStepType]>;
  * @description This function will create a modal builder with the provided metadata and login parameters.
  *
  * @example
- * Here is an example of how to use the `modalBuilder` to create and display a sharing modal:
+ * Here is an example of how to use the `modalBuilder` to create and display a reward modal:
  *
  * ```js
  * // Create the modal builder
  * const modalBuilder = window.FrakSDK.modalBuilder(frakClient, baseModalConfig);
  *
- * // Configure the information to be shared via the sharing link
- * const sharingConfig = {
- *   popupTitle: "Share this with your friends",
- *   text: "Discover our product!",
- *   link: window.location.href,
- * };
- *
- * // Display the sharing modal
- * function modalShare() {
- *   modalBuilder.sharing(sharingConfig).display();
+ * // Display the reward modal
+ * function modalReward() {
+ *   modalBuilder.reward().display();
  * }
  * ```
  *
@@ -156,29 +138,6 @@ function modalStepsBuilder<CurrentSteps extends ModalStepTypes[]>(
         );
     }
 
-    // Function to add sharing step at the end
-    function sharing(
-        sharingOptions?: Extract<
-            FinalActionType,
-            { key: "sharing" }
-        >["options"],
-        options?: Omit<FinalModalStepType["params"], "action">
-    ) {
-        return modalStepsBuilder<[...CurrentSteps, FinalModalStepType]>(
-            client,
-            {
-                ...params,
-                steps: {
-                    ...params.steps,
-                    final: {
-                        ...options,
-                        action: { key: "sharing", options: sharingOptions },
-                    },
-                },
-            } as DisplayModalParamsType<[...CurrentSteps, FinalModalStepType]>
-        );
-    }
-
     async function display(
         metadataOverride?: (
             current?: ModalRpcMetadata
@@ -195,7 +154,6 @@ function modalStepsBuilder<CurrentSteps extends ModalStepTypes[]>(
         params,
         sendTx,
         reward,
-        sharing,
         display,
     };
 }
