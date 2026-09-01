@@ -223,6 +223,24 @@ do_device() {
 		--terminate-existing "$BUNDLE_ID"
 }
 
+# Relaunches rather than attaching: Apple ships no way to attach to a running app's
+# log stream. `devicectl` has no log verb, and `log stream` takes no --device (only
+# `log collect` does, and it writes an archive). Attaching needs idevicesyslog or
+# pymobiledevice3, which this harness does not depend on.
+do_logs() {
+	local udid
+	udid="$(select_device)"
+	log "Target device: $udid"
+
+	if ! xcrun devicectl device info details --device "$udid" >/dev/null 2>&1; then
+		die "Cannot query the device. Unlock it, and enable Developer Mode."
+	fi
+
+	log "Relaunching to stream SDK logs (Ctrl-C to stop)..."
+	xcrun devicectl device process launch --device "$udid" --console \
+		--terminate-existing "$BUNDLE_ID"
+}
+
 do_xcode() {
 	generate_project
 	log "Opening $PROJECT"
@@ -247,14 +265,16 @@ case "${1:-run}" in
 run) do_run ;;
 device) do_device ;;
 build) do_build_only ;;
+logs) do_logs ;;
 xcode) do_xcode ;;
 lint) do_lint ;;
 format) do_format ;;
 *)
-	echo "Usage: $0 {run|device|build|xcode|lint|format}"
+	echo "Usage: $0 {run|device|logs|build|xcode|lint|format}"
 	echo ""
 	echo "  run    - generate + build + install + launch on a simulator, then stream logs"
 	echo "  device - same, on a physical iPhone (needs Developer Mode and a signing team)"
+	echo "  logs   - relaunch on a physical iPhone and stream the SDK log output"
 	echo "  build  - compile-only typecheck (Swift 6 strict concurrency), no simulator"
 	echo "  xcode  - regenerate the project and open it in Xcode"
 	echo "  lint   - swift-format lint (strict), no simulator"
