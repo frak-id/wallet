@@ -9,7 +9,8 @@
     @MainActor
     final class SharingPresentation {
         let model: SharingSheetModel
-        let webView: SharingWebView
+        /// Swapped when recovery rebuilds the engine, so the sheet presents the new one.
+        private(set) var webView: SharingWebView
 
         private let pool: SharingWebViewPool
         private var preparation: Task<Void, Never>?
@@ -112,26 +113,33 @@
             model.onOutcome = onOutcome
             model.onClose = onClose
 
-            webView.bind(
+            let binding = { [weak model] in
                 SharingWebViewBinding(
                     sessionId: sessionId,
-                    onAction: { [weak model] in model?.onPageAction($0) },
-                    onPageReady: { [weak model] in
+                    onAction: { model?.onPageAction($0) },
+                    onPageReady: {
                         trace.mark("document finished")
                         model?.onPageReady()
                     },
-                    onLoadFailed: { [weak model] in
+                    onLoadFailed: {
                         trace.mark("load FAILED")
                         model?.onPageUnavailable()
                     },
-                    onOpenExternal: { [weak model] in model?.openExternally($0) }
+                    onOpenExternal: { model?.openExternally($0) }
                 )
-            )
+            }
+            webView.bind(binding())
 
             // Attach before start: whichever finishes second issues the navigation.
             model.attach(webView)
 
             let presentation = SharingPresentation(model: model, webView: webView, pool: pool)
+            // The same binding: the fresh engine reports to this session, not a warm one.
+            model.onRebuildEngine = { [weak presentation] in
+                guard let presentation, let rebuilt = pool.rebuild(binding()) else { return nil }
+                presentation.webView = rebuilt
+                return rebuilt
+            }
             presentation.preparation = Task { await model.start(request) }
             return presentation
         }

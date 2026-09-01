@@ -158,6 +158,10 @@ func isFetchableShareImageURL(_ url: URL) -> Bool {
     if let address = IPv4Address(host) { return !address.isPrivateOrLinkLocal }
     // An IPv6 literal keeps its brackets in some `URL.host` paths and loses them in others.
     if host.contains(":") || host.hasPrefix("[") { return !isPrivateIPv6Literal(host) }
+    // A single-label host is a LAN name (`router`, `intranet`) or a search-domain completion,
+    // never a public one. https-only makes it hard to exploit, not safe to allow.
+    guard host.contains(".") else { return false }
+    if host.hasSuffix(".home.arpa") || host.hasSuffix(".lan") { return false }
     return true
 }
 
@@ -318,6 +322,51 @@ func sharingDecision(
         let navigation = session.navigation(confirmed: false, currentBaseURL: currentBaseURL)
     else { return .nativeShare(session) }
     return .showPage(navigation)
+}
+
+/// What an expired activation budget should do.
+enum SharingExpiry: Equatable {
+    /// Load the page again: the activated document never reported itself alive.
+    case recover
+    /// Recovery already ran and the page still never reported. Tier 3 owns it now.
+    case fallBack
+    case doNothing
+}
+
+/// What an expired budget should do with a page that never reported itself alive.
+///
+/// `pageReported` is the page's own `action=ready`, never `didFinish`: a reclaimed renderer still
+/// completes its navigation, so the engine's word cannot separate a live document from a blank
+/// one. That holds for a full load as much as an activation, so both routes recover.
+func sharingExpiry(
+    pageReported: Bool,
+    recoveryAttempted: Bool,
+    showingInstallPage: Bool,
+    fellBack: Bool,
+    closed: Bool
+) -> SharingExpiry {
+    if fellBack || closed || pageReported { return .doNothing }
+    // The install page is a different document; its own load failure path owns it.
+    if showingInstallPage { return .doNothing }
+    return recoveryAttempted ? .fallBack : .recover
+}
+
+/// Whether an activation should arm the watchdog.
+///
+/// The page emits `ready` from an effect keyed on `warm`/`sid`, so only the first activation off
+/// the warm document produces a report to wait for. Watching a later one — a confirmation, a
+/// `shareAgain` — would strand a budget nothing can clear, and recover over the user's page.
+func sharingShouldWatchActivation(
+    sessionActivated: Bool,
+    pageReported: Bool,
+    showingInstallPage: Bool,
+    fellBack: Bool,
+    closed: Bool
+) -> Bool {
+    if sessionActivated || pageReported { return false }
+    // The install page is a different document with no `ready` of its own.
+    if showingInstallPage || fellBack || closed { return false }
+    return true
 }
 
 /// Where a link the hosted page handed out should go.
@@ -499,6 +548,9 @@ private func sharingPageJSONNumber(_ value: Double) -> NSDecimalNumber? {
 /// Waits between attempts at building the session, when the failure looks transient: the build is
 /// the only step with no fallback, and a throwing one closes the sheet outright.
 let sharingBuildRetryDelays: [TimeInterval] = [0.25, 0.75]
+
+/// Tap-to-content budget for a full load, timed from the tap. Must stay above the ladder above.
+let sharingPageLoadDeadline: TimeInterval = 2
 
 /// Whether a failed session build is worth another attempt.
 ///

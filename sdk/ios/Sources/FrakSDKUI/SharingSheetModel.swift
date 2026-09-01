@@ -12,10 +12,14 @@
     /// after the OS chooser, confirm after that, never fall back twice.
     @MainActor
     final class SharingSheetModel: ObservableObject {
-        /// Tap-to-content budget, timed from the tap, so it has to cover the build too. Sized for a
-        /// full load, not a warm activation: warming is usually still in flight at the tap, so the
-        /// common case is the slow one. `SharingWebView`'s retry ladder fits inside this.
-        static let pageLoadDeadline: TimeInterval = 5
+        /// The tap-to-content budget lives in `SharingSheetLogic.swift`, beside the retry ladder
+        /// it must outlast, so one host-run test can compare the two.
+        static let pageLoadDeadline = sharingPageLoadDeadline
+        /// How long an activated document has to report itself alive. Far below
+        /// `pageLoadDeadline`, which is sized for a full load: an activation is the fast path, and
+        /// spending five seconds before recovery even starts would blow the tap-to-content budget.
+        /// Above `FrakSharingSheet`'s 0.4s paint grace and a mounted page's two frames.
+        static let activationDeadline: TimeInterval = 1
         // `sharingBuildRetryDelays` and `sharingBuildIsWorthRetrying` live in SharingSheetLogic
         // .swift, outside this `#if`, so the ladder has a host-run test.
         nonisolated static let seedTimeout: TimeInterval = 0.04
@@ -50,6 +54,9 @@
         /// Every outcome as it happens; the caller keeps the most significant.
         var onOutcome: ((SharingResult) -> Void)?
         var onClose: (() -> Void)?
+        /// Swaps in a fresh engine, for the document a reload cannot bring back. Set by
+        /// `SharingPresentation`, which owns the pool.
+        var onRebuildEngine: (() -> SharingWebView?)?
 
         private let sessionId: String
         private let trace: SharingTrace
@@ -77,7 +84,8 @@
         private let metadataLang: @Sendable () -> FrakLanguage?
         private let imageCache: SharingImagePreviewCache
 
-        private var webView: SharingWebView?
+        /// Published: recovery can swap the engine, and the sheet has to present the new one.
+        @Published private(set) var webView: SharingWebView?
         private var session: SharingSession?
         private var deadline: Task<Void, Never>?
         private var started = false
@@ -88,6 +96,16 @@
         /// one share could queue two `sharing` interactions.
         private var fellBack = false
         private var deadlineExpired = false
+        /// The page's own `action=ready`. Distinct from `page`, which `didFinish` and the
+        /// activation both advance: only this says a document exists to talk to.
+        private var pageReported = false
+        /// Set when the activation watchdog is armed, so its expiry is told apart from the
+        /// tap-to-content deadline's.
+        private var activationArmed = false
+        private var recoveryAttempted = false
+        /// Whether this session has already activated once. The page reports `ready` on the
+        /// warm-to-live transition only, so later activations have no report to wait for.
+        private var sessionActivated = false
         /// The page's buttons that are mid-round-trip. The footer stays enabled throughout, so
         /// without this a second tap stacks a second chooser, bills a second reward-bearing
         /// interaction, or races two install pages on the one shared web view. A set, matching
@@ -261,7 +279,9 @@
             // Never backwards: an already-painted page that reports its document finished, or a
             // renderer crash the sheet has already covered, must not be uncovered again.
             if page == .loading { page = .documentReady }
-            settleContent()
+            // Deliberately does not settle: this arrives from `didFinish`, which a reclaimed
+            // renderer still delivers over an empty document. Only `onPageAction` — the page
+            // speaking for itself — clears a budget, on the cold path as much as the warm one.
         }
 
         func onPageVisible() {
@@ -307,10 +327,12 @@
         }
 
         func onPageAction(_ action: SharingPageAction) {
-            // A user driving the page proves it both arrived and drew, whatever WebKit reported —
-            // a fragment activation is same-document, so there is no `didFinish` for a warm page
-            // the user is already sharing from. Without this the deadline can elapse behind an
-            // accepted chooser and raise a second one. `.error` is the page saying it drew nothing.
+            // Any action reached this host from inside the document — the proof `didFinish`
+            // cannot give, and it settles both budgets. `.error` counts: the page ran enough to
+            // say it drew nothing, so reloading would only repeat that. Without the settle, a
+            // deadline can elapse behind an accepted chooser and raise a second one.
+            pageReported = true
+            activationArmed = false
             settleContent()
             if action != .error { onPageVisible() }
             switch action {
@@ -482,8 +504,39 @@
         private func navigateNow(_ webView: SharingWebView, _ navigation: SharingNavigation) {
             webView.navigate(navigation)
             // Only a finished document can be activated, so tap-to-content is already met.
-            // `onPageVisible` is not called: paint stays the page's word.
-            if case .activate = navigation { onPageReady() }
+            // Only the first activation off the warm document is watched. The page emits `ready`
+            // from an effect keyed on `warm`/`sid` (`useHostBridge.ts`), so a later same-session
+            // activation — a confirmation, a `shareAgain` — re-runs nothing and would strand a
+            // watchdog nobody can clear.
+            if case .activate = navigation {
+                let watch = sharingShouldWatchActivation(
+                    sessionActivated: sessionActivated,
+                    pageReported: pageReported,
+                    showingInstallPage: showingInstallPage,
+                    fellBack: fellBack,
+                    closed: closed
+                )
+                sessionActivated = true
+                onPageReady()
+                // After `onPageReady`: it settles the budget it just met, which would cancel a
+                // watchdog armed any earlier.
+                if watch { armActivationWatchdog() }
+            }
+        }
+
+        /// Gives the activated document its own budget to report `action=ready`.
+        ///
+        /// The engine cannot answer this: a reclaimed content process still completes its
+        /// navigation, so `didFinish` arrives for a document with no page in it.
+        private func armActivationWatchdog() {
+            // Never two live budgets: an orphan would recover and fall back on its own.
+            deadline?.cancel()
+            activationArmed = true
+            deadline = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(Self.activationDeadline * 1_000_000_000))
+                guard !Task.isCancelled else { return }
+                self?.onDeadline()
+            }
         }
 
         /// The install page URL, carrying `sid`/`probe` in its fragment. Starts the probe as a
@@ -529,11 +582,13 @@
 
         /// How the page gets where it is going next, preferring a same-document activation over
         /// loading it again. Every navigation this sheet makes goes through here, not just the first.
-        private func pageNavigation(confirmed: Bool) -> SharingNavigation? {
+        private func pageNavigation(confirmed: Bool, recovering: Bool = false) -> SharingNavigation? {
             session?.navigation(
                 confirmed: confirmed,
                 // Not the view's own tracked value: only this model knows where it navigated the view.
-                currentBaseURL: showingInstallPage ? nil : activationBaseURL
+                // A recovery passes nil so the session yields a full load: the document it would
+                // otherwise activate on is the one that never reported.
+                currentBaseURL: (showingInstallPage || recovering) ? nil : activationBaseURL
             )
         }
 
@@ -658,6 +713,13 @@
         }
 
         private func onDeadline() {
+            // Any page that never spoke for itself is routed by `sharingExpiry`, warm or cold.
+            // `sharingDecision` cannot answer this: `didFinish` makes `pageLoaded` true, and it
+            // returns `.doNothing` for every loaded page — including a blank one.
+            if !pageReported, session != nil {
+                onActivationDeadline()
+                return
+            }
             switch sharingDecision(
                 session: session,
                 deadlineExpired: true,
@@ -673,6 +735,51 @@
             case .showPage:
                 // Unreachable: `deadlineExpired: true` above never yields a page.
                 return
+            }
+        }
+
+        /// The document never reported `action=ready`: load its page again, and on a second
+        /// silence hand the share to tier 3. Warm or cold — `didFinish` lies on both.
+        private func onActivationDeadline() {
+            activationArmed = false
+            switch sharingExpiry(
+                pageReported: pageReported,
+                recoveryAttempted: recoveryAttempted,
+                showingInstallPage: showingInstallPage,
+                fellBack: fellBack,
+                closed: closed
+            ) {
+            case .recover:
+                guard let navigation = pageNavigation(confirmed: false, recovering: true) else {
+                    deadlineExpired = true
+                    return
+                }
+                recoveryAttempted = true
+                // A fresh engine, not a reload: a content process reclaimed without its
+                // termination callback still answers and still reports `didFinish`, with no
+                // document behind it. Re-navigating that view returns to the same nothing.
+                let engine = onRebuildEngine?()
+                if let engine {
+                    webView = engine
+                    trace.mark("page went silent — rebuilding the engine")
+                } else {
+                    trace.mark("page went silent — reloading it")
+                }
+                guard let target = webView else {
+                    deadlineExpired = true
+                    return
+                }
+                target.navigate(navigation)
+                armActivationWatchdog()
+            case .fallBack:
+                guard let session else {
+                    deadlineExpired = true
+                    return
+                }
+                trace.mark("recovery went silent — falling back")
+                Task { await fallBack(to: session) }
+            case .doNothing:
+                deadlineExpired = true
             }
         }
 

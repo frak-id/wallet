@@ -119,7 +119,7 @@
 
         /// A plausible viewport for a view that is not in a window yet. The constant is a
         /// mid-range iPhone; only its non-degeneracy matters, since the sheet resizes the view.
-        private static func warmFrame() -> CGRect {
+        static func warmFrame() -> CGRect {
             let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
             return scene?.screen.bounds ?? CGRect(x: 0, y: 0, width: 390, height: 844)
         }
@@ -454,7 +454,13 @@
             return webView.view
         }
 
-        func updateUIView(_ uiView: WKWebView, context: Context) {}
+        /// Sizes the engine to the host SwiftUI gave it: the view is pooled, so it arrives
+        /// carrying whatever frame and autoresizing state its last presentation left it.
+        func updateUIView(_ uiView: WKWebView, context: Context) {
+            uiView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            guard let host = uiView.superview, uiView.frame != host.bounds else { return }
+            uiView.frame = host.bounds
+        }
 
         static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
             coordinator.onDismantled()
