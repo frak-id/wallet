@@ -198,6 +198,57 @@ class SharingWebViewClientTest {
     }
 
     @Test
+    fun `a share action carries the page's title and text`() {
+        val (view, h) = harness()
+        view.client.shouldOverrideUrlLoading(
+            view,
+            request(
+                "$RETURN_SCHEME://${SharingPageUrl.RESULT_HOST}" +
+                    "?action=share&title=Kettle+deal&text=Grab+it%21&sid=$SESSION_ID",
+            ),
+        )
+
+        assertEquals(listOf(SharingPageAction.Share(title = "Kettle deal", text = "Grab it!")), h.actions)
+    }
+
+    @Test
+    fun `a share action with no payload still delivers, with null title and text`() {
+        val (view, h) = harness()
+        view.client.shouldOverrideUrlLoading(
+            view,
+            request("$RETURN_SCHEME://${SharingPageUrl.RESULT_HOST}?action=share&sid=$SESSION_ID"),
+        )
+
+        assertEquals(listOf(SharingPageAction.Share(title = null, text = null)), h.actions)
+    }
+
+    @Test
+    fun `an empty share title or text decodes to null, not a blank string`() {
+        val (view, h) = harness()
+        view.client.shouldOverrideUrlLoading(
+            view,
+            request("$RETURN_SCHEME://${SharingPageUrl.RESULT_HOST}?action=share&title=&text=&sid=$SESSION_ID"),
+        )
+
+        assertEquals(listOf(SharingPageAction.Share(title = null, text = null)), h.actions)
+    }
+
+    @Test
+    fun `a share action ignores an image param entirely`() {
+        // Android ships no preview thumbnail, so `image` must not reach the actions at all.
+        val (view, h) = harness()
+        view.client.shouldOverrideUrlLoading(
+            view,
+            request(
+                "$RETURN_SCHEME://${SharingPageUrl.RESULT_HOST}" +
+                    "?action=share&title=Kettle&image=https%3A%2F%2Fcdn.example.com%2Fp.png&sid=$SESSION_ID",
+            ),
+        )
+
+        assertEquals(listOf(SharingPageAction.Share(title = "Kettle", text = null)), h.actions)
+    }
+
+    @Test
     fun `a sub-frame cannot hand the host an install code`() {
         val (view, h) = harness()
         view.client.shouldOverrideUrlLoading(

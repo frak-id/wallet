@@ -17,6 +17,14 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
 
 ### Fixed
 
+- **A share no longer opens a permanently blank sheet.** WebKit can reclaim the sharing web
+  view's content process while it sits off-screen, and does so without calling
+  `webViewWebContentProcessDidTerminate`, so the view kept reporting a finished document that no
+  longer existed. The sheet now waits for the page's own signal rather than the engine's, and
+  replaces the web view — a reload cannot revive a reclaimed process. A share that still cannot
+  reach the page falls through to the OS share sheet, which keeps the link, the attribution and
+  the rich preview.
+
 - **The install code no longer lands on the pasteboard unprotected.** The install page wrote it
   too, and that plain write landed after the SDK's `localOnly` + `expirationDate` one, replacing
   it. The install URL now carries `clip=host`, telling the page the SDK owns the pasteboard. An

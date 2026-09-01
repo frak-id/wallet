@@ -112,6 +112,12 @@ internal class DefaultFrakClient(
 
     val environment: FrakEnvironment get() = settings.env
 
+    /** The merchant-supplied build-time name, for the sharing sheet's tier-3 fallback copy. */
+    val metadataName: String? get() = settings.metadata.name
+
+    /** The merchant-supplied build-time language, for the same copy. */
+    val metadataLang: FrakLanguage? get() = settings.metadata.lang
+
     /** Suspend because the first read may mint a keypair. */
     suspend fun anonymousId(): String? = identity.anonymousId()
 

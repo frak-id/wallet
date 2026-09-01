@@ -1,3 +1,4 @@
+import Foundation
 @_spi(FrakInternal) import FrakSDK
 import Testing
 
@@ -155,6 +156,64 @@ struct SharingPageURLTests {
         #expect(!fragment.contains("&seedReward="))
         // Absent, not `confirmed=0`: the page reads presence, and this is the pre-share step.
         #expect(!fragment.contains("confirmed"))
+    }
+
+    @Test("an over-budget share override is capped before it reaches the url")
+    func shareOverridesAreCappedOnTheWayOut() throws {
+        let url = SharingPageURL.build(
+            walletOrigin: "https://wallet.frak.id",
+            merchantId: "m",
+            clientId: "c",
+            bundleId: "com.acme.app",
+            sessionId: "session-1",
+            shareTitle: String(repeating: "t", count: 400),
+            shareText: String(repeating: "b", count: 400)
+        )
+        let components = try #require(URLComponents(string: url))
+        let items = components.queryItems ?? []
+        let title = try #require(items.first { $0.name == "shareTitle" }?.value)
+        let text = try #require(items.first { $0.name == "shareText" }?.value)
+        #expect(title.utf16.count <= shareTitleLimit)
+        #expect(text.utf16.count <= shareTextLimit)
+        #expect(title.hasSuffix("…"))
+        #expect(text.hasSuffix("…"))
+    }
+
+    @Test("a non-https share image is dropped rather than sent for the page to reject")
+    func nonHTTPSShareImageIsDropped() {
+        let url = SharingPageURL.build(
+            walletOrigin: "https://wallet.frak.id",
+            merchantId: "m",
+            clientId: "c",
+            bundleId: "com.acme.app",
+            sessionId: "session-1",
+            shareImageURL: "http://cdn.example.com/p.png"
+        )
+        #expect(!url.contains("shareImage"))
+    }
+
+    @Test("a blank share override is absent, not an empty parameter")
+    func blankShareOverrideIsOmitted() {
+        let fragment = SharingPageURL.activationFragment(
+            sessionId: "session-1",
+            shareTitle: "   ",
+            shareText: "",
+            shareImageURL: "  "
+        )
+        #expect(fragment == "#sid=session-1&state=live")
+    }
+
+    @Test("the activation fragment caps its share overrides too")
+    func activationFragmentCapsShareOverrides() throws {
+        let fragment = SharingPageURL.activationFragment(
+            sessionId: "session-1",
+            shareText: String(repeating: "b", count: 400)
+        )
+        let query = String(fragment.dropFirst())
+        let components = try #require(URLComponents(string: "https://x.example/?" + query))
+        let text = try #require(components.queryItems?.first { $0.name == "shareText" }?.value)
+        #expect(text.utf16.count <= shareTextLimit)
+        #expect(text.hasSuffix("…"))
     }
 
     @Test("every activation fragment starts a new session")

@@ -6,6 +6,7 @@ import { trackEvent } from "../../common/analytics";
 import {
     type SharingOutcomes,
     type SharingPageControllerInput,
+    type SharingResolvedShareData,
     useSharingPageController,
 } from "./useSharingPageController";
 
@@ -23,12 +24,16 @@ vi.mock("../../common/hook/useFormattedEstimatedReward", () => ({
 }));
 
 const triggerSharing = vi.fn();
+let lastShareLinkArgs: unknown[] = [];
 vi.mock("./useShareLink", () => ({
-    useShareLink: () => ({
-        mutate: triggerSharing,
-        isPending: false,
-        canShare: false,
-    }),
+    useShareLink: (...args: unknown[]) => {
+        lastShareLinkArgs = args;
+        return {
+            mutate: triggerSharing,
+            isPending: false,
+            canShare: false,
+        };
+    },
 }));
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
@@ -461,5 +466,205 @@ describe("the copied event", () => {
         );
         expect(recordSharing).not.toHaveBeenCalled();
         expect(result.current.view).toBe("share");
+    });
+});
+
+describe("share payload precedence", () => {
+    it("keeps today's copy byte-for-byte with no products and no overrides", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup({ share });
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({
+                title: "sharing.title",
+                text: "sharing.text",
+            })
+        );
+    });
+
+    it("prefers the per-call override over everything else", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup(
+            { share },
+            {
+                shareTitle: "Custom title",
+                shareText: "Custom text",
+                shareImage: "https://cdn.example.com/custom.png",
+                products: [
+                    {
+                        title: "Kettle",
+                        link: "https://acme.example/k",
+                        imageUrl: "https://cdn.example.com/kettle.png",
+                    },
+                ],
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({
+                title: "Custom title",
+                text: "Custom text",
+                imageUrl: "https://cdn.example.com/custom.png",
+            })
+        );
+    });
+
+    it("falls to the selected product when there is no per-call override", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup(
+            { share },
+            {
+                products: [
+                    {
+                        title: "Kettle",
+                        link: "https://acme.example/k",
+                        imageUrl: "https://cdn.example.com/kettle.png",
+                    },
+                ],
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({
+                title: "Kettle",
+                imageUrl: "https://cdn.example.com/kettle.png",
+            })
+        );
+    });
+
+    it("falls to the merchant logo when neither an override nor a product supplies an image", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup(
+            { share },
+            {
+                merchant: {
+                    name: "Acme",
+                    logoUrl: "https://cdn.example.com/logo.png",
+                },
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({
+                imageUrl: "https://cdn.example.com/logo.png",
+            })
+        );
+    });
+
+    it("treats an empty-string override as no override, not a blank value", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup(
+            { share },
+            {
+                shareTitle: "",
+                products: [{ title: "Kettle", link: "https://acme.example/k" }],
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({ title: "Kettle" })
+        );
+    });
+
+    it("passes the same precedence into the local useShareLink path", () => {
+        setup({}, { shareTitle: "Custom title", shareText: "Custom text" });
+
+        const [, shareData] = lastShareLinkArgs as [
+            unknown,
+            { title: string; text: string },
+        ];
+        expect(shareData.title).toBe("Custom title");
+        expect(shareData.text).toBe("Custom text");
+    });
+});
+
+describe("share payload sanitization", () => {
+    it("strips bidi overrides and control characters from a product title", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup(
+            { share },
+            {
+                products: [
+                    {
+                        title: "Kett\u202Ele\u0007r",
+                        link: "https://acme.example/k",
+                    },
+                ],
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({ title: "Kettler" })
+        );
+    });
+
+    it("clips an over-budget product title to the wire budget", () => {
+        const share = vi.fn((_data: SharingResolvedShareData) => true);
+        const { result } = setup(
+            { share },
+            {
+                products: [
+                    { title: "a".repeat(300), link: "https://acme.example/k" },
+                ],
+            }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        const { title } = share.mock.calls[0][0];
+        expect(title.length).toBe(120);
+        expect(title.endsWith("…")).toBe(true);
+    });
+
+    it("flattens a blank line in a title to a single space", () => {
+        const share = vi.fn(() => true);
+        const { result } = setup({ share }, { shareTitle: "A\n\n\nB" });
+
+        act(() => result.current.actions.onShare());
+
+        expect(share).toHaveBeenCalledWith(
+            expect.objectContaining({ title: "A B" })
+        );
+    });
+
+    it("drops a product image that is not a safe https URL", () => {
+        const share = vi.fn(() => true);
+        for (const imageUrl of [
+            "http://cdn.example.com/x.png",
+            "javascript:alert(1)",
+            "https://192.168.1.1/x.png",
+        ]) {
+            share.mockClear();
+            const { result } = setup(
+                { share },
+                {
+                    products: [
+                        {
+                            title: "Kettle",
+                            link: "https://acme.example/k",
+                            imageUrl,
+                        },
+                    ],
+                }
+            );
+
+            act(() => result.current.actions.onShare());
+
+            expect(share).toHaveBeenCalledWith(
+                expect.objectContaining({ imageUrl: undefined })
+            );
+        }
     });
 });

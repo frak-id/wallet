@@ -1,5 +1,6 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { openExternalUrl } from "@frak-labs/wallet-shared/common/utils/openExternalUrl";
+import { translationKeyPathToObject } from "@frak-labs/wallet-shared/common/utils/translationKeyPathToObject";
 import {
     buildInstallUrl,
     SharingPage,
@@ -66,11 +67,14 @@ export function SharingView({
         sid,
         sdkVersion,
         seedReward,
+        shareTitle,
+        shareText,
+        shareImage,
         state,
         view,
     } = { ...search, ...activation };
 
-    const { t: rawT } = useTranslation();
+    const { i18n } = useTranslation();
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
 
     const embedded = isHostEmbedded(embed);
@@ -91,6 +95,35 @@ export function SharingView({
 
     // Branding falls back to the merchant config unless the caller overrode it.
     const { data: config } = useMerchantResolvedConfig({ merchantId });
+
+    // Merged into a clone, never the shared instance: `addResourceBundle` deep-merges
+    // into a page-lifetime singleton, so one merchant's overrides would outlive them and
+    // land on the next. Building it during render also keeps `t` in step with the config,
+    // which a store mutation would not — nothing re-renders on one.
+    const t = useMemo(() => {
+        const lng = i18n.resolvedLanguage ?? i18n.language;
+        const translations = config?.sdkConfig?.translations;
+        if (!translations || Object.keys(translations).length === 0) {
+            return i18n.getFixedT(lng, null);
+        }
+        const scoped = i18n.cloneInstance({
+            lng,
+            // Without this the clone shares the parent's store and the merge is still global.
+            forkResourceStore: true,
+            // Nothing to fetch once the store is forked: init synchronously rather than
+            // racing an async init queued behind this render.
+            initAsync: false,
+            partialBundledLanguages: false,
+        });
+        scoped.addResourceBundle(
+            lng,
+            "customized",
+            translationKeyPathToObject(translations),
+            true,
+            true
+        );
+        return scoped.getFixedT(lng, null);
+    }, [config?.sdkConfig?.translations, i18n, i18n.resolvedLanguage]);
 
     // Neither credential travels from here: this page has no SDK keypair, so
     // it can sign no `#p=` proof, and an unprovable `a=` is refused once
@@ -117,6 +150,9 @@ export function SharingView({
         },
         defaultAttribution: config?.sdkConfig?.attribution ?? undefined,
         seedReward,
+        shareTitle,
+        shareText,
+        shareImage,
         source: "sharing_page_wallet",
         installUrl,
         chrome: embedded ? { mode: "none" } : { mode: "full" },
@@ -124,11 +160,16 @@ export function SharingView({
         warm,
         sdkVersion,
         canHandOff,
-        t: rawT,
+        t,
         outcomes: {
             // Handed to the SDK: `navigator.share` does not exist in an Android
             // WebView, and the interaction has to be signed by the SDK keypair.
-            share: () => returnToHost("share"),
+            share: (data) =>
+                returnToHost("share", {
+                    title: data.title || undefined,
+                    text: data.text || undefined,
+                    image: data.imageUrl,
+                }),
             // Same reason, but the page carries on afterwards: a host does not
             // re-present it for a copy.
             copy: () => returnToHost("copy"),

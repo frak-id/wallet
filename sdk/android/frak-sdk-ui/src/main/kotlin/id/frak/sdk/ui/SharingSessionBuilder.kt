@@ -1,6 +1,7 @@
 package id.frak.sdk.ui
 
 import id.frak.sdk.core.FrakError
+import id.frak.sdk.core.FrakLanguage
 import id.frak.sdk.sharing.SharingRequest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
@@ -72,16 +73,19 @@ internal class SharingSessionBuilder(
 
         val walletOrigin = dependencies.environment().wallet
         val returnScheme = SharingPageUrl.returnScheme(packageId)
+        // Resolved before the config call so a session that does have a page still degrades to
+        // localised copy when that page never loads. The page's own payload wins whenever it arrives.
+        val fallback = tier3ShareCopy(request)
         val merchant =
             try {
                 dependencies.resolveConfig()
             } catch (resolveFailed: FrakError) {
-                // Tier 3: the link stands alone. A no-page session, not a failed one.
                 return SharingBuild.Ready(
                     SharingSession(
                         returnScheme = returnScheme,
                         link = link,
-                        shareTitle = null,
+                        shareTitle = fallback.title,
+                        shareText = fallback.text,
                         pageUrl = null,
                     ),
                 )
@@ -93,11 +97,17 @@ internal class SharingSessionBuilder(
         val requestLogoUrl = request.logoUrl
         val pageLink = request.link ?: request.products.firstOrNull()?.link
         val products = productsJson(request)
+        // Blank is absent on the wire: an empty value would erase whatever the warm URL carries.
+        val shareTitle = request.shareTitle?.takeIf { it.isNotBlank() }
+        val shareText = request.shareText?.takeIf { it.isNotBlank() }
+        val shareImage = request.shareImageUrl?.takeIf { it.isNotBlank() }
         return SharingBuild.Ready(
             SharingSession(
                 returnScheme = returnScheme,
                 link = link,
-                shareTitle = appName,
+                // Only read if the page never loads; otherwise the page reports its own copy.
+                shareTitle = fallback.title,
+                shareText = fallback.text,
                 pageUrl =
                     SharingPageUrl.build(
                         walletOrigin = walletOrigin,
@@ -111,6 +121,9 @@ internal class SharingSessionBuilder(
                         products = products,
                         seededReward = seededReward,
                         language = language,
+                        shareTitle = shareTitle,
+                        shareText = shareText,
+                        shareImage = shareImage,
                     ),
                 // Rebuilt from the same resolved config as pageUrl. If the pool warmed against
                 // anything else the strings differ, and the session does a full load instead of
@@ -134,6 +147,9 @@ internal class SharingSessionBuilder(
                         // the config's own logo.
                         logoUrl = requestLogoUrl,
                         seededReward = seededReward,
+                        shareTitle = shareTitle,
+                        shareText = shareText,
+                        shareImage = shareImage,
                     ),
             ),
         )
@@ -154,6 +170,42 @@ internal class SharingSessionBuilder(
             }
         }
     }
+
+    /** Per-call override, then the first product's title, then a built-in default. Never reads `sdkConfig`. */
+    private fun tier3ShareCopy(request: SharingRequest): Tier3ShareCopy {
+        val defaults = Tier3Defaults.forLang(dependencies.metadataLang())
+        val name = dependencies.metadataName()?.takeIf { it.isNotBlank() }
+        // Interpolated over the winner: a merchant may put the placeholder in their own override.
+        val title =
+            interpolateProductName(
+                request.shareTitle?.takeIf { it.isNotBlank() }
+                    ?: request.products
+                        .firstOrNull()
+                        ?.title
+                        ?.takeIf { it.isNotBlank() }
+                    ?: defaults.title,
+                name,
+            )
+        val text = interpolateProductName(request.shareText?.takeIf { it.isNotBlank() } ?: defaults.text, name)
+        return Tier3ShareCopy(title = title, text = text)
+    }
+
+    /** Drops the placeholder when there is no name, closing the gap it leaves so "Discover !" cannot happen. */
+    private fun interpolateProductName(
+        template: String,
+        productName: String?,
+    ): String {
+        if (productName != null) return template.replace(PRODUCT_NAME_PLACEHOLDER, productName)
+        return template
+            .replace(PLACEHOLDER_BEFORE_PUNCTUATION, "")
+            .replace(PLACEHOLDER_WITH_PADDING, " ")
+            .trim()
+    }
+
+    private class Tier3ShareCopy(
+        val title: String,
+        val text: String,
+    )
 
     /**
      * Null rather than `[]` when empty — the page skips the card section on null and renders an
@@ -186,11 +238,43 @@ internal class SharingSessionBuilder(
     /** Null for NaN/Infinity, which [JSONObject.put] rejects outright. */
     private fun Double?.finiteOrNull(): Double? = this?.takeIf { it.isFinite() }
 
+    /** Bundled defaults mirroring the wallet's `sharing.title`/`sharing.text`; kept in step by hand. */
+    private object Tier3Defaults {
+        fun forLang(lang: FrakLanguage?): Tier3ShareCopy =
+            when (lang) {
+                FrakLanguage.FR -> {
+                    Tier3ShareCopy(
+                        title = "Lien d'invitation $PRODUCT_NAME_PLACEHOLDER",
+                        text = "Découvrez ce produit incroyable !",
+                    )
+                }
+
+                FrakLanguage.EN, null -> {
+                    Tier3ShareCopy(
+                        title = "$PRODUCT_NAME_PLACEHOLDER invite link",
+                        text = "Discover this amazing product!",
+                    )
+                }
+            }
+    }
+
     private companion object {
         /** Sized for a cache hit and nothing more; a miss needs the network, which the page does itself. */
         const val SEED_TIMEOUT_MILLIS = 40L
 
         /** Hard ceiling on a build. A liveness backstop, sized never to fire on a merely slow device. */
         const val BUILD_DEADLINE_MILLIS = 8_000L
+
+        const val PRODUCT_NAME_PLACEHOLDER = "{{productName}}"
+
+        /**
+         * Only the placeholder's own seam is rewritten. Padding is dropped outright before
+         * punctuation ("Buy , now"), and collapses to one space anywhere else — a blanket
+         * space-before-punctuation rule would eat the French default's own " !".
+         */
+        val PLACEHOLDER_BEFORE_PUNCTUATION =
+            Regex("\\s*" + Regex.escape(PRODUCT_NAME_PLACEHOLDER) + "\\s*(?=[,.!?;:])")
+
+        val PLACEHOLDER_WITH_PADDING = Regex("\\s*" + Regex.escape(PRODUCT_NAME_PLACEHOLDER) + "\\s*")
     }
 }

@@ -428,8 +428,118 @@ struct SharingBuildRetryTests {
     @Test("the ladder fits inside the tap-to-content deadline")
     func ladderFitsInsideTheDeadline() {
         // Otherwise the last attempt lands after the deadline has already raised the OS chooser,
-        // and the sheet holds a skeleton over a share that has moved on without it.
-        #expect(sharingBuildRetryDelays.reduce(0, +) < 5)
+        // and the sheet holds a skeleton over a share that has moved on without it. Read from the
+        // constant, not a literal: tuning the budget must not silently outrun the ladder.
+        #expect(sharingBuildRetryDelays.reduce(0, +) < sharingPageLoadDeadline)
         #expect(sharingBuildRetryDelays.allSatisfy { $0 > 0 })
+    }
+}
+
+@Suite("sharing activation expiry")
+struct SharingExpiryTests {
+    private static func expiry(
+        pageReported: Bool = false,
+        recoveryAttempted: Bool = false,
+        showingInstallPage: Bool = false,
+        fellBack: Bool = false,
+        closed: Bool = false
+    ) -> SharingExpiry {
+        sharingExpiry(
+            pageReported: pageReported,
+            recoveryAttempted: recoveryAttempted,
+            showingInstallPage: showingInstallPage,
+            fellBack: fellBack,
+            closed: closed
+        )
+    }
+    @Test("an activation the page never reported recovers")
+    func silentActivationRecovers() {
+        #expect(Self.expiry() == .recover)
+    }
+
+    @Test("a page that reported ready is left alone")
+    func reportedPageIsLeftAlone() {
+        // `didFinish` never reaches this predicate: only the page's own report clears it.
+        #expect(Self.expiry(pageReported: true) == .doNothing)
+        #expect(Self.expiry(pageReported: true, recoveryAttempted: true) == .doNothing)
+    }
+
+    @Test("a recovery that also went silent falls back")
+    func silentRecoveryFallsBack() {
+        #expect(Self.expiry(recoveryAttempted: true) == .fallBack)
+    }
+
+    @Test("a cold load that never reports is recovered too")
+    func coldLoadIsRecovered() {
+        // Observed on device: a third share opened a COLD view, `didFinish` arrived over an
+        // empty document at 60ms, and the sheet stranded with no budget left. `didFinish` lies
+        // on a full load exactly as it does on an activation, so both routes recover.
+        #expect(Self.expiry() == .recover)
+        #expect(Self.expiry(recoveryAttempted: true) == .fallBack)
+    }
+
+    @Test("the install page is left to its own failure path")
+    func installPageIsLeftAlone() {
+        #expect(Self.expiry(showingInstallPage: true) == .doNothing)
+    }
+
+    @Test("a settled session never recovers behind the user's back")
+    func settledSessionNeverRecovers() {
+        #expect(Self.expiry(fellBack: true) == .doNothing)
+        #expect(Self.expiry(closed: true) == .doNothing)
+        #expect(Self.expiry(recoveryAttempted: true, closed: true) == .doNothing)
+    }
+
+    @Test("each activation gets its own recovery, not one per session")
+    func recoveryBudgetIsPerActivation() {
+        // `shareAgain` and the install return both activate a different document. Carrying the
+        // session's spent budget into them would leave the next one with no recovery at all —
+        // the same silent-renderer hole this predicate exists to close.
+        #expect(Self.expiry(recoveryAttempted: false) == .recover)
+        #expect(Self.expiry(recoveryAttempted: true) == .fallBack)
+    }
+}
+
+@Suite("sharing activation watch")
+struct SharingWatchActivationTests {
+    private static func watch(
+        sessionActivated: Bool = false,
+        pageReported: Bool = false,
+        showingInstallPage: Bool = false,
+        fellBack: Bool = false,
+        closed: Bool = false
+    ) -> Bool {
+        sharingShouldWatchActivation(
+            sessionActivated: sessionActivated,
+            pageReported: pageReported,
+            showingInstallPage: showingInstallPage,
+            fellBack: fellBack,
+            closed: closed
+        )
+    }
+
+    @Test("the first activation off the warm document is watched")
+    func firstActivationIsWatched() {
+        // Deleting the arm makes this false: the silent-renderer hole reopens with no watchdog.
+        #expect(Self.watch())
+    }
+
+    @Test("a later activation in the same session is not watched")
+    func laterActivationIsNotWatched() {
+        // A confirmation or `shareAgain` re-runs no `ready` effect, so a budget armed here would
+        // expire and reload the unconfirmed page over the user's confirmation screen.
+        #expect(!Self.watch(sessionActivated: true))
+    }
+
+    @Test("a page that already reported needs no budget")
+    func reportedPageIsNotWatched() {
+        #expect(!Self.watch(pageReported: true))
+    }
+
+    @Test("the install page and settled sessions are never watched")
+    func nonSharingDocumentsAreNotWatched() {
+        #expect(!Self.watch(showingInstallPage: true))
+        #expect(!Self.watch(fellBack: true))
+        #expect(!Self.watch(closed: true))
     }
 }

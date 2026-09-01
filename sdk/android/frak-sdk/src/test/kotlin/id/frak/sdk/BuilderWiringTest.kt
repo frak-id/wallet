@@ -103,6 +103,9 @@ class BuilderWiringTest {
         assertNull(request.targetInteraction)
         assertNull(request.placement)
         assertNull(request.logoUrl)
+        assertNull(request.shareTitle)
+        assertNull(request.shareText)
+        assertNull(request.shareImageUrl)
 
         assertEquals(ProductDetails.Builder().build(), ProductDetails { })
         assertEquals(AttributionParams.Builder().build(), AttributionParams { })
@@ -184,6 +187,9 @@ class BuilderWiringTest {
                 .targetInteraction("purchase")
                 .placement("product-page")
                 .logoUrl("https://acme.example/logo.png")
+                .shareTitle("share-title")
+                .shareText("share-text")
+                .shareImageUrl("https://acme.example/share.png")
                 .build()
 
         assertEquals("https://acme.example/request", request.link)
@@ -192,6 +198,9 @@ class BuilderWiringTest {
         assertEquals("purchase", request.targetInteraction)
         assertEquals("product-page", request.placement)
         assertEquals("https://acme.example/logo.png", request.logoUrl)
+        assertEquals("share-title", request.shareTitle)
+        assertEquals("share-text", request.shareText)
+        assertEquals("https://acme.example/share.png", request.shareImageUrl)
     }
 
     @Test

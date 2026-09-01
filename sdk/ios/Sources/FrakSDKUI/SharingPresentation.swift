@@ -9,7 +9,8 @@
     @MainActor
     final class SharingPresentation {
         let model: SharingSheetModel
-        let webView: SharingWebView
+        /// Swapped when recovery rebuilds the engine, so the sheet presents the new one.
+        private(set) var webView: SharingWebView
 
         private let pool: SharingWebViewPool
         private var preparation: Task<Void, Never>?
@@ -82,6 +83,7 @@
             install: FrakInstallPresentation,
             detectInstall: Bool,
             language: String?,
+            imageCache: SharingImagePreviewCache,
             onOutcome: @escaping (SharingResult) -> Void,
             onClose: @escaping () -> Void
         ) -> SharingPresentation {
@@ -105,31 +107,39 @@
                 activationBaseURL: activationBaseURL,
                 install: install,
                 detectInstall: detectInstall,
-                language: language
+                language: language,
+                imageCache: imageCache
             )
             model.onOutcome = onOutcome
             model.onClose = onClose
 
-            webView.bind(
+            let binding = { [weak model] in
                 SharingWebViewBinding(
                     sessionId: sessionId,
-                    onAction: { [weak model] in model?.onPageAction($0) },
-                    onPageReady: { [weak model] in
+                    onAction: { model?.onPageAction($0) },
+                    onPageReady: {
                         trace.mark("document finished")
                         model?.onPageReady()
                     },
-                    onLoadFailed: { [weak model] in
+                    onLoadFailed: {
                         trace.mark("load FAILED")
                         model?.onPageUnavailable()
                     },
-                    onOpenExternal: { [weak model] in model?.openExternally($0) }
+                    onOpenExternal: { model?.openExternally($0) }
                 )
-            )
+            }
+            webView.bind(binding())
 
             // Attach before start: whichever finishes second issues the navigation.
             model.attach(webView)
 
             let presentation = SharingPresentation(model: model, webView: webView, pool: pool)
+            // The same binding: the fresh engine reports to this session, not a warm one.
+            model.onRebuildEngine = { [weak presentation] in
+                guard let presentation, let rebuilt = pool.rebuild(binding()) else { return nil }
+                presentation.webView = rebuilt
+                return rebuilt
+            }
             presentation.preparation = Task { await model.start(request) }
             return presentation
         }
@@ -161,6 +171,8 @@
 
         private var phase: Phase = .idle
         private var pool: SharingWebViewPool?
+        /// Shared with every session this presenter starts, so a warmed logo is instant at the tap.
+        private let imageCache = SharingImagePreviewCache()
 
         /// The BCP-47 tag the pool was warmed on, so a re-drive rebuilds the identical URL.
         private var warmLanguage: String?
@@ -191,6 +203,11 @@
             // that banks only DNS/TLS/bundle rather than the queries.
             guard let config = try? await client.config.resolve() else { return }
             trace.mark("warm config ready")
+
+            // Only starts the fetch; `warm()` never waits on the image.
+            if let logoURL = config.displayLogoURL, let url = URL(string: logoURL) {
+                await imageCache.prefetch(url)
+            }
 
             poolIfPossible()?
                 .warm(
@@ -238,6 +255,7 @@
                 install: install,
                 detectInstall: detectInstall,
                 language: language,
+                imageCache: imageCache,
                 onOutcome: onOutcome,
                 onClose: onClose
             )

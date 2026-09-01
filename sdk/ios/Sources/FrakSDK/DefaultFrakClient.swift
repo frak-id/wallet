@@ -139,6 +139,16 @@ actor DefaultFrakClient {
         settings.env
     }
 
+    /// `FrakMetadata.name`, for the sharing sheet's tier-3 fallback.
+    nonisolated var metadataName: String? {
+        settings.metadata.name
+    }
+
+    /// `FrakMetadata.lang`, for the same tier-3 fallback.
+    nonisolated var metadataLang: FrakLanguage? {
+        settings.metadata.lang
+    }
+
     /// Async because a first read can mint a keypair. `identity`'s eager generation, started in
     /// `init`, means a caller here usually awaits an already-completed result.
     var anonymousId: String? {

@@ -84,6 +84,24 @@
             return reused
         }
 
+        /// Replaces the pooled engine with a fresh one, bound to the same session.
+        ///
+        /// For the case a reload cannot reach: a content process reclaimed without
+        /// `webViewWebContentProcessDidTerminate` leaves a `WKWebView` that still answers, still
+        /// reports `didFinish`, and has no document behind it — Web Inspector lists the target and
+        /// shows nothing. Only a new engine recovers that.
+        func rebuild(_ binding: SharingWebViewBinding) -> SharingWebView? {
+            guard !destroyed else { return nil }
+            pooled?.view.removeFromSuperview()
+            pooled?.stopLoading()
+            let view = makeView()
+            view.bind(binding)
+            pooled = view
+            lent = true
+            warmURL = nil
+            return view
+        }
+
         /// Takes the view back when a sheet closes: reset in place wherever possible.
         ///
         /// A session that activated on the warm document only moved its params, so putting them

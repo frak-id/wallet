@@ -158,12 +158,18 @@ class PublicSurfaceTest {
                 .attribution(attributionParams)
                 .targetInteraction("purchase")
                 .placement("product-page")
+                .shareTitle("share-title")
+                .shareText("share-text")
+                .shareImageUrl("https://acme.example/share.png")
                 .build()
 
         assertEquals(listOf(product), request.products)
         assertEquals(attributionParams, request.attribution)
         assertEquals("purchase", request.targetInteraction)
         assertEquals("product-page", request.placement)
+        assertEquals("share-title", request.shareTitle)
+        assertEquals("share-text", request.shareText)
+        assertEquals("https://acme.example/share.png", request.shareImageUrl)
 
         val sugaredRequest =
             SharingRequest {
@@ -172,6 +178,9 @@ class PublicSurfaceTest {
                 attribution = attributionParams
                 targetInteraction = "purchase"
                 placement = "product-page"
+                shareTitle = "share-title"
+                shareText = "share-text"
+                shareImageUrl = "https://acme.example/share.png"
             }
 
         assertEquals(request.link, sugaredRequest.link)
@@ -180,6 +189,9 @@ class PublicSurfaceTest {
         assertEquals(request.targetInteraction, sugaredRequest.targetInteraction)
         assertEquals(request.placement, sugaredRequest.placement)
         assertEquals(request.logoUrl, sugaredRequest.logoUrl)
+        assertEquals(request.shareTitle, sugaredRequest.shareTitle)
+        assertEquals(request.shareText, sugaredRequest.shareText)
+        assertEquals(request.shareImageUrl, sugaredRequest.shareImageUrl)
 
         val bare = SharingRequest { }
         assertNull(bare.link)

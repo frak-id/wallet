@@ -26,6 +26,14 @@ public final class FrakClient: Sendable {
     /// The stage this client talks to. Merchants never set it directly, see `FrakConfig.env`.
     public nonisolated var environment: FrakEnvironment { core.environment }
 
+    /// Wire plumbing for `FrakSDKUI`'s tier-3 fallback, not merchant API.
+    @_spi(FrakInternal)
+    public nonisolated var metadataName: String? { core.metadataName }
+
+    /// Wire plumbing for `FrakSDKUI`'s tier-3 fallback, not merchant API.
+    @_spi(FrakInternal)
+    public nonisolated var metadataLang: FrakLanguage? { core.metadataLang }
+
     /// Nil when tracking is disabled or the device refused key material.
     public var anonymousId: String? {
         get async { await core.anonymousId }

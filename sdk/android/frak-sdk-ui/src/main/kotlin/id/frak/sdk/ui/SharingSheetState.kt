@@ -106,7 +106,10 @@ internal class SharingSheetState(
      * The page's buttons that are mid-round-trip. The footer stays enabled throughout, so without
      * this a second tap stacks a chooser, bills a second reward, or races two install pages.
      */
-    private val claimed = mutableSetOf<SharingPageAction>()
+    private val claimed = mutableSetOf<ClaimKey>()
+
+    /** Payload-free, so two taps carrying different payloads still count as one in-flight claim. */
+    private enum class ClaimKey { Share, Copy, Install }
 
     /** [onPageUnavailable] has to tell a failed install page apart from a failed sharing page. */
     private var showingInstallPage = false
@@ -277,16 +280,19 @@ internal class SharingSheetState(
     }
 
     /** Claims one of the page's buttons for its round trip. False when that button is already in flight. */
-    private fun claim(action: SharingPageAction): Boolean = claimed.add(action)
+    private fun claim(key: ClaimKey): Boolean = claimed.add(key)
 
-    /** Raises the chooser, then attributes the share. */
-    fun share() {
+    /** Raises the chooser, then attributes the share. A null [payload] falls back to the session's own copy. */
+    fun share(payload: SharingPageAction.Share? = null) {
         val active = session ?: return
-        if (!claim(SharingPageAction.Share)) return
+        if (!claim(ClaimKey.Share)) return
+        // Blank counts as absent, so a payload carrying one cannot suppress the session's own copy.
+        val title = payload?.title?.takeIf { it.isNotBlank() } ?: active.shareTitle
+        val text = payload?.text?.takeIf { it.isNotBlank() } ?: active.shareText
         outcome.launch {
-            if (!NativeShare.share(launchContext(), active.link, active.shareTitle)) {
+            if (!NativeShare.share(launchContext(), active.link, title, text)) {
                 // Released here, unlike the success path: no chooser came up, so the user can retry.
-                claimed.remove(SharingPageAction.Share)
+                claimed.remove(ClaimKey.Share)
                 return@launch
             }
             // Tracked when the chooser opens rather than on completion: this is the reward-bearing
@@ -304,7 +310,7 @@ internal class SharingSheetState(
      */
     fun copy() {
         val active = session ?: return
-        if (!claim(SharingPageAction.Copy)) return
+        if (!claim(ClaimKey.Copy)) return
         outcome.launch {
             try {
                 track()
@@ -313,7 +319,7 @@ internal class SharingSheetState(
             } finally {
                 // Released, unlike share(): the page keeps its Copy button enabled and stays on
                 // the sharing view, so a second tap must not be a silent no-op.
-                claimed.remove(SharingPageAction.Copy)
+                claimed.remove(ClaimKey.Copy)
             }
         }
     }
@@ -346,8 +352,8 @@ internal class SharingSheetState(
 
             // The page draws the buttons; this sheet performs them — `navigator.share` does not exist
             // in a WebView, and the interaction must be signed by a keypair the page cannot reach.
-            SharingPageAction.Share -> {
-                share()
+            is SharingPageAction.Share -> {
+                share(action)
             }
 
             SharingPageAction.Copy -> {
@@ -378,7 +384,7 @@ internal class SharingSheetState(
 
     private fun install() {
         val current = session ?: return
-        if (!claim(SharingPageAction.Install)) return
+        if (!claim(ClaimKey.Install)) return
         outcome.launch {
             // The wallet is already here, so the install page has nothing left to do: its code
             // exists only to reconnect an identity across a fresh install, and the deep link
@@ -415,7 +421,7 @@ internal class SharingSheetState(
             showingInstallPage = false
             // Back on a page that plausibly offers Install again, so a second tap must be able to
             // fetch a fresh one rather than stay locked out by this session's first attempt.
-            claimed.remove(SharingPageAction.Install)
+            claimed.remove(ClaimKey.Install)
             recovery?.let { nav -> webView?.let { view -> navigateNow(view, nav) } }
             return
         }
@@ -436,8 +442,9 @@ internal class SharingSheetState(
         if (fellBack) return
         fellBack = true
         outcome.launch {
+            // No page round trip is possible here, so the session's own tier-3 copy is all there is.
             // Same rule as share(): pays out after the chooser, not before.
-            val shared = NativeShare.share(launchContext(), active.link, active.shareTitle)
+            val shared = NativeShare.share(launchContext(), active.link, active.shareTitle, active.shareText)
             if (shared) track()
             finish(if (shared) SharingResult.Shared(active.link) else SharingResult.Dismissed)
         }

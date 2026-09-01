@@ -164,10 +164,20 @@
 
         var body: some View {
             ZStack {
+                // From the model, not the presentation: recovery can swap the engine, and only
+                // the model publishes that. Falls back to the presentation's own view until
+                // `attach` has run.
                 SharingWebViewContainer(
-                    webView: presentation.webView,
+                    webView: model.webView ?? presentation.webView,
                     onDismantled: { [presentation] in presentation.onContentDismantled() }
                 )
+                // A `UIViewRepresentable` reports no intrinsic size, so the stack would be held
+                // open only by the skeleton sibling — and the page lays out at 0x0 whenever that
+                // is gone. A degenerate first layout is one the page never recovers from.
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // A representable keeps whatever `makeUIView` returned, so a swapped engine
+                // needs a new identity to be built at all.
+                .id(ObjectIdentifier(model.webView ?? presentation.webView))
 
                 if !model.pageVisible {
                     SharingSheetSkeleton()

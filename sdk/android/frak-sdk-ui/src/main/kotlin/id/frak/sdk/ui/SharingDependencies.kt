@@ -1,9 +1,11 @@
 package id.frak.sdk.ui
 
 import id.frak.sdk.Frak
+import id.frak.sdk.InternalFrakApi
 import id.frak.sdk.OpenAppResult
 import id.frak.sdk.config.FrakResolvedConfig
 import id.frak.sdk.core.FrakEnvironment
+import id.frak.sdk.core.FrakLanguage
 import id.frak.sdk.core.FrakResult
 import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.rewards.BestReward
@@ -55,6 +57,12 @@ internal interface SharingDependencies {
     ): String?
 
     suspend fun openFrakApp(): OpenAppResult
+
+    /** Tier-3's only name source: local, so it survives a [resolveConfig] failure. */
+    fun metadataName(): String?
+
+    /** [id.frak.sdk.core.FrakMetadata.lang]; picks which bundled tier-3 copy to use. */
+    fun metadataLang(): FrakLanguage?
 }
 
 /**
@@ -62,6 +70,7 @@ internal interface SharingDependencies {
  * `Frak.initialize` may not have run when a sheet's state is built and the host may replace the
  * client via `Frak.shutdown()`.
  */
+@OptIn(InternalFrakApi::class)
 internal object FrakClientDependencies : SharingDependencies {
     override suspend fun buildSharingLink(request: SharingRequest): String? = Frak.client.sharing.buildLink(request)
 
@@ -97,4 +106,8 @@ internal object FrakClientDependencies : SharingDependencies {
     ): String? = Frak.client.appLink.installPageUrl(returnScheme, sessionId)
 
     override suspend fun openFrakApp(): OpenAppResult = Frak.client.appLink.openFrakApp()
+
+    override fun metadataName(): String? = Frak.client.metadataName
+
+    override fun metadataLang(): FrakLanguage? = Frak.client.metadataLang
 }

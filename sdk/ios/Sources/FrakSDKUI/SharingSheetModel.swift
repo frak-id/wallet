@@ -12,10 +12,14 @@
     /// after the OS chooser, confirm after that, never fall back twice.
     @MainActor
     final class SharingSheetModel: ObservableObject {
-        /// Tap-to-content budget, timed from the tap, so it has to cover the build too. Sized for a
-        /// full load, not a warm activation: warming is usually still in flight at the tap, so the
-        /// common case is the slow one. `SharingWebView`'s retry ladder fits inside this.
-        static let pageLoadDeadline: TimeInterval = 5
+        /// The tap-to-content budget lives in `SharingSheetLogic.swift`, beside the retry ladder
+        /// it must outlast, so one host-run test can compare the two.
+        static let pageLoadDeadline = sharingPageLoadDeadline
+        /// How long an activated document has to report itself alive. Far below
+        /// `pageLoadDeadline`, which is sized for a full load: an activation is the fast path, and
+        /// spending five seconds before recovery even starts would blow the tap-to-content budget.
+        /// Above `FrakSharingSheet`'s 0.4s paint grace and a mounted page's two frames.
+        static let activationDeadline: TimeInterval = 1
         // `sharingBuildRetryDelays` and `sharingBuildIsWorthRetrying` live in SharingSheetLogic
         // .swift, outside this `#if`, so the ladder has a host-run test.
         nonisolated static let seedTimeout: TimeInterval = 0.04
@@ -50,6 +54,9 @@
         /// Every outcome as it happens; the caller keeps the most significant.
         var onOutcome: ((SharingResult) -> Void)?
         var onClose: (() -> Void)?
+        /// Swaps in a fresh engine, for the document a reload cannot bring back. Set by
+        /// `SharingPresentation`, which owns the pool.
+        var onRebuildEngine: (() -> SharingWebView?)?
 
         private let sessionId: String
         private let trace: SharingTrace
@@ -71,8 +78,14 @@
         private let installPageURL: @Sendable (String, String) async -> String?
         private let isFrakAppInstalled: @Sendable () async -> Bool
         private let openFrakApp: @Sendable () async -> OpenAppResult
+        /// Tier-3's only name source: `FrakMetadata.name` survives a failed config resolve.
+        private let metadataName: @Sendable () -> String?
+        /// `FrakMetadata.lang`; picks the bundled tier-3 constants. Nil means `.en`.
+        private let metadataLang: @Sendable () -> FrakLanguage?
+        private let imageCache: SharingImagePreviewCache
 
-        private var webView: SharingWebView?
+        /// Published: recovery can swap the engine, and the sheet has to present the new one.
+        @Published private(set) var webView: SharingWebView?
         private var session: SharingSession?
         private var deadline: Task<Void, Never>?
         private var started = false
@@ -83,11 +96,21 @@
         /// one share could queue two `sharing` interactions.
         private var fellBack = false
         private var deadlineExpired = false
+        /// The page's own `action=ready`. Distinct from `page`, which `didFinish` and the
+        /// activation both advance: only this says a document exists to talk to.
+        private var pageReported = false
+        /// Set when the activation watchdog is armed, so its expiry is told apart from the
+        /// tap-to-content deadline's.
+        private var activationArmed = false
+        private var recoveryAttempted = false
+        /// Whether this session has already activated once. The page reports `ready` on the
+        /// warm-to-live transition only, so later activations have no report to wait for.
+        private var sessionActivated = false
         /// The page's buttons that are mid-round-trip. The footer stays enabled throughout, so
         /// without this a second tap stacks a second chooser, bills a second reward-bearing
         /// interaction, or races two install pages on the one shared web view. A set, matching
         /// Android's `SharingSheetState.claimed`, so `shareAgain` reopens them all at once.
-        private var claimed: Set<SharingPageAction> = []
+        private var claimed: Set<SharingPageAction.Kind> = []
         /// On the wallet's install page rather than the sharing page, so `onPageUnavailable` can
         /// tell a failed install page apart from a failed sharing page.
         private var showingInstallPage = false
@@ -139,7 +162,10 @@
             },
             openFrakApp: @escaping @Sendable () async -> OpenAppResult = {
                 await (try? Frak.client)?.appLink.openFrakApp() ?? .failed
-            }
+            },
+            metadataName: @escaping @Sendable () -> String? = { (try? Frak.client)?.metadataName },
+            metadataLang: @escaping @Sendable () -> FrakLanguage? = { (try? Frak.client)?.metadataLang },
+            imageCache: SharingImagePreviewCache = SharingImagePreviewCache()
         ) {
             self.sessionId = sessionId
             self.trace = trace
@@ -156,6 +182,9 @@
             self.installPageURL = installPageURL
             self.isFrakAppInstalled = isFrakAppInstalled
             self.openFrakApp = openFrakApp
+            self.metadataName = metadataName
+            self.metadataLang = metadataLang
+            self.imageCache = imageCache
         }
 
         func attach(_ webView: SharingWebView) {
@@ -196,11 +225,12 @@
         /// Claims one of the page's buttons for its round trip.
         ///
         /// - Returns: false when that button is already in flight.
-        private func claim(_ action: SharingPageAction) -> Bool {
+        private func claim(_ action: SharingPageAction.Kind) -> Bool {
             claimed.insert(action).inserted
         }
 
-        func share() async {
+        /// The page's own Share button; its reported payload wins, `session.shareTitle` is tier-3 only.
+        func share(_ payload: SharingSharePayload) async {
             guard let session else { return }
             // The tier-3 fallback races a page action that arrives in the same turn; without this
             // a chooser it already raised is stacked under a second one, and both attribute.
@@ -210,7 +240,16 @@
             // dismissed underneath one.
             // After the chooser, only on success: this interaction pays out, so recording it on
             // intent would reward a cancelled chooser.
-            guard await NativeShare.share(link: session.link, title: session.shareTitle) else {
+            guard
+                await NativeShare.share(
+                    link: session.link,
+                    // The page's own copy wins; the session's is the floor for a field it omitted.
+                    title: payload.title ?? session.shareTitle,
+                    text: payload.text ?? session.shareText,
+                    imageURL: payload.imageURL ?? session.shareImageURL.flatMap(URL.init(string:)),
+                    imageCache: imageCache
+                )
+            else {
                 // Released, unlike the success path: the page is still on its sharing screen.
                 claimed.remove(.share)
                 return
@@ -240,7 +279,9 @@
             // Never backwards: an already-painted page that reports its document finished, or a
             // renderer crash the sheet has already covered, must not be uncovered again.
             if page == .loading { page = .documentReady }
-            settleContent()
+            // Deliberately does not settle: this arrives from `didFinish`, which a reclaimed
+            // renderer still delivers over an empty document. Only `onPageAction` — the page
+            // speaking for itself — clears a budget, on the cold path as much as the warm one.
         }
 
         func onPageVisible() {
@@ -286,10 +327,12 @@
         }
 
         func onPageAction(_ action: SharingPageAction) {
-            // A user driving the page proves it both arrived and drew, whatever WebKit reported —
-            // a fragment activation is same-document, so there is no `didFinish` for a warm page
-            // the user is already sharing from. Without this the deadline can elapse behind an
-            // accepted chooser and raise a second one. `.error` is the page saying it drew nothing.
+            // Any action reached this host from inside the document — the proof `didFinish`
+            // cannot give, and it settles both budgets. `.error` counts: the page ran enough to
+            // say it drew nothing, so reloading would only repeat that. Without the settle, a
+            // deadline can elapse behind an accepted chooser and raise a second one.
+            pageReported = true
+            activationArmed = false
             settleContent()
             if action != .error { onPageVisible() }
             switch action {
@@ -336,8 +379,8 @@
                 }
             // The page draws both buttons; this model performs them — the SDK keypair the page
             // cannot reach has to sign the interaction.
-            case .share:
-                Task { await share() }
+            case .share(let payload):
+                Task { await share(payload) }
             case .copy:
                 Task { await copy() }
             case .code(let value, let expiresAt):
@@ -461,8 +504,39 @@
         private func navigateNow(_ webView: SharingWebView, _ navigation: SharingNavigation) {
             webView.navigate(navigation)
             // Only a finished document can be activated, so tap-to-content is already met.
-            // `onPageVisible` is not called: paint stays the page's word.
-            if case .activate = navigation { onPageReady() }
+            // Only the first activation off the warm document is watched. The page emits `ready`
+            // from an effect keyed on `warm`/`sid` (`useHostBridge.ts`), so a later same-session
+            // activation — a confirmation, a `shareAgain` — re-runs nothing and would strand a
+            // watchdog nobody can clear.
+            if case .activate = navigation {
+                let watch = sharingShouldWatchActivation(
+                    sessionActivated: sessionActivated,
+                    pageReported: pageReported,
+                    showingInstallPage: showingInstallPage,
+                    fellBack: fellBack,
+                    closed: closed
+                )
+                sessionActivated = true
+                onPageReady()
+                // After `onPageReady`: it settles the budget it just met, which would cancel a
+                // watchdog armed any earlier.
+                if watch { armActivationWatchdog() }
+            }
+        }
+
+        /// Gives the activated document its own budget to report `action=ready`.
+        ///
+        /// The engine cannot answer this: a reclaimed content process still completes its
+        /// navigation, so `didFinish` arrives for a document with no page in it.
+        private func armActivationWatchdog() {
+            // Never two live budgets: an orphan would recover and fall back on its own.
+            deadline?.cancel()
+            activationArmed = true
+            deadline = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(Self.activationDeadline * 1_000_000_000))
+                guard !Task.isCancelled else { return }
+                self?.onDeadline()
+            }
         }
 
         /// The install page URL, carrying `sid`/`probe` in its fragment. Starts the probe as a
@@ -508,11 +582,13 @@
 
         /// How the page gets where it is going next, preferring a same-document activation over
         /// loading it again. Every navigation this sheet makes goes through here, not just the first.
-        private func pageNavigation(confirmed: Bool) -> SharingNavigation? {
+        private func pageNavigation(confirmed: Bool, recovering: Bool = false) -> SharingNavigation? {
             session?.navigation(
                 confirmed: confirmed,
                 // Not the view's own tracked value: only this model knows where it navigated the view.
-                currentBaseURL: showingInstallPage ? nil : activationBaseURL
+                // A recovery passes nil so the session yields a full load: the document it would
+                // otherwise activate on is the one that never reported.
+                currentBaseURL: (showingInstallPage || recovering) ? nil : activationBaseURL
             )
         }
 
@@ -540,16 +616,21 @@
             let bundleId = Bundle.main.bundleIdentifier ?? ""
             let returnScheme = SharingPageURL.returnScheme(bundleId: bundleId)
 
+            // Resolved before the config attempt so it is available on both branches: a session
+            // that has a page still falls back to this when the page never loads.
+            let fallback = tier3ShareData(request: request, productName: metadataName(), lang: metadataLang())
+
             let config: FrakResolvedConfig
             do {
                 config = try await resolveConfig()
             } catch is FrakError {
-                // No page, but the link is already built; the native-share fallback fires from this.
                 return SharingSession(
                     walletOrigin: walletOrigin,
                     returnScheme: returnScheme,
                     link: link,
-                    shareTitle: nil,
+                    shareTitle: fallback.title,
+                    shareText: fallback.text,
+                    shareImageURL: request.shareImageURL,
                     pageURL: nil
                 )
             }
@@ -566,7 +647,10 @@
                 walletOrigin: walletOrigin,
                 returnScheme: returnScheme,
                 link: link,
-                shareTitle: name,
+                // Only read if the page never loads; otherwise the page reports its own copy.
+                shareTitle: fallback.title,
+                shareText: fallback.text,
+                shareImageURL: request.shareImageURL,
                 pageURL: SharingPageURL.build(
                     walletOrigin: walletOrigin,
                     merchantId: config.merchantId,
@@ -578,7 +662,10 @@
                     link: pageLink,
                     products: productsJSON,
                     seededReward: seeded,
-                    language: language
+                    language: language,
+                    shareTitle: request.shareTitle,
+                    shareText: request.shareText,
+                    shareImageURL: request.shareImageURL
                 ),
                 // Rebuilt from the same resolved config as `pageURL`: if the pool warmed against
                 // anything else the strings differ and the session does a full load instead.
@@ -597,7 +684,10 @@
                     products: productsJSON,
                     // Only when the request overrides the config; the warm URL already carries it.
                     logoURL: requestLogoURL,
-                    seededReward: seeded
+                    seededReward: seeded,
+                    shareTitle: request.shareTitle,
+                    shareText: request.shareText,
+                    shareImageURL: request.shareImageURL
                 )
             )
         }
@@ -623,6 +713,13 @@
         }
 
         private func onDeadline() {
+            // Any page that never spoke for itself is routed by `sharingExpiry`, warm or cold.
+            // `sharingDecision` cannot answer this: `didFinish` makes `pageLoaded` true, and it
+            // returns `.doNothing` for every loaded page — including a blank one.
+            if !pageReported, session != nil {
+                onActivationDeadline()
+                return
+            }
             switch sharingDecision(
                 session: session,
                 deadlineExpired: true,
@@ -641,6 +738,51 @@
             }
         }
 
+        /// The document never reported `action=ready`: load its page again, and on a second
+        /// silence hand the share to tier 3. Warm or cold — `didFinish` lies on both.
+        private func onActivationDeadline() {
+            activationArmed = false
+            switch sharingExpiry(
+                pageReported: pageReported,
+                recoveryAttempted: recoveryAttempted,
+                showingInstallPage: showingInstallPage,
+                fellBack: fellBack,
+                closed: closed
+            ) {
+            case .recover:
+                guard let navigation = pageNavigation(confirmed: false, recovering: true) else {
+                    deadlineExpired = true
+                    return
+                }
+                recoveryAttempted = true
+                // A fresh engine, not a reload: a content process reclaimed without its
+                // termination callback still answers and still reports `didFinish`, with no
+                // document behind it. Re-navigating that view returns to the same nothing.
+                let engine = onRebuildEngine?()
+                if let engine {
+                    webView = engine
+                    trace.mark("page went silent — rebuilding the engine")
+                } else {
+                    trace.mark("page went silent — reloading it")
+                }
+                guard let target = webView else {
+                    deadlineExpired = true
+                    return
+                }
+                target.navigate(navigation)
+                armActivationWatchdog()
+            case .fallBack:
+                guard let session else {
+                    deadlineExpired = true
+                    return
+                }
+                trace.mark("recovery went silent — falling back")
+                Task { await fallBack(to: session) }
+            case .doNothing:
+                deadlineExpired = true
+            }
+        }
+
         /// Tier 3: skip the page entirely and open the OS share sheet on the local link.
         private func fallBack(to session: SharingSession) async {
             guard !fellBack else { return }
@@ -648,7 +790,14 @@
             settleContent()
 
             // Same rule as `share()`: the interaction follows the chooser rather than announcing it.
-            let shared = await NativeShare.share(link: session.link, title: session.shareTitle)
+            let imageURL = session.shareImageURL.flatMap(URL.init(string:))
+            let shared = await NativeShare.share(
+                link: session.link,
+                title: session.shareTitle,
+                text: session.shareText,
+                imageURL: imageURL,
+                imageCache: imageCache
+            )
             if shared { await trackSharing() }
             report(shared ? .shared(link: session.link) : .dismissed)
             close()

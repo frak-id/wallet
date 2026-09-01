@@ -698,6 +698,9 @@ public final class id/frak/sdk/sharing/SharingRequest {
 	public final fun getLogoUrl ()Ljava/lang/String;
 	public final fun getPlacement ()Ljava/lang/String;
 	public final fun getProducts ()Ljava/util/List;
+	public final fun getShareImageUrl ()Ljava/lang/String;
+	public final fun getShareText ()Ljava/lang/String;
+	public final fun getShareTitle ()Ljava/lang/String;
 	public final fun getTargetInteraction ()Ljava/lang/String;
 }
 
@@ -711,6 +714,9 @@ public final class id/frak/sdk/sharing/SharingRequest$Builder {
 	public final fun getLogoUrl ()Ljava/lang/String;
 	public final fun getPlacement ()Ljava/lang/String;
 	public final fun getProducts ()Ljava/util/List;
+	public final fun getShareImageUrl ()Ljava/lang/String;
+	public final fun getShareText ()Ljava/lang/String;
+	public final fun getShareTitle ()Ljava/lang/String;
 	public final fun getTargetInteraction ()Ljava/lang/String;
 	public final fun link (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
 	public final fun logoUrl (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
@@ -721,7 +727,13 @@ public final class id/frak/sdk/sharing/SharingRequest$Builder {
 	public final fun setLogoUrl (Ljava/lang/String;)V
 	public final fun setPlacement (Ljava/lang/String;)V
 	public final fun setProducts (Ljava/util/List;)V
+	public final fun setShareImageUrl (Ljava/lang/String;)V
+	public final fun setShareText (Ljava/lang/String;)V
+	public final fun setShareTitle (Ljava/lang/String;)V
 	public final fun setTargetInteraction (Ljava/lang/String;)V
+	public final fun shareImageUrl (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
+	public final fun shareText (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
+	public final fun shareTitle (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
 	public final fun targetInteraction (Ljava/lang/String;)Lid/frak/sdk/sharing/SharingRequest$Builder;
 }
 

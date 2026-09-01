@@ -30,8 +30,14 @@ internal sealed interface SharingPageAction {
 
     data object ShareAgain : SharingPageAction
 
-    /** The page asking the host to share: navigator.share does not exist in an Android WebView. */
-    data object Share : SharingPageAction
+    /**
+     * The page asking the host to share: navigator.share does not exist in an Android WebView.
+     * `image` is never parsed — Android ships no preview thumbnail.
+     */
+    data class Share(
+        val title: String?,
+        val text: String?,
+    ) : SharingPageAction
 
     data object Copy : SharingPageAction
 
@@ -52,6 +58,8 @@ internal sealed interface SharingPageAction {
             action: String?,
             value: String? = null,
             exp: String? = null,
+            title: String? = null,
+            text: String? = null,
         ): SharingPageAction? =
             when (action) {
                 "install" -> Install
@@ -60,7 +68,9 @@ internal sealed interface SharingPageAction {
 
                 "shareAgain" -> ShareAgain
 
-                "share" -> Share
+                // Blank decodes to null, so it falls through to the session's own copy rather
+                // than suppressing it with an empty subject.
+                "share" -> Share(blankToNull(title), blankToNull(text))
 
                 "copy" -> Copy
 
@@ -73,6 +83,8 @@ internal sealed interface SharingPageAction {
 
                 else -> null
             }
+
+        private fun blankToNull(value: String?): String? = value?.trim()?.takeIf { it.isNotEmpty() }
     }
 }
 
@@ -329,6 +341,8 @@ internal class SharingWebViewClient(
                         action = url.getQueryParameter("action"),
                         value = url.getQueryParameter("value"),
                         exp = url.getQueryParameter("exp"),
+                        title = url.getQueryParameter("title"),
+                        text = url.getQueryParameter("text"),
                     )?.let(binding.onAction)
             }
             return true

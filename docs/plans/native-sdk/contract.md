@@ -21,6 +21,9 @@ Native adds six additive params; absent, the page renders exactly as before.
 | `products` | required for product shares | array of `SharingPageProduct` |
 | `link` | required | the URL being shared |
 | `appName`, `logoUrl` | recommended | |
+| `shareTitle` | optional | per-call OS-share override, `str` capped at 120 — trap 4 |
+| `shareText` | optional | as above, capped at 280, control chars stripped |
+| `shareImage` | optional | as above, `sanitizeShareImage`: https only, capped at 512 |
 | `attribution` | optional | JSON object, or discrete `utm_*`/`ref`/`via` params — trap 2 |
 | `native=1` | required | chromeless: the page hides its header, the native sheet owns dismissal. Footer CTAs stay and reach the host as `share`/`copy` |
 | `returnScheme`, `sid` | required | the result channel — §1.2 |
@@ -45,6 +48,14 @@ attribution object must **omit** the param.
 fires analytics only. The route never emits `create_referral_link`. The native SDK owns 100 % of
 share tracking, and nothing in the page enforces that.
 
+**Trap 4 — the three `share*` params ride `transport: "both"`, and that is only safe because
+activations replace.** A warm view is recycled across sessions, so session A's `shareText` would leak
+into session B if an activation merged into the previous one. It does not: `useActivationParams`
+replaces its state wholesale on every `hashchange`, and both `resetToWarm()` and `activationFragment()`
+write a *complete* fragment. An absent key therefore falls through to `search`, which on a warm URL
+never carried these params. Any change that merges activations instead of replacing them breaks this,
+and `logoUrl` with it.
+
 ### 1.2 The return channel
 
 The page navigates to `<returnScheme>://result?action=…&sid=…`; the SDK intercepts and cancels the
@@ -54,7 +65,7 @@ correlation.
 | Action | Meaning |
 |---|---|
 | `ready` | the page's own JS reports a rendered document |
-| `share` | SDK raises the OS chooser, then reloads with `confirmed=1` |
+| `share` | SDK raises the OS chooser, then reloads with `confirmed=1`; carries the resolved payload — see below |
 | `copy` | SDK writes the clipboard and records the interaction; **no reload** |
 | `install` | SDK owns everything after — §3 |
 | `code` | carries the install code: `&value=<code>&exp=<epochSeconds>` |
@@ -71,6 +82,34 @@ Rules:
   silently accepts `NaN`.
 - A malformed `returnScheme` leaves no channel to report on, and the sheet is stuck on the wallet's
   error page.
+
+**The `share` payload.** `action=share` carries the copy the page resolved, so the OS sheet says
+something better than a bare URL:
+
+```
+frak-<pkg>://result?action=share&sid=…&title=…&text=…&image=…
+```
+
+Every field is optional and absent means the pre-payload behaviour — the session's own tier-3 copy.
+**Empty-string values decode to null, not `""`**: an empty `EXTRA_SUBJECT` is worse than an absent
+one. Dedupe needs no change — `REPEATABLE_ACTIONS` already contains `share`, so `sentActions` never
+keys on the payload.
+
+Caps are enforced once, page-side at resolution, so web, Tauri and native all see the same string:
+`title` 120, `text` 280, `image` 512. Worst case ≈ 1.6 KB percent-encoded, inside every relevant
+limit. **Past the cap, truncate on a grapheme boundary and append `…` — never drop the field**;
+clipped copy beats a bare URL. There is no chunking protocol: a field that overruns this budget is
+bad copy, not a transport problem.
+
+Sanitization runs on both sides. Page-side, at resolution: strip C0/C1 controls (keeping `\n` in
+`text` only), strip bidi overrides `\u202A-\u202E\u2066-\u2069` against RTL spoofing, collapse
+`\n{3,}`, trim, then truncate; `image` must parse as `https:` with no credentials, and unlike
+`sanitizeRedirectUrl` it **keeps the query string** because CDN image URLs are signed. Native-side the
+page is first-party, but iOS *fetches* `image`, so it re-validates: https only, no private or
+link-local hosts (the app's network position is not ours to lend), 2 MB and 2 s ceilings, an `image/*`
+content type, and a non-nil decode. Android drops `image` at the parser — no fetch, no risk. Both
+re-apply the caps defensively before `EXTRA_TEXT`/`LPLinkMetadata`, because a megabyte `Intent` extra
+is a `TransactionTooLargeException` in the *merchant's* process.
 
 ### 1.3 `confirmed=1`
 
