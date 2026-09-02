@@ -56,7 +56,6 @@ export type ReactSdkTestFixtures = {
      */
     mockCoreActions: {
         displayModal: ReturnType<typeof import("vitest").vi.fn>;
-        displayEmbeddedWallet: ReturnType<typeof import("vitest").vi.fn>;
         openSso: ReturnType<typeof import("vitest").vi.fn>;
         prepareSso: ReturnType<typeof import("vitest").vi.fn>;
         getMerchantInformation: ReturnType<typeof import("vitest").vi.fn>;
@@ -186,7 +185,6 @@ export const test = baseTest.extend<ReactSdkTestFixtures>({
 
         const actions = {
             displayModal: vi.fn(),
-            displayEmbeddedWallet: vi.fn(),
             openSso: vi.fn(),
             prepareSso: vi.fn(),
             getMerchantInformation: vi.fn(),

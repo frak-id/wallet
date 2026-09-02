@@ -109,12 +109,6 @@ vi.mock("@/module/modal/component/Generic", () => ({
     DismissButton: () => <div data-testid="dismiss-button" />,
 }));
 
-vi.mock("../AuthenticateWithPhone", () => ({
-    AuthenticateWithPhone: ({ text }: { text: ReactNode }) => (
-        <div data-testid="phone-button">{text}</div>
-    ),
-}));
-
 function getSessionStore() {
     if (!mockSessionStore.store) {
         throw new Error("mock sessionStore not initialised");
@@ -157,11 +151,10 @@ describe("LoginModalStep", () => {
         });
     });
 
-    test("shows SSO + QR options and no passkey fallback when SSO is allowed", () => {
+    test("shows SSO and no passkey fallback when SSO is allowed", () => {
         renderLogin({ allowSso: true });
 
         expect(screen.getByTestId("sso-button")).toBeInTheDocument();
-        expect(screen.getByTestId("phone-button")).toBeInTheDocument();
         expect(screen.getByTestId("dismiss-button")).toBeInTheDocument();
         // The webauthn fallback <button> is only rendered when SSO is disabled.
         expect(screen.queryByRole("button")).toBeNull();
@@ -170,9 +163,8 @@ describe("LoginModalStep", () => {
     test("renders the passkey fallback and logs in on click when SSO is disabled (first login — no session)", () => {
         renderLogin({ allowSso: false });
 
-        // SSO button is gone; the QR option stays.
+        // SSO button is gone.
         expect(screen.queryByTestId("sso-button")).toBeNull();
-        expect(screen.getByTestId("phone-button")).toBeInTheDocument();
 
         const passkeyButton = screen.getByRole("button", {
             name: "sdk.modal.login.primaryAction",
@@ -224,7 +216,7 @@ describe("LoginModalStep", () => {
         expect(onFinish).not.toHaveBeenCalled();
     });
 
-    test("auto-finishes when a NEW session arrives after mount (SSO / phone pairing completion)", () => {
+    test("auto-finishes when a NEW session arrives after mount (SSO completion)", () => {
         const { onFinish } = renderLogin({ allowSso: true });
 
         // Session is null on mount; now SSO delivers a fresh session.

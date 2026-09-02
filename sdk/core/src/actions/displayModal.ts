@@ -25,9 +25,9 @@ import type {
  *     3. `success` (if included, always last)
  *
  * @example
- * Simple sharing modal with steps:
+ * Simple reward modal with steps:
  *  1. Login (Skipped if already logged in)
- *  2. Display a success message with sharing link option
+ *  2. Display a success reward message
  *
  * ```ts
  * const results = await displayModal(frakConfig, {
@@ -51,7 +51,7 @@ import type {
  *  1. Login (Skipped if already logged in)
  *  2. Authenticate via SIWE
  *  3. Send a transaction
- *  4. Display a success message with sharing link options
+ *  4. Display a success reward message
  *
  * ```ts
  * const results = await displayModal(frakConfig, {
@@ -80,19 +80,12 @@ import type {
  *                 { to: "0xdeadbeef", data: "0xdeadbeef" },
  *             ],
  *         },
- *         // Success message with sharing options
+ *         // Success message with the reward screen
  *         final: {
- *             action: {
- *                 key: "sharing",
- *                 options: {
- *                     popupTitle: "Share the app",
- *                     text: "Discover my super app website",
- *                     link: "https://my-app.com",
- *                 },
- *             },
+ *             action: { key: "reward" },
  *             dismissedMetadata: {
  *                 title: "Dismiss",
- *                 description: "You won't be rewarded for this sharing action",
+ *                 description: "You won't be rewarded for this action",
  *             },
  *         },
  *     },

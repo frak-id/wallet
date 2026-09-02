@@ -195,10 +195,6 @@ return array(
 				'type'    => 'string',
 				'default' => '',
 			),
-			'clickAction'       => array(
-				'type'    => 'string',
-				'default' => 'sharing-page',
-			),
 			'buttonStyle'       => array(
 				'type'    => 'string',
 				'default' => 'primary',

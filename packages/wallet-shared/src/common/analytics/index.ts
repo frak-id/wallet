@@ -5,7 +5,6 @@ export type {
     DeepLinkEventMap,
     DeepLinkSource,
     DiagnosticsEventMap,
-    EmbeddedWalletEventMap,
     EventMap,
     ExplorerEventMap,
     FlowEndExtras,

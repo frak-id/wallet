@@ -198,27 +198,21 @@ export default interface Resources {
     "sdk": {
       "modal": {
         "dismiss": {
-          "primaryAction": "Continue browsing",
-          "primaryAction_sharing": "Share without being paid"
+          "primaryAction": "Continue browsing"
         },
         "final": {
           "description": "You've successfully completed all the steps.",
           "description_reward": "Check your earnings at any time on [wallet.frak.id](https://wallet.frak.id). You too can share with your friends, all your shares that lead to clicks, registrations or purchases generate new earnings!",
-          "description_sharing": "Your wallet has been created to receive your **{{productName}}** reward for sharing. To find your wallet, go to [wallet.frak.id](https://wallet.frak.id).",
           "dismissed": {
-            "description": "All good",
-            "description_sharing": "Share this article."
+            "description": "All good"
           },
           "title": "Success",
-          "title_reward": "Gains",
-          "title_sharing": "Share"
+          "title_reward": "Gains"
         },
         "login": {
           "description": "Login to your Frak account to get the best experience on **{{productName}}**",
           "description_reward": "{{productName}} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
-          "description_sharing": "{{productName}} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.",
           "primaryAction": "Create my account in 30 sec",
-          "secondaryAction": "Use a QR code",
           "success": "Connection successful",
           "title": "Connection"
         },
@@ -319,20 +313,6 @@ export default interface Resources {
             "lockup": "Your earnings will be available {{lockupInDay}} days after the purchase is confirmed.",
             "title": "Collect your earnings in the app."
           }
-        }
-      },
-      "wallet": {
-        "loggedIn": {
-          "onboarding": {
-            "share": "🚀 Let's go! Share this product and receive your rewards directly.",
-            "share_referred": "🚀 Share your turn to win more!",
-            "welcome": "🥳 Congratulations! Your wallet is created."
-          }
-        },
-        "login": {
-          "primaryAction": "I create my wallet",
-          "text": "Create your wallet and receive up to **{{estimatedReward}}** per referred friend",
-          "text_referred": "Welcome! Receive up to **{{estimatedReward}}** in case of purchase on the site.\n\nCreate your wallet in 1 click"
         }
       }
     }

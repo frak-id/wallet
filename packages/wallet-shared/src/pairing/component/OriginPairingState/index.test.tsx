@@ -44,11 +44,6 @@ vi.mock("../PairingStatusBox", () => ({
             {title}
         </div>
     ),
-    StatusBoxWalletEmbedded: ({ status, title }: any) => (
-        <div data-testid="status-box-embedded" data-status={status}>
-            {title}
-        </div>
-    ),
 }));
 
 vi.mock("../../clients/store", async () => {
@@ -112,7 +107,7 @@ describe("OriginPairingState", () => {
         it("should return null when no distant webauthn session", () => {
             mockSessionState.distantWebauthnSession = null;
 
-            const { container } = render(<OriginPairingState type="modal" />);
+            const { container } = render(<OriginPairingState />);
 
             expect(container.firstChild).toBeNull();
         });
@@ -122,7 +117,7 @@ describe("OriginPairingState", () => {
                 address: "0x1234567890123456789012345678901234567890",
             };
 
-            render(<OriginPairingState type="modal" />);
+            render(<OriginPairingState />);
 
             // Should render status box
             expect(screen.getByTestId("status-box-modal")).toBeInTheDocument();
@@ -136,25 +131,10 @@ describe("OriginPairingState", () => {
             };
         });
 
-        it("should render modal variant", () => {
-            render(<OriginPairingState type="modal" />);
+        it("should render the pairing status box", () => {
+            render(<OriginPairingState />);
 
             expect(screen.getByTestId("status-box-modal")).toBeInTheDocument();
-        });
-
-        it("should render embedded variant", () => {
-            render(<OriginPairingState type="embedded" />);
-
-            expect(
-                screen.getByTestId("status-box-embedded")
-            ).toBeInTheDocument();
-        });
-
-        it("should throw error for invalid type", () => {
-            // @ts-expect-error - Testing invalid type
-            expect(() => render(<OriginPairingState type="invalid" />)).toThrow(
-                "Invalid type: invalid"
-            );
         });
     });
 
@@ -169,7 +149,7 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "idle";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="modal" />);
+            render(<OriginPairingState />);
 
             const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "waiting");
@@ -182,7 +162,7 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "connecting";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="modal" />);
+            render(<OriginPairingState />);
 
             const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "waiting");
@@ -195,7 +175,7 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "paired";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="modal" />);
+            render(<OriginPairingState />);
 
             const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "success");
@@ -208,7 +188,7 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "retry-error";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="modal" />);
+            render(<OriginPairingState />);
 
             const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "error");
@@ -229,7 +209,7 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "paired";
             mockPairingState.signatureRequests = new Map([["req-1", {}]]);
 
-            render(<OriginPairingState type="modal" />);
+            render(<OriginPairingState />);
 
             const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "loading");
@@ -242,7 +222,7 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "connecting";
             mockPairingState.signatureRequests = new Map([["req-1", {}]]);
 
-            render(<OriginPairingState type="modal" />);
+            render(<OriginPairingState />);
 
             const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "waiting");
@@ -255,7 +235,7 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "paired";
             mockPairingState.signatureRequests = new Map([["req-1", {}]]);
 
-            render(<OriginPairingState type="modal" />);
+            render(<OriginPairingState />);
 
             const statusBox = screen.getByTestId("status-box-modal");
             // Should show request state, not regular paired state
@@ -279,7 +259,7 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "paired";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="modal" />);
+            render(<OriginPairingState />);
 
             const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "success");
@@ -289,7 +269,7 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "idle";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="modal" />);
+            render(<OriginPairingState />);
 
             const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "waiting");
@@ -299,7 +279,7 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "retry-error";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="modal" />);
+            render(<OriginPairingState />);
 
             const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "error");

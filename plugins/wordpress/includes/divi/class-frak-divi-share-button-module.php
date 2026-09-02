@@ -55,7 +55,6 @@ class Frak_Divi_Share_Button_Module extends Frak_Divi_Module_Base {
 			'text',
 			'button_style',
 			'no_reward_text',
-			'click_action',
 			'placement',
 			'target_interaction',
 			'classname',
@@ -98,18 +97,6 @@ class Frak_Divi_Share_Button_Module extends Frak_Divi_Module_Base {
 					'option_category' => 'basic_option',
 					'description'     => esc_html__( 'Shown when the button text contains {REWARD} but no reward is available.', 'frak' ),
 					'toggle_slug'     => 'button',
-				),
-				'click_action'       => array(
-					'label'           => esc_html__( 'Click action', 'frak' ),
-					'type'            => 'select',
-					'option_category' => 'configuration',
-					'options'         => array(
-						'sharing-page'    => esc_html__( 'Sharing page', 'frak' ),
-						'embedded-wallet' => esc_html__( 'Embedded wallet', 'frak' ),
-					),
-					'default'         => 'sharing-page',
-					'description'     => esc_html__( 'Override what happens when the button is clicked.', 'frak' ),
-					'toggle_slug'     => 'advanced',
 				),
 				'target_interaction' => array(
 					'label'           => esc_html__( 'Target interaction', 'frak' ),

@@ -11,6 +11,10 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Changed
+
+- **`<frak-button-share>`: the `click_action` attribute has been retired.** `FrakComponentRenderer::SHARE_BUTTON_ATTRS` no longer maps `clickAction => click-action`. The embedded wallet drawer was the last alternative to the hosted sharing page and has been removed SDK-side, so every share CTA now opens the sharing page and the attribute had nothing left to select. No template in the module ever passed it; any custom Smarty template still supplying `click_action` keeps working — the attribute is silently dropped, same as `use_reward`.
+
 ## [1.0.9] - 2026-08-04
 
 ### Added

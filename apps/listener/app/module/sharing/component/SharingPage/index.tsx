@@ -149,7 +149,7 @@ export function ListenerSharingPage() {
 
     return (
         <>
-            {/* Owned by the consumer: the embedded wallet mounts its own. */}
+            {/* Owned by the consumer: a shared presentational component should not decide that a global overlay exists. */}
             <Toaster position="top-center" />
             <SharingPage {...controller} />
         </>

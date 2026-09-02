@@ -1,5 +1,4 @@
 import {
-    type DisplayEmbeddedWalletParamsType,
     type DisplaySharingPageParamsType,
     type FrakWalletSdkConfig,
     formatAmount,
@@ -60,20 +59,6 @@ export type GenericWalletUiType = {
 };
 
 /**
- * Type for the embedded wallet ui type
- *  - todo: Maybe some pre-check hooks, or other stuff to store here? Like which view to display (loggedOut or loggedIn?)
- */
-type EmbeddedWalletUiType = {
-    type: "embedded";
-    params: DisplayEmbeddedWalletParamsType;
-    emitter: (
-        response: RpcResponse<
-            ExtractReturnType<IFrameRpcSchema, "frak_displayEmbeddedWallet">
-        >
-    ) => Promise<void>;
-};
-
-/**
  * Type for the modal ui type
  *  - todo: Should it contain same stuff as the atom? Like prepared steps etc?
  */
@@ -101,12 +86,7 @@ type SharingPageUiType = {
     ) => Promise<void>;
 };
 
-export type UIRequest = (
-    | EmbeddedWalletUiType
-    | ModalUiType
-    | SharingPageUiType
-) &
-    GenericWalletUiType;
+export type UIRequest = (ModalUiType | SharingPageUiType) & GenericWalletUiType;
 
 type UIContext = {
     currentRequest: UIRequest | undefined;
@@ -128,8 +108,8 @@ const ListenerUiContext = createContext<UIContext | undefined>(undefined);
 
 /**
  * Provider for the listener UI
- *  - Will directly display either modal or embedded wallet
- *  - Keep the state of either modal or embedded wallet in a shared context accessible with hooks
+ *  - Will directly display either the modal or the sharing page
+ *  - Keep the state of either one in a shared context accessible with hooks
  */
 export function ListenerUiProvider({ children }: PropsWithChildren) {
     // Initial translation context
@@ -245,11 +225,9 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             }
 
             const requestI18n =
-                request.type === "embedded"
+                request.type === "sharing"
                     ? request.params.metadata?.i18n
-                    : request.type === "sharing"
-                      ? request.params.metadata?.i18n
-                      : request.metadata.i18n;
+                    : request.metadata.i18n;
             if (requestI18n) {
                 mapI18nConfig(requestI18n, i18n);
             }
@@ -401,21 +379,6 @@ export function useModalListenerUI() {
     }
     return uiContext as Omit<UIContext, "currentRequest"> & {
         currentRequest: ModalUiType & GenericWalletUiType;
-    };
-}
-
-/**
- * Custom hook to get the listener ui context only when displaying an embedded wallet
- */
-export function useEmbeddedListenerUI() {
-    const uiContext = useListenerUI();
-    if (uiContext.currentRequest?.type !== "embedded") {
-        throw new Error(
-            "useModalListenerUI must be used within a embedded displayed UI"
-        );
-    }
-    return uiContext as Omit<UIContext, "currentRequest"> & {
-        currentRequest: EmbeddedWalletUiType & GenericWalletUiType;
     };
 }
 

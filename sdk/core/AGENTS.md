@@ -1,10 +1,10 @@
 # sdk/core — Compass
 
-Framework-agnostic core SDK (111 public exports). Dual build: NPM (`dist/`, ESM+CJS+types) and CDN (`cdn/bundle.js`, IIFE, `window.FrakSDK`).
+Framework-agnostic core SDK (119 public exports). Dual build: NPM (`dist/`, ESM+CJS+types) and CDN (`cdn/bundle.js`, IIFE, `window.FrakSDK`).
 
 ## Key Files
 - `src/index.ts` — main barrel
-- `src/actions/` — 15 actions: `displayModal`, `displayEmbeddedWallet`, `sendInteraction`, `sendTransaction`, `watchWalletStatus`, `getMerchantInformation`, `openSso`, `prepareSso`, `prepareSsoUrl`, `processReferral`, `referralInteraction`, `trackPurchaseStatus`, `modalBuilder`, `siweAuthenticate` (+ `index.ts`)
+- `src/actions/` — 14 actions: `displayModal`, `displaySharingPage`, `sendInteraction`, `sendTransaction`, `watchWalletStatus`, `getMerchantInformation`, `openSso`, `prepareSso`, `prepareSsoUrl`, `processReferral`, `referralInteraction`, `trackPurchaseStatus`, `modalBuilder`, `siweAuthenticate` (+ `index.ts`)
 - `src/clients/` — `createIFrameFrakClient`, `setupClient`, iframe communication, `DebugInfoGatherer`
 - `src/types/rpc/` — `IFrameRpcSchema` + per-method types
 - `src/bundle.ts` — CDN entry (IIFE)

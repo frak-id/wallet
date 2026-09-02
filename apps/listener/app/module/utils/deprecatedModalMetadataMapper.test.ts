@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { UIRequest } from "@/ui/ListenerUiProvider";
 import { mapDeprecatedModalMetadata } from "./deprecatedModalMetadataMapper";
 
 describe("mapDeprecatedModalMetadata", () => {
@@ -20,192 +21,6 @@ describe("mapDeprecatedModalMetadata", () => {
         });
     });
 
-    describe("when request.type === 'embedded'", () => {
-        it("should return empty object when loggedIn is missing", () => {
-            const request = {
-                type: "embedded" as const,
-                appName: "test",
-                configMetadata: {},
-                params: {
-                    loggedOut: { metadata: { text: "Log in" } },
-                },
-                emitter: async () => {},
-            };
-            const result = mapDeprecatedModalMetadata(request as any);
-            expect(result).toEqual({});
-        });
-
-        it("should return empty object when loggedOut is missing", () => {
-            const request = {
-                type: "embedded" as const,
-                appName: "test",
-                configMetadata: {},
-                params: {
-                    loggedIn: {
-                        action: {
-                            key: "sharing",
-                            options: { popupTitle: "Share" },
-                        },
-                    },
-                },
-                emitter: async () => {},
-            };
-            const result = mapDeprecatedModalMetadata(request as any);
-            expect(result).toEqual({});
-        });
-
-        it("should map sharing popupTitle to 'sharing.title' when loggedIn action is 'sharing'", () => {
-            const request = {
-                type: "embedded" as const,
-                appName: "test",
-                configMetadata: {},
-                params: {
-                    loggedIn: {
-                        action: {
-                            key: "sharing",
-                            options: { popupTitle: "Share this!" },
-                        },
-                    },
-                    loggedOut: { metadata: {} },
-                },
-                emitter: async () => {},
-            };
-            const result = mapDeprecatedModalMetadata(request as any);
-            expect(result["sharing.title"]).toBe("Share this!");
-        });
-
-        it("should map sharing text to 'sharing.text'", () => {
-            const request = {
-                type: "embedded" as const,
-                appName: "test",
-                configMetadata: {},
-                params: {
-                    loggedIn: {
-                        action: {
-                            key: "sharing",
-                            options: { text: "Check this out" },
-                        },
-                    },
-                    loggedOut: { metadata: {} },
-                },
-                emitter: async () => {},
-            };
-            const result = mapDeprecatedModalMetadata(request as any);
-            expect(result["sharing.text"]).toBe("Check this out");
-        });
-
-        it("should map loggedOut text to 'sdk.wallet.login.text'", () => {
-            const request = {
-                type: "embedded" as const,
-                appName: "test",
-                configMetadata: {},
-                params: {
-                    loggedIn: { action: { key: "other" } },
-                    loggedOut: { metadata: { text: "Please log in" } },
-                },
-                emitter: async () => {},
-            };
-            const result = mapDeprecatedModalMetadata(request as any);
-            expect(result["sdk.wallet.login.text"]).toBe("Please log in");
-        });
-
-        it("should map loggedOut buttonText to 'sdk.wallet.login.primaryAction'", () => {
-            const request = {
-                type: "embedded" as const,
-                appName: "test",
-                configMetadata: {},
-                params: {
-                    loggedIn: { action: { key: "other" } },
-                    loggedOut: { metadata: { buttonText: "Connect Wallet" } },
-                },
-                emitter: async () => {},
-            };
-            const result = mapDeprecatedModalMetadata(request as any);
-            expect(result["sdk.wallet.login.primaryAction"]).toBe(
-                "Connect Wallet"
-            );
-        });
-
-        it("should handle all fields present together", () => {
-            const request = {
-                type: "embedded" as const,
-                appName: "test",
-                configMetadata: {},
-                params: {
-                    loggedIn: {
-                        action: {
-                            key: "sharing",
-                            options: {
-                                popupTitle: "Share!",
-                                text: "Check this out",
-                            },
-                        },
-                    },
-                    loggedOut: {
-                        metadata: {
-                            text: "Log in first",
-                            buttonText: "Connect",
-                        },
-                    },
-                },
-                emitter: async () => {},
-            };
-            const result = mapDeprecatedModalMetadata(request as any);
-            expect(result).toEqual({
-                "sharing.title": "Share!",
-                "sharing.text": "Check this out",
-                "sdk.wallet.login.text": "Log in first",
-                "sdk.wallet.login.primaryAction": "Connect",
-            });
-        });
-
-        it("should skip undefined fields", () => {
-            const request = {
-                type: "embedded" as const,
-                appName: "test",
-                configMetadata: {},
-                params: {
-                    loggedIn: {
-                        action: {
-                            key: "sharing",
-                            options: { popupTitle: "Share" },
-                        },
-                    },
-                    loggedOut: { metadata: { text: "Log in" } },
-                },
-                emitter: async () => {},
-            };
-            const result = mapDeprecatedModalMetadata(request as any);
-            expect(result).toEqual({
-                "sharing.title": "Share",
-                "sdk.wallet.login.text": "Log in",
-            });
-            expect(result["sharing.text"]).toBeUndefined();
-            expect(result["sdk.wallet.login.primaryAction"]).toBeUndefined();
-        });
-
-        it("should not map sharing when loggedIn action key is not 'sharing'", () => {
-            const request = {
-                type: "embedded" as const,
-                appName: "test",
-                configMetadata: {},
-                params: {
-                    loggedIn: {
-                        action: {
-                            key: "other",
-                            options: { popupTitle: "Should not map" },
-                        },
-                    },
-                    loggedOut: { metadata: { text: "Log in" } },
-                },
-                emitter: async () => {},
-            };
-            const result = mapDeprecatedModalMetadata(request as any);
-            expect(result["sharing.title"]).toBeUndefined();
-            expect(result["sharing.text"]).toBeUndefined();
-        });
-    });
-
     describe("when request.type === 'modal'", () => {
         it("should map dismissActionTxt to 3 keys", () => {
             const request = {
@@ -222,9 +37,9 @@ describe("mapDeprecatedModalMetadata", () => {
             expect(result["sdk.modal.dismiss.primaryAction"]).toBe(
                 "Maybe later"
             );
-            expect(result["sdk.modal.dismiss.primaryAction_sharing"]).toBe(
-                "Maybe later"
-            );
+            expect(
+                result["sdk.modal.dismiss.primaryAction_sharing"]
+            ).toBeUndefined();
             expect(result["sdk.modal.dismiss.primaryAction_reward"]).toBe(
                 "Maybe later"
             );
@@ -242,7 +57,7 @@ describe("mapDeprecatedModalMetadata", () => {
             };
             const result = mapDeprecatedModalMetadata(request as any);
             expect(result["sdk.modal.login.title"]).toBe("Welcome");
-            expect(result["sdk.modal.login.title_sharing"]).toBe("Welcome");
+            expect(result["sdk.modal.login.title_sharing"]).toBeUndefined();
             expect(result["sdk.modal.login.title_reward"]).toBe("Welcome");
         });
 
@@ -264,9 +79,9 @@ describe("mapDeprecatedModalMetadata", () => {
             expect(result["sdk.modal.login.description"]).toBe(
                 "Get {{ estimatedReward }} reward"
             );
-            expect(result["sdk.modal.login.description_sharing"]).toBe(
-                "Get {{ estimatedReward }} reward"
-            );
+            expect(
+                result["sdk.modal.login.description_sharing"]
+            ).toBeUndefined();
             expect(result["sdk.modal.login.description_reward"]).toBe(
                 "Get {{ estimatedReward }} reward"
             );
@@ -288,9 +103,9 @@ describe("mapDeprecatedModalMetadata", () => {
             };
             const result = mapDeprecatedModalMetadata(request as any);
             expect(result["sdk.modal.login.primaryAction"]).toBe("Continue");
-            expect(result["sdk.modal.login.primaryAction_sharing"]).toBe(
-                "Continue"
-            );
+            expect(
+                result["sdk.modal.login.primaryAction_sharing"]
+            ).toBeUndefined();
             expect(result["sdk.modal.login.primaryAction_reward"]).toBe(
                 "Continue"
             );
@@ -312,9 +127,9 @@ describe("mapDeprecatedModalMetadata", () => {
             };
             const result = mapDeprecatedModalMetadata(request as any);
             expect(result["sdk.modal.login.secondaryAction"]).toBe("Skip");
-            expect(result["sdk.modal.login.secondaryAction_sharing"]).toBe(
-                "Skip"
-            );
+            expect(
+                result["sdk.modal.login.secondaryAction_sharing"]
+            ).toBeUndefined();
             expect(result["sdk.modal.login.secondaryAction_reward"]).toBe(
                 "Skip"
             );
@@ -340,9 +155,9 @@ describe("mapDeprecatedModalMetadata", () => {
             expect(result["sdk.modal.login.dismissed.title"]).toBe(
                 "Dismissed Title"
             );
-            expect(result["sdk.modal.login.dismissed.title_sharing"]).toBe(
-                "Dismissed Title"
-            );
+            expect(
+                result["sdk.modal.login.dismissed.title_sharing"]
+            ).toBeUndefined();
             expect(result["sdk.modal.login.dismissed.title_reward"]).toBe(
                 "Dismissed Title"
             );
@@ -351,13 +166,13 @@ describe("mapDeprecatedModalMetadata", () => {
             );
             expect(
                 result["sdk.modal.login.dismissed.description_sharing"]
-            ).toBe("You dismissed with {{ estimatedReward }}");
+            ).toBeUndefined();
             expect(result["sdk.modal.login.dismissed.description_reward"]).toBe(
                 "You dismissed with {{ estimatedReward }}"
             );
         });
 
-        it("should map sharing action options for 'final' step with action.key 'sharing'", () => {
+        it("no longer maps sharing options on a final step", () => {
             const request = {
                 type: "modal" as const,
                 appName: "test",
@@ -376,57 +191,14 @@ describe("mapDeprecatedModalMetadata", () => {
                 },
                 emitter: async () => {},
             };
-            const result = mapDeprecatedModalMetadata(request as any);
-            expect(result["sharing.title"]).toBe("Share your success");
-            expect(result["sharing.text"]).toBe("I just completed this");
-        });
-
-        it("should not map sharing for non-final steps", () => {
-            const request = {
-                type: "modal" as const,
-                appName: "test",
-                configMetadata: {},
-                steps: {
-                    login: {
-                        metadata: { title: "Login" },
-                        action: {
-                            key: "sharing",
-                            options: {
-                                popupTitle: "Should not map",
-                                text: "Should not map",
-                            },
-                        },
-                    },
-                },
-                emitter: async () => {},
-            };
-            const result = mapDeprecatedModalMetadata(request as any);
+            // The `sharing` action was removed from `FinalActionType`; this
+            // fixture reproduces a legacy payload the mapper must ignore.
+            const result = mapDeprecatedModalMetadata(
+                request as unknown as UIRequest
+            );
             expect(result["sharing.title"]).toBeUndefined();
             expect(result["sharing.text"]).toBeUndefined();
-        });
-
-        it("should not map sharing for final step with non-sharing action", () => {
-            const request = {
-                type: "modal" as const,
-                appName: "test",
-                configMetadata: {},
-                steps: {
-                    final: {
-                        metadata: { title: "Done" },
-                        action: {
-                            key: "other",
-                            options: {
-                                popupTitle: "Should not map",
-                                text: "Should not map",
-                            },
-                        },
-                    },
-                },
-                emitter: async () => {},
-            };
-            const result = mapDeprecatedModalMetadata(request as any);
-            expect(result["sharing.title"]).toBeUndefined();
-            expect(result["sharing.text"]).toBeUndefined();
+            expect(result["sdk.modal.final.title"]).toBe("Done");
         });
 
         it("should handle multiple steps", () => {
@@ -576,9 +348,9 @@ describe("mapDeprecatedModalMetadata", () => {
             expect(result["sdk.modal.final.title"]).toBe("Success");
             expect(result["sdk.modal.final.secondaryAction"]).toBe("Close");
 
-            // Sharing
-            expect(result["sharing.title"]).toBe("Share");
-            expect(result["sharing.text"]).toBe("I earned {REWARD}");
+            // The retired sharing action contributes no keys.
+            expect(result["sharing.title"]).toBeUndefined();
+            expect(result["sharing.text"]).toBeUndefined();
         });
     });
 });

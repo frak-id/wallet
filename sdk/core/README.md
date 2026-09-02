@@ -9,7 +9,7 @@ Checkout our documentation for more information's about the usage:
 
 ## API Surface
 
-The Core SDK exports 111 functions, types, and utilities organized into four categories:
+The Core SDK exports 119 functions, types, and utilities organized into four categories:
 
 ### Client
 
@@ -24,7 +24,6 @@ The Core SDK exports 111 functions, types, and utilities organized into four cat
 | Export | Purpose |
 |--------|---------|
 | `displayModal` | Show wallet modal for user interactions |
-| `displayEmbeddedWallet` | Render embedded wallet view within your app |
 | `getMerchantInformation` | Fetch merchant data including rewards and tiers |
 | `openSso` | Trigger single sign-on flow in popup window |
 | `prepareSso` | Prepare SSO parameters before opening popup |
@@ -61,5 +60,5 @@ The Core SDK exports 111 functions, types, and utilities organized into four cat
 
 Core SDK exports 40+ TypeScript types including:
 
-`FrakClient`, `FrakWalletSdkConfig`, `SendInteractionParamsType`, `DisplayModalParamsType`, `WalletStatusReturnType`, `GetMerchantInformationReturnType`, `DisplayEmbeddedWalletParamsType`, `SendTransactionReturnType`, `SiweAuthenticateReturnType`, `OpenSsoParamsType`, `PrepareSsoParamsType`, `TrackArrivalParams`, `UtmParams`, `Currency`, `Language`, `FrakContext`, `IFrameRpcSchema`, and more.
+`FrakClient`, `FrakWalletSdkConfig`, `SendInteractionParamsType`, `DisplayModalParamsType`, `WalletStatusReturnType`, `GetMerchantInformationReturnType`, `SendTransactionReturnType`, `SiweAuthenticateReturnType`, `OpenSsoParamsType`, `PrepareSsoParamsType`, `TrackArrivalParams`, `UtmParams`, `Currency`, `Language`, `FrakContext`, `IFrameRpcSchema`, and more.
 

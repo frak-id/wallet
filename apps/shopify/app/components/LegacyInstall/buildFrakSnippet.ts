@@ -40,13 +40,6 @@ export function buildFrakSnippet({
       // waitForBackendConfig defaults to true: name, logo, css, i18n and
       // placements are fetched from the Frak dashboard automatically.
     },
-    modalConfig: {
-      login: {
-        allowSso: true,
-        ssoMetadata: { homepageLink: window.location.host },
-      },
-    },
-    modalShareConfig: { link: window.location.href },
   };
 
   // Store merchantId in sessionStorage for the checkout pixel fallback.

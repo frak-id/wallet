@@ -42,7 +42,7 @@ bun run test             # Vitest (17 test files)
 - **LRU cache tiers**: shop 1min · theme 30s · merchant 5min · onchain/campaigns 5s. React Query: stale 1min, gc infinity, localStorage persist.
 - **Onboarding = 6-step wizard** (`utils/onboarding.ts`): merchant, pixel, webhooks, Frak webhook, theme blocks, buttons. Use `stepValidations` + `stepDataFetchers`.
 - **No Biome divergence**: there is no `apps/shopify/biome.json` and no root override — shopify inherits root's settings, cognitive complexity 16 included.
-- **Web Components**: `frak-button-wallet` (shadow DOM), `frak-button-share` / `frak-open-in-app` (light DOM — inherit theme CSS).
+- **Web Components**: `frak-button-wallet` (shadow DOM; legacy name, opens the sharing page), `frak-button-share` / `frak-open-in-app` (light DOM — inherit theme CSS).
 
 ## Anti-Patterns
 

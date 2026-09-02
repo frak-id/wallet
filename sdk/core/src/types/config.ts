@@ -127,8 +127,7 @@ export type FrakWalletSdkConfig = {
  *  - `{{ estimatedReward }}` : The estimated reward for the user (based on the specific `targetInteraction` you can specify, or the max referrer reward if no target interaction is specified)
  *
  * Context of the translation [see i18n context](https://www.i18next.com/translation-function/context)
- *  - For modal display, the key of the final action (`sharing`, `reward`, or undefined)
- *  - For embedded wallet display, the key of the logged in action (`sharing` or undefined)
+ *  - For modal display, the key of the final action (`reward` or undefined)
  *
  * @example
  * ```ts

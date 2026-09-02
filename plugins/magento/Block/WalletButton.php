@@ -32,14 +32,4 @@ class WalletButton extends Template
     {
         return $this->config->isEnabled();
     }
-
-    /**
-     * Get the wallet button position (left or right)
-     *
-     * @return string
-     */
-    public function getPosition(): string
-    {
-        return $this->config->getWalletButtonPosition() ?? "right";
-    }
 }

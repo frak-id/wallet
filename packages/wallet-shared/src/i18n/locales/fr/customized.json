@@ -2,28 +2,22 @@
     "sdk": {
         "modal": {
             "dismiss": {
-                "primaryAction": "Je continue ma navigation",
-                "primaryAction_sharing": "Partager sans être récompensé"
+                "primaryAction": "Je continue ma navigation"
             },
             "final": {
                 "title": "Succès",
                 "title_reward": "Gains",
-                "title_sharing": "Partager",
-                "description_sharing": "Recevez jusqu'a **{{ estimatedReward }}** de la part de **{{ productName }}** directement sur votre porte-monnaie pour tout achat réalisé grâce à votre partage.\n\nRetrouvez votre porte-monnaie sur [wallet.frak.id](https://wallet.frak.id).\n\nPrêt, Partagez, Gagnez !",
                 "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois **{{ estimatedReward }}** directement sur mon porte-monnaie, utilisable où je veux.",
                 "description": "Vous avez effectué toutes les étapes avec succès.",
                 "dismissed": {
-                    "description": "Tout est bon",
-                    "description_sharing": "Partager cet article."
+                    "description": "Tout est bon"
                 }
             },
             "login": {
                 "description": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**.",
                 "description_other": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**",
-                "description_sharing": "En partageant ce produit, je deviens ambassadeur-rice **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}** directement dans mon porte-monnaie.",
                 "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}** directement sur mon porte-monnaie, utilisable où je veux.",
                 "primaryAction": "Créer mon compte en 30 sec",
-                "secondaryAction": "Utiliser un QR code",
                 "title": "Connexion",
                 "success": "Connexion réussie"
             },
@@ -38,20 +32,6 @@
                 "connectingTo": "Connexion sécurisée à {{productName}} ({{domain}})",
                 "primaryAction": "Authentifier",
                 "title": "Authentification"
-            }
-        },
-        "wallet": {
-            "login": {
-                "text": "Créez votre porte-monnaie et recevez jusqu’à **{{ estimatedReward }}** par ami(e) parrainé(e)",
-                "text_referred": "Bienvenue ! Recevez jusqu'à **{{ estimatedReward }}** en cas d’achat sur le site.\n\nCréez votre porte-monnaie en 1 clic",
-                "primaryAction": "Je crée mon porte-monnaie"
-            },
-            "loggedIn": {
-                "onboarding": {
-                    "welcome": "🥳 Bravo ! Votre porte-monnaie est créé.",
-                    "share": "🚀 C'est parti ! Partagez ce produit et recevez des récompenses",
-                    "share_referred": "🚀 Partagez a votre tour pour gagner plus!"
-                }
             }
         },
         "sharingPage": {

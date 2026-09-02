@@ -3,6 +3,7 @@ export type SharingSource =
     | "sharing_page_wallet"
     | "sharing_page_listener"
     | "modal"
+    /** Retired surface; kept so historical events stay comparable, nothing emits it any more. */
     | "embedded_wallet"
     | "explorer_detail"
     | "welcome_card";
