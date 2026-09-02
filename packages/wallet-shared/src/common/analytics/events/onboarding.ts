@@ -19,6 +19,7 @@ type ReferralCodeOutcome =
 
 type EmailInputOutcome =
     | "submitted"
+    | "skipped"
     | "back"
     | "login_existing"
     | "already_used";
@@ -44,8 +45,9 @@ type OnboardingMidFlowEvents = {
     // Fires once when the user lands on the `emailInput` onboarding step.
     email_input_viewed: OnboardingBaseProps | undefined;
     // Fires when the user leaves the email step: `submitted` advances the
-    // flow, `back` returns to the previous step, `login_existing` triggers
-    // a login mutation when the entered email is already attached to a wallet.
+    // flow, `skipped` advances without an address, `back` returns to the
+    // previous step, `login_existing` triggers a login mutation when the
+    // entered email is already attached to a wallet.
     email_input_resolved: OnboardingBaseProps & {
         outcome: EmailInputOutcome;
     };

@@ -34,6 +34,21 @@ test("should register new wallet with biometrics successfully", async ({
     expect(analyticsRequestsCount).toBeGreaterThan(0);
 });
 
+test("should register a wallet without providing an email", async ({
+    webAuthN,
+    authPage,
+}) => {
+    await authPage.navigateToRegister();
+    await authPage.verifyRegistrationReady();
+
+    // Skips the email step from the header instead of submitting an address.
+    await authPage.clickRegisterSkippingEmail();
+    await authPage.completeOnboarding();
+
+    const credentials = await webAuthN.getCredentials();
+    expect(credentials).toHaveLength(1);
+});
+
 test("should enforce user verification on WebAuthn registration", async ({
     page,
     webAuthN,

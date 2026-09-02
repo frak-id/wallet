@@ -84,18 +84,25 @@ function renderStep(overrides?: {
     onApplied?: () => void;
     onSkip?: () => void;
     onError?: (key: string) => void;
+    onBusyChange?: (isBusy: boolean) => void;
 }) {
     const onApplied = overrides?.onApplied ?? vi.fn();
     const onSkip = overrides?.onSkip ?? vi.fn();
     const onError = overrides?.onError ?? vi.fn();
+    const onBusyChange = overrides?.onBusyChange ?? vi.fn();
     render(
         <ReferralCodeStep
             onApplied={onApplied}
-            onSkip={onSkip}
             onError={onError}
+            onBusyChange={onBusyChange}
+            headerEnd={
+                <button type="button" onClick={onSkip}>
+                    onboarding.skipStep
+                </button>
+            }
         />
     );
-    return { onApplied, onSkip, onError };
+    return { onApplied, onSkip, onError, onBusyChange };
 }
 
 function getApplyButton() {
@@ -110,7 +117,7 @@ function getSkipButton() {
     return screen
         .getAllByRole("button")
         .find((btn) =>
-            btn.textContent?.includes("onboarding.referral.skip")
+            btn.textContent?.includes("onboarding.skipStep")
         ) as HTMLButtonElement;
 }
 
@@ -173,10 +180,24 @@ describe("ReferralCodeStep", () => {
         expect(capturedOptions?.onError).toBe(onError);
     });
 
-    it("calls onSkip when Passer is tapped", () => {
+    it("renders the parent's skip in the header, not in the footer", () => {
         const { onSkip } = renderStep();
         fireEvent.click(getSkipButton());
         expect(onSkip).toHaveBeenCalled();
+        expect(
+            screen
+                .getAllByRole("button")
+                .some((btn) =>
+                    btn.textContent?.includes("onboarding.referral.skip")
+                )
+        ).toBe(false);
+    });
+
+    it("reports its pending state so the parent can disable the skip", () => {
+        const onBusyChange = vi.fn();
+        mockState = { isPending: true, error: null };
+        renderStep({ onBusyChange });
+        expect(onBusyChange).toHaveBeenCalledWith(true);
     });
 
     it("renders the error message when the hook resolves a key", () => {

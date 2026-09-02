@@ -662,7 +662,7 @@ export default interface Resources {
         "checkError": "Unable to verify this email right now. Please try again.",
         "clearAriaLabel": "Clear email address",
         "continue": "Continue",
-        "description": "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.",
+        "description": "Your email is only used to recover your account if you lose access. It will never be used to send you unsolicited messages. You can add it later from your wallet.",
         "label": "Email",
         "placeholder": "your.email@gmail.com",
         "title": "Enter your email address"
@@ -684,19 +684,18 @@ export default interface Resources {
       "notification": {
         "description": "Get notified as soon as money is credited to your wallet.",
         "enable": "Yes, notify me",
-        "skip": "Later",
         "title": "Don't miss any reward!"
       },
       "referral": {
         "appliedToast": "Referral code applied",
-        "description": "Got a creator code? Enter it here. Otherwise, you can skip this step.",
+        "description": "Got a creator code? Enter it here.",
         "label": "Referral code",
         "placeholder": "Ex: LOLA10",
-        "skip": "Skip",
         "submitCta": "Apply code",
         "title": "Add a referral code"
       },
       "rewardCode": "I have a reward code",
+      "skipStep": "Later",
       "start": "Get started",
       "steps": {
         "one": {

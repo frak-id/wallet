@@ -823,6 +823,7 @@
         "activateSecureSpace": "Activate my secure space",
         "alreadyHaveAccount": "Already have an account?",
         "rewardCode": "I have a reward code",
+        "skipStep": "Later",
         "steps": {
             "one": {
                 "title": "Earn money by recommending",
@@ -839,7 +840,7 @@
         },
         "email": {
             "title": "Enter your email address",
-            "description": "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.",
+            "description": "Your email is only used to recover your account if you lose access. It will never be used to send you unsolicited messages. You can add it later from your wallet.",
             "label": "Email",
             "placeholder": "your.email@gmail.com",
             "continue": "Continue",
@@ -869,16 +870,14 @@
         "notification": {
             "title": "Don't miss any reward!",
             "description": "Get notified as soon as money is credited to your wallet.",
-            "enable": "Yes, notify me",
-            "skip": "Later"
+            "enable": "Yes, notify me"
         },
         "referral": {
             "title": "Add a referral code",
-            "description": "Got a creator code? Enter it here. Otherwise, you can skip this step.",
+            "description": "Got a creator code? Enter it here.",
             "label": "Referral code",
             "placeholder": "Ex: LOLA10",
             "submitCta": "Apply code",
-            "skip": "Skip",
             "appliedToast": "Referral code applied"
         },
         "welcome": {
