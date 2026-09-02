@@ -3,7 +3,7 @@ import { button } from "@frak-labs/design-system/components/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { FaceIdIcon, QrCodeIcon } from "@frak-labs/design-system/icons";
+import { FaceIdIcon } from "@frak-labs/design-system/icons";
 import { useWebauthnErrorToast } from "@frak-labs/wallet-shared/authentication";
 import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
 import {
@@ -27,7 +27,6 @@ import {
     useListenerTranslation,
     useModalListenerUI,
 } from "@/ui/ListenerUiProvider";
-import { AuthenticateWithPhone } from "../AuthenticateWithPhone";
 
 /**
  * The component for the login step of a modal
@@ -67,8 +66,7 @@ export function LoginModalStep({
     // Capture the session present at mount time. The `useEffect` below must
     // NOT auto-finish for that session — it may be a stale (dead-token) object
     // that triggered this very login step. We only auto-finish when a NEW
-    // session appears (e.g. the user completed SSO in a popup, or phone
-    // pairing delivered a fresh session from another device).
+    // session appears (e.g. the user completed SSO in a popup).
     const initialSessionRef = useRef(session);
 
     // Scope the passkey button to the last LOCAL authenticator. We read it from
@@ -76,7 +74,7 @@ export function LoginModalStep({
     // is cleared/replaced by logout, backup restore and SSO. A remote (paired)
     // authenticator is intentionally NOT used here: its credential lives on
     // another device, so a local WebAuthn assertion against it can't succeed
-    // — those re-login via SSO / phone pairing, not this passkey button.
+    // — those re-login via SSO, not this passkey button.
     const lastAuthenticator = useStore(
         authenticationStore,
         selectLastAuthenticator
@@ -103,7 +101,7 @@ export function LoginModalStep({
      * Listen to the session status, and exit directly after a NEW session is
      * set in the storage.
      * - Will be triggered if the user goes through the external registration
-     *   process (SSO popup, phone pairing, etc.).
+     *   process (SSO popup).
      * - Must NOT fire on mount when a stale (dead-token) session is already in
      *   the store — that session is what caused this login step to be shown.
      */
@@ -121,7 +119,6 @@ export function LoginModalStep({
     });
 
     const primaryClass = `${button({ variant: "primary", size: "large" })} ${prefixModalCss("button-primary")}`;
-    const secondaryClass = `${button({ variant: "secondary", size: "large" })} ${prefixModalCss("button-secondary")}`;
 
     return (
         <>
@@ -142,15 +139,6 @@ export function LoginModalStep({
                         className={primaryClass}
                     />
                 )}
-                <AuthenticateWithPhone
-                    text={
-                        <>
-                            <QrCodeIcon width={24} height={24} />
-                            {t("sdk.modal.login.secondaryAction")}
-                        </>
-                    }
-                    className={secondaryClass}
-                />
                 {!allowSso && (
                     <button
                         type={"button"}

@@ -213,7 +213,6 @@ export default interface Resources {
           "description": "Login to your Frak account to get the best experience on **{{productName}}**",
           "description_reward": "{{productName}} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
           "primaryAction": "Create my account in 30 sec",
-          "secondaryAction": "Use a QR code",
           "success": "Connection successful",
           "title": "Connection"
         },

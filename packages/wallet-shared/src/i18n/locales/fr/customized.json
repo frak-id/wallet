@@ -18,7 +18,6 @@
                 "description_other": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**",
                 "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}** directement sur mon porte-monnaie, utilisable où je veux.",
                 "primaryAction": "Créer mon compte en 30 sec",
-                "secondaryAction": "Utiliser un QR code",
                 "title": "Connexion",
                 "success": "Connexion réussie"
             },
