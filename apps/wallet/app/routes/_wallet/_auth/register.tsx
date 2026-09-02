@@ -1,3 +1,4 @@
+import { Button } from "@frak-labs/design-system/components/Button";
 import { ConfirmationTooltip } from "@frak-labs/design-system/components/ConfirmationTooltip";
 import { ToastSurface } from "@frak-labs/design-system/components/ToastSurface";
 import {
@@ -26,6 +27,7 @@ import { Welcome } from "@/module/onboarding/component/Welcome";
 import { useInstallReferrer } from "@/module/onboarding/hook/useInstallReferrer";
 import { usePushOptIn } from "@/module/onboarding/hook/usePushOptIn";
 import { useRegisterFlow } from "@/module/onboarding/hook/useRegisterFlow";
+import { useSkipLatch } from "@/module/onboarding/hook/useSkipLatch";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import { modalStore } from "@/module/stores/modalStore";
@@ -103,9 +105,12 @@ function RegisterPage() {
     const navigate = useNavigate();
     const { email: prefilledEmail } = Route.useSearch();
     const [loginError, setLoginError] = useState<Error | null>(null);
+    // The skip control lives in each asking step's header slot, so its
+    // disabled state has to come from the step rather than from inside it.
+    // Each step reports its own state and clears the flag when it unmounts.
+    const [isStepBusy, setIsStepBusy] = useState(false);
     // Step state machine, transition helper, and per-step analytics tracking.
-    // `goToStep` clears the transient login error before every transition.
-    const { step, goToStep, flowRef } = useRegisterFlow({
+    const { step, stepRef, goToStep, flowRef } = useRegisterFlow({
         prefilledEmail,
         onBeforeTransition: () => setLoginError(null),
     });
@@ -239,19 +244,25 @@ function RegisterPage() {
             openModal({
                 id: "keypass",
                 onAuthSuccess: advanceAfterKeypass,
-                email: emailOverride || email || undefined,
+                // `undefined` means "use whatever was collected"; an explicit
+                // empty string means the user skipped, so send no email.
+                email: (emailOverride ?? email) || undefined,
             });
         },
         [openModal, advanceAfterKeypass, email]
     );
 
+    // The redemption mutation is not unmount-cancelled, so a slow success can
+    // land after the user already skipped the step. Ignore it then — the flow
+    // has moved on and re-driving it would yank the user backwards.
     const handleReferralApplied = useCallback(() => {
+        if (stepRef.current !== "referralCode") return;
         flowRef.current?.track("referral_code_resolved", {
             outcome: "applied",
         });
         setReferralToast("shown");
         goToStep("notification");
-    }, [goToStep]);
+    }, [goToStep, stepRef]);
 
     const handleReferralSkip = useCallback(() => {
         flowRef.current?.track("referral_code_resolved", {
@@ -260,12 +271,51 @@ function RegisterPage() {
         goToStep("notification");
     }, [goToStep]);
 
-    const handleReferralError = useCallback((errorKey: string) => {
-        flowRef.current?.track("referral_code_resolved", {
-            outcome: "error",
-            error_key: errorKey,
+    // Same stale-step guard as the applied path: a redemption that fails after
+    // the user skipped must not emit a second resolution for the step.
+    const handleReferralError = useCallback(
+        (errorKey: string) => {
+            if (stepRef.current !== "referralCode") return;
+            flowRef.current?.track("referral_code_resolved", {
+                outcome: "error",
+                error_key: errorKey,
+            });
+        },
+        [stepRef]
+    );
+
+    const handleEmailSkip = useCallback(() => {
+        flowRef.current?.track("email_input_resolved", {
+            outcome: "skipped",
         });
-    }, []);
+        // No email captured: the keypass registration accepts `undefined`,
+        // and the wallet keeps prompting for one after onboarding.
+        setEmail("");
+        // Mirrors the submit path: pairing context goes straight to keypass
+        // so the user can confirm the pairing, everyone else sees the
+        // secure-space step first.
+        if (isPairingContext) {
+            handleOpenKeypass("");
+            return;
+        }
+        goToStep("onboardingThree");
+    }, [goToStep, handleOpenKeypass, isPairingContext]);
+
+    const guardSkip = useSkipLatch(step);
+
+    // One control, one label, reused by every step that asks for something.
+    const renderSkip = (onSkip: () => void) => (
+        <Button
+            type="button"
+            variant="secondary"
+            size="small"
+            width="auto"
+            disabled={isStepBusy}
+            onClick={() => guardSkip(onSkip)}
+        >
+            {t("onboarding.skipStep")}
+        </Button>
+    );
 
     return (
         <>
@@ -307,6 +357,8 @@ function RegisterPage() {
             {step === "emailInput" && (
                 <EmailInputStep
                     initialValue={email}
+                    headerEnd={renderSkip(handleEmailSkip)}
+                    onBusyChange={setIsStepBusy}
                     onContinue={(value) => {
                         setEmail(value);
                         flowRef.current?.track("email_input_resolved", {
@@ -381,14 +433,16 @@ function RegisterPage() {
             {step === "referralCode" && !hasExistingReferrer && (
                 <ReferralCodeStep
                     onApplied={handleReferralApplied}
-                    onSkip={handleReferralSkip}
                     onError={handleReferralError}
+                    headerEnd={renderSkip(handleReferralSkip)}
+                    onBusyChange={setIsStepBusy}
                 />
             )}
             {step === "notification" && (
                 <NotificationOptIn
                     onEnable={onEnablePush}
-                    onSkip={onSkipPush}
+                    headerEnd={renderSkip(onSkipPush)}
+                    onBusyChange={setIsStepBusy}
                 />
             )}
             {step === "welcome" && (

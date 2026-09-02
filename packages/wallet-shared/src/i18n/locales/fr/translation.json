@@ -823,6 +823,7 @@
         "activateSecureSpace": "Activer mon espace sécurisé",
         "alreadyHaveAccount": "Déjà un compte ?",
         "rewardCode": "J'ai un code de récompense",
+        "skipStep": "Plus tard",
         "steps": {
             "one": {
                 "title": "Gagne de l'argent en recommandant",
@@ -839,7 +840,7 @@
         },
         "email": {
             "title": "Entre ton adresse e-mail",
-            "description": "Ton e-mail sert uniquement à récupérer ton compte en cas d'oubli. Il ne sera jamais utilisé pour t'envoyer des messages non sollicités.",
+            "description": "Ton e-mail sert uniquement à récupérer ton compte si tu perds l'accès. Il ne sera jamais utilisé pour t'envoyer des messages non sollicités. Tu peux l'ajouter plus tard depuis ton porte-monnaie.",
             "label": "Email",
             "placeholder": "ton.email@gmail.com",
             "continue": "Continuer",
@@ -869,16 +870,14 @@
         "notification": {
             "title": "Ne rate aucun gain !",
             "description": "Sois averti dès que l'argent est crédité sur ton porte-monnaie.",
-            "enable": "Oui, me prévenir",
-            "skip": "Plus tard"
+            "enable": "Oui, me prévenir"
         },
         "referral": {
             "title": "Ajoute un code de parrainage",
-            "description": "Tu as un code créateur ? Entre-le ici. Sinon, tu peux passer cette étape.",
+            "description": "Tu as un code créateur ? Entre-le ici.",
             "label": "Code de parrainage",
             "placeholder": "Ex : LOLA10",
             "submitCta": "Appliquer le code",
-            "skip": "Passer",
             "appliedToast": "Code de parrainage appliqué"
         },
         "welcome": {
