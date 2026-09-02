@@ -39,9 +39,9 @@ const edges = new Map();
 for (const f of files) {
     const src = readFileSync(join(dir, f), "utf8");
     const deps = new Set();
-    for (const m of src.matchAll(/from"\.\/([A-Za-z0-9_.-]+\.js)"/g))
+    for (const m of src.matchAll(/from\s*"\.\/([A-Za-z0-9_.-]+\.js)"/g))
         deps.add(m[1]);
-    for (const m of src.matchAll(/import"\.\/([A-Za-z0-9_.-]+\.js)"/g))
+    for (const m of src.matchAll(/import\s*"\.\/([A-Za-z0-9_.-]+\.js)"/g))
         deps.add(m[1]);
     edges.set(f, deps);
 }

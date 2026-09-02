@@ -144,7 +144,8 @@ export function ButtonWallet({
         const placementPosition = placement?.components?.buttonWallet?.position;
         // `modalWalletConfig` is the retired embedded-wallet config; only its
         // position hint is still honoured, for integrations (Magento) that
-        // keep injecting it.
+        // keep injecting it. Deliberately not a dep: it's set before mount
+        // and never mutated, so the placement position is the only live input.
         const configPosition =
             window.FrakSetup?.modalWalletConfig?.metadata?.position;
         setPosition(placementPosition ?? configPosition ?? "right");

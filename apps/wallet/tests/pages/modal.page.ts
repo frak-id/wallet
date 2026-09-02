@@ -1,4 +1,5 @@
 import {
+    type ElementHandle,
     expect,
     type Frame,
     type FrameLocator,
@@ -47,10 +48,6 @@ export class ModalPage {
         return this.walletFrame.locator(".nexus-modal-button-primary");
     }
 
-    get secondaryButton() {
-        return this.walletFrame.locator(".nexus-modal-button-secondary");
-    }
-
     async clickPrimary() {
         await expect(this.primaryButton.first()).toBeVisible();
         await this.primaryButton.first().click();
@@ -63,15 +60,33 @@ export class ModalPage {
         await close.click();
     }
 
-    // Login step with `allowSso: false` → primary action is the passkey button.
+    // Login step with `allowSso: false` → primary action is the passkey
+    // button. Its node handle is captured pre-click so the advance wait can
+    // anchor on the login step actually unmounting — the next step's primary
+    // reuses the same class, so the locator alone can't observe a transition.
+    private loginPrimaryHandle: ElementHandle | null = null;
+
     async clickLoginPasskey() {
-        await this.clickPrimary();
+        const passkey = this.primaryButton.first();
+        await expect(passkey).toBeVisible();
+        this.loginPrimaryHandle = await passkey.elementHandle();
+        await passkey.click();
     }
 
-    // Once the login step completes, its secondary (QR) action disappears as
-    // the modal advances to the next step.
+    // The mocked login resolves and the modal advances: the captured login
+    // button detaches, then the next step mounts its own primary. Throws on
+    // misuse instead of degrading to a racy visibility check — a missing
+    // handle would make this a silently-passing gate again.
     async waitForLoginToAdvance() {
-        await expect(this.secondaryButton).toBeHidden();
+        const handle = this.loginPrimaryHandle;
+        if (!handle) {
+            throw new Error(
+                "clickLoginPasskey() must run before waitForLoginToAdvance()"
+            );
+        }
+        await handle.waitForElementState("hidden");
+        this.loginPrimaryHandle = null;
+        await expect(this.primaryButton.first()).toBeVisible();
     }
 
     // sendTransaction step → primary action is "Send".

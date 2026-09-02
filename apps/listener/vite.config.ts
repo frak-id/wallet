@@ -105,12 +105,12 @@ const deepLinkScheme = isProd ? "frakwallet://" : "frakwallet-dev://";
  *  3. Deletes the orphan chunks from the bundle so they aren't written.
  *
  * It ALSO strips orphan side-effect imports of known lazy-only chunks
- * (blockchain-vendor, BaseProvider, ui-vendor, ui-runtime, lazy-shared,
- * Modal, Wallet, SharingPage). Those chunks are not empty, but Rolldown
- * sometimes hoists their side-effect imports into eager chunks even when
- * no bound symbols cross the boundary — forcing the iframe to download
- * lazy chunks on boot. Real dynamic-import call sites (`__vitePreload(...)`)
- * are preserved because they don't use the top-level `import "...";` form.
+ * (the `LAZY_CHUNK_NAMES` list above). Those chunks are not empty, but
+ * Rolldown sometimes hoists their side-effect imports into eager chunks
+ * even when no bound symbols cross the boundary — forcing the iframe to
+ * download lazy chunks on boot. Real dynamic-import call sites
+ * (`__vitePreload(...)`) are preserved because they don't use the
+ * top-level `import "...";` form.
  */
 function stripOrphanCrossChunkImports() {
     const LAZY_ORPHAN_RE = new RegExp(
@@ -514,7 +514,7 @@ export default defineConfig(async () => {
                             // implies. Narrowing the `lazy-shared` regex to
                             // the genuinely sharing-reachable set is the open
                             // win here; measure with
-                            // `node scripts/chunk-closure.mjs` before/after.
+                            // `bun run chunk:closure` before/after.
                             {
                                 name: "blockchain-vendor",
                                 test: /(?:node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox|abitype|radash|mipd|eventemitter3)[\\/])|(?:packages[\\/]app-essentials[\\/]src[\\/](?:blockchain|webauthn))|(?:wallet-shared[\\/]src[\\/](?:providers[\\/]BaseProvider|wallet[\\/]|blockchain[\\/]|authentication[\\/]webauthn[\\/]tauriBridge))/,
