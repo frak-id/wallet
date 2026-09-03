@@ -90,7 +90,6 @@ public class FrakSharing internal constructor(
          *
          * @throws IllegalStateException if called before the Activity reaches `onCreate`.
          */
-
         @MainThread
         public fun build(activity: ComponentActivity): FrakSharing {
             check(activity.application != null) {

@@ -31,6 +31,11 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
   were never released. The replaced view is now fully retired, and the pool keeps its warm URL
   so the share after a recovery activates warm instead of cold-loading.
 
+- **A large preview image no longer forfeits the share sheet's thumbnail.** The preview fetch
+  read the response one byte per await, so an image near the 2 MB cap burned the tap deadline
+  on scheduler churn and shipped no preview at all. The body is now fetched in one read, under
+  the same timeout, size cap and content-type checks.
+
 - **The install code no longer lands on the pasteboard unprotected.** The install page wrote it
   too, and that plain write landed after the SDK's `localOnly` + `expirationDate` one, replacing
   it. The install URL now carries `clip=host`, telling the page the SDK owns the pasteboard. An

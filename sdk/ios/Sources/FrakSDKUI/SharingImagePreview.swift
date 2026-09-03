@@ -27,23 +27,17 @@
             let body: Data?
             do {
                 body = try await withTimeout(timeoutSeconds) {
-                    // Headers first, so an advertised over-cap body is refused before a byte of it
-                    // is buffered; the running cap below is for a response that lies or omits it.
-                    let (bytes, response) = try await session.bytes(for: request)
+                    // `data(for:)`, not `bytes(for:)`: AsyncBytes yields one byte per await,
+                    // so a cap-sized image costs ~2M resumptions and loses the tap deadline.
+                    // The cost is buffering a body that lies about its length, bounded by the
+                    // timeout above and rejected by the size check below.
+                    let (data, response) = try await session.data(for: request)
                     guard let http = response as? HTTPURLResponse,
                         http.isSuccess,
                         isImageContentType(http.value(forHTTPHeaderField: "Content-Type")),
-                        http.expectedContentLength <= maxBytes
+                        http.expectedContentLength <= maxBytes,
+                        data.count <= maxBytes
                     else { return nil }
-
-                    var data = Data()
-                    if http.expectedContentLength > 0 {
-                        data.reserveCapacity(Int(http.expectedContentLength))
-                    }
-                    for try await byte in bytes {
-                        data.append(byte)
-                        if data.count > maxBytes { return nil }
-                    }
                     return data
                 }
             } catch {
