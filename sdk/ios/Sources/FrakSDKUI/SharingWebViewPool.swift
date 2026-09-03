@@ -92,13 +92,19 @@
         /// shows nothing. Only a new engine recovers that.
         func rebuild(_ binding: SharingWebViewBinding) -> SharingWebView? {
             guard !destroyed else { return nil }
-            pooled?.view.removeFromSuperview()
-            pooled?.stopLoading()
+            if let corpse = pooled {
+                corpse.view.removeFromSuperview()
+                // `destroy()`, not `stopLoading()`: a replaced engine keeps this session's
+                // binding and any booked retry, and either would fire `onPageUnavailable` over
+                // the fresh engine. Also the only path that releases the WKWebView's processes.
+                corpse.destroy()
+            }
             let view = makeView()
             view.bind(binding)
             pooled = view
             lent = true
-            warmURL = nil
+            // `warmURL` kept: `release` compares it against what the fresh engine actually
+            // loaded, and re-warms on mismatch.
             return view
         }
 

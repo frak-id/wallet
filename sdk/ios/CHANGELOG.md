@@ -25,6 +25,12 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
   reach the page falls through to the OS share sheet, which keeps the link, the attribution and
   the rich preview.
 
+- **Engine recovery no longer leaks the replaced web view.** Swapping in a fresh engine left
+  the dead one delegate-bound to the live session: a retry booked before the swap could fire on
+  it and report the page unavailable over an engine that was loading fine, and its processes
+  were never released. The replaced view is now fully retired, and the pool keeps its warm URL
+  so the share after a recovery activates warm instead of cold-loading.
+
 - **The install code no longer lands on the pasteboard unprotected.** The install page wrote it
   too, and that plain write landed after the SDK's `localOnly` + `expirationDate` one, replacing
   it. The install URL now carries `clip=host`, telling the page the SDK owns the pasteboard. An
