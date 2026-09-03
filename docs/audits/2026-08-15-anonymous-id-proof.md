@@ -4,7 +4,7 @@
 
 ## Status — re-verified 2026-09-04 against `5f7c52f33`
 
-**Both criticals and every P0 but AID-017 are closed** — AID-001, 002, 004, 006, 007, 009, 014,
+**Both criticals and every P0 are closed** — AID-001, 002, 004, 006, 007, 009, 014,
 016, 018 and 020 are deleted from this file; the programme that closed them is recorded in
 [`../plans/identity-proof-of-possession/README.md`](../plans/identity-proof-of-possession/README.md),
 which also holds the invariants that must not be undone. What is left below is open, partial, or
@@ -12,7 +12,7 @@ open by design (AID-005 is the population `/merge/execute` is deliberately left 
 
 The 2026-09-04 pass re-read every closure against the tree rather than the remediation commit
 messages. Three corrections to the 2026-08-18 statuses: **AID-011 regressed** on 2026-09-03
-(`337260551`); **AID-010** is partial, not closed; **AID-017** is re-graded High. It also found one
+(`337260551`); **AID-010** is partial, not closed; **AID-017** is de-prioritised to P2 (still Low: a captured proof only wins a group that never got its wallet). It also found one
 operational blocker — the prod migration for `install_codes.checkout_token` does not exist — and
 three new app-side defects, all listed under [Re-verification 2026-09-04](#re-verification-2026-09-04).
 
@@ -49,7 +49,7 @@ cite them still resolve. Status is current.
 | AID-019 | Medium | P1-next | The install ticket is 7-day, non-single-use, and one code yields up to 20 tickets | **Partly closed, partly accepted.** TTL is env-driven and clamped; multi-use is now a recorded decision in `jwt.ts` — a burn-set deadlocks the wallet's retry loop. The 20-per-code fan-out stands |
 | AID-013 | Low | P2-when-picked-up | No test pins cross-merchant proof scoping (property holds; coverage does not) | **Open.** Still the cheapest item outstanding |
 | AID-015 | Low | P2-when-picked-up | The envelope version byte is not covered by the signature | **Open.** Codec-level, untouched |
-| AID-017 | Low → **High** (2026-09-04) | **P0-now** | An `frak-ensure-v1` proof is an unbound 30-day bearer credential | **Open, scheduled.** Binding still `32 zero bytes` (`sdk/core/src/identity/canonical.ts`), window still 30 days (`IdentityProofService.ts`). Binding it changes a signed message, which needs ~30 days of dual-accept across two store binaries; the clock only starts when the plan starts, and it has not |
+| AID-017 | Low | P2-when-picked-up (was P0-now) | An `frak-ensure-v1` proof is an unbound 30-day bearer credential | **Open.** Binding still `32 zero bytes` (`sdk/core/src/identity/canonical.ts`), window still 30 days. Re-read 2026-09-04: the proof is only minted while a wallet is connected (`watchWalletStatus.ts`), so a replay hits `WALLET_CONFLICT` unless the original link never committed — the reachable population is "ensure 5xx'd after the proof left the browser", and the proof travels in a POST body no backend log prints. Fix is cheap (bind `SHA-256(walletAddress)` as `frak-ensure-v2`, v1 fallback; only `sdk/core` mints it, no native side) but not urgent |
 
 ## Re-verification 2026-09-04
 
@@ -68,8 +68,7 @@ stay unambiguous.
 | AID-025 | Nit | P2-when-picked-up | **Stale "verified, not enforced" comments** contradict the enforced code at `installCode.ts` (generate's anonymous arm), `ensure.ts` ("Verified when present, never required"), `latchedProof.ts` (two `ROLLOUT-STEP-3` markers), and the wallet's `drainEnsures.ts` / `pendingActionsStore.ts` / `pending-actions/types.ts`, which still name `ENSURE_BARE_ARM_ENABLED`, a backend flag deleted by `8cdd4b8e4`. Comment-budget item; the next reader will "fix" the code to match |
 
 **Not re-verified in this pass:** AID-015 (codec-level; no commit under `sdk/core/src/identity/`
-touched the envelope since the audit, so "untouched" is taken on that evidence); the native SDK
-sides of the AID-017 dual-accept; whether `validateToken` honours `exp` with clock skew (assumed
+touched the envelope since the audit, so "untouched" is taken on that evidence); whether `validateToken` honours `exp` with clock skew (assumed
 standard `jose`). No request was executed against a live backend.
 
 ## Audit coverage
