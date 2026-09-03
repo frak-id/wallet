@@ -228,6 +228,23 @@ describe("sendHostResult", () => {
         expect(assign).toHaveBeenCalledTimes(1);
     });
 
+    it("lets a re-activated presentation repeat an outcome under the same sid", () => {
+        // `shareAgain` re-activates the SAME document with the SAME sid: both
+        // hosts clear their claimed buttons and navigate by fragment. Keyed
+        // without an activation reset, the second Install tap died here.
+        const args = {
+            scheme: "frak-acme",
+            action: "install",
+            sid: "s1",
+        } as const;
+
+        sendHostResult(args);
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
+        sendHostResult(args);
+
+        expect(assign).toHaveBeenCalledTimes(2);
+    });
+
     it("lets a regenerated code through, but not the same one twice", () => {
         expect(
             sendHostResult({

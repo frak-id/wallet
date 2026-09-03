@@ -60,6 +60,14 @@ export function buildHostResultUrl({
  */
 const sentActions = new Set<string>();
 
+// A fragment activation re-presents this same document: the host clears its
+// claimed buttons before re-activating (`shareAgain`), so outcomes sent to the
+// previous presentation no longer bind this one. `hashchange` never fires on
+// the initial load, so a first presentation keeps its dedupe.
+if (typeof window !== "undefined") {
+    window.addEventListener("hashchange", () => sentActions.clear());
+}
+
 /** Actions exempt from the dedupe: repeated presses, plus a per-presentation `ready` ping. */
 const REPEATABLE_ACTIONS: ReadonlySet<HostResultAction> = new Set([
     "share",
