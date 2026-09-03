@@ -23,6 +23,16 @@ The Frak Wallet mobile app is built using [Tauri 2.x](https://tauri.app/), which
 - **CocoaPods**: `sudo gem install cocoapods`
 - **Apple Developer Account**: For code signing (Team ID: `57DZ6Z2235`)
 - **iOS Simulator**: Available devices can be listed with `xcrun simctl list devices`
+- **iOS deployment target**: 16.0 (minimum). Passkeys are the only way into the
+  wallet and `ASAuthorizationPlatformPublicKeyCredential*` requires iOS 16, so a
+  15.x install could never create or use a credential — the App Store's own
+  "requires iOS 16.0 or later" is the correct unsupported-device screen, and the
+  floor is what produces it. This also clears ITMS-90068, which only mandates
+  15.0 from Spring 2027. Declared in `gen/apple/project.yml`, mirrored into
+  `gen/apple/app.xcodeproj/project.pbxproj`, `gen/apple/Podfile`, the
+  `minimumSystemVersion` in `tauri.conf.json`, every plugin `ios/Package.swift`,
+  and the SwiftPM pre-warm stub in `.github/workflows/tauri-mobile-release.yml`
+  (a stale floor there poisons the shared artifact cache).
 
 ### Android Development
 

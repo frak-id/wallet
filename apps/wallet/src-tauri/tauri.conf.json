@@ -53,7 +53,8 @@
             "debugApplicationIdSuffix": ".dev"
         },
         "iOS": {
-            "developmentTeam": "57DZ6Z2235"
+            "developmentTeam": "57DZ6Z2235",
+            "minimumSystemVersion": "16.0"
         }
     }
 }

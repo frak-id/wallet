@@ -6,15 +6,7 @@ import WebKit
 class AppSettingsPlugin: Plugin {
     @objc public func openNotificationSettings(_ invoke: Invoke) {
         DispatchQueue.main.async {
-            var settingsUrl: URL?
-
-            if #available(iOS 16.0, *) {
-                settingsUrl = URL(string: UIApplication.openNotificationSettingsURLString)
-            }
-
-            if settingsUrl == nil {
-                settingsUrl = URL(string: UIApplication.openSettingsURLString)
-            }
+            let settingsUrl = URL(string: UIApplication.openNotificationSettingsURLString)
 
             guard let url = settingsUrl,
                   UIApplication.shared.canOpenURL(url) else {

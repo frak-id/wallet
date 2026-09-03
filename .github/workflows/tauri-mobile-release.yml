@@ -320,10 +320,10 @@ jobs:
           import PackageDescription
           let package = Package(
               name: "Prewarm",
-              platforms: [.iOS(.v14), .macOS(.v10_15)],
+              platforms: [.iOS(.v16), .macOS(.v10_15)],
               products: [.library(name: "Prewarm", targets: ["Prewarm"])],
               dependencies: [
-                  .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "12.11.0"),
+                  .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "12.13.0"),
               ],
               targets: [
                   .target(
