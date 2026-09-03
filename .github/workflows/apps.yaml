@@ -129,6 +129,11 @@ jobs:
       # browser-shipped packages that declare a typecheck script fails here.
       - name: "🔎 Typecheck"
         run: bun run typecheck
+      # The generated `resources.d.ts` types are values, not key constraints:
+      # an EN locale edit without regeneration type-checks clean and drifts
+      # silently, so drift is caught by comparison, not by tsc.
+      - name: "🔎 Generated i18n types drift"
+        run: bun run check:i18n-types
 
   # ── Listener ────────────────────────────────────────────
   listener-eager-budget:
@@ -256,10 +261,10 @@ jobs:
       - name: "📏 Lint (ktlint)"
         run: bun run --cwd sdk/android lint
 
-      # The only gate on the Kotlin/Swift comment budget; biome cannot parse either
-      # language, so nothing else in CI runs it.
-      - name: "🗒️ Comment budget"
-        run: bun run lint:comments
+      # Kotlin sits outside biome; the budget's own gate for it lives here
+      # (Swift runs in the ios-sdk job, which this job's filter can skip).
+      - name: "🗒️ Comment budget (Kotlin)"
+        run: bun run lint:comments -- sdk/android/frak-sdk/src sdk/android/frak-sdk-ui/src example/native-android/app/src
 
       # `assembleRelease` IS the typecheck: it compiles every source set with
       # `explicitApi()` enforced. There is no separate typecheck task to add.
@@ -304,6 +309,11 @@ jobs:
 
       - name: "📏 Lint (swift-format, strict)"
         run: bun run --cwd sdk/ios lint
+
+      # Swift is outside biome, and the android job — the other budget site —
+      # does not run on an iOS-only change, so the Swift roots are gated here.
+      - name: "🗒️ Comment budget (Swift)"
+        run: bun run lint:comments -- sdk/ios/Sources sdk/ios/Tests sdk/ios/Package.swift example/native-ios/Sources example/native-ios/Package.swift
 
       # Cross-compiles against the iphonesimulator SDK under Swift 6 strict concurrency.
       # A bare `swift build` would silently compile this package as macOS and prove

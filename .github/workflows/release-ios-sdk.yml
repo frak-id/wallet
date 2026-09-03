@@ -128,9 +128,13 @@ jobs:
 
       - name: "🔑 Authorize the mirror push"
         if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        env:
+          # env: indirection, not inline ${{ }}: the expression engine expands
+          # secrets into the script text before bash parses it.
+          DEPLOY_KEY: ${{ secrets.IOS_MIRROR_DEPLOY_KEY }}
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          printf '%s\n' "${{ secrets.IOS_MIRROR_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
 
