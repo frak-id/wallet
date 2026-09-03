@@ -2,19 +2,19 @@
 
 **Date:** 2026-08-15 · **Branch:** `dev` · **HEAD:** `a9e4dc543a89c29bb81279c26dfa445e441b61d1` · **Range audited:** `2a51ba4c8` (plan) … `a9e4dc543` (HEAD), principally `71ea819ac`…`cc826290a` plus the native/backend follow-ups `0542b55d1`, `f6ff19afc`, `7a673da17`, `98d424362`, `97ee0c1ed`.
 
-## Status — remediated 2026-08-18
+## Status — re-verified 2026-09-04 against `5f7c52f33`
 
-**Both criticals and every P0 but AID-017 are closed.** Of the rest, AID-003, AID-008,
-AID-013, AID-015 and AID-017 are open, and AID-005 is open by design — it is the population
-`/merge/execute` is deliberately left unflipped for. The programme that closed the others is
-recorded in
+**Both criticals and every P0 but AID-017 are closed** — AID-001, 002, 004, 006, 007, 009, 014,
+016, 018 and 020 are deleted from this file; the programme that closed them is recorded in
 [`../plans/identity-proof-of-possession/README.md`](../plans/identity-proof-of-possession/README.md),
-which is the authoritative document for what remains open and for the invariants that must not be
-undone. The surface map and admission plan this file used to point at are deleted; their `G*` gap
-ids are gone with them, so the table below now carries status directly.
+which also holds the invariants that must not be undone. What is left below is open, partial, or
+open by design (AID-005 is the population `/merge/execute` is deliberately left unflipped for).
 
-This file is retained as the **audit record**: what was examined, what was found, and the ids and
-severities other audit reports cross-reference.
+The 2026-09-04 pass re-read every closure against the tree rather than the remediation commit
+messages. Three corrections to the 2026-08-18 statuses: **AID-011 regressed** on 2026-09-03
+(`337260551`); **AID-010** is partial, not closed; **AID-017** is re-graded High. It also found one
+operational blocker — the prod migration for `install_codes.checkout_token` does not exist — and
+three new app-side defects, all listed under [Re-verification 2026-09-04](#re-verification-2026-09-04).
 
 ## Verdict
 
@@ -40,38 +40,37 @@ cite them still resolve. Status is current.
 
 | ID | Severity | Priority | One-line finding | Status |
 |---|---|---|---|---|
-| AID-001 | Critical | **P0-now** | Unauthenticated `install-code/generate`+`resolve` launders any `anonymousId` into an install ticket whose branch in `ensure` never reads the latch | **Closed.** `generate`'s anonymous arm requires a valid proof, so a ticket is only ever minted for a proven id or a server-derived one |
-| AID-020 | Critical | **P0-now** | Any wallet can claim an arbitrary unlatched `anonymousId` via `merge/initiate`+`merge/execute` in two calls, with no proof and no install code | **Closed at step 1.** `/merge/initiate`'s anon-source arm refuses without a proof, breaking the chain before `execute` is reached |
 | AID-003 | High | P1-next | Merge tokens are never consumed: a captured `?fmt=` is a 60-min unlimited-use group-capture capability | **Open.** Reach now requires a proof to obtain, which bounds who can mint one, but a captured token is still replayable for its TTL |
-| AID-004 | High | P1-next | A `localStorage` quota error deletes a valid private key, then migration silently orphans the identity | **Closed.** `persistIdentity` sits outside `ensureIdentityKey`'s guarded block, so a write failure never reaches the catch that clears the key; the legacy marker is written before the key/id pair, and `pendingLegacyId` is returned from memory whether or not the write landed, so the merge retries next visit. Two regression tests pin both halves |
 | AID-005 | High | P1-next | The legacy id survives migration as a permanently unlatched alias for a latched identity | **Open by design.** This is the population `/merge/execute` is deliberately left unflipped for |
-| AID-018 | High | **P0-now** | The `ROLLOUT-STEP-3` marker set is incomplete: three backend sites carrying the same bypass have no marker | **Closed.** The unmarked door was the `x-frak-client-id` header fall-through; it lands on the same bare exit, which now refuses |
-| AID-006 | Medium | P1-next | `anonymous_fingerprint` is case-normalised for proof verification but not for persistence | **Closed.** `IdentityRepository#normalizeValue` now lower-cases it, and that one method governs both lookup and persist. Safe because ids are lowercase by construction — `deriveClientIdFromHash` builds them from `bytesToHex`, and server-minted ones from `crypto.randomUUID()` |
-| AID-007 | Medium | P1-next | Three identity limiters share `name`+`seed` and collapse into one bucket | **Closed.** Distinct buckets: `identity-ensure`, `identity-merge`, `identity-install-code-generate`, `identity-install-code-resolve` |
 | AID-008 | Medium | P1-next | The `frak-sso-v1` proof rides in a search param and is never stripped from the URL | **Open.** Client-side, untouched |
-| AID-009 | Medium | P1-next | `getMergeToken` signs over `config.metadata.merchantId`, not the resolved one | **Closed.** The handler reads the resolved `merchantId` off the listener context |
-| AID-010 | Medium | P1-next | `weightCache` is not invalidated on wallet attach, so `WALLET_CONFLICT` can read stale state | **Closed.** Invalidation had already shipped; the finding was stale when written |
-| AID-011 | Medium | P2-when-picked-up | `WALLET_ALREADY_LINKED` is unreportable on the standalone `/install` surface | **Closed.** Conflict surface added, bundle delta measured against the eager budget |
+| AID-010 | Medium | P1-next | `weightCache` is not invalidated on wallet attach, so `WALLET_CONFLICT` can read stale state | **Partial.** The merge paths invalidate; the three `addNode` callers (`auth/email.ts`, `IdentityOrchestrator.ts`, `InstallCredentialOrchestrator.ts`) still do not, so a weight can be ≤30 s stale after a wallet attach. Low residual |
+| AID-011 | Medium | P2-when-picked-up | `WALLET_ALREADY_LINKED` is unreportable on the standalone `/install` surface | **Regressed 2026-09-03.** `337260551` removed `EnsureConflictToast` from `entry/install/main.tsx` on the premise that the SPA surfaces the conflict after the redirect. It cannot: `ensureConflictStore` is not persisted, the exit is `window.location.replace("/wallet")`, and `drainEnsures` removes the action before raising. Re-mount the toast or persist the flag |
 | AID-012 | Medium | P1-next | Inbound `fmt` is consume-on-read with new hard-failure modes and no retry | **Mostly closed.** The redemption itself now retries a network failure or a 5xx twice (~5 s) in `lifecycleHandler`, where the HTTP status is actually observable; a 4xx is never retried, so a new refusal code cannot become retryable by omission. Safe to repeat because the token is not consumed server-side (AID-003). Residual: a page closed mid-backoff, and the SDK→listener `postMessage` hop, which has no ack — both need a durable queue, which would put a replayable group-capture token at rest on disk |
 | AID-019 | Medium | P1-next | The install ticket is 7-day, non-single-use, and one code yields up to 20 tickets | **Partly closed, partly accepted.** TTL is env-driven and clamped; multi-use is now a recorded decision in `jwt.ts` — a burn-set deadlocks the wallet's retry loop. The 20-per-code fan-out stands |
 | AID-013 | Low | P2-when-picked-up | No test pins cross-merchant proof scoping (property holds; coverage does not) | **Open.** Still the cheapest item outstanding |
-| AID-014 | Low | P1-next | Every validity window in `README.md` is wrong, and the fragment-only rule is absolute where the code is not | **Closed.** That README was rewritten; windows are no longer restated where they can drift |
 | AID-015 | Low | P2-when-picked-up | The envelope version byte is not covered by the signature | **Open.** Codec-level, untouched |
-| AID-016 | Low | P2-when-picked-up | Ensure actions retry permanently-doomed 4xx/403 requests for a week | **Closed.** All six refusal codes are non-retryable in `drainEnsures`, which is what makes the deploy-day burst decay |
-| AID-017 | Low | **P0-now** | An `frak-ensure-v1` proof is an unbound 30-day bearer credential | **Open, scheduled.** Binding it changes a signed message, which needs ~30 days of dual-accept across two store binaries |
+| AID-017 | Low → **High** (2026-09-04) | **P0-now** | An `frak-ensure-v1` proof is an unbound 30-day bearer credential | **Open, scheduled.** Binding still `32 zero bytes` (`sdk/core/src/identity/canonical.ts`), window still 30 days (`IdentityProofService.ts`). Binding it changes a signed message, which needs ~30 days of dual-accept across two store binaries; the clock only starts when the plan starts, and it has not |
 
-The wallet-session-arm branch on `/merge/execute` that this audit originally proposed as the AID-020 P0 fix is **bypassable** —
-`api/user/identity/merge.ts` passes both `sourceAnonymousId` and `sourceWalletAddress`, so an attacker supplies their own derived id
-plus a valid proof for it and the branch never fires. It closes a code path, not an outcome; treat it as alarm-only instrumentation,
-not a remedy. It shipped as exactly that: `identity_merge_execute_wallet_source_unproven_total`,
-a labelled alarm, never a gate. The real fix was closing `/merge/initiate`.
+## Re-verification 2026-09-04
 
-## AID-002
+Against `dev` @ `5f7c52f33`; nothing below is on `origin/main`. Every closure in the table was
+re-read in the code and its tests (`installCode.test.ts`, `sign.test.ts`, `ensure.test.ts`,
+`AnonymousMergeOrchestrator.test.ts`), not taken from the remediation commits. The closures hold
+except where the table now says otherwise. New findings continue the id space so cross-references
+stay unambiguous.
 
-**Closed.** The `/identity/ensure` bare wallet arm no longer nullifies the latch: it throws
-`PROOF_OR_TOKEN_REQUIRED`. Both carry-overs went with it — the `x-frak-client-id` header fallback
-lands on the same exit (AID-018), and the ticket half is only reachable for a credential already
-presented at `generate` (AID-001).
+| ID | Severity | Priority | Finding |
+|---|---|---|---|
+| AID-021 | High (operational) | **P0-now** | **The prod migration for `install_codes.checkout_token` does not exist.** `services/bootstrap/drizzle/prod/` stops at `0020`; the column (plus `anonymous_id DROP NOT NULL`, the `install_codes_credential_present` CHECK and two indexes) lives only in `dev/0043` and `local/0039` (`630af0dfc`). `migrate-pg.ts` selects `./drizzle/prod` when `STAGE` is prod, and `InstallCodeRepository.ts` names `checkout_token` in raw SQL on both `generate` and `resolve` — every install-code call 500s with `42703` the moment this reaches `main`. Generate the prod migration before merging |
+| AID-022 | Medium | P1-next | **A logged-in user never drains a queued ensure outside the auth pages.** `useExecutePendingActions` is mounted only by `register.tsx`, `login.index.tsx` and `LoginWithEmailPage`; `fireEnsureActions` only by `InstallView`. `_auth.tsx`'s `beforeLoad` bounces a logged-in user to `/wallet`, whose layout drains nothing. An ensure queued by `useResolveInstallCode` or `useInstallReferrer` from a logged-in session sits until the 7-day TTL, contradicting the "next launch" comments in `pendingActionsStore`. Drain from the wallet layout |
+| AID-023 | Low | P2-when-picked-up | **Three non-retryable 400s are retried for the TTL.** `ensure.ts` throws `MERCHANT_MISMATCH`, `ANONYMOUS_ID_MISMATCH` and `INCOMPLETE_IDENTITY` as 400s; none is in `drainEnsures`' `MISSING_CREDENTIAL_CODES`, so the action is retried on every launch for a week. Same class as the closed AID-016, three codes wider. One-line fix |
+| AID-024 | Low | P2-when-picked-up | **The identity rate limiter is single-instance, in-memory and IP-keyed** (`rateLimiter.ts`). The replay and enumeration bounds relied on by AID-003 and AID-019 do not hold across replicas or behind a shared egress |
+| AID-025 | Nit | P2-when-picked-up | **Stale "verified, not enforced" comments** contradict the enforced code at `installCode.ts` (generate's anonymous arm), `ensure.ts` ("Verified when present, never required"), `latchedProof.ts` (two `ROLLOUT-STEP-3` markers), and the wallet's `drainEnsures.ts` / `pendingActionsStore.ts` / `pending-actions/types.ts`, which still name `ENSURE_BARE_ARM_ENABLED`, a backend flag deleted by `8cdd4b8e4`. Comment-budget item; the next reader will "fix" the code to match |
+
+**Not re-verified in this pass:** AID-015 (codec-level; no commit under `sdk/core/src/identity/`
+touched the envelope since the audit, so "untouched" is taken on that evidence); the native SDK
+sides of the AID-017 dual-accept; whether `validateToken` honours `exp` with clock skew (assumed
+standard `jose`). No request was executed against a live backend.
 
 ## Audit coverage
 
