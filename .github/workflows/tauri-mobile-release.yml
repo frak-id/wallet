@@ -142,6 +142,21 @@ jobs:
             exit 1
           fi
 
+      # Fails the release before any build: a partial floor bump links and ships,
+      # surfacing only as an always-true availability branch in the plugins.
+      # No `bun install` — the script only reads files.
+      - name: "📥 Checkout"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 1
+
+      - name: "🧅 Setup Bun"
+        uses: oven-sh/setup-bun@v2
+
+      - name: "📱 Gate the iOS deployment floor"
+        run: bun scripts/check-ios-floor.ts
+
   prepare:
     name: "📦 Build SDK"
     needs: validate

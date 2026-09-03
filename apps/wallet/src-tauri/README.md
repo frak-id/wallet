@@ -28,11 +28,11 @@ The Frak Wallet mobile app is built using [Tauri 2.x](https://tauri.app/), which
   15.x install could never create or use a credential — the App Store's own
   "requires iOS 16.0 or later" is the correct unsupported-device screen, and the
   floor is what produces it. This also clears ITMS-90068, which only mandates
-  15.0 from Spring 2027. Declared in `gen/apple/project.yml`, mirrored into
-  `gen/apple/app.xcodeproj/project.pbxproj`, `gen/apple/Podfile`, the
-  `minimumSystemVersion` in `tauri.conf.json`, every plugin `ios/Package.swift`,
-  and the SwiftPM pre-warm stub in `.github/workflows/tauri-mobile-release.yml`
-  (a stale floor there poisons the shared artifact cache).
+  15.0 from Spring 2027. Declared in `gen/apple/project.yml` and mirrored into
+  eleven other sites, all gated as a set by `bun run check:ios-floor`
+  (`scripts/check-ios-floor.ts`), which runs inside `bun run lint` and in the
+  release workflow's validate job. Bump `project.yml` and let the gate name the
+  rest; it also fails a `.vN` a manifest's `swift-tools-version` cannot express.
 
 ### Android Development
 
