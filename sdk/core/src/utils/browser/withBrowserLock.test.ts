@@ -145,9 +145,9 @@ describe("withBrowserLock", () => {
             // A present-but-broken Locks API (e.g. a sandboxed context) must
             // not reject callers documented never to throw — the keygen path
             // caches a rejection permanently.
-            const request = vi.fn().mockRejectedValue(
-                new DOMException("denied", "SecurityError")
-            );
+            const request = vi
+                .fn()
+                .mockRejectedValue(new DOMException("denied", "SecurityError"));
             Object.defineProperty(navigator, "locks", {
                 value: { request },
                 configurable: true,
