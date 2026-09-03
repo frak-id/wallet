@@ -63,7 +63,7 @@ let memoryEnv: ResolvedEnvironment = PRESETS.prod;
  * would produce `https://host//user/…`.
  */
 function withoutTrailingSlash(origin: string): string {
-    return origin.endsWith("/") ? origin.slice(0, -1) : origin;
+    return origin.replace(/\/+$/, "");
 }
 
 /**
@@ -76,8 +76,11 @@ function withoutTrailingSlash(origin: string): string {
  */
 function resolveEnvironment(env: FrakEnvironment): ResolvedEnvironment {
     if (typeof env === "string") {
-        const preset = PRESETS[env];
-        if (preset) return preset;
+        // `Object.hasOwn`, not a truthiness probe: a bare index would resolve
+        // inherited keys ("constructor", "toString") to a non-environment.
+        if (Object.hasOwn(PRESETS, env)) {
+            return PRESETS[env as keyof typeof PRESETS];
+        }
         console.error(
             `[Frak SDK] Unknown env "${env}", falling back to production. Expected "prod", "dev", or { wallet, backend }.`
         );

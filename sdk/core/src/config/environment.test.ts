@@ -58,6 +58,16 @@ describe("environment", () => {
         expect(getWalletUrl()).toBe("https://localhost:3000");
     });
 
+    it("collapses repeated trailing slashes, not just one", () => {
+        setEnvironment({
+            wallet: "https://localhost:3000//",
+            backend: "https://localhost:3030//",
+        });
+
+        expect(getBackendUrl()).toBe("https://localhost:3030");
+        expect(getWalletUrl()).toBe("https://localhost:3000");
+    });
+
     it("leaves the published env alone when none is stated", () => {
         // A second client built from a bare config must not repoint the
         // first one's in-flight calls at production.
@@ -73,6 +83,17 @@ describe("environment", () => {
         // anything; silently landing on production is the bug this whole
         // module replaced.
         expect(setEnvironment("staging" as never)).toEqual({
+            wallet: "https://wallet.frak.id",
+            backend: "https://backend.frak.id",
+        });
+        expect(console.error).toHaveBeenCalledOnce();
+    });
+
+    it("refuses inherited object keys as stage names", () => {
+        // A bare `PRESETS[env]` probe resolved "constructor"/"toString" to a
+        // truthy non-environment, skipping the error and yielding
+        // `fetch("undefined/…")` far from the cause.
+        expect(setEnvironment("constructor" as never)).toEqual({
             wallet: "https://wallet.frak.id",
             backend: "https://backend.frak.id",
         });
