@@ -21,6 +21,7 @@ import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
 import { StrictMode, startTransition } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
+import { installViewTransitionOptOut } from "./utils/bottomBarRoutes";
 import { initDeepLinks } from "./utils/deepLink";
 import { initKeyboardInset } from "./utils/keyboardInset";
 import { initSafeAreaInsets } from "./utils/safeArea";
@@ -86,16 +87,12 @@ const router = createRouter({
     scrollRestoration: true,
     scrollToTopSelectors: ["main"],
     // Browsers without `document.startViewTransition` (Firefox, Safari < 18)
-    // gracefully fall through to instant navigation. We skip the transition
-    // on the very first navigation (no `fromLocation`) so the boot path —
-    // which often awaits route loaders, lazy chunks, and smart-wallet init —
-    // never trips Chromium's ~4s DOM-update timeout ("Transition was aborted
-    // because of timeout in DOM update").
-    defaultViewTransition: {
-        types: ({ pathChanged, fromLocation }) =>
-            fromLocation && pathChanged ? ["page"] : false,
-    },
+    // fall through to instant navigation. Which navigations actually animate is
+    // narrowed by `installViewTransitionOptOut` below.
+    defaultViewTransition: true,
 });
+
+installViewTransitionOptOut(router);
 
 // Subscribe to navigation events to manage root element attributes
 router.subscribe("onResolved", ({ toLocation }) => {
