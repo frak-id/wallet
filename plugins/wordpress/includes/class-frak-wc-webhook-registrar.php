@@ -455,8 +455,8 @@ class Frak_WC_Webhook_Registrar {
 
 	/**
 	 * Project line-item entries down to the DTO shape. Drops every other field
-	 * WC adds: none are read by the backend handler, and `meta_data` in
-	 * particular is a free-form bag other plugins often stuff with PII.
+	 * WC adds: `meta_data` in particular is a free-form bag other plugins
+	 * often stuff with PII.
 	 *
 	 * @param mixed $items Source `line_items` array (defensive — webhook payloads can be malformed).
 	 * @return array<int, array<string, mixed>>
@@ -482,6 +482,17 @@ class Frak_WC_Webhook_Registrar {
 
 			if ( isset( $item['sku'] ) && '' !== $item['sku'] ) {
 				$entry['sku'] = $item['sku'];
+			}
+
+			// Post-discount line total and its tax. The backend sums them into
+			// the matched-items reward basis; without them it falls back to
+			// `price * quantity`, which is the undiscounted list price.
+			if ( isset( $item['total'] ) && '' !== $item['total'] ) {
+				$entry['total'] = $item['total'];
+			}
+
+			if ( isset( $item['total_tax'] ) && '' !== $item['total_tax'] ) {
+				$entry['total_tax'] = $item['total_tax'];
 			}
 
 			if ( isset( $item['image'] ) && is_array( $item['image'] ) ) {

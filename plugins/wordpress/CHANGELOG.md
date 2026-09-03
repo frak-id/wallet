@@ -11,6 +11,14 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Added
+
+- **The post-purchase `products` attribute now carries product-scope fields.** `Frak_WooCommerce::extract_order_products()` previously emitted only `title`, `imageUrl` and `link`, so a product-scoped campaign had no line-item data to match against and every scoped campaign matched every product — the sharing page could advertise a reward the order could not earn. Each entry now also carries `sku` (variation-level, the field variant scoping keys on), `productId`, `quantity` and `unitPrice`. Empty values are omitted rather than sent as empty strings, because an empty-string SKU satisfies `exists`, `neq` and `not_in` and would silently join a negated scope's matched set.
+
+  `productId` is the *parent* product id (`WC_Order_Item_Product::get_product_id()`), matching the id the order webhook already sends, so a `productId` scope resolves identically on the display and payout paths. `unitPrice` is post-discount and tax-**exclusive** (`get_total()` divided by the quantity), which is exactly what WooCommerce's REST serializer puts in `line_items[].price` and therefore what the backend evaluates a `unitPrice` scope against — the two paths have to agree or a scope advertises on the product page and then fails to pay.
+
+- **WooCommerce order webhooks now forward each line item's discounted total as `total` and `total_tax`.** `Frak_WC_Webhook_Registrar::strip_line_items()` projects line items down to an allow-list, which dropped both fields before the payload left the store. The backend sums them into the basis a campaign paying a percentage of the eligible products is computed on: `total` is the line amount net of discounts and `total_tax` the tax charged on it, so the basis matches what the customer actually paid. Without them the backend falls back to `price * quantity`, which is tax-exclusive and so understates a tax-inclusive order total. Both are forwarded only when non-empty, matching how `sku` is handled; `total_tax` is absent on stores that charge no tax, and the backend treats a missing tax as zero.
+
 ### Changed
 
 - **The share button's *Click action* setting has been removed entirely** from every editor (Gutenberg block, classic widget, Elementor, Divi) along with the `click_action` shortcode attribute. The embedded wallet drawer was the last alternative to the hosted sharing page and it has now been retired SDK-side, which left the dropdown with a single choice. Every share CTA opens the sharing page, so there is nothing left to pick.

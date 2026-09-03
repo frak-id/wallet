@@ -47,7 +47,13 @@ Matchable fields (exact-match allowlist): `productId`, `name`, `sku`,
   on the rule (publish-time validation).
 - `matchedAmount` is fiat in the order currency, like `purchase.amount`; the
   existing FX/token-pricing path applies. Values are normalized with
-  `roundAmount` (1e-6).
+  `roundAmount` (1e-6). It sums each matched line's `totalPrice` — see
+  [Line money](#line-money) for what that means per provider.
+- **The matched basis is clamped to `purchase.amount`.** `matchedAmount` is
+  summed from line data while `purchase.amount` is the platform's order total,
+  so a provider that reports lines on a different basis could otherwise pay a
+  percentage of more than the customer paid. `calculatePercentageReward` and
+  the `purchase.matchedAmount` tier lookup both clamp.
 - **Zero/missing basis never defers.** A zero fiat base (e.g. an
   all-excluded matched set) or a missing `matchedAmount` (wiring bug) is a
   hard error, short-circuited **before** any pricing call — otherwise an
@@ -98,11 +104,21 @@ needed, it ships as an explicit separate field, not by overloading negation.
   field would silently never match);
 - operator/value coherence: `in`/`not_in` require a non-empty array,
   scalar/comparison operators reject arrays, string operators require
-  strings, `between` requires a scalar `valueTo`;
+  strings, `between` requires a scalar, non-null `valueTo` ordered above
+  `value` (an inverted range can never match, so it is rejected rather than
+  published as a campaign that silently never pays);
+- a non-empty scope: neither the top-level array nor any nested
+  `ConditionGroup` may be empty. An empty node matches every item, which would
+  read as scoped while covering everything — and would satisfy the
+  matched-basis requirement below. Omit `productScope` to target all products;
 - depth ≤ 5 / ≤ 50 nodes across nested `ConditionGroup`s;
 - the negation guard above;
 - matched-basis rewards (`matched_items_amount`, `purchase.matchedAmount`,
   `purchase.matchedQuantity`) require a `productScope`.
+
+Percentage rewards additionally reject `minAmount > maxAmount`: the clamps
+apply as `min(max(amount, minAmount), maxAmount)`, so an inverted pair would
+pin every payout to `minAmount` and defeat the cap.
 
 Order-level `conditions` are intentionally **not** validated this way: the
 item shape is a small closed set, `RuleContext` is open-ended and pre-dates
@@ -112,10 +128,48 @@ field-agnostic protection for every caller of the schema.
 
 ## SKU plumbing
 
-`purchase_items.sku` (nullable) is declared in the Drizzle schema; the DB
-team owns the migration, which must land **before** this deploys (inserts
-reference the column). `sku` is optional at every hop; items without it never
-match SKU conditions — no error, graceful degradation.
+`purchase_items.sku` and `purchase_items.total_price` (both nullable) are
+declared in the Drizzle schema. **This branch ships no migration**: the DB
+team owns those, and the rollout is staged in
+[`docs/plans/purchase-items-line-key-migration.md`](../../../docs/plans/purchase-items-line-key-migration.md).
+
+The backend **cannot be deployed to a stage whose database has not taken the
+change**. Inserts reference `total_price` and bind their conflict target to
+the line constraint below, so both must exist first or every purchase webhook
+fails on write.
+
+`sku` is optional at every hop; items without it never match SKU conditions —
+no error, graceful degradation.
+
+**`sku` is part of item identity.** A line is keyed on
+`(purchase_id, external_id, sku)`, because `external_id` is the *parent*
+product id on every provider — two variants of one product share it, and
+keying on it alone would drop all but one of them. `schema.ts` declares a
+single `UNIQUE NULLS NOT DISTINCT(purchase_id, external_id, sku)` constraint
+for this; `NULLS NOT DISTINCT` (Postgres 15+) is what stops a redelivery
+duplicating a sku-less line, which a plain nullable unique column would allow.
+Lines arriving in one delivery that share a key are **merged**, summing
+`quantity` and `totalPrice`, since Postgres rejects a statement that touches
+the same conflict target twice.
+
+Each delivery reconciles the stored set to the incoming one, inside the
+transaction and in this order:
+
+1. **adopt** — a stored sku-less row is filled in when the delivery carries
+   exactly one line for that product and it now has a sku, so the row keeps the
+   `total_price` and `image_url` already on it. Skipped when the target key
+   already exists, which would violate the constraint;
+2. **reconcile** — stored lines the delivery no longer carries are deleted,
+   comparing skus with `is not distinct from` (a plain `=` is `NULL` against a
+   stored `NULL`, and `DELETE` only removes rows on `TRUE`). This is what keeps
+   a changed sku from stranding the old row;
+3. **upsert** — fill-only, so a redelivery fills gaps and never overwrites a
+   stored value with `NULL`.
+
+A delivery carrying no items at all leaves the stored lines untouched: `items`
+is optional on the custom and Magento webhooks, so an empty one is absence of
+information, not an empty cart. Otherwise the stored set equals the incoming
+set, which is what makes the webhook-first and late-claim paths agree.
 
 Flow: webhook DTO → `PurchaseItemInsert` → `purchase_items` row →
 `PurchaseInteractionCreator` → `PurchasePayload.items[].sku` →
@@ -127,10 +181,32 @@ Per provider:
 | Provider | SKU source |
 |---|---|
 | Shopify | `line_items[].sku` (native) |
-| WooCommerce | `line_items[].sku` — plugin now forwards it (was stripped) |
+| WooCommerce | `line_items[].sku`, forwarded by the plugin's payload filter |
 | PrestaShop | `order_detail.product_reference`, sent as `sku` when non-empty |
-| Magento | plugin now sends explicit `sku` (from `getSku()`); `name` carries the product name. Older plugin versions sent the SKU as `name` with no `sku` field — those simply don't match SKU conditions until upgraded (Magento is not in production use). |
+| Magento | `getSku()`, sent unconditionally — an item with no SKU therefore arrives as `""`, which satisfies `exists`, `neq` and `not_in` instead of being skipped. Out of scope pending a dedicated review |
 | Custom | optional `sku` added to the public webhook contract |
+
+## Line money
+
+`purchase_items.total_price` (nullable) is the amount actually paid for a
+line: **post-discount, tax-inclusive, shipping excluded**. It is what
+`matchedAmount` sums, so it is the basis of every `matched_items_amount`
+reward. When absent it falls back to `price * quantity`.
+
+| Provider | `total_price` source |
+|---|---|
+| WooCommerce | `line_items[].total` + `total_tax` (plugin forwards both) |
+| Shopify | `price × quantity` − `discount_allocations`, plus `tax_lines` only when the order is not `taxes_included` |
+| PrestaShop | `order_detail.total_price_tax_incl` (plugin sends it as `totalPrice`) |
+| Custom | optional `totalPrice` per item |
+| Magento | not sent — falls back to `price * quantity`, which is pre-discount and tax-exclusive. Magento is out of scope pending a dedicated review |
+
+**`unitPrice` is not comparable across providers.** It carries whatever the
+provider's per-unit `price` means: tax-**exclusive** on WooCommerce
+(`get_total()/quantity`, post-discount) and tax-**inclusive** on PrestaShop
+(`unit_price_tax_incl`). A `unitPrice` threshold therefore selects different
+items on different platforms for the same catalogue. Scope on `sku` or
+`productId` when a scope has to behave identically everywhere.
 
 ## SDK / wallet surfaces
 
@@ -162,7 +238,21 @@ Per provider:
   single `products` attribute (JSON-stringified for server-rendered
   surfaces, whose HTML attributes always arrive as strings). Since
   `SharingPageProduct extends ProductDetails`, the same array drives both the
-  sharing-page product cards and reward selection.
+  sharing-page product cards and reward selection. The WooCommerce and
+  PrestaShop plugins populate the scope fields (`sku`, `productId`, `quantity`,
+  `unitPrice`) on it; Magento emits no `products` attribute at all, so on that
+  platform display-side selection runs with no product context and every scoped
+  campaign ranks as matching.
+
+## Observability
+
+A scope that matches no line item is reported distinctly from a campaign that
+never fired: `applyProductScope` returns a `scope_matched_no_item` reason,
+`evaluateCampaigns` collects those campaign ids into
+`EvaluationResult.scopeMatchedNoItemCampaigns`, and the evaluator logs at
+debug. This separates "the scope matched nothing" from "no eligible purchase" —
+the two look identical from the outside, and the usual causes are a plugin that
+sends no `sku` or a casing mismatch against the merchant's catalogue.
 
 ## Open questions
 
@@ -170,6 +260,11 @@ Per provider:
    `matchedQuantity` tiers cover stepped cases.
 2. **Campaign exclusivity** ("best promo only" instead of additive): not
    expressible today; `priority` orders evaluation but doesn't short-circuit.
-3. **Business app**: campaign creation UI for `productScope`, a product/SKU
-   autocomplete source (e.g. distinct SKUs from purchase history), and a
-   "product-scoped" indicator on the campaign list are not built yet.
+3. **Business app**: the campaign creation UI for `productScope` ships as the
+   wizard's products step. A product/SKU autocomplete source (e.g. distinct
+   SKUs from purchase history) and a "product-scoped" indicator on the campaign
+   list are not built yet.
+4. **SKU matching is exact and case-sensitive.** No normalisation is applied on
+   either the ingest or the authoring side, so `shoe-42` never matches a
+   `SHOE-42` catalogue. Deliberately left until real merchant usage shows
+   whether SKUs are case-significant in the systems feeding them.

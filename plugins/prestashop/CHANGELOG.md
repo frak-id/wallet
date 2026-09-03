@@ -11,6 +11,12 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Added
+
+- **The post-purchase `products` attribute now carries product-scope fields.** `FrakOrderResolver::extractProducts()` previously emitted only `title`, `imageUrl` and `link`, so a product-scoped campaign had no line-item data to match against and every scoped campaign matched every product — the sharing page could advertise a reward the order could not earn. Each entry now also carries `sku` (from `order_detail.product_reference`), `productId`, `quantity` and `unitPrice` (`unit_price_tax_incl`). Empty values are omitted rather than sent as empty strings, because an empty-string SKU satisfies `exists`, `neq` and `not_in` and would silently join a negated scope's matched set. The backend identifies a line by `(productId, sku)`: two lines of the same product carrying different combination References stay distinct, while two lines sharing both are merged into one with their quantities and line totals summed.
+
+- **Order webhooks now forward each line item's discounted total as `totalPrice`.** `FrakOrderResolver::getWebhookPayload()` adds an optional `totalPrice` key sourced from `order_detail.total_price_tax_incl` — the amount actually paid for the line, post-discount and tax-inclusive, shipping excluded. That is the basis a campaign paying a percentage of the eligible products is computed on; without it the backend falls back to `price * quantity`, which ignores any cart rule applied to the line. `price` is unchanged for backwards compatibility.
+
 ### Changed
 
 - **`<frak-button-share>`: the `click_action` attribute has been retired.** `FrakComponentRenderer::SHARE_BUTTON_ATTRS` no longer maps `clickAction => click-action`. The embedded wallet drawer was the last alternative to the hosted sharing page and has been removed SDK-side, so every share CTA now opens the sharing page and the attribute had nothing left to select. No template in the module ever passed it; any custom Smarty template still supplying `click_action` keeps working — the attribute is silently dropped, same as `use_reward`.

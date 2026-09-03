@@ -117,9 +117,14 @@ class Frak_WooCommerce {
 	 *                  zero resolvable line items.
 	 *
 	 * Each product entry contains:
-	 *   - `title`    : line-item name (variation-aware, falls back to product name)
-	 *   - `imageUrl` : `medium`-size featured image URL (omitted when missing)
-	 *   - `link`     : product permalink (omitted when missing)
+	 *   - `title`     : line-item name (variation-aware, falls back to product name)
+	 *   - `imageUrl`  : `medium`-size featured image URL (omitted when missing)
+	 *   - `link`      : product permalink (omitted when missing)
+	 *   - `sku`       : variation-level SKU, drives campaign product-scope
+	 *                   matching (omitted when the product has none)
+	 *   - `productId` : parent product id, matching the id the order webhook
+	 *                   sends so a `productId` scope agrees on both surfaces
+	 *   - `quantity` / `unitPrice` : line quantity and per-unit price
 	 *
 	 * Variation products inherit their parent's image when no variation-
 	 * specific image is set — standard WooCommerce behaviour.
@@ -128,7 +133,7 @@ class Frak_WooCommerce {
 	 * @param int  $cap            Max products to include (default {@see DEFAULT_PRODUCT_CAP}).
 	 *                              Caller-overridable because attribute serialisation
 	 *                              cost scales linearly with the cap.
-	 * @return array{context: array<string, string>, products: array<int, array{title: string, imageUrl?: string, link?: string}>|null}|null
+	 * @return array{context: array<string, string>, products: array<int, array{title: string, imageUrl?: string, link?: string, sku?: string, productId?: string, quantity?: int, unitPrice?: float}>|null}|null
 	 */
 	public static function get_post_purchase_data( bool $with_products = true, int $cap = self::DEFAULT_PRODUCT_CAP ) {
 		$order = self::resolve_current_order();
@@ -157,9 +162,13 @@ class Frak_WooCommerce {
 	 *   - none of the line items resolve to a real {@see WC_Product}
 	 *     (rare, but possible for orders whose products were deleted).
 	 *
+	 * Scope fields (`sku`, `productId`, `quantity`, `unitPrice`) are omitted
+	 * rather than sent empty: an empty-string SKU satisfies `exists`, `neq`
+	 * and `not_in`, silently joining a negated scope's matched set.
+	 *
 	 * @param WC_Order $order Resolved order.
 	 * @param int      $cap   Max products to include.
-	 * @return array<int, array{title: string, imageUrl?: string, link?: string}>|null
+	 * @return array<int, array{title: string, imageUrl?: string, link?: string, sku?: string, productId?: string, quantity?: int, unitPrice?: float}>|null
 	 */
 	private static function extract_order_products( $order, int $cap ) {
 		$items = $order->get_items();
@@ -185,6 +194,26 @@ class Frak_WooCommerce {
 				'title' => (string) $item->get_name(),
 			);
 
+			$sku = (string) $product->get_sku();
+			if ( '' !== $sku ) {
+				$entry['sku'] = $sku;
+			}
+
+			$product_id = (int) $item->get_product_id();
+			if ( $product_id > 0 ) {
+				$entry['productId'] = (string) $product_id;
+			}
+
+			$quantity = (int) $item->get_quantity();
+			if ( $quantity > 0 ) {
+				$entry['quantity'] = $quantity;
+			}
+
+			$unit_price = self::line_unit_price( $item, $quantity );
+			if ( null !== $unit_price ) {
+				$entry['unitPrice'] = $unit_price;
+			}
+
 			$image_id = (int) $product->get_image_id();
 			if ( $image_id > 0 ) {
 				$image_url = wp_get_attachment_image_url( $image_id, 'medium' );
@@ -203,6 +232,24 @@ class Frak_WooCommerce {
 		}
 
 		return ! empty( $products ) ? $products : null;
+	}
+
+	/**
+	 * Per-unit price for a line: post-discount, tax excluded.
+	 *
+	 * Must stay identical to WooCommerce REST `line_items[].price`, which the
+	 * webhook sends and the backend evaluates `unitPrice` scopes against. A
+	 * different basis here makes a scope advertise and then not pay.
+	 *
+	 * @param WC_Order_Item_Product $item     Line item.
+	 * @param int                   $quantity Line quantity (already resolved).
+	 * @return float|null Null when the quantity is unusable.
+	 */
+	private static function line_unit_price( $item, int $quantity ) {
+		if ( $quantity <= 0 ) {
+			return null;
+		}
+		return round( (float) $item->get_total() / $quantity, 2 );
 	}
 
 	/**

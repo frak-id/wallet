@@ -2,9 +2,9 @@
 
 **Date:** 2026-08-15 · **Branch:** `dev` · **HEAD:** `a9e4dc543` · **Range audited:** `8c75c119c^..a9e4dc543` (feature work concentrated in `b3e8c68e5`, `2097e36b4`, `3ca997d46`, `6dbb5d542`, `d35e17be3`, `d445db03a`, `413c3cffb`, `c21582feb`, `15480d761`, `c47780084`, `908f68f0c`, `c889c477b`)
 
-## Status — re-verified 2026-09-04 against `5f7c52f33`
+## Status — resolved 2026-09-04
 
-**All 28 findings are open.** No commit between the audit and HEAD touched a finding's path with intent to fix it, and the repros for PSC-1, PSC-8, PSC-12, PSC-13, PSC-14, PSC-16 and PSC-18 were re-run and still reproduce. PSC-1 is still Critical / P0-now. Three findings were re-graded down (PSC-17, PSC-19, PSC-21 are Low), and five widened (PSC-8, PSC-9, PSC-12, PSC-26, PSC-27 — whose blast radius grew with `ee02d5bdb`). Severity and priority in the table are the 2026-08-15 values; the appended status column is the 2026-09-04 read, with reasoning in [Re-verification 2026-09-04](#re-verification-2026-09-04).
+**Every P0 and P1 finding is closed except PSC-7, which the owner deliberately deferred.** The work landed on `chore/audit-findings`: 24 P0/P1 items fixed, one new finding (PSC-29) found and fixed during the work, three of this document's own claims corrected as wrong (see [Corrections to this audit](#corrections-to-this-audit)). P2 items are untouched and remain open. Per-finding state is the Status column below; the reasoning is in [Resolution 2026-09-04](#resolution-2026-09-04).
 
 ## Verdict
 
@@ -37,34 +37,35 @@ Severity is technical and unchanged. Priority is the schedule. A finding can be 
 
 | ID | Severity | Priority | Area | One-line finding | Status (2026-09-04) |
 |---|---|---|---|---|---|
-| PSC-1 | Critical | P0-now | Business wizard | Authored `productScope` is stripped from the PUT body at the products step and never reaches the server | **Open.** Byte-identical at HEAD; confirmed against `useSaveCampaign.ts` and `CampaignManagementService.ts` |
-| PSC-2 | High | P1-next | Payout basis | `matched_items_amount` pays on undiscounted line totals, unclamped against `purchase.amount` | **Open.** Go-live gate |
-| PSC-3 | High | P1-next | Persistence | Variant line items sharing a `product_id` are discarded by `onConflictDoNothing`; the two claim paths then disagree | **Open.** Go-live gate, pairs with PSC-20 |
-| PSC-4 | High | P2-when-picked-up | Listener / display | *Known product gap.* With no product context every scoped campaign "matches", so the headline advertises a reward the cart cannot earn | **Open.** `InstallView` still passes no `products` |
-| PSC-5 | High | P1-next | SDK components | `<frak-post-purchase>` share CTA throws `TypeError: Invalid URL` and unmounts the listener tree | **Open.** `new URL(url)` still unguarded |
-| PSC-6 | High | P1-next | Plugins | WooCommerce/PrestaShop send no `sku` in the display `products` array, making live product context inert | **Open.** No shipped plugin sends `sku` |
-| PSC-7 | Medium | P1-next | Ingest | SKU matching is byte-exact and case-sensitive with no normalisation, validation or merchant feedback | **Open.** Unchanged |
-| PSC-8 | Medium | P1-next | Ingest | Webhook bodies are cast, not validated; a numeric `sku` matches differently on the two claim paths | **Open, widened.** `quantity` has the same string/number split across the two claim paths as `sku`; fold into this item |
-| PSC-9 | Medium | P1-next | Reward calc | `minAmount` is applied after `maxAmount`, silently defeating the cap; ordering never validated | **Open.** High is arguable (an inverted pair uncaps every match); API-only reachability keeps Medium. Also: `EstimatedRewardService` truthiness drops a `0` cap |
-| PSC-10 | Medium | P2-when-picked-up | Business wizard | Tiered rewards on a matched-items basis still label their ranges "Basket Range" | **Open.** Unchanged |
-| PSC-11 | Medium | P2-when-picked-up | Business wizard | `AdvancedScopeNotice` drops group `logic` and operand values, inverting the meaning of a `none` scope | **Open.** Unchanged |
-| PSC-12 | Medium | P1-next | Validation | Empty `productScope: []` publishes, matches everything, and satisfies the matched-basis requirement | **Open, widened.** `{logic: "none", conditions: []}` does the same one level down; the validator must recurse |
-| PSC-13 | Medium | P1-next | Validation | `between` with `valueTo: null` passes publish and means two different things per side | **Open.** Unchanged |
-| PSC-14 | Medium | P1-next | Validation | Inverted `between` range (100..10) is accepted end to end and can never match | **Open.** Unchanged |
-| PSC-15 | Medium | P1-next | Observability | A scope that matches nothing is indistinguishable from a campaign that never fired | **Open.** Cheapest support win in the report |
-| PSC-16 | Medium | P1-next | Parity | Two hand-copied evaluators, no shared corpus; `exists`/`not_exists` already diverge on `null` | **Open.** Reachable only via direct `matchesProductScope` calls, since `sanitizeProducts` drops nulls |
-| PSC-17 | Medium | P1-next | Tests | The one SDK↔backend operator parity test asserts only `not.toThrow()` and cannot fail | **Open · re-graded Low.** Test quality only; ride along with PSC-16 |
-| PSC-18 | Medium | P2-when-picked-up | Magento (folded) | **Folded item.** Magento is unused, untested and developed blind — needs a full dedicated review before any merchant uses it. Absorbs every Magento-specific finding | **Open.** Two unrelated Magento commits landed; all four bullets stand |
-| PSC-19 | Medium | P2-when-picked-up | Tests | Backend `formatted=1` tests re-implement the handler instead of invoking it | **Open · re-graded Low.** Test gap only |
-| PSC-20 | Medium | P1-next | Persistence | A missing SKU is never backfilled on webhook redelivery | **Open.** Unchanged |
-| PSC-21 | Medium | P2-when-picked-up | Schema | `campaign_rules.rule` is bare `jsonb`; every scope invariant lives only in the service layer | **Open · re-graded Low.** One-liner; ride along with any validator commit |
-| PSC-22 | Low | P2-when-picked-up | Migrations | `drizzle/v2` baseline lacks `purchase_items.sku` (latent, nothing routes to `_v2`) | **Open, now structural.** `drizzle/v2` is at 17 tables against 32 in the `dev` snapshot; delete it (see re-verification) |
-| PSC-23 | Low | P2-when-picked-up | Tests | `CampaignInfoSection` duplicates `RewardBreakdown` basis logic with no test at all | **Open.** Unchanged; the component is in `apps/wallet` |
-| PSC-24 | Low | P2-when-picked-up | SDK | `matchedProducts: undefined` conflates "no context" with "scope matched none" | **Open.** Unchanged |
-| PSC-25 | Low | P2-when-picked-up | Fixtures | Golden corpus is a change-detector; `GoldenFixtures.REWARDS`/`.rewards` referenced by nobody | **Open.** Unchanged; same dead constants as native NSD-16 |
-| PSC-26 | Low | P2-when-picked-up | Display | *Known product gap.* Tier ranges for `purchase.matchedQuantity` render as currency | **Open, widened.** Tier ranges also render raw min beside formatted max (`10–100 €`) on both renderers |
-| PSC-27 | Low | P1-next | Components | `sanitizeSharingProducts` silently discards scope context for entries without a `title` | **Open, widened.** Since `ee02d5bdb` every share CTA routes `products` to the sharing page, so the drop now also loses scope on sharing-page ranking |
-| PSC-28 | Low | P2-when-picked-up | Docs | Plan docs describe a business app and XSS sinks that no longer exist | **Open.** Three plan docs byte-identical since audit |
+| PSC-1 | Critical | P0-now | Business wizard | Authored `productScope` is stripped from the PUT body at the products step and never reaches the server | **Fixed.** `rule` is sent on every draft save; backend accepts an empty `rewards` on a draft PUT, still rejects it on publish |
+| PSC-2 | High | P1-next | Payout basis | `matched_items_amount` pays on undiscounted line totals, unclamped against `purchase.amount` | **Fixed** — *diagnosis partly wrong, see corrections.* Per-line `total_price` (post-discount, tax-inclusive) carried end to end, plus a `Math.min(matchedAmount, purchase.amount)` backstop |
+| PSC-3 | High | P1-next | Persistence | Variant line items sharing a `product_id` are discarded by `onConflictDoNothing`; the two claim paths then disagree | **Fixed.** Item identity now includes `sku` (`UNIQUE NULLS NOT DISTINCT`); duplicates merge rather than drop; both claim paths consume the same merged set. Migration is a DB-team request, not shipped here |
+| PSC-4 | High | P2-when-picked-up | Listener / display | *Known product gap.* With no product context every scoped campaign "matches", so the headline advertises a reward the cart cannot earn | **Open.** P2, unchanged. Blast radius reduced: shipped plugins now send `sku` (PSC-6) |
+| PSC-5 | High | P1-next | SDK components | `<frak-post-purchase>` share CTA throws `TypeError: Invalid URL` and unmounts the listener tree | **Fixed.** All three `new URL` sites in `FrakContextManager` guarded; `merchantDomain` normalised to a scheme-qualified URL. *Trigger misattributed, see corrections* |
+| PSC-6 | High | P1-next | Plugins | WooCommerce/PrestaShop send no `sku` in the display `products` array, making live product context inert | **Fixed.** Both plugins emit `sku`/`productId`/`quantity`/`unitPrice`, omitted when empty. Magento still absent (PSC-18) |
+| PSC-7 | Medium | P1-next | Ingest | SKU matching is byte-exact and case-sensitive with no normalisation, validation or merchant feedback | **Deferred by owner.** No merchant has used the feature yet; normalisation waits for real usage and feedback, since some legacy systems may treat SKU case as significant |
+| PSC-8 | Medium | P1-next | Ingest | Webhook bodies are cast, not validated; a numeric `sku` matches differently on the two claim paths | **Fixed.** One coercion site (`dto/lineItem.ts`) for all four webhooks; `sku` and `quantity` agree on both paths; empty/whitespace sku normalises to `null`, never `""` |
+| PSC-9 | Medium | P1-next | Reward calc | `minAmount` is applied after `maxAmount`, silently defeating the cap; ordering never validated | **Fixed.** Clamp is min-then-max; `minAmount > maxAmount` and `maxAmount <= 0` rejected at publish; `EstimatedRewardService` honours a `0` cap |
+| PSC-10 | Medium | P2-when-picked-up | Business wizard | Tiered rewards on a matched-items basis still label their ranges "Basket Range" | **Open.** P2, unchanged |
+| PSC-11 | Medium | P2-when-picked-up | Business wizard | `AdvancedScopeNotice` drops group `logic` and operand values, inverting the meaning of a `none` scope | **Open.** P2, unchanged |
+| PSC-12 | Medium | P1-next | Validation | Empty `productScope: []` publishes, matches everything, and satisfies the matched-basis requirement | **Fixed.** Empty root and empty groups rejected recursively at any depth |
+| PSC-13 | Medium | P1-next | Validation | `between` with `valueTo: null` passes publish and means two different things per side | **Fixed.** Null bound rejected at publish; the backend's `localeCompare("null")` degradation killed at source |
+| PSC-14 | Medium | P1-next | Validation | Inverted `between` range (100..10) is accepted end to end and can never match | **Fixed** — *prescription wrong, see corrections.* Rule is `valueTo >= value`, enforced in the wizard and at publish |
+| PSC-15 | Medium | P1-next | Observability | A scope that matches nothing is indistinguishable from a campaign that never fired | **Fixed.** Distinct reason on `EvaluationResult` plus a `log.debug`. The collector field has no production reader yet |
+| PSC-16 | Medium | P1-next | Parity | Two hand-copied evaluators, no shared corpus; `exists`/`not_exists` already diverge on `null` | **Fixed.** Both sides on `!= null`; shared 23-entry corpus asserted from both suites, with deliberate fail-open/fail-closed divergences pinned as data |
+| PSC-17 | Medium | P1-next | Tests | The one SDK↔backend operator parity test asserts only `not.toThrow()` and cannot fail | **Fixed.** Replaced by an outcome table where the fail-open default is the wrong answer; operator list derived, so a new operator fails the completeness test |
+| PSC-18 | Medium | P2-when-picked-up | Magento (folded) | **Folded item.** Magento is unused, untested and developed blind — needs a full dedicated review before any merchant uses it | **Open.** P2, untouched by design. Magento remains the one provider off the PSC-2 line-total convention |
+| PSC-19 | Medium | P2-when-picked-up | Tests | Backend `formatted=1` tests re-implement the handler instead of invoking it | **Open.** P2 / Low |
+| PSC-20 | Medium | P1-next | Persistence | A missing SKU is never backfilled on webhook redelivery | **Fixed.** Fill-only upsert plus a guarded adopt of stored sku-less rows; reconciliation removes stale lines a redelivery no longer carries |
+| PSC-21 | Medium | P2-when-picked-up | Schema | `campaign_rules.rule` is bare `jsonb`; every scope invariant lives only in the service layer | **Open.** P2 / Low |
+| PSC-22 | Low | P2-when-picked-up | Migrations | `drizzle/v2` baseline lacks `purchase_items.sku` (latent, nothing routes to `_v2`) | **Open.** P2. Deliberately untouched — `services/bootstrap/drizzle` is DB-team territory |
+| PSC-23 | Low | P2-when-picked-up | Tests | `CampaignInfoSection` duplicates `RewardBreakdown` basis logic with no test at all | **Open.** P2 |
+| PSC-24 | Low | P2-when-picked-up | SDK | `matchedProducts: undefined` conflates "no context" with "scope matched none" | **Open.** P2 |
+| PSC-25 | Low | P2-when-picked-up | Fixtures | Golden corpus is a change-detector; `GoldenFixtures.REWARDS`/`.rewards` referenced by nobody | **Open.** P2. The new scope-match corpus is hand-written and load-bearing on both sides, so it does not repeat this failure |
+| PSC-26 | Low | P2-when-picked-up | Display | *Known product gap.* Tier ranges for `purchase.matchedQuantity` render as currency | **Open.** P2 |
+| PSC-27 | Low | P1-next | Components | `sanitizeSharingProducts` silently discards scope context for entries without a `title` | **Fixed.** Title-less entries survive for scope, only titled ones render, and selection defaults to the first renderable entry |
+| PSC-28 | Low | P2-when-picked-up | Docs | Plan docs describe a business app and XSS sinks that no longer exist | **Open.** P2. `services/backend/docs/product-scoped-campaigns.md` was brought in step as part of this work; the plan docs were not |
+| PSC-29 | High | P0-now | Reward calc | **New, found during the work.** An absent field satisfied `gt`/`gte` against any threshold — fail-open in a fail-closed evaluator, on live order-level `conditions` | **Fixed.** `compareValues` treats a null/absent operand as non-evaluable at source |
 
 **Priority legend** — `P0-now` fix immediately · `P1-next` fix in the next pass · `P2-when-picked-up` real but not scheduled, revisit when the feature is picked up · `Accepted-risk` consciously accepted, not to be fixed. No finding in this report is `Accepted-risk`.
 
@@ -337,7 +338,7 @@ expect(() => matchesProductScope(scope, product)).not.toThrow();
 
 The structural gap: **coverage is strong at the pure-function layer and absent at every boundary**. Every confirmed high/critical finding in this audit lives at a boundary — form→payload (PSC-1), item→DB (PSC-3), plugin→SDK (PSC-6), component→listener (PSC-5), calculator→order total (PSC-2). No test crosses one.
 
-*Environment note:* the local `node_modules` install is broken (`react` not hoisted), so React/DOM suites fail with `React.act is not a function`. That is a local artifact, not a defect. Pure-logic suites run fine — `sdk/core/src/rewards` passes 167/167 — and I used targeted Vitest runs to reproduce PSC-1, PSC-12 and PSC-16 empirically.
+*Environment note (corrected 2026-09-04):* React/DOM suites here failed with `React.act is not a function`, originally recorded as a broken local install. It is not — that error appears when `NODE_ENV=production`, because React then resolves its production build, which omits `act`. With `NODE_ENV` unset or `test` every DOM suite runs. Pure-logic suites were always fine — `sdk/core/src/rewards` passes 167/167 — and targeted Vitest runs reproduced PSC-1, PSC-12 and PSC-16 empirically.
 
 ## Doc drift
 
@@ -410,6 +411,40 @@ Against `dev` @ `5f7c52f33`. `git log db3b7b2b7..HEAD` over `apps/business/src/m
 **Delegate corrections.** The re-verification brief placed `CampaignInfoSection` in `apps/business`; it is `apps/wallet/app/module/explorer/component/ExplorerDetail/CampaignInfoSection.tsx`, as the audit says. PSC-25's dead `GoldenFixtures` constants are the same two the native audit records as NSD-16; close them together.
 
 **Still not executed.** No live Postgres, so PSC-3's `onConflictDoNothing` truncation and the `_v2` failure remain reasoned from schema; no plugin was installed against a store.
+
+## Resolution 2026-09-04
+
+Branch `chore/audit-findings`. Every P0/P1 finding is closed except PSC-7 (owner-deferred). Work ran as six parallel lanes, then two review rounds and three fix rounds; each review round found defects in the previous round's fixes, including two money defects introduced by the fix for PSC-3.
+
+**Verification.** biome, `bun run lint` (comment budget, i18n, iOS floor), per-package typecheck, backend 1267/1267, sdk/core + sdk/components + wallet-shared + apps/business 2887/2887. Behaviour changes were mutation-checked — the fix was reverted and the new test confirmed red — not merely observed green.
+
+### Corrections to this audit
+
+Three claims in this document are wrong, and the code now follows the evidence rather than the text.
+
+- **PSC-2's diagnosis holds only for Shopify.** WooCommerce's REST serializer computes `line_items[].price` as `get_total() / quantity`, which is already **post-discount**; the real gap there is **tax** (line ex-tax against an order total inc-tax), which *under*states rather than overpays. PrestaShop already sent `unit_price_tax_incl`. Only Shopify's `price` is genuinely pre-discount, so "systematic overpay on every discounted order" was true for one of three providers. The fix — one tax-inclusive, post-discount basis — is right for all three regardless. This wrong diagnosis had already propagated into two merchant-facing plugin changelogs before it was caught.
+- **PSC-14's prescription is wrong.** It asks for `valueTo > value`. The evaluator's `between` is inclusive on both ends, so `between 50 and 50` means "exactly 50" and is satisfiable; rejecting it at publish is the same defect with the sign flipped, and it fails loudly at the merchant with a message that is untrue. The rule is `valueTo >= value`. Found by mutation-testing an untested boundary.
+- **PSC-5's trigger is misattributed.** The WordPress shortcode's `sharing_url => ''` default is not a trigger: `build_html_attrs()` skips empty values, so no attribute is emitted and the fallback works. The real source is `merchantDomain` arriving as a bare host from the backend. The SDK guard was still needed; the plugin blame was not.
+
+Also corrected: the *Environment note* under Test and coverage assessment blames a broken local `node_modules` for `React.act is not a function`. It is not broken — that error appears when `NODE_ENV=production`, because React resolves its production build, which omits `act`. Every DOM suite runs green with `NODE_ENV` unset or `test`. The false belief cost two agents a wrong report each.
+
+### Not shipped here: the migration
+
+PSC-2 and PSC-3 need a `purchase_items` change (nullable `total_price`, and item identity re-keyed to `UNIQUE NULLS NOT DISTINCT(purchase_id, external_id, sku)`). The `schema.ts` declaration ships on this branch; **the migrations do not**. `services/bootstrap/AGENTS.md` states migrations are human-generated and DB-team-owned, and this work initially violated that by running `drizzle-kit generate` for all three stages. Those artefacts were removed. The request, with the reference DDL, the safety argument, the lock-window note and the staged local → dev → QA → prod rollout, is `docs/plans/purchase-items-line-key-migration.md`.
+
+**The backend must not be deployed to a stage whose database has not taken that change** — the code writes `total_price` and uses the constraint as its `ON CONFLICT` arbiter.
+
+Generating against `prod` also surfaced unrelated pending drift (`install_codes` columns and check constraint, a `purchase_claims` index). That predates this work and needs its own decision.
+
+### New residual risks, for the next auditor
+
+- **`unitPrice` means different things per platform.** The backend evaluates a `unitPrice` scope against the webhook's per-item `price`: tax-**exclusive** on WooCommerce, tax-**inclusive** on PrestaShop. Display now matches payout *within* each platform, but `unitPrice lt 100` is not portable *across* them. The PSC-2 convention settled line totals, not unit prices.
+- **Numeric coercion differs between display and ingest.** `sanitizeProducts` uses `Number.parseFloat` (so `"79.90 €"` → `79.9`); the backend's `toPurchaseItem` uses `Number` (→ absent). Only reachable for hand-rolled integrations that send formatted strings; both shipped plugins send numerics.
+- **Reconciliation trusts a non-empty delivery.** The stored item set equals the incoming set only when a delivery carries at least one item; an empty `items` is treated as absence of information, because it is optional on the custom and Magento DTOs and reconciling against it would wipe an order's lines.
+- **`scopeMatchedNoItemCampaigns` has no production reader.** PSC-15's diagnostic value is carried by its `log.debug`; the collector field is currently test-only, mirroring the pre-existing `skippedCampaigns`.
+- **Row locks on redelivery.** The reconciliation `DELETE` and the adopt `UPDATE` take row locks on `purchase_items` for the purchase, so a redelivery racing a late claim now serialises where it previously did not.
+- **Nothing here ran against a live Postgres or a live store.** The DDL, the reconciliation SQL and every PHP change are reviewed by eye and by rendered-SQL assertions only. The DB team's `local` step is the first real execution.
+- **`@frak-labs/core-sdk` bump level is a judgement call.** `SharingPageProduct.title` moving required → optional is a consumer-visible type break on a published 1.x; the changeset says `minor` on the grounds that the type is overwhelmingly an input and the runtime is strictly more permissive. Strict semver would say `major`. Revisit before release.
 
 ## Audit coverage
 

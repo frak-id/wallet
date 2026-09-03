@@ -81,7 +81,7 @@ class FrakOrderResolver
      *
      * @param Order  $order  Loaded PrestaShop order object.
      * @param string $status Mapped Frak status (`pending|confirmed|cancelled|refunded`).
-     * @return array{id:int,customerId:int,status:string,token:string,currency:string,totalPrice:float,items:array<int,array{productId:int,quantity:int,price:float,name:string,title:string,sku?:string}>}
+     * @return array{id:int,customerId:int,status:string,token:string,currency:string,totalPrice:float,items:array<int,array{productId:int,quantity:int,price:float,name:string,title:string,totalPrice?:string,sku?:string}>}
      */
     public static function getWebhookPayload($order, string $status): array
     {
@@ -113,6 +113,9 @@ class FrakOrderResolver
                 'name' => $product['product_name'],
                 'title' => $product['product_name'],
             ];
+            if (isset($product['total_price_tax_incl'])) {
+                $item['totalPrice'] = (string) $product['total_price_tax_incl'];
+            }
             if (!empty($product['product_reference'])) {
                 $item['sku'] = (string) $product['product_reference'];
             }
@@ -152,7 +155,8 @@ class FrakOrderResolver
     }
 
     /**
-     * Extract line items as `{ title, imageUrl?, link? }` entries.
+     * Extract line items as `{ title, imageUrl?, link?, sku?, productId?,
+     * quantity?, unitPrice? }` entries.
      *
      * Uses {@see Order::getProducts()} which already enriches each row with
      * the cover {@see Image} object and `link_rewrite` slug — no extra DB
@@ -167,8 +171,12 @@ class FrakOrderResolver
      *
      * Returns `null` when the order has no line items at all, or when
      * none of them resolved a non-empty `title`.
+     *
+     * Scope fields are omitted rather than sent empty: an empty-string SKU
+     * satisfies `exists`, `neq` and `not_in`, silently joining a negated
+     * scope's matched set.
      * @param Order $order PrestaShop Order object resolved by the calling hook.
-     * @return list<array{title: string, imageUrl?: string, link?: string}>|null
+     * @return list<array{title: string, imageUrl?: string, link?: string, sku?: string, productId?: string, quantity?: int, unitPrice?: float}>|null
      */
     private static function extractProducts($order, int $cap): ?array
     {
@@ -192,6 +200,23 @@ class FrakOrderResolver
             }
 
             $entry = ['title' => $title];
+
+            if (!empty($row['product_reference'])) {
+                $entry['sku'] = (string) $row['product_reference'];
+            }
+
+            if (!empty($row['product_id'])) {
+                $entry['productId'] = (string) (int) $row['product_id'];
+            }
+
+            $quantity = isset($row['product_quantity']) ? (int) $row['product_quantity'] : 0;
+            if ($quantity > 0) {
+                $entry['quantity'] = $quantity;
+            }
+
+            if (isset($row['unit_price_tax_incl'])) {
+                $entry['unitPrice'] = (float) $row['unit_price_tax_incl'];
+            }
 
             if (
                 !empty($row['image'])
