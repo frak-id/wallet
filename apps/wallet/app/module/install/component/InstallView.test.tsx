@@ -340,6 +340,9 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
 
         const modal = modalStore.getState().modal;
         if (modal?.id !== "recoveryCodeSuccess") throw new Error("no modal");
+        // Optional on the variant — but this page has no other way out, so
+        // this opener owes one.
+        if (!modal.onExit) throw new Error("no exit");
         modal.onExit();
 
         expect(toWallet).toHaveBeenCalledTimes(1);
@@ -432,6 +435,7 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
                 throw new Error("no modal");
             expect(modal.merchant).toBeUndefined();
 
+            if (!modal.onExit) throw new Error("no exit");
             modal.onExit();
             expect(toWallet).toHaveBeenCalledTimes(1);
         } finally {

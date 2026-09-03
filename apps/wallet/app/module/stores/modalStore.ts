@@ -38,10 +38,13 @@ type ModalState =
     | {
           id: "recoveryCodeSuccess";
           merchant?: { name: string; domain?: string };
-          /** Runs on dismissal, however it arrives — see `closeModal`. The
-           * onboarding flows continue to `/register`, the install handoff
-           * exits to `/wallet`. */
-          onExit: () => void;
+          /** Runs on dismissal, however it arrives — see `closeModal`. Only
+           * for an opener that owes a transition: `/recovery-code` continues
+           * to `/register`, the install handoff exits to `/wallet`. An opener
+           * whose own page is already the destination MUST omit it — a
+           * self-navigation there re-runs `beforeLoad`, which can bounce the
+           * user off the page they just dismissed the modal on. */
+          onExit?: () => void;
           /** Label for an explicit dismiss button, where nothing else on the
            * page offers a way out. */
           actionLabel?: string;
@@ -101,7 +104,7 @@ type ModalStore = {
  * clobbered by the very `set` that is still returning.
  */
 function exitOf(modal: ModalState | null | undefined): (() => void) | null {
-    return modal?.id === "recoveryCodeSuccess" ? modal.onExit : null;
+    return (modal?.id === "recoveryCodeSuccess" ? modal.onExit : null) ?? null;
 }
 
 /** Fires after the update commits, never inside the updater. */

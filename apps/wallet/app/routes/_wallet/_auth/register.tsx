@@ -100,6 +100,15 @@ const REFERRAL_TOAST_VISIBLE_MS = 4000;
 // Matches `ConfirmationTooltip`'s 200ms exit animation + buffer.
 const TOAST_EXIT_MS = 220;
 
+/**
+ * The install-referrer confirmation is an announcement, not a step: it is owed
+ * once per app launch, not once per mount. `useInstallReferrer` caches at
+ * `staleTime: Infinity`, so every later mount of this route — returning from
+ * `/login`, re-entering onboarding — resolves it synchronously and would
+ * re-announce the same link. Module scope matches that query's own lifetime.
+ */
+let hasAnnouncedInstallReferrer = false;
+
 function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -152,16 +161,17 @@ function RegisterPage() {
     // On Tauri+Android: read Play Store referrer, resolve merchant, store ensure action
     const { data: referrerData } = useInstallReferrer();
 
-    // Show merchant popup once referrer is resolved
+    // Announce the resolved referrer once. No `onExit`: this page is already
+    // where dismissal should land, and navigating to it re-runs `beforeLoad`
+    // without `new`, whose credential guard then redirects to `/login`.
     useEffect(() => {
-        if (referrerData?.merchant) {
-            openModal({
-                id: "recoveryCodeSuccess",
-                merchant: referrerData.merchant,
-                onExit: () => navigate({ to: "/register", replace: true }),
-            });
-        }
-    }, [referrerData, openModal, navigate]);
+        if (!referrerData?.merchant || hasAnnouncedInstallReferrer) return;
+        hasAnnouncedInstallReferrer = true;
+        openModal({
+            id: "recoveryCodeSuccess",
+            merchant: referrerData.merchant,
+        });
+    }, [referrerData, openModal]);
 
     const advanceAfterKeypass = useCallback(() => {
         closeModal();
