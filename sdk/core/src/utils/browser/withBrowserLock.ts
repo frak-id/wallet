@@ -57,9 +57,24 @@ export async function withBrowserLock<T>(
     if (!locks) return task();
 
     if (options.ifAvailable) {
-        return locks.request(name, { ifAvailable: true }, async (lock) =>
-            lock ? task() : undefined
-        );
+        // Tracks whether the task ran, mirroring the waiting branch below: a
+        // Locks API that throws (rather than being absent) must degrade to
+        // unsynchronised, not reject a caller documented never to throw.
+        let started = false;
+        try {
+            return await locks.request(
+                name,
+                { ifAvailable: true },
+                async (lock) => {
+                    if (!lock) return undefined;
+                    started = true;
+                    return task();
+                }
+            );
+        } catch (error) {
+            if (started) throw error;
+            return task();
+        }
     }
 
     const controller = new AbortController();

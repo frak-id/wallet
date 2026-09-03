@@ -213,23 +213,28 @@ export function mockWebLocks(target: object = navigator) {
         const run = callback ?? (options as (lock: unknown) => unknown);
         const opts = callback ? (options as RequestOptions) : {};
 
-        const holder = held.get(name);
-        if (holder) {
-            if (opts.ifAvailable) return run(null);
-            await waitFor(holder, opts.signal);
-        }
+        const tail = held.get(name);
+        if (tail && opts.ifAvailable) return run(null);
 
+        // Chained onto the current tail and installed BEFORE any await, so a
+        // third contender queues behind this one instead of sharing its turn —
+        // and a caller arriving between a holder's release and a waiter's
+        // resumption still sees the queue, not a free lock.
         const released = (async () => {
-            try {
-                return await run({ name, mode: "exclusive" });
-            } finally {
-                held.delete(name);
-            }
+            if (tail) await waitFor(tail, opts.signal);
+            return run({ name, mode: "exclusive" });
         })();
-        held.set(
-            name,
-            released.catch(() => undefined)
-        );
+        // The queue entry settles only when BOTH the predecessor chain and this
+        // caller are done: an aborted waiter rejects `released` while the real
+        // holder still runs, and its successor must keep waiting on that holder.
+        const settled = Promise.allSettled(
+            tail ? [tail, released] : [released]
+        ).then(() => {
+            // Only the tail clears the map: an intermediate settling must not
+            // erase the queue behind it.
+            if (held.get(name) === settled) held.delete(name);
+        });
+        held.set(name, settled);
         return released;
     }
 

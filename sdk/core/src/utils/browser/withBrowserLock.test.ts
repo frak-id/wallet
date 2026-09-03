@@ -56,6 +56,31 @@ describe("withBrowserLock", () => {
             expect(await runs).toEqual(["done", "done"]);
         });
 
+        it("keeps a third contender excluded, not just the second", async () => {
+            // The mock once let every waiter await the same original holder,
+            // so B and C both resumed on A's release and ran together.
+            mockWebLocks();
+            const a = pendingTask();
+            const b = pendingTask();
+            const c = pendingTask();
+
+            const runs = Promise.all([
+                withBrowserLock("serial3", a.task),
+                withBrowserLock("serial3", b.task),
+                withBrowserLock("serial3", c.task),
+            ]);
+            await vi.waitFor(() => expect(a.started).toHaveBeenCalled());
+
+            a.release();
+            await vi.waitFor(() => expect(b.started).toHaveBeenCalled());
+            expect(c.started).not.toHaveBeenCalled();
+
+            b.release();
+            await vi.waitFor(() => expect(c.started).toHaveBeenCalled());
+            c.release();
+            expect(await runs).toEqual(["done", "done", "done"]);
+        });
+
         it("skips an ifAvailable caller while the lock is held", async () => {
             mockWebLocks();
             const holder = pendingTask();
@@ -114,6 +139,28 @@ describe("withBrowserLock", () => {
                     throw new Error("task failed");
                 })
             ).rejects.toThrow("task failed");
+        });
+
+        it("degrades to unsynchronised when the lock manager itself throws", async () => {
+            // A present-but-broken Locks API (e.g. a sandboxed context) must
+            // not reject callers documented never to throw — the keygen path
+            // caches a rejection permanently.
+            const request = vi.fn().mockRejectedValue(
+                new DOMException("denied", "SecurityError")
+            );
+            Object.defineProperty(navigator, "locks", {
+                value: { request },
+                configurable: true,
+            });
+
+            await expect(
+                withBrowserLock("frak-test", async () => "waited")
+            ).resolves.toBe("waited");
+            await expect(
+                withBrowserLock("frak-test", async () => "skipped", {
+                    ifAvailable: true,
+                })
+            ).resolves.toBe("skipped");
         });
     });
 });
