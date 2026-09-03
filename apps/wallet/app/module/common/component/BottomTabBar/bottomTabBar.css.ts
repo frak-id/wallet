@@ -11,6 +11,16 @@ import { style } from "@vanilla-extract/css";
 
 const pillRadius = "999px";
 
+// A floor, not a clamp: tab content is 54px, so a fixed height clips if text
+// inflates.
+const pillHeight = "56px";
+
+/** Wrapper padding above the pill; also the gap below it, before the inset. */
+const barPaddingBlock = alias.spacing.s;
+
+/** Full painted height of the bar, excluding the bottom safe-area inset. */
+export const bottomBarHeight = `calc(${pillHeight} + ${barPaddingBlock} * 2)`;
+
 export const bottomTabBarStyles = {
     /**
      * Outer wrapper — fills the entire bottom bar area.
@@ -28,8 +38,8 @@ export const bottomTabBarStyles = {
         display: "flex",
         justifyContent: "center",
         alignItems: "flex-end",
-        padding: `${alias.spacing.s} ${alias.spacing.m}`,
-        paddingBottom: `calc(${alias.spacing.s} + ${safeArea.bottom})`,
+        padding: `${barPaddingBlock} ${alias.spacing.m}`,
+        paddingBottom: `calc(${barPaddingBlock} + ${safeArea.bottom})`,
     }),
 
     /**
@@ -62,6 +72,7 @@ export const bottomTabBarStyles = {
         display: "flex",
         alignItems: "stretch",
         width: "100%",
+        minHeight: pillHeight,
         maxWidth: "286px",
         borderRadius: pillRadius,
         overflow: "hidden",
