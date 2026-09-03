@@ -1,6 +1,6 @@
 import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { purchasesTable } from "../db/schema";
+import { purchaseItemsTable, purchasesTable } from "../db/schema";
 import { PurchaseRepository } from "./PurchaseRepository";
 
 // No live DB: chainable vi.fn() stand-ins for the Drizzle query builder.
@@ -10,10 +10,14 @@ import { PurchaseRepository } from "./PurchaseRepository";
 // `.onConflictDoUpdate(...)` so tests can assert on the upsert semantics.
 const {
     mockTrxInsert,
+    mockTrxDelete,
+    mockTrxSelect,
     mockPurchaseValues,
     mockPurchaseReturning,
     mockItemsValues,
-    mockItemsOnConflictDoNothing,
+    mockItemsOnConflictDoUpdate,
+    mockTrxUpdate,
+    capturedItemsSetRef,
     mockSelectWhere,
     capturedSetRef,
     dbMock,
@@ -52,10 +56,14 @@ const {
 
     return {
         mockTrxInsert: vi.fn(),
+        mockTrxDelete: vi.fn(),
+        mockTrxSelect: vi.fn(),
         mockPurchaseValues: vi.fn(),
         mockPurchaseReturning: vi.fn(),
         mockItemsValues: vi.fn(),
-        mockItemsOnConflictDoNothing: vi.fn(),
+        mockItemsOnConflictDoUpdate: vi.fn(),
+        mockTrxUpdate: vi.fn(),
+        capturedItemsSetRef: { current: null as unknown },
         mockSelectWhere: vi.fn(),
         capturedSetRef: { current: null as unknown },
         dbMock,
@@ -77,13 +85,20 @@ vi.mock("@backend-infrastructure", () => ({
         from: vi.fn().mockReturnThis(),
         where: mockSelectWhere,
         transaction: vi.fn(async (cb: (trx: unknown) => unknown) =>
-            cb({ insert: mockTrxInsert })
+            cb({
+                insert: mockTrxInsert,
+                update: mockTrxUpdate,
+                delete: mockTrxDelete,
+                select: mockTrxSelect,
+            })
         ),
         update: (...args: unknown[]) => dbMock.update(...args),
         query: dbMock.query,
     },
 }));
 const pgDialect = new PgDialect();
+const capturedBackfills: { set: unknown; where: unknown }[] = [];
+const capturedDeletes: { where: unknown }[] = [];
 
 const basePurchase = {
     externalId: "order-1",
@@ -112,10 +127,15 @@ describe("PurchaseRepository", () => {
                 };
                 return purchaseChain;
             }
-            // purchaseItemsTable: .values().onConflictDoNothing()
+            // purchaseItemsTable: .values().onConflictDoUpdate()
             const itemsChain = {
                 values: mockItemsValues.mockImplementation(() => itemsChain),
-                onConflictDoNothing: mockItemsOnConflictDoNothing,
+                onConflictDoUpdate:
+                    mockItemsOnConflictDoUpdate.mockImplementation(
+                        async (args: any) => {
+                            capturedItemsSetRef.current = args;
+                        }
+                    ),
             };
             return itemsChain;
         });
@@ -123,8 +143,28 @@ describe("PurchaseRepository", () => {
         mockPurchaseReturning.mockReset();
         mockPurchaseReturning.mockResolvedValue([{ purchaseId: "purchase-1" }]);
         mockItemsValues.mockReset();
-        mockItemsOnConflictDoNothing.mockReset();
-        mockItemsOnConflictDoNothing.mockResolvedValue(undefined);
+        mockItemsOnConflictDoUpdate.mockReset();
+        capturedItemsSetRef.current = null;
+        mockTrxUpdate.mockReset();
+        mockTrxUpdate.mockImplementation(() => ({
+            set: vi.fn((set: unknown) => ({
+                where: vi.fn(async (where: unknown) => {
+                    capturedBackfills.push({ set, where });
+                }),
+            })),
+        }));
+        capturedBackfills.length = 0;
+        mockTrxDelete.mockReset();
+        mockTrxDelete.mockImplementation(() => ({
+            where: vi.fn(async (where: unknown) => {
+                capturedDeletes.push({ where });
+            }),
+        }));
+        capturedDeletes.length = 0;
+        mockTrxSelect.mockReset();
+        mockTrxSelect.mockImplementation(() => ({
+            from: vi.fn(() => ({ where: vi.fn((w: unknown) => w) })),
+        }));
         mockSelectWhere.mockReset();
         mockSelectWhere.mockResolvedValue([]);
         capturedSetRef.current = null;
@@ -222,6 +262,190 @@ describe("PurchaseRepository", () => {
                     purchaseId: "purchase-1",
                 }),
             ]);
+        });
+
+        const item = (overrides: Record<string, unknown>) => ({
+            externalId: "product-1",
+            price: "10.00",
+            name: "Shoe",
+            title: "Shoe",
+            quantity: 1,
+            ...overrides,
+        });
+
+        it("persists two variants of one product as separate rows", async () => {
+            await new PurchaseRepository().upsertWithItems({
+                purchase: basePurchase as never,
+                items: [
+                    item({ sku: "A-S" }) as never,
+                    item({ sku: "A-M" }) as never,
+                ],
+            });
+
+            const inserted = mockItemsValues.mock.calls[0]?.[0];
+            expect(inserted).toHaveLength(2);
+            expect(inserted.map((row: any) => row.sku)).toEqual(["A-S", "A-M"]);
+        });
+
+        it("binds the insert to the single nulls-not-distinct line key", async () => {
+            await new PurchaseRepository().upsertWithItems({
+                purchase: basePurchase as never,
+                items: [item({ sku: "A-S" }) as never, item({}) as never],
+            });
+
+            expect(mockItemsValues).toHaveBeenCalledTimes(1);
+            const args = capturedItemsSetRef.current;
+            expect(args.target).toEqual([
+                purchaseItemsTable.purchaseId,
+                purchaseItemsTable.externalId,
+                purchaseItemsTable.sku,
+            ]);
+            expect(args.targetWhere).toBeUndefined();
+        });
+
+        it("adopts a stored sku-less row instead of inserting a duplicate when a redelivery adds the sku", async () => {
+            await new PurchaseRepository().upsertWithItems({
+                purchase: basePurchase as never,
+                items: [item({ sku: "A-S" }) as never],
+            });
+
+            expect(capturedBackfills).toHaveLength(1);
+            expect(capturedBackfills[0]?.set).toEqual({ sku: "A-S" });
+            expect(pgDialect.sqlToQuery(capturedBackfills[0]?.where).sql).toBe(
+                '("purchase_items"."purchase_id" = $1 and "purchase_items"."external_id" = $2 and "purchase_items"."sku" is null and not exists ("taken"."purchase_id" = $3 and "taken"."external_id" = $4 and "taken"."sku" = $5))'
+            );
+        });
+
+        it("does not adopt onto a line key that already exists", async () => {
+            await new PurchaseRepository().upsertWithItems({
+                purchase: basePurchase as never,
+                items: [item({ sku: "A-S" }) as never],
+            });
+
+            // Without the guard this UPDATE moves the stored NULL row onto an
+            // existing (purchase, product, sku) and violates the line index.
+            const rendered = pgDialect.sqlToQuery(capturedBackfills[0]?.where);
+            expect(rendered.sql).toContain("not exists");
+            expect(rendered.params).toEqual([
+                "purchase-1",
+                "product-1",
+                "purchase-1",
+                "product-1",
+                "A-S",
+            ]);
+        });
+
+        it("deletes stored lines the delivery no longer carries", async () => {
+            await new PurchaseRepository().upsertWithItems({
+                purchase: basePurchase as never,
+                items: [item({ sku: "A-M" }) as never],
+            });
+
+            expect(capturedDeletes).toHaveLength(1);
+            const rendered = pgDialect.sqlToQuery(capturedDeletes[0]?.where);
+            // `is not distinct from` and not `=`: a stored NULL sku compared
+            // with `= $n` yields NULL, and DELETE only removes rows on TRUE.
+            expect(rendered.sql).toBe(
+                '("purchase_items"."purchase_id" = $1 and not ("purchase_items"."external_id" = $2 and "purchase_items"."sku" is not distinct from $3))'
+            );
+            expect(rendered.params).toEqual(["purchase-1", "product-1", "A-M"]);
+        });
+
+        it("keeps a sku-less line the delivery still carries", async () => {
+            await new PurchaseRepository().upsertWithItems({
+                purchase: basePurchase as never,
+                items: [item({}) as never],
+            });
+
+            const rendered = pgDialect.sqlToQuery(capturedDeletes[0]?.where);
+            expect(rendered.params).toEqual(["purchase-1", "product-1", null]);
+        });
+
+        it("reconciles every stored line when the product has several incoming lines", async () => {
+            await new PurchaseRepository().upsertWithItems({
+                purchase: basePurchase as never,
+                items: [
+                    item({ sku: "A-S" }) as never,
+                    item({ sku: "A-M" }) as never,
+                ],
+            });
+
+            // The backfill deliberately skips this shape, so the orphan
+            // sku-less row is only removed by the reconciliation.
+            expect(capturedBackfills).toHaveLength(0);
+            const rendered = pgDialect.sqlToQuery(capturedDeletes[0]?.where);
+            expect(rendered.params).toEqual([
+                "purchase-1",
+                "product-1",
+                "A-S",
+                "product-1",
+                "A-M",
+            ]);
+        });
+
+        it("does not delete stored lines when the delivery carries none", async () => {
+            await new PurchaseRepository().upsertWithItems({
+                purchase: basePurchase as never,
+                items: [],
+            });
+
+            // `items` is optional on the custom and Magento webhooks; an empty
+            // delivery must not wipe the order's lines.
+            expect(capturedDeletes).toHaveLength(0);
+        });
+
+        it("leaves stored sku-less rows alone when the product has several incoming lines", async () => {
+            await new PurchaseRepository().upsertWithItems({
+                purchase: basePurchase as never,
+                items: [
+                    item({ sku: "A-S" }) as never,
+                    item({ sku: "A-M" }) as never,
+                ],
+            });
+
+            expect(capturedBackfills).toHaveLength(0);
+        });
+
+        it("merges lines sharing a product id and sku, summing quantity and line total", async () => {
+            await new PurchaseRepository().upsertWithItems({
+                purchase: basePurchase as never,
+                items: [
+                    item({
+                        sku: "A-S",
+                        quantity: 1,
+                        totalPrice: "10",
+                    }) as never,
+                    item({
+                        sku: "A-S",
+                        quantity: 2,
+                        totalPrice: "20",
+                    }) as never,
+                ],
+            });
+
+            // Two rows on one arbiter key would make Postgres reject the whole
+            // statement; dropping the second is the truncation being fixed.
+            const inserted = mockItemsValues.mock.calls[0]?.[0];
+            expect(inserted).toHaveLength(1);
+            expect(inserted[0].quantity).toBe(3);
+            expect(inserted[0].totalPrice).toBe("30");
+        });
+
+        it("backfills totalPrice and imageUrl on redelivery without nulling stored values", async () => {
+            await new PurchaseRepository().upsertWithItems({
+                purchase: basePurchase as never,
+                items: [item({ sku: "A-S" }) as never],
+            });
+
+            const set = capturedItemsSetRef.current.set;
+            // `excluded` is the incoming row, the qualified column the stored
+            // one: a redelivery fills a gap and never overwrites with NULL.
+            expect(pgDialect.sqlToQuery(set.totalPrice).sql).toBe(
+                'coalesce(excluded.total_price, "purchase_items"."total_price")'
+            );
+            expect(pgDialect.sqlToQuery(set.imageUrl).sql).toBe(
+                'coalesce(excluded.image_url, "purchase_items"."image_url")'
+            );
         });
 
         it("does not insert items when the list is empty", async () => {

@@ -24,7 +24,29 @@ type SingleCampaignResult = {
     errors: string[];
     deferForUnpriceableReward: boolean;
     deferReason?: string;
+    /**
+     * Order-level conditions matched but the product scope selected no line
+     * item — the campaign's own filter excluded the cart, not the cart the
+     * campaign. Reported so support can tell it from "no eligible purchase".
+     */
+    scopeMatchedNoItem?: boolean;
 };
+
+type ProductScopeOutcome = {
+    context: RuleContext | undefined;
+    reason?: "no_purchase" | "scope_matched_no_item";
+};
+
+/** Flags a campaign whose product scope selected no line item. */
+function collectScopeMiss(
+    result: SingleCampaignResult,
+    campaignId: string,
+    into: string[]
+): void {
+    if (result.scopeMatchedNoItem) {
+        into.push(campaignId);
+    }
+}
 
 function campaignResult(
     overrides: Partial<SingleCampaignResult> = {}
@@ -35,6 +57,7 @@ function campaignResult(
         budgetExceeded: false,
         errors: [],
         deferForUnpriceableReward: false,
+        scopeMatchedNoItem: false,
         ...overrides,
     };
 }
@@ -85,6 +108,7 @@ export class RuleEngineService {
                 rewards: [],
                 budgetExceeded: false,
                 skippedCampaigns: [],
+                scopeMatchedNoItemCampaigns: [],
                 errors: [],
                 deferForUnpriceableReward: false,
             };
@@ -119,6 +143,7 @@ export class RuleEngineService {
 
         const allRewards: CalculatedReward[] = [];
         const skippedCampaigns: string[] = [];
+        const scopeMatchedNoItemCampaigns: string[] = [];
         const errors: { campaignRuleId: string; error: string }[] = [];
         let budgetExceeded = false;
         let deferForUnpriceableReward = false;
@@ -135,6 +160,7 @@ export class RuleEngineService {
                 params.merchantDefaultToken
             );
 
+            collectScopeMiss(result, campaign.id, scopeMatchedNoItemCampaigns);
             if (!result.matched) continue;
 
             deferForUnpriceableReward ||= result.deferForUnpriceableReward;
@@ -169,6 +195,7 @@ export class RuleEngineService {
             rewards: allRewards,
             budgetExceeded,
             skippedCampaigns,
+            scopeMatchedNoItemCampaigns,
             errors,
             deferForUnpriceableReward,
             deferReason,
@@ -176,35 +203,39 @@ export class RuleEngineService {
     }
 
     // Evaluated with each item as the root object (`field: "productId"`, not
-    // `field: "purchase.items.productId"`). Returns `undefined` when a present
-    // scope matches no item, which the caller treats as `matched: false`.
+    // `field: "purchase.items.productId"`).
     private applyProductScope(
         productScope: RuleConditions | undefined,
         context: RuleContext
-    ): RuleContext | undefined {
-        if (!productScope) return context;
+    ): ProductScopeOutcome {
+        if (!productScope) return { context };
 
         const { purchase } = context;
-        if (!purchase) return undefined;
+        if (!purchase) return { context: undefined, reason: "no_purchase" };
 
         const matchedItems = purchase.items.filter((item) =>
             this.conditionEvaluator.evaluate(productScope, item)
         );
         if (matchedItems.length === 0) {
-            return undefined;
+            return { context: undefined, reason: "scope_matched_no_item" };
         }
 
         return {
-            ...context,
-            purchase: {
-                ...purchase,
-                matchedAmount: roundAmount(
-                    matchedItems.reduce((sum, item) => sum + item.totalPrice, 0)
-                ),
-                matchedQuantity: matchedItems.reduce(
-                    (sum, item) => sum + item.quantity,
-                    0
-                ),
+            context: {
+                ...context,
+                purchase: {
+                    ...purchase,
+                    matchedAmount: roundAmount(
+                        matchedItems.reduce(
+                            (sum, item) => sum + item.totalPrice,
+                            0
+                        )
+                    ),
+                    matchedQuantity: matchedItems.reduce(
+                        (sum, item) => sum + item.quantity,
+                        0
+                    ),
+                },
             },
         };
     }
@@ -229,11 +260,25 @@ export class RuleEngineService {
 
         // A scoped campaign without purchase items never matches — this also
         // covers non-purchase triggers, which never carry items.
-        const scopedContext = this.applyProductScope(
+        const scopeOutcome = this.applyProductScope(
             campaign.rule.productScope,
             context
         );
+        const scopedContext = scopeOutcome.context;
         if (!scopedContext) {
+            if (scopeOutcome.reason === "scope_matched_no_item") {
+                log.debug(
+                    {
+                        campaignId: campaign.id,
+                        identityGroupId: context.user.identityGroupId,
+                        orderId: context.purchase?.orderId,
+                        itemCount: context.purchase?.items.length ?? 0,
+                        productScope: campaign.rule.productScope,
+                    },
+                    "Product scope matched no line item"
+                );
+                return campaignResult({ scopeMatchedNoItem: true });
+            }
             return campaignResult();
         }
 

@@ -117,6 +117,12 @@ export type EvaluationResult = {
     rewards: CalculatedReward[];
     budgetExceeded: boolean;
     skippedCampaigns: string[];
+    /**
+     * Campaigns whose order-level conditions matched but whose product scope
+     * selected no line item. Distinguishes a mis-scoped campaign (wrong SKU,
+     * wrong casing, plugin sending none) from "no eligible purchase".
+     */
+    scopeMatchedNoItemCampaigns: string[];
     errors: {
         campaignRuleId: string;
         error: string;

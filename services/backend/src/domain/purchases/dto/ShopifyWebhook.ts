@@ -11,13 +11,17 @@ export type ShopifyOrderUpdateWebhookDto = Readonly<{
     };
     token: string; // The token of the order
     checkout_token?: string; // The token of the order
+    // When true, `line_items[].price` already carries tax.
+    taxes_included?: boolean;
     line_items: {
         product_id: number; // The product id
         quantity: number; // The quantity of the product
-        price: string; // The price of the product
+        price: string; // The unit price of the product, before discounts
         name: string; // The name of the product
         title: string; // The title of the product
         sku?: string; // The SKU of the product
+        discount_allocations?: { amount: string }[];
+        tax_lines?: { price: string }[];
     }[];
     note_attributes?: { name: string; value: string }[];
 }>;

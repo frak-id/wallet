@@ -2,7 +2,11 @@ import { log } from "@backend-infrastructure";
 import { HttpError, t } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
-import type { PurchaseStatus } from "../../../../domain/purchases";
+import {
+    type PurchaseStatus,
+    sumLineAmounts,
+    toPurchaseItem,
+} from "../../../../domain/purchases";
 import type {
     OrderFinancialStatus,
     ShopifyOrderUpdateWebhookDto,
@@ -115,14 +119,20 @@ export const shopifyWebhook = new Elysia()
                         totalPrice: webhookData.total_price,
                         currencyCode: webhookData.currency,
                     },
-                    purchaseItems: webhookData.line_items.map((item) => ({
-                        externalId: item.product_id.toString(),
-                        price: item.price,
-                        name: item.name,
-                        title: item.title,
-                        quantity: item.quantity,
-                        sku: item.sku,
-                    })),
+                    purchaseItems: webhookData.line_items.map((item) =>
+                        toPurchaseItem({
+                            productId: item.product_id,
+                            price: item.price,
+                            totalPrice: lineTotalPaid(
+                                item,
+                                webhookData.taxes_included === true
+                            ),
+                            name: item.name,
+                            title: item.title,
+                            quantity: item.quantity,
+                            sku: item.sku,
+                        })
+                    ),
                     merchantId: resolved.merchantId,
                     clientId: frakClientId,
                 }
@@ -138,6 +148,26 @@ export const shopifyWebhook = new Elysia()
             }),
         }
     );
+
+/**
+ * Amount actually paid for a Shopify line: `price` is the pre-discount unit
+ * price, `discount_allocations` the order's discounts apportioned to this line,
+ * and `tax_lines` is only additive when the shop prices tax-exclusively.
+ */
+function lineTotalPaid(
+    item: ShopifyOrderUpdateWebhookDto["line_items"][number],
+    taxesIncluded: boolean
+): string | undefined {
+    const price = Number(item.price);
+    const quantity = Number(item.quantity);
+    if (!Number.isFinite(price) || !Number.isFinite(quantity)) {
+        return undefined;
+    }
+    const discounted =
+        price * quantity - sumLineAmounts(item.discount_allocations);
+    const tax = taxesIncluded ? 0 : sumLineAmounts(item.tax_lines);
+    return String(discounted + tax);
+}
 
 function mapFinancialStatus(
     financialStatus: OrderFinancialStatus

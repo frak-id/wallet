@@ -2,6 +2,7 @@ import { log } from "@backend-infrastructure";
 import { HttpError, t } from "@backend-utils";
 import { Elysia } from "elysia";
 import type { PurchaseStatus } from "../../../../domain/purchases";
+import { toPurchaseItem } from "../../../../domain/purchases";
 import type { WooCommerceOrderUpdateWebhookDto } from "../../../../domain/purchases/dto/WooCommerceWebhook";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { resolveAndVerifyWebhook } from "./resolveAndVerifyWebhook";
@@ -54,15 +55,22 @@ export const wooCommerceWebhook = new Elysia().post(
                     totalPrice: webhookData.total,
                     currencyCode: webhookData.currency,
                 },
-                purchaseItems: webhookData.line_items.map((item) => ({
-                    externalId: item.product_id.toString(),
-                    price: item.price.toString(),
-                    name: item.name,
-                    title: item.name,
-                    quantity: item.quantity,
-                    imageUrl: item.image?.src?.length ? item.image.src : null,
-                    sku: item.sku,
-                })),
+                purchaseItems: webhookData.line_items.map((item) =>
+                    toPurchaseItem({
+                        productId: item.product_id,
+                        price: item.price,
+                        // `total` is net of discounts but tax-exclusive on
+                        // every WooCommerce tax setting.
+                        totalPrice: lineTotalPaid(item),
+                        name: item.name,
+                        title: item.name,
+                        quantity: item.quantity,
+                        imageUrl: item.image?.src?.length
+                            ? item.image.src
+                            : null,
+                        sku: item.sku,
+                    })
+                ),
                 merchantId: resolved.merchantId,
             }
         );
@@ -88,6 +96,20 @@ export const wooCommerceWebhook = new Elysia().post(
         }),
     }
 );
+
+/**
+ * Amount actually paid for a WooCommerce line: `total` is already net of
+ * discounts, `total_tax` is the tax charged on that net amount.
+ */
+function lineTotalPaid(
+    item: WooCommerceOrderUpdateWebhookDto["line_items"][number]
+): string | undefined {
+    if (item.total === undefined) return undefined;
+    const total = Number(item.total);
+    if (!Number.isFinite(total)) return undefined;
+    const tax = Number(item.total_tax ?? 0);
+    return String(total + (Number.isFinite(tax) ? tax : 0));
+}
 
 /**
  * Build the canonical purchase token used as the secondary index on the

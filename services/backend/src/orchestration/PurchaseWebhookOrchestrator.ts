@@ -98,10 +98,11 @@ export class PurchaseWebhookOrchestrator {
             // No claim, no cart-attribute identity — store the purchase and wait.
             // The interaction will be created when PurchaseLinkingOrchestrator
             // reconciles the late claim with this purchase.
-            const purchaseId = await this.purchaseRepository.upsertWithItems({
-                purchase,
-                items: purchaseItems,
-            });
+            const { purchaseId } =
+                await this.purchaseRepository.upsertWithItems({
+                    purchase,
+                    items: purchaseItems,
+                });
 
             log.info(
                 {
@@ -125,11 +126,12 @@ export class PurchaseWebhookOrchestrator {
         const identityGroupId = claim.claimingIdentityGroupId;
         await this.purchaseClaimRepository.delete(claim.id);
 
-        const purchaseId = await this.purchaseRepository.upsertWithItems({
-            purchase,
-            items: purchaseItems,
-            identityGroupId,
-        });
+        const { purchaseId, items } =
+            await this.purchaseRepository.upsertWithItems({
+                purchase,
+                items: purchaseItems,
+                identityGroupId,
+            });
 
         const interactionLogId = await this.purchaseInteractionCreator.create({
             purchaseId,
@@ -137,7 +139,7 @@ export class PurchaseWebhookOrchestrator {
             externalCustomerId: purchase.externalCustomerId,
             totalPrice: purchase.totalPrice,
             currencyCode: purchase.currencyCode,
-            items: purchaseItems,
+            items,
             identityGroupId,
             merchantId,
             cancelled: isCancelled,
@@ -176,11 +178,12 @@ export class PurchaseWebhookOrchestrator {
         const { finalGroupId: identityGroupId } =
             await this.identityOrchestrator.resolveAndAssociate([identityNode]);
 
-        const purchaseId = await this.purchaseRepository.upsertWithItems({
-            purchase,
-            items: purchaseItems,
-            identityGroupId,
-        });
+        const { purchaseId, items } =
+            await this.purchaseRepository.upsertWithItems({
+                purchase,
+                items: purchaseItems,
+                identityGroupId,
+            });
 
         const interactionLogId = await this.purchaseInteractionCreator.create({
             purchaseId,
@@ -188,7 +191,7 @@ export class PurchaseWebhookOrchestrator {
             externalCustomerId: purchase.externalCustomerId,
             totalPrice: purchase.totalPrice,
             currencyCode: purchase.currencyCode,
-            items: purchaseItems,
+            items,
             identityGroupId,
             merchantId,
             cancelled,

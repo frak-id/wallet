@@ -245,6 +245,23 @@ describe("RewardCalculator.calculateAll — percentage FX normalisation", () => 
         expect(calculated[0].amount).toBe(2);
     });
 
+    it("lets maxAmount win over a higher minAmount instead of uncapping", async () => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            {
+                converted: true,
+                tokenAmount: 3,
+            }
+        );
+
+        const { calculated } = await calculator.calculateAll(
+            [percentageReward({ minAmount: 100, maxAmount: 5 })],
+            { ...baseContext, purchase: purchase("eur") },
+            "campaign-1"
+        );
+
+        expect(calculated[0].amount).toBe(5);
+    });
+
     it("prices against the merchant default token when the reward pins none", async () => {
         vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
             {
@@ -532,6 +549,25 @@ describe("RewardCalculator.calculateAll — matched_items_amount basis", () => {
         expect(calculated[0].amount).toBe(5);
     });
 
+    it("clamps a matched subtotal that exceeds the order total actually paid", async () => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: true, tokenAmount: 7 }
+        );
+
+        await calculator.calculateAll(
+            [percentageReward()],
+            {
+                ...baseContext,
+                purchase: purchaseWithMatch(70, 100),
+            },
+            "campaign-1"
+        );
+
+        expect(pricingRepository.convertFiatToTokenAmount).toHaveBeenCalledWith(
+            expect.objectContaining({ fiatAmount: 7 })
+        );
+    });
+
     it("still applies min/max caps post-conversion", async () => {
         vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
             { converted: true, tokenAmount: 50 }
@@ -682,6 +718,25 @@ describe("RewardCalculator.calculateAll — tiered purchase.matchedAmount normal
             expect.objectContaining({ fiatAmount: 150 })
         );
         expect(calculated[0].amount).toBe(5);
+    });
+
+    it("clamps a matched tier basis that exceeds the order total actually paid", async () => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: true, tokenAmount: 70 }
+        );
+
+        await calculator.calculateAll(
+            [tieredReward()],
+            {
+                ...baseContext,
+                purchase: purchaseWithMatch(70, 150),
+            },
+            "campaign-1"
+        );
+
+        expect(pricingRepository.convertFiatToTokenAmount).toHaveBeenCalledWith(
+            expect.objectContaining({ fiatAmount: 70 })
+        );
     });
 
     it("is a hard error (not a number) when matchedAmount is missing", async () => {

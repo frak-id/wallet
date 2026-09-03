@@ -1,4 +1,5 @@
 import { eventEmitter, log } from "@backend-infrastructure";
+import { resolveLineTotal } from "../domain/purchases/dto/lineItem";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type { PurchasePayload } from "../domain/rewards/types";
 import { purchaseExternalEventId } from "../domain/rewards/utils";
@@ -15,6 +16,8 @@ type PurchaseInteractionParams = {
         quantity: number;
         price: string;
         sku?: string | null;
+        /** Amount actually paid for the line; `price * quantity` when absent. */
+        totalPrice?: string | null;
     }[];
     identityGroupId: string;
     merchantId: string;
@@ -58,7 +61,7 @@ export class PurchaseInteractionCreator {
                 name: item.name,
                 quantity: item.quantity,
                 unitPrice: Number(item.price),
-                totalPrice: Number(item.price) * item.quantity,
+                totalPrice: resolveLineTotal(item),
                 sku: item.sku ?? undefined,
             })),
             purchaseId: params.purchaseId,

@@ -1,6 +1,9 @@
 import { HttpError, t } from "@backend-utils";
 import { Elysia } from "elysia";
-import type { PurchaseStatus } from "../../../../domain/purchases";
+import {
+    type PurchaseStatus,
+    toPurchaseItem,
+} from "../../../../domain/purchases";
 import type {
     MagentoOrderStatus,
     MagentoOrderWebhookDto,
@@ -51,15 +54,17 @@ export const magentoWebhook = new Elysia()
                         totalPrice: webhookData.totalPrice ?? "0",
                         currencyCode: webhookData.currency ?? "EUR",
                     },
-                    purchaseItems: (webhookData.items ?? []).map((item) => ({
-                        externalId: item.productId,
-                        price: item.price,
-                        name: item.name,
-                        title: item.title,
-                        quantity: item.quantity,
-                        imageUrl: item.image ?? null,
-                        sku: item.sku,
-                    })),
+                    purchaseItems: (webhookData.items ?? []).map((item) =>
+                        toPurchaseItem({
+                            productId: item.productId,
+                            price: item.price,
+                            name: item.name,
+                            title: item.title,
+                            quantity: item.quantity,
+                            imageUrl: item.image ?? null,
+                            sku: item.sku,
+                        })
+                    ),
                     merchantId: resolved.merchantId,
                     clientId: webhookData.clientId,
                 }

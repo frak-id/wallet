@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import type { CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
-import type { CampaignRuleDefinition, RewardTier } from "../schemas";
+import type {
+    CampaignRuleDefinition,
+    RewardTier,
+    RuleCondition,
+} from "../schemas";
 import { CampaignManagementService } from "./CampaignManagementService";
 
 const draftCampaign = {
@@ -643,5 +647,231 @@ describe("CampaignManagementService productScope validation", () => {
 
         const rule = update.mock.calls[0][1].rule as CampaignRuleDefinition;
         expect(rule.productScope).toEqual(scope);
+    });
+});
+
+describe("CampaignManagementService draft rule save", () => {
+    it("keeps a productScope authored before any reward exists", async () => {
+        const { service, update } = serviceWith(draftCampaign);
+        const productScope: CampaignRuleDefinition["productScope"] = [
+            { field: "sku", operator: "in", value: ["SHOE-42"] },
+        ];
+
+        await service.update("campaign-1", {
+            rule: {
+                trigger: "purchase",
+                conditions: [],
+                productScope,
+                rewards: [],
+            },
+        });
+
+        const rule = update.mock.calls[0][1].rule as CampaignRuleDefinition;
+        expect(rule.productScope).toEqual(productScope);
+    });
+
+    it("still rejects publishing a campaign with no reward", async () => {
+        const campaign = {
+            id: "campaign-1",
+            status: "draft",
+            budgetConfig: [{ type: "total", amount: 100 }],
+            rule: {
+                trigger: "purchase",
+                conditions: [],
+                productScope: [
+                    { field: "sku", operator: "in", value: ["SHOE-42"] },
+                ],
+                rewards: [],
+            },
+        } as unknown as CampaignRuleSelect;
+        const repository = {
+            findById: vi.fn().mockResolvedValue(campaign),
+            publish: vi.fn().mockResolvedValue(campaign),
+        } as unknown as CampaignRuleRepository;
+
+        await expect(
+            new CampaignManagementService(repository).publish("campaign-1")
+        ).rejects.toThrow("at least one reward");
+        expect(repository.publish).not.toHaveBeenCalled();
+    });
+});
+
+describe("CampaignManagementService empty productScope", () => {
+    it("rejects an empty top-level scope array", async () => {
+        const rule = productScopedRule({ productScope: [] });
+        await expect(
+            serviceWithDraft().update("campaign-1", { rule })
+        ).rejects.toThrow("productScope cannot be empty");
+    });
+
+    it("rejects an empty 'none' group, which would match everything", async () => {
+        const rule = productScopedRule({
+            productScope: { logic: "none", conditions: [] },
+        });
+        await expect(
+            serviceWithDraft().update("campaign-1", { rule })
+        ).rejects.toThrow("cannot be empty");
+    });
+
+    it("stops an empty scope satisfying the matched_items_amount requirement", async () => {
+        const rule = productScopedRule({
+            productScope: [],
+            rewards: [
+                {
+                    recipient: "referee",
+                    type: "token",
+                    amountType: "percentage",
+                    percent: 5,
+                    percentOf: "matched_items_amount",
+                },
+            ],
+        });
+        await expect(
+            serviceWithDraft().update("campaign-1", { rule })
+        ).rejects.toThrow("productScope cannot be empty");
+    });
+
+    it("rejects an empty group nested inside a populated one", async () => {
+        const rule = productScopedRule({
+            productScope: {
+                logic: "all",
+                conditions: [
+                    { field: "productId", operator: "eq", value: "A" },
+                    { logic: "any", conditions: [] },
+                ],
+            },
+        });
+        await expect(
+            serviceWithDraft().update("campaign-1", { rule })
+        ).rejects.toThrow("cannot be empty");
+    });
+});
+
+describe("CampaignManagementService 'between' bounds", () => {
+    const betweenRule = (
+        value: RuleCondition["value"],
+        valueTo: RuleCondition["valueTo"]
+    ) =>
+        productScopedRule({
+            productScope: [
+                { field: "unitPrice", operator: "between", value, valueTo },
+            ],
+        });
+
+    it("rejects a null valueTo", async () => {
+        await expect(
+            serviceWithDraft().update("campaign-1", {
+                rule: betweenRule(10, null),
+            })
+        ).rejects.toThrow("requires a non-null valueTo");
+    });
+
+    it("rejects a missing valueTo", async () => {
+        await expect(
+            serviceWithDraft().update("campaign-1", {
+                rule: betweenRule(10, undefined),
+            })
+        ).rejects.toThrow("requires a non-null valueTo");
+    });
+
+    it("rejects an inverted numeric range", async () => {
+        await expect(
+            serviceWithDraft().update("campaign-1", {
+                rule: betweenRule(100, 10),
+            })
+        ).rejects.toThrow("requires valueTo not less than value");
+    });
+
+    it("rejects an inverted range authored as numeric strings", async () => {
+        await expect(
+            serviceWithDraft().update("campaign-1", {
+                rule: betweenRule("100", "10"),
+            })
+        ).rejects.toThrow("requires valueTo not less than value");
+    });
+
+    it("rejects an inverted lexicographic range", async () => {
+        await expect(
+            serviceWithDraft().update("campaign-1", {
+                rule: betweenRule("ZZZ", "AAA"),
+            })
+        ).rejects.toThrow("requires valueTo not less than value");
+    });
+
+    it("accepts an ordered numeric range", async () => {
+        await expect(
+            serviceWithDraft().update("campaign-1", {
+                rule: betweenRule(10, 100),
+            })
+        ).resolves.toBeDefined();
+    });
+
+    it("accepts an ordered range authored as numeric strings", async () => {
+        await expect(
+            serviceWithDraft().update("campaign-1", {
+                rule: betweenRule("9", "10"),
+            })
+        ).resolves.toBeDefined();
+    });
+
+    it("accepts equal bounds, the only case separating `<=` from `<`", async () => {
+        await expect(
+            serviceWithDraft().update("campaign-1", {
+                rule: betweenRule(50, 50),
+            })
+        ).resolves.toBeDefined();
+    });
+});
+
+describe("CampaignManagementService percentage min/max bounds", () => {
+    const cappedRule = (
+        minAmount: number | undefined,
+        maxAmount: number | undefined
+    ): CampaignRuleDefinition => ({
+        trigger: "purchase",
+        conditions: [],
+        rewards: [
+            {
+                recipient: "referee",
+                type: "token",
+                amountType: "percentage",
+                percent: 5,
+                percentOf: "purchase_amount",
+                minAmount,
+                maxAmount,
+            },
+        ],
+    });
+
+    it("rejects minAmount greater than maxAmount", async () => {
+        await expect(
+            serviceWithDraft().update("campaign-1", {
+                rule: cappedRule(100, 5),
+            })
+        ).rejects.toThrow("minAmount cannot exceed maxAmount");
+    });
+
+    it("accepts an ordered min/max pair", async () => {
+        await expect(
+            serviceWithDraft().update("campaign-1", {
+                rule: cappedRule(5, 100),
+            })
+        ).resolves.toBeDefined();
+    });
+
+    it("rejects a zero maxAmount, which can never pay", async () => {
+        await expect(
+            serviceWithDraft().update("campaign-1", {
+                rule: cappedRule(0, 0),
+            })
+        ).rejects.toThrow("maxAmount must be positive");
+    });
+
+    it("accepts a zero minAmount with a positive cap", async () => {
+        await expect(
+            serviceWithDraft().update("campaign-1", {
+                rule: cappedRule(0, 100),
+            })
+        ).resolves.toBeDefined();
     });
 });

@@ -127,4 +127,91 @@ describe("PurchaseInteractionCreator", () => {
             expect(payload.items[0]?.sku).toBeUndefined();
         });
     });
+
+    describe("line total — the matched-items payout basis", () => {
+        const withCreator = async (items: unknown[]) => {
+            const { creator, interactionLogRepository } = buildCreator();
+            vi.mocked(
+                interactionLogRepository.createIdempotent
+            ).mockResolvedValue({ id: "interaction-1" } as never);
+
+            await creator.create({ ...baseParams, items: items as never });
+
+            return vi.mocked(interactionLogRepository.createIdempotent).mock
+                .calls[0]?.[0].payload as PurchasePayload;
+        };
+
+        it("pays on the discounted line total the provider sent, not the list price", async () => {
+            const payload = await withCreator([
+                {
+                    externalId: "product-1",
+                    name: "Shoe",
+                    quantity: 1,
+                    price: "100",
+                    totalPrice: "70",
+                },
+            ]);
+
+            expect(payload.items[0]?.totalPrice).toBe(70);
+            expect(payload.items[0]?.unitPrice).toBe(100);
+        });
+
+        it("falls back to price * quantity for rows stored before line totals existed", async () => {
+            const payload = await withCreator([
+                {
+                    externalId: "product-1",
+                    name: "Shoe",
+                    quantity: 3,
+                    price: "10",
+                    totalPrice: null,
+                },
+            ]);
+
+            expect(payload.items[0]?.totalPrice).toBe(30);
+        });
+
+        it("falls back rather than emitting NaN when the stored total is unparseable", async () => {
+            const payload = await withCreator([
+                {
+                    externalId: "product-1",
+                    name: "Shoe",
+                    quantity: 2,
+                    price: "10",
+                    totalPrice: "oops",
+                },
+            ]);
+
+            expect(payload.items[0]?.totalPrice).toBe(20);
+        });
+
+        it("builds the same payload items from both claim paths", async () => {
+            const webhookFirst = await withCreator([
+                {
+                    externalId: "product-1",
+                    name: "Shoe",
+                    quantity: 2,
+                    price: "50",
+                    totalPrice: "70",
+                    sku: "A-S",
+                },
+            ]);
+            const lateClaim = await withCreator([
+                {
+                    id: "row-1",
+                    purchaseId: "purchase-1",
+                    externalId: "product-1",
+                    name: "Shoe",
+                    title: "Shoe",
+                    imageUrl: null,
+                    createdAt: new Date(),
+                    quantity: 2,
+                    price: "50",
+                    totalPrice: "70",
+                    sku: "A-S",
+                },
+            ]);
+
+            expect(lateClaim.items).toEqual(webhookFirst.items);
+        });
+    });
 });

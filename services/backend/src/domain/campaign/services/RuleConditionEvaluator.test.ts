@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { ConditionGroup, RuleCondition } from "../types";
+// Imported by path, not through the SDK export map: the corpus is a test
+// artifact and must not become published API surface.
+import goldenScopeMatch from "../../../../../../sdk/core/src/rewards/fixtures/golden-scope-match.json";
+import type { ConditionGroup, PurchaseItem, RuleCondition } from "../types";
 import { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 
 const evaluator = new RuleConditionEvaluator();
@@ -289,6 +292,18 @@ describe("RuleConditionEvaluator — numeric comparison with string operands", (
         expect(evaluator.evaluate([between], { unitPrice: 200 })).toBe(false);
     });
 
+    it("treats equal between bounds as exactly that value", () => {
+        const between: RuleCondition = {
+            field: "unitPrice",
+            operator: "between",
+            value: 50,
+            valueTo: 50,
+        };
+        expect(evaluator.evaluate([between], { unitPrice: 50 })).toBe(true);
+        expect(evaluator.evaluate([between], { unitPrice: 49 })).toBe(false);
+        expect(evaluator.evaluate([between], { unitPrice: 51 })).toBe(false);
+    });
+
     it("still compares genuine text lexicographically", () => {
         const gt: RuleCondition = {
             field: "name",
@@ -297,5 +312,153 @@ describe("RuleConditionEvaluator — numeric comparison with string operands", (
         };
         expect(evaluator.evaluate([gt], { name: "B" })).toBe(true);
         expect(evaluator.evaluate([gt], { name: "0" })).toBe(false);
+    });
+});
+
+type ScopeMatchFixture = {
+    name: string;
+    description: string;
+    kind: "scope-match";
+    divergence?: "fail-open-vs-fail-closed";
+    scope: RuleCondition[] | ConditionGroup;
+    product: PurchaseItem;
+    sdk: boolean;
+    backend: boolean;
+};
+
+// The JSON import is inferred as a union of per-entry literal shapes, which
+// narrows to `never` under a type predicate. Widen ONCE to the declared
+// fixture type so the payload fields stay genuinely type-checked and a corpus
+// shape drift is a type error rather than a silent pass.
+const scopeMatchFixtures = (
+    goldenScopeMatch.fixtures as unknown as ScopeMatchFixture[]
+).filter(
+    (fixture): fixture is ScopeMatchFixture => fixture.kind === "scope-match"
+);
+
+describe("RuleConditionEvaluator — shared scope-match corpus", () => {
+    it("loads every corpus entry the SDK matcher suite also asserts against", () => {
+        expect(scopeMatchFixtures.length).toBe(23);
+    });
+
+    it.each(scopeMatchFixtures)(
+        "$name: $description",
+        ({ scope, product, backend }) => {
+            expect(evaluator.evaluate(scope, product)).toBe(backend);
+        }
+    );
+
+    it("fails closed on every case where the advisory SDK fails open", () => {
+        const diverging = scopeMatchFixtures.filter(
+            (fixture) => fixture.sdk !== fixture.backend
+        );
+        expect(diverging.length).toBeGreaterThan(0);
+        for (const fixture of diverging) {
+            expect(evaluator.evaluate(fixture.scope, fixture.product)).toBe(
+                false
+            );
+        }
+    });
+});
+
+describe("RuleConditionEvaluator — between with a null bound", () => {
+    it("fails closed instead of degrading to a lower-bound-only threshold", () => {
+        const condition: RuleCondition = {
+            field: "unitPrice",
+            operator: "between",
+            value: 10,
+            valueTo: null,
+        };
+        expect(evaluator.evaluate([condition], { unitPrice: 5000 })).toBe(
+            false
+        );
+        expect(evaluator.evaluate([condition], { unitPrice: 50 })).toBe(false);
+    });
+
+    it("fails closed on a null lower bound", () => {
+        const condition: RuleCondition = {
+            field: "unitPrice",
+            operator: "between",
+            value: null,
+            valueTo: 100,
+        };
+        expect(evaluator.evaluate([condition], { unitPrice: 50 })).toBe(false);
+    });
+});
+
+describe("RuleConditionEvaluator — ordering operators on an absent field", () => {
+    it("does not let an absent order-level field satisfy gt", () => {
+        const condition: RuleCondition = {
+            field: "purchase.shipping",
+            operator: "gt",
+            value: 5,
+        };
+        expect(
+            evaluator.evaluate([condition], {
+                purchase: { amount: 100 },
+            } as never)
+        ).toBe(false);
+    });
+
+    it("does not let an absent item field satisfy gt or gte at any threshold", () => {
+        const gt: RuleCondition = {
+            field: "totalPrice",
+            operator: "gt",
+            value: 10,
+        };
+        const gte: RuleCondition = {
+            field: "totalPrice",
+            operator: "gte",
+            value: 1000000,
+        };
+        expect(evaluator.evaluate([gt], { unitPrice: 50 })).toBe(false);
+        expect(evaluator.evaluate([gte], { unitPrice: 50 })).toBe(false);
+    });
+
+    it("does not let a null item field satisfy an ordering operator", () => {
+        const condition: RuleCondition = {
+            field: "totalPrice",
+            operator: "gt",
+            value: 10,
+        };
+        expect(
+            evaluator.evaluate([condition], { totalPrice: null } as never)
+        ).toBe(false);
+    });
+
+    it("still evaluates a present field normally", () => {
+        const condition: RuleCondition = {
+            field: "totalPrice",
+            operator: "gt",
+            value: 10,
+        };
+        expect(
+            evaluator.evaluate([condition], { totalPrice: 20 } as never)
+        ).toBe(true);
+        expect(
+            evaluator.evaluate([condition], { totalPrice: 5 } as never)
+        ).toBe(false);
+    });
+});
+
+describe("RuleConditionEvaluator — exists/not_exists on a null field", () => {
+    it("treats a null field as absent for exists", () => {
+        const condition: RuleCondition = {
+            field: "sku",
+            operator: "exists",
+            value: null,
+        };
+        expect(evaluator.evaluate([condition], { sku: "SHOE-42" })).toBe(true);
+        expect(evaluator.evaluate([condition], { sku: null })).toBe(false);
+    });
+
+    it("treats a null field as absent for not_exists", () => {
+        const condition: RuleCondition = {
+            field: "sku",
+            operator: "not_exists",
+            value: null,
+        };
+        expect(evaluator.evaluate([condition], { sku: null })).toBe(true);
+        expect(evaluator.evaluate([condition], { sku: "SHOE-42" })).toBe(false);
     });
 });

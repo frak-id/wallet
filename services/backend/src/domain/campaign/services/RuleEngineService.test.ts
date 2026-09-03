@@ -810,6 +810,55 @@ describe("RuleEngineService", () => {
             expect(result.rewards).toEqual([]);
             expect(mockRewardCalculator.calculateAll).not.toHaveBeenCalled();
             expect(mockRepository.consumeBudget).not.toHaveBeenCalled();
+            // Support has to tell "the scope matched nothing" apart from
+            // "no eligible purchase" — the two look identical otherwise.
+            expect(result.scopeMatchedNoItemCampaigns).toEqual([campaign.id]);
+        });
+
+        it("reports nothing when a scope does match, so the signal stays specific", async () => {
+            const mockRepository = createMockRepository();
+            const mockRewardCalculator = createMockRewardCalculator();
+            const mockAssetLogRepository = createMockAssetLogRepository();
+
+            const campaign = scopedCampaign([
+                { field: "productId", operator: "eq", value: "A" },
+            ]);
+
+            vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
+                campaign,
+            ]);
+            vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
+                calculated: [createMockCalculatedReward()],
+                errors: [],
+                deferForUnpriceableReward: false,
+            });
+            vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
+                success: true,
+                remaining: {},
+            });
+
+            const service = new RuleEngineService(
+                mockRepository,
+                realConditionEvaluator,
+                mockRewardCalculator,
+                mockAssetLogRepository
+            );
+
+            const result = await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "purchase",
+                context: purchaseContext([
+                    {
+                        productId: "A",
+                        name: "Widget",
+                        quantity: 1,
+                        unitPrice: 10,
+                        totalPrice: 10,
+                    },
+                ]),
+            });
+
+            expect(result.scopeMatchedNoItemCampaigns).toEqual([]);
         });
 
         it("skips a productScope campaign when there is no purchase context", async () => {
@@ -840,6 +889,9 @@ describe("RuleEngineService", () => {
 
             expect(result.rewards).toEqual([]);
             expect(mockRewardCalculator.calculateAll).not.toHaveBeenCalled();
+            // A non-purchase trigger is not a mis-scoped campaign, so it must
+            // not be reported as one.
+            expect(result.scopeMatchedNoItemCampaigns).toEqual([]);
         });
 
         it("additivity: two product-scoped campaigns matching different items both reward", async () => {

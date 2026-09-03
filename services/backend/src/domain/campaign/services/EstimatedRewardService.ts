@@ -132,12 +132,14 @@ export class EstimatedRewardService {
             payoutType: "percentage",
             percent: rewardDef.percent,
             percentOf: rewardDef.percentOf,
-            maxAmount: rewardDef.maxAmount
-                ? this.toTokenAmount(rewardDef.maxAmount, price)
-                : undefined,
-            minAmount: rewardDef.minAmount
-                ? this.toTokenAmount(rewardDef.minAmount, price)
-                : undefined,
+            maxAmount:
+                rewardDef.maxAmount !== undefined
+                    ? this.toTokenAmount(rewardDef.maxAmount, price)
+                    : undefined,
+            minAmount:
+                rewardDef.minAmount !== undefined
+                    ? this.toTokenAmount(rewardDef.minAmount, price)
+                    : undefined,
         };
     }
 

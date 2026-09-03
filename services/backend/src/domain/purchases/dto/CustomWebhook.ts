@@ -43,9 +43,15 @@ export type CustomWebhookDto = Readonly<{
          */
         quantity: number;
         /**
-         * The price of the product
+         * The unit price of the product
          */
         price: string;
+        /**
+         * The amount actually paid for this line
+         *  - Optional, defaults to `price * quantity`
+         *  - Post-discount, tax included, shipping excluded
+         */
+        totalPrice?: string;
         /**
          * An internal name for the product, used in url slug
          */
