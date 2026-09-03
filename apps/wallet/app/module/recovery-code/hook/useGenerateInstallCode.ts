@@ -64,7 +64,9 @@ export function useGenerateInstallCode({
             );
         },
         enabled: !!merchantId && hasCredential,
-        // Each generate mints a new row (no upsert on merchantId+anonymousId): a refetch would show a code the pasteboard doesn't hold, and burns rate-limit budget on refocus.
+        // A refetch burns rate-limit budget on refocus (5/min shared with the
+        // sharing page), and when the backend cannot reuse the live row it
+        // would show a code the pasteboard doesn't hold.
         staleTime: Number.POSITIVE_INFINITY,
         // Pinned here rather than left to the host client: the standalone
         // `/install` entrypoint defaults to `retry: 1` while the SPA takes

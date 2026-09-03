@@ -118,10 +118,13 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
                         sdkConfig={sdkConfig}
                     />
 
+                    {/* Branded from the render-gated sdkConfig like the sibling
+                        panels: `merchant` is a separate in-flight query, and a
+                        preset clicked before it resolved persisted brandless copy. */}
                     <SharingWordingPanel
                         merchantId={merchantId}
                         sdkConfig={sdkConfig}
-                        shopName={merchant?.name ?? ""}
+                        shopName={sdkConfig.name ?? "My Store"}
                     />
 
                     <PlacementSelector

@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { InstallView } from "@/module/install/component/InstallView";
 import { parseInstallSearch } from "@/module/install/params";
-import { EnsureConflictToast } from "@/module/pending-actions/component/EnsureConflictToast";
 import {
     bootstrapStandalonePage,
     reportBootstrapFailure,
@@ -33,18 +32,18 @@ function ProcessingLayout({ children }: { children: ReactNode }) {
 }
 
 bootstrapStandalonePage(
-    <>
-        <InstallView
-            search={search}
-            navigation={{
-                // No router: both exits hand over to the SPA, which owns
-                // everything past the install handoff.
-                toWallet: () => window.location.replace("/wallet"),
-                toRegister: () => window.location.replace("/register"),
-            }}
-            processingLayout={ProcessingLayout}
-        />
-        {/* This page fires the ensure, so the conflict must land here too. */}
-        <EnsureConflictToast />
-    </>
+    // No EnsureConflictToast here: the ensure only fires from the logged-in
+    // processing branch, which replaces the document with `/wallet` within
+    // MIN_PROCESSING_MS — a conflict raised by the network round-trip lands
+    // after teardown, and the SPA wallet layout already surfaces it there.
+    <InstallView
+        search={search}
+        navigation={{
+            // No router: both exits hand over to the SPA, which owns
+            // everything past the install handoff.
+            toWallet: () => window.location.replace("/wallet"),
+            toRegister: () => window.location.replace("/register"),
+        }}
+        processingLayout={ProcessingLayout}
+    />
 ).catch(reportBootstrapFailure);
