@@ -281,6 +281,13 @@
             "when": 1786987206611,
             "tag": "0039_gorgeous_virginia_dare",
             "breakpoints": true
+        },
+        {
+            "idx": 40,
+            "version": "7",
+            "when": 1788474856253,
+            "tag": "0040_chubby_calypso",
+            "breakpoints": true
         }
     ]
 }
