@@ -27,5 +27,9 @@ export const heroImageCenter = style({
     display: "block",
     maxWidth: "100%",
     maxHeight: "100%",
+    // Neutralise the `height` attribute's presentational hint: the attrs are
+    // there to reserve the aspect ratio (no CLS), not to set a rendered size.
+    // Without this the image renders at its natural 2x height (641px/700px).
+    height: "auto",
     objectFit: "contain",
 });
