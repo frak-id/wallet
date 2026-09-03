@@ -284,11 +284,18 @@ export function assertEagerBundleBudget(
     } = options;
     // Any output directory, not just `assets/`: a multi-entry build may route
     // its chunks elsewhere (see the wallet's `standalone/` pass).
-    const scriptRe = /<script\b[^>]*\bsrc="\/?([^"]+\.js)"/g;
+    const scriptRe = /<script\b[^>]*\bsrc="([^"]+\.js)"/g;
+    // `src` is a SERVED path: under a non-root `base` (the listener's
+    // `/listener/`) it carries a prefix that is not part of the on-disk output
+    // path, so it must be stripped before the closure walk.
+    let base = "/";
 
     return {
         name: "frak:assert-eager-bundle-budget",
         apply: "build" as const,
+        configResolved(config: { base?: string }) {
+            base = config.base ?? "/";
+        },
         // writeBundle (post-write) so the final, fully-transformed HTML and
         // every chunk are on disk — avoids in-memory bundle timing/encoding edge
         // cases where the emitted HTML asset isn't yet a string in generateBundle.
@@ -301,6 +308,7 @@ export function assertEagerBundleBudget(
                     dir,
                     htmlFile,
                     scriptRe,
+                    base,
                     budgetGzip,
                     enforce,
                     assertHtml,
@@ -388,6 +396,7 @@ function measureEntry({
     dir,
     htmlFile,
     scriptRe,
+    base,
     budgetGzip,
     enforce,
     assertHtml,
@@ -395,6 +404,7 @@ function measureEntry({
     dir: string;
     htmlFile: string;
     scriptRe: RegExp;
+    base: string;
     budgetGzip: number;
     enforce: boolean;
     assertHtml?: (htmlSource: string, htmlFile: string) => void;
@@ -408,11 +418,34 @@ function measureEntry({
 
     assertHtml?.(htmlSource, htmlFile);
 
+    // Reduce a served src to its output-relative path: drop the app's `base`
+    // when it carries one (`/listener/assets/x.js` → `assets/x.js`), else just
+    // the leading slash. A src that dodges both (an absolute URL to another
+    // origin) is left as is and caught by the empty-closure guard below.
+    const basePrefix = base.startsWith("/") ? base.replace(/\/?$/, "/") : null;
     const entries: string[] = [];
     // `matchAll` on a shared /g regex is safe: it clones the regex internally.
-    for (const m of htmlSource.matchAll(scriptRe)) entries.push(m[1]);
+    for (const m of htmlSource.matchAll(scriptRe)) {
+        const src = m[1];
+        entries.push(
+            basePrefix && src.startsWith(basePrefix)
+                ? src.slice(basePrefix.length)
+                : src.replace(/^\//, "")
+        );
+    }
 
     const eager = collectEagerClosure(dir, entries);
+
+    // A captured entry that resolves to zero on-disk chunks means the path
+    // mapping above is wrong, not that the app got lighter: fail loud instead
+    // of reporting a 0.00 KB pass (which is how a `base` change once turned
+    // this gate into a no-op). Config error, so `enforce: false` does not
+    // downgrade it.
+    if (entries.length > 0 && eager.size === 0) {
+        throw new Error(
+            `[eager-budget] ${htmlFile}: none of the entry scripts (${entries.join(", ")}) exist under ${dir} — served-path to output-path mapping is broken.`
+        );
+    }
 
     let totalGzip = 0;
     const breakdown: string[] = [];

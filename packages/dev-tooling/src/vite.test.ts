@@ -12,6 +12,7 @@ import {
 
 type WriteBundlePlugin = {
     writeBundle: (options: { dir?: string }) => void;
+    configResolved?: (config: { base?: string }) => void;
 };
 
 type AsyncWriteBundlePlugin = {
@@ -170,6 +171,50 @@ describe("assertEagerBundleBudget", () => {
 
         expect(() => plugin.writeBundle({ dir })).toThrow(
             "custom html check failed"
+        );
+    });
+
+    it("strips a non-root base from the served src before walking", () => {
+        // The listener serves under `/listener/`, so its HTML carries
+        // `src="/listener/assets/entry.js"` while the chunk sits at
+        // `assets/entry.js` on disk. The gate once measured this as
+        // 0 chunks / 0.00 KB and passed — a defeated budget, not a light app.
+        fsSync.writeFileSync(
+            path.join(dir, "index.html"),
+            `<script type="module" src="/listener/assets/entry.js"></script>`,
+            "utf-8"
+        );
+        fsSync.writeFileSync(
+            path.join(dir, "assets", "entry.js"),
+            `console.log(${JSON.stringify("x".repeat(5000))});`,
+            "utf-8"
+        );
+
+        const plugin = assertEagerBundleBudget({
+            budgetGzip: 1,
+        }) as unknown as WriteBundlePlugin;
+        plugin.configResolved?.({ base: "/listener" });
+
+        expect(() => plugin.writeBundle({ dir })).toThrow(
+            /Eager boot JS budget exceeded/
+        );
+    });
+
+    it("fails loud when no entry script resolves to an on-disk chunk", () => {
+        // A src the path mapping cannot place must not read as a 0-chunk pass.
+        fsSync.writeFileSync(
+            path.join(dir, "index.html"),
+            `<script type="module" src="/elsewhere/assets/entry.js"></script>`,
+            "utf-8"
+        );
+
+        const plugin = assertEagerBundleBudget({
+            budgetGzip: 1024,
+            enforce: false,
+        }) as unknown as WriteBundlePlugin;
+
+        expect(() => plugin.writeBundle({ dir })).toThrow(
+            /served-path to output-path mapping is broken/
         );
     });
 });
