@@ -141,6 +141,21 @@ export function draftToProductsForm(draft: CampaignDraft): ProductsFormValues {
     };
 }
 
+/**
+ * Mirrors the backend validator: numeric whenever both bounds parse as finite
+ * numbers, lexicographic otherwise. `between` is inclusive on both ends, so
+ * equal bounds are the legitimate "exactly N" scope; only an inverted range
+ * can never match.
+ */
+function isBoundInverted(from: string | number, to: string | number): boolean {
+    const fromNumber = Number(from);
+    const toNumber = Number(to);
+    if (Number.isFinite(fromNumber) && Number.isFinite(toNumber)) {
+        return toNumber < fromNumber;
+    }
+    return String(to).localeCompare(String(from)) < 0;
+}
+
 /** Build the rule condition, or `null` when the form describes no scope. */
 export function productsFormToCondition(
     values: ProductsFormValues
@@ -167,6 +182,7 @@ export function productsFormToCondition(
     if (operator === "between") {
         const valueTo = parseValue(values.valueTo, field);
         if (valueTo === undefined) return null;
+        if (isBoundInverted(parsed[0], valueTo)) return null;
         return { ...condition, valueTo };
     }
 
@@ -180,9 +196,15 @@ export function productsFormToDraft(
     // No form representation — leave the scope untouched rather than flatten
     // it into whatever the disabled form holds.
     if (isAdvancedScope(draft)) return draft;
+
+    const condition = productsFormToCondition(values);
+    // Only "all products" means "drop the scope". An incomplete or inverted
+    // "specific" form is an unfinished edit, so keep what was authored.
+    if (!condition && values.mode === "specific") return draft;
+
     return {
         ...draft,
-        rule: setProductScope(draft.rule, productsFormToCondition(values)),
+        rule: setProductScope(draft.rule, condition),
     };
 }
 

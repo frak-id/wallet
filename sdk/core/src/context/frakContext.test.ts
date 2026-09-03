@@ -464,6 +464,16 @@ describe("FrakContextManager", () => {
                 );
             });
 
+            it.each([
+                ["bare host", "shop.example.com"],
+                ["garbage", "not a url"],
+                ["relative path", "/product/shoes"],
+            ])("should return null for a malformed URL: %s", (_label, url) => {
+                const result = FrakContextManager.parse({ url });
+
+                expect(result).toBeNull();
+            });
+
             it("should return undefined for malformed fCtx parameter", () => {
                 const url = "https://example.com?fCtx=!!!invalid!!!";
 
@@ -496,6 +506,21 @@ describe("FrakContextManager", () => {
                     url: undefined,
                     context,
                 });
+
+                expect(result).toBeNull();
+            });
+
+            it.each([
+                ["bare host", "shop.example.com"],
+                ["garbage", "not a url"],
+                ["protocol-relative", "//example.com/product"],
+                ["relative path", "/product/shoes"],
+            ])("should return null for a malformed URL: %s", (_label, url) => {
+                const context: FrakContextV1 = {
+                    r: "0x1234567890123456789012345678901234567890" as Address,
+                };
+
+                const result = FrakContextManager.update({ url, context });
 
                 expect(result).toBeNull();
             });
@@ -581,6 +606,14 @@ describe("FrakContextManager", () => {
 
             expect(result).toContain("#section");
             expect(result).not.toContain("fCtx");
+        });
+
+        it.each([
+            ["bare host", "shop.example.com"],
+            ["garbage", "not a url"],
+            ["relative path", "/product/shoes"],
+        ])("should return a malformed URL unchanged: %s", (_label, url) => {
+            expect(FrakContextManager.remove(url)).toBe(url);
         });
     });
 

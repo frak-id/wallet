@@ -3,13 +3,13 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckIcon } from "@frak-labs/design-system/icons";
 import * as styles from "./sharingPage.css";
-import type { SharingProducts } from "./types";
+import { renderableProducts, type SharingProducts } from "./types";
 
 /** The product picker. Rendered only when the caller passed products. */
 export function ProductList({ products }: { products: SharingProducts }) {
     return (
         <Stack as="section" space="s">
-            {products.items.map((product, index) => (
+            {renderableProducts(products).map(({ product, index }) => (
                 <ProductCard
                     // Products carry no stable id, and the list is a fixed
                     // per-request payload that is never reordered in place.
@@ -44,7 +44,7 @@ function ProductCard({
             {product.imageUrl && (
                 <img
                     src={product.imageUrl}
-                    alt={product.title}
+                    alt={product.title ?? ""}
                     className={styles.productImage}
                 />
             )}

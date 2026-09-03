@@ -1,0 +1,284 @@
+{
+    "formatVersion": 1,
+    "fixtures": [
+        {
+            "name": "eq-sku-match",
+            "description": "eq on a present sku matches on both sides",
+            "kind": "scope-match",
+            "scope": [{ "field": "sku", "operator": "eq", "value": "SHOE-42" }],
+            "product": { "sku": "SHOE-42", "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": true
+        },
+        {
+            "name": "eq-sku-mismatch",
+            "description": "eq on a differing sku fails on both sides",
+            "kind": "scope-match",
+            "scope": [{ "field": "sku", "operator": "eq", "value": "SHOE-42" }],
+            "product": { "sku": "BOOT-1", "unitPrice": 50, "quantity": 1 },
+            "sdk": false,
+            "backend": false
+        },
+        {
+            "name": "neq-sku-match",
+            "description": "neq selects the complement of the named sku",
+            "kind": "scope-match",
+            "scope": [{ "field": "sku", "operator": "neq", "value": "CHEAP" }],
+            "product": { "sku": "SHOE-42", "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": true
+        },
+        {
+            "name": "exists-sku-present",
+            "description": "exists on a populated sku holds on both sides",
+            "kind": "scope-match",
+            "scope": [{ "field": "sku", "operator": "exists", "value": null }],
+            "product": { "sku": "SHOE-42", "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": true
+        },
+        {
+            "name": "exists-sku-absent",
+            "description": "exists on an absent sku is a real no, not a non-evaluable leaf",
+            "kind": "scope-match",
+            "scope": [{ "field": "sku", "operator": "exists", "value": null }],
+            "product": { "unitPrice": 50, "quantity": 1 },
+            "sdk": false,
+            "backend": false
+        },
+        {
+            "name": "exists-sku-null",
+            "description": "PSC-16: a null sku must not satisfy exists on either side",
+            "kind": "scope-match",
+            "scope": [{ "field": "sku", "operator": "exists", "value": null }],
+            "product": { "sku": null, "unitPrice": 50, "quantity": 1 },
+            "sdk": false,
+            "backend": false
+        },
+        {
+            "name": "not-exists-sku-null",
+            "description": "PSC-16: a null sku counts as absent for not_exists on both sides",
+            "kind": "scope-match",
+            "scope": [
+                { "field": "sku", "operator": "not_exists", "value": null }
+            ],
+            "product": { "sku": null, "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": true
+        },
+        {
+            "name": "not-exists-sku-present",
+            "description": "not_exists fails when the field is populated",
+            "kind": "scope-match",
+            "scope": [
+                { "field": "sku", "operator": "not_exists", "value": null }
+            ],
+            "product": { "sku": "SHOE-42", "unitPrice": 50, "quantity": 1 },
+            "sdk": false,
+            "backend": false
+        },
+        {
+            "name": "in-sku-member",
+            "description": "in matches a listed sku",
+            "kind": "scope-match",
+            "scope": [
+                {
+                    "field": "sku",
+                    "operator": "in",
+                    "value": ["SHOE-42", "SHOE-43"]
+                }
+            ],
+            "product": { "sku": "SHOE-43", "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": true
+        },
+        {
+            "name": "not-in-sku-member",
+            "description": "not_in excludes a listed sku",
+            "kind": "scope-match",
+            "scope": [
+                { "field": "sku", "operator": "not_in", "value": ["CHEAP"] }
+            ],
+            "product": { "sku": "CHEAP", "unitPrice": 1, "quantity": 1 },
+            "sdk": false,
+            "backend": false
+        },
+        {
+            "name": "neq-absent-field",
+            "description": "neq against an absent field is true on both sides: the item does not carry the excluded value",
+            "kind": "scope-match",
+            "scope": [{ "field": "sku", "operator": "neq", "value": "CHEAP" }],
+            "product": { "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": true
+        },
+        {
+            "name": "not-in-absent-field",
+            "description": "not_in against an absent field is true on both sides, matching neq",
+            "kind": "scope-match",
+            "scope": [
+                { "field": "sku", "operator": "not_in", "value": ["CHEAP"] }
+            ],
+            "product": { "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": true
+        },
+        {
+            "name": "numeric-string-threshold-gt",
+            "description": "a JSON-string threshold compares numerically, not lexicographically",
+            "kind": "scope-match",
+            "scope": [
+                { "field": "unitPrice", "operator": "gt", "value": "10" }
+            ],
+            "product": { "sku": "SHOE-42", "unitPrice": 9, "quantity": 1 },
+            "sdk": false,
+            "backend": false
+        },
+        {
+            "name": "between-numeric-inside",
+            "description": "between accepts a value inside string-authored bounds",
+            "kind": "scope-match",
+            "scope": [
+                {
+                    "field": "unitPrice",
+                    "operator": "between",
+                    "value": "9",
+                    "valueTo": "100"
+                }
+            ],
+            "product": { "sku": "SHOE-42", "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": true
+        },
+        {
+            "name": "between-equal-bounds-exact",
+            "description": "equal between bounds mean exactly N and match inclusively on both sides",
+            "kind": "scope-match",
+            "scope": [
+                {
+                    "field": "unitPrice",
+                    "operator": "between",
+                    "value": 50,
+                    "valueTo": 50
+                }
+            ],
+            "product": { "sku": "SHOE-42", "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": true
+        },
+        {
+            "name": "between-equal-bounds-outside",
+            "description": "an item one unit below equal between bounds matches neither side",
+            "kind": "scope-match",
+            "scope": [
+                {
+                    "field": "unitPrice",
+                    "operator": "between",
+                    "value": 50,
+                    "valueTo": 50
+                }
+            ],
+            "product": { "sku": "SHOE-42", "unitPrice": 49, "quantity": 1 },
+            "sdk": false,
+            "backend": false
+        },
+        {
+            "name": "between-numeric-outside",
+            "description": "between rejects a value above the upper bound",
+            "kind": "scope-match",
+            "scope": [
+                {
+                    "field": "unitPrice",
+                    "operator": "between",
+                    "value": "9",
+                    "valueTo": "100"
+                }
+            ],
+            "product": { "sku": "SHOE-42", "unitPrice": 200, "quantity": 1 },
+            "sdk": false,
+            "backend": false
+        },
+        {
+            "name": "contains-name",
+            "description": "contains matches a substring of the product name",
+            "kind": "scope-match",
+            "scope": [
+                { "field": "name", "operator": "contains", "value": "Shoe" }
+            ],
+            "product": { "name": "Running Shoe", "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": true
+        },
+        {
+            "name": "group-none-negates",
+            "description": "a none group inverts its child conditions",
+            "kind": "scope-match",
+            "scope": {
+                "logic": "none",
+                "conditions": [
+                    { "field": "sku", "operator": "eq", "value": "CHEAP" }
+                ]
+            },
+            "product": { "sku": "SHOE-42", "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": true
+        },
+        {
+            "name": "divergence-between-null-bound",
+            "description": "PSC-13/PSC-16 deliberate divergence: a null bound is non-evaluable, so the advisory SDK fails open while the backend fails closed",
+            "kind": "scope-match",
+            "divergence": "fail-open-vs-fail-closed",
+            "scope": [
+                {
+                    "field": "unitPrice",
+                    "operator": "between",
+                    "value": 10,
+                    "valueTo": null
+                }
+            ],
+            "product": { "sku": "SHOE-42", "unitPrice": 5000, "quantity": 1 },
+            "sdk": true,
+            "backend": false
+        },
+        {
+            "name": "divergence-missing-field-comparison",
+            "description": "Deliberate divergence: an absent field makes a comparison non-evaluable, so the SDK fails open and the backend fails closed",
+            "kind": "scope-match",
+            "divergence": "fail-open-vs-fail-closed",
+            "scope": [
+                { "field": "totalPrice", "operator": "gt", "value": 10 }
+            ],
+            "product": { "sku": "SHOE-42", "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": false
+        },
+        {
+            "name": "divergence-in-missing-field",
+            "description": "Deliberate divergence: `in` against an absent field is non-evaluable client-side but a hard non-match on the backend",
+            "kind": "scope-match",
+            "divergence": "fail-open-vs-fail-closed",
+            "scope": [
+                { "field": "sku", "operator": "in", "value": ["SHOE-42"] }
+            ],
+            "product": { "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": false
+        },
+        {
+            "name": "divergence-array-operand-on-scalar-operator",
+            "description": "Deliberate divergence: an array operand on a scalar operator is malformed; the SDK fails open, the backend fails closed",
+            "kind": "scope-match",
+            "divergence": "fail-open-vs-fail-closed",
+            "scope": [
+                {
+                    "field": "sku",
+                    "operator": "neq",
+                    "value": ["SHOE-42", "SHOE-43"]
+                }
+            ],
+            "product": { "sku": "SHOE-42", "unitPrice": 50, "quantity": 1 },
+            "sdk": true,
+            "backend": false
+        }
+    ]
+}

@@ -68,6 +68,50 @@ describe("getStep2Context", () => {
     });
 });
 
+describe("SharingPage — product picker (PSC-27)", () => {
+    type PickerItems = NonNullable<SharingPageProps["products"]>["items"];
+
+    const withProducts = (items: PickerItems): SharingPageProps => ({
+        ...baseProps,
+        products: { items, selectedIndex: 0, onSelect: () => {} },
+    });
+
+    it("renders a card for each titled product", () => {
+        render(
+            <SharingPage
+                {...withProducts([
+                    { title: "Shoes", sku: "SHOE-42" },
+                    { title: "Socks", sku: "SOCK-9" },
+                ])}
+            />
+        );
+        expect(screen.getByText("Shoes")).toBeInTheDocument();
+        expect(screen.getByText("Socks")).toBeInTheDocument();
+    });
+
+    it("draws no card for a title-less product", () => {
+        const { container } = render(
+            <SharingPage
+                {...withProducts([
+                    { sku: "HIDDEN-1" },
+                    { title: "Socks", sku: "SOCK-9" },
+                ])}
+            />
+        );
+        expect(screen.getByText("Socks")).toBeInTheDocument();
+        expect(container.textContent).not.toContain("HIDDEN-1");
+    });
+
+    it("renders no picker at all when every product is title-less", () => {
+        const { container } = render(
+            <SharingPage {...withProducts([{ sku: "HIDDEN-1" }])} />
+        );
+        expect(
+            container.querySelector("button[class*=productCard]")
+        ).toBeNull();
+    });
+});
+
 describe("SharingPage — tagline2 / step2 copy", () => {
     it("uses the default tagline2 copy for an unscoped campaign", () => {
         const { container } = render(

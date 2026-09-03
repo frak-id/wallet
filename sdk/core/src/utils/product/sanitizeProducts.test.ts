@@ -220,7 +220,7 @@ describe("sanitizeProductDetailsList", () => {
         ).toBeUndefined();
     });
 
-    it("does not require a title (unlike sanitizeSharingProducts)", () => {
+    it("does not require a title", () => {
         expect(sanitizeProductDetailsList([{ sku: "SHOE-42" }])).toEqual([
             { sku: "SHOE-42" },
         ]);
@@ -246,7 +246,7 @@ describe("sanitizeProductDetailsList", () => {
 });
 
 describe("normalizeSharingProduct", () => {
-    describe("rejects non-object / title-less candidates", () => {
+    describe("rejects candidates with nothing usable", () => {
         it.each([
             ["null", null],
             ["undefined", undefined],
@@ -262,26 +262,55 @@ describe("normalizeSharingProduct", () => {
             expect(normalizeSharingProduct({})).toBeNull();
         });
 
-        it("returns null when title is missing", () => {
+        it("returns null when neither a title nor a scope field survives", () => {
             expect(
                 normalizeSharingProduct({ imageUrl: "https://x.test" })
             ).toBeNull();
         });
 
-        it("returns null when title is the empty string", () => {
+        it("returns null when title is the empty string and there is no scope field", () => {
             expect(normalizeSharingProduct({ title: "" })).toBeNull();
         });
 
-        it("returns null when title is whitespace only", () => {
+        it("returns null when title is whitespace only and there is no scope field", () => {
             expect(normalizeSharingProduct({ title: "   " })).toBeNull();
             expect(normalizeSharingProduct({ title: "\t\n" })).toBeNull();
         });
 
-        it("returns null when title is a non-string value", () => {
+        it("returns null when title is a non-string value and there is no scope field", () => {
             expect(normalizeSharingProduct({ title: 42 })).toBeNull();
             expect(normalizeSharingProduct({ title: true })).toBeNull();
             expect(normalizeSharingProduct({ title: null })).toBeNull();
             expect(normalizeSharingProduct({ title: {} })).toBeNull();
+        });
+    });
+
+    describe("title-less entries keep their scope fields (PSC-27)", () => {
+        it("keeps a sku-only entry and emits no title key", () => {
+            const result = normalizeSharingProduct({ sku: "SHOE-42" });
+
+            expect(result).toEqual({ sku: "SHOE-42" });
+            expect(result).not.toHaveProperty("title");
+        });
+
+        it("keeps scope fields when the title is present but empty", () => {
+            expect(
+                normalizeSharingProduct({ title: "  ", sku: "SHOE-42" })
+            ).toEqual({ sku: "SHOE-42" });
+        });
+
+        it("keeps a title-less entry's other scope fields and link", () => {
+            expect(
+                normalizeSharingProduct({
+                    productId: "prod_9",
+                    unitPrice: "79.90",
+                    link: "https://shop.example.com/shoes",
+                })
+            ).toEqual({
+                productId: "prod_9",
+                unitPrice: 79.9,
+                link: "https://shop.example.com/shoes",
+            });
         });
     });
 
@@ -515,6 +544,21 @@ describe("sanitizeSharingProducts", () => {
                 { title: "" },
             ])
         ).toBeUndefined();
+    });
+
+    it("keeps a title-less entry that carries a sku (PSC-27)", () => {
+        expect(sanitizeSharingProducts([{ sku: "SHOE-42" }])).toEqual([
+            { sku: "SHOE-42" },
+        ]);
+    });
+
+    it("keeps title-less and titled entries side by side, in order", () => {
+        expect(
+            sanitizeSharingProducts([
+                { sku: "SHOE-42" },
+                { title: "Socks", sku: "SOCK-9" },
+            ])
+        ).toEqual([{ sku: "SHOE-42" }, { title: "Socks", sku: "SOCK-9" }]);
     });
 
     it("returns the sanitised entries when at least one is valid", () => {

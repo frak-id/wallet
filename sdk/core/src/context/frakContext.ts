@@ -19,6 +19,18 @@ import { decodeFrakContextV2, encodeFrakContextV2 } from "./frakContextV2Codec";
 const contextKey = "fCtx";
 
 /**
+ * `new URL` throws on a bare host such as `shop.example.com`, which reaches
+ * here from merchant-supplied sharing URLs.
+ */
+function safeParseUrl(url: string): URL | null {
+    try {
+        return new URL(url);
+    } catch {
+        return null;
+    }
+}
+
+/**
  * Compress a Frak context into a URL-safe string.
  *
  * - V2 contexts are encoded using a compact binary layout (see
@@ -86,12 +98,14 @@ function decompress(context?: string): FrakContext | undefined {
  *
  * @param args
  * @param args.url - The URL to parse
- * @returns The parsed FrakContext, or null if absent
+ * @returns The parsed FrakContext, or null when absent or the URL is unparseable
  */
 function parse({ url }: { url: string }): FrakContext | null | undefined {
     if (!url) return null;
 
-    const urlObj = new URL(url);
+    const urlObj = safeParseUrl(url);
+    if (!urlObj) return null;
+
     const frakContext = getQueryParamCaseInsensitive(
         urlObj.searchParams,
         contextKey
@@ -174,7 +188,9 @@ function update({
     const compressedContext = compress(context);
     if (!compressedContext) return null;
 
-    const urlObj = new URL(url);
+    const urlObj = safeParseUrl(url);
+    if (!urlObj) return null;
+
     deleteQueryParamCaseInsensitive(urlObj.searchParams, contextKey);
     urlObj.searchParams.set(contextKey, compressedContext);
     applyAttributionParams(urlObj, attribution);
@@ -185,10 +201,12 @@ function update({
  * Remove the `fCtx` query parameter from a URL.
  *
  * @param url - The URL to strip the context from
- * @returns The cleaned URL string
+ * @returns The cleaned URL string, or `url` unchanged when it is not parseable
  */
 function remove(url: string): string {
-    const urlObj = new URL(url);
+    const urlObj = safeParseUrl(url);
+    if (!urlObj) return url;
+
     deleteQueryParamCaseInsensitive(urlObj.searchParams, contextKey);
     return urlObj.toString();
 }

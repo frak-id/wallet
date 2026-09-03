@@ -12,7 +12,11 @@ import { ProductList } from "./ProductCard";
 import { RewardCard } from "./RewardCard";
 import { Steps } from "./Steps";
 import * as styles from "./sharingPage.css";
-import { isChromeless, type SharingPageProps } from "./types";
+import {
+    isChromeless,
+    renderableProducts,
+    type SharingPageProps,
+} from "./types";
 
 export { getStep2Context } from "./Steps";
 export type {
@@ -108,7 +112,7 @@ export function SharingPage({
                         </Text>
                     </section>
 
-                    {products && products.items.length > 0 && (
+                    {products && renderableProducts(products).length > 0 && (
                         <ProductList products={products} />
                     )}
 

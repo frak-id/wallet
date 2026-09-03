@@ -33,6 +33,17 @@ describe("rewardProductsForSelection", () => {
         expect(rewardProductsForSelection(products, -1)).toEqual(products);
     });
 
+    it("carries a title-less, sku-only product into reward selection (PSC-27)", () => {
+        // The entry renders no card, but its sku must still scope the reward.
+        const skuOnly: SharingPageProduct = { sku: "HIDDEN-1" };
+        expect(rewardProductsForSelection([skuOnly], undefined)).toEqual([
+            skuOnly,
+        ]);
+        expect(rewardProductsForSelection([shoes, skuOnly], 1)).toEqual([
+            skuOnly,
+        ]);
+    });
+
     it("passes the caller's array through by reference on the full-list path", () => {
         // The result feeds a react-query `select`, so identity must be stable.
         const products = [shoes, socks];

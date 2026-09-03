@@ -87,6 +87,37 @@ describe("buildSharingLink", () => {
         });
     });
 
+    describe("malformed baseUrl", () => {
+        it.each([
+            [
+                "bare host (WordPress `sharing_url` default path)",
+                "shop.example.com",
+            ],
+            ["empty-ish whitespace", "   "],
+            ["garbage", "not a url"],
+            ["protocol-relative", "//example.com/product"],
+            ["relative path", "/product/shoes"],
+        ])("returns null instead of throwing for %s", (_label, url) => {
+            expect(
+                buildSharingLink({
+                    clientId,
+                    merchantId,
+                    baseUrl: url,
+                })
+            ).toBeNull();
+        });
+
+        it("still builds a link for a scheme-qualified URL", () => {
+            expect(
+                buildSharingLink({
+                    clientId,
+                    merchantId,
+                    baseUrl: "https://shop.example.com",
+                })
+            ).not.toBeNull();
+        });
+    });
+
     describe("attribution", () => {
         it("applies per-call attribution overrides", () => {
             const link = buildSharingLink({

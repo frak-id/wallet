@@ -125,6 +125,39 @@ describe("productsFormToCondition", () => {
             )
         ).toBeNull();
     });
+
+    test("an inverted between range is rejected", () => {
+        expect(
+            productsFormToCondition(
+                form({
+                    mode: "specific",
+                    field: "unitPrice",
+                    operator: "between",
+                    values: ["100"],
+                    valueTo: "10",
+                })
+            )
+        ).toBeNull();
+    });
+
+    test("an equal-bound between range is the 'exactly N' scope", () => {
+        expect(
+            productsFormToCondition(
+                form({
+                    mode: "specific",
+                    field: "quantity",
+                    operator: "between",
+                    values: ["5"],
+                    valueTo: "5",
+                })
+            )
+        ).toEqual({
+            field: "quantity",
+            operator: "between",
+            value: 5,
+            valueTo: 5,
+        });
+    });
 });
 
 describe("isProductsFormValid", () => {
@@ -190,6 +223,42 @@ describe("productsFormToDraft", () => {
         };
         const next = productsFormToDraft(form({ mode: "all" }), advanced);
         expect(next.rule.productScope).toEqual(advanced.rule.productScope);
+    });
+
+    test("keeps the authored scope when an inverted range is saved", () => {
+        const scoped: CampaignDraft = {
+            ...baseDraft,
+            rule: {
+                ...baseDraft.rule,
+                productScope: [{ field: "sku", operator: "eq", value: "A-S" }],
+            },
+        };
+        const next = productsFormToDraft(
+            form({
+                mode: "specific",
+                field: "unitPrice",
+                operator: "between",
+                values: ["100"],
+                valueTo: "10",
+            }),
+            scoped
+        );
+        expect(next.rule.productScope).toEqual(scoped.rule.productScope);
+    });
+
+    test("keeps the authored scope when a specific form has no value yet", () => {
+        const scoped: CampaignDraft = {
+            ...baseDraft,
+            rule: {
+                ...baseDraft.rule,
+                productScope: [{ field: "sku", operator: "eq", value: "A-S" }],
+            },
+        };
+        const next = productsFormToDraft(
+            form({ mode: "specific", values: ["  "] }),
+            scoped
+        );
+        expect(next.rule.productScope).toEqual(scoped.rule.productScope);
     });
 });
 

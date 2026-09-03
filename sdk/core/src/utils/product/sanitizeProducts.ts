@@ -95,8 +95,11 @@ export function sanitizeProductDetailsList(
 
 /**
  * Normalise one untrusted candidate into a {@link SharingPageProduct}, or null
- * when it has no usable title. `products` is a public API boundary, so every
+ * when nothing usable survived. `products` is a public API boundary, so every
  * URL field is validated structurally before reaching `new URL(...)`.
+ *
+ * A title-less entry is kept when it carries scope fields: the title is a
+ * display concern, the scope fields are a reward-matching one.
  */
 export function normalizeSharingProduct(
     candidate: unknown
@@ -104,12 +107,11 @@ export function normalizeSharingProduct(
     if (!candidate || typeof candidate !== "object") return null;
     const item = candidate as Record<string, unknown>;
     const title = typeof item.title === "string" ? item.title.trim() : "";
-    if (title === "") return null;
+    const details = normalizeProductDetails(candidate);
+    if (title === "" && !details) return null;
 
-    const entry: SharingPageProduct = {
-        title,
-        ...normalizeProductDetails(candidate),
-    };
+    const entry: SharingPageProduct = { ...details };
+    if (title !== "") entry.title = title;
     if (typeof item.imageUrl === "string" && isHttpUrl(item.imageUrl)) {
         entry.imageUrl = item.imageUrl;
     }

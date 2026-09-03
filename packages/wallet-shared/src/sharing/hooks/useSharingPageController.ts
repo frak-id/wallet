@@ -14,11 +14,12 @@ import { rewardProductsForSelection } from "../../common/hook/rewardProductsForS
 import { useCopyToClipboardWithState } from "../../common/hook/useCopyToClipboardWithState";
 import { useFormattedEstimatedReward } from "../../common/hook/useFormattedEstimatedReward";
 import { buildSharingLink } from "../buildSharingLink";
-import type {
-    SharingChrome,
-    SharingPageProps,
-    SharingReward,
-    SharingT,
+import {
+    firstRenderableIndex,
+    type SharingChrome,
+    type SharingPageProps,
+    type SharingReward,
+    type SharingT,
 } from "../component/SharingPage/types";
 import {
     clearConfirmation,
@@ -165,9 +166,14 @@ export function useSharingPageController({
     outcomes,
 }: SharingPageControllerInput): SharingPageProps {
     const { copy } = useCopyToClipboardWithState();
-    const [selectedProductIndex, setSelectedProductIndex] = useState(0);
+    const [pickedProductIndex, setPickedProductIndex] = useState<number>();
 
     const items = useMemo(() => products ?? [], [products]);
+
+    // A hidden entry must never be the selection: it would scope the reward and
+    // the share link to a product the user cannot see or change.
+    const selectedProductIndex =
+        pickedProductIndex ?? firstRenderableIndex(items);
 
     // Memoised so the query's `select` isn't re-run on every render.
     const rewardProducts = useMemo(
@@ -240,7 +246,10 @@ export function useSharingPageController({
         setShowConfirmation(getSavedConfirmation(confirmationScope));
     }, [confirmed, confirmationScope]);
 
-    const selectedProduct = items[selectedProductIndex];
+    const selectedProduct =
+        selectedProductIndex === undefined
+            ? undefined
+            : items[selectedProductIndex];
 
     // Prefers the selected product's own link over the caller's default.
     const sharingLink = useMemo(
@@ -416,7 +425,7 @@ export function useSharingPageController({
                 ? {
                       items,
                       selectedIndex: selectedProductIndex,
-                      onSelect: setSelectedProductIndex,
+                      onSelect: setPickedProductIndex,
                   }
                 : undefined,
         share: {

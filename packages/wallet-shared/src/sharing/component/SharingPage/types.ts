@@ -47,9 +47,42 @@ export type SharingChrome = { mode: "full" } | { mode: "none" };
 /** The product picker, absent entirely when there is nothing to pick. */
 export type SharingProducts = {
     items: SharingPageProduct[];
-    selectedIndex: number;
+    /** Indexes `items`. Absent when no entry is renderable. */
+    selectedIndex: number | undefined;
     onSelect: (index: number) => void;
 };
+
+/**
+ * A title-less entry carries scope fields for reward selection only: it has
+ * nothing to draw, so the picker skips it.
+ */
+function isRenderableProduct(product: SharingPageProduct): boolean {
+    return Boolean(product.title?.trim());
+}
+
+/**
+ * The entries the picker can draw, each paired with its index in `items`.
+ * `selectedIndex` keeps indexing the full array.
+ */
+export function renderableProducts(
+    products: SharingProducts
+): { product: SharingPageProduct; index: number }[] {
+    return products.items
+        .map((product, index) => ({ product, index }))
+        .filter(({ product }) => isRenderableProduct(product));
+}
+
+/**
+ * Index of the first entry the picker can draw, or `undefined` when none can.
+ * A selection pointing at a hidden entry would scope the reward and the share
+ * link to a product the user cannot see or change.
+ */
+export function firstRenderableIndex(
+    items: SharingPageProduct[]
+): number | undefined {
+    const index = items.findIndex(isRenderableProduct);
+    return index === -1 ? undefined : index;
+}
 
 export type SharingShareState = {
     /** Web Share API available, or a host is listening for the hand-off. */

@@ -15,7 +15,7 @@ function isConditionGroup(
 function getField(
     product: ProductDetails,
     field: string
-): string | number | undefined {
+): string | number | null | undefined {
     return product[field as keyof ProductDetails];
 }
 
@@ -32,9 +32,8 @@ function asNumber(value: string | number | boolean): number | undefined {
     return undefined;
 }
 
-// Mirrors the backend's `compareValues`: numeric whenever both sides are
-// numeric, lexicographic only for genuine text. A `String()` fallback would
-// rank "9" above "10".
+// Numeric whenever both sides are numeric, lexicographic only for genuine
+// text. A `String()` fallback would rank "9" above "10".
 function compare(a: string | number, b: string | number | boolean): number {
     const numA = asNumber(a);
     const numB = asNumber(b);
@@ -44,13 +43,13 @@ function compare(a: string | number, b: string | number | boolean): number {
 
 function evaluateArrayOperator(
     operator: "in" | "not_in",
-    fieldValue: string | number | undefined,
+    fieldValue: string | number | null | undefined,
     value: RuleCondition["value"]
 ): boolean | undefined {
     if (!Array.isArray(value)) return operator === "not_in";
     // Deliberate divergence from the backend, which hard-fails here: a missing
     // field client-side only means the integrator didn't supply it.
-    if (fieldValue === undefined) return undefined;
+    if (fieldValue == null) return undefined;
     const includes = value.includes(fieldValue);
     return operator === "in" ? includes : !includes;
 }
@@ -113,8 +112,8 @@ function evaluateCondition(
     const fieldValue = getField(product, condition.field);
     const { operator, value, valueTo } = condition;
 
-    if (operator === "exists") return fieldValue !== undefined;
-    if (operator === "not_exists") return fieldValue === undefined;
+    if (operator === "exists") return fieldValue != null;
+    if (operator === "not_exists") return fieldValue == null;
 
     if (operator === "in" || operator === "not_in") {
         return evaluateArrayOperator(operator, fieldValue, value);
@@ -122,7 +121,7 @@ function evaluateCondition(
 
     // Remaining operators are scalar-only. The backend fails closed on an array
     // operand here; advisory display fails open instead.
-    if (Array.isArray(value) || fieldValue === undefined || value === null) {
+    if (Array.isArray(value) || fieldValue == null || value == null) {
         return undefined;
     }
 

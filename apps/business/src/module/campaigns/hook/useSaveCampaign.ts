@@ -37,12 +37,6 @@ export function useSaveCampaign() {
     return useMutation({
         mutationKey: ["campaigns", "save"],
         mutationFn: async (draft: CampaignDraft): Promise<Campaign> => {
-            // Persist the just-saved draft (+ the returned id) back into the
-            // store so later wizard steps read the values that were actually
-            // saved, not a stale copy. We keep the submitted `draft` (which
-            // still carries the UI-only `rewardToken`) rather than rebuilding
-            // from the response — at create time the campaign has no rewards
-            // yet, so deriving the token from the response would drop it.
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 300));
                 const demoCampaign = buildDemoCampaign(draft);
@@ -54,23 +48,18 @@ export function useSaveCampaign() {
 
             const payload = buildApiPayload(draft);
             if (draft.id) {
-                // On update, only send rule if rewards are present.
-                // The backend validates rule.rewards on PUT but not
-                // on POST (create). Step 1 doesn't manage rewards
-                // (that's step 2), so sending an empty rewards array
-                // on update causes a 400 "Rule must have at least
-                // one reward".
-                const { rule, ...rest } = payload;
-                const includeRule = rule.rewards.length > 0;
+                // `rule` carries every wizard step before the reward one,
+                // so it must go out on each save.
                 const updated = await updateCampaign({
                     campaignId: draft.id,
-                    ...rest,
-                    ...(includeRule ? { rule } : {}),
+                    ...payload,
                 });
                 campaignStore.getState().setDraft(draft);
                 return updated;
             }
             const created = await createCampaign(payload);
+            // Keep the submitted draft: it carries the UI-only `rewardToken`,
+            // which the response cannot supply before any reward exists.
             campaignStore.getState().setDraft({ ...draft, id: created.id });
             return created;
         },

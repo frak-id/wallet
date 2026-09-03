@@ -12,9 +12,12 @@ import type { AttributionParams } from "../tracking";
  */
 export type SharingPageProduct = ProductDetails & {
     /**
-     * The product title / name
+     * The product title / name.
+     *
+     * Optional: an entry carrying only scope fields (e.g. `sku`) still drives
+     * reward selection, it just renders no product card.
      */
-    title: string;
+    title?: string;
     /**
      * Optional product image URL
      */
