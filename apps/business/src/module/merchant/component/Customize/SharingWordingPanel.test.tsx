@@ -23,7 +23,10 @@ import { SECTION_KEYS } from "./sections";
 const sections = new Map<string, () => Promise<void>>();
 const dirty: Record<string, boolean> = {};
 
-function renderPanel(translations?: SdkConfig["translations"]) {
+function renderPanel(
+    translations?: SdkConfig["translations"],
+    config?: Partial<SdkConfig>
+) {
     sections.clear();
     for (const key of Object.keys(dirty)) delete dirty[key];
     return render(
@@ -40,7 +43,7 @@ function renderPanel(translations?: SdkConfig["translations"]) {
         >
             <SharingWordingPanel
                 merchantId="merchant-1"
-                sdkConfig={{ translations } as SdkConfig}
+                sdkConfig={{ translations, ...config } as SdkConfig}
                 shopName="Nowa"
             />
         </CustomizeSaveProvider>
@@ -76,13 +79,14 @@ describe("SharingWordingPanel", () => {
         expect(screen.getByText("A gift from Nowa")).toBeInTheDocument();
     });
 
-    // The bundled default keeps `{{productName}}` in its stored value, so the
-    // picker is where a raw token would reach a merchant's eyes.
-    it("shows no interpolation token in the picker", () => {
-        const { container } = renderPanel();
-        expect(container.textContent).not.toContain("{{productName}}");
-        expect(container.textContent).not.toContain("{Brand}");
-        expect(screen.getByText("Nowa invite link")).toBeInTheDocument();
+    // Preset labels are brand-substituted for display while the stored value
+    // keeps its tokens. Token-scrubbing across the whole panel is covered by
+    // the preview suite.
+    it("labels the bundled preset with the shop name", () => {
+        renderPanel();
+        expect(
+            screen.getAllByRole("radio", { name: /Nowa invite link/ })
+        ).toHaveLength(1);
     });
 
     it("shows the stored override for the active language tier", () => {
@@ -172,5 +176,132 @@ describe("SharingWordingPanel", () => {
         );
         await save();
         expect(editSdkConfig).toHaveBeenCalledWith({ translations: null });
+    });
+});
+
+describe("SharingWordingPanel preview", () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    /**
+     * The rendered preview, scoped past the card header so a `p`/`img` lookup
+     * cannot match the panel's own chrome. Keyed on `data-testid`, not the
+     * vanilla-extract class name, which is only readable while identifiers
+     * default to "debug". Throws rather than defaulting: a structural
+     * regression must name itself.
+     */
+    function preview(container: HTMLElement): HTMLElement {
+        const root = container.querySelector<HTMLElement>(
+            '[data-testid="social-preview"]'
+        );
+        if (!root) throw new Error("no preview rendered");
+        return root;
+    }
+
+    /**
+     * Text of the chat bubble. The message is one `<p>` of title + link + body,
+     * exactly as a messaging app renders it, so no fragment is its own element.
+     */
+    function bubbleText(container: HTMLElement): string {
+        const bubble = preview(container).querySelector("p");
+        if (!bubble) throw new Error("no chat bubble rendered");
+        return bubble.textContent ?? "";
+    }
+
+    it("previews the bundled default when no tier is set", () => {
+        const { container } = renderPanel(undefined, { lang: "fr" });
+        // fr, because the identity language decides what an unset tier resolves to.
+        expect(bubbleText(container)).toContain(
+            "Découvrez ce produit incroyable !"
+        );
+    });
+
+    it("previews the stored override instead of the default", () => {
+        const { container } = renderPanel({
+            default: { "sharing.text": "Stored body" },
+        });
+        expect(bubbleText(container)).toContain("Stored body");
+        expect(bubbleText(container)).not.toContain(
+            "Discover this amazing product!"
+        );
+    });
+
+    it("tracks the field as it is typed", () => {
+        const { container } = renderPanel();
+        fireEvent.change(
+            screen.getByLabelText("customize.sharing.fields.text.label"),
+            { target: { value: "Live edit" } }
+        );
+        expect(bubbleText(container)).toContain("Live edit");
+    });
+
+    // The bundled title carries `{{productName}}`; the SDK interpolates it at
+    // share time, so a raw token in the preview would be the merchant's only
+    // sighting of it.
+    it("shows no interpolation token", () => {
+        const { container } = renderPanel({
+            default: { "sharing.title": "{{productName}} — {Brand}" },
+        });
+        expect(container.textContent).not.toContain("{{productName}}");
+        expect(container.textContent).not.toContain("{Brand}");
+    });
+
+    // The mock is inert: a live anchor would navigate the dashboard away and
+    // discard unsaved copy, and it would bind a merchant-authored URL to `href`.
+    it("renders the shared link without an anchor", () => {
+        const { container } = renderPanel(undefined, {
+            homepageLink: "https://nowa.example/shop",
+        });
+        expect(container.querySelector("a")).toBeNull();
+        expect(bubbleText(container)).toContain("https://nowa.example/shop");
+    });
+
+    it("shows the host without its userinfo", () => {
+        const { container } = renderPanel(undefined, {
+            homepageLink: "https://a@evil.example@nowa.example/shop",
+        });
+        // Scoped to the host row: the bubble still prints the URL verbatim.
+        const host = preview(container).querySelector(
+            '[data-testid="link-card-host"]'
+        );
+        expect(host?.textContent).toBe("nowa.example");
+    });
+
+    it("renders the merchant logo in the link card", () => {
+        const { container } = renderPanel(undefined, {
+            logoUrl: "https://cdn.example.com/logo.png",
+        });
+        expect(preview(container).querySelector("img")).toHaveAttribute(
+            "src",
+            "https://cdn.example.com/logo.png"
+        );
+    });
+
+    // A merchant with no logo must still get a card, not a gap.
+    it("drops the image band but keeps the title and host rows", () => {
+        const { container } = renderPanel(
+            { default: { "sharing.title": "Card title" } },
+            { homepageLink: "https://nowa.example/shop" }
+        );
+        const root = preview(container);
+        expect(root.querySelector("img")).toBeNull();
+        expect(
+            root.querySelector('[data-testid="link-card-host"]')?.textContent
+        ).toBe("nowa.example");
+        expect(
+            root.querySelector('[data-testid="link-card-title"]')?.textContent
+        ).toBe("Card title");
+    });
+
+    // The preview is decorative. Focusable chrome inside it would land between
+    // the language tabs and the wording inputs in the panel's tab order.
+    it("adds no tab stop and stays out of the a11y tree", () => {
+        const { container } = renderPanel();
+        const root = preview(container);
+        expect(root).toHaveAttribute("aria-hidden", "true");
+        expect(
+            root.querySelectorAll(
+                "a, button, input, select, textarea, iframe, summary, [tabindex], [contenteditable]"
+            )
+        ).toHaveLength(0);
     });
 });

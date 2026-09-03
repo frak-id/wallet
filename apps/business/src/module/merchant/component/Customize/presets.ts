@@ -194,6 +194,14 @@ export const SHARING_PRESETS: readonly LocalizedSharingPreset[] = [
     },
 ];
 
+/**
+ * The wallet's bundled `sharing.title` / `sharing.text`, mirrored verbatim from
+ * the wallet-shared `common.json` locales. Named because the preview falls back
+ * to it: reordering the array must not silently change what an unset tier
+ * renders.
+ */
+export const BUNDLED_SHARING_DEFAULT = SHARING_PRESETS[0];
+
 export function applyBrand(text: string, shopName: string): string {
     return text.replace(/\{Brand\}/g, shopName);
 }

@@ -1074,6 +1074,7 @@ export default interface Resources {
             "label": "Share title"
           }
         },
+        "preview": "Preview",
         "title": "Share message"
       }
     },

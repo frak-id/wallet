@@ -5,17 +5,21 @@ import { RadioGroup } from "@frak-labs/design-system/components/RadioGroup";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { Tiles } from "@frak-labs/design-system/components/Tiles";
+import { SocialPreview } from "@frak-labs/ui-preview";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import { EditField } from "@/module/forms/EditField";
 import { Form, FormControl, FormField } from "@/module/forms/Form";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { useCustomizeSection } from "../saveRegistry";
 import { WordingLangTabs } from "./ComponentEditor";
 import * as styles from "./customize.css";
+import { resolveBuiltInLang, resolvePreviewWording } from "./localizable";
 import {
     applyBrand,
+    BUNDLED_SHARING_DEFAULT,
     formatSharingPreview,
     matchSharingPreset,
     SHARING_PRESETS,
@@ -93,12 +97,21 @@ export function SharingWordingPanel({
                         </Text>
                     </Stack>
 
-                    <SharingPresets form={form} shopName={shopName} />
-
                     <WordingLangTabs
                         selected={activeLang}
                         onSelect={setActiveLang}
                     />
+
+                    <PreviewWrapper label={t("customize.sharing.preview")}>
+                        <SharingPreview
+                            form={form}
+                            lang={activeLang}
+                            sdkConfig={sdkConfig}
+                            shopName={shopName}
+                        />
+                    </PreviewWrapper>
+
+                    <SharingPresets form={form} shopName={shopName} />
 
                     <div className={styles.settingsGrid}>
                         <FormField
@@ -149,6 +162,47 @@ export function SharingWordingPanel({
                 </Stack>
             </Card>
         </Form>
+    );
+}
+
+/** Stand-in link while the merchant has set no homepage. */
+const SAMPLE_SHARE_LINK = "https://example.com/product";
+
+/**
+ * The share message as a messaging app renders it. Tracks the form, so a
+ * merchant reads their own copy while typing it.
+ *
+ * Falls back to the wallet's bundled copy: `wallet-shared` is off-limits to
+ * this app, and an unconfigured merchant ships exactly that wording.
+ */
+function SharingPreview({
+    form,
+    lang,
+    sdkConfig,
+    shopName,
+}: {
+    form: UseFormReturn<SharingWordingFormValues>;
+    lang: WordingLang;
+    sdkConfig: SdkConfig;
+    shopName: string;
+}) {
+    const values = form.watch();
+    const fallback =
+        BUNDLED_SHARING_DEFAULT[resolveBuiltInLang(lang, sdkConfig.lang)];
+
+    return (
+        <SocialPreview
+            title={formatSharingPreview(
+                resolvePreviewWording(values.title, lang, fallback.title),
+                shopName
+            )}
+            text={formatSharingPreview(
+                resolvePreviewWording(values.text, lang, fallback.text),
+                shopName
+            )}
+            link={sdkConfig.homepageLink ?? SAMPLE_SHARE_LINK}
+            imageUrl={sdkConfig.logoUrl ?? undefined}
+        />
     );
 }
 
