@@ -815,7 +815,10 @@
         "installedHeadline": "C'est prêt. Ouvre l'app pour récupérer {{ estimatedReward }}."
     },
     "pendingActions": {
-        "walletAlreadyLinked": "Ce lien de parrainage est déjà lié à un autre porte-monnaie."
+        "walletAlreadyLinked": {
+            "title": "Lien de parrainage déjà utilisé",
+            "message": "Ce lien de parrainage est déjà lié à un autre porte-monnaie."
+        }
     },
     "onboarding": {
         "start": "Commencer",

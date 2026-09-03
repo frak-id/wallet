@@ -1,11 +1,13 @@
+import { AlertMessage } from "@frak-labs/design-system/components/AlertMessage";
+import { ExclamationFilledIcon } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
-import { Toast } from "@/module/common/component/Toast";
 import { ensureConflictStore } from "@/module/pending-actions/stores/ensureConflictStore";
 
 /**
- * Surfaces a permanently-failed pending `ensure`. Mounted on every surface
- * that can fire one — the wallet layout and the standalone install entry —
- * because the conflict is raised after that page has navigated away.
+ * Surfaces a permanently-failed pending `ensure`. Mounted in the app shell's
+ * `BannerStack`, which every wallet surface renders: the conflict is raised
+ * after the page that fired the ensure has navigated away. The stack is a
+ * click-through overlay, so the toast never displaces content.
  */
 export function EnsureConflictToast() {
     const { t } = useTranslation();
@@ -15,10 +17,13 @@ export function EnsureConflictToast() {
     if (!raised) return null;
 
     return (
-        <Toast
-            text={t("pendingActions.walletAlreadyLinked")}
+        <AlertMessage
+            tone="warning"
+            icon={<ExclamationFilledIcon width={24} height={24} />}
+            title={t("pendingActions.walletAlreadyLinked.title")}
+            description={t("pendingActions.walletAlreadyLinked.message")}
             onDismiss={dismiss}
-            ariaDismissLabel={t("common.close")}
+            dismissLabel={t("common.close")}
         />
     );
 }

@@ -720,7 +720,10 @@ export default interface Resources {
       }
     },
     "pendingActions": {
-      "walletAlreadyLinked": "This referral link is already linked to another wallet."
+      "walletAlreadyLinked": {
+        "message": "This referral link is already linked to another wallet.",
+        "title": "Referral link already claimed"
+      }
     },
     "reward": {
       "detail": {

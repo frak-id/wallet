@@ -815,7 +815,10 @@
         "installedHeadline": "You're all set. Open the app to claim {{ estimatedReward }}."
     },
     "pendingActions": {
-        "walletAlreadyLinked": "This referral link is already linked to another wallet."
+        "walletAlreadyLinked": {
+            "title": "Referral link already claimed",
+            "message": "This referral link is already linked to another wallet."
+        }
     },
     "onboarding": {
         "start": "Get started",

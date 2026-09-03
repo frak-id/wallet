@@ -19,6 +19,7 @@ import {
 } from "@/module/common/component/BottomTabBar";
 import { SessionExpiringBanner } from "@/module/common/component/SessionExpiringBanner";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
+import { EnsureConflictToast } from "@/module/pending-actions/component/EnsureConflictToast";
 import {
     bottomBar,
     mainContentNoNav,
@@ -113,6 +114,7 @@ export function AppShell({
                     <SessionExpiringBanner />
                     <PairingInProgress />
                     <WebauthnErrorToast />
+                    <EnsureConflictToast />
                 </BannerStack>
                 <Box
                     as="main"

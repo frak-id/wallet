@@ -25,7 +25,10 @@ describe("EnsureConflictToast", () => {
         });
 
         expect(
-            screen.getByText(/pendingActions\.walletAlreadyLinked/)
+            screen.getByText(/pendingActions\.walletAlreadyLinked\.title/)
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText(/pendingActions\.walletAlreadyLinked\.message/)
         ).toBeInTheDocument();
     });
 });
