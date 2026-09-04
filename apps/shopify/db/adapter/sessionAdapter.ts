@@ -19,6 +19,8 @@ export interface SessionInput {
     scope?: string;
     expires?: Date;
     accessToken?: string;
+    refreshToken?: string;
+    refreshTokenExpires?: Date;
     onlineAccessInfo?: { associated_user: { id: number } };
 }
 
@@ -36,6 +38,8 @@ export function sessionToRow(
         scope: session.scope,
         expires: session.expires,
         accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+        refreshTokenExpires: session.refreshTokenExpires,
         userId: session.onlineAccessInfo?.associated_user.id,
     };
 }
@@ -61,6 +65,12 @@ export function rowToSessionParams(
     }
     if (row.accessToken) {
         sessionParams.accessToken = row.accessToken;
+    }
+    if (row.refreshToken) {
+        sessionParams.refreshToken = row.refreshToken;
+    }
+    if (row.refreshTokenExpires) {
+        sessionParams.refreshTokenExpires = row.refreshTokenExpires.getTime();
     }
     if (row.userId) {
         sessionParams.onlineAccessInfo = row.userId;

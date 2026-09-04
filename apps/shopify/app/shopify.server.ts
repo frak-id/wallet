@@ -27,6 +27,12 @@ const shopify = shopifyApp({
     authPathPrefix: "/auth",
     sessionStorage: sessionStorageAdapter,
     distribution: AppDistribution.AppStore,
+    future: {
+        // Non-expiring offline tokens are rejected by the Admin API for public
+        // apps from 2027-01-01. Requires `refreshToken`/`refreshTokenExpires`
+        // to survive a session-storage round trip (see db/adapter).
+        expiringOfflineAccessTokens: true,
+    },
 });
 
 export default shopify;
