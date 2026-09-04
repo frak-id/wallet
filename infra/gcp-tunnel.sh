@@ -33,9 +33,17 @@ function reclaim_port() {
         esac
     done
 
-    # The kernel needs a beat to release the socket before a rebind succeeds.
-    sleep 1
-    [ -z "$(lsof -nP -iTCP:"${port}" -sTCP:LISTEN -t 2>/dev/null)" ]
+    # The kernel releases the socket asynchronously, so poll rather than guess:
+    # a fixed sleep that loses the race abandons the tunnel for good.
+    local waited=0
+    while [ ${waited} -lt 20 ]; do
+        [ -z "$(lsof -nP -iTCP:"${port}" -sTCP:LISTEN -t 2>/dev/null)" ] && return 0
+        sleep 0.5
+        waited=$((waited + 1))
+    done
+
+    echo "[${label}] Port ${port} still held after SIGTERM. Free it, then restart the GCP Tunnel task."
+    return 1
 }
 
 # --- Postgres tunnel (gcloud SSH through bastion) ---
@@ -166,9 +174,19 @@ rustfsRemotePort=9000
 
 echo "[rustfs] Forwarding localhost:${rustfsLocalPort} -> ${rustfsService}.${rustfsNamespace}:${rustfsRemotePort}"
 
-# Run both tunnels in parallel, exit if either dies
+# Run every tunnel in parallel; each supervises its own restarts.
 launch_pg_tunnel &
+pgPid=$!
 supervise_port_forward "sqld" "${sqldNamespace}" "${sqldService}" "${sqldLocalPort}" "${sqldRemotePort}" &
+sqldPid=$!
 supervise_port_forward "rustfs" "${rustfsNamespace}" "${rustfsService}" "${rustfsLocalPort}" "${rustfsRemotePort}" &
+rustfsPid=$!
 monitor_pg_health &
-wait
+
+# Wait on the tunnels only: the health monitor never returns, so a bare `wait`
+# keeps the task alive and apparently running long after every tunnel gave up.
+status=0
+for pid in ${pgPid} ${sqldPid} ${rustfsPid}; do
+    wait ${pid} || status=1
+done
+exit ${status}
