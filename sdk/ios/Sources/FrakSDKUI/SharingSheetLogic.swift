@@ -468,6 +468,10 @@ private func tier3Defaults(for lang: FrakLanguage) -> Tier3ShareData {
 }
 
 /// Per-call override, then the first product's title, then the bundled default.
+/// Deliberately the FIRST product, not the page's carousel selection: the selection lives in
+/// the page, and tier 3 exists for sessions where that page never painted or died — reading
+/// it back would need the page streaming selection changes to the host, a wire-contract
+/// addition for a copy-only corner. Mirrors the Android twin.
 func tier3ShareData(
     request: SharingRequest,
     productName: String?,

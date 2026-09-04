@@ -171,7 +171,13 @@ internal class SharingSessionBuilder(
         }
     }
 
-    /** Per-call override, then the first product's title, then a built-in default. Never reads `sdkConfig`. */
+    /**
+     * Per-call override, then the first product's title, then a built-in default. Never reads
+     * `sdkConfig`. Deliberately the FIRST product, not the page's carousel selection: the
+     * selection lives in the page, and tier 3 exists for sessions where that page never
+     * painted or died — reading it back would need the page streaming selection changes to
+     * the host, a wire-contract addition for a copy-only corner. Mirrors the iOS twin.
+     */
     private fun tier3ShareCopy(request: SharingRequest): Tier3ShareCopy {
         val defaults = Tier3Defaults.forLang(dependencies.metadataLang())
         val name = dependencies.metadataName()?.takeIf { it.isNotBlank() }

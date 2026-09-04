@@ -67,6 +67,7 @@ Open, tracked, knowingly not being worked.
 | 8.2 | ~2,000 lines of iOS sharing-sheet code with zero executed coverage, for the same structural reason. Android's `SharingHost` — lifecycle attach/detach, `ViewModelStore` retention, buffered-result replay — has no test constructing one either; no JVM harness supplies a real `ComponentActivity` + `ViewModelStore` + `ComponentDialog` | same |
 | 4.2 | iOS `EventQueue` actor does synchronous file I/O on the cooperative pool. Making it `async` reopens an interleaving window that was closed deliberately; `SerialExecutor` needs a deprecated iOS-15-floor API. Bounded and short (≤1100 rows) | accepted with rationale |
 | 9.5 | Android pauses the warm `SharingWebViewHandle` because it composites while warm; iOS has no analogue (the pooled `WKWebView` is never in a hierarchy until presented). Argued moot, unconfirmed | needs a simulator pass |
+| REL-017 | Tier-3 share copy reads `products.first()` where the page reads the carousel selection, so a multi-product share that falls to tier 3 after a swipe announces product 1. Fixing it means the page streaming selection changes to the host — a wire-contract addition for a copy-only corner. Both `tier3ShareCopy`/`tier3ShareData` now document the rung as deliberate | wants the next ABI window, if product cares |
 | — | `do_xcframework()` still `die`s "not implemented". Source distribution covers beta | needs a decision on binary distribution |
 
 ## 3. Security and privacy
