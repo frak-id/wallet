@@ -157,6 +157,11 @@ jobs:
       - name: "📱 Gate the iOS deployment floor"
         run: bun scripts/check-ios-floor.ts
 
+      # A dev-flavoured manifest in a prod AAB fails App Link verification outright:
+      # assetlinks.json is stage-scoped, so nothing delegates to the prod package.
+      - name: "🤖 Gate the Android deep-link manifest"
+        run: bun scripts/check-android-manifest.ts
+
   prepare:
     name: "📦 Build SDK"
     needs: validate
