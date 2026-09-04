@@ -7,7 +7,7 @@ package id.frak.sdk
 public object FrakSdkVersion {
     /** Keep in step with `frak.sdk.version` in `gradle.properties`; the build checks it. */
     @JvmStatic
-    public val CURRENT: String = "1.0.0-beta.2"
+    public val CURRENT: String = "1.0.0-beta.3"
 
     /** Wire plumbing for `HttpClient`; not merchant API. */
     @JvmStatic

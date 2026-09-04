@@ -16,6 +16,23 @@ independently — see [`../ios/CHANGELOG.md`](../ios/CHANGELOG.md).
 
 ## [Unreleased]
 
+## [1.0.0-beta.3] - 2026-09-04
+
+### Added
+
+- **`SharingRequest.shareTitle`, `shareText` and `shareImageUrl`**, also on the `Builder`, as
+  per-call overrides for the OS share sheet's copy. They take precedence over the sharing page's
+  own copy and your merchant-level defaults. `shareImageUrl` is accepted for API symmetry with
+  iOS and has no effect: Android's chooser ships no preview image.
+
+### Changed
+
+- **The OS chooser now carries a message, not a bare link.** `ACTION_SEND` used to send only the
+  tracking URL. It now puts the resolved text above the link in `EXTRA_TEXT` and the title in
+  `EXTRA_SUBJECT`, so mail clients get a subject and messaging apps get a sentence. When the
+  sharing page never loads, the copy resolves locally: the per-call override, then the first
+  product's title, then a bundled English or French default keyed on `FrakMetadata.name`.
+
 ### Fixed
 
 - **The install code no longer lands on the clipboard unmarked.** The install page wrote it too,

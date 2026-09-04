@@ -12,10 +12,10 @@ This file is contributor-facing. The section below is the only merchant-facing p
 
 ```kotlin
 dependencies {
-    implementation("id.frak.sdk:core:1.0.0-beta.2")
+    implementation("id.frak.sdk:core:1.0.0-beta.3")
     // Only if you show the sharing sheet. Brings Compose (ui, foundation, material3),
     // androidx.activity and androidx.webkit onto your runtime classpath.
-    implementation("id.frak.sdk:ui:1.0.0-beta.2")
+    implementation("id.frak.sdk:ui:1.0.0-beta.3")
 }
 ```
 
@@ -263,7 +263,7 @@ Get the case wrong and nothing fails: `isRequired = signingKey != null` makes si
 
 ```bash
 bun run --cwd sdk/android publishLocal
-cat ~/.m2/repository/id/frak/sdk/core/1.0.0-beta.2/core-1.0.0-beta.2.pom
+cat ~/.m2/repository/id/frak/sdk/core/1.0.0-beta.3/core-1.0.0-beta.3.pom
 ```
 
 The POM contents are Central-valid already — `buildSrc/src/main/kotlin/frak-publish.gradle.kts` is a convention plugin applied by both modules (licence, developers, SCM, sources/javadoc jars), only the transport is missing.

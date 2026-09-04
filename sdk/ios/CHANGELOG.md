@@ -15,6 +15,25 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
 
 ## [Unreleased]
 
+## [1.0.0-beta.3] - 2026-09-04
+
+### Added
+
+- **`SharingRequest.shareTitle`, `shareText` and `shareImageURL`**, as defaulted `init`
+  parameters, for per-call overrides of the OS share sheet's copy and preview image. They take
+  precedence over the sharing page's own copy and your merchant-level defaults. `shareImageURL`
+  must be `https`; it is fetched under a 2 MB cap and a tap deadline, and a preview that does not
+  arrive in time is dropped while the share still goes out with its link and attribution.
+
+### Changed
+
+- **The OS share sheet now carries rich metadata.** The link is handed over through
+  `LPLinkMetadata` with the title and the preview image as its icon, and the message body rides
+  as a separate activity item, so mail gets a subject, messages get a sentence, and the chooser
+  draws a preview tile. When the sharing page never loads, the copy resolves locally: the
+  per-call override, then the first product's title, then a bundled English or French default
+  keyed on `FrakMetadata.name`.
+
 ### Fixed
 
 - **A share no longer opens a permanently blank sheet.** WebKit can reclaim the sharing web
