@@ -9,8 +9,12 @@ import type { SharingSearch } from "@/module/sharing/params/table";
 import { SharingView } from "./SharingView";
 
 const resolvedConfig = vi.fn();
+const resolvedConfigArgs = vi.fn();
 vi.mock("@/module/common/hook/useMerchantResolvedConfig", () => ({
-    useMerchantResolvedConfig: () => ({ data: resolvedConfig() }),
+    useMerchantResolvedConfig: (args: unknown) => {
+        resolvedConfigArgs(args);
+        return { data: resolvedConfig() };
+    },
 }));
 
 vi.mock("@/module/sharing/params/fragment", () => ({
@@ -91,6 +95,7 @@ beforeEach(() => {
     lastTitle = undefined;
     lastT = undefined;
     resolvedConfig.mockReset();
+    resolvedConfigArgs.mockReset();
 });
 
 describe("SharingView merchant translations", () => {
@@ -172,5 +177,16 @@ describe("SharingView merchant translations", () => {
         renderView().unmount();
 
         expect(i18next.getFixedT("en", null)("sharing.title")).toBe(before);
+    });
+
+    it("resolves the merchant config in the page's language", () => {
+        // The backend flattens the tiered overrides to one language; without the page's
+        // own, a French device would render the merchant's `en` copy.
+        resolvedConfig.mockReturnValue(null);
+        renderView();
+
+        expect(resolvedConfigArgs).toHaveBeenCalledWith(
+            expect.objectContaining({ merchantId, lang: "en" })
+        );
     });
 });

@@ -93,8 +93,13 @@ export function SharingView({
         embedded,
     });
 
-    // Branding falls back to the merchant config unless the caller overrode it.
-    const { data: config } = useMerchantResolvedConfig({ merchantId });
+    // Branding falls back to the merchant config unless the caller overrode it. `lang` is
+    // the page's own: the backend flattens the merchant's tiered overrides to one language,
+    // and without it a French device gets the `en` share copy under a French page.
+    const { data: config } = useMerchantResolvedConfig({
+        merchantId,
+        lang: i18n.resolvedLanguage ?? i18n.language,
+    });
 
     // A merchant's overrides are resolved here rather than merged into i18next. Merging needs a
     // per-merchant instance, and `cloneInstance({ forkResourceStore: true })` does not give one:
