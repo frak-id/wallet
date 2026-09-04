@@ -23,8 +23,7 @@ type ConflictStepProps = {
  * primary action launches the wallet-merge flow when the backend returned
  * the conflicting credential metadata; otherwise the user is steered back
  * to picking a different email.
- *
- * Navigation: the top-left back arrow already routes to /profile, so we
+ * Navigation: the top-left back arrow is the only way out, so we
  * deliberately do not duplicate it as a third bottom button. That keeps
  * the footer focused on the two real decisions (combine / use different).
  */

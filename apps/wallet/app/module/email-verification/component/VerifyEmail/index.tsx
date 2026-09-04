@@ -9,7 +9,7 @@ import {
     selectSession,
     sessionStore,
 } from "@frak-labs/wallet-shared";
-import { useNavigate } from "@tanstack/react-router";
+import { useCanGoBack, useNavigate, useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
@@ -30,7 +30,7 @@ const CODE_LENGTH = EMAIL_VERIFICATION.CODE_LENGTH;
 
 type FlowState =
     | { kind: "verify" }
-    | { kind: "changeEmail"; backTo: "profile" | "verify" }
+    | { kind: "changeEmail"; backTo: "exit" | "verify" }
     | {
           kind: "conflict";
           email: string;
@@ -165,16 +165,38 @@ export function VerifyEmail({
 
     const [flowState, setFlowState] = useState<FlowState>(() =>
         startInChangeEmail
-            ? { kind: "changeEmail", backTo: "profile" }
+            ? { kind: "changeEmail", backTo: "exit" }
             : { kind: "verify" }
     );
     const [code, setCode] = useState("");
     const [targetEmail, setTargetEmail] = useState<string | undefined>();
     const autoVerifiedRef = useRef(false);
 
+    const router = useRouter();
+    const canGoBack = useCanGoBack();
+
+    /**
+     * Terminal exit to /profile. Replaces rather than pushes so this screen
+     * leaves the history stack — a spent code form must not be reachable by
+     * hardware/browser back once the flow has ended.
+     */
     const goToProfile = useCallback(() => {
-        navigate({ to: "/profile" });
+        navigate({ to: "/profile", replace: true });
     }, [navigate]);
+
+    /**
+     * Back returns to whichever surface opened this screen — the wallet-home
+     * security card, the profile row, or the add-email form. Falls back to
+     * /profile when there is no history to pop, which is the case for the
+     * `#code=` magic link opened straight from a mail client.
+     */
+    const handleBack = useCallback(() => {
+        if (canGoBack) {
+            router.history.back();
+            return;
+        }
+        goToProfile();
+    }, [canGoBack, router, goToProfile]);
 
     const handleVerify = useCallback(
         async (value: string) => {
@@ -267,7 +289,9 @@ export function VerifyEmail({
                     variant="primary"
                     size="large"
                     width="full"
-                    onClick={() => navigate({ to: "/profile/recovery" })}
+                    onClick={() =>
+                        navigate({ to: "/profile/recovery", replace: true })
+                    }
                 >
                     {t("wallet.verifyEmail.success.setupRecovery")}
                 </Button>
@@ -313,7 +337,7 @@ export function VerifyEmail({
                 onUseDifferent={() =>
                     setFlowState({ kind: "changeEmail", backTo: "verify" })
                 }
-                onBack={goToProfile}
+                onBack={handleBack}
             />
         );
     }
@@ -330,8 +354,8 @@ export function VerifyEmail({
                 )}
                 submitLabel={t("wallet.verifyEmail.changeEmail.continue")}
                 onBack={() =>
-                    flowState.backTo === "profile"
-                        ? goToProfile()
+                    flowState.backTo === "exit"
+                        ? handleBack()
                         : setFlowState({ kind: "verify" })
                 }
                 onSubmit={handleChangeEmailSubmit}
@@ -382,7 +406,7 @@ export function VerifyEmail({
             <EmailFlowResultScreen
                 title={t("wallet.verifyEmail.verifying.title")}
                 description={t("wallet.verifyEmail.verifying.description")}
-                onBack={goToProfile}
+                onBack={handleBack}
             />
         );
     }
@@ -392,7 +416,7 @@ export function VerifyEmail({
             fixedViewport
             title={t("wallet.verifyEmail.title")}
             description={t("wallet.verifyEmail.description")}
-            onBack={goToProfile}
+            onBack={handleBack}
             footer={
                 <Button
                     type="button"
