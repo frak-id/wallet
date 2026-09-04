@@ -5,7 +5,13 @@ import { OrchestrationContext } from "../../../orchestration";
 import { ExplorerQueryResultSchema } from "../../schemas";
 
 export const exploreApi = new Elysia()
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 30 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "merchant-explorer",
+            windowMs: 60_000,
+            maxRequests: 30,
+        })
+    )
     .get(
         "/explore",
         async ({ query: { limit, offset } }) => {

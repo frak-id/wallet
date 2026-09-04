@@ -42,21 +42,39 @@ function renderStep(overrides?: {
         wallet?: `0x${string}`;
     }) => void;
     initialValue?: string;
+    onSkip?: () => void;
+    onBusyChange?: (isBusy: boolean) => void;
 }) {
     const onContinue = overrides?.onContinue ?? vi.fn();
     const onBack = overrides?.onBack ?? vi.fn();
     const onAlreadyUsed = overrides?.onAlreadyUsed ?? vi.fn();
-    render(
+    const onSkip = overrides?.onSkip ?? vi.fn();
+    const onBusyChange = overrides?.onBusyChange ?? vi.fn();
+    const view = render(
         (
             <EmailInputStep
                 onContinue={onContinue}
                 onBack={onBack}
                 onAlreadyUsed={onAlreadyUsed}
                 initialValue={overrides?.initialValue}
+                onBusyChange={onBusyChange}
+                headerEnd={
+                    <button type="button" onClick={onSkip}>
+                        onboarding.skipStep
+                    </button>
+                }
             />
         ) as ReactElement
     );
-    return { onContinue, onBack, onAlreadyUsed };
+    return { onContinue, onBack, onAlreadyUsed, onSkip, onBusyChange, view };
+}
+
+function getSkipButton() {
+    return screen
+        .getAllByRole("button")
+        .find((btn) =>
+            btn.textContent?.includes("onboarding.skipStep")
+        ) as HTMLButtonElement;
 }
 
 function getContinueButton() {
@@ -196,11 +214,66 @@ describe("EmailInputStep", () => {
         const back = buttons.find(
             (btn) =>
                 !btn.textContent?.includes("onboarding.email.continue") &&
+                !btn.textContent?.includes("onboarding.skipStep") &&
                 btn.getAttribute("aria-label") !==
                     "onboarding.email.clearAriaLabel"
         );
         if (!back) throw new Error("back button not found");
         fireEvent.click(back);
         expect(onBack).toHaveBeenCalled();
+    });
+
+    it("renders the parent's skip and leaves continue independent", () => {
+        const { onSkip, onContinue } = renderStep();
+        fireEvent.click(getSkipButton());
+        expect(onSkip).toHaveBeenCalled();
+        expect(onContinue).not.toHaveBeenCalled();
+        expect(checkEmailMock).not.toHaveBeenCalled();
+    });
+
+    it("reports its checking state so the parent can disable the skip", () => {
+        const onBusyChange = vi.fn();
+        setupHook({ isChecking: true });
+        renderStep({ onBusyChange });
+        expect(onBusyChange).toHaveBeenCalledWith(true);
+    });
+
+    it("reports busy false once the check settles", () => {
+        const onBusyChange = vi.fn();
+        setupHook({ isChecking: true });
+        const { view } = renderStep({ onBusyChange });
+        expect(onBusyChange).toHaveBeenLastCalledWith(true);
+
+        setupHook({ isChecking: false });
+        view.rerender(
+            (
+                <EmailInputStep
+                    onContinue={vi.fn()}
+                    onBack={vi.fn()}
+                    onAlreadyUsed={vi.fn()}
+                    onBusyChange={onBusyChange}
+                />
+            ) as ReactElement
+        );
+        expect(onBusyChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it("ignores a check that resolves after the step unmounts", async () => {
+        let resolveCheck: (value: { used: boolean }) => void = () => {};
+        checkEmailMock.mockReturnValue(
+            new Promise<{ used: boolean }>((resolve) => {
+                resolveCheck = resolve;
+            })
+        );
+        const { onContinue, view } = renderStep();
+        fireEvent.change(getInput(), { target: { value: "a@b.co" } });
+        fireEvent.click(getContinueButton());
+
+        // The user skips while the check is still in flight.
+        view.unmount();
+        resolveCheck({ used: false });
+        await Promise.resolve();
+
+        expect(onContinue).not.toHaveBeenCalled();
     });
 });

@@ -6,7 +6,7 @@
 # drizzle-orm, mongodb) so it skips the Node 24 install + SDK build entirely
 # and runs on alpine in the final image.
 
-ARG BUN_VERSION=1.3.11
+ARG BUN_VERSION=1.4.0
 
 FROM oven/bun:${BUN_VERSION}-alpine AS deps
 WORKDIR /app

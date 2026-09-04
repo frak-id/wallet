@@ -15,7 +15,7 @@ import type {
     SdkResolvedConfig,
 } from "../types/resolvedConfig";
 import { clearAllCache, withCache } from "../utils/cache";
-import { getBackendUrl } from "./backendUrl";
+import { getBackendUrl } from "./environment";
 
 const GLOBAL_KEY = "__frakSdkConfig";
 const CACHE_TTL = 30_000; // 30 seconds
@@ -127,11 +127,10 @@ function getTargetDomain(domain?: string): string {
 
 async function fetchFromBackend(
     targetDomain: string,
-    walletUrl?: string,
     lang?: Language
 ): Promise<MerchantConfigResponse | undefined> {
     try {
-        const backendUrl = getBackendUrl(walletUrl);
+        const backendUrl = getBackendUrl();
         const langParam = lang ? `&lang=${encodeURIComponent(lang)}` : "";
         const response = await fetch(
             `${backendUrl}/user/merchant/resolve?domain=${encodeURIComponent(targetDomain)}${langParam}`
@@ -212,7 +211,6 @@ export const sdkConfigStore = {
 
     resolve(
         domain?: string,
-        walletUrl?: string,
         lang?: Language
     ): Promise<MerchantConfigResponse | undefined> {
         const targetDomain = getTargetDomain(domain);
@@ -224,11 +222,7 @@ export const sdkConfigStore = {
 
         return withCache(
             async () => {
-                const result = await fetchFromBackend(
-                    targetDomain,
-                    walletUrl,
-                    lang
-                );
+                const result = await fetchFromBackend(targetDomain, lang);
                 // Throw on failure so withCache doesn't cache undefined
                 if (!result) {
                     throw new Error("Config resolution returned empty");
@@ -253,14 +247,11 @@ export const sdkConfigStore = {
         return undefined;
     },
 
-    async resolveMerchantId(
-        domain?: string,
-        walletUrl?: string
-    ): Promise<string | undefined> {
+    async resolveMerchantId(domain?: string): Promise<string | undefined> {
         const fast = sdkConfigStore.getMerchantId();
         if (fast) return fast;
 
-        const config = await sdkConfigStore.resolve(domain, walletUrl);
+        const config = await sdkConfigStore.resolve(domain);
         return config?.merchantId;
     },
 };

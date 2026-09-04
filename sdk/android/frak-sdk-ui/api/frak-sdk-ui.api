@@ -1,0 +1,81 @@
+public final class id/frak/sdk/ui/FrakSharing {
+	public static final field $stable I
+	public final fun present (Lid/frak/sdk/sharing/SharingRequest;)V
+	public final fun warm ()V
+}
+
+public final class id/frak/sdk/ui/FrakSharing$Builder {
+	public static final field $stable I
+	public fun <init> (Lid/frak/sdk/ui/FrakSharing$ResultCallback;)V
+	public final fun build (Landroidx/activity/ComponentActivity;)Lid/frak/sdk/ui/FrakSharing;
+	public final fun build (Landroidx/compose/runtime/Composer;I)Lid/frak/sdk/ui/FrakSharing;
+	public final fun heightFraction (F)Lid/frak/sdk/ui/FrakSharing$Builder;
+	public final fun language (Ljava/lang/String;)Lid/frak/sdk/ui/FrakSharing$Builder;
+}
+
+public abstract interface class id/frak/sdk/ui/FrakSharing$ResultCallback {
+	public abstract fun onResult (Lid/frak/sdk/ui/SharingResult;)V
+}
+
+public final class id/frak/sdk/ui/FrakSharingDefaults {
+	public static final field $stable I
+	public static final field INSTANCE Lid/frak/sdk/ui/FrakSharingDefaults;
+	public static final fun getHEIGHT_FRACTION ()F
+}
+
+public abstract interface class id/frak/sdk/ui/SharingResult {
+	public abstract fun getKind ()Lid/frak/sdk/ui/SharingResult$Kind;
+}
+
+public final class id/frak/sdk/ui/SharingResult$Copied : id/frak/sdk/ui/SharingResult {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;)V
+	public fun getKind ()Lid/frak/sdk/ui/SharingResult$Kind;
+	public final fun getLink ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/ui/SharingResult$Dismissed : id/frak/sdk/ui/SharingResult {
+	public static final field $stable I
+	public static final field INSTANCE Lid/frak/sdk/ui/SharingResult$Dismissed;
+	public fun getKind ()Lid/frak/sdk/ui/SharingResult$Kind;
+}
+
+public final class id/frak/sdk/ui/SharingResult$Failed : id/frak/sdk/ui/SharingResult {
+	public static final field $stable I
+	public fun <init> (Lid/frak/sdk/core/FrakError;)V
+	public final fun getError ()Lid/frak/sdk/core/FrakError;
+	public fun getKind ()Lid/frak/sdk/ui/SharingResult$Kind;
+}
+
+public final class id/frak/sdk/ui/SharingResult$InstallStarted : id/frak/sdk/ui/SharingResult {
+	public static final field $stable I
+	public static final field INSTANCE Lid/frak/sdk/ui/SharingResult$InstallStarted;
+	public fun getKind ()Lid/frak/sdk/ui/SharingResult$Kind;
+}
+
+public final class id/frak/sdk/ui/SharingResult$Kind : java/lang/Enum {
+	public static final field COPIED Lid/frak/sdk/ui/SharingResult$Kind;
+	public static final field DISMISSED Lid/frak/sdk/ui/SharingResult$Kind;
+	public static final field FAILED Lid/frak/sdk/ui/SharingResult$Kind;
+	public static final field INSTALL_STARTED Lid/frak/sdk/ui/SharingResult$Kind;
+	public static final field SHARED Lid/frak/sdk/ui/SharingResult$Kind;
+	public static final field WALLET_OPENED Lid/frak/sdk/ui/SharingResult$Kind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getWireValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lid/frak/sdk/ui/SharingResult$Kind;
+	public static fun values ()[Lid/frak/sdk/ui/SharingResult$Kind;
+}
+
+public final class id/frak/sdk/ui/SharingResult$Shared : id/frak/sdk/ui/SharingResult {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;)V
+	public fun getKind ()Lid/frak/sdk/ui/SharingResult$Kind;
+	public final fun getLink ()Ljava/lang/String;
+}
+
+public final class id/frak/sdk/ui/SharingResult$WalletOpened : id/frak/sdk/ui/SharingResult {
+	public static final field $stable I
+	public static final field INSTANCE Lid/frak/sdk/ui/SharingResult$WalletOpened;
+	public fun getKind ()Lid/frak/sdk/ui/SharingResult$Kind;
+}
+

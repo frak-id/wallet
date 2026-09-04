@@ -54,29 +54,7 @@ describe("useFrakConfig", () => {
         );
     });
 
-    test("should apply default walletUrl if not provided", () => {
-        const configWithoutWalletUrl = {
-            domain: "example.com",
-            metadata: {
-                name: "Test App",
-            },
-        };
-
-        const wrapper = ({ children }: { children: React.ReactNode }) =>
-            React.createElement(
-                FrakConfigProvider,
-                { config: configWithoutWalletUrl },
-                children
-            );
-
-        const { result } = renderHook(() => useFrakConfig(), {
-            wrapper,
-        });
-
-        expect(result.current.walletUrl).toBe("https://wallet.frak.id");
-    });
-
-    test("should use provided walletUrl if specified", ({ mockFrakConfig }) => {
+    test("should use provided env if specified", ({ mockFrakConfig }) => {
         const wrapper = ({ children }: { children: React.ReactNode }) =>
             React.createElement(
                 FrakConfigProvider,
@@ -88,7 +66,7 @@ describe("useFrakConfig", () => {
             wrapper,
         });
 
-        expect(result.current.walletUrl).toBe(mockFrakConfig.walletUrl);
+        expect(result.current.env).toEqual(mockFrakConfig.env);
     });
 
     test("should return stable config across re-renders", ({
@@ -111,7 +89,7 @@ describe("useFrakConfig", () => {
 
         // Config values should remain stable
         expect(firstConfig.domain).toBe(secondConfig.domain);
-        expect(firstConfig.walletUrl).toBe(secondConfig.walletUrl);
+        expect(firstConfig.env).toEqual(secondConfig.env);
         expect(firstConfig.domain).toBe(mockFrakConfig.domain);
     });
 
@@ -128,7 +106,7 @@ describe("useFrakConfig", () => {
         });
 
         expect(result.current.domain).toBe(mockFrakConfig.domain);
-        expect(result.current.walletUrl).toBe(mockFrakConfig.walletUrl);
+        expect(result.current.env).toEqual(mockFrakConfig.env);
         expect(result.current.metadata).toEqual(mockFrakConfig.metadata);
         expect(result.current.customizations).toEqual(
             mockFrakConfig.customizations
@@ -155,7 +133,6 @@ describe("useFrakConfig", () => {
         });
 
         expect(result.current.domain).toBe("minimal.com");
-        expect(result.current.walletUrl).toBe("https://wallet.frak.id");
         expect(result.current.metadata.name).toBe("Minimal Test App");
         expect(result.current.customizations).toBeUndefined();
     });

@@ -1,0 +1,33 @@
+# ktlint configuration for the Frak Android SDK.
+#
+# Adapted from `example/native-android/.editorconfig`. Scoped to this folder
+# rather than the repo root: biome owns TS/JS formatting monorepo-wide and
+# `sdk/android` is excluded from it, so the two never overlap.
+root = true
+
+[*.{kt,kts}]
+indent_style = space
+indent_size = 4
+max_line_length = 120
+insert_final_newline = true
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+
+# `@Composable` functions are PascalCase by convention — that is the Compose
+# naming rule, not a violation of Kotlin's. ktlint's standard function-naming
+# rule does not know about Compose, so exempt annotated declarations rather
+# than turning the rule off for the whole source set.
+#
+# Unlike the example app this rule earns its keep in exactly one module:
+# `frak-sdk-ui`. `frak-sdk` is UI-free by design (02 §2 — "Core is UI-free and
+# headlessly testable") and must never gain a `@Composable`, so from the core
+# module's perspective this line is dead. It stays here anyway: ktlint resolves
+# `.editorconfig` from the file being linted upwards, a per-module override
+# would be a second file to keep in sync, and the exemption is a no-op on a
+# source set that carries no annotated declarations.
+ktlint_function_naming_ignore_when_annotated_with = Composable
+
+# Off by default since ktlint 1.7 (false positives when auto-removing), and gone in 2.0.
+# Enabled anyway: four documents cited it as the gate that catches an unused import, and
+# without it that claim was false.
+ktlint_standard_no-unused-imports = enabled

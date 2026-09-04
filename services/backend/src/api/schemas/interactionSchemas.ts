@@ -16,7 +16,11 @@ const ArrivalSubmissionSchema = t.Object({
 const SharingSubmissionSchema = t.Object({
     type: t.Literal("sharing"),
     merchantId: t.String({ format: "uuid" }),
-    sharingTimestamp: t.Optional(t.Number()),
+    // Unix SECONDS, and bounded to what the `(payload->>'sharingTimestamp')::int` cast in
+    // `rewards/db/schema.ts` can hold: a client sending milliseconds otherwise overflows it.
+    sharingTimestamp: t.Optional(
+        t.Integer({ minimum: 0, maximum: 2_147_483_647 })
+    ),
     purchaseId: t.Optional(t.String({ minLength: 1, maxLength: 255 })),
     idempotencyKey: t.Optional(t.String({ minLength: 1, maxLength: 255 })),
 });

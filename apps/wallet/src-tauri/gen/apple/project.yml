@@ -2,7 +2,7 @@ name: app
 options:
   bundleIdPrefix: id.frak.wallet
   deploymentTarget:
-    iOS: 14.0
+    iOS: 16.0
 fileGroups: [../../src]
 configs:
   debug: debug
@@ -54,8 +54,8 @@ targets:
           - UIInterfaceOrientationPortrait
         UISupportedInterfaceOrientations~ipad:
           - UIInterfaceOrientationPortrait
-        CFBundleShortVersionString: 1.0.93
-        CFBundleVersion: "1.0.93"
+        CFBundleShortVersionString: 1.0.96
+        CFBundleVersion: "1.0.96"
         ITSAppUsesNonExemptEncryption: false
         UIBackgroundModes:
           - remote-notification

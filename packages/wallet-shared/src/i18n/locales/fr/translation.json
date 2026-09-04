@@ -777,15 +777,16 @@
         },
         "confirmAction": "Confirmer avec {{type}}"
     },
-    "recoveryCode": {
-        "title": "Récupération de ton code",
-        "description": "Colle le code copié depuis wallet.frak.id pour récupérer tes gains.",
+    "rewardCode": {
+        "title": "Saisis ton code de récompense",
+        "description": "Colle le code de récompense copié depuis wallet.frak.id pour récupérer tes gains.",
         "paste": "Coller le code",
         "validate": "Valider le code",
-        "codeLabel": "Code de récupération",
+        "codeLabel": "Code de récompense",
         "error": {
-            "invalid": "Code incorrect ou expiré, vérifie le code copié depuis wallet.frak.id",
-            "alreadyLinked": "Ce code a déjà été utilisé.",
+            "invalid": "Code de récompense incorrect ou expiré, vérifie le code copié depuis wallet.frak.id",
+            "alreadyLinked": "Ce code de récompense a déjà été utilisé.",
+            "unresolved": "Ce code de récompense n'est pas encore lié à un achat. Réessaie dans quelques minutes.",
             "generic": "Une erreur est survenue, réessaie."
         },
         "success": {
@@ -795,26 +796,37 @@
         }
     },
     "installCode": {
-        "title": "Ne perds pas tes {{ estimatedReward }} !\nCopie ce code",
+        "title": "Ne perds pas tes {{ estimatedReward }} !\nCopie ton code de récompense",
         "description": "Colle-le à l'ouverture de l'app. Il te permettra de récupérer tes gains une fois connecté·e.",
+        "codelessTitle": "Ne perds pas tes {{ estimatedReward }} !",
+        "codelessDescription": "Télécharge l'app et connecte-toi pour récupérer tes gains.",
         "copyCode": "Copier le code",
-        "codeCopied": "Code copié !",
-        "loading": "Génération de ton code...",
-        "error": "Échec de la génération du code. Rafraîchis la page.",
+        "codeCopied": "Code de récompense copié !",
+        "loading": "Génération de ton code de récompense...",
         "infoTitle": "Code valable 3 jours",
-        "infoDescription": "À l'ouverture de l'app, appuie sur <1>\"J'ai un code de récupération\"</1>.",
+        "infoDescription": "À l'ouverture de l'app, appuie sur <1>\"J'ai un code de récompense\"</1>.",
         "download": "Télécharger l'app",
-        "processing": "Configuration de ton porte-monnaie..."
+        "processing": "Configuration de ton porte-monnaie...",
+        "processingDone": "Ton porte-monnaie est prêt",
+        "openWalletCta": "Ouvrir mon porte-monnaie",
+        "installedMerchant": "Connecté à {{ merchantName }}",
+        "installedCodeToggle": "Ou saisis ce code manuellement",
+        "openWallet": "Ouvre Frak et récupère {{ estimatedReward }}",
+        "installedHeadline": "C'est prêt. Ouvre l'app pour récupérer {{ estimatedReward }}."
     },
     "pendingActions": {
-        "walletAlreadyLinked": "Ce lien de parrainage est déjà lié à un autre porte-monnaie."
+        "walletAlreadyLinked": {
+            "title": "Lien de parrainage déjà utilisé",
+            "message": "Ce lien de parrainage est déjà lié à un autre porte-monnaie."
+        }
     },
     "onboarding": {
         "start": "Commencer",
         "continue": "Continuer",
         "activateSecureSpace": "Activer mon espace sécurisé",
         "alreadyHaveAccount": "Déjà un compte ?",
-        "recoveryCode": "J'ai un code de récupération",
+        "rewardCode": "J'ai un code de récompense",
+        "skipStep": "Plus tard",
         "steps": {
             "one": {
                 "title": "Gagne de l'argent en recommandant",
@@ -831,7 +843,7 @@
         },
         "email": {
             "title": "Entre ton adresse e-mail",
-            "description": "Ton e-mail sert uniquement à récupérer ton compte en cas d'oubli. Il ne sera jamais utilisé pour t'envoyer des messages non sollicités.",
+            "description": "Ton e-mail sert uniquement à récupérer ton compte si tu perds l'accès. Il ne sera jamais utilisé pour t'envoyer des messages non sollicités. Tu peux l'ajouter plus tard depuis ton porte-monnaie.",
             "label": "Email",
             "placeholder": "ton.email@gmail.com",
             "continue": "Continuer",
@@ -861,16 +873,14 @@
         "notification": {
             "title": "Ne rate aucun gain !",
             "description": "Sois averti dès que l'argent est crédité sur ton porte-monnaie.",
-            "enable": "Oui, me prévenir",
-            "skip": "Plus tard"
+            "enable": "Oui, me prévenir"
         },
         "referral": {
             "title": "Ajoute un code de parrainage",
-            "description": "Tu as un code créateur ? Entre-le ici. Sinon, tu peux passer cette étape.",
+            "description": "Tu as un code créateur ? Entre-le ici.",
             "label": "Code de parrainage",
             "placeholder": "Ex : LOLA10",
             "submitCta": "Appliquer le code",
-            "skip": "Passer",
             "appliedToast": "Code de parrainage appliqué"
         },
         "welcome": {
@@ -884,6 +894,7 @@
     "reward": {
         "status": {
             "pending": "En attente de validation par la marque",
+            "bank_depleted": "En attente de financement par la marque",
             "processing": "En cours de traitement",
             "settled": "À collecter",
             "consumed": "Consommé",

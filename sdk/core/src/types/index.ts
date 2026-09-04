@@ -9,6 +9,7 @@ export type {
 } from "./compression";
 export type {
     Currency,
+    FrakEnvironment,
     FrakWalletSdkConfig,
     I18nConfig,
     Language,
@@ -44,14 +45,6 @@ export type {
     DisplaySharingPageResultType,
     SharingPageProduct,
 } from "./rpc/displaySharingPage";
-export type {
-    DisplayEmbeddedWalletParamsType,
-    DisplayEmbeddedWalletResultType,
-    EmbeddedViewActionReferred,
-    EmbeddedViewActionSharing,
-    LoggedInEmbeddedView,
-    LoggedOutEmbeddedView,
-} from "./rpc/embedded";
 export type { SendInteractionParamsType } from "./rpc/interaction";
 export type {
     ConditionGroup,

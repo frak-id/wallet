@@ -18,6 +18,7 @@ import {
     useCancelAllSignatureRequests,
 } from "@frak-labs/wallet-shared/pairing";
 import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/usePersistentPairingClient";
+import type { TranslationKey } from "@frak-labs/wallet-shared/types";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import {
     type Dispatch,
@@ -52,6 +53,9 @@ import {
 } from "@/ui/ListenerUiProvider";
 import { ToastLoading } from "../../../component/ToastLoading";
 import * as styles from "./index.css";
+
+/** These are all `sdk.modal.*`, which lives in the `customized` namespace. */
+type ModalKey = TranslationKey<"customized">;
 
 // Re-export the lazy handler body so it lands in the Modal default chunk
 // instead of its own .impl shim chunk. See useDisplayModalListener.ts.
@@ -221,7 +225,7 @@ function ListenerModalInner({
                     onLogoError={() => setLogoFailed(true)}
                 />
                 <CurrentModalStepComponent />
-                <OriginPairingState type="modal" />
+                <OriginPairingState />
             </Stack>
         </ModalComponent>
     );
@@ -328,7 +332,9 @@ function CurrentModalTitle({ metadataTitle }: { metadataTitle?: ReactNode }) {
             currentStep.key === "final"
                 ? currentStep.params.action.key
                 : undefined;
-        const key = `sdk.modal.${currentStep.key}.title`;
+        // Built from the step at runtime, so it cannot be a static key; the
+        // `exists` guard below is what makes the lookup safe.
+        const key = `sdk.modal.${currentStep.key}.title` as ModalKey;
         return i18n.exists(key) ? t(key, { context }) : undefined;
     }, [currentStep, i18n, t]);
 
@@ -359,17 +365,18 @@ function CurrentModalMetadataInfo() {
         }))
     );
 
-    // Extract step key and metadata
-    const descriptionKey = useMemo(() => {
+    // Built from the step at runtime, so it cannot be a static key; the
+    // `exists` guard below is what makes the lookup safe.
+    const descriptionKey = useMemo((): ModalKey | null => {
         if (!currentStep) return null;
 
         // If we are in the final step, and the modal was dismissed, used the dismissed metadata
         if (currentStep.key === "final" && isDismissed) {
-            return `sdk.modal.${currentStep.key}.dismissed.description`;
+            return `sdk.modal.${currentStep.key}.dismissed.description` as ModalKey;
         }
 
         // Otherwise, use the default description
-        return `sdk.modal.${currentStep.key}.description`;
+        return `sdk.modal.${currentStep.key}.description` as ModalKey;
     }, [currentStep, isDismissed]);
 
     // Render the Radix Description (always present for a11y) as the centered
@@ -452,12 +459,7 @@ function CurrentModalStepComponent() {
                     />
                 );
             case "final":
-                return (
-                    <FinalModalStep
-                        params={currentStep.params}
-                        onFinish={currentStep.onResponse}
-                    />
-                );
+                return <FinalModalStep onFinish={currentStep.onResponse} />;
             default:
                 return <>Can't handle {stepKey} yet</>;
         }

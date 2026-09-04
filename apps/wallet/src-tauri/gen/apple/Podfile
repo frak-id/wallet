@@ -1,7 +1,7 @@
 # Uncomment the next line to define a global platform for your project
 
 target 'app_iOS' do
-platform :ios, '14.0'
+platform :ios, '16.0'
   # Firebase (FCM + Crashlytics) is provided via Swift Package Manager by the
   # tauri-plugin-frak-firebase plugin (combined FCM + Crashlytics). Adding the
   # same pods here would link Firebase twice and break Crashlytics' signal

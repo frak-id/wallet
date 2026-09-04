@@ -11,6 +11,9 @@ export const container = style({
     overscrollBehavior: "contain",
     backgroundColor: vars.surface.background,
     color: vars.text.primary,
+    // Takes focus on open via `useOverlayBehaviour`; it is a scroll container,
+    // not a control, so the UA ring would be noise.
+    outline: "none",
     "@media": tabletContainerMedia,
 });
 

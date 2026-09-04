@@ -349,8 +349,15 @@ export function PostPurchase({
         openSharingPage(undefined, placementId, {
             link: resolvedSharingUrl,
             products: parsedProducts,
+            checkoutToken: token,
         });
-    }, [resolvedVariant, placementId, resolvedSharingUrl, parsedProducts]);
+    }, [
+        resolvedVariant,
+        placementId,
+        resolvedSharingUrl,
+        parsedProducts,
+        token,
+    ]);
 
     // Bail conditions: hide when the resolved variant is missing, or when we're
     // in normal (non-preview) mode and the client/context isn't ready yet.

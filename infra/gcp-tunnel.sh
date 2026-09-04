@@ -7,6 +7,45 @@
 # the launch_*_tunnel job wrappers.
 trap 'kill -- -$$ 2>/dev/null; exit' INT TERM EXIT
 
+# --- Local port reclamation ---
+# A local listener left over from a previous run makes every rebind fail with
+# "address already in use", which no amount of retrying can fix. Reclaim the
+# port when the holder is one of our own tunnel processes; refuse to touch
+# anything else and let the caller abort instead of looping.
+function reclaim_port() {
+    local label=$1 port=$2 owner=$3 pids pid comm
+
+    command -v lsof >/dev/null 2>&1 || return 0
+    pids=$(lsof -nP -iTCP:"${port}" -sTCP:LISTEN -t 2>/dev/null)
+    [ -z "${pids}" ] && return 0
+
+    for pid in ${pids}; do
+        comm=$(ps -p "${pid}" -o comm= 2>/dev/null)
+        case "${comm}" in
+            ${owner})
+                echo "[${label}] Reclaiming port ${port} from stale ${comm##*/} (pid ${pid})"
+                kill "${pid}" 2>/dev/null
+                ;;
+            *)
+                echo "[${label}] Port ${port} is held by '${comm:-unknown}' (pid ${pid}) — refusing to kill it. Free the port, then restart the GCP Tunnel task."
+                return 1
+                ;;
+        esac
+    done
+
+    # The kernel releases the socket asynchronously, so poll rather than guess:
+    # a fixed sleep that loses the race abandons the tunnel for good.
+    local waited=0
+    while [ ${waited} -lt 20 ]; do
+        [ -z "$(lsof -nP -iTCP:"${port}" -sTCP:LISTEN -t 2>/dev/null)" ] && return 0
+        sleep 0.5
+        waited=$((waited + 1))
+    done
+
+    echo "[${label}] Port ${port} still held after SIGTERM. Free it, then restart the GCP Tunnel task."
+    return 1
+}
+
 # --- Postgres tunnel (gcloud SSH through bastion) ---
 bastionHost=$BASTION_HOST
 bastionZone=$BASTION_ZONE
@@ -17,15 +56,25 @@ dbPort=$DB_PORT
 echo "[postgres] Launching tunnel to ${bastionHost} in zone ${bastionZone} on port ${localPort} to ${dbHost}:${dbPort}"
 
 function launch_pg_tunnel() {
-    gcloud compute ssh ${bastionHost} --zone=${bastionZone} --tunnel-through-iap --ssh-flag="-4 -L${localPort}:${dbHost}:${dbPort} -N -q"
-    local exit_code=$?
+    local reauthed="" exit_code
 
-    if [ $exit_code -ne 0 ]; then
+    while true; do
+        reclaim_port "postgres" "${localPort}" "*ssh*" || return 1
+
+        gcloud compute ssh ${bastionHost} --zone=${bastionZone} --tunnel-through-iap --ssh-flag="-4 -L${localPort}:${dbHost}:${dbPort} -N -q"
+        exit_code=$?
+        [ $exit_code -eq 0 ] && return 0
+
+        # Re-auth is worth exactly one shot: a second failure is not a token problem.
+        if [ -n "${reauthed}" ]; then
+            echo "[postgres] Tunnel failed again after re-authenticating (exit code: ${exit_code}). Restart the GCP Tunnel task."
+            return 1
+        fi
+        reauthed="yes"
         echo "[postgres] Tunnel creation failed. Attempting to re-authenticate..."
         gcloud auth application-default login
         echo "[postgres] Retrying tunnel creation..."
-        launch_pg_tunnel
-    fi
+    done
 }
 
 # --- Postgres tunnel health-check ---
@@ -76,6 +125,39 @@ function monitor_pg_health() {
     done
 }
 
+# --- kubectl port-forward supervisor ---
+# `kubectl port-forward` exits 1 both when a live tunnel dies (transient) and
+# when the local port is already bound (permanent while the holder lives), so
+# every attempt resolves the bind conflict first and consecutive fast failures
+# are capped. A forward that stayed up long enough resets the budget.
+function supervise_port_forward() {
+    local label=$1 namespace=$2 service=$3 localPort=$4 remotePort=$5
+    local attempt=0 started exit_code delay
+
+    while true; do
+        if ! reclaim_port "${label}" "${localPort}" "*kubectl*"; then
+            echo "[${label}] Tunnel abandoned."
+            return 1
+        fi
+
+        started=$SECONDS
+        kubectl port-forward -n "${namespace}" "svc/${service}" "${localPort}:${remotePort}"
+        exit_code=$?
+        [ $exit_code -eq 0 ] && return 0
+
+        [ $((SECONDS - started)) -ge 60 ] && attempt=0
+        attempt=$((attempt + 1))
+        if [ ${attempt} -gt 5 ]; then
+            echo "[${label}] Port-forward failed 5 times in a row — giving up. Restart the GCP Tunnel task once the cause is fixed."
+            return 1
+        fi
+
+        delay=$((attempt * 3))
+        echo "[${label}] Port-forward failed (exit code: ${exit_code}). Retry ${attempt}/5 in ${delay}s..."
+        sleep "${delay}"
+    done
+}
+
 # --- sqld tunnel (kubectl port-forward to K8s pod) ---
 sqldLocalPort=$SQLD_LOCAL_PORT
 sqldNamespace=$SQLD_NAMESPACE
@@ -83,17 +165,6 @@ sqldService=$SQLD_SERVICE
 sqldRemotePort=$SQLD_REMOTE_PORT
 
 echo "[sqld] Forwarding localhost:${sqldLocalPort} -> ${sqldService}.${sqldNamespace}:${sqldRemotePort}"
-
-function launch_sqld_tunnel() {
-    kubectl port-forward -n "${sqldNamespace}" "svc/${sqldService}" "${sqldLocalPort}:${sqldRemotePort}"
-    local exit_code=$?
-
-    if [ $exit_code -ne 0 ]; then
-        echo "[sqld] Port-forward failed (exit code: ${exit_code}). Retrying in 3s..."
-        sleep 3
-        launch_sqld_tunnel
-    fi
-}
 
 # --- RustFS tunnel (kubectl port-forward to RustFS pod) ---
 rustfsLocalPort=${RUSTFS_LOCAL_PORT:-9100}
@@ -103,20 +174,19 @@ rustfsRemotePort=9000
 
 echo "[rustfs] Forwarding localhost:${rustfsLocalPort} -> ${rustfsService}.${rustfsNamespace}:${rustfsRemotePort}"
 
-function launch_rustfs_tunnel() {
-    kubectl port-forward -n "${rustfsNamespace}" "svc/${rustfsService}" "${rustfsLocalPort}:${rustfsRemotePort}"
-    local exit_code=$?
-
-    if [ $exit_code -ne 0 ]; then
-        echo "[rustfs] Port-forward failed (exit code: ${exit_code}). Retrying in 3s..."
-        sleep 3
-        launch_rustfs_tunnel
-    fi
-}
-
-# Run both tunnels in parallel, exit if either dies
+# Run every tunnel in parallel; each supervises its own restarts.
 launch_pg_tunnel &
-launch_sqld_tunnel &
-launch_rustfs_tunnel &
+pgPid=$!
+supervise_port_forward "sqld" "${sqldNamespace}" "${sqldService}" "${sqldLocalPort}" "${sqldRemotePort}" &
+sqldPid=$!
+supervise_port_forward "rustfs" "${rustfsNamespace}" "${rustfsService}" "${rustfsLocalPort}" "${rustfsRemotePort}" &
+rustfsPid=$!
 monitor_pg_health &
-wait
+
+# Wait on the tunnels only: the health monitor never returns, so a bare `wait`
+# keeps the task alive and apparently running long after every tunnel gave up.
+status=0
+for pid in ${pgPid} ${sqldPid} ${rustfsPid}; do
+    wait ${pid} || status=1
+done
+exit ${status}

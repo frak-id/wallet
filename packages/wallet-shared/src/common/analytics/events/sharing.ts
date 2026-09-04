@@ -1,28 +1,9 @@
-/**
- * Sharing event map — unified across all entry points.
- *
- * `source` is REQUIRED on every link event so dashboards can segment by
- * origin. Five entry points exist today:
- *   - `sharing_page_wallet`    — apps/wallet `/sharing` route
- *   - `sharing_page_listener`  — listener `frak_displaySharingPage` handler
- *   - `modal`                  — listener legacy modal final sharing step
- *   - `embedded_wallet`        — listener embedded wallet view (deprecating)
- *   - `explorer_detail`        — wallet explorer merchant detail card
- *
- * Total sharing events emitted:
- *   - `sharing_page_viewed` / `sharing_page_opened` — lifecycle, no source
- *   - `sharing_link_started`   — user triggered the share flow (intent), carries source
- *   - `sharing_link_shared`    — native share succeeded, carries source
- *   - `sharing_link_copied`    — clipboard copy, carries source
- *
- * `sharing_link_started` is emitted before the OS share sheet opens and
- * has no completion guarantee. Comparing it against `sharing_link_shared`
- * yields the share-completion rate (drop-offs in the native chooser).
- */
+/** Where a sharing link event originated, so dashboards can segment by entry point. */
 export type SharingSource =
     | "sharing_page_wallet"
     | "sharing_page_listener"
     | "modal"
+    /** Retired surface; kept so historical events stay comparable, nothing emits it any more. */
     | "embedded_wallet"
     | "explorer_detail"
     | "welcome_card";
@@ -33,17 +14,35 @@ type SharingLinkProps = {
     link?: string;
 };
 
+/**
+ * Set when a return scheme was present to hand the action to — not proof a
+ * host took it, since a scheme navigation cannot be acknowledged. `link` is
+ * independent: it carries whatever this page wrote, and a host may have
+ * replaced it with one built from its own state.
+ */
+type HandedOff = { handed_off?: boolean };
+
 export type SharingEventMap = {
-    sharing_link_started: SharingLinkProps;
-    sharing_link_shared: SharingLinkProps;
-    sharing_link_copied: SharingLinkProps;
     /**
-     * `sdk_version` and `native` are only present when a native host opened
-     * the page. They are what tells us which SDK builds are still in the
-     * field, so a page change can be weighed against what it would break in
-     * binaries that can no longer be updated.
+     * The user asked to share. A `handed_off: true` one is never followed by a
+     * `sharing_link_shared` — the host owns the sheet and reports no completion
+     * back — so compute the chooser completion rate over `handed_off` false only.
      */
+    sharing_link_started: SharingLinkProps & HandedOff;
+    /** Completion. Only ever fires for a share this page ran itself. */
+    sharing_link_shared: SharingLinkProps;
+    sharing_link_copied: SharingLinkProps & HandedOff;
+    /** `sdk_version` and `native` are only set when a native host opened the page. */
     sharing_page_viewed: {
+        merchant_id?: string;
+        sdk_version?: string;
+        native?: boolean;
+    };
+    /**
+     * A native host warmed this page, possibly without any user opening a sheet.
+     * Kept out of `sharing_page_viewed`, which is the sharing funnel's denominator.
+     */
+    sharing_page_preloaded: {
         merchant_id?: string;
         sdk_version?: string;
         native?: boolean;

@@ -11,12 +11,14 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 class SdkLoaderTest extends TestCase
 {
     private Config&MockObject $config;
     private StoreManagerInterface&MockObject $storeManager;
     private Context&MockObject $context;
+    private LoggerInterface&MockObject $logger;
     private SdkLoader $sdkLoader;
 
     protected function setUp(): void
@@ -24,8 +26,14 @@ class SdkLoaderTest extends TestCase
         $this->config = $this->createMock(Config::class);
         $this->storeManager = $this->createMock(StoreManagerInterface::class);
         $this->context = $this->createMock(Context::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
 
-        $this->sdkLoader = new SdkLoader($this->context, $this->config, $this->storeManager);
+        $this->sdkLoader = new SdkLoader(
+            $this->context,
+            $this->config,
+            $this->storeManager,
+            $this->logger
+        );
     }
 
     public function testIsEnabledDelegatesToConfig(): void
@@ -48,25 +56,76 @@ class SdkLoaderTest extends TestCase
         $store->method("getName")->willReturn("Frak Demo Store");
 
         $this->storeManager->method("getStore")->willReturn($store);
-        $this->config->method("getWalletUrl")->willReturn("https://wallet.frak.id");
+        $this->config->method("getEnvironment")->willReturn([
+            "wallet" => "https://wallet-dev.frak.id",
+            "backend" => "https://backend.gcp-dev.frak.id",
+        ]);
+        $this->config->method("isEnvironmentHalfConfigured")->willReturn(false);
         $this->config->method("getLanguage")->willReturn("fr");
         $this->config->method("getLogoUrl")->willReturn("https://cdn.frak.id/logo.png");
         $this->config->method("getMerchantId")->willReturn("merchant-123");
         $this->config->method("getWalletButtonPosition")->willReturn("right");
+        $this->logger->expects(self::never())->method("warning");
 
         $json = $this->sdkLoader->getFrakConfig();
         $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 
         self::assertIsArray($data);
         self::assertArrayHasKey("config", $data);
-        self::assertArrayHasKey("modalConfig", $data);
-        self::assertArrayHasKey("modalShareConfig", $data);
         self::assertArrayHasKey("modalWalletConfig", $data);
-        self::assertSame("https://wallet.frak.id", $data["config"]["walletUrl"]);
+        self::assertSame(
+            ["wallet" => "https://wallet-dev.frak.id", "backend" => "https://backend.gcp-dev.frak.id"],
+            $data["config"]["env"]
+        );
+        self::assertArrayNotHasKey("walletUrl", $data["config"]);
         self::assertSame("Frak Demo Store", $data["config"]["metadata"]["name"]);
         self::assertSame("fr", $data["config"]["metadata"]["lang"]);
         self::assertSame("https://cdn.frak.id/logo.png", $data["config"]["metadata"]["logoUrl"]);
         self::assertSame("merchant-123", $data["config"]["metadata"]["merchantId"]);
         self::assertSame("right", $data["modalWalletConfig"]["metadata"]["position"]);
+    }
+
+    /**
+     * @dataProvider halfConfiguredOriginProvider
+     */
+    public function testGetFrakConfigReportsAHalfConfiguredPair(
+        bool $isHalfConfigured,
+        bool $expectsWarning
+    ): void {
+        $store = $this->createMock(StoreInterface::class);
+        $store->method("getName")->willReturn("Frak Demo Store");
+
+        $this->storeManager->method("getStore")->willReturn($store);
+        $this->config->method("getEnvironment")->willReturn([
+            "wallet" => Config::DEFAULT_WALLET_URL,
+            "backend" => Config::DEFAULT_BACKEND_URL,
+        ]);
+        $this->config->method("isEnvironmentHalfConfigured")->willReturn($isHalfConfigured);
+        $this->logger
+            ->expects($expectsWarning ? self::once() : self::never())
+            ->method("warning")
+            ->with(self::stringContains("wallet_url/backend_url"), self::isType("array"));
+
+        $json = $this->sdkLoader->getFrakConfig();
+        $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame(
+            [
+                "wallet" => Config::DEFAULT_WALLET_URL,
+                "backend" => Config::DEFAULT_BACKEND_URL,
+            ],
+            $data["config"]["env"]
+        );
+    }
+
+    /**
+     * @return array<string, array{0: bool, 1: bool}>
+     */
+    public static function halfConfiguredOriginProvider(): array
+    {
+        return [
+            "half configured warns" => [true, true],
+            "both cleared stays quiet" => [false, false],
+        ];
     }
 }

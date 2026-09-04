@@ -47,7 +47,13 @@ const SiweProofDto = t.Object({
  * both completes a pending login AND refreshes the 5-minute step-up window.
  */
 export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 15 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "business-auth-two-factor",
+            windowMs: 60_000,
+            maxRequests: 15,
+        })
+    )
     .get(
         "/methods",
         async ({ headers }) => {

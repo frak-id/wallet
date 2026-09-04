@@ -3,18 +3,24 @@ import {
     FrakIFrameClientProvider,
 } from "@frak-labs/react-sdk";
 import { type PropsWithChildren, use } from "react";
-import { detectWalletUrl } from "../../../../../shared/detectWalletUrl";
+import { detectFrakEnv } from "../../../../../shared/detectFrakEnv";
 
-const walletUrlPromise: Promise<string> = detectWalletUrl(
+const envPromise = detectFrakEnv(
     import.meta.env.DEV,
     process.env.FRAK_WALLET_URL
+        ? {
+              wallet: process.env.FRAK_WALLET_URL,
+              backend:
+                  process.env.BACKEND_URL ?? "https://backend.gcp-dev.frak.id",
+          }
+        : "dev"
 );
 
 export function FrakProvider({ children }: PropsWithChildren) {
-    const walletUrl = use(walletUrlPromise);
+    const env = use(envPromise);
 
     const frakWalletSdkConfig = {
-        walletUrl,
+        env,
         metadata: {
             name: "Demo - EthCC",
         },

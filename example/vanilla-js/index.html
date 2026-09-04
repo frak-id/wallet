@@ -6,14 +6,14 @@
     <title>Example Vanilla JS</title>
     <link rel="icon" href="/favicon.ico" sizes="32x32"/>
     <script>
-        const detectWalletUrl = <%- detectWalletUrl %>;
+        const detectFrakEnv = <%- detectFrakEnv %>;
 
         (async () => {
-            const walletUrl = await detectWalletUrl(<%= useLocal %>, "<%= walletUrl %>");
+            const env = await detectFrakEnv(<%= useLocal %>, <%- remoteEnv %>);
 
             window.FrakSetup = {
                 config: {
-                    walletUrl,
+                    env,
                     metadata: {
                         name: "Vanilla JS",
                         lang: "fr",
@@ -34,17 +34,16 @@
                         },
                     },
                 },
-                modalWalletConfig: {
-                    metadata: {
-                        position: "left",
-                    },
-                },
             };
 
             // Load SDK components script
             const sdkScript = document.createElement('script');
             sdkScript.type = 'module';
             sdkScript.src = '<%- sdkScriptSrc %>';
+            // Without this a 404 is silent: no client ever lands and every action hangs.
+            sdkScript.onerror = () => {
+                console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+            };
             document.head.appendChild(sdkScript);
         })();
     </script>
@@ -62,17 +61,6 @@
         }
         .page-title {
             color: #fff;
-        }
-        frak-button-share .override {
-            background-color: black;
-            color: white;
-        }
-        frak-button-wallet .override {
-            background-color: black;
-        }
-        frak-open-in-app .override {
-            background-color: black;
-            color: white;
         }
 
         /* Merge Token Demo Styles */
@@ -132,18 +120,6 @@
         .status-box .warn { color: #fa0; }
         .status-box .error { color: #f55; }
         .status-box .success { color: #4CAF50; }
-        .token-display {
-            background: #1e2127;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 10px;
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 0.75rem;
-            color: #888;
-            max-height: 60px;
-            overflow-y: auto;
-        }
         .current-id {
             color: #4CAF50;
             font-family: monospace;
@@ -220,18 +196,6 @@
             font-size: 0.8rem;
             min-width: 120px;
         }
-        .cascade-info {
-            background: #1e2127;
-            border-radius: 8px;
-            padding: 12px;
-            margin-top: 10px;
-            font-family: monospace;
-            font-size: 0.8rem;
-            color: #888;
-            line-height: 1.6;
-        }
-        .cascade-info .high { color: #4CAF50; }
-        .cascade-info .low { color: #666; }
 
         /* Share Link Sample Styles */
         .share-link-row {
@@ -380,6 +344,21 @@
             image-url="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%230043EF'/><text x='50' y='66' font-size='52' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>F</text></svg>"
         ></frak-post-purchase>
     </div>
+
+    <h3 class="test-section__subtitle">Live card with an order token (<code>token</code>)</h3>
+    <p class="test-section__note">
+        Not a preview, so the CTA is live: clicking it opens the sharing page and
+        forwards <code>token</code> as the <code>checkoutToken</code>, which is how
+        a buyer with no <code>frak-client-id</code> still gets an install link.
+        Renders only once the SDK resolves a referral status.
+    </p>
+    <div class="component-row">
+        <frak-post-purchase
+            customer-id="demo-customer-1"
+            order-id="demo-order-1"
+            token="demo-checkout-token-1"
+        ></frak-post-purchase>
+    </div>
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
@@ -447,6 +426,43 @@
     </div>
 </div>
 
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 7: Native App Referral Deep Links  -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2 class="test-section__title">7. Share into the native example apps</h2>
+    <p class="test-section__text">
+        Builds a <code>FrakContext</code> v2 referral link targeting the native
+        harnesses in <code>example/native-ios</code> and <code>example/native-android</code>.
+        The <code>fCtx</code> query param is decoded natively and tracked as a referral
+        arrival: on iOS the harness forwards <code>onOpenURL</code> to
+        <code>Frak.client.appLink.handleReferral(url)</code>, while Android needs no host code
+        at all — <code>DeepLinkHandling.Automatic</code> reads the intent itself.
+    </p>
+    <p class="test-section__note">
+        Both harnesses only declare the <code>merchantapp://</code> URL scheme
+        (iOS has no associated-domains entitlement, and the Android
+        <code>https://example-merchant.com/product</code> filter is not
+        <code>autoVerify</code>'d), so that scheme is the link target on both platforms.
+        The link carries the native harnesses' merchant id — the native SDK drops an
+        arrival whose <code>fCtx</code> merchant doesn't match the app's own. On a
+        non-matching platform the button falls back to the native share sheet / clipboard.
+    </p>
+
+    <div class="share-link-row">
+        <button id="btn-share-native-ios" class="test-section__button">Share to iOS app</button>
+        <code id="native-link-ios" class="share-link-row__url">Generating…</code>
+    </div>
+    <div class="share-link-row">
+        <button id="btn-share-native-android" class="test-section__button test-section__button--variant">Share to Android app</button>
+        <code id="native-link-android" class="share-link-row__url">Generating…</code>
+    </div>
+
+    <div id="native-share-status" class="status-box">
+        <div class="info">[Ready] Detecting platform…</div>
+    </div>
+</div>
+
 <!-- Merge Token Demo Section -->
 <div class="merge-demo">
     <h2 class="merge-demo__title">Identity Merge Demo</h2>
@@ -455,17 +471,13 @@
         social app browsers (Instagram, TikTok) to external browsers via SSO/OAuth flows.
     </p>
 
-    <p class="merge-demo__text"><strong>Note:</strong> Token generation requires backend running with a merchant configured for "localhost".</p>
+    <p class="merge-demo__text"><strong>Note:</strong> Arriving with a <code>?fmt=</code> merge token in the URL is logged below; the listener processes it and links the identities.</p>
 
     <p class="merge-demo__text"><strong>Your anonymousId:</strong> <span id="current-client-id" class="current-id">Loading...</span></p>
 
     <div>
-        <button id="btn-generate-token" class="merge-demo__button">Generate Merge Token</button>
-        <button id="btn-simulate-redirect" class="merge-demo__button merge-demo__button--secondary">Simulate Redirect</button>
         <button id="btn-clear-id" class="merge-demo__button merge-demo__button--secondary">Clear ID (New Identity)</button>
     </div>
-
-    <div id="token-display" class="token-display" style="display: none;"></div>
 
     <div id="merge-status" class="status-box">
         <div class="info">[Ready] Merge token demo initialized</div>

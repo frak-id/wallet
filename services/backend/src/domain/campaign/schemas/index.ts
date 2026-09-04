@@ -54,7 +54,15 @@ export const RuleConditionSchema = t.Object({
 });
 export type RuleCondition = Static<typeof RuleConditionSchema>;
 
-// Recursive schema - t.Recursive required for self-referential ConditionGroup
+// Recursive schema - t.Recursive required for self-referential ConditionGroup.
+// The `$id` is a full JSON pointer on purpose: TypeBox emits the self-reference
+// verbatim as `{ $ref: <$id> }`, so a bare `"ConditionGroup"` leaks into the
+// OpenAPI document as a dangling ref that codegen cannot resolve. Using the
+// pointer makes every emitted ref target `components.schemas.ConditionGroup`,
+// which `scripts/generate-openapi.ts` registers as an Elysia model.
+// Runtime validation is unaffected: TypeBox resolves recursion via the `$id`
+// string identity, whatever that string happens to be.
+export const CONDITION_GROUP_SCHEMA_ID = "ConditionGroup";
 export const ConditionGroupSchema: TSchema = t.Recursive(
     (Self) =>
         t.Object({
@@ -65,7 +73,7 @@ export const ConditionGroupSchema: TSchema = t.Recursive(
             ]),
             conditions: t.Array(t.Union([RuleConditionSchema, Self])),
         }),
-    { $id: "ConditionGroup" }
+    { $id: `#/components/schemas/${CONDITION_GROUP_SCHEMA_ID}` }
 );
 
 export type ConditionGroup = {
@@ -285,6 +293,18 @@ export type EstimatedRewardItem = Omit<
     "conditions" | "productScope"
 > & { conditions: RuleConditions; productScope?: RuleConditions };
 
+// Mirrors `ProductDetails` (sdk/core/src/types/product.ts) field-for-field: the set of
+// purchase line-item fields a campaign's `productScope` can target. Every field is
+// optional on both sides of the wire — a caller supplies whatever it knows.
+const ProductDetailsSchema = t.Object({
+    productId: t.Optional(t.String()),
+    sku: t.Optional(t.String()),
+    name: t.Optional(t.String()),
+    quantity: t.Optional(t.Number()),
+    unitPrice: t.Optional(t.Number()),
+    totalPrice: t.Optional(t.Number()),
+});
+
 // Mirrors `BestReward` (sdk/core/src/rewards/select.ts), minus `campaignId`
 // which the native SDK has no use for.
 const BestRewardSchema = t.Object({
@@ -299,6 +319,12 @@ const BestRewardSchema = t.Object({
     referrerReward: t.Optional(EstimatedRewardSchema),
     refereeReward: t.Optional(EstimatedRewardSchema),
     minPurchaseValue: t.Optional(t.Number()),
+    // The gate, not the reward's basis — a product-gated campaign can still pay a
+    // percentage of the whole basket. See `BestReward.isProductScoped` in sdk/core.
+    isProductScoped: t.Boolean(),
+    // The subset of the caller's `products` that matched the winning campaign's scope.
+    // Absent for an unscoped winner or when the caller supplied no products.
+    matchedProducts: t.Optional(t.Array(ProductDetailsSchema)),
 });
 
 export const EstimatedRewardsResultSchema = t.Object({

@@ -11,7 +11,13 @@ import { registerRoutes } from "./register";
 import { walletSdkRoutes } from "./sdk";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "wallet-auth",
+            windowMs: 60_000,
+            maxRequests: 10,
+        })
+    )
     .use(walletSdkRoutes)
     .use(loginRoutes)
     .use(registerRoutes)

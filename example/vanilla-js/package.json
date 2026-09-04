@@ -15,7 +15,6 @@
   },
   "devDependencies": {
     "@frak-labs/app-essentials": "workspace:*",
-    "@frak-labs/components": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
     "@typescript/native": "catalog:",
     "typescript": "catalog:",

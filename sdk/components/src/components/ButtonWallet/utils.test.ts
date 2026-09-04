@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import * as embeddedWalletUtils from "@/actions/embeddedWallet";
+import * as sharingPageUtils from "@/actions/sharingPage";
 import * as safeVibrateUtils from "@/utils/browser/safeVibrate";
 import { openWalletModal } from "./utils";
 
-vi.mock("@/actions/embeddedWallet", () => ({
-    openEmbeddedWallet: vi.fn(),
+vi.mock("@/actions/sharingPage", () => ({
+    openSharingPage: vi.fn(),
 }));
 
 vi.mock("@/utils/browser/safeVibrate", () => ({
@@ -16,29 +16,29 @@ describe("openWalletModal", () => {
         vi.clearAllMocks();
     });
 
-    it("should call safeVibrate and openEmbeddedWallet", () => {
+    it("should call safeVibrate and openSharingPage", () => {
         openWalletModal();
 
         expect(safeVibrateUtils.safeVibrate).toHaveBeenCalledTimes(1);
-        expect(embeddedWalletUtils.openEmbeddedWallet).toHaveBeenCalledWith(
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
             undefined,
             undefined
         );
     });
 
-    it("should pass targetInteraction to openEmbeddedWallet", () => {
+    it("should pass targetInteraction to openSharingPage", () => {
         openWalletModal("custom.customerMeeting");
 
-        expect(embeddedWalletUtils.openEmbeddedWallet).toHaveBeenCalledWith(
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
             "custom.customerMeeting",
             undefined
         );
     });
 
-    it("should pass targetInteraction and placement to openEmbeddedWallet", () => {
+    it("should pass targetInteraction and placement to openSharingPage", () => {
         openWalletModal("custom.customerMeeting", "hero");
 
-        expect(embeddedWalletUtils.openEmbeddedWallet).toHaveBeenCalledWith(
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
             "custom.customerMeeting",
             "hero"
         );

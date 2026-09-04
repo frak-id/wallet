@@ -5,7 +5,7 @@ let package = Package(
     name: "tauri-plugin-frak-firebase",
     platforms: [
         .macOS(.v10_15),
-        .iOS(.v14),
+        .iOS(.v16),
     ],
     products: [
         .library(

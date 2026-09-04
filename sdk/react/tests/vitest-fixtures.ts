@@ -56,7 +56,6 @@ export type ReactSdkTestFixtures = {
      */
     mockCoreActions: {
         displayModal: ReturnType<typeof import("vitest").vi.fn>;
-        displayEmbeddedWallet: ReturnType<typeof import("vitest").vi.fn>;
         openSso: ReturnType<typeof import("vitest").vi.fn>;
         prepareSso: ReturnType<typeof import("vitest").vi.fn>;
         getMerchantInformation: ReturnType<typeof import("vitest").vi.fn>;
@@ -94,7 +93,10 @@ export const test = baseTest.extend<ReactSdkTestFixtures>({
         const mockClient: FrakClient = {
             config: {
                 domain: "example.com",
-                walletUrl: "https://wallet-test.frak.id",
+                env: {
+                    wallet: "https://wallet-test.frak.id",
+                    backend: "https://backend-test.frak.id",
+                },
                 metadata: {
                     name: "Test App",
                 },
@@ -112,7 +114,10 @@ export const test = baseTest.extend<ReactSdkTestFixtures>({
     mockFrakConfig: async ({}, use) => {
         const config: FrakWalletSdkConfig = {
             domain: "example.com",
-            walletUrl: "https://wallet-test.frak.id",
+            env: {
+                wallet: "https://wallet-test.frak.id",
+                backend: "https://backend-test.frak.id",
+            },
             metadata: {
                 name: "Test App",
                 logoUrl: "https://example.com/logo.png",
@@ -180,7 +185,6 @@ export const test = baseTest.extend<ReactSdkTestFixtures>({
 
         const actions = {
             displayModal: vi.fn(),
-            displayEmbeddedWallet: vi.fn(),
             openSso: vi.fn(),
             prepareSso: vi.fn(),
             getMerchantInformation: vi.fn(),

@@ -1,5 +1,6 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { setEnvironment } from "@frak-labs/core-sdk";
 import {
     defaultNS,
     fallbackLng,
@@ -20,12 +21,19 @@ import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
 import { StrictMode, startTransition } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
+import { installViewTransitionOptOut } from "./utils/bottomBarRoutes";
 import { initDeepLinks } from "./utils/deepLink";
 import { initKeyboardInset } from "./utils/keyboardInset";
 import { initSafeAreaInsets } from "./utils/safeArea";
 
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
+
+// Core-SDK helpers (in-app-browser escape) reach the backend through the SDK's environment singleton; this app isn't an SDK integration, so publish this build's own origins here.
+setEnvironment({
+    wallet: window.location.origin,
+    backend: process.env.BACKEND_URL ?? "https://backend.frak.id",
+});
 
 // Initialise analytics (OpenPanel + crashlytics globals) once at bootstrap.
 // Side-effect was previously triggered by importing the analytics module;
@@ -79,16 +87,12 @@ const router = createRouter({
     scrollRestoration: true,
     scrollToTopSelectors: ["main"],
     // Browsers without `document.startViewTransition` (Firefox, Safari < 18)
-    // gracefully fall through to instant navigation. We skip the transition
-    // on the very first navigation (no `fromLocation`) so the boot path —
-    // which often awaits route loaders, lazy chunks, and smart-wallet init —
-    // never trips Chromium's ~4s DOM-update timeout ("Transition was aborted
-    // because of timeout in DOM update").
-    defaultViewTransition: {
-        types: ({ pathChanged, fromLocation }) =>
-            fromLocation && pathChanged ? ["page"] : false,
-    },
+    // fall through to instant navigation. Which navigations actually animate is
+    // narrowed by `installViewTransitionOptOut` below.
+    defaultViewTransition: true,
 });
+
+installViewTransitionOptOut(router);
 
 // Subscribe to navigation events to manage root element attributes
 router.subscribe("onResolved", ({ toLocation }) => {
@@ -150,6 +154,12 @@ async function main() {
                     "localStorage",
                     "navigator",
                 ],
+            },
+            react: {
+                // The English bundle is added AFTER `languageChanged` fires, and
+                // react-i18next's default only listens to that event — without this an
+                // English device renders the French fallback and never re-renders.
+                bindI18nStore: "added",
             },
         });
 

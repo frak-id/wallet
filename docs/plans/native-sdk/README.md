@@ -1,132 +1,85 @@
-# Frak Native Mobile SDK — Plan
+# Frak Native Mobile SDK
 
-Native Android (Kotlin) and iOS (Swift) SDKs mirroring the capabilities of
-`sdk/core` + `sdk/components` + the sharing surface of `apps/listener`.
-
-## Documents
+Native Android (Kotlin) and iOS (Swift) SDKs mirroring `sdk/core` + `sdk/components` plus the
+sharing surface of `apps/listener`.
 
 | Doc | Content |
 |---|---|
-| [`01-platform-changes.md`](./01-platform-changes.md) | Changes required in `apps/wallet`, `apps/listener`, `services/backend` before/alongside native work |
-| [`02-native-sdk-overview.md`](./02-native-sdk-overview.md) | What we build natively, philosophy, architecture, API surface, phasing |
-| [`03-implementation-strategy.md`](./03-implementation-strategy.md) | How we build and ship it: two native codebases vs a shared core, distribution, React Native, monorepo integration, and the v0.1 POC scope |
+| [`decisions.md`](./decisions.md) | Every decision that is expensive to revisit, and why |
+| [`contract.md`](./contract.md) | The wire contract: `/sharing` params, the return channel, backend endpoints, golden fixtures |
+| [`open.md`](./open.md) | What is still open, ranked |
+| [`next.md`](./next.md) | What comes next, ordered, with preconditions |
 
-## Scope (MVP)
+Merchant-facing docs live with the code: `sdk/android/README.md`, `sdk/ios/README.md`,
+`sdk/AGENTS.md`. This folder is for decisions and gaps, not usage.
 
-A native app implementor must be able to:
+## Scope
 
-1. Ask **what the reward is** for a product, and **what the config is** for a placement (CTA texts, etc.)
-2. Send **purchase tracking** info
-3. Display the **sharing modal**, including the post-share "create your wallet" install step
-4. Get **current config / current campaigns** info
-5. **Redirect the user to the Frak app**
+A native app implementor must be able to: ask what the reward is for a product and what the config
+is for a placement; send purchase tracking; display the sharing modal including the post-share
+install step; read current config and campaigns; and redirect the user to the Frak app. Plus,
+cross-cutting: anonymous id generation, interaction tracking, inbound `fCtx` with the self-referral
+guard, and merchant matching by package id.
 
-Plus, cross-cutting: anonymous id generation + interaction tracking, inbound referral
-(`fCtx`) link handling with the self-referral guard, and merchant matching by package id
-(in addition to allowed domains).
+First client: the My Moulinex app (`com.groupeseb.moulinex.food`), verified manually — no SEB domain
+publishes usable well-known files.
 
-**First client:** the My Moulinex app (`com.groupeseb.moulinex.food`). Its merchant
-identity will be verified manually — no SEB domain currently publishes usable
-well-known files, so auto-verification cannot be the launch path. See
-[`01-platform-changes.md`](./01-platform-changes.md) §3.5.
+## The architectural decision
 
-## ⚠️ Prerequisite: identity proof-of-possession
-
-A security review during planning found a **live, exploitable reward-theft
-vulnerability in production today**, independent of native: `POST /user/identity/merge/execute`
-has no authentication at all, and `merge/initiate` mints a merge token for any
-`sourceAnonymousId` a caller names — an id that every share link publishes in clear.
-Worse than the theft, a hostile merge **permanently locks the victim out** of ever
-linking their wallet for that merchant (`WALLET_CONFLICT`).
-
-**This is being fixed first, before any native work.** The plan lives in
-[`../identity-proof-of-possession/`](../identity-proof-of-possession/): anonymous ids
-become derived from a device-held P-256 keypair, and sensitive operations carry a
-timestamped signature.
-
-We do it now because we currently have almost no shares and no active users — the
-legacy-id population that cannot be retrofitted is nearly empty. That window closes as
-we grow.
-
-Native consequences:
-
-- native v0.1 ships key derivation + signing from day one (no legacy native ids, so
-  native is cryptographic-only — no trust-on-first-use path)
-- the `?fmt=` merge flow stays unsupported until the fix lands
-- see [`01-platform-changes.md`](./01-platform-changes.md) §3.2 for the attack chain
-
-## Core architectural decision
-
-The web SDK is three layers, and the middle one — the `apps/listener` iframe — exists
-**only because of browser origin isolation**. A merchant's page cannot hold wallet
-credentials, so wallet-owning code lives cross-origin and the halves talk over
-`postMessage` RPC.
-
-**A native app is already a trust boundary. That layer is not ported.**
+The web SDK is three layers, and the middle one — the `apps/listener` iframe — exists only because
+of browser origin isolation. A native app is already a trust boundary, so that layer is not ported.
 
 | Web layer | Native |
 |---|---|
-| `sdk/core` direct HTTP calls | port directly |
-| `sdk/core` iframe-RPC calls | **replaced by the equivalent direct HTTPS endpoints — they already exist** |
-| `packages/rpc` postMessage transport | **not ported** |
-| `apps/listener` sharing UI | native shell hosting the existing `/sharing` route (see below) |
+| `sdk/core` direct HTTP calls | ported directly |
+| `sdk/core` iframe-RPC calls | replaced by the equivalent direct HTTPS endpoints |
+| `packages/rpc` postMessage transport | not ported |
+| `apps/listener` sharing UI | native shell hosting the existing `/sharing` route |
 | `apps/listener` wallet / passkey / SSO / pairing | out of MVP |
 
-Every RPC method the MVP needs has a direct HTTPS twin that is already `merchantId`-keyed
-and performs no server-side origin check:
+## Status — 2026-08-14
 
-| Web RPC | Native HTTPS |
+**Published.** `id.frak.sdk:core` and `id.frak.sdk:ui` at `1.0.0-beta.1` are on Maven Central;
+`frak-id/frak-ios-sdk` carries tag `1.0.0-beta.1`. Both release workflows ran green on 2026-08-13
+from tag `0a5b873a4`. Nothing has consumed a published artifact yet — the harnesses still use a
+Gradle composite build and a SwiftPM path dependency.
+
+This closes the window the planning docs were written against. Anything ABI-irreversible is no
+longer "free now, expensive later" — it is a break against a published coordinate, and the
+remaining budget for taking one is the rest of the `beta` line. See [`open.md`](./open.md) §1.
+
+Both platforms implement the MVP surface: identity, the FrakContext v2 codec and local link
+building, tracking over a durable queue, inbound `fCtx` with the self-referral guard, the install
+handoff, and the sharing sheet. `FrakClient` is a sealed concrete class with five namespaces
+(`config`, `rewards`, `sharing`, `tracking`, `appLink`). Licence: Apache-2.0.
+
+| Gate | State |
 |---|---|
-| `frak_sendInteraction` | `POST /user/track/interaction` |
-| `frak_getMerchantInformation` | `GET /user/merchant/estimated-rewards?merchantId=` |
-| `frak_getUserReferralStatus` | `GET /user/merchant/referral-status?merchantId=` |
-| `frak_displaySharingPage` | native sheet hosting `${walletUrl}/sharing?…` |
-| (config) | `GET /user/merchant/resolve?merchantId=&lang=` |
-| (purchase) | `POST /user/track/purchase` |
+| CI | `apps.yaml` lints, builds and unit-tests both SDKs per push/PR. Android runs the full `check` including the ABI gate |
+| ABI gate | Wired and enforced. `frak-sdk/api/frak-sdk.api` + `frak-sdk-ui/api/frak-sdk-ui.api` committed, `apiCheck` green |
+| Device | Android on a minified R8 build, iOS sheet on an iPhone 15, both 2026-08-13. Manual, harness-driven, single-screen |
+| Automated device/simulator | None. CI compiles iOS tests at the simulator triple and runs them on the macOS host, so every UIKit-gated suite is type-checked and executed nowhere |
+| XCFramework | `do_xcframework()` still `die`s "not implemented". Source distribution only |
 
-Only one surface needs a web view: the sharing page.
+Three places where iOS could not mirror Android, each forced rather than chosen:
 
-## The flow we are reproducing
+| | Android | iOS |
+|---|---|---|
+| Identity storage | key in `AndroidKeyStore`, non-exportable | key in a backup-excluded file; Secure Enclave when available, raw scalar otherwise |
+| Inbound links | `Automatic` via `ActivityLifecycleCallbacks` | `.manual` only — a library cannot observe a host's `Scene`/`AppDelegate` |
+| Install carrier | Play referrer, deterministic | install code + pasteboard + `SKOverlay` |
 
-The existing web flow, preserved end to end:
+## Prerequisite: identity proof-of-possession
 
-```
-Merchant app surface (product page / post-purchase / event)
-  → "Share and earn {REWARD}"
-  → sharing sheet: reward card, product cards, how-it-works, FAQ
-  → user shares (native OS share sheet) or copies
-  → PostShareConfirmation: "create your wallet to get your rewards"
-  → Install CTA
-      ├─ Frak app installed  → deep link, identity linked automatically
-      └─ not installed       → /install flow (Android: Play Install Referrer,
-                                iOS: install code + pasteboard + in-app App Store)
-```
+A security review found a live reward-theft vulnerability in production, independent of native:
+identity-merge endpoints had no authentication. It was fixed before native work started — see
+[`../identity-proof-of-possession/`](../identity-proof-of-possession/). Enforcement (the
+wallet-facing arms going from permissive to mandatory) is still open, gated on a store binary being
+live, tracked as `ROLLOUT-STEP-3`.
 
-Native adds one shortcut the web cannot have: when the Frak app is already
-installed, the install step becomes a direct deep link that links the anonymous
-id to the wallet with no code, no store, no friction.
+## History
 
-Two steps in that chain are easy to miss and each silently kills the funnel:
-the page needs `?confirmed=1` to show `PostShareConfirmation` at all under `native=1`,
-and the SDK — not the merchant — must own the install step end to end.
-
-## Status
-
-Planning. No implementation yet. Reviewed by architecture, security, platform-research
-and codebase-gap passes; findings folded into `01` and `02`.
-
-`03-implementation-strategy.md` adds the build-and-ship decisions the first two
-documents leave open (code sharing, distribution, React Native, monorepo integration)
-and corrects three claims in them: the CocoaPods and Maven Central distribution
-targets, and the "first production Kotlin/Swift codebase" premise of `02` §12
-question 6.
-
-It also reframes v0.1: the MVP scope in `02` §11 is preceded by a deliberately thin
-**POC** that proves one share loop end to end on both platforms, driven by example apps
-under `example/native-{android,ios}/` — which are not a demo but the only way to run a
-native SDK at all. See `03` §6.
-
-**The POC is internal only.** No merchant integrates it, Moulinex included; they get the
-hardened MVP. That is what makes the §6.1 cuts safe, and it splits the security
-checklist: `3.2` and `3.6` still block because they are live production vulnerabilities,
-while `3.3` and `3.4` move to before public release (`03` §6.1b).
+This folder was 34 files and ~13k lines of audit narrative through 2026-08-14. It was consolidated
+to the five documents above; the audit rounds, per-area reports and superseded plans are in git
+history. Finding ids (`A3`, `9.x`, `S4`, `T3`, `B3`…) are preserved wherever an item is still open,
+so older commit messages still resolve.

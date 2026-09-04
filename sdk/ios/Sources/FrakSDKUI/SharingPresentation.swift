@@ -1,0 +1,321 @@
+#if canImport(UIKit)
+    import Foundation
+    import FrakSDK
+
+    /// One sharing session, started at the tap rather than at the sheet's first render.
+    ///
+    /// Presenting a `.sheet` occupies the main actor for the whole present-and-animate, so the
+    /// session build and its navigation are kicked off here, before SwiftUI starts presenting.
+    @MainActor
+    final class SharingPresentation {
+        let model: SharingSheetModel
+        /// Swapped when recovery rebuilds the engine, so the sheet presents the new one.
+        private(set) var webView: SharingWebView
+
+        private let pool: SharingWebViewPool
+        private var preparation: Task<Void, Never>?
+        private var disposed = false
+
+        /// Whether a sheet took ownership; decides which teardown signal disposes this.
+        private(set) var wasPresented = false
+
+        /// Whether SwiftUI has taken the web view out of the hierarchy, and whether the pool has
+        /// had it back. The two are separate because either can happen first.
+        private var contentDismantled = false
+        private var reclaimed = false
+
+        private init(model: SharingSheetModel, webView: SharingWebView, pool: SharingWebViewPool) {
+            self.model = model
+            self.webView = webView
+            self.pool = pool
+        }
+
+        func onPresented() {
+            wasPresented = true
+        }
+
+        /// SwiftUI has taken this session's web view off screen for good.
+        func onContentDismantled() {
+            contentDismantled = true
+            reclaimWebView()
+        }
+
+        /// Hands the pooled view back, at most once, and never before this session is done with it.
+        ///
+        /// The presenter calls this itself before starting the next session: SwiftUI dismantles a
+        /// closed sheet's content *after* the next sheet is already up, so a dismantle left to its
+        /// own timing can arrive once the pool has re-lent this very view — and `release` detaches
+        /// it and re-warms it, which strands the live sheet on its skeleton showing warm content.
+        func reclaimWebView() {
+            guard disposed, !reclaimed else { return }
+            reclaimed = true
+            pool.release(webView)
+        }
+
+        /// Ends the session. Idempotent, and deliberately not driven by `.onDisappear`, which also
+        /// fires when a `UIActivityViewController` covers the sheet.
+        ///
+        /// Synchronous: an outcome still resolving loses to the `.dismissed` the caller is about to
+        /// report. That race is a local queue append behind the dismissal animation, and Android
+        /// accepts the same one on its gesture path.
+        func dispose() {
+            guard !disposed else { return }
+            disposed = true
+            // Stops a stale build resuming into a session this presentation has dropped,
+            // cooperative cancellation notwithstanding.
+            preparation?.cancel()
+            preparation = nil
+            model.release()
+            // A presented sheet still has frames to draw with this view in them, so its own
+            // container hands it back from `dismantleUIView`. One that never appeared has no
+            // container to do that, and one already dismantled has nothing left to wait for.
+            if !wasPresented || contentDismantled { reclaimWebView() }
+            // Severs the session: `share()`/`copy()`/`fallBack(to:)` are un-cancelled tasks that
+            // outlive the sheet, and their closures write the presenter's `best` and flip its
+            // `isPresented` — which by now may belong to the next session.
+            model.onOutcome = nil
+            model.onClose = nil
+        }
+
+        static func start(
+            pool: SharingWebViewPool,
+            request: SharingRequest,
+            install: FrakInstallPresentation,
+            detectInstall: Bool,
+            language: String?,
+            imageCache: SharingImagePreviewCache,
+            onOutcome: @escaping (SharingResult) -> Void,
+            onClose: @escaping () -> Void
+        ) -> SharingPresentation {
+            let trace = SharingTrace()
+            let sessionId = UUID().uuidString.lowercased()
+
+            let webView = pool.acquire(SharingWebViewBinding(sessionId: sessionId))
+
+            // A fragment activation is only same-document if the document is actually there;
+            // hanging one off a half-loaded page would strand it.
+            let activationBaseURL = webView.documentReady ? webView.loadedBaseURL : nil
+            switch (activationBaseURL, pool.hasWarmView) {
+            case (.some, _): trace.mark("launch (warm view, ACTIVATING)")
+            case (nil, true): trace.mark("launch (warm view, still loading)")
+            case (nil, false): trace.mark("launch (COLD view)")
+            }
+
+            let model = SharingSheetModel(
+                sessionId: sessionId,
+                trace: trace,
+                activationBaseURL: activationBaseURL,
+                install: install,
+                detectInstall: detectInstall,
+                language: language,
+                imageCache: imageCache
+            )
+            model.onOutcome = onOutcome
+            model.onClose = onClose
+
+            let binding = { [weak model] in
+                SharingWebViewBinding(
+                    sessionId: sessionId,
+                    onAction: { model?.onPageAction($0) },
+                    onPageReady: {
+                        trace.mark("document finished")
+                        model?.onPageReady()
+                    },
+                    onLoadFailed: {
+                        trace.mark("load FAILED")
+                        model?.onPageUnavailable()
+                    },
+                    onOpenExternal: { model?.openExternally($0) }
+                )
+            }
+            webView.bind(binding())
+
+            // Attach before start: whichever finishes second issues the navigation.
+            model.attach(webView)
+
+            let presentation = SharingPresentation(model: model, webView: webView, pool: pool)
+            // The same binding: the fresh engine reports to this session, not a warm one.
+            model.onRebuildEngine = { [weak presentation] in
+                guard let presentation, let rebuilt = pool.rebuild(binding()) else { return nil }
+                presentation.webView = rebuilt
+                return rebuilt
+            }
+            presentation.preparation = Task { await model.start(request) }
+            return presentation
+        }
+    }
+
+    /// Owns the share surface's warm view pool and whatever session is currently up.
+    ///
+    /// A merchant flips a `Binding<Bool>` rather than calling a method, so `launch` is idempotent
+    /// and the sheet's own `onAppear` can re-ask without risk.
+    @MainActor
+    final class SharingPresenter: ObservableObject {
+        /// Where the session is in its life. One value rather than a `launched`/`active` pair,
+        /// which could spell states that do not exist.
+        private enum Phase {
+            case idle
+            case live(SharingPresentation)
+            /// Launched, but the pool refused it, so its failure is already reported. Not `idle`:
+            /// it still owes exactly one `finish`, and must not report twice.
+            case reported
+        }
+
+        /// Written by the modifier's `body`, not captured by the observer: `onChange` runs the
+        /// action registered by the *previous* render, which would share the previous request.
+        var pendingRequest = SharingRequest()
+
+        /// Deliberately **not** cleared when a session ends: `@Published`, so finishing inside
+        /// SwiftUI's dismissal transaction would re-present the sheet.
+        @Published private(set) var presentation: SharingPresentation?
+
+        private var phase: Phase = .idle
+        private var pool: SharingWebViewPool?
+        /// Shared with every session this presenter starts, so a warmed logo is instant at the tap.
+        private let imageCache = SharingImagePreviewCache()
+
+        /// The BCP-47 tag the pool was warmed on, so a re-drive rebuilds the identical URL.
+        private var warmLanguage: String?
+
+        /// Warms the sheet: first the engine, then the data it needs to build a URL, then the page.
+        ///
+        /// Driven by attaching the `frakSharingSheet` modifier, which is the only control: iOS has
+        /// no other warm entry point, so a merchant does not call this by hand. The reward is not
+        /// warmed: its cache key includes the request's products, which are unknown here.
+        func warm(language: String? = nil) async {
+            guard Frak.isInitialized, let client = try? Frak.client else { return }
+            // Latched: `launch` rebuilds this URL and compares it string-for-string, and the
+            // modifier's own warm call has no configuration to hand.
+            if let language { warmLanguage = language }
+            let trace = SharingTrace()
+            let walletOrigin = client.environment.wallet
+            let bundleId = Bundle.main.bundleIdentifier ?? ""
+
+            // Ahead of both awaits, and the reason `prepare` is split off `warm(_:)`: booting the
+            // engine needs only the origin, while the URL is two round trips away.
+            poolIfPossible()?.prepare()
+            trace.mark("warm engine ready")
+
+            guard let clientId = await client.anonymousId else { return }
+            trace.mark("warm identity ready")
+
+            // Without both halves of the identity the page would render nothing, and warming
+            // that banks only DNS/TLS/bundle rather than the queries.
+            guard let config = try? await client.config.resolve() else { return }
+            trace.mark("warm config ready")
+
+            // Only starts the fetch; `warm()` never waits on the image.
+            if let logoURL = config.displayLogoURL, let url = URL(string: logoURL) {
+                await imageCache.prefetch(url)
+            }
+
+            poolIfPossible()?
+                .warm(
+                    SharingPageURL.warm(
+                        walletOrigin: walletOrigin,
+                        merchantId: config.merchantId,
+                        clientId: clientId,
+                        bundleId: bundleId,
+                        appName: config.displayName,
+                        logoURL: config.displayLogoURL,
+                        language: warmLanguage
+                    )
+                )
+        }
+
+        /// Starts the session. A second call while one is up is a no-op rather than a replacement.
+        func launch(
+            _ request: SharingRequest,
+            install: FrakInstallPresentation,
+            detectInstall: Bool,
+            language: String?,
+            onOutcome: @escaping (SharingResult) -> Void,
+            onClose: @escaping () -> Void
+        ) {
+            warmLanguage = language
+            switch phase {
+            case .live, .reported:
+                // Already up. Both the merchant's binding and the modifier's own `onAppear` ask.
+                return
+            case .idle:
+                // In order, before `acquire` below: the previous session's sheet content may not
+                // be dismantled yet, and a dismantle landing after the next session has taken the
+                // same view yanks it out from under a live sheet. No-op once it has already run.
+                presentation?.reclaimWebView()
+            }
+            guard let pool = poolIfPossible() else {
+                phase = .reported
+                onOutcome(.failed(.notInitialized))
+                onClose()
+                return
+            }
+            let started = SharingPresentation.start(
+                pool: pool,
+                request: request,
+                install: install,
+                detectInstall: detectInstall,
+                language: language,
+                imageCache: imageCache,
+                onOutcome: onOutcome,
+                onClose: onClose
+            )
+            phase = .live(started)
+            presentation = started
+        }
+
+        func onPresented() {
+            guard case .live(let current) = phase else { return }
+            current.onPresented()
+        }
+
+        /// The sheet has gone.
+        ///
+        /// - Parameters:
+        ///   - onlyIfUnpresented: pass true from the `isPresented` change, which fires before the
+        ///     dismissal animation; a presented sheet is left to `onDismiss`.
+        ///   - onSettled: the merchant-visible report, called synchronously. Not called on a no-op.
+        func finish(onlyIfUnpresented: Bool = false, onSettled: () -> Void) {
+            switch phase {
+            case .idle:
+                return
+            case .reported:
+                phase = .idle
+                onSettled()
+            case .live(let current):
+                if onlyIfUnpresented, current.wasPresented { return }
+                // `presentation` is deliberately left pointing at this session — see its doc. The
+                // sheet is on its way out and still rendering the page it showed; the next
+                // `launch` replaces it.
+                phase = .idle
+                current.dispose()
+                onSettled()
+            }
+        }
+
+        /// The share surface has left the screen; the pooled view's timers and process go with it.
+        func teardown() {
+            // A session goes with the surface.
+            phase = .idle
+            // A surface can go while the session is still live — a merchant navigating away from
+            // the presenting screen — and only `dispose` stops the install probe and takes the
+            // store surface down. Idempotent, so a sheet that already dismissed pays nothing.
+            presentation?.dispose()
+            // Ahead of `destroy()`, which refuses to drop a view the pool still thinks is lent.
+            presentation?.reclaimWebView()
+            // The one place `presentation` is cleared: the surface is gone, so nothing is
+            // rendering it and no sheet transaction is in flight to disturb.
+            presentation = nil
+            pool?.destroy()
+            pool = nil
+        }
+
+        /// Nil before `Frak.initialize`, which has no wallet origin to boot a view against.
+        private func poolIfPossible() -> SharingWebViewPool? {
+            guard Frak.isInitialized, let client = try? Frak.client else { return nil }
+            if let pool { return pool }
+            let created = SharingWebViewPool(walletOrigin: client.environment.wallet)
+            pool = created
+            return created
+        }
+    }
+#endif

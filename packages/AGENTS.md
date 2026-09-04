@@ -26,7 +26,7 @@ bun run typecheck                           # runs across all packages from root
 - **Subpath exports are explicit**: wildcard re-exports forbidden. Public API is locked per-package.
 - **`test-foundation` setup order matters**: `shared-setup → react-setup → RTL → wallet-mocks → apps-setup → project-setup`. Breaking the order breaks hoisting-safe mocks.
 - **`app-essentials` is workspace-only** (not published). Only runtime dep: `viem`.
-- **Lightning CSS targets** (for CSS Modules apps) are centralised in `dev-tooling` — Chrome 100+, Safari 14+, Firefox 91+, Edge 100+.
+- **Lightning CSS targets** (for CSS Modules apps) are centralised in `dev-tooling`, derived from `BROWSER_TARGET` — Safari 15.4+, Chrome 111+, Edge 111+, Firefox 114+.
 - **Zustand rule**: individual selectors mandatory everywhere.
 
 ## Anti-Patterns

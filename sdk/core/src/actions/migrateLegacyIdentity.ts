@@ -1,6 +1,44 @@
-import { getBackendUrl } from "../config/backendUrl";
+import { getBackendUrl } from "../config/environment";
 import { sdkConfigStore } from "../config/sdkConfigStore";
-import { clearPendingLegacyId, signProof } from "../identity/sign";
+import {
+    clearPendingLegacyId,
+    getPendingLegacyId,
+    signProof,
+} from "../identity/sign";
+import { withBrowserLock } from "../utils/browser/withBrowserLock";
+import { sdkVersionHeaders } from "../utils/sdkVersionHeader";
+
+/**
+ * Error codes naming a credential the caller could hold later. Refusing on
+ * one of these says the request was inadmissible, not that the migration is
+ * impossible, so the marker survives for a future visit to retry.
+ */
+const RECOVERABLE_ERROR_CODES = new Set([
+    "PROOF_REQUIRED",
+    "PROOF_OR_TOKEN_REQUIRED",
+    "MISSING_ANONYMOUS_ID",
+]);
+
+/**
+ * Whether a failed merge response leaves the legacy id worth retrying. A 403
+ * is admission control, which a later visit may satisfy; other 4xx are
+ * terminal for this pairing and drop the marker rather than loop forever.
+ */
+async function isRecoverableFailure(response: Response): Promise<boolean> {
+    if (response.status >= 500) return true;
+    if (response.status === 403) return true;
+    try {
+        const body = (await response.clone().json()) as { code?: string };
+        return (
+            typeof body.code === "string" &&
+            RECOVERABLE_ERROR_CODES.has(body.code)
+        );
+    } catch {
+        return false;
+    }
+}
+
+const MIGRATION_LOCK_NAME = "frak-legacy-merge";
 
 /**
  * Fold a pre-derivation (legacy) anonymous id into the derived id that
@@ -22,11 +60,9 @@ import { clearPendingLegacyId, signProof } from "../identity/sign";
 export async function migrateLegacyIdentity({
     legacyId,
     derivedId,
-    walletUrl,
 }: {
     legacyId: string;
     derivedId: string;
-    walletUrl?: string;
 }): Promise<void> {
     if (typeof window === "undefined") return;
     // A derivation that produced the id it is replacing would merge a group
@@ -36,15 +72,33 @@ export async function migrateLegacyIdentity({
         return;
     }
 
+    // At most one instance merges; the losers have nothing left to do.
+    await withBrowserLock(
+        MIGRATION_LOCK_NAME,
+        async () => {
+            // Re-read under the lock: a sibling may have confirmed the merge
+            // while this one queued, and the marker is the shared truth.
+            if (getPendingLegacyId() !== legacyId) return;
+            await runMerge({ legacyId, derivedId });
+        },
+        { ifAvailable: true }
+    );
+}
+
+async function runMerge({
+    legacyId,
+    derivedId,
+}: {
+    legacyId: string;
+    derivedId: string;
+}): Promise<void> {
     try {
         const merchantId = await sdkConfigStore.resolveMerchantId();
         if (!merchantId) return;
 
-        // Proves possession of `derivedId` (the merge SOURCE) only —
-        // nothing about `legacyId`, since no key ever existed for it. That's
-        // accepted: an attacker can run the identical migration against any
-        // harvested legacy id. Still required by `/merge/initiate`, so a
-        // signing failure aborts rather than sending a request that 403s.
+        // Proves possession of `derivedId` only (no key ever existed for
+        // `legacyId`). Still required by `/merge/initiate`, so a signing
+        // failure aborts rather than sending a request that 403s.
         const proof = await signProof({
             op: "frak-merge-v1",
             merchantId,
@@ -52,7 +106,7 @@ export async function migrateLegacyIdentity({
         });
         if (!proof) return;
 
-        const backendUrl = getBackendUrl(walletUrl);
+        const backendUrl = getBackendUrl();
 
         const initiateResponse = await fetch(
             `${backendUrl}/user/identity/merge/initiate`,
@@ -61,6 +115,7 @@ export async function migrateLegacyIdentity({
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json",
+                    ...sdkVersionHeaders(),
                 },
                 body: JSON.stringify({
                     sourceAnonymousId: derivedId,
@@ -70,11 +125,9 @@ export async function migrateLegacyIdentity({
             }
         );
         if (!initiateResponse.ok) {
-            // 4xx: this migration can never succeed as posed (e.g. the
-            // derived id is latched to a different key), so drop the marker
-            // rather than loop forever. 5xx/network falls to the catch
-            // below and retries.
-            if (initiateResponse.status < 500) clearPendingLegacyId();
+            if (!(await isRecoverableFailure(initiateResponse))) {
+                clearPendingLegacyId();
+            }
             return;
         }
 
@@ -90,6 +143,7 @@ export async function migrateLegacyIdentity({
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json",
+                    ...sdkVersionHeaders(),
                 },
                 body: JSON.stringify({
                     mergeToken,
@@ -106,7 +160,9 @@ export async function migrateLegacyIdentity({
             clearPendingLegacyId();
             return;
         }
-        if (executeResponse.status < 500) clearPendingLegacyId();
+        if (!(await isRecoverableFailure(executeResponse))) {
+            clearPendingLegacyId();
+        }
     } catch {
         // Transient (offline, DNS, 5xx). The marker stays, so the next
         // visit retries.

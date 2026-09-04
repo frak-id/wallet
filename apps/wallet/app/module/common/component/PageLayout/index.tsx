@@ -16,7 +16,11 @@ type PageLayoutProps = {
      * Used for lightweight breadcrumbs / step indicators in multi-step flows.
      */
     headerCenter?: ReactNode;
-    /** Optional content rendered right-aligned on the header row. */
+    /**
+     * Optional content rendered right-aligned on the header row. The slot
+     * carries `data-testid="page-header-end"` so e2e can scope to it — the
+     * one test seam in this component; prefer roles and labels elsewhere.
+     */
     headerEnd?: ReactNode;
     /** Bottom-pinned footer content (buttons, actions) */
     footer?: ReactNode;
@@ -78,7 +82,12 @@ export function PageLayout({
                         <div className={styles.headerCenter}>
                             {headerCenter}
                         </div>
-                        <div className={styles.headerEnd}>{headerEnd}</div>
+                        <div
+                            className={styles.headerEnd}
+                            data-testid="page-header-end"
+                        >
+                            {headerEnd}
+                        </div>
                     </div>
                 )}
                 {children}

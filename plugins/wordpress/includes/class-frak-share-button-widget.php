@@ -56,15 +56,6 @@ class Frak_Share_Button_Widget extends Frak_Widget_Base {
 				'label' => __( 'Fallback text (no reward)', 'frak' ),
 				'help'  => __( 'Shown when the button text contains {REWARD} but no reward is available.', 'frak' ),
 			),
-			'clickAction'       => array(
-				'type'    => 'select',
-				'label'   => __( 'Click action (advanced)', 'frak' ),
-				'help'    => __( 'Override what happens when the button is clicked.', 'frak' ),
-				'options' => array(
-					'sharing-page'    => __( 'Sharing page', 'frak' ),
-					'embedded-wallet' => __( 'Embedded wallet', 'frak' ),
-				),
-			),
 			'placement'         => array(
 				'type'  => 'text',
 				'label' => __( 'Placement ID', 'frak' ),

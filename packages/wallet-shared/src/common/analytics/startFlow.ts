@@ -45,7 +45,7 @@ function generateFlowId(): string {
  *    events without flow context
  *
  * `flow_id` lives in the closure, never in OpenPanel global properties, so
- * concurrent flows (e.g. token-send + an embedded wallet opened by a push
+ * concurrent flows (e.g. token-send + a sharing page opened by a push
  * notification) don't cross-contaminate.
  */
 export function startFlow<Name extends FlowBaseName>(

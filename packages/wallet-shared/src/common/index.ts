@@ -22,7 +22,6 @@ export type {
     DeepLinkEventMap,
     DeepLinkSource,
     DiagnosticsEventMap,
-    EmbeddedWalletEventMap,
     EventMap,
     Flow,
     FlowEndExtras,
@@ -84,7 +83,6 @@ export {
     type ApiErrorKeyMap,
     asApiError,
     getErrorCode,
-    getErrorStatus,
     resolveApiErrorKey,
 } from "./api/errors";
 export {

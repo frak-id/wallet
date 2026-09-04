@@ -58,7 +58,6 @@ class Frak_Shortcodes {
 		'classname'          => '',
 		'no_reward_text'     => '',
 		'target_interaction' => '',
-		'click_action'       => '',
 		'button_style'       => '',
 	);
 
@@ -105,7 +104,7 @@ class Frak_Shortcodes {
 	}
 
 	/**
-	 * `[frak_share_button text="Share & earn up to {REWARD}" no_reward_text="Share & earn" click_action="sharing-page"]`
+	 * `[frak_share_button text="Share & earn up to {REWARD}" no_reward_text="Share & earn"]`
 	 *
 	 * @param array<string, string>|string $atts Shortcode attributes.
 	 * @return string

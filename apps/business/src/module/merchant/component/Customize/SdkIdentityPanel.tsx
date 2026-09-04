@@ -21,6 +21,7 @@ import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { useCustomizeSection } from "../saveRegistry";
 import * as styles from "./customize.css";
+import { SECTION_KEYS } from "./sections";
 import type { SdkIdentityFormValues } from "./types";
 import { valueOrNull } from "./utils";
 
@@ -83,7 +84,7 @@ export function SdkIdentityPanel({
         [editSdkConfig, form]
     );
 
-    useCustomizeSection("identity", form, onSubmit);
+    useCustomizeSection(SECTION_KEYS.identity, form, onSubmit);
 
     const handleLogoUploadSuccess = useCallback(
         (url: string) => {

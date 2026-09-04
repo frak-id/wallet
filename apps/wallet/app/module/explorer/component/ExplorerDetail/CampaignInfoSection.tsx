@@ -16,6 +16,7 @@ import {
     ClockIcon,
     CoinsIcon,
 } from "@frak-labs/design-system/icons";
+import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import { useTranslation } from "react-i18next";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { InstructionList } from "@/module/common/component/InstructionList";
@@ -118,7 +119,7 @@ function CampaignInfoCard({ view }: { view: CampaignView }) {
                     label={t("explorer.detail.earningsAvailability")}
                     action={
                         <Text variant="bodySmall" weight="medium">
-                            {view.isImmediate
+                            {view.isImmediate || view.pendingDays == null
                                 ? t("explorer.detail.immediate")
                                 : t("explorer.detail.pendingDays", {
                                       count: view.pendingDays,
@@ -155,7 +156,7 @@ function RewardRow({
     reward,
     minPurchase,
 }: {
-    labelKey: string;
+    labelKey: DefaultTranslationKey;
     reward: EstimatedReward;
     minPurchase: number | undefined;
 }) {
@@ -224,7 +225,7 @@ function TieredRewardBlock({
     labelKey,
     reward,
 }: {
-    labelKey: string;
+    labelKey: DefaultTranslationKey;
     reward: TieredReward;
 }) {
     const { t } = useTranslation();

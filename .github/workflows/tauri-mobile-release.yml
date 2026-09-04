@@ -142,6 +142,26 @@ jobs:
             exit 1
           fi
 
+      # Fails the release before any build: a partial floor bump links and ships,
+      # surfacing only as an always-true availability branch in the plugins.
+      # No `bun install` — the script only reads files.
+      - name: "📥 Checkout"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 1
+
+      - name: "🧅 Setup Bun"
+        uses: oven-sh/setup-bun@v2
+
+      - name: "📱 Gate the iOS deployment floor"
+        run: bun scripts/check-ios-floor.ts
+
+      # A dev-flavoured manifest in a prod AAB fails App Link verification outright:
+      # assetlinks.json is stage-scoped, so nothing delegates to the prod package.
+      - name: "🤖 Gate the Android deep-link manifest"
+        run: bun scripts/check-android-manifest.ts
+
   prepare:
     name: "📦 Build SDK"
     needs: validate
@@ -320,10 +340,10 @@ jobs:
           import PackageDescription
           let package = Package(
               name: "Prewarm",
-              platforms: [.iOS(.v14), .macOS(.v10_15)],
+              platforms: [.iOS(.v16), .macOS(.v10_15)],
               products: [.library(name: "Prewarm", targets: ["Prewarm"])],
               dependencies: [
-                  .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "12.11.0"),
+                  .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "12.13.0"),
               ],
               targets: [
                   .target(

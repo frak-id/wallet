@@ -18,6 +18,8 @@ import { PlacementCustomization } from "./PlacementCustomization";
 import { PlacementSelector } from "./PlacementSelector";
 import { SaveFooter } from "./SaveFooter";
 import { SdkIdentityPanel } from "./SdkIdentityPanel";
+import { SharingWordingPanel } from "./SharingWordingPanel";
+import { hasDiscardableSectionChanges } from "./sections";
 import { getSdkConfig } from "./utils";
 
 export function CustomizePage({ merchantId }: { merchantId: string }) {
@@ -49,13 +51,8 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
         isSuccess: isCreatePlacementSuccess,
     } = useMerchantUpdate({ merchantId, target: "sdk-config" });
 
-    // Identity stays mounted across selector changes; only the customization
-    // sections below the selector unmount (and lose their edits).
     const hasUnsavedSectionChanges = useMemo(
-        () =>
-            Object.entries(dirtySections).some(
-                ([key, isDirty]) => isDirty && key !== "identity"
-            ),
+        () => hasDiscardableSectionChanges(dirtySections),
         [dirtySections]
     );
 
@@ -119,6 +116,15 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
                     <SdkIdentityPanel
                         merchantId={merchantId}
                         sdkConfig={sdkConfig}
+                    />
+
+                    {/* Branded from the render-gated sdkConfig like the sibling
+                        panels: `merchant` is a separate in-flight query, and a
+                        preset clicked before it resolved persisted brandless copy. */}
+                    <SharingWordingPanel
+                        merchantId={merchantId}
+                        sdkConfig={sdkConfig}
+                        shopName={sdkConfig.name ?? "My Store"}
                     />
 
                     <PlacementSelector

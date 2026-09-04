@@ -58,10 +58,12 @@ describe("Identity Merge Routes API", () => {
                 mergeToken: "mock-merge-token",
                 expiresAt: expiresAt.toISOString(),
             });
-            expect(mockInitiateMerge).toHaveBeenCalledWith({
-                sourceAnonymousId: "fingerprint-abc123",
-                merchantId: "550e8400-e29b-41d4-a716-446655440000",
-            });
+            expect(mockInitiateMerge).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    sourceAnonymousId: "fingerprint-abc123",
+                    merchantId: "550e8400-e29b-41d4-a716-446655440000",
+                })
+            );
         });
 
         it("should accept wallet auth without sourceAnonymousId", async () => {
@@ -91,11 +93,13 @@ describe("Identity Merge Routes API", () => {
             expect(response.status).toBe(200);
             const data = await response.json();
             expect(data.mergeToken).toBe("wallet-merge-token");
-            expect(mockInitiateMerge).toHaveBeenCalledWith({
-                sourceAnonymousId: undefined,
-                sourceWalletAddress: "0xWalletAddress",
-                merchantId: "550e8400-e29b-41d4-a716-446655440000",
-            });
+            expect(mockInitiateMerge).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    sourceAnonymousId: undefined,
+                    sourceWalletAddress: "0xWalletAddress",
+                    merchantId: "550e8400-e29b-41d4-a716-446655440000",
+                })
+            );
         });
 
         it("should return 400 when neither wallet auth nor sourceAnonymousId is provided", async () => {

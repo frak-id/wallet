@@ -33,6 +33,7 @@ export const managementRoutes = new Elysia()
             };
         },
         {
+            withWalletAuthent: true,
             response: {
                 200: t.Object({
                     id: t.String(),
@@ -41,6 +42,7 @@ export const managementRoutes = new Elysia()
                     pairingCode: t.String(),
                     authenticatorHints: t.Optional(t.Array(t.String())),
                 }),
+                401: t.String(),
                 404: t.String(),
             },
         }

@@ -3,12 +3,23 @@
  * Tests that the provider correctly provides config to child components
  */
 
+import { getEnvironment, setEnvironment } from "@frak-labs/core-sdk";
 import { render } from "@testing-library/react";
 import React, { createElement } from "react";
-import { describe, expect, test } from "../../tests/vitest-fixtures";
+import {
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../tests/vitest-fixtures";
 import { FrakConfigContext, FrakConfigProvider } from "./FrakConfigProvider";
 
 describe("FrakConfigProvider", () => {
+    beforeEach(() => {
+        // The env is a page-level singleton and a config without `env` leaves
+        // whatever was published alone, so each case has to state its own.
+        setEnvironment("prod");
+    });
     test("should render children", ({ mockFrakConfig }) => {
         const { container } = render(
             createElement(
@@ -45,51 +56,62 @@ describe("FrakConfigProvider", () => {
         expect(receivedConfig.domain).toBe(mockFrakConfig.domain);
     });
 
-    test("should apply default walletUrl", () => {
-        const configWithoutWalletUrl = {
-            domain: "example.com",
-            metadata: {
-                name: "Test App",
-            },
-        };
-
-        let receivedConfig: any;
-
-        const Consumer = () => {
-            const config = React.useContext(FrakConfigContext);
-            receivedConfig = config;
-            return null;
-        };
+    test("should leave the published environment alone when none is given", () => {
+        setEnvironment("dev");
 
         render(
-            createElement(
-                FrakConfigProvider,
-                { config: configWithoutWalletUrl },
-                createElement(Consumer)
-            )
+            createElement(FrakConfigProvider, {
+                config: { domain: "example.com", metadata: { name: "Test" } },
+            })
         );
 
-        expect(receivedConfig.walletUrl).toBe("https://wallet.frak.id");
+        // Not "reset to prod": a bare config must not repoint an SDK that
+        // another integration on the page already pointed at a stage.
+        expect(getEnvironment()).toEqual({
+            wallet: "https://wallet-dev.frak.id",
+            backend: "https://backend.gcp-dev.frak.id",
+        });
     });
 
-    test("should preserve custom walletUrl", ({ mockFrakConfig }) => {
-        let receivedConfig: any;
-
-        const Consumer = () => {
-            const config = React.useContext(FrakConfigContext);
-            receivedConfig = config;
-            return null;
-        };
-
+    test("nested providers: the last one to mount wins globally", () => {
+        // Documents the singleton's cost: `env` is page-level, so unlike every
+        // other config field it is NOT scoped to the provider subtree.
         render(
             createElement(
                 FrakConfigProvider,
-                { config: mockFrakConfig },
-                createElement(Consumer)
+                { config: { env: "prod" as const, metadata: { name: "O" } } },
+                createElement(FrakConfigProvider, {
+                    config: { env: "dev" as const, metadata: { name: "I" } },
+                })
             )
         );
 
-        expect(receivedConfig.walletUrl).toBe(mockFrakConfig.walletUrl);
+        expect(getEnvironment().backend).toBe(
+            "https://backend.gcp-dev.frak.id"
+        );
+    });
+
+    test("should publish the configured environment", ({ mockFrakConfig }) => {
+        render(createElement(FrakConfigProvider, { config: mockFrakConfig }));
+
+        expect(getEnvironment()).toEqual(mockFrakConfig.env);
+    });
+
+    test("should publish the named dev environment", () => {
+        render(
+            createElement(FrakConfigProvider, {
+                config: {
+                    domain: "example.com",
+                    env: "dev",
+                    metadata: { name: "Test App" },
+                },
+            })
+        );
+
+        expect(getEnvironment()).toEqual({
+            wallet: "https://wallet-dev.frak.id",
+            backend: "https://backend.gcp-dev.frak.id",
+        });
     });
 
     test("should fallback domain to window.location.host", () => {
@@ -137,7 +159,7 @@ describe("FrakConfigProvider", () => {
         );
 
         expect(receivedConfig.domain).toBe(mockFrakConfig.domain);
-        expect(receivedConfig.walletUrl).toBe(mockFrakConfig.walletUrl);
+        expect(receivedConfig.env).toEqual(mockFrakConfig.env);
         expect(receivedConfig.metadata).toEqual(mockFrakConfig.metadata);
         expect(receivedConfig.customizations).toEqual(
             mockFrakConfig.customizations
@@ -169,14 +191,12 @@ describe("FrakConfigProvider", () => {
         );
 
         expect(receivedConfig.domain).toBe("minimal.com");
-        expect(receivedConfig.walletUrl).toBe("https://wallet.frak.id");
         expect(receivedConfig.metadata.name).toBe("Minimal Test App");
     });
 
     test("should support nested providers with different configs", () => {
         const outerConfig = {
             domain: "outer.com",
-            walletUrl: "https://wallet-outer.frak.id",
             metadata: {
                 name: "Outer App",
             },
@@ -184,7 +204,6 @@ describe("FrakConfigProvider", () => {
 
         const innerConfig = {
             domain: "inner.com",
-            walletUrl: "https://wallet-inner.frak.id",
             metadata: {
                 name: "Inner App",
             },

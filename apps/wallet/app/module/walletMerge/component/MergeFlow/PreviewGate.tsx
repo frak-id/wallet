@@ -1,6 +1,7 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
+import type { DefaultTranslate } from "@frak-labs/wallet-shared/types";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
@@ -27,10 +28,7 @@ const MERGE_STEP_NUMBER: Record<
     settling: 5,
 };
 
-export function renderStepIndicator(
-    t: ReturnType<typeof useTranslation>["t"],
-    kind: Step["kind"]
-) {
+export function renderStepIndicator(t: DefaultTranslate, kind: Step["kind"]) {
     if (kind === "success") return null;
     return (
         <Text variant="bodySmall" color="secondary">

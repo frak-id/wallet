@@ -8,10 +8,6 @@ import type {
     DisplaySharingPageParamsType,
     DisplaySharingPageResultType,
 } from "./rpc/displaySharingPage";
-import type {
-    DisplayEmbeddedWalletParamsType,
-    DisplayEmbeddedWalletResultType,
-} from "./rpc/embedded";
 import type { SendInteractionParamsType } from "./rpc/interaction";
 import type { GetMerchantInformationReturnType } from "./rpc/merchantInformation";
 import type {
@@ -56,11 +52,6 @@ import type { WalletStatusReturnType } from "./rpc/walletStatus";
  *  - Params: None
  *  - Returns: {@link GetMerchantInformationReturnType}
  *  - Response Type: promise (one-shot)
- *
- * #### frak_displayEmbeddedWallet
- * - Params: [request: {@link DisplayEmbeddedWalletParamsType}, metadata: {@link FrakWalletSdkConfig}["metadata"], placement?: string]
- * - Returns: {@link DisplayEmbeddedWalletResultType}
- * - Response Type: promise (one-shot)
  *
  * #### frak_displaySharingPage
  * - Params: [request: {@link DisplaySharingPageParamsType}, configMetadata: {@link FrakWalletSdkConfig}["metadata"], placement?: string]
@@ -131,19 +122,6 @@ export type IFrameRpcSchema = [
         Method: "frak_getMerchantInformation";
         Parameters?: undefined;
         ReturnType: GetMerchantInformationReturnType;
-    },
-    /**
-     * Method to show the embedded wallet, with potential customization
-     * This is a one-shot request
-     */
-    {
-        Method: "frak_displayEmbeddedWallet";
-        Parameters: [
-            request: DisplayEmbeddedWalletParamsType,
-            metadata: FrakWalletSdkConfig["metadata"],
-            placement?: string,
-        ];
-        ReturnType: DisplayEmbeddedWalletResultType;
     },
     /**
      * Method to send interactions (arrival, sharing, custom events)

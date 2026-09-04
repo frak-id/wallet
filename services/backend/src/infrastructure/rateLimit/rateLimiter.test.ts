@@ -11,7 +11,7 @@ vi.mock("@frak-labs/app-essentials", () => ({
     isRunningLocally: false,
 }));
 
-import { InMemoryRateLimitStore } from "./rateLimiter";
+import { InMemoryRateLimitStore, rateLimitMiddleware } from "./rateLimiter";
 
 describe("InMemoryRateLimitStore", () => {
     const config = { windowMs: 60_000, maxRequests: 10 };
@@ -153,5 +153,34 @@ describe("InMemoryRateLimitStore", () => {
         mockNow(60_001);
         store.purgeExpired();
         expect(store.consume("k", config)).toBe(false);
+    });
+});
+
+describe("rateLimitMiddleware bucket isolation", () => {
+    async function get(app: { handle: (req: Request) => Promise<Response> }) {
+        return app.handle(
+            new Request("http://localhost/x", {
+                headers: { "x-forwarded-for": "1.2.3.4" },
+            })
+        );
+    }
+
+    it("gives limiters with identical config but distinct buckets their own window", async () => {
+        const config = { windowMs: 60_000, maxRequests: 1 };
+        const { Elysia } = await import("elysia");
+
+        const a = new Elysia()
+            .use(rateLimitMiddleware({ bucket: "bucket-a", ...config }))
+            .get("/x", () => "a");
+        const b = new Elysia()
+            .use(rateLimitMiddleware({ bucket: "bucket-b", ...config }))
+            .get("/x", () => "b");
+
+        expect((await get(a)).status).toBe(200);
+        expect((await get(a)).status).toBe(429);
+
+        // Elysia dedupes plugins on `{name, seed}`; without `bucket` in the
+        // seed this second limiter would be discarded and inherit A's window.
+        expect((await get(b)).status).toBe(200);
     });
 });

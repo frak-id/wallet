@@ -8,11 +8,6 @@
 	const { PanelBody, TextControl, SelectControl } = components;
 	const { __ } = i18n;
 
-	const CLICK_ACTIONS = [
-		{ label: __( 'Sharing page', 'frak' ), value: 'sharing-page' },
-		{ label: __( 'Embedded wallet', 'frak' ), value: 'embedded-wallet' },
-	];
-
 	const BUTTON_STYLES = [
 		{ label: __( 'Primary (theme button)', 'frak' ), value: 'primary' },
 		{ label: __( 'Secondary (outline)', 'frak' ), value: 'secondary' },
@@ -91,13 +86,6 @@
 					el(
 						PanelBody,
 						{ title: __( 'Advanced', 'frak' ), initialOpen: false },
-						el( SelectControl, {
-							label: __( 'Click action', 'frak' ),
-							help: __( 'Override what happens when the button is clicked.', 'frak' ),
-							value: attributes.clickAction,
-							options: CLICK_ACTIONS,
-							onChange: setter( 'clickAction' ),
-						} ),
 						el( TextControl, {
 							label: __( 'Placement ID', 'frak' ),
 							help: __( 'Backend placement identifier for custom configuration.', 'frak' ),
@@ -122,7 +110,6 @@
 						text: attr( attributes.text ),
 					classname: attr( composeClassname( attributes.buttonStyle, [ attributes.className, attributes.classname ].filter( Boolean ).join( ' ' ).trim() ) ),
 						placement: attr( attributes.placement ),
-						'click-action': attr( attributes.clickAction ),
 						'no-reward-text': attr( attributes.noRewardText ),
 						'target-interaction': attr( attributes.targetInteraction ),
 					} )

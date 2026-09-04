@@ -54,7 +54,7 @@ describe("FrakIFrameClientProvider", () => {
             expect(el).not.toBeNull();
             return el;
         });
-        expect(iframe?.src).toContain(`${mockFrakConfig.walletUrl}/listener`);
+        expect(iframe?.src).toContain("https://wallet-test.frak.id/listener");
     });
 
     test("should seed the listener URL with the derived clientId", async ({
@@ -271,7 +271,7 @@ describe("FrakIFrameClientProvider", () => {
                 expect.objectContaining({
                     config: expect.objectContaining({
                         domain: "example.com",
-                        walletUrl: "https://wallet-test.frak.id",
+                        env: mockFrakConfig.env,
                     }),
                 })
             );

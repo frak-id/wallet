@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 # Build / install / launch the Android merchant example app.
 #
-# Mirrors the ergonomics of `apps/wallet/scripts/tauri-dev.sh`: one script with
-# subcommands, wrapped by root package.json scripts.
-#
 # Usage:
 #   bun run native:android          # build + install + launch (boots an AVD if needed)
 #   bun run native:android:build    # assembleDebug only, no device required
@@ -19,6 +16,10 @@ set -euo pipefail
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PACKAGE_ID="id.frak.example.android"
 ACTIVITY="$PACKAGE_ID/.MainActivity"
+# `Frak` is FrakLogger's tag in :frak-sdk; `FrakSharing` is a separate one in
+# :frak-sdk-ui, and filtering on `Frak` alone drops every sheet warning. The
+# last two catch the crashes and WebView errors the SDK never sees.
+LOG_TAGS=(Frak FrakSharing FrakHarness AndroidRuntime:E chromium:E)
 
 log() { echo "[native-android] $*"; }
 die() {
@@ -26,9 +27,8 @@ die() {
 	exit 1
 }
 
-# Locates the SDK and exports ANDROID_HOME. The export matters: Gradle reads it
-# directly, and without it `assembleDebug` fails with a raw "SDK location not
-# found" even when the SDK is sitting at the default path.
+# Locates the SDK and exports ANDROID_HOME; without it, assembleDebug fails with a raw
+# "SDK location not found" even at the default path.
 resolve_sdk() {
 	local sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 	[ -d "$sdk" ] || die "Android SDK not found. Set ANDROID_HOME, or install via Android Studio."
@@ -36,7 +36,7 @@ resolve_sdk() {
 	export PATH="$sdk/platform-tools:$sdk/emulator:$PATH"
 }
 
-# Only the device-driven paths need adb; `build` deliberately does not.
+# Only the device-driven paths need adb; `build` does not.
 require_adb() {
 	command -v adb >/dev/null 2>&1 || die "adb not found under ${ANDROID_HOME}/platform-tools"
 }
@@ -76,8 +76,7 @@ boot_emulator() {
 }
 
 do_build() {
-	# Needs no device, but still needs the SDK path — without this Gradle fails
-	# with a raw "SDK location not found" instead of the pointed message below.
+	# Needs no device, but still needs the SDK path resolved.
 	resolve_sdk
 	cd "$APP_DIR"
 	log "Building debug APK..."
@@ -93,10 +92,9 @@ do_run() {
 	log "Installing..."
 	./gradlew installDebug
 
-	# `installDebug` returns before the package manager has finished indexing
-	# the new package, so an immediate launch fails with a misleading
-	# "Activity class ... does not exist" even though the APK and the resolver
-	# table both carry it. Wait for the activity to become resolvable.
+	# installDebug returns before the package manager finishes indexing; an immediate
+	# launch fails with a misleading "Activity class ... does not exist". Wait for it
+	# to become resolvable.
 	log "Waiting for the package manager to index the app..."
 	local tries=30
 	while ! adb shell cmd package resolve-activity --brief "$PACKAGE_ID" 2>/dev/null |
@@ -113,18 +111,17 @@ do_run() {
 
 	log "Running. Streaming SDK logs (Ctrl-C to stop)..."
 	adb logcat -c 2>/dev/null || true
-	adb logcat -s FrakSDK
+	adb logcat -s "${LOG_TAGS[@]}"
 }
 
 do_logs() {
 	resolve_sdk
 	require_adb
 	device_online || die "No device attached."
-	adb logcat -s FrakSDK
+	adb logcat -s "${LOG_TAGS[@]}"
 }
 
-# ktlint comes from the Gradle plugin, so these need no `brew install` — the
-# first run downloads it, later runs are cached like any other dependency.
+# ktlint comes from the Gradle plugin: first run downloads it, then it's cached.
 do_lint() {
 	cd "$APP_DIR"
 	log "Checking Kotlin formatting and style..."

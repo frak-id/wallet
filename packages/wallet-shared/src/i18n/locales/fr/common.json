@@ -28,6 +28,10 @@
                 "title": "Verrouillage d'écran requis",
                 "message": "Votre appareil a besoin d'un verrouillage d'écran (code, schéma ou biométrie) pour utiliser les passkeys. Ajoutez-en un dans vos réglages, puis réessayez."
             },
+            "permissionsPolicy": {
+                "title": "Passkey bloquée",
+                "message": "Une extension du navigateur ou une politique de sécurité a bloqué la demande de passkey. Désactivez votre gestionnaire de mots de passe pour ce site, ou essayez une fenêtre privée."
+            },
             "unsupported": {
                 "title": "Passkeys indisponibles",
                 "message": "Les passkeys ne peuvent pas être utilisées sur cet appareil pour le moment. Vérifiez que votre gestionnaire de passkeys est configuré, ou essayez un autre appareil."

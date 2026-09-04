@@ -86,7 +86,7 @@ function walletStatusSideEffect(
             "frak-wallet-interaction-token",
             status.interactionToken
         );
-        ensureIdentity(status.interactionToken, client.config.walletUrl);
+        ensureIdentity(status.interactionToken);
     } else {
         window.sessionStorage.removeItem("frak-wallet-interaction-token");
     }

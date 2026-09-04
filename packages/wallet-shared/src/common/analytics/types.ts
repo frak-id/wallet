@@ -17,7 +17,7 @@ export type AnalyticsGlobalProperties = {
     platform?: "ios" | "android" | "web" | "unknown";
     // Pass a custom iframe referrer (since the event referrer could be overridden if user got multiple websites using frak open, see: https://github.com/Openpanel-dev/openpanel/issues/172)
     iframeReferrer?: string;
-    // Embedded specifics
+    // Partner-site URL the iframe is resolving against
     contextUrl?: string;
     // Session / build
     session_id?: string;

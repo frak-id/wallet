@@ -16,10 +16,7 @@ export { OriginPairingState } from "./component/OriginPairingState";
 
 export { PairingQrCode } from "./component/PairingQrCode";
 export { PairingStatus } from "./component/PairingStatus";
-export {
-    StatusBoxModal,
-    StatusBoxWalletEmbedded,
-} from "./component/PairingStatusBox";
+export { StatusBoxModal } from "./component/PairingStatusBox";
 export { PairingView } from "./component/PairingView";
 // Hooks
 export { useCancelAllSignatureRequests } from "./hook/useCancelAllSignatureRequests";
@@ -45,7 +42,6 @@ export type {
 } from "./types/errors";
 // Errors
 export {
-    isPairingSignatureError,
     PairingNotReadyError,
     PairingSignatureError,
 } from "./types/errors";

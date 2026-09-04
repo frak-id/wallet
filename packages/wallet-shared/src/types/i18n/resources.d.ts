@@ -28,6 +28,10 @@ export default interface Resources {
           "message": "The passkey prompt was closed or timed out before the operation completed.",
           "title": "Authentication cancelled"
         },
+        "permissionsPolicy": {
+          "message": "A browser extension or security policy blocked the passkey request. Disable your password manager extension for this site, or try a private window.",
+          "title": "Passkey blocked"
+        },
         "retry": "Try again",
         "syncFailed": {
           "message": "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device - not a problem with your account.",
@@ -194,27 +198,21 @@ export default interface Resources {
     "sdk": {
       "modal": {
         "dismiss": {
-          "primaryAction": "Continue browsing",
-          "primaryAction_sharing": "Share without being paid"
+          "primaryAction": "Continue browsing"
         },
         "final": {
           "description": "You've successfully completed all the steps.",
           "description_reward": "Check your earnings at any time on [wallet.frak.id](https://wallet.frak.id). You too can share with your friends, all your shares that lead to clicks, registrations or purchases generate new earnings!",
-          "description_sharing": "Your wallet has been created to receive your **{{productName}}** reward for sharing. To find your wallet, go to [wallet.frak.id](https://wallet.frak.id).",
           "dismissed": {
-            "description": "All good",
-            "description_sharing": "Share this article."
+            "description": "All good"
           },
           "title": "Success",
-          "title_reward": "Gains",
-          "title_sharing": "Share"
+          "title_reward": "Gains"
         },
         "login": {
           "description": "Login to your Frak account to get the best experience on **{{productName}}**",
           "description_reward": "{{productName}} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
-          "description_sharing": "{{productName}} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.",
           "primaryAction": "Create my account in 30 sec",
-          "secondaryAction": "Use a QR code",
           "success": "Connection successful",
           "title": "Connection"
         },
@@ -297,28 +295,24 @@ export default interface Resources {
           "title": "Share with your friends"
         },
         "steps": {
-          "1": "Share in 1 click. A personal link is automatically generated with each share.",
-          "2": "Earn on every purchase. Every order placed through your link earns you cash.",
-          "2_min": "Earn on every purchase. Every order of at least {{minAmount}} placed through your link earns you cash.",
-          "2_min_product": "Earn on every purchase of selected products of at least {{minAmount}}. Every qualifying order placed through your link earns you cash.",
-          "2_product": "Earn on every purchase of selected products. Every qualifying order placed through your link earns you cash.",
-          "3": "Collect your earnings in the app. Install FRAK to collect your earnings.",
-          "3_lockup": "Your earnings will be available {{lockupInDay}} days after the purchase is confirmed.",
-          "title": ""
-        }
-      },
-      "wallet": {
-        "loggedIn": {
-          "onboarding": {
-            "share": "🚀 Let's go! Share this product and receive your rewards directly.",
-            "share_referred": "🚀 Share your turn to win more!",
-            "welcome": "🥳 Congratulations! Your wallet is created."
+          "1": {
+            "description": "A personal link is automatically generated with each share.",
+            "title": "Share in 1 click."
+          },
+          "2": {
+            "description": "Every order placed through your link earns you cash.",
+            "description_min": "Every order of at least {{minAmount}} placed through your link earns you cash.",
+            "description_min_product": "Every qualifying order placed through your link earns you cash.",
+            "description_product": "Every qualifying order placed through your link earns you cash.",
+            "title": "Earn on every purchase.",
+            "title_min_product": "Earn on every purchase of selected products of at least {{minAmount}}.",
+            "title_product": "Earn on every purchase of selected products."
+          },
+          "3": {
+            "description": "Install FRAK to collect your earnings.",
+            "lockup": "Your earnings will be available {{lockupInDay}} days after the purchase is confirmed.",
+            "title": "Collect your earnings in the app."
           }
-        },
-        "login": {
-          "primaryAction": "I create my wallet",
-          "text": "Create your wallet and receive up to **{{estimatedReward}}** per referred friend",
-          "text_referred": "Welcome! Receive up to **{{estimatedReward}}** in case of purchase on the site.\n\nCreate your wallet in 1 click"
         }
       }
     }
@@ -495,16 +489,23 @@ export default interface Resources {
       }
     },
     "installCode": {
-      "codeCopied": "Code copied!",
+      "codeCopied": "Reward code copied!",
+      "codelessDescription": "Download the app and log in to claim your rewards.",
+      "codelessTitle": "Don't lose your {{estimatedReward}}!",
       "copyCode": "Copy the code",
       "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
       "download": "Download the app",
-      "error": "Failed to generate code. Please refresh.",
-      "infoDescription": "When opening the app, tap <1>\"I have a recovery code\"</1>.",
+      "infoDescription": "When opening the app, tap <1>\"I have a reward code\"</1>.",
       "infoTitle": "Code valid for 3 days",
-      "loading": "Generating your code...",
+      "installedCodeToggle": "Or enter this code manually",
+      "installedHeadline": "You're all set. Open the app to claim {{estimatedReward}}.",
+      "installedMerchant": "Connected to {{merchantName}}",
+      "loading": "Generating your reward code...",
+      "openWallet": "Open Frak & claim {{estimatedReward}}",
+      "openWalletCta": "Open my wallet",
       "processing": "Setting up your wallet...",
-      "title": "Don't lose your {{estimatedReward}}!\nCopy this code"
+      "processingDone": "Your wallet is ready",
+      "title": "Don't lose your {{estimatedReward}}!\nCopy your reward code"
     },
     "monerium": {
       "account": "Monerium Account",
@@ -661,7 +662,7 @@ export default interface Resources {
         "checkError": "Unable to verify this email right now. Please try again.",
         "clearAriaLabel": "Clear email address",
         "continue": "Continue",
-        "description": "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.",
+        "description": "Your email is only used to recover your account if you lose access. It will never be used to send you unsolicited messages. You can add it later from your wallet.",
         "label": "Email",
         "placeholder": "your.email@gmail.com",
         "title": "Enter your email address"
@@ -682,21 +683,19 @@ export default interface Resources {
       },
       "notification": {
         "description": "Get notified as soon as money is credited to your wallet.",
-        "descriptionHighlight": "Track your rewards in real time.",
         "enable": "Yes, notify me",
-        "skip": "Later",
         "title": "Don't miss any reward!"
       },
-      "recoveryCode": "I have a recovery code",
       "referral": {
         "appliedToast": "Referral code applied",
-        "description": "Got a creator code? Enter it here. Otherwise, you can skip this step.",
+        "description": "Got a creator code? Enter it here.",
         "label": "Referral code",
         "placeholder": "Ex: LOLA10",
-        "skip": "Skip",
         "submitCta": "Apply code",
         "title": "Add a referral code"
       },
+      "rewardCode": "I have a reward code",
+      "skipStep": "Later",
       "start": "Get started",
       "steps": {
         "one": {
@@ -721,24 +720,10 @@ export default interface Resources {
       }
     },
     "pendingActions": {
-      "walletAlreadyLinked": "This referral link is already linked to another wallet."
-    },
-    "recoveryCode": {
-      "codeLabel": "Recovery code",
-      "description": "Paste the code copied from wallet.frak.id to recover your earnings.",
-      "error": {
-        "alreadyLinked": "This code has already been used.",
-        "generic": "Something went wrong, please try again.",
-        "invalid": "Incorrect or expired code, check the code copied from wallet.frak.id"
-      },
-      "paste": "Paste the code",
-      "success": {
-        "description": "You'll receive a notification as soon as a friend purchases via your link.",
-        "merchantInfo": "Connected to {{merchantName}}",
-        "title": "Your referral link has been found!"
-      },
-      "title": "Recover your code",
-      "validate": "Validate the code"
+      "walletAlreadyLinked": {
+        "message": "This referral link is already linked to another wallet.",
+        "title": "Referral link already claimed"
+      }
     },
     "reward": {
       "detail": {
@@ -770,6 +755,7 @@ export default interface Resources {
         "viewAll": "View all"
       },
       "status": {
+        "bank_depleted": "Awaiting funding by the brand",
         "cancelled": "Cancelled",
         "consumed": "Consumed",
         "expired": "Expired",
@@ -784,6 +770,24 @@ export default interface Resources {
         "referral": "Referral",
         "unknown": "Reward"
       }
+    },
+    "rewardCode": {
+      "codeLabel": "Reward code",
+      "description": "Paste the reward code you copied from wallet.frak.id to claim your earnings.",
+      "error": {
+        "alreadyLinked": "This reward code has already been used.",
+        "generic": "Something went wrong, please try again.",
+        "invalid": "Incorrect or expired reward code, check the code copied from wallet.frak.id",
+        "unresolved": "This reward code isn't linked to a purchase yet. Try again in a few minutes."
+      },
+      "paste": "Paste the code",
+      "success": {
+        "description": "You'll receive a notification as soon as a friend purchases via your link.",
+        "merchantInfo": "Connected to {{merchantName}}",
+        "title": "Your referral link has been found!"
+      },
+      "title": "Enter your reward code",
+      "validate": "Validate the code"
     },
     "version": {
       "hardUpdate": {

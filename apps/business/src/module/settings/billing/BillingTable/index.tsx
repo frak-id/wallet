@@ -49,7 +49,7 @@ function badgeVariantFor(kind: BillingEntry["kind"]) {
     }
 }
 
-/** Badge label per entry kind (billing-feature-fixes.md B16). */
+/** Badge label per entry kind. */
 function badgeLabelFor(t: TFunction, kind: BillingEntry["kind"]): string {
     switch (kind) {
         case "invoice":

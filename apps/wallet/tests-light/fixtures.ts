@@ -12,8 +12,8 @@ type LightFixtures = {
 
 export const test = base.extend<LightFixtures>({
     mockApis: [
-        async ({ page }, use) => {
-            await mockDefaultApiRoutes(page);
+        async ({ page, baseURL }, use) => {
+            await mockDefaultApiRoutes(page, baseURL);
             await use(undefined);
         },
         { auto: true },

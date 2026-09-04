@@ -1,7 +1,6 @@
 export function gapianne() {
     setConfig();
     replaceNexusShareButton();
-    // addWalletButton();
 }
 
 /**
@@ -12,7 +11,6 @@ function setConfig() {
         "https://gapianne.com/cdn/shop/files/logo-gapianne_7a65f4c4-54e8-4831-afa2-0849e4c5f8de.png";
 
     window.FrakSetup.config = {
-        walletUrl: "https://wallet.frak.id",
         metadata: {
             name: "Gapianne",
             lang: "fr",
@@ -24,8 +22,6 @@ function setConfig() {
             i18n: {
                 "sharing.title": "Prêt(e) à révéler un secret bien-être ?",
                 "sharing.text": "Découvre ce produit chez Gapianne",
-                "sdk.wallet.login.text":
-                    "Créez votre porte-monnaie avec **{{ productName }}** et recevez **{{ estimatedReward }}** par ami(e) parrainé(e)",
             },
         },
         domain: window.location.host,
@@ -51,23 +47,4 @@ function replaceNexusShareButton() {
         buttonShare.setAttribute("classname", "button w-full");
         button.replaceWith(buttonShare);
     }
-}
-
-/**
- * Add frak-button-wallet to the body
- */
-function _addWalletButton() {
-    // Inject only if the cookie button is disabled (has the disabled html tag) (since it's also on the bottom left of the page)
-    const id = "axeptio_main_button";
-    const cookieButton = document.getElementById(id);
-
-    // If we didn't find it, consider it's not present
-    const isDisabled = cookieButton
-        ? cookieButton.hasAttribute("disabled")
-        : true;
-    if (!isDisabled) return;
-
-    const buttonWallet = document.createElement("frak-button-wallet");
-    buttonWallet.setAttribute("use-reward", "true");
-    document.body.appendChild(buttonWallet);
 }

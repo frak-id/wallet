@@ -54,7 +54,7 @@ export async function doSomething(
 | ----------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Query shop data         | `shop.ts`             | `shopInfo()`, `firstProductPublished()`, `normalizeDomain()`                                                                                                  |
 | Read/write metafields   | `metafields.ts`       | `getI18nCustomizations()`, `updateI18nCustomizations()`, `getAppearanceMetafield()`, `updateAppearanceMetafield()`, `getMerchantIdMetafield()`, `getShopId()` |
-| Check theme integration | `theme.ts`            | `doesThemeSupportBlock()`, `doesThemeHasFrakActivated()`, `doesThemeHasFrakButton()`, `doesThemeHasFrakWalletButton()`, `getMainThemeId()`                    |
+| Check theme integration | `theme.ts`            | `doesThemeSupportBlock()`, `doesThemeHasFrakActivated()`, `doesThemeHasFrakButton()`, `getMainThemeId()`                    |
 | Manage web pixel        | `webPixel.ts`         | `getWebPixel()`, `createWebPixel()`, `deleteWebPixel()`                                                                                                       |
 | Manage webhooks         | `webhook.ts`          | `getWebhooks()`, `createWebhook()`, `deleteWebhook()`, `frakWebhookStatus()`                                                                                  |
 | App purchases           | `purchase.ts`         | `startupPurchase()`, `getCurrentPurchases()`, `getPurchase()`                                                                                                 |

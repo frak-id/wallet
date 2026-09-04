@@ -13,6 +13,7 @@
 
 import { p256 as pureJsP256 } from "@noble/curves/nist.js";
 import { p256 as webCryptoP256 } from "@noble/curves/webcrypto.js";
+import { withBrowserLock } from "../utils/browser/withBrowserLock";
 import {
     buildProofMessage,
     bytesToHex,
@@ -21,6 +22,8 @@ import {
 } from "./canonical";
 import { deriveClientId } from "./derive";
 import type { ProofOp } from "./types";
+
+const IDENTITY_KEY_LOCK_NAME = "frak-identity-key";
 
 const CLIENT_ID_KEY = "frak-client-id";
 const CLIENT_KEY_KEY = "frak-client-key";
@@ -124,6 +127,19 @@ function loadPrivateKey(): Uint8Array | null {
 }
 
 /**
+ * Persist a key/id pair. A write failure (quota, disabled storage) must not
+ * reach `ensureIdentityKey`'s catch: the key in hand is valid, and clearing
+ * it there would leave the next visit treating a derived id as legacy.
+ */
+function persistIdentity(entries: [key: string, value: string][]): void {
+    try {
+        for (const [key, value] of entries) {
+            localStorage.setItem(key, value);
+        }
+    } catch {}
+}
+
+/**
  * Load the persisted key/id pair, generating a fresh key when neither
  * exists. Enforces the atomicity invariant: a stored id that doesn't match
  * its key is never trusted over the key. On mismatch or a missing half, the
@@ -142,65 +158,72 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
         );
     }
 
-    // `crypto.getRandomValues` is not secure-context gated and has shipped
-    // since IE11, so this is effectively unreachable in a real browser. It
-    // stays because keygen throws without it, and a clear error here beats
-    // that failure surfacing from inside the curve implementation.
+    // Effectively unreachable in a real browser, but keygen throws without
+    // it, and a clear error here beats that surfacing from inside the curve implementation.
     if (typeof crypto === "undefined" || !crypto.getRandomValues) {
         throw new Error(
             "[Frak SDK] crypto.getRandomValues unavailable, cannot derive a client id"
         );
     }
 
+    // Serialised across SDK instances: two copies racing a first visit would
+    // each generate a key and both write, and the loser would then sign with
+    // the winner's stored key — proofs for an id it never reports.
+    return withBrowserLock(IDENTITY_KEY_LOCK_NAME, loadOrCreateIdentity);
+}
+
+async function loadOrCreateIdentity(): Promise<IdentityKeyMaterial> {
     const storedId = localStorage.getItem(CLIENT_ID_KEY);
 
+    let existingKey: Uint8Array | null;
+    let privateKey: Uint8Array;
+    let derivedId: string;
+    // Only key load, keygen and derivation are guarded: those are the
+    // failures a stored key cannot survive. Storage writes are not, and
+    // must never land here.
     try {
-        const existingKey = loadPrivateKey();
-        const privateKey = existingKey ?? pureJsP256.utils.randomSecretKey();
-        const derivedId = await deriveClientId(publicKeyFor(privateKey));
-
-        if (existingKey) {
-            // Atomicity: the key is authoritative. A missing or mismatched
-            // stored id is silently corrected, never trusted.
-            if (storedId !== derivedId) {
-                localStorage.setItem(CLIENT_ID_KEY, derivedId);
-            }
-            // Re-report a legacy id whose merge never confirmed, so the
-            // caller retries it on this visit.
-            const pendingLegacyId = getPendingLegacyId();
-            return {
-                clientId: derivedId,
-                ...(pendingLegacyId && { pendingLegacyId }),
-            };
-        }
-
-        // No key but an existing id ⇒ pre-derivation client being migrated.
-        // Derive its provable id NOW, before the caller boots the iframe, so
-        // the listener is seeded with the new id immediately. The merge that
-        // folds `storedId` into `derivedId` runs afterwards, off the
-        // critical path. Record the legacy id first: if the page dies
-        // between these writes, the marker is already durable and the merge
-        // retries next visit — the reverse order could lose it entirely.
-        if (storedId) {
-            localStorage.setItem(CLIENT_ID_LEGACY_KEY, storedId);
-        }
-
-        // Store key and id together — never one without the other.
-        localStorage.setItem(CLIENT_KEY_KEY, bytesToHex(privateKey));
-        localStorage.setItem(CLIENT_ID_KEY, derivedId);
-
-        return {
-            clientId: derivedId,
-            ...(storedId && { pendingLegacyId: storedId }),
-        };
+        existingKey = loadPrivateKey();
+        privateKey = existingKey ?? pureJsP256.utils.randomSecretKey();
+        derivedId = await deriveClientId(publicKeyFor(privateKey));
     } catch (error) {
-        // Keygen failed outright, or the stored key was unusable. Clear it so
-        // the next visit regenerates cleanly, then rethrow — an unprovable id
-        // is not an acceptable substitute.
         localStorage.removeItem(CLIENT_KEY_KEY);
         publicKeyCache = null;
         throw error;
     }
+
+    if (existingKey) {
+        // Atomicity: the key is authoritative. A missing or mismatched
+        // stored id is silently corrected, never trusted.
+        if (storedId !== derivedId) {
+            persistIdentity([[CLIENT_ID_KEY, derivedId]]);
+        }
+        // Re-report a legacy id whose merge never confirmed, so the
+        // caller retries it on this visit.
+        const pendingLegacyId = getPendingLegacyId();
+        return {
+            clientId: derivedId,
+            ...(pendingLegacyId && { pendingLegacyId }),
+        };
+    }
+
+    // No key but an existing id ⇒ pre-derivation client being migrated.
+    // Derive its provable id now, before the caller boots the iframe.
+    // Record the legacy id first: if the page dies between these writes,
+    // the marker is durable and the merge retries next visit — the
+    // reverse order could lose it entirely.
+    persistIdentity([
+        ...(storedId
+            ? ([[CLIENT_ID_LEGACY_KEY, storedId]] as [string, string][])
+            : []),
+        // Key and id together — never one without the other.
+        [CLIENT_KEY_KEY, bytesToHex(privateKey)],
+        [CLIENT_ID_KEY, derivedId],
+    ]);
+
+    return {
+        clientId: derivedId,
+        ...(storedId && { pendingLegacyId: storedId }),
+    };
 }
 
 /**

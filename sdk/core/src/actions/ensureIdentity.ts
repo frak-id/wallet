@@ -1,7 +1,8 @@
-import { getBackendUrl } from "../config/backendUrl";
 import { getClientIdAsync } from "../config/clientId";
+import { getBackendUrl } from "../config/environment";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { signProof } from "../identity/sign";
+import { sdkVersionHeaders } from "../utils/sdkVersionHeader";
 
 const ENSURE_STORAGE_PREFIX = "frak-identity-ensured-";
 
@@ -19,8 +20,6 @@ const ENSURE_STORAGE_PREFIX = "frak-identity-ensured-";
  * - **Fire-and-forget** — errors are logged but never thrown
  *
  * @param interactionToken - The SDK JWT from wallet status (x-wallet-sdk-auth)
- * @param walletUrl - Without it the backend falls back to `window.FrakSetup`,
- * which only the components CDN bootstrap sets.
  *
  * @example
  * ```ts
@@ -29,10 +28,7 @@ const ENSURE_STORAGE_PREFIX = "frak-identity-ensured-";
  * await ensureIdentity("eyJhbGciOi...");
  * ```
  */
-export async function ensureIdentity(
-    interactionToken: string,
-    walletUrl?: string
-): Promise<void> {
+export async function ensureIdentity(interactionToken: string): Promise<void> {
     if (typeof window === "undefined") {
         return;
     }
@@ -57,7 +53,7 @@ export async function ensureIdentity(
     }
 
     try {
-        const backendUrl = getBackendUrl(walletUrl);
+        const backendUrl = getBackendUrl();
         // Proof is always optional: if it can't be produced (legacy id,
         // keygen failed), the call goes out as before. Off the critical
         // path — a single sign is <1 ms and never blocks or throws.
@@ -73,6 +69,7 @@ export async function ensureIdentity(
                 "Content-Type": "application/json",
                 "x-wallet-sdk-auth": interactionToken,
                 "x-frak-client-id": clientId,
+                ...sdkVersionHeaders(),
             },
             body: JSON.stringify({
                 merchantId,

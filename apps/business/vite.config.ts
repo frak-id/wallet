@@ -5,6 +5,7 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig, type UserConfig } from "vite";
 import removeConsole from "vite-plugin-remove-console";
 import {
+    assertBundleEsVersion,
     assertEagerBundleBudget,
     getSandboxEnv,
     getSstResource,
@@ -59,6 +60,17 @@ function buildChunkGroups() {
             name: "blockchain-vendor",
             test: /node_modules[\\/](viem|@noble|@scure)/,
             priority: 25,
+            minShareCount: 1,
+        },
+        // `@radix-ui/react-collection` alone, above `ui-vendor` so it claims
+        // the package first. Its `OrderedDict extends Map` declares a
+        // `toSorted` method es-check reads as `Array.prototype.toSorted`;
+        // isolating it keeps the exemption off lucide-react, cmdk and
+        // react-hook-form, where a genuine above-floor call would be masked.
+        {
+            name: "radix-collection",
+            test: /node_modules[\\/]@radix-ui[\\/]react-collection[\\/]/,
+            priority: 32,
             minShareCount: 1,
         },
         {
@@ -155,6 +167,23 @@ export default defineConfig(async () => {
             assertEagerBundleBudget({
                 budgetGzip: EAGER_JS_BUDGET_GZIP,
                 enforce: false,
+            }),
+            // No `build.target` pin here, so JS keeps vite's default
+            // (safari16.4) while CSS compiles at 15.4 via lightningCssConfig.
+            // The asymmetry is deliberate: the 15.4 floor comes from wallet
+            // traffic, and pinning this dashboard to it costs ~14 KB gz of
+            // class-field lowering and breaks its eager budget, for browsers
+            // it does not need. The gate still runs, so an above-floor API
+            // cannot ship unnoticed.
+            assertBundleEsVersion({
+                subdir: "assets",
+                // @radix-ui/react-collection defines `toSorted` on its own
+                // `OrderedDict extends Map`, not `Array.prototype`; es-check
+                // matches property names without receiver analysis.
+                ignore: {
+                    features: "ArrayToSorted",
+                    in: "radix-collection",
+                },
             }),
         ],
         resolve: {

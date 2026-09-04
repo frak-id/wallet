@@ -16,6 +16,8 @@ type FlowStepScreenProps = {
     backDisabled?: boolean;
     /** Header-center slot, typically a "N/M" step indicator. */
     stepIndicator?: ReactNode;
+    /** Header-end slot, right-aligned on the header row. */
+    headerEnd?: ReactNode;
     /** Bottom-pinned actions (a single `Button`, or a `Stack` of them). */
     footer?: ReactNode;
     fixedViewport?: boolean;
@@ -35,6 +37,7 @@ export function FlowStepScreen({
     onBack,
     backDisabled,
     stepIndicator,
+    headerEnd,
     footer,
     fixedViewport,
     children,
@@ -48,6 +51,7 @@ export function FlowStepScreen({
                 ) : undefined
             }
             headerCenter={stepIndicator}
+            headerEnd={headerEnd}
             footer={footer}
         >
             <Stack space="l" className={styles.body}>

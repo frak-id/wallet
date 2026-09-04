@@ -61,10 +61,6 @@ export const selectLastAuthenticationAt = (state: AuthenticationStore) =>
 export const selectLastAuthenticator = (state: AuthenticationStore) =>
     state.lastAuthenticator;
 
-// Get the last REMOTE (paired) authenticator
-export const selectLastRemoteAuthenticator = (state: AuthenticationStore) =>
-    state.lastRemoteAuthenticator;
-
 /**
  * Helper function to add last authentication
  */

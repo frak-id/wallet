@@ -37,11 +37,26 @@
   {% assign merchant_id_metafield = shop.metafields.frak.merchant_id %}
 
 
-  // Read wallet URL from metafield (set by the app per environment)
+  // Read the wallet + backend origins from metafields (set by the app per
+  // environment, always written together).
   {% assign wallet_url_metafield = shop.metafields.frak.wallet_url %}
+  {% assign backend_url_metafield = shop.metafields.frak.backend_url %}
+  // The pair is defaulted as a whole, never half each: a shop synced before
+  // `backend_url` existed has only the wallet one, and defaulting that half
+  // alone would pair a dev wallet with the production backend.
+  {% if wallet_url_metafield.value and backend_url_metafield.value %}
+    {% assign frak_wallet_origin = wallet_url_metafield.value %}
+    {% assign frak_backend_origin = backend_url_metafield.value %}
+  {% else %}
+    {% assign frak_wallet_origin = 'https://wallet.frak.id' %}
+    {% assign frak_backend_origin = 'https://backend.frak.id' %}
+  {% endif %}
   // Top level Frak SDK config
   const frakConfig = {
-    walletUrl: {{ wallet_url_metafield.value | default: 'https://wallet.frak.id' | json }},
+    env: {
+      wallet: {{ frak_wallet_origin | json }},
+      backend: {{ frak_backend_origin | json }},
+    },
     metadata: {
       // Your app name (will be displayed on some modals and in the SSO)
       name: '{{ shop.name }}',
@@ -61,24 +76,8 @@
     waitForBackendConfig: false,
   };
 
-  // Base config for the modals (not rly used for client side stuff)
-  const baseModalConfig = {
-    login: {
-      allowSso: true,
-      ssoMetadata: {
-        logoUrl,
-        homepageLink: window.location.host,
-      },
-    },
-  };
-
-  // Sharing config
-  const sharingConfig = { link: window.location.href };
-
   window.FrakSetup = {
     config: frakConfig,
-    modalConfig: baseModalConfig,
-    modalShareConfig: sharingConfig,
   };
 
   // Store merchantId in sessionStorage for the checkout pixel fallback

@@ -1,5 +1,11 @@
 <?php
-/** @var \FrakLabs\Sdk\Block\WalletButton $block */
+/**
+ * Floating share CTA. The tag is still named `frak-button-wallet` for
+ * backwards compatibility, but it opens the Frak sharing page — the embedded
+ * wallet drawer it used to open has been retired.
+ *
+ * @var \FrakLabs\Sdk\Block\WalletButton $block
+ */
 if (!$block->isEnabled()) {
     return;
 }
