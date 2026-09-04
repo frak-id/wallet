@@ -30,8 +30,11 @@ function trapTab(event: KeyboardEvent, container: HTMLElement) {
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
     const active = document.activeElement;
+    // The container itself holds focus on open, and sits before `first`.
     const leaving = event.shiftKey
-        ? active === first || !container.contains(active)
+        ? active === first ||
+          active === container ||
+          !container.contains(active)
         : active === last;
 
     if (!leaving) return;
@@ -54,8 +57,8 @@ function overlayKeyHandler(
 }
 
 /**
- * Modal behaviour for an overlay: Escape dismisses, focus starts inside, Tab cannot
- * leave. Listens on `document`; disabled when a host owns the chrome. `onDismiss`
+ * Modal behaviour for an overlay: Escape dismisses, focus starts on the dialog, Tab
+ * cannot leave. Listens on `document`; disabled when a host owns the chrome. `onDismiss`
  * is read through a ref so the effect runs once per `enabled` transition.
  */
 export function useOverlayBehaviour({
@@ -77,11 +80,11 @@ export function useOverlayBehaviour({
 
         const container = containerRef.current;
 
-        // Move focus in; falls back to the container, which carries `tabIndex={-1}`.
-        if (container) {
-            const [first] = focusableWithin(container);
-            (first ?? container).focus({ preventScroll: true });
-        }
+        // Focus the dialog, never its first control: a merchant CTA is clicked
+        // with a mouse, so focusing a button matches `:focus-visible` and paints
+        // a ring the user never asked for. The container is `tabIndex={-1}` and
+        // has its outline suppressed, so it takes focus silently.
+        container?.focus({ preventScroll: true });
 
         const onKeyDown = overlayKeyHandler(
             () => onDismissRef.current(),

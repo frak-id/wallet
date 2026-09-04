@@ -21,7 +21,7 @@ function Overlay({
     });
 
     return (
-        <div ref={containerRef} tabIndex={-1}>
+        <div ref={containerRef} tabIndex={-1} data-testid="dialog">
             <button type="button">first</button>
             <button type="button">second</button>
             <button
@@ -54,10 +54,13 @@ describe("useOverlayBehaviour", () => {
         expect(onDismiss).not.toHaveBeenCalled();
     });
 
-    it("moves focus into the dialog on open", () => {
+    // A mouse click on the merchant CTA opens this page, so focusing a control
+    // would match `:focus-visible` and paint a ring nobody asked for.
+    it("focuses the dialog itself, not its first control", () => {
         render(<Overlay onDismiss={vi.fn()} />);
 
-        expect(screen.getByText("first")).toHaveFocus();
+        expect(screen.getByTestId("dialog")).toHaveFocus();
+        expect(screen.getByText("first")).not.toHaveFocus();
     });
 
     it("does NOT steal focus back on an unrelated re-render", () => {
@@ -105,6 +108,17 @@ describe("useOverlayBehaviour", () => {
         render(<Overlay onDismiss={vi.fn()} />);
 
         screen.getByText("first").focus();
+        fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+
+        expect(screen.getByTestId("rerender")).toHaveFocus();
+    });
+
+    // Focus opens on the container, which sits before every control: Shift+Tab
+    // from there escapes the dialog unless it wraps to the last one.
+    it("wraps Shift+Tab from the container itself", () => {
+        render(<Overlay onDismiss={vi.fn()} />);
+
+        expect(screen.getByTestId("dialog")).toHaveFocus();
         fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
 
         expect(screen.getByTestId("rerender")).toHaveFocus();
