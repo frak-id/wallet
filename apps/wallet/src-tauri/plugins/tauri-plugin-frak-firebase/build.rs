@@ -44,4 +44,15 @@ fn main() {
         .android_path("android")
         .ios_path("ios")
         .build();
+
+    // Crashlytics ships Objective-C++ (FIRCLSException.mm, FIRCLSDemangleOperation.mm)
+    // and swift-rs bundles those objects into this rlib, so any Rust-driven Apple link
+    // needs the C++ runtime. Xcode's own `-lc++` only covers its link of libapp.a,
+    // not the `cdylib` cargo produces alongside it.
+    if matches!(
+        std::env::var("CARGO_CFG_TARGET_OS").as_deref(),
+        Ok("ios") | Ok("macos")
+    ) {
+        println!("cargo:rustc-link-lib=dylib=c++");
+    }
 }
