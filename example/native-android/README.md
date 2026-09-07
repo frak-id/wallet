@@ -2,13 +2,13 @@
 
 Android test harness for the Frak Native SDK. Consumes the real `sdk/android` artifacts (`:frak-sdk`, `:frak-sdk-ui`) via a Gradle composite build (`includeBuild("../../sdk/android")` in `settings.gradle.kts`), through the SDK's public API only.
 
-Configured with `env = FrakEnvironment.Development` and a real merchant id (`0a799880-ba54-4276-a734-db8721911bab`) against the Frak development backend (`backend.gcp-dev.frak.id`). That merchant must have this app's bundle id, `id.frak.example.android`, on its allow list, or calls fail with `MerchantResolutionFailed`.
+Runs against either Frak stage, picked in-app — see [Environment toggle](#environment-toggle) below. Each stage carries its own real merchant id, and that merchant must have this app's bundle id, `id.frak.example.android`, on its allow list, or calls fail with `MerchantResolutionFailed`.
 
 ## Overview
 
 Jetpack Compose app that exercises:
 
-- SDK init via `Frak.initialize(...)` with `deepLink = DeepLinkHandling.Automatic`
+- SDK init via `Frak.initialize(...)` with `deepLink = DeepLinkHandling.Automatic`, against the stage the *Frak Environment* card selected
 - `Frak.client.rewards.best(RewardRequest { targetInteraction = "purchase"; products = ... })` for a single catalog-wide reward, and `FrakSharing.Builder(::onResult).build(this)` — the plain-Activity build site, not the `@Composable` one — for the sharing sheet
 - the three sharing scopes, one button each: **store** (no `products` and no `link`, so the link falls back to the merchant homepage), **product** (one `SharingProduct` with `imageUrl` and `ProductDetails`), **collection** (all three products, each illustrated, under an explicit collection `link`)
 - `Frak.client.tracking.purchase(customerId, orderId, token)` on order confirmation
@@ -17,6 +17,26 @@ Jetpack Compose app that exercises:
 - wallet-detection `<queries>` and the `INTERNET` permission come from `:frak-sdk`'s own manifest, folded in by the manifest merger
 
 Product fixtures and order total match the iOS harness so the two stay comparable.
+
+## Environment toggle
+
+The *Frak Environment* card at the top of the **Checkout & Tools** tab switches the stage the SDK runs against. `dev` and `prod` are separate backend deployments, so each has its own merchant record:
+
+| Stage | Backend | Wallet | Merchant id |
+|---|---|---|---|
+| Development (default) | `backend.gcp-dev.frak.id` | `wallet-dev.frak.id`, `id.frak.wallet.dev` | `0a799880-ba54-4276-a734-db8721911bab` |
+| Production | `backend.frak.id` | `wallet.frak.id`, `id.frak.wallet` | `dab86a41-f685-470d-91c8-e87af5834af9` |
+
+**The choice applies on the next launch, not immediately.** Picking a stage writes it to the harness's own `frak-harness` prefs file and shows a restart notice; `MainActivity.onCreate` reads it back before `Frak.initialize`. Kill and relaunch the app (or `bun run --cwd example/native-android start`) to apply it.
+
+That is deliberate, not a shortcut. A live `Frak.shutdown()` + re-`initialize` would look like it worked and quietly test the wrong thing:
+
+- **The sharing sheet would stay on the old wallet origin.** `SharingHost` builds `SharingWebViewPool(walletOrigin = Frak.client.environment.wallet)` once, memoised in an Activity-scoped `ViewModel` that survives even `recreate()`, with no public dispose. The client would talk to prod while the sheet loaded the dev wallet page — a false green on exactly the install and sharing handoff this toggle exists to check.
+- **Inbound `fCtx` would double-track.** `DeepLinkObserver` only removes its `OnNewIntentListener` in `onActivityDestroyed`, which never fires for a live Activity, so re-initializing leaves a stale listener pointing at the new client. Known open defect: `docs/plans/native-sdk/open.md` §2.3.
+
+Confirm which stage is live in the **SDK Debug Info** card: *Harness environment*, *Configured merchant id*, and the *Wallet origin* / *Backend origin* rows are read back from the live client, not from the picker.
+
+Wallet detection works on both stages without any harness change — `:frak-sdk`'s manifest already declares `id.frak.wallet` and `id.frak.wallet.dev` in `<queries>`.
 
 ## Running
 

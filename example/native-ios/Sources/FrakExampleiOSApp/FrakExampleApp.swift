@@ -22,8 +22,9 @@ struct ProductItem: Identifiable, Sendable {
     let priceCents: Int64
 }
 
-/// Configured merchant id, echoed in the debug panel next to the one the backend resolves.
-let merchantId = "0a799880-ba54-4276-a734-db8721911bab"
+/// The stage this process initialized against. Read once at launch; the picker in *Checkout &
+/// Tools* only writes the next launch's value.
+let activeEnvironment = HarnessEnvironmentStore.read()
 
 /// Store homepage, used by the unscoped share and as the collection landing page.
 let storeLink = "https://example.com"
@@ -122,22 +123,23 @@ struct FrakExampleApp: App {
     @State private var debugRows: [DebugRow] = []
     @State private var isDebugRefreshing = false
     @State private var installRoute: InstallRoute = .storeProductPage
+    @State private var selectedEnvironment: HarnessEnvironment = HarnessEnvironmentStore.read()
 
     init() {
         // .manual is the only DeepLinkHandling option on iOS: inbound URLs are routed to
         // appLink.handleReferral(_:) by hand — see .onOpenURL below.
         Frak.initialize(
             FrakConfig(
-                merchantId: merchantId,
+                merchantId: activeEnvironment.merchantId,
                 metadata: FrakMetadata(
                     name: "Frak iOS Harness",
                     // Last fallback of the share link chain, so the unscoped share
                     // (no link, no products) still has something to link to.
                     homepageLink: storeLink
                 ),
-                // Development points at the dev wallet app; isFrakAppInstalled() reports
-                // false without it.
-                env: .development,
+                // Each stage has its own wallet URL scheme, so isFrakAppInstalled() only reports
+                // true for the wallet build matching this one.
+                env: activeEnvironment.frakEnvironment,
                 deepLink: .manual,
                 logLevel: .info
             )
@@ -153,7 +155,7 @@ struct FrakExampleApp: App {
                     .foregroundColor(FrakTheme.textPrimary)
 
                 Text(
-                    "Live Frak SDK against the Frak development backend, using a real merchant id — network calls are expected to succeed."
+                    "Live Frak SDK against \(activeEnvironment.backendOrigin), using a real merchant id — network calls are expected to succeed."
                 )
                 .font(.caption)
                 .foregroundColor(FrakTheme.textPrimary)
@@ -179,6 +181,8 @@ struct FrakExampleApp: App {
                 } else {
                     CheckoutToolsView(
                         debugRows: debugRows,
+                        selectedEnvironment: $selectedEnvironment,
+                        onSelectEnvironment: selectEnvironment,
                         installRoute: $installRoute,
                         isDebugRefreshing: isDebugRefreshing,
                         onSimulateDeepLink: handleSimulateDeepLink,
@@ -216,7 +220,8 @@ struct FrakExampleApp: App {
             .padding()
             .task {
                 addLog(
-                    "Frak.initialize called for merchant \(merchantId) (development)",
+                    "Frak.initialize called for merchant \(activeEnvironment.merchantId) "
+                        + "(\(activeEnvironment.label))",
                     type: .info
                 )
                 await checkWalletInstalled()
@@ -236,6 +241,17 @@ struct FrakExampleApp: App {
                 onResult: handleSharingResult
             )
         }
+    }
+
+    /// Persists only. Switching in place would leave the sharing sheet's pooled web view on the
+    /// previous stage's wallet origin, and `Frak.shutdown()` does not stop every background task.
+    private func selectEnvironment(_ environment: HarnessEnvironment) {
+        HarnessEnvironmentStore.write(environment)
+        guard environment != activeEnvironment else {
+            addLog("Environment stays \(environment.label) on the next launch.", type: .info)
+            return
+        }
+        addLog("Environment set to \(environment.label). Relaunch the app to apply it.", type: .info)
     }
 
     /// Share #1: no products at all — the link falls back to the merchant homepage.
@@ -404,7 +420,8 @@ struct FrakExampleApp: App {
 
         var rows = [
             DebugRow(label: "SDK version", value: FrakSDKVersion.current),
-            DebugRow(label: "Configured merchant id", value: merchantId),
+            DebugRow(label: "Harness environment", value: activeEnvironment.label),
+            DebugRow(label: "Configured merchant id", value: activeEnvironment.merchantId),
             DebugRow(label: "Bundle id", value: Bundle.main.bundleIdentifier ?? "unknown"),
         ]
 
@@ -603,6 +620,8 @@ enum InstallRoute: String, CaseIterable, Identifiable {
 
 struct CheckoutToolsView: View {
     let debugRows: [DebugRow]
+    @Binding var selectedEnvironment: HarnessEnvironment
+    let onSelectEnvironment: (HarnessEnvironment) -> Void
     @Binding var installRoute: InstallRoute
     let isDebugRefreshing: Bool
     let onSimulateDeepLink: () -> Void
@@ -612,6 +631,11 @@ struct CheckoutToolsView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 14) {
+                EnvironmentCard(
+                    selected: $selectedEnvironment,
+                    onSelect: onSelectEnvironment
+                )
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Order Confirmation Test")
                         .font(.headline)
@@ -669,6 +693,56 @@ struct CheckoutToolsView: View {
                 StoreInviteCard()
             }
         }
+    }
+}
+
+/// Picks the stage the next launch initializes against. Never the running one — see
+/// `FrakExampleApp.selectEnvironment(_:)`.
+struct EnvironmentCard: View {
+    @Binding var selected: HarnessEnvironment
+    let onSelect: (HarnessEnvironment) -> Void
+
+    /// A derived binding, not `.onChange`: the zero-argument overload is iOS 17 and this app
+    /// deploys to 15.
+    private var selection: Binding<HarnessEnvironment> {
+        Binding(
+            get: { selected },
+            set: { environment in
+                selected = environment
+                onSelect(environment)
+            }
+        )
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Frak Environment")
+                .font(.headline)
+                .foregroundColor(FrakTheme.textPrimary)
+            Text("Running against \(activeEnvironment.label) (\(activeEnvironment.backendOrigin)).")
+                .font(.caption)
+                .foregroundColor(FrakTheme.textSecondary)
+
+            Picker("Environment", selection: selection) {
+                ForEach(HarnessEnvironment.allCases) { environment in
+                    Text(environment.label).tag(environment)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle())
+
+            if selected != activeEnvironment {
+                Text(
+                    "Relaunch the app to run against \(selected.label) "
+                        + "(merchant \(selected.merchantId))."
+                )
+                .font(.caption)
+                .foregroundColor(FrakTheme.textAction)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(FrakTheme.surfaceBackground2)
+        .cornerRadius(10)
     }
 }
 

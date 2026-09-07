@@ -2,13 +2,13 @@
 
 iOS test harness for the Frak Native SDK. Consumes the real SDK at `../../sdk/ios` (products `FrakSDK`, `FrakSDKUI`) as a local SwiftPM path dependency, wired in `Package.swift` and as an XcodeGen `packages:` entry in `project.yml`, through the SDK's public API only.
 
-Configured with `env: .development` and a real merchant id (`0a799880-ba54-4276-a734-db8721911bab`) against the Frak dev backend (`backend.gcp-dev.frak.id`). That merchant must have this app's bundle id, `id.frak.example.ios`, on its allow list, or calls fail with `MerchantResolutionFailed`.
+Runs against either Frak stage, picked in-app — see [Environment toggle](#environment-toggle) below. Each stage carries its own real merchant id, and that merchant must have this app's bundle id, `id.frak.example.ios`, on its allow list, or calls fail with `MerchantResolutionFailed`.
 
 ## Overview
 
 SwiftUI app that exercises:
 
-- SDK init via `Frak.initialize(FrakConfig(...))` in the `App`'s `init()`
+- SDK init via `Frak.initialize(FrakConfig(...))` in the `App`'s `init()`, against the stage the *Frak Environment* card selected
 - `client.rewards.best(_:forceRefresh:)` for a single catalog-wide reward, and the `.frakSharingSheet(isPresented:request:onResult:)` view modifier from `FrakSDKUI`, logging every `SharingResult` case
 - the three sharing scopes, one button each: **store** (no `products` and no `link`, so the link falls back to the merchant homepage), **product** (one `SharingProduct` with `imageURL` and `ProductDetails`), **collection** (all three products, each illustrated, under an explicit collection `link`)
 - `client.tracking.purchase(customerId:orderId:token:)` on order confirmation
@@ -18,6 +18,26 @@ SwiftUI app that exercises:
 - ships its own `PrivacyInfo.xcprivacy`; `Info.plist` declares `LSApplicationQueriesSchemes` with `frakwallet` and `frakwallet-dev`
 
 Product fixtures and order total match the Android harness so the two stay comparable.
+
+## Environment toggle
+
+The *Frak Environment* card at the top of the **Checkout & Tools** tab switches the stage the SDK runs against. `dev` and `prod` are separate backend deployments, so each has its own merchant record:
+
+| Stage | Backend | Wallet | Merchant id |
+|---|---|---|---|
+| Development (default) | `backend.gcp-dev.frak.id` | `wallet-dev.frak.id`, `frakwallet-dev://` | `0a799880-ba54-4276-a734-db8721911bab` |
+| Production | `backend.frak.id` | `wallet.frak.id`, `frakwallet://` | `dab86a41-f685-470d-91c8-e87af5834af9` |
+
+**The choice applies on the next launch, not immediately.** Picking a stage writes it to `UserDefaults.standard` and shows a relaunch notice; the `App`'s `init()` reads it back before `Frak.initialize`. Swipe the app away and reopen it (or re-run `bun run --cwd example/native-ios start`) to apply it.
+
+That is deliberate, not a shortcut. A live `Frak.shutdown()` + re-`initialize` would look like it worked and quietly test the wrong thing:
+
+- **The sharing sheet would stay on the old wallet origin.** `SharingPresentation` builds `SharingWebViewPool(walletOrigin: client.environment.wallet)` once, behind a cache. The client would talk to prod while the sheet loaded the dev wallet page — a false green on exactly the install and sharing handoff this toggle exists to check.
+- **`shutdown()` does not stop everything.** Background config revalidation, `RewardRepository`, the `resetAnonymousId` purge and the eager identity mint are unstructured `Task`s that can still hit the network after it returns. Known open item: `docs/plans/native-sdk/open.md` §9.7.
+
+Confirm which stage is live in the **SDK Debug Info** card: *Harness environment*, *Configured merchant id*, and the *Wallet origin* / *Backend origin* / *Wallet scheme* rows are read back from the live client, not from the picker.
+
+Wallet detection works on both stages without any harness change — `Info.plist` already declares `frakwallet` and `frakwallet-dev` in `LSApplicationQueriesSchemes`.
 
 ## Running on a simulator
 
@@ -53,8 +73,8 @@ signing settings by SDK: simulator builds stay ad-hoc, `[sdk=iphoneos*]` turns o
 automatic signing. The team comes from the script, not the spec — override it with
 `FRAK_DEVELOPMENT_TEAM` if you sign with your own Apple team.
 
-Keep the bundle id at `id.frak.example.ios` whatever team you use: the dev merchant
-allow-lists that exact string, and anything else fails with `MerchantResolutionFailed`.
+Keep the bundle id at `id.frak.example.ios` whatever team you use: both merchants
+allow-list that exact string, and anything else fails with `MerchantResolutionFailed`.
 
 With more than one device attached, pick one by name or UDID:
 

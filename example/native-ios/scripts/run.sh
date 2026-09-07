@@ -30,7 +30,7 @@ SCHEME="FrakExampleiOSApp"
 PROJECT="$APP_DIR/$SCHEME.xcodeproj"
 DERIVED="$APP_DIR/build"
 # Frak Labs. Override for a contributor signing with their own Apple team; the bundle
-# id must stay id.frak.example.ios either way, since the dev merchant allow-lists it.
+# id must stay id.frak.example.ios either way, since both stages' merchants allow-list it.
 DEVELOPMENT_TEAM="${FRAK_DEVELOPMENT_TEAM:-57DZ6Z2235}"
 
 # Logs go to stderr: `boot_simulator` returns the UDID on stdout, so anything

@@ -51,7 +51,6 @@ import id.frak.sdk.Frak
 import id.frak.sdk.FrakSdkVersion
 import id.frak.sdk.core.DeepLinkHandling
 import id.frak.sdk.core.FrakConfig
-import id.frak.sdk.core.FrakEnvironment
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLogLevel
 import id.frak.sdk.core.FrakMetadata
@@ -84,9 +83,6 @@ data class ProductItem(
     val imageUrl: String,
     val priceCents: Long,
 )
-
-/** Configured merchant id, echoed in the debug panel next to the one the backend resolves. */
-const val MERCHANT_ID = "0a799880-ba54-4276-a734-db8721911bab"
 
 /** Store homepage, used by the unscoped share and as the collection landing page. */
 const val STORE_LINK = "https://example.com"
@@ -158,6 +154,11 @@ class MainActivity : ComponentActivity() {
      */
     private lateinit var sharing: FrakSharing
 
+    /** Read once, before [Frak.initialize]; the picker below only writes the next launch's value. */
+    private lateinit var activeEnvironment: HarnessEnvironment
+
+    private var selectedEnvironment by mutableStateOf(HarnessEnvironment.DEVELOPMENT)
+
     private val logs = mutableStateListOf<LogEntry>()
     private val debugRows = mutableStateListOf<DebugRow>()
     private var isDebugRefreshing by mutableStateOf(false)
@@ -175,12 +176,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        activeEnvironment = HarnessEnvironmentStore.read(this)
+        selectedEnvironment = activeEnvironment
+
         sharing = FrakSharing.Builder(::logSharingResult).build(this)
 
         Frak.initialize(
             context = applicationContext,
             config =
-                FrakConfig(merchantId = MERCHANT_ID) {
+                FrakConfig(merchantId = activeEnvironment.merchantId) {
                     metadata =
                         FrakMetadata {
                             name = "Frak Android Harness"
@@ -188,15 +192,19 @@ class MainActivity : ComponentActivity() {
                             // (no link, no products) still has something to link to.
                             homepageLink = STORE_LINK
                         }
-                    // Development points at the dev wallet app; isFrakAppInstalled() reports
-                    // false without it.
-                    env = FrakEnvironment.Development
+                    // Each stage has its own wallet package id, so isFrakAppInstalled() only
+                    // reports true for the wallet build matching this one.
+                    env = activeEnvironment.frakEnvironment
                     // Automatic exists only on Android; iOS routes .onOpenURL by hand.
                     deepLink = DeepLinkHandling.Automatic
                     logLevel = FrakLogLevel.INFO
                 },
         )
-        addLog("Frak.initialize called for merchant $MERCHANT_ID (development)", LogType.INFO)
+        addLog(
+            "Frak.initialize called for merchant ${activeEnvironment.merchantId} " +
+                "(${activeEnvironment.label})",
+            LogType.INFO,
+        )
 
         // Not the Compose build site, so warming has to be explicit. A merchant whose share
         // surface is several taps in should warm when that surface appears, not at startup.
@@ -231,6 +239,9 @@ class MainActivity : ComponentActivity() {
                     val scope = rememberCoroutineScope()
 
                     MerchantAppScreen(
+                        activeEnvironment = activeEnvironment,
+                        selectedEnvironment = selectedEnvironment,
+                        onSelectEnvironment = ::selectEnvironment,
                         logs = logs,
                         catalogRewardLabel = catalogRewardLabel,
                         debugRows = debugRows,
@@ -246,6 +257,20 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Persists only. Switching in place would leave the sharing sheet's pooled web view on the
+     * previous stage's wallet origin, and re-initializing double-registers the deep-link observer.
+     */
+    private fun selectEnvironment(environment: HarnessEnvironment) {
+        selectedEnvironment = environment
+        HarnessEnvironmentStore.write(this, environment)
+        if (environment == activeEnvironment) {
+            addLog("Environment stays ${environment.label} on the next launch.", LogType.INFO)
+            return
+        }
+        addLog("Environment set to ${environment.label}. Restart the app to apply it.", LogType.INFO)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -410,7 +435,8 @@ class MainActivity : ComponentActivity() {
         isDebugRefreshing = true
         val rows = mutableListOf<DebugRow>()
         rows += DebugRow("SDK version", FrakSdkVersion.CURRENT)
-        rows += DebugRow("Configured merchant id", MERCHANT_ID)
+        rows += DebugRow("Harness environment", activeEnvironment.label)
+        rows += DebugRow("Configured merchant id", activeEnvironment.merchantId)
 
         val client = Frak.clientOrNull
         if (client == null) {
@@ -469,6 +495,9 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MerchantAppScreen(
+    activeEnvironment: HarnessEnvironment,
+    selectedEnvironment: HarnessEnvironment,
+    onSelectEnvironment: (HarnessEnvironment) -> Unit,
     logs: List<LogEntry>,
     catalogRewardLabel: String,
     debugRows: List<DebugRow>,
@@ -508,7 +537,7 @@ fun MerchantAppScreen(
         ) {
             Text(
                 text =
-                    "Wired to the real Frak SDK against the Frak development backend, using a " +
+                    "Wired to the real Frak SDK against ${activeEnvironment.backendOrigin}, using a " +
                         "real merchant id — network calls below are expected to succeed.",
                 color = FrakTheme.textPrimary,
                 modifier = Modifier.padding(10.dp),
@@ -538,6 +567,9 @@ fun MerchantAppScreen(
                 )
             } else {
                 CheckoutToolsView(
+                    activeEnvironment = activeEnvironment,
+                    selectedEnvironment = selectedEnvironment,
+                    onSelectEnvironment = onSelectEnvironment,
                     debugRows = debugRows,
                     isDebugRefreshing = isDebugRefreshing,
                     onSimulateDeepLink = onSimulateDeepLink,
@@ -719,6 +751,9 @@ private fun ProductCard(
 
 @Composable
 fun CheckoutToolsView(
+    activeEnvironment: HarnessEnvironment,
+    selectedEnvironment: HarnessEnvironment,
+    onSelectEnvironment: (HarnessEnvironment) -> Unit,
     debugRows: List<DebugRow>,
     isDebugRefreshing: Boolean,
     onSimulateDeepLink: () -> Unit,
@@ -730,6 +765,14 @@ fun CheckoutToolsView(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
+        item {
+            EnvironmentCard(
+                active = activeEnvironment,
+                selected = selectedEnvironment,
+                onSelect = onSelectEnvironment,
+            )
+        }
+
         item {
             Card(
                 colors =
@@ -804,6 +847,58 @@ fun CheckoutToolsView(
                 isRefreshing = isDebugRefreshing,
                 onRefresh = onRefreshDebugInfo,
             )
+        }
+    }
+}
+
+/** Picks the stage the next launch initializes against. Never the running one — see [MainActivity.selectEnvironment]. */
+@Composable
+private fun EnvironmentCard(
+    active: HarnessEnvironment,
+    selected: HarnessEnvironment,
+    onSelect: (HarnessEnvironment) -> Unit,
+) {
+    Card(
+        colors =
+            CardDefaults.cardColors(
+                containerColor = FrakTheme.surfaceBackground2,
+            ),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = "Frak Environment",
+                style = MaterialTheme.typography.titleMedium,
+                color = FrakTheme.textPrimary,
+            )
+            Text(
+                text = "Running against ${active.label} (${active.backendOrigin}).",
+                style = MaterialTheme.typography.bodySmall,
+                color = FrakTheme.textSecondary,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            TabRow(selectedTabIndex = HarnessEnvironment.entries.indexOf(selected)) {
+                HarnessEnvironment.entries.forEach { environment ->
+                    Tab(
+                        selected = environment == selected,
+                        onClick = { onSelect(environment) },
+                    ) {
+                        Text(environment.label, modifier = Modifier.padding(10.dp))
+                    }
+                }
+            }
+
+            if (selected != active) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text =
+                        "Restart the app to run against ${selected.label} " +
+                            "(merchant ${selected.merchantId}).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FrakTheme.textAction,
+                )
+            }
         }
     }
 }
