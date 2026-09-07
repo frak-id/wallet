@@ -122,6 +122,26 @@ Four things must be true, and three of them can only be done on the phone:
 
 Note that a first device run consumes one of the team's 100 device slots.
 
+## Shipping to TestFlight
+
+Run the **🧪 Release Native Example Apps** workflow (`workflow_dispatch`). It archives, exports and uploads; testers get the build a few minutes later. It reuses the wallet's App Store Connect API key — there is no separate credential to provision.
+
+Distribution is **internal only**: up to 100 testers, each of whom must be an App Store Connect user on the Frak team, and no Beta App Review. Builds expire 90 days after upload.
+
+Locally, with the same API key:
+
+```bash
+export FRAK_ASC_KEY_PATH=~/AuthKey_XXXXXXX.p8
+export FRAK_ASC_KEY_ID=XXXXXXX
+export FRAK_ASC_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+FRAK_BUILD_NUMBER=42 bun run --cwd example/native-ios archive
+bun run --cwd example/native-ios upload
+```
+
+`archive` and `upload` are separate so a failed upload can be retried without rebuilding. `FRAK_BUILD_NUMBER` must increase on every upload — App Store Connect rejects a build number it has already seen; CI passes `github.run_number`.
+
+Signing is automatic: `-allowProvisioningUpdates` plus the API key lets xcodebuild mint the App Store profile unattended, so nothing has to be checked in. The bundle id stays `id.frak.example.ios` — the App Store Connect record must use that exact id, since both merchants allow-list it.
+
 ## Formatting and linting
 
 `biome` cannot parse Swift, so this folder is excluded from it in `biome.json`. `swift format`, from the Xcode toolchain, fills that gap. Rules live in `.swift-format`, scoped to this folder: 4-space indent to match biome, and `--strict` so findings fail rather than warn.

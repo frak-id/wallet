@@ -35,7 +35,9 @@ let package = Package(
             ],
             path: "Sources/FrakExampleiOSApp",
             exclude: [
-                "Info.plist"
+                "Info.plist",
+                // App-target-only; SwiftPM cannot compile an asset catalog for a library.
+                "Assets.xcassets",
             ],
             resources: [
                 .process("PrivacyInfo.xcprivacy")

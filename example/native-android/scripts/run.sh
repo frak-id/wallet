@@ -83,6 +83,27 @@ do_build() {
 	./gradlew assembleDebug
 }
 
+# Play distribution artifact. Signed with the upload keystore when FRAK_KEYSTORE points at
+# one; otherwise the debug signer, which Play rejects — good enough to check the build.
+do_bundle() {
+	resolve_sdk
+	cd "$APP_DIR"
+	local args=(bundleRelease)
+	args+=("-Pfrak.versionCode=${FRAK_VERSION_CODE:-1}")
+	args+=("-Pfrak.versionName=${FRAK_VERSION_NAME:-1.0}")
+	if [ -n "${FRAK_KEYSTORE:-}" ]; then
+		args+=("-Pfrak.keystore=$FRAK_KEYSTORE")
+		args+=("-Pfrak.keystorePassword=${FRAK_KEYSTORE_PASSWORD:-}")
+		args+=("-Pfrak.keyAlias=${FRAK_KEY_ALIAS:-upload}")
+		args+=("-Pfrak.keyPassword=${FRAK_KEY_PASSWORD:-}")
+	else
+		log "No FRAK_KEYSTORE set — the bundle will be debug-signed and Play will reject it."
+	fi
+	log "Building release AAB (version ${FRAK_VERSION_NAME:-1.0}, code ${FRAK_VERSION_CODE:-1})..."
+	./gradlew "${args[@]}"
+	log "AAB: $APP_DIR/app/build/outputs/bundle/release/app-release.aab"
+}
+
 do_run() {
 	resolve_sdk
 	require_adb
@@ -137,14 +158,16 @@ do_format() {
 case "${1:-run}" in
 run) do_run ;;
 build) do_build ;;
+bundle) do_bundle ;;
 logs) do_logs ;;
 lint) do_lint ;;
 format) do_format ;;
 *)
-	echo "Usage: $0 {run|build|logs|lint|format}"
+	echo "Usage: $0 {run|build|bundle|logs|lint|format}"
 	echo ""
 	echo "  run    - build + install + launch (boots an AVD if needed), then tail logs"
 	echo "  build  - assembleDebug only, no device required"
+	echo "  bundle - release AAB for Play, no device required"
 	echo "  logs   - tail the SDK log stream on the running device"
 	echo "  lint   - ktlint check, no device required"
 	echo "  format - ktlint auto-format in place"

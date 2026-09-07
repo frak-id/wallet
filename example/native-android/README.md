@@ -73,6 +73,25 @@ ANDROID_AVD=Pixel_9a bun run --cwd example/native-android start
 
 Android Studio also works: open the `example/native-android` folder and hit Run.
 
+## Shipping to Play internal testing
+
+Run the **🧪 Release Native Example Apps** workflow (`workflow_dispatch`). It builds a signed AAB and publishes it to the internal track, where testers get it within minutes. It reuses the wallet's upload keystore and Play service account — there is no separate credential to provision.
+
+The internal track needs no store listing, no content rating and no data safety form: Play exempts apps that are only active there. Up to 100 testers, added by email in Play Console.
+
+Locally:
+
+```bash
+export FRAK_KEYSTORE=~/upload-keystore.jks
+export FRAK_KEYSTORE_PASSWORD=...
+export FRAK_KEY_PASSWORD=...
+FRAK_VERSION_CODE=42 FRAK_VERSION_NAME=1.0 bun run --cwd example/native-android bundle
+```
+
+Without `FRAK_KEYSTORE` the bundle is debug-signed — fine for checking the build, rejected by Play. `FRAK_VERSION_CODE` must increase on every upload; CI passes `github.run_number`. The output lands at `app/build/outputs/bundle/release/app-release.aab`.
+
+`assembleRelease` still works on a clean checkout with no keystore, so the R8 path stays reproducible for anyone.
+
 ## Formatting and linting
 
 `biome` cannot parse Kotlin, so this folder is excluded from it in `biome.json`. ktlint, via the Gradle plugin, fills that gap. Rules live in `.editorconfig`, scoped to this folder. `@Composable` functions are exempted from ktlint's function-naming rule, since PascalCase is Compose convention.
