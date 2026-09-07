@@ -392,7 +392,7 @@ jobs:
       - name: "🔍 Verify iOS artifact carries the stage's variant"
         run: |
           bash apps/wallet/scripts/verify-ios-artifact.sh "$STAGE" \
-            apps/wallet/src-tauri/gen/apple/build/app_iOS.xcarchive
+            apps/wallet/src-tauri/gen/apple/build
         env:
           STAGE: ${{ needs.validate.outputs.stage }}
 

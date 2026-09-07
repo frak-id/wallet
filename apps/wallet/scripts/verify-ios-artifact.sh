@@ -32,7 +32,20 @@ esac
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
-# Resolve any of the three shapes down to a single .app bundle.
+# Resolve any accepted shape down to a single .app bundle. A directory prefers the
+# exported .ipa over the .xcarchive: the archive is pre-export, so its entitlements
+# still hold `$(AppIdentifierPrefix)` and its signature is not the one that ships.
+if [ -d "$ARTIFACT" ] && [ "${ARTIFACT%.xcarchive}" = "$ARTIFACT" ] && [ "${ARTIFACT%.app}" = "$ARTIFACT" ]; then
+    FOUND=$(find "$ARTIFACT" -maxdepth 3 -name "*.ipa" | head -1)
+    [ -n "$FOUND" ] || FOUND=$(find "$ARTIFACT" -maxdepth 2 -name "*.xcarchive" | head -1)
+    if [ -z "$FOUND" ]; then
+        echo "❌ no .ipa or .xcarchive under $ARTIFACT" >&2
+        exit 1
+    fi
+    echo "   verifying $(basename "$FOUND")"
+    ARTIFACT=$FOUND
+fi
+
 case "$ARTIFACT" in
 *.ipa)
     unzip -q "$ARTIFACT" -d "$WORK/ipa"
@@ -45,7 +58,7 @@ case "$ARTIFACT" in
     APP="$ARTIFACT"
     ;;
 *)
-    echo "❌ $ARTIFACT is not a .app, .ipa or .xcarchive" >&2
+    echo "❌ $ARTIFACT is not a .app, .ipa, .xcarchive or a directory holding one" >&2
     exit 1
     ;;
 esac
@@ -89,11 +102,14 @@ else
             "$WANT_DOMAINS" "$GOT_DOMAINS"
 
     GOT_GROUP=$(/usr/libexec/PlistBuddy -c "Print :keychain-access-groups:0" "$ENTITLEMENTS" 2>/dev/null || true)
-    # Xcode expands $(AppIdentifierPrefix) at signing, so match on the suffix.
+    # Two legal spellings of the same group: `$(AppIdentifierPrefix)<id>` as authored,
+    # and `<team>.<id>` once export expands it. Strip whichever prefix is present.
     case "$GOT_GROUP" in
-    *".$WANT_ID") ;;
-    *) fail "wrong keychain access group" "*.$WANT_ID" "$GOT_GROUP" ;;
+    '$(AppIdentifierPrefix)'*) GOT_ID_PART=${GOT_GROUP#'$(AppIdentifierPrefix)'} ;;
+    *) GOT_ID_PART=${GOT_GROUP#*.} ;;
     esac
+    [ "$GOT_ID_PART" = "$WANT_ID" ] ||
+        fail "wrong keychain access group" "\$(AppIdentifierPrefix)$WANT_ID or <team>.$WANT_ID" "$GOT_GROUP"
 fi
 
 if [ "$FAILED" -ne 0 ]; then

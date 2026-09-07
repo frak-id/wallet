@@ -24,4 +24,4 @@ FRAK_VARIANT=dev sst shell -- bash -c \
     "cd apps/wallet && tauri ios build --config src-tauri/tauri.conf.dev.json --export-method app-store-connect"
 
 bash apps/wallet/scripts/verify-ios-artifact.sh dev \
-    apps/wallet/src-tauri/gen/apple/build/app_iOS.xcarchive
+    apps/wallet/src-tauri/gen/apple/build
