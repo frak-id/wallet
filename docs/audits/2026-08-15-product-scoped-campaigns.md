@@ -30,25 +30,25 @@ The core evaluator, the negation guard and the fail-open display contract were g
 4. **Non-SDK, non-plugin display surfaces (wallet, listener, business app display) are P2-when-picked-up enhancements.** The full product-metadata / multi-campaign-display experience is unbuilt by product choice; the single "on selected products!" line is the intended current state. Display-shortfall findings are reframed as tracked product gaps, with the technical detail preserved.
 5. **Magento is folded into one item (PSC-18).** The plugin is used by nobody, kept only in case, was developed blind and has never been tested. It needs a full dedicated review before any merchant uses it, not piecemeal fixes now.
 
-Severity is technical and unchanged. Priority is the schedule. A finding can be High and P2 at the same time — that is the point of the two columns.
+Severity is technical. Priority is the schedule. A finding can be High and P2 at the same time — that is the point of the two columns. Both lead with the 2026-08-15 value so citations still resolve; where the 2026-09-04 pass re-graded one, the current value follows an arrow.
 
 ## Findings at a glance
 
-| ID | Severity | Priority | Area | One-line finding | Status (2026-09-04) |
-|---|---|---|---|---|---|
-| PSC-4 | High | P2-when-picked-up | Listener / display | *Known product gap.* With no product context every scoped campaign "matches", so the headline advertises a reward the cart cannot earn | **Open.** P2, unchanged. Blast radius reduced: shipped plugins now send `sku` (PSC-6) |
-| PSC-7 | Medium | P1-next | Ingest | SKU matching is byte-exact and case-sensitive with no normalisation, validation or merchant feedback | **Deferred by owner.** No merchant has used the feature yet; normalisation waits for real usage and feedback, since some legacy systems may treat SKU case as significant |
-| PSC-10 | Medium | P2-when-picked-up | Business wizard | Tiered rewards on a matched-items basis still label their ranges "Basket Range" | **Open.** P2, unchanged |
-| PSC-11 | Medium | P2-when-picked-up | Business wizard | `AdvancedScopeNotice` drops group `logic` and operand values, inverting the meaning of a `none` scope | **Open.** P2, unchanged |
-| PSC-18 | Medium | P2-when-picked-up | Magento (folded) | **Folded item.** Magento is unused, untested and developed blind — needs a full dedicated review before any merchant uses it | **Open.** P2, untouched by design. Magento remains the one provider off the PSC-2 line-total convention |
-| PSC-19 | Medium | P2-when-picked-up | Tests | Backend `formatted=1` tests re-implement the handler instead of invoking it | **Open.** P2 / Low |
-| PSC-21 | Medium | P2-when-picked-up | Schema | `campaign_rules.rule` is bare `jsonb`; every scope invariant lives only in the service layer | **Open.** P2 / Low |
-| PSC-22 | Low | P2-when-picked-up | Migrations | `drizzle/v2` baseline lacks `purchase_items.sku` (latent, nothing routes to `_v2`) | **Open.** P2. Deliberately untouched — `services/bootstrap/drizzle` is DB-team territory |
-| PSC-23 | Low | P2-when-picked-up | Tests | `CampaignInfoSection` duplicates `RewardBreakdown` basis logic with no test at all | **Open.** P2 |
-| PSC-24 | Low | P2-when-picked-up | SDK | `matchedProducts: undefined` conflates "no context" with "scope matched none" | **Open.** P2 |
-| PSC-25 | Low | P2-when-picked-up | Fixtures | Golden corpus is a change-detector; `GoldenFixtures.REWARDS`/`.rewards` referenced by nobody | **Open.** P2. The new scope-match corpus is hand-written and load-bearing on both sides, so it does not repeat this failure |
-| PSC-26 | Low | P2-when-picked-up | Display | *Known product gap.* Tier ranges for `purchase.matchedQuantity` render as currency | **Open.** P2 |
-| PSC-28 | Low | P2-when-picked-up | Docs | Plan docs describe a business app and XSS sinks that no longer exist | **Open.** P2. `services/backend/docs/product-scoped-campaigns.md` was brought in step as part of this work; the plan docs were not |
+| ID | Severity | Priority | Area | Finding |
+|---|---|---|---|---|
+| PSC-4 | High | P2-when-picked-up | Listener / display | *Known product gap.* With no product context every scoped campaign "matches", so the headline advertises a reward the cart cannot earn. **Open, unchanged.** Blast radius reduced: shipped plugins now send `sku` (PSC-6) |
+| PSC-7 | Medium | P1-next | Ingest | SKU matching is byte-exact and case-sensitive with no normalisation, validation or merchant feedback. **Deferred by owner.** No merchant has used the feature yet; normalisation waits for real usage and feedback, since some legacy systems may treat SKU case as significant |
+| PSC-10 | Medium | P2-when-picked-up | Business wizard | Tiered rewards on a matched-items basis still label their ranges "Basket Range". **Open, unchanged.** |
+| PSC-11 | Medium | P2-when-picked-up | Business wizard | `AdvancedScopeNotice` drops group `logic` and operand values, inverting the meaning of a `none` scope. **Open, unchanged.** |
+| PSC-18 | Medium | P2-when-picked-up | Magento (folded) | **Folded item.** Magento is unused, untested and developed blind — needs a full dedicated review before any merchant uses it. **Open, untouched by design.** Magento remains the one provider off the PSC-2 line-total convention |
+| PSC-19 | Medium → Low | P2-when-picked-up | Tests | Backend `formatted=1` tests re-implement the handler instead of invoking it. **Open.** |
+| PSC-21 | Medium → Low | P2-when-picked-up | Schema | `campaign_rules.rule` is bare `jsonb`; every scope invariant lives only in the service layer. **Open.** |
+| PSC-22 | Low | P2-when-picked-up | Migrations | `drizzle/v2` baseline lacks `purchase_items.sku` (latent, nothing routes to `_v2`). **Open.** Deliberately untouched — `services/bootstrap/drizzle` is DB-team territory |
+| PSC-23 | Low | P2-when-picked-up | Tests | `CampaignInfoSection` duplicates `RewardBreakdown` basis logic with no test at all. **Open.** |
+| PSC-24 | Low | P2-when-picked-up | SDK | `matchedProducts: undefined` conflates "no context" with "scope matched none". **Open.** |
+| PSC-25 | Low | P2-when-picked-up | Fixtures | Golden corpus is a change-detector; `GoldenFixtures.REWARDS`/`.rewards` referenced by nobody. **Open.** The new scope-match corpus is hand-written and load-bearing on both sides, so it does not repeat this failure |
+| PSC-26 | Low | P2-when-picked-up | Display | *Known product gap.* Tier ranges for `purchase.matchedQuantity` render as currency. **Open.** |
+| PSC-28 | Low | P2-when-picked-up | Docs | Plan docs describe a business app and XSS sinks that no longer exist. **Open.** `services/backend/docs/product-scoped-campaigns.md` was brought in step as part of this work; the plan docs were not |
 
 **Priority legend** — `P0-now` fix immediately · `P1-next` fix in the next pass · `P2-when-picked-up` real but not scheduled, revisit when the feature is picked up · `Accepted-risk` consciously accepted, not to be fixed. No finding in this report is `Accepted-risk`.
 
