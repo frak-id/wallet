@@ -103,14 +103,15 @@ private final class ProductPagePresenter: NSObject, SKStoreProductViewController
 
 /// Run each presenter from here, then again from inside the sheet — the second run is the
 /// condition the sharing sheet creates.
-struct StoreInviteCard: View {
+struct StoreInviteSection: View {
     @State private var status = "not run yet"
     @State private var showingSheet = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("App Store Invite Presenters")
-                .font(.headline)
+            Text("App Store invite presenters")
+                .font(.subheadline)
+                .bold()
                 .foregroundColor(FrakTheme.textPrimary)
             Text(
                 "SKOverlay attaches to the window scene; SKStoreProductViewController is a modal. "
@@ -138,9 +139,6 @@ struct StoreInviteCard: View {
                 .cornerRadius(8)
             }
         }
-        .padding(12)
-        .background(FrakTheme.surfaceBackground2)
-        .cornerRadius(10)
         .sheet(isPresented: $showingSheet) {
             StoreInviteSheet(status: $status)
         }

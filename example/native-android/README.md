@@ -13,28 +13,43 @@ Jetpack Compose app that exercises:
 - the three sharing scopes, one button each: **store** (no `products` and no `link`, so the link falls back to the merchant homepage), **product** (one `SharingProduct` with `imageUrl` and `ProductDetails`), **collection** (all three products, each illustrated, under an explicit collection `link`)
 - `Frak.client.tracking.purchase(customerId, orderId, token)` on order confirmation
 - inbound deep links via Android intent filters — **cold start is exercised; warm start (`onNewIntent`) has never been run on a device** — plus a manual `appLink.handleReferral(url)` trigger for testing
-- an SDK debug panel in the *Checkout & Tools* tab, read back from the live client: SDK version, environment and its wallet/backend origins, configured vs. resolved merchant id, `anonymousId()`, `isTrackingEnabled()`, `isFrakAppInstalled()` and the resolved merchant's name, domain, currency, language and placements
+- an SDK debug panel in the *Debug* tab, read back from the live client: app build, SDK version, environment and its wallet/backend origins, configured vs. resolved merchant id, `anonymousId()`, `isTrackingEnabled()`, `isFrakAppInstalled()` and the resolved merchant's name, domain, currency, language and placements
 - wallet-detection `<queries>` and the `INTERNET` permission come from `:frak-sdk`'s own manifest, folded in by the manifest merger
 
 Product fixtures and order total match the iOS harness so the two stay comparable.
 
+
+## What's on screen
+
+The app is laid out so a non-technical tester can drive it without being told what an `fCtx` is. Three tabs, a status strip above them and the event log below them, always visible.
+
+**Status strip** — one line, four facts: the live stage (red pill on Production), whether the SDK reached its backend, whether the Frak wallet app is installed on this device, and the app build + SDK version. If anything is red, stop and report it before testing further.
+
+| Tab | For | Contains |
+|---|---|---|
+| **Shop** | anyone | The catalog as a shopper sees it, images included (Coil), with the three share entry points: whole store, Best Sellers collection, single product. The reward figure at the top is one `rewards.best` call for the whole catalog. |
+| **Checkout** | anyone | *Complete a test order* (fires `tracking.purchase`) and *Simulate a referral link* (fires `appLink.handleReferral`). |
+| **Debug** | engineers, or a tester reading values out | Stage picker with a one-tap *Restart now*, the SDK debug panel, and *Developer probes* — collapsed, holding the Java interop probe. |
+
+**Reporting a bug**: the event log has *Copy*, *Share* and *Expand*. Share opens the Android chooser, so the whole log goes straight into Slack or a ticket. *Copy* on the SDK debug panel does the same for the wiring values. Every entry is still mirrored to `adb logcat -s FrakHarness`. Prices follow the merchant's resolved currency, and the log is capped at 300 entries.
+
 ## Environment toggle
 
-The *Frak Environment* card at the top of the **Checkout & Tools** tab switches the stage the SDK runs against. `dev` and `prod` are separate backend deployments, so each has its own merchant record:
+The *Frak environment* card at the top of the **Debug** tab switches the stage the SDK runs against. `dev` and `prod` are separate backend deployments, so each has its own merchant record:
 
 | Stage | Backend | Wallet | Merchant id |
 |---|---|---|---|
 | Development (default) | `backend.gcp-dev.frak.id` | `wallet-dev.frak.id`, `id.frak.wallet.dev` | `0a799880-ba54-4276-a734-db8721911bab` |
 | Production | `backend.frak.id` | `wallet.frak.id`, `id.frak.wallet` | `dab86a41-f685-470d-91c8-e87af5834af9` |
 
-**The choice applies on the next launch, not immediately.** Picking a stage writes it to the harness's own `frak-harness` prefs file and shows a restart notice; `MainActivity.onCreate` reads it back before `Frak.initialize`. Kill and relaunch the app (or `bun run --cwd example/native-android start`) to apply it.
+**The choice applies on the next launch, not immediately.** Picking a stage writes it to the harness's own `frak-harness` prefs file and raises a red restart banner with a *Restart now* button; `MainActivity.onCreate` reads it back before `Frak.initialize`. Tapping it relaunches the task and ends the process, which is what makes the new stage take effect.
 
 That is deliberate, not a shortcut. A live `Frak.shutdown()` + re-`initialize` would look like it worked and quietly test the wrong thing:
 
 - **The sharing sheet would stay on the old wallet origin.** `SharingHost` builds `SharingWebViewPool(walletOrigin = Frak.client.environment.wallet)` once, memoised in an Activity-scoped `ViewModel` that survives even `recreate()`, with no public dispose. The client would talk to prod while the sheet loaded the dev wallet page — a false green on exactly the install and sharing handoff this toggle exists to check.
 - **Inbound `fCtx` would double-track.** `DeepLinkObserver` only removes its `OnNewIntentListener` in `onActivityDestroyed`, which never fires for a live Activity, so re-initializing leaves a stale listener pointing at the new client. Known open defect: `docs/plans/native-sdk/open.md` §2.3.
 
-Confirm which stage is live in the **SDK Debug Info** card: *Harness environment*, *Configured merchant id*, and the *Wallet origin* / *Backend origin* rows are read back from the live client, not from the picker.
+Confirm which stage is live in the status strip, or in the **SDK debug info** card for the detail: *Harness environment*, *Configured merchant id*, and the *Wallet origin* / *Backend origin* rows are read back from the live client, not from the picker.
 
 Wallet detection works on both stages without any harness change — `:frak-sdk`'s manifest already declares `id.frak.wallet` and `id.frak.wallet.dev` in `<queries>`.
 
@@ -72,7 +87,7 @@ adb shell am start -a android.intent.action.VIEW -d "https://example-merchant.co
 
 With `DeepLinkHandling.Automatic` configured, the SDK's own `ActivityLifecycleCallbacks` picks up the
 intent and calls `appLink.handleReferral` itself; the app only logs that the intent arrived, which is
-all it can honestly observe. Open **Debug info** to confirm the SDK actually tracked it.
+all it can honestly observe. Open the **Debug** tab to confirm the SDK actually tracked it.
 
 Run that command while the app is already running and you are testing the *warm* path, which is a
 different code path (`OnNewIntentProvider`) and the one with no device evidence. The harness logs

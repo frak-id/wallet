@@ -67,6 +67,10 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
+    // Product thumbnails: the harness renders the same images it hands the SDK.
+    implementation("io.coil-kt.coil3:coil-compose:3.4.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.4.0")
+
     implementation("id.frak.sdk:core:1.0.0-beta.3")
     implementation("id.frak.sdk:ui:1.0.0-beta.3")
 

@@ -14,28 +14,43 @@ SwiftUI app that exercises:
 - `client.tracking.purchase(customerId:orderId:token:)` on order confirmation
 - inbound deep links via `CFBundleURLTypes` and `.onOpenURL`, routed to `client.appLink.handleReferral(_:)` — mandatory on iOS, since `DeepLinkHandling` here only has `.manual`/`.disabled`, with no `.automatic` counterpart to Android's `ActivityLifecycleCallbacks`
 - startup diagnostics: `appLink.isFrakAppInstalled()` and `config.resolve()`
-- an SDK debug panel in the *Checkout & Tools* tab, read back from the live client: SDK version, environment and its wallet/backend origins, configured vs. resolved merchant id, `anonymousId`, `isTrackingEnabled()`, `isFrakAppInstalled()` and the resolved merchant's name, domain, currency, language and placements
+- an SDK debug panel in the *Debug* tab, read back from the live client: app build, SDK version, environment and its wallet/backend origins, configured vs. resolved merchant id, `anonymousId`, `isTrackingEnabled()`, `isFrakAppInstalled()` and the resolved merchant's name, domain, currency, language and placements
 - ships its own `PrivacyInfo.xcprivacy`; `Info.plist` declares `LSApplicationQueriesSchemes` with `frakwallet` and `frakwallet-dev`
 
 Product fixtures and order total match the Android harness so the two stay comparable.
 
+
+## What's on screen
+
+The app is laid out so a non-technical tester can drive it without being told what an `fCtx` is. Three tabs, a status strip above them and the event log below them, always visible.
+
+**Status strip** — one line, four facts: the live stage (red pill on Production), whether the SDK reached its backend, whether the Frak wallet app is installed on this device, and the app build + SDK version. If anything is red, stop and report it before testing further.
+
+| Tab | For | Contains |
+|---|---|---|
+| **Shop** | anyone | The catalog as a shopper sees it, images included, with the three share entry points: whole store, Best Sellers collection, single product. The reward figure at the top is one `rewards.best` call for the whole catalog. |
+| **Checkout** | anyone | *Complete a test order* (fires `tracking.purchase`) and *Simulate a referral link* (fires `appLink.handleReferral`). |
+| **Debug** | engineers, or a tester reading values out | Stage picker, the SDK debug panel, and *Developer probes* — collapsed, holding the sharing-sheet install route and the `SKOverlay` / `SKStoreProductViewController` presenters. |
+
+**Reporting a bug**: the event log has *Copy*, *Share* and *Expand*. Share opens the iOS share sheet, so the whole log goes straight into Slack or a ticket. *Copy* on the SDK debug panel does the same for the wiring values. Prices follow the merchant's resolved currency, and the log is capped at 300 entries.
+
 ## Environment toggle
 
-The *Frak Environment* card at the top of the **Checkout & Tools** tab switches the stage the SDK runs against. `dev` and `prod` are separate backend deployments, so each has its own merchant record:
+The *Frak environment* card at the top of the **Debug** tab switches the stage the SDK runs against. `dev` and `prod` are separate backend deployments, so each has its own merchant record:
 
 | Stage | Backend | Wallet | Merchant id |
 |---|---|---|---|
 | Development (default) | `backend.gcp-dev.frak.id` | `wallet-dev.frak.id`, `frakwallet-dev://` | `0a799880-ba54-4276-a734-db8721911bab` |
 | Production | `backend.frak.id` | `wallet.frak.id`, `frakwallet://` | `dab86a41-f685-470d-91c8-e87af5834af9` |
 
-**The choice applies on the next launch, not immediately.** Picking a stage writes it to `UserDefaults.standard` and shows a relaunch notice; the `App`'s `init()` reads it back before `Frak.initialize`. Swipe the app away and reopen it (or re-run `bun run --cwd example/native-ios start`) to apply it.
+**The choice applies on the next launch, not immediately.** Picking a stage writes it to `UserDefaults.standard` and raises a red *Close and reopen the app* banner; the `App`'s `init()` reads it back before `Frak.initialize`. Swipe the app away and reopen it (or re-run `bun run --cwd example/native-ios start`) to apply it.
 
 That is deliberate, not a shortcut. A live `Frak.shutdown()` + re-`initialize` would look like it worked and quietly test the wrong thing:
 
 - **The sharing sheet would stay on the old wallet origin.** `SharingPresentation` builds `SharingWebViewPool(walletOrigin: client.environment.wallet)` once, behind a cache. The client would talk to prod while the sheet loaded the dev wallet page — a false green on exactly the install and sharing handoff this toggle exists to check.
 - **`shutdown()` does not stop everything.** Background config revalidation, `RewardRepository`, the `resetAnonymousId` purge and the eager identity mint are unstructured `Task`s that can still hit the network after it returns. Known open item: `docs/plans/native-sdk/open.md` §9.7.
 
-Confirm which stage is live in the **SDK Debug Info** card: *Harness environment*, *Configured merchant id*, and the *Wallet origin* / *Backend origin* / *Wallet scheme* rows are read back from the live client, not from the picker.
+Confirm which stage is live in the status strip, or in the **SDK debug info** card for the detail: *Harness environment*, *Configured merchant id*, and the *Wallet origin* / *Backend origin* / *Wallet scheme* rows are read back from the live client, not from the picker.
 
 Wallet detection works on both stages without any harness change — `Info.plist` already declares `frakwallet` and `frakwallet-dev` in `LSApplicationQueriesSchemes`.
 
