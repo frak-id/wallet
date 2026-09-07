@@ -68,7 +68,12 @@ async function calculatePercentageReward(
                 error: "matched_items_amount reward requires purchase.matchedAmount",
             };
         }
-        fiatBase = context.purchase.matchedAmount;
+        // The matched basis is recomputed from line data and can exceed what the
+        // customer actually paid on a discounted order.
+        fiatBase = Math.min(
+            context.purchase.matchedAmount,
+            context.purchase.amount
+        );
     } else {
         fiatBase = context.purchase.amount;
     }
@@ -98,11 +103,11 @@ async function calculatePercentageReward(
     // min/max cap the token payout (same unit as a fixed reward), so they are
     // applied after the fiat->token conversion.
     let amount = conversion.tokenAmount;
-    if (reward.maxAmount !== undefined && amount > reward.maxAmount) {
-        amount = reward.maxAmount;
-    }
     if (reward.minAmount !== undefined && amount < reward.minAmount) {
         amount = reward.minAmount;
+    }
+    if (reward.maxAmount !== undefined && amount > reward.maxAmount) {
+        amount = reward.maxAmount;
     }
 
     if (amount <= 0) {
@@ -162,6 +167,19 @@ async function resolveTierValue(
     return { value: conversion.tokenAmount };
 }
 
+// A percent tier pays a share of the matched value, which is recomputed from
+// line data and can exceed what the customer actually paid.
+function clampMatchedTierValue(
+    tierField: string,
+    rawValue: number,
+    context: RuleContext
+): number {
+    if (tierField !== "purchase.matchedAmount" || !context.purchase) {
+        return rawValue;
+    }
+    return Math.min(rawValue, context.purchase.amount);
+}
+
 async function calculateTieredReward(
     reward: TieredRewardDefinition,
     context: RuleContext,
@@ -181,10 +199,12 @@ async function calculateTieredReward(
         };
     }
 
+    const tierBase = clampMatchedTierValue(reward.tierField, rawValue, context);
+
     const resolved = await resolveTierValue(
         reward,
         context,
-        rawValue,
+        tierBase,
         merchantDefaultToken,
         pricingRepository
     );

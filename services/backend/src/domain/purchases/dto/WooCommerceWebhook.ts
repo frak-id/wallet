@@ -11,10 +11,13 @@ export type WooCommerceOrderUpdateWebhookDto = Readonly<{
     order_key: string; // The key of the order
     transaction_id: string; // The id of the transaction
     line_items: {
-        id: number; // The product id
+        id: number; // The line item id, unique within the order
         product_id: number; // The product id
         quantity: number; // The quantity of the product
-        price: number; // The price of the product
+        price: number; // Unit price after discounts, tax excluded (total / quantity)
+        // Line total after discounts, tax excluded, and its tax counterpart.
+        total?: string;
+        total_tax?: string;
         name: string; // The name of the product
         sku?: string; // The SKU of the product
         image: {

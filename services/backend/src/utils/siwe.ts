@@ -1,4 +1,5 @@
 import { viemClient } from "@backend-infrastructure";
+import { encodeHexLowerCase } from "@oslojs/encoding";
 import type { Address, Hex } from "viem";
 import { verifyMessage } from "viem/actions";
 import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
@@ -6,6 +7,16 @@ import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
 export type SiweVerifyResult =
     | { valid: true; wallet: Address; nonce: string | undefined }
     | { valid: false; error: string };
+
+/**
+ * Mint an anti-replay nonce that is safe to embed in an EIP-4361 message:
+ * `createSiweMessage` rejects anything non-alphanumeric or shorter than 8
+ * chars, so hex — a base64url nonce throws in the wallet modal at build time,
+ * before the user can sign.
+ */
+export function generateSiweNonce(): string {
+    return encodeHexLowerCase(crypto.getRandomValues(new Uint8Array(16)));
+}
 
 /**
  * SIWE message freshness bounds (opt-in, see `verifySiweSignature`). No

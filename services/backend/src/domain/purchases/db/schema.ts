@@ -6,6 +6,7 @@ import {
     serial,
     text,
     timestamp,
+    unique,
     uniqueIndex,
     uuid,
     varchar,
@@ -64,6 +65,9 @@ export const purchaseItemsTable = pgTable(
         purchaseId: uuid("purchase_id").notNull(),
         externalId: varchar("external_id").notNull(),
         price: decimal("price").notNull(),
+        // Amount actually paid for the line: post-discount, tax-inclusive,
+        // shipping excluded. Nullable for rows written before it existed.
+        totalPrice: decimal("total_price"),
         name: varchar("name").notNull(),
         title: varchar("title").notNull(),
         imageUrl: varchar("image_url"),
@@ -74,10 +78,12 @@ export const purchaseItemsTable = pgTable(
     },
     (table) => [
         index("purchase_items_purchase_id_idx").on(table.purchaseId),
-        uniqueIndex("purchase_items_external_id_idx").on(
-            table.externalId,
-            table.purchaseId
-        ),
+        // `external_id` is the parent product id, so it repeats across the
+        // variants of one product; the sku is what separates them.
+        // `nullsNotDistinct` so a redelivery cannot duplicate a sku-less line.
+        unique("purchase_items_line_idx")
+            .on(table.purchaseId, table.externalId, table.sku)
+            .nullsNotDistinct(),
     ]
 );
 

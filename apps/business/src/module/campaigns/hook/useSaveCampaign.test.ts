@@ -4,8 +4,12 @@ import {
     createCampaign,
     updateCampaign,
 } from "@/module/campaigns/api/campaignApi";
+import {
+    DEFAULT_PRODUCTS_FORM,
+    productsFormToDraft,
+} from "@/module/campaigns/component/Creation/ProductsCampaign/utils";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import type { CampaignDraft } from "@/stores/campaignStore";
+import { type CampaignDraft, setStartDate } from "@/stores/campaignStore";
 import {
     describe,
     expect,
@@ -145,6 +149,81 @@ describe("useSaveCampaign", () => {
             const stored = freshCampaignStore.getState().draft;
             expect(stored.id).toBe("existing-1");
             expect(stored.name).toBe("Edited name");
+        });
+
+        test("sends the products-step scope even with no rewards yet", async ({
+            freshCampaignStore,
+            queryWrapper,
+        }: TestContext) => {
+            vi.mocked(useIsDemoMode).mockReturnValue(false);
+            vi.mocked(updateCampaign).mockResolvedValue(mockCampaign);
+
+            const scoped = productsFormToDraft(
+                {
+                    ...DEFAULT_PRODUCTS_FORM,
+                    mode: "specific",
+                    field: "sku",
+                    operator: "in",
+                    values: ["SHOE-42"],
+                },
+                { ...draft, id: "existing-1" }
+            );
+            expect(scoped.rule.rewards).toHaveLength(0);
+
+            const { result } = renderHook(() => useSaveCampaign(), {
+                wrapper: queryWrapper.wrapper,
+            });
+            await result.current.mutateAsync(scoped);
+
+            expect(updateCampaign).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    campaignId: "existing-1",
+                    rule: expect.objectContaining({
+                        productScope: [
+                            {
+                                field: "sku",
+                                operator: "in",
+                                value: ["SHOE-42"],
+                            },
+                        ],
+                    }),
+                })
+            );
+            expect(
+                freshCampaignStore.getState().draft.rule.productScope
+            ).toEqual(scoped.rule.productScope);
+        });
+
+        test("sends the start date set before the reward step", async ({
+            freshCampaignStore,
+            queryWrapper,
+        }: TestContext) => {
+            vi.mocked(useIsDemoMode).mockReturnValue(false);
+            vi.mocked(updateCampaign).mockResolvedValue(mockCampaign);
+
+            const withStartDate: CampaignDraft = {
+                ...draft,
+                id: "existing-1",
+                rule: setStartDate(draft.rule, "2024-06-01T00:00:00.000Z"),
+            };
+
+            const { result } = renderHook(() => useSaveCampaign(), {
+                wrapper: queryWrapper.wrapper,
+            });
+            await result.current.mutateAsync(withStartDate);
+
+            const [sent] = vi.mocked(updateCampaign).mock.calls[0] ?? [];
+            const startCondition = {
+                field: "time.timestamp",
+                operator: "gte",
+                value: Math.floor(
+                    new Date("2024-06-01T00:00:00.000Z").getTime() / 1000
+                ),
+            };
+            expect(sent?.rule?.conditions).toContainEqual(startCondition);
+            expect(
+                freshCampaignStore.getState().draft.rule.conditions
+            ).toContainEqual(startCondition);
         });
     });
 });

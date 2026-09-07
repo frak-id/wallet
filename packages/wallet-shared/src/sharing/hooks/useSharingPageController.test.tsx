@@ -19,8 +19,12 @@ vi.mock("../../common/hook/useCopyToClipboardWithState", () => ({
     useCopyToClipboardWithState: () => ({ copy }),
 }));
 
+let lastRewardQuery: { products?: unknown } | undefined;
 vi.mock("../../common/hook/useFormattedEstimatedReward", () => ({
-    useFormattedEstimatedReward: () => ({ data: undefined, isLoading: false }),
+    useFormattedEstimatedReward: (args: { products?: unknown }) => {
+        lastRewardQuery = args;
+        return { data: undefined, isLoading: false };
+    },
 }));
 
 const triggerSharing = vi.fn();
@@ -372,6 +376,40 @@ describe("props it derives", () => {
         act(() => result.current.products?.onSelect(1));
         expect(result.current.products?.selectedIndex).toBe(1);
         expect(result.current.sharingLink).toContain("acme.example/m");
+    });
+
+    it("skips a title-less entry when picking the default selection", () => {
+        const { result } = setup(
+            {},
+            {
+                products: [
+                    { sku: "HIDDEN-1", link: "https://acme.example/hidden" },
+                    {
+                        title: "Socks",
+                        sku: "SOCK-9",
+                        link: "https://acme.example/s",
+                    },
+                ],
+            }
+        );
+
+        expect(result.current.products?.selectedIndex).toBe(1);
+        expect(lastRewardQuery?.products).toEqual([
+            { title: "Socks", sku: "SOCK-9", link: "https://acme.example/s" },
+        ]);
+        expect(result.current.sharingLink).toContain("acme.example/s");
+    });
+
+    it("scopes the reward to every entry when none is renderable", () => {
+        const products = [
+            { sku: "HIDDEN-1", link: "https://acme.example/hidden" },
+            { sku: "HIDDEN-2" },
+        ];
+        const { result } = setup({}, { products });
+
+        expect(result.current.products?.selectedIndex).toBeUndefined();
+        expect(lastRewardQuery?.products).toEqual(products);
+        expect(result.current.sharingLink).toContain("acme.example/kettle");
     });
 
     it("lets a host hand off a share the platform cannot do itself", () => {

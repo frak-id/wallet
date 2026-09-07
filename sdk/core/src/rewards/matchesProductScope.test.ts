@@ -5,7 +5,14 @@ import type {
     RuleCondition,
     RuleConditions,
 } from "../types";
+import goldenScopeMatch from "./fixtures/golden-scope-match.json";
 import { matchesProductScope } from "./matchesProductScope";
+import {
+    ARRAY_OPERATORS,
+    EXISTENCE_OPERATORS,
+    SCALAR_OPERATORS,
+    STRING_OPERATORS,
+} from "./operators";
 
 const product: ProductDetails = {
     productId: "prod-1",
@@ -367,11 +374,10 @@ describe("matchesProductScope — fail-open cases", () => {
     });
 });
 
-// Parity test against the backend's allowlists, copied by hand (no shared
-// import across the SDK/backend boundary):
-//  - fields:    `PRODUCT_SCOPE_FIELDS` in CampaignManagementService.ts
-//  - operators: `evaluateOperator`'s switch in RuleConditionEvaluator.ts
-// A backend change requires updating both lists in the same PR.
+// Parity test against the backend's field allowlist (`PRODUCT_SCOPE_FIELDS` in
+// CampaignManagementService.ts), copied by hand — no shared import across the
+// SDK/backend boundary. The operator list is derived from `operators.ts`, which
+// the backend imports, so a new operator fails the outcome table on its own.
 describe("matchesProductScope — parity with backend allowlist", () => {
     const BACKEND_PRODUCT_SCOPE_FIELDS = [
         "productId",
@@ -383,21 +389,11 @@ describe("matchesProductScope — parity with backend allowlist", () => {
     ] as const;
 
     const BACKEND_OPERATORS = [
-        "eq",
-        "neq",
-        "gt",
-        "gte",
-        "lt",
-        "lte",
-        "between",
-        "in",
-        "not_in",
-        "contains",
-        "starts_with",
-        "ends_with",
-        "exists",
-        "not_exists",
-    ] as const;
+        ...SCALAR_OPERATORS,
+        ...ARRAY_OPERATORS,
+        ...STRING_OPERATORS,
+        ...EXISTENCE_OPERATORS,
+    ];
 
     it("ProductDetails has exactly the backend's allowlisted fields", () => {
         const target: Required<ProductDetails> = {
@@ -413,24 +409,103 @@ describe("matchesProductScope — parity with backend allowlist", () => {
         );
     });
 
-    it("every backend operator is handled (not silently treated as unknown)", () => {
-        for (const operator of BACKEND_OPERATORS) {
-            const scope: RuleConditions = [
-                {
-                    field: "sku",
-                    operator,
-                    value:
-                        operator === "in" || operator === "not_in"
-                            ? ["SHOE-42"]
-                            : "SHOE-42",
-                    ...(operator === "between" ? { valueTo: "ZZZZ" } : {}),
-                },
-            ];
-            // Asserts every operator has a `case` in `evaluateCondition`
-            // rather than falling through to the fail-open default, not the
-            // boolean outcome.
-            expect(() => matchesProductScope(scope, product)).not.toThrow();
+    // An outcome per operator, each chosen so the fail-open default (`true`)
+    // is the WRONG answer: deleting an operator's branch turns it red.
+    const OPERATOR_OUTCOMES: {
+        operator: (typeof BACKEND_OPERATORS)[number];
+        condition: Omit<RuleCondition, "field">;
+        expected: boolean;
+    }[] = [
+        {
+            operator: "eq",
+            condition: { operator: "eq", value: "OTHER" },
+            expected: false,
+        },
+        {
+            operator: "neq",
+            condition: { operator: "neq", value: "SHOE-42" },
+            expected: false,
+        },
+        {
+            operator: "gt",
+            condition: { operator: "gt", value: "ZZZZ" },
+            expected: false,
+        },
+        {
+            operator: "gte",
+            condition: { operator: "gte", value: "ZZZZ" },
+            expected: false,
+        },
+        {
+            operator: "lt",
+            condition: { operator: "lt", value: "AAAA" },
+            expected: false,
+        },
+        {
+            operator: "lte",
+            condition: { operator: "lte", value: "AAAA" },
+            expected: false,
+        },
+        {
+            operator: "between",
+            condition: { operator: "between", value: "AAAA", valueTo: "BBBB" },
+            expected: false,
+        },
+        {
+            operator: "in",
+            condition: { operator: "in", value: ["OTHER"] },
+            expected: false,
+        },
+        {
+            operator: "not_in",
+            condition: { operator: "not_in", value: ["SHOE-42"] },
+            expected: false,
+        },
+        {
+            operator: "contains",
+            condition: { operator: "contains", value: "BOOT" },
+            expected: false,
+        },
+        {
+            operator: "starts_with",
+            condition: { operator: "starts_with", value: "BOOT" },
+            expected: false,
+        },
+        {
+            operator: "ends_with",
+            condition: { operator: "ends_with", value: "BOOT" },
+            expected: false,
+        },
+        {
+            operator: "not_exists",
+            condition: { operator: "not_exists", value: null },
+            expected: false,
+        },
+    ];
+
+    it("covers every backend operator in the outcome table", () => {
+        const covered = OPERATOR_OUTCOMES.map((entry) => entry.operator);
+        expect([...covered, "exists"].sort()).toEqual(
+            [...BACKEND_OPERATORS].sort()
+        );
+    });
+
+    it.each(OPERATOR_OUTCOMES)(
+        "$operator returns the evaluated outcome, not the fail-open default",
+        ({ condition, expected }) => {
+            const scope = [
+                { field: "sku", ...condition },
+            ] as unknown as RuleConditions;
+            expect(matchesProductScope(scope, product)).toBe(expected);
         }
+    );
+
+    it("exists returns true on a populated field and false on an absent one", () => {
+        const scope: RuleConditions = [
+            { field: "sku", operator: "exists", value: null },
+        ];
+        expect(matchesProductScope(scope, product)).toBe(true);
+        expect(matchesProductScope(scope, {})).toBe(false);
     });
 });
 
@@ -514,5 +589,51 @@ describe("matchesProductScope — numeric comparison with string operands", () =
                 }
             )
         ).toBe(false);
+    });
+});
+
+type ScopeMatchFixture = {
+    name: string;
+    description: string;
+    kind: "scope-match";
+    divergence?: "fail-open-vs-fail-closed";
+    scope: RuleConditions;
+    product: ProductDetails;
+    sdk: boolean;
+    backend: boolean;
+};
+
+// The JSON import is inferred as a union of per-entry literal shapes, which
+// narrows to `never` under a type predicate. Widen ONCE to the declared
+// fixture type so the payload fields stay genuinely type-checked and a corpus
+// shape drift is a type error rather than a silent pass.
+const scopeMatchFixtures = (
+    goldenScopeMatch.fixtures as unknown as ScopeMatchFixture[]
+).filter(
+    (fixture): fixture is ScopeMatchFixture => fixture.kind === "scope-match"
+);
+
+describe("matchesProductScope — shared scope-match corpus", () => {
+    it("loads every corpus entry the backend evaluator suite also asserts against", () => {
+        expect(scopeMatchFixtures.length).toBe(23);
+    });
+
+    it.each(scopeMatchFixtures)(
+        "$name: $description",
+        ({ scope, product: fixtureProduct, sdk }) => {
+            expect(matchesProductScope(scope, fixtureProduct)).toBe(sdk);
+        }
+    );
+
+    it("pins every deliberate SDK/backend divergence as fail-open vs fail-closed", () => {
+        const diverging = scopeMatchFixtures.filter(
+            (fixture) => fixture.sdk !== fixture.backend
+        );
+        expect(diverging.length).toBeGreaterThan(0);
+        for (const fixture of diverging) {
+            expect(fixture.divergence).toBe("fail-open-vs-fail-closed");
+            expect(fixture.sdk).toBe(true);
+            expect(fixture.backend).toBe(false);
+        }
     });
 });
