@@ -69,7 +69,6 @@ name = "app"
 version = "1.0.96"
 dependencies = [
  "log",
- "plist",
  "serde",
  "serde_json",
  "tauri",

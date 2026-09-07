@@ -278,8 +278,10 @@ run_ios() {
     setup_firebase_config
     start_dev_server
     cd "$WALLET_DIR"
-    # Match release: dev variant config (id.frak.wallet.dev / Frak Wallet Dev) +
-    # FRAK_VARIANT=dev so build.rs rewrites entitlements for wallet-dev.frak.id.
+    # Match release: dev variant config (id.frak.wallet.dev / Frak Wallet Dev). The
+    # scheme, associated domains and keychain group follow the bundle id, applied by
+    # gen/apple/sync-ios-variant.sh inside the Xcode build; this leaves the tracked
+    # Info.plist and entitlements on dev values afterwards.
     # Foreground; the EXIT trap cleans up the vite dev server.
     FRAK_VARIANT=dev bun run tauri ios dev --config src-tauri/tauri.conf.dev.json --no-dev-server -c '{"build":{"beforeDevCommand":""}}' "$device"
 }
