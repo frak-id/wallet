@@ -209,12 +209,12 @@ export const handleOpenSso: OpenSsoHandler = async (params, context) => {
             css
         );
 
-        // Trigger redirect via lifecycle event
-        // Flow: wallet iframe -> SDK iframe -> window.location.href = ssoUrl
-        emitLifecycleEvent({
-            iframeLifecycle: "redirect",
-            data: { baseRedirectUrl: ssoUrl },
-        });
+        // Flow: wallet iframe -> SDK iframe -> window.location.href = ssoUrl.
+        // The URL embeds the clientId and its proof, so only the merchant gets it.
+        emitLifecycleEvent(
+            { iframeLifecycle: "redirect", data: { baseRedirectUrl: ssoUrl } },
+            { targetOrigin: context.origin }
+        );
 
         // Return immediately (wallet will be set after redirect completes)
         return { wallet: undefined };

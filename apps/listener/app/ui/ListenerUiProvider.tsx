@@ -159,7 +159,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             clearTimeoutRef.current = null;
         }
         setCurrentRequest(request);
-        emitLifecycleEvent({ iframeLifecycle: "show" });
+        emitLifecycleEvent({ iframeLifecycle: "show" }, { targetOrigin: "*" });
     }, []);
 
     // Clear the current request + hide the iframe
@@ -169,7 +169,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             clearTimeout(clearTimeoutRef.current);
         }
 
-        emitLifecycleEvent({ iframeLifecycle: "hide" });
+        emitLifecycleEvent({ iframeLifecycle: "hide" }, { targetOrigin: "*" });
 
         // Delay clearing to prevent flashing on rapid close/open
         clearTimeoutRef.current = setTimeout(() => {

@@ -89,7 +89,7 @@ export const clientLifecycleHandler: LifecycleHandler<
  */
 export function emitConnected(): void {
     if (typeof window === "undefined") return;
-    emitLifecycleEvent({ iframeLifecycle: "connected" });
+    emitLifecycleEvent({ iframeLifecycle: "connected" }, { targetOrigin: "*" });
 }
 
 async function handleRestoreBackup(

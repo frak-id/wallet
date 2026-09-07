@@ -3,6 +3,7 @@ import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecy
 import { getTokenExpMs } from "@frak-labs/wallet-shared/common/utils/tokenExpiry";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import type { SdkSession, Session } from "@frak-labs/wallet-shared/types";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 /**
  * Represent backed up data
@@ -74,11 +75,13 @@ export async function restoreBackupData({
         throw new Error("Invalid backup data");
     }
 
-    // If the backup is older than a week ago, ask to remove it and return
+    // Expired: ask the parent to drop it. Carries no credentials, so the
+    // wildcard is fine here where `do-backup` below must fail closed.
     if (data.expireAtTimestamp < Date.now()) {
-        emitLifecycleEvent({
-            iframeLifecycle: "remove-backup",
-        });
+        emitLifecycleEvent(
+            { iframeLifecycle: "remove-backup" },
+            { targetOrigin: "*" }
+        );
         return;
     }
 
@@ -127,17 +130,26 @@ export async function pushBackupData(args?: { domain?: string }) {
         // Backup will expire in a week
         expireAtTimestamp: Date.now() + 7 * 24 * 60 * 60_000,
     };
-    console.log("[Backup] Pushing new backup data to parent client", {
-        backup,
-    });
-
-    // If nothing to back up, just remove it
+    // If nothing to back up, just remove it. Carries no credentials.
     if (!backup.session?.token && !backup.sdkSession?.token) {
-        emitLifecycleEvent({
-            iframeLifecycle: "remove-backup",
-        });
+        emitLifecycleEvent(
+            { iframeLifecycle: "remove-backup" },
+            { targetOrigin: "*" }
+        );
         return;
     }
+
+    // A credential payload with no known recipient has no correct target.
+    const origin = resolvingContextStore.getState().context?.origin;
+    if (!origin) {
+        console.warn(
+            "[Backup] Origin not resolved, session will not persist on the merchant page"
+        );
+        return;
+    }
+    // Never log `backup` itself: it carries the live session and SDK tokens,
+    // and console stripping only runs on prod builds.
+    console.log("[Backup] Pushing new backup data to parent client");
 
     // Add hash to backup data
     const hashProtected: HashProtectedBackup = {
@@ -151,8 +163,8 @@ export async function pushBackupData(args?: { domain?: string }) {
     );
 
     // And then push the event
-    emitLifecycleEvent({
-        iframeLifecycle: "do-backup",
-        data: { backup: encoded },
-    });
+    emitLifecycleEvent(
+        { iframeLifecycle: "do-backup", data: { backup: encoded } },
+        { targetOrigin: origin }
+    );
 }

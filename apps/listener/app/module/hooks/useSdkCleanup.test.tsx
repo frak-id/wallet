@@ -76,9 +76,10 @@ describe("useSdkCleanup", () => {
 
         result.current();
 
-        expect(mockEmitLifecycleEvent).toHaveBeenCalledWith({
-            iframeLifecycle: "remove-backup",
-        });
+        expect(mockEmitLifecycleEvent).toHaveBeenCalledWith(
+            { iframeLifecycle: "remove-backup" },
+            { targetOrigin: "*" }
+        );
     });
 
     test("should clear session and SDK session", ({ queryWrapper }) => {

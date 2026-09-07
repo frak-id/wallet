@@ -187,6 +187,7 @@ describe("ssoHandler", () => {
             const context = {
                 merchantId: "m-1",
                 clientId: "c-1",
+                origin: "https://merchant.example",
             };
 
             const { handleOpenSso } = await import("./ssoHandler");
@@ -196,12 +197,16 @@ describe("ssoHandler", () => {
             );
 
             expect(result).toEqual({ wallet: undefined });
-            expect(emitLifecycleEvent).toHaveBeenCalledWith({
-                iframeLifecycle: "redirect",
-                data: {
-                    baseRedirectUrl: "https://wallet.frak.id/sso?redirect=1",
+            expect(emitLifecycleEvent).toHaveBeenCalledWith(
+                {
+                    iframeLifecycle: "redirect",
+                    data: {
+                        baseRedirectUrl:
+                            "https://wallet.frak.id/sso?redirect=1",
+                    },
                 },
-            });
+                { targetOrigin: "https://merchant.example" }
+            );
         });
 
         test("should infer redirect mode from redirectUrl presence", async () => {

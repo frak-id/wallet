@@ -31,6 +31,22 @@ function buildDeepLinkHref(pairing: { id: string }): string {
 }
 
 /**
+ * Hand the SSO URL to the parent for a full-page redirect. It embeds the
+ * clientId and its proof, so an unresolved origin sends nothing.
+ */
+function emitSsoRedirect(link: string) {
+    const origin = resolvingContextStore.getState().context?.origin;
+    if (!origin) {
+        console.warn("[SSO] Origin not resolved, redirect dropped");
+        return;
+    }
+    emitLifecycleEvent(
+        { iframeLifecycle: "redirect", data: { baseRedirectUrl: link } },
+        { targetOrigin: origin }
+    );
+}
+
+/**
  * Try to open SSO popup and track result
  * @returns true if popup opened successfully
  */
@@ -287,10 +303,7 @@ function MobileSsoButton({
                     return;
                 // App genuinely not installed — redirect parent to SSO
                 clearPairingTimeout();
-                emitLifecycleEvent({
-                    iframeLifecycle: "redirect",
-                    data: { baseRedirectUrl: link },
-                });
+                emitSsoRedirect(link);
             }, 5_000);
         },
         [startSsoRedirectTimeout, clearPairingTimeout, link, client]
@@ -361,12 +374,9 @@ function MobileSsoButton({
             className={className}
             onClick={() => {
                 if (!deepLinkHref) return;
-                emitRedirectWithFallback(deepLinkHref, () => {
-                    emitLifecycleEvent({
-                        iframeLifecycle: "redirect",
-                        data: { baseRedirectUrl: link },
-                    });
-                });
+                emitRedirectWithFallback(deepLinkHref, () =>
+                    emitSsoRedirect(link)
+                );
                 setStatus("waiting");
             }}
             disabled={!deepLinkHref}

@@ -26,12 +26,23 @@ export function useDeepLinkFallback() {
         (deepLinkUrl: string, onFallback: () => void) => {
             fallbackRef.current = onFallback;
 
-            // Route through parent SDK — it handles intent:// conversion
-            // on Chromium Android and visibility-based fallback detection
-            emitLifecycleEvent({
-                iframeLifecycle: "redirect",
-                data: { baseRedirectUrl: deepLinkUrl },
-            });
+            // The parent handles intent:// conversion on Chromium Android and
+            // visibility-based fallback detection. The pairing id in the URL
+            // is only for the merchant, so an unresolved origin sends nothing.
+            const origin = resolvingContextStore.getState().context?.origin;
+            if (!origin) {
+                console.warn(
+                    "[DeepLink] Origin not resolved, redirect dropped"
+                );
+                return;
+            }
+            emitLifecycleEvent(
+                {
+                    iframeLifecycle: "redirect",
+                    data: { baseRedirectUrl: deepLinkUrl },
+                },
+                { targetOrigin: origin }
+            );
         },
         []
     );
