@@ -1,7 +1,7 @@
 ---
-"@frak-labs/core-sdk": major
-"@frak-labs/react-sdk": major
-"@frak-labs/components": major
+"@frak-labs/core-sdk": minor
+"@frak-labs/react-sdk": minor
+"@frak-labs/components": minor
 ---
 
 Replace `config.walletUrl` with `config.env`, which states both the wallet and backend origins instead of guessing the backend from the wallet URL by substring-matching known hosts.

@@ -1,7 +1,7 @@
 ---
-"@frak-labs/core-sdk": major
-"@frak-labs/react-sdk": major
-"@frak-labs/components": major
+"@frak-labs/core-sdk": minor
+"@frak-labs/react-sdk": minor
+"@frak-labs/components": minor
 "@frak-labs/nexus-sdk": patch
 ---
 
