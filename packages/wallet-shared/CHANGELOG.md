@@ -1,5 +1,13 @@
 # @frak-labs/wallet-shared
 
+## 0.0.17
+
+### Patch Changes
+
+- Updated dependencies [[`2d6912c`](https://github.com/frak-id/wallet/commit/2d6912ce8fbca937ed058ce957870bc77a6e8f98), [`ee02d5b`](https://github.com/frak-id/wallet/commit/ee02d5bdb51e3eb141e290aa5114acb3a5e9c0d1), [`2b5f2cc`](https://github.com/frak-id/wallet/commit/2b5f2cc5892267400e13fd039887332891675455), [`ce242a0`](https://github.com/frak-id/wallet/commit/ce242a0a094230bc23fcfa377793b2b924ac913e), [`c42f254`](https://github.com/frak-id/wallet/commit/c42f2540e42e5c776e04f83ccdcb19b1c389887f)]:
+  - @frak-labs/core-sdk@1.4.0
+  - @frak-labs/backend-elysia@0.0.30
+
 ## 0.0.16
 
 ### Patch Changes
