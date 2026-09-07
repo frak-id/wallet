@@ -9,6 +9,37 @@ Tiers: **P1** listener/SDK (every visitor of every merchant site) · **P2** wall
 
 ---
 
+## 2026-09-07 — the P1 postMessage cluster
+
+Four commits. The audit filed §6.1 items 1-3 as one defect ("the postMessage trust boundary is
+unguarded"). Re-measurement split them: one was real, one rested on a false premise, and one is not
+implementable as written.
+
+### P1 — Listener / SDK
+
+| Was | Fix | Caveat |
+|---|---|---|
+| **P1-3** every iframe→parent lifecycle message used `targetOrigin: "*"`, including `do-backup` payloads carrying the live session token and SDK JWT, on a path that fires on every authenticated status emit | `emitLifecycleEvent` takes an optional target; credential-bearing sends pass the resolved merchant origin. A `do-backup` with no resolved origin is suppressed rather than sent to an unknown recipient; `remove-backup` still sends, carrying nothing. The `console.log` of the whole backup was removed — `removeConsole` runs only on prod builds, so dev and staging were printing the same tokens | **The audit's wording overstated the reach.** `postMessage` with `"*"` delivers to the parent window only; sibling frames never receive it. The real exposure was delivery to *whatever origin the parent held* — a different merchant embed, a post-navigation page, a parent named by a poisoned config. It cannot protect against a script already running on the merchant page: that script shares the parent's origin and is the intended recipient |
+| **P1-7** `packages/rpc` had no test files, no runner, no test script; every downstream suite mocks it, so `listener.ts` never executed under test | Registered as a vitest project (`frame-connector-unit`) with 7 tests driving the real `createRpcListener`: origin admission, lifecycle-vs-middleware routing, middleware error handling | Tests dispatch a hand-built `MessageEvent` rather than calling `postMessage`. **jsdom reports `event.origin` as `""`** regardless of `location.origin`, so an origin comparison would match empty against empty and the tests would pass whether or not the guard worked — the precise failure P1-7 describes. Mutation-verified: stubbing the guard to always admit turns the suite red |
+| **P1-2** `walletContextMiddleware` "fails open on a runtime `STAGE` value" | **Downgraded to hygiene, then done.** Swapped to `import.meta.env.DEV` | **The premise was wrong.** `vite.config.ts:294` `define`s `process.env.STAGE` from the *build* environment and `inlineConst` folds `isRunningLocally` to a literal, so every deployed listener has the branch eliminated. A misconfigured stage is a release-pipeline failure, not a runtime one. The swap changes no deployed behaviour; it states the intent without requiring the reader to know the build config |
+| **P1-1** "lifecycle channel bypasses all origin validation" | **Rejected — not implementable as written.** See `findings-ranked-by-gain.md` §6.1 | The fix is circular: the listener cannot know a merchant's allowed origins until the `resolved-config` lifecycle message delivers them, so routing lifecycle through the allow-list needs the list before the message that carries it. `bootstrap.ts:155-157` already documented this. The genuine weakness underneath — `allowedDomains` is self-asserted on that message — is **still open** and is a product decision about attesting merchant origins, not an origin-validation bug |
+
+### Also struck from the audit
+
+Items §6.1 #8 (embedded wallet z-index) and #9 (`ButtonWallet` accessible name), plus the §7
+"this week" line repeating #9: both were fixed upstream by the embedded-wallet removal
+(`ee02d5bdb`) and had been directing readers at work that no longer existed.
+
+### Verification notes for this pass
+
+- `apps/listener`: 25 files / 232 tests passing (was 21 / 217 — the two units added 15).
+- `packages/rpc`: 7 tests, the package's first, executing the real listener.
+- The origin-guard mutation check is the one that matters: with `isOriginAllowed` stubbed to admit
+  everything, the suite goes red. Planning research had previously seen a disabled origin guard
+  leave 925 tests green.
+
+---
+
 ## 2026-08-05 — first remediation pass
 
 Two commits. Source findings were re-measured before fixing; three turned out to be different

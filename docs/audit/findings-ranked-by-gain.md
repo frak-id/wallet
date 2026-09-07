@@ -150,18 +150,18 @@ The listener's three-ring architecture means "P1" is **not** uniform. Traced fro
 
 | # | Finding | Path | Gain | Effort |
 |---|---|---|---|---|
-| **1** | **Lifecycle channel bypasses all origin validation** | Eager | `listener.ts:394-398` routes lifecycle messages *before* the middleware chain; with `allowedOrigins: "*"` (`bootstrap.ts:170`) **any origin can set `merchantId`/`origin`/`trustLevel`** — the trust root, self-asserted in the same message that authorizes it. Reachable: arbitrary `Session` writes, unvalidated CSS injection | **M** |
-| **2** | **`walletContextMiddleware` fails open** | Eager | `walletContext.ts:80-90` logs "rejecting" then **processes the request anyway** when `isRunningLocally` — which is `STAGE`-based (a *runtime* value), so it is not statically eliminated and a misconfigured `STAGE` disables origin enforcement in a deployed build. Swap for `import.meta.env.DEV` | **XS** |
-| **3** | **Lifecycle replies broadcast JWTs to `targetOrigin: "*"`** | Eager | `lifecycleEvents.ts:19,22` — every iframe→parent message, including `do-backup` payloads with live session + SDK JWTs. `includeUserActivation: true` also hands transient activation to an unverified origin. `pushBackupData` additionally `console.log`s the whole backup (`removeConsole` only runs when `isProd`) | **S** |
+| ~~**1**~~ | ~~**Lifecycle channel bypasses all origin validation**~~ | Eager | **Rejected — the framing is circular.** `allowedOrigins: "*"` is structural: the listener is embedded by an unknown merchant and cannot know its allowed origins until the `resolved-config` lifecycle message delivers them, so routing lifecycle through the allow-list would require the list before the message that carries it. `bootstrap.ts:155-157` already documents this. The real weakness the framing points at is genuine but different — `allowedDomains` arrives self-asserted on that message — and is tracked as trust establishment, not as an origin-validation bug | — |
+| ~~**2**~~ | ~~**`walletContextMiddleware` fails open**~~ | Eager | **Downgraded to hygiene, done.** The premise is wrong: `STAGE` is not a runtime value. `vite.config.ts:294` `define`s `process.env.STAGE` from the build environment and `inlineConst` folds `isRunningLocally` to a literal in every deployed listener, so a runtime misconfiguration cannot reach it. Swapped to `import.meta.env.DEV` anyway — same behaviour, legible without the build config | — |
+| ~~**3**~~ | ~~**Lifecycle replies broadcast JWTs to `targetOrigin: "*"`**~~ | Eager | **Fixed.** Credential-bearing sends now carry the resolved merchant origin. Note the original wording overstated the reach: `postMessage` with `"*"` delivers to the parent window only — sibling frames never receive it — so the exposure was delivery to *whatever origin the parent held* (a different merchant embed, a post-navigation page, a parent named by a poisoned config), not a broadcast. The `console.log` of the whole backup is also gone | — |
 | **4** | **Two sequential CDN round trips before the iframe starts** | Eager | `components.js` is a 3-line shim that dynamically imports `loader.js` from jsdelivr, re-resolving `@${CDN_TAG}` at runtime. WordPress pins `latest` with no `?ver=`. This is pure serial latency on **every merchant page** — *not in the original audits* | **S** |
 | **5** | **`@frak-labs/components@1.0.13` is uninstallable** | n/a | Verified live 404 — `design-system: workspace:*` is a **runtime** dep but the package is `private: true`. `tsdown.config.ts` already inlines it via `alwaysBundle`, so the manifest entry is dead weight. Every public install fails | **XS** |
 | **6** | **`semanticDark` ships to every visitor and is 100% dead** | **Eager** | `theme.css.ts:59` emits a full second 42-token block into the base CSS injected by `loader.ts:9`. **Nothing in the repo sets `data-theme`** — verified across apps/sdk/packages/plugins/services; there is no `prefers-color-scheme` fallback either. The only residue is a `frak_theme` localStorage key that `useLogout.ts:11` clears and nothing reads | **XS** |
-| **7** | **`packages/rpc` has zero tests, on both eager paths** | Eager | The whole package is `$initial` in the listener *and* inlined into both CDN bundles. Every downstream test `vi.mock`s it, so `listener.ts`/`client.ts` never execute under test. Planning research already saw a disabled origin guard leave **925 tests green** | **M** |
-| **8** | **Embedded wallet paints over every modal** | Ring 2 | `zIndex: 1001` sits exactly 1 above `zIndex.modal` → renders over every DS Dialog/Drawer, trapping focus behind an un-dismissable panel. Listener's own modal is at 210/220, *below* `zIndex.modal` | **S** |
-| **9** | **Embedded wallet CTAs have no accessible name** | Ring 2 | `ButtonWallet/index.tsx:25-33` renders `children` as a **sibling outside** the button; only `icon` is inside. The embedded wallet's primary Copy and Share actions announce as unnamed buttons | **XS** |
+| ~~**7**~~ | ~~**`packages/rpc` has zero tests, on both eager paths**~~ | Eager | **Fixed.** The package is now a vitest project (`frame-connector-unit`) with 7 tests driving the real `createRpcListener` — origin admission, lifecycle-vs-middleware routing, middleware error handling. Verified by mutation: stubbing the guard to always admit turns the suite red. Tests dispatch a hand-built `MessageEvent`, since jsdom reports `event.origin` as `""` and an origin comparison would otherwise match empty against empty | — |
+| ~~**8**~~ | ~~**Embedded wallet paints over every modal**~~ | Ring 2 | **Already fixed upstream** — the embedded wallet was removed in `ee02d5bdb` | — |
+| ~~**9**~~ | ~~**Embedded wallet CTAs have no accessible name**~~ | Ring 2 | **Already fixed upstream** — `ButtonWallet.tsx:177` carries an `aria-label`, and the embedded wallet itself is gone | — |
 | **10** | 18 hardcoded hex colors, 0 DS tokens adopted | Ring 2 | `ButtonWallet` alone has 7. Listener is effectively un-themable | **M** |
 
-**P1 verdict:** the top 3 are all the **same defect class** — the postMessage trust boundary is unguarded, and it is reachable by every visitor of every merchant site. That is the single most consequential cluster in the entire audit, and it ranks far above anything I put in my previous Tier 1. Items 4 and 6 are the only pure *page-view* performance wins available at P1; everything else on the eager path is already tightly budgeted (32 KB hard-fail).
+**P1 verdict:** the top 3 were filed as one defect class — an unguarded postMessage trust boundary. Re-measurement split them: #3 was real and is fixed, #2 rested on a false premise about build-time inlining and became hygiene, and #1 is not implementable as written. What survives is **trust establishment** — `allowedDomains` is self-asserted on the `resolved-config` message, so a merchant page still declares its own trust level. That is a product decision about how merchant origins are attested, not an origin-validation bug, and it is the open successor to this cluster. Items 4 and 6 remain the only pure *page-view* performance wins at P1.
 
 ### 6.2 P2 — Wallet / Tauri (B2C users, mobile, money paths)
 
@@ -214,11 +214,11 @@ Everything here is real but absorbs cost the other two tiers cannot. **Two excep
 
 ## 7. Revised sequencing (scope-weighted)
 
-### Now — P1 trust boundary, as one piece of work
+### Done — the P1 postMessage cluster
 
-The three findings are one defect and should not be split: **route lifecycle messages through origin validation** (`packages/rpc/src/listener.ts`), **replace `allowedOrigins: "*"` with the resolved merchant origin**, **swap `isRunningLocally` for `import.meta.env.DEV`**, and **stop broadcasting to `targetOrigin: "*"`**. Then add runtime validation on the RPC payload slice only — not the whole X1 programme.
+Landed as one piece of work: credential-bearing lifecycle sends now carry the resolved merchant origin, the backup blob is no longer logged, the mismatch bypass reads `import.meta.env.DEV`, and `packages/rpc` has its first executing tests (mutation-verified — disabling the origin guard turns the suite red). Two of the four items did not survive measurement: the lifecycle-routing fix is circular, and the fail-open premise was wrong. See §6.1 entries 1-3 and 7.
 
-Reachable by every visitor of every merchant site, and `packages/rpc` has **no tests that execute it**, so nothing will tell you if this regresses. Pair the fix with the first real tests in that package.
+**What is left of this cluster is trust establishment**, not origin validation: `allowedDomains` arrives self-asserted on `resolved-config`, so a merchant page still declares its own trust level. Deciding how a merchant origin is attested — backend confirmation, a signed config, or accepting the current level — is the open successor, and it changes which merchants are trusted, so it is a product decision rather than a bug fix. Runtime validation on the RPC payload slice remains unstarted and is still worth doing on its own.
 
 ### This week — one-liners, any tier
 
@@ -228,7 +228,7 @@ Reachable by every visitor of every merchant site, and `packages/rpc` has **no t
 | 2 | Delete `semanticDark` (or wire up a theme switch) | P1 | Dead CSS off every visitor's critical path |
 | 3 | `GlassButton` focus-visible ring | P2 | Restores keyboard focus wallet-wide |
 | 4 | Delete `mock/products.json` and DS `Slider` | P3 | Two dead modules |
-| 5 | `ButtonWallet` accessible name | P1 | Primary embedded-wallet actions stop announcing as unnamed |
+| 5 | ~~`ButtonWallet` accessible name~~ | — | **Already fixed upstream** — the embedded wallet was removed in `ee02d5bdb`; the button carries an `aria-label` |
 
 ### Next — P2 smoothness + the P1 latency item (days)
 
