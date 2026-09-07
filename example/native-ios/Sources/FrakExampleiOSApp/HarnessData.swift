@@ -1,6 +1,5 @@
 import Foundation
 import FrakSDK
-import FrakSDKUI
 
 /// Catalog row display model, local to this harness.
 struct ProductItem: Identifiable, Sendable {
@@ -142,21 +141,6 @@ enum CatalogRewardLookup {
         case .loaded(let reward): return reward.formatted
         case .noActiveReward: return "No reward running right now"
         case .failed: return "Rewards unavailable"
-        }
-    }
-}
-
-/// Which store surface `FrakSharingConfiguration.install` should hand the sheet's install step.
-enum InstallRoute: String, CaseIterable, Identifiable {
-    case storeProductPage = "Store page"
-    case overlay = "Overlay"
-
-    var id: String { rawValue }
-
-    var presentation: FrakInstallPresentation {
-        switch self {
-        case .storeProductPage: return .storeProductPage
-        case .overlay: return .overlay(.init(position: .bottomRaised))
         }
     }
 }

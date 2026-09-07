@@ -20,7 +20,6 @@ final class HarnessModel: ObservableObject {
     @Published private(set) var walletInstalled: Bool?
     @Published private(set) var currencyCode = fallbackCurrencyCode
     @Published var isDebugRefreshing = false
-    @Published var installRoute: InstallRoute = .storeProductPage
     @Published var selectedEnvironment = HarnessEnvironmentStore.read()
     @Published var isSharingPresented = false
     @Published var pendingSharingRequest = SharingRequest()

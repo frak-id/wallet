@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Everything an engineer needs and a tester may be asked to read out: the live stage, the wiring
-/// the SDK reports, and the platform probes that only make sense to the SDK's own authors.
+/// Everything an engineer needs and a tester may be asked to read out: which stage is live and the
+/// wiring the SDK reports back.
 struct DebugTab: View {
     @Binding var selectedEnvironment: HarnessEnvironment
     let onSelectEnvironment: (HarnessEnvironment) -> Void
@@ -9,7 +9,6 @@ struct DebugTab: View {
     let debugExport: String
     let isDebugRefreshing: Bool
     let onRefreshDebugInfo: () -> Void
-    @Binding var installRoute: InstallRoute
 
     var body: some View {
         ScrollView {
@@ -24,7 +23,6 @@ struct DebugTab: View {
                     isRefreshing: isDebugRefreshing,
                     onRefresh: onRefreshDebugInfo
                 )
-                ProbesCard(installRoute: $installRoute)
             }
         }
     }
@@ -131,58 +129,6 @@ private struct SdkDebugCard: View {
                     copyToClipboard(exportText)
                 }
             }
-        }
-    }
-}
-
-/// SDK-author probes, collapsed: a tester never needs them, and an open card of them reads as part
-/// of the merchant flow.
-private struct ProbesCard: View {
-    @Binding var installRoute: InstallRoute
-    @State private var isExpanded = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            DisclosureGroup(isExpanded: $isExpanded) {
-                VStack(alignment: .leading, spacing: 12) {
-                    InstallRouteSection(route: $installRoute)
-                    StoreInviteSection()
-                }
-                .padding(.top, 8)
-            } label: {
-                Text("Developer probes")
-                    .font(.headline)
-                    .foregroundColor(FrakTheme.textPrimary)
-            }
-            .accentColor(FrakTheme.textSecondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(FrakTheme.surfaceBackground2)
-        .cornerRadius(10)
-    }
-}
-
-/// Switches the sheet's install step between the two store surfaces, so both can be driven from a
-/// real share rather than only from the standalone buttons below.
-private struct InstallRouteSection: View {
-    @Binding var route: InstallRoute
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Sharing sheet install route")
-                .font(.subheadline)
-                .bold()
-                .foregroundColor(FrakTheme.textPrimary)
-            Text("What the sheet's Install button raises. Applies to the next share.")
-                .font(.caption)
-                .foregroundColor(FrakTheme.textSecondary)
-            Picker("Install route", selection: $route) {
-                ForEach(InstallRoute.allCases) { route in
-                    Text(route.rawValue).tag(route)
-                }
-            }
-            .pickerStyle(SegmentedPickerStyle())
         }
     }
 }

@@ -94,7 +94,6 @@ struct RootView: View {
         .frakSharingSheet(
             isPresented: $model.isSharingPresented,
             request: model.pendingSharingRequest,
-            configuration: FrakSharingConfiguration(install: model.installRoute.presentation),
             onResult: model.handleSharingResult
         )
     }
@@ -124,8 +123,7 @@ struct RootView: View {
                 debugRows: model.debugRows,
                 debugExport: model.debugExport,
                 isDebugRefreshing: model.isDebugRefreshing,
-                onRefreshDebugInfo: { Task { await model.refreshDebugInfo(log: true) } },
-                installRoute: $model.installRoute
+                onRefreshDebugInfo: { Task { await model.refreshDebugInfo(log: true) } }
             )
         }
     }

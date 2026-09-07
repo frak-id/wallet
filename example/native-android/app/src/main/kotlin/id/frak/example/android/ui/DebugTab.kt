@@ -1,7 +1,5 @@
 package id.frak.example.android.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,10 +13,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -26,8 +20,8 @@ import id.frak.example.android.DebugRow
 import id.frak.example.android.HarnessEnvironment
 
 /**
- * Everything an engineer needs and a tester may be asked to read out: the live stage, the wiring
- * the SDK reports, and the platform probes that only make sense to the SDK's own authors.
+ * Everything an engineer needs and a tester may be asked to read out: which stage is live and the
+ * wiring the SDK reports back.
  */
 @Composable
 fun DebugTab(
@@ -39,7 +33,6 @@ fun DebugTab(
     debugExport: String,
     isDebugRefreshing: Boolean,
     onRefreshDebugInfo: () -> Unit,
-    onRunJavaInterop: () -> Unit,
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -60,9 +53,6 @@ fun DebugTab(
                 isRefreshing = isDebugRefreshing,
                 onRefresh = onRefreshDebugInfo,
             )
-        }
-        item {
-            ProbesCard(onRunJavaInterop = onRunJavaInterop)
         }
     }
 }
@@ -166,34 +156,6 @@ private fun SdkDebugCard(
                 modifier = Modifier.weight(1f),
                 tint = ActionTint.NEUTRAL,
             ) { copyToClipboard(context, exportText) }
-        }
-    }
-}
-
-/**
- * SDK-author probes, collapsed: a tester never needs them, and an open card of them reads as part
- * of the merchant flow.
- */
-@Composable
-private fun ProbesCard(onRunJavaInterop: () -> Unit) {
-    var isExpanded by remember { mutableStateOf(false) }
-    HarnessCard(
-        title = if (isExpanded) "Developer probes ▾" else "Developer probes ▸",
-        modifier = Modifier.clickable { isExpanded = !isExpanded },
-    ) {
-        AnimatedVisibility(visible = isExpanded) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "Runs the Java-facing *Async surface, which only a Java merchant would reach for.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = FrakTheme.textSecondary,
-                )
-                ActionButton(
-                    label = "Run Java interop probe",
-                    tint = ActionTint.NEUTRAL,
-                    onClick = onRunJavaInterop,
-                )
-            }
         }
     }
 }

@@ -185,10 +185,6 @@ class HarnessModel(
         }
     }
 
-    fun runJavaInterop() {
-        JavaInterop.exercise { line -> addLog(line, LogType.INFO) }
-    }
-
     fun clearLogs() {
         logs.clear()
         addLog("Log cleared.", LogType.INFO)

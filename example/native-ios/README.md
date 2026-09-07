@@ -30,7 +30,7 @@ The app is laid out so a non-technical tester can drive it without being told wh
 |---|---|---|
 | **Shop** | anyone | The catalog as a shopper sees it, images included, with the three share entry points: whole store, Best Sellers collection, single product. The reward figure at the top is one `rewards.best` call for the whole catalog. |
 | **Checkout** | anyone | *Complete a test order* (fires `tracking.purchase`) and *Simulate a referral link* (fires `appLink.handleReferral`). |
-| **Debug** | engineers, or a tester reading values out | Stage picker, the SDK debug panel, and *Developer probes* — collapsed, holding the sharing-sheet install route and the `SKOverlay` / `SKStoreProductViewController` presenters. |
+| **Debug** | engineers, or a tester reading values out | Stage picker, and the SDK debug panel. |
 
 **Reporting a bug**: the event log has *Copy*, *Share* and *Expand*. Share opens the iOS share sheet, so the whole log goes straight into Slack or a ticket. *Copy* on the SDK debug panel does the same for the wiring values. Prices follow the merchant's resolved currency, and the log is capped at 300 entries.
 

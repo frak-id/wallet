@@ -201,7 +201,6 @@ fun MerchantAppScreen(
                         debugExport = model.debugExport,
                         isDebugRefreshing = model.isDebugRefreshing,
                         onRefreshDebugInfo = { scope.launch { model.refreshDebugInfo(log = true) } },
-                        onRunJavaInterop = model::runJavaInterop,
                     )
                 }
             }
