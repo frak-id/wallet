@@ -138,7 +138,7 @@ FRAK_BUILD_NUMBER=42 bun run --cwd example/native-ios archive
 bun run --cwd example/native-ios upload
 ```
 
-`archive` and `upload` are separate so a failed upload can be retried without rebuilding. `FRAK_BUILD_NUMBER` must increase on every upload — App Store Connect rejects a build number it has already seen; CI passes `github.run_number`.
+`archive` and `upload` are separate so a failed upload can be retried without rebuilding. `FRAK_BUILD_NUMBER` must increase on every upload — App Store Connect rejects a build number it has already seen; CI passes `github.run_number + 10`, leaving the low numbers free for a build seeded by hand.
 
 Signing is automatic: `-allowProvisioningUpdates` plus the API key lets xcodebuild mint the App Store profile unattended, so nothing has to be checked in. The bundle id stays `id.frak.example.ios` — the App Store Connect record must use that exact id, since both merchants allow-list it.
 

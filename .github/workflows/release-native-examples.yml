@@ -33,10 +33,8 @@ permissions:
 
 env:
   CI: true
-  # Monotonic across both platforms, which is all TestFlight and Play require of a build
-  # number. Re-running a failed job burns a number; that is intended, since neither store
-  # accepts a repeat.
-  FRAK_BUILD_NUMBER: ${{ github.run_number }}
+  # The build number is derived per job, in a step: GitHub expressions have no arithmetic,
+  # and it needs an offset (see "Resolve build number" below).
   FRAK_VERSION_NAME: ${{ inputs.version || '1.0' }}
 
 defaults:
@@ -51,6 +49,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
+
+      # Monotonic, which is all TestFlight and Play ask of a build number. Re-running a
+      # failed job burns one; that is intended, since neither store accepts a repeat.
+      #
+      # Offset by 10: run numbers start at 1 and so does a bundle seeded by hand, and Play
+      # accepts a given version code exactly once.
+      - name: "🔢 Resolve build number"
+        run: echo "FRAK_BUILD_NUMBER=$(( GITHUB_RUN_NUMBER + 10 ))" >> "$GITHUB_ENV"
 
       - name: "🧰 Install XcodeGen"
         run: brew install xcodegen
@@ -123,6 +129,10 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
+      # See the iOS job: same offset, same reason.
+      - name: "🔢 Resolve version code"
+        run: echo "FRAK_VERSION_CODE=$(( GITHUB_RUN_NUMBER + 10 ))" >> "$GITHUB_ENV"
+
       - name: "🔑 Write upload keystore"
         run: |
           umask 077
@@ -137,7 +147,6 @@ jobs:
           FRAK_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           FRAK_KEY_ALIAS: upload
           FRAK_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          FRAK_VERSION_CODE: ${{ github.run_number }}
 
       - name: "🧹 Remove keystore"
         if: always()

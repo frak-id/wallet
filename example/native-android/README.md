@@ -88,7 +88,15 @@ export FRAK_KEY_PASSWORD=...
 FRAK_VERSION_CODE=42 FRAK_VERSION_NAME=1.0 bun run --cwd example/native-android bundle
 ```
 
-Without `FRAK_KEYSTORE` the bundle is debug-signed — fine for checking the build, rejected by Play. `FRAK_VERSION_CODE` must increase on every upload; CI passes `github.run_number`. The output lands at `app/build/outputs/bundle/release/app-release.aab`.
+Without `FRAK_KEYSTORE` the bundle is debug-signed — fine for checking the build, **rejected by Play**. `FRAK_VERSION_CODE` must increase on every upload; CI passes `github.run_number + 10`, leaving the low numbers free for a bundle seeded by hand. The output lands at `app/build/outputs/bundle/release/app-release.aab`.
+
+Whichever key signs the **first** upload is the one Play registers as the upload key, and every later upload must match it. Check before uploading anything:
+
+```bash
+jarsigner -verify -verbose:summary app/build/outputs/bundle/release/app-release.aab | grep 'Signed by'
+```
+
+`CN=Android Debug` means the keystore was not picked up. Uploading that would register the debug certificate as the upload key, and recovering needs an upload-key reset from Google support.
 
 `assembleRelease` still works on a clean checkout with no keystore, so the R8 path stays reproducible for anyone.
 
