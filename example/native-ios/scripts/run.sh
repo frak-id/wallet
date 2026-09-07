@@ -215,7 +215,9 @@ do_upload() {
 	local keys_dir="$DERIVED/private_keys"
 	mkdir -p "$keys_dir"
 	cp "$FRAK_ASC_KEY_PATH" "$keys_dir/AuthKey_$FRAK_ASC_KEY_ID.p8"
-	trap 'rm -rf "$keys_dir"' EXIT
+	# Expanded now rather than when the trap fires: `keys_dir` is local and out of scope by
+	# then, which under `set -u` fails the run after a successful upload.
+	trap "rm -rf $(printf '%q' "$keys_dir")" EXIT
 
 	log "Uploading $ipa to App Store Connect..."
 	API_PRIVATE_KEYS_DIR="$keys_dir" xcrun altool --upload-app -f "$ipa" -t ios \

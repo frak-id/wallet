@@ -47,6 +47,14 @@
         <string>UIInterfaceOrientationLandscapeLeft</string>
         <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
+    <!-- iPad multitasking requires all four, and the store rejects a subset (ITMS-90474). -->
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
     <!--
       Both wallet variants: the app ships as `frakwallet://` in prod and
       `frakwallet-dev://` for the dev stage (see sdk/core/src/constants.ts).
