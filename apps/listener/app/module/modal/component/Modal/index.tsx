@@ -224,7 +224,7 @@ function ListenerModalInner({
                     logoFailed={logoFailed}
                     onLogoError={() => setLogoFailed(true)}
                 />
-                <CurrentModalStepComponent />
+                <CurrentModalStepComponent onError={onError} />
                 <OriginPairingState />
             </Stack>
         </ModalComponent>
@@ -403,7 +403,11 @@ function CurrentModalMetadataInfo() {
  * Return the right inner component depending on the current modal step
  * @constructor
  */
-function CurrentModalStepComponent() {
+function CurrentModalStepComponent({
+    onError,
+}: {
+    onError: (reason?: string, code?: number) => void;
+}) {
     const currentStep = modalStore(selectCurrentStep);
     const currentStepIndex = modalStore((s) => s.currentStep);
     const totalSteps = modalStore((s) => s.steps?.length ?? 0);
@@ -449,6 +453,7 @@ function CurrentModalStepComponent() {
                     <SiweAuthenticateModalStep
                         params={currentStep.params}
                         onFinish={currentStep.onResponse}
+                        onError={onError}
                     />
                 );
             case "sendTransaction":
@@ -463,5 +468,5 @@ function CurrentModalStepComponent() {
             default:
                 return <>Can't handle {stepKey} yet</>;
         }
-    }, [currentStep]);
+    }, [currentStep, onError]);
 }

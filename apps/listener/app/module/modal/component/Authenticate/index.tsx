@@ -4,12 +4,18 @@ import { Card } from "@frak-labs/design-system/components/Card";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { RpcErrorCodes } from "@frak-labs/frame-connector";
 import { useWebauthnErrorToast } from "@frak-labs/wallet-shared/authentication";
 import { prefixModalCss } from "@frak-labs/wallet-shared/common";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { createSiweMessage, type SiweMessage } from "viem/siwe";
 import { useConnection, useSignMessage } from "wagmi";
 import { useListenerTranslation } from "@/ui/ListenerUiProvider";
+
+type BuiltSiweMessage =
+    | { status: "pending" }
+    | { status: "ready"; message: string }
+    | { status: "invalid"; reason: string };
 
 /**
  * The component for the siwe authentication step of a modal
@@ -19,9 +25,11 @@ import { useListenerTranslation } from "@/ui/ListenerUiProvider";
 export function SiweAuthenticateModalStep({
     params,
     onFinish,
+    onError,
 }: {
     params: SiweAuthenticateModalStepType["params"];
     onFinish: (result: SiweAuthenticateModalStepType["returns"]) => void;
+    onError?: (reason: string, code?: number) => void;
 }) {
     const { t } = useListenerTranslation();
     const { address, chainId } = useConnection();
@@ -43,13 +51,36 @@ export function SiweAuthenticateModalStep({
         };
     }, [params, address, chainId]);
 
-    // Undefined until the wallet connection resolves `address`/`chainId`.
+    // `pending` until the wallet connection resolves `address`/`chainId`.
     // Never fall back to a placeholder: signing a bogus message would produce
     // an invalid SIWE proof the backend rejects (`Invalid proof`).
-    const message = useMemo(
-        () => (siweMessage ? createSiweMessage(siweMessage) : undefined),
-        [siweMessage]
-    );
+    const built = useMemo<BuiltSiweMessage>(() => {
+        if (!siweMessage) return { status: "pending" };
+        try {
+            return {
+                status: "ready",
+                message: createSiweMessage(siweMessage),
+            };
+        } catch (error) {
+            // viem validates every EIP-4361 field here, during render, and
+            // the listener has no error boundary — translate the throw into
+            // an RPC rejection instead of a modal nobody can sign.
+            return {
+                status: "invalid",
+                reason:
+                    error instanceof Error
+                        ? error.message
+                        : "Invalid SIWE parameters",
+            };
+        }
+    }, [siweMessage]);
+
+    const message = built.status === "ready" ? built.message : undefined;
+
+    useEffect(() => {
+        if (built.status !== "invalid") return;
+        onError?.(built.reason, RpcErrorCodes.serverError);
+    }, [built, onError]);
 
     const {
         mutate: signMessage,
