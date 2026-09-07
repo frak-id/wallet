@@ -33,17 +33,6 @@ export function BottomTabBar({ tabs, activeKey, homeKey }: BottomTabBarProps) {
         [tabs, activeKey]
     );
 
-    const gliderTranslateStep = useMemo(() => {
-        if (tabs.length <= 1) {
-            return 0;
-        }
-
-        const widthRatio = 1 / tabs.length;
-        const availableTrack = 1 - widthRatio;
-        const stepRatio = availableTrack / (tabs.length - 1);
-
-        return (stepRatio / widthRatio) * 100;
-    }, [tabs.length]);
     return (
         <Box className={bottomTabBarStyles.wrapper}>
             {/* Progressive blur background */}
@@ -69,7 +58,11 @@ export function BottomTabBar({ tabs, activeKey, homeKey }: BottomTabBarProps) {
                             key={tab.key}
                             to={tab.key}
                             replace={replace}
-                            className={`${bottomTabBarStyles.tab}${isActive ? ` ${bottomTabBarStyles.tabActive}` : ""}`}
+                            className={
+                                isActive
+                                    ? bottomTabBarStyles.tabActive
+                                    : bottomTabBarStyles.tab
+                            }
                             aria-current={isActive ? "page" : undefined}
                         >
                             <Box
@@ -95,8 +88,8 @@ export function BottomTabBar({ tabs, activeKey, homeKey }: BottomTabBarProps) {
                 <span
                     className={bottomTabBarStyles.glider}
                     style={{
-                        width: `calc((100% - 4px) / ${tabs.length})`,
-                        transform: `translateX(${activeIndex * gliderTranslateStep}%)`,
+                        width: `calc(100% / ${tabs.length})`,
+                        transform: `translateX(${activeIndex * 100}%)`,
                     }}
                     aria-hidden="true"
                 />

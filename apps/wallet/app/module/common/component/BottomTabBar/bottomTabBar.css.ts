@@ -21,6 +21,38 @@ const barPaddingBlock = alias.spacing.s;
 /** Full painted height of the bar, excluding the bottom safe-area inset. */
 export const bottomBarHeight = `calc(${pillHeight} + ${barPaddingBlock} * 2)`;
 
+// Hoisted so the active variants compose them: a standalone variant would drop
+// layout.
+const tabBase = style({
+    position: "relative",
+    display: "flex",
+    flex: "1 1 0",
+    minWidth: 0,
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "2px",
+    padding: "8px 22px",
+    border: "none",
+    borderRadius: pillRadius,
+    background: "transparent",
+    cursor: "pointer",
+    zIndex: 1,
+    color: vars.text.secondary,
+    lineHeight: "12px",
+    whiteSpace: "nowrap",
+    transition: `color ${transition.base} ${easing.default}`,
+    WebkitTapHighlightColor: "transparent",
+});
+
+const tabIconWrapperBase = style({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: vars.icon.primary,
+    transition: `color ${transition.base} ${easing.default}`,
+});
+
 export const bottomTabBarStyles = {
     /**
      * Outer wrapper — fills the entire bottom bar area.
@@ -73,7 +105,9 @@ export const bottomTabBarStyles = {
         alignItems: "stretch",
         width: "100%",
         minHeight: pillHeight,
-        maxWidth: "286px",
+        // Content width (minus the 1px border) must divide by the tab count:
+        // a fractional tab x re-rounds per glider stop on WebKit.
+        maxWidth: "287px",
         borderRadius: pillRadius,
         overflow: "hidden",
         zIndex: 1,
@@ -83,31 +117,9 @@ export const bottomTabBarStyles = {
         boxShadow: glass.innerShadow,
     }),
 
-    tab: style({
-        position: "relative",
-        display: "flex",
-        flex: "1 1 0",
-        minWidth: 0,
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "2px",
-        padding: "8px 22px",
-        border: "none",
-        borderRadius: pillRadius,
-        background: "transparent",
-        cursor: "pointer",
-        zIndex: 1,
-        color: vars.text.secondary,
-        lineHeight: "12px",
-        whiteSpace: "nowrap",
-        transition: `color ${transition.base} ${easing.default}`,
-        WebkitTapHighlightColor: "transparent",
-    }),
+    tab: tabBase,
 
-    tabActive: style({
-        color: vars.text.action,
-    }),
+    tabActive: style([tabBase, { color: vars.text.action }]),
 
     tabLabel: style({
         fontSize: "10px",
@@ -115,28 +127,24 @@ export const bottomTabBarStyles = {
         letterSpacing: "-0.01em",
     }),
 
-    tabIconWrapper: style({
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: vars.icon.primary,
-        transition: `color ${transition.base} ${easing.default}`,
-    }),
+    tabIconWrapper: tabIconWrapperBase,
 
-    tabIconWrapperActive: style({
-        color: vars.icon.action,
-    }),
+    tabIconWrapperActive: style([
+        tabIconWrapperBase,
+        { color: vars.icon.action },
+    ]),
 
     /**
-     * Active tab indicator — slides behind the active tab.
-     * Width is set inline as `(1 / tabs.length) * 100%` so it
-     * adapts to any number of tabs.
+     * Active tab indicator — slides behind the active tab. Width is set inline
+     * as `100% / tabs.length`, and it must track the tab box exactly: a
+     * horizontal inset would shrink the glider but not the tabs, so each
+     * `translateX(i * 100%)` step would fall short and drift the highlight.
      */
     glider: style({
         position: "absolute",
         top: "2px",
         bottom: "2px",
-        left: "2px",
+        left: 0,
         display: "block",
         borderRadius: pillRadius,
         background: glass.indicator,
@@ -144,5 +152,9 @@ export const bottomTabBarStyles = {
         zIndex: 0,
         pointerEvents: "none",
         transition: `transform ${transition.slow} ${easing.decelerate}`,
+        // Tabs sit at fractional x and WebKit snaps them differently while
+        // overlapping a composited sibling; keep the layer permanent
+        // (webkit.org/b/115304).
+        willChange: "transform",
     }),
 };

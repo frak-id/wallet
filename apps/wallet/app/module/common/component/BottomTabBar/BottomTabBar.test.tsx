@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { bottomTabBarStyles } from "./bottomTabBar.css";
 import { BottomTabBar } from "./index";
 
 // `<Link>` from TanStack Router needs a router context. Stub it to a
@@ -47,21 +48,45 @@ describe("BottomTabBar", () => {
         expect(tabBLink?.getAttribute("href")).toBe("b");
     });
 
-    it("should give active tab a different className than inactive tab", () => {
-        render(<BottomTabBar tabs={mockTabs} activeKey="a" />);
-        const tabALink = screen.getByText("Tab A").closest("a");
-        const tabBLink = screen.getByText("Tab B").closest("a");
-
-        expect(tabALink).not.toBeNull();
-        expect(tabBLink).not.toBeNull();
-        expect(tabALink?.className).not.toBe(tabBLink?.className);
-    });
-
     it("should mark active tab with aria-current='page'", () => {
         render(<BottomTabBar tabs={mockTabs} activeKey="a" />);
         const links = screen.getAllByRole("link");
         expect(links[0]).toHaveAttribute("aria-current", "page");
         expect(links[1]).not.toHaveAttribute("aria-current");
+    });
+
+    // Active variants compose their base; replacing it would drop layout.
+    it("should render the active tab with its base classes applied", () => {
+        render(<BottomTabBar tabs={mockTabs} activeKey="a" />);
+        const [activeLink, inactiveLink] = screen.getAllByRole("link");
+
+        expect(activeLink.className).toContain(bottomTabBarStyles.tab);
+        expect(activeLink.className).toContain(bottomTabBarStyles.tabActive);
+        expect(inactiveLink.className).not.toContain(
+            bottomTabBarStyles.tabActive
+        );
+
+        const activeIcon = activeLink.querySelector("span");
+        expect(activeIcon?.className).toContain(
+            bottomTabBarStyles.tabIconWrapper
+        );
+        expect(activeIcon?.className).toContain(
+            bottomTabBarStyles.tabIconWrapperActive
+        );
+    });
+
+    // The glider must span a whole tab and step by exactly one tab width, or
+    // the highlight drifts off-centre on the outer tabs.
+    it("should size and step the glider by one full tab", () => {
+        const { container } = render(
+            <BottomTabBar tabs={mockTabs} activeKey="c" />
+        );
+
+        const glider = container.querySelector<HTMLElement>(
+            `.${bottomTabBarStyles.glider}`
+        );
+        expect(glider?.style.width).toBe("calc(33.3333%)");
+        expect(glider?.style.transform).toBe("translateX(200%)");
     });
 
     it("should render the progressive blur background", () => {
