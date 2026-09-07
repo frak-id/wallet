@@ -59,6 +59,8 @@ internal class DefaultFrakClient(
     private val ioDispatcher: CoroutineDispatcher = defaultIoDispatcher(),
     /** What the Java `*Async` twins complete on. See [MainThreadDispatcher]. */
     private val mainDispatcher: CoroutineDispatcher = MainThreadDispatcher,
+    /** A seam: the unit-test `android.jar` throws on every `Looper` call. */
+    private val onMainThread: () -> Boolean = ::isMainThread,
     /** Must be the instance [identity] holds, or a corrected clock never reaches the signing path. */
     serverClock: ServerClock = ServerClock(logger = logger),
     http: HttpClient =
@@ -101,14 +103,16 @@ internal class DefaultFrakClient(
         )
 
     /**
-     * Builds a Java `*Async` twin: body on [ioDispatcher], completion signalled on [mainDispatcher].
-     * Never `get()`/`join()` one on the main thread — completion needs a main-looper turn, so it
-     * deadlocks into an ANR. Cancelled by [shutdown], which leaves later twins already cancelled.
+     * Builds a Java `*Async` twin: body on [ioDispatcher], completion signalled on [mainDispatcher]
+     * so a merchant's `thenAccept` lands where it can touch views. Blocking one from the main
+     * thread throws rather than deadlocking, see [MainSafeFuture]. Cancelled by [shutdown], which
+     * leaves later twins already cancelled.
      */
     fun <T> asFuture(block: suspend () -> T): CompletableFuture<T> =
-        scope.future(mainDispatcher, CoroutineStart.UNDISPATCHED) {
-            withContext(ioDispatcher) { block() }
-        }
+        scope
+            .future(mainDispatcher, CoroutineStart.UNDISPATCHED) {
+                withContext(ioDispatcher) { block() }
+            }.mainSafe(onMainThread)
 
     val environment: FrakEnvironment get() = settings.env
 

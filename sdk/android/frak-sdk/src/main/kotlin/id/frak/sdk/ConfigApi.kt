@@ -22,7 +22,7 @@ public class ConfigApi internal constructor(
     @Throws(FrakError::class)
     public suspend fun resolve(forceRefresh: Boolean): FrakResolvedConfig = core.resolveConfig(forceRefresh)
 
-    /** [resolve] for Java. Never `get()`/`join()` it on the main thread — completion needs a main-looper turn. */
+    /** [resolve] for Java. Completes on the main thread; blocking it from there throws. */
     public fun resolveAsync(): CompletableFuture<FrakResolvedConfig> = resolveAsync(false)
 
     /** [resolve] for Java. */

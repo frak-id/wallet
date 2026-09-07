@@ -16,6 +16,20 @@ independently — see [`../ios/CHANGELOG.md`](../ios/CHANGELOG.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **Blocking a `*Async` future from the main thread now throws instead of deadlocking.** The twins
+  complete on the main thread so `thenAccept`/`whenComplete` can touch views, which made
+  `get()`/`join()` from that same thread unanswerable — it hung until Android's ANR watchdog killed
+  the app. Those three methods now fail immediately with an `IllegalStateException` naming the fix.
+  Nothing changes for callback-style use; move the `get()`/`join()` call to a background thread.
+
+### Fixed
+
+- **`id.frak.sdk:ui` now publishes Compose on the compile classpath.** `FrakSharing.Builder`'s
+  `@Composable build()` overload takes a `Composer`, so Compose is part of this artifact's public
+  surface, but the dependency was `implementation`-scoped and reached consumers as runtime-only.
+
 ## [1.0.0-beta.3] - 2026-09-04
 
 ### Added

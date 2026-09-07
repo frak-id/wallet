@@ -15,6 +15,7 @@ import id.frak.sdk.core.FrakLogger
 import id.frak.sdk.core.MainThreadDispatcher
 import id.frak.sdk.core.TrackingConsent
 import id.frak.sdk.core.defaultIoDispatcher
+import id.frak.sdk.core.mainSafe
 import id.frak.sdk.identity.AndroidKeystoreDeviceKeyStore
 import id.frak.sdk.identity.AnonymousIdStore
 import id.frak.sdk.net.ServerClock
@@ -148,15 +149,17 @@ public object Frak {
 
     /**
      * [shutdown] for Java. Runs on its own scope, not the client's, which `shutdown()` cancels.
-     * Never `get()`/`join()` it on the main thread, and sequence a following [initialize] off the
-     * future (`thenRun`) rather than beside it, or the new client races the old one's teardown.
+     * Blocking it from the main thread throws rather than deadlocking; sequence a following
+     * [initialize] off the future (`thenRun`) rather than beside it, or the new client races the
+     * old one's teardown.
      */
     @JvmStatic
     public fun shutdownAsync(): CompletableFuture<Void?> =
-        teardownScope.future(MainThreadDispatcher) {
-            shutdown()
-            null
-        }
+        teardownScope
+            .future<Void?>(MainThreadDispatcher) {
+                shutdown()
+                null
+            }.mainSafe()
 
     /** Not the client's scope, deliberately: see [shutdownAsync]. */
     private val teardownScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

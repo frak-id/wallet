@@ -45,7 +45,12 @@ dependencies {
         }
     }
 
-    implementation(platform(libs.compose.bom))
+    // `api`, not `implementation`: `Composer` is a parameter of the `@Composable build()` overload,
+    // so Compose is on this module's public surface and has to reach a merchant's compile
+    // classpath. The BOM carries the same scope, or the published constraint has no version.
+    api(platform(libs.compose.bom))
+    api(libs.compose.runtime)
+
     implementation(libs.compose.ui)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)

@@ -15,12 +15,16 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -114,10 +118,52 @@ class AsyncTwinTest {
             assertTrue("cause must be the FrakError", failure?.cause is FrakError.MerchantResolutionFailed)
         }
 
+    @Test
+    fun `blocking a twin from the main thread throws instead of deadlocking`() =
+        runTest {
+            val main = RecordingDispatcher()
+            val client =
+                newClient(
+                    testScheduler,
+                    StandardTestDispatcher(testScheduler),
+                    main,
+                    onMainThread = { true },
+                )
+
+            val future = client.asFuture { "never observed" }
+            advanceUntilIdle()
+
+            assertThrows(IllegalStateException::class.java) { future.get() }
+            assertThrows(IllegalStateException::class.java) { future.get(1, TimeUnit.SECONDS) }
+            assertThrows(IllegalStateException::class.java) { future.join() }
+            // The non-blocking path is what the guard exists to protect.
+            assertEquals("never observed", future.getNow(null))
+        }
+
+    @Test
+    fun `a derived twin keeps the guard`() =
+        runTest {
+            val main = RecordingDispatcher()
+            val client =
+                newClient(
+                    testScheduler,
+                    StandardTestDispatcher(testScheduler),
+                    main,
+                    onMainThread = { true },
+                )
+
+            val derived = client.asFuture { "value" }.thenApply { it.uppercase() }
+            advanceUntilIdle()
+
+            assumeTrue("platform derives through newIncompleteFuture", derived is MainSafeFuture)
+            assertThrows(IllegalStateException::class.java) { derived.join() }
+        }
+
     private fun newClient(
         testScheduler: TestCoroutineScheduler,
         ioDispatcher: CoroutineDispatcher,
         mainDispatcher: CoroutineDispatcher,
+        onMainThread: () -> Boolean = { false },
     ): DefaultFrakClient {
         val logger = FrakLogger(FrakLogLevel.NONE)
         val identityStore = InMemoryKeyValueStore()
@@ -145,6 +191,7 @@ class AsyncTwinTest {
             logger = logger,
             ioDispatcher = ioDispatcher,
             mainDispatcher = mainDispatcher,
+            onMainThread = onMainThread,
             http = HttpClient(FAKE_BASE_URL, UnconfinedTestDispatcher(testScheduler), FakeHttpTransport()::open),
         )
     }
