@@ -1,3 +1,6 @@
+#[cfg(target_os = "ios")]
+mod ios;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default();
@@ -48,6 +51,15 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            #[cfg(target_os = "ios")]
+            {
+                use tauri::Manager;
+                if let Some(window) = app.get_webview_window("main") {
+                    ios::enable_swipe_back(&window);
+                }
+            }
+
             Ok(())
         })
         .run(tauri::generate_context!())
