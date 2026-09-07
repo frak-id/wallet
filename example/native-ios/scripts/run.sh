@@ -124,9 +124,18 @@ do_build_only() {
 do_archive() {
 	generate_project
 
-	: "${FRAK_ASC_KEY_PATH:?set FRAK_ASC_KEY_PATH to the App Store Connect .p8}"
-	: "${FRAK_ASC_KEY_ID:?set FRAK_ASC_KEY_ID}"
-	: "${FRAK_ASC_ISSUER_ID:?set FRAK_ASC_ISSUER_ID}"
+	# Unauthenticated falls back to whatever Apple ID Xcode is signed in as, which is enough to
+	# mint the profile locally. CI has no such account and always passes the key.
+	local auth=()
+	if [ -n "${FRAK_ASC_KEY_PATH:-}" ]; then
+		: "${FRAK_ASC_KEY_ID:?set FRAK_ASC_KEY_ID alongside FRAK_ASC_KEY_PATH}"
+		: "${FRAK_ASC_ISSUER_ID:?set FRAK_ASC_ISSUER_ID alongside FRAK_ASC_KEY_PATH}"
+		auth=(
+			-authenticationKeyPath "$FRAK_ASC_KEY_PATH"
+			-authenticationKeyID "$FRAK_ASC_KEY_ID"
+			-authenticationKeyIssuerID "$FRAK_ASC_ISSUER_ID"
+		)
+	fi
 
 	local version="${FRAK_VERSION_NAME:-1.0}"
 	local build="${FRAK_BUILD_NUMBER:-1}"
@@ -137,19 +146,17 @@ do_archive() {
 	mkdir -p "$DERIVED"
 
 	log "Archiving $version ($build) for team $DEVELOPMENT_TEAM..."
-	# "Apple Distribution" overrides the project's device default of "Apple Development";
-	# everything else is resolved by automatic signing against the key above.
+	# The archive stays on the project's development identity: a CODE_SIGN_IDENTITY override
+	# here would also hit the SwiftPM SDK targets, which xcodebuild rejects as a conflict with
+	# automatic signing. `-exportArchive` below re-signs for distribution.
 	run_xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
 		-configuration Release \
 		-destination 'generic/platform=iOS' \
 		-archivePath "$archive" \
 		-allowProvisioningUpdates \
-		-authenticationKeyPath "$FRAK_ASC_KEY_PATH" \
-		-authenticationKeyID "$FRAK_ASC_KEY_ID" \
-		-authenticationKeyIssuerID "$FRAK_ASC_ISSUER_ID" \
+		${auth[@]+"${auth[@]}"} \
 		DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
 		CODE_SIGN_STYLE=Automatic \
-		CODE_SIGN_IDENTITY="Apple Distribution" \
 		MARKETING_VERSION="$version" \
 		CURRENT_PROJECT_VERSION="$build" \
 		archive
@@ -175,14 +182,15 @@ do_archive() {
 EOF
 
 	log "Exporting .ipa..."
-	run_xcodebuild -exportArchive \
+	# Apple's rsync only: the export pipeline shells out to rsync, and Homebrew's 3.x fails it
+	# with a bare "Copy failed". Harmless on CI, where only the system one exists.
+	PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH" \
+		run_xcodebuild -exportArchive \
 		-archivePath "$archive" \
 		-exportPath "$export_dir" \
 		-exportOptionsPlist "$DERIVED/ExportOptions.plist" \
 		-allowProvisioningUpdates \
-		-authenticationKeyPath "$FRAK_ASC_KEY_PATH" \
-		-authenticationKeyID "$FRAK_ASC_KEY_ID" \
-		-authenticationKeyIssuerID "$FRAK_ASC_ISSUER_ID"
+		${auth[@]+"${auth[@]}"}
 
 	local ipa
 	ipa="$(find "$export_dir" -name '*.ipa' -maxdepth 1 | head -1)"
