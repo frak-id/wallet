@@ -76,6 +76,16 @@ export function resolveLineTotal(item: {
 }
 
 /**
+ * Serialise a computed money amount for a `numeric` column. Float sums such
+ * as `19.99 * 3` carry binary noise (`59.97000000000001`) that must not be
+ * persisted.
+ */
+export function formatLineAmount(amount: number): string | undefined {
+    if (!Number.isFinite(amount)) return undefined;
+    return (Math.round(amount * 100) / 100).toFixed(2);
+}
+
+/**
  * Sum a provider's per-line money array (Shopify `discount_allocations`,
  * `tax_lines`), skipping entries whose amount is not a number.
  */

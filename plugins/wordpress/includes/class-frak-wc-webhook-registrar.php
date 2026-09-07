@@ -486,7 +486,7 @@ class Frak_WC_Webhook_Registrar {
 
 			// Post-discount line total and its tax. The backend sums them into
 			// the matched-items reward basis; without them it falls back to
-			// `price * quantity`, which is the undiscounted list price.
+			// `price * quantity`, which is tax-exclusive.
 			if ( isset( $item['total'] ) && '' !== $item['total'] ) {
 				$entry['total'] = $item['total'];
 			}

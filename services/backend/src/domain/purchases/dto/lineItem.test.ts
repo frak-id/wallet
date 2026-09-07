@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sumLineAmounts, toPurchaseItem } from "./lineItem";
+import { formatLineAmount, sumLineAmounts, toPurchaseItem } from "./lineItem";
 
 const baseSource = {
     productId: 42,
@@ -96,5 +96,21 @@ describe("sumLineAmounts", () => {
 
     it("is zero when the provider omits the array", () => {
         expect(sumLineAmounts(undefined)).toBe(0);
+    });
+});
+
+describe("formatLineAmount", () => {
+    it("rounds binary float noise away before it reaches a numeric column", () => {
+        expect(formatLineAmount(19.99 * 3)).toBe("59.97");
+        expect(formatLineAmount(0.1 + 0.2)).toBe("0.30");
+    });
+
+    it("keeps two decimals on whole amounts", () => {
+        expect(formatLineAmount(30)).toBe("30.00");
+    });
+
+    it("is undefined for a non-finite amount", () => {
+        expect(formatLineAmount(Number.NaN)).toBeUndefined();
+        expect(formatLineAmount(Number.POSITIVE_INFINITY)).toBeUndefined();
     });
 });

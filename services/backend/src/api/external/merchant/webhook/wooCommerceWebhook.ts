@@ -2,7 +2,7 @@ import { log } from "@backend-infrastructure";
 import { HttpError, t } from "@backend-utils";
 import { Elysia } from "elysia";
 import type { PurchaseStatus } from "../../../../domain/purchases";
-import { toPurchaseItem } from "../../../../domain/purchases";
+import { formatLineAmount, toPurchaseItem } from "../../../../domain/purchases";
 import type { WooCommerceOrderUpdateWebhookDto } from "../../../../domain/purchases/dto/WooCommerceWebhook";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { resolveAndVerifyWebhook } from "./resolveAndVerifyWebhook";
@@ -108,7 +108,7 @@ function lineTotalPaid(
     const total = Number(item.total);
     if (!Number.isFinite(total)) return undefined;
     const tax = Number(item.total_tax ?? 0);
-    return String(total + (Number.isFinite(tax) ? tax : 0));
+    return formatLineAmount(total + (Number.isFinite(tax) ? tax : 0));
 }
 
 /**

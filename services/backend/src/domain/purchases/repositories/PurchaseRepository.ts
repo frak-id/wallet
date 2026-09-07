@@ -18,7 +18,7 @@ import {
     purchaseItemsTable,
     purchasesTable,
 } from "../db/schema";
-import { resolveLineTotal } from "../dto/lineItem";
+import { formatLineAmount, resolveLineTotal } from "../dto/lineItem";
 
 // Self-join alias: the NOT EXISTS probes the same table the UPDATE writes.
 const taken = aliasedTable(purchaseItemsTable, "taken");
@@ -75,8 +75,7 @@ function sumLineTotals(
     b: PurchaseItemInsert
 ): string | null {
     if (a.totalPrice == null && b.totalPrice == null) return null;
-    const sum = resolveLineTotal(a) + resolveLineTotal(b);
-    return Number.isFinite(sum) ? String(sum) : null;
+    return formatLineAmount(resolveLineTotal(a) + resolveLineTotal(b)) ?? null;
 }
 
 export class PurchaseRepository {

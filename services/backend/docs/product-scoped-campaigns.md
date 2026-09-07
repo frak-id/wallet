@@ -129,8 +129,9 @@ field-agnostic protection for every caller of the schema.
 ## SKU plumbing
 
 `purchase_items.sku` and `purchase_items.total_price` (both nullable) are
-declared in the Drizzle schema. **This branch ships no migration**: the DB
-team owns those, and the rollout is staged in
+declared in the Drizzle schema. The `local` and `dev` migrations ship with
+it; **`prod` does not** — the DB team owns that step, and the rollout is
+staged in
 [`docs/plans/purchase-items-line-key-migration.md`](../../../docs/plans/purchase-items-line-key-migration.md).
 
 The backend **cannot be deployed to a stage whose database has not taken the
@@ -191,13 +192,15 @@ Per provider:
 `purchase_items.total_price` (nullable) is the amount actually paid for a
 line: **post-discount, tax-inclusive, shipping excluded**. It is what
 `matchedAmount` sums, so it is the basis of every `matched_items_amount`
-reward. When absent it falls back to `price * quantity`.
+reward. When absent it falls back to `price * quantity`. Computed totals
+are rounded to two decimals before storage (`formatLineAmount`), since the
+float sums the handlers produce carry binary noise.
 
 | Provider | `total_price` source |
 |---|---|
 | WooCommerce | `line_items[].total` + `total_tax` (plugin forwards both) |
 | Shopify | `price × quantity` − `discount_allocations`, plus `tax_lines` only when the order is not `taxes_included` |
-| PrestaShop | `order_detail.total_price_tax_incl` (plugin sends it as `totalPrice`) |
+| PrestaShop | `order_detail.total_price_tax_incl` (plugin sends it as `totalPrice`) — after specific prices; cart rules are order-level and not allocated per line |
 | Custom | optional `totalPrice` per item |
 | Magento | not sent — falls back to `price * quantity`, which is pre-discount and tax-exclusive. Magento is out of scope pending a dedicated review |
 

@@ -10,7 +10,12 @@ export {
     purchaseItemsTable,
     purchasesTable,
 } from "./db/schema";
-export { sumLineAmounts, toPurchaseItem } from "./dto/lineItem";
+export {
+    formatLineAmount,
+    resolveLineTotal,
+    sumLineAmounts,
+    toPurchaseItem,
+} from "./dto/lineItem";
 export { PurchaseClaimRepository } from "./repositories/PurchaseClaimRepository";
 export { PurchaseRepository } from "./repositories/PurchaseRepository";
 export {

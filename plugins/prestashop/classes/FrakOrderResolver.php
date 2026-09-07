@@ -33,10 +33,11 @@ class FrakOrderResolver
      * Returned shape:
      *   - `context`  : map of camelCase keys (customerId / orderId / token).
      *                  Always present.
-     *   - `products` : list of `{ title, imageUrl?, link? }` arrays, or `null`
-     *                  when the order has zero resolvable line items.
+     *   - `products` : list of `{ title, imageUrl?, link?, sku?, productId?,
+     *                  quantity?, unitPrice? }` arrays, or `null` when the
+     *                  order has zero resolvable line items.
      * @param Order $order PrestaShop Order object resolved by the calling hook.
-     * @return array{context: array<string, string>, products: list<array{title: string, imageUrl?: string, link?: string}>|null}
+     * @return array{context: array<string, string>, products: list<array{title: string, imageUrl?: string, link?: string, sku?: string, productId?: string, quantity?: int, unitPrice?: float}>|null}
      */
     public static function getPostPurchaseData($order, int $cap = self::DEFAULT_PRODUCT_CAP): array
     {
@@ -116,7 +117,7 @@ class FrakOrderResolver
             if (isset($product['total_price_tax_incl'])) {
                 $item['totalPrice'] = (string) $product['total_price_tax_incl'];
             }
-            if (!empty($product['product_reference'])) {
+            if (isset($product['product_reference']) && '' !== (string) $product['product_reference']) {
                 $item['sku'] = (string) $product['product_reference'];
             }
             $items[] = $item;
@@ -201,7 +202,7 @@ class FrakOrderResolver
 
             $entry = ['title' => $title];
 
-            if (!empty($row['product_reference'])) {
+            if (isset($row['product_reference']) && '' !== (string) $row['product_reference']) {
                 $entry['sku'] = (string) $row['product_reference'];
             }
 

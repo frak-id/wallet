@@ -3,6 +3,7 @@ import { HttpError, t } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import {
+    formatLineAmount,
     type PurchaseStatus,
     sumLineAmounts,
     toPurchaseItem,
@@ -166,7 +167,7 @@ function lineTotalPaid(
     const discounted =
         price * quantity - sumLineAmounts(item.discount_allocations);
     const tax = taxesIncluded ? 0 : sumLineAmounts(item.tax_lines);
-    return String(discounted + tax);
+    return formatLineAmount(discounted + tax);
 }
 
 function mapFinancialStatus(

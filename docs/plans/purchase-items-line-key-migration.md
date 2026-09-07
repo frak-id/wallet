@@ -1,16 +1,18 @@
-# Migration request — `purchase_items` line key + `total_price`
+# Migration — `purchase_items` line key + `total_price`
 
 **Owner:** DB team · **Requested:** 2026-09-04 · **Branch:** `chore/audit-findings`
-**Blocks:** deploying the backend from this branch. The application code in this branch writes
+**Blocks:** deploying the backend from this branch to `prod`. The application code writes
 `purchase_items.total_price` and uses `purchase_items_line_idx` as its `ON CONFLICT` arbiter, so the
 backend will fail at runtime against a database that has not taken this change.
 
-## Why this exists as a request instead of a migration
+## What ships where
 
-The schema change (`services/backend/src/domain/purchases/db/schema.ts`) ships in this branch. The
-migrations do **not**: `services/bootstrap/AGENTS.md` states migrations are human-generated and owned
-by the DB team, and generation is staged per environment (`db:generate:local` / `:dev` / `:prod`,
-each against its own `.env.*`). Generate them in your own rollout order.
+The schema change (`services/backend/src/domain/purchases/db/schema.ts`) and the `local`
+(`drizzle/local/0040_chubby_calypso.sql`) and `dev` (`drizzle/dev/0044_typical_alex_wilder.sql`)
+migrations ship in this branch. **`prod` does not**: `services/bootstrap/AGENTS.md` keeps migration
+generation staged per environment (`db:generate:prod` against its own `.env.prod`), and the prod
+snapshot carries unrelated drift that needs its own decision (below). Nothing in CI blocks a `main`
+merge on the missing prod file.
 
 ## What the schema now declares
 
@@ -23,8 +25,8 @@ unique("purchase_items_line_idx")
 // the old uniqueIndex("purchase_items_external_id_idx") on (external_id, purchase_id) is gone
 ```
 
-`drizzle-kit generate` against that schema produced the following on a `dev`-shaped snapshot. It is
-reproduced here as a **reference for diffing your own output**, not as something to apply:
+`drizzle-kit generate` against that schema produced the following; it is what the `dev` and `local`
+files contain, and what the `prod` generation should produce once the drift below is handled:
 
 ```sql
 DROP INDEX "purchase_items_external_id_idx";--> statement-breakpoint
@@ -64,8 +66,8 @@ none of which belongs to this work. Expect it, and decide separately whether tha
 
 ## Rollout
 
-1. `local` — generate, apply, run the backend suite against it.
-2. `dev` — generate, apply, deploy this branch's backend, QA validates.
+1. `local` — shipped; apply, run the backend suite against it.
+2. `dev` — shipped; apply, deploy this branch's backend, QA validates.
 3. `prod` — generate only after QA signs off on dev, handling the snapshot drift above.
 
 The backend must not be deployed to a stage ahead of its migration.

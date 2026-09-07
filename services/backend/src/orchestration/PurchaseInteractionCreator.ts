@@ -1,5 +1,5 @@
 import { eventEmitter, log } from "@backend-infrastructure";
-import { resolveLineTotal } from "../domain/purchases/dto/lineItem";
+import { resolveLineTotal } from "../domain/purchases";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type { PurchasePayload } from "../domain/rewards/types";
 import { purchaseExternalEventId } from "../domain/rewards/utils";

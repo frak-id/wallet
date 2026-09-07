@@ -413,12 +413,12 @@ describe("PurchaseRepository", () => {
                     item({
                         sku: "A-S",
                         quantity: 1,
-                        totalPrice: "10",
+                        totalPrice: "19.99",
                     }) as never,
                     item({
                         sku: "A-S",
                         quantity: 2,
-                        totalPrice: "20",
+                        totalPrice: "39.98",
                     }) as never,
                 ],
             });
@@ -428,7 +428,8 @@ describe("PurchaseRepository", () => {
             const inserted = mockItemsValues.mock.calls[0]?.[0];
             expect(inserted).toHaveLength(1);
             expect(inserted[0].quantity).toBe(3);
-            expect(inserted[0].totalPrice).toBe("30");
+            // 19.99 + 39.98 is 59.97000000000001 in binary float.
+            expect(inserted[0].totalPrice).toBe("59.97");
         });
 
         it("backfills totalPrice and imageUrl on redelivery without nulling stored values", async () => {
