@@ -24,6 +24,7 @@ import {
     formValuesToComponents,
 } from "./fields/fieldDefaults";
 import { CUSTOM_CSS_ENABLED } from "./flags";
+import { SECTION_KEYS } from "./sections";
 import type {
     ComponentSettingsFormValues,
     ComponentType,
@@ -98,7 +99,7 @@ function GlobalComponentsPanel({
         [editSdkConfig]
     );
 
-    useCustomizeSection("default-components", form, onSubmit);
+    useCustomizeSection(SECTION_KEYS.defaultComponents, form, onSubmit);
 
     return (
         <Form {...form}>

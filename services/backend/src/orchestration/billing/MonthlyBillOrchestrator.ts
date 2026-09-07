@@ -102,7 +102,7 @@ type GenerateMonthlyBillInput = {
 /**
  * Generates the monthly bill: a per-currency fiat ledger (opening/closing
  * balance derived from admin-entered deposits/withdraws + settled rewards)
- * and a reward annex (billing-feature-plan.md §6). Kept separate from
+ * and a reward annex. Kept separate from
  * `BillingOrchestrator` (deposit/withdraw) — this use case pulls in pricing
  * and token-metadata collaborators that deposit/withdraw assembly never needs;
  * merging would turn `BillingOrchestrator` into an unrelated god-orchestrator

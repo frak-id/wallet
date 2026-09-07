@@ -31,7 +31,7 @@ Theme blocks (listener.liquid)
   → Reads metafields: frak.appearance, frak.modal_i18n, frak.merchant_id
 
 referral_button.liquid / wallet_button.liquid / open_in_app.liquid
-  → Renders <frak-button-share> / <frak-button-wallet> / <frak-open-in-app> web components
+  → Renders <frak-button-share> / <frak-open-in-app> web components
   → User interaction → stores token in sessionStorage
 
 checkout-web-pixel

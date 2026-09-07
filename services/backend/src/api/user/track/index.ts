@@ -41,6 +41,7 @@ function extractMerchantId(body: unknown): string | undefined {
 export const trackApi = new Elysia({ prefix: "/track" })
     .use(
         rateLimitMiddleware({
+            bucket: "track-client",
             windowMs: 60_000,
             maxRequests: 120,
             keyExtractor: trackClientKeyExtractor,
@@ -48,6 +49,7 @@ export const trackApi = new Elysia({ prefix: "/track" })
     )
     .use(
         rateLimitMiddleware({
+            bucket: "track-ip",
             windowMs: 60_000,
             maxRequests: 300,
         })

@@ -5,7 +5,11 @@
 type PendingEnsureAction = {
     type: "ensure";
     merchantId: string;
-    anonymousId: string;
+    /**
+     * Absent on a ticket-carrying action: the ticket resolves its own id
+     * server-side, so the wallet never needs to name one.
+     */
+    anonymousId?: string;
     /** Optional merchant metadata for UI display */
     merchant?: { name: string; domain: string };
     /**
@@ -19,7 +23,7 @@ type PendingEnsureAction = {
      * the Play referrer's `proof=` key. Sent alongside
      * `merchantId`/`anonymousId` on `/identity/ensure`, binding exactly
      * those two fields.
-     * ROLLOUT-STEP-3: revisit once the bare `anonymousId` arm is deleted.
+     * ROLLOUT-STEP-3: gated by ENSURE_BARE_ARM_ENABLED, not by a release.
      */
     proof?: string;
 };

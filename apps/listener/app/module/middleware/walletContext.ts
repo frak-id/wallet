@@ -97,6 +97,7 @@ export const walletContextMiddleware: RpcMiddleware<
             merchantId: resolvingContext.merchantId,
             sourceUrl: resolvingContext.sourceUrl,
             clientId: resolvingContext.clientId,
+            mergeSourceProof: resolvingContext.mergeSourceProof,
         };
     },
 } as const;

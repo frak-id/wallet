@@ -1,10 +1,10 @@
 # sdk/core — Compass
 
-Framework-agnostic core SDK (111 public exports). Dual build: NPM (`dist/`, ESM+CJS+types) and CDN (`cdn/bundle.js`, IIFE, `window.FrakSDK`).
+Framework-agnostic core SDK (119 public exports). Dual build: NPM (`dist/`, ESM+CJS+types) and CDN (`cdn/bundle.js`, IIFE, `window.FrakSDK`).
 
 ## Key Files
 - `src/index.ts` — main barrel
-- `src/actions/` — 15 actions: `displayModal`, `displayEmbeddedWallet`, `sendInteraction`, `sendTransaction`, `watchWalletStatus`, `getMerchantInformation`, `openSso`, `prepareSso`, `prepareSsoUrl`, `processReferral`, `referralInteraction`, `trackPurchaseStatus`, `modalBuilder`, `siweAuthenticate` (+ `index.ts`)
+- `src/actions/` — 14 actions: `displayModal`, `displaySharingPage`, `sendInteraction`, `sendTransaction`, `watchWalletStatus`, `getMerchantInformation`, `openSso`, `prepareSso`, `prepareSsoUrl`, `processReferral`, `referralInteraction`, `trackPurchaseStatus`, `modalBuilder`, `siweAuthenticate` (+ `index.ts`)
 - `src/clients/` — `createIFrameFrakClient`, `setupClient`, iframe communication, `DebugInfoGatherer`
 - `src/types/rpc/` — `IFrameRpcSchema` + per-method types
 - `src/bundle.ts` — CDN entry (IIFE)
@@ -20,7 +20,7 @@ Framework-agnostic core SDK (111 public exports). Dual build: NPM (`dist/`, ESM+
 - **Framework-agnostic rule**: NO React/Preact/Vue code here — that belongs in `sdk/react` or `sdk/components`.
 - **Pure actions**: no side effects outside `client.request`. Tree-shakeable named exports only.
 - **Adding an action requires schema update**: always extend `IFrameRpcSchema` first, or the RPC is not typed end-to-end.
-- **CDN bundle is `noExternal: [/.*/]`**: viem + all deps inline. Be conscious of size on every change.
+- **CDN bundle is `deps.alwaysBundle: [/.*/]`**: viem + all deps inline. Be conscious of size on every change, and of the ES floor — it is one parse unit.
 - **Client is singleton per iframe**: prefer `setupClient` once; don't instantiate repeatedly.
 
 ## See Also

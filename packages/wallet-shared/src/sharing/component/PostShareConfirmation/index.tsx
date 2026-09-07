@@ -11,23 +11,24 @@ import {
     WalletIcon,
 } from "@frak-labs/design-system/icons";
 import { clsx } from "clsx";
-import type { ReactNode } from "react";
+import { type ReactNode, useRef } from "react";
 import { MerchantLogo } from "../MerchantLogo";
-import { containerChromeless, overlay } from "../shared.css";
+import {
+    isChromeless,
+    type SharingChrome,
+    type SharingMerchant,
+    type SharingT,
+} from "../SharingPage/types";
+import { containerChromeless, overlay, overlayChromeless } from "../shared.css";
+import { useOverlayBehaviour } from "../useOverlayBehaviour";
 import * as styles from "./postShareConfirmation.css";
 
 export type PostShareConfirmationProps = {
     installUrl: string | null;
-    appName: string;
-    logoUrl?: string;
-    t: (key: string, options?: Record<string, unknown>) => string;
-    /**
-     * Suppress this screen's own header, so a host presenting it inside its
-     * own chrome does not stack two logos and two close controls. The footer
-     * stays: its install / share-again CTAs are this screen's whole point and
-     * have no equivalent in a host's share sheet.
-     */
-    chromeless?: boolean;
+    merchant: SharingMerchant;
+    t: SharingT;
+    /** Under `mode: "none"` the header goes, but the footer CTAs stay. */
+    chrome: SharingChrome;
     onDismiss: () => void;
     onShareAgain: () => void;
     onInstall: () => void;
@@ -41,36 +42,46 @@ const benefits = [
 
 export function PostShareConfirmation({
     installUrl,
-    appName,
-    logoUrl,
+    merchant,
     t,
-    chromeless = false,
+    chrome,
     onDismiss,
     onShareAgain,
     onInstall,
 }: PostShareConfirmationProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const chromeless = isChromeless(chrome);
+
+    useOverlayBehaviour({
+        enabled: !chromeless,
+        onDismiss,
+        containerRef,
+    });
+
     return (
+        // biome-ignore lint/a11y/useKeyWithClickEvents: dismissal has a keyboard equivalent in `useOverlayBehaviour`'s document-level Escape listener, not a per-element handler — the backdrop is never focusable.
         <div
-            className={overlay}
+            className={clsx(overlay, chromeless && overlayChromeless)}
             onClick={chromeless ? undefined : onDismiss}
-            onKeyDown={(e) => {
-                if (!chromeless && e.key === "Escape") onDismiss();
-            }}
         >
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: onClick only stops the backdrop's dismiss-on-click from firing; same rationale as the backdrop above. */}
             <div
+                ref={containerRef}
                 className={clsx(
                     styles.container,
                     chromeless && containerChromeless
                 )}
+                role="dialog"
+                aria-modal="true"
+                tabIndex={-1}
                 onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
             >
                 {!chromeless && (
                     <header className={styles.header}>
                         <Box display="flex" alignItems="center" gap="m">
                             <MerchantLogo
-                                src={logoUrl}
-                                alt={appName}
+                                src={merchant.logoUrl}
+                                alt={merchant.name}
                                 className={styles.merchantLogo}
                             />
                             <LogoFrakWithName className={styles.logo} />
@@ -108,8 +119,8 @@ export function PostShareConfirmation({
                                     )}
                                 </Text>
                                 <MerchantLogo
-                                    src={logoUrl}
-                                    alt={appName}
+                                    src={merchant.logoUrl}
+                                    alt={merchant.name}
                                     className={styles.phonePopupMerchantLogo}
                                 />
                             </div>

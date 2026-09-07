@@ -7,8 +7,6 @@ import type {
 } from "@/module/pending-actions/types";
 
 const DEFAULT_NAV_TTL_MS = 10 * 60 * 1000; // 10 minutes
-// Shared with the install-ticket JWT the ensure action carries, so the two
-// can never expire out of step.
 const DEFAULT_ENSURE_TTL_MS = INSTALL_TICKET_TTL_MS;
 
 type PendingActionsState = {
@@ -34,8 +32,8 @@ const initialState: PendingActionsState = {
  * `anonymousId` are distinct pending actions rather than overwriting each
  * other. Falls back to the legacy `anonymousId`-keyed form.
  *
- * ROLLOUT-STEP-3: once the bare `anonymousId` arm is deleted this branch
- * has no more actions to key.
+ * ROLLOUT-STEP-3: this branch runs dry once ENSURE_BARE_ARM_ENABLED is
+ * disabled and the queued bare actions have drained.
  */
 function dedupeKey(action: PendingActionInput): string {
     switch (action.type) {
@@ -43,7 +41,7 @@ function dedupeKey(action: PendingActionInput): string {
             if (action.ticket) {
                 return `ensure:${action.merchantId}:${action.ticket}`;
             }
-            // ROLLOUT-STEP-3: legacy anonymousId-keyed dedupe.
+            // Legacy anonymousId-keyed dedupe, drains with the bare arm.
             return `ensure:${action.merchantId}:${action.anonymousId}`;
         case "navigation":
             return "navigation";
@@ -53,7 +51,7 @@ function dedupeKey(action: PendingActionInput): string {
 /**
  * Default TTL by action type.
  *   - navigation: 10 minutes (stale deep links should expire quickly)
- *   - ensure: 24 hours (referral attribution must survive download + onboarding)
+ *   - ensure: one week (referral attribution must survive download + onboarding)
  */
 function defaultTtl(action: PendingActionInput): number {
     switch (action.type) {

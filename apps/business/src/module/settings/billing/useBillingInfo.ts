@@ -13,8 +13,8 @@ function toBillingEntry(doc: BillingDocumentResponse): BillingEntry {
         amount: doc.grossAmount ? Number.parseFloat(doc.grossAmount) : null,
         currency: doc.currency,
         // `monthly_bill` -> "invoice", `deposit` -> "deposit", `withdraw` ->
-        // its own "withdraw" kind (billing-feature-fixes.md B16) so a
-        // restitution is never displayed as an actual deposit.
+        // its own "withdraw" kind, so a restitution is never displayed as an
+        // actual deposit.
         kind:
             doc.kind === "monthly_bill"
                 ? "invoice"

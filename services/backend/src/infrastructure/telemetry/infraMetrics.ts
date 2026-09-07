@@ -58,6 +58,125 @@ const identityProofCheckedTotal = register(
     })
 );
 
+/**
+ * The credential a caller presented on an identity admission route,
+ * classified as the answer that route will give once its proof requirement
+ * becomes mandatory. `absent_unlatched` is the would-403 population: allowed
+ * today, refused after the flip.
+ */
+export type IdentityCredentialClass =
+    | "proven"
+    | "invalid"
+    | "absent_latched"
+    | "absent_unlatched";
+
+/**
+ * Outcome of the Gate 2 checkout-token ladder. The `checkout_token` share of
+ * `generate` is a bucket-D cutover condition, so it needs its own series.
+ */
+export type InstallCredentialOutcome = "resolved" | "deferred" | "unresolved";
+
+/** Which route ran the ladder: `generate` mints, `resolve` redeems. */
+export type InstallCredentialCallSite = "generate" | "resolve";
+
+/**
+ * Verdict of the claim-age bound. `undated` is expected to stay at zero: the
+ * column is `DEFAULT now()` and no writer passes an explicit null, so it is
+ * only reachable if some future writer starts doing so.
+ */
+export type InstallClaimAgeVerdict = "fresh" | "expired" | "undated";
+
+export type IdentityEnsureArm =
+    | "wallet_ticket"
+    | "wallet_bare"
+    | "wallet_proof"
+    | "sdk";
+
+/**
+ * `n/a` is the ticket arm, whose receipt is not a credential class. `absent`
+ * is the bare arm, which refuses without reading a latch — so it may not claim
+ * `absent_unlatched`, a latched id reaches it too.
+ */
+export type IdentityEnsureArmClass = IdentityCredentialClass | "n/a" | "absent";
+
+/**
+ * No `merchant` label: `merchantId` arrives unvalidated in the body of an
+ * unauthenticated route and the emission necessarily precedes `validateToken`,
+ * so labelling it would let any caller mint unbounded series. The per-merchant
+ * cut comes from the `absent_unlatched` log line instead.
+ */
+const identityMergeExecuteCredentialTotal = register(
+    new Counter({
+        name: "identity_merge_execute_credential_total",
+        help: "Credential class presented on /user/identity/merge/execute",
+        labelNames: ["class"] as const,
+    })
+);
+
+const identityMergeInitiateCredentialTotal = register(
+    new Counter({
+        name: "identity_merge_initiate_credential_total",
+        help: "Credential class presented on /user/identity/merge/initiate's anonymous-source arm",
+        labelNames: ["class"] as const,
+    })
+);
+
+const identityInstallCodeGenerateCredentialTotal = register(
+    new Counter({
+        name: "identity_install_code_generate_credential_total",
+        help: "Credential class presented on /user/identity/install-code/generate",
+        labelNames: ["class"] as const,
+    })
+);
+
+const identityEnsureArmTotal = register(
+    new Counter({
+        name: "identity_ensure_arm_total",
+        help: "Arm taken on /user/identity/ensure and the credential class it presented",
+        labelNames: ["arm", "class"] as const,
+    })
+);
+
+const identityWalletConflictTotal = register(
+    new Counter({
+        name: "identity_wallet_conflict_total",
+        help: "Refused merges between identity groups carrying different wallets, by the flow that hit it",
+        labelNames: ["source"] as const,
+    })
+);
+
+const identityMergeExecuteWalletSourceUnprovenTotal = register(
+    new Counter({
+        name: "identity_merge_execute_wallet_source_unproven_total",
+        help: "Merge executions redeeming a wallet-session-minted token with no target proof, by merchant",
+        labelNames: ["merchant"] as const,
+    })
+);
+
+const installCredentialClaimArmTotal = register(
+    new Counter({
+        name: "install_credential_claim_arm_total",
+        help: "Install-credential resolutions served by the forgeable pending-claim arm, by merchant and call site",
+        labelNames: ["merchant", "call_site"] as const,
+    })
+);
+
+const installClaimAgeTotal = register(
+    new Counter({
+        name: "install_claim_age_total",
+        help: "Claim-age bound verdicts on the forgeable pending-claim arm, by call site",
+        labelNames: ["verdict", "call_site"] as const,
+    })
+);
+
+const installCredentialOutcomeTotal = register(
+    new Counter({
+        name: "install_credential_outcome_total",
+        help: "Outcome of the Gate 2 checkout-token ladder, by call site",
+        labelNames: ["outcome", "call_site"] as const,
+    })
+);
+
 export const infraMetrics = {
     advisoryLockAcquired(lock: string) {
         advisoryLockTotal.inc({ lock, outcome: "acquired" });
@@ -76,5 +195,48 @@ export const infraMetrics = {
     },
     identityProofChecked(op: string, outcome: "valid" | "invalid") {
         identityProofCheckedTotal.inc({ op, outcome });
+    },
+    identityMergeExecuteCredential(credentialClass: IdentityCredentialClass) {
+        identityMergeExecuteCredentialTotal.inc({ class: credentialClass });
+    },
+    identityMergeInitiateCredential(credentialClass: IdentityCredentialClass) {
+        identityMergeInitiateCredentialTotal.inc({ class: credentialClass });
+    },
+    identityInstallCodeGenerateCredential(
+        credentialClass: IdentityCredentialClass
+    ) {
+        identityInstallCodeGenerateCredentialTotal.inc({
+            class: credentialClass,
+        });
+    },
+    identityEnsureArm(
+        arm: IdentityEnsureArm,
+        credentialClass: IdentityEnsureArmClass
+    ) {
+        identityEnsureArmTotal.inc({ arm, class: credentialClass });
+    },
+    identityWalletConflict(source: string) {
+        identityWalletConflictTotal.inc({ source });
+    },
+    identityMergeExecuteWalletSourceUnproven(merchant: string) {
+        identityMergeExecuteWalletSourceUnprovenTotal.inc({ merchant });
+    },
+    installCredentialClaimArm(
+        merchant: string,
+        callSite: InstallCredentialCallSite
+    ) {
+        installCredentialClaimArmTotal.inc({ merchant, call_site: callSite });
+    },
+    installCredentialOutcome(
+        outcome: InstallCredentialOutcome,
+        callSite: InstallCredentialCallSite
+    ) {
+        installCredentialOutcomeTotal.inc({ outcome, call_site: callSite });
+    },
+    installClaimAge(
+        verdict: InstallClaimAgeVerdict,
+        callSite: InstallCredentialCallSite
+    ) {
+        installClaimAgeTotal.inc({ verdict, call_site: callSite });
     },
 };

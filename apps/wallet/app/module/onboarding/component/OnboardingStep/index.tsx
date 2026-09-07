@@ -26,7 +26,7 @@ type OnboardingStepProps = {
     isLoginLoading?: boolean;
     /** Login error surfaced above the actions (login-enabled step only) */
     loginError?: Error | null;
-    /** Called when the user clicks the recovery code link */
+    /** Called when the user clicks the reward code link */
     onRecoveryCodeClick?: () => void;
 };
 
@@ -70,7 +70,7 @@ export function OnboardingStep({
                             variant="ghost"
                             onClick={() => onRecoveryCodeClick()}
                         >
-                            {t("onboarding.recoveryCode")}
+                            {t("onboarding.rewardCode")}
                         </Button>
                     )}
                 </>

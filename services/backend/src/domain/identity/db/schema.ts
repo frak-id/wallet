@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
     bigserial,
+    check,
     index,
     integer,
     jsonb,
@@ -142,7 +143,9 @@ export const installCodesTable = pgTable(
         id: uuid("id").primaryKey().defaultRandom(),
         code: varchar("code", { length: 6 }).notNull(),
         merchantId: uuid("merchant_id").notNull(),
-        anonymousId: text("anonymous_id").notNull(),
+        // Nullable since Gate 2: a Shopify checkout token can stand in as the credential, resolved to an id at redeem time.
+        anonymousId: text("anonymous_id"),
+        checkoutToken: text("checkout_token"),
         createdAt: timestamp("created_at").notNull().defaultNow(),
         expiresAt: timestamp("expires_at").notNull(),
         // Durable per-code attempt counter; caps hammering of a minted code across pod replicas, unlike in-memory rateLimitMiddleware. Does not cap keyspace enumeration, still bounded by the IP rate limit + 72h TTL.
@@ -154,7 +157,15 @@ export const installCodesTable = pgTable(
             table.merchantId,
             table.anonymousId
         ),
+        index("install_codes_merchant_checkout_token_idx").on(
+            table.merchantId,
+            table.checkoutToken
+        ),
         index("install_codes_expires_at_idx").on(table.expiresAt),
+        check(
+            "install_codes_credential_present",
+            sql`"anonymous_id" IS NOT NULL OR "checkout_token" IS NOT NULL`
+        ),
     ]
 );
 

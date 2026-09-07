@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { Input, Resource } from "@pulumi/pulumi";
 import { KubernetesService } from "../components/KubernetesService";
@@ -24,6 +25,37 @@ import {
 } from "./utils";
 
 const subDomain = isProd ? "extension-shop" : "extension-shop-dev";
+
+/**
+ * Access scopes for the embedded app, read from the same TOML the Shopify CLI
+ * deploys (`shopify app deploy --config <stage>`), so the granted scopes and
+ * the ones `shopifyApp` requests can never drift apart.
+ *
+ * Required at RUNTIME: `shopify.server.ts` reads `process.env.SCOPES`, and with
+ * it unset `shopifyApp` cannot compare granted vs. required scopes — token
+ * exchange then fails and every embedded request 401s. Throw rather than
+ * deploy a pod that authenticates nothing.
+ */
+const shopifyScopes = readShopifyScopes();
+
+function readShopifyScopes(): string {
+    const configFile = isProd
+        ? "shopify.app.production.toml"
+        : "shopify.app.development.toml";
+    const location = path.join($cli.paths.root, "apps/shopify", configFile);
+    const scopes = readFileSync(location, "utf8")
+        .split(/^\[/m)
+        .find((section) => section.startsWith("access_scopes]"))
+        ?.match(/^scopes\s*=\s*"([^"]*)"/m)?.[1]
+        ?.trim();
+
+    if (!scopes) {
+        throw new Error(
+            `[shopify] no non-empty \`scopes\` under [access_scopes] in ${configFile}`
+        );
+    }
+    return scopes;
+}
 
 /**
  * Target Postgres = the in-cluster GCP instance, dedicated `shopify` database +
@@ -61,6 +93,7 @@ const shopifyBuildEnv = {
 const shopifyRuntimeEnv = {
     STAGE: normalizedStageName,
     SHOPIFY_APP_URL: shopifyAppUrl,
+    SCOPES: shopifyScopes,
     ...targetDbEnv,
     SHOPIFY_API_SECRET: shopifyApiSecret.value,
     PRODUCT_SETUP_CODE_SALT: productSetupCodeSalt.value,

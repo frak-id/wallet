@@ -29,20 +29,6 @@ $config = $block->getFrakConfig();
                 ...staticConfig.config,
                 domain: window.location.host
             },
-            modalConfig: {
-                ...staticConfig.modalConfig,
-                login: {
-                    ...((staticConfig.modalConfig || {}).login || {}),
-                    ssoMetadata: {
-                        ...((((staticConfig.modalConfig || {}).login || {}).ssoMetadata) || {}),
-                        homepageLink: window.location.host
-                    }
-                }
-            },
-            modalShareConfig: {
-                ...(staticConfig.modalShareConfig || {}),
-                link: window.location.href
-            }
         };
     })();
     JS,

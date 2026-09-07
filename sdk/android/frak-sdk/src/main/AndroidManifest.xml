@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Never QUERY_ALL_PACKAGES: Play policy restricts it to apps whose core
+      purpose needs broad visibility.
+
+      Both variants are listed: the wallet ships as `id.frak.wallet` in prod and
+      `id.frak.wallet.dev` for the dev stage (see
+      `packages/wallet-shared/src/common/utils/storeUrls.ts`).
+
+      The manifest merger folds this into every merchant app, so
+      `AppInstalledProbe` works without the merchant knowing the wallet's
+      package ids.
+    -->
+    <queries>
+        <package android:name="id.frak.wallet" />
+        <package android:name="id.frak.wallet.dev" />
+    </queries>
+
+    <!-- The only permission the SDK will ever request. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+      No <application> block, and deliberately no exported activity and no
+      intent filter. Inbound `fCtx` handling is wired through
+      `FrakConfig.deepLink` (Automatic via ActivityLifecycleCallbacks, or
+      Manual via `appLink.handleReferral(url)`), so the merchant's own activity
+      keeps owning the intent.
+
+      No backup-exclusion rules ship here either, and the SDK asks nothing of
+      a merchant on that front. It used to ship
+      `frak_data_extraction_rules.xml` and `frak_full_backup_content.xml` for
+      merchants to reference; both were removed because excluding what they
+      excluded is wrong. The keypair lives in `AndroidKeyStore` and can never
+      be backed up or transferred, so the identity already regenerates on a
+      new device with no help. What those files DID exclude was
+      `id.frak.sdk.xml`, which holds the tracking-consent decision — and a
+      withdrawal has to survive a device transfer, not vanish with it. The
+      event queue is excluded where it matters, in `noBackupFilesDir`, which
+      needs no `<application>` attribute. See PRIVACY.md.
+    -->
+
+</manifest>

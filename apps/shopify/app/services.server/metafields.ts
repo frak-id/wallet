@@ -8,6 +8,7 @@ const MODAL_I18N_KEY = "modal_i18n";
 const APPEARANCE_KEY = "appearance";
 const MERCHANT_ID_KEY = "merchant_id";
 const WALLET_URL_KEY = "wallet_url";
+const BACKEND_URL_KEY = "backend_url";
 const COMPONENTS_URL_KEY = "components_url";
 const SHARE_URL_KEY = "share_url";
 const SHARE_BUTTON_HTML_KEY = "share_button_html";
@@ -237,13 +238,26 @@ async function writeMetafield<T>(
     success: boolean;
     userErrors: Array<{ field: string; message: string }>;
 }> {
+    return writeMetafields(ctx, [{ key, value }]);
+}
+
+/**
+ * Write (or delete) several metafields in one mutation, so callers can't leave a half-written pair behind. Every entry must be a write or every entry a delete.
+ */
+async function writeMetafields<T>(
+    ctx: AuthenticatedContext,
+    entries: Array<{ key: string; value: T | null }>
+): Promise<{
+    success: boolean;
+    userErrors: Array<{ field: string; message: string }>;
+}> {
     const {
         admin: { graphql },
     } = ctx;
     const shopId = await getShopId(ctx);
 
     // Get the right query depending on the value (either create / update or delete)
-    const query = value
+    const query = entries.every((entry) => entry.value)
         ? graphql(
               `
           mutation CreateOrUpdateShopMetafield(
@@ -265,15 +279,15 @@ async function writeMetafield<T>(
         `,
               {
                   variables: {
-                      metafields: [
-                          {
-                              namespace: FRAK_NAMESPACE,
-                              key,
-                              type: "json",
-                              value: value ? JSON.stringify(value) : undefined,
-                              ownerId: shopId,
-                          },
-                      ],
+                      metafields: entries.map((entry) => ({
+                          namespace: FRAK_NAMESPACE,
+                          key: entry.key,
+                          type: "json",
+                          value: entry.value
+                              ? JSON.stringify(entry.value)
+                              : undefined,
+                          ownerId: shopId,
+                      })),
                   },
               }
           )
@@ -297,13 +311,11 @@ async function writeMetafield<T>(
         `,
               {
                   variables: {
-                      metafields: [
-                          {
-                              namespace: FRAK_NAMESPACE,
-                              key,
-                              ownerId: shopId,
-                          },
-                      ],
+                      metafields: entries.map((entry) => ({
+                          namespace: FRAK_NAMESPACE,
+                          key: entry.key,
+                          ownerId: shopId,
+                      })),
                   },
               }
           );
@@ -884,16 +896,26 @@ export async function getWalletUrlMetafield({
 }
 
 /**
- * Write wallet URL to shop metafields so listener.liquid can read it.
+ * Read the backend URL from shop metafields.
  */
-export async function writeWalletUrlMetafield(
+export async function getBackendUrlMetafield({
+    admin: { graphql },
+}: AuthenticatedContext): Promise<string | null> {
+    return readMetafield<string>(graphql, BACKEND_URL_KEY);
+}
+
+/** Write both origins of the SDK's `env` in a single `metafieldsSet` mutation, so a shop is never left with a cross-stage pair. The backend origin is stored rather than derived from the wallet one — sandboxes pair hosts nothing can guess. */
+export async function writeEnvMetafields(
     context: AuthenticatedContext,
-    walletUrl: string
+    { walletUrl, backendUrl }: { walletUrl: string; backendUrl: string }
 ): Promise<{
     success: boolean;
     userErrors: Array<{ field: string; message: string }>;
 }> {
-    return writeMetafield(context, WALLET_URL_KEY, walletUrl);
+    return writeMetafields(context, [
+        { key: WALLET_URL_KEY, value: walletUrl },
+        { key: BACKEND_URL_KEY, value: backendUrl },
+    ]);
 }
 
 /* -------------------------------------------------------------------------- */

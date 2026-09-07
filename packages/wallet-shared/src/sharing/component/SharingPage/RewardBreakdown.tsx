@@ -7,11 +7,10 @@ import {
     type RewardExample,
 } from "@frak-labs/core-sdk/rewards";
 import * as styles from "./sharingPage.css";
+import type { SharingT } from "./types";
 
 type TieredReward = Extract<EstimatedReward, { payoutType: "tiered" }>;
 type RewardTier = TieredReward["tiers"][number];
-
-type Translate = (key: string, options?: Record<string, unknown>) => string;
 
 /**
  * Per-audience reward detail rendered inside the "How is my reward calculated?"
@@ -28,7 +27,7 @@ export function RewardBreakdown({
     referrer?: EstimatedReward;
     referee?: EstimatedReward;
     minPurchaseValue?: number;
-    t: Translate;
+    t: SharingT;
 }) {
     const hasReferrer = hasBreakdown(referrer);
     const hasReferee = hasBreakdown(referee);
@@ -73,7 +72,7 @@ function RewardBlock({
     label: string;
     reward: EstimatedReward;
     minPurchaseValue?: number;
-    t: Translate;
+    t: SharingT;
 }) {
     const matchedItemsBasis = isMatchedItemsBasis(reward);
     return (
@@ -107,7 +106,7 @@ function TierRow({
 }: {
     tier: RewardTier;
     isMatchedItemsBasis: boolean;
-    t: Translate;
+    t: SharingT;
 }) {
     const range =
         tier.maxValue == null
@@ -157,7 +156,7 @@ function PercentageRow({
     reward: Extract<EstimatedReward, { payoutType: "percentage" }>;
     minPurchaseValue?: number;
     isMatchedItemsBasis: boolean;
-    t: Translate;
+    t: SharingT;
 }) {
     // `buildPercentageExample` assumes a whole-basket reference, wrong for a
     // percent applied only to matched items.
@@ -183,7 +182,7 @@ function PercentageRow({
     );
 }
 
-function ExampleText({ example, t }: { example: RewardExample; t: Translate }) {
+function ExampleText({ example, t }: { example: RewardExample; t: SharingT }) {
     return (
         <span className={styles.rewardExample}>
             {t("sdk.sharingPage.faq.reward.percentExample", {

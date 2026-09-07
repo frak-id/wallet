@@ -1,11 +1,185 @@
 import { describe, expect, it } from "vitest";
 import type { InteractionTypeKey } from "../constants/interactionTypes";
-import type { EstimatedReward, MerchantReward, RuleConditions } from "../types";
+import type {
+    Currency,
+    EstimatedReward,
+    MerchantReward,
+    ProductDetails,
+    RuleConditions,
+} from "../types";
+import goldenRewards from "./fixtures/golden-rewards.json";
 import {
     formatBestReward,
+    type SelectDisplayCampaignOptions,
     selectBestReward,
     selectDisplayCampaign,
 } from "./select";
+
+/** See `scripts/generate-golden-rewards.ts` for why codepoints are asserted. */
+const codepoints = (value: string): string[] =>
+    Array.from(value, (char) => {
+        const code = char.codePointAt(0) ?? 0;
+        return `U+${code.toString(16).toUpperCase().padStart(4, "0")}`;
+    });
+
+type SelectionOptions = {
+    nowIso: string;
+    currency: Currency | null;
+    audience: "referrer" | "referee" | null;
+    targetInteraction: string | null;
+    products: ProductDetails[] | null;
+};
+
+type DisplayCampaignFixture = {
+    name: string;
+    description: string;
+    kind: "select-display-campaign";
+    campaigns: MerchantReward[];
+    options: SelectionOptions;
+    selected: {
+        campaignId: string;
+        status: "live" | "upcoming";
+        startsAtIso: string | null;
+        matchedProductIds: (string | undefined)[] | null;
+    } | null;
+};
+
+type BestRewardFixture = {
+    name: string;
+    description: string;
+    kind: "select-best-reward";
+    campaigns: MerchantReward[];
+    options: SelectionOptions;
+    best: {
+        formatted: string;
+        formattedCodepoints: string[];
+        payoutType: EstimatedReward["payoutType"];
+        minPurchaseAmount: string | null;
+        minPurchaseAmountCodepoints: string[] | null;
+        minPurchaseValue: number | null;
+        lockupDurationDays: number | null;
+        isProductScoped: boolean;
+        matchedProductIds: (string | undefined)[] | null;
+    } | null;
+};
+
+/** The pinned "now" from the corpus is rehydrated, never `Date.now()`. */
+const toOptions = (
+    options: SelectionOptions
+): SelectDisplayCampaignOptions => ({
+    now: new Date(options.nowIso),
+    currency: options.currency ?? undefined,
+    audience: options.audience ?? undefined,
+    targetInteraction:
+        (options.targetInteraction as InteractionTypeKey | null) ?? undefined,
+    products: options.products ?? undefined,
+});
+
+// The JSON import is inferred as a union of per-entry literal shapes, which
+// narrows to `never` under a type predicate. Widen ONCE to the union of the
+// declared fixture types — not to a minimal `{ kind: string }` — so the
+// payload fields stay genuinely type-checked and a corpus shape drift is a
+// type error rather than a silent pass.
+const allFixtures = goldenRewards.fixtures as unknown as (
+    | DisplayCampaignFixture
+    | BestRewardFixture
+)[];
+
+const displayCampaignFixtures = allFixtures.filter(
+    (fixture): fixture is DisplayCampaignFixture =>
+        fixture.kind === "select-display-campaign"
+);
+
+const bestRewardFixtures = allFixtures.filter(
+    (fixture): fixture is BestRewardFixture =>
+        fixture.kind === "select-best-reward"
+);
+
+describe("reward selection golden fixtures", () => {
+    it("declares the expected format version", () => {
+        expect(goldenRewards.formatVersion).toBe(1);
+    });
+
+    it("pins an explicit `now` on every selection fixture", () => {
+        for (const fixture of [
+            ...displayCampaignFixtures,
+            ...bestRewardFixtures,
+        ]) {
+            expect(fixture.options.nowIso).toBe("2025-01-15T00:00:00.000Z");
+        }
+    });
+
+    it("covers both the selected and the nothing-to-show outcomes", () => {
+        expect(
+            displayCampaignFixtures.filter(
+                (fixture) => fixture.selected === null
+            )
+        ).not.toHaveLength(0);
+        expect(
+            bestRewardFixtures.filter((fixture) => fixture.best === null)
+        ).not.toHaveLength(0);
+    });
+
+    it.each(displayCampaignFixtures)(
+        "selectDisplayCampaign reproduces: $description",
+        (fixture) => {
+            const selected = selectDisplayCampaign(
+                fixture.campaigns,
+                toOptions(fixture.options)
+            );
+            if (fixture.selected === null) {
+                expect(selected).toBeUndefined();
+                return;
+            }
+            expect(selected?.campaign.campaignId).toBe(
+                fixture.selected.campaignId
+            );
+            expect(selected?.status).toBe(fixture.selected.status);
+            expect(selected?.startsAt?.toISOString() ?? null).toBe(
+                fixture.selected.startsAtIso
+            );
+            expect(
+                selected?.matchedProducts?.map(
+                    (product) => product.productId
+                ) ?? null
+            ).toEqual(fixture.selected.matchedProductIds);
+        }
+    );
+
+    it.each(bestRewardFixtures)(
+        "selectBestReward reproduces: $description",
+        (fixture) => {
+            const best = selectBestReward(
+                fixture.campaigns,
+                toOptions(fixture.options)
+            );
+            if (fixture.best === null) {
+                expect(best).toBeUndefined();
+                return;
+            }
+            expect(best).toBeDefined();
+            expect(codepoints(best?.formatted as string)).toEqual(
+                fixture.best.formattedCodepoints
+            );
+            expect(best?.formatted).toBe(fixture.best.formatted);
+            expect(best?.payoutType).toBe(fixture.best.payoutType);
+            expect(best?.minPurchaseAmount ?? null).toBe(
+                fixture.best.minPurchaseAmount
+            );
+            expect(best?.minPurchaseValue ?? null).toBe(
+                fixture.best.minPurchaseValue
+            );
+            expect(best?.lockupDurationDays ?? null).toBe(
+                fixture.best.lockupDurationDays
+            );
+            expect(best?.isProductScoped).toBe(fixture.best.isProductScoped);
+            expect(
+                best?.matchedProducts?.map((product) => product.productId) ??
+                    null
+            ).toEqual(fixture.best.matchedProductIds);
+        }
+    );
+});
 
 const NOW = new Date("2025-01-15T00:00:00Z");
 const unix = (iso: string) => Math.floor(new Date(iso).getTime() / 1000);
@@ -526,7 +700,9 @@ describe("selectBestReward", () => {
         const referee = fixedReward(3);
         const best = selectBestReward(
             [campaign({ id: "c", referrer, referee })],
-            { now: NOW }
+            {
+                now: NOW,
+            }
         );
         expect(best?.referrerReward).toEqual(referrer);
         expect(best?.refereeReward).toEqual(referee);

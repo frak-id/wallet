@@ -36,8 +36,8 @@ export type MergeAttributionInput = {
  * Special rules:
  * - `perCall === null` returns `undefined` (explicit disable: no UTM/ref/via).
  * - `perCall === undefined` (no opinion) yields at least `{}` so `FrakContextManager`
- *   applies its hardcoded defaults (utm_source=frak, utm_medium=referral,
- *   utm_campaign=<merchantId>, ref=<clientId>, via=frak).
+ *   applies its one hardcoded default, `utm_source=frak`. There are no others:
+ *   `resolveAttributionValues` leaves every other key undefined unless supplied.
  * - `utm_content` never comes from `defaults`; only `productUtmContent` or
  *   `perCall.utmContent` can populate it.
  */

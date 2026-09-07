@@ -3,11 +3,12 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppError } from "app/components/AppError";
 import { Skeleton } from "app/components/Skeleton";
 import type { loader as rootLoader } from "app/root";
+import { frakEnv } from "app/services.server/frakEnv";
 import { log } from "app/services.server/logger";
 import {
     ensureComponentsUrlMetafield,
+    ensureEnvMetafields,
     ensureKlaviyoShareMetafields,
-    ensureWalletUrlMetafield,
     resolveMerchantId,
 } from "app/services.server/merchant";
 import { ensureFrakI18nMetaobject } from "app/services.server/metafields";
@@ -52,8 +53,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // (e.g. the pre-try `shopInfo` lookup). Log it rather than swallowing it
     // silently — an empty `.catch(() => {})` is a latent trap that hides a
     // regression exactly when these start failing.
-    ensureWalletUrlMetafield(context).catch((err) =>
-        log.warn({ err }, "ensureWalletUrlMetafield failed")
+    ensureEnvMetafields(context).catch((err) =>
+        log.warn({ err }, "ensureEnvMetafields failed")
     );
     ensureComponentsUrlMetafield(context).catch((err) =>
         log.warn({ err }, "ensureComponentsUrlMetafield failed")
@@ -68,7 +69,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return {
         apiKey: process.env.SHOPIFY_API_KEY || "",
         businessUrl: process.env.BUSINESS_URL || "https://business.frak.id",
-        walletUrl: process.env.FRAK_WALLET_URL || "https://wallet.frak.id",
+        env: frakEnv(),
         componentsUrl:
             process.env.FRAK_COMPONENTS_URL ||
             "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest",

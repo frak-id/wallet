@@ -35,4 +35,9 @@
             <argument name="logger" xsi:type="object">FrakLabs\Sdk\Logger</argument>
         </arguments>
     </type>
+    <type name="FrakLabs\Sdk\Block\SdkLoader">
+        <arguments>
+            <argument name="logger" xsi:type="object">FrakLabs\Sdk\Logger</argument>
+        </arguments>
+    </type>
 </config>

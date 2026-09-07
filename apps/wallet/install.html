@@ -1,0 +1,57 @@
+<!doctype html>
+<!--
+    Standalone entrypoint for /install — NOT the SPA shell.
+
+    Built by `vite.standalone.config.ts` and served by nginx at `/install`
+    (see `nginx.conf`). See `sharing.html` for why this document is so bare.
+-->
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta
+            id="viewport"
+            name="viewport"
+            content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+        >
+        <!-- Same native-host zoom lock as sharing.html; that file carries the why. -->
+        <script>
+        if (new URLSearchParams(location.search).get("embed") === "native") {
+            document
+                .getElementById("viewport")
+                ?.setAttribute(
+                    "content",
+                    "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content"
+                );
+        }
+        </script>
+
+        <title>Get the Frak app</title>
+        <meta
+            name="description"
+            content="Copy your install code and download the Frak app to claim your rewards."
+        >
+        <meta name="theme-color" content="#ffffff">
+        <meta name="robots" content="noindex, nofollow">
+        <meta name="google" content="notranslate">
+
+        <link rel="icon" href="/favicon.ico" sizes="32x32">
+        <link rel="icon" href="/icon.svg" type="image/svg+xml">
+
+        <!-- Smart App Banner: this page's entire job is to get the visitor into
+             the app, so the native banner is an asset here (unlike the SPA). -->
+        <meta name="apple-itunes-app" content="app-id=6759159306">
+
+        <!-- Suppress Chrome's native PWA install promotion — this page offers
+             the Play Store build, which carries the install referrer. -->
+        <script>
+        window.addEventListener("beforeinstallprompt", (e) =>
+            e.preventDefault()
+        );
+        </script>
+    </head>
+
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/app/entry/install/main.tsx"></script>
+    </body>
+</html>

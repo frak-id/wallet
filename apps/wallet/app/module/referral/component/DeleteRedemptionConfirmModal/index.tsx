@@ -5,6 +5,7 @@ import { ResponsiveModal } from "@frak-labs/design-system/components/ResponsiveM
 import { Text } from "@frak-labs/design-system/components/Text";
 import { BinIcon } from "@frak-labs/design-system/icons";
 import { vars } from "@frak-labs/design-system/theme";
+import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import { useTranslation } from "react-i18next";
 import { CloseButton } from "@/module/common/component/CloseButton";
 import * as styles from "./index.css";
@@ -19,7 +20,7 @@ type Props = {
      * caller resolves the key from the mutation error so the modal stays
      * presentational.
      */
-    errorMessageKey?: string | null;
+    errorMessageKey?: DefaultTranslationKey | null;
 };
 
 /**

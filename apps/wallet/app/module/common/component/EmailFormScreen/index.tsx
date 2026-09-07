@@ -41,6 +41,8 @@ export type EmailFormScreenProps = {
     submitDisabled?: boolean;
     /** Called on every input change. Lets parents drop transient banners. */
     onEmailChange?: (email: string) => void;
+    /** Header-end slot, right-aligned on the header row. */
+    headerEnd?: ReactNode;
     /**
      * Slot rendered after the input. Hosts state-specific UI:
      * already-used banner (onboarding), conflict banner (post-auth),
@@ -70,6 +72,7 @@ export function EmailFormScreen({
     isSubmitting = false,
     submitDisabled = false,
     onEmailChange,
+    headerEnd,
     children,
 }: EmailFormScreenProps) {
     const [email, setEmail] = useState(initialValue);
@@ -102,6 +105,7 @@ export function EmailFormScreen({
         <PageLayout
             fixedViewport
             back={<Back onClick={onBack} />}
+            headerEnd={headerEnd}
             footer={
                 <Button
                     type="submit"

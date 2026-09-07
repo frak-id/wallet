@@ -142,6 +142,26 @@ jobs:
             exit 1
           fi
 
+      # Fails the release before any build: a partial floor bump links and ships,
+      # surfacing only as an always-true availability branch in the plugins.
+      # No `bun install` — the script only reads files.
+      - name: "📥 Checkout"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 1
+
+      - name: "🧅 Setup Bun"
+        uses: oven-sh/setup-bun@v2
+
+      - name: "📱 Gate the iOS deployment floor"
+        run: bun scripts/check-ios-floor.ts
+
+      # A dev-flavoured manifest in a prod AAB fails App Link verification outright:
+      # assetlinks.json is stage-scoped, so nothing delegates to the prod package.
+      - name: "🤖 Gate the Android deep-link manifest"
+        run: bun scripts/check-android-manifest.ts
+
   prepare:
     name: "📦 Build SDK"
     needs: validate
@@ -320,10 +340,10 @@ jobs:
           import PackageDescription
           let package = Package(
               name: "Prewarm",
-              platforms: [.iOS(.v14), .macOS(.v10_15)],
+              platforms: [.iOS(.v16), .macOS(.v10_15)],
               products: [.library(name: "Prewarm", targets: ["Prewarm"])],
               dependencies: [
-                  .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "12.11.0"),
+                  .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "12.13.0"),
               ],
               targets: [
                   .target(
@@ -344,9 +364,11 @@ jobs:
 
       - name: "🏗️ Build iOS"
         # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory.
-        # FRAK_VARIANT=dev triggers build.rs (src-tauri/build.rs) to rewrite the entitlements
-        # file in place for the dev variant (associated domains → wallet-dev.frak.id, keychain
-        # access group → id.frak.wallet.dev). The --config overlay flips identifier + productName.
+        # The --config overlay flips identifier + productName, and gen/apple/sync-ios-variant.sh
+        # (last step of the Xcode "Build Rust Code" phase) derives the scheme, associated domains
+        # and keychain group from PRODUCT_BUNDLE_IDENTIFIER. FRAK_VARIANT is kept for Android and
+        # for the beforeBuildCommand — cargo-mobile2 strips it before xcodebuild, so nothing in the
+        # iOS shell may depend on it.
         run: |
           if [ "$STAGE" = "dev" ]; then
             CONFIG_FLAG="--config src-tauri/tauri.conf.dev.json"
@@ -361,6 +383,18 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPLE_API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPLE_API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+
+      # Post-upload on purpose: `tauri ios build --export-method app-store-connect`
+      # uploads inside the step above, so this cannot gate TestFlight itself — it fails
+      # the run and blocks the GitHub Release, which is what tells us a bad build went out.
+      # 1.0.96 (dev) shipped `frakwallet://` and prod associated domains; this is the check
+      # that would have caught it.
+      - name: "🔍 Verify iOS artifact carries the stage's variant"
+        run: |
+          bash apps/wallet/scripts/verify-ios-artifact.sh "$STAGE" \
+            apps/wallet/src-tauri/gen/apple/build
+        env:
+          STAGE: ${{ needs.validate.outputs.stage }}
 
       # Run out-of-band from xcodebuild: doing this as an Xcode build phase races with
       # `dsymutil` (the script can fire before dSYM generation finalizes) and SIGBUSes

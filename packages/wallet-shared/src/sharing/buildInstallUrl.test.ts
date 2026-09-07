@@ -27,7 +27,7 @@ describe("buildInstallUrl", () => {
         expect(url).toBe(
             "https://wallet.frak.id/install?m=merchant-1&a=client-1#p=the-install-proof"
         );
-        const [withoutFragment, fragment] = url.split("#");
+        const [withoutFragment, fragment] = String(url).split("#");
         expect(new URL(withoutFragment).searchParams.has("p")).toBe(false);
         expect(fragment).toBe("p=the-install-proof");
     });
@@ -60,6 +60,86 @@ describe("buildInstallUrl same-origin", () => {
         expect(
             buildInstallUrl({ merchantId: "merchant-1", clientId: "client-1" })
         ).toBe("/install?m=merchant-1&a=client-1");
+    });
+});
+
+describe("buildInstallUrl checkoutToken", () => {
+    test("builds a token-only URL when there is no clientId", () => {
+        expect(
+            buildInstallUrl({
+                baseUrl: "https://wallet.frak.id",
+                merchantId: "merchant-1",
+                checkoutToken: "tok-1",
+            })
+        ).toBe(
+            "https://wallet.frak.id/install?m=merchant-1&checkoutToken=tok-1"
+        );
+    });
+
+    test("carries the token as a search param, never a fragment", () => {
+        const url = buildInstallUrl({
+            merchantId: "merchant-1",
+            checkoutToken: "tok-1",
+            installProof: "the-install-proof",
+        });
+
+        const [withoutFragment, fragment] = String(url).split("#");
+        expect(
+            new URL(withoutFragment, "https://wallet.frak.id").searchParams.get(
+                "checkoutToken"
+            )
+        ).toBe("tok-1");
+        expect(fragment).toBe("p=the-install-proof");
+    });
+
+    test("keeps both credentials when both are known", () => {
+        expect(
+            buildInstallUrl({
+                merchantId: "merchant-1",
+                clientId: "client-1",
+                checkoutToken: "tok-1",
+            })
+        ).toBe("/install?m=merchant-1&a=client-1&checkoutToken=tok-1");
+    });
+
+    test("encodes the token", () => {
+        expect(
+            buildInstallUrl({
+                merchantId: "merchant-1",
+                checkoutToken: "tok&1=2",
+            })
+        ).toBe(
+            `/install?m=merchant-1&checkoutToken=${encodeURIComponent("tok&1=2")}`
+        );
+    });
+
+    test("refuses to build a link carrying neither credential", () => {
+        expect(buildInstallUrl({ merchantId: "merchant-1" })).toBeNull();
+        expect(
+            buildInstallUrl({
+                merchantId: "merchant-1",
+                installProof: "the-install-proof",
+            })
+        ).toBeNull();
+    });
+
+    test("builds a merchant-only link when the caller opts in", () => {
+        expect(
+            buildInstallUrl({
+                merchantId: "merchant-1",
+                allowCredentialless: true,
+            })
+        ).toBe("/install?m=merchant-1");
+    });
+
+    test("still carries the checkout token when the caller opts in", () => {
+        expect(
+            buildInstallUrl({
+                merchantId: "merchant-1",
+                checkoutToken: "tok-1",
+                allowCredentialless: true,
+            })
+        ).toBe("/install?m=merchant-1&checkoutToken=tok-1");
     });
 });
 

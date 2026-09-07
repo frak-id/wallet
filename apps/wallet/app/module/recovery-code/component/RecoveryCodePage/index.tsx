@@ -13,6 +13,7 @@ export function RecoveryCodePage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [code, setCode] = useState("");
+    const [unresolved, setUnresolved] = useState(false);
     const openModal = modalStore((s) => s.openModal);
 
     const {
@@ -31,6 +32,7 @@ export function RecoveryCodePage() {
     const handleCodeChange = useCallback(
         (value: string) => {
             setCode(value);
+            setUnresolved(false);
             if (error) resetMutation();
         },
         [error, resetMutation]
@@ -42,22 +44,33 @@ export function RecoveryCodePage() {
         trackEvent("install_code_submitted");
         try {
             const result = await resolveAsync(code);
+            // An `UNRESOLVED` code queues no ensure action, so announcing a
+            // recovered referral would be a lie.
+            if (result.outcome === "UNRESOLVED") {
+                setUnresolved(true);
+                return;
+            }
             openModal({
                 id: "recoveryCodeSuccess",
                 merchant: result.merchant,
+                onExit: () => navigate({ to: "/register", replace: true }),
             });
         } catch {
             // Error is captured by the mutation state
         }
-    }, [isComplete, isPending, code, resolveAsync, openModal]);
+    }, [isComplete, isPending, code, resolveAsync, openModal, navigate]);
 
-    const errorMessage = error ? t("recoveryCode.error.invalid") : undefined;
+    const errorMessage = error
+        ? t("rewardCode.error.invalid")
+        : unresolved
+          ? t("rewardCode.error.unresolved")
+          : undefined;
 
     return (
         <FlowStepScreen
             fixedViewport
-            title={t("recoveryCode.title")}
-            description={t("recoveryCode.description")}
+            title={t("rewardCode.title")}
+            description={t("rewardCode.description")}
             onBack={() => navigate({ to: "/register", replace: true })}
             footer={
                 <Button
@@ -65,7 +78,7 @@ export function RecoveryCodePage() {
                     disabled={!isComplete}
                     loading={isPending}
                 >
-                    {t("recoveryCode.validate")}
+                    {t("rewardCode.validate")}
                 </Button>
             }
         >
@@ -73,8 +86,8 @@ export function RecoveryCodePage() {
                 length={CODE_LENGTH}
                 mode="alphanumeric"
                 onChange={handleCodeChange}
-                label={t("recoveryCode.codeLabel")}
-                pasteLabel={t("recoveryCode.paste")}
+                label={t("rewardCode.codeLabel")}
+                pasteLabel={t("rewardCode.paste")}
                 error={errorMessage}
                 // Sole input on this screen, so focusing on arrival costs the
                 // user nothing and saves a tap. On iOS it also surfaces a code

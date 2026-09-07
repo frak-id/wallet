@@ -17,7 +17,6 @@ components/
 ├── Appearance/           # Theme customization tabs
 │   ├── ButtonTab.tsx
 │   ├── CustomizationsTab.tsx
-│   └── WalletButtonTab.tsx
 ├── Customizations/       # Logo field (wording editors are Frak-managed, removed)
 │   └── Field.tsx         # LogoField
 ├── ModalPreview/         # Markdown → React preview (uses CSS modules)

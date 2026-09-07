@@ -1,6 +1,61 @@
 import { describe, expect, it } from "vitest";
-import type { EstimatedReward } from "../types";
-import { getRewardRank, getRewardValue, isMatchedItemsBasis } from "./value";
+import type { Currency, EstimatedReward, TokenAmountType } from "../types";
+import goldenRewards from "./fixtures/golden-rewards.json";
+import {
+    getRewardRank,
+    getRewardValue,
+    isMatchedItemsBasis,
+    maxRewardPercent,
+} from "./value";
+
+type RewardValueFixture = {
+    name: string;
+    description: string;
+    kind: "reward-value";
+    reward: EstimatedReward;
+    currency: Currency | null;
+    amountKey: keyof TokenAmountType;
+    value: number;
+    maxPercent: number;
+    rank: number;
+};
+
+// The JSON import is inferred as a union of per-entry literal shapes, which
+// narrows to `never` under a type predicate. Widen ONCE to the declared
+// fixture type so the payload fields stay genuinely type-checked and a corpus
+// shape drift is a type error rather than a silent pass.
+const valueFixtures = (
+    goldenRewards.fixtures as unknown as RewardValueFixture[]
+).filter(
+    (fixture): fixture is RewardValueFixture => fixture.kind === "reward-value"
+);
+
+describe("reward value golden fixtures", () => {
+    it("declares the expected format version", () => {
+        expect(goldenRewards.formatVersion).toBe(1);
+    });
+
+    it("pins the percentage-only rank weight, not just its sign", () => {
+        const uncapped = valueFixtures.find(
+            (fixture) => fixture.name === "value-percentage-uncapped"
+        );
+        expect(uncapped?.value).toBe(0);
+        expect(uncapped?.rank).toBe(8e-6);
+    });
+
+    it.each(valueFixtures)(
+        "reproduces value / maxPercent / rank for: $description",
+        (fixture) => {
+            expect(getRewardValue(fixture.reward, fixture.amountKey)).toBe(
+                fixture.value
+            );
+            expect(maxRewardPercent(fixture.reward)).toBe(fixture.maxPercent);
+            expect(getRewardRank(fixture.reward, fixture.amountKey)).toBe(
+                fixture.rank
+            );
+        }
+    );
+});
 
 const amount = (eur: number) => ({
     amount: eur,

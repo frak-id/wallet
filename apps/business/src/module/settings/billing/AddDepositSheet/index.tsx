@@ -64,7 +64,7 @@ function emptyValues(defaultCountry?: string): DepositFormValues {
 /**
  * Platform-admin-only sheet to record a deposit note. VAT and the Frak fee
  * are computed server-side from `grossAmount` + `country` — this form only
- * captures the raw inputs (billing-feature-plan.md §4).
+ * captures the raw inputs.
  */
 export function AddDepositSheet({
     merchantId,
@@ -87,9 +87,9 @@ export function AddDepositSheet({
     // `defaultCountry` (the merchant's saved accounting country) arrives
     // async from `useBillingInfo`, well after this sheet's `useForm` first
     // captures `defaultValues` — so the initial capture is almost always
-    // empty (billing-feature-fixes.md B18). Backfill it once it resolves,
-    // but only while the form is still pristine and the country field is
-    // still empty, so it never clobbers input the operator already typed.
+    // empty. Backfill it once it resolves, but only while the form is still
+    // pristine and the country field is still empty, so it never clobbers
+    // input the operator already typed.
     useEffect(() => {
         if (!defaultCountry) return;
         if (form.formState.isDirty) return;

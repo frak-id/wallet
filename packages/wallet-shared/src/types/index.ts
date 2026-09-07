@@ -1,8 +1,14 @@
 // Types
 export type { BalanceItem } from "./Balance";
 export type { HistoryGroup } from "./HistoryGroup";
-// i18n types are ambient declarations (i18n.d.ts, resources.d.ts)
-// and are automatically included by TypeScript
+// i18n ambient declarations (i18n.d.ts, resources.d.ts) are included
+// automatically by TypeScript; the key-checked `t` alias is a real module.
+export type {
+    DefaultTranslate,
+    DefaultTranslationKey,
+    Translate,
+    TranslationKey,
+} from "./i18n/translate";
 export type { CurrentRecovery, GeneratedRecoveryData } from "./Recovery";
 
 export type {

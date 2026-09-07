@@ -1,5 +1,4 @@
 import type {
-    DisplayEmbeddedWalletParamsType,
     DisplayModalParamsType,
     FrakClient,
     ModalStepTypes,
@@ -108,21 +107,6 @@ export class SdkHelper {
             }
         }
         throw new Error("Modal did not open");
-    }
-
-    async openWalletModal(params?: DisplayEmbeddedWalletParamsType) {
-        const walletClient = await this.walletClient;
-        await this.fireUntilModalOpen(() =>
-            walletClient.evaluate((client, params) => {
-                // Fire-and-forget: the embedded wallet request stays open.
-                client
-                    .request({
-                        method: "frak_displayEmbeddedWallet",
-                        params: [params ?? {}, { name: "e2e test" }],
-                    })
-                    .catch(() => {});
-            }, params)
-        );
     }
 
     /**

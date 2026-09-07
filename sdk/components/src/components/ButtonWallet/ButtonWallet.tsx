@@ -1,5 +1,5 @@
-import type { InteractionTypeKey } from "@frak-labs/core-sdk";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { type InteractionTypeKey, trackEvent } from "@frak-labs/core-sdk";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useLang } from "@/hooks/useLang";
 import { usePlacement } from "@/hooks/usePlacement";
@@ -52,7 +52,12 @@ const componentCss = `
 `;
 
 /**
- * Button to open wallet modal
+ * Floating circular button that opens the Frak sharing page.
+ *
+ * Historically this opened the embedded wallet drawer; that surface was
+ * retired, so the button now routes to the full-page sharing UI like every
+ * other share CTA. The `frak-button-wallet` tag name is kept because it is
+ * public API (merchant markup, Magento template).
  *
  * @param args
  * @returns The wallet button with `<button>` tag
@@ -89,7 +94,7 @@ const componentCss = `
  * <frak-button-wallet placement="hero-wallet"></frak-button-wallet>
  * ```
  *
- * @see {@link @frak-labs/core-sdk!actions.modalBuilder | `modalBuilder()`} for more info about the modal display
+ * @see {@link @frak-labs/core-sdk!actions.displaySharingPage | `displaySharingPage()`} for more info about the sharing page
  * @see {@link @frak-labs/core-sdk!actions.getMerchantInformation | `getMerchantInformation()`} for more info about the estimated reward fetching
  */
 export function ButtonWallet({
@@ -120,8 +125,27 @@ export function ButtonWallet({
     );
     const [position, setPosition] = useState<"left" | "right">("right");
 
+    // Mirrors `<frak-button-share>`: since this button was repointed at the
+    // sharing page both tags open the same surface, so both must report the
+    // click. Without it, wallet-button traffic would land on the sharing page
+    // with no originating `share_button_clicked` and the funnel would not add
+    // up.
+    const onClick = useCallback(() => {
+        trackEvent(window.FrakSetup.client, "share_button_clicked", {
+            placement: placementId,
+            target_interaction: resolvedTargetInteraction,
+            has_reward: Boolean(reward),
+            click_action: "sharing-page",
+        });
+        openWalletModal(resolvedTargetInteraction, placementId);
+    }, [placementId, resolvedTargetInteraction, reward]);
+
     useEffect(() => {
         const placementPosition = placement?.components?.buttonWallet?.position;
+        // `modalWalletConfig` is the retired embedded-wallet config; only its
+        // position hint is still honoured, for integrations (Magento) that
+        // keep injecting it. Deliberately not a dep: it's set before mount
+        // and never mutated, so the placement position is the only live input.
         const configPosition =
             window.FrakSetup?.modalWalletConfig?.metadata?.position;
         setPosition(placementPosition ?? configPosition ?? "right");
@@ -154,9 +178,7 @@ export function ButtonWallet({
                 part="button"
                 disabled={!isClientReady}
                 class={buttonClass}
-                onClick={() => {
-                    openWalletModal(resolvedTargetInteraction, placementId);
-                }}
+                onClick={onClick}
             >
                 <GiftIcon />
                 {reward && <span class="reward">{reward}</span>}

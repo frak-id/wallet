@@ -5,6 +5,7 @@ import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { PairingQrCode, PairingStatus } from "@frak-labs/wallet-shared";
+import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
@@ -13,11 +14,11 @@ import { RemotePeerWaitingCard } from "../RemotePeerWaitingCard";
 import * as styles from "../stepLayout.css";
 
 export type RemotePairingPanelI18nKeys = {
-    title: string;
-    description: string;
-    preparing: string;
-    error: string;
-    retry: string;
+    title: DefaultTranslationKey;
+    description: DefaultTranslationKey;
+    preparing: DefaultTranslationKey;
+    error: DefaultTranslationKey;
+    retry: DefaultTranslationKey;
 };
 
 type RemotePairingPanelProps = {

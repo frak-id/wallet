@@ -24,9 +24,16 @@
     <true/>
     <key>UILaunchScreen</key>
     <dict/>
+    <!--
+      Landscape is here so the sharing sheet's safe-area handling can be exercised.
+      Portrait-only made the notch-on-the-side case untestable in the one app that
+      drives the SDK.
+    -->
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
     <!--
       Both wallet variants: the app ships as `frakwallet://` in prod and

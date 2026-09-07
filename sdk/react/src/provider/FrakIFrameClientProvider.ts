@@ -63,11 +63,10 @@ export function FrakIFrameClientProvider({
     // Seed the listener URL with the derived anonymous id. This provider used
     // to omit `clientId` entirely, so the listener fell back to its own store.
     const { data: iframeSrc } = useQuery({
-        queryKey: ["frak", "listener-url", config.walletUrl],
+        queryKey: ["frak", "listener-url", config.env],
         queryFn: async () => {
             const clientId = await getClientIdAsync().catch(() => undefined);
             return buildListenerUrl({
-                walletUrl: config.walletUrl,
                 clientId,
                 preload: config.preload ?? ["sharing"],
             });

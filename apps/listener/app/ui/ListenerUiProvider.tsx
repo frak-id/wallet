@@ -1,5 +1,4 @@
 import {
-    type DisplayEmbeddedWalletParamsType,
     type DisplaySharingPageParamsType,
     type FrakWalletSdkConfig,
     formatAmount,
@@ -14,12 +13,10 @@ import type {
     RpcResponse,
 } from "@frak-labs/frame-connector";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
+import { translationKeyPathToObject } from "@frak-labs/wallet-shared/common/utils/translationKeyPathToObject";
 import type { i18n, TOptions } from "i18next";
 import { useStore } from "zustand";
-import {
-    mapI18nConfig,
-    translationKeyPathToObject,
-} from "@/module/utils/i18nMapper";
+import { mapI18nConfig } from "@/module/utils/i18nMapper";
 
 /**
  * TFunction overloads expect `Omit<TOptions, "context"> & { context?: string }` rather than raw
@@ -27,7 +24,11 @@ import {
  */
 type TranslationOptions = Omit<TOptions, "context"> & { context?: string };
 
+/** Keys resolvable in this app: it registers `customized` + `common` only. */
+type ListenerKey = TranslationKey<"customized" | "common">;
+
 import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared/common/hook/useFormattedEstimatedReward";
+import type { TranslationKey } from "@frak-labs/wallet-shared/types";
 import {
     createContext,
     type PropsWithChildren,
@@ -58,20 +59,6 @@ export type GenericWalletUiType = {
 };
 
 /**
- * Type for the embedded wallet ui type
- *  - todo: Maybe some pre-check hooks, or other stuff to store here? Like which view to display (loggedOut or loggedIn?)
- */
-type EmbeddedWalletUiType = {
-    type: "embedded";
-    params: DisplayEmbeddedWalletParamsType;
-    emitter: (
-        response: RpcResponse<
-            ExtractReturnType<IFrameRpcSchema, "frak_displayEmbeddedWallet">
-        >
-    ) => Promise<void>;
-};
-
-/**
  * Type for the modal ui type
  *  - todo: Should it contain same stuff as the atom? Like prepared steps etc?
  */
@@ -99,12 +86,7 @@ type SharingPageUiType = {
     ) => Promise<void>;
 };
 
-export type UIRequest = (
-    | EmbeddedWalletUiType
-    | ModalUiType
-    | SharingPageUiType
-) &
-    GenericWalletUiType;
+export type UIRequest = (ModalUiType | SharingPageUiType) & GenericWalletUiType;
 
 type UIContext = {
     currentRequest: UIRequest | undefined;
@@ -112,7 +94,9 @@ type UIContext = {
     clearRequest: () => void;
     translation: {
         lang?: "en" | "fr";
-        t: (key: string, options?: TranslationOptions) => string;
+        // Scoped to the namespaces this app registers below; `translation` is
+        // deliberately absent from its bundle and would render as raw text.
+        t: (key: ListenerKey, options?: TranslationOptions) => string;
         i18n: i18n;
     };
 };
@@ -124,8 +108,8 @@ const ListenerUiContext = createContext<UIContext | undefined>(undefined);
 
 /**
  * Provider for the listener UI
- *  - Will directly display either modal or embedded wallet
- *  - Keep the state of either modal or embedded wallet in a shared context accessible with hooks
+ *  - Will directly display either the modal or the sharing page
+ *  - Keep the state of either one in a shared context accessible with hooks
  */
 export function ListenerUiProvider({ children }: PropsWithChildren) {
     // Initial translation context
@@ -241,11 +225,9 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             }
 
             const requestI18n =
-                request.type === "embedded"
+                request.type === "sharing"
                     ? request.params.metadata?.i18n
-                    : request.type === "sharing"
-                      ? request.params.metadata?.i18n
-                      : request.metadata.i18n;
+                    : request.metadata.i18n;
             if (requestI18n) {
                 mapI18nConfig(requestI18n, i18n);
             }
@@ -331,7 +313,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
         // Note: context variables (productName, productOrigin, estimatedReward) are already
         // provided via defaultVariables in the cloneInstance call above
         const rawT = i18n.getFixedT(lang, null);
-        const t = (key: string, options?: TranslationOptions): string =>
+        const t = (key: ListenerKey, options?: TranslationOptions): string =>
             rawT(key, options);
         return { lang, i18n, t };
     }, [
@@ -397,21 +379,6 @@ export function useModalListenerUI() {
     }
     return uiContext as Omit<UIContext, "currentRequest"> & {
         currentRequest: ModalUiType & GenericWalletUiType;
-    };
-}
-
-/**
- * Custom hook to get the listener ui context only when displaying an embedded wallet
- */
-export function useEmbeddedListenerUI() {
-    const uiContext = useListenerUI();
-    if (uiContext.currentRequest?.type !== "embedded") {
-        throw new Error(
-            "useModalListenerUI must be used within a embedded displayed UI"
-        );
-    }
-    return uiContext as Omit<UIContext, "currentRequest"> & {
-        currentRequest: EmbeddedWalletUiType & GenericWalletUiType;
     };
 }
 

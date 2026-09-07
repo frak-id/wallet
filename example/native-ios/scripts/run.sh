@@ -8,11 +8,19 @@
 #   bun run native:ios              # generate + build + install + launch
 #   bun run native:ios:build        # compile-only typecheck, no simulator needed
 #   bun run native:ios:xcode        # open the generated project in Xcode
+#   bun run native:ios:device       # build + install + launch on a physical iPhone
 #
-# Device selection, in priority order:
+# Simulator selection, in priority order:
 #   1. an already-booted simulator
 #   2. $IOS_SIMULATOR                — IOS_SIMULATOR="iPhone 17 Pro" bun run native:ios
 #   3. "iPhone 17", else the first available iPhone
+#
+# Device selection, in priority order:
+#   1. $IOS_DEVICE                   — a name or UDID, matched against connected devices
+#   2. the sole connected device; ambiguous if more than one, so $IOS_DEVICE is required
+#
+# Device signing: automatic, with $FRAK_DEVELOPMENT_TEAM (default: the Frak Labs team)
+# and -allowProvisioningUpdates, which registers the device on that Apple team.
 
 set -euo pipefail
 
@@ -21,6 +29,9 @@ BUNDLE_ID="id.frak.example.ios"
 SCHEME="FrakExampleiOSApp"
 PROJECT="$APP_DIR/$SCHEME.xcodeproj"
 DERIVED="$APP_DIR/build"
+# Frak Labs. Override for a contributor signing with their own Apple team; the bundle
+# id must stay id.frak.example.ios either way, since the dev merchant allow-lists it.
+DEVELOPMENT_TEAM="${FRAK_DEVELOPMENT_TEAM:-57DZ6Z2235}"
 
 # Logs go to stderr: `boot_simulator` returns the UDID on stdout, so anything
 # chatty on stdout would be captured into the UDID by the caller.
@@ -28,6 +39,20 @@ log() { echo "[native-ios] $*" >&2; }
 die() {
 	echo "[native-ios] ERROR: $*" >&2
 	exit 1
+}
+
+# xcodebuild is far too chatty to show in full, but silencing it with >/dev/null
+# hides the one line that matters when it fails. Tee to a log, print only the
+# error lines on failure, and keep the log around for the rest.
+run_xcodebuild() {
+	local logfile="$DERIVED/xcodebuild.log"
+	mkdir -p "$DERIVED"
+	if ! xcodebuild "$@" >"$logfile" 2>&1; then
+		log "Build failed. Relevant output:"
+		grep -iE "error:|warning: .*provisioning|isn't registered|doesn't include" "$logfile" |
+			head -20 >&2 || true
+		die "xcodebuild failed. Full log: $logfile"
+	fi
 }
 
 require_xcodegen() {
@@ -95,9 +120,9 @@ do_run() {
 	udid="$(boot_simulator)"
 
 	log "Building..."
-	xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
+	run_xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
 		-sdk iphonesimulator -configuration Debug \
-		-derivedDataPath "$DERIVED" build >/dev/null
+		-derivedDataPath "$DERIVED" build
 
 	local app="$DERIVED/Build/Products/Debug-iphonesimulator/$SCHEME.app"
 	[ -d "$app" ] || die "Build succeeded but $app is missing."
@@ -109,6 +134,111 @@ do_run() {
 	# --console-pty streams the SDK's print() output; it does not reach the
 	# unified log system, so `log show` would find nothing.
 	xcrun simctl launch --console-pty "$udid" "$BUNDLE_ID"
+}
+
+# Emits "<udid>\t<name>" per connected device. devicectl's JSON output is the only
+# stable read: the human table pads columns and truncates long names.
+list_devices() {
+	local json
+	json="$(mktemp)"
+	xcrun devicectl list devices --quiet --json-output "$json" >/dev/null 2>&1 ||
+		die "devicectl failed. Is Xcode installed and the device paired?"
+	# CoreDevice remembers every device ever paired, so `pairingState` alone still
+	# lists phones last seen months ago. A device reachable right now is the one that
+	# reports a transport and a tunnelState other than "unavailable" — without this
+	# filter a stale entry wins the "sole device" check and the install fails.
+	/usr/bin/python3 -c '
+import json, sys
+with open(sys.argv[1]) as f:
+    devices = json.load(f)["result"]["devices"]
+for d in devices:
+    conn = d.get("connectionProperties", {})
+    if conn.get("pairingState") != "paired":
+        continue
+    if conn.get("tunnelState") == "unavailable" and not conn.get("transportType"):
+        continue
+    print("\t".join([d["identifier"], d.get("deviceProperties", {}).get("name", "?")]))
+' "$json"
+	rm -f "$json"
+}
+
+select_device() {
+	local devices
+	devices="$(list_devices)"
+	[ -n "$devices" ] || die "No paired device found. Plug in the iPhone, unlock it, and trust this Mac."
+
+	local wanted="${IOS_DEVICE:-}"
+	if [ -n "$wanted" ]; then
+		local match
+		match="$(echo "$devices" | awk -F'\t' -v w="$wanted" '$1 == w || $2 == w {print $1; exit}')"
+		[ -n "$match" ] || die "No paired device matching IOS_DEVICE=\"$wanted\". Available:
+$(echo "$devices" | awk -F'\t' '{printf "  %s  (%s)\n", $2, $1}')"
+		echo "$match"
+		return
+	fi
+
+	local count
+	count="$(echo "$devices" | wc -l | tr -d ' ')"
+	[ "$count" -eq 1 ] || die "$count paired devices found — set IOS_DEVICE to pick one:
+$(echo "$devices" | awk -F'\t' '{printf "  %s  (%s)\n", $2, $1}')"
+	echo "$devices" | cut -f1
+}
+
+do_device() {
+	generate_project
+
+	local udid
+	udid="$(select_device)"
+	log "Target device: $udid"
+
+	# Developer Mode is off by default on every iOS 16+ device and cannot be turned on
+	# from the host. Failing here beats a bare "unable to install" from devicectl.
+	if ! xcrun devicectl device info details --device "$udid" >/dev/null 2>&1; then
+		die "Cannot query the device. Unlock it, and enable Settings > Privacy & Security > Developer Mode (the device restarts)."
+	fi
+
+	log "Building for device (team $DEVELOPMENT_TEAM)..."
+	# -allowProvisioningUpdates lets Xcode create/refresh the profile and register this
+	# device on the team, which is what makes a first run on a new phone work unattended.
+	# It needs an Apple ID signed into Xcode (Settings > Accounts) with a role that can
+	# register devices; without one it fails with "isn't registered in your developer account".
+	run_xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
+		-destination "id=$udid" -configuration Debug \
+		-derivedDataPath "$DERIVED" \
+		DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
+		-allowProvisioningUpdates build
+
+	local app="$DERIVED/Build/Products/Debug-iphoneos/$SCHEME.app"
+	[ -d "$app" ] || die "Build succeeded but $app is missing."
+
+	log "Installing..."
+	xcrun devicectl device install app --device "$udid" "$app" >/dev/null ||
+		die "Install failed. Check that Developer Mode is on and the device is unlocked."
+
+	log "Launching. Streaming SDK logs (Ctrl-C to stop)..."
+	# --console streams the app's stdout, where the SDK's print() output goes.
+	# First launch of a build signed by a new team needs the profile trusted on-device:
+	# Settings > General > VPN & Device Management.
+	xcrun devicectl device process launch --device "$udid" --console \
+		--terminate-existing "$BUNDLE_ID"
+}
+
+# Relaunches rather than attaching: Apple ships no way to attach to a running app's
+# log stream. `devicectl` has no log verb, and `log stream` takes no --device (only
+# `log collect` does, and it writes an archive). Attaching needs idevicesyslog or
+# pymobiledevice3, which this harness does not depend on.
+do_logs() {
+	local udid
+	udid="$(select_device)"
+	log "Target device: $udid"
+
+	if ! xcrun devicectl device info details --device "$udid" >/dev/null 2>&1; then
+		die "Cannot query the device. Unlock it, and enable Developer Mode."
+	fi
+
+	log "Relaunching to stream SDK logs (Ctrl-C to stop)..."
+	xcrun devicectl device process launch --device "$udid" --console \
+		--terminate-existing "$BUNDLE_ID"
 }
 
 do_xcode() {
@@ -133,14 +263,18 @@ do_format() {
 
 case "${1:-run}" in
 run) do_run ;;
+device) do_device ;;
 build) do_build_only ;;
+logs) do_logs ;;
 xcode) do_xcode ;;
 lint) do_lint ;;
 format) do_format ;;
 *)
-	echo "Usage: $0 {run|build|xcode|lint|format}"
+	echo "Usage: $0 {run|device|logs|build|xcode|lint|format}"
 	echo ""
 	echo "  run    - generate + build + install + launch on a simulator, then stream logs"
+	echo "  device - same, on a physical iPhone (needs Developer Mode and a signing team)"
+	echo "  logs   - relaunch on a physical iPhone and stream the SDK log output"
 	echo "  build  - compile-only typecheck (Swift 6 strict concurrency), no simulator"
 	echo "  xcode  - regenerate the project and open it in Xcode"
 	echo "  lint   - swift-format lint (strict), no simulator"

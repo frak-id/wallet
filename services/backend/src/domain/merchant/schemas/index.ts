@@ -76,6 +76,15 @@ export type LocalizableString = Static<typeof LocalizableStringSchema>;
 const ButtonShareComponentSchema = t.Object({
     text: t.Optional(LocalizableStringSchema),
     noRewardText: t.Optional(LocalizableStringSchema),
+    /**
+     * Which UI the share button opens.
+     *
+     * `"embedded-wallet"` and `"share-modal"` are RETIRED surfaces. They stay
+     * in the union on purpose: merchant configs created before the migration
+     * still carry those values, and tightening this would fail validation on
+     * read for every one of those stored rows. The SDK routes both to the
+     * sharing page, so they behave as `"sharing-page"` at runtime.
+     */
     clickAction: t.Optional(
         t.Union([
             t.Literal("embedded-wallet"),
@@ -87,6 +96,13 @@ const ButtonShareComponentSchema = t.Object({
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
 
+/**
+ * Legacy config for the floating `<frak-button-wallet>`.
+ *
+ * The embedded wallet drawer it used to open is gone — the tag now opens the
+ * sharing page and only `position` is still read. Kept so pre-migration
+ * merchant configs keep validating.
+ */
 const ButtonWalletComponentSchema = t.Object({
     position: t.Optional(t.Union([t.Literal("right"), t.Literal("left")])),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),
@@ -158,6 +174,8 @@ const ResolvedComponentsSchema = t.Object({
         t.Object({
             text: t.Optional(t.String()),
             noRewardText: t.Optional(t.String()),
+            // Retired values kept for pre-migration configs; both behave
+            // as `"sharing-page"` at runtime. See ButtonShareComponentSchema.
             clickAction: t.Optional(
                 t.Union([
                     t.Literal("embedded-wallet"),
@@ -168,6 +186,7 @@ const ResolvedComponentsSchema = t.Object({
             css: t.Optional(t.String()),
         })
     ),
+    // Legacy: see ButtonWalletComponentSchema. Only `position` is still read.
     buttonWallet: t.Optional(
         t.Object({
             position: t.Optional(
@@ -277,9 +296,8 @@ export type Placement = Static<typeof PlacementSchema>;
 
 /**
  * Merchant company/accounting info used on generated billing documents.
- * `country` and `vatNumber` are tax-relevant and platform-admin-writable only
- * (see billing-feature-plan.md §3.1) — enforced at the service/route layer,
- * not by this schema.
+ * `country` and `vatNumber` are tax-relevant and platform-admin-writable
+ * only — enforced at the service/route layer, not by this schema.
  */
 export const MerchantAccountingInfoSchema = t.Object({
     companyName: t.String({ maxLength: 200 }),

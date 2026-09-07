@@ -8,9 +8,9 @@ import { useBillingInfo } from "../useBillingInfo";
 
 /**
  * Platform-admin-only section: create deposit notes / withdraw bills for the
- * active merchant (billing-feature-plan.md §5, admin-only routes). Rendered
- * by `BillingTab` gated on `useMyMerchants().isPlatformAdmin` — this
- * component itself does not re-check the flag, so it must never be rendered
+ * active merchant (admin-only routes). Rendered by `BillingTab` gated on
+ * `useMyMerchants().isPlatformAdmin` — this component itself does not
+ * re-check the flag, so it must never be rendered
  * unconditionally by a caller.
  */
 export function BillingAdminPanel() {

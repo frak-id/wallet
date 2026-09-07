@@ -3,7 +3,7 @@
  *  - "small" (default): sm 1x, md 2x, lg 3x. Correct for anything the app
  *    shell caps at ~430px CSS — merchant logos and Explorer heroes alike.
  *  - "large": md 1x, lg 2x. For elements already near the md box at 1x
- *    (e.g. the ~195px embedded-wallet header logo).
+ *    (e.g. the ~195px listener modal header logo).
  */
 export type MediaSrcSetMode = "small" | "large";
 

@@ -214,7 +214,7 @@ $config = $block->getFrakConfig();
 ```javascript
 window.FrakSetup = {
     config: {
-        walletUrl: "...",
+        env: { wallet: "...", backend: "..." },
         metadata: {
             name: "...",
             lang: "...",
@@ -1114,7 +1114,7 @@ composer run cs-fix    # auto-fix
 
 - [ ] SDK loader renders on all page types (home, category, product, CMS)
 - [ ] `window.FrakSetup` config matches admin settings
-- [ ] `window.FrakSetup` includes walletUrl, metadata (name/lang/logoUrl/merchantId), customizations, domain, modalConfig, modalShareConfig, modalWalletConfig
+- [ ] `window.FrakSetup` includes env (wallet + backend origins), metadata (name/lang/logoUrl/merchantId), customizations, domain, modalConfig, modalShareConfig, modalWalletConfig
 - [ ] Share button renders on product pages (when enabled)
 - [ ] Wallet button renders in configured position
 - [ ] Frak iframe loads (check Network tab for `/listener` request)

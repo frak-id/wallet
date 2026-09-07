@@ -64,7 +64,6 @@ deployed vanilla demo; set it to `http://localhost:3013/` for a local run).
 | `setup-paired` | – | writes `PAIRED_STORAGE_STATE` | Cross-device (distant-webauthn) pairing |
 | `chromium-on-device` | `setup` | on-device state | Authenticated wallet specs (home, history, settings) — **mobile** (Pixel 7), excludes sdk |
 | `chromium-paired` | `setup-paired` | paired state | Wallet specs under a paired session — desktop |
-| `sdk-embedded` | `setup` | on-device state | Authenticated SDK/modal specs (sdk/all, sdk/balance-all) — desktop partner page |
 | `sdk-fresh` | – | none | Logged-out, **self-contained** SDK modal/login specs — desktop |
 
 The setup projects run first and persist a Playwright storage state under
@@ -115,7 +114,7 @@ tests/
 └── specs/
     ├── authentication/      # on-device-login/register, pairing-desktop
     ├── home/ history/ settings/
-    └── sdk/                 # embedded wallet (all, balance-all) + modal-*-fresh
+    └── sdk/                 # modal-*-fresh
 ```
 
 ## Gotchas (learned the hard way)
@@ -139,7 +138,7 @@ tests/
 
 1. Pick the project by auth need: `sdk-fresh` (logged-out / self-contained),
    `chromium-on-device` (authenticated wallet, mobile), `chromium-paired`
-   (distant-webauthn), `sdk-embedded` (authenticated SDK).
+   (distant-webauthn).
 2. Reuse page objects + helpers; add new ones to `fixtures.ts`.
 3. Name on-device files `*on-device*.spec.ts` or `*all*.spec.ts`, pairing
    `*pairing*.spec.ts`, and self-contained modal files `*fresh*.spec.ts` so they

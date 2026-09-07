@@ -2,7 +2,7 @@ name: app
 options:
   bundleIdPrefix: id.frak.wallet
   deploymentTarget:
-    iOS: 14.0
+    iOS: 16.0
 fileGroups: [../../src]
 configs:
   debug: debug
@@ -54,12 +54,15 @@ targets:
           - UIInterfaceOrientationPortrait
         UISupportedInterfaceOrientations~ipad:
           - UIInterfaceOrientationPortrait
-        CFBundleShortVersionString: 1.0.93
-        CFBundleVersion: "1.0.93"
+        CFBundleShortVersionString: 1.0.98
+        CFBundleVersion: "1.0.98"
         ITSAppUsesNonExemptEncryption: false
         UIBackgroundModes:
           - remote-notification
         NSFaceIDUsageDescription: Unlock your wallet securely with Face ID
+        # Prod values. The variant is applied to the generated Info.plist and
+        # entitlements on every build by sync-ios-variant.sh (last step of the
+        # "Build Rust Code" phase), which keys off PRODUCT_BUNDLE_IDENTIFIER.
         CFBundleURLTypes:
           - CFBundleURLName: id.frak.wallet
             CFBundleURLSchemes:
@@ -135,6 +138,10 @@ targets:
           set -e
           bun tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths "${FRAMEWORK_SEARCH_PATHS:?}" --header-search-paths "${HEADER_SEARCH_PATHS:?}" --gcc-preprocessor-definitions "${GCC_PREPROCESSOR_DEFINITIONS:-}" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}
           bash "${SRCROOT}/firebase-forceload.sh"
+          # Last: the deep-link plugin's build script writes the same two files from
+          # the same merged config, but only when cargo re-runs it, and its
+          # entitlements branch drops the webcredentials entries.
+          bash "${SRCROOT}/sync-ios-variant.sh"
         name: Build Rust Code
         basedOnDependencyAnalysis: false
         outputFiles:

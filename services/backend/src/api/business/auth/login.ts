@@ -53,7 +53,13 @@ const GENERIC_RESET_RESPONSE = {
 } as const;
 
 export const loginRoutes = new Elysia()
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "business-auth-login",
+            windowMs: 60_000,
+            maxRequests: 10,
+        })
+    )
     .post(
         "/login",
         async ({ body: { message, signature }, request, headers, server }) => {

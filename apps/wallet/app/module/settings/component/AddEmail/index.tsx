@@ -3,7 +3,7 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { authKey, selectSession, sessionStore } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useCanGoBack, useNavigate, useRouter } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
@@ -66,9 +66,31 @@ export function AddEmail() {
         reset,
     } = useSendEmailVerification();
 
+    const router = useRouter();
+    const canGoBack = useCanGoBack();
+
+    /**
+     * Terminal exit to /profile. Replaces rather than pushes, so this page
+     * leaves the history stack — after a merge, or on the no-history back
+     * fallback, hardware/browser back must not return to the completed form.
+     */
     const goToProfile = useCallback(() => {
-        navigate({ to: "/profile" });
+        navigate({ to: "/profile", replace: true });
     }, [navigate]);
+
+    /**
+     * The back arrow returns to whichever surface opened this page — the
+     * wallet-home card or the profile security row — rather than always
+     * landing on /profile. Falls back to /profile when there is no history
+     * to pop (deep link, hard reload).
+     */
+    const handleBack = useCallback(() => {
+        if (canGoBack) {
+            router.history.back();
+            return;
+        }
+        goToProfile();
+    }, [canGoBack, router, goToProfile]);
 
     const backToInput = useCallback(() => {
         setFlowState({ kind: "input" });
@@ -110,7 +132,10 @@ export function AddEmail() {
                     verifiedAt: null,
                     pendingEmail: null,
                 });
-                navigate({ to: "/profile/verify-email" });
+                // Replace: the code is sent, so this form is spent. Leaving
+                // it on the stack would put a stale form behind the verify
+                // screen's own back handling.
+                navigate({ to: "/profile/verify-email", replace: true });
             } catch {
                 // Surface via `submitError` from the hook so the user can
                 // retry from the form.
@@ -171,7 +196,7 @@ export function AddEmail() {
                 canMerge={canMerge}
                 onMerge={startMerge}
                 onUseDifferent={backToInput}
-                onBack={goToProfile}
+                onBack={handleBack}
             />
         );
     }
@@ -184,7 +209,7 @@ export function AddEmail() {
             placeholder={t("wallet.addEmail.placeholder")}
             clearAriaLabel={t("wallet.addEmail.clearAriaLabel")}
             submitLabel={t("wallet.addEmail.continue")}
-            onBack={goToProfile}
+            onBack={handleBack}
             onSubmit={handleSubmit}
             isSubmitting={isSending}
             submitDisabled={unavailable}

@@ -28,6 +28,10 @@
                 "title": "Screen lock required",
                 "message": "Your device needs a screen lock (PIN, pattern, or biometrics) to use passkeys. Add one in your settings, then try again."
             },
+            "permissionsPolicy": {
+                "title": "Passkey blocked",
+                "message": "A browser extension or security policy blocked the passkey request. Disable your password manager extension for this site, or try a private window."
+            },
             "unsupported": {
                 "title": "Passkeys unavailable",
                 "message": "Passkeys can't be used on this device right now. Make sure your passkey provider is set up, or try another device."

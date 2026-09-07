@@ -9,7 +9,7 @@ import {
 } from "../db/schema";
 import type { BillingDocumentDetails, BillingDocumentKind } from "../schemas";
 
-// Human-facing reference prefix per kind (billing-feature-plan.md §1/§3.2).
+// Human-facing reference prefix per kind.
 const REFERENCE_PREFIX: Record<BillingDocumentKind, string> = {
     deposit: "DEP",
     withdraw: "WDR",
@@ -33,7 +33,7 @@ export function formatReference(
 
 /**
  * All queries are scoped by `merchantId` — never fetch a document by `id`
- * alone (prevents IDOR across merchants, see billing-feature-plan.md §5).
+ * alone (prevents IDOR across merchants).
  */
 export class BillingDocumentRepository {
     /**
@@ -322,8 +322,7 @@ export class BillingDocumentRepository {
     /**
      * Distinct non-voided deposit/withdraw currencies for a merchant — one
      * half of the monthly-bill ledger currency set (the other half is
-     * stablecoins seen in settled rewards; see `MonthlyBillOrchestrator`,
-     * billing-feature-plan.md §6.2).
+     * stablecoins seen in settled rewards; see `MonthlyBillOrchestrator`).
      */
     async distinctCurrencies(merchantId: string): Promise<Stablecoin[]> {
         const rows = await db
@@ -348,7 +347,7 @@ export class BillingDocumentRepository {
      * Deposit/withdraw totals grouped by currency, either "before" a single
      * instant (ledger opening/closing balance) or within a half-open
      * `[start, end)` window (in-period movement) — monthly-bill fiat ledger
-     * (billing-feature-plan.md §6.2). Both legs sum the `net_amount` column:
+     * Both legs sum the `net_amount` column:
      * for deposits it is the net-to-bank amount, and `createWithdraw` stores
      * `net_amount = bankSent` for withdraws (the total sent to the
      * destination account), so no jsonb extraction is needed. Voided

@@ -26,7 +26,7 @@ const ListDocumentsResponseSchema = t.Object({
 });
 
 /**
- * Merchant-facing billing document reads (billing-feature-plan.md §5).
+ * Merchant-facing billing document reads.
  * Guarded by `requireMerchantAccess`, never `platformAdminAuthenticated`
  * (that guard is for the admin CRUD routes in `billing.ts` only).
  */

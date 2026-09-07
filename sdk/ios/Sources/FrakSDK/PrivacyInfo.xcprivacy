@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Since 1 May 2024, an SDK using a required-reason API must declare it in a privacy
+  manifest or App Store Connect rejects the upload with ITMS-91053 (Missing API
+  declaration). That rejection lands on the merchant's upload, not ours: shipping this
+  file wrong or absent breaks every integrator's release.
+
+  Known failure mode to validate before release: AppsFlyer's manifest failed to bundle
+  correctly in the static SPM variant (their issue #281). Propagation must be checked
+  against a real consumer app, not just a local `swift build`.
+-->
+<plist version="1.0">
+<dict>
+    <!--
+      No tracking as defined by App Tracking Transparency. Decided, not deferred: nothing
+      in the SDK path joins data with another company's advertising data and nothing
+      reaches a data broker. The affiliate integration that would have complicated the
+      answer lives in the Frak wallet app, not in this SDK.
+
+      Cross-merchant linkage does exist — one wallet accumulates rewards from several
+      merchants — but only once the user authenticates with that wallet, and it serves
+      reward distribution, not advertising measurement.
+
+      If an ad network ever enters the SDK path, this key, NSPrivacyTrackingDomains and
+      the NSPrivacyCollectedDataTypeTracking flags below all change together.
+    -->
+    <key>NSPrivacyTracking</key>
+    <false/>
+    <key>NSPrivacyTrackingDomains</key>
+    <array/>
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array>
+        <!--
+          Covers two identifiers: the anonymous id, and the `customerId` a merchant hands
+          to `trackPurchase(customerId:orderId:token:)`.
+
+          The anonymous id is NOT a Device ID, whatever its name suggests. Apple's Device
+          ID is "the device's advertising identifier, or other device-level ID"; this one
+          is per app installation, unreadable by another app, and gone on uninstall
+          (`DeviceKey.swift` refuses Keychain so it cannot survive one). It is Apple's
+          "assigned user ID ... that can be used to identify a particular user or account".
+
+          Linked: the install handoff exists to let the wallet join this id to the user's
+          Frak identity, so unlinked would be false the moment `openFrakApp()` succeeds.
+
+          AppFunctionality only — the id routes attribution and rewards. Merchant-facing
+          reporting is derived from Product Interaction below, which carries Analytics.
+        -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeUserID</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+        <!--
+          `trackPurchase(customerId:orderId:token:)` transmits the merchant's own
+          customer and order identifiers plus a checkout token, so a payout can be
+          reconciled. That is purchase history under Apple's taxonomy even though no
+          amount or line item is sent. Nothing in this array is an upload gate — that is
+          NSPrivacyAccessedAPITypes below — so accuracy here is about describing the
+          merchant's app correctly, not about passing ingestion.
+        -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypePurchaseHistory</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+        <!--
+          `track(_:)` posts `arrival`, `sharing` and `custom` interactions to
+          /user/track/interaction. In-app interaction events are exactly Apple's
+          "Product Interaction", and this is the SDK's headline feature.
+
+          `Interaction.custom(_:data:)` carries a merchant-supplied [String: String].
+          The SDK cannot declare what a merchant chooses to put in it: that payload is
+          the merchant's own declaration responsibility, and sdk/ios/README.md says so.
+        -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeProductInteraction</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+                <string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+            </array>
+        </dict>
+    </array>
+    <!--
+      UserDefaults is one of the five required-reason categories. This SDK keeps the
+      resolved merchant config (suite `id.frak.sdk.config`) and the tracking-consent
+      decision (suite `id.frak.sdk.consent`) there. The anonymous id is not: it lives in
+      `FileKeyValueStore` (Application Support/id.frak.sdk/identity.json), an ordinary
+      file whose timestamps are never read — as is the event queue. Neither WebKit nor
+      UIPasteboard is in a category.
+
+      CA92.1 is the right code: it covers a third-party SDK reading or writing
+      UserDefaults in the app's own container, on the app's behalf, which is what this
+      SDK does. C56D.1 is for an SDK that exposes a UserDefaults wrapper API for the
+      app itself to call. This SDK exposes no such API, so C56D.1 would be the wrong
+      declaration.
+    -->
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

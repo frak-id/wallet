@@ -19,7 +19,7 @@
 # vanilla-extract's `compile()` relies on `vm.Script` + `Module._load` via the `eval`
 # package, which Bun's Node compat layer cannot satisfy from a VM sandbox.
 
-ARG BUN_VERSION=1.3.11
+ARG BUN_VERSION=1.4.0
 
 FROM oven/bun:${BUN_VERSION} AS tooling
 RUN --mount=type=cache,id=apt-cache,target=/var/cache/apt,sharing=locked \
@@ -97,12 +97,15 @@ RUN find dist -type f \
     | xargs -0 -P "$(nproc)" -n 32 gzip -9 -k && \
     echo "Pre-compressed $(find dist -name '*.gz' | wc -l) files"
 
-FROM nginx:1.29.1-alpine
+FROM nginx:1.31.4-alpine
 COPY --from=app-builder /app/apps/wallet/dist /usr/share/nginx/html
 # nginx envsubst on /etc/nginx/templates/*.template at container startup; the
 # NGINX_ENVSUBST_FILTER scopes substitution to MONERIUM_* env vars so nginx's
 # own $uri/$http_* are left untouched. MONERIUM_API_HOST is set per-stage on
 # the pod via Pulumi.
 COPY apps/wallet/nginx.conf /etc/nginx/templates/default.conf.template
+# Not a template: `include`d by nginx.conf from every block that declares an
+# `add_header` of its own, since that suppresses inheritance of the rest.
+COPY apps/wallet/nginx-security-headers.conf /etc/nginx/security-headers.conf
 ENV NGINX_ENVSUBST_FILTER='^MONERIUM_'
 EXPOSE 80

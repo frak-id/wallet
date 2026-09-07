@@ -30,7 +30,10 @@ type SdkIdentitySuccess = {
 type SdkIdentityError = {
     success: false;
     error: string;
-    statusCode: number;
+    // Literal union, not `number`: routes declare per-status `response`
+    // schemas, and Elysia can only match `status(code, …)` to one of them
+    // when the code narrows to the declared literals.
+    statusCode: 400 | 401;
 };
 
 type SdkIdentityResult = SdkIdentitySuccess | SdkIdentityError;

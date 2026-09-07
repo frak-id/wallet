@@ -1,5 +1,6 @@
 import { globalStyle } from "@vanilla-extract/css";
 import { tablet } from "./breakpoints";
+import { hostSheet, hostSheetVar } from "./hostSheet";
 import { vars } from "./theme.css";
 import { brand } from "./tokens.css";
 
@@ -25,7 +26,10 @@ globalStyle("a:hover", {
 globalStyle("body", {
     position: "relative",
     overflow: "hidden",
-    backgroundColor: vars.surface.background2,
+    // A native host sets `--frak-host-surface: transparent` so the page's
+    // rounded top corners cut through to its scrim. Written as a fallback, not
+    // an override, so the host never has to win a specificity fight.
+    backgroundColor: hostSheet(hostSheetVar.surface, vars.surface.background2),
     "@media": {
         [`(min-width: ${tablet}px)`]: {
             display: "flex",
@@ -38,15 +42,17 @@ globalStyle("body", {
 });
 
 /**
- * Native (Tauri) override: the desktop-only "phone frame" centering does not
- * apply when the app runs as a native shell (iPad must fill the device).
- * Keep the rule scoped to tablet+ widths to avoid touching mobile defaults.
+ * A native shell owns the window, so drop the desktop centering: Tauri fills
+ * the device, and a host's sheet is full-bleed at every width.
  */
-globalStyle(':root[data-platform="tauri"] body', {
-    "@media": {
-        [`(min-width: ${tablet}px)`]: {
-            display: "block",
-            minHeight: "unset",
+globalStyle(
+    ':root[data-platform="tauri"] body, :root[data-embed="native"] body',
+    {
+        "@media": {
+            [`(min-width: ${tablet}px)`]: {
+                display: "block",
+                minHeight: "unset",
+            },
         },
-    },
-});
+    }
+);

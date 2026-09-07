@@ -49,7 +49,7 @@ type BillingInfoSheetProps = {
      * Persist the edited info. Must invoke `opts.onSuccess` only when the
      * save actually succeeded — the sheet stays open (edits intact, inline
      * error shown) until then, so a failed PUT never silently discards the
-     * merchant's changes (billing-feature-fixes.md B12).
+     * merchant's changes.
      */
     onSave: (info: BillingInfo, opts?: { onSuccess?: () => void }) => void;
     /** Save mutation in flight — drives the submit button's loading state. */

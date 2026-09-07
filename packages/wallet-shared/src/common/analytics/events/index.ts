@@ -1,7 +1,6 @@
 import type { AuthEventMap } from "./auth";
 import type { DeepLinkEventMap } from "./deepLink";
 import type { DiagnosticsEventMap } from "./diagnostics";
-import type { EmbeddedWalletEventMap } from "./embeddedWallet";
 import type { ExplorerEventMap } from "./explorer";
 import type { FavoritesEventMap } from "./favorites";
 import type { InstallEventMap } from "./install";
@@ -19,7 +18,6 @@ import type { WalletMergeEventMap } from "./walletMerge";
 export type { AuthEventMap } from "./auth";
 export type { DeepLinkEventMap, DeepLinkSource } from "./deepLink";
 export type { AppErrorSource, DiagnosticsEventMap } from "./diagnostics";
-export type { EmbeddedWalletEventMap } from "./embeddedWallet";
 export type { ExplorerEventMap } from "./explorer";
 export type { FavoritesEventMap } from "./favorites";
 export type {
@@ -31,6 +29,8 @@ export type {
 export type {
     InstallEventMap,
     InstallPageView,
+    InstallProbeSurface,
+    InstallProbeUnavailableReason,
     InstallReferrerMissingReason,
     InstallSource,
     InstallStore,
@@ -38,6 +38,7 @@ export type {
 export type {
     InAppBrowserRedirectTarget,
     ListenerMiscEventMap,
+    MergeExecuteTargetSource,
 } from "./listener";
 export type {
     ModalDismissSource,
@@ -73,7 +74,6 @@ export type EventMap = AuthEventMap &
     ModalEventMap &
     WalletModalEventMap &
     ListenerTxEventMap &
-    EmbeddedWalletEventMap &
     ListenerMiscEventMap &
     OnboardingEventMap &
     NotificationEventMap &

@@ -91,11 +91,3 @@ export function ensureI18nBundle(lang: string, i18n: I18nType): Promise<void> {
     registrationPromises.set(lang, promise);
     return promise;
 }
-
-/**
- * Test-only escape hatch to reset both caches between cases.
- */
-export function _resetI18nPreloadForTests(): void {
-    bundlePromises.clear();
-    registrationPromises.clear();
-}

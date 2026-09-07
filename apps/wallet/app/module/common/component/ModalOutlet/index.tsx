@@ -119,6 +119,7 @@ function renderModal(
                 <RecoveryCodeSuccessModal
                     onClose={closeModal}
                     merchant={modal.merchant}
+                    actionLabel={modal.actionLabel}
                 />
             );
         case "explorerDetail":

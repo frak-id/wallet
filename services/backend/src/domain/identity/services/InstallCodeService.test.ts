@@ -21,6 +21,52 @@ describe("InstallCodeService", () => {
         JwtContextMock.installTicket.verify.mockClear();
     });
 
+    describe("generate", () => {
+        it("returns only the code and expiry, never the row's internals", async () => {
+            const { service, repository } = makeService();
+            const expiresAt = new Date(Date.now() + 72 * 3600 * 1000);
+            repository.create.mockResolvedValue({
+                id: "id-1",
+                code: "ABC234",
+                merchantId: "merchant-1",
+                anonymousId: "anon-1",
+                createdAt: new Date(),
+                expiresAt,
+                attempts: 0,
+                reused: false,
+            });
+
+            const result = await service.generate({
+                merchantId: "merchant-1",
+                anonymousId: "anon-1",
+            });
+
+            expect(result).toEqual({ code: "ABC234", expiresAt });
+        });
+
+        it("returns a reused code unchanged", async () => {
+            const { service, repository } = makeService();
+            const expiresAt = new Date(Date.now() + 40 * 3600 * 1000);
+            repository.create.mockResolvedValue({
+                id: "id-1",
+                code: "REUSED",
+                merchantId: "merchant-1",
+                anonymousId: "anon-1",
+                createdAt: new Date(Date.now() - 32 * 3600 * 1000),
+                expiresAt,
+                attempts: 2,
+                reused: true,
+            });
+
+            const result = await service.generate({
+                merchantId: "merchant-1",
+                anonymousId: "anon-1",
+            });
+
+            expect(result).toEqual({ code: "REUSED", expiresAt });
+        });
+    });
+
     describe("resolve", () => {
         it("returns the merchantId/anonymousId for a valid code", async () => {
             const { service, repository } = makeService();

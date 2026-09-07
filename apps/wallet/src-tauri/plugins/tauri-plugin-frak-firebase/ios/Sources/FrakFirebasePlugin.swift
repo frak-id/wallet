@@ -502,11 +502,7 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
            previous.responds(to: #selector(UNUserNotificationCenterDelegate.userNotificationCenter(_:willPresent:withCompletionHandler:))) {
             previous.userNotificationCenter?(center, willPresent: notification, withCompletionHandler: completionHandler)
         } else {
-            if #available(iOS 14.0, *) {
-                completionHandler([.banner, .sound])
-            } else {
-                completionHandler([.alert, .sound])
-            }
+            completionHandler([.banner, .sound])
         }
     }
 

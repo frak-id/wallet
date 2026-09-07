@@ -38,11 +38,6 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
     }
 
     @objc public func register(_ invoke: Invoke) {
-        guard #available(iOS 16.0, *) else {
-            invoke.reject("Passkeys require iOS 16.0 or later")
-            return
-        }
-
         // Reject concurrent requests so we don't overwrite `pendingInvoke`
         // (leaks the prior invoke — Rust callback hangs forever — and lets
         // a delegate callback resolve the wrong invoke later).
@@ -98,11 +93,6 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
     }
 
     @objc public func authenticate(_ invoke: Invoke) {
-        guard #available(iOS 16.0, *) else {
-            invoke.reject("Passkeys require iOS 16.0 or later")
-            return
-        }
-
         guard pendingInvoke == nil else {
             invoke.reject("Another WebAuthn operation is already in progress")
             return
@@ -167,9 +157,7 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
             controller.presentationContextProvider = self
             self.authController = controller
             self.preferImmediateInFlight = preferImmediate
-            // `preferImmediatelyAvailableCredentials` is iOS 16+; the request
-            // itself already requires iOS 16 (guarded in register/authenticate).
-            if #available(iOS 16.0, *), preferImmediate {
+            if preferImmediate {
                 controller.performRequests(options: .preferImmediatelyAvailableCredentials)
             } else {
                 controller.performRequests()
@@ -192,16 +180,14 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
 
         guard let invoke = invoke else { return }
 
-        if #available(iOS 16.0, *) {
-            if let registration = authorization.credential as? ASAuthorizationPlatformPublicKeyCredentialRegistration {
-                resolveRegistration(invoke: invoke, credential: registration)
-                return
-            }
+        if let registration = authorization.credential as? ASAuthorizationPlatformPublicKeyCredentialRegistration {
+            resolveRegistration(invoke: invoke, credential: registration)
+            return
+        }
 
-            if let assertion = authorization.credential as? ASAuthorizationPlatformPublicKeyCredentialAssertion {
-                resolveAssertion(invoke: invoke, credential: assertion)
-                return
-            }
+        if let assertion = authorization.credential as? ASAuthorizationPlatformPublicKeyCredentialAssertion {
+            resolveAssertion(invoke: invoke, credential: assertion)
+            return
         }
 
         invoke.reject("Unexpected credential type")
@@ -295,7 +281,6 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
 
     // MARK: - Response builders
 
-    @available(iOS 16.0, *)
     private func resolveRegistration(invoke: Invoke, credential: ASAuthorizationPlatformPublicKeyCredentialRegistration) {
         let credentialIdB64 = credential.credentialID.base64URLEncodedString()
         let attestationData = credential.rawAttestationObject ?? Data()
@@ -329,7 +314,6 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
         invoke.resolve(result)
     }
 
-    @available(iOS 16.0, *)
     private func resolveAssertion(invoke: Invoke, credential: ASAuthorizationPlatformPublicKeyCredentialAssertion) {
         let credentialIdB64 = credential.credentialID.base64URLEncodedString()
 

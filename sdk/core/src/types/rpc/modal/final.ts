@@ -1,7 +1,7 @@
 import type { GenericModalStepType, ModalStepMetadata } from "./generic";
 
 /**
- * The final modal step type, could be used to display sharing options or a success reward screen.
+ * The final modal step type, displaying a success reward screen.
  *
  * **Input**: What type final step to display?
  * **Output**: None
@@ -25,22 +25,7 @@ export type FinalModalStepType = GenericModalStepType<
  * The different types of final actions we can display in the final step
  * @group Modal Display
  */
-export type FinalActionType =
-    | {
-          key: "sharing";
-          options?: {
-              /**
-               * @deprecated Use the top level `config.metadata.i18n` instead
-               */
-              popupTitle?: string;
-              /**
-               * @deprecated Use the top level `config.metadata.i18n` instead
-               */
-              text?: string;
-              link?: string;
-          };
-      }
-    | {
-          key: "reward";
-          options?: never;
-      };
+export type FinalActionType = {
+    key: "reward";
+    options?: never;
+};

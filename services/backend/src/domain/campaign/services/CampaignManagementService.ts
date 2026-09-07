@@ -12,11 +12,12 @@ import type {
     BudgetConfig,
     CampaignRuleDefinition,
     ConditionGroup,
+    PercentageRewardDefinition,
     RuleCondition,
     RuleConditions,
     TieredRewardDefinition,
 } from "../types";
-import { isConditionGroup } from "./RuleConditionEvaluator";
+import { compareValues, isConditionGroup } from "./RuleConditionEvaluator";
 
 // Item shape is a small closed set, so productScope gets an exact-match field
 // allowlist. Order-level `conditions` are deliberately NOT validated this way:
@@ -85,6 +86,11 @@ function validateProductScopeNode(
     }
 
     if (isConditionGroup(node)) {
+        // An empty group matches every item, so it silently widens the scope to
+        // "everything" while still reading as scoped.
+        if (node.conditions.length === 0) {
+            return `productScope group '${node.logic}' cannot be empty`;
+        }
         for (const child of node.conditions) {
             const error = validateProductScopeNode(
                 child,
@@ -97,6 +103,33 @@ function validateProductScopeNode(
     }
 
     return validateProductScopeCondition(node);
+}
+
+// Ordering is decided by the evaluator's own comparison, so a bound pair this
+// accepts is one `between` can actually match. Equal bounds mean "exactly N",
+// which the evaluator matches inclusively.
+function isBoundOrdered(from: unknown, to: unknown): boolean {
+    const cmp = compareValues(from, to);
+    return cmp !== undefined && cmp <= 0;
+}
+
+function validateBetweenBounds(
+    value: RuleCondition["value"],
+    valueTo: RuleCondition["valueTo"]
+): string | null {
+    if (valueTo === undefined || valueTo === null) {
+        return "productScope 'between' requires a non-null valueTo";
+    }
+    if (Array.isArray(valueTo)) {
+        return "productScope operator 'between' cannot use an array valueTo";
+    }
+    if (value === null) {
+        return "productScope 'between' requires a non-null value";
+    }
+    if (!isBoundOrdered(value, valueTo)) {
+        return "productScope 'between' requires valueTo not less than value";
+    }
+    return null;
 }
 
 function validateProductScopeCondition(
@@ -128,20 +161,47 @@ function validateProductScopeCondition(
     }
 
     if (operator === "between") {
-        if (condition.valueTo === undefined) {
-            return "productScope 'between' requires valueTo";
-        }
-        if (Array.isArray(condition.valueTo)) {
-            return "productScope operator 'between' cannot use an array valueTo";
-        }
+        return validateBetweenBounds(value, condition.valueTo);
     }
 
+    return null;
+}
+
+function validatePercentageReward(
+    reward: PercentageRewardDefinition,
+    rule: CampaignRuleDefinition
+): string | null {
+    if (
+        typeof reward.percent !== "number" ||
+        reward.percent <= 0 ||
+        reward.percent > 100
+    ) {
+        return "Percentage reward must have percent between 0 and 100";
+    }
+    if (reward.percentOf === "matched_items_amount" && !rule.productScope) {
+        return "percentOf matched_items_amount requires a productScope";
+    }
+    // A non-positive cap clamps every match to <= 0, which the calculator then
+    // rejects as "zero or negative" on every purchase.
+    if (reward.maxAmount !== undefined && reward.maxAmount <= 0) {
+        return "Percentage reward maxAmount must be positive";
+    }
+    if (
+        reward.minAmount !== undefined &&
+        reward.maxAmount !== undefined &&
+        reward.minAmount > reward.maxAmount
+    ) {
+        return "Percentage reward minAmount cannot exceed maxAmount";
+    }
     return null;
 }
 
 function validateProductScope(productScope: RuleConditions): string | null {
     const nodeCounter = { count: 0 };
     const nodes = Array.isArray(productScope) ? productScope : [productScope];
+    if (nodes.length === 0) {
+        return "productScope cannot be empty; omit it to target all products";
+    }
     for (const node of nodes) {
         const error = validateProductScopeNode(node, 1, nodeCounter);
         if (error) return error;
@@ -301,7 +361,9 @@ export class CampaignManagementService {
         }
 
         if (input.rule) {
-            const validationError = this.validateRuleDefinition(input.rule);
+            const validationError = this.validateRuleDefinition(input.rule, {
+                requireRewards: false,
+            });
             if (validationError) {
                 throw HttpError.badRequest("INVALID_RULE", validationError);
             }
@@ -484,7 +546,9 @@ export class CampaignManagementService {
             if (publishError) {
                 throw HttpError.badRequest("PUBLISH_INVALID", publishError);
             }
-            const ruleError = this.validateRuleDefinition(campaign.rule);
+            const ruleError = this.validateRuleDefinition(campaign.rule, {
+                requireRewards: true,
+            });
             if (ruleError) {
                 throw HttpError.badRequest("INVALID_RULE", ruleError);
             }
@@ -519,18 +583,23 @@ export class CampaignManagementService {
         return updated;
     }
 
+    // `requireRewards` is false on a draft save: the wizard authors the product
+    // scope (step 4) before any reward exists (step 5), and dropping the whole
+    // rule until then loses the scope. Publish always requires one.
     private validateRuleDefinition(
-        rule: CampaignRuleDefinition
+        rule: CampaignRuleDefinition,
+        { requireRewards }: { requireRewards: boolean }
     ): string | null {
         if (!rule.trigger) {
             return "Rule must have a trigger";
         }
 
-        if (!rule.rewards || rule.rewards.length === 0) {
+        const rewards = rule.rewards ?? [];
+        if (requireRewards && rewards.length === 0) {
             return "Rule must have at least one reward";
         }
 
-        if (rule.productScope) {
+        if (rule.productScope !== undefined) {
             if (rule.trigger !== "purchase") {
                 return "productScope is only valid on the purchase trigger";
             }
@@ -539,13 +608,13 @@ export class CampaignManagementService {
 
             if (
                 productScopeHasNegation(rule.productScope) &&
-                !rule.rewards.every(isMatchedBasisReward)
+                !rewards.every(isMatchedBasisReward)
             ) {
                 return "productScope with a negative predicate (neq, not_in, not_exists, logic 'none') requires every reward to use a matched-items basis (percentOf matched_items_amount, or tierField purchase.matchedAmount/purchase.matchedQuantity); to gate a flat reward on product presence, express the scope positively (eq, in, contains)";
             }
         }
 
-        for (const reward of rule.rewards) {
+        for (const reward of rewards) {
             const error = this.validateReward(reward, rule);
             if (error) return error;
         }
@@ -575,20 +644,7 @@ export class CampaignManagementService {
                 }
                 break;
             case "percentage":
-                if (
-                    typeof reward.percent !== "number" ||
-                    reward.percent <= 0 ||
-                    reward.percent > 100
-                ) {
-                    return "Percentage reward must have percent between 0 and 100";
-                }
-                if (
-                    reward.percentOf === "matched_items_amount" &&
-                    !rule.productScope
-                ) {
-                    return "percentOf matched_items_amount requires a productScope";
-                }
-                break;
+                return validatePercentageReward(reward, rule);
             case "tiered":
                 if (!reward.tiers || reward.tiers.length === 0) {
                     return "Tiered reward must have at least one tier";

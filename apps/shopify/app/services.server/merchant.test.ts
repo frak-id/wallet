@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthenticatedContext } from "../types/context";
 
 // Mock dependencies before importing the module under test
@@ -9,6 +9,9 @@ vi.mock("./shop", () => ({
 vi.mock("./metafields", () => ({
     getMerchantIdMetafield: vi.fn(),
     writeMerchantIdMetafield: vi.fn(),
+    getWalletUrlMetafield: vi.fn(),
+    getBackendUrlMetafield: vi.fn(),
+    writeEnvMetafields: vi.fn(),
 }));
 
 vi.mock("../utils/backendApi", () => ({
@@ -26,10 +29,17 @@ vi.mock("../utils/backendApi", () => ({
 import { backendApi } from "../utils/backendApi";
 import {
     clearMerchantCache,
+    ensureEnvMetafields,
     resolveMerchantId,
     resolveMerchantInfo,
 } from "./merchant";
-import { getMerchantIdMetafield, writeMerchantIdMetafield } from "./metafields";
+import {
+    getBackendUrlMetafield,
+    getMerchantIdMetafield,
+    getWalletUrlMetafield,
+    writeEnvMetafields,
+    writeMerchantIdMetafield,
+} from "./metafields";
 import { shopInfo } from "./shop";
 
 const mockContext = {} as AuthenticatedContext;
@@ -360,5 +370,94 @@ describe("clearMerchantCache", () => {
         const second = await resolveMerchantId(mockContext);
         expect(second).toBe("merchant-updated");
         expect(backendGet).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe("ensureEnvMetafields", () => {
+    let shopCounter = 0;
+    const savedWalletUrl = process.env.FRAK_WALLET_URL;
+    const savedPublicBackendUrl = process.env.PUBLIC_BACKEND_URL;
+    const savedBackendUrl = process.env.BACKEND_URL;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        // Memoised per shop for 30 minutes: each case needs its own shop or it's a no-op.
+        shopCounter += 1;
+        vi.mocked(shopInfo).mockResolvedValue({
+            ...mockShop,
+            normalizedDomain: `shop-${shopCounter}.myshopify.com`,
+        } as never);
+        process.env.FRAK_WALLET_URL = "https://wallet-dev.frak.id";
+        process.env.PUBLIC_BACKEND_URL = "https://backend.gcp-dev.frak.id";
+    });
+
+    afterAll(() => {
+        process.env.FRAK_WALLET_URL = savedWalletUrl;
+        process.env.PUBLIC_BACKEND_URL = savedPublicBackendUrl;
+        process.env.BACKEND_URL = savedBackendUrl;
+    });
+
+    it("backfills a shop that predates the backend metafield", async () => {
+        // Rollout case: wallet_url already synced, backend_url absent.
+        vi.mocked(getWalletUrlMetafield).mockResolvedValue(
+            "https://wallet-dev.frak.id"
+        );
+        vi.mocked(getBackendUrlMetafield).mockResolvedValue(null);
+
+        await ensureEnvMetafields(mockContext);
+
+        expect(writeEnvMetafields).toHaveBeenCalledWith(mockContext, {
+            walletUrl: "https://wallet-dev.frak.id",
+            backendUrl: "https://backend.gcp-dev.frak.id",
+        });
+    });
+
+    it("writes both origins in a single call so no half-pair can be left", async () => {
+        vi.mocked(getWalletUrlMetafield).mockResolvedValue("https://stale");
+        vi.mocked(getBackendUrlMetafield).mockResolvedValue("https://stale");
+
+        await ensureEnvMetafields(mockContext);
+
+        expect(writeEnvMetafields).toHaveBeenCalledTimes(1);
+    });
+
+    it("writes nothing when both already match", async () => {
+        vi.mocked(getWalletUrlMetafield).mockResolvedValue(
+            "https://wallet-dev.frak.id"
+        );
+        vi.mocked(getBackendUrlMetafield).mockResolvedValue(
+            "https://backend.gcp-dev.frak.id"
+        );
+
+        await ensureEnvMetafields(mockContext);
+
+        expect(writeEnvMetafields).not.toHaveBeenCalled();
+    });
+
+    it("stays unsynced after a failed write so the next admin load retries", async () => {
+        vi.mocked(getWalletUrlMetafield).mockResolvedValue(null);
+        vi.mocked(getBackendUrlMetafield).mockResolvedValue(null);
+        vi.mocked(writeEnvMetafields).mockRejectedValueOnce(
+            new Error("rate limited")
+        );
+
+        await expect(ensureEnvMetafields(mockContext)).resolves.toBeUndefined();
+
+        vi.mocked(writeEnvMetafields).mockResolvedValue({
+            success: true,
+            userErrors: [],
+        });
+        await ensureEnvMetafields(mockContext);
+
+        expect(writeEnvMetafields).toHaveBeenCalledTimes(2);
+    });
+
+    it("does nothing when the deployment states only one origin", async () => {
+        process.env.PUBLIC_BACKEND_URL = "";
+        process.env.BACKEND_URL = "";
+
+        await ensureEnvMetafields(mockContext);
+
+        expect(writeEnvMetafields).not.toHaveBeenCalled();
     });
 });

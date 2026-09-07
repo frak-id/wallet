@@ -1,5 +1,5 @@
-import { getBackendUrl } from "../config/backendUrl";
 import { getClientIdAsync } from "../config/clientId";
+import { getBackendUrl } from "../config/environment";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 
 /**

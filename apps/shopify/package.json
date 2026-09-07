@@ -40,7 +40,7 @@
     "@shopify/shopify-app-react-router": "^1.2.1",
     "@shopify/shopify-app-session-storage": "^5.0.1",
     "@shopify/shopify-app-session-storage-memory": "^6.0.1",
-    "@tanstack/query-sync-storage-persister": "^5.101.4",
+    "@tanstack/query-sync-storage-persister": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-persist-client": "catalog:",
     "compression": "^1.8.1",

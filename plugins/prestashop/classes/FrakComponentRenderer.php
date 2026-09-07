@@ -47,7 +47,6 @@ class FrakComponentRenderer
         'classname' => 'classname',
         'noRewardText' => 'no-reward-text',
         'targetInteraction' => 'target-interaction',
-        'clickAction' => 'click-action',
     ];
 
     /**

@@ -43,7 +43,13 @@ async function resolveInvitation(token: string) {
  * session in the same browser can't misdirect which account gets claimed.
  */
 export const inviteRoutes = new Elysia({ prefix: "/invite" })
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "business-auth-invite",
+            windowMs: 60_000,
+            maxRequests: 10,
+        })
+    )
     .post(
         "/preview",
         async ({ body: { token } }) => {

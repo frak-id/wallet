@@ -270,44 +270,7 @@ describe("displayModal", () => {
         });
     });
 
-    describe("modal with sharing action", () => {
-        it("should handle sharing final action", async () => {
-            const mockResponse = {
-                final: {},
-            };
-
-            const mockClient = {
-                config: {
-                    metadata: {
-                        name: "Test App",
-                    },
-                },
-                request: vi.fn().mockResolvedValue(mockResponse),
-            } as unknown as FrakClient;
-
-            const params: DisplayModalParamsType<ModalStepTypes[]> = {
-                steps: {
-                    final: {
-                        action: {
-                            key: "sharing",
-                            options: {
-                                popupTitle: "Share the app",
-                                text: "Discover my app",
-                                link: "https://example.com",
-                            },
-                        },
-                    },
-                },
-            };
-
-            await displayModal(mockClient, params);
-
-            expect(mockClient.request).toHaveBeenCalledWith({
-                method: "frak_displayModal",
-                params: [params.steps, undefined, { name: "Test App" }],
-            });
-        });
-
+    describe("modal with final action", () => {
         it("should handle reward final action", async () => {
             const mockResponse = {
                 final: {},

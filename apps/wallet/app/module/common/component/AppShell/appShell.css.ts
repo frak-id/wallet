@@ -2,6 +2,7 @@ import { tablet } from "@frak-labs/design-system/breakpoints";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, safeArea } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
+import { bottomBarHeight } from "@/module/common/component/BottomTabBar/bottomTabBar.css";
 
 /**
  * Outer shell — fills the viewport, flex column so main + bottom bar stack.
@@ -61,9 +62,9 @@ const mainContentBase = style({
 export const mainContentWithNav = style([
     mainContentBase,
     {
-        // Bar is absolute-positioned on all breakpoints, so content
-        // needs bottom padding everywhere to stay above it.
-        paddingBottom: `calc(110px + ${safeArea.bottom})`,
+        // Bar overlays content on all breakpoints. Derived from the bar's own
+        // metrics; a literal drifts and strands dead space beneath it.
+        paddingBottom: `calc(${bottomBarHeight} + ${safeArea.bottom})`,
     },
 ]);
 
@@ -104,10 +105,10 @@ export const mainContentNoNav = style([
 ]);
 
 /**
- * Bottom tab bar — overlays content on all breakpoints.
- * Positioned absolute inside shellContainer so it stays within the
- * shell bounds on tablet (393px in browser, full width in Tauri) without
- * needing transform centering, which would break backdrop-filter compositing.
+ * Bottom tab bar — absolute inside shellContainer, so it stays in the shell
+ * bounds without transform centering, which would break backdrop-filter.
+ * Never give this a stacking context (`view-transition-name`, `isolation`):
+ * it isolates the bar from the page it samples, killing the frosted glass.
  */
 export const bottomBar = style({
     position: "absolute",

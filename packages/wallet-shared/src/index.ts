@@ -1,10 +1,5 @@
-// Public API barrel for @frak-labs/wallet-shared.
-//
-// Exports are enumerated explicitly (rather than wildcard re-exports) so the
-// public surface is discoverable and tree-shakeable. Names re-exported by
-// more than one sub-barrel (e.g. the webauthn error helpers, shared by
-// `authentication` and `common`) are listed once, from the first sub-barrel
-// that owns them.
+// Public API barrel for @frak-labs/wallet-shared. Exports are enumerated
+// explicitly; a name owned by several sub-barrels is listed once, from the first.
 
 export {
     authKey,
@@ -50,7 +45,6 @@ export {
     type DeepLinkEventMap,
     type DeepLinkSource,
     type DiagnosticsEventMap,
-    type EmbeddedWalletEventMap,
     type EventMap,
     ExternalLink,
     emitLifecycleEvent,
@@ -66,7 +60,6 @@ export {
     type FreshSdkResult,
     formatCurrency,
     getErrorCode,
-    getErrorStatus,
     getFromLocalStorage,
     getInvoke,
     getOrCreateSessionId,
@@ -163,7 +156,6 @@ export {
     getOriginPairingClient,
     getTargetPairingClient,
     isPairingNotFoundError,
-    isPairingSignatureError,
     LaunchPairing,
     type OnPairingSuccessCallback,
     type OriginPairingClient,
@@ -180,7 +172,6 @@ export {
     type SignatureRejectCode,
     type SignatureRejectReason,
     StatusBoxModal,
-    StatusBoxWalletEmbedded,
     TargetPairingClient,
     type TargetPairingIdState,
     type TargetPairingPendingSignature,
@@ -205,7 +196,6 @@ export {
     useRedeemReferralCodeForm,
     useReferralStatus,
     useReplaceReferralCode,
-    useRevokeReferralCode,
     useSuggestReferralCodes,
     useUnredeemReferralCode,
 } from "./referral";
@@ -213,17 +203,26 @@ export {
     buildInstallUrl,
     buildPlayStoreInstallUrl,
     buildSharingLink,
-    CopyIcon,
     clearConfirmation,
     getSavedConfirmation,
     PostShareConfirmation,
     type PostShareConfirmationProps,
-    ShareIcon,
+    type SharingActions,
+    type SharingChrome,
+    type SharingMerchant,
+    type SharingOutcomes,
     SharingPage,
+    type SharingPageControllerInput,
     type SharingPageProps,
+    type SharingProducts,
+    type SharingReward,
+    type SharingShareState,
+    type SharingT,
     saveConfirmation,
+    sharingConfirmationScope,
     sharingKey,
     useShareLink,
+    useSharingPageController,
 } from "./sharing";
 export {
     addLastAuthentication,
@@ -234,7 +233,6 @@ export {
     recordDistantAuthenticator,
     selectLastAuthenticationAt,
     selectLastAuthenticator,
-    selectLastRemoteAuthenticator,
 } from "./stores/authenticationStore";
 export { clientIdStore } from "./stores/clientIdStore";
 export { detachedPairingSessionStore } from "./stores/detachedPairingSessionStore";

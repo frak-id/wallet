@@ -6,21 +6,24 @@ namespace FrakLabs\Sdk\Block;
 use FrakLabs\Sdk\Model\Config;
 use Magento\Framework\View\Element\Template;
 use Magento\Store\Model\StoreManagerInterface;
+use Psr\Log\LoggerInterface;
 
 class SdkLoader extends Template
 {
     /**
-     * Initialize block with SDK config and store manager
+     * Initialize block with SDK config, store manager and logger
      *
      * @param Template\Context $context
      * @param Config $config
      * @param StoreManagerInterface $storeManager
+     * @param LoggerInterface $logger
      * @param array $data
      */
     public function __construct(
         Template\Context $context,
         private readonly Config $config,
         private readonly StoreManagerInterface $storeManager,
+        private readonly LoggerInterface $logger,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -56,7 +59,7 @@ class SdkLoader extends Template
     {
         $setup = [
             "config" => [
-                "walletUrl" => $this->config->getWalletUrl() ?? "https://wallet.frak.id",
+                "env" => $this->getEnvironment(),
                 "metadata" => [
                     "name" => $this->storeManager->getStore()->getName(),
                     "lang" => $this->config->getLanguage() ?? "en",
@@ -68,15 +71,6 @@ class SdkLoader extends Template
                     "i18n" => new \stdClass(),
                 ],
             ],
-            "modalConfig" => [
-                "login" => [
-                    "allowSso" => true,
-                    "ssoMetadata" => [
-                        "logoUrl" => $this->config->getLogoUrl(),
-                    ],
-                ],
-            ],
-            "modalShareConfig" => new \stdClass(),
             "modalWalletConfig" => [
                 "metadata" => [
                     "position" => $this->config->getWalletButtonPosition() ?? "right",
@@ -90,12 +84,26 @@ class SdkLoader extends Template
     }
 
     /**
-     * Get the Frak backend URL
+     * The wallet + backend origin pair for the SDK's `env` config.
      *
-     * @return string
+     * Resolution lives on {@see Config::getEnvironment()} so the tracker and
+     * the webhook resolve the same backend; this block only reports the
+     * half-configured case, which it is the surface positioned to surface.
+     *
+     * @return array{wallet: string, backend: string}
      */
-    public function getBackendUrl(): string
+    private function getEnvironment(): array
     {
-        return $this->config->getBackendUrl() ?? "https://backend.frak.id";
+        if ($this->config->isEnvironmentHalfConfigured()) {
+            $this->logger->warning(
+                "Frak: only one of wallet_url/backend_url is set; both fall back to production.",
+                [
+                    "wallet" => $this->config->getWalletUrl(),
+                    "backend" => $this->config->getBackendUrl(),
+                ]
+            );
+        }
+
+        return $this->config->getEnvironment();
     }
 }

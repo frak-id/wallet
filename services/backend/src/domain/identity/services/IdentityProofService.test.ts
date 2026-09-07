@@ -81,8 +81,8 @@ describe("IdentityProofService", () => {
             expect(result).toEqual({ valid: false, reason: "expired" });
         });
 
-        it("accepts frak-merge-v1 just inside the ±2 min window", async () => {
-            vi.setSystemTime((mergeFixture.ts + 2 * 60) * 1000);
+        it("accepts frak-merge-v1 just inside the 10 min window", async () => {
+            vi.setSystemTime((mergeFixture.ts + 10 * 60) * 1000);
             const result = await service.verify({
                 op: "frak-merge-v1",
                 proof: mergeFixture.proof,
@@ -93,8 +93,8 @@ describe("IdentityProofService", () => {
             expect(result).toEqual({ valid: true });
         });
 
-        it("rejects frak-merge-v1 just past the ±2 min window", async () => {
-            vi.setSystemTime((mergeFixture.ts + 2 * 60 + 1) * 1000);
+        it("rejects frak-merge-v1 just past the 10 min window", async () => {
+            vi.setSystemTime((mergeFixture.ts + 10 * 60 + 1) * 1000);
             const result = await service.verify({
                 op: "frak-merge-v1",
                 proof: mergeFixture.proof,

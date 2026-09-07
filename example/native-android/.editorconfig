@@ -18,3 +18,7 @@ ij_kotlin_allow_trailing_comma_on_call_site = true
 # rule does not know about Compose, so exempt annotated declarations rather
 # than turning the rule off for the whole source set.
 ktlint_function_naming_ignore_when_annotated_with = Composable
+
+# See sdk/android/.editorconfig: off by default since ktlint 1.7, gone in 2.0, enabled here so
+# an unused import fails the build rather than sitting in the harness that validates the SDK.
+ktlint_standard_no-unused-imports = enabled

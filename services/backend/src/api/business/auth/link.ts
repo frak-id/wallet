@@ -9,7 +9,13 @@ import { assertStepUpFresh, requireDbSession, verifySiweProof } from "./common";
  * Credential linking — sensitive: requires a fresh step-up (§4.8).
  */
 export const linkRoutes = new Elysia({ prefix: "/link" })
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "business-auth-link",
+            windowMs: 60_000,
+            maxRequests: 10,
+        })
+    )
     .post(
         "/wallet",
         async ({ body: { message, signature }, headers, request }) => {

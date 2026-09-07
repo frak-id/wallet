@@ -55,7 +55,6 @@ class Frak_Component_Renderer {
 		'classname'         => 'classname',
 		'noRewardText'      => 'no-reward-text',
 		'targetInteraction' => 'target-interaction',
-		'clickAction'       => 'click-action',
 	);
 
 	/**

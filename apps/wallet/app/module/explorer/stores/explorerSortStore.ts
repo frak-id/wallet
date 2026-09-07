@@ -1,3 +1,4 @@
+import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import { create } from "zustand";
 
 /**
@@ -28,7 +29,7 @@ export const DEFAULT_EXPLORER_SORT: ExplorerSort = "recommended";
  */
 export const EXPLORER_SORT_OPTIONS: {
     value: ExplorerSort;
-    labelKey: string;
+    labelKey: DefaultTranslationKey;
 }[] = [
     { value: "recommended", labelKey: "explorer.sort.recommended" },
     { value: "popular", labelKey: "explorer.sort.popular" },

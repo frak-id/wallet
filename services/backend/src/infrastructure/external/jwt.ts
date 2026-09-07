@@ -1,6 +1,7 @@
 import { t } from "@backend-utils";
 import { INSTALL_TICKET_TTL_MS } from "@frak-labs/app-essentials/constants/installTicket";
 import { getSchemaValidator, type Static, type TSchema } from "elysia";
+
 import {
     type JWSHeaderParameters,
     type JWTPayload,
@@ -44,17 +45,18 @@ export namespace JwtContext {
     export const anonymousMerge = buildJwtContext({
         secret: process.env.JWT_SDK_SECRET as string,
         schema: AnonymousMergeTokenDto,
-        // 60 minutes - user may browse before leaving in-app browser
+        // 60 minutes - user may browse before leaving in-app browser.
+        // `MergeSender.kt`'s `holdTimeoutMillis` mirrors this value and ships
+        // in a store binary, so cutting it here alone drops native merge rows
+        // at 401 — move both together.
         expirationDelayInSecond: 60 * 60,
         iss: "frak-identity",
     });
     /**
-     * Install ticket (docs/plans/identity-proof-of-possession/README.md §5, "Ticket design") — minted unconditionally
-     * by `install-code/resolve`, consumed by `/identity/ensure`. TTL is tied
-     * to `INSTALL_TICKET_TTL_MS`, the single constant also imported by the
-     * wallet's `pendingActionsStore.ts` (`DEFAULT_ENSURE_TTL_MS`), so the two
-     * can never drift apart. Not single-use — see the README's "Not
-     * single-use" rule; a burn-set would deadlock the wallet's retry loop.
+     * Install ticket — minted unconditionally by `install-code/resolve`,
+     * consumed by `/identity/ensure`. Its TTL is mirrored by the wallet's
+     * pending-action store, which prunes the ticket at the same value.
+     * Not single-use — a burn-set would deadlock the wallet's retry loop.
      */
     export const installTicket = buildJwtContext({
         secret: process.env.JWT_SDK_SECRET as string,
@@ -118,7 +120,7 @@ interface JWTOption<Schema extends TSchema | undefined = undefined>
      */
     schema?: Schema;
     /**
-     * Potential epxiration delay in seconds if exp isn't provided
+     * Potential epxiration delay in seconds if exp isn't provided.
      */
     expirationDelayInSecond?: number;
 

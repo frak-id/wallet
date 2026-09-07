@@ -39,11 +39,14 @@ class PurchaseTracker extends Template
     /**
      * Get the Frak backend URL for client-side purchase tracking
      *
+     * Reads the pair so a half-configured store tracks against the same
+     * backend the SDK was handed, not a custom one it was never told about.
+     *
      * @return string
      */
     public function getBackendUrl(): string
     {
-        return $this->config->getBackendUrl() ?? "https://backend.frak.id";
+        return $this->config->getEnvironment()["backend"];
     }
 
     /**

@@ -1,20 +1,17 @@
 import type { Currency, EstimatedReward } from "../types";
 import { formatAmount } from "../utils/format/formatAmount";
+import {
+    formatAmountParts,
+    percentAmountParts,
+    type RewardAmountParts,
+} from "../utils/format/formatAmountParts";
 import { getCurrencyAmountKey } from "../utils/format/getCurrencyAmountKey";
 import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
 import { getRewardRank, getRewardValue, maxRewardPercent } from "./value";
 
 /**
- * Format an {@link EstimatedReward} into a human-readable string.
- *
- * - `fixed`      → e.g. `"5 €"`
- * - `percentage` → e.g. `"10 %"`
- * - `tiered`     → the richest tier: max token amount (e.g. `"50 €"`) or, when
- *                  tiers only carry percentages, the max percent (e.g. `"10 %"`)
- *
- * Percentages are always rendered as a `"X %"` string: the backend never sends
- * a reference basket, so the reward cannot be resolved to a concrete amount
- * here. Callers that need a worked example use the `example` helpers instead.
+ * Format an {@link EstimatedReward} into a human-readable string; a tiered
+ * reward renders its richest tier. Percentages stay as `"X %"`.
  */
 export function formatEstimatedReward(
     reward: EstimatedReward,
@@ -48,14 +45,48 @@ export function formatEstimatedReward(
 }
 
 /**
- * Format a reward for display, or return `undefined` when it is not worth
- * advertising. Callers rely on `undefined` to hide a badge / fall back to
- * other copy.
- *
- * A reward is hidden only when it carries no displayable value — a `fixed` or
- * `tiered` reward whose money value is `0` (e.g. an unknown token price). An
- * uncapped percentage always renders as `"X %"`, since the percent itself is
- * meaningful even without a money value.
+ * The same selection {@link formatEstimatedReward} makes, expressed as display
+ * parts instead of a string. Deliberately a sibling switch rather than derived
+ * from it: `formatted` is interpolated into i18next on several surfaces and
+ * must stay byte-stable.
+ */
+export function formatEstimatedRewardParts(
+    reward: EstimatedReward,
+    currency?: Currency
+): RewardAmountParts {
+    const supportedCurrency = getSupportedCurrency(currency);
+    const key = getCurrencyAmountKey(supportedCurrency);
+
+    switch (reward.payoutType) {
+        case "fixed":
+            return formatAmountParts(
+                Math.round(reward.amount[key]),
+                supportedCurrency
+            );
+
+        case "percentage":
+            return percentAmountParts(reward.percent);
+
+        case "tiered": {
+            const maxAmount = getRewardValue(reward, key);
+            if (maxAmount > 0) {
+                return formatAmountParts(
+                    Math.round(maxAmount),
+                    supportedCurrency
+                );
+            }
+            const maxPercent = maxRewardPercent(reward);
+            if (maxPercent > 0) {
+                return percentAmountParts(maxPercent);
+            }
+            return formatAmountParts(0, supportedCurrency);
+        }
+    }
+}
+
+/**
+ * Format a reward for display, or `undefined` when it carries no displayable
+ * value (a `fixed`/`tiered` reward worth `0`) so callers can hide the badge.
  */
 export function formatRewardOrHide(
     reward: EstimatedReward | undefined,

@@ -1,3 +1,4 @@
+import { mockWebLocks } from "@frak-labs/test-foundation";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../config/sdkConfigStore", () => ({
@@ -37,6 +38,7 @@ describe("migrateLegacyIdentity", () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        Reflect.deleteProperty(navigator, "locks");
     });
 
     it("merges the legacy id into the derived one and clears the marker", async () => {
@@ -108,14 +110,61 @@ describe("migrateLegacyIdentity", () => {
         expect(getPendingLegacyId()).toBe(LEGACY_ID);
     });
 
-    it("drops the marker on a 4xx, which retrying can never fix", async () => {
+    it("drops the marker on a terminal 4xx, which retrying can never fix", async () => {
         const { derivedId } = await migratingClient();
-        fetchSpy.mockResolvedValueOnce({ ok: false, status: 403 });
+        fetchSpy.mockResolvedValueOnce({
+            ok: false,
+            status: 404,
+            clone: () => ({ json: async () => ({}) }),
+        });
 
         await migrateLegacyIdentity({ legacyId: LEGACY_ID, derivedId });
 
         expect(fetchSpy).toHaveBeenCalledTimes(1);
         expect(getPendingLegacyId()).toBeUndefined();
+    });
+
+    it("keeps the marker when initiate 403s, so a later visit can retry", async () => {
+        const { derivedId } = await migratingClient();
+        fetchSpy.mockResolvedValueOnce({
+            ok: false,
+            status: 403,
+            clone: () => ({ json: async () => ({ code: "PROOF_REQUIRED" }) }),
+        });
+
+        await migrateLegacyIdentity({ legacyId: LEGACY_ID, derivedId });
+
+        expect(getPendingLegacyId()).toBe(LEGACY_ID);
+    });
+
+    it("keeps the marker when execute 403s", async () => {
+        const { derivedId } = await migratingClient();
+        fetchSpy
+            .mockResolvedValueOnce(okJson({ mergeToken: "merge-token-abc" }))
+            .mockResolvedValueOnce({
+                ok: false,
+                status: 403,
+                clone: () => ({ json: async () => ({}) }),
+            });
+
+        await migrateLegacyIdentity({ legacyId: LEGACY_ID, derivedId });
+
+        expect(getPendingLegacyId()).toBe(LEGACY_ID);
+    });
+
+    it("keeps the marker on a recoverable error code carried by a 400", async () => {
+        const { derivedId } = await migratingClient();
+        fetchSpy.mockResolvedValueOnce({
+            ok: false,
+            status: 400,
+            clone: () => ({
+                json: async () => ({ code: "MISSING_ANONYMOUS_ID" }),
+            }),
+        });
+
+        await migrateLegacyIdentity({ legacyId: LEGACY_ID, derivedId });
+
+        expect(getPendingLegacyId()).toBe(LEGACY_ID);
     });
 
     it("never merges an id into itself", async () => {
@@ -134,11 +183,42 @@ describe("migrateLegacyIdentity", () => {
         // No key on file ⇒ `signProof` returns null. Sending anyway would
         // just 403 on the proof-required initiate arm.
         localStorage.clear();
+        localStorage.setItem("frak-client-id-legacy", LEGACY_ID);
 
         await migrateLegacyIdentity({
             legacyId: LEGACY_ID,
             derivedId: "11111111-1111-4111-8111-111111111111",
         });
+
+        expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it("merges once when two SDK instances race on the same marker", async () => {
+        const { derivedId } = await migratingClient();
+        mockWebLocks();
+        fetchSpy
+            .mockResolvedValueOnce(okJson({ mergeToken: "merge-token-abc" }))
+            .mockResolvedValueOnce(okJson({ merged: true }));
+
+        await Promise.all([
+            migrateLegacyIdentity({ legacyId: LEGACY_ID, derivedId }),
+            migrateLegacyIdentity({ legacyId: LEGACY_ID, derivedId }),
+        ]);
+
+        expect(fetchSpy).toHaveBeenCalledTimes(2);
+        expect(getPendingLegacyId()).toBeUndefined();
+    });
+
+    it("skips an instance that queued behind a confirmed merge", async () => {
+        const { derivedId } = await migratingClient();
+        fetchSpy
+            .mockResolvedValueOnce(okJson({ mergeToken: "merge-token-abc" }))
+            .mockResolvedValueOnce(okJson({ merged: true }));
+        await migrateLegacyIdentity({ legacyId: LEGACY_ID, derivedId });
+        fetchSpy.mockClear();
+
+        // Same legacy id still held in the sibling's module state.
+        await migrateLegacyIdentity({ legacyId: LEGACY_ID, derivedId });
 
         expect(fetchSpy).not.toHaveBeenCalled();
     });

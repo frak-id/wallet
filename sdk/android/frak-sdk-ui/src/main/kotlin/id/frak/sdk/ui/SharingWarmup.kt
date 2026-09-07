@@ -1,0 +1,44 @@
+package id.frak.sdk.ui
+
+import id.frak.sdk.Frak
+import id.frak.sdk.core.FrakError
+
+/**
+ * Warms the identity and merchant config the sheet needs, then answers a URL rather than warming
+ * the pool: this can resume with no Activity attached, and a `WebView` needs a windowed context.
+ */
+internal suspend fun resolveWarmUrl(
+    packageId: String,
+    language: String?,
+): String? {
+    if (!Frak.isInitialized) return null
+
+    val client = Frak.client
+    val walletOrigin = client.environment.wallet
+
+    // A warm-up that fails is not a failure: the sheet re-resolves. It must never throw either —
+    // this runs on a scope with no exception handler between it and the merchant's process.
+    val identity =
+        try {
+            // Already eager at initialize; awaiting only lands the sheet's read on a completed one.
+            val clientId = client.anonymousId()
+            clientId to client.config.resolve().toSharingMerchant()
+        } catch (unavailable: FrakError) {
+            null
+        }
+    val clientId = identity?.first
+    val merchant = identity?.second
+
+    // Without both halves the page renders nothing; leave the view cold for the sheet's full load.
+    if (merchant == null || clientId == null) return null
+
+    return SharingPageUrl.warm(
+        walletOrigin = walletOrigin,
+        merchantId = merchant.merchantId,
+        clientId = clientId,
+        packageId = packageId,
+        appName = merchant.displayName,
+        logoUrl = merchant.logoUrl,
+        language = language,
+    )
+}

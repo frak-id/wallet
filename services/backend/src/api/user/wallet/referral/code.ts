@@ -16,9 +16,16 @@ const identityKey = (ctx: any): string | null => {
 
 export const referralCodeRoutes = new Elysia({ prefix: "/code" })
     .use(identityContext)
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
     .use(
         rateLimitMiddleware({
+            bucket: "referral-code-ip",
+            windowMs: 60_000,
+            maxRequests: 10,
+        })
+    )
+    .use(
+        rateLimitMiddleware({
+            bucket: "referral-code-identity",
             windowMs: 60_000,
             maxRequests: 10,
             keyExtractor: identityKey,

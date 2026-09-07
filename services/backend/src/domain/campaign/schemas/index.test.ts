@@ -52,4 +52,46 @@ describe("EstimatedRewardsResultSchema", () => {
             })
         ).toBe(false);
     });
+
+    // Native SDKs decode `matchedProducts` from this response — Elysia strips any field
+    // the schema doesn't declare, so a missing entry here silently makes the whole
+    // product-scope feature inert on the wire without a single test failing elsewhere.
+    it("accepts a scoped `best` carrying `isProductScoped` and `matchedProducts`", () => {
+        const best = selectBestReward(
+            [
+                {
+                    campaignId: "campaign-1",
+                    name: "Shoe campaign",
+                    interactionTypeKey: "purchase",
+                    conditions: [],
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                    referrer: {
+                        payoutType: "fixed",
+                        amount: {
+                            amount: 5,
+                            eurAmount: 5,
+                            usdAmount: 5.5,
+                            gbpAmount: 4.5,
+                        },
+                    },
+                },
+            ],
+            { currency: "eur", products: [{ sku: "SHOE-42" }] }
+        );
+
+        expect(best?.isProductScoped).toBe(true);
+        expect(best?.matchedProducts).toEqual([{ sku: "SHOE-42" }]);
+        expect(validator?.Check({ rewards: [], best })).toBe(true);
+    });
+
+    it("rejects a `best` missing the now-required `isProductScoped`", () => {
+        expect(
+            validator?.Check({
+                rewards: [],
+                best: { formatted: "12\u00a0€", payoutType: "fixed" },
+            })
+        ).toBe(false);
+    });
 });

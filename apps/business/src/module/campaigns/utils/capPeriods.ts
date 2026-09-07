@@ -12,7 +12,7 @@ const capPeriods: Record<BudgetType, number | null> = {
  * `BudgetType` union (plus the empty-string "no selection yet" sentinel
  * every call site passes) so the return type is honestly `number | null`
  * — no unsound `as BudgetType` cast that could silently return `undefined`
- * for an arbitrary string (billing-feature-fixes.md B8).
+ * for an arbitrary string.
  * @param type
  */
 export function getCapPeriod(type?: "" | BudgetType): number | null {

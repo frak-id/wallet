@@ -9,6 +9,7 @@ vi.mock("../config/sdkConfigStore", () => ({
 }));
 
 import { getClientId, initClientId } from "../config/clientId";
+import { setEnvironment } from "../config/environment";
 import { decodeProof } from "../identity/canonical";
 import { ensureIdentity } from "./ensureIdentity";
 
@@ -22,6 +23,7 @@ describe("ensureIdentity", () => {
         sessionStorage.clear();
         fetchSpy = vi.fn().mockResolvedValue({ ok: true });
         vi.stubGlobal("fetch", fetchSpy);
+        setEnvironment("prod");
     });
 
     afterEach(() => {
@@ -63,13 +65,16 @@ describe("ensureIdentity", () => {
         expect(body).not.toHaveProperty("proof");
     });
 
-    it("derives the backend from walletUrl rather than defaulting to production", async () => {
+    it("posts to the configured environment's backend", async () => {
+        // Otherwise a locally-run integration would post a dev token to the
+        // production backend.
+        setEnvironment({
+            wallet: "https://localhost:3000",
+            backend: "https://localhost:3030",
+        });
         await initClientId();
 
-        // Without this the global fallback is used, which only the components
-        // CDN bootstrap populates — every other integration would post a dev
-        // token to the production backend.
-        await ensureIdentity("interaction-token", "https://localhost:3000");
+        await ensureIdentity("interaction-token");
 
         const [url] = fetchSpy.mock.calls[0] as [string];
         expect(url).toBe("https://localhost:3030/user/identity/ensure");

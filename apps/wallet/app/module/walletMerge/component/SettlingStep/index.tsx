@@ -4,6 +4,7 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import { type ReactNode, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
@@ -53,9 +54,9 @@ type SettlingStepProps = {
 };
 
 type SettleRecovery = {
-    titleKey: string;
-    bodyKey: string;
-    ctaKey: string;
+    titleKey: DefaultTranslationKey;
+    bodyKey: DefaultTranslationKey;
+    ctaKey: DefaultTranslationKey;
     target: SettleRecoveryTarget;
 };
 

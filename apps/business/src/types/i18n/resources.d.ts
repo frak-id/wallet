@@ -1061,7 +1061,22 @@ export default interface Resources {
         },
         "title": "SDK Customization"
       },
-      "save": "Save"
+      "save": "Save",
+      "sharing": {
+        "description": "The title and text shown when a visitor shares through their phone or messaging app.",
+        "fields": {
+          "text": {
+            "hint": "Sent alongside the shared link.",
+            "label": "Share message"
+          },
+          "title": {
+            "hint": "Used as the subject in email and as the preview header.",
+            "label": "Share title"
+          }
+        },
+        "preview": "Preview",
+        "title": "Share message"
+      }
     },
     "dashboard": {
       "actions": {

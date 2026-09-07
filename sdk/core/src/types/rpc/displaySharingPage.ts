@@ -12,9 +12,12 @@ import type { AttributionParams } from "../tracking";
  */
 export type SharingPageProduct = ProductDetails & {
     /**
-     * The product title / name
+     * The product title / name.
+     *
+     * Optional: an entry carrying only scope fields (e.g. `sku`) still drives
+     * reward selection, it just renders no product card.
      */
-    title: string;
+    title?: string;
     /**
      * Optional product image URL
      */
@@ -48,13 +51,19 @@ export type DisplaySharingPageParamsType = {
      */
     link?: string;
     /**
+     * Opaque per-order token (Shopify's checkout token, or a plugin equivalent).
+     * Lets the sharing page derive an identity from the order when the caller's
+     * own `clientId` is missing, so the install CTA still carries a credential.
+     */
+    checkoutToken?: string;
+    /**
      * Optional attribution overrides for the outbound sharing URL.
      *
-     * When provided (even as an empty object), Frak adds standard affiliation
-     * params (`utm_source=frak`, `utm_medium=referral`, `utm_campaign=<merchantId>`,
-     * `ref=<clientId>`, `via=frak`) alongside `fCtx`. Existing UTMs on the base
-     * URL are preserved (gap-fill). Set this to `null` to disable attribution
-     * params entirely (only `fCtx` is added).
+     * When provided (even as an empty object), Frak adds `utm_source=frak` alongside
+     * `fCtx`; every other param (`utm_medium`, `utm_campaign`, `utm_content`,
+     * `utm_term`, `via`, `ref`) is added only when you or the merchant's resolved
+     * config supplies it. Existing UTMs on the base URL are preserved (gap-fill).
+     * Set this to `null` to disable attribution params entirely (only `fCtx` is added).
      *
      * @default {} — defaults applied
      */

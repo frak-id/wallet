@@ -28,6 +28,7 @@
 // DOM mocking utilities
 export {
     mockDocumentReferrer,
+    mockWebLocks,
     mockWindowHistory,
     mockWindowOrigin,
     setupListenerDomMocks,

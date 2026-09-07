@@ -21,6 +21,10 @@ export type InstallStore = "app_store" | "play_store";
 
 export type InstallReferrerMissingReason = "empty" | "missing_params";
 
+export type InstallProbeSurface = "overlay" | "product";
+
+export type InstallProbeUnavailableReason = "disabled" | "undeclared";
+
 export type InstallPageView = "code" | "processing";
 
 type MerchantMaybe = {
@@ -33,6 +37,9 @@ export type InstallEventMap = {
     // ---------------------------------------------------------------------
     install_page_viewed: MerchantMaybe & {
         has_anonymous_id: boolean;
+        // Gate 2's order-derived credential. Sizes the Shopify share of this
+        // surface, and the loss on the processing branch that drops it.
+        has_checkout_token: boolean;
         // Whether the `#p=` install-proof fragment survived the redirect
         // chain that led here. Purely diagnostic — attribution never
         // depends on this being true.
@@ -44,13 +51,22 @@ export type InstallEventMap = {
     install_processing_triggered: {
         is_logged_in: boolean;
         has_ensure_action: boolean;
+        // This branch cannot resolve a token to an id, so a true value here is
+        // an attribution loss rather than a credential.
+        has_checkout_token: boolean;
         has_install_proof: boolean;
     };
     install_code_displayed: MerchantMaybe;
     install_code_generation_failed: MerchantMaybe & {
         error_type: string;
     };
-    install_code_copied: MerchantMaybe;
+    install_code_copied: MerchantMaybe & {
+        // Whether a return scheme was present to hand the code to, not whether
+        // a host took it: the navigation is fire-and-forget and cannot be
+        // acknowledged. A shared link opened in an ordinary browser carries the
+        // scheme and reports true.
+        handed_off: boolean;
+    };
     install_store_clicked: MerchantMaybe & {
         store: InstallStore;
         has_referrer: boolean;
@@ -60,6 +76,17 @@ export type InstallEventMap = {
         has_referrer_proof: boolean;
     };
     install_page_dismissed: undefined;
+
+    // iOS post-install detection. Sourced from the SDK's fragment rewrite
+    // (`dt`/`via`/`probe`); neither native SDK has an analytics sink of its own.
+    install_detected: MerchantMaybe & {
+        elapsed_ms: number;
+        surface: InstallProbeSurface;
+    };
+    install_probe_unavailable: MerchantMaybe & {
+        reason: InstallProbeUnavailableReason;
+    };
+    install_open_wallet_clicked: MerchantMaybe;
 
     // PWA "Add to Home Screen" — separate from the mobile-app retrieval flow
     // but kept here to keep every install-themed event under one domain.
@@ -88,6 +115,8 @@ export type InstallEventMap = {
     install_code_resolved: {
         has_wallet: boolean;
         merchant_domain: string;
+        /** `UNRESOLVED` means the code was valid but named no identity. */
+        outcome: "RESOLVED" | "UNRESOLVED";
     };
     install_code_resolve_failed: {
         error_code: string;

@@ -51,7 +51,12 @@ function asNumber(value: unknown): number | undefined {
     return undefined;
 }
 
-function compareValues(a: unknown, b: unknown): number {
+// `undefined` means "not comparable": ordering operators must fail closed on it
+// rather than `String()`-coercing, which ranks "undefined" above every digit.
+export function compareValues(a: unknown, b: unknown): number | undefined {
+    if (a == null || b == null) {
+        return undefined;
+    }
     // Numeric whenever BOTH sides are numeric, even as strings: a lexicographic
     // fallback would rank "9" above "10".
     const numA = asNumber(a);
@@ -74,10 +79,22 @@ function evaluateComparison(
     conditionValue: unknown
 ): boolean {
     const cmp = compareValues(fieldValue, conditionValue);
+    if (cmp === undefined) return false;
     if (operator === "gt") return cmp > 0;
     if (operator === "gte") return cmp >= 0;
     if (operator === "lt") return cmp < 0;
     return cmp <= 0;
+}
+
+function evaluateBetween(
+    fieldValue: unknown,
+    lowerBound: unknown,
+    upperBound: unknown
+): boolean {
+    const lower = compareValues(fieldValue, lowerBound);
+    const upper = compareValues(fieldValue, upperBound);
+    if (lower === undefined || upper === undefined) return false;
+    return lower >= 0 && upper <= 0;
 }
 
 function evaluateStringOperator(
@@ -133,11 +150,7 @@ function evaluateOperator(
         return fieldValue === undefined || fieldValue === null;
 
     if (operator === "between") {
-        if (conditionValueTo === undefined) return false;
-        return (
-            compareValues(fieldValue, conditionValue) >= 0 &&
-            compareValues(fieldValue, conditionValueTo) <= 0
-        );
+        return evaluateBetween(fieldValue, conditionValue, conditionValueTo);
     }
 
     if (

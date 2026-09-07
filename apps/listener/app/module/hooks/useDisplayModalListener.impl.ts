@@ -58,7 +58,7 @@ export const handleDisplayModal = async (
     activeUnsubscribe = null;
 
     // If no modal to display, early exit
-    const steps = params[0];
+    const steps = coerceFinalActionToReward(params[0]);
     if (Object.keys(steps).length === 0) {
         modalStore.getState().clearModal();
         throw new FrakRpcError(
@@ -217,6 +217,24 @@ function prepareInputStepsArray(steps: ModalRpcStepsInput) {
 
     // Return the sorted array
     return inputSteps;
+}
+
+/**
+ * Force a `final` step onto the reward screen.
+ *
+ * `action.key` arrives from the partner's SDK bundle, which a merchant CDN can
+ * cache long after the `sharing` action was removed. Reward is the only action
+ * left, so any other key — retired, absent, or malformed — resolves to it here,
+ * before the steps reach the store, the i18n context and the analytics.
+ */
+export function coerceFinalActionToReward(
+    steps: ModalRpcStepsInput
+): ModalRpcStepsInput {
+    const final = steps.final;
+    if (!final || final.action?.key === "reward") {
+        return steps;
+    }
+    return { ...steps, final: { ...final, action: { key: "reward" } } };
 }
 
 /**

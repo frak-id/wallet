@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "1.0.93"
+version = "1.0.98"
 description = "Frak Wallet"
 authors = ["Frak Labs"]
 license = "GNU GPL 3.0"
@@ -16,7 +16,6 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2.6", features = [] }
-plist = "1"
 
 [dependencies]
 serde_json = "1.0"

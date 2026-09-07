@@ -105,7 +105,7 @@ function mapWithdrawError(err: unknown) {
 }
 
 /**
- * Admin-only deposit/withdraw CRUD (billing-feature-plan.md §5 Phase 2).
+ * Admin-only deposit/withdraw CRUD.
  * Guarded by `platformAdminAuthenticated` — never `requireMerchantAccess`,
  * whose platform-admin grant is read-only. Every handler records the acting
  * admin's business `accountId` as `createdBy` (null for the legacy-JWT grace

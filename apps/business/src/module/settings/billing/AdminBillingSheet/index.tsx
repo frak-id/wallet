@@ -56,7 +56,7 @@ export type AdminBillingSheetProps = {
 
 /**
  * Shared scaffolding for the admin billing sheets (AddDepositSheet /
- * AddWithdrawSheet, billing-feature-fixes.md B6): owns the open/close state,
+ * AddWithdrawSheet): owns the open/close state,
  * the trigger button, `SheetContent` + close toolbar, the discard-guard
  * wiring (escape/outside-click/close-button all route through the guard),
  * and the Cancel + primary-submit footer. Callers only supply the form body

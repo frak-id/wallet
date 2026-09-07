@@ -1,7 +1,7 @@
 import type { Address, Hex } from "viem";
 import { createSiweMessage } from "viem/siwe";
 import { describe, expect, it } from "vitest";
-import { verifySiweSignature } from "./siwe";
+import { generateSiweNonce, verifySiweSignature } from "./siwe";
 
 // `verifyMessage` (viem/actions) is globally mocked to resolve `true`, so
 // these tests exercise the parse → domain-validate → freshness pipeline in
@@ -111,5 +111,24 @@ describe("verifySiweSignature validation", () => {
         });
         expect(result).toMatchObject({ valid: false });
         if (!result.valid) expect(result.error).toMatch(/validation failed/i);
+    });
+});
+
+describe("generateSiweNonce", () => {
+    it("mints a nonce createSiweMessage accepts", () => {
+        for (let i = 0; i < 50; i++) {
+            const nonce = generateSiweNonce();
+            expect(nonce).toMatch(/^[a-z0-9]{32}$/);
+            expect(() =>
+                createSiweMessage({
+                    address: ADDRESS,
+                    chainId: 1,
+                    domain: "example.com",
+                    nonce,
+                    uri: ORIGIN,
+                    version: "1",
+                })
+            ).not.toThrow();
+        }
     });
 });

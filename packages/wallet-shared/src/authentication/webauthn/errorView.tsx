@@ -6,6 +6,7 @@ import {
     FaceIdIcon,
 } from "@frak-labs/design-system/icons";
 import type { ReactNode } from "react";
+import type { DefaultTranslationKey } from "../../types";
 import type { WebauthnToastOperation } from "../stores/webauthnErrorToastStore";
 import { classifyWebauthnError, type WebauthnErrorKind } from "./errors";
 
@@ -13,9 +14,17 @@ import { classifyWebauthnError, type WebauthnErrorKind } from "./errors";
 const iconProps = { width: 24, height: 24 };
 
 /** i18n key for the "retry the ceremony" action link. */
-const RETRY_ACTION = "error.webauthn.retry";
+const RETRY_ACTION = "error.webauthn.retry" satisfies DefaultTranslationKey;
 /** i18n key for the "log in instead" action link. */
-const LOGIN_ACTION = "error.webauthn.login";
+const LOGIN_ACTION = "error.webauthn.login" satisfies DefaultTranslationKey;
+
+/** Base keys whose `.title` and `.message` both exist in the locales. */
+type BaseKeyOf<Key> = Key extends `${infer Base}.title` ? Base : never;
+type MessageKeyOf<Key> = Key extends `${infer Base}.message` ? Base : never;
+export type WebauthnErrorBaseKey = Extract<
+    BaseKeyOf<DefaultTranslationKey> & MessageKeyOf<DefaultTranslationKey>,
+    `error.webauthn.${string}`
+>;
 
 /**
  * Presentation for a WebAuthn failure: a tone (tinted surface + icon + action
@@ -26,10 +35,10 @@ const LOGIN_ACTION = "error.webauthn.login";
 export type WebauthnErrorView = {
     tone: AlertMessageTone;
     icon: ReactNode;
-    baseKey: string;
-    stepKeys?: string[];
+    baseKey: WebauthnErrorBaseKey;
+    stepKeys?: DefaultTranslationKey[];
     /** i18n key for the action link's label, or undefined when the kind offers none. */
-    actionKey?: string;
+    actionKey?: DefaultTranslationKey;
     /** Whether replaying the same ceremony can plausibly succeed. */
     retryable: boolean;
 };
@@ -86,6 +95,12 @@ function viewForKind(kind: WebauthnErrorKind, isAuth: boolean): ViewShape {
                 tone: "danger",
                 icon: <ExclamationTriangleIcon {...iconProps} />,
                 baseKey: "error.webauthn.unsupported",
+            };
+        case "permissions-policy":
+            return {
+                tone: "danger",
+                icon: <ExclamationTriangleIcon {...iconProps} />,
+                baseKey: "error.webauthn.permissionsPolicy",
             };
         case "cancelled":
             return {

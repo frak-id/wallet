@@ -1,7 +1,7 @@
 import { lazy, type PropsWithChildren, Suspense } from "react";
 
 /**
- * Wraps wagmi setup for the lazy modal + embedded-wallet boundaries.
+ * Wraps wagmi setup for the lazy modal boundary.
  *
  * `WagmiProviderWithDynamicConfig` is dynamically imported (via a deep
  * `wallet-shared/providers/BaseProvider` subpath, configured in
@@ -10,8 +10,7 @@ import { lazy, type PropsWithChildren, Suspense } from "react";
  * bundle. The dynamic-import boundary is required: without it, Rolldown's
  * static-import graph reaches `blockchain-vendor` from the `common` chunk
  * (via barrel re-exports) and the browser fetches ~80 KB gz of blockchain
- * code on iframe boot — even though the modal/wallet UIs are themselves
- * lazy.
+ * code on iframe boot — even though the modal UI is itself lazy.
  */
 const WagmiProviderLazy = lazy(() =>
     import("@frak-labs/wallet-shared/providers/BaseProvider").then((mod) => ({

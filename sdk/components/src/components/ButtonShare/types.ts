@@ -46,15 +46,17 @@ export type ButtonShareProps = {
      */
     products?: SharingPageProduct[] | string;
     /**
-     * Which UI to open on click.
+     * Reported on the `share_button_clicked` event.
      *
-     * Legacy values (e.g. `"share-modal"`) are accepted at runtime and
-     * gracefully route to the full-page sharing UI — the modal-flow
-     * share path was retired in favour of `displaySharingPage`.
+     * It no longer selects anything: every click opens the full-page sharing
+     * UI. Retired values (`"share-modal"`, `"embedded-wallet"`) stay accepted
+     * because merchant configs and saved plugin markup still carry them, and
+     * the resolved value is reported as-is so a legacy config stays visible in
+     * analytics.
      *
      * @defaultValue `"sharing-page"`
      */
-    clickAction?: "embedded-wallet" | "sharing-page";
+    clickAction?: "sharing-page" | (string & {});
     /**
      * When set, renders the button in preview mode (e.g. Shopify/WP editor).
      * Skips the client-ready gating so the button is always enabled visually,

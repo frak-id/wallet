@@ -13,7 +13,7 @@ export type { SdkReferralEventMap } from "./referral";
  * Merged SDK event map. Consumed by the SDK's typed `trackEvent`.
  * Stays isolated from wallet-shared because the SDK ships in partner
  * bundles (different OpenPanel client id, no wallet-shared dependency
- * allowed — see `packages/wallet-shared/AGENTS.md`).
+ * allowed).
  */
 export type SdkEventMap = SdkLifecycleEventMap &
     SdkComponentEventMap &

@@ -42,7 +42,9 @@ describe("Wallet Pairing Management Routes API", () => {
 
             // Act: Make GET request
             const response = await managementRoutes.handle(
-                new Request(`http://localhost/find/${testPairingId}`)
+                new Request(`http://localhost/find/${testPairingId}`, {
+                    headers: { "x-wallet-auth": validAuthToken },
+                })
             );
 
             // Assert: Should return 200 with pairing data
@@ -63,7 +65,9 @@ describe("Wallet Pairing Management Routes API", () => {
 
             // Act: Make GET request
             const response = await managementRoutes.handle(
-                new Request(`http://localhost/find/${testPairingId}`)
+                new Request(`http://localhost/find/${testPairingId}`, {
+                    headers: { "x-wallet-auth": validAuthToken },
+                })
             );
 
             // Assert: Should return 404
@@ -92,7 +96,9 @@ describe("Wallet Pairing Management Routes API", () => {
 
             // Act: Make GET request
             const response = await managementRoutes.handle(
-                new Request("http://localhost/find/test-pairing-456")
+                new Request("http://localhost/find/test-pairing-456", {
+                    headers: { "x-wallet-auth": validAuthToken },
+                })
             );
 
             // Assert: Should only include specific fields
@@ -129,7 +135,8 @@ describe("Wallet Pairing Management Routes API", () => {
             // Act: Make GET request with encoded ID
             const response = await managementRoutes.handle(
                 new Request(
-                    `http://localhost/find/${encodeURIComponent(specialPairingId)}`
+                    `http://localhost/find/${encodeURIComponent(specialPairingId)}`,
+                    { headers: { "x-wallet-auth": validAuthToken } }
                 )
             );
 
@@ -140,7 +147,7 @@ describe("Wallet Pairing Management Routes API", () => {
             expect(data.id).toBe(specialPairingId);
         });
 
-        it("should not require authentication for find endpoint", async () => {
+        it("requires wallet authentication: the pairing code is a credential", async () => {
             // Arrange: Mock pairing
             const mockPairing = {
                 pairingId: testPairingId,
@@ -157,14 +164,11 @@ describe("Wallet Pairing Management Routes API", () => {
 
             dbMock.__setSelectResponse(() => Promise.resolve([mockPairing]));
 
-            // Act: Make GET request WITHOUT auth header
             const response = await managementRoutes.handle(
                 new Request(`http://localhost/find/${testPairingId}`)
             );
 
-            // Assert: Should succeed without authentication
-            expect(response.status).toBe(200);
-            expect(JwtContextMock.wallet.verify).not.toHaveBeenCalled();
+            expect(response.status).toBe(401);
         });
     });
 

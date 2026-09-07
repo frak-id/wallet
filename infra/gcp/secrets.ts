@@ -160,6 +160,8 @@ export const elysiaEnv = {
 
     // Mobile app version floor (hard-update gate). `0.0.0` = disabled.
     // Bump when shipping a breaking change that requires a forced upgrade.
-    MIN_VERSION_IOS: process.env.MIN_VERSION_IOS ?? "0.0.0",
-    MIN_VERSION_ANDROID: process.env.MIN_VERSION_ANDROID ?? "0.0.0",
+    // `|| default`, never `??`: an unset `${{ vars.X }}` arrives as the empty
+    // string, which `??` would forward verbatim.
+    MIN_VERSION_IOS: process.env.MIN_VERSION_IOS?.trim() || "0.0.0",
+    MIN_VERSION_ANDROID: process.env.MIN_VERSION_ANDROID?.trim() || "0.0.0",
 };

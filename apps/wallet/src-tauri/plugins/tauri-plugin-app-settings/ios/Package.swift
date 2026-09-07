@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.7
 
 import PackageDescription
 
@@ -6,7 +6,7 @@ let package = Package(
     name: "tauri-plugin-app-settings",
     platforms: [
         .macOS(.v10_13),
-        .iOS(.v14),
+        .iOS(.v16),
     ],
     products: [
         .library(

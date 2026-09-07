@@ -165,6 +165,12 @@ type RateLimitOptions = Partial<RateLimitConfig> & {
      * e.g. identity-based buckets on anonymous routes).
      */
     keyExtractor?: KeyExtractor;
+    /**
+     * Distinguishes this limiter from every other one. Elysia silently
+     * discards a plugin whose `{name, seed}` matches an earlier one, so two
+     * routes sharing a bucket string AND a config collapse into one window.
+     */
+    bucket: string;
 };
 
 const ipKeyExtractor: KeyExtractor = ({ request, headers, server }) => {
@@ -182,13 +188,20 @@ const ipKeyExtractor: KeyExtractor = ({ request, headers, server }) => {
     return `ip:${ip}`;
 };
 
-export function rateLimitMiddleware(config?: RateLimitOptions) {
-    const { keyExtractor = ipKeyExtractor, ...configOverrides } = config ?? {};
+export function rateLimitMiddleware(config: RateLimitOptions) {
+    const {
+        keyExtractor = ipKeyExtractor,
+        bucket,
+        ...configOverrides
+    } = config;
     const finalConfig = { ...defaultConfig, ...configOverrides };
     const store = new InMemoryRateLimitStore();
     stores.push(store);
 
-    return new Elysia({ name: "Middleware.rateLimit", seed: finalConfig })
+    return new Elysia({
+        name: "Middleware.rateLimit",
+        seed: { ...finalConfig, bucket },
+    })
         .onBeforeHandle((ctx) => {
             const key = keyExtractor(
                 ctx as unknown as Parameters<KeyExtractor>[0]

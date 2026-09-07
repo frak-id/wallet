@@ -24,9 +24,23 @@ export type ResolvedPlacement = {
         buttonShare?: {
             text?: string;
             noRewardText?: string;
+            /**
+             * Which UI the share button opens.
+             *
+             * `"embedded-wallet"` and `"share-modal"` are retired surfaces
+             * kept in the union because this is a wire type: the backend
+             * still stores and emits them for merchant configs created
+             * before the migration. The SDK routes both to the sharing page.
+             */
             clickAction?: "embedded-wallet" | "share-modal" | "sharing-page";
             css?: string;
         };
+        /**
+         * Legacy embedded-wallet button config. The drawer it used to open is
+         * gone; `<frak-button-wallet>` now opens the sharing page and only
+         * still reads `position`. Kept because the backend emits it for
+         * pre-migration merchant configs.
+         */
         buttonWallet?: {
             position?: "right" | "left";
             css?: string;

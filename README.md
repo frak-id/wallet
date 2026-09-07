@@ -73,7 +73,6 @@ Visit our comprehensive documentation at **[docs.frak.id](https://docs.frak.id)*
 
 ### Development Tools
 - **[Changesets](https://github.com/changesets/changesets)** - Package versioning and releases
-- **[Typedoc](https://typedoc.org/)** - Documentation generation
 - **[Knip](https://knip.dev/)** - Dead code elimination
 - **[Biome](https://biomejs.dev/)** - Ultra-fast linting and formatting
 

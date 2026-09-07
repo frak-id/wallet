@@ -15,11 +15,13 @@ import { infraMetrics } from "../../../infrastructure/telemetry";
  * format, so revisable independently of `canonical.ts`.
  *
  * `frak-ensure-v1`/`frak-install-v1`: 30 days, long enough to cover the
- * install→forget→reopen funnel. `frak-merge-v1`: 2 minutes, a live
- * request-response window.
+ * install→forget→reopen funnel. `frak-merge-v1`: 10 minutes — the token it is
+ * bound to is single-use and short-lived, so replay is bounded by the token,
+ * not by this; the window only has to survive an unsynchronised device clock
+ * and a queued retry, both of which a 2-minute one loses to.
  */
 const PROOF_WINDOW_SECONDS: Record<ProofOp, number> = {
-    "frak-merge-v1": 2 * 60,
+    "frak-merge-v1": 10 * 60,
     "frak-ensure-v1": 30 * 24 * 60 * 60,
     "frak-install-v1": 30 * 24 * 60 * 60,
     // `frak-sso-v1` travels in a URL with no server-issued nonce, so this

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  The harness accesses no required-reason API and collects no data: it has no
-  SDK behind it, so nothing is persisted or sent anywhere. Declared empty rather
-  than omitted, so the file is here and correct on the day the real SDK lands.
+  Declared empty at the app level. The SDK behind this harness does persist and
+  send data, and ships its own PrivacyInfo.xcprivacy describing it — an app-level
+  manifest does not restate a dependency's. Revisit if the harness itself ever
+  touches a required-reason API directly.
 -->
 <plist version="1.0">
 <dict>

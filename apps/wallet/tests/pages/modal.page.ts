@@ -1,4 +1,5 @@
 import {
+    type ElementHandle,
     expect,
     type Frame,
     type FrameLocator,
@@ -38,40 +39,6 @@ export class ModalPage {
         await expect(this.walletFrame.locator("body")).not.toBeVisible();
     }
 
-    async verifyEnableCopyAndShareButton() {
-        await expect(
-            this.walletFrame.getByRole("button", { name: "Copy" })
-        ).toBeEnabled();
-        await expect(
-            this.walletFrame.getByRole("button", { name: "Share" })
-        ).toBeEnabled();
-    }
-
-    async clickShareButton() {
-        await expect(
-            this.walletFrame.getByRole("button", { name: "Share" })
-        ).toBeVisible();
-        await this.walletFrame.getByRole("button", { name: "Share" }).click();
-    }
-
-    async clickCopyButton() {
-        const copy = this.walletFrame.getByRole("button", { name: "Copy" });
-        await expect(copy).toBeVisible();
-        await copy.click();
-    }
-
-    // Modal language is merchant/SDK-config-driven (not browser locale), so it
-    // can render French — match "Balance"/"Solde". No verifyModalDisplayed
-    // here, so allow for the open animation.
-    async verifyBalanceInformations(amount: number) {
-        await expect(this.walletFrame.getByText(/Balance|Solde/i)).toBeVisible({
-            timeout: 15_000,
-        });
-        await expect(
-            this.walletFrame.getByText(amount.toString()).first()
-        ).toBeVisible();
-    }
-
     // --- Modal step helpers (redesigned listener modal) ------------------
     // All actions use the stable, language-independent `nexus-modal-*` class
     // hooks: the listener can render raw i18n keys before translations load,
@@ -79,10 +46,6 @@ export class ModalPage {
 
     get primaryButton() {
         return this.walletFrame.locator(".nexus-modal-button-primary");
-    }
-
-    get secondaryButton() {
-        return this.walletFrame.locator(".nexus-modal-button-secondary");
     }
 
     async clickPrimary() {
@@ -97,15 +60,33 @@ export class ModalPage {
         await close.click();
     }
 
-    // Login step with `allowSso: false` → primary action is the passkey button.
+    // Login step with `allowSso: false` → primary action is the passkey
+    // button. Its node handle is captured pre-click so the advance wait can
+    // anchor on the login step actually unmounting — the next step's primary
+    // reuses the same class, so the locator alone can't observe a transition.
+    private loginPrimaryHandle: ElementHandle | null = null;
+
     async clickLoginPasskey() {
-        await this.clickPrimary();
+        const passkey = this.primaryButton.first();
+        await expect(passkey).toBeVisible();
+        this.loginPrimaryHandle = await passkey.elementHandle();
+        await passkey.click();
     }
 
-    // Once the login step completes, its secondary (QR) action disappears as
-    // the modal advances to the next step.
+    // The mocked login resolves and the modal advances: the captured login
+    // button detaches, then the next step mounts its own primary. Throws on
+    // misuse instead of degrading to a racy visibility check — a missing
+    // handle would make this a silently-passing gate again.
     async waitForLoginToAdvance() {
-        await expect(this.secondaryButton).toBeHidden();
+        const handle = this.loginPrimaryHandle;
+        if (!handle) {
+            throw new Error(
+                "clickLoginPasskey() must run before waitForLoginToAdvance()"
+            );
+        }
+        await handle.waitForElementState("hidden");
+        this.loginPrimaryHandle = null;
+        await expect(this.primaryButton.first()).toBeVisible();
     }
 
     // sendTransaction step → primary action is "Send".

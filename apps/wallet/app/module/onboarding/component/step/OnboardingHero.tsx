@@ -4,8 +4,8 @@ import { HeroContent } from "../HeroContent";
 import * as styles from "./index.css";
 
 export type OnboardingHeroProps = {
-    /** Translation key suffix: "one" | "two" | "three" */
-    translationKey: string;
+    /** Translation key suffix under `onboarding.steps`. */
+    translationKey: "one" | "two" | "three";
     /** Image source */
     image: string;
     /** Image layout variant */

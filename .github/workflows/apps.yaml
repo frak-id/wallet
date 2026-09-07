@@ -1,11 +1,11 @@
-name: "✅ CI: Apps"
+name: "✅ CI: Apps & SDK"
 
 on:
   push:
     branches: [main, dev]
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'bun.lock']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
   pull_request:
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'bun.lock']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
 
 # Newer pushes to the same ref cancel in-flight runs.
 concurrency:
@@ -13,10 +13,134 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ── Change detection ────────────────────────────────────
+  # The workflow-level `paths:` above is all-or-nothing, and `sdk/**` covers both the
+  # TypeScript packages and the two native ones. Without this gate a one-line change in
+  # `apps/business` would boot a macOS runner to rebuild an iOS SDK it cannot affect —
+  # and macOS bills at 10× Linux. Same pattern as `deploy.yml`.
+  #
+  # Skipped jobs report neutral, not failed, so these stay safe to mark as required
+  # branch-protection checks.
+  changes:
+    name: "🔎 Detect changes"
+    runs-on: ubuntu-latest
+    outputs:
+      ts: ${{ steps.filter.outputs.ts }}
+      android: ${{ steps.filter.outputs.android }}
+      ios: ${{ steps.filter.outputs.ios }}
+      walletPages: ${{ steps.filter.outputs.walletPages }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          # Negations keep `ts` self-maintaining: a new TypeScript SDK package is picked
+          # up by `sdk/**` automatically, without anyone remembering to widen this list.
+          filters: |
+            ts:
+              - 'apps/**'
+              - 'packages/**'
+              - 'sdk/**'
+              # The gate scripts and their npm entrypoints: without these a
+              # change to a check never triggers the job that runs it.
+              - 'scripts/**'
+              - 'package.json'
+              - '!sdk/android/**'
+              - '!sdk/ios/**'
+              - 'bun.lock'
+              - '.github/workflows/apps.yaml'
+            android:
+              - 'sdk/android/**'
+              - '.github/workflows/apps.yaml'
+            ios:
+              - 'sdk/ios/**'
+              - '.github/workflows/apps.yaml'
+            # `/sharing` and `/install` are assembled from three places: the wallet's
+            # entrypoints, `wallet-shared` (which owns `SharingPage`, its tablet card
+            # rule and the install copy) and the design system (the `body` centering the
+            # host opt-out cancels). A filter missing any one of them lets the guarded
+            # rule change without running its guard.
+            walletPages:
+              - 'apps/wallet/**'
+              - 'packages/wallet-shared/**'
+              - 'packages/design-system/**'
+              - 'sdk/core/**'
+              - 'bun.lock'
+              - '.github/workflows/apps.yaml'
+
+  # ── TypeScript SDK ──────────────────────────────────────
+  # The quick gate the SDK never had: nothing verified `sdk/*` on its own before this,
+  # only whatever the listener build happened to pull in. Lint and tests need no build —
+  # the `development` export condition makes every workspace consumer read SDK source
+  # directly, so `bun install` is the whole setup.
+  sdk-lint-test:
+    name: "🧪 SDK · Lint & tests"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.ts == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      # `biome ci` is the non-writing form of the repo's `format` script: formatting,
+      # lint and import order in a single pass, scoped to the SDK workspaces.
+      # `sdk/android` and `sdk/ios` are excluded in `biome.json` — biome cannot parse
+      # Kotlin or Swift, so their linters live in the native jobs below.
+      - name: "📏 Lint & format check"
+        run: bunx biome ci sdk/
+      # core-sdk-unit + react-sdk-unit. `bun run` matters: bare `bun test` bypasses
+      # Vitest and runs Bun's own runner against files it cannot handle.
+      - name: "🧪 Unit tests"
+        run: bun run test:sdk
+
+  # ── Types ───────────────────────────────────────────────
+  typecheck:
+    name: "🔎 Typecheck"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.ts == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      # The SDK build is required, not an optimisation: only `apps/listener`
+      # declares `customConditions: ["development"]`, so every other consumer
+      # resolves `@frak-labs/core-sdk` to `sdk/core/dist/*.d.ts`. That output is
+      # gitignored and no install hook creates it, so a clean checkout without
+      # this step fails with unresolved-module errors across wallet, business
+      # and shopify.
+      - name: "🔨 Build the SDK"
+        run: bun run build:sdk
+      # The only place in CI where dist/ and cdn/ exist — they are gitignored,
+      # so this check has to follow the build rather than stand as its own job.
+      - name: "🔎 Emitted ES version"
+        run: bun run check:es-output
+      # `apps/wallet/app/routeTree.gen.ts` is gitignored and written by the
+      # tanstackRouter vite plugin, so a clean checkout does not have it and
+      # every wallet route fails to resolve. `apps/business` commits its
+      # equivalent, which is why only the wallet needs this. Codegen only —
+      # a full build here would spend minutes and report a bundle regression
+      # under a job named "Typecheck".
+      - name: "🔨 Generate the wallet route tree"
+        run: bun run --cwd apps/wallet generate:routes
+      # Enforces the ES2022 browser floor: an above-floor API in any of the
+      # browser-shipped packages that declare a typecheck script fails here.
+      - name: "🔎 Typecheck"
+        run: bun run typecheck
+      # The generated `resources.d.ts` types are values, not key constraints:
+      # an EN locale edit without regeneration type-checks clean and drifts
+      # silently, so drift is caught by comparison, not by tsc.
+      - name: "🔎 Generated i18n types drift"
+        run: bun run check:i18n-types
+
   # ── Listener ────────────────────────────────────────────
   listener-eager-budget:
     name: "📏 Listener · Eager bundle budget"
     runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.ts == 'true'
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -37,3 +161,167 @@ jobs:
       # shipping on every iframe boot.
       - name: "📏 Build listener & assert eager budget"
         run: bun run --cwd apps/listener build
+
+  # ── Wallet standalone pages ─────────────────────────────
+  # `/sharing` and `/install` are what the iOS and Android SDKs render inside their
+  # sharing sheet, and neither SDK runs on a device or a simulator anywhere in CI. This
+  # is the only executed coverage that surface has.
+  #
+  # Behaviour only, deliberately: the screenshot baselines carry a platform suffix and
+  # are gitignored, so `ignoreSnapshots` leaves every `toHaveScreenshot` a no-op here.
+  # The assertions that matter — layout width, the `data-embed` tag, the return-channel
+  # URLs, locale copy — all run without a baseline, which is why they were written that
+  # way. Pixel comparison stays a local opt-in (`bun run test:light:pixels`).
+  wallet-pages:
+    name: "🖼️ Wallet pages · Native sheet behaviour"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.walletPages == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      # Both go through the workspace, not `bunx`: `bunx playwright` resolves
+      # `playwright@latest` from the registry, so the browser install and the
+      # runner can end up on different versions. Chromium only — the config
+      # declares one browser, and the standalone bundle is built by the suite's
+      # own `globalSetup`.
+      - name: "🌐 Install Chromium"
+        run: bun run --cwd apps/wallet test:light:install
+      # `--project standalone` skips `pages.check.ts`, which needs a running SPA
+      # (dev server plus SST) that this job deliberately does not start.
+      # `STANDALONE_HOST` widens the server's loopback-only default: the runner
+      # is a disposable container, so there is no LAN to expose `dist/` to, and
+      # loopback is not reachable across its network namespace.
+      - name: "🧪 Native sheet behaviour"
+        run: bun run --cwd apps/wallet test:light -- --project standalone
+        env:
+          STANDALONE_HOST: 0.0.0.0
+      - name: "📄 Upload report on failure"
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wallet-pages-report
+          path: apps/wallet/playwright-report/
+          retention-days: 7
+
+  # ── Android SDK ─────────────────────────────────────────
+  # First CI coverage this package has ever had; treat a red run here as real until
+  # proven otherwise. Every step is the exact `bun run --cwd sdk/android <script>` a
+  # developer runs locally (it dispatches to `sdk/android/scripts/run.sh`), so there is
+  # no second, CI-only definition of "does it build" that can drift.
+  #
+  # No device anywhere: `build` is `assembleRelease` and `test` is the JVM unit tests,
+  # both of which run on a bare Linux runner.
+  #
+  # `check` adds Android Lint and version drift on top. The narrower steps are kept
+  # alongside it so a failure is attributed by step name; Gradle skips the repeated work.
+  android-sdk:
+    name: "🤖 Android SDK · Lint, build, test & ABI"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
+    steps:
+      - uses: actions/checkout@v6
+
+      # AGP targets JVM 17 (`buildSrc/src/main/kotlin/frak-publish.gradle.kts`); a newer
+      # default JDK on the runner would compile against the wrong bytecode target.
+      - name: "☕ Setup Java 17"
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # `scripts/run.sh` resolves ANDROID_HOME or dies with "SDK location not found";
+      # this action is what provides it on a runner.
+      - name: "📱 Setup Android SDK"
+        uses: android-actions/setup-android@v4
+
+      # Caches ~/.gradle (dependencies + wrapper dists), keyed off the build scripts.
+      # Works with the plain `./gradlew` calls inside `run.sh` — it configures the
+      # environment, it does not need to invoke Gradle itself. Only dev/main write the
+      # cache, so a PR cannot poison it.
+      - name: "🐘 Setup Gradle"
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          build-root-directory: sdk/android
+          cache-read-only: ${{ github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/main' }}
+          # `validateDistributionUrl` in gradle-wrapper.properties checks the URL is
+          # well-formed, not the bytes. This checks the wrapper jar against Gradle's
+          # published hashes, which matters most in the pipeline holding the signing key.
+          validate-wrappers: true
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: "📦 Install (bun)"
+        run: bun install --frozen-lockfile
+
+      # ktlint resolves through Gradle, so there is nothing to `brew install` here.
+      - name: "📏 Lint (ktlint)"
+        run: bun run --cwd sdk/android lint
+
+      # Kotlin sits outside biome; the budget's own gate for it lives here
+      # (Swift runs in the ios-sdk job, which this job's filter can skip).
+      - name: "🗒️ Comment budget (Kotlin)"
+        run: bun run lint:comments -- sdk/android/frak-sdk/src sdk/android/frak-sdk-ui/src example/native-android/app/src
+
+      # `assembleRelease` IS the typecheck: it compiles every source set with
+      # `explicitApi()` enforced. There is no separate typecheck task to add.
+      - name: "🔨 Build (assembleRelease)"
+        run: bun run --cwd sdk/android build
+
+      - name: "🧪 Unit tests"
+        run: bun run --cwd sdk/android test
+
+      # Its own step, not just via `check`, so a broken ABI is readable from the step name.
+      - name: "🔒 ABI gate (apiCheck)"
+        run: bun run --cwd sdk/android apiCheck
+
+      - name: "✅ Full check (Android Lint, version drift)"
+        run: bun run --cwd sdk/android check
+
+  # ── iOS SDK ─────────────────────────────────────────────
+  # macOS runner is unavoidable: `swift format` and the iphonesimulator SDK both come
+  # from the Xcode toolchain. Kept to a single job so the 10× billing multiplier is paid
+  # once, and gated on `sdk/ios/**` by the `changes` job above.
+  #
+  # Compile-verified only, not executed on a simulator: the suites cannot be run at the
+  # simulator triple from SwiftPM at all (see the comments in `sdk/ios/scripts/run.sh`).
+  ios-sdk:
+    name: "🍏 iOS SDK · Lint, build & test"
+    runs-on: macos-26
+    needs: changes
+    if: needs.changes.outputs.ios == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+
+      # Zero SwiftPM dependencies (`Package.swift` has no `dependencies`), so the only
+      # thing worth caching is compiled output — keyed on the sources, since a stale
+      # `.build` against changed sources just gets rebuilt anyway.
+      - name: "💾 Cache SwiftPM build"
+        uses: actions/cache@v5
+        with:
+          path: sdk/ios/.build
+          key: ${{ runner.os }}-spm-frak-sdk-${{ hashFiles('sdk/ios/Package.swift', 'sdk/ios/Sources/**', 'sdk/ios/Tests/**') }}
+          restore-keys: ${{ runner.os }}-spm-frak-sdk-
+
+      - name: "📏 Lint (swift-format, strict)"
+        run: bun run --cwd sdk/ios lint
+
+      # Swift is outside biome, and the android job — the other budget site —
+      # does not run on an iOS-only change, so the Swift roots are gated here.
+      - name: "🗒️ Comment budget (Swift)"
+        run: bun run lint:comments -- sdk/ios/Sources sdk/ios/Tests sdk/ios/Package.swift example/native-ios/Sources example/native-ios/Package.swift
+
+      # Cross-compiles against the iphonesimulator SDK under Swift 6 strict concurrency.
+      # A bare `swift build` would silently compile this package as macOS and prove
+      # nothing about iOS.
+      - name: "🔨 Build (iOS simulator triple, Swift 6)"
+        run: bun run --cwd sdk/ios build
+
+      # Two stages inside the script: compile the suites at the simulator triple (they
+      # cannot be *run* there from SwiftPM), then run them on the host toolchain.
+      - name: "🧪 Tests"
+        run: bun run --cwd sdk/ios test

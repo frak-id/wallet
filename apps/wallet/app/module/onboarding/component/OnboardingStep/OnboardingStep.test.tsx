@@ -89,7 +89,7 @@ describe.sequential("OnboardingStep", () => {
         expect(onLoginClick).toHaveBeenCalled();
     });
 
-    it("renders the recovery code button when handler provided", () => {
+    it("renders the reward code button when handler provided", () => {
         const onRecoveryCodeClick = vi.fn();
         render(
             <OnboardingStep
@@ -101,13 +101,13 @@ describe.sequential("OnboardingStep", () => {
         );
 
         const recovery = screen.getByRole("button", {
-            name: "onboarding.recoveryCode",
+            name: "onboarding.rewardCode",
         });
         fireEvent.click(recovery);
         expect(onRecoveryCodeClick).toHaveBeenCalled();
     });
 
-    it("does not render the recovery code button when no handler is provided", () => {
+    it("does not render the reward code button when no handler is provided", () => {
         render(
             <OnboardingStep
                 hero={hero}
@@ -118,7 +118,7 @@ describe.sequential("OnboardingStep", () => {
 
         expect(
             screen.queryByRole("button", {
-                name: "onboarding.recoveryCode",
+                name: "onboarding.rewardCode",
             })
         ).not.toBeInTheDocument();
     });

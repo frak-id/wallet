@@ -18,9 +18,9 @@ export type BillingInfo = MerchantAccountingInfo;
  * `kind` drives the table tag (Paid / Deposit / Withdraw) and which tab
  * it's listed under: `monthly_bill` documents become "invoice" rows;
  * `deposit` documents become "deposit" rows; `withdraw` documents become
- * their own "withdraw" rows (billing-feature-fixes.md B16 — previously
- * folded into "deposit", making a restitution indistinguishable from an
- * actual deposit). Both "deposit" and "withdraw" rows are listed under the
+ * their own "withdraw" rows, never folded into "deposit" — that would make
+ * a restitution indistinguishable from an actual deposit. Both "deposit"
+ * and "withdraw" rows are listed under the
  * same Deposit tab (see `useBillingInfo`'s `deposits` array).
  */
 export type BillingEntry = {

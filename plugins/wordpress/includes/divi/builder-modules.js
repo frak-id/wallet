@@ -133,7 +133,6 @@
 					composeShareClassname( props.button_style, props.classname )
 				),
 				placement: attr( props.placement ),
-				'click-action': attr( props.click_action ),
 				'no-reward-text': attr( props.no_reward_text ),
 				'target-interaction': attr( props.target_interaction ),
 			} ) );

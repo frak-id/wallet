@@ -34,7 +34,7 @@ export function invalidateDocumentsAfterSettle(
 
 /**
  * Keeps only the country code and last 3 characters of an IBAN-shaped
- * string, masking everything in between (billing-feature-plan.md §3.5) —
+ * string, masking everything in between —
  * the full IBAN must never leave the browser. The backend re-masks
  * defensively on top of this (double security), but this is the primary
  * guard: only the masked form is ever sent over the wire.

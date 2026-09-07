@@ -56,6 +56,26 @@ import {
 import type { PostPurchaseProps } from "./types";
 
 /**
+ * `onChainMetadata.domain` is a bare host and `sharing-url` defaults to `""` in
+ * the WordPress shortcode; both would throw inside `FrakContextManager.update`.
+ */
+export function resolveShareBaseUrl(
+    value: string | undefined
+): string | undefined {
+    const trimmed = value?.trim();
+    if (!trimmed) return undefined;
+
+    const candidate = /^https?:\/\//i.test(trimmed)
+        ? trimmed
+        : `https://${trimmed}`;
+    try {
+        return new URL(candidate).toString();
+    } catch {
+        return undefined;
+    }
+}
+
+/**
  * Resolved context computed locally from referral status + merchant info.
  */
 type ResolvedPostPurchaseContext = {
@@ -242,7 +262,9 @@ export function PostPurchase({
         forcedVariant ??
         context?.variant ??
         (isPreview ? (previewVariant ?? "referrer") : undefined);
-    const resolvedSharingUrl = sharingUrl ?? context?.merchantDomain;
+    const resolvedSharingUrl = resolveShareBaseUrl(
+        sharingUrl ?? context?.merchantDomain
+    );
 
     const rewardText = useMemo(() => {
         if (!context?.reward) return undefined;
@@ -349,8 +371,15 @@ export function PostPurchase({
         openSharingPage(undefined, placementId, {
             link: resolvedSharingUrl,
             products: parsedProducts,
+            checkoutToken: token,
         });
-    }, [resolvedVariant, placementId, resolvedSharingUrl, parsedProducts]);
+    }, [
+        resolvedVariant,
+        placementId,
+        resolvedSharingUrl,
+        parsedProducts,
+        token,
+    ]);
 
     // Bail conditions: hide when the resolved variant is missing, or when we're
     // in normal (non-preview) mode and the client/context isn't ready yet.

@@ -48,7 +48,7 @@ import {
 
 const FORM_ID = "campaign-products-form";
 
-/** Mirrors the backend's `PRODUCT_SCOPE_MAX_NODES` (CampaignManagementService.ts:35). */
+/** Mirrors the backend's `PRODUCT_SCOPE_MAX_NODES`. */
 const MAX_VALUES = 50;
 
 const MODES = [

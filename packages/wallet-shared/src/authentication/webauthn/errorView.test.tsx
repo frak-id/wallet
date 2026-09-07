@@ -48,6 +48,22 @@ describe("resolveWebauthnErrorView", () => {
         );
     });
 
+    it("maps a Permissions Policy denial to its own view, not cancellation", () => {
+        // Verbatim Chrome wording; the extension gate re-throws it as NotAllowedError.
+        const denial = new Error(
+            "The 'publickey-credentials-get' feature is not enabled in this document. Permissions Policy may be used to delegate Web Authentication capabilities to cross-origin child frames."
+        );
+        denial.name = "NotAllowedError";
+        const view = resolveWebauthnErrorView(
+            ox("SignFailedError", denial),
+            "sign"
+        );
+        expect(view.tone).toBe("danger");
+        expect(view.baseKey).toBe("error.webauthn.permissionsPolicy");
+        expect(view.retryable).toBe(false);
+        expect(view.actionKey).toBeUndefined();
+    });
+
     it("maps folsom/sync-failed to the warning view with guidance steps", () => {
         const view = resolveWebauthnErrorView(folsom());
         expect(view.tone).toBe("warning");

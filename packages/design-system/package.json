@@ -12,6 +12,7 @@
     "./icons": "./src/icons/index.ts",
     "./breakpoints": "./src/breakpoints.ts",
     "./global": "./src/global.ts",
+    "./hostSheet": "./src/hostSheet.ts",
     "./theme": "./src/theme.css.ts",
     "./tokens": "./src/tokens.css.ts",
     "./keyframes": "./src/keyframes.css.ts",

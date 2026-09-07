@@ -1,26 +1,34 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import type { FrakWalletSdkConfig } from "@frak-labs/core-sdk";
+import type { FrakEnvironment, FrakWalletSdkConfig } from "@frak-labs/core-sdk";
 
-/**
- * Get the wallet URL based on environment
- * Falls back to local wallet if running locally
- */
-function getWalletUrl(): string {
-    if (process.env.FRAK_WALLET_URL) {
-        return process.env.FRAK_WALLET_URL;
+/** The stage the dashboard's own SDK talks to; reused verbatim since this app deploys against sandboxes no preset covers. */
+function getEnv(): FrakEnvironment {
+    if (process.env.FRAK_WALLET_URL && process.env.BACKEND_URL) {
+        return {
+            wallet: process.env.FRAK_WALLET_URL,
+            backend: process.env.BACKEND_URL,
+        };
     }
 
-    // Fallback based on environment
+    // Half-injected is a deploy bug: falling through would point widgets at production while the API client uses the injected stage.
+    if (process.env.FRAK_WALLET_URL || process.env.BACKEND_URL) {
+        console.error(
+            "[Frak] FRAK_WALLET_URL and BACKEND_URL must be injected together; ignoring both."
+        );
+    }
+
     if (isRunningLocally) {
-        return "https://localhost:3000";
+        return {
+            wallet: "https://localhost:3000",
+            backend: "https://localhost:3030",
+        };
     }
 
-    // Default to production wallet
-    return "https://wallet.frak.id";
+    return "prod";
 }
 
 export const frakWalletSdkConfig: Omit<FrakWalletSdkConfig, "domain"> = {
-    walletUrl: getWalletUrl(),
+    env: getEnv(),
     metadata: {
         name: "Dashboard",
     },

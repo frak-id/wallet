@@ -7,9 +7,14 @@ const defaultOptions = {
     yesterdayLabel: "Yesterday",
 };
 
+/** Anchor "now" at midday: an hour subtracted at 00:30 lands on yesterday. */
+function nowMs(): number {
+    return new Date().setHours(12, 0, 0, 0);
+}
+
 describe("groupByDay", () => {
     test("should group items by day", () => {
-        const now = Date.now();
+        const now = nowMs();
         const oneDayAgo = now - 24 * 60 * 60 * 1000;
         const twoDaysAgo = now - 2 * 24 * 60 * 60 * 1000;
 
@@ -29,7 +34,7 @@ describe("groupByDay", () => {
     });
 
     test("should sort items by timestamp descending", () => {
-        const now = Math.floor(Date.now() / 1000);
+        const now = Math.floor(nowMs() / 1000);
         const items = [
             { timestamp: now - 1000, id: 1 },
             { timestamp: now, id: 2 },
@@ -53,7 +58,7 @@ describe("groupByDay", () => {
     });
 
     test("should handle single item", () => {
-        const now = Math.floor(Date.now() / 1000);
+        const now = Math.floor(nowMs() / 1000);
         const items = [{ timestamp: now, id: 1 }];
 
         const result = groupByDay(items, defaultOptions);
@@ -64,7 +69,7 @@ describe("groupByDay", () => {
     });
 
     test("should group Yesterday items", () => {
-        const yesterday = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
+        const yesterday = Math.floor((nowMs() - 24 * 60 * 60 * 1000) / 1000);
         const items = [
             { timestamp: yesterday, id: 1 },
             { timestamp: yesterday - 3600, id: 2 },
@@ -78,7 +83,7 @@ describe("groupByDay", () => {
 
     test("should use localized date for older items", () => {
         const threeDaysAgo = Math.floor(
-            (Date.now() - 3 * 24 * 60 * 60 * 1000) / 1000
+            (nowMs() - 3 * 24 * 60 * 60 * 1000) / 1000
         );
         const items = [{ timestamp: threeDaysAgo, id: 1 }];
 
@@ -92,7 +97,7 @@ describe("groupByDay", () => {
 
     test("should use locale-specific date format", () => {
         const threeDaysAgo = Math.floor(
-            (Date.now() - 3 * 24 * 60 * 60 * 1000) / 1000
+            (nowMs() - 3 * 24 * 60 * 60 * 1000) / 1000
         );
         const items = [{ timestamp: threeDaysAgo, id: 1 }];
 
@@ -113,8 +118,8 @@ describe("groupByDay", () => {
     });
 
     test("should use custom today/yesterday labels", () => {
-        const now = Math.floor(Date.now() / 1000);
-        const yesterday = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
+        const now = Math.floor(nowMs() / 1000);
+        const yesterday = Math.floor((nowMs() - 24 * 60 * 60 * 1000) / 1000);
         const items = [
             { timestamp: now, id: 1 },
             { timestamp: yesterday, id: 2 },
@@ -131,7 +136,7 @@ describe("groupByDay", () => {
     });
 
     test("should preserve item data in grouped results", () => {
-        const now = Math.floor(Date.now() / 1000);
+        const now = Math.floor(nowMs() / 1000);
         const items = [
             { timestamp: now, id: 1, name: "Item 1" },
             { timestamp: now - 3600, id: 2, name: "Item 2" },
@@ -144,10 +149,10 @@ describe("groupByDay", () => {
     });
 
     test("should handle items spanning multiple days", () => {
-        const now = Math.floor(Date.now() / 1000);
-        const yesterday = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
+        const now = Math.floor(nowMs() / 1000);
+        const yesterday = Math.floor((nowMs() - 24 * 60 * 60 * 1000) / 1000);
         const twoDaysAgo = Math.floor(
-            (Date.now() - 2 * 24 * 60 * 60 * 1000) / 1000
+            (nowMs() - 2 * 24 * 60 * 60 * 1000) / 1000
         );
 
         const items = [
@@ -163,7 +168,7 @@ describe("groupByDay", () => {
     });
 
     test("should handle items with same timestamp", () => {
-        const now = Math.floor(Date.now() / 1000);
+        const now = Math.floor(nowMs() / 1000);
         const items = [
             { timestamp: now, id: 1 },
             { timestamp: now, id: 2 },
@@ -189,7 +194,7 @@ describe("groupByDay", () => {
     });
 
     test("should return record object with string keys", () => {
-        const now = Math.floor(Date.now() / 1000);
+        const now = Math.floor(nowMs() / 1000);
         const items = [{ timestamp: now, id: 1 }];
 
         const result = groupByDay(items, defaultOptions);

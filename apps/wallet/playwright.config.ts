@@ -37,7 +37,7 @@ export default defineConfig({
     testDir: "./tests",
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
-    // One local retry (CI gets 2): the embedded-wallet modal-open race flakes
+    // One local retry (CI gets 2): the modal-open race flakes
     // ~every run otherwise. This masks that single known flake, not real
     // regressions — the proper fix is stabilizing the modal-open itself.
     retries: process.env.CI ? 2 : 1,
@@ -94,17 +94,6 @@ export default defineConfig({
             dependencies: ["setup-paired"],
             testMatch: ["**/*pairing*.spec.ts", "**/*all*.spec.ts"],
             testIgnore: ["**/sdk/**"],
-        },
-        {
-            // Authenticated SDK/modal specs — desktop partner page.
-            name: "sdk-embedded",
-            use: {
-                ...devices["Desktop Chrome"],
-                storageState: ON_DEVICE_STORAGE_STATE,
-                permissions: ["clipboard-read", "clipboard-write"],
-            },
-            dependencies: ["setup"],
-            testMatch: ["**/sdk/all.spec.ts", "**/sdk/balance-all.spec.ts"],
         },
         {
             // Logged-out SDK specs (self-contained: mock WebAuthn + /auth/login,

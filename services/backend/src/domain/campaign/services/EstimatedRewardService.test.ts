@@ -107,4 +107,31 @@ describe("EstimatedRewardService.getEstimatedRewards — productScope", () => {
             expect(referee.percentOf).toBe("matched_items_amount");
         }
     });
+
+    it("keeps a zero maxAmount cap instead of dropping it as falsy", async () => {
+        const rule: CampaignRuleDefinition = {
+            trigger: "purchase",
+            conditions: [],
+            rewards: [
+                {
+                    recipient: "referee",
+                    type: "token",
+                    amountType: "percentage",
+                    percent: 10,
+                    percentOf: "purchase_amount",
+                    maxAmount: 0,
+                    minAmount: 0,
+                },
+            ],
+        };
+
+        const service = serviceWith([campaignWithRule(rule)]);
+        const result = await service.getEstimatedRewards("merchant-1");
+
+        const referee = result.rewards[0].referee;
+        expect(referee?.payoutType).toBe("percentage");
+        if (referee?.payoutType !== "percentage") return;
+        expect(referee.maxAmount?.amount).toBe(0);
+        expect(referee.minAmount?.amount).toBe(0);
+    });
 });

@@ -56,10 +56,10 @@ export function useRegisterFlow({
     );
     const flowRef = useRef<Flow | null>(null);
 
-    // Mirror the latest step into a ref so the mount-scoped abandon cleanup
-    // below reports the step the user actually dropped off on. Reading `step`
-    // straight from the effect closure would freeze it at the initial value
-    // for the flow's lifetime.
+    // Mirror the latest step into a ref so mount-scoped cleanups and async
+    // callbacks read the step the user is actually on. Reading `step` straight
+    // from a closure would freeze it at the value captured when the callback
+    // was created.
     const stepRef = useRef(step);
     stepRef.current = step;
 
@@ -121,5 +121,5 @@ export function useRegisterFlow({
         }
     }, [step]);
 
-    return { step, goToStep, flowRef };
+    return { step, stepRef, goToStep, flowRef };
 }

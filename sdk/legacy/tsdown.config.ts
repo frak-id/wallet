@@ -10,7 +10,7 @@ import { defineConfig } from "tsdown";
  *
  * Configuration:
  * - IIFE format with "NexusSDK" global name
- * - Bundles all dependencies (noExternal)
+ * - Bundles all dependencies (deps.alwaysBundle)
  * - No TypeScript declarations needed (legacy consumers don't use them)
  *
  * This package exists solely for backward compatibility and is marked as deprecated.

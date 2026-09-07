@@ -5,8 +5,10 @@ import {
     type RpcClient,
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
+import { sha256 } from "@noble/hashes/sha2.js";
 import { OpenPanel } from "@openpanel/web";
 import { getClientIdAsync } from "../config/clientId";
+import { setEnvironment } from "../config/environment";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { BACKUP_KEY } from "../constants";
 import { signProof } from "../identity/sign";
@@ -50,7 +52,9 @@ export async function createIFrameFrakClient({
     config: FrakWalletSdkConfig;
     iframe: HTMLIFrameElement;
 }): Promise<FrakClient> {
-    const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
+    // Idempotent with `createIframe`'s own call: the client is also created
+    // directly (React provider, tests) with an iframe it didn't build.
+    const frakWalletUrl = setEnvironment(config?.env).wallet;
 
     // Precedence: explicit `metadata.lang` → page `<html lang>` → browser
     // language. Lets a page authored in a given language drive SDK copy even
@@ -65,7 +69,7 @@ export async function createIFrameFrakClient({
     // Skip fetch entirely if cache is fresh, otherwise fetch (SWR)
     const configPromise = sdkConfigStore.isCacheFresh
         ? undefined
-        : sdkConfigStore.resolve(config.domain, config.walletUrl, detectedLang);
+        : sdkConfigStore.resolve(config.domain, detectedLang);
 
     // Resolved once, here, rather than inside OpenPanel's `filter` callback
     // below (a sync predicate that can't await). Awaited after `configPromise`
@@ -127,8 +131,16 @@ export async function createIFrameFrakClient({
     // Setup heartbeat
     const stopHeartbeat = setupHeartbeat(rpcClient, lifecycleManager);
 
+    // Assigned by `postConnectionSetup`, which runs after `destroy` is built.
+    let stopFreshnessRepush: (() => void) | undefined;
+    // `destroy` can win the race against setup, and the teardown it needs does
+    // not exist yet at that point.
+    let destroyed = false;
+
     const destroy = async () => {
+        destroyed = true;
         stopHeartbeat();
+        stopFreshnessRepush?.();
         rpcClient.cleanup();
         iframe.remove();
         clearAllCache();
@@ -220,7 +232,13 @@ export async function createIFrameFrakClient({
         openPanel,
         clientId: resolvedClientId,
     })
-        .then(() => {})
+        .then((stopRepush) => {
+            if (destroyed) {
+                stopRepush();
+                return;
+            }
+            stopFreshnessRepush = stopRepush;
+        })
         .catch((err) => {
             contextSent.reject(err);
             throw err;
@@ -326,30 +344,34 @@ function updateOpenPanelMerchantProps(
 }
 
 async function hashMergeToken(token: string): Promise<Uint8Array | undefined> {
-    if (typeof crypto === "undefined" || !crypto.subtle) return undefined;
+    const encoded = new TextEncoder().encode(token);
+    if (typeof crypto !== "undefined" && crypto.subtle) {
+        try {
+            const digest = await crypto.subtle.digest(
+                "SHA-256",
+                encoded as BufferSource
+            );
+            return new Uint8Array(digest);
+        } catch {}
+    }
+    // WebCrypto is absent on non-secure-context merchant pages, where
+    // `signProof` still signs via pure JS — so the binding must not be the
+    // thing that drops the merge proof.
     try {
-        const digest = await crypto.subtle.digest(
-            "SHA-256",
-            new TextEncoder().encode(token) as BufferSource
-        );
-        return new Uint8Array(digest);
+        return sha256(encoded);
     } catch {
         return undefined;
     }
 }
 
 /**
- * Produce the two named, domain-separated proofs carried on `resolved-config`.
+ * Produce the named, domain-separated proofs carried on `resolved-config`.
  * Never throws and never blocks the handshake: `signProof` resolves to
  * `null` (never rejects) when no key is available.
- *
- * `merge` is only produced when a pending merge token exists, bound to
- * `SHA-256(mergeToken)`, signed after the token is known.
  *
  * ROLLOUT-STEP-1: `proofs.install` travels on `resolved-config` and the
  * listener forwards it into the `/install` URL as a `#p=` fragment — the
  * wallet's install route still needs to read it and send it to the backend.
- * See ROLLOUT.md.
  */
 async function buildSdkIdentity({
     merchantId,
@@ -360,25 +382,24 @@ async function buildSdkIdentity({
     anonymousId: string;
     pendingMergeToken?: string;
 }): Promise<
-    | { anonymousId: string; proofs: { merge?: string; install?: string } }
+    | {
+          anonymousId: string;
+          proofs: {
+              merge?: string;
+              mergeSource?: string;
+              install?: string;
+          };
+      }
     | undefined
 > {
+    // No binding could be produced (e.g. no WebCrypto on an HTTP merchant
+    // page) but a token is pending — omit the execute proof rather than sign
+    // over the wrong binding.
     const mergeBinding = pendingMergeToken
         ? await hashMergeToken(pendingMergeToken)
         : undefined;
-    // No binding could be produced (e.g. no WebCrypto on an HTTP merchant
-    // page) but a token is pending — omit the merge proof rather than sign
-    // over the wrong binding.
-    if (pendingMergeToken && !mergeBinding) {
-        const install = await signProof({
-            op: "frak-install-v1",
-            merchantId,
-            anonymousId,
-        });
-        return install ? { anonymousId, proofs: { install } } : undefined;
-    }
 
-    const [merge, install] = await Promise.all([
+    const [merge, mergeSource, install] = await Promise.all([
         mergeBinding
             ? signProof({
                   op: "frak-merge-v1",
@@ -387,25 +408,30 @@ async function buildSdkIdentity({
                   binding: mergeBinding,
               })
             : Promise.resolve(null),
+        // Empty binding, so it is signable before any token exists — which is
+        // the point: `/merge/initiate` is what mints the token.
+        signProof({ op: "frak-merge-v1", merchantId, anonymousId }),
         signProof({ op: "frak-install-v1", merchantId, anonymousId }),
     ]);
 
-    if (!merge && !install) return undefined;
+    if (!merge && !mergeSource && !install) return undefined;
 
     return {
         anonymousId,
         proofs: {
             ...(merge && { merge }),
+            ...(mergeSource && { mergeSource }),
             ...(install && { install }),
         },
     };
 }
 
 /**
- * Perform the post connection setup
+ * Perform the post connection setup.
  * @param config - SDK configuration
  * @param rpcClient - RPC client to send lifecycle events
  * @param lifecycleManager - Lifecycle manager to track connection
+ * @returns a teardown for the freshness listener it installs
  */
 async function postConnectionSetup({
     config,
@@ -424,7 +450,7 @@ async function postConnectionSetup({
     openPanel: OpenPanel | undefined;
     /** Resolved once by the caller — see `createIFrameFrakClient`. */
     clientId: string | undefined;
-}): Promise<void> {
+}): Promise<() => void> {
     await lifecycleManager.isConnected;
 
     setupSsoUrlListener(rpcClient, lifecycleManager.isConnected);
@@ -613,4 +639,45 @@ async function postConnectionSetup({
             reason: "asset_push",
         });
     }
+
+    return setupProofFreshnessRepush(sendLifecycleConfig);
+}
+
+/** Half of `frak-merge-v1`'s 600 s window, so a stored proof is never stale. */
+const PROOF_REPUSH_INTERVAL_MS = 5 * 60 * 1000;
+
+/** Focus churn (app switching, tab flicking, bfcache) must not sign per event. */
+const PROOF_REPUSH_MIN_INTERVAL_MS = 60 * 1000;
+
+/**
+ * Keep `proofs.mergeSource` fresh. The listener's modal and embed arms read
+ * the stored proof after arbitrary dwell, so a tab that never hides would
+ * otherwise present one past its window. The listener is last-write-wins.
+ */
+function setupProofFreshnessRepush(
+    sendLifecycleConfig: (resolved: SdkResolvedConfig) => Promise<void>
+): () => void {
+    if (typeof document === "undefined") return () => {};
+
+    let lastRepushAt = 0;
+
+    const repush = (throttled: boolean) => {
+        if (document.visibilityState !== "visible") return;
+        if (!sdkConfigStore.isResolved) return;
+        const now = Date.now();
+        if (throttled && now - lastRepushAt < PROOF_REPUSH_MIN_INTERVAL_MS) {
+            return;
+        }
+        lastRepushAt = now;
+        void sendLifecycleConfig(sdkConfigStore.getConfig());
+    };
+
+    const onVisibilityChange = () => repush(true);
+    const timer = setInterval(() => repush(false), PROOF_REPUSH_INTERVAL_MS);
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+        clearInterval(timer);
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
 }

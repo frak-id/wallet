@@ -29,15 +29,33 @@ export class AuthPage {
         await this.page.locator("button", { hasText: "Continue" }).click();
         // Email step: submit a unique address so it resolves as a new email.
         await this.submitOnboardingEmail();
-        // Slide 3 → "Activate my secure space" opens the Keypass modal
-        await expect(
-            this.page.locator("button", {
-                hasText: "Activate my secure space",
-            })
-        ).toBeVisible({ timeout: 10_000 });
-        await this.page
-            .locator("button", { hasText: "Activate my secure space" })
-            .click();
+        await this.openKeypassFromSecureSpace();
+    }
+
+    /**
+     * Same path as `navigateToKeypass`, but skips the email step instead of
+     * submitting an address — the account is created with no email. The skip
+     * click is strict here: this path exists to exercise it, so a missing
+     * button must fail as itself rather than as a later timeout.
+     */
+    async navigateToKeypassSkippingEmail() {
+        await this.page.locator("button", { hasText: "Get started" }).click();
+        await this.page.locator("button", { hasText: "Continue" }).click();
+        await this.waitForStepSettled();
+        // Assert before clicking so a missing skip fails as "skip not visible"
+        // rather than as a generic actionability timeout.
+        await expect(this.headerSkip()).toBeVisible({ timeout: 8_000 });
+        await this.headerSkip().click();
+        await this.openKeypassFromSecureSpace();
+    }
+
+    /** Slide 3 → "Activate my secure space" → the Keypass modal. */
+    private async openKeypassFromSecureSpace() {
+        const secureSpace = this.page.locator("button", {
+            hasText: "Activate my secure space",
+        });
+        await expect(secureSpace).toBeVisible({ timeout: 10_000 });
+        await secureSpace.click();
         // Keypass modal — the visible ContentBlock <h1>. (The Radix dialog
         // title renders a separate <h2> with the same text, so scope by level.)
         await expect(
@@ -93,36 +111,58 @@ export class AuthPage {
     }
 
     /**
-     * Onboarding inserts a referral-code step after WebAuthn registration.
-     * Skip it when shown (it is absent for users with an existing referrer).
+     * The skip shared by onboarding's asking steps (email, referral code,
+     * notifications). Scoped to the header slot so a mis-sequenced test fails
+     * loudly instead of skipping the wrong step.
      */
-    async skipReferralIfPresent() {
-        const skip = this.page.locator("button", { hasText: "Skip" });
-        try {
-            await skip.waitFor({ state: "visible", timeout: 8_000 });
-            await skip.click();
-        } catch {
-            // Referral step not shown — continue.
-        }
+    private headerSkip() {
+        return this.page
+            .getByTestId("page-header-end")
+            .locator("button", { hasText: "Later" })
+            .first();
     }
 
     /**
-     * The notification opt-in step auto-skips once the permission is resolved;
-     * otherwise dismiss it via "Later".
+     * A step transition keeps the outgoing screen in the DOM until the view
+     * transition finishes, so the previous step's skip stays visible and
+     * clickable for a beat. Clicking it then aborts the transition and strands
+     * the flow. `withStepTransition` mirrors its lifetime onto `<html>`, so
+     * wait for that to clear before touching the next step.
      */
-    async skipNotificationIfPresent() {
-        const later = this.page.locator("button", { hasText: "Later" });
+    private async waitForStepSettled() {
+        await this.page
+            .locator("html:not([data-onboarding-transition])")
+            .waitFor({ state: "attached", timeout: 5_000 });
+    }
+
+    /** Dismiss a step that may have auto-skipped (referrer, permission). */
+    private async skipStepIfPresent(timeoutMs: number) {
+        await this.waitForStepSettled();
+        const skip = this.headerSkip();
         try {
-            await later.waitFor({ state: "visible", timeout: 5_000 });
-            await later.click();
+            await skip.waitFor({ state: "visible", timeout: timeoutMs });
+            await skip.click();
         } catch {
-            // Notification step auto-skipped — continue.
+            // Step not shown — continue.
         }
+    }
+
+    async skipReferralIfPresent() {
+        await this.skipStepIfPresent(8_000);
+    }
+
+    async skipNotificationIfPresent() {
+        await this.skipStepIfPresent(5_000);
     }
 
     async clickRegister() {
         await this.navigateToKeypass();
         // Click "Continue" on Keypass — triggers WebAuthn
+        await this.page.locator("button", { hasText: "Continue" }).click();
+    }
+
+    async clickRegisterSkippingEmail() {
+        await this.navigateToKeypassSkippingEmail();
         await this.page.locator("button", { hasText: "Continue" }).click();
     }
 

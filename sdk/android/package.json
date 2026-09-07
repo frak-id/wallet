@@ -1,0 +1,17 @@
+{
+    "name": "@frak-labs-sdk/native-android",
+    "version": "1.0.0-beta.3",
+    "private": true,
+    "scripts": {
+        "build": "./scripts/run.sh build",
+        "test": "./scripts/run.sh test",
+        "lint": "./scripts/run.sh lint",
+        "format": "./scripts/run.sh format",
+        "check": "./scripts/run.sh check",
+        "check:version": "./scripts/run.sh version",
+        "apiCheck": "./scripts/run.sh apiCheck",
+        "apiDump": "./scripts/run.sh apiDump",
+        "publishLocal": "./scripts/run.sh publishLocal",
+        "bundle": "./scripts/run.sh bundle"
+    }
+}

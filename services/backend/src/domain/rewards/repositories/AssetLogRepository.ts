@@ -620,7 +620,7 @@ export class AssetLogRepository {
      * each token's amount converted into a single target currency's unit via
      * the per-token `conversionFactors` map (target-currency-units per 1 token
      * unit). Settled-only — only actually-paid rewards reduce the campaign
-     * bank (billing-feature-plan.md §6.2). Returns a decimal string ("0" when
+     * bank. Returns a decimal string ("0" when
      * no rows match) to preserve numeric(36,18) precision; callers must use
      * decimal.js, never parseFloat.
      *
@@ -701,8 +701,8 @@ export class AssetLogRepository {
 
     /**
      * Settled rewards for a merchant in a half-open window
-     * `[start, end)` (monthly-bill reward annex — billing-feature-plan.md
-     * §6.1). Narrow projection (annex columns only, `AnnexAssetLogRow`), no
+     * `[start, end)` (the monthly-bill reward annex). Narrow projection
+     * (annex columns only, `AnnexAssetLogRow`), no
      * joins, capped at `ANNEX_MAX_ROWS` — this is a per-row PDF listing, not
      * an aggregation input; totals/counts come from the grouped SQL sums and
      * `countSettledByMerchantAndDateRange`, which stay exact past the cap.
@@ -770,7 +770,7 @@ export class AssetLogRepository {
      * Settled reward totals grouped by token, either "before" a single
      * instant (ledger opening/closing balance) or within a half-open
      * `[start, end)` window (in-period movement) — monthly-bill fiat ledger
-     * (billing-feature-plan.md §6.2). Settled-only, same rationale as
+     * Settled-only, same rationale as
      * `sumSettledConvertedSince`. Callers map `tokenAddress` back to a
      * `Stablecoin` currency themselves (rewards store the token address, not
      * a currency code) and must use decimal.js on the returned strings,

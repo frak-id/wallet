@@ -3,6 +3,7 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { recordError, trackEvent } from "@frak-labs/wallet-shared";
+import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -32,7 +33,7 @@ type OutcomeKind = "cancelled" | "csrf" | "error";
 
 const OUTCOME_COPY: Record<
     OutcomeKind,
-    { title: string; description: string }
+    { title: DefaultTranslationKey; description: DefaultTranslationKey }
 > = {
     cancelled: {
         title: "monerium.callback.cancelledTitle",

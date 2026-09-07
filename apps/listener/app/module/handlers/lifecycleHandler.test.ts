@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks — must be declared before any imports from the module under
@@ -6,12 +6,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 // ---------------------------------------------------------------------------
 
 const mockMergeExecutePost = vi.fn();
+const mockTrackEvent = vi.fn();
 const mockSetContext = vi.fn();
 const mockSetTrustLevel = vi.fn();
 const mockSetBackendConfig = vi.fn();
 
 vi.mock("@frak-labs/wallet-shared/common/analytics", () => ({
-    trackEvent: vi.fn(),
+    trackEvent: (...args: unknown[]) => mockTrackEvent(...args),
     updateGlobalProperties: vi.fn(),
 }));
 
@@ -138,9 +139,9 @@ describe("clientLifecycleHandler — resolved-config", () => {
         });
     });
 
-    test("falls back to the local id, unproven, when sdkIdentity carries no anonymousId", async () => {
-        // Nothing identifies what the proof covers, so the merge goes out
-        // unproven rather than pairing a proof with an unverifiable target.
+    test("refuses when sdkIdentity carries no anonymousId", async () => {
+        // Nothing identifies what the orphan proof covers, so there is no
+        // target it can be paired with and the merge is refused outright.
         const data = baseData({
             pendingMergeToken: "the-merge-token",
             sdkIdentity: { proofs: { merge: "orphan-proof" } },
@@ -151,15 +152,10 @@ describe("clientLifecycleHandler — resolved-config", () => {
             CONTEXT
         );
 
-        expect(mockMergeExecutePost).toHaveBeenCalledWith({
-            mergeToken: "the-merge-token",
-            targetAnonymousId: "iframe-client-id",
-            merchantId: "merchant-1",
-            proof: undefined,
-        });
+        expect(mockMergeExecutePost).not.toHaveBeenCalled();
     });
 
-    test("sends proof: undefined (byte-identical to omission) when sdkIdentity is absent", async () => {
+    test("refuses when sdkIdentity is absent", async () => {
         const data = baseData({ pendingMergeToken: "the-merge-token" });
 
         await clientLifecycleHandler(
@@ -167,20 +163,7 @@ describe("clientLifecycleHandler — resolved-config", () => {
             CONTEXT
         );
 
-        const body = mockMergeExecutePost.mock.calls[0][0];
-        expect(body).toEqual({
-            mergeToken: "the-merge-token",
-            targetAnonymousId: "iframe-client-id",
-            merchantId: "merchant-1",
-            proof: undefined,
-        });
-        expect(JSON.stringify(body)).toBe(
-            JSON.stringify({
-                mergeToken: "the-merge-token",
-                targetAnonymousId: "iframe-client-id",
-                merchantId: "merchant-1",
-            })
-        );
+        expect(mockMergeExecutePost).not.toHaveBeenCalled();
     });
 
     test.each([
@@ -194,7 +177,7 @@ describe("clientLifecycleHandler — resolved-config", () => {
         ],
         ["null", null],
     ])(
-        "degrades to no proof without throwing when sdkIdentity is malformed (%s)",
+        "refuses without throwing when sdkIdentity is malformed (%s)",
         async (_label, sdkIdentity) => {
             const data = baseData({
                 pendingMergeToken: "the-merge-token",
@@ -208,10 +191,100 @@ describe("clientLifecycleHandler — resolved-config", () => {
                 )
             ).resolves.toBeUndefined();
 
-            const body = mockMergeExecutePost.mock.calls[0][0];
-            expect(body.proof).toBeUndefined();
+            expect(mockMergeExecutePost).not.toHaveBeenCalled();
         }
     );
+
+    test("ignores an unknown proof key rather than treating it as the merge proof", async () => {
+        const data = baseData({
+            pendingMergeToken: "the-merge-token",
+            sdkAnonymousId: "sdk-anon-id",
+            sdkIdentity: {
+                anonymousId: "sdk-anon-id",
+                proofs: { mergeExecute: "not-a-key-we-read" },
+            },
+        });
+
+        await clientLifecycleHandler(
+            { clientLifecycle: "resolved-config", data },
+            CONTEXT
+        );
+
+        expect(mockMergeExecutePost).not.toHaveBeenCalled();
+    });
+
+    test("stores sdkIdentity.proofs.mergeSource on the context for the mint path", async () => {
+        const data = baseData({
+            sdkIdentity: {
+                anonymousId: "sdk-anon-id",
+                proofs: { mergeSource: "the-source-proof" },
+            },
+        });
+
+        await clientLifecycleHandler(
+            { clientLifecycle: "resolved-config", data },
+            CONTEXT
+        );
+
+        expect(mockSetContext).toHaveBeenCalledWith(
+            expect.objectContaining({ mergeSourceProof: "the-source-proof" })
+        );
+    });
+
+    test("a re-pushed config overwrites the stored mergeSource proof", async () => {
+        for (const proof of ["stale-proof", "fresh-proof"]) {
+            await clientLifecycleHandler(
+                {
+                    clientLifecycle: "resolved-config",
+                    data: baseData({
+                        sdkIdentity: {
+                            anonymousId: "sdk-anon-id",
+                            proofs: { mergeSource: proof },
+                        },
+                    }),
+                },
+                CONTEXT
+            );
+        }
+
+        expect(mockSetContext).toHaveBeenLastCalledWith(
+            expect.objectContaining({ mergeSourceProof: "fresh-proof" })
+        );
+    });
+
+    test("a re-push carrying no mergeSource clears the stored one", async () => {
+        await clientLifecycleHandler(
+            {
+                clientLifecycle: "resolved-config",
+                data: baseData({
+                    sdkIdentity: {
+                        anonymousId: "sdk-anon-id",
+                        proofs: { mergeSource: "stale-proof" },
+                    },
+                }),
+            },
+            CONTEXT
+        );
+        await clientLifecycleHandler(
+            { clientLifecycle: "resolved-config", data: baseData() },
+            CONTEXT
+        );
+
+        expect(mockSetContext.mock.calls.at(-1)?.[0]).not.toHaveProperty(
+            "mergeSourceProof"
+        );
+    });
+
+    test("does not set mergeSourceProof when the SDK sent none", async () => {
+        await clientLifecycleHandler(
+            { clientLifecycle: "resolved-config", data: baseData() },
+            CONTEXT
+        );
+
+        expect(mockSetContext.mock.calls[0][0]).not.toHaveProperty(
+            "mergeSourceProof"
+        );
+    });
 
     test("stores sdkIdentity.proofs.install on the context for the install URL", async () => {
         const data = baseData({
@@ -241,5 +314,163 @@ describe("clientLifecycleHandler — resolved-config", () => {
 
         const setContextArg = mockSetContext.mock.calls[0][0];
         expect(setContextArg).not.toHaveProperty("installProof");
+    });
+    test("counts a proven target carrying its execute proof as proven", async () => {
+        const data = baseData({
+            pendingMergeToken: "the-merge-token",
+            sdkAnonymousId: "sdk-anon-id",
+            sdkIdentity: {
+                anonymousId: "sdk-anon-id",
+                proofs: { merge: "the-merge-proof" },
+            },
+        });
+
+        await clientLifecycleHandler(
+            { clientLifecycle: "resolved-config", data },
+            CONTEXT
+        );
+
+        expect(mockTrackEvent).toHaveBeenCalledWith(
+            "merge_execute_target_source",
+            { source: "proven" }
+        );
+    });
+
+    test("counts and refuses a proven target with no execute proof", async () => {
+        const data = baseData({
+            pendingMergeToken: "the-merge-token",
+            sdkAnonymousId: "sdk-anon-id",
+            sdkIdentity: { anonymousId: "sdk-anon-id", proofs: {} },
+        });
+
+        await clientLifecycleHandler(
+            { clientLifecycle: "resolved-config", data },
+            CONTEXT
+        );
+
+        expect(mockTrackEvent).toHaveBeenCalledWith(
+            "merge_execute_target_source",
+            { source: "proven_unproven" }
+        );
+        expect(mockMergeExecutePost).not.toHaveBeenCalled();
+        expect(mockTrackEvent).toHaveBeenCalledWith("identity_ensure_failed", {
+            source: "inapp_redirect",
+            error_type: "no_merge_target",
+        });
+    });
+
+    test("counts and refuses the unproven fallback", async () => {
+        const data = baseData({ pendingMergeToken: "the-merge-token" });
+
+        await clientLifecycleHandler(
+            { clientLifecycle: "resolved-config", data },
+            CONTEXT
+        );
+
+        expect(mockTrackEvent).toHaveBeenCalledWith(
+            "merge_execute_target_source",
+            { source: "fallback" }
+        );
+        expect(mockMergeExecutePost).not.toHaveBeenCalled();
+    });
+
+    test("pairs every refusal with an executed event", async () => {
+        const data = baseData({ pendingMergeToken: "the-merge-token" });
+
+        await clientLifecycleHandler(
+            { clientLifecycle: "resolved-config", data },
+            CONTEXT
+        );
+
+        expect(mockTrackEvent).toHaveBeenCalledWith(
+            "identity_ensure_executed",
+            {
+                source: "inapp_redirect",
+            }
+        );
+        expect(mockTrackEvent).toHaveBeenCalledWith("identity_ensure_failed", {
+            source: "inapp_redirect",
+            error_type: "no_merge_target",
+        });
+    });
+});
+
+describe("clientLifecycleHandler — merge redemption retry", () => {
+    function provenData() {
+        return baseData({
+            pendingMergeToken: "the-merge-token",
+            sdkAnonymousId: "sdk-anon-id",
+            sdkIdentity: {
+                anonymousId: "sdk-anon-id",
+                proofs: { merge: "the-merge-proof" },
+            },
+        });
+    }
+
+    async function redeem() {
+        await clientLifecycleHandler(
+            { clientLifecycle: "resolved-config", data: provenData() },
+            CONTEXT
+        );
+        await vi.advanceTimersByTimeAsync(10_000);
+    }
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    test("retries a 5xx and reports the success that follows it", async () => {
+        mockMergeExecutePost
+            .mockResolvedValueOnce({ error: { status: 503 } })
+            .mockResolvedValueOnce({ error: undefined });
+
+        await redeem();
+
+        expect(mockMergeExecutePost).toHaveBeenCalledTimes(2);
+        expect(mockTrackEvent).toHaveBeenCalledWith(
+            "identity_ensure_succeeded",
+            expect.objectContaining({ source: "inapp_redirect" })
+        );
+    });
+
+    test("retries a thrown network failure", async () => {
+        mockMergeExecutePost
+            .mockRejectedValueOnce(new Error("NetworkError"))
+            .mockResolvedValueOnce({ error: undefined });
+
+        await redeem();
+
+        expect(mockMergeExecutePost).toHaveBeenCalledTimes(2);
+    });
+
+    test("never retries a 4xx, so a refusal stays one request", async () => {
+        mockMergeExecutePost.mockResolvedValue({
+            error: { status: 403, value: { code: "PROOF_REQUIRED" } },
+        });
+
+        await redeem();
+
+        expect(mockMergeExecutePost).toHaveBeenCalledTimes(1);
+        expect(mockTrackEvent).toHaveBeenCalledWith("identity_ensure_failed", {
+            source: "inapp_redirect",
+            error_type: "PROOF_REQUIRED",
+        });
+    });
+
+    test("gives up after the bounded retries rather than looping", async () => {
+        mockMergeExecutePost.mockResolvedValue({ error: { status: 500 } });
+
+        await redeem();
+
+        expect(mockMergeExecutePost).toHaveBeenCalledTimes(3);
+        expect(mockTrackEvent).toHaveBeenCalledWith("identity_ensure_failed", {
+            source: "inapp_redirect",
+            error_type: "unknown",
+        });
     });
 });

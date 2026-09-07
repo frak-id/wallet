@@ -18,9 +18,9 @@ const AccountingInfoResponseSchema = t.Object({
     accountingInfo: t.Union([PartialAccountingInfoSchema, t.Null()]),
 });
 
-// Billing-identity fields a merchant owner/admin may edit
-// (billing-feature-plan.md §3.1). These are exactly the fields the
-// merchant-facing `BillingInfoSheet` form captures — `vatNumber` and
+// Billing-identity fields a merchant owner/admin may edit. These are
+// exactly the fields the merchant-facing `BillingInfoSheet` form
+// captures — `vatNumber` and
 // `country` are required there, and `country` drives VAT applicability, so
 // they must round-trip or the merchant silently loses data.
 //

@@ -8,9 +8,25 @@ export type InAppBrowserRedirectTarget =
     | "sd-iframe-clipboard"
     | "window";
 
+/**
+ * `proven` is a proven id carrying its execute-side proof; `proven_unproven` is
+ * the same id with the proof missing, which the backend admits only while the
+ * id has never latched. `fallback` names no proven id at all.
+ */
+export type MergeExecuteTargetSource =
+    | "proven"
+    | "proven_unproven"
+    | "fallback";
+
 export type ListenerMiscEventMap = {
     sdk_cleaned_up: undefined;
     in_app_browser_redirected: {
         target: InAppBrowserRedirectTarget;
+    };
+    // Every surface refuses for one reason — the SDK pushed no `mergeSource`
+    // proof — so the surface is not worth a dimension.
+    merge_initiate_proofless: undefined;
+    merge_execute_target_source: {
+        source: MergeExecuteTargetSource;
     };
 };

@@ -62,7 +62,6 @@ class Frak_Elementor_Share_Button_Widget extends Frak_Elementor_Widget_Base {
 			'text',
 			'buttonStyle',
 			'noRewardText',
-			'clickAction',
 			'placement',
 			'targetInteraction',
 			'classname',
@@ -125,20 +124,6 @@ class Frak_Elementor_Share_Button_Widget extends Frak_Elementor_Widget_Base {
 			array(
 				'label' => esc_html__( 'Advanced', 'frak' ),
 				'tab'   => \Elementor\Controls_Manager::TAB_CONTENT,
-			)
-		);
-
-		$this->add_control(
-			'clickAction',
-			array(
-				'label'       => esc_html__( 'Click action', 'frak' ),
-				'type'        => \Elementor\Controls_Manager::SELECT,
-				'default'     => 'sharing-page',
-				'options'     => array(
-					'sharing-page'    => esc_html__( 'Sharing page', 'frak' ),
-					'embedded-wallet' => esc_html__( 'Embedded wallet', 'frak' ),
-				),
-				'description' => esc_html__( 'Override what happens when the button is clicked.', 'frak' ),
 			)
 		);
 

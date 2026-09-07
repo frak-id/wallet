@@ -40,7 +40,13 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
     // step-up-exempt embedded branch; `/verify` is a domain-registration
     // oracle. IP-keyed low ceiling over the whole registration group (every
     // other auth route already carries one).
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "business-merchant-registration",
+            windowMs: 60_000,
+            maxRequests: 10,
+        })
+    )
     .use(businessSessionContext)
     .get(
         "/dns-txt",

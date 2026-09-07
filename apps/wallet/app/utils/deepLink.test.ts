@@ -533,6 +533,31 @@ describe("initDeepLinks", () => {
             )
         ).toEqual(["m"]);
     });
+
+    test("carries the proof over an https app link too", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler([
+            "https://wallet.frak.id/install?m=merchant-123&a=anonymous-456&p=proof-xyz",
+        ]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/install",
+            search: {
+                m: "merchant-123",
+                a: "anonymous-456",
+                p: "proof-xyz",
+            },
+            replace: true,
+        });
+    });
 });
 
 describe("deep link auth gate", () => {

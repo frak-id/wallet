@@ -1,29 +1,35 @@
-import type { FinalModalStepType } from "@frak-labs/core-sdk";
-import { FinalModalActionComponent } from "@/module/modal/component/Final/Action";
-import { modalStore, selectIsDismissed } from "@/module/stores/modalStore";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { prefixModalCss, trackEvent } from "@frak-labs/wallet-shared/common";
+import { useListenerTranslation } from "@/ui/ListenerUiProvider";
 
 /**
  * The component for the final step of a modal
- * @param appName
- * @param params
- * @param onFinish
- * @constructor
  */
 export function FinalModalStep({
-    params,
     onFinish,
 }: {
-    params: FinalModalStepType["params"];
     onFinish: (args: object) => void;
 }) {
-    // Check if it was dismissed or not
-    const isDismissed = modalStore(selectIsDismissed);
+    const { t } = useListenerTranslation();
 
     return (
-        <FinalModalActionComponent
-            action={params.action}
-            onFinish={onFinish}
-            isSuccess={!isDismissed}
-        />
+        <Stack space="m" className={prefixModalCss("buttons-wrapper")}>
+            <Button
+                variant="primary"
+                size="large"
+                className={prefixModalCss("button-primary")}
+                onClick={() => {
+                    onFinish({});
+                    trackEvent("modal_dismissed", {
+                        last_step: "final",
+                        completed: true,
+                        source: "final_action",
+                    });
+                }}
+            >
+                {t("sdk.modal.dismiss.primaryAction")}
+            </Button>
+        </Stack>
     );
 }

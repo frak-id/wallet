@@ -40,7 +40,7 @@ let initPromise: Promise<string> | null = null;
  * merge itself is NOT awaited, so the caller can seed the iframe with the
  * derived id immediately while the merge stays off the critical path.
  */
-export async function initClientId(walletUrl?: string): Promise<string> {
+export async function initClientId(): Promise<string> {
     if (cachedClientId) return cachedClientId;
     if (initPromise) return initPromise;
 
@@ -50,7 +50,6 @@ export async function initClientId(walletUrl?: string): Promise<string> {
             void migrateLegacyIdentity({
                 legacyId: pendingLegacyId,
                 derivedId: clientId,
-                walletUrl,
             });
         }
         return clientId;

@@ -1,3 +1,4 @@
+import { log } from "@backend-infrastructure";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { IdentityNode } from "./identity";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
@@ -61,7 +62,7 @@ describe("PurchaseLinkingOrchestrator.claimPurchase", () => {
         ctx = makeOrchestrator();
     });
 
-    describe("merge: false (§3.9 — /track/purchase, unauthenticated x-frak-client-id)", () => {
+    describe("§3.9 — /track/purchase, unauthenticated x-frak-client-id", () => {
         it("uses resolveForAttribution, never resolveAndAssociate, when no existing purchase row", async () => {
             ctx.identityOrchestrator.resolveForAttribution.mockResolvedValue({
                 groupId: CLAIMING_GROUP,
@@ -74,7 +75,6 @@ describe("PurchaseLinkingOrchestrator.claimPurchase", () => {
                 customerId: "cust-1",
                 orderId: "order-1",
                 token: "tok-1",
-                merge: false,
             });
 
             expect(result).toEqual({
@@ -107,7 +107,6 @@ describe("PurchaseLinkingOrchestrator.claimPurchase", () => {
                 customerId: "cust-1",
                 orderId: "order-1",
                 token: "tok-1",
-                merge: false,
             });
 
             // The claim row drives attribution once the webhook lands, so a
@@ -138,7 +137,6 @@ describe("PurchaseLinkingOrchestrator.claimPurchase", () => {
                 customerId: "cust-1",
                 orderId: "order-1",
                 token: "tok-1",
-                merge: false,
             });
 
             // The purchase keeps its stored attribution: merging is refused,
@@ -146,71 +144,18 @@ describe("PurchaseLinkingOrchestrator.claimPurchase", () => {
             // let a forged `x-frak-client-id` steal an existing purchase —
             // the same class of hole as the merge itself.
             expect(result.identityGroupId).toBe(EXISTING_PURCHASE_GROUP);
-            expect(result.merged).toBe(false);
             expect(ctx.identityOrchestrator.associate).not.toHaveBeenCalled();
             expect(
                 ctx.purchaseRepository.updateIdentityGroup
             ).not.toHaveBeenCalled();
-        });
-    });
-
-    describe("merge: true / default (webhook path, server-to-server)", () => {
-        it("defaults to merging when `merge` is omitted", async () => {
-            ctx.identityOrchestrator.resolveAndAssociate.mockResolvedValue({
-                finalGroupId: CLAIMING_GROUP,
-                merged: false,
-            });
-            ctx.purchaseRepository.findByOrderAndToken.mockResolvedValue(null);
-
-            await ctx.orchestrator.claimPurchase({
-                identityNodes: nodes,
-                merchantId: MERCHANT_ID,
-                customerId: "cust-1",
-                orderId: "order-1",
-                token: "tok-1",
-            });
-
-            expect(
-                ctx.identityOrchestrator.resolveAndAssociate
-            ).toHaveBeenCalledWith(nodes);
-            expect(
-                ctx.identityOrchestrator.resolveForAttribution
-            ).not.toHaveBeenCalled();
-        });
-
-        it("still calls associate() to reconcile with an existing purchase's identity group", async () => {
-            ctx.identityOrchestrator.resolveAndAssociate.mockResolvedValue({
-                finalGroupId: CLAIMING_GROUP,
-                merged: false,
-            });
-            ctx.identityOrchestrator.associate.mockResolvedValue({
-                finalGroupId: "merged-group",
-            });
-            ctx.purchaseRepository.findByOrderAndToken.mockResolvedValue({
-                id: "purchase-1",
-                identityGroupId: EXISTING_PURCHASE_GROUP,
-                status: "pending",
-                externalId: "ext-1",
-                externalCustomerId: "cust-1",
-                totalPrice: "10",
-                currencyCode: "USD",
-            });
-
-            const result = await ctx.orchestrator.claimPurchase({
-                identityNodes: nodes,
-                merchantId: MERCHANT_ID,
-                customerId: "cust-1",
-                orderId: "order-1",
-                token: "tok-1",
-                merge: true,
-            });
-
-            expect(ctx.identityOrchestrator.associate).toHaveBeenCalledWith(
-                CLAIMING_GROUP,
-                EXISTING_PURCHASE_GROUP
+            expect(log.warn).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    purchaseId: "purchase-1",
+                    claimingGroupId: CLAIMING_GROUP,
+                    purchaseGroupId: EXISTING_PURCHASE_GROUP,
+                }),
+                expect.stringContaining("keeping the stored group")
             );
-            expect(result.identityGroupId).toBe("merged-group");
-            expect(result.merged).toBe(true);
         });
     });
 });

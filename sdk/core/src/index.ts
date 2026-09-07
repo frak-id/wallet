@@ -7,7 +7,10 @@ export {
     getBackendUrl,
     getClientId,
     getClientIdAsync,
+    getEnvironment,
+    type ResolvedEnvironment,
     sdkConfigStore,
+    setEnvironment,
 } from "./config";
 // Constants
 export { DEEP_LINK_SCHEME } from "./constants";
@@ -28,15 +31,10 @@ export type {
     ConditionGroup,
     ConditionOperator,
     Currency,
-    // RPC Embedded wallet
-    DisplayEmbeddedWalletParamsType,
-    DisplayEmbeddedWalletResultType,
     DisplayModalParamsType,
     // RPC Sharing page
     DisplaySharingPageParamsType,
     DisplaySharingPageResultType,
-    EmbeddedViewActionReferred,
-    EmbeddedViewActionSharing,
     EstimatedReward,
     FinalActionType,
     FinalModalStepType,
@@ -46,6 +44,7 @@ export type {
     FrakContext,
     FrakContextV1,
     FrakContextV2,
+    FrakEnvironment,
     FrakLifecycleEvent,
     // Config
     FrakWalletSdkConfig,
@@ -61,8 +60,6 @@ export type {
     Language,
     ListenerPreloadOption,
     LocalizedI18nConfig,
-    LoggedInEmbeddedView,
-    LoggedOutEmbeddedView,
     LoginModalStepType,
     MerchantConfigResponse,
     MerchantReward,
@@ -126,6 +123,7 @@ export {
     type FullSsoParams,
     findIframeInOpener,
     formatAmount,
+    formatAmountParts,
     generateSsoUrl,
     getCurrencyAmountKey,
     getQueryParamCaseInsensitive,

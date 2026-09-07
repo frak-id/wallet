@@ -8,7 +8,6 @@ export {
 } from "./hook/useRedeemReferralCodeForm";
 export { useReferralStatus } from "./hook/useReferralStatus";
 export { useReplaceReferralCode } from "./hook/useReplaceReferralCode";
-export { useRevokeReferralCode } from "./hook/useRevokeReferralCode";
 export { useSuggestReferralCodes } from "./hook/useSuggestReferralCodes";
 export { useUnredeemReferralCode } from "./hook/useUnredeemReferralCode";
 // Query keys

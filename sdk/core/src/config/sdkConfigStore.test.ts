@@ -1,17 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setEnvironment } from "./environment";
 import { sdkConfigStore } from "./sdkConfigStore";
-
-vi.mock("./backendUrl", () => ({
-    getBackendUrl: vi.fn((walletUrl?: string) => {
-        if (walletUrl?.includes("localhost")) {
-            return "http://localhost:3030";
-        }
-        return "https://backend.frak.id";
-    }),
-}));
 
 describe("sdkConfigStore", () => {
     beforeEach(() => {
+        setEnvironment("prod");
         sdkConfigStore.clearCache();
         window.sessionStorage.clear();
         window.localStorage.clear();
@@ -156,7 +149,7 @@ describe("sdkConfigStore", () => {
             );
         });
 
-        it("should use custom walletUrl to derive backend URL", async () => {
+        it("should hit the configured environment's backend", async () => {
             const mockResponse = {
                 merchantId: "merchant-local",
                 name: "Test",
@@ -169,10 +162,12 @@ describe("sdkConfigStore", () => {
                 json: async () => mockResponse,
             });
 
-            const result = await sdkConfigStore.resolve(
-                "shop.example.com",
-                "http://localhost:3000"
-            );
+            setEnvironment({
+                wallet: "http://localhost:3000",
+                backend: "http://localhost:3030",
+            });
+
+            const result = await sdkConfigStore.resolve("shop.example.com");
 
             expect(result).toEqual(mockResponse);
             expect(global.fetch).toHaveBeenCalledWith(
@@ -234,7 +229,7 @@ describe("sdkConfigStore", () => {
                 json: async () => mockResponse,
             });
 
-            await sdkConfigStore.resolve("shop.example.com", undefined, "fr");
+            await sdkConfigStore.resolve("shop.example.com", "fr");
 
             expect(global.fetch).toHaveBeenCalledWith(
                 "https://backend.frak.id/user/merchant/resolve?domain=shop.example.com&lang=fr"

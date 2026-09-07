@@ -34,6 +34,12 @@ export type WalletRpcContext = {
      * Anonymous client ID from the SDK for identity tracking
      */
     clientId?: string;
+
+    /**
+     * `frak-merge-v1` proof with an EMPTY binding, signed by the SDK on the
+     * merchant origin. The listener holds no key and cannot produce one.
+     */
+    mergeSourceProof?: string;
 };
 
 /**

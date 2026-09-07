@@ -60,6 +60,19 @@ export type BannerFormValues = {
     css: string;
 };
 
+// The two OS-share-sheet keys. Stored in `sdkConfig.translations` (a tiered
+// key -> string dictionary), not in `components`, so this is its own form
+// rather than a fourth `ComponentType`.
+export const SHARING_TRANSLATION_KEYS = {
+    title: "sharing.title",
+    text: "sharing.text",
+} as const;
+
+export type SharingWordingFormValues = {
+    title: LocalizedText;
+    text: LocalizedText;
+};
+
 export type ComponentSettingsFormValues = {
     targetInteraction: string;
     buttonShare: ButtonShareFormValues;

@@ -1,3 +1,4 @@
+import type { TranslationKey } from "@frak-labs/wallet-shared/types";
 // Order matches the runtime render order in `WelcomeCard`
 // (intro → notifications → invite). The tuple is only consumed for
 // `WelcomeSlideId` derivation and `isWelcomeSlideId` validation, but
@@ -26,7 +27,13 @@ export type NotificationWelcomeSlide = {
     id: WelcomeSlideId;
     kind: "notifications";
     title: string;
-    actionI18nKey: string;
+    /**
+     * The single key this slide renders. `Extract` rather than bare
+     * `TranslationKey`: it stays one literal, so `Trans i18nKey` does not hit
+     * TS's union complexity limit, but collapses to `never` if the key leaves
+     * the locale JSON.
+     */
+    actionI18nKey: Extract<TranslationKey, "wallet.activateNotifications">;
     onAction: () => void;
 };
 

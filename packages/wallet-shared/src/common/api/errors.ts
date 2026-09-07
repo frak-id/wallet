@@ -12,6 +12,8 @@
  * type guards in every component.
  */
 
+import type { DefaultTranslationKey } from "../../types";
+
 /**
  * Backend `HttpError` response body. Backend routes declare their error
  * responses with `t.ErrorResponse`, which produces this shape.
@@ -70,11 +72,11 @@ export function getErrorCode(err: unknown): string | undefined {
  */
 export type ApiErrorKeyMap = {
     /** Map backend `HttpError.code` (e.g. "ALREADY_ACTIVE") to an i18n key. */
-    byCode?: Readonly<Record<string, string>>;
+    byCode?: Readonly<Record<string, DefaultTranslationKey>>;
     /** Map HTTP status (e.g. 409, 404) to an i18n key. */
-    byStatus?: Readonly<Partial<Record<number, string>>>;
+    byStatus?: Readonly<Partial<Record<number, DefaultTranslationKey>>>;
     /** Used when the error doesn't match any entry above. */
-    fallback?: string;
+    fallback?: DefaultTranslationKey;
 };
 
 /**
@@ -84,7 +86,7 @@ export type ApiErrorKeyMap = {
 export function resolveApiErrorKey(
     err: unknown,
     map: ApiErrorKeyMap
-): string | null {
+): DefaultTranslationKey | null {
     if (!err) return null;
     const apiErr = asApiError(err);
     if (!apiErr) return map.fallback ?? null;

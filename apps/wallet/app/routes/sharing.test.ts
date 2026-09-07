@@ -1,34 +1,26 @@
-import { parseSearchWith } from "@tanstack/react-router";
-import { describe, expect, it } from "vitest";
-import { Route } from "./sharing";
-
-// `validateSearch` is the whole native-facing param contract, and a shipped
-// SDK binary can never be updated to match a change here.
-const validateSearch = Route.options.validateSearch as (
-    search: Record<string, unknown>
-) => Record<string, unknown>;
-
-// A host writes a URL string, not an object. Going through the router's own
-// parser is the only way to see the types `validateSearch` is really handed:
-// it runs values through JSON, so `?native=1` arrives as a number.
-const parseSearch = parseSearchWith(JSON.parse);
-const fromUrl = (query: string) =>
-    validateSearch(parseSearch(query) as Record<string, unknown>);
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { parseInstallSearch } from "@/module/install/params";
+import { resetHostResults } from "@/module/sharing/host/bridge";
+import { Route, toInstallSearch } from "./sharing";
 
 const beforeLoad = Route.options.beforeLoad as (ctx: {
     search: Record<string, unknown>;
 }) => void;
 
-describe("/sharing native clientId guard", () => {
-    it("rejects a native launch with no clientId", () => {
-        expect(() => beforeLoad({ search: { native: true } })).toThrow(
+const errorComponent = Route.options.errorComponent as (props: {
+    error: Error;
+}) => unknown;
+
+describe("/sharing host clientId guard", () => {
+    it("rejects an embedded launch with no clientId", () => {
+        expect(() => beforeLoad({ search: { embed: "native" } })).toThrow(
             /clientId/
         );
     });
 
-    it("allows a native launch that states its clientId", () => {
+    it("allows an embedded launch that states its clientId", () => {
         expect(() =>
-            beforeLoad({ search: { native: true, clientId: "c1" } })
+            beforeLoad({ search: { embed: "native", clientId: "c1" } })
         ).not.toThrow();
     });
 
@@ -40,100 +32,82 @@ describe("/sharing native clientId guard", () => {
     });
 });
 
-describe("/sharing param contract", () => {
-    it("ignores params it does not know", () => {
-        const result = validateSearch({
-            merchantId: "m1",
-            somethingFromAFutureSdk: "value",
-        });
+describe("/sharing host error hand-off", () => {
+    const assign = vi.fn();
 
-        expect(result.merchantId).toBe("m1");
-        expect(result).not.toHaveProperty("somethingFromAFutureSdk");
+    beforeEach(() => {
+        resetHostResults();
+        assign.mockClear();
+        // `location.assign` is non-configurable in jsdom, so it is stubbed wholesale.
+        vi.stubGlobal("location", { assign });
     });
 
-    it("accepts sdkv so old binaries stay identifiable", () => {
-        expect(validateSearch({ sdkv: "0.1.0" }).sdkv).toBe("0.1.0");
-        expect(validateSearch({}).sdkv).toBeUndefined();
+    afterEach(() => {
+        vi.unstubAllGlobals();
     });
 
-    it("reads native and confirmed as either flag form", () => {
-        expect(validateSearch({ native: 1 }).native).toBe(true);
-        expect(validateSearch({ native: "1" }).native).toBe(true);
-        expect(validateSearch({ native: true }).native).toBe(true);
-        expect(validateSearch({ native: "true" }).native).toBe(true);
-        expect(validateSearch({ native: 0 }).native).toBe(false);
-        expect(validateSearch({ native: "0" }).native).toBe(false);
-        expect(validateSearch({}).native).toBe(false);
+    it("tells the host instead of rendering an error it cannot read", () => {
+        let thrown: Error | undefined;
+        try {
+            beforeLoad({
+                search: {
+                    embed: "native",
+                    returnScheme: "frak-acme",
+                    sid: "s1",
+                },
+            });
+        } catch (error) {
+            thrown = error as Error;
+        }
 
-        expect(validateSearch({ confirmed: 1 }).confirmed).toBe(true);
-        expect(validateSearch({ confirmed: "1" }).confirmed).toBe(true);
-        expect(validateSearch({}).confirmed).toBe(false);
-    });
-
-    it("drops a returnScheme that is not a valid frak scheme", () => {
-        expect(validateSearch({ returnScheme: "frak-acme" }).returnScheme).toBe(
-            "frak-acme"
+        expect(thrown).toBeDefined();
+        expect(errorComponent({ error: thrown as Error })).toBeNull();
+        expect(assign).toHaveBeenCalledWith(
+            "frak-acme://result?action=error&sid=s1"
         );
-        expect(
-            validateSearch({ returnScheme: "some-banking-app" }).returnScheme
-        ).toBeUndefined();
     });
 
-    it("drops a redirectUrl that is not https", () => {
-        expect(
-            validateSearch({ redirectUrl: "https://shop.example/cart" })
-                .redirectUrl
-        ).toBe("https://shop.example/cart");
-        expect(
-            validateSearch({ redirectUrl: "javascript:alert(1)" }).redirectUrl
-        ).toBeUndefined();
-    });
-
-    it("accepts a seeded reward headline but not arbitrary text", () => {
-        expect(validateSearch({ r: "12,50 €" }).r).toBe("12,50 €");
-        expect(validateSearch({ r: "<img src=x>" }).r).toBeUndefined();
-        expect(validateSearch({}).r).toBeUndefined();
-    });
-
-    it("keeps a null attribution distinct from an absent one", () => {
-        // null disables backend attribution defaults; undefined still applies
-        // them, so the two must not collapse into each other.
-        expect(validateSearch({ attribution: null }).attribution).toBeNull();
-        expect(validateSearch({}).attribution).toBeUndefined();
+    it("rethrows anything that is not the guard's own error", () => {
+        const other = new Error("something else");
+        expect(() => errorComponent({ error: other })).toThrow(other);
     });
 });
 
-// The contract a host actually writes: a URL. Asserting against hand-built
-// objects hid that the router hands `?native=1` over as a number, which read
-// as false and rewrote the URL to `native=false` with the page in full chrome.
-describe("/sharing params as a host writes them", () => {
-    it("reads a native launch from a plain URL", () => {
-        const search = fromUrl(
-            "?native=1&confirmed=1&clientId=test&merchantId=m1"
-        );
-
-        expect(search.native).toBe(true);
-        expect(search.confirmed).toBe(true);
-        expect(search.clientId).toBe("test");
+describe("/sharing → /install forwarding", () => {
+    it("carries the checkout token so a Shopify install stays attributed", () => {
+        expect(
+            toInstallSearch({
+                merchantId: "merchant-1",
+                checkoutToken: "tok-1",
+            })
+        ).toEqual({ m: "merchant-1", checkoutToken: "tok-1" });
     });
 
-    it("keeps an all-digit sid, which parses as a number", () => {
-        // Hosts mint these from timestamps and counters; dropping the value
-        // would cost every callback its session id.
-        expect(fromUrl("?sid=1738147200000").sid).toBe("1738147200000");
-        expect(fromUrl("?sid=abc123").sid).toBe("abc123");
+    it("never forwards an `a=` this page holds no credential for", () => {
+        expect(
+            toInstallSearch({
+                merchantId: "merchant-1",
+                checkoutToken: "tok-1",
+            })
+        ).not.toHaveProperty("a");
     });
 
-    it("keeps an sdkv that looks numeric", () => {
-        expect(fromUrl("?sdkv=0.1.0").sdkv).toBe("0.1.0");
-        // A two-part version parses as a number, and an unidentifiable binary
-        // is exactly what `sdkv` exists to prevent.
-        expect(fromUrl("?sdkv=0.1").sdkv).toBe("0.1");
+    it("stays undefined-valued rather than empty-string when nothing is known", () => {
+        expect(toInstallSearch({})).toEqual({
+            m: undefined,
+            checkoutToken: undefined,
+        });
     });
 
-    it("still rejects a native launch with no clientId", () => {
-        expect(() =>
-            beforeLoad({ search: fromUrl("?native=1&merchantId=m1") })
-        ).toThrow(/clientId/);
+    it("hands `/install` a search object its own parser accepts unchanged", () => {
+        const search = toInstallSearch({
+            merchantId: "merchant-1",
+            checkoutToken: "tok-1",
+        });
+
+        expect(parseInstallSearch(search)).toMatchObject({
+            m: "merchant-1",
+            checkoutToken: "tok-1",
+        });
     });
 });

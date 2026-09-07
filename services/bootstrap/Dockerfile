@@ -13,7 +13,7 @@
 # migrator reads `.sql` files from disk (`./drizzle/{prod,dev,v2,local,libsql}`
 # paths resolved relative to cwd).
 
-ARG BUN_VERSION=1.3.11
+ARG BUN_VERSION=1.4.0
 
 FROM oven/bun:${BUN_VERSION} AS deps
 WORKDIR /app

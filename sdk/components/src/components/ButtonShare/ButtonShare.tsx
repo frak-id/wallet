@@ -5,7 +5,6 @@ import {
     trackEvent,
 } from "@frak-labs/core-sdk";
 import { useCallback, useMemo } from "preact/hooks";
-import { openEmbeddedWallet } from "@/actions/embeddedWallet";
 import { openSharingPage } from "@/actions/sharingPage";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
@@ -141,14 +140,10 @@ export function ButtonShare({
             has_reward: Boolean(reward),
             click_action: resolvedClickAction,
         });
-        if (resolvedClickAction === "embedded-wallet") {
-            openEmbeddedWallet(resolvedTargetInteraction, placementId);
-            return;
-        }
-        // Anything else (legacy `share-modal` configs included) routes to
-        // the full-page sharing UI — the modal-flow share path was retired
-        // in favour of `displaySharingPage` so every share surface goes
-        // through the same UI.
+        // Every click routes to the full-page sharing UI. Legacy configs
+        // (`share-modal`, `embedded-wallet`) land here too — both of those
+        // surfaces were retired in favour of `displaySharingPage`, so every
+        // share CTA now goes through the same UI.
         openSharingPage(resolvedTargetInteraction, placementId, {
             products: parsedProducts,
         });

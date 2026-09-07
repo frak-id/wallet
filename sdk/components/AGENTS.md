@@ -5,7 +5,7 @@ Preact-based Web Components (Custom Elements). Hybrid Light DOM / Shadow DOM. CD
 ## Component Matrix
 | Element | DOM | Reason |
 |---------|-----|--------|
-| `<frak-button-wallet>` | **Shadow DOM** | Floating overlay must NOT inherit merchant styles |
+| `<frak-button-wallet>` | **Shadow DOM** | Floating overlay must NOT inherit merchant styles. Legacy name: opens the sharing page |
 | `<frak-button-share>` | Light DOM | MUST inherit merchant theme `.button` styles |
 | `<frak-open-in-app>` | Light DOM | MUST inherit merchant theme styles (mobile-only renderer) |
 
@@ -28,6 +28,7 @@ Preact-based Web Components (Custom Elements). Hybrid Light DOM / Shadow DOM. CD
 - **Placement CSS pipeline**: pre-scoped on the backend via LightningCSS (sanitization + scoping + minification) before being injected — don't replicate that pipeline client-side.
 - **Custom elements auto-register on import** — `components.ts` import has side effects.
 - **CDN uses hashed chunks** — cache-bust is automatic; don't pin chunk names.
+- **`<frak-post-purchase token>` is load-bearing twice**: it feeds `trackPurchaseStatus` AND rides `displaySharingPage` as `checkoutToken`, which is how a buyer with no `frak-client-id` still gets an install link. Dropping it from a plugin's render path silently costs attribution on exactly the ad-blocked buyer the fallback exists for.
 
 ## Usage
 ```html

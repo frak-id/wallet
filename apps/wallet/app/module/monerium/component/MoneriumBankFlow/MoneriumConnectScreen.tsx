@@ -6,6 +6,7 @@ import {
     PersonIcon,
     SafetyIcon,
 } from "@frak-labs/design-system/icons";
+import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useConnection } from "wagmi";
@@ -24,8 +25,8 @@ type MoneriumConnectScreenProps = {
 
 type FeatureConfig = {
     icon: ReactNode;
-    titleKey: string;
-    descriptionKey: string;
+    titleKey: DefaultTranslationKey;
+    descriptionKey: DefaultTranslationKey;
 };
 
 const infoFeatures: FeatureConfig[] = [

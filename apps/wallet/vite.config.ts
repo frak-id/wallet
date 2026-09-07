@@ -9,17 +9,16 @@ import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import removeConsole from "vite-plugin-remove-console";
 import {
-    getSandboxEnv,
-    getSstResource,
+    assertBundleEsVersion,
+    BROWSER_TARGET,
     inlineFontFaces,
     lightningCssConfig,
     onwarn,
     preconnectOrigins,
     stripAbiInternalType,
 } from "../../packages/dev-tooling";
-import walletPackage from "./package.json";
-
-const DEBUG = JSON.stringify(false);
+import { routerGenerationOptions } from "./router.options";
+import { getDefineProps, readDefine } from "./vite.defines";
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isTauri = !!process.env.TAURI_CLI_RUNNING;
@@ -30,26 +29,20 @@ const tauriPlatform = process.env.TAURI_ENV_PLATFORM;
 const isTauriIos = isTauri && tauriPlatform === "ios";
 const isTauriAndroid = isTauri && tauriPlatform === "android";
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
-const appVersion = process.env.COMMIT_HASH ?? walletPackage.version;
+// `vite build --watch` (used by `dev:built`) re-empties `outDir` on EVERY
+// rebuild, not just the first. `dist/` is shared with the standalone pass
+// (`vite.standalone.config.ts` writes `sharing.html`, `install.html` and
+// `standalone/` there), so emptying on rebuild would delete the other build's
+// output every time a source file changed. `dev:built` cleans `dist/` itself
+// once at startup instead. Read from argv because Vite resolves `--watch`
+// into `build.watch` only after this config function has run.
+const isWatch = process.argv.includes("--watch") || process.argv.includes("-w");
 // Web stays strict at 300 KB to surface regressions early; Tauri allows
 // 500 KB since assets ship in the binary (no network cost) and the
 // `blockchain-vendor` chunk runs close to the limit.
 const chunkSizeWarningLimit = isTauri ? 500 : 300;
 // Drop Rolldown debug info in prod (smaller maps), keep full in dev.
 const attachDebugInfo: "full" | "none" = isProd ? "none" : "full";
-
-// Routes whose only purpose is to host nested child routes via `<Outlet/>`.
-// They look like leaf routes from `routeId` alone, but their files are
-// 9-line layout shells. Listed explicitly so TanStack Router's
-// `autoCodeSplitting` skips them — saves one ~210 B lazy chunk per route.
-// Verify with: `rg '<Outlet ?/>' apps/wallet/app/routes`.
-const PURE_OUTLET_PARENT_ROUTES = new Set([
-    "/_wallet/_protected/wallet",
-    "/_wallet/_protected/profile",
-    "/_wallet/_protected/settings",
-    "/_wallet/_protected-fullscreen/profile/referral",
-    "/_wallet/_protected-fullscreen/profile/recovery",
-]);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -71,6 +64,34 @@ const tauriAlias = isTauri
     : [
           { find: /^@tauri-apps\/.*$/, replacement: tauriStub },
           { find: /^tauri-plugin-.*$/, replacement: tauriStub },
+      ];
+
+// `/sharing` and `/install` are served from their own build on the web
+// (`vite.standalone.config.ts` + nginx exact-match locations), so the SPA
+// copies of those two pages are Tauri-only. Swapping the views for redirect
+// stubs on the web build keeps them — and `sonner`, `CodeInput` and the
+// pending-action tree behind them — out of `feature-social`, which every
+// `_protected-fullscreen` route also pulls. See `StandaloneRedirect.tsx`.
+//
+// Only the views are aliased, not the route files: the routes stay in
+// `routeTree.gen.ts` for both targets, so the generated tree never depends on
+// the build and `to: "/install"` keeps typechecking.
+const standaloneRedirectStub = path.resolve(
+    __dirname,
+    "./app/module/common/component/StandaloneRedirect.tsx"
+);
+
+const standalonePageAlias = isTauri
+    ? []
+    : [
+          {
+              find: /^@\/module\/sharing\/component\/SharingView$/,
+              replacement: standaloneRedirectStub,
+          },
+          {
+              find: /^@\/module\/install\/component\/InstallView$/,
+              replacement: standaloneRedirectStub,
+          },
       ];
 
 // Code-splitting groups for Rolldown. Same shape for web and Tauri.
@@ -134,6 +155,18 @@ function buildChunkGroups() {
             name: "forms-vendor",
             test: /[\\/]node_modules[\\/](?:react-hook-form|qr)[\\/]/,
             priority: 31,
+            minShareCount: 1,
+        },
+        // `@radix-ui/react-collection` alone, above `ui-vendor` so it claims
+        // the package first. Its `OrderedDict extends Map` declares a
+        // `toSorted` method that es-check reads as `Array.prototype.toSorted`;
+        // isolating it keeps the exemption off the rest of Radix, vaul,
+        // sonner, lucide-react and micromark, where a genuine above-floor
+        // call would otherwise be masked.
+        {
+            name: "radix-collection",
+            test: /[\\/]node_modules[\\/]@radix-ui[\\/]react-collection[\\/]/,
+            priority: 32,
             minShareCount: 1,
         },
         {
@@ -230,9 +263,14 @@ function buildChunkGroups() {
             priority: 20,
             minShareCount: 1,
         },
+        // Sharing + install: the `?tsr-split=` route components, plus the
+        // `SharingView` / `InstallView` modules they render. Those views are
+        // shared with the standalone web build (`vite.standalone.config.ts`),
+        // so they live under `app/module/` rather than in the route files —
+        // named here so they stay in this lazy chunk instead of scattering.
         {
             name: "feature-social",
-            test: /[\\/]app[\\/]routes[\\/](?:_wallet[\\/]_protected-fullscreen[\\/]|(?:sharing|install)\.).*\?tsr-split=/,
+            test: /[\\/]app[\\/](?:module[\\/](?:sharing|install)[\\/]|routes[\\/](?:_wallet[\\/]_protected-fullscreen[\\/]|(?:sharing|install)\.).*\?tsr-split=)/,
             priority: 19,
             minShareCount: 1,
         },
@@ -247,105 +285,36 @@ function buildChunkGroups() {
     ];
 }
 
-async function getDefineProps() {
-    const sandboxEnv = await getSandboxEnv();
-    const backendUrl =
-        sandboxEnv.backendUrl ??
-        getSstResource("BACKEND_URL") ??
-        "https://backend.gcp-dev.frak.id";
-
-    // Fail loud instead of silently shipping the dev backend in a prod app.
-    // `sst shell` serves `BACKEND_URL` from the last *deployed* stage state, not
-    // from current code — so a stale/undeployed `prod` stage makes the resource
-    // resolve to `undefined` here and fall back to the dev default. The mobile
-    // release sets `FRAK_VARIANT=prod` directly (independent of SST), so use it
-    // as the authoritative prod-build signal: if we're building the prod app but
-    // the backend still points at a dev host, that's a broken release — abort.
-    if (
-        process.env.FRAK_VARIANT === "prod" &&
-        (backendUrl.includes("gcp-dev") || backendUrl.includes("-dev."))
-    ) {
-        throw new Error(
-            `[wallet build] FRAK_VARIANT=prod but BACKEND_URL resolved to "${backendUrl}". ` +
-                `The prod stage's SST_RESOURCE_BACKEND_URL is missing — run \`sst deploy --stage prod\` ` +
-                `to sync the BACKEND_URL linkable into the deployed state before building.`
-        );
-    }
-
-    return {
-        "process.env.STAGE": JSON.stringify(getSstResource("STAGE") ?? "dev"),
-        "process.env.BACKEND_URL": JSON.stringify(backendUrl),
-        "process.env.ERPC_URL": JSON.stringify(
-            getSstResource("ERPC_URL") ??
-                "https://erpc.gcp-dev.frak.id/nexus-rpc/evm/"
-        ),
-        "process.env.DRPC_API_KEY": JSON.stringify(
-            getSstResource("DRPC_API_KEY")
-        ),
-        "process.env.PIMLICO_API_KEY": JSON.stringify(
-            getSstResource("PIMLICO_API_KEY")
-        ),
-        "process.env.NEXUS_RPC_SECRET": JSON.stringify(
-            getSstResource("NEXUS_RPC_SECRET")
-        ),
-        "process.env.VAPID_PUBLIC_KEY": JSON.stringify(
-            getSstResource("VAPID_PUBLIC_KEY")
-        ),
-        "process.env.DEBUG": JSON.stringify(DEBUG),
-        // Build-time platform constants consumed by
-        // `packages/app-essentials/src/utils/platform.ts`. Substituted to literal
-        // booleans so Rolldown's `inlineConst` propagates them to every call site
-        // and dead-code-eliminates the unreachable branches (and their `@tauri-apps/*`
-        // dynamic imports).
-        __IS_TAURI__: JSON.stringify(isTauri),
-        __IS_IOS__: JSON.stringify(isTauriIos),
-        __IS_ANDROID__: JSON.stringify(isTauriAndroid),
-        "process.env.APP_VERSION": JSON.stringify(appVersion),
-        "process.env.FRAK_WALLET_URL": JSON.stringify(
-            sandboxEnv.walletUrl ??
-                getSstResource("FRAK_WALLET_URL") ??
-                "https://wallet-dev.frak.id"
-        ),
-        "process.env.OPEN_PANEL_API_URL": JSON.stringify(
-            getSstResource("OPEN_PANEL_API_URL") ?? "https://op-api.gcp.frak.id"
-        ),
-        "process.env.OPEN_PANEL_WALLET_CLIENT_ID": JSON.stringify(
-            getSstResource("OPEN_PANEL_WALLET_CLIENT_ID")
-        ),
-        "process.env.WEBAUTHN_RP_ID": JSON.stringify(
-            process.env.WEBAUTHN_RP_ID
-        ),
-        "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
-            getSstResource("ANDROID_SHA256_FINGERPRINT")
-        ),
-        "process.env.MONERIUM_CLIENT_ID": JSON.stringify(
-            getSstResource("MONERIUM_CLIENT_ID")
-        ),
-    };
-}
-
 export default defineConfig(
     async ({ mode, command }: ConfigEnv): Promise<UserConfig> => {
         const isSW = mode === "sw";
 
-        const define = await getDefineProps();
+        const define = await getDefineProps({
+            isTauri,
+            isTauriIos,
+            isTauriAndroid,
+        });
         const baseConfig: UserConfig = {
             clearScreen: false,
             envPrefix: ["VITE_", "TAURI_"],
             define,
+            // Named JSON exports rather than one stringified blob. Must match
+            // `vite.standalone.config.ts`: `vite dev` serves BOTH the SPA and
+            // the standalone entrypoints from this config, and
+            // `i18n/locales/*/standalone.ts` imports single keys out of
+            // `translation.json` by name — which a `JSON.parse("…")` module
+            // cannot provide.
+            json: { namedExports: true, stringify: false },
         };
 
         // Read back from the defines rather than resolving these a second
         // time, so a preconnect can never point somewhere the app does not.
-        // `JSON.stringify` yields the value `undefined` for an unset resource,
-        // not a JSON string, so parsing is guarded for the optional ones.
-        const readDefine = (key: keyof typeof define): string | undefined => {
-            const raw = define[key];
-            return typeof raw === "string" ? JSON.parse(raw) : undefined;
-        };
-        const backendUrl = readDefine("process.env.BACKEND_URL");
-        const erpcUrl = readDefine("process.env.ERPC_URL");
-        const nexusRpcSecret = readDefine("process.env.NEXUS_RPC_SECRET");
+        const backendUrl = readDefine(define, "process.env.BACKEND_URL");
+        const erpcUrl = readDefine(define, "process.env.ERPC_URL");
+        const nexusRpcSecret = readDefine(
+            define,
+            "process.env.NEXUS_RPC_SECRET"
+        );
 
         // Service worker configuration
         if (isSW) {
@@ -356,6 +325,9 @@ export default defineConfig(
                 },
                 publicDir: false,
                 build: {
+                    // Deliberately below BROWSER_TARGET: an IIFE lib build
+                    // emitted to public/, outside typecheck and outside the
+                    // standalone pass the ES-version gate inspects.
                     target: "ES2020",
                     lib: {
                         name: "WalletServiceWorker",
@@ -374,38 +346,7 @@ export default defineConfig(
             ...baseConfig,
             css: lightningCssConfig,
             plugins: [
-                tanstackRouter({
-                    routesDirectory: "./app/routes",
-                    generatedRouteTree: "./app/routeTree.gen.ts",
-                    // Per-route lazy chunks. The `feature-*` groups in
-                    // `buildChunkGroups` re-coalesce these into one chunk
-                    // per feature so each navigation is a single fetch.
-                    autoCodeSplitting: true,
-                    routeFileIgnorePattern: "\\.css\\.ts$",
-                    // Per-route splitting policy. We disable splitting for
-                    // pure-`<Outlet/>` layouts so they don't each produce a
-                    // 200–300 B chunk that is downloaded eagerly with the
-                    // child route anyway. Inlining them into the static
-                    // route tree adds ~1 KB to the entry chunk in exchange
-                    // for ~10 fewer HTTP requests.
-                    codeSplittingOptions: {
-                        splitBehavior: ({ routeId }) => {
-                            // Filename-prefix layouts (TanStack convention).
-                            const lastSegment = routeId.split("/").pop() ?? "";
-                            if (lastSegment.startsWith("_")) return [];
-                            // Parent routes that just render `<Outlet/>` to
-                            // host nested children. TanStack's plugin can't
-                            // detect this from `routeId` alone; the list is
-                            // verified by greppping for `<Outlet />` in the
-                            // route files.
-                            if (PURE_OUTLET_PARENT_ROUTES.has(routeId)) {
-                                return [];
-                            }
-                            // Default: split the component into a lazy chunk.
-                            return undefined;
-                        },
-                    },
-                }),
+                tanstackRouter(routerGenerationOptions),
                 viteReact(),
                 vanillaExtractPlugin(),
                 // Skip HTTPS for Tauri dev (simulators don't trust self-signed certs) and sandbox (proxy handles TLS)
@@ -448,6 +389,17 @@ export default defineConfig(
                         },
                     ],
                 }),
+                assertBundleEsVersion({
+                    subdir: "assets",
+                    // @radix-ui/react-collection defines `toSorted` on its own
+                    // `OrderedDict extends Map`, not `Array.prototype`;
+                    // es-check matches property names without receiver
+                    // analysis.
+                    ignore: {
+                        features: "ArrayToSorted",
+                        in: "radix-collection",
+                    },
+                }),
             ],
             resolve: {
                 tsconfigPaths: true,
@@ -465,6 +417,7 @@ export default defineConfig(
                           ]
                         : []),
                     ...tauriAlias,
+                    ...standalonePageAlias,
                 ],
             },
             preview: {
@@ -529,6 +482,9 @@ export default defineConfig(
                 },
             },
             build: {
+                // See `isWatch`: under `--watch` this build shares `dist/` with the
+                // standalone pass and must not wipe it on every rebuild.
+                emptyOutDir: !isWatch,
                 // Single bundled stylesheet for both web and Tauri.
                 // Per-route CSS splitting was tried, but Vanilla Extract emits
                 // a CSS file per `.css.ts` source — that exploded into 38 CSS
@@ -536,7 +492,7 @@ export default defineConfig(
                 // (~5 KB gz). One stylesheet is simpler, fewer requests, and
                 // matches Tauri's preferred pattern (single Rust IPC fetch).
                 cssCodeSplit: false,
-                target: "baseline-widely-available",
+                target: BROWSER_TARGET,
                 chunkSizeWarningLimit,
                 minify: true,
                 sourcemap: !isProd,

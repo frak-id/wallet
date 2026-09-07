@@ -1,0 +1,2659 @@
+{
+    "formatVersion": 1,
+    "fixtures": [
+        {
+            "name": "format-amount-eur-zero",
+            "description": "formatAmount: eur/fr-FR, zero",
+            "kind": "format-amount",
+            "amount": 0,
+            "currency": "eur",
+            "locale": "fr-FR",
+            "formatted": "0\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0030",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "format-amount-eur-small-integer",
+            "description": "formatAmount: eur/fr-FR, a small integer",
+            "kind": "format-amount",
+            "amount": 5,
+            "currency": "eur",
+            "locale": "fr-FR",
+            "formatted": "5\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0035",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "format-amount-eur-decimals",
+            "description": "formatAmount: eur/fr-FR, a value with decimals",
+            "kind": "format-amount",
+            "amount": 1234.56,
+            "currency": "eur",
+            "locale": "fr-FR",
+            "formatted": "1\u202f234,56\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0031",
+                "U+202F",
+                "U+0032",
+                "U+0033",
+                "U+0034",
+                "U+002C",
+                "U+0035",
+                "U+0036",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "format-amount-eur-large",
+            "description": "formatAmount: eur/fr-FR, a large value crossing two group separators",
+            "kind": "format-amount",
+            "amount": 1234567,
+            "currency": "eur",
+            "locale": "fr-FR",
+            "formatted": "1\u202f234\u202f567\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0031",
+                "U+202F",
+                "U+0032",
+                "U+0033",
+                "U+0034",
+                "U+202F",
+                "U+0035",
+                "U+0036",
+                "U+0037",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "format-amount-eur-rounds",
+            "description": "formatAmount: eur/fr-FR, a value that rounds to two fraction digits",
+            "kind": "format-amount",
+            "amount": 9876.5432,
+            "currency": "eur",
+            "locale": "fr-FR",
+            "formatted": "9\u202f876,54\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0039",
+                "U+202F",
+                "U+0038",
+                "U+0037",
+                "U+0036",
+                "U+002C",
+                "U+0035",
+                "U+0034",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "format-amount-usd-zero",
+            "description": "formatAmount: usd/en-US, zero",
+            "kind": "format-amount",
+            "amount": 0,
+            "currency": "usd",
+            "locale": "en-US",
+            "formatted": "$0",
+            "formattedCodepoints": [
+                "U+0024",
+                "U+0030"
+            ]
+        },
+        {
+            "name": "format-amount-usd-small-integer",
+            "description": "formatAmount: usd/en-US, a small integer",
+            "kind": "format-amount",
+            "amount": 5,
+            "currency": "usd",
+            "locale": "en-US",
+            "formatted": "$5",
+            "formattedCodepoints": [
+                "U+0024",
+                "U+0035"
+            ]
+        },
+        {
+            "name": "format-amount-usd-decimals",
+            "description": "formatAmount: usd/en-US, a value with decimals",
+            "kind": "format-amount",
+            "amount": 1234.56,
+            "currency": "usd",
+            "locale": "en-US",
+            "formatted": "$1,234.56",
+            "formattedCodepoints": [
+                "U+0024",
+                "U+0031",
+                "U+002C",
+                "U+0032",
+                "U+0033",
+                "U+0034",
+                "U+002E",
+                "U+0035",
+                "U+0036"
+            ]
+        },
+        {
+            "name": "format-amount-usd-large",
+            "description": "formatAmount: usd/en-US, a large value crossing two group separators",
+            "kind": "format-amount",
+            "amount": 1234567,
+            "currency": "usd",
+            "locale": "en-US",
+            "formatted": "$1,234,567",
+            "formattedCodepoints": [
+                "U+0024",
+                "U+0031",
+                "U+002C",
+                "U+0032",
+                "U+0033",
+                "U+0034",
+                "U+002C",
+                "U+0035",
+                "U+0036",
+                "U+0037"
+            ]
+        },
+        {
+            "name": "format-amount-usd-rounds",
+            "description": "formatAmount: usd/en-US, a value that rounds to two fraction digits",
+            "kind": "format-amount",
+            "amount": 9876.5432,
+            "currency": "usd",
+            "locale": "en-US",
+            "formatted": "$9,876.54",
+            "formattedCodepoints": [
+                "U+0024",
+                "U+0039",
+                "U+002C",
+                "U+0038",
+                "U+0037",
+                "U+0036",
+                "U+002E",
+                "U+0035",
+                "U+0034"
+            ]
+        },
+        {
+            "name": "format-amount-gbp-zero",
+            "description": "formatAmount: gbp/en-GB, zero",
+            "kind": "format-amount",
+            "amount": 0,
+            "currency": "gbp",
+            "locale": "en-GB",
+            "formatted": "\u00a30",
+            "formattedCodepoints": [
+                "U+00A3",
+                "U+0030"
+            ]
+        },
+        {
+            "name": "format-amount-gbp-small-integer",
+            "description": "formatAmount: gbp/en-GB, a small integer",
+            "kind": "format-amount",
+            "amount": 5,
+            "currency": "gbp",
+            "locale": "en-GB",
+            "formatted": "\u00a35",
+            "formattedCodepoints": [
+                "U+00A3",
+                "U+0035"
+            ]
+        },
+        {
+            "name": "format-amount-gbp-decimals",
+            "description": "formatAmount: gbp/en-GB, a value with decimals",
+            "kind": "format-amount",
+            "amount": 1234.56,
+            "currency": "gbp",
+            "locale": "en-GB",
+            "formatted": "\u00a31,234.56",
+            "formattedCodepoints": [
+                "U+00A3",
+                "U+0031",
+                "U+002C",
+                "U+0032",
+                "U+0033",
+                "U+0034",
+                "U+002E",
+                "U+0035",
+                "U+0036"
+            ]
+        },
+        {
+            "name": "format-amount-gbp-large",
+            "description": "formatAmount: gbp/en-GB, a large value crossing two group separators",
+            "kind": "format-amount",
+            "amount": 1234567,
+            "currency": "gbp",
+            "locale": "en-GB",
+            "formatted": "\u00a31,234,567",
+            "formattedCodepoints": [
+                "U+00A3",
+                "U+0031",
+                "U+002C",
+                "U+0032",
+                "U+0033",
+                "U+0034",
+                "U+002C",
+                "U+0035",
+                "U+0036",
+                "U+0037"
+            ]
+        },
+        {
+            "name": "format-amount-gbp-rounds",
+            "description": "formatAmount: gbp/en-GB, a value that rounds to two fraction digits",
+            "kind": "format-amount",
+            "amount": 9876.5432,
+            "currency": "gbp",
+            "locale": "en-GB",
+            "formatted": "\u00a39,876.54",
+            "formattedCodepoints": [
+                "U+00A3",
+                "U+0039",
+                "U+002C",
+                "U+0038",
+                "U+0037",
+                "U+0036",
+                "U+002E",
+                "U+0035",
+                "U+0034"
+            ]
+        },
+        {
+            "name": "format-amount-default-currency",
+            "description": "formatAmount: no currency supplied, falls back to eur/fr-FR",
+            "kind": "format-amount",
+            "amount": 1234.56,
+            "currency": null,
+            "locale": "fr-FR",
+            "formatted": "1\u202f234,56\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0031",
+                "U+202F",
+                "U+0032",
+                "U+0033",
+                "U+0034",
+                "U+002C",
+                "U+0035",
+                "U+0036",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "estimated-fixed-eur",
+            "description": "formatEstimatedReward: fixed reward in the default currency",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "fixed",
+                "amount": {
+                    "amount": 12,
+                    "eurAmount": 12,
+                    "usdAmount": 13.2,
+                    "gbpAmount": 8.5
+                }
+            },
+            "currency": "eur",
+            "formatted": "12\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0031",
+                "U+0032",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "estimated-fixed-usd",
+            "description": "formatEstimatedReward: the same fixed reward read through the usd amount key",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "fixed",
+                "amount": {
+                    "amount": 12,
+                    "eurAmount": 12,
+                    "usdAmount": 13.2,
+                    "gbpAmount": 8.5
+                }
+            },
+            "currency": "usd",
+            "formatted": "$13",
+            "formattedCodepoints": [
+                "U+0024",
+                "U+0031",
+                "U+0033"
+            ]
+        },
+        {
+            "name": "estimated-fixed-gbp",
+            "description": "formatEstimatedReward: the same fixed reward read through the gbp amount key",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "fixed",
+                "amount": {
+                    "amount": 12,
+                    "eurAmount": 12,
+                    "usdAmount": 13.2,
+                    "gbpAmount": 8.5
+                }
+            },
+            "currency": "gbp",
+            "formatted": "\u00a39",
+            "formattedCodepoints": [
+                "U+00A3",
+                "U+0039"
+            ]
+        },
+        {
+            "name": "estimated-fixed-rounds-down",
+            "description": "formatEstimatedReward: fixed amount 5.4 rounds DOWN to 5 before formatting",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "fixed",
+                "amount": {
+                    "amount": 5.4,
+                    "eurAmount": 5.4,
+                    "usdAmount": 5.4,
+                    "gbpAmount": 5.4
+                }
+            },
+            "currency": "eur",
+            "formatted": "5\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0035",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "estimated-fixed-rounds-up",
+            "description": "formatEstimatedReward: fixed amount 5.6 rounds UP to 6 before formatting",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "fixed",
+                "amount": {
+                    "amount": 5.6,
+                    "eurAmount": 5.6,
+                    "usdAmount": 5.6,
+                    "gbpAmount": 5.6
+                }
+            },
+            "currency": "eur",
+            "formatted": "6\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0036",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "estimated-fixed-large",
+            "description": "formatEstimatedReward: large fixed reward, fr-FR group separators",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "fixed",
+                "amount": {
+                    "amount": 1234567,
+                    "eurAmount": 1234567,
+                    "usdAmount": 1234567,
+                    "gbpAmount": 1234567
+                }
+            },
+            "currency": "eur",
+            "formatted": "1\u202f234\u202f567\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0031",
+                "U+202F",
+                "U+0032",
+                "U+0033",
+                "U+0034",
+                "U+202F",
+                "U+0035",
+                "U+0036",
+                "U+0037",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "estimated-percentage-uncapped",
+            "description": "formatEstimatedReward: percentage renders as a percent string, never a basket amount",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "percentage",
+                "percent": 8,
+                "percentOf": "purchase_amount"
+            },
+            "currency": "eur",
+            "formatted": "8 %",
+            "formattedCodepoints": [
+                "U+0038",
+                "U+0020",
+                "U+0025"
+            ]
+        },
+        {
+            "name": "estimated-percentage-capped",
+            "description": "formatEstimatedReward: a capped percentage still renders as its percent, not the cap",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "percentage",
+                "percent": 10,
+                "percentOf": "purchase_amount",
+                "maxAmount": {
+                    "amount": 50,
+                    "eurAmount": 50,
+                    "usdAmount": 55,
+                    "gbpAmount": 42.5
+                }
+            },
+            "currency": "eur",
+            "formatted": "10 %",
+            "formattedCodepoints": [
+                "U+0031",
+                "U+0030",
+                "U+0020",
+                "U+0025"
+            ]
+        },
+        {
+            "name": "estimated-tiered-amounts",
+            "description": "formatEstimatedReward: tiered picks the richest token tier",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "tiered",
+                "tierField": "purchase.amount",
+                "tiers": [
+                    {
+                        "minValue": 0,
+                        "maxValue": 50,
+                        "amount": {
+                            "amount": 2,
+                            "eurAmount": 2,
+                            "usdAmount": 2.2,
+                            "gbpAmount": 1.7
+                        }
+                    },
+                    {
+                        "minValue": 50,
+                        "maxValue": 200,
+                        "amount": {
+                            "amount": 8,
+                            "eurAmount": 8,
+                            "usdAmount": 8.8,
+                            "gbpAmount": 6.9
+                        }
+                    },
+                    {
+                        "minValue": 200,
+                        "amount": {
+                            "amount": 30,
+                            "eurAmount": 30,
+                            "usdAmount": 33,
+                            "gbpAmount": 25.5
+                        }
+                    }
+                ]
+            },
+            "currency": "eur",
+            "formatted": "30\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0033",
+                "U+0030",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "estimated-tiered-amounts-gbp",
+            "description": "formatEstimatedReward: the same tiered reward through the gbp key, richest tier rounds",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "tiered",
+                "tierField": "purchase.amount",
+                "tiers": [
+                    {
+                        "minValue": 0,
+                        "maxValue": 50,
+                        "amount": {
+                            "amount": 2,
+                            "eurAmount": 2,
+                            "usdAmount": 2.2,
+                            "gbpAmount": 1.7
+                        }
+                    },
+                    {
+                        "minValue": 50,
+                        "maxValue": 200,
+                        "amount": {
+                            "amount": 8,
+                            "eurAmount": 8,
+                            "usdAmount": 8.8,
+                            "gbpAmount": 6.9
+                        }
+                    },
+                    {
+                        "minValue": 200,
+                        "amount": {
+                            "amount": 30,
+                            "eurAmount": 30,
+                            "usdAmount": 33,
+                            "gbpAmount": 25.5
+                        }
+                    }
+                ]
+            },
+            "currency": "gbp",
+            "formatted": "\u00a326",
+            "formattedCodepoints": [
+                "U+00A3",
+                "U+0032",
+                "U+0036"
+            ]
+        },
+        {
+            "name": "estimated-tiered-percent-only",
+            "description": "formatEstimatedReward: tiered with ONLY percentages falls back to the max percent",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "tiered",
+                "tierField": "purchase.amount",
+                "tiers": [
+                    {
+                        "minValue": 0,
+                        "maxValue": 50,
+                        "percent": 5
+                    },
+                    {
+                        "minValue": 50,
+                        "percent": 12
+                    }
+                ]
+            },
+            "currency": "eur",
+            "formatted": "12 %",
+            "formattedCodepoints": [
+                "U+0031",
+                "U+0032",
+                "U+0020",
+                "U+0025"
+            ]
+        },
+        {
+            "name": "estimated-tiered-mixed",
+            "description": "formatEstimatedReward: tiered mixing a percent tier and an amount tier prefers the amount",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "tiered",
+                "tierField": "purchase.matchedAmount",
+                "tiers": [
+                    {
+                        "minValue": 0,
+                        "maxValue": 100,
+                        "percent": 4
+                    },
+                    {
+                        "minValue": 100,
+                        "amount": {
+                            "amount": 15,
+                            "eurAmount": 15,
+                            "usdAmount": 16.5,
+                            "gbpAmount": 12.75
+                        }
+                    }
+                ]
+            },
+            "currency": "eur",
+            "formatted": "15\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0031",
+                "U+0035",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "estimated-tiered-zero-amount",
+            "description": "formatEstimatedReward: tiered whose tiers are all zero-amount falls back to a formatted zero",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "tiered",
+                "tierField": "purchase.amount",
+                "tiers": [
+                    {
+                        "minValue": 0,
+                        "maxValue": 50,
+                        "amount": {
+                            "amount": 0,
+                            "eurAmount": 0,
+                            "usdAmount": 0,
+                            "gbpAmount": 0
+                        }
+                    },
+                    {
+                        "minValue": 50,
+                        "amount": {
+                            "amount": 0,
+                            "eurAmount": 0,
+                            "usdAmount": 0,
+                            "gbpAmount": 0
+                        }
+                    }
+                ]
+            },
+            "currency": "eur",
+            "formatted": "0\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0030",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "estimated-tiered-zero-amount-usd",
+            "description": "formatEstimatedReward: the zero-amount tiered fallback in usd",
+            "kind": "format-estimated-reward",
+            "reward": {
+                "payoutType": "tiered",
+                "tierField": "purchase.amount",
+                "tiers": [
+                    {
+                        "minValue": 0,
+                        "maxValue": 50,
+                        "amount": {
+                            "amount": 0,
+                            "eurAmount": 0,
+                            "usdAmount": 0,
+                            "gbpAmount": 0
+                        }
+                    },
+                    {
+                        "minValue": 50,
+                        "amount": {
+                            "amount": 0,
+                            "eurAmount": 0,
+                            "usdAmount": 0,
+                            "gbpAmount": 0
+                        }
+                    }
+                ]
+            },
+            "currency": "usd",
+            "formatted": "$0",
+            "formattedCodepoints": [
+                "U+0024",
+                "U+0030"
+            ]
+        },
+        {
+            "name": "hide-missing-reward",
+            "description": "formatRewardOrHide: no reward at all is hidden",
+            "kind": "format-reward-or-hide",
+            "reward": null,
+            "currency": "eur",
+            "formatted": null,
+            "formattedCodepoints": null
+        },
+        {
+            "name": "hide-zero-fixed",
+            "description": "formatRewardOrHide: a fixed reward worth 0 is hidden",
+            "kind": "format-reward-or-hide",
+            "reward": {
+                "payoutType": "fixed",
+                "amount": {
+                    "amount": 0,
+                    "eurAmount": 0,
+                    "usdAmount": 0,
+                    "gbpAmount": 0
+                }
+            },
+            "currency": "eur",
+            "formatted": null,
+            "formattedCodepoints": null
+        },
+        {
+            "name": "hide-zero-tiered",
+            "description": "formatRewardOrHide: an all-zero tiered reward is hidden",
+            "kind": "format-reward-or-hide",
+            "reward": {
+                "payoutType": "tiered",
+                "tierField": "purchase.amount",
+                "tiers": [
+                    {
+                        "minValue": 0,
+                        "maxValue": 50,
+                        "amount": {
+                            "amount": 0,
+                            "eurAmount": 0,
+                            "usdAmount": 0,
+                            "gbpAmount": 0
+                        }
+                    },
+                    {
+                        "minValue": 50,
+                        "amount": {
+                            "amount": 0,
+                            "eurAmount": 0,
+                            "usdAmount": 0,
+                            "gbpAmount": 0
+                        }
+                    }
+                ]
+            },
+            "currency": "eur",
+            "formatted": null,
+            "formattedCodepoints": null
+        },
+        {
+            "name": "show-fixed",
+            "description": "formatRewardOrHide: a fixed reward carrying money value is shown",
+            "kind": "format-reward-or-hide",
+            "reward": {
+                "payoutType": "fixed",
+                "amount": {
+                    "amount": 12,
+                    "eurAmount": 12,
+                    "usdAmount": 13.2,
+                    "gbpAmount": 8.5
+                }
+            },
+            "currency": "eur",
+            "formatted": "12\u00a0\u20ac",
+            "formattedCodepoints": [
+                "U+0031",
+                "U+0032",
+                "U+00A0",
+                "U+20AC"
+            ]
+        },
+        {
+            "name": "show-uncapped-percentage",
+            "description": "formatRewardOrHide: an uncapped percentage is shown even though it has no money value",
+            "kind": "format-reward-or-hide",
+            "reward": {
+                "payoutType": "percentage",
+                "percent": 8,
+                "percentOf": "purchase_amount"
+            },
+            "currency": "eur",
+            "formatted": "8 %",
+            "formattedCodepoints": [
+                "U+0038",
+                "U+0020",
+                "U+0025"
+            ]
+        },
+        {
+            "name": "show-capped-percentage",
+            "description": "formatRewardOrHide: a capped percentage is shown as its percent",
+            "kind": "format-reward-or-hide",
+            "reward": {
+                "payoutType": "percentage",
+                "percent": 10,
+                "percentOf": "purchase_amount",
+                "maxAmount": {
+                    "amount": 50,
+                    "eurAmount": 50,
+                    "usdAmount": 55,
+                    "gbpAmount": 42.5
+                }
+            },
+            "currency": "eur",
+            "formatted": "10 %",
+            "formattedCodepoints": [
+                "U+0031",
+                "U+0030",
+                "U+0020",
+                "U+0025"
+            ]
+        },
+        {
+            "name": "show-percent-only-tiered",
+            "description": "formatRewardOrHide: a percent-only tiered reward is shown, not hidden",
+            "kind": "format-reward-or-hide",
+            "reward": {
+                "payoutType": "tiered",
+                "tierField": "purchase.amount",
+                "tiers": [
+                    {
+                        "minValue": 0,
+                        "maxValue": 50,
+                        "percent": 5
+                    },
+                    {
+                        "minValue": 50,
+                        "percent": 12
+                    }
+                ]
+            },
+            "currency": "eur",
+            "formatted": "12 %",
+            "formattedCodepoints": [
+                "U+0031",
+                "U+0032",
+                "U+0020",
+                "U+0025"
+            ]
+        },
+        {
+            "name": "value-fixed-eur",
+            "description": "getRewardValue: fixed reward through the eur key",
+            "kind": "reward-value",
+            "reward": {
+                "payoutType": "fixed",
+                "amount": {
+                    "amount": 12,
+                    "eurAmount": 12,
+                    "usdAmount": 13.2,
+                    "gbpAmount": 8.5
+                }
+            },
+            "currency": "eur",
+            "amountKey": "eurAmount",
+            "value": 12,
+            "maxPercent": 0,
+            "rank": 12
+        },
+        {
+            "name": "value-fixed-usd",
+            "description": "getRewardValue: the same fixed reward through the usd key",
+            "kind": "reward-value",
+            "reward": {
+                "payoutType": "fixed",
+                "amount": {
+                    "amount": 12,
+                    "eurAmount": 12,
+                    "usdAmount": 13.2,
+                    "gbpAmount": 8.5
+                }
+            },
+            "currency": "usd",
+            "amountKey": "usdAmount",
+            "value": 13.2,
+            "maxPercent": 0,
+            "rank": 13.2
+        },
+        {
+            "name": "value-fixed-gbp",
+            "description": "getRewardValue: the same fixed reward through the gbp key",
+            "kind": "reward-value",
+            "reward": {
+                "payoutType": "fixed",
+                "amount": {
+                    "amount": 12,
+                    "eurAmount": 12,
+                    "usdAmount": 13.2,
+                    "gbpAmount": 8.5
+                }
+            },
+            "currency": "gbp",
+            "amountKey": "gbpAmount",
+            "value": 8.5,
+            "maxPercent": 0,
+            "rank": 8.5
+        },
+        {
+            "name": "value-fixed-zero",
+            "description": "getRewardRank: a zero-value fixed reward ranks exactly 0",
+            "kind": "reward-value",
+            "reward": {
+                "payoutType": "fixed",
+                "amount": {
+                    "amount": 0,
+                    "eurAmount": 0,
+                    "usdAmount": 0,
+                    "gbpAmount": 0
+                }
+            },
+            "currency": "eur",
+            "amountKey": "eurAmount",
+            "value": 0,
+            "maxPercent": 0,
+            "rank": 0
+        },
+        {
+            "name": "value-percentage-capped",
+            "description": "getRewardValue: a capped percentage is worth its cap",
+            "kind": "reward-value",
+            "reward": {
+                "payoutType": "percentage",
+                "percent": 10,
+                "percentOf": "purchase_amount",
+                "maxAmount": {
+                    "amount": 50,
+                    "eurAmount": 50,
+                    "usdAmount": 55,
+                    "gbpAmount": 42.5
+                }
+            },
+            "currency": "eur",
+            "amountKey": "eurAmount",
+            "value": 50,
+            "maxPercent": 10,
+            "rank": 50
+        },
+        {
+            "name": "value-percentage-uncapped",
+            "description": "getRewardRank: an uncapped percentage is worth 0 but ranks at percent * PERCENT_ONLY_RANK_WEIGHT (1e-6)",
+            "kind": "reward-value",
+            "reward": {
+                "payoutType": "percentage",
+                "percent": 8,
+                "percentOf": "purchase_amount"
+            },
+            "currency": "eur",
+            "amountKey": "eurAmount",
+            "value": 0,
+            "maxPercent": 8,
+            "rank": 0.000008
+        },
+        {
+            "name": "value-tiered-amounts",
+            "description": "getRewardValue: tiered takes the richest token tier",
+            "kind": "reward-value",
+            "reward": {
+                "payoutType": "tiered",
+                "tierField": "purchase.amount",
+                "tiers": [
+                    {
+                        "minValue": 0,
+                        "maxValue": 50,
+                        "amount": {
+                            "amount": 2,
+                            "eurAmount": 2,
+                            "usdAmount": 2.2,
+                            "gbpAmount": 1.7
+                        }
+                    },
+                    {
+                        "minValue": 50,
+                        "maxValue": 200,
+                        "amount": {
+                            "amount": 8,
+                            "eurAmount": 8,
+                            "usdAmount": 8.8,
+                            "gbpAmount": 6.9
+                        }
+                    },
+                    {
+                        "minValue": 200,
+                        "amount": {
+                            "amount": 30,
+                            "eurAmount": 30,
+                            "usdAmount": 33,
+                            "gbpAmount": 25.5
+                        }
+                    }
+                ]
+            },
+            "currency": "eur",
+            "amountKey": "eurAmount",
+            "value": 30,
+            "maxPercent": 0,
+            "rank": 30
+        },
+        {
+            "name": "value-tiered-amounts-gbp",
+            "description": "getRewardValue: the same tiered reward through the gbp key",
+            "kind": "reward-value",
+            "reward": {
+                "payoutType": "tiered",
+                "tierField": "purchase.amount",
+                "tiers": [
+                    {
+                        "minValue": 0,
+                        "maxValue": 50,
+                        "amount": {
+                            "amount": 2,
+                            "eurAmount": 2,
+                            "usdAmount": 2.2,
+                            "gbpAmount": 1.7
+                        }
+                    },
+                    {
+                        "minValue": 50,
+                        "maxValue": 200,
+                        "amount": {
+                            "amount": 8,
+                            "eurAmount": 8,
+                            "usdAmount": 8.8,
+                            "gbpAmount": 6.9
+                        }
+                    },
+                    {
+                        "minValue": 200,
+                        "amount": {
+                            "amount": 30,
+                            "eurAmount": 30,
+                            "usdAmount": 33,
+                            "gbpAmount": 25.5
+                        }
+                    }
+                ]
+            },
+            "currency": "gbp",
+            "amountKey": "gbpAmount",
+            "value": 25.5,
+            "maxPercent": 0,
+            "rank": 25.5
+        },
+        {
+            "name": "value-tiered-percent-only",
+            "description": "getRewardRank: a percent-only tiered reward ranks at maxPercent * 1e-6",
+            "kind": "reward-value",
+            "reward": {
+                "payoutType": "tiered",
+                "tierField": "purchase.amount",
+                "tiers": [
+                    {
+                        "minValue": 0,
+                        "maxValue": 50,
+                        "percent": 5
+                    },
+                    {
+                        "minValue": 50,
+                        "percent": 12
+                    }
+                ]
+            },
+            "currency": "eur",
+            "amountKey": "eurAmount",
+            "value": 0,
+            "maxPercent": 12,
+            "rank": 0.000012
+        },
+        {
+            "name": "value-tiered-mixed",
+            "description": "getRewardValue: a mixed tiered reward ignores percent tiers for its money value",
+            "kind": "reward-value",
+            "reward": {
+                "payoutType": "tiered",
+                "tierField": "purchase.matchedAmount",
+                "tiers": [
+                    {
+                        "minValue": 0,
+                        "maxValue": 100,
+                        "percent": 4
+                    },
+                    {
+                        "minValue": 100,
+                        "amount": {
+                            "amount": 15,
+                            "eurAmount": 15,
+                            "usdAmount": 16.5,
+                            "gbpAmount": 12.75
+                        }
+                    }
+                ]
+            },
+            "currency": "eur",
+            "amountKey": "eurAmount",
+            "value": 15,
+            "maxPercent": 4,
+            "rank": 15
+        },
+        {
+            "name": "value-tiered-zero",
+            "description": "getRewardRank: an all-zero tiered reward ranks 0 and is therefore hidden",
+            "kind": "reward-value",
+            "reward": {
+                "payoutType": "tiered",
+                "tierField": "purchase.amount",
+                "tiers": [
+                    {
+                        "minValue": 0,
+                        "maxValue": 50,
+                        "amount": {
+                            "amount": 0,
+                            "eurAmount": 0,
+                            "usdAmount": 0,
+                            "gbpAmount": 0
+                        }
+                    },
+                    {
+                        "minValue": 50,
+                        "amount": {
+                            "amount": 0,
+                            "eurAmount": 0,
+                            "usdAmount": 0,
+                            "gbpAmount": 0
+                        }
+                    }
+                ]
+            },
+            "currency": "eur",
+            "amountKey": "eurAmount",
+            "value": 0,
+            "maxPercent": 0,
+            "rank": 0
+        },
+        {
+            "name": "select-campaign-live-richest",
+            "description": "selectDisplayCampaign: picks the richest live campaign, skipping the expired one",
+            "kind": "select-display-campaign",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-modest",
+                    "name": "campaign-modest",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 5,
+                            "eurAmount": 5,
+                            "usdAmount": 5.5,
+                            "gbpAmount": 9.4
+                        }
+                    },
+                    "referee": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 2,
+                            "eurAmount": 2,
+                            "usdAmount": 2.2,
+                            "gbpAmount": 1.7
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-rich",
+                    "name": "campaign-rich",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 12,
+                            "eurAmount": 12,
+                            "usdAmount": 13.2,
+                            "gbpAmount": 8.5
+                        }
+                    },
+                    "conditions": [
+                        {
+                            "field": "purchase.amount",
+                            "operator": "gte",
+                            "value": 30
+                        }
+                    ],
+                    "expiresAt": null,
+                    "defaultLockupSeconds": 172800
+                },
+                {
+                    "campaignId": "campaign-percent-only",
+                    "name": "campaign-percent-only",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "percentage",
+                        "percent": 8,
+                        "percentOf": "purchase_amount"
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-expired",
+                    "name": "campaign-expired",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 100,
+                            "eurAmount": 100,
+                            "usdAmount": 100,
+                            "gbpAmount": 100
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": "2024-12-01T00:00:00.000Z"
+                },
+                {
+                    "campaignId": "campaign-referral-side-channel",
+                    "name": "campaign-referral-side-channel",
+                    "interactionTypeKey": "referral",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 3,
+                            "eurAmount": 3,
+                            "usdAmount": 3,
+                            "gbpAmount": 3
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "selected": {
+                "campaignId": "campaign-rich",
+                "status": "live",
+                "startsAtIso": null,
+                "matchedProductIds": null
+            }
+        },
+        {
+            "name": "select-campaign-live-richest-gbp",
+            "description": "selectDisplayCampaign: ranking in gbp flips the winner, because the amount key differs",
+            "kind": "select-display-campaign",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-modest",
+                    "name": "campaign-modest",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 5,
+                            "eurAmount": 5,
+                            "usdAmount": 5.5,
+                            "gbpAmount": 9.4
+                        }
+                    },
+                    "referee": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 2,
+                            "eurAmount": 2,
+                            "usdAmount": 2.2,
+                            "gbpAmount": 1.7
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-rich",
+                    "name": "campaign-rich",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 12,
+                            "eurAmount": 12,
+                            "usdAmount": 13.2,
+                            "gbpAmount": 8.5
+                        }
+                    },
+                    "conditions": [
+                        {
+                            "field": "purchase.amount",
+                            "operator": "gte",
+                            "value": 30
+                        }
+                    ],
+                    "expiresAt": null,
+                    "defaultLockupSeconds": 172800
+                },
+                {
+                    "campaignId": "campaign-percent-only",
+                    "name": "campaign-percent-only",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "percentage",
+                        "percent": 8,
+                        "percentOf": "purchase_amount"
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-expired",
+                    "name": "campaign-expired",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 100,
+                            "eurAmount": 100,
+                            "usdAmount": 100,
+                            "gbpAmount": 100
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": "2024-12-01T00:00:00.000Z"
+                },
+                {
+                    "campaignId": "campaign-referral-side-channel",
+                    "name": "campaign-referral-side-channel",
+                    "interactionTypeKey": "referral",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 3,
+                            "eurAmount": 3,
+                            "usdAmount": 3,
+                            "gbpAmount": 3
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": "gbp",
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "selected": {
+                "campaignId": "campaign-modest",
+                "status": "live",
+                "startsAtIso": null,
+                "matchedProductIds": null
+            }
+        },
+        {
+            "name": "select-campaign-referee-audience",
+            "description": "selectDisplayCampaign: ranking by the referee side ignores campaigns with no referee reward",
+            "kind": "select-display-campaign",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-modest",
+                    "name": "campaign-modest",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 5,
+                            "eurAmount": 5,
+                            "usdAmount": 5.5,
+                            "gbpAmount": 9.4
+                        }
+                    },
+                    "referee": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 2,
+                            "eurAmount": 2,
+                            "usdAmount": 2.2,
+                            "gbpAmount": 1.7
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-rich",
+                    "name": "campaign-rich",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 12,
+                            "eurAmount": 12,
+                            "usdAmount": 13.2,
+                            "gbpAmount": 8.5
+                        }
+                    },
+                    "conditions": [
+                        {
+                            "field": "purchase.amount",
+                            "operator": "gte",
+                            "value": 30
+                        }
+                    ],
+                    "expiresAt": null,
+                    "defaultLockupSeconds": 172800
+                },
+                {
+                    "campaignId": "campaign-percent-only",
+                    "name": "campaign-percent-only",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "percentage",
+                        "percent": 8,
+                        "percentOf": "purchase_amount"
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-expired",
+                    "name": "campaign-expired",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 100,
+                            "eurAmount": 100,
+                            "usdAmount": 100,
+                            "gbpAmount": 100
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": "2024-12-01T00:00:00.000Z"
+                },
+                {
+                    "campaignId": "campaign-referral-side-channel",
+                    "name": "campaign-referral-side-channel",
+                    "interactionTypeKey": "referral",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 3,
+                            "eurAmount": 3,
+                            "usdAmount": 3,
+                            "gbpAmount": 3
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": "referee",
+                "targetInteraction": null,
+                "products": null
+            },
+            "selected": {
+                "campaignId": "campaign-modest",
+                "status": "live",
+                "startsAtIso": null,
+                "matchedProductIds": null
+            }
+        },
+        {
+            "name": "select-campaign-target-interaction",
+            "description": "selectDisplayCampaign: targetInteraction filters down to the referral campaign",
+            "kind": "select-display-campaign",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-modest",
+                    "name": "campaign-modest",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 5,
+                            "eurAmount": 5,
+                            "usdAmount": 5.5,
+                            "gbpAmount": 9.4
+                        }
+                    },
+                    "referee": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 2,
+                            "eurAmount": 2,
+                            "usdAmount": 2.2,
+                            "gbpAmount": 1.7
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-rich",
+                    "name": "campaign-rich",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 12,
+                            "eurAmount": 12,
+                            "usdAmount": 13.2,
+                            "gbpAmount": 8.5
+                        }
+                    },
+                    "conditions": [
+                        {
+                            "field": "purchase.amount",
+                            "operator": "gte",
+                            "value": 30
+                        }
+                    ],
+                    "expiresAt": null,
+                    "defaultLockupSeconds": 172800
+                },
+                {
+                    "campaignId": "campaign-percent-only",
+                    "name": "campaign-percent-only",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "percentage",
+                        "percent": 8,
+                        "percentOf": "purchase_amount"
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-expired",
+                    "name": "campaign-expired",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 100,
+                            "eurAmount": 100,
+                            "usdAmount": 100,
+                            "gbpAmount": 100
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": "2024-12-01T00:00:00.000Z"
+                },
+                {
+                    "campaignId": "campaign-referral-side-channel",
+                    "name": "campaign-referral-side-channel",
+                    "interactionTypeKey": "referral",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 3,
+                            "eurAmount": 3,
+                            "usdAmount": 3,
+                            "gbpAmount": 3
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": "referral",
+                "products": null
+            },
+            "selected": {
+                "campaignId": "campaign-referral-side-channel",
+                "status": "live",
+                "startsAtIso": null,
+                "matchedProductIds": null
+            }
+        },
+        {
+            "name": "select-campaign-empty",
+            "description": "selectDisplayCampaign: an empty candidate set selects nothing",
+            "kind": "select-display-campaign",
+            "campaigns": [],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "selected": null
+        },
+        {
+            "name": "select-campaign-all-expired",
+            "description": "selectDisplayCampaign: every candidate expired at the pinned now, so nothing is selected",
+            "kind": "select-display-campaign",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-expired",
+                    "name": "campaign-expired",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 100,
+                            "eurAmount": 100,
+                            "usdAmount": 100,
+                            "gbpAmount": 100
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": "2024-12-01T00:00:00.000Z"
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "selected": null
+        },
+        {
+            "name": "select-campaign-upcoming-soonest",
+            "description": "selectDisplayCampaign: with no live campaign it falls back to the SOONEST upcoming, not the richest",
+            "kind": "select-display-campaign",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-upcoming-late-but-rich",
+                    "name": "campaign-upcoming-late-but-rich",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 90,
+                            "eurAmount": 90,
+                            "usdAmount": 90,
+                            "gbpAmount": 90
+                        }
+                    },
+                    "conditions": [
+                        {
+                            "field": "time.timestamp",
+                            "operator": "gte",
+                            "value": 1740787200
+                        }
+                    ],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-upcoming-soonest",
+                    "name": "campaign-upcoming-soonest",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 50,
+                            "eurAmount": 50,
+                            "usdAmount": 50,
+                            "gbpAmount": 50
+                        }
+                    },
+                    "conditions": [
+                        {
+                            "field": "time.timestamp",
+                            "operator": "gte",
+                            "value": 1738368000
+                        }
+                    ],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "selected": {
+                "campaignId": "campaign-upcoming-soonest",
+                "status": "upcoming",
+                "startsAtIso": "2025-02-01T00:00:00.000Z",
+                "matchedProductIds": null
+            }
+        },
+        {
+            "name": "select-campaign-live-beats-richer-upcoming",
+            "description": "selectDisplayCampaign: a modest live campaign beats a far richer upcoming one",
+            "kind": "select-display-campaign",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-upcoming-late-but-rich",
+                    "name": "campaign-upcoming-late-but-rich",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 90,
+                            "eurAmount": 90,
+                            "usdAmount": 90,
+                            "gbpAmount": 90
+                        }
+                    },
+                    "conditions": [
+                        {
+                            "field": "time.timestamp",
+                            "operator": "gte",
+                            "value": 1740787200
+                        }
+                    ],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-upcoming-soonest",
+                    "name": "campaign-upcoming-soonest",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 50,
+                            "eurAmount": 50,
+                            "usdAmount": 50,
+                            "gbpAmount": 50
+                        }
+                    },
+                    "conditions": [
+                        {
+                            "field": "time.timestamp",
+                            "operator": "gte",
+                            "value": 1738368000
+                        }
+                    ],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-modest",
+                    "name": "campaign-modest",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 5,
+                            "eurAmount": 5,
+                            "usdAmount": 5.5,
+                            "gbpAmount": 9.4
+                        }
+                    },
+                    "referee": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 2,
+                            "eurAmount": 2,
+                            "usdAmount": 2.2,
+                            "gbpAmount": 1.7
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "selected": {
+                "campaignId": "campaign-modest",
+                "status": "live",
+                "startsAtIso": null,
+                "matchedProductIds": null
+            }
+        },
+        {
+            "name": "select-campaign-product-match-wins",
+            "description": "selectDisplayCampaign: a product-matching scoped campaign outranks a richer scoped one that matches nothing",
+            "kind": "select-display-campaign",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-scoped-rich-no-match",
+                    "name": "campaign-scoped-rich-no-match",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 20,
+                            "eurAmount": 20,
+                            "usdAmount": 20,
+                            "gbpAmount": 20
+                        }
+                    },
+                    "conditions": [],
+                    "productScope": [
+                        {
+                            "field": "sku",
+                            "operator": "eq",
+                            "value": "SKU-NOPE"
+                        }
+                    ],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-scoped-modest-match",
+                    "name": "campaign-scoped-modest-match",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 6,
+                            "eurAmount": 6,
+                            "usdAmount": 6,
+                            "gbpAmount": 6
+                        }
+                    },
+                    "conditions": [],
+                    "productScope": [
+                        {
+                            "field": "sku",
+                            "operator": "eq",
+                            "value": "SKU-42"
+                        }
+                    ],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": [
+                    {
+                        "productId": "p-1",
+                        "sku": "SKU-42",
+                        "name": "Scoped item",
+                        "quantity": 1
+                    },
+                    {
+                        "productId": "p-2",
+                        "sku": "SKU-99",
+                        "name": "Other item",
+                        "quantity": 2
+                    }
+                ]
+            },
+            "selected": {
+                "campaignId": "campaign-scoped-modest-match",
+                "status": "live",
+                "startsAtIso": null,
+                "matchedProductIds": [
+                    "p-1"
+                ]
+            }
+        },
+        {
+            "name": "select-campaign-no-product-context",
+            "description": "selectDisplayCampaign: without product context the grouping is inert and the richer campaign wins",
+            "kind": "select-display-campaign",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-scoped-rich-no-match",
+                    "name": "campaign-scoped-rich-no-match",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 20,
+                            "eurAmount": 20,
+                            "usdAmount": 20,
+                            "gbpAmount": 20
+                        }
+                    },
+                    "conditions": [],
+                    "productScope": [
+                        {
+                            "field": "sku",
+                            "operator": "eq",
+                            "value": "SKU-NOPE"
+                        }
+                    ],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-scoped-modest-match",
+                    "name": "campaign-scoped-modest-match",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 6,
+                            "eurAmount": 6,
+                            "usdAmount": 6,
+                            "gbpAmount": 6
+                        }
+                    },
+                    "conditions": [],
+                    "productScope": [
+                        {
+                            "field": "sku",
+                            "operator": "eq",
+                            "value": "SKU-42"
+                        }
+                    ],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "selected": {
+                "campaignId": "campaign-scoped-rich-no-match",
+                "status": "live",
+                "startsAtIso": null,
+                "matchedProductIds": null
+            }
+        },
+        {
+            "name": "best-reward-live-richest",
+            "description": "selectBestReward: richest live campaign, with its minimum purchase and lockup",
+            "kind": "select-best-reward",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-modest",
+                    "name": "campaign-modest",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 5,
+                            "eurAmount": 5,
+                            "usdAmount": 5.5,
+                            "gbpAmount": 9.4
+                        }
+                    },
+                    "referee": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 2,
+                            "eurAmount": 2,
+                            "usdAmount": 2.2,
+                            "gbpAmount": 1.7
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-rich",
+                    "name": "campaign-rich",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 12,
+                            "eurAmount": 12,
+                            "usdAmount": 13.2,
+                            "gbpAmount": 8.5
+                        }
+                    },
+                    "conditions": [
+                        {
+                            "field": "purchase.amount",
+                            "operator": "gte",
+                            "value": 30
+                        }
+                    ],
+                    "expiresAt": null,
+                    "defaultLockupSeconds": 172800
+                },
+                {
+                    "campaignId": "campaign-percent-only",
+                    "name": "campaign-percent-only",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "percentage",
+                        "percent": 8,
+                        "percentOf": "purchase_amount"
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-expired",
+                    "name": "campaign-expired",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 100,
+                            "eurAmount": 100,
+                            "usdAmount": 100,
+                            "gbpAmount": 100
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": "2024-12-01T00:00:00.000Z"
+                },
+                {
+                    "campaignId": "campaign-referral-side-channel",
+                    "name": "campaign-referral-side-channel",
+                    "interactionTypeKey": "referral",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 3,
+                            "eurAmount": 3,
+                            "usdAmount": 3,
+                            "gbpAmount": 3
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "best": {
+                "formatted": "12\u00a0\u20ac",
+                "formattedCodepoints": [
+                    "U+0031",
+                    "U+0032",
+                    "U+00A0",
+                    "U+20AC"
+                ],
+                "payoutType": "fixed",
+                "minPurchaseAmount": "30\u00a0\u20ac",
+                "minPurchaseAmountCodepoints": [
+                    "U+0033",
+                    "U+0030",
+                    "U+00A0",
+                    "U+20AC"
+                ],
+                "minPurchaseValue": 30,
+                "lockupDurationDays": 2,
+                "isProductScoped": false,
+                "matchedProductIds": null
+            }
+        },
+        {
+            "name": "best-reward-live-richest-gbp",
+            "description": "selectBestReward: the gbp ranking picks a different campaign and formats in en-GB",
+            "kind": "select-best-reward",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-modest",
+                    "name": "campaign-modest",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 5,
+                            "eurAmount": 5,
+                            "usdAmount": 5.5,
+                            "gbpAmount": 9.4
+                        }
+                    },
+                    "referee": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 2,
+                            "eurAmount": 2,
+                            "usdAmount": 2.2,
+                            "gbpAmount": 1.7
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-rich",
+                    "name": "campaign-rich",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 12,
+                            "eurAmount": 12,
+                            "usdAmount": 13.2,
+                            "gbpAmount": 8.5
+                        }
+                    },
+                    "conditions": [
+                        {
+                            "field": "purchase.amount",
+                            "operator": "gte",
+                            "value": 30
+                        }
+                    ],
+                    "expiresAt": null,
+                    "defaultLockupSeconds": 172800
+                },
+                {
+                    "campaignId": "campaign-percent-only",
+                    "name": "campaign-percent-only",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "percentage",
+                        "percent": 8,
+                        "percentOf": "purchase_amount"
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-expired",
+                    "name": "campaign-expired",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 100,
+                            "eurAmount": 100,
+                            "usdAmount": 100,
+                            "gbpAmount": 100
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": "2024-12-01T00:00:00.000Z"
+                },
+                {
+                    "campaignId": "campaign-referral-side-channel",
+                    "name": "campaign-referral-side-channel",
+                    "interactionTypeKey": "referral",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 3,
+                            "eurAmount": 3,
+                            "usdAmount": 3,
+                            "gbpAmount": 3
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": "gbp",
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "best": {
+                "formatted": "\u00a39",
+                "formattedCodepoints": [
+                    "U+00A3",
+                    "U+0039"
+                ],
+                "payoutType": "fixed",
+                "minPurchaseAmount": null,
+                "minPurchaseAmountCodepoints": null,
+                "minPurchaseValue": null,
+                "lockupDurationDays": null,
+                "isProductScoped": false,
+                "matchedProductIds": null
+            }
+        },
+        {
+            "name": "best-reward-referee-audience",
+            "description": "selectBestReward: the referee side of the only campaign that defines one",
+            "kind": "select-best-reward",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-modest",
+                    "name": "campaign-modest",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 5,
+                            "eurAmount": 5,
+                            "usdAmount": 5.5,
+                            "gbpAmount": 9.4
+                        }
+                    },
+                    "referee": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 2,
+                            "eurAmount": 2,
+                            "usdAmount": 2.2,
+                            "gbpAmount": 1.7
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-rich",
+                    "name": "campaign-rich",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 12,
+                            "eurAmount": 12,
+                            "usdAmount": 13.2,
+                            "gbpAmount": 8.5
+                        }
+                    },
+                    "conditions": [
+                        {
+                            "field": "purchase.amount",
+                            "operator": "gte",
+                            "value": 30
+                        }
+                    ],
+                    "expiresAt": null,
+                    "defaultLockupSeconds": 172800
+                },
+                {
+                    "campaignId": "campaign-percent-only",
+                    "name": "campaign-percent-only",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "percentage",
+                        "percent": 8,
+                        "percentOf": "purchase_amount"
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-expired",
+                    "name": "campaign-expired",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 100,
+                            "eurAmount": 100,
+                            "usdAmount": 100,
+                            "gbpAmount": 100
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": "2024-12-01T00:00:00.000Z"
+                },
+                {
+                    "campaignId": "campaign-referral-side-channel",
+                    "name": "campaign-referral-side-channel",
+                    "interactionTypeKey": "referral",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 3,
+                            "eurAmount": 3,
+                            "usdAmount": 3,
+                            "gbpAmount": 3
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": "referee",
+                "targetInteraction": null,
+                "products": null
+            },
+            "best": {
+                "formatted": "2\u00a0\u20ac",
+                "formattedCodepoints": [
+                    "U+0032",
+                    "U+00A0",
+                    "U+20AC"
+                ],
+                "payoutType": "fixed",
+                "minPurchaseAmount": null,
+                "minPurchaseAmountCodepoints": null,
+                "minPurchaseValue": null,
+                "lockupDurationDays": null,
+                "isProductScoped": false,
+                "matchedProductIds": null
+            }
+        },
+        {
+            "name": "best-reward-percentage-only",
+            "description": "selectBestReward: a percentage-only candidate set still yields a percent string",
+            "kind": "select-best-reward",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-percent-only",
+                    "name": "campaign-percent-only",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "percentage",
+                        "percent": 8,
+                        "percentOf": "purchase_amount"
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-zero-fixed",
+                    "name": "campaign-zero-fixed",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 0,
+                            "eurAmount": 0,
+                            "usdAmount": 0,
+                            "gbpAmount": 0
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "best": {
+                "formatted": "8 %",
+                "formattedCodepoints": [
+                    "U+0038",
+                    "U+0020",
+                    "U+0025"
+                ],
+                "payoutType": "percentage",
+                "minPurchaseAmount": null,
+                "minPurchaseAmountCodepoints": null,
+                "minPurchaseValue": null,
+                "lockupDurationDays": null,
+                "isProductScoped": false,
+                "matchedProductIds": null
+            }
+        },
+        {
+            "name": "best-reward-all-zero-value",
+            "description": "selectBestReward: every candidate is worth 0, so there is nothing worth showing",
+            "kind": "select-best-reward",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-zero-fixed",
+                    "name": "campaign-zero-fixed",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 0,
+                            "eurAmount": 0,
+                            "usdAmount": 0,
+                            "gbpAmount": 0
+                        }
+                    },
+                    "conditions": [],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "best": null
+        },
+        {
+            "name": "best-reward-no-audience-reward",
+            "description": "selectBestReward: the selected campaign has no reward on the requested side",
+            "kind": "select-best-reward",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-referrer-only",
+                    "name": "campaign-referrer-only",
+                    "interactionTypeKey": "purchase",
+                    "conditions": [],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "best": null
+        },
+        {
+            "name": "best-reward-upcoming",
+            "description": "selectBestReward: resolves the soonest upcoming campaign when none is live",
+            "kind": "select-best-reward",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-upcoming-late-but-rich",
+                    "name": "campaign-upcoming-late-but-rich",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 90,
+                            "eurAmount": 90,
+                            "usdAmount": 90,
+                            "gbpAmount": 90
+                        }
+                    },
+                    "conditions": [
+                        {
+                            "field": "time.timestamp",
+                            "operator": "gte",
+                            "value": 1740787200
+                        }
+                    ],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-upcoming-soonest",
+                    "name": "campaign-upcoming-soonest",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 50,
+                            "eurAmount": 50,
+                            "usdAmount": 50,
+                            "gbpAmount": 50
+                        }
+                    },
+                    "conditions": [
+                        {
+                            "field": "time.timestamp",
+                            "operator": "gte",
+                            "value": 1738368000
+                        }
+                    ],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "best": {
+                "formatted": "50\u00a0\u20ac",
+                "formattedCodepoints": [
+                    "U+0035",
+                    "U+0030",
+                    "U+00A0",
+                    "U+20AC"
+                ],
+                "payoutType": "fixed",
+                "minPurchaseAmount": null,
+                "minPurchaseAmountCodepoints": null,
+                "minPurchaseValue": null,
+                "lockupDurationDays": null,
+                "isProductScoped": false,
+                "matchedProductIds": null
+            }
+        },
+        {
+            "name": "best-reward-product-scoped",
+            "description": "selectBestReward: a scoped winner reports isProductScoped and its matched products",
+            "kind": "select-best-reward",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-scoped-rich-no-match",
+                    "name": "campaign-scoped-rich-no-match",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 20,
+                            "eurAmount": 20,
+                            "usdAmount": 20,
+                            "gbpAmount": 20
+                        }
+                    },
+                    "conditions": [],
+                    "productScope": [
+                        {
+                            "field": "sku",
+                            "operator": "eq",
+                            "value": "SKU-NOPE"
+                        }
+                    ],
+                    "expiresAt": null
+                },
+                {
+                    "campaignId": "campaign-scoped-modest-match",
+                    "name": "campaign-scoped-modest-match",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "fixed",
+                        "amount": {
+                            "amount": 6,
+                            "eurAmount": 6,
+                            "usdAmount": 6,
+                            "gbpAmount": 6
+                        }
+                    },
+                    "conditions": [],
+                    "productScope": [
+                        {
+                            "field": "sku",
+                            "operator": "eq",
+                            "value": "SKU-42"
+                        }
+                    ],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": [
+                    {
+                        "productId": "p-1",
+                        "sku": "SKU-42",
+                        "name": "Scoped item",
+                        "quantity": 1
+                    },
+                    {
+                        "productId": "p-2",
+                        "sku": "SKU-99",
+                        "name": "Other item",
+                        "quantity": 2
+                    }
+                ]
+            },
+            "best": {
+                "formatted": "6\u00a0\u20ac",
+                "formattedCodepoints": [
+                    "U+0036",
+                    "U+00A0",
+                    "U+20AC"
+                ],
+                "payoutType": "fixed",
+                "minPurchaseAmount": null,
+                "minPurchaseAmountCodepoints": null,
+                "minPurchaseValue": null,
+                "lockupDurationDays": null,
+                "isProductScoped": true,
+                "matchedProductIds": [
+                    "p-1"
+                ]
+            }
+        },
+        {
+            "name": "best-reward-tiered",
+            "description": "selectBestReward: a tiered campaign reports payoutType tiered and its richest tier",
+            "kind": "select-best-reward",
+            "campaigns": [
+                {
+                    "campaignId": "campaign-tiered",
+                    "name": "campaign-tiered",
+                    "interactionTypeKey": "purchase",
+                    "referrer": {
+                        "payoutType": "tiered",
+                        "tierField": "purchase.amount",
+                        "tiers": [
+                            {
+                                "minValue": 0,
+                                "maxValue": 50,
+                                "amount": {
+                                    "amount": 2,
+                                    "eurAmount": 2,
+                                    "usdAmount": 2.2,
+                                    "gbpAmount": 1.7
+                                }
+                            },
+                            {
+                                "minValue": 50,
+                                "maxValue": 200,
+                                "amount": {
+                                    "amount": 8,
+                                    "eurAmount": 8,
+                                    "usdAmount": 8.8,
+                                    "gbpAmount": 6.9
+                                }
+                            },
+                            {
+                                "minValue": 200,
+                                "amount": {
+                                    "amount": 30,
+                                    "eurAmount": 30,
+                                    "usdAmount": 33,
+                                    "gbpAmount": 25.5
+                                }
+                            }
+                        ]
+                    },
+                    "conditions": [
+                        {
+                            "field": "purchase.amount",
+                            "operator": "gte",
+                            "value": 1500
+                        }
+                    ],
+                    "expiresAt": null
+                }
+            ],
+            "options": {
+                "nowIso": "2025-01-15T00:00:00.000Z",
+                "currency": null,
+                "audience": null,
+                "targetInteraction": null,
+                "products": null
+            },
+            "best": {
+                "formatted": "30\u00a0\u20ac",
+                "formattedCodepoints": [
+                    "U+0033",
+                    "U+0030",
+                    "U+00A0",
+                    "U+20AC"
+                ],
+                "payoutType": "tiered",
+                "minPurchaseAmount": "1\u202f500\u00a0\u20ac",
+                "minPurchaseAmountCodepoints": [
+                    "U+0031",
+                    "U+202F",
+                    "U+0035",
+                    "U+0030",
+                    "U+0030",
+                    "U+00A0",
+                    "U+20AC"
+                ],
+                "minPurchaseValue": 1500,
+                "lockupDurationDays": null,
+                "isProductScoped": false,
+                "matchedProductIds": null
+            }
+        }
+    ]
+}

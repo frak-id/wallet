@@ -16,8 +16,8 @@ export const StablecoinSchema = t.Union([
 ]);
 
 /**
- * `details` jsonb shape, explicitly typed per `kind` (billing-feature-plan.md
- * §3.2). VAT/fee breakdown and free-text notes live here (frozen at issue
+ * `details` jsonb shape, explicitly typed per `kind`. VAT/fee breakdown
+ * and free-text notes live here (frozen at issue
  * time) rather than as table columns.
  */
 const DepositDetailsSchema = t.Object({

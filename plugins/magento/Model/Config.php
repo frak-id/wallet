@@ -21,6 +21,14 @@ class Config
     private const XML_PATH_STORE_NAME = "general/store_information/name";
 
     /**
+     * Origins used when the admin URL fields are not both set. Mirrors the
+     * defaults in `etc/config.xml`; the getters stay null-returning so callers
+     * can tell a cleared field from a configured one.
+     */
+    public const DEFAULT_WALLET_URL = "https://wallet.frak.id";
+    public const DEFAULT_BACKEND_URL = "https://backend.frak.id";
+
+    /**
      * Initialize with Magento scope config
      *
      * @param ScopeConfigInterface $scopeConfig
@@ -106,6 +114,46 @@ class Config
     }
 
     /**
+     * Resolve the wallet + backend origin pair.
+     *
+     * Both-or-neither: a null means the merchant cleared that field, and
+     * honouring the surviving half would pair a custom origin with the other
+     * environment's default. Every consumer reads the pair from here so the
+     * page, the tracker and the webhook cannot disagree on the backend.
+     *
+     * @param int|null $storeId
+     * @return array{wallet: string, backend: string}
+     */
+    public function getEnvironment(?int $storeId = null): array
+    {
+        $wallet = $this->getWalletUrl($storeId);
+        $backend = $this->getBackendUrl($storeId);
+
+        if ($wallet === null || $backend === null) {
+            return [
+                "wallet" => self::DEFAULT_WALLET_URL,
+                "backend" => self::DEFAULT_BACKEND_URL,
+            ];
+        }
+
+        return ["wallet" => $wallet, "backend" => $backend];
+    }
+
+    /**
+     * Whether exactly one of the two origin fields is set.
+     *
+     * @param int|null $storeId
+     * @return bool
+     */
+    public function isEnvironmentHalfConfigured(?int $storeId = null): bool
+    {
+        $wallet = $this->getWalletUrl($storeId);
+        $backend = $this->getBackendUrl($storeId);
+
+        return ($wallet === null) !== ($backend === null);
+    }
+
+    /**
      * Get the SDK display language
      *
      * @param int|null $storeId
@@ -165,7 +213,11 @@ class Config
     }
 
     /**
-     * Read a string config value with empty-to-null normalization
+     * Read a string config value, normalising blank input to null.
+     *
+     * Trimmed first: the URL fields carry no `<validate>`, so a merchant who
+     * "clears" one by leaving a space would otherwise save a non-null value
+     * that every downstream guard reads as configured.
      *
      * @param string $path
      * @param int|null $storeId
@@ -178,6 +230,10 @@ class Config
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
+
+        if (is_string($value)) {
+            $value = trim($value);
+        }
 
         if ($value === null || $value === "") {
             return null;

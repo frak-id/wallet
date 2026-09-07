@@ -1,4 +1,5 @@
 import { getClientIdAsync } from "../config/clientId";
+import { sdkConfigStore } from "../config/sdkConfigStore";
 import { signProof } from "../identity/sign";
 import type { FrakClient } from "../types";
 import { withCache } from "../utils/cache";
@@ -30,13 +31,17 @@ export async function getMergeToken(
             // be produced, the call goes out as before. Signing lives inside
             // this closure so a cache hit performs no crypto.
             const anonymousId = await getClientIdAsync().catch(() => undefined);
-            const proof = anonymousId
-                ? await signProof({
-                      op: "frak-merge-v1",
-                      merchantId: client.config.metadata.merchantId ?? "",
-                      anonymousId,
-                  })
-                : null;
+            // The resolved id, not `config.metadata.merchantId`: the latter
+            // is often absent, and a non-UUID makes `signProof` return null.
+            const merchantId = await sdkConfigStore.resolveMerchantId();
+            const proof =
+                anonymousId && merchantId
+                    ? await signProof({
+                          op: "frak-merge-v1",
+                          merchantId,
+                          anonymousId,
+                      })
+                    : null;
 
             return client.request({
                 method: "frak_getMergeToken",

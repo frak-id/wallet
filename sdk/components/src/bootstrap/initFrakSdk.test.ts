@@ -42,7 +42,6 @@ describe.sequential("initFrakSdk", () => {
         window.FrakSetup = {
             config: {
                 domain: "example.com",
-                walletUrl: "https://wallet.frak.id",
             },
             client: undefined,
             core: undefined,

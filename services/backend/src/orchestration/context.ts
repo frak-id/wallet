@@ -31,6 +31,7 @@ import {
     IdentityMergeService,
     IdentityOrchestrator,
     IdentityWeightService,
+    InstallCredentialOrchestrator,
     RecoveryClaimOrchestrator,
     WalletMergeOrchestrator,
     WalletSessionOrchestrator,
@@ -251,6 +252,12 @@ const authenticatorLookupOrchestrator = new AuthenticatorLookupOrchestrator(
     IdentityContext.repositories.identity
 );
 
+const installCredentialOrchestrator = new InstallCredentialOrchestrator(
+    IdentityContext.repositories.identity,
+    PurchasesContext.repositories.purchase,
+    PurchasesContext.repositories.purchaseClaim
+);
+
 export namespace OrchestrationContext {
     export const orchestrators = {
         explorer: explorerOrchestrator,
@@ -273,6 +280,7 @@ export namespace OrchestrationContext {
         walletSession: walletSessionOrchestrator,
         recoveryClaim: recoveryClaimOrchestrator,
         authenticatorLookup: authenticatorLookupOrchestrator,
+        installCredential: installCredentialOrchestrator,
         pairing: pairingOrchestrator,
         pairingRouter: pairingRouterOrchestrator,
         takeAdsIngestion: takeAdsIngestionOrchestrator,

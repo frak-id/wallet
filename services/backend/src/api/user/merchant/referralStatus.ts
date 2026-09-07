@@ -43,5 +43,17 @@ export const merchantReferralStatusRoute = new Elysia().get(
         query: t.Object({
             merchantId: t.String({ format: "uuid" }),
         }),
+        response: {
+            200: t.Object({
+                isReferred: t.Boolean(),
+            }),
+            // `resolveSdkIdentity` only ever fails with 400 (client id given
+            // without a merchantId) or 401 (no usable identity header). Its
+            // error body carries no `code`, so `t.ErrorResponse` minus that
+            // field is the exact shape — declaring the full one would make
+            // Elysia reject every real error response with a 422.
+            400: t.Omit(t.ErrorResponse, ["code"]),
+            401: t.Omit(t.ErrorResponse, ["code"]),
+        },
     }
 );

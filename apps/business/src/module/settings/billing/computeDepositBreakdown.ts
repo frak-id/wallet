@@ -1,6 +1,6 @@
 /**
  * Client-side mirror of the backend deposit math
- * (`BillingComputationService.computeDeposit`, billing-feature-plan.md §4),
+ * (`BillingComputationService.computeDeposit`),
  * for a live, DISPLAY-ONLY preview in `AddDepositSheet`. The server recomputes
  * authoritatively on submit — these numbers only guide the operator and are
  * never persisted, so `number` arithmetic (rounded for display) is fine here

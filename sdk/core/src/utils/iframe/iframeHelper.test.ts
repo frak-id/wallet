@@ -17,6 +17,7 @@ import {
     expect,
     it,
 } from "../../../tests/vitest-fixtures";
+import { setEnvironment } from "../../config/environment";
 import type { FrakWalletSdkConfig } from "../../types";
 import {
     baseIframeProps,
@@ -60,6 +61,10 @@ describe("iframeHelper", () => {
         let createElementSpy: ReturnType<typeof vi.fn>;
 
         beforeEach(() => {
+            // The env is a page-level singleton that a config without `env`
+            // deliberately leaves alone, so each case has to state its own.
+            setEnvironment("prod");
+
             // Create mock iframe
             mockIframe = {
                 id: "",
@@ -117,9 +122,25 @@ describe("iframeHelper", () => {
             );
         });
 
-        it("should use config walletUrl when provided", async () => {
+        it("should use the named dev environment's wallet URL", async () => {
             const config: FrakWalletSdkConfig = {
-                walletUrl: "https://custom-wallet.com",
+                env: "dev",
+                metadata: { name: "Test" },
+            };
+
+            await createIframe({ config });
+
+            expect(mockIframe.src).toBe(
+                "https://wallet-dev.frak.id/listener?clientId=mock-client-id-for-test"
+            );
+        });
+
+        it("should use a custom environment's wallet URL", async () => {
+            const config: FrakWalletSdkConfig = {
+                env: {
+                    wallet: "https://custom-wallet.com",
+                    backend: "https://custom-backend.com",
+                },
                 metadata: { name: "Test" },
             };
 
@@ -127,30 +148,6 @@ describe("iframeHelper", () => {
 
             expect(mockIframe.src).toBe(
                 "https://custom-wallet.com/listener?clientId=mock-client-id-for-test"
-            );
-        });
-
-        it("should use deprecated walletBaseUrl when provided", async () => {
-            await createIframe({ walletBaseUrl: "https://legacy-wallet.com" });
-
-            expect(mockIframe.src).toBe(
-                "https://legacy-wallet.com/listener?clientId=mock-client-id-for-test"
-            );
-        });
-
-        it("should prefer config.walletUrl over walletBaseUrl", async () => {
-            const config: FrakWalletSdkConfig = {
-                walletUrl: "https://new-wallet.com",
-                metadata: { name: "Test" },
-            };
-
-            await createIframe({
-                walletBaseUrl: "https://old-wallet.com",
-                config,
-            });
-
-            expect(mockIframe.src).toBe(
-                "https://new-wallet.com/listener?clientId=mock-client-id-for-test"
             );
         });
 

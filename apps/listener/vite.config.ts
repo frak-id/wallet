@@ -8,7 +8,9 @@ import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import removeConsole from "vite-plugin-remove-console";
 import {
+    assertBundleEsVersion,
     assertEagerBundleBudget,
+    BROWSER_TARGET,
     getSandboxEnv,
     getSstResource,
     inlineFontFaces,
@@ -61,12 +63,12 @@ const LAZY_CHUNK_NAMES = [
     "blockchain-vendor",
     "BaseProvider",
     "Modal",
-    "Wallet",
     "SharingPage",
     "ccip",
     "secp256k1",
     "lazy-shared",
     "ui-vendor",
+    "radix-collection",
     "ui-runtime",
 ] as const;
 const LAZY_CHUNK_ALTERNATION = LAZY_CHUNK_NAMES.join("|");
@@ -103,12 +105,12 @@ const deepLinkScheme = isProd ? "frakwallet://" : "frakwallet-dev://";
  *  3. Deletes the orphan chunks from the bundle so they aren't written.
  *
  * It ALSO strips orphan side-effect imports of known lazy-only chunks
- * (blockchain-vendor, BaseProvider, ui-vendor, ui-runtime, lazy-shared,
- * Modal, Wallet, SharingPage). Those chunks are not empty, but Rolldown
- * sometimes hoists their side-effect imports into eager chunks even when
- * no bound symbols cross the boundary — forcing the iframe to download
- * lazy chunks on boot. Real dynamic-import call sites (`__vitePreload(...)`)
- * are preserved because they don't use the top-level `import "...";` form.
+ * (the `LAZY_CHUNK_NAMES` list above). Those chunks are not empty, but
+ * Rolldown sometimes hoists their side-effect imports into eager chunks
+ * even when no bound symbols cross the boundary — forcing the iframe to
+ * download lazy chunks on boot. Real dynamic-import call sites
+ * (`__vitePreload(...)`) are preserved because they don't use the
+ * top-level `import "...";` form.
  */
 function stripOrphanCrossChunkImports() {
     const LAZY_ORPHAN_RE = new RegExp(
@@ -345,6 +347,16 @@ export default defineConfig(async () => {
                 budgetGzip: EAGER_JS_BUDGET_GZIP,
                 assertHtml: assertNoLazyCssLeak,
             }),
+            assertBundleEsVersion({
+                subdir: "assets",
+                // @radix-ui/react-collection defines `toSorted` on its own
+                // `OrderedDict extends Map`, not `Array.prototype`; es-check
+                // matches property names without receiver analysis.
+                ignore: {
+                    features: "ArrayToSorted",
+                    in: "radix-collection",
+                },
+            }),
         ],
         server: {
             port: 3002,
@@ -364,12 +376,12 @@ export default defineConfig(async () => {
             // Vite eagerly emits `<link rel="modulepreload">` tags for every
             // chunk reachable from the entry — including those reached only
             // via dynamic imports. That defeats the lazy-loading effort:
-            // the modal/embedded-wallet bundles (and the heavy blockchain
+            // the modal/sharing bundles (and the heavy blockchain
             // graph they pull) end up downloaded on iframe boot just to be
             // ready when the user eventually opens a modal. Restrict the
             // HTML preload list to the chunks the iframe actually needs
             // before any user interaction. Runtime preloading via
-            // `__vitePreload` (used when modal/wallet actually mounts) is
+            // `__vitePreload` (used when the modal actually mounts) is
             // unaffected.
             modulePreload: {
                 resolveDependencies: (_filename, deps, { hostType }) => {
@@ -380,7 +392,7 @@ export default defineConfig(async () => {
                     return deps.filter((d) => !lazyDepRe.test(d));
                 },
             },
-            target: "baseline-widely-available",
+            target: BROWSER_TARGET,
             // Coarse per-chunk warning only: kept just above the largest legit
             // lazy chunk (blockchain-vendor ~285 KB) to avoid routine noise on
             // intentionally heavy lazy chunks. The KPI that matters — the eager
@@ -455,7 +467,7 @@ export default defineConfig(async () => {
 
                             // `vendor` keeps Ring-0-eager runtime libs:
                             // zustand stores, idb-keyval, elysia client,
-                            // clsx, nanoid, and the headless @tanstack/query-*
+                            // nanoid, and the headless @tanstack/query-*
                             // libs that the eager `queryClient.ts` needs.
                             {
                                 name: "vendor",
@@ -463,7 +475,7 @@ export default defineConfig(async () => {
                                 // makes Rolldown reject shared-with-lazy modules
                                 // (verified: @tanstack/query-core, zustand, etc.
                                 // would otherwise fall through to ui-runtime).
-                                test: /node_modules[\\/](?:zustand|idb-keyval|nanoid|@elysiajs|clsx|@tanstack[\\/](?:query-core|query-async-storage-persister|query-persist-client-core))[\\/]/,
+                                test: /node_modules[\\/](?:zustand|idb-keyval|nanoid|@elysiajs|@tanstack[\\/](?:query-core|query-async-storage-persister|query-persist-client-core))[\\/]/,
                                 priority: 40,
                                 // CRITICAL: must be 1, otherwise the global
                                 // `minShareCount: 2` keeps single-entry node_modules
@@ -477,12 +489,12 @@ export default defineConfig(async () => {
                             //
                             // • `blockchain-vendor` → viem + wagmi +
                             //   permissionless + BaseProvider + provider glue.
-                            //   Modal/Wallet only.
+                            //   Modal only.
                             // • `ui-vendor` → heavy lazy UI libs (@radix-ui,
                             //   qr, micromark). radix + alert-dialog are
                             //   Modal-only; qr + micromark land here through
-                            //   wallet-shared pairing/Markdown which Modal+Wallet
-                            //   share. SharingPage pulls @radix-ui/react-accordion
+                            //   wallet-shared pairing/Markdown, reachable from
+                            //   the Modal. SharingPage pulls @radix-ui/react-accordion
                             //   via design-system Accordion (FAQ section).
                             // • `lazy-shared` → design-system + sonner +
                             //   lucide + listener shared components +
@@ -491,9 +503,18 @@ export default defineConfig(async () => {
                             //   `minShareCount: 1` ensures it materialises
                             //   even when only one boundary uses a given file.
                             //
-                            // SharingPage skips `blockchain-vendor` and the
-                            // heavy `ui-vendor` — only `lazy-shared` is fetched
-                            // on first display.
+                            // NOTE: SharingPage does NOT get a chunk of its
+                            // own — `lazy-shared`'s regex claims it. And
+                            // `lazy-shared` statically imports BOTH
+                            // `ui-vendor` and `blockchain-vendor`, because it
+                            // also hosts Modal-only code (SsoButton,
+                            // ToastLoading, Markdown, the pairing UI). So a
+                            // first sharing-page display currently costs
+                            // ~226 KB gz, not the ~76 KB this grouping
+                            // implies. Narrowing the `lazy-shared` regex to
+                            // the genuinely sharing-reachable set is the open
+                            // win here; measure with
+                            // `bun run chunk:closure` before/after.
                             {
                                 name: "blockchain-vendor",
                                 test: /(?:node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox|abitype|radash|mipd|eventemitter3)[\\/])|(?:packages[\\/]app-essentials[\\/]src[\\/](?:blockchain|webauthn))|(?:wallet-shared[\\/]src[\\/](?:providers[\\/]BaseProvider|wallet[\\/]|blockchain[\\/]|authentication[\\/]webauthn[\\/]tauriBridge))/,
@@ -503,10 +524,33 @@ export default defineConfig(async () => {
                                 // lands here instead of its own chunk.
                                 minShareCount: 1,
                             },
+                            // `@radix-ui/react-collection` alone, above
+                            // `ui-vendor` so it claims the package first. Its
+                            // `OrderedDict extends Map` declares a `toSorted`
+                            // method es-check reads as
+                            // `Array.prototype.toSorted`; isolating it keeps
+                            // the exemption off micromark and qr, where a
+                            // genuine above-floor call would be masked.
+                            {
+                                name: "radix-collection",
+                                test: /node_modules[\\/]@radix-ui[\\/]react-collection[\\/]/,
+                                priority: 32,
+                            },
                             {
                                 name: "ui-vendor",
                                 test: /node_modules[\\/](?:@radix-ui|micromark|qr)[\\/]/,
                                 priority: 30,
+                                // No explicit minShareCount: `@radix-ui` is
+                                // reached from BOTH boundaries (Modal via
+                                // alert-dialog, SharingPage via design-system
+                                // Accordion in the FAQ), so the group
+                                // materialises on the default. Leave it that
+                                // way — forcing 1 additionally hoists
+                                // micromark/qr (single-consumer, Modal-only)
+                                // out of `lazy-shared` into this chunk, and
+                                // since `lazy-shared` statically imports
+                                // `ui-vendor` anyway that moves ~8 KB gz ONTO
+                                // the sharing page. Measured, don't guess.
                             },
                             {
                                 name: "lazy-shared",
@@ -514,12 +558,11 @@ export default defineConfig(async () => {
                                 priority: 25,
                                 minShareCount: 1,
                             },
-                            // No explicit Modal/Wallet group: default chunking
+                            // No explicit Modal group: default chunking
                             // emits a single chunk per dynamic-import boundary
-                            // (Modal/index.tsx and Wallet/index.tsx). Each
-                            // boundary now re-exports its lazy handler body
-                            // (handleDisplayModal / handleDisplayEmbeddedWallet)
-                            // from useDisplay*.impl so the impl modules land in
+                            // (Modal/index.tsx). Each boundary re-exports its
+                            // lazy handler body (handleDisplayModal) from
+                            // useDisplay*.impl so the impl modules land in
                             // the same default chunk as their parent component
                             // tree — collapsing the previous 1-2 KB shim chunks.
                             // (i18n locale chunking is implicit — the per-language
@@ -564,7 +607,7 @@ export default defineConfig(async () => {
                                 // hook .impl chunks) out of this chunk — they
                                 // belong in `lazy-shared` / their boundary chunk.
                                 tags: ["$initial"],
-                                test: /(?:vite[\\/](?:dist[\\/])?preload-helper)|(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|types|pairing[\\/]types|common[\\/](?:analytics|api|lib|utils|storage|tauri|queryKeys)|common[\\/]hook[\\/](?:useEstimatedReward|useGetSafeSdkSession)))|(?:packages[\\/]app-essentials[\\/])|(?:packages[\\/]rpc[\\/](?:dist|src)[\\/])|(?:sdk[\\/]core[\\/]src[\\/])|(?:apps[\\/]listener[\\/]app[\\/](?:uiBus|queryClient|i18nOverrideQueue)\.ts)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|providers|types|common|queryKeys|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)|hooks[\\/](?:useDisplayEmbeddedWallet(?!\.impl)|useDisplayModalListener(?!\.impl)|useDisplaySharingPageListener(?!\.impl)|useOnGet|useSendInteraction(?!Listener\.)|useSendInteractionListener|useUserReferralStatus|useWalletStatusListener|useSsoLink)))/,
+                                test: /(?:vite[\\/](?:dist[\\/])?preload-helper)|(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|types|pairing[\\/]types|common[\\/](?:analytics|api|lib|utils|storage|tauri|queryKeys)|common[\\/]hook[\\/](?:useEstimatedReward|useGetSafeSdkSession)))|(?:packages[\\/]app-essentials[\\/])|(?:packages[\\/]rpc[\\/](?:dist|src)[\\/])|(?:sdk[\\/]core[\\/]src[\\/])|(?:apps[\\/]listener[\\/]app[\\/](?:uiBus|queryClient|i18nOverrideQueue)\.ts)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|types|queryKeys|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)|hooks[\\/](?:useDisplayModalListener(?!\.impl)|useDisplaySharingPageListener(?!\.impl)|useOnGet|useSendInteraction(?!Listener\.)|useSendInteractionListener|useUserReferralStatus|useWalletStatusListener|useSsoLink)))/,
                                 priority: 50,
                                 // Single-importer modules must still land here
                                 // (e.g. wallet-shared/common/api/backendClient.ts

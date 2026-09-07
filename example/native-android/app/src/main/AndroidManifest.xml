@@ -2,23 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-      Frak wallet app detection — strictly scoped, never QUERY_ALL_PACKAGES
-      (Play policy restricts it to apps whose core purpose needs broad
-      visibility; requesting it drags every integrator into a Permissions
-      Declaration review).
-
-      Both variants are listed: the wallet ships as `id.frak.wallet` in prod and
-      `id.frak.wallet.dev` for the dev stage (see
-      `packages/wallet-shared/src/common/utils/storeUrls.ts`). Querying only the
-      prod package makes a locally-built dev wallet undetectable — exactly the
-      build a POC runs against.
+      No <queries> or INTERNET permission here: `:frak-sdk`'s own manifest already declares
+      both, and the manifest merger folds them into this one automatically.
     -->
-    <queries>
-        <package android:name="id.frak.wallet" />
-        <package android:name="id.frak.wallet.dev" />
-    </queries>
-
-    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="false"
@@ -36,13 +22,10 @@
             </intent-filter>
 
             <!--
-              Inbound referral links.
-
-              No `android:autoVerify="true"` on the https filter: `example-merchant.com`
-              is a placeholder we do not control and it serves no `assetlinks.json`,
-              so verification would simply fail at install time and the link would
-              open in a browser. A real merchant sets autoVerify and publishes the
-              asset links file for their own domain.
+              Inbound referral links. No android:autoVerify: example-merchant.com is a
+              placeholder domain with no assetlinks.json, so verification would fail and
+              the link opens in a browser instead. A real merchant sets autoVerify and
+              publishes asset links for their own domain.
             -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

@@ -8,20 +8,32 @@ import {
     REDEMPTION_CODE_LENGTH,
     useRedeemReferralCodeForm,
 } from "@frak-labs/wallet-shared";
+import { type ReactNode, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import * as styles from "./index.css";
 
 type ReferralCodeStepProps = {
     onApplied: () => void;
-    onSkip: () => void;
     onError?: (key: string) => void;
+    /**
+     * Header-end slot, right-aligned on the header row. Required: this screen
+     * has no back affordance and its footer holds only the submit CTA, so the
+     * skip is the only way out without a valid code.
+     */
+    headerEnd: ReactNode;
+    /**
+     * Reports whether the redemption call is in flight, so the parent can
+     * disable the header skip while it runs.
+     */
+    onBusyChange?: (isBusy: boolean) => void;
 };
 
 export function ReferralCodeStep({
     onApplied,
-    onSkip,
     onError,
+    headerEnd,
+    onBusyChange,
 }: ReferralCodeStepProps) {
     const { t } = useTranslation();
     const {
@@ -41,34 +53,31 @@ export function ReferralCodeStep({
         requireCompleteCode: false,
     });
 
+    // Clear on unmount too: leaving mid-redemption would otherwise strand the
+    // parent's flag at `true` and disable the next step's skip.
+    useEffect(() => {
+        onBusyChange?.(isPending);
+        return () => onBusyChange?.(false);
+    }, [isPending, onBusyChange]);
+
     return (
         <FlowStepScreen
             fixedViewport
             title={t("onboarding.referral.title")}
             description={t("onboarding.referral.description")}
+            headerEnd={headerEnd}
             footer={
-                <>
-                    <Button
-                        type="submit"
-                        form="referral-code-step-form"
-                        variant="primary"
-                        size="large"
-                        width="full"
-                        disabled={!canSubmit}
-                        loading={isPending}
-                    >
-                        {isPending ? null : t("onboarding.referral.submitCta")}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="small"
-                        disabled={isPending}
-                        onClick={onSkip}
-                    >
-                        {t("onboarding.referral.skip")}
-                    </Button>
-                </>
+                <Button
+                    type="submit"
+                    form="referral-code-step-form"
+                    variant="primary"
+                    size="large"
+                    width="full"
+                    disabled={!canSubmit}
+                    loading={isPending}
+                >
+                    {isPending ? null : t("onboarding.referral.submitCta")}
+                </Button>
             }
         >
             <form id="referral-code-step-form" onSubmit={handleSubmit}>

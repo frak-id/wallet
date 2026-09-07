@@ -2,6 +2,7 @@ import { log } from "@backend-infrastructure";
 import { HttpError, t } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
+import { toPurchaseItem } from "../../../../domain/purchases";
 import type { CustomWebhookDto } from "../../../../domain/purchases/dto/CustomWebhook";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { resolveAndVerifyWebhook } from "./resolveAndVerifyWebhook";
@@ -61,15 +62,18 @@ export const customWebhook = new Elysia()
                         currencyCode: webhookData.currency ?? "",
                     },
                     purchaseItems:
-                        webhookData.items?.map((item) => ({
-                            externalId: item.productId,
-                            price: item.price,
-                            name: item.name,
-                            title: item.title,
-                            quantity: item.quantity,
-                            imageUrl: item.image,
-                            sku: item.sku,
-                        })) ?? [],
+                        webhookData.items?.map((item) =>
+                            toPurchaseItem({
+                                productId: item.productId,
+                                price: item.price,
+                                totalPrice: item.totalPrice,
+                                name: item.name,
+                                title: item.title,
+                                quantity: item.quantity,
+                                imageUrl: item.image,
+                                sku: item.sku,
+                            })
+                        ) ?? [],
                     merchantId: resolved.merchantId,
                 }
             );

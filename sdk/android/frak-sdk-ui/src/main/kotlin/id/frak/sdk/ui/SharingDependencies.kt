@@ -1,0 +1,113 @@
+package id.frak.sdk.ui
+
+import id.frak.sdk.Frak
+import id.frak.sdk.InternalFrakApi
+import id.frak.sdk.OpenAppResult
+import id.frak.sdk.config.FrakResolvedConfig
+import id.frak.sdk.core.FrakEnvironment
+import id.frak.sdk.core.FrakLanguage
+import id.frak.sdk.core.FrakResult
+import id.frak.sdk.core.ProductDetails
+import id.frak.sdk.rewards.BestReward
+import id.frak.sdk.rewards.RewardRequest
+import id.frak.sdk.sharing.SharingRequest
+import id.frak.sdk.tracking.Interaction
+
+/** The merchant facts the sheet needs from a resolved config, already folded. */
+internal class SharingMerchant(
+    val merchantId: String,
+    /** [FrakResolvedConfig.displayName]: the `sdkConfig` override when the backend sent one. */
+    val displayName: String,
+    val logoUrl: String?,
+)
+
+internal fun FrakResolvedConfig.toSharingMerchant(): SharingMerchant =
+    SharingMerchant(merchantId = merchantId, displayName = displayName, logoUrl = displayLogoUrl)
+
+/** Everything [SharingSheetState] needs from the SDK core, as one seam. */
+internal interface SharingDependencies {
+    suspend fun buildSharingLink(request: SharingRequest): String?
+
+    suspend fun anonymousId(): String?
+
+    fun environment(): FrakEnvironment
+
+    /**
+     * Throws [id.frak.sdk.core.FrakError] exactly as `ConfigApi.resolve` does; the sheet's tier-3
+     * fallback depends on that.
+     */
+    suspend fun resolveConfig(): SharingMerchant
+
+    suspend fun bestReward(
+        targetInteraction: String?,
+        products: List<ProductDetails>?,
+    ): BestReward?
+
+    suspend fun track(interaction: Interaction): FrakResult<Unit>
+
+    /**
+     * A preference, never a gate: it picks the better of two routes that both work, so a false
+     * answer must degrade to the install page rather than block the handoff.
+     */
+    fun isFrakAppInstalled(): Boolean
+
+    suspend fun installPageUrl(
+        returnScheme: String,
+        sessionId: String,
+    ): String?
+
+    suspend fun openFrakApp(): OpenAppResult
+
+    /** Tier-3's only name source: local, so it survives a [resolveConfig] failure. */
+    fun metadataName(): String?
+
+    /** [id.frak.sdk.core.FrakMetadata.lang]; picks which bundled tier-3 copy to use. */
+    fun metadataLang(): FrakLanguage?
+}
+
+/**
+ * The production implementation: every member re-reads `Frak.client` at call time, because
+ * `Frak.initialize` may not have run when a sheet's state is built and the host may replace the
+ * client via `Frak.shutdown()`.
+ */
+@OptIn(InternalFrakApi::class)
+internal object FrakClientDependencies : SharingDependencies {
+    override suspend fun buildSharingLink(request: SharingRequest): String? = Frak.client.sharing.buildLink(request)
+
+    override suspend fun anonymousId(): String? = Frak.client.anonymousId()
+
+    override fun environment(): FrakEnvironment = Frak.client.environment
+
+    override suspend fun resolveConfig(): SharingMerchant =
+        Frak.client.config
+            .resolve()
+            .toSharingMerchant()
+
+    override suspend fun bestReward(
+        targetInteraction: String?,
+        products: List<ProductDetails>?,
+    ): BestReward? =
+        Frak.client.rewards.best(
+            RewardRequest {
+                this.targetInteraction = targetInteraction
+                // `RewardRequest.products` is non-null; the seam's parameter is nullable because the
+                // sheet distinguishes "no products in this request" from "an empty scope".
+                this.products = products.orEmpty()
+            },
+        )
+
+    override suspend fun track(interaction: Interaction): FrakResult<Unit> = Frak.client.tracking.track(interaction)
+
+    override fun isFrakAppInstalled(): Boolean = Frak.client.appLink.isFrakAppInstalled()
+
+    override suspend fun installPageUrl(
+        returnScheme: String,
+        sessionId: String,
+    ): String? = Frak.client.appLink.installPageUrl(returnScheme, sessionId)
+
+    override suspend fun openFrakApp(): OpenAppResult = Frak.client.appLink.openFrakApp()
+
+    override fun metadataName(): String? = Frak.client.metadataName
+
+    override fun metadataLang(): FrakLanguage? = Frak.client.metadataLang
+}

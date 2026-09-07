@@ -5,7 +5,13 @@ import { BusinessAuthContext } from "../../../domain/business-auth";
 import { requireDbSession } from "./common";
 
 export const sessionManagementRoutes = new Elysia()
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 30 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "business-auth-sessions",
+            windowMs: 60_000,
+            maxRequests: 30,
+        })
+    )
     .get(
         "/account",
         async ({ headers }) => {

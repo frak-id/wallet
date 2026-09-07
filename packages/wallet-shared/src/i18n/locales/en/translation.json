@@ -777,15 +777,16 @@
         },
         "confirmAction": "Confirm with {{type}}"
     },
-    "recoveryCode": {
-        "title": "Recover your code",
-        "description": "Paste the code copied from wallet.frak.id to recover your earnings.",
+    "rewardCode": {
+        "title": "Enter your reward code",
+        "description": "Paste the reward code you copied from wallet.frak.id to claim your earnings.",
         "paste": "Paste the code",
         "validate": "Validate the code",
-        "codeLabel": "Recovery code",
+        "codeLabel": "Reward code",
         "error": {
-            "invalid": "Incorrect or expired code, check the code copied from wallet.frak.id",
-            "alreadyLinked": "This code has already been used.",
+            "invalid": "Incorrect or expired reward code, check the code copied from wallet.frak.id",
+            "alreadyLinked": "This reward code has already been used.",
+            "unresolved": "This reward code isn't linked to a purchase yet. Try again in a few minutes.",
             "generic": "Something went wrong, please try again."
         },
         "success": {
@@ -795,26 +796,37 @@
         }
     },
     "installCode": {
-        "title": "Don't lose your {{ estimatedReward }}!\nCopy this code",
+        "title": "Don't lose your {{ estimatedReward }}!\nCopy your reward code",
         "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
+        "codelessTitle": "Don't lose your {{ estimatedReward }}!",
+        "codelessDescription": "Download the app and log in to claim your rewards.",
         "copyCode": "Copy the code",
-        "codeCopied": "Code copied!",
-        "loading": "Generating your code...",
-        "error": "Failed to generate code. Please refresh.",
+        "codeCopied": "Reward code copied!",
+        "loading": "Generating your reward code...",
         "infoTitle": "Code valid for 3 days",
-        "infoDescription": "When opening the app, tap <1>\"I have a recovery code\"</1>.",
+        "infoDescription": "When opening the app, tap <1>\"I have a reward code\"</1>.",
         "download": "Download the app",
-        "processing": "Setting up your wallet..."
+        "processing": "Setting up your wallet...",
+        "processingDone": "Your wallet is ready",
+        "openWalletCta": "Open my wallet",
+        "installedMerchant": "Connected to {{ merchantName }}",
+        "installedCodeToggle": "Or enter this code manually",
+        "openWallet": "Open Frak & claim {{ estimatedReward }}",
+        "installedHeadline": "You're all set. Open the app to claim {{ estimatedReward }}."
     },
     "pendingActions": {
-        "walletAlreadyLinked": "This referral link is already linked to another wallet."
+        "walletAlreadyLinked": {
+            "title": "Referral link already claimed",
+            "message": "This referral link is already linked to another wallet."
+        }
     },
     "onboarding": {
         "start": "Get started",
         "continue": "Continue",
         "activateSecureSpace": "Activate my secure space",
         "alreadyHaveAccount": "Already have an account?",
-        "recoveryCode": "I have a recovery code",
+        "rewardCode": "I have a reward code",
+        "skipStep": "Later",
         "steps": {
             "one": {
                 "title": "Earn money by recommending",
@@ -831,7 +843,7 @@
         },
         "email": {
             "title": "Enter your email address",
-            "description": "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.",
+            "description": "Your email is only used to recover your account if you lose access. It will never be used to send you unsolicited messages. You can add it later from your wallet.",
             "label": "Email",
             "placeholder": "your.email@gmail.com",
             "continue": "Continue",
@@ -861,17 +873,14 @@
         "notification": {
             "title": "Don't miss any reward!",
             "description": "Get notified as soon as money is credited to your wallet.",
-            "descriptionHighlight": "Track your rewards in real time.",
-            "enable": "Yes, notify me",
-            "skip": "Later"
+            "enable": "Yes, notify me"
         },
         "referral": {
             "title": "Add a referral code",
-            "description": "Got a creator code? Enter it here. Otherwise, you can skip this step.",
+            "description": "Got a creator code? Enter it here.",
             "label": "Referral code",
             "placeholder": "Ex: LOLA10",
             "submitCta": "Apply code",
-            "skip": "Skip",
             "appliedToast": "Referral code applied"
         },
         "welcome": {
@@ -885,6 +894,7 @@
     "reward": {
         "status": {
             "pending": "Awaiting validation by the brand",
+            "bank_depleted": "Awaiting funding by the brand",
             "processing": "Processing",
             "settled": "To collect",
             "consumed": "Consumed",

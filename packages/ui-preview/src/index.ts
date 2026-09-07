@@ -1,16 +1,16 @@
-// Sharing page preview (header, card, reward, stepper, footer)
+// Unreferenced across the monorepo: `SharingPreview`, `SharingSuccessPreview`,
+// `parseMarkdown`. The rest of this module is live. `SharingPreview` duplicates
+// `wallet-shared`'s `SharingPage` by hand because this package may not import
+// it, so it drifts silently.
 
-// Explorer phone preview (CSS phone-frame mockup)
 export type { ExplorerPhonePreviewProps } from "./explorer-phone";
 export { ExplorerPhonePreview } from "./explorer-phone";
-// Shared preview wrapper (disabled affordance)
 export { previewWrap } from "./preview-frame";
 export type {
     BannerPreviewProps,
     PostPurchasePreviewProps,
     ShareButtonPreviewProps,
 } from "./sdk-components";
-// SDK component previews
 export {
     BannerPreview,
     PostPurchasePreview,
@@ -19,9 +19,7 @@ export {
 export type { SharingPreviewProps } from "./sharing-page";
 export { SharingPreview } from "./sharing-page";
 export type { SharingSuccessPreviewProps } from "./sharing-success";
-// Sharing success preview (post-share confirmation)
 export { SharingSuccessPreview } from "./sharing-success";
-// Social preview
+export type { SocialPreviewProps } from "./social";
 export { SocialPreview } from "./social";
-// Utilities
 export { parseMarkdown, replaceVariables } from "./utils/variables";

@@ -1,9 +1,9 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
 import { HttpError, TwoFactorMethodDto, t } from "@backend-utils";
-import { encodeBase64urlNoPadding } from "@oslojs/encoding";
 import { Elysia } from "elysia";
 import { BusinessAuthContext } from "../../../domain/business-auth";
 import type { BusinessEmailCodePurpose } from "../../../domain/business-auth/db/schema";
+import { generateSiweNonce } from "../../../utils/siwe";
 import { StepUpRequired401 } from "../middleware/session";
 import { assertStepUpFresh, requireDbSession, verifySiweProof } from "./common";
 
@@ -47,7 +47,13 @@ const SiweProofDto = t.Object({
  * both completes a pending login AND refreshes the 5-minute step-up window.
  */
 export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 15 }))
+    .use(
+        rateLimitMiddleware({
+            bucket: "business-auth-two-factor",
+            windowMs: 60_000,
+            maxRequests: 15,
+        })
+    )
     .get(
         "/methods",
         async ({ headers }) => {
@@ -91,9 +97,7 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
                     // the code.
                     return { status: "ready" as const };
                 case "siwe": {
-                    const nonce = encodeBase64urlNoPadding(
-                        crypto.getRandomValues(new Uint8Array(16))
-                    );
+                    const nonce = generateSiweNonce();
                     await BusinessAuthContext.repositories.session.setTwoFactorNonce(
                         auth.sessionId,
                         nonce
