@@ -114,6 +114,8 @@ const AmountInput = function AmountInput({
         });
     }, [selectedToken, setValue]);
 
+    // The user picked a token. The effect below clears the amount for the
+    // other trigger: the backend swapping the token out from under them.
     const handleTokenChange = useCallback(
         (token: BalanceItem) => {
             setSelectedToken(token);
@@ -227,20 +229,11 @@ function TokensSendPage() {
         setSelectedTokenAddress(token.token);
     }, []);
 
-    // The backend drops tokens whose balance hits zero (and maps a multicall
-    // error to a zero balance), so a background refetch can remove the token
-    // the user picked and `resolveSelectedToken` falls back to another one.
-    // The screen has to keep *some* selection — the token picker lives inside
-    // `AmountInput` — so adopt the substitute explicitly and drop the amount
-    // that was typed for the old asset.
-    //
-    // `selectedTokenAddress` is what the user asked for and `selectedToken` is
-    // what they are actually being shown, so the divergence is readable from
-    // the current render; there is no previous value to remember. Converges in
-    // one pass: the state is set to the resolved token, which makes the two
-    // equal. A transient `undefined` (address change, failed refetch) leaves
-    // the requested address untouched, so the amount survives the gap and is
-    // only cleared if the token really did change.
+    // The backend drops tokens whose balance hits zero, so a refetch can remove
+    // the pick and `resolveSelectedToken` substitutes another. Adopt it and
+    // drop the amount typed for the old asset, like `handleTokenChange` does
+    // for a user pick. `selectedTokenAddress` is the ask, `selectedToken` the
+    // show; a transient `undefined` leaves the ask alone so the amount survives.
     useEffect(() => {
         if (!selectedToken || !selectedTokenAddress) return;
         if (isAddressEqual(selectedToken.token, selectedTokenAddress)) return;
