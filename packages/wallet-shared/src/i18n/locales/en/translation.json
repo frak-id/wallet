@@ -843,6 +843,11 @@
             "message": "This referral link is already linked to another wallet."
         }
     },
+    "modalError": {
+        "title": "Couldn't open that",
+        "message": "The app was updated since this page loaded. Reload to continue.",
+        "reload": "Reload"
+    },
     "onboarding": {
         "start": "Get started",
         "continue": "Continue",

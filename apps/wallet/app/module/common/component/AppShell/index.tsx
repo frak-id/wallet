@@ -18,6 +18,7 @@ import {
     type TabItem,
 } from "@/module/common/component/BottomTabBar";
 import { ErrorBoundary } from "@/module/common/component/ErrorBoundary";
+import { ModalErrorToast } from "@/module/common/component/ModalErrorToast";
 import { SessionExpiringBanner } from "@/module/common/component/SessionExpiringBanner";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { EnsureConflictToast } from "@/module/pending-actions/component/EnsureConflictToast";
@@ -116,6 +117,7 @@ export function AppShell({
                     <PairingInProgress />
                     <WebauthnErrorToast />
                     <EnsureConflictToast />
+                    <ModalErrorToast />
                 </BannerStack>
                 <Box
                     as="main"

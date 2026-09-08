@@ -507,6 +507,11 @@ export default interface Resources {
       "processingDone": "Your wallet is ready",
       "title": "Don't lose your {{estimatedReward}}!\nCopy your reward code"
     },
+    "modalError": {
+      "message": "The app was updated since this page loaded. Reload to continue.",
+      "reload": "Reload",
+      "title": "Couldn't open that"
+    },
     "monerium": {
       "account": "Monerium Account",
       "badge": {
