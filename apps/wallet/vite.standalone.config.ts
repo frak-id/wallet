@@ -148,10 +148,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
             vanillaExtractPlugin(),
             ...(isProd ? [removeConsole()] : []),
             inlineFontFaces({
-                cssFiles: [
-                    "public/fonts/inter.css",
-                    "public/fonts/inter-tight.css",
-                ],
+                cssFiles: ["public/fonts/inter.css"],
                 preload: ["/fonts/inter-latin.woff2"],
             }),
             // Both pages issue their first backend call from a React component,
