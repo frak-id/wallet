@@ -779,6 +779,17 @@
             "moneriumCallback": {
                 "ariaLabel": "Connecting your bank account"
             }
+        },
+        "modalError": {
+            "title": "Couldn't open that",
+            "message": "The app was updated since this page loaded. Reload to continue.",
+            "messageOffline": "You're offline, so this couldn't load. It'll work once you're back online.",
+            "reload": "Reload"
+        },
+        "errorFallback": {
+            "title": "Something went wrong",
+            "message": "Reload the page to continue.",
+            "reload": "Reload"
         }
     },
     "biometrics": {
@@ -842,11 +853,6 @@
             "title": "Referral link already claimed",
             "message": "This referral link is already linked to another wallet."
         }
-    },
-    "modalError": {
-        "title": "Couldn't open that",
-        "message": "The app was updated since this page loaded. Reload to continue.",
-        "reload": "Reload"
     },
     "onboarding": {
         "start": "Get started",

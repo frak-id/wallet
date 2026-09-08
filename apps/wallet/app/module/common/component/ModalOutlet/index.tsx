@@ -96,7 +96,10 @@ export function ModalOutlet() {
         <CatchBoundary
             getResetKey={() => modal.id}
             onCatch={(error) => {
-                recordError(error, { source: "error_boundary" });
+                recordError(error, {
+                    source: "error_boundary",
+                    context: { stage: "modal_load", modal_id: modal.id },
+                });
                 // Close rather than render a fallback in the modal slot: a
                 // broken modal left on screen has no exit. The toast is what
                 // tells the user why it vanished.
@@ -105,7 +108,10 @@ export function ModalOutlet() {
             }}
             errorComponent={renderNothing}
         >
-            <Suspense fallback={null}>
+            {/* Seven modals share `DetailOverlay` at this position; without a
+                key, closing one over another reuses the instance and its
+                already-closing state, so the survivor cannot close. */}
+            <Suspense fallback={null} key={modal.id}>
                 {renderModal(modal, closeModal)}
             </Suspense>
         </CatchBoundary>

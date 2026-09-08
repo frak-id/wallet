@@ -507,11 +507,6 @@ export default interface Resources {
       "processingDone": "Your wallet is ready",
       "title": "Don't lose your {{estimatedReward}}!\nCopy your reward code"
     },
-    "modalError": {
-      "message": "The app was updated since this page loaded. Reload to continue.",
-      "reload": "Reload",
-      "title": "Couldn't open that"
-    },
     "monerium": {
       "account": "Monerium Account",
       "badge": {
@@ -849,6 +844,11 @@ export default interface Resources {
         "pairing": "Scan with the phone holding your passkey to reconnect the same wallet.",
         "title": "Reconnect your wallet"
       },
+      "errorFallback": {
+        "message": "Reload the page to continue.",
+        "reload": "Reload",
+        "title": "Something went wrong"
+      },
       "installWebApp": "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time",
       "invite": {
         "text": "Earn $5 for each friend you invite. T&C apply",
@@ -1034,6 +1034,12 @@ export default interface Resources {
         "welcomeDetail": {
           "ariaLabel": "Welcome to Frak"
         }
+      },
+      "modalError": {
+        "message": "The app was updated since this page loaded. Reload to continue.",
+        "messageOffline": "You're offline, so this couldn't load. It'll work once you're back online.",
+        "reload": "Reload",
+        "title": "Couldn't open that"
       },
       "notifications": {
         "noNotifications": "No notifications"
