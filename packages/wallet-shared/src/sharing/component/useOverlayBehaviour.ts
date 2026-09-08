@@ -2,7 +2,7 @@ import { type RefObject, useEffect, useRef } from "react";
 
 /** Everything focusable, minus anything explicitly taken out of the tab order. */
 const FOCUSABLE =
-    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    'a[href], button:not([disabled]):not([tabindex="-1"]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Skips anything inside a `[hidden]` subtree — the FAQ accordion keeps its closed

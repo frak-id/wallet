@@ -290,6 +290,9 @@ export default interface Resources {
           "privacy": "Privacy notice",
           "terms": "Terms & conditions"
         },
+        "products": {
+          "label": "Choose one product to share"
+        },
         "reward": {
           "tagline": "You earn a reward every time a friend makes a purchase through your link.",
           "title": "Share with your friends"

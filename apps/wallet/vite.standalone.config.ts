@@ -58,7 +58,7 @@ const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
  * a design-system component that pulls Radix, a full locale bundle — fails the
  * build instead of quietly regressing an SDK-critical path.
  *
- * Measured at the time of writing: 90 KB gz for `/sharing`, 72 KB for
+ * Measured at the time of writing: 97.8 KB gz for `/sharing`, 79.5 KB for
  * `/install`. Raise it only with a measurement and a reason, never to unblock
  * a build — that turns the ratchet into a moving line.
  */

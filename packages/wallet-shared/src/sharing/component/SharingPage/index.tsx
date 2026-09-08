@@ -113,7 +113,7 @@ export function SharingPage({
                     </section>
 
                     {products && renderableProducts(products).length > 0 && (
-                        <ProductList products={products} />
+                        <ProductList products={products} t={t} />
                     )}
 
                     <Steps reward={reward} t={t} />

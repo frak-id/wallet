@@ -48,6 +48,9 @@
                 "tagline2": "on every purchase!",
                 "tagline2_product": "on selected products!"
             },
+            "products": {
+                "label": "Choose one product to share"
+            },
             "steps": {
                 "1": {
                     "title": "Share in 1 click.",
