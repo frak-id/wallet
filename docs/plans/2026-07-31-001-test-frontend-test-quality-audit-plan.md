@@ -40,7 +40,7 @@ The gate itself is human. `AGENTS.md:16` names four commands as mandatory pre-co
 
 - **Mutation testing over an assertion census** — a surviving mutant is proof; a reading of a test file is an opinion. (session-settled: user-directed — chosen over a file-by-file assertion census of the whole suite and over a reading-only failure-mode map: only mutation answers whether existing tests work.) Governs R4, R5, R9.
 - **Failure modes select the mutation sites** — keeps the sample principled rather than opportunistic, and bounds it to code where a silent break costs money or trust. Governs R1, R2, R3.
-- **Frontend only** — matches the framing of `docs/audit/frontend-audit.md`; `services/backend` is out. (session-settled: user-directed — chosen over including backend tests.) Governs R1.
+- **Frontend only** — matches the framing of `docs/audits/2026-07-31-frontend.md`; `services/backend` is out. (session-settled: user-directed — chosen over including backend tests.) Governs R1.
 - **The verdict follows the numbers** — a high survival rate makes this a document about deleting or rewriting tests, not only about adding them. Neither framing is pre-committed. Governs R9, R10.
 
 ### Requirements
@@ -98,7 +98,7 @@ The gate itself is human. `AGENTS.md:16` names four commands as mandatory pre-co
 - Mutants are measured one at a time. Concurrency, if used, requires isolated trees (worktrees or copies) so no two mutations are ever live together; planning decides whether the wall-clock saving justifies that machinery.
 - `vitest run` transforms TypeScript without typechecking, so a mutation that introduces a type error still executes. Type errors are not a distinct measurement outcome.
 - Coverage thresholds do not fire locally, since they are gated on `CI=true`. Mutation results are independent of that gate.
-- `docs/audit/frontend-audit.md` supplies the load-bearing code map: the merge flow, the token-send path, the RPC lifecycle channel, and persisted-store migrations are already identified as risk-carrying.
+- `docs/audits/2026-07-31-frontend.md` supplies the load-bearing code map: the merge flow, the token-send path, the RPC lifecycle channel, and persisted-store migrations are already identified as risk-carrying.
 
 ### Outstanding Questions
 
@@ -108,7 +108,7 @@ The gate itself is human. `AGENTS.md:16` names four commands as mandatory pre-co
 
 ### Sources / Research
 
-- `docs/audit/frontend-audit.md` — the prior frontend audit; supplies the load-bearing code map and the P0/P1 findings that motivate several failure modes.
+- `docs/audits/2026-07-31-frontend.md` — the prior frontend audit; supplies the load-bearing code map and the P0/P1 findings that motivate several failure modes.
 - `vitest.config.ts:34-49` — root projects glob; `packages/rpc` has no `vitest.config.ts` and is therefore unmatched, though downstream suites import it.
 - `packages/test-foundation/src/vitest.shared.ts:76-99` — coverage thresholds and reporters, both gated on `CI=true`.
 - `apps/wallet/vitest.config.ts:36-38`, `apps/business/vitest.config.ts:33-35`, `apps/listener/vitest.config.ts:58-60` — the component-exclusion rule applied identically across apps.
@@ -155,7 +155,7 @@ U1 establishes the baseline and the harness. U2 fixes the site list. U3-U6 measu
 - **Goal:** Establish a trustworthy baseline and a repeatable apply-measure-revert loop before any finding is recorded.
 - **Requirements:** R4, R6; KTD2, KTD4.
 - **Dependencies:** none.
-- **Files:** `docs/audit/frontend-test-quality-audit.md` (created, working notes appended as measurement proceeds).
+- **Files:** `docs/audits/frontend-test-quality.md` (created, working notes appended as measurement proceeds).
 - **Approach:**
   1. Confirm `git diff --quiet` on a clean tree, then run `bun run test` and record the green baseline with file and test counts.
   2. For each candidate module, determine which projects' tests actually execute it — grep for `vi.mock` of the module alongside the import, since a mocked import never runs the real code (KTD2). Record the executing set, not the importing set.
@@ -169,7 +169,7 @@ U1 establishes the baseline and the harness. U2 fixes the site list. U3-U6 measu
 - **Goal:** Produce the failure-mode to code to defending-test map, and fix the ~30 mutation sites it selects.
 - **Requirements:** R1, R2, R3, R13.
 - **Dependencies:** U1.
-- **Files:** `docs/audit/frontend-test-quality-audit.md`.
+- **Files:** `docs/audits/frontend-test-quality.md`.
 - **Approach:**
   1. Enumerate failure modes across the R1 workspaces as observable bad outcomes, and map each to its implementing guard and defending test (or its absence).
   2. Allocate the site budget by blast radius: RPC trust boundary, listener lifecycle handling, walletMerge, token send, redirect sanitization, persisted-state rehydration, plus the KTD3 control arm.
@@ -236,7 +236,7 @@ U1 establishes the baseline and the harness. U2 fixes the site list. U3-U6 measu
 - **Goal:** Write the findings document.
 - **Requirements:** R8, R9, R10, R11, R12, R13, R14.
 - **Dependencies:** U3, U4, U5, U6.
-- **Files:** `docs/audit/frontend-test-quality-audit.md`.
+- **Files:** `docs/audits/frontend-test-quality.md`.
 - **Approach:**
   1. Report each survivor with location, semantic change, and user-visible consequence, holding security-relevant entries to R14.
   2. State the survival rate over tested code only, the per-failure-mode breakdown, and the control-arm rate beside it. Scope the verdict to the sampled failure modes per R9.

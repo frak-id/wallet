@@ -20,7 +20,7 @@ the existing `safeArea` token, then gate the raw spelling out of `.css.ts`
 (KTD1, KTD2).
 
 **Product authority:** Audit item §6.2 #6 in
-`docs/audit/findings-ranked-by-gain.md`, re-grounded against the tree on
+`docs/audits/2026-08-05-frontend-findings-ranked-by-gain.md`, re-grounded against the tree on
 2026-09-08. The audit entry is stale in both directions and is corrected by this
 plan (see Problem Frame). Business-app edge-to-edge and the native sharing-sheet
 inset contract are not active scope.
@@ -162,7 +162,7 @@ both sharing sites.
   `windowInsetsPadding(safeDrawing)`). This exists so a later reader does not
   mistake the sharing swap for a contract change.
 
-- **R10.** `docs/audit/findings-ranked-by-gain.md` §6.2 #6 records the outcome and
+- **R10.** `docs/audits/2026-08-05-frontend-findings-ranked-by-gain.md` §6.2 #6 records the outcome and
   corrects the two stale claims: the seed added since the audit, and the true
   bypass count of six rather than four.
 
@@ -380,7 +380,7 @@ the Verification Contract.
 
 **Goal:** §6.2 #6 reflects what was actually found and fixed. Covers R10.
 
-**Files:** `docs/audit/findings-ranked-by-gain.md` (§6.2 row 6; §7 item 10)
+**Files:** `docs/audits/2026-08-05-frontend-findings-ranked-by-gain.md` (§6.2 row 6; §7 item 10)
 
 **Approach:** Strike the row in the style the file already uses for resolved
 findings, and correct both stale claims: `reset-globals.css.ts` seeding postdates

@@ -15,7 +15,7 @@ execution: code
 
 - **Objective:** A render error in the wallet app costs the user the section it happened in, not the whole app. The user always keeps a visible way to continue, and the team learns the error happened.
 - **Means:** One shared error boundary inside `AppShell` on the four layouts that render it, `errorComponent` on the one that does not, and a boundary around `ModalOutlet`'s `Suspense` (KTD1, KTD2).
-- **Product authority:** Closes `docs/audit/findings-ranked-by-gain.md` §6.2 #3 (also listed as X5 and as sequencing item #8). Containment only — recovery of in-flight flow state is not active scope.
+- **Product authority:** Closes `docs/audits/2026-08-05-frontend-findings-ranked-by-gain.md` §6.2 #3 (also listed as X5 and as sequencing item #8). Containment only — recovery of in-flight flow state is not active scope.
 - **Open blockers:** None.
 - **Stop conditions:** Stop and ask if implementation requires changing `MergeFlow` or `MoneriumBankFlow` state handling, or if preserving `AppShell` chrome turns out to require restructuring `AppShell` itself.
 
@@ -119,8 +119,8 @@ The cost shape is that the blast radius is always the whole app, regardless of h
 
 ### Sources / Research
 
-- `docs/audit/findings-ranked-by-gain.md:102` (X5), `:172` (§6.2 #3), `:236` (sequencing item #8) — the finding and its three listings.
-- `docs/audit/frontend-audit.md:112-118` — the original write-up and its proposed fix.
+- `docs/audits/2026-08-05-frontend-findings-ranked-by-gain.md:102` (X5), `:172` (§6.2 #3), `:236` (sequencing item #8) — the finding and its three listings.
+- `docs/audits/2026-07-31-frontend.md:112-118` — the original write-up and its proposed fix.
 - `apps/wallet/app/routes/__root.tsx:27,67-83` — the sole existing boundary and the root fallback shape.
 - `apps/wallet/app/module/common/component/AppShell/index.tsx:108-147` — chrome composition; the banner stack renders for all four layouts, the tab bar is gated on `navigation`.
 - `apps/wallet/app/module/common/component/FullScreenGate/index.tsx` — the wallet's existing fallback vocabulary. Imports only `Box` and `Text`; no i18n, no router.
@@ -288,4 +288,4 @@ The wallet unit project is `wallet-unit`. Mutation check before declaring done: 
 - The whole gate passes: `bun run format`, `bun run lint`, `bun run typecheck`, `bun run test`.
 - The reload action carries its one-line service-worker comment, and `bun run lint:comments` stays green.
 - No scaffolding, throwaway throw-injectors, or commented-out experiments remain in the diff.
-- `docs/audit/findings-ranked-by-gain.md` §6.2 #3 and sequencing item #8 are updated to reflect the shipped state.
+- `docs/audits/2026-08-05-frontend-findings-ranked-by-gain.md` §6.2 #3 and sequencing item #8 are updated to reflect the shipped state.

@@ -14,7 +14,7 @@ execution: code
 ## Goal Capsule
 
 - **Objective:** Frak session credentials leave the listener iframe only when the page that embeds it is the merchant origin it was configured for — a page on any other origin receives nothing — and the origin rules that protect the listener stop being silently changeable.
-- **Product authority:** Closes P1-3 and P1-7 from `docs/audit/findings-ranked-by-gain.md` §6.1, and downgrades P1-2 there to a hygiene change. Trust-level establishment (P1-1) is not active scope.
+- **Product authority:** Closes P1-3 and P1-7 from `docs/audits/2026-08-05-frontend-findings-ranked-by-gain.md` §6.1, and downgrades P1-2 there to a hygiene change. Trust-level establishment (P1-1) is not active scope.
 - **Means:** Thread the resolved merchant origin from each credential-bearing call site into the lifecycle emitter (KTD1), and register `packages/rpc` as a vitest project so its origin guard executes (KTD3).
 - **Stop conditions:** Stop and ask if narrowing a target would break a legitimate merchant path, or if a credential-free event turns out to carry session material.
 - **Open blockers:** None.
@@ -87,7 +87,7 @@ The audit filed a third item alongside these, P1-1, calling for lifecycle messag
 
 ### Scope Boundaries
 
-- Trust-level establishment — how `verified`, `dev-override`, and `unverified` are decided, and the interaction-attribution exposure a self-asserted domain list permits. Recorded in `docs/audit/findings-ranked-by-gain.md` §6.1 as P1-1.
+- Trust-level establishment — how `verified`, `dev-override`, and `unverified` are decided, and the interaction-attribution exposure a self-asserted domain list permits. Recorded in `docs/audits/2026-08-05-frontend-findings-ranked-by-gain.md` §6.1 as P1-1.
 - The wildcard origin admission in the listener bootstrap. It is structurally required and stays.
 - The remaining open audit items — the uninstallable components package, the dead dark theme, the wallet focus ring, dead modules.
 
@@ -102,8 +102,8 @@ None. Both items previously deferred to planning are resolved in the Planning Co
 
 ### Sources / Research
 
-- `docs/audit/findings-ranked-by-gain.md` §6.1 — P1 findings, including the P1-1 framing this plan rejects.
-- `docs/audit/findings-resolved.md` — prior remediation passes on the same audit.
+- `docs/audits/2026-08-05-frontend-findings-ranked-by-gain.md` §6.1 — P1 findings, including the P1-1 framing this plan rejects.
+- `docs/audits/2026-08-05-frontend-findings-resolved.md` — prior remediation passes on the same audit.
 - `packages/wallet-shared/src/common/utils/lifecycleEvents.ts` — the two wildcard sends.
 - `apps/listener/app/module/hooks/useWalletStatusListener.ts` — the status path that pushes a backup on every emit.
 - `apps/listener/app/module/utils/backup.ts` — what the backup payload contains.
@@ -217,9 +217,9 @@ U1 changes the emitter signature and must land before U2 and U3, which pass the 
 
 ### U5. Record the audit outcome
 
-- **Goal:** `docs/audit/findings-ranked-by-gain.md` reflects what this plan closed, downgraded, rejected, and found already fixed.
+- **Goal:** `docs/audits/2026-08-05-frontend-findings-ranked-by-gain.md` reflects what this plan closed, downgraded, rejected, and found already fixed.
 - **Requirements:** None; satisfies the Definition of Done's audit-record clause.
-- **Files:** `docs/audit/findings-ranked-by-gain.md`
+- **Files:** `docs/audits/2026-08-05-frontend-findings-ranked-by-gain.md`
 - **Approach:** In §6.1, mark P1-3 and P1-7 resolved by this plan; mark P1-2 downgraded to hygiene, citing the build-time inlining that folds the stage value to a constant; mark P1-1 rejected, citing the circularity that the allowlist arrives in the message it would have to validate. Strike the embedded-wallet z-index collision (#8) and the `ButtonWallet` accessible name (#9) as fixed upstream by the embedded-wallet removal, and strike the §7 "this week" line that repeats #9. Leave the `GlassButton` focus ring untouched.
 - **Verification:** Read the edited sections back against this list.
 - **Dependencies:** U1, U2, U3, U4
@@ -246,5 +246,5 @@ A regression check for the leak itself: U1's default-target scenario and U2's ta
 - Every credential-bearing lifecycle send targets the resolved merchant origin; the credential-free events are unchanged.
 - `packages/rpc` appears as a project in `bun run test` output, and its origin-guard tests fail when the guard is removed.
 - The four gates above pass.
-- `docs/audit/findings-ranked-by-gain.md` records P1-3 and P1-7 as resolved, P1-2 as downgraded with the build-time-inlining reason, and P1-1 as rejected with the circularity reason. Two §6.1 entries are struck as already fixed upstream by the embedded-wallet removal: the embedded-wallet z-index collision (#8) and the `ButtonWallet` accessible name (#9), along with the §7 "this week" line that repeats the latter. The `GlassButton` focus ring stays open and untouched — it is a separate wallet finding, not one of these two.
+- `docs/audits/2026-08-05-frontend-findings-ranked-by-gain.md` records P1-3 and P1-7 as resolved, P1-2 as downgraded with the build-time-inlining reason, and P1-1 as rejected with the circularity reason. Two §6.1 entries are struck as already fixed upstream by the embedded-wallet removal: the embedded-wallet z-index collision (#8) and the `ButtonWallet` accessible name (#9), along with the §7 "this week" line that repeats the latter. The `GlassButton` focus ring stays open and untouched — it is a separate wallet finding, not one of these two.
 - No scaffolding or abandoned-approach code remains in the diff.

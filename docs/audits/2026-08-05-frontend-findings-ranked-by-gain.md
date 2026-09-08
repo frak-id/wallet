@@ -1,12 +1,12 @@
 # Audit Findings — Ranked by Engineering Gain
 
 **Date:** 2026-08-05
-**Inputs:** `docs/audit/frontend-audit.md`, `docs/audit/frontend-ui-audit.md`, `docs/plans/2026-07-31-001-test-frontend-test-quality-audit-plan.md` (commit `e73842a43`)
+**Inputs:** `docs/audits/2026-07-31-frontend.md`, `docs/audits/2026-07-31-frontend-ui.md`, `docs/plans/2026-07-31-001-test-frontend-test-quality-audit-plan.md` (commit `e73842a43`)
 **Method:** every quantified claim in those three docs was re-measured against the tree (`wc`, `stat`, `gzip -9`, `grep`, plus two synthetic rolldown-vite tree-shake probes). This document re-sorts the findings by *what we gain*, not by severity.
 
 > **Read this first:** ten headline numbers in the source audits did not survive measurement — four overstated, two understated, four mis-diagnosed (including one filed as **P0** that is unreachable code). See [§0 Corrections](#0-corrections-to-the-source-audits). The rankings below use the measured numbers.
 
-> **Scope:** this document tracks what is still **open**. Items are removed as they land and recorded, with their residual caveats, in `docs/audit/findings-resolved.md`.
+> **Scope:** this document tracks what is still **open**. Items are removed as they land and recorded, with their residual caveats, in `docs/audits/2026-08-05-frontend-findings-resolved.md`.
 
 **Two sorts are provided.** §1–§5 rank by *engineering dimension* (performance, bundle, code efficiency, complexity). §6–§8 re-rank by **exposure scope** (P1 listener/SDK → P2 wallet/Tauri → P3 business/shopify), which is the sort to act on — it moves a business-app bundle saving off the top spot and puts the postMessage trust boundary there instead.
 
@@ -156,7 +156,7 @@ The listener's three-ring architecture means "P1" is **not** uniform. Traced fro
 | **4** | **Two sequential CDN round trips before the iframe starts** | Eager | `components.js` is a 3-line shim that dynamically imports `loader.js` from jsdelivr, re-resolving `@${CDN_TAG}` at runtime. WordPress pins `latest` with no `?ver=`. This is pure serial latency on **every merchant page** — *not in the original audits* | **S** |
 | ~~**5**~~ | ~~**`@frak-labs/components@1.0.13` is uninstallable**~~ | n/a | **Fixed.** Still reproduced on 1.2.0 (`npm view` shows `design-system: "0.0.0"`, and that name 404s). `design-system` moved to `devDependencies`; `dist/` was already inlining it. Gated by `bun run check:publishable` — inside `bun run lint`, the SDK CI job, and the release workflow before the publish step | — |
 | ~~**6**~~ | ~~**`semanticDark` ships to every visitor and is 100% dead**~~ | **Eager** | **Disabled, not deleted.** `theme.css.ts` no longer emits the `[data-theme='dark']` block; measured −157 B gz on `cdn/loader.js` (33,748 → 33,591). `semanticDark` stays in `tokens.css.ts` with its tests, since a dark theme is planned — re-enable is one `createGlobalTheme` line. The five `[data-theme='dark']` style sites (Skeleton, charts ×2, the `darkMode` sprinkle) remain, inert | — |
-| ~~**7**~~ | ~~**`packages/rpc` has zero tests, on both eager paths**~~ | Eager | **Fixed.** The package is now a vitest project (`frame-connector-unit`) with 7 tests driving the real `createRpcListener` — origin admission, lifecycle-vs-middleware routing, middleware error handling. Verified by mutation: stubbing the guard to always admit turns the suite red. Tests dispatch a hand-built `MessageEvent`, since jsdom reports `event.origin` as `""` and an origin comparison would otherwise match empty against empty | — |
+| ~~**7**~~ | ~~**`packages/rpc` has zero tests, on both eager paths**~~ | Eager | **Fixed.** The package is now a vitest project (`rpc-unit`) with 7 tests driving the real `createRpcListener` — origin admission, lifecycle-vs-middleware routing, middleware error handling. Verified by mutation: stubbing the guard to always admit turns the suite red. Tests dispatch a hand-built `MessageEvent`, since jsdom reports `event.origin` as `""` and an origin comparison would otherwise match empty against empty | — |
 | ~~**8**~~ | ~~**Embedded wallet paints over every modal**~~ | Ring 2 | **Already fixed upstream** — the embedded wallet was removed in `ee02d5bdb` | — |
 | ~~**9**~~ | ~~**Embedded wallet CTAs have no accessible name**~~ | Ring 2 | **Already fixed upstream** — `ButtonWallet.tsx:177` carries an `aria-label`, and the embedded wallet itself is gone | — |
 | **10** | 18 hardcoded hex colors, 0 DS tokens adopted | Ring 2 | `ButtonWallet` alone has 7. Listener is effectively un-themable | **M** |
