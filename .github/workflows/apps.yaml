@@ -3,9 +3,9 @@ name: "✅ CI: Apps & SDK"
 on:
   push:
     branches: [main, dev]
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'services/**', 'infra/**', 'sst.config.ts', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
   pull_request:
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'services/**', 'infra/**', 'sst.config.ts', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
 
 # Newer pushes to the same ref cancel in-flight runs.
 concurrency:
