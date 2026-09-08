@@ -89,6 +89,10 @@ jobs:
       # Kotlin or Swift, so their linters live in the native jobs below.
       - name: "📏 Lint & format check"
         run: bunx biome ci sdk/
+      # Manifest-only: a public SDK package must not name a private workspace
+      # sibling under a runtime field, or its published form 404s on install.
+      - name: "🔎 Public packages depend only on published ones"
+        run: bun run check:publishable
       # core-sdk-unit + react-sdk-unit. `bun run` matters: bare `bun test` bypasses
       # Vitest and runs Bun's own runner against files it cannot handle.
       - name: "🧪 Unit tests"

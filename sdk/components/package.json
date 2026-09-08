@@ -104,12 +104,12 @@
   },
   "dependencies": {
     "@frak-labs/core-sdk": "workspace:*",
-    "@frak-labs/design-system": "workspace:*",
     "@frak-labs/frame-connector": "workspace:*",
     "preact": "catalog:",
     "preact-custom-element": "^4.6.0"
   },
   "devDependencies": {
+    "@frak-labs/design-system": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
     "@preact/preset-vite": "catalog:",
     "@rolldown/plugin-node-polyfills": "catalog:",

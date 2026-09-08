@@ -30,6 +30,12 @@ jobs:
       - name: "🔨 Install dependencies"
         run: bun install --frozen-lockfile
 
+      # Changesets strips devDependencies and rewrites `workspace:*` to the
+      # sibling's version, so a private sibling under `dependencies` publishes
+      # as a registry lookup that 404s on every install. Fail here, not there.
+      - name: "🔎 Public packages depend only on published ones"
+        run: bun run check:publishable
+
       - name: "🔍 Detect release mode"
         id: mode
         run: |

@@ -154,7 +154,7 @@ The listener's three-ring architecture means "P1" is **not** uniform. Traced fro
 | ~~**2**~~ | ~~**`walletContextMiddleware` fails open**~~ | Eager | **Downgraded to hygiene, done.** The premise is wrong: `STAGE` is not a runtime value. `vite.config.ts:294` `define`s `process.env.STAGE` from the build environment and `inlineConst` folds `isRunningLocally` to a literal in every deployed listener, so a runtime misconfiguration cannot reach it. Swapped to `import.meta.env.DEV` anyway — same behaviour, legible without the build config | — |
 | ~~**3**~~ | ~~**Lifecycle replies broadcast JWTs to `targetOrigin: "*"`**~~ | Eager | **Fixed.** Credential-bearing sends now carry the resolved merchant origin. Note the original wording overstated the reach: `postMessage` with `"*"` delivers to the parent window only — sibling frames never receive it — so the exposure was delivery to *whatever origin the parent held* (a different merchant embed, a post-navigation page, a parent named by a poisoned config), not a broadcast. The `console.log` of the whole backup is also gone | — |
 | **4** | **Two sequential CDN round trips before the iframe starts** | Eager | `components.js` is a 3-line shim that dynamically imports `loader.js` from jsdelivr, re-resolving `@${CDN_TAG}` at runtime. WordPress pins `latest` with no `?ver=`. This is pure serial latency on **every merchant page** — *not in the original audits* | **S** |
-| **5** | **`@frak-labs/components@1.0.13` is uninstallable** | n/a | Verified live 404 — `design-system: workspace:*` is a **runtime** dep but the package is `private: true`. `tsdown.config.ts` already inlines it via `alwaysBundle`, so the manifest entry is dead weight. Every public install fails | **XS** |
+| ~~**5**~~ | ~~**`@frak-labs/components@1.0.13` is uninstallable**~~ | n/a | **Fixed.** Still reproduced on 1.2.0 (`npm view` shows `design-system: "0.0.0"`, and that name 404s). `design-system` moved to `devDependencies`; `dist/` was already inlining it. Gated by `bun run check:publishable` — inside `bun run lint`, the SDK CI job, and the release workflow before the publish step | — |
 | **6** | **`semanticDark` ships to every visitor and is 100% dead** | **Eager** | `theme.css.ts:59` emits a full second 42-token block into the base CSS injected by `loader.ts:9`. **Nothing in the repo sets `data-theme`** — verified across apps/sdk/packages/plugins/services; there is no `prefers-color-scheme` fallback either. The only residue is a `frak_theme` localStorage key that `useLogout.ts:11` clears and nothing reads | **XS** |
 | ~~**7**~~ | ~~**`packages/rpc` has zero tests, on both eager paths**~~ | Eager | **Fixed.** The package is now a vitest project (`frame-connector-unit`) with 7 tests driving the real `createRpcListener` — origin admission, lifecycle-vs-middleware routing, middleware error handling. Verified by mutation: stubbing the guard to always admit turns the suite red. Tests dispatch a hand-built `MessageEvent`, since jsdom reports `event.origin` as `""` and an origin comparison would otherwise match empty against empty | — |
 | ~~**8**~~ | ~~**Embedded wallet paints over every modal**~~ | Ring 2 | **Already fixed upstream** — the embedded wallet was removed in `ee02d5bdb` | — |
@@ -223,7 +223,7 @@ Landed as one piece of work: credential-bearing lifecycle sends now carry the re
 
 | # | Change | Tier | Gain |
 |---|---|---|---|
-| 1 | `sdk/components`: design-system → `devDependencies` | P1 | The package becomes installable at all |
+| ~~1~~ | ~~`sdk/components`: design-system → `devDependencies`~~ | — | **Done**, with a publishability gate so the manifest cannot regress |
 | 2 | Delete `semanticDark` (or wire up a theme switch) | P1 | Dead CSS off every visitor's critical path |
 | 3 | `GlassButton` focus-visible ring | P2 | Restores keyboard focus wallet-wide |
 | ~~4~~ | ~~Delete `mock/products.json` and DS `Slider`~~ | — | **Done.** Both removed, with `@radix-ui/react-slider` dropped from the design-system manifest |
@@ -257,7 +257,7 @@ Landed as one piece of work: credential-bearing lifecycle sends now carry the re
 
 ### Add the enforcement the repo already knows how to write
 
-Every P1 finding above survived because **no gate covers that boundary**. The repo demonstrably knows the reflex — `assertComponentRegistrations`, the 32 KB hard-fail budget, the prod-build `BACKEND_URL` guard. Missing: a publishability check (catches P1-5), an origin-enforcement test that actually executes `packages/rpc` (catches P1-1/2/3), and *any* CI job running the four-command gate.
+Every P1 finding above survived because **no gate covers that boundary**. The repo demonstrably knows the reflex — `assertComponentRegistrations`, the 32 KB hard-fail budget, the prod-build `BACKEND_URL` guard. Two of the three gaps are now closed: `check:publishable` (catches P1-5) and the executing `packages/rpc` tests (catch P1-1/2/3). Still missing: *any* CI job running the four-command gate.
 
 ---
 
