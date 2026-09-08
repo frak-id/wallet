@@ -159,7 +159,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             clearTimeoutRef.current = null;
         }
         setCurrentRequest(request);
-        emitLifecycleEvent({ iframeLifecycle: "show" });
+        emitLifecycleEvent({ iframeLifecycle: "show" }, { targetOrigin: "*" });
     }, []);
 
     // Clear the current request + hide the iframe
@@ -169,7 +169,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             clearTimeout(clearTimeoutRef.current);
         }
 
-        emitLifecycleEvent({ iframeLifecycle: "hide" });
+        emitLifecycleEvent({ iframeLifecycle: "hide" }, { targetOrigin: "*" });
 
         // Delay clearing to prevent flashing on rapid close/open
         clearTimeoutRef.current = setTimeout(() => {
@@ -325,15 +325,22 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
         populateI18nResources,
     ]);
 
+    // Memoised so the context identity only changes when a member actually
+    // changes. `setRequest`/`clearRequest` are already `useCallback([])` and
+    // `translation` is memoised above, so an inline literal here was the sole
+    // reason all 17 consumer sites re-rendered on every provider render.
+    const contextValue = useMemo(
+        () => ({
+            currentRequest,
+            setRequest,
+            clearRequest,
+            translation,
+        }),
+        [currentRequest, setRequest, clearRequest, translation]
+    );
+
     return (
-        <ListenerUiContext.Provider
-            value={{
-                currentRequest,
-                setRequest,
-                clearRequest,
-                translation,
-            }}
-        >
+        <ListenerUiContext.Provider value={contextValue}>
             {children}
         </ListenerUiContext.Provider>
     );

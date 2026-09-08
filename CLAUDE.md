@@ -182,7 +182,6 @@ bun run changeset:release
     - **Known Issues**:
       - ⚠️ Component duplication with `design-system` (AlertDialog exists in both)
       - ⚠️ Backend type coupling via dev dependency on `@frak-labs/backend-elysia`
-    - **Technical Debt**: See `docs/audit/PACKAGE_SPLIT_OPTIONS.md` for refactoring analysis (conclusion: well-organized, needs targeted fixes not full split)
   - `design-system/` - Vanilla Extract design system: tokens + ~28 components (replaces legacy ui)
   - `ui-preview/` - Embedded preview widgets (business, shopify)
   - `app-essentials/` - Core blockchain utilities and WebAuthn configuration

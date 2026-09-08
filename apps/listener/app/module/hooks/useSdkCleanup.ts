@@ -17,9 +17,10 @@ export function useSdkCleanup() {
         trackEvent("sdk_cleaned_up");
 
         // Remove backup data from the client website
-        emitLifecycleEvent({
-            iframeLifecycle: "remove-backup",
-        });
+        emitLifecycleEvent(
+            { iframeLifecycle: "remove-backup" },
+            { targetOrigin: "*" }
+        );
 
         // Clean the session store, this will force a rerender on the displayed component depending on it
         sessionStore.getState().setSession(null);

@@ -21,7 +21,10 @@ export { PairingView } from "./component/PairingView";
 // Hooks
 export { useCancelAllSignatureRequests } from "./hook/useCancelAllSignatureRequests";
 export { useDeletePairing } from "./hook/useDeletePairing";
-export { useGetActivePairings } from "./hook/useListPairings";
+export {
+    activePairingsQueryOptions,
+    useGetActivePairings,
+} from "./hook/useListPairings";
 
 export {
     isPairingNotFoundError,

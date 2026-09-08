@@ -25,7 +25,8 @@ export { handleDisplaySharingPage } from "@/module/hooks/useDisplaySharingPageLi
 export function ListenerSharingPage() {
     const { currentRequest, clearRequest } = useSharingListenerUI();
     const { t: rawT } = useListenerTranslation();
-    const { sourceUrl, merchantId, installProof } = useSafeResolvingContext();
+    const { sourceUrl, merchantId, installProof, origin } =
+        useSafeResolvingContext();
     const defaultAttribution = useStore(
         resolvingContextStore,
         (s) => s.backendSdkConfig?.attribution
@@ -132,7 +133,7 @@ export function ListenerSharingPage() {
                             openInNewTab: true,
                         },
                     },
-                    { includeUserActivation: true }
+                    { includeUserActivation: true, targetOrigin: origin }
                 );
             },
             confirmationDismiss: clearRequest,

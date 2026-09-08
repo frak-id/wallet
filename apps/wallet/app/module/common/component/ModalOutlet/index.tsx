@@ -1,6 +1,9 @@
+import { recordError } from "@frak-labs/wallet-shared";
+import { CatchBoundary } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { DetailOverlay } from "@/module/common/component/DetailOverlay";
 import { RecoveryCodeSuccessModal } from "@/module/recovery-code/component/RecoveryCodeSuccessModal";
+import { modalErrorStore } from "@/module/stores/modalErrorStore";
 import { modalStore, selectModal } from "@/module/stores/modalStore";
 import { EmptyPendingGainsModal } from "@/module/tokens/component/EmptyPendingGainsModal";
 import { EmptyTransferModal } from "@/module/tokens/component/EmptyTransferModal";
@@ -72,6 +75,9 @@ const PendingGainsModal = lazy(() =>
     }))
 );
 
+/** The modal is closed on catch, so the boundary has nothing left to render. */
+const renderNothing = () => null;
+
 /**
  * Global modal outlet — mounted once at the app root.
  *
@@ -87,7 +93,28 @@ export function ModalOutlet() {
     if (!modal) return null;
 
     return (
-        <Suspense fallback={null}>{renderModal(modal, closeModal)}</Suspense>
+        <CatchBoundary
+            getResetKey={() => modal.id}
+            onCatch={(error) => {
+                recordError(error, {
+                    source: "error_boundary",
+                    context: { stage: "modal_load", modal_id: modal.id },
+                });
+                // Close rather than render a fallback in the modal slot: a
+                // broken modal left on screen has no exit. The toast is what
+                // tells the user why it vanished.
+                closeModal();
+                modalErrorStore.getState().raise();
+            }}
+            errorComponent={renderNothing}
+        >
+            {/* Seven modals share `DetailOverlay` at this position; without a
+                key, closing one over another reuses the instance and its
+                already-closing state, so the survivor cannot close. */}
+            <Suspense fallback={null} key={modal.id}>
+                {renderModal(modal, closeModal)}
+            </Suspense>
+        </CatchBoundary>
     );
 }
 
@@ -124,7 +151,10 @@ function renderModal(
             );
         case "explorerDetail":
             return (
-                <DetailOverlay onClose={closeModal}>
+                <DetailOverlay
+                    onClose={closeModal}
+                    labelKey="wallet.modal.explorerDetail.ariaLabel"
+                >
                     {({ handleClose }) => (
                         <ExplorerDetail
                             merchant={modal.merchant}
@@ -135,7 +165,10 @@ function renderModal(
             );
         case "welcomeDetail":
             return (
-                <DetailOverlay onClose={closeModal}>
+                <DetailOverlay
+                    onClose={closeModal}
+                    labelKey="wallet.modal.welcomeDetail.ariaLabel"
+                >
                     {({ handleClose }) => (
                         <WelcomeDetail onClose={handleClose} />
                     )}
@@ -143,7 +176,10 @@ function renderModal(
             );
         case "moneriumBankFlow":
             return (
-                <DetailOverlay onClose={closeModal}>
+                <DetailOverlay
+                    onClose={closeModal}
+                    labelKey="wallet.modal.moneriumBankFlow.ariaLabel"
+                >
                     {({ handleClose }) => (
                         <MoneriumBankFlow onClose={handleClose} />
                     )}
@@ -151,7 +187,10 @@ function renderModal(
             );
         case "rewardDetail":
             return (
-                <DetailOverlay onClose={closeModal}>
+                <DetailOverlay
+                    onClose={closeModal}
+                    labelKey="wallet.modal.rewardDetail.ariaLabel"
+                >
                     {({ handleClose }) => (
                         <RewardDetailModal
                             item={modal.item}
@@ -162,7 +201,10 @@ function renderModal(
             );
         case "moneriumOrderDetail":
             return (
-                <DetailOverlay onClose={closeModal}>
+                <DetailOverlay
+                    onClose={closeModal}
+                    labelKey="wallet.modal.moneriumOrderDetail.ariaLabel"
+                >
                     {({ handleClose }) => (
                         <MoneriumOrderDetailModal
                             order={modal.order}
@@ -173,7 +215,11 @@ function renderModal(
             );
         case "editReferralCode":
             return (
-                <DetailOverlay onClose={closeModal} variant="bottomSheet">
+                <DetailOverlay
+                    onClose={closeModal}
+                    variant="bottomSheet"
+                    labelKey="wallet.modal.editReferralCode.ariaLabel"
+                >
                     {({ handleClose }) => (
                         <EditReferralCodeSheet
                             onClose={handleClose}

@@ -89,6 +89,10 @@ function ListenerModalInner({
         resolvingContextStore,
         (s) => s.context?.sourceUrl
     );
+    const resolvedOrigin = useStore(
+        resolvingContextStore,
+        (s) => s.context?.origin
+    );
     const cancelAllSignatures = useCancelAllSignatureRequests({
         client: getOriginPairingClient(),
     });
@@ -210,6 +214,7 @@ function ListenerModalInner({
             <InAppBrowserToast
                 getMergeToken={getMergeToken}
                 parentUrl={parentUrl}
+                targetOrigin={resolvedOrigin}
             />
             <ToastLoading />
 

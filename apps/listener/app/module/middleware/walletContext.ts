@@ -1,4 +1,3 @@
-import { isRunningLocally } from "@frak-labs/app-essentials/utils/env";
 import {
     FrakRpcError,
     RpcErrorCodes,
@@ -81,8 +80,8 @@ export const walletContextMiddleware: RpcMiddleware<
                 method: msg.topic,
             });
 
-            // In local development, allow mismatch for testing
-            if (!isRunningLocally) {
+            // Build-time flag: folds to a constant in deployed builds.
+            if (!import.meta.env.DEV) {
                 throw new FrakRpcError(
                     RpcErrorCodes.configError,
                     "Origin mismatch - request origin does not match expected domain"

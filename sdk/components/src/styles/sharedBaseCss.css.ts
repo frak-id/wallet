@@ -4,8 +4,7 @@
  * Aggregates the design-system rules every Light DOM component depends on:
  * - Vanilla-extract reset rules (`base`, `element.button`, `fieldAppearance`,
  *   `focusRing`, ...) composed in component styles like Banner's `referralCta`.
- * - Theme tokens (`:root { --text-primary: ...; ... }`,
- *   `[data-theme='dark'] { ... }`).
+ * - Theme tokens (`:root { --text-primary: ...; ... }`).
  * - SDK-local composable styles (e.g. `buttonReset`) that more than one
  *   component shares — kept here so the rules ship once in the global
  *   `<style>` instead of being duplicated in each component's cssSource.

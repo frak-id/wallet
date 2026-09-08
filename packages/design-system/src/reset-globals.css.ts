@@ -35,7 +35,12 @@ globalStyle(":root", {
 });
 
 globalStyle("html", {
-    height: "100vh",
+    // `dvh`, not `vh`: on iOS Safari/WKWebView `100vh` is the URL-bar-collapsed
+    // height, so the page is taller than the visible viewport and the bottom of
+    // the layout sits under the browser chrome. Everything downstream already
+    // migrated to `dvh`; this was the last `vh` left in the wallet path, and it
+    // fought `AppShell`'s `--viewport-height` keyboard mirror.
+    height: "100dvh",
     scrollBehavior: "smooth",
 });
 

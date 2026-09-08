@@ -4,13 +4,13 @@ import {
     WagmiProviderWithDynamicConfig,
 } from "@frak-labs/wallet-shared";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import { QueryClient } from "@tanstack/react-query";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { lazy, type PropsWithChildren, useEffect } from "react";
+import { lazy, type PropsWithChildren, Suspense, useEffect } from "react";
 import { useConnection } from "wagmi";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { useWalletSessionGuard } from "@/module/common/hook/useWalletSessionGuard";
+import { queryClient } from "@/module/common/provider/queryClient";
 
 const ReactQueryDevtools = lazy(() =>
     import("@tanstack/react-query-devtools").then((m) => ({
@@ -19,20 +19,7 @@ const ReactQueryDevtools = lazy(() =>
 );
 
 /**
- * The query client that will be used by tanstack/react-query
- */
-const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            gcTime: Number.POSITIVE_INFINITY,
-            staleTime: 60 * 1000, // 1 minute
-            // Prefetch in render — gone upstream in 5.102.2, hence the exact 5.101.4 catalog pin.
-            experimental_prefetchInRender: true,
-        },
-    },
-});
 
-/**
  * The storage persister to cache our query data's
  */
 const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
@@ -73,10 +60,15 @@ export function RootProvider({ children }: PropsWithChildren) {
         >
             {content}
             {import.meta.env.DEV && (
-                <ReactQueryDevtools
-                    initialIsOpen={false}
-                    buttonPosition={"bottom-left"}
-                />
+                // Own boundary: the nearest ancestor Suspense is the router's,
+                // shared with the whole app, so an unwrapped lazy devtools
+                // import gates first paint behind the pending UI in dev.
+                <Suspense fallback={null}>
+                    <ReactQueryDevtools
+                        initialIsOpen={false}
+                        buttonPosition={"bottom-left"}
+                    />
+                </Suspense>
             )}
         </PersistQueryClientProvider>
     );

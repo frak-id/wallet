@@ -1,6 +1,6 @@
 import { createGlobalTheme, createThemeContract } from "@vanilla-extract/css";
 
-import { semanticDark, semanticLight } from "./tokens.css";
+import { semanticLight } from "./tokens.css";
 
 export const vars = createThemeContract({
     text: {
@@ -56,4 +56,8 @@ export const vars = createThemeContract({
 });
 
 createGlobalTheme(":root", vars, semanticLight);
-createGlobalTheme("[data-theme='dark']", vars, semanticDark);
+
+// Dark mode is planned, not shipped: nothing sets `data-theme`, so emitting
+// the block would only add ~500 B gz to every merchant page. Re-enable with
+// `createGlobalTheme("[data-theme='dark']", vars, semanticDark)` once a
+// switch exists; `semanticDark` in tokens.css.ts stays the tested source.

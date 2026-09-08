@@ -192,7 +192,10 @@ function MoneriumCallback() {
                 !isError));
 
     return (
-        <DetailOverlay onClose={goToWallet}>
+        <DetailOverlay
+            onClose={goToWallet}
+            labelKey="wallet.modal.moneriumCallback.ariaLabel"
+        >
             {({ handleClose }) => {
                 if (isExchangingCode) {
                     return (

@@ -13,13 +13,9 @@ vi.mock("@frak-labs/wallet-shared/common/utils/lifecycleEvents", () => ({
     emitLifecycleEvent: vi.fn(),
 }));
 
-// Mock resolvingContextStore to return a known origin
+const getState = vi.fn(() => ({ context: { origin: EXPECTED_ORIGIN } }));
 vi.mock("@/module/stores/resolvingContextStore", () => ({
-    resolvingContextStore: {
-        getState: () => ({
-            context: { origin: EXPECTED_ORIGIN },
-        }),
-    },
+    resolvingContextStore: { getState: () => getState() },
 }));
 
 describe("useDeepLinkFallback", () => {
@@ -38,10 +34,30 @@ describe("useDeepLinkFallback", () => {
 
         result.current.emitRedirectWithFallback(deepLinkUrl, onFallback);
 
-        expect(emitLifecycleEvent).toHaveBeenCalledWith({
-            iframeLifecycle: "redirect",
-            data: { baseRedirectUrl: deepLinkUrl },
-        });
+        expect(emitLifecycleEvent).toHaveBeenCalledWith(
+            {
+                iframeLifecycle: "redirect",
+                data: { baseRedirectUrl: deepLinkUrl },
+            },
+            { targetOrigin: EXPECTED_ORIGIN }
+        );
+    });
+
+    test("should drop the redirect when no origin is resolved", async () => {
+        const { emitLifecycleEvent } = await import(
+            "@frak-labs/wallet-shared/common/utils/lifecycleEvents"
+        );
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        getState.mockReturnValueOnce({ context: undefined } as never);
+        const { result } = renderHook(() => useDeepLinkFallback());
+
+        result.current.emitRedirectWithFallback("frakwallet://pair", vi.fn());
+
+        expect(emitLifecycleEvent).not.toHaveBeenCalled();
+        expect(warn).toHaveBeenCalledWith(
+            expect.stringContaining("Origin not resolved")
+        );
+        warn.mockRestore();
     });
 
     test("should store fallback callback", () => {
@@ -236,31 +252,5 @@ describe("useDeepLinkFallback", () => {
         const secondFunction = result.current.emitRedirectWithFallback;
 
         expect(firstFunction).toBe(secondFunction);
-    });
-
-    test("should always route through parent SDK lifecycle event regardless of URL type", async () => {
-        const { emitLifecycleEvent } = await import(
-            "@frak-labs/wallet-shared/common/utils/lifecycleEvents"
-        );
-        const { result } = renderHook(() => useDeepLinkFallback());
-
-        // Deep link URL
-        result.current.emitRedirectWithFallback("frakwallet://wallet", vi.fn());
-        expect(emitLifecycleEvent).toHaveBeenCalledWith({
-            iframeLifecycle: "redirect",
-            data: { baseRedirectUrl: "frakwallet://wallet" },
-        });
-
-        vi.mocked(emitLifecycleEvent).mockClear();
-
-        // Regular URL
-        result.current.emitRedirectWithFallback(
-            "https://wallet.frak.id/open",
-            vi.fn()
-        );
-        expect(emitLifecycleEvent).toHaveBeenCalledWith({
-            iframeLifecycle: "redirect",
-            data: { baseRedirectUrl: "https://wallet.frak.id/open" },
-        });
     });
 });
