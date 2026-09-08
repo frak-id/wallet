@@ -1,5 +1,5 @@
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
+import { createClient } from "@libsql/client/http";
+import { drizzle } from "drizzle-orm/libsql/http";
 import { migrate } from "drizzle-orm/libsql/migrator";
 
 const MIGRATIONS_FOLDER = "./drizzle/libsql";

@@ -1,7 +1,7 @@
 import { currentChainId } from "@frak-labs/app-essentials/blockchain";
-import { type Client, createClient } from "@libsql/client";
+import { type Client, createClient } from "@libsql/client/http";
 import { and, eq, isNull } from "drizzle-orm";
-import { drizzle as drizzleLibsql } from "drizzle-orm/libsql";
+import { drizzle as drizzleLibsql } from "drizzle-orm/libsql/http";
 import { drizzle as drizzlePg } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { authenticatorsTable } from "../../backend/src/domain/auth/db/schema";

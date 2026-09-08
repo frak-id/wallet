@@ -8,10 +8,7 @@ const result = await build({
     minify: true,
     splitting: false,
     target: "bun",
-    // @libsql/client ships native bindings that cannot be bundled;
-    // it is installed in the runtime image instead (same approach as
-    // services/backend).
-    external: ["@libsql/client"],
+    external: [],
     drop: ["debugger"],
     sourcemap: "linked",
 });

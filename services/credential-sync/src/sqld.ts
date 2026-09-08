@@ -1,6 +1,6 @@
-import { createClient } from "@libsql/client";
+import { createClient } from "@libsql/client/http";
 import { inArray } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/libsql";
+import { drizzle } from "drizzle-orm/libsql/http";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 const LIBSQL_URL = process.env.LIBSQL_URL;

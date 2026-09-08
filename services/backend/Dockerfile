@@ -2,13 +2,11 @@
 #
 # Elysia backend — self-contained multi-stage build.
 #
-# Runtime stays on the Debian-flavored `oven/bun` image because two runtime
-# dependencies ship native binaries that are reliably available there:
-#   - lightningcss    (parcel CSS engine; glibc binary preferred)
-#   - @libsql/client  (better-sqlite3 native bindings)
-# Both are excluded from `bun build` and installed at runtime instead of being
-# bundled. Switching to alpine would require validating musl prebuilds for both
-# on every dependency bump, which is not worth the ~150 MB savings.
+# Runtime stays on the Debian-flavored `oven/bun` image because lightningcss is
+# the one runtime dependency shipping a native binary, and its glibc prebuild is
+# first-class. It is excluded from `bun build` and installed at runtime instead
+# of being bundled. Switching to alpine would require validating its musl
+# prebuild on every dependency bump.
 
 ARG BUN_VERSION=1.4.2
 
@@ -55,14 +53,13 @@ ENV NODE_ENV=production \
 WORKDIR /app/services/backend
 RUN bun run build
 
-# Pre-install the runtime-only native modules into a scratch directory so the
-# final image gets a clean, minimal node_modules layer instead of the previous
-# `cp -rL /tmp/node_modules` dance.
+# Pre-install the runtime-only native module into a scratch directory so the
+# final image gets a clean, minimal node_modules layer.
 FROM tooling AS runtime-deps
 WORKDIR /runtime
 RUN --mount=type=cache,id=bun-store,target=/root/.bun/install/cache,sharing=locked \
     bun init -y >/dev/null \
-    && bun add lightningcss @libsql/client
+    && bun add lightningcss
 
 FROM oven/bun:${BUN_VERSION}
 WORKDIR /app
