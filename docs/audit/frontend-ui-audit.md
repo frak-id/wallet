@@ -399,18 +399,21 @@ The Escape handler is attached to a non-focusable backdrop `<div>` (no `tabIndex
 
 Move the listener to `document` in a `useEffect`, add `role="dialog" aria-modal="true" aria-label`, and delete the no-op `onKeyDown` pair.
 
-### 24. Missing safe-area insets on mobile CTAs
+### 24. Missing safe-area insets on mobile CTAs — **fixed**
 
-`tokens.css.ts:388-392` documents that **raw `env()` returns 0 on Android Tauri** (the `safeArea` token exists precisely for this), yet 4 sites use raw `env()` and one uses nothing:
+`tokens.css.ts` documents that raw `env()` returns 0 on Android Tauri. Six sites
+used it anyway — not four: the original entry missed
+`wallet-shared/…/PostShareConfirmation:97` and `…/SharingPage:350`. Three more
+inlined the token's composite expression by hand.
 
-- `DetailSheet/detailSheet.css.ts:62` — the primary CTA row
-- `Drawer/drawer.css.ts:31` — what `ResponsiveModal` renders on **every** mobile device (the same file uses the token correctly at `:56`)
-- `styles/inAppBanner.css.ts:19`, `FullScreenGate/index.css.ts:19` (line 20 uses the token correctly — inconsistent within two adjacent lines)
-- `business/…/FloatingFooter/floating-footer.css.ts:15-29` — `fixed bottom: 0`, 96px tall, **no inset at all**; the primary CTA sits under the iOS home indicator
+All nine now import `safeArea`. `scripts/check-safe-area.ts` (in `bun run lint`)
+bans the raw literal in any `.css.ts` outside `tokens.css.ts` and
+`reset-globals.css.ts`, which are what define the token.
 
-```ts
-paddingBottom: `calc(${alias.spacing.m} + ${safeArea.bottom})`,
-```
+`business/…/FloatingFooter` is **not** part of this: `apps/business/index.html`
+carries no `viewport-fit=cover` and the app never loads `reset-globals`, so an
+inset there would resolve to `0px` twice over. Making it real means opting the
+whole app into edge-to-edge — a product call, tracked separately.
 
 ### 25. Fixed widths overflow a 320px viewport
 
