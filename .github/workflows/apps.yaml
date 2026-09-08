@@ -41,19 +41,23 @@ jobs:
       - uses: dorny/paths-filter@v4
         id: filter
         with:
-          # Negations keep `ts` self-maintaining: a new TypeScript SDK package is picked
-          # up by `sdk/**` automatically, without anyone remembering to widen this list.
+          # No `!` entries anywhere in this block. In paths-filter a leading `!` is
+          # not an exclusion from the patterns above it — it is a rule matching every
+          # path *outside* that directory, so `!sdk/android/**` matched `services/**`
+          # and made its filter fire on everything. The TypeScript SDK packages are
+          # named instead; a new one has to be added here.
           filters: |
             ts:
               - 'apps/**'
               - 'packages/**'
-              - 'sdk/**'
+              - 'sdk/core/**'
+              - 'sdk/react/**'
+              - 'sdk/components/**'
+              - 'sdk/legacy/**'
               # The gate scripts and their npm entrypoints: without these a
               # change to a check never triggers the job that runs it.
               - 'scripts/**'
               - 'package.json'
-              - '!sdk/android/**'
-              - '!sdk/ios/**'
               - 'bun.lock'
               - '.github/workflows/apps.yaml'
             android:
@@ -346,13 +350,13 @@ jobs:
       # baseline behind them. Gating that needs a paydown first, not a CI step.
 
   # ── Infra ───────────────────────────────────────────────
-  # Lint only, deliberately. Typechecking `infra/` needs its own tsconfig — it has no
-  # `package.json`, so `--filter '*'` cannot reach it, and the root config's
-  # `include: ["**/*.ts"]` would typecheck the entire repo. A scoped config surfaces
-  # three pre-existing Pulumi typing errors, so wiring one here would land red on
-  # work unrelated to CI. Do not add a `tsc` step without fixing those first.
+  # `infra/` has no `package.json`, so `bun run --filter '*' typecheck` cannot reach
+  # it and the root config's `include: ["**/*.ts"]` would typecheck the whole repo.
+  # `infra/tsconfig.json` scopes it, and `sst install` is required first: both
+  # `sst.config.ts` and `KubernetesService.ts` reference `.sst/platform`, which is
+  # gitignored and generated.
   infra:
-    name: "🏗️ Infra · Lint"
+    name: "🏗️ Infra · Lint & types"
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.infra == 'true'
@@ -363,6 +367,12 @@ jobs:
         run: bun install --frozen-lockfile
       - name: "📏 Lint & format check"
         run: bunx biome ci infra/ sst.config.ts
+      # `--stage` is required: a clean checkout has no `.sst/stage`. The stage only
+      # selects which config branch is evaluated, and nothing here deploys.
+      - name: "🔨 Install SST providers"
+        run: bunx sst install --stage dev
+      - name: "🔎 Typecheck"
+        run: bunx tsc --noEmit -p infra/tsconfig.json
 
   # ── Types ───────────────────────────────────────────────
   # Also gated on `backend`: every app type-imports `@frak-labs/backend-elysia/*`

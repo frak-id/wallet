@@ -91,7 +91,10 @@ const sanitizedBranch = (process.env.GITHUB_REF_NAME ?? "dev")
     .toLowerCase()
     .slice(0, 100);
 
-type CachedImageArgs = dockerbuild.ImageArgs & {
+// `cacheFrom`/`cacheTo` are owned here: this wrapper exists to set them. They are
+// `Input<Input<T>[]>` upstream, so a caller-supplied value could be an Output and
+// would not be spreadable into the arrays below.
+type CachedImageArgs = Omit<dockerbuild.ImageArgs, "cacheFrom" | "cacheTo"> & {
     /**
      * Override the zot cache repository. Defaults to `cache/<image-name>` which
      * gives each image its own namespace (no write contention between parallel
@@ -129,7 +132,6 @@ export function cachedImage(
             { registry: { ref: cacheRef(`branch-${sanitizedBranch}`) } },
             { registry: { ref: cacheRef("branch-dev") } },
             { registry: { ref: cacheRef("branch-main") } },
-            ...(args.cacheFrom ?? []),
         ],
         cacheTo: [
             {
@@ -140,7 +142,6 @@ export function cachedImage(
                     ociMediaTypes: true,
                 },
             },
-            ...(args.cacheTo ?? []),
         ],
     });
 }
