@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Page, Route } from "@playwright/test";
 
 export async function mockDefaultApiRoutes(page: Page, baseURL?: string) {
     await Promise.all([
@@ -6,6 +6,7 @@ export async function mockDefaultApiRoutes(page: Page, baseURL?: string) {
         mockBackendAuth(page),
         mockBackendBalance(page),
         mockBackendNotifications(page),
+        mockBackendSession(page),
         mockBackendMerchant(page),
         mockRemoteImages(page, baseURL),
         mockRpc(page),
@@ -176,6 +177,30 @@ async function mockBackendNotifications(page: Page) {
             contentType: "application/json",
             body: JSON.stringify({ tokens: [] }),
         })
+    );
+}
+
+// Authenticated reads every protected page issues. Unmocked they 401 against
+// the mock token, and the session guard answers a 401 with the re-auth modal.
+async function mockBackendSession(page: Page) {
+    const json = (body: unknown) => (route: Route) =>
+        route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify(body),
+        });
+    await page.route("**/*/wallet/pairings/list", json([]));
+    await page.route(
+        "**/*/wallet/referral/status*",
+        json({
+            ownedCode: null,
+            crossMerchantReferrer: null,
+            merchantReferrer: null,
+        })
+    );
+    await page.route(
+        "**/*/wallet/rewards/history*",
+        json({ items: [], totalCount: 0 })
     );
 }
 
