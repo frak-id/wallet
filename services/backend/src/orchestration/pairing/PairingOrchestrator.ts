@@ -1,8 +1,8 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { JwtContext, log } from "@backend-infrastructure";
+import { describeUserAgent } from "@backend-utils";
 import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import type { ElysiaWS } from "elysia/ws";
-import { UAParser } from "ua-parser-js";
 import { isAddressEqual } from "viem";
 import type {
     StaticWalletTokenDto,
@@ -524,9 +524,7 @@ export class PairingOrchestrator {
     }
 
     private uaToDeviceName(userAgent?: string): string {
-        if (!userAgent) return "Unknown";
-        const parsed = UAParser(userAgent);
-        return `${parsed.browser.name} on ${parsed.os.name}`;
+        return describeUserAgent(userAgent);
     }
 
     private sendDirect(
