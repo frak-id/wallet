@@ -1,0 +1,172 @@
+name: "🧪 Release Native Example Apps"
+
+# Ships the two SDK harnesses to the team: iOS to TestFlight, Android to the Play
+# internal testing track. Both are internal-only distribution — no App Review, no Play
+# store listing — so this is safe to run as often as needed.
+#
+# Reuses the wallet's signing credentials (see tauri-mobile-release.yml); nothing new to
+# provision. The harnesses build the SDK from local source (SwiftPM path dependency /
+# Gradle composite build), so a release ships whatever the chosen ref contains.
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Which harness to ship"
+        required: false
+        type: choice
+        options:
+          - both
+          - ios
+          - android
+        default: both
+      version:
+        description: "Marketing version (e.g. 1.2). Empty = 1.0."
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  CI: true
+  # The build number is derived per job, in a step: GitHub expressions have no arithmetic,
+  # and it needs an offset (see "Resolve build number" below).
+  FRAK_VERSION_NAME: ${{ inputs.version || '1.0' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ios:
+    name: "🍏 iOS · TestFlight"
+    if: inputs.platform == 'both' || inputs.platform == 'ios'
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+
+      # Monotonic, which is all TestFlight and Play ask of a build number. Re-running a
+      # failed job burns one; that is intended, since neither store accepts a repeat.
+      #
+      # Offset by 10: run numbers start at 1 and so does a bundle seeded by hand, and Play
+      # accepts a given version code exactly once.
+      - name: "🔢 Resolve build number"
+        run: echo "FRAK_BUILD_NUMBER=$(( GITHUB_RUN_NUMBER + 10 ))" >> "$GITHUB_ENV"
+
+      - name: "🧰 Install XcodeGen"
+        run: brew install xcodegen
+
+      - name: "💾 Cache SwiftPM build"
+        uses: actions/cache@v5
+        with:
+          path: example/native-ios/.build
+          key: ${{ runner.os }}-spm-harness-${{ hashFiles('sdk/ios/Sources/**', 'example/native-ios/Sources/**') }}
+          restore-keys: ${{ runner.os }}-spm-harness-
+
+      - name: "🔑 Write App Store Connect API key"
+        run: |
+          umask 077
+          echo "$APPLE_API_KEY_CONTENT" > "$RUNNER_TEMP/AuthKey.p8"
+        env:
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
+      # Archive and upload are separate script subcommands so a transient upload failure
+      # can be retried without paying for another archive.
+      - name: "📦 Archive"
+        run: bun run --cwd example/native-ios archive
+        env:
+          FRAK_ASC_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+          FRAK_ASC_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          FRAK_ASC_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+
+      - name: "🚀 Upload to TestFlight"
+        run: bun run --cwd example/native-ios upload
+        env:
+          FRAK_ASC_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+          FRAK_ASC_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          FRAK_ASC_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+
+      - name: "🧹 Remove API key"
+        if: always()
+        run: rm -f "$RUNNER_TEMP/AuthKey.p8"
+
+      - name: "📦 Upload .ipa artifact"
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-example-ios-ipa
+          path: example/native-ios/build/export/*.ipa
+          if-no-files-found: warn
+
+  android:
+    name: "🤖 Android · Play internal"
+    if: inputs.platform == 'both' || inputs.platform == 'android'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: "☕ Setup Java 17"
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # `scripts/run.sh` resolves ANDROID_HOME or dies with "SDK location not found".
+      - name: "📱 Setup Android SDK"
+        uses: android-actions/setup-android@v4
+
+      - name: "🐘 Setup Gradle"
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          build-root-directory: example/native-android
+          cache-read-only: true
+          validate-wrappers: true
+
+      - uses: oven-sh/setup-bun@v2
+
+      # See the iOS job: same offset, same reason.
+      - name: "🔢 Resolve version code"
+        run: echo "FRAK_VERSION_CODE=$(( GITHUB_RUN_NUMBER + 10 ))" >> "$GITHUB_ENV"
+
+      - name: "🔑 Write upload keystore"
+        run: |
+          umask 077
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload-keystore.jks"
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+
+      - name: "📦 Build release AAB"
+        run: bun run --cwd example/native-android bundle
+        env:
+          FRAK_KEYSTORE: ${{ runner.temp }}/upload-keystore.jks
+          FRAK_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          FRAK_KEY_ALIAS: upload
+          FRAK_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: "🧹 Remove keystore"
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload-keystore.jks"
+
+      # `status: completed` rather than `draft`: the internal track has no review, so a
+      # draft would just sit there waiting for a human to press a button.
+      - name: "🚀 Upload to Play internal track"
+        uses: r0adkll/upload-google-play@v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: id.frak.example.android
+          releaseFiles: example/native-android/app/build/outputs/bundle/release/app-release.aab
+          tracks: internal
+          status: completed
+
+      - name: "📦 Upload .aab artifact"
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-example-android-aab
+          path: example/native-android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: warn

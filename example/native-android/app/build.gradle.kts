@@ -15,12 +15,29 @@ android {
         applicationId = "id.frak.example.android"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        // Play rejects a version code it has already seen, so CI passes its run number.
+        versionCode = (findProperty("frak.versionCode") as String?)?.toInt() ?: 1
+        versionName = (findProperty("frak.versionName") as String?) ?: "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    // Present only when CI (or a local release build) supplies a keystore; without it the
+    // release variant falls back to the debug signer so `assembleRelease` still works on a
+    // clean checkout, and R8 stays reproducible.
+    val uploadKeystore = (findProperty("frak.keystore") as String?)?.let(::file)
+
+    signingConfigs {
+        if (uploadKeystore?.exists() == true) {
+            create("upload") {
+                storeFile = uploadKeystore
+                storePassword = findProperty("frak.keystorePassword") as String?
+                keyAlias = (findProperty("frak.keyAlias") as String?) ?: "upload"
+                keyPassword = findProperty("frak.keyPassword") as String?
+            }
         }
     }
 
@@ -32,9 +49,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // Debug-signed so `installRelease` works without a keystore. This is the harness,
-            // not a shippable artifact.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig =
+                signingConfigs.findByName("upload") ?: signingConfigs.getByName("debug")
         }
     }
 
@@ -66,6 +82,10 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+
+    // Product thumbnails: the harness renders the same images it hands the SDK.
+    implementation("io.coil-kt.coil3:coil-compose:3.4.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.4.0")
 
     implementation("id.frak.sdk:core:1.0.0-beta.3")
     implementation("id.frak.sdk:ui:1.0.0-beta.3")

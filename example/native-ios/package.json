@@ -7,6 +7,8 @@
         "device": "./scripts/run.sh device",
         "logs": "./scripts/run.sh logs",
         "build": "./scripts/run.sh build",
+        "archive": "./scripts/run.sh archive",
+        "upload": "./scripts/run.sh upload",
         "xcode": "./scripts/run.sh xcode",
         "lint": "./scripts/run.sh lint",
         "format": "./scripts/run.sh format"
