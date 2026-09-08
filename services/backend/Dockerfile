@@ -2,14 +2,13 @@
 #
 # Elysia backend — self-contained multi-stage build.
 #
-# Runtime stays on the Debian-flavored `oven/bun` image because three runtime
+# Runtime stays on the Debian-flavored `oven/bun` image because two runtime
 # dependencies ship native binaries that are reliably available there:
-#   - sharp           (libvips bindings; glibc prebuilds are first-class)
 #   - lightningcss    (parcel CSS engine; glibc binary preferred)
 #   - @libsql/client  (better-sqlite3 native bindings)
-# These three are excluded from `bun build` and installed at runtime instead of
-# being bundled. Switching to alpine would require validating musl prebuilds for
-# all three on every dependency bump, which is not worth the ~150 MB savings.
+# Both are excluded from `bun build` and installed at runtime instead of being
+# bundled. Switching to alpine would require validating musl prebuilds for both
+# on every dependency bump, which is not worth the ~150 MB savings.
 
 ARG BUN_VERSION=1.4.2
 
@@ -63,7 +62,7 @@ FROM tooling AS runtime-deps
 WORKDIR /runtime
 RUN --mount=type=cache,id=bun-store,target=/root/.bun/install/cache,sharing=locked \
     bun init -y >/dev/null \
-    && bun add sharp lightningcss @libsql/client
+    && bun add lightningcss @libsql/client
 
 FROM oven/bun:${BUN_VERSION}
 WORKDIR /app

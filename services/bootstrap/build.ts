@@ -8,10 +8,10 @@ const result = await build({
     minify: true,
     splitting: false,
     target: "bun",
-    // sharp and @libsql/client ship native bindings that cannot be bundled;
-    // they are installed in the runtime image instead (same approach as
+    // @libsql/client ships native bindings that cannot be bundled;
+    // it is installed in the runtime image instead (same approach as
     // services/backend).
-    external: ["sharp", "@libsql/client"],
+    external: ["@libsql/client"],
     drop: ["debugger"],
     sourcemap: "linked",
 });

@@ -31,8 +31,7 @@
         "@frak-labs/app-essentials": "workspace:*",
         "@libsql/client": "^0.17.4",
         "drizzle-orm": "^0.45.2",
-        "postgres": "^3.4.9",
-        "sharp": "^0.35.3"
+        "postgres": "^3.4.9"
     },
     "devDependencies": {
         "@swc/core": "^1.15.46",
