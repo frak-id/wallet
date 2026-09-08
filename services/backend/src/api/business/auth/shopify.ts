@@ -1,7 +1,7 @@
 import { log, rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { constantTimeEqual } from "@oslojs/crypto/subtle";
-import { generateState } from "arctic";
+
 import { Elysia, status } from "elysia";
 import { BusinessAuthContext } from "../../../domain/business-auth";
 import { resolveClientIp } from "./common";
@@ -40,6 +40,13 @@ export function safeRelativeRedirect(
     return redirect;
 }
 
+/** CSRF nonce for the OAuth `state`. Unpadded base64url, so it is dot-free. */
+export function generateStateNonce(): string {
+    return Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString(
+        "base64url"
+    );
+}
+
 /**
  * Pack the CSRF nonce and an optional post-login redirect into a single
  * opaque OAuth `state` value. Shopify echoes `state` back verbatim on the
@@ -47,8 +54,8 @@ export function safeRelativeRedirect(
  * query param except `hmac`/`signature`), so anything embedded here is
  * tamper-proof on return — a strictly better carrier than a second,
  * unauthenticated cookie that would need to stay in sync with this one.
- * `generateState()` (arctic) emits unpadded base64url — a dot-free
- * alphabet — so the nonce can never collide with the `.` separator below.
+ * The nonce's dot-free alphabet means it can never collide with the `.`
+ * separator below.
  */
 export function packState(nonce: string, redirect: string | null): string {
     if (!redirect) return nonce;
@@ -171,7 +178,7 @@ export const shopifyAuthRoutes = new Elysia({ prefix: "/shopify" })
             // pure enhancement, not required for SSO to function.
             const validRedirect = safeRelativeRedirect(redirect);
 
-            const nonce = generateState();
+            const nonce = generateStateNonce();
             cookie[STATE_COOKIE_NAME]?.set({
                 // Cookie stores ONLY the nonce — the callback splits the
                 // returned (HMAC-verified) state and compares just this part.

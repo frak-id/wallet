@@ -53,7 +53,7 @@
     "format:check": "biome check .",
     "knip": "knip",
     "knip:backend": "knip -W services/backend --include classMembers",
-    "lint": "biome lint . && bun run lint:comments && bun run check:i18n-types && bun run check:ios-floor && bun run check:ios-url-scheme && bun run check:android-manifest && bun run check:publishable && bun run check:safe-area",
+    "lint": "biome lint . && bun run lint:comments && bun run check:i18n-types && bun run check:ios-floor && bun run check:ios-url-scheme && bun run check:android-manifest && bun run check:publishable && bun run check:safe-area && bun run scripts/check-bun-version.ts ",
     "lint:comments": "bun scripts/check-comments.ts",
     "test": "nice -n 10 vitest run",
     "test:watch": "nice -n 10 vitest",
