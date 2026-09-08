@@ -207,7 +207,6 @@ Everything here is real but absorbs cost the other two tiers cannot. **Two excep
 | **Chunk config triplicated (428 LOC)** | wallet, business, listener | P2/P3 | Listener's is the one with a hard-fail budget, so drift there is caught. `react-vendor` is byte-identical wallet↔business — start there |
 | **`zIndex` token bypassed (51 literals / 36 files)** | all | P1 (embedded wallet) → P2 | The 4 live collisions span tiers; the token itself is correct |
 | **`prefers-reduced-motion` unguarded** | DS keyframes + 11 files | P1 (sdk Banner keyframes, listener Spinner) | Two **infinite** animations (Skeleton pulse, Spinner spin). `MotionConfig`/`useReducedMotion` = 0 matches repo-wide |
-| **DS `Slider` is fully unreferenced** | none | dead code | Verified zero consumers outside its own directory; drags `@radix-ui/react-slider` into the graph |
 | **CI runs no quality job** | all | **P1** | 7 workflows, only the listener bundle budget. The 4-command gate at `AGENTS.md:16` is human-enforced and has measurably leaked |
 
 ---
@@ -227,7 +226,7 @@ Landed as one piece of work: credential-bearing lifecycle sends now carry the re
 | 1 | `sdk/components`: design-system → `devDependencies` | P1 | The package becomes installable at all |
 | 2 | Delete `semanticDark` (or wire up a theme switch) | P1 | Dead CSS off every visitor's critical path |
 | 3 | `GlassButton` focus-visible ring | P2 | Restores keyboard focus wallet-wide |
-| 4 | Delete `mock/products.json` and DS `Slider` | P3 | Two dead modules |
+| ~~4~~ | ~~Delete `mock/products.json` and DS `Slider`~~ | — | **Done.** Both removed, with `@radix-ui/react-slider` dropped from the design-system manifest |
 | 5 | ~~`ButtonWallet` accessible name~~ | — | **Already fixed upstream** — the embedded wallet was removed in `ee02d5bdb`; the button carries an `aria-label` |
 
 ### Next — P2 smoothness + the P1 latency item (days)

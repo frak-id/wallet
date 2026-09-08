@@ -466,7 +466,7 @@ Use middle-truncation, or `overflowWrap: "anywhere"` + `userSelect: "all"` to ma
 | Component | Missing |
 |---|---|
 | `Accordion/accordion.css.ts:27-40` | **`:focus-visible` entirely** (a real `<button>` with zero focus indication), plus hover and disabled |
-| `Slider/slider.css.ts:31-44` | hover, `:active` (a drag handle with no pressed feedback), **and disabled** |
+| ~~`Slider/slider.css.ts:31-44`~~ | ~~hover, `:active`, disabled~~ — component deleted as unreferenced |
 | `Checkbox/checkbox.css.ts:15-30` | hover, active |
 | `RadioGroup/radioGroup.css.ts:31-42` | hover, active |
 | `Switch/switch.css.ts:17-30` | hover, active — and `switchThumb:37` hardcodes `"white"`, the only color literal left in an interactive DS component; blows out against the grey400 track in dark mode |
