@@ -1,3 +1,4 @@
+import { radioAccent } from "@frak-labs/design-system/components/RadioGroup/styles";
 import { vars } from "@frak-labs/design-system/theme";
 import {
     alias,
@@ -162,7 +163,14 @@ export const rewardCard = style({
     textAlign: "center",
 });
 
+export const productList = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.s,
+});
+
 export const productCard = style({
+    position: "relative",
     display: "flex",
     alignItems: "center",
     gap: alias.spacing.m,
@@ -172,7 +180,53 @@ export const productCard = style({
     borderRadius: alias.cornerRadius.l,
     cursor: "pointer",
     textAlign: "left",
+
+    // Black rather than the design-system blue: the picker sits under a
+    // merchant-tinted reward card, and the old checkmark was black too.
+    vars: { [radioAccent]: vars.text.primary },
+
+    // Mirror the radio's focus ring onto the row: 20px is a small target on a
+    // full-width card. `:has()` is below the firefox114 pin in BROWSER_TARGET,
+    // where the radio's own ring is the whole indication.
+    selectors: {
+        "&:has(:focus-visible)": {
+            boxShadow: `0 0 0 2px ${vars.border.focus}`,
+        },
+    },
 });
+
+/** Stretched so a tap anywhere on the row selects, as the whole card once did. */
+export const productCardLabel = style({
+    flex: 1,
+    cursor: "pointer",
+
+    // The text box is only ~22px of a 74px row, so the label claims the rest
+    // through an overlay. It stops short of the radio: Radix commits an arrow
+    // move by clicking that radio, and an overlay on top of it swallows the
+    // click, which leaves the selection lagging focus by one.
+    selectors: {
+        "&::after": {
+            content: '""',
+            position: "absolute",
+            insetBlock: 0,
+            insetInlineEnd: 0,
+            // Clears the 20px radio plus the card's gap.
+            insetInlineStart: `calc(20px + ${alias.spacing.m})`,
+        },
+    },
+});
+
+/**
+ * The dot alone is a 20px signal on a full-width row; a customer who taps and
+ * looks away can miss that the selection moved.
+ */
+export const productCardSelected = style([
+    productCard,
+    {
+        backgroundColor: vars.surface.muted,
+        borderColor: vars.text.primary,
+    },
+]);
 
 export const productImage = style({
     width: "40px",
@@ -183,33 +237,6 @@ export const productImage = style({
     border: `1px solid ${vars.border.subtle}`,
     boxShadow: "0px 2px 16px 0px #00000026",
 });
-
-const checkIconBase = style({
-    width: "24px",
-    height: "24px",
-    borderRadius: alias.cornerRadius.s,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-});
-
-export const checkIcon = style([
-    checkIconBase,
-    {
-        backgroundColor: vars.text.primary,
-        color: vars.text.onAction,
-        fontSize: fontSize.xs,
-    },
-]);
-
-export const checkIconUnselected = style([
-    checkIconBase,
-    {
-        backgroundColor: vars.surface.muted,
-        border: `1px solid ${vars.border.default}`,
-    },
-]);
 
 /**
  * Stepper — numbered steps with a vertical connecting line.

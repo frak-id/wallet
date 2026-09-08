@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { getStep2Context, SharingPage, type SharingPageProps } from "./index";
 
 // stand-in `t` echoing the interpolated context/values, so assertions read
@@ -18,6 +18,8 @@ const t = (key: string, opts?: Record<string, unknown>): string => {
                 : "Step2-default";
         case "sdk.sharingPage.card.amount":
             return "10 %";
+        case "sdk.sharingPage.products.label":
+            return "Choose one product to share";
         default:
             return key;
     }
@@ -71,9 +73,12 @@ describe("getStep2Context", () => {
 describe("SharingPage — product picker (PSC-27)", () => {
     type PickerItems = NonNullable<SharingPageProps["products"]>["items"];
 
-    const withProducts = (items: PickerItems): SharingPageProps => ({
+    const withProducts = (
+        items: PickerItems,
+        overrides: Partial<NonNullable<SharingPageProps["products"]>> = {}
+    ): SharingPageProps => ({
         ...baseProps,
-        products: { items, selectedIndex: 0, onSelect: () => {} },
+        products: { items, selectedIndex: 0, onSelect: () => {}, ...overrides },
     });
 
     it("renders a card for each titled product", () => {
@@ -103,12 +108,112 @@ describe("SharingPage — product picker (PSC-27)", () => {
     });
 
     it("renders no picker at all when every product is title-less", () => {
-        const { container } = render(
-            <SharingPage {...withProducts([{ sku: "HIDDEN-1" }])} />
+        render(<SharingPage {...withProducts([{ sku: "HIDDEN-1" }])} />);
+        expect(screen.queryByRole("radiogroup")).toBeNull();
+    });
+
+    it("renders one radio per titled product inside a single radiogroup", () => {
+        render(
+            <SharingPage
+                {...withProducts([
+                    { title: "Shoes", sku: "SHOE-42" },
+                    { title: "Socks", sku: "SOCK-9" },
+                ])}
+            />
+        );
+        expect(screen.getAllByRole("radiogroup")).toHaveLength(1);
+        expect(screen.getAllByRole("radio")).toHaveLength(2);
+    });
+
+    it("checks only the selected card", () => {
+        render(
+            <SharingPage
+                {...withProducts(
+                    [
+                        { title: "Shoes", sku: "SHOE-42" },
+                        { title: "Socks", sku: "SOCK-9" },
+                    ],
+                    { selectedIndex: 1 }
+                )}
+            />
+        );
+        const [shoes, socks] = screen.getAllByRole("radio");
+        expect(shoes).toHaveAttribute("aria-checked", "false");
+        expect(socks).toHaveAttribute("aria-checked", "true");
+    });
+
+    it("selects by the index into items, not into the rendered subset", () => {
+        // The title-less entry draws nothing but still occupies index 0;
+        // renumbering here would scope the share to the wrong product.
+        const onSelect = vi.fn();
+        render(
+            <SharingPage
+                {...withProducts(
+                    [
+                        { sku: "HIDDEN-1" },
+                        { title: "Shoes", sku: "SHOE-42" },
+                        { title: "Socks", sku: "SOCK-9" },
+                    ],
+                    { selectedIndex: 1, onSelect }
+                )}
+            />
+        );
+        fireEvent.click(screen.getByText("Socks"));
+        expect(onSelect).toHaveBeenCalledWith(2);
+    });
+
+    it("keeps the selection when the selected card is clicked again", () => {
+        const onSelect = vi.fn();
+        render(
+            <SharingPage
+                {...withProducts(
+                    [
+                        { title: "Shoes", sku: "SHOE-42" },
+                        { title: "Socks", sku: "SOCK-9" },
+                    ],
+                    { selectedIndex: 1, onSelect }
+                )}
+            />
+        );
+        fireEvent.click(screen.getByText("Socks"));
+        // Never index 0 by way of `Number("")`, and never a cleared group.
+        expect(onSelect).not.toHaveBeenCalledWith(0);
+    });
+
+    it("keeps the label a sibling of the radio, never its wrapper", () => {
+        // Structural on purpose: Radix commits an arrow move by clicking the
+        // focused radio, and a wrapping label re-dispatches that click, so the
+        // selection silently lags focus by one. Nothing else catches it.
+        render(
+            <SharingPage
+                {...withProducts([{ title: "Shoes", sku: "SHOE-42" }])}
+            />
         );
         expect(
-            container.querySelector("button[class*=productCard]")
+            screen.getByRole("radio", { name: "Shoes" }).closest("label")
         ).toBeNull();
+    });
+
+    it("names each radio by its product title", () => {
+        render(
+            <SharingPage
+                {...withProducts([{ title: "Shoes", sku: "SHOE-42" }])}
+            />
+        );
+        expect(
+            screen.getByRole("radio", { name: "Shoes" })
+        ).toBeInTheDocument();
+    });
+
+    it("labels the group so the single-choice intent is announced", () => {
+        render(
+            <SharingPage
+                {...withProducts([{ title: "Shoes", sku: "SHOE-42" }])}
+            />
+        );
+        expect(screen.getByRole("radiogroup")).toHaveAccessibleName(
+            "Choose one product to share"
+        );
     });
 });
 

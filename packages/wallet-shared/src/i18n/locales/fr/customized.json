@@ -49,6 +49,9 @@
                 "tagline2": "à chaque achat réalisé !",
                 "tagline2_product": "sur une sélection de produits !"
             },
+            "products": {
+                "label": "Choisissez un produit à partager"
+            },
             "steps": {
                 "1": {
                     "title": "Partagez en 1 clic.",

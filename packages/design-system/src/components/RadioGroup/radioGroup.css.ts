@@ -1,6 +1,11 @@
-import { style } from "@vanilla-extract/css";
+import { createVar, fallbackVar, style } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
 import { alias, easing, transition } from "../../tokens.css";
+
+/** Checked ring/dot colour. Set on any ancestor of the item; defaults to `surface.primary`. */
+export const radioAccent = createVar();
+
+const accent = fallbackVar(radioAccent, vars.surface.primary);
 
 export const radioGroup = style({
     display: "flex",
@@ -8,9 +13,9 @@ export const radioGroup = style({
 });
 
 /**
- * 20px ring radio: 2px border, grey (`border.default`) when off → blue
- * (`surface.primary`) when checked.
- * The 11px center dot is the radix Indicator itself (only mounted when
+ * 20px ring radio: 2px border, grey (`border.default`) when off → `radioAccent`
+ * when checked.
+ * The 10px center dot is the radix Indicator itself (only mounted when
  * checked), so no pseudo-element / globalStyle is needed.
  */
 export const radioGroupItem = style({
@@ -34,7 +39,7 @@ export const radioGroupItem = style({
 
     selectors: {
         '&[data-state="checked"]': {
-            borderColor: vars.surface.primary,
+            borderColor: accent,
         },
         "&[data-disabled]": {
             opacity: 0.5,
@@ -44,16 +49,16 @@ export const radioGroupItem = style({
 });
 
 /**
- * Blue center dot. The source glyph is r≈5.46 (≈10.92px); we use an even 10px so it
- * stays integer-centered inside the 16px content box (3px gap each side) and
- * never lands on a half-pixel — odd sizes round asymmetrically at 1x and
- * read as off-centre.
+ * Center dot, `radioAccent`. The source glyph is r≈5.46 (≈10.92px); we use an
+ * even 10px so it stays integer-centered inside the 16px content box (3px gap
+ * each side) and never lands on a half-pixel — odd sizes round asymmetrically
+ * at 1x and read as off-centre.
  */
 export const radioGroupIndicator = style({
     width: "10px",
     height: "10px",
     borderRadius: alias.cornerRadius.full,
-    backgroundColor: vars.surface.primary,
+    backgroundColor: accent,
 });
 
 /**

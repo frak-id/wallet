@@ -6,6 +6,7 @@
   "license": "GNU GPL 3.0",
   "exports": {
     "./components/charts": "./src/components/charts/index.ts",
+    "./components/RadioGroup/styles": "./src/components/RadioGroup/radioGroup.css.ts",
     "./components/*": "./src/components/*/index.tsx",
     "./hooks/useMediaQuery": "./src/hooks/useMediaQuery.ts",
     "./hooks/useResponsiveValue": "./src/hooks/useResponsiveValue.ts",
