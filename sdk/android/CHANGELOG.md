@@ -16,7 +16,13 @@ independently — see [`../ios/CHANGELOG.md`](../ios/CHANGELOG.md).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-08
+
 ### Changed
+
+- **First stable release.** From this version the public surface of `id.frak.sdk:core` and
+  `id.frak.sdk:ui` follows semantic versioning — a breaking change takes a new major. The one
+  behaviour change below lands with it.
 
 - **Blocking a `*Async` future from the main thread now throws instead of deadlocking.** The twins
   complete on the main thread so `thenAccept`/`whenComplete` can touch views, which made

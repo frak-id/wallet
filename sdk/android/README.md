@@ -12,10 +12,10 @@ This file is contributor-facing. The section below is the only merchant-facing p
 
 ```kotlin
 dependencies {
-    implementation("id.frak.sdk:core:1.0.0-beta.3")
+    implementation("id.frak.sdk:core:1.0.0")
     // Only if you show the sharing sheet. Brings Compose (ui, foundation, material3),
     // androidx.activity and androidx.webkit onto your runtime classpath.
-    implementation("id.frak.sdk:ui:1.0.0-beta.3")
+    implementation("id.frak.sdk:ui:1.0.0")
 }
 ```
 
@@ -207,7 +207,7 @@ The MVP surface above is implemented and covered by 550 JVM unit tests as of 202
 
 Android has been driven on a device (SM-G998B/Android 15 through development, RMX3511/Android 16 for the 2026-08-13 pass) — `initialize`, the wallet-installed probe, `config.resolve`, `rewards.best`, and since 2026-08-13 **the sharing sheet and the `ComponentDialog` host, in a minified R8 build** (`isMinifyEnabled = true` on the harness release variant): no `ClassNotFoundException`/`NoSuchMethodError`/`VerifyError` across 16 500 logcat lines, 254 SDK classes reaching R8 and 23 shaken out. Still not run on a device: the install handoff, inbound deep links (cold *or* warm), a rotation pass, a leak check, and anything only a multi-destination `NavHost` triggers. The run is also single-screen, so it cannot see anything the harness itself gets wrong. `.github/workflows/apps.yaml` lints, builds and unit-tests this SDK on every push and PR touching `sdk/android/**`, but it does **not** build `example/native-android`: nothing in CI compiles the harness, so a broken harness call site does not go red. The binary-compatibility gate is wired and **ratified**: both `api/*.api` dumps are committed, `apiCheck` runs in CI, and `check` is green — see "Binary compatibility" below.
 
-**`1.0.0-beta.1` and `1.0.0-beta.2` are on Maven Central**, so the publish path has run end to end. Nothing consumes a published artifact yet — `example/native-android` resolves the composite build, not the coordinate — so the ABI is nominally frozen and practically still free. That ends the moment a merchant integrates.
+**`1.0.0-beta.1` and `1.0.0-beta.2` are on Maven Central**, so the publish path has run end to end. Nothing consumes a published artifact yet — `example/native-android` resolves the composite build, not the coordinate — so the ABI was nominally frozen and practically still free. That ends at `1.0.0`: from it the public surface follows semantic versioning, and the first merchant integration spends whatever budget is left.
 
 `example/native-android` builds against the real artifacts via a Gradle composite build (`includeBuild("../../sdk/android")` with an explicit `dependencySubstitution`, since Gradle's automatic substitution derives coordinates from `project.group` plus the Gradle module name and so looks for `id.frak.sdk:frak-sdk`, not the published `id.frak.sdk:core`). It exercises `Frak.initialize`, `.appLink`, `.config.resolve`, `.tracking.purchase` and `.rewards.best` through the SDK's public API — a source checkout, not a published artifact.
 
@@ -263,7 +263,7 @@ Get the case wrong and nothing fails: `isRequired = signingKey != null` makes si
 
 ```bash
 bun run --cwd sdk/android publishLocal
-cat ~/.m2/repository/id/frak/sdk/core/1.0.0-beta.3/core-1.0.0-beta.3.pom
+cat ~/.m2/repository/id/frak/sdk/core/1.0.0/core-1.0.0.pom
 ```
 
 The POM contents are Central-valid already — `buildSrc/src/main/kotlin/frak-publish.gradle.kts` is a convention plugin applied by both modules (licence, developers, SCM, sources/javadoc jars), only the transport is missing.
