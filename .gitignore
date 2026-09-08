@@ -90,3 +90,4 @@ sst-env.d.ts
 
 .pi-subagents/
 .pi/subagents/
+.worktrees/
