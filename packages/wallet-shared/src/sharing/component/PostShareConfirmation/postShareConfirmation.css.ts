@@ -1,5 +1,10 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, fontSize, zIndex } from "@frak-labs/design-system/tokens";
+import {
+    alias,
+    fontSize,
+    safeArea,
+    zIndex,
+} from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 import { tabletContainerMedia, tabletFooterMedia } from "../shared.css";
 
@@ -94,7 +99,7 @@ export const footer = style({
     zIndex: 2,
     flexShrink: 0,
     padding: `${alias.spacing.m} ${alias.spacing.l}`,
-    paddingBottom: `max(${alias.spacing.l}, env(safe-area-inset-bottom))`,
+    paddingBottom: `max(${alias.spacing.l}, ${safeArea.bottom})`,
     backgroundColor: vars.surface.background,
     display: "flex",
     flexDirection: "column",

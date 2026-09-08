@@ -28,7 +28,7 @@ export const drawerContentWrapperStyle = style({
     display: "flex",
     flexDirection: "column",
     margin: `0 ${alias.spacing.m}`,
-    marginBottom: `max(${alias.spacing.m}, env(safe-area-inset-bottom))`,
+    marginBottom: `max(${alias.spacing.m}, ${safeArea.bottom})`,
 });
 
 export const drawerContentStyle = style({
