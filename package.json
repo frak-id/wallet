@@ -59,7 +59,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "test:apps": "vitest run --project *-unit",
-    "test:sdk": "vitest run --project core-sdk-unit --project react-sdk-unit",
+    "test:sdk": "vitest run --project core-sdk-unit --project react-sdk-unit --project components-sdk-unit",
     "update:deps": "npm-check-updates -ui -ws",
     "typecheck": "bun run --filter '*' typecheck"
   },
