@@ -12,6 +12,7 @@ export type AppErrorSource =
     | "window_error"
     | "unhandled_rejection"
     | "react_router"
+    | "error_boundary"
     | "deep_link"
     | "biometrics"
     | "service_worker"
