@@ -32,9 +32,11 @@ deliberately absent from the payload: `GoldenFixtures` reads the corpus out of
 `sdk/core`, so a mirrored suite could never pass. `README.mirror.md` is the merchant-facing
 README and this file is the contributor-facing one; they are meant to diverge.
 
-**Cutting a release.** One commit moves all three version sites — `FrakSDKVersion.current`,
-`package.json`, and the `exact:` pin in `README.mirror.md` — and promotes `[Unreleased]` in
-`CHANGELOG.md` to the version being cut; pushing `ios-v<version>` runs the workflow. It checks
+**Cutting a release.** `bun scripts/native-version.ts bump ios <version>` moves all three version
+sites — `FrakSDKVersion.current`, `package.json`, and the `exact:` pin in `README.mirror.md` — and
+promotes `[Unreleased]` in `CHANGELOG.md` to the version being cut. It refuses a tree already out
+of step, a version that does not follow the current one, and an empty `[Unreleased]`. Commit that
+as one change; pushing `ios-v<version>` runs the workflow. It checks
 those sites against each other and against the tag on a Linux runner, then lints, builds and
 tests the released tree on macOS *before* anything reaches the mirror, because the mirror
 refuses to retag a published version. It then pushes, opens a GitHub release whose body is that

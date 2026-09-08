@@ -8,14 +8,14 @@ This file is contributor-facing. The section below is the only merchant-facing p
 
 **Before anything else: Frak must allow-list your application id against your merchant id.** Ask us to do it. Until it is done every call fails with `MerchantResolutionFailed` — and `tracking.purchase` still returns `Success`, because tracking is queued and best-effort, so the failure is invisible unless you turn logging up.
 
-**Published on Maven Central**, currently as a beta. Both artifacts ship in lockstep behind a `strictly` constraint, so take the same version for both — Gradle will fail the resolution rather than mix them:
+**Published on Maven Central.** Both artifacts ship in lockstep behind a `strictly` constraint, so take the same version for both — Gradle will fail the resolution rather than mix them:
 
 ```kotlin
 dependencies {
-    implementation("id.frak.sdk:core:1.0.0-beta.3")
+    implementation("id.frak.sdk:core:1.0.0")
     // Only if you show the sharing sheet. Brings Compose (ui, foundation, material3),
     // androidx.activity and androidx.webkit onto your runtime classpath.
-    implementation("id.frak.sdk:ui:1.0.0-beta.3")
+    implementation("id.frak.sdk:ui:1.0.0")
 }
 ```
 
@@ -207,7 +207,7 @@ The MVP surface above is implemented and covered by 550 JVM unit tests as of 202
 
 Android has been driven on a device (SM-G998B/Android 15 through development, RMX3511/Android 16 for the 2026-08-13 pass) — `initialize`, the wallet-installed probe, `config.resolve`, `rewards.best`, and since 2026-08-13 **the sharing sheet and the `ComponentDialog` host, in a minified R8 build** (`isMinifyEnabled = true` on the harness release variant): no `ClassNotFoundException`/`NoSuchMethodError`/`VerifyError` across 16 500 logcat lines, 254 SDK classes reaching R8 and 23 shaken out. Still not run on a device: the install handoff, inbound deep links (cold *or* warm), a rotation pass, a leak check, and anything only a multi-destination `NavHost` triggers. The run is also single-screen, so it cannot see anything the harness itself gets wrong. `.github/workflows/apps.yaml` lints, builds and unit-tests this SDK on every push and PR touching `sdk/android/**`, but it does **not** build `example/native-android`: nothing in CI compiles the harness, so a broken harness call site does not go red. The binary-compatibility gate is wired and **ratified**: both `api/*.api` dumps are committed, `apiCheck` runs in CI, and `check` is green — see "Binary compatibility" below.
 
-**`1.0.0-beta.1` and `1.0.0-beta.2` are on Maven Central**, so the publish path has run end to end. Nothing consumes a published artifact yet — `example/native-android` resolves the composite build, not the coordinate — so the ABI is nominally frozen and practically still free. That ends the moment a merchant integrates.
+**`1.0.0-beta.1` and `1.0.0-beta.2` are on Maven Central**, so the publish path has run end to end. Nothing consumes a published artifact yet — `example/native-android` resolves the composite build, not the coordinate — so the ABI was nominally frozen and practically still free. That ends at `1.0.0`: from it the public surface follows semantic versioning, and the first merchant integration spends whatever budget is left.
 
 `example/native-android` builds against the real artifacts via a Gradle composite build (`includeBuild("../../sdk/android")` with an explicit `dependencySubstitution`, since Gradle's automatic substitution derives coordinates from `project.group` plus the Gradle module name and so looks for `id.frak.sdk:frak-sdk`, not the published `id.frak.sdk:core`). It exercises `Frak.initialize`, `.appLink`, `.config.resolve`, `.tracking.purchase` and `.rewards.best` through the SDK's public API — a source checkout, not a published artifact.
 
@@ -238,7 +238,7 @@ Both artifacts go up in **one** deployment. They ship in lockstep behind a `stri
 
 Releases default to `USER_MANAGED`: the Portal validates, then a human releases or drops it at [central.sonatype.com/publishing/deployments](https://central.sonatype.com/publishing/deployments). `AUTOMATIC` exists as a workflow input and cannot be undone once it publishes.
 
-**Cutting a release.** One commit moves all five version sites and promotes `[Unreleased]` in `CHANGELOG.md` to the version being cut; pushing `android-v<version>` runs the workflow. It re-checks the sites against each other and against the tag, runs the full `check`, builds and verifies the signed bundle, uploads it, and opens a **draft** GitHub release whose body is that CHANGELOG section — draft because the Portal deployment is still `USER_MANAGED` at that point, so the same person publishes both. iOS releases on its own tag and its own cadence; nothing pairs them, deliberately, so either can take a hotfix alone.
+**Cutting a release.** `bun scripts/native-version.ts bump android <version>` moves all five version sites and promotes `[Unreleased]` in `CHANGELOG.md` to the version being cut, refusing a tree already out of step, a version that does not follow the current one, and an empty `[Unreleased]`. Commit that as one change; pushing `android-v<version>` runs the workflow. It re-checks the sites against each other and against the tag, runs the full `check`, builds and verifies the signed bundle, uploads it, and opens a **draft** GitHub release whose body is that CHANGELOG section — draft because the Portal deployment is still `USER_MANAGED` at that point, so the same person publishes both. iOS releases on its own tag and its own cadence; nothing pairs them, deliberately, so either can take a hotfix alone.
 
 The format was proven against the real Portal rather than assumed — a `USER_MANAGED` probe of `0.0.1` returned `VALIDATED` with no errors and no warnings, confirming the layout, the signatures, the POM and the javadoc stub, and was then dropped without publishing.
 
@@ -263,7 +263,7 @@ Get the case wrong and nothing fails: `isRequired = signingKey != null` makes si
 
 ```bash
 bun run --cwd sdk/android publishLocal
-cat ~/.m2/repository/id/frak/sdk/core/1.0.0-beta.3/core-1.0.0-beta.3.pom
+cat ~/.m2/repository/id/frak/sdk/core/1.0.0/core-1.0.0.pom
 ```
 
 The POM contents are Central-valid already — `buildSrc/src/main/kotlin/frak-publish.gradle.kts` is a convention plugin applied by both modules (licence, developers, SCM, sources/javadoc jars), only the transport is missing.
@@ -301,5 +301,5 @@ The shape being frozen was decided in five reviewed steps — `docs/plans/native
 - ~~The committed `api/*.api` dumps.~~ **Done** — both are committed and `apiCheck` passes in CI. What `docs/plans/native-sdk/open.md` §1 still lists as open is now *frozen* rather than pending: fixes to those items have to be additive or they are a break.
 - The `-javadoc` jar is a **stub**, on both artifacts. AGP's `withJavadocJar()` runs a bundled Dokka whose relocated ASM predates the `PermittedSubclasses` attribute, so it throws on the first `sealed` type it reads as a binary — which is every publish of `:frak-sdk-ui`, since that module sees `:frak-sdk` as a jar. Central requires the artifact to exist and never opens it, and the sources jar carries the KDoc an IDE actually reads. Detail and the reason a modern Dokka is not reachable from here: `docs/plans/native-sdk/decisions.md` §5.4.
 - ~~Generating the real GPG key and wiring the Portal repository.~~ **Done** — the signing key is on a keyserver and lives in the `ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY` secrets, and `.github/workflows/release-android-sdk.yml` builds, signs, verifies and uploads the bundle. The `id.frak.sdk` namespace is claimed, which is why the coordinates are `id.frak.sdk:core`/`:ui` and not `id.frak:frak-sdk`: Sonatype grants authorization downwards only, so a verified `id.frak.sdk` covers `id.frak.sdk.*` and never the `id.frak` parent.
-- A device pass covering the install handoff and inbound deep links, cold and warm. The sharing sheet got one on 2026-08-13, in a minified R8 build; these two did not, and a beta is already published against them.
+- A device pass covering the install handoff and inbound deep links, cold and warm. The sharing sheet got one on 2026-08-13, in a minified R8 build; these two did not, and `1.0.0` ships without one.
 - A CI job that builds `example/native-android`. `.github/workflows/apps.yaml` already lints, builds and unit-tests the SDK itself (see "Testing" above); nothing compiles the harness, so a broken harness call site does not go red.

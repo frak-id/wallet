@@ -29,12 +29,12 @@ Xcode → File → Add Package Dependencies → `https://github.com/frak-id/frak
 
 Or in a `Package.swift`:
 
-This is a prerelease, so pin it exactly. A `from:` bound against a prerelease rolls forward
-across later betas, and `from: "1.0.0"` would not resolve this tag at all:
+Pinned exactly below so the snippet matches the version this mirror was cut at. `from: "1.0.0"`
+also resolves now that the line is stable, and takes patches and minors as they ship:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/frak-id/frak-ios-sdk.git", exact: "1.0.0-beta.3")
+    .package(url: "https://github.com/frak-id/frak-ios-sdk.git", exact: "1.0.0")
 ],
 targets: [
     .target(name: "YourApp", dependencies: [
