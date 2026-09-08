@@ -688,7 +688,6 @@
         "@simplewebauthn/server": "^13.3.2",
         "arctic": "^3.7.0",
         "async-mutex": "^0.5.0",
-        "croner": "^10.0.1",
         "decimal.js": "^10.6.0",
         "drizzle-orm": "^0.45.2",
         "elysia": "catalog:",
@@ -2476,8 +2475,6 @@
     "cosmiconfig": ["cosmiconfig@8.3.6", "http://verdaccio.verdaccio.svc.cluster.local:4873/cosmiconfig/-/cosmiconfig-8.3.6.tgz", { "dependencies": { "import-fresh": "^3.3.0", "js-yaml": "^4.1.0", "parse-json": "^5.2.0", "path-type": "^4.0.0" }, "peerDependencies": { "typescript": ">=4.9.5" }, "optionalPeers": ["typescript"] }, "sha512-kcZ6+W5QzcJ3P1Mt+83OUv/oHFqZHIx8DuxG6eZ5RGMERoLqp4BuGjhHLYGK+Kf5XVkQvqBSmAy/nGWN3qDgEA=="],
 
     "countries-list": ["countries-list@3.4.1", "http://verdaccio.verdaccio.svc.cluster.local:4873/countries-list/-/countries-list-3.4.1.tgz", {}, "sha512-sKLGAZD5EAdzQwQ19vOp/9u33MTjmZ0CkdXPYtp/An6cyIlJ/E8TwGf2FcPe1AnzHO+h7nbTfoHyXIi58Hpa+Q=="],
-
-    "croner": ["croner@10.0.1", "http://verdaccio.verdaccio.svc.cluster.local:4873/croner/-/croner-10.0.1.tgz", {}, "sha512-ixNtAJndqh173VQ4KodSdJEI6nuioBWI0V1ITNKhZZsO0pEMoDxz539T4FTTbSZ/xIOSuDnzxLVRqBVSvPNE2g=="],
 
     "cross-fetch": ["cross-fetch@4.1.0", "http://verdaccio.verdaccio.svc.cluster.local:4873/cross-fetch/-/cross-fetch-4.1.0.tgz", { "dependencies": { "node-fetch": "^2.7.0" } }, "sha512-uKm5PU+MHTootlWEY+mZ4vvXoCn4fLQxT9dSc1sXVMSFkINTJVN8cAQROpwcKm8bJ/c7rgZVIBWzH5T78sNZZw=="],
 
