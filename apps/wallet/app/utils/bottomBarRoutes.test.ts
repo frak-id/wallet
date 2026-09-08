@@ -1,7 +1,22 @@
 import type { AnyRouter } from "@tanstack/react-router";
 import { createRouter } from "@tanstack/react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { routeTree } from "@/routeTree.gen";
+
+const platformMocks = vi.hoisted(() => ({ isIOS: vi.fn(() => false) }));
+vi.mock("@frak-labs/app-essentials/utils/platform", async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import("@frak-labs/app-essentials/utils/platform")
+        >();
+    return {
+        ...actual,
+        get IS_IOS() {
+            return platformMocks.isIOS();
+        },
+    };
+});
+
 import { installViewTransitionOptOut, keepsBottomBar } from "./bottomBarRoutes";
 
 const router = createRouter({ routeTree });
@@ -74,12 +89,28 @@ function createAppRouter() {
 // `resolvedLocation` is written only by `Transitioner`'s layout effect, so
 // without a mounted `<RouterProvider>` it stays `undefined` and the router
 // cannot be navigated for real. Pin both locations to drive the guard.
-function pinLocations(appRouter: AnyRouter, from: string, to: string) {
+function pinLocations(
+    appRouter: AnyRouter,
+    from: string,
+    to: string,
+    indices?: { from: number; to: number }
+) {
     appRouter.stores.resolvedLocation.set({
         ...appRouter.latestLocation,
         pathname: from,
+        state: {
+            ...appRouter.latestLocation.state,
+            __TSR_index: indices?.from ?? 0,
+        },
     });
-    appRouter.latestLocation = { ...appRouter.latestLocation, pathname: to };
+    appRouter.latestLocation = {
+        ...appRouter.latestLocation,
+        pathname: to,
+        state: {
+            ...appRouter.latestLocation.state,
+            __TSR_index: indices?.to ?? 0,
+        },
+    };
 }
 
 describe("view transition opt-out", () => {
@@ -131,5 +162,46 @@ describe("view transition opt-out", () => {
         const appRouter = createAppRouter();
         expect(appRouter.stores.resolvedLocation.get()).toBeUndefined();
         expect(await countTransitions(() => appRouter.load())).toBe(0);
+    });
+
+    // The iOS edge-swipe already animates the destination in natively, so a
+    // crossfade on top replays the screen being left as a flash.
+    it("skips a back navigation on iOS", async () => {
+        platformMocks.isIOS.mockReturnValue(true);
+        const appRouter = createAppRouter();
+        await appRouter.load();
+        pinLocations(appRouter, "/pairing", "/wallet", { from: 2, to: 1 });
+        expect(
+            await countTransitions(() =>
+                appRouter.startViewTransition(async () => {})
+            )
+        ).toBe(0);
+    });
+
+    // Same pair, opposite direction: the skip must be about direction, not
+    // about these two routes.
+    it("still transitions going forward on iOS", async () => {
+        platformMocks.isIOS.mockReturnValue(true);
+        const appRouter = createAppRouter();
+        await appRouter.load();
+        pinLocations(appRouter, "/wallet", "/pairing", { from: 1, to: 2 });
+        expect(
+            await countTransitions(() =>
+                appRouter.startViewTransition(async () => {})
+            )
+        ).toBe(1);
+    });
+
+    // Only iOS has the competing native gesture animation.
+    it("still transitions on a back navigation off iOS", async () => {
+        platformMocks.isIOS.mockReturnValue(false);
+        const appRouter = createAppRouter();
+        await appRouter.load();
+        pinLocations(appRouter, "/pairing", "/wallet", { from: 2, to: 1 });
+        expect(
+            await countTransitions(() =>
+                appRouter.startViewTransition(async () => {})
+            )
+        ).toBe(1);
     });
 });
