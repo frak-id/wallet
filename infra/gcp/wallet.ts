@@ -362,9 +362,22 @@ if ($dev) {
 
     new sst.x.DevCommand("wallet:tauri-ios", {
         dev: {
-            title: "Tauri iOS",
+            title: "Tauri iOS (simulator)",
             autostart: false,
             command: "./scripts/tauri-dev.sh ios",
+            directory: "./apps/wallet",
+        },
+        environment,
+    });
+
+    // Physical iPhone: the script serves the dev bundle and the backend mirror on this
+    // Mac's LAN IP (localhost is the phone). Needs a cabled, unlocked device with
+    // Developer Mode on; set TAURI_IOS_DEVICE when more than one is connected.
+    new sst.x.DevCommand("wallet:tauri-ios-device", {
+        dev: {
+            title: "Tauri iOS (device)",
+            autostart: false,
+            command: "./scripts/tauri-dev.sh ios-device",
             directory: "./apps/wallet",
         },
         environment,

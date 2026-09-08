@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Only `tauri ios dev` on a physical device reads these values; every `tauri ios
+     build` merges its own --export-method, signingStyle and teamID over them. -->
 <plist version="1.0">
 <dict>
     <key>method</key>
-    <string>app-store</string>
+    <string>development</string>
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <key>teamID</key>
+    <string>57DZ6Z2235</string>
 </dict>
 </plist>

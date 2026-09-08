@@ -453,11 +453,14 @@ export default defineConfig(
                 // For Tauri dev: tell Vite the host so HMR WebSocket can connect
                 host: isTauri ? "0.0.0.0" : "localhost",
                 allowedHosts: isSandbox ? true : undefined,
-                // Enable HMR for Tauri by explicitly setting the WebSocket URL
+                // Enable HMR for Tauri by explicitly setting the WebSocket URL.
+                // On a physical iPhone `localhost` is the phone itself, so
+                // tauri-dev.sh exports TAURI_DEV_HOST (this Mac's LAN IP) and the
+                // socket must point there — same address Tauri gives `--host`.
                 hmr: isTauri
                     ? {
                           protocol: "ws",
-                          host: "localhost",
+                          host: process.env.TAURI_DEV_HOST || "localhost",
                           port: 3010,
                       }
                     : undefined,
