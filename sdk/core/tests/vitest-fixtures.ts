@@ -269,26 +269,21 @@ export const test = baseTest.extend<SdkCoreTestFixtures>({
 });
 
 /**
- * Type-aware hooks that have access to fixtures
+ * Re-export the vitest utilities test files pull from this module alongside
+ * `test`, so a suite needs one import.
  *
- * @example
- * ```ts
- * import { test, beforeEach } from './tests/vitest-fixtures';
- *
- * beforeEach(({ mockDomain }) => {
- *     // Setup with typed fixtures
- *     console.log(`Testing with domain: ${mockDomain}`);
- * });
- *
- * test('should use fixtures', ({ mockArticleId }) => {
- *     // Test with typed fixtures
- *     expect(mockArticleId).toBeDefined();
- * });
- * ```
+ * The hooks come straight from `vitest` rather than being destructured off
+ * the extended `test`: no suite takes fixture arguments in a hook, and the
+ * destructured form exports types naming vitest-internal declarations that
+ * cannot be referenced from outside the package (TS4023).
  */
-export const { beforeEach, afterEach, beforeAll, afterAll } = test;
-
-/**
- * Re-export expect and other vitest utilities
- */
-export { describe, expect, it, vi } from "vitest";
+export {
+    afterAll,
+    afterEach,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi,
+} from "vitest";

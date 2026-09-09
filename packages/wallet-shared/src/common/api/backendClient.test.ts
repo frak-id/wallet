@@ -60,6 +60,10 @@ describe("backendClient", () => {
     });
 
     it("should use correct backend URL from env", async () => {
+        // `treaty` is called once, at module load. Vitest 5 clears mock call
+        // history before every test, and the module is already cached by the
+        // cases above, so re-import it in a fresh registry to observe the call.
+        vi.resetModules();
         const { treaty } = await import("@elysiajs/eden");
         await import("./backendClient");
         expect(treaty).toHaveBeenCalled();
