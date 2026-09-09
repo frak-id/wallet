@@ -167,7 +167,7 @@ The listener's three-ring architecture means "P1" is **not** uniform. Traced fro
 
 | # | Finding | Gain | Effort |
 |---|---|---|---|
-| **1** | **OAuth refresh token in plaintext localStorage** | `moneriumStore.ts:24-61` — no `partialize`, no `version`, no `migrate`; PKCE verifier/state persist indefinitely. Currently prod-gated — **fix before lifting the gate**. Sibling stores get this right | **S** |
+| ~~**1**~~ | ~~**OAuth refresh token in plaintext localStorage**~~ | **Fixed — shape hardened, storage kept.** `moneriumStore` now has `version: 1`, a `partialize` naming the seven persisted fields, and a guard in **`merge`** — not `migrate`, which zustand only calls when the stored version differs, so a guard there fires once per user on the v0→v1 upgrade and never again; anyone who can write localStorage writes `version: 1` and walks past it. `merge` runs on every hydration: a wrong type on any field yields the disconnected slice, and the slice is picked field by field, so an unknown key such as `disconnect: null` can no longer overwrite an action. The PKCE pair carries `pendingAuthCreatedAt` and is dropped after 30 min both on rehydration and at exchange time in the callback (a tab never reloaded would otherwise exchange a stale verifier); tokens are untouched, so a connected user stays connected. Rehydration errors reach `recordError`. Mutation-verified at v1 and v0: admitting every payload fails 9 tests, spreading the raw payload fails 20, dropping `migrate` (logs out every v0 user) fails 1, wiping tokens on TTL fails 1. **Still localStorage by decision**: a session-scoped refresh token would force an OAuth round trip on every launch of the bank flow; revisit if Monerium offers a shorter-lived grant | — |
 | **2** | **Explorer lookup: uncapped serial scan** | No page cap, 100/page, serial, against a 30-req/min backend limit → 429s past page 30. Compounds with #1: the moment a push points at `/explorer/{id}`, it lands on a cold start *and* runs this | **M** |
 | ~~**3**~~ | ~~**One error boundary for the whole app**~~ | **Fixed.** One shared boundary inside `AppShell` covers the four shell layouts, so a throw degrades the content region while the banner stack and tab bar survive; `_wallet` takes a route-level fallback since it renders no `AppShell`; `ModalOutlet`'s `Suspense` closes the modal and raises a toast. Both audit failure modes were reproduced live against a running wallet — a blocked chunk and an induced render throw — and neither blanks the app. Covered by 19 tests across 4 files, mutation-verified. Three corrections came out of the work: there are **4** layout routes, not 3 (`_sso` was missed, and it hosts a merchant-initiated flow); `errorComponent` is the wrong instrument on 4 of the 5, because `CatchBoundary` wraps the route's own `component` (`Match.js:84-90`) and would replace that layout's chrome; and the boundary must key on the pathname, not a constant — `AppShell` outlives sibling navigation, so a constant key stranded the user on the fallback with a working tab bar that changed nothing. Containment is render-phase only: a `beforeLoad` throw still reaches the root fallback, which is correct. Plan: `docs/plans/2026-09-08-1055-fix-wallet-error-boundaries-plan.md` | — |
 | ~~**4**~~ | ~~**`GlassButton` erases focus repo-wide**~~ | **Fixed.** Always-on 2px transparent outline (no layout shift), `vars.border.focus` on `:focus-visible` — and on `:focus-visible > &`, since `Back` nests the span variant inside a focusable `<Link>`. Covered by `tests-light/specs/glass-button.check.ts` (idle, pointer press, keyboard on both variants, one pixel snapshot); mutation-verified against the old CSS | — |
@@ -207,7 +207,7 @@ Everything here is real but absorbs cost the other two tiers cannot. **Two excep
 | **Chunk config triplicated (428 LOC)** | wallet, business, listener | P2/P3 | Listener's is the one with a hard-fail budget, so drift there is caught. `react-vendor` is byte-identical wallet↔business — start there |
 | **`zIndex` token bypassed (51 literals / 36 files)** | all | P1 (embedded wallet) → P2 | The 4 live collisions span tiers; the token itself is correct |
 | **`prefers-reduced-motion` unguarded** | DS keyframes + 11 files | P1 (sdk Banner keyframes, listener Spinner) | Two **infinite** animations (Skeleton pulse, Spinner spin). `MotionConfig`/`useReducedMotion` = 0 matches repo-wide |
-| **CI runs no quality job** | all | **P1** | 7 workflows, only the listener bundle budget. The 4-command gate at `AGENTS.md:16` is human-enforced and has measurably leaked |
+| ~~**CI runs no quality job**~~ | all | — | **Fixed** (`ff64ca82a`). The gate runs per area on pull requests — `biome ci` + unit tests for SDK, backend, wallet, business, listener+shopify, packages and infra, a `gates` job for the four `check:*` scripts, and workspace-wide `typecheck` — each behind the `changes` filter. Every vitest project is named exactly once |
 
 ---
 
@@ -232,7 +232,7 @@ Landed as one piece of work: credential-bearing lifecycle sends now carry the re
 ### Next — P2 smoothness + the P1 latency item (days)
 
 6. Add `modulepreload` for `cdn/loader.js` in the merchant plugins (P1 — see the note below; the shim itself must stay)
-7. `moneriumStore` hardening, before the prod gate lifts
+7. ~~`moneriumStore` hardening~~ — **done.** See §6.2 #1
 8. ~~Wallet error containment~~ — **done.** One shared boundary inside `AppShell`, `errorComponent` on `_wallet`, and a boundary around `ModalOutlet`'s `Suspense`. See §6.2 #3
 9. Retire the bespoke `DetailOverlay` portal in favour of the DS `Dialog` (it now has dialog semantics, but still no focus trap — see the resolved-log caveat)
 10. ~~Safe-area insets~~ — **done.** All nine `.css.ts` sites now import the `safeArea` token, gated by `bun run check:safe-area` inside `bun run lint`. See §6.2 #6
@@ -257,7 +257,7 @@ Landed as one piece of work: credential-bearing lifecycle sends now carry the re
 
 ### Add the enforcement the repo already knows how to write
 
-Every P1 finding above survived because **no gate covers that boundary**. The repo demonstrably knows the reflex — `assertComponentRegistrations`, the 32 KB hard-fail budget, the prod-build `BACKEND_URL` guard. Two of the three gaps are now closed: `check:publishable` (catches P1-5) and the executing `packages/rpc` tests (catch P1-1/2/3). Still missing: *any* CI job running the four-command gate.
+Every P1 finding above survived because **no gate covers that boundary**. The repo demonstrably knows the reflex — `assertComponentRegistrations`, the 32 KB hard-fail budget, the prod-build `BACKEND_URL` guard. All three gaps are now closed: `check:publishable` (catches P1-5), the executing `packages/rpc` tests (catch P1-1/2/3), and the per-area CI gate (`ff64ca82a`).
 
 ---
 
