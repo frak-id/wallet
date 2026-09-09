@@ -26,7 +26,7 @@
  * DRY principles.
  */
 
-import * as os from "node:os";
+import { maxWorkers } from "@frak-labs/test-foundation/vitest.workers";
 import { defineConfig } from "vitest/config";
 
 // Use generic type to avoid importing vite types that may not be available in all projects
@@ -59,9 +59,8 @@ export default defineConfig({
         // Full isolation ensures test independence (safer but slightly slower)
         isolate: true,
 
-        // Leave 1 CPU core free for system operations to prevent throttling
-        // Use at least 1 worker even on single-core systems
-        maxWorkers: Math.max(1, os.cpus().length - 1),
+        // Shared with scripts/vitest.config.ts: every project must agree.
+        maxWorkers,
 
         // Run test files in parallel for better performance
         fileParallelism: true,

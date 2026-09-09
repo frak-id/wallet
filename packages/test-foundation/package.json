@@ -9,6 +9,7 @@
     "exports": {
         ".": "./src/index.ts",
         "./vitest.shared": "./src/vitest.shared.ts",
+        "./vitest.workers": "./src/vitest.workers.ts",
         "./shared-setup": "./src/shared-setup.ts",
         "./react-setup": "./src/react-setup.ts",
         "./react-testing-library-setup": "./src/react-testing-library-setup.ts",
