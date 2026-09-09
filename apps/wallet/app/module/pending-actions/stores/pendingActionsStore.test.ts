@@ -129,6 +129,14 @@ describe("pendingActionsStore — hydration guard", () => {
         ["an element with no expiresAt", { ...validAction, expiresAt: null }],
         ["an element with an unknown type", { ...validAction, type: "exec" }],
         ["an ensure with no merchantId", { ...validAction, merchantId: 42 }],
+        [
+            "an ensure with a non-string ticket",
+            { ...validAction, ticket: 12345 },
+        ],
+        [
+            "an ensure with a non-string proof",
+            { ...validAction, proof: { blob: true } },
+        ],
     ])("drops %s while keeping the valid one", async (_label, bad) => {
         await rehydrate({
             state: { actions: [bad, validAction] },
@@ -142,6 +150,7 @@ describe("pendingActionsStore — hydration guard", () => {
         ["an absolute URL", "https://evil.example/steal"],
         ["a protocol-relative URL", "//evil.example/steal"],
         ["a javascript: scheme", "javascript:alert(1)"],
+        ["a backslash-disguised host", "/\\evil.example/steal"],
     ])("drops a navigation action pointing at %s", async (_label, to) => {
         await rehydrate({
             state: {

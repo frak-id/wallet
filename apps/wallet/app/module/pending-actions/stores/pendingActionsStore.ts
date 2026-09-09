@@ -28,6 +28,11 @@ const initialState: PendingActionsState = {
 
 export const PENDING_ACTIONS_STORE_NAME = "frak_pending_actions_store";
 
+/** Absent is fine; present means a string, since it goes on the wire as one. */
+function isOptionalString(value: unknown): boolean {
+    return value === undefined || typeof value === "string";
+}
+
 /**
  * A persisted entry is only usable if every field the store reads back is
  * present and the right type. `expiresAt` in particular is read unguarded
@@ -43,15 +48,23 @@ function isPendingAction(value: unknown): value is PendingAction {
     ) {
         return false;
     }
-    if (action.type === "ensure") return typeof action.merchantId === "string";
+    if (action.type === "ensure") {
+        return (
+            typeof action.merchantId === "string" &&
+            isOptionalString(action.anonymousId) &&
+            isOptionalString(action.ticket) &&
+            isOptionalString(action.proof)
+        );
+    }
     // A `to` from storage becomes a post-auth redirect target, so only an
-    // in-app absolute path is accepted — never a scheme or protocol-relative
-    // URL, which would navigate the user off-origin.
+    // in-app absolute path is accepted — never a scheme, protocol-relative
+    // URL or backslash (`/\evil` resolves off-origin under WHATWG rules).
     if (action.type === "navigation") {
         return (
             typeof action.to === "string" &&
             action.to.startsWith("/") &&
-            !action.to.startsWith("//")
+            !action.to.startsWith("//") &&
+            !action.to.includes("\\")
         );
     }
     return false;
