@@ -18,7 +18,6 @@ const Command: typeof DevCommand = await import(
     .then((m) => m.DevCommand)
     .catch(() => {
         console.debug("SST Command not found, using a placeholder constructor");
-        // @ts-expect-error: Not exported in the SST platform
         return sst.x.DevCommand;
     });
 

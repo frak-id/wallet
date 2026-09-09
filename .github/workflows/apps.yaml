@@ -3,9 +3,9 @@ name: "✅ CI: Apps & SDK"
 on:
   push:
     branches: [main, dev]
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'services/**', 'infra/**', 'sst.config.ts', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
   pull_request:
-    paths: ['apps/**', 'packages/**', 'sdk/**', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'services/**', 'infra/**', 'sst.config.ts', 'scripts/**', 'bun.lock', 'package.json', '.github/workflows/apps.yaml']
 
 # Newer pushes to the same ref cancel in-flight runs.
 concurrency:
@@ -29,24 +29,35 @@ jobs:
       android: ${{ steps.filter.outputs.android }}
       ios: ${{ steps.filter.outputs.ios }}
       walletPages: ${{ steps.filter.outputs.walletPages }}
+      backend: ${{ steps.filter.outputs.backend }}
+      wallet: ${{ steps.filter.outputs.wallet }}
+      business: ${{ steps.filter.outputs.business }}
+      appsSmall: ${{ steps.filter.outputs.appsSmall }}
+      packages: ${{ steps.filter.outputs.packages }}
+      gates: ${{ steps.filter.outputs.gates }}
+      infra: ${{ steps.filter.outputs.infra }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v4
         id: filter
         with:
-          # Negations keep `ts` self-maintaining: a new TypeScript SDK package is picked
-          # up by `sdk/**` automatically, without anyone remembering to widen this list.
+          # No `!` entries anywhere in this block. In paths-filter a leading `!` is
+          # not an exclusion from the patterns above it — it is a rule matching every
+          # path *outside* that directory, so `!sdk/android/**` matched `services/**`
+          # and made its filter fire on everything. The TypeScript SDK packages are
+          # named instead; a new one has to be added here.
           filters: |
             ts:
               - 'apps/**'
               - 'packages/**'
-              - 'sdk/**'
+              - 'sdk/core/**'
+              - 'sdk/react/**'
+              - 'sdk/components/**'
+              - 'sdk/legacy/**'
               # The gate scripts and their npm entrypoints: without these a
               # change to a check never triggers the job that runs it.
               - 'scripts/**'
               - 'package.json'
-              - '!sdk/android/**'
-              - '!sdk/ios/**'
               - 'bun.lock'
               - '.github/workflows/apps.yaml'
             android:
@@ -65,6 +76,102 @@ jobs:
               - 'packages/wallet-shared/**'
               - 'packages/design-system/**'
               - 'sdk/core/**'
+              - 'bun.lock'
+              - '.github/workflows/apps.yaml'
+            # ── Quality-gate slices ──
+            # One filter per owning tree, so cost stays proportional to the diff
+            # rather than booting every suite.
+            #
+            # Each app slice also lists the workspaces its tests import, and the
+            # root config files that define the gate itself. Omitting either is
+            # the silent failure: the slice passes without ever seeing the change.
+            backend:
+              - 'services/**'
+              - 'sdk/core/**'
+              - 'packages/app-essentials/**'
+              - 'packages/test-foundation/**'
+              - 'bun.lock'
+              - 'vitest.config.ts'
+              - 'biome.json'
+              - 'tsconfig.json'
+              - '.github/workflows/apps.yaml'
+            wallet:
+              - 'apps/wallet/**'
+              - 'packages/wallet-shared/**'
+              - 'packages/design-system/**'
+              - 'packages/app-essentials/**'
+              - 'packages/client/**'
+              - 'sdk/core/**'
+              - 'packages/rpc/**'
+              - 'packages/test-foundation/**'
+              - 'bun.lock'
+              - 'vitest.config.ts'
+              - 'biome.json'
+              - 'tsconfig.json'
+              - '.github/workflows/apps.yaml'
+            business:
+              - 'apps/business/**'
+              - 'packages/design-system/**'
+              - 'packages/app-essentials/**'
+              - 'packages/client/**'
+              - 'packages/ui-preview/**'
+              - 'sdk/core/**'
+              - 'sdk/react/**'
+              - 'sdk/components/**'
+              - 'packages/rpc/**'
+              - 'packages/test-foundation/**'
+              - 'bun.lock'
+              - 'vitest.config.ts'
+              - 'biome.json'
+              - 'tsconfig.json'
+              - '.github/workflows/apps.yaml'
+            appsSmall:
+              - 'apps/listener/**'
+              - 'apps/shopify/**'
+              - 'packages/wallet-shared/**'
+              - 'packages/design-system/**'
+              - 'packages/app-essentials/**'
+              - 'packages/rpc/**'
+              - 'packages/ui-preview/**'
+              - 'packages/test-foundation/**'
+              - 'sdk/core/**'
+              - 'sdk/react/**'
+              - 'bun.lock'
+              - 'vitest.config.ts'
+              - 'biome.json'
+              - 'tsconfig.json'
+              - '.github/workflows/apps.yaml'
+            packages:
+              - 'packages/**'
+              - 'scripts/**'
+              - 'bun.lock'
+              - 'vitest.config.ts'
+              - 'biome.json'
+              - 'tsconfig.json'
+              - '.github/workflows/apps.yaml'
+            # Filtered on what the gate scripts read, not on where they live.
+            # `check:safe-area` walks every `.css.ts` under apps/packages/sdk/
+            # example; the three deep-link/floor checks read `src-tauri`.
+            #
+            # No `!` entries: in paths-filter a negation is a rule matching
+            # everything outside that path, not an exclusion from the includes
+            # above, so one would make this filter match the whole repo. The
+            # TypeScript SDK packages are named instead.
+            gates:
+              - 'apps/**'
+              - 'packages/**'
+              - 'sdk/core/**'
+              - 'sdk/react/**'
+              - 'sdk/components/**'
+              - 'sdk/legacy/**'
+              - 'example/**'
+              - 'scripts/**'
+              - 'package.json'
+              - '.github/workflows/tauri-mobile-release.yml'
+              - '.github/workflows/apps.yaml'
+            infra:
+              - 'infra/**'
+              - 'sst.config.ts'
               - 'bun.lock'
               - '.github/workflows/apps.yaml'
 
@@ -93,17 +200,188 @@ jobs:
       # sibling under a runtime field, or its published form 404s on install.
       - name: "🔎 Public packages depend only on published ones"
         run: bun run check:publishable
-      # core-sdk-unit + react-sdk-unit. `bun run` matters: bare `bun test` bypasses
-      # Vitest and runs Bun's own runner against files it cannot handle.
+      # `bun run` matters: bare `bun test` bypasses Vitest and runs Bun's own
+      # runner against files it cannot handle.
       - name: "🧪 Unit tests"
         run: bun run test:sdk
 
+  # ── Backend ─────────────────────────────────────────────
+  # `deploy.yml` ships this tree to GKE on any push to dev/main with no quality
+  # steps, so this job is the only gate before production.
+  #
+  # `build:sdk` is required for typecheck, not for tests: backend resolves
+  # `@frak-labs/core-sdk` *types* through gitignored `sdk/core/dist/*.d.ts`,
+  # while vitest reads SDK source through the `development` export condition.
+  backend:
+    name: "🗄️ Backend · Lint, types & tests"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      - name: "📏 Lint & format check"
+        run: bunx biome ci services/
+      - name: "🔨 Build the SDK"
+        run: bun run build:sdk
+      - name: "🔎 Typecheck"
+        run: bun run --cwd services/backend typecheck
+      - name: "🧪 Unit tests"
+        run: bun run test --project backend-unit
+
+  # ── Wallet ──────────────────────────────────────────────
+  # `routeTree.gen.ts` is gitignored and written by the tanstackRouter vite plugin, so
+  # a clean checkout does not have it — and `bottomBarRoutes.test.ts` imports it at
+  # module load. Without the codegen step the suite fails on an unresolved import
+  # rather than on a real defect.
+  wallet:
+    name: "👛 Wallet · Lint & tests"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.wallet == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      - name: "📏 Lint & format check"
+        run: bunx biome ci apps/wallet/
+      - name: "🔨 Generate the wallet route tree"
+        run: bun run --cwd apps/wallet generate:routes
+      - name: "🧪 Unit tests"
+        run: bun run test --project wallet-unit
+
+  # ── Business ────────────────────────────────────────────
+  business:
+    name: "📊 Business · Lint & tests"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.business == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      - name: "📏 Lint & format check"
+        run: bunx biome ci apps/business/
+      - name: "🧪 Unit tests"
+        run: bun run test --project business-unit
+
+  # ── Listener & Shopify ──────────────────────────────────
+  # Paired in one job because both are small: together they are a fraction of the
+  # wallet slice, and two runners would cost more in setup than they save.
+  apps-small:
+    name: "🔗 Listener & Shopify · Lint & tests"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.appsSmall == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      - name: "📏 Lint & format check"
+        run: bunx biome ci apps/listener/ apps/shopify/
+      - name: "🧪 Unit tests"
+        run: bun run test --project listener-unit --project shopify-unit
+
+  # ── Shared packages ─────────────────────────────────────
+  # Every project is named explicitly: a bare `bun run test` runs the whole
+  # workspace, which would duplicate the app and SDK slices on every packages
+  # change. `scripts-unit` rides along here rather than earning a job — two test
+  # files, and its filter would overlap the gates job below.
+  packages:
+    name: "📦 Packages · Lint & tests"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.packages == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      - name: "📏 Lint & format check"
+        run: bunx biome ci packages/ scripts/
+      - name: "🧪 Unit tests"
+        run: >
+          bun run test
+          --project wallet-shared-unit
+          --project design-system-unit
+          --project app-essentials-unit
+          --project dev-tooling-unit
+          --project ui-preview-unit
+          --project rpc-unit
+          --project scripts-unit
+
+  # ── Repo-wide gates ─────────────────────────────────────
+  # The four `check:*` scripts inside `bun run lint`, each guarding an invariant
+  # that regressed silently before it existed.
+  #
+  # Not `bun run lint`: that re-runs `check:i18n-types` and `check:publishable`,
+  # which the Types and SDK jobs own. One step per gate attributes the failure.
+  gates:
+    name: "🚧 Repo gates"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.gates == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      # Passkeys need iOS 16, so a 15.x install could never create a credential.
+      # Twelve sites carry the floor; a partial bump is the failure mode.
+      - name: "📱 iOS deployment floor"
+        run: bun run check:ios-floor
+      # The tracked Info.plist must carry prod deep-links, not the dev overlay.
+      - name: "🔗 iOS URL scheme"
+        run: bun run check:ios-url-scheme
+      - name: "🤖 Android manifest deep-links"
+        run: bun run check:android-manifest
+      # Bare `env(safe-area-*)` returns 0 in the Android Tauri WebView; every
+      # `.css.ts` must go through the design-system token.
+      - name: "📐 Safe-area token"
+        run: bun run check:safe-area
+      # No TypeScript comment budget here: `check-comments.ts` defaults to the Kotlin
+      # and Swift roots (gated in the native jobs below) because biome owns the TS
+      # tree, and pointing it at TS surfaces hundreds of pre-existing findings with no
+      # baseline behind them. Gating that needs a paydown first, not a CI step.
+
+  # ── Infra ───────────────────────────────────────────────
+  # `infra/` has no `package.json`, so `bun run --filter '*' typecheck` cannot reach
+  # it and the root config's `include: ["**/*.ts"]` would typecheck the whole repo.
+  # `infra/tsconfig.json` scopes it, and `sst install` is required first: both
+  # `sst.config.ts` and `KubernetesService.ts` reference `.sst/platform`, which is
+  # gitignored and generated.
+  infra:
+    name: "🏗️ Infra · Lint & types"
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      - name: "📏 Lint & format check"
+        run: bunx biome ci infra/ sst.config.ts
+      # `--stage` is required: a clean checkout has no `.sst/stage`. The stage only
+      # selects which config branch is evaluated, and nothing here deploys.
+      - name: "🔨 Install SST providers"
+        run: bunx sst install --stage dev
+      - name: "🔎 Typecheck"
+        run: bunx tsc --noEmit -p infra/tsconfig.json
+
   # ── Types ───────────────────────────────────────────────
+  # Also gated on `backend`: every app type-imports `@frak-labs/backend-elysia/*`
+  # schemas, and this is the only job that re-checks them against a backend change.
   typecheck:
     name: "🔎 Typecheck"
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.ts == 'true'
+    if: needs.changes.outputs.ts == 'true' || needs.changes.outputs.backend == 'true'
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
