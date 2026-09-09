@@ -55,7 +55,7 @@
         "react": "catalog:",
         "react-day-picker": "^10.0.1",
         "react-dom": "catalog:",
-        "react-dropzone": "^19.1.1",
+        "react-dropzone": "^19.3.0",
         "react-hook-form": "catalog:",
         "react-i18next": "catalog:",
         "viem": "catalog:",
@@ -64,7 +64,7 @@
     "devDependencies": {
         "@frak-labs/test-foundation": "workspace:*",
         "@tanstack/query-async-storage-persister": "catalog:",
-        "@tanstack/react-devtools": "^0.10.9",
+        "@tanstack/react-devtools": "^0.10.12",
         "@tanstack/react-query-devtools": "catalog:",
         "@tanstack/react-query-persist-client": "catalog:",
         "@tanstack/react-router-devtools": "catalog:",
