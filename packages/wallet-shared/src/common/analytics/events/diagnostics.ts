@@ -19,6 +19,7 @@ export type AppErrorSource =
     | "tokens_send"
     | "monerium_callback"
     | "monerium_api"
+    | "monerium_store_rehydrate"
     | "recovery"
     | "sso"
     | "notifications"
