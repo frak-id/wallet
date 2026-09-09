@@ -84,9 +84,6 @@ function createAppRouter() {
         context: { queryClient },
         defaultViewTransition: true,
     });
-    // Simulate WebKit below 18.2, where `defaultViewTransition.types` is never
-    // consulted. The opt-out must hold without it.
-    appRouter.isViewTransitionTypesSupported = false;
     installViewTransitionOptOut(appRouter);
     return appRouter;
 }

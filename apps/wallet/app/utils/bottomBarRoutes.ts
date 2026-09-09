@@ -9,11 +9,10 @@ const NAV_LAYOUT_ID: keyof FileRoutesById = "/_wallet/_protected";
 
 /** Whether both ends of a navigation render the bottom tab bar. */
 export function keepsBottomBar(router: AnyRouter, from: string, to: string) {
-    return [from, to].every((pathname) =>
-        router
-            .getMatchedRoutes(pathname)
-            .matchedRoutes.some((route) => route.id === NAV_LAYOUT_ID)
-    );
+    return [from, to].every((pathname) => {
+        const [matchedRoutes] = router.getMatchedRoutes(pathname);
+        return matchedRoutes.some((route) => route.id === NAV_LAYOUT_ID);
+    });
 }
 
 /**
@@ -31,8 +30,8 @@ function isBackNavigation(router: AnyRouter) {
 /**
  * Skip the route crossfade where it costs more than it buys: the tab bar is
  * captured into both snapshots, where `backdrop-filter` has no live backdrop
- * and its glass washes out. Wrapping is load-bearing — `types` is only
- * consulted on Safari 18.2+, and `onBeforeNavigate` fires too early.
+ * and its glass washes out. Wrapping is load-bearing — `onBeforeNavigate`
+ * fires too early to decide.
  *
  * On iOS the edge-swipe is also skipped on the way back: WKWebView already
  * slid its own snapshot of the destination in, so the crossfade replays the

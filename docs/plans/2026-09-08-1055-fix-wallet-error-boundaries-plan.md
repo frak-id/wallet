@@ -112,7 +112,7 @@ The cost shape is that the blast radius is always the whole app, regardless of h
 
 ### Dependencies / Assumptions
 
-- `CatchBoundary` and `ErrorComponent` are exported from `@tanstack/react-router` (1.170.18, catalog-pinned), so no new dependency is needed. There is no `react-error-boundary` in the repo and none is being added.
+- `CatchBoundary` and `ErrorComponent` are exported from `@tanstack/react-router` (1.170.33, catalog-pinned), so no new dependency is needed. There is no `react-error-boundary` in the repo and none is being added. Note that as of 1.170.33 `ErrorComponentProps["error"]` is `unknown`, not `Error` — a fallback that reads `.message` or `.stack` must narrow with `instanceof Error` first.
 - Router boundaries reset on `router.stores.loadedAt`, so a route-level caught error self-clears on navigation. R8's hard reload is a deliberate override for the stale-asset case, not a redundancy.
 - `recordError` is safe to call from anywhere and no-ops when analytics are unconfigured, so adding call sites carries no bootstrap risk.
 - The wallet service worker registers no `fetch` handler and caches no assets (`apps/wallet/app/service-worker.ts`) — it handles push and notification clicks only. R8 depends on this: a hard reload reaches the network for the new manifest. Adding asset caching later would break R8 silently.
@@ -121,7 +121,7 @@ The cost shape is that the blast radius is always the whole app, regardless of h
 
 - `docs/audits/2026-08-05-frontend-findings-ranked-by-gain.md:102` (X5), `:172` (§6.2 #3), `:236` (sequencing item #8) — the finding and its three listings.
 - `docs/audits/2026-07-31-frontend.md:112-118` — the original write-up and its proposed fix.
-- `apps/wallet/app/routes/__root.tsx:27,67-83` — the sole existing boundary and the root fallback shape.
+- `apps/wallet/app/routes/__root.tsx:31,74-90` — the sole existing boundary and the root fallback shape.
 - `apps/wallet/app/module/common/component/AppShell/index.tsx:108-147` — chrome composition; the banner stack renders for all four layouts, the tab bar is gated on `navigation`.
 - `apps/wallet/app/module/common/component/FullScreenGate/index.tsx` — the wallet's existing fallback vocabulary. Imports only `Box` and `Text`; no i18n, no router.
 - `apps/wallet/app/module/pending-actions/component/EnsureConflictToast/index.tsx` — the store-driven banner-stack toast pattern R10 mirrors.

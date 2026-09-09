@@ -3,7 +3,11 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { recordError } from "@frak-labs/wallet-shared";
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import {
+    createRootRouteWithContext,
+    type ErrorComponentProps,
+    Outlet,
+} from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 import { BiometricLock } from "@/module/biometrics";
@@ -63,8 +67,11 @@ function RootComponent() {
  * `FullScreenGate` so the failure mode looks like an intentional state
  * rather than a broken page. The full stack trace stays accessible via
  * `console.error` (React + TanStack Router both log it).
+ *
+ * `error` is `unknown` because a throw site can raise any value; the
+ * message is never read here, so nothing needs narrowing.
  */
-function ErrorComponent({ error }: { error: Error }) {
+function ErrorComponent({ error }: ErrorComponentProps) {
     useEffect(() => {
         recordError(error, { source: "react_router" });
     }, [error]);
