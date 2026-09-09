@@ -30,9 +30,9 @@ vi.mock("../actions/sharingPage", () => ({
     openSharingPage: vi.fn(),
 }));
 
-// Sequential: tests mutate window.FrakSetup and vi.mock module state,
-// incompatible with the workspace default of `sequence.concurrent: true`.
-describe.sequential("initFrakSdk", () => {
+// Tests mutate window.FrakSetup and vi.mock module state, so they depend on
+// the workspace's in-file sequential execution.
+describe("initFrakSdk", () => {
     beforeEach(async () => {
         vi.clearAllMocks();
         // Clear withCache global state between tests

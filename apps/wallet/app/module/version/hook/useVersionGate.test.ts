@@ -62,7 +62,7 @@ const idleNativeStatus: NativeUpdateStatus = {
     currentVersion: "1.2.3",
 };
 
-describe.sequential("useVersionGate", () => {
+describe("useVersionGate", () => {
     beforeEach(({ queryWrapper }: WalletTestFixtures) => {
         queryWrapper.client.clear();
         checkNativeUpdateMock.mockReset().mockResolvedValue(idleNativeStatus);

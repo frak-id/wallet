@@ -59,7 +59,7 @@ const validTokenPayload: PushTokenPayload = {
     token: "subscribe-token",
 };
 
-describe.sequential("useSubscribeToPushNotification", () => {
+describe("useSubscribeToPushNotification", () => {
     beforeEach(({ queryWrapper }: WalletTestFixtures) => {
         queryWrapper.client.clear();
 

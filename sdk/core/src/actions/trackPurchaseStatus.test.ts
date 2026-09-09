@@ -21,7 +21,7 @@ import { getClientIdAsync } from "../config/clientId";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { trackPurchaseStatus } from "./trackPurchaseStatus";
 
-describe.sequential("trackPurchaseStatus", () => {
+describe("trackPurchaseStatus", () => {
     const TRACK_PURCHASE_URL = "https://backend.frak.id/user/track/purchase";
 
     let mockSessionStorage: {

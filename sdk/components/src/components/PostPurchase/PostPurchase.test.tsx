@@ -79,7 +79,7 @@ describe("resolveShareBaseUrl", () => {
 });
 
 // Sequential: these tests mutate `window.FrakSetup` and shared mock state.
-describe.sequential("PostPurchase sharing hand-off", () => {
+describe("PostPurchase sharing hand-off", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         window.FrakSetup = { client: { config: { metadata: {} } } } as never;

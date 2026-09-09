@@ -28,9 +28,9 @@ vi.mock("@/actions/sharingPage", () => ({
     openSharingPage: vi.fn(),
 }));
 
-// Sequential: tests mutate vi.mock state for shared hooks and window globals,
-// incompatible with the workspace default of `sequence.concurrent: true`.
-describe.sequential("ButtonShare", () => {
+// Tests mutate vi.mock state for shared hooks and window globals, so they
+// depend on the workspace's in-file sequential execution.
+describe("ButtonShare", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         // Reset mocks to default state

@@ -54,7 +54,7 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     };
 });
 
-describe.sequential("useNotificationStatus", () => {
+describe("useNotificationStatus", () => {
     beforeEach(({ queryWrapper }: WalletTestFixtures) => {
         queryWrapper.client.clear();
         mockAdapter.events = new EventTarget();

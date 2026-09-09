@@ -29,9 +29,9 @@ export default mergeConfig(
             // Backend tests need Node environment (not jsdom)
             environment: "node",
 
-            // Backend tests should run sequentially to avoid mock interference
-            // The shared config enables concurrent: true, but backend mocks (viem, drizzle)
-            // are stateful and can't be safely shared across concurrent tests
+            // Backend mocks (viem, drizzle) are stateful and cannot be
+            // shared across concurrent tests. Restated locally rather than
+            // inherited so the guarantee survives a shared-config change.
             sequence: {
                 concurrent: false,
             },

@@ -12,7 +12,7 @@ function setHtmlLang(value: string) {
     document.documentElement.lang = value;
 }
 
-describe.sequential("detectPageLanguage", () => {
+describe("detectPageLanguage", () => {
     afterEach(() => {
         setBrowserLanguage("en-US");
         setHtmlLang("");

@@ -53,7 +53,7 @@ function createTestClient(): {
     return { client, wrapper };
 }
 
-describe.sequential("SoftUpdatePrompt — AvailableBanner", () => {
+describe("SoftUpdatePrompt — AvailableBanner", () => {
     beforeEach(() => {
         startNativeSoftUpdateMock.mockReset();
         completeNativeSoftUpdateMock.mockReset();
@@ -195,7 +195,7 @@ describe.sequential("SoftUpdatePrompt — AvailableBanner", () => {
     });
 });
 
-describe.sequential("SoftUpdatePrompt — DownloadedBanner", () => {
+describe("SoftUpdatePrompt — DownloadedBanner", () => {
     beforeEach(() => {
         startNativeSoftUpdateMock.mockReset();
         completeNativeSoftUpdateMock.mockReset();
@@ -244,7 +244,7 @@ describe.sequential("SoftUpdatePrompt — DownloadedBanner", () => {
     });
 });
 
-describe.sequential("SoftUpdatePrompt — in_progress", () => {
+describe("SoftUpdatePrompt — in_progress", () => {
     test("invokes onDismiss so a wedged progress banner can be hidden", async () => {
         const { wrapper } = createTestClient();
         const onDismiss = vi.fn();

@@ -22,7 +22,7 @@ vi.mock("preact-custom-element", () => ({
 
 // Sequential: tests register/unregister the same custom element on
 // window.customElements, incompatible with concurrent execution.
-describe.sequential("registerWebComponent", () => {
+describe("registerWebComponent", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         // Reset customElements registry

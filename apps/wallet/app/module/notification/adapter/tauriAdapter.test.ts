@@ -89,7 +89,7 @@ function installInvokeRouter(handlers: CmdHandlerMap) {
     });
 }
 
-describe.sequential("createTauriNotificationAdapter", () => {
+describe("createTauriNotificationAdapter", () => {
     beforeEach(() => {
         invokeMock.mockReset();
         checkPermissionsCoreMock.mockReset();

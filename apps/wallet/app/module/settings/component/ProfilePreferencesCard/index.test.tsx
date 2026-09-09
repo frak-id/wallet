@@ -110,7 +110,7 @@ const ProfilePreferencesCardPromise = import("./index").then(
     (m) => m.ProfilePreferencesCard
 );
 
-describe.sequential("ProfilePreferencesCard › Tauri NotificationRow", () => {
+describe("ProfilePreferencesCard › Tauri NotificationRow", () => {
     beforeEach(({ queryWrapper }: WalletTestFixtures) => {
         queryWrapper.client.clear();
         mockAdapter.openSettings.mockReset().mockResolvedValue(undefined);

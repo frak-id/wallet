@@ -27,9 +27,10 @@ const makeChange = (value: string) =>
 const makeSubmit = () =>
     ({ preventDefault: vi.fn() }) as unknown as FormEventLike;
 
-// Mocks are module-scoped on `authenticatedWalletApi`, so concurrent tests
-// inside this file would race on `mockResolvedValue`. Run sequentially.
-describe.sequential("useRedeemReferralCodeForm", () => {
+// Mocks are module-scoped on `authenticatedWalletApi`, so these depend on the
+// workspace's in-file sequential execution: concurrent tests would race on
+// `mockResolvedValue`.
+describe("useRedeemReferralCodeForm", () => {
     afterEach(() => {
         vi.resetAllMocks();
     });

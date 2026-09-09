@@ -21,11 +21,10 @@ vi.mock("../../common/api/backendClient", () => ({
     },
 }));
 
-// `describe.sequential` because the shared `vitest.shared.ts` runs tests
-// concurrently inside a file by default, and our mocks live on a single
-// module-scoped `authenticatedWalletApi` — concurrent `mockResolvedValue`
-// calls from sibling tests leak into each other otherwise.
-describe.sequential("useReplaceReferralCode", () => {
+// Mocks live on a single module-scoped `authenticatedWalletApi`, so these
+// depend on the workspace's in-file sequential execution: concurrent
+// `mockResolvedValue` calls from sibling tests would leak into each other.
+describe("useReplaceReferralCode", () => {
     afterEach(() => {
         // resetAllMocks clears both call history AND queued resolutions so
         // each test starts from a clean slate.

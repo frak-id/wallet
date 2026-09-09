@@ -65,10 +65,9 @@ function createWrapper(queryClient: QueryClient) {
 }
 
 // Sequential: each test reconfigures the shared vi.mocked(...) return values
-// for useGetMerchantAdministrators / useGetMerchantBank. With the workspace
-// default of `sequence.concurrent: true`, tests race each other and observe
-// mocks set by neighbors.
-describe.sequential("useMerchantSetupStatus", () => {
+// for useGetMerchantAdministrators / useGetMerchantBank, so they rely on the
+// workspace's in-file sequential execution and per-test mock reset.
+describe("useMerchantSetupStatus", () => {
     it("should not fetch until dependencies are loaded", () => {
         vi.mocked(useGetMerchantAdministrators).mockReturnValue({
             data: undefined,

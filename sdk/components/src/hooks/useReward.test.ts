@@ -6,7 +6,7 @@ import { useReward } from "./useReward";
 
 // Sequential: tests share vi.mock state (getMerchantInformation) and
 // window.FrakSetup.client, incompatible with concurrent execution.
-describe.sequential("useReward", () => {
+describe("useReward", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });

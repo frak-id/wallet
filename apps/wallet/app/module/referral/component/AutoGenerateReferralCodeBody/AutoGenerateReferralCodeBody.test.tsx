@@ -64,7 +64,7 @@ const renderBody = (
     return { ...utils, scope: within(utils.container) };
 };
 
-describe.sequential("AutoGenerateReferralCodeBody", () => {
+describe("AutoGenerateReferralCodeBody", () => {
     beforeEach(() => {
         vi.resetAllMocks();
         issueOnSuccess = null;

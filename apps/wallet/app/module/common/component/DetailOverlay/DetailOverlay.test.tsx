@@ -4,9 +4,9 @@ import * as styles from "@/module/common/styles/detailOverlay.css";
 import { DetailOverlay } from "./index";
 
 // `DetailOverlay` portals straight to `document.body`, which means
-// concurrent renders inside the same test file would all share the body
-// (vitest's default `concurrent: true`). Walk up from a unique testid in
-// the children render-prop so each test grabs its own overlay element.
+// renders inside the same test file all share the body. Walk up from a
+// unique testid in the children render-prop so each test grabs its own
+// overlay element.
 const renderOverlay = (
     variant: "fullScreen" | "bottomSheet" | undefined,
     onClose = vi.fn(),
@@ -38,7 +38,7 @@ const renderOverlay = (
     return { ...utils, overlay, onClose };
 };
 
-describe.sequential("DetailOverlay", () => {
+describe("DetailOverlay", () => {
     it("renders the children render-prop", () => {
         const { overlay } = renderOverlay(undefined);
         expect(overlay).toBeTruthy();
