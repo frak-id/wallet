@@ -1,14 +1,7 @@
 {
   // This tsconfig file contains the shared config for the build (tsconfig.build.json) and type checking (tsconfig.json) config.
-  "include": ["./src/**/*", "./tests/**/*", "../../types/**/*.d.ts"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "../../**/*.ts",
-    "../../**/*.tsx",
-    "../**/*.ts",
-    "../**/*.tsx"
-  ],
+  "include": ["./src", "./tests/**/*.d.ts", "../../types/**/*.d.ts"],
+  "exclude": ["**/*.test.ts", "**/*.test.tsx"],
   "references": [],
   "compilerOptions": {
     // Output directory
