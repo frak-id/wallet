@@ -5,18 +5,30 @@ import { defineConfig, devices } from "@playwright/test";
 const configPerEnv = {
     dev: {
         baseURL: "https://wallet-dev.frak.id",
+        backendURL: "https://backend.gcp-dev.frak.id",
+        hostURL: "https://vanilla.frak-labs.com/",
     },
     prod: {
         baseURL: "https://wallet.frak.id",
+        backendURL: "https://backend.frak.id",
+        hostURL: "https://vanilla.frak-labs.com/",
     },
     local: {
         baseURL: "https://localhost:3000",
+        backendURL: "https://localhost:3030",
+        hostURL: "http://localhost:3013/",
     },
 };
 const targetEnv = (process.env.TARGET_ENV ??
     "dev") as keyof typeof configPerEnv;
 
 const config = configPerEnv[targetEnv];
+
+export const TARGET_ENV = targetEnv;
+/** Backend the active target's wallet, listener and SDK all talk to. */
+export const TARGET_BACKEND_URL = config.backendURL;
+/** Merchant page embedding the SDK, overridable for a locally served harness. */
+export const TARGET_HOST_URL = process.env.FRAK_E2E_HOST_URL ?? config.hostURL;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const storagePath = join(__dirname, "playwright", ".storage");
@@ -104,6 +116,24 @@ export default defineConfig({
                 permissions: ["clipboard-read", "clipboard-write"],
             },
             testMatch: ["**/sdk/*fresh*.spec.ts"],
+        },
+        {
+            // Two-wallet referral chain against a real backend: the referrer
+            // registers inside the suite, so no setup dependency and no
+            // storage state. Serial, and the file names carry the ordering:
+            // Playwright runs a project's files in path order, and every "no
+            // attribution" assertion is only meaningful once
+            // `referral-earned` has proven this environment emits an arrival
+            // at all. Rename a spec and check it still sorts after that one.
+            name: "sharing-referral",
+            use: {
+                ...devices["Desktop Chrome"],
+                permissions: ["clipboard-read", "clipboard-write"],
+                serviceWorkers: "block",
+            },
+            fullyParallel: false,
+            workers: 1,
+            testMatch: ["**/sharing/*.spec.ts"],
         },
     ],
     // We don't use the `webserver` since we rely on the sst multiplexer here
