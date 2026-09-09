@@ -92,7 +92,7 @@
     "@tanstack/query-sync-storage-persister": "5.102.8",
     "vite": "^8.2.2",
     "@vitejs/plugin-react": "^6.1.1",
-    "tsdown": "^0.22.14",
+    "tsdown": "^0.23.0",
     "@rolldown/plugin-node-polyfills": "^1.0.3",
     "rolldown": "~1.2.0",
     "@openpanel/web": "^1.4.1",
