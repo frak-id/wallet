@@ -26,6 +26,62 @@ const initialState: PendingActionsState = {
     actions: [],
 };
 
+export const PENDING_ACTIONS_STORE_NAME = "frak_pending_actions_store";
+
+/** Absent is fine; present means a string, since it goes on the wire as one. */
+function isOptionalString(value: unknown): boolean {
+    return value === undefined || typeof value === "string";
+}
+
+/**
+ * A persisted entry is only usable if every field the store reads back is
+ * present and the right type. `expiresAt` in particular is read unguarded
+ * by `getValidActions`, and `to` is passed straight to `navigate`.
+ */
+function isPendingAction(value: unknown): value is PendingAction {
+    if (typeof value !== "object" || value === null) return false;
+    const action = value as Record<string, unknown>;
+    if (
+        typeof action.id !== "string" ||
+        typeof action.createdAt !== "number" ||
+        typeof action.expiresAt !== "number"
+    ) {
+        return false;
+    }
+    if (action.type === "ensure") {
+        return (
+            typeof action.merchantId === "string" &&
+            isOptionalString(action.anonymousId) &&
+            isOptionalString(action.ticket) &&
+            isOptionalString(action.proof)
+        );
+    }
+    // A `to` from storage becomes a post-auth redirect target, so only an
+    // in-app absolute path is accepted — never a scheme, protocol-relative
+    // URL or backslash (`/\evil` resolves off-origin under WHATWG rules).
+    if (action.type === "navigation") {
+        return (
+            typeof action.to === "string" &&
+            action.to.startsWith("/") &&
+            !action.to.startsWith("//") &&
+            !action.to.includes("\\")
+        );
+    }
+    return false;
+}
+
+/**
+ * Picks the persisted slice out of whatever localStorage held. Runs on
+ * every hydration, so unknown keys never reach the store's actions and a
+ * malformed entry is dropped rather than handed to a consumer.
+ */
+function pickPersistedState(value: unknown): PendingActionsState {
+    if (typeof value !== "object" || value === null) return initialState;
+    const { actions } = value as { actions?: unknown };
+    if (!Array.isArray(actions)) return initialState;
+    return { actions: actions.filter(isPendingAction) };
+}
+
 /**
  * Dedup key for an action. Prefers the ticket when present: a ticket is
  * per-`resolve` call, not per-identity, so two resolves for the same
@@ -116,27 +172,19 @@ export const pendingActionsStore = create<PendingActionsStore>()(
             clearAll: () => set(initialState),
         }),
         {
-            name: "frak_pending_actions_store",
+            name: PENDING_ACTIONS_STORE_NAME,
             version: 1,
-            partialize: (state) => ({
-                actions: state.actions,
+            partialize: (state: PendingActionsStore) =>
+                pickPersistedState(state),
+            // Without `migrate` a v0 payload is discarded, dropping a
+            // referral attribution the user already earned. `migrate` only
+            // runs when the stored version differs, so validation lives in
+            // `merge`, which runs on every hydration.
+            migrate: (persistedState) => persistedState,
+            merge: (persistedState, currentState) => ({
+                ...currentState,
+                ...pickPersistedState(persistedState),
             }),
-            /**
-             * MUST NOT THROW: an unversioned persisted store is treated as
-             * version `0` by zustand's `persist`, which always calls
-             * `migrate` — including for the `navigation` actions this same
-             * store backs. A malformed or unrecognised `persistedState`
-             * degrades to `initialState` instead of throwing.
-             */
-            migrate: (persistedState) => {
-                const state = persistedState as
-                    | Partial<PendingActionsState>
-                    | undefined;
-                if (!state || !Array.isArray(state.actions)) {
-                    return { actions: [] };
-                }
-                return { actions: state.actions };
-            },
         }
     )
 );
