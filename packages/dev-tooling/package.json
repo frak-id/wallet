@@ -22,6 +22,6 @@
     "@typescript/native": "catalog:"
   },
   "dependencies": {
-    "es-check": "^9.6.4"
+    "es-check": "9.6.4"
   }
 }
