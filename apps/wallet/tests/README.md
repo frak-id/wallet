@@ -39,6 +39,10 @@ bun run test:e2e:local      # FRAK_E2E_HOST_URL=http://localhost:3013/
 bun run test:e2e:dev        # wallet-dev.frak.id
 bun run test:e2e:prod       # wallet.frak.id  (careful)
 
+# two-wallet referral chain (real backend, no route mocks)
+bun run test:e2e:sharing        # dev — the default target
+bun run test:e2e:sharing:local  # local stack, when offline
+
 # a single project / file / title
 bunx playwright test --project=sdk-fresh
 bunx playwright test --project=setup
@@ -50,9 +54,16 @@ bun run test:e2e:ui
 bun run test:e2e:report
 ```
 
-`TARGET_ENV` selects the base URL (`local` → `https://localhost:3000`).
-`FRAK_E2E_HOST_URL` is the partner page the SDK specs load (defaults to the
-deployed vanilla demo; set it to `http://localhost:3013/` for a local run).
+`TARGET_ENV` selects the base URL (`local` → `https://localhost:3000`), and now
+also the backend and merchant harness the `sharing-referral` project probes:
+
+| `TARGET_ENV` | Wallet | Backend | Harness |
+|---|---|---|---|
+| `dev` (default) | `wallet-dev.frak.id` | `backend.gcp-dev.frak.id` | `vanilla.frak-labs.com` |
+| `prod` | `wallet.frak.id` | `backend.frak.id` | `vanilla.frak-labs.com` |
+| `local` | `localhost:3000` | `localhost:3030` | `localhost:3013` |
+
+`FRAK_E2E_HOST_URL` overrides the harness column for any target.
 
 ## Architecture
 
@@ -65,11 +76,20 @@ deployed vanilla demo; set it to `http://localhost:3013/` for a local run).
 | `chromium-on-device` | `setup` | on-device state | Authenticated wallet specs (home, history, settings) — **mobile** (Pixel 7), excludes sdk |
 | `chromium-paired` | `setup-paired` | paired state | Wallet specs under a paired session — desktop |
 | `sdk-fresh` | – | none | Logged-out, **self-contained** SDK modal/login specs — desktop |
+| `sharing-referral` | – | none | Two-wallet referral chain against a real backend — desktop, serial |
 
 The setup projects run first and persist a Playwright storage state under
 `playwright/.storage/`; the authenticated projects load it via `storageState`.
 `setup` and `setup-paired` are split so the (flaky) pairing flow only gates the
 paired suite — never the on-device path.
+
+`sharing-referral` registers its own referrer inside the suite, so it depends on
+no setup project. It is deliberately serial: the negative assertions (no
+self-referral attribution, second referrer loses) are only meaningful once the
+earned-referral spec has proven this environment emits an arrival at all. A
+listener that distrusts the harness origin refuses every interaction silently,
+which is indistinguishable from a passing negative assertion — hence the
+precondition guard in `helpers/stack.helper.ts`.
 
 ### WebAuthn
 
@@ -100,6 +120,45 @@ Run in `sdk-fresh` and are **self-contained** — no `setup` dependency:
 - Selectors use the stable `nexus-modal-*` class hooks — the listener can render
   raw i18n keys before translations load locally, so text selectors are unsafe.
 
+### Sharing referral specs (`specs/sharing/*.spec.ts`)
+
+Run in `sharing-referral` against a real backend with **no route mocking** — a
+mocked arrival would prove nothing about the `referral_links` row. A referrer
+registers on the wallet origin, opens the SDK sharing modal on the merchant
+page, and its link is captured from the clipboard; a fresh anonymous context
+consumes it. Assertions read the arrival response body and a direct `fetch` to
+`/user/merchant/referral-status`, never `frak_getUserReferralStatus` (cached at
+three layers, so a dropped row would still read `isReferred: true`).
+
+Four files, run in path order because the later ones assert absences:
+
+| File | Asserts |
+|---|---|
+| `fixtures.spec.ts` | The environment is usable and the fixtures are what they claim: link carries the referrer wallet, two credential names are two wallets, each referee is a new identity |
+| `referral-earned.spec.ts` | **Positive control.** An arrival returns a `referralLinkId` and the referee reads as referred |
+| `referral-rules.spec.ts` | Self-referral resolves `"self-referral"` and emits nothing; the second referrer's arrival returns no id while the first's did |
+| `referral-merge.spec.ts` | Wallet-only read is `false` before the ensure and `true` after, the ensure reports `linked`, and the same call unsigned is refused 403 `PROOF_REQUIRED` |
+
+Two traps are worth knowing before editing them. `POST /user/track/interaction`
+carries `sharing` and `custom` interactions too — the copy action alone posts a
+`sharing` one — so the arrival capture filters on the request's `type`; without
+it a self-referral looks like an attributed arrival that merely lost its id.
+And the SDK fires `ensureIdentity` during its own boot, latching a
+`sessionStorage` key, so the merge spec arms its interception and takes its
+pre-merge baseline *before* returning to the merchant page rather than racing
+that call.
+
+**Local target needs a merchant precondition.** The SDK resolves the merchant by
+bare `window.location.hostname` (`localhost`) while the listener compares the
+iframe origin's `host` (`localhost:3013`, port included). Unless the merchant
+resolved for `localhost` carries `localhost:3013` in `allowedDomains`, the
+listener drops to `dev-override` and refuses every interaction with `-32002`.
+The dashboard route rejects a port, so set it at registration
+(`services/backend/src/domain/merchant/services/MerchantRegistrationService.ts`
+accepts `allowedDomains` unvalidated) or by a seed. `assertStackReady` fails
+naming the exact missing entry. Dev needs nothing: `vanilla.frak-labs.com`
+resolves a merchant that already allows it.
+
 ## Layout
 
 ```
@@ -108,13 +167,14 @@ tests/
 ├── global.setup.ts          # on-device setup → ON_DEVICE_STORAGE_STATE
 ├── global-paired.setup.ts   # pairing setup → PAIRED_STORAGE_STATE
 ├── api/                     # backend.api (route/WS mocks, mockLoginSuccess), rpc.api, analytics.api
-├── helpers/                 # mockedWebauthn, webauthn (virtual), sdk, pairingTab, clipboard, storage
+├── helpers/                 # mockedWebauthn, webauthn (virtual), sdk, pairingTab, clipboard, storage, stack
 │   └── webauthn/            # hand-rolled attestation/assertion (signature.ts) + types
 ├── pages/                   # auth, home, history, settings, pairing, modal page objects
 └── specs/
     ├── authentication/      # on-device-login/register, pairing-desktop
     ├── home/ history/ settings/
-    └── sdk/                 # modal-*-fresh
+    ├── sdk/                 # modal-*-fresh
+    └── sharing/             # referral chain across two contexts
 ```
 
 ## Gotchas (learned the hard way)
@@ -133,13 +193,18 @@ tests/
   **context** level (`page.context().routeWebSocket`); capture is still flaky.
 - **Stale storage**: if auth behaves oddly, delete `playwright/.storage/*` to
   force a fresh credential + re-register.
+- **Zero arrivals is not a passing negative**: a listener that distrusts the
+  harness origin emits no interaction request at all, and both SDK layers
+  swallow the refusal. Run the earned-referral spec first as the positive
+  control before trusting any "no attribution" assertion.
 
 ## Adding a spec
 
 1. Pick the project by auth need: `sdk-fresh` (logged-out / self-contained),
    `chromium-on-device` (authenticated wallet, mobile), `chromium-paired`
-   (distant-webauthn).
+   (distant-webauthn), `sharing-referral` (two contexts, real backend).
 2. Reuse page objects + helpers; add new ones to `fixtures.ts`.
 3. Name on-device files `*on-device*.spec.ts` or `*all*.spec.ts`, pairing
-   `*pairing*.spec.ts`, and self-contained modal files `*fresh*.spec.ts` so they
-   land in the right project (`testMatch`).
+   `*pairing*.spec.ts`, self-contained modal files `*fresh*.spec.ts`, and
+   referral files under `specs/sharing/` so they land in the right project
+   (`testMatch`).

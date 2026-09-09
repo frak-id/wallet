@@ -26,6 +26,7 @@ export function Footer({
                     onClick={actions.onShare}
                     disabled={share.isSharing || !share.canAct}
                     className={styles.shareButton}
+                    data-testid="sharing-share"
                 >
                     {t("sharing.btn.share")}
                     <ShareIcon width={16} height={16} />
@@ -38,6 +39,7 @@ export function Footer({
                 onClick={actions.onCopy}
                 disabled={!share.canAct}
                 className={styles.copyButton}
+                data-testid="sharing-copy"
             >
                 {t("sharing.btn.copy")}
                 <CopyIcon width={16} height={16} />

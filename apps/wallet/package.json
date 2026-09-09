@@ -35,6 +35,8 @@
     "test:e2e:dev:ui": "TARGET_ENV=dev playwright test --ui",
     "test:e2e:prod:ui": "TARGET_ENV=prod playwright test --ui",
     "test:e2e:dev:codegen": "TARGET_ENV=dev playwright codegen wallet-dev.frak.id",
+    "test:e2e:sharing": "TARGET_ENV=dev playwright test --project=sharing-referral",
+    "test:e2e:sharing:local": "TARGET_ENV=local playwright test --project=sharing-referral",
     "test:light": "playwright test --config playwright.light.config.ts",
     "test:light:ui": "playwright test --config playwright.light.config.ts --ui",
     "test:light:pixels": "LIGHT_SNAPSHOTS=1 playwright test --config playwright.light.config.ts",
