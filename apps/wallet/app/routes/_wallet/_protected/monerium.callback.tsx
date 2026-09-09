@@ -10,7 +10,10 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DetailOverlay } from "@/module/common/component/DetailOverlay";
 import { MoneriumScreen } from "@/module/monerium/component/MoneriumBankFlow/MoneriumScreen";
-import { moneriumStore } from "@/module/monerium/store/moneriumStore";
+import {
+    isPendingAuthExpired,
+    moneriumStore,
+} from "@/module/monerium/store/moneriumStore";
 import { exchangeCodeForTokens } from "@/module/monerium/utils/moneriumApi";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./monerium.callback.css";
@@ -85,6 +88,13 @@ function MoneriumCallback() {
     const [sessionExpired, setSessionExpired] = useState(false);
     const pendingCodeVerifier = moneriumStore((s) => s.pendingCodeVerifier);
     const pendingState = moneriumStore((s) => s.pendingState);
+    const pendingAuthCreatedAt = moneriumStore((s) => s.pendingAuthCreatedAt);
+    // The TTL is enforced here as well as on rehydration: a tab that was
+    // never reloaded still holds a pair from an abandoned redirect.
+    const hasUsablePendingAuth =
+        Boolean(pendingCodeVerifier) &&
+        Boolean(pendingState) &&
+        !isPendingAuthExpired(pendingAuthCreatedAt);
 
     const { mutate, isPending, isError, isSuccess } = useMutation({
         mutationFn: async ({
@@ -133,10 +143,10 @@ function MoneriumCallback() {
             });
             return;
         }
-        if (!pendingCodeVerifier || !pendingState) {
-            // Code present but our PKCE verifier is gone (already consumed,
-            // or store cleared between redirect and callback). Surface as a
-            // recoverable error rather than the generic CSRF screen.
+        if (!hasUsablePendingAuth || !pendingCodeVerifier) {
+            // Code present but our PKCE verifier is gone or stale (already
+            // consumed, cleared, or the redirect took too long). Surface as
+            // a recoverable error rather than the generic CSRF screen.
             if (sessionExpired) return;
             setSessionExpired(true);
             trackEvent("monerium_callback_outcome", {
@@ -171,6 +181,7 @@ function MoneriumCallback() {
         state,
         pendingCodeVerifier,
         pendingState,
+        pendingAuthCreatedAt,
         mutate,
         sessionExpired,
         error,
@@ -186,10 +197,7 @@ function MoneriumCallback() {
         !sessionExpired &&
         (isPending ||
             isSuccess ||
-            (Boolean(code) &&
-                Boolean(pendingCodeVerifier) &&
-                Boolean(pendingState) &&
-                !isError));
+            (Boolean(code) && hasUsablePendingAuth && !isError));
 
     return (
         <DetailOverlay
