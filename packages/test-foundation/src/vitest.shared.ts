@@ -47,6 +47,10 @@ export default defineConfig({
         testTimeout: 10000,
         hookTimeout: 10000,
 
+        // Persist transformed modules to node_modules/.vitest-cache across runs.
+        // Invalidated by lockfile hash, so a dependency change resets it.
+        fsModuleCache: true,
+
         // Pool configuration for optimized parallel execution
         // Threads pool provides better performance for CPU-intensive tests
         // Note: In Vitest 4.0, poolOptions was removed - all options are now top-level
