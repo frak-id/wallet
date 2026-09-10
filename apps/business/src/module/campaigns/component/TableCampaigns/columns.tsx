@@ -1,4 +1,3 @@
-import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
@@ -13,8 +12,8 @@ import type { CampaignWithStats } from "@/module/campaigns/hook/useCampaignsWith
 import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPercent } from "@/module/common/utils/formatPercent";
 import { formatPrice } from "@/module/common/utils/formatPrice";
-import { campaignSelectionStore } from "@/stores/campaignSelectionStore";
 import { CellBudget } from "./CellBudget";
+import { CellSelect, HeaderSelect } from "./CellSelect";
 import { MutedText } from "./MutedText";
 import * as styles from "./table-campaigns.css";
 
@@ -40,67 +39,14 @@ export function useCampaignColumns({
     merchantId: string;
 }): ColumnDef<CampaignWithStats>[] {
     const { t } = useTranslation();
-    const selectedIds = campaignSelectionStore((state) => state.selectedIds);
-    const toggleSelection = campaignSelectionStore((state) => state.toggle);
-    const setManySelection = campaignSelectionStore((state) => state.setMany);
-    const clearSelection = campaignSelectionStore((state) => state.clear);
-
     return useMemo(
         () =>
             [
                 columnHelper.display({
                     id: "select",
                     size: 40,
-                    header: ({ table }) => {
-                        const visibleIds = table
-                            .getRowModel()
-                            .rows.map((r) => r.original.id);
-                        const selectedVisible = visibleIds.filter((id) =>
-                            selectedIds.has(id)
-                        );
-                        const checked =
-                            visibleIds.length > 0 &&
-                            selectedVisible.length === visibleIds.length
-                                ? true
-                                : selectedVisible.length > 0
-                                  ? "indeterminate"
-                                  : false;
-                        return (
-                            <div
-                                onClick={(e) => e.stopPropagation()}
-                                onKeyDown={(e) => e.stopPropagation()}
-                            >
-                                <Checkbox
-                                    id="campaign-select-all"
-                                    size="l"
-                                    checked={checked}
-                                    disabled={visibleIds.length === 0}
-                                    onCheckedChange={() => {
-                                        if (selectedVisible.length > 0) {
-                                            clearSelection();
-                                        } else {
-                                            setManySelection(visibleIds);
-                                        }
-                                    }}
-                                />
-                            </div>
-                        );
-                    },
-                    cell: ({ row }) => (
-                        <div
-                            onClick={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
-                        >
-                            <Checkbox
-                                id={`campaign-select-${row.original.id}`}
-                                size="l"
-                                checked={selectedIds.has(row.original.id)}
-                                onCheckedChange={() =>
-                                    toggleSelection(row.original.id)
-                                }
-                            />
-                        </div>
-                    ),
+                    header: ({ table }) => <HeaderSelect table={table} />,
+                    cell: ({ row }) => <CellSelect row={row} />,
                 }),
                 columnHelper.accessor("name", {
                     enableSorting: false,
@@ -289,13 +235,6 @@ export function useCampaignColumns({
                     ),
                 }),
             ] as ColumnDef<CampaignWithStats>[],
-        [
-            t,
-            merchantId,
-            selectedIds,
-            toggleSelection,
-            setManySelection,
-            clearSelection,
-        ]
+        [t, merchantId]
     );
 }

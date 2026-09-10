@@ -219,6 +219,9 @@ export default defineConfig(async () => {
             "process.env.FUNDING_ON_RAMP_URL": JSON.stringify(
                 getSstResource("FUNDING_ON_RAMP_URL")
             ),
+            "process.env.APP_VERSION": JSON.stringify(
+                process.env.COMMIT_HASH ?? ""
+            ),
             // Not placing mongo or session encryption key, that's only server side normally
         },
         build: {
