@@ -25,4 +25,12 @@ describe("FieldError", () => {
             screen.getByText("Invalid email").closest("#email-error")
         ).not.toBeNull();
     });
+
+    it("exposes the message as an alert so it is announced on appearance", () => {
+        const { rerender } = render(<FieldError />);
+        expect(screen.queryByRole("alert")).toBeNull();
+
+        rerender(<FieldError>Invalid email</FieldError>);
+        expect(screen.getByRole("alert")).toHaveTextContent("Invalid email");
+    });
 });

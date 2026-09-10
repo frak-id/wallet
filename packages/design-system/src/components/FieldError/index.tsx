@@ -24,6 +24,10 @@ export function FieldError({ children, className, id }: FieldErrorProps) {
         <Box
             as="span"
             id={id}
+            // Mounted only once a message exists, so the insertion itself is
+            // the announcement; `aria-describedby` alone is read at focus and
+            // would stay silent for an error raised on submit.
+            role="alert"
             className={`${styles.root}${className ? ` ${className}` : ""}`}
         >
             <ExclamationCircleIcon
