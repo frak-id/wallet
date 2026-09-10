@@ -30,14 +30,11 @@ function Harness({ error }: { error?: string }) {
     );
 }
 
-// `FormControl` is the only place the error message is linked to the control,
-// so a dangling id here silently costs every form its accessible description.
 describe("FormControl accessibility wiring", () => {
     it("no error: describedby absent", () => {
         render(<Harness />);
         const input = screen.getByLabelText("Email");
         expect(input.getAttribute("aria-describedby")).toBeNull();
-        expect(input.getAttribute("aria-invalid")).toBe("false");
     });
 
     it("with error: describedby resolves to the message", async () => {

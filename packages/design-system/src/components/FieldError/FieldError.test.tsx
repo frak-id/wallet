@@ -26,11 +26,22 @@ describe("FieldError", () => {
         ).not.toBeNull();
     });
 
-    it("exposes the message as an alert so it is announced on appearance", () => {
+    it("announces politely, including when the message changes in place", () => {
         const { rerender } = render(<FieldError />);
-        expect(screen.queryByRole("alert")).toBeNull();
+        expect(screen.queryByRole("status")).toBeNull();
 
-        rerender(<FieldError>Invalid email</FieldError>);
+        rerender(<FieldError>Pool is 10 EUR</FieldError>);
+        const region = screen.getByRole("status");
+        expect(region).toHaveTextContent("Pool is 10 EUR");
+
+        // Same node, new text: a non-live element would swallow this.
+        rerender(<FieldError>Pool is 105 EUR</FieldError>);
+        expect(screen.getByRole("status")).toBe(region);
+        expect(region).toHaveTextContent("Pool is 105 EUR");
+    });
+
+    it("can interrupt when a caller opts into the assertive role", () => {
+        render(<FieldError role="alert">Invalid email</FieldError>);
         expect(screen.getByRole("alert")).toHaveTextContent("Invalid email");
     });
 });
