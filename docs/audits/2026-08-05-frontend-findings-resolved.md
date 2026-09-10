@@ -9,6 +9,46 @@ Tiers: **P1** listener/SDK (every visitor of every merchant site) · **P2** wall
 
 ---
 
+## 2026-09-10 — three audit quick-wins
+
+Three commits. All three source entries were re-measured first; one of the four items picked up did
+not survive that step and was dropped rather than implemented.
+
+### P3 — Business / Shopify
+
+| Was | Fix | Caveat |
+|---|---|---|
+| **§6.3 #1** Shopify blocks FCP on a cross-origin font stylesheet; the audit's fix was "register `inlineFontFaces`, the one app that never did" | `rel="preload" as="style" crossOrigin=""` on the `cdn.shopify.com` Inter sheet in `apps/shopify/app/root.tsx` | **The audit named the wrong instrument.** `inlineFontFaces` hooks `transformIndexHtml`; shopify is React Router SSR and has no `index.html`, which is *why* it was never registered. The real find is that `polaris.js` appends this exact stylesheet itself at boot with `crossOrigin=""` — so the render-blocking `<link>` was blocking paint for a resource the page fetches anyway. The CORS mode is load-bearing: a preload under a different mode is a separate connection and a separate cache key, so the entry would not be reused |
+| **§6.3 #5** business persister has no `buster` and `maxAge: Infinity`, so a payload schema change rehydrates stale shapes forever | `buster: process.env.APP_VERSION`, plus the build plumbing that carries `COMMIT_HASH` to it: `infra/gcp/business.ts` buildArg → `apps/business/Dockerfile` `ARG`/`ENV` → vite `define` | **The option was the small half.** `COMMIT_HASH` never reached this build at all — infra passed five buildArgs and the Dockerfile declared six, none of them the commit. Deliberately no package-version fallback: `@frak-labs/nexus-business` is `private` and changeset-ignored, frozen at `0.0.1` since creation, so it would be a buster that never rotates — worse than none, because it looks configured. Local builds get `""`, TanStack's own default for the option |
+| **§6.3 #2** campaigns table rebuilds all cells per checkbox; `10 × N`, N unbounded | `selectedIds` left `useCampaignColumns`'s `useMemo` deps; `CellSelect`/`HeaderSelect` subscribe to the store themselves. Deps drop to `[t, merchantId]` | Removing the two `stopPropagation` wrapper divs (`onClick` moved onto the Radix `Checkbox`, which renders a `<button>`) is safe because Radix composes via `composeEventHandlers` and skips its own handler only on `defaultPrevented` — `stopPropagation` is not that. Verified in the installed source, not assumed. The parent still subscribes for the row highlight, so it re-renders; the win is that the *column defs* stay identical, so cells do not |
+
+### Struck from the audit, not fixed
+
+**§6.2 #7** (`welcome_logos_detail.webp`, "183 KB, idle-prefetched every boot, re-encode → 40–55 KB")
+is wrong twice. It is **not** prefetched: `preloadModalChunks` warms the JS chunk, and the webp URL
+is a string inside it — `dist/index.html` carries no preload for it, so the fetch happens only when
+the modal opens. And 40–55 KB is unreachable: 786×718, lossy, with a load-bearing alpha channel
+carrying the tile shadows. Best honest re-encode was `q82 -sharp_yuv` → 174 KB (7% off); `alpha_q50`
+reaches 121 KB but visibly destroys the shadows. The real win, if wanted, is resizing to the 560 px
+sheet max-width — a different change than the audit described.
+
+### Verification notes for this pass
+
+- The buster was proven on real build output, not inspection: `COMMIT_HASH=deadbee` emits
+  `buster:"deadbee"`, unset emits `buster:""`.
+- The memo fix carries a mutation-verified regression test (`CellSelect.test.tsx`) — restoring
+  `selectedIds` to the dep array turns it red. Its failure mode is silent (the UI stays correct and
+  only gets slower), so nothing else would catch a reintroduction.
+- **Trap for the next reader of that test:** `t` is a real dep of the memo, so the usual
+  `vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (k) => k }) }))` shape fails the
+  identity assert for the wrong reason. Hoist `t` to a stable const. That mock shape is copied
+  across the other `apps/business` test files.
+- `apps/wallet` has the same buster pattern and its Dockerfile *also* receives no `COMMIT_HASH`, so
+  it falls back to its package version. Unlike business that version does move (per mobile release),
+  so it busts per release instead of per deploy — degraded, not broken, and still open.
+
+---
+
 ## 2026-09-07 — the P1 postMessage cluster
 
 Four commits. The audit filed §6.1 items 1-3 as one defect ("the postMessage trust boundary is

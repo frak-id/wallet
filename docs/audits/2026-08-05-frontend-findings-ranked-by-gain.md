@@ -39,7 +39,7 @@ Ranked by measured cost × how hot the path is.
 
 | # | Finding | Location | Measured cost | Gain | Effort |
 |---|---|---|---|---|---|
-| P2 | **Campaigns table rebuilds all cells per checkbox** | `TableCampaigns/columns.tsx:293-300` | `selectedIds` in `useMemo` deps + store allocates a new `Set` per mutation → 10 column defs rebuilt and `10 × N` `flexRender` calls per click. **1 of 10 columns actually reads `selectedIds`**. No pagination → N unbounded | Selection cost drops from `O(10N)` to `O(1)` per click. Removes the only unbounded interaction cost in the app | **S** |
+| ~~P2~~ | ~~**Campaigns table rebuilds all cells per checkbox**~~ | `TableCampaigns/columns.tsx` | **Fixed 2026-09-10.** Selection moved out of the column-def memo into the two checkbox leaves; deps are now `[t, merchantId]` | — | — |
 | P3 | **Explorer merchant lookup: uncapped serial scan** | `useGetExplorerMerchantById.ts:30-49` | `while(true)` over 100-record pages, **no page cap**, awaited serially. Backend limit is 30 req/min (`explorer.ts:8`) → a merchant past page 30 throws 429 mid-scan | One request instead of up to `ceil(total/100)`. Removes a hard failure mode, not just latency. Backend needs `GET /user/merchant/explore/:id` (the file's own TODO says so) | **M** (needs backend) |
 | P4 | **Listener context re-renders 17 consumer sites** | `ListenerUiProvider.tsx:347-355` | Inline object literal as `value`; the other three members are *already* stabilized — the literal is the sole cause. **16 files / 17 call sites** | One `useMemo` stops the entire listener modal tree re-rendering on every provider state change. Listener is an iframe on merchant sites = hottest path in the product | **XS** |
 | P6 | **Unbounded, unvirtualized history** | `history.tsx:19-70`, `useHistory.ts:15-46` | No slice/limit anywhere in the chain; `useGetRewardHistory` sends no query params so the server returns everything. Rendered in a Tauri WebView | Bounded first paint. Fixing the `${day}-${index}` keys also stops `MerchantLogo` re-fetch churn on every insert (list is timestamp-desc, so a new entry shifts every key) | **M** |
@@ -58,9 +58,9 @@ The business eager budget is **gzipped** (`EAGER_JS_BUDGET_GZIP = 275 * 1024`), 
 |---|---|---|---|---|
 | B1 | `ReactQueryDevtools` rendered unguarded (`RootProvider.tsx:92`) | **18.6 KB gz eager** (+71.6 KB gz dead lazy chunk) | **6.8%** | **XS** — one `import.meta.env.DEV &&`, matching what `__root.tsx:50-64` already does |
 | B2 | Mock JSON in production query modules (7 files) | 5.6 KB gz | 2.0% | **S** |
-| B3 | Shopify blocks FCP on a cross-origin font stylesheet (`root.tsx:69-71`) | **150–450 ms** FCP/LCP, per `dev-tooling/src/vite.ts:136-140`'s own docblock | n/a — latency, not bytes | **S** — `inlineFontFaces` already exists; shopify is the one app that never registered it |
+| ~~B3~~ | ~~Shopify blocks FCP on a cross-origin font stylesheet~~ | **Fixed** — `rel="preload" as="style" crossOrigin=""`. Not via `inlineFontFaces`: that plugin needs an `index.html` and shopify is SSR | — | — |
 | B4 | Inter-tight fonts, 0 consumers | 131.5 KiB **deploy artifact / Tauri binary**; ~940 B on the web path | ~0% web | **XS** |
-| B5 | `welcome_logos_detail.webp` 183 KB, idle-prefetched on every boot within 2s | 183 KB for a modal most users never open | n/a | **XS** — re-encode → 40–55 KB expected |
+| ~~B5~~ | ~~`welcome_logos_detail.webp`~~ | **Struck.** Not prefetched, and 40–55 KB is unreachable — see §6.2 #7 | — | — |
 | B6 | Shopify PNGs with `assetsInlineLimit: 0` | 45.8 KB across 2 files, full round-trip each | n/a | **XS** |
 | ~~B7~~ | ~~nprogress~~ | ~~4.1 KB gz~~ — **it is used.** Dropped | — | — |
 
@@ -115,7 +115,7 @@ These are not perf or complexity findings, but they are cheap and they are wrong
 | `key={index}` over a removable + appendable field array | `ProductsCampaign/index.tsx:259-260` | Deleting "A" from `["A","B","C"]` leaves the value visibly behind. RHF registration, focus and validation state bind to the wrong row. `useFieldArray` + `field.id` is the fix |
 | Client never validates `percent ≤ 100` | `RewardCampaign/utils.ts` vs `CampaignManagementService.ts:578-584` | **The real defect behind the "re-implementation" finding.** Backend rejects at publish; the wizard lets you get there |
 | Two `shortenAddress` formats in the merge flow | `authentication/` vs `walletMerge/` | The merge flow is the exact flow that asks users to compare addresses, and it shows a different truncation than SSO does |
-| Business persister has no `buster` | `apps/business/.../RootProvider.tsx:33` | Combined with `maxAge: Infinity`, a payload schema change hydrates stale shapes indefinitely. Wallet gets this right |
+| ~~Business persister has no `buster`~~ | — | **Fixed 2026-09-10.** See §6.3 #5 |
 
 ---
 
@@ -173,7 +173,7 @@ The listener's three-ring architecture means "P1" is **not** uniform. Traced fro
 | ~~**4**~~ | ~~**`GlassButton` erases focus repo-wide**~~ | **Fixed.** Always-on 2px transparent outline (no layout shift), `vars.border.focus` on `:focus-visible` — and on `:focus-visible > &`, since `Back` nests the span variant inside a focusable `<Link>`. Covered by `tests-light/specs/glass-button.check.ts` (idle, pointer press, keyboard on both variants, one pixel snapshot); mutation-verified against the old CSS | — |
 | **5** | **Unbounded, unvirtualized history** | No slice/limit anywhere in the chain; server returns everything; rendered in a Tauri WebView. Index-derived keys over a timestamp-desc list mis-associate every row on insert, churning `MerchantLogo` fetches | **M** |
 | ~~**6**~~ | ~~**Missing safe-area insets**~~ | **Fixed.** The original entry was stale in both directions. `reset-globals.css.ts:28-35` had since started seeding `--safe-area-inset-*` from `env()` on `:root`, so the token already resolved on iOS/web and the defect was narrower than filed — but the bypass count was **six, not four**: both sharing sites (`postShareConfirmation.css.ts:97`, `sharingPage.css.ts:350`) were missed. All nine hand-typed sites (six bypasses plus three inlined composites) now import the token, and `scripts/check-safe-area.ts` bans the raw literal in any `.css.ts` outside `tokens.css.ts` and `reset-globals.css.ts`, inside `bun run lint`. Mutation-verified: reintroducing a raw `env(` turns it red. 47/47 light-suite pixel tests show zero diff — but that proves **no web regression only**, since both Playwright projects run Desktop Chrome where `env()` is 0 either way; the Android inset fix was hand-checked on a Tauri Android build (nav-bar clearance, keyboard collapse in `Drawer`) and iOS confirmed unchanged on a notched device, 2026-09-08 | — |
-| **7** | `welcome_logos_detail.webp` 183 KB, idle-prefetched every boot | For a modal most users never open. Re-encode → 40–55 KB | **XS** |
+| ~~**7**~~ | ~~`welcome_logos_detail.webp` 183 KB, idle-prefetched every boot~~ | **Struck — the entry is wrong twice.** It is not prefetched (`preloadModalChunks` warms the JS chunk; the webp is a string inside it and `dist/index.html` has no preload for it), and 40–55 KB is unreachable for 786×718 lossy content with a load-bearing alpha channel — best honest re-encode was 174 KB. Resizing to the 560 px sheet width is the real win, if wanted | — |
 | **8** | 16px close button (13% of the 44px minimum) | `padding: 0`, no width/height, pinned 8px into the corner. 5 more sub-44px targets | **XS** |
 
 > **Do not discount P2 on "it's lazy":** `preloadModalChunks.ts:18-55` fires **every** modal chunk on the first idle tick. Wallet modal weight is downloaded by all users regardless of whether they open one.
@@ -184,11 +184,11 @@ Everything here is real but absorbs cost the other two tiers cannot. **Two excep
 
 | # | Finding | Gain | Effort |
 |---|---|---|---|
-| **1** | Shopify blocks FCP on a cross-origin font stylesheet | **150–450 ms** per `dev-tooling`'s own docblock. `inlineFontFaces` already exists; shopify is the one app that never registered it — *escalate purely on effort* | **S** |
-| **2** | Campaigns table rebuilds all cells per checkbox | `10 × N`, unbounded (no pagination model registered). Only 1 of 10 columns reads `selectedIds` | **S** |
+| ~~**1**~~ | ~~Shopify blocks FCP on a cross-origin font stylesheet~~ | **Fixed** via `rel="preload"`, not `inlineFontFaces` — that plugin hooks `transformIndexHtml` and shopify is SSR with no `index.html`, which is why it was never registered. `polaris.js` appends the same sheet itself at boot | — |
+| ~~**2**~~ | ~~Campaigns table rebuilds all cells per checkbox~~ | **Fixed.** `selectedIds` left the `useMemo` deps; the two checkbox leaves subscribe to the store themselves. Mutation-verified regression test on the memo identity | — |
 | **3** | `key={index}` over a removable field array | **Correctness.** Deleting "A" from `["A","B","C"]` leaves the value visibly behind; RHF state binds to the wrong row | **S** |
 | **4** | Campaign wizard territory field is keyboard-unreachable | `PopoverTrigger asChild` onto a plain `<div>`. A **required** field — the flow cannot be completed by keyboard at all | **S** |
-| **5** | Business persister has no `buster` + `maxAge: Infinity` | A payload schema change rehydrates stale shapes forever. Wallet gets this right | **S** |
+| ~~**5**~~ | ~~Business persister has no `buster` + `maxAge: Infinity`~~ | **Fixed.** `buster: process.env.APP_VERSION`, plus the `COMMIT_HASH` plumbing that never reached this build. No package-version fallback on purpose — that package is `private` and changeset-ignored, so its version never moves | — |
 | **6** | `FieldError` is silent + 11 dangling `aria-describedby` | Validation errors are never announced. Business-only (wallet has its own `Field`) | **S** |
 | **7** | Sidebar collides with content at exactly 768px | 9 sites use `767px`, 12 use `768px`. Confirmed 1px-wide broken state | **S** |
 | **8** | Mock JSON in production query modules | 5.6 KB gz, but the real issue is demo data reachable in prod via a localStorage token | **S** |
@@ -236,7 +236,7 @@ Landed as one piece of work: credential-bearing lifecycle sends now carry the re
 8. ~~Wallet error containment~~ — **done.** One shared boundary inside `AppShell`, `errorComponent` on `_wallet`, and a boundary around `ModalOutlet`'s `Suspense`. See §6.2 #3
 9. Retire the bespoke `DetailOverlay` portal in favour of the DS `Dialog` (it now has dialog semantics, but still no focus trap — see the resolved-log caveat)
 10. ~~Safe-area insets~~ — **done.** All nine `.css.ts` sites now import the `safeArea` token, gated by `bun run check:safe-area` inside `bun run lint`. See §6.2 #6
-11. Shopify `inlineFontFaces` + business persister `buster` (P3, both cheap)
+11. ~~Shopify font stylesheet + business persister `buster`~~ — **done.** Both landed 2026-09-10; the shopify fix was a `preload`, not `inlineFontFaces` (that plugin needs an `index.html`, which an SSR app has not). See the resolved log
 
 ### Then — structural (weeks)
 
