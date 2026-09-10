@@ -35,16 +35,16 @@ describe("FxRateRepository", () => {
 
     it("fetches the rate table from Frankfurter and picks the quote", async () => {
         frankfurterGet.mockResolvedValue({
-            json: async () => ({
-                base: "JPY",
-                rates: { USD: 0.0062, EUR: 0.0054 },
-            }),
+            json: async () => [
+                { date: "2026-09-10", base: "JPY", quote: "USD", rate: 0.0062 },
+                { date: "2026-09-10", base: "JPY", quote: "EUR", rate: 0.0054 },
+            ],
         });
 
         const rate = await repository.getRate({ from: "jpy", to: "usd" });
 
         expect(rate).toBe(0.0062);
-        expect(frankfurterGet).toHaveBeenCalledWith("latest", {
+        expect(frankfurterGet).toHaveBeenCalledWith("rates", {
             searchParams: { base: "JPY" },
         });
         expect(erApiGet).not.toHaveBeenCalled();
@@ -52,10 +52,10 @@ describe("FxRateRepository", () => {
 
     it("caches the rate table per base currency", async () => {
         frankfurterGet.mockResolvedValue({
-            json: async () => ({
-                base: "SEK",
-                rates: { USD: 0.105, EUR: 0.091 },
-            }),
+            json: async () => [
+                { base: "SEK", quote: "USD", rate: 0.105 },
+                { base: "SEK", quote: "EUR", rate: 0.091 },
+            ],
         });
 
         const usd = await repository.getRate({ from: "SEK", to: "USD" });
@@ -83,7 +83,7 @@ describe("FxRateRepository", () => {
 
     it("falls back when Frankfurter does not know the base currency", async () => {
         frankfurterGet.mockResolvedValue({
-            json: async () => ({ rates: {} }),
+            json: async () => [],
         });
         erApiGet.mockResolvedValue({
             json: async () => ({
@@ -108,10 +108,7 @@ describe("FxRateRepository", () => {
 
     it("returns undefined when the quote currency is missing from the table", async () => {
         frankfurterGet.mockResolvedValue({
-            json: async () => ({
-                base: "JPY",
-                rates: { EUR: 0.0054 },
-            }),
+            json: async () => [{ base: "JPY", quote: "EUR", rate: 0.0054 }],
         });
 
         const rate = await repository.getRate({ from: "JPY", to: "XXX" });
@@ -137,13 +134,13 @@ describe("FxRateRepository", () => {
 
     it("rejects a rate that jumps more than 20% vs the last accepted value", async () => {
         frankfurterGet.mockResolvedValueOnce({
-            json: async () => ({ rates: { USD: 1.08 } }),
+            json: async () => [{ quote: "USD", rate: 1.08 }],
         });
         expect(await repository.getRate({ from: "EUR", to: "USD" })).toBe(1.08);
 
         expireRateTable(repository);
         frankfurterGet.mockResolvedValueOnce({
-            json: async () => ({ rates: { USD: 108 } }),
+            json: async () => [{ quote: "USD", rate: 108 }],
         });
 
         expect(
@@ -153,20 +150,20 @@ describe("FxRateRepository", () => {
 
     it("accepts a rate drifting within the 20% band and moves the baseline", async () => {
         frankfurterGet.mockResolvedValueOnce({
-            json: async () => ({ rates: { USD: 1.0 } }),
+            json: async () => [{ quote: "USD", rate: 1.0 }],
         });
         expect(await repository.getRate({ from: "EUR", to: "USD" })).toBe(1.0);
 
         expireRateTable(repository);
         frankfurterGet.mockResolvedValueOnce({
-            json: async () => ({ rates: { USD: 1.15 } }),
+            json: async () => [{ quote: "USD", rate: 1.15 }],
         });
         expect(await repository.getRate({ from: "EUR", to: "USD" })).toBe(1.15);
 
         // 1.15 -> 1.3 is within 20% of the moved baseline, but 30% from 1.0
         expireRateTable(repository);
         frankfurterGet.mockResolvedValueOnce({
-            json: async () => ({ rates: { USD: 1.3 } }),
+            json: async () => [{ quote: "USD", rate: 1.3 }],
         });
         expect(await repository.getRate({ from: "EUR", to: "USD" })).toBe(1.3);
     });

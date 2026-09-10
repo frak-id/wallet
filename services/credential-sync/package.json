@@ -11,7 +11,7 @@
         "dev": "bun run --watch src/index.ts"
     },
     "dependencies": {
-        "@libsql/client": "^0.17.2",
+        "@libsql/client": "^0.18.0",
         "drizzle-orm": "^0.45.2",
         "mongodb": "^6.20.0"
     },

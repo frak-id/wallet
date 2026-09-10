@@ -32,7 +32,7 @@ export const RewardConfig = {
      */
     cron: {
         /** Reward calculation job pattern (every 5 minutes) */
-        rewardCalculation: "0 */5 * * * *",
+        rewardCalculation: "*/5 * * * *",
         /** Settlement job pattern (every hour) */
         settlement: "0 * * * *",
         /** Bank-depleted requeue check pattern (every 3 hours) */

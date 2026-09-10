@@ -1,5 +1,6 @@
-import { type Client, createClient } from "@libsql/client";
-import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";
+import { type Client, createClient } from "@libsql/client/http";
+import type { LibSQLDatabase } from "drizzle-orm/libsql/driver-core";
+import { drizzle } from "drizzle-orm/libsql/http";
 import * as authSchema from "../../domain/auth/db/schema";
 
 /**

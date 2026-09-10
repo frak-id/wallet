@@ -14,7 +14,7 @@ const bunResult = await build({
     minify: false,
     splitting: false,
     target: "bun",
-    external: ["sharp", "lightningcss"],
+    external: ["lightningcss"],
     packages: "bundle",
     define: {
         "process.env.STAGE": JSON.stringify(stage),

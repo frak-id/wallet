@@ -1,7 +1,5 @@
-import sharp from "sharp";
-
 /**
- * Shared, dependency-free (sharp-only) size-variant contract for merchant media.
+ * Shared, import-free size-variant contract for merchant media.
  *
  * Storage layout (per merchant + base type):
  *   {merchantId}/{type}.webp        → canonical, "lg" (largest, source of truth)
@@ -12,9 +10,9 @@ import sharp from "sharp";
  * existing consumers that read `{type}.webp` keep getting the full-size asset.
  * SVGs are vector and are never variant-processed (single canonical object).
  *
- * This module must NOT import anything beyond `sharp` so that the one-shot
- * bootstrap service (whose tsconfig cannot resolve `@backend-utils`) can import
- * it directly for the backfill step.
+ * This module must stay import-free so that the one-shot bootstrap service
+ * (whose tsconfig cannot resolve `@backend-utils`) can import it directly for
+ * the backfill step.
  */
 
 export type ImageType = "logo" | "hero" | "icon";
@@ -84,7 +82,7 @@ export const imageTypeConfigs: Record<ImageType, ImageTypeConfig> = {
     },
 };
 
-const WEBP_OPTIONS = { quality: 82, effort: 4 } as const;
+const WEBP_OPTIONS = { quality: 82 } as const;
 
 /**
  * Resize a source raster buffer into a single size's bounding box and encode as
@@ -97,13 +95,13 @@ export function resizeToVariant(
     size: SizeVariant
 ): Promise<Buffer> {
     const box = imageTypeConfigs[type].sizes[size];
-    return sharp(input)
+    return new Bun.Image(input)
         .resize(box.width, box.height, {
             fit: "inside",
             withoutEnlargement: true,
         })
         .webp(WEBP_OPTIONS)
-        .toBuffer();
+        .buffer();
 }
 
 /**
