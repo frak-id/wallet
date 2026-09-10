@@ -15,7 +15,7 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { DeleteIcon, PlusIcon } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { type Control, Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
@@ -212,6 +212,43 @@ export function ValuesField({
     const inputType = isNumericField(field) ? "number" : "text";
     const placeholder = t(`campaigns.create.products.placeholder.${field}`);
 
+    // Row identity, not row position: keyed by index, React reuses the removed
+    // row's node for its successor and the caret lands on whatever shifted up.
+    // Values are controlled, so they render correctly either way — this is a
+    // focus bug, not data loss.
+    const rowIds = useRef<number[]>([]);
+    const nextRowId = useRef(0);
+    while (rowIds.current.length < values.length) {
+        rowIds.current.push(nextRowId.current++);
+    }
+    const rowKeys = rowIds.current;
+
+    // Which row held the caret. Recorded on focus because by the time the
+    // delete handler runs the caret is on the button, not in any input.
+    const caretRow = useRef<number | null>(null);
+
+    function removeValueAt(index: number, trigger: HTMLElement) {
+        const list = trigger.closest(`.${styles.valueRow}`)?.parentElement;
+        const caretBefore = caretRow.current;
+        caretRow.current = null;
+
+        rowIds.current = rowKeys.filter((_, i) => i !== index);
+        setValues(values.filter((_, i) => i !== index));
+
+        // Clicking delete unmounts the button holding focus, so it always
+        // falls to `<body>`. Put the caret back where the user left it,
+        // shifted if the removed row sat above it.
+        if (caretBefore === null || !list) return;
+        const target =
+            caretBefore === index
+                ? index
+                : caretBefore - (caretBefore > index ? 1 : 0);
+        queueMicrotask(() => {
+            const inputs = list.querySelectorAll<HTMLInputElement>("input");
+            inputs[Math.min(target, inputs.length - 1)]?.focus();
+        });
+    }
+
     if (!isList) {
         return (
             <Stack space="s">
@@ -257,7 +294,7 @@ export function ValuesField({
         <FieldLabel label={t("campaigns.create.products.values.label")}>
             <Stack space="s">
                 {values.map((_, index) => (
-                    <div key={index} className={styles.valueRow}>
+                    <div key={rowKeys[index]} className={styles.valueRow}>
                         <Controller
                             control={control}
                             name={`values.${index}` as const}
@@ -266,6 +303,9 @@ export function ValuesField({
                                     type={inputType}
                                     value={formField.value ?? ""}
                                     onChange={formField.onChange}
+                                    onFocus={() => {
+                                        caretRow.current = index;
+                                    }}
                                     onBlur={formField.onBlur}
                                     placeholder={placeholder}
                                     classNameWrapper={styles.valueInput}
@@ -283,10 +323,8 @@ export function ValuesField({
                                 aria-label={t(
                                     "campaigns.create.products.removeValue"
                                 )}
-                                onClick={() =>
-                                    setValues(
-                                        values.filter((_, i) => i !== index)
-                                    )
+                                onClick={(e) =>
+                                    removeValueAt(index, e.currentTarget)
                                 }
                             >
                                 <DeleteIcon width={20} height={20} />
