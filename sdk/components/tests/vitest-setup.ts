@@ -15,7 +15,12 @@
 
 import { afterEach, beforeEach, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/preact";
+import { cleanup, configure } from "@testing-library/preact";
+
+// RTL's `waitFor` keeps its own 1s budget, independent of `testTimeout`. Ten
+// projects sharing `cpus-1` workers put a cold transform inside that window,
+// so a test awaiting a resolved promise fails on scheduling, not behaviour.
+configure({ asyncUtilTimeout: 5000 });
 
 // Mock window.FrakSetup global
 declare global {
