@@ -9,19 +9,9 @@ import java.util.concurrent.CompletableFuture
  * Everything the SDK can do. Obtained from [Frak.client]. Every suspending member has a `*Async`
  * twin returning a [CompletableFuture], since a Java caller cannot name a `Continuation`.
  *
- * How failure is signalled, one tier per kind of answer:
- * - `T?` means **absence** — nothing was there, and that is a normal answer ([anonymousId],
- *   [RewardsApi.best], [SharingApi.buildLink]'s null arm).
- * - A sealed or enum type means **outcome** — several ends are all valid ([OpenAppResult]).
- * - `Boolean` means **predicate** ([AppLinkApi.isFrakAppInstalled]).
- * - A thrown [id.frak.sdk.core.FrakError] means **failure** — the call could have worked and did
- *   not ([ConfigApi.resolve], [RewardsApi.campaigns], [SharingApi.buildLink],
- *   [AppLinkApi.installPageUrl]). Through an `*Async` twin this arrives as a `CompletionException`
- *   whose `cause` is the [id.frak.sdk.core.FrakError].
- *
- * [TrackingApi] is the one deliberate exception: it returns [id.frak.sdk.core.FrakResult] and never
- * throws, because it is called from hot paths where a disabled-tracking refusal is expected rather
- * than exceptional. A tier change is invisible to the ABI dump, so it needs a `!` commit.
+ * Absence is `T?`, an outcome is a sealed or enum type, a predicate is `Boolean`, and a failure is
+ * a thrown [id.frak.sdk.core.FrakError] — except [TrackingApi], which returns
+ * [id.frak.sdk.core.FrakResult] and never throws. A tier change is invisible to the ABI dump.
  */
 public class FrakClient internal constructor(
     internal val core: DefaultFrakClient,
@@ -47,7 +37,7 @@ public class FrakClient internal constructor(
      * Destroys the keypair so the next [anonymousId] mints a new identity.
      *
      * This is a local identity rotation, not an Art. 17 erasure: events already sent stay
-     * attributed to the old id on Frak's side. Route an actual erasure request to
+     * attributed to the id it replaces. Route an actual erasure request to
      * https://frak.id/account-deletion.
      *
      * @return false when the platform keystore refused to erase the key; the identity did not rotate.

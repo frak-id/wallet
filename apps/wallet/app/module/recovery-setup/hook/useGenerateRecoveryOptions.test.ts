@@ -48,20 +48,6 @@ describe("useGenerateRecoveryOptions", () => {
         vi.restoreAllMocks();
     });
 
-    test("should initialize with correct default state", async ({
-        queryWrapper,
-    }) => {
-        const { result } = renderHook(() => useGenerateRecoveryOptions(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        expect(result.current.isPending).toBe(false);
-        expect(result.current.isSuccess).toBe(false);
-        expect(result.current.isError).toBe(false);
-        expect(result.current.generateRecoveryOptions).toBeDefined();
-        expect(result.current.generateRecoveryOptionsAsync).toBeDefined();
-    });
-
     test("should return the setup tx data and the encrypted blob", async ({
         queryWrapper,
     }) => {

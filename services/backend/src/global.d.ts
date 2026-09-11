@@ -10,15 +10,10 @@ declare global {
             // Notification stuff
             VAPID_PUBLIC_KEY: string;
             VAPID_PRIVATE_KEY: string;
-            // Other services
-            WORLD_NEWS_API_KEY: string;
             // Shopify
             SHOPIFY_API_SECRET: string;
             SHOPIFY_CLIENT_ID: string;
-            // Business dashboard origin — Shopify SSO callback redirect
-            // target (§4.7). NOTE: not yet wired into infra/gcp/secrets.ts
-            // elysiaEnv (out of scope for this backend-only change — infra's
-            // `businessUrl` from infra/config.ts is the value to plumb in).
+            // Business dashboard origin — Shopify SSO callback redirect target
             BUSINESS_URL: string;
             // RustFS (object storage)
             RUSTFS_ENDPOINT: string;

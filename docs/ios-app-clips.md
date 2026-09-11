@@ -1,5 +1,9 @@
 # iOS App Clips for Frak Wallet
 
+Status: **proposal, nothing implemented and nothing scheduled.** No App Clip target
+exists in `apps/wallet/src-tauri/`. Read this as an argument for a shape, not as a
+plan of record.
+
 ## Why App Clips?
 
 Today, when an iOS user on a merchant website interacts with the Frak SDK and needs to install the wallet, they hit a painful flow:
@@ -188,7 +192,7 @@ The **Live Activity** angle is the most interesting: the App Clip can start one 
 
 | Priority | Item | Why | Effort |
 |----------|------|-----|--------|
-| **P0** | App Clip for install/ensure flow | Eliminates 6-digit code, deterministic attribution, ~20-30% conversion lift | Medium |
+| **P0** | App Clip for install/ensure flow | Eliminates the 6-digit code and makes attribution deterministic. The conversion gain is unmeasured — the current funnel is not instrumented per step, so size it before committing. | Medium |
 | **P1** | Smart App Banner on wallet.frak.id | Low-effort prerequisite — triggers the App Clip Card | Low |
 | **P1** | AASA file update | Add App Clip bundle ID to webcredentials + applinks | Low |
 | **P2** | Live Activity from App Clip | "Reward tracking" on Lock Screen post-merchant-purchase | Medium |
@@ -212,4 +216,4 @@ The **Live Activity** angle is the most interesting: the App Clip can start one 
 | `apps/wallet/src-tauri/gen/apple/app_iOS/app_iOS.entitlements` | Current iOS entitlements (webcredentials, applinks) |
 | `packages/wallet-shared/src/common/storage/authenticators.ts` | IndexedDB authenticator storage (won't transfer — that's fine) |
 | `packages/app-essentials/src/webauthn/index.ts` | RP ID and Origin config (`frak.id`) |
-| `sdk/core/src/utils/deepLinkWithFallback.ts` | Current deep link fallback (would trigger App Clip instead) |
+| `sdk/core/src/utils/browser/deepLinkWithFallback.ts` | Current deep link fallback (would trigger App Clip instead) |

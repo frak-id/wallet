@@ -45,9 +45,6 @@ export function RecoveryConfiguration({
             description={t("wallet.recoverySetup.config.description")}
             onBack={onBack}
         >
-            {/* Status hero: reassure the user recovery is on and healthy.
-                Rendered directly on the page background (no card) so the
-                blue icon disc stands out instead of muddying against grey. */}
             <Stack space="s" align="center">
                 <IconCircle size="lg" tone="action">
                     <ShieldIcon width={28} height={28} />
@@ -57,7 +54,6 @@ export function RecoveryConfiguration({
                 </Text>
             </Stack>
 
-            {/* On-chain validity window as a plain data card. */}
             {onChainRecovery && (
                 <Card variant="muted" padding="default">
                     <Stack space="s">
@@ -83,10 +79,6 @@ export function RecoveryConfiguration({
                 </Card>
             )}
 
-            {/* All recovery actions as uniform, profile-style nav rows: a
-                leading icon and label (no trailing chevron, matching the
-                profile/referral rows). Each opens its own screen — no inline
-                toggles. */}
             <InfoCard>
                 <InfoRow
                     icon={LockIcon}
@@ -105,7 +97,6 @@ export function RecoveryConfiguration({
                 />
             </InfoCard>
 
-            {/* Irreversible: demoted to a quiet, centered link. */}
             <Stack space="none" align="center">
                 <Button
                     type="button"

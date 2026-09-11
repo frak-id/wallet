@@ -52,22 +52,16 @@ export type FiatToTokenConversion =
       };
 
 export class PricingRepository {
-    // Cache for the prices
     private readonly cache = new LRUCache<Address, TokenPrice | "unknown">({
-        // Max 128 items in the cache
         max: 128,
-        // Max age of 20 minute
         ttl: 1000 * 60 * 20,
     });
 
-    // Mutex for the api calls
     private readonly apiMutex = new Mutex();
 
-    // The ky client
     private readonly client: KyInstance;
 
     constructor(private readonly fxRates: FxRateRepository) {
-        // Build our ky client
         this.client = ky.create({
             prefix: "https://api.coingecko.com/api/v3/",
             headers: {
@@ -82,7 +76,6 @@ export class PricingRepository {
      * Get a current token price in eur, usd and gbp. Pegged stablecoins are
      * priced from their 1:1 redemption plus FX rates; anything else comes
      * from CoinGecko spot data.
-     * @param token
      */
     async getTokenPrice({
         token,
@@ -197,7 +190,6 @@ export class PricingRepository {
         }
 
         try {
-            // Perform the query
             const response = await this.client.get<{
                 [key: string]:
                     | {
@@ -213,15 +205,16 @@ export class PricingRepository {
                 },
             });
 
-            // Extract the token price
             const prices = await response.json();
             const tokenPrice = Object.values(prices)[0];
 
-            // Cache the result
             this.cache.set(token, tokenPrice ?? "unknown");
             return tokenPrice ?? undefined;
         } catch (error) {
-            log.warn({ error }, "[PricingRepository] Unable to get toke price");
+            log.warn(
+                { error },
+                "[PricingRepository] Unable to get token price"
+            );
             return undefined;
         }
     }

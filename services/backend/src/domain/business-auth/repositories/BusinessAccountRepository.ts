@@ -7,11 +7,9 @@ import {
 } from "../db/schema";
 
 /**
- * One row per business account, holding at most one credential of each
- * login method (password/shopify/wallet) and TOTP enrollment inline —
- * see the schema-level rationale in `db/schema.ts`. Absorbs what used to be
- * three repositories (account, credential, TOTP): every method here used to
- * be a join across tables, now it's a single-row read or column update.
+ * One row per business account, holding at most one credential of each login
+ * method (password/shopify/wallet) and TOTP enrollment inline — see the
+ * schema-level rationale in `db/schema.ts`.
  */
 export class BusinessAccountRepository {
     async findById(id: string): Promise<BusinessAccountSelect | null> {

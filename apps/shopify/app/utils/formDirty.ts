@@ -53,13 +53,9 @@ export type ExplorerSaveValidation =
     | { canSave: false; logoError: boolean; heroError: boolean };
 
 /**
- * Save-time URL validation for the Explorer form, re-homed from the old
- * auto-save's disable-drops-invalid-URLs rule (the Save Bar's Save button
- * can't be conditionally disabled like the old inline button):
- * - If the listing is being turned off, an invalid logo/hero URL doesn't
- *   block Save — it's silently dropped so garbage never reaches storage.
- * - Otherwise (listing on, or staying on), Save is blocked until the
- *   merchant fixes the invalid URL(s).
+ * Save-time URL validation for the Explorer form. Turning the listing off
+ * silently drops an invalid logo/hero URL rather than blocking Save; while the
+ * listing stays on, Save is blocked until the merchant fixes it.
  */
 export function validateExplorerSave(
     pending: ExplorerFormState

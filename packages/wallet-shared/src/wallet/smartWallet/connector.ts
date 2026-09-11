@@ -141,9 +141,6 @@ export function smartAccountConnector() {
                 // Create the provider
                 cachedProvider = getSmartAccountProvider({
                     onAccountChanged: (wallet) => {
-                        console.log("Wagmi provider account changed", {
-                            wallet,
-                        });
                         // When the account change to no wallet, emit the disconnect event
                         if (!wallet) {
                             config.emitter.emit("change", {});

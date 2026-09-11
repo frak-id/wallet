@@ -4,12 +4,12 @@ Those components are meant to be used to interact with the [Frak Wallet](https:/
 
 They are built as [Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components), so you can use them in any web project, no matter the framework you are using.
 
-Checkout our documentation for more information's about the usage:
+See the documentation for usage:
  - [Components](https://docs.frak.id/components)
  - [Share Button usage](https://docs.frak.id/components/share-button)
  - [Wallet Button usage](https://docs.frak.id/components/wallet-button)
 
-To have more info about how does it works under the hood, you can check [this](https://docs.frak.id/wallet-sdk/under-the-hood)
+How it works under the hood: [Under the hood](https://docs.frak.id/wallet-sdk/under-the-hood).
 
 ## Setup
 
@@ -88,3 +88,25 @@ Button with custom class:
 ```
 
 **Note:** This component only renders on mobile devices. On desktop, it returns null.
+
+## Sample usage for Post Purchase
+
+Rendered on the order-confirmation page, it tracks the purchase and offers the buyer the sharing page:
+
+```html
+<frak-post-purchase customer-id="1234" order-id="5678" token="checkout-token"></frak-post-purchase>
+```
+
+## Sample usage for Banner
+
+A banner that switches between the referral and in-app-browser messages on its own:
+
+```html
+<frak-banner></frak-banner>
+```
+
+Banner with custom copy:
+
+```html
+<frak-banner referral-title="You were referred!" referral-cta="Claim"></frak-banner>
+```

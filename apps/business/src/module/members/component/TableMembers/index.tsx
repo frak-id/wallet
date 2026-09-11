@@ -24,11 +24,6 @@ import { membersStore } from "@/stores/membersStore";
 
 const columnHelper = createDataTableColumnHelper<GetMembersPageItem>();
 
-/**
- * Table of all the members components
- *  - tanstack table
- *  - filter on top
- */
 export function TableMembers() {
     const { t } = useTranslation();
     const filters = membersStore((state) => state.tableFilters);

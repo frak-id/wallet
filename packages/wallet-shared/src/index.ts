@@ -168,7 +168,6 @@ export {
     type PairingSignatureErrorCause,
     PairingStatus,
     PairingView,
-    type PairingWsEventListener,
     pairingKey,
     type SignatureRejectCode,
     type SignatureRejectReason,

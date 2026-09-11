@@ -1,7 +1,5 @@
 /**
- * Encode a buffer to a base64url encoded string
- * @param buffer The buffer to encode
- * @returns The encoded string
+ * Encode a buffer to a base64url encoded string (unpadded)
  */
 export function base64urlEncode(buffer: Uint8Array): string {
     return btoa(Array.from(buffer, (b) => String.fromCharCode(b)).join(""))
@@ -11,9 +9,7 @@ export function base64urlEncode(buffer: Uint8Array): string {
 }
 
 /**
- * Decode a base64url encoded string
- * @param value The value to decode
- * @returns The decoded value
+ * Decode a base64url encoded string, padded or not
  */
 export function base64urlDecode(value: string): Uint8Array {
     const m = value.length % 4;

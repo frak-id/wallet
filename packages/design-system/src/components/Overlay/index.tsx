@@ -12,7 +12,6 @@ export function Overlay({ className, onClick }: OverlayProps) {
             className={clsx(overlayStyle, className)}
             onClick={onClick}
             onKeyDown={() => {}}
-            data-testid="overlay"
         />
     );
 }

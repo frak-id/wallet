@@ -1,5 +1,5 @@
 import { currentChainId } from "@frak-labs/app-essentials/blockchain";
-import { type Client, createClient } from "@libsql/client/http";
+import { createClient } from "@libsql/client/http";
 import { and, eq, isNull } from "drizzle-orm";
 import { drizzle as drizzleLibsql } from "drizzle-orm/libsql/http";
 import { drizzle as drizzlePg } from "drizzle-orm/postgres-js";
@@ -36,33 +36,12 @@ type BackfillStats = {
 };
 
 /**
- * Seed one active wallet binding per legacy authenticator into THIS
- * environment's postgres database and migrate the legacy
- * `authenticators.email` column into a dedicated `identity_nodes` row keyed
- * to the wallet's identity group.
+ * Seed one active wallet binding per legacy authenticator, and migrate the legacy
+ * `authenticators.email` column onto the wallet's identity group.
  *
- * Both writes target postgres (env-scoped), so each environment that runs
- * the bootstrap step fills its own state from the env-shared libSQL
- * authenticator rows. The binding is created for `currentChainId` only —
- * the chain this environment runs on — which is what makes the merge flow
- * env-isolated (a binding repoint on dev cannot leak into staging).
- *
- * Bindings step is idempotent — relies on the partial unique index
- * `(authenticator_id, chain_id) WHERE unlinked_at IS NULL` to skip rows
- * that already have an active binding.
- *
- * Email step is idempotent — skips when the wallet's identity group already
- * holds an email node, regardless of value. The `identity_nodes` global
- * unique on `(identity_type, identity_value, merchant_id)` would also catch
- * exact duplicates, but the explicit per-group pre-check additionally guards
- * against inserting a second, different email onto a group that has already
- * been updated through the post-auth `POST /email` route.
- *
- * Authenticators with a NULL `smart_wallet_address` (very old rows from
- * before the column existed) are SKIPPED here; they get back-filled lazily
- * on the next login via the postgres `WalletBindingRepository.ensureActiveBinding`
- * call from the login route. Their email — if any — lands on the next
- * bootstrap run once their wallet identity group exists in postgres.
+ * Bindings are created for `currentChainId` only — the chain this environment runs
+ * on — which is what keeps the merge flow env-isolated. Authenticators with a NULL
+ * `smart_wallet_address` are skipped, and back-filled lazily on their next login.
  */
 export async function runAuthBindingBackfill(): Promise<void> {
     const libsqlUrl = process.env.LIBSQL_URL;
@@ -91,7 +70,7 @@ export async function runAuthBindingBackfill(): Promise<void> {
     };
 
     try {
-        await processAllBatches({ libsqlClient, libsqlDb, pgDb, stats });
+        await processAllBatches({ libsqlDb, pgDb, stats });
     } finally {
         libsqlClient.close();
         await pgClient.end();
@@ -103,17 +82,14 @@ export async function runAuthBindingBackfill(): Promise<void> {
 }
 
 async function processAllBatches({
-    libsqlClient,
     libsqlDb,
     pgDb,
     stats,
 }: {
-    libsqlClient: Client;
     libsqlDb: ReturnType<typeof drizzleLibsql>;
     pgDb: ReturnType<typeof drizzlePg>;
     stats: BackfillStats;
 }): Promise<void> {
-    void libsqlClient; // ownership stays with caller
     let offset = 0;
     while (true) {
         const batch: AuthBatchRow[] = await libsqlDb

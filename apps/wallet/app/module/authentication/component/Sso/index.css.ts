@@ -25,11 +25,8 @@ export const disclaimerLink = style({
     textDecoration: "none",
 });
 
-/** Preserves the local `Notice`'s original `marginTop` above the register error. */
-// The old local `Notice` rendered inside `Badge`, whose base set
-// `white-space: nowrap` (inherited by the caption text). `Notice` doesn't,
-// so restore it to keep the pill 1:1. No `font-weight` here: the old caption
-// `Text` set an explicit `regular` weight on the span, beating Badge's 600.
+/** `nowrap` keeps the register-error pill on one line: `Notice` does not set
+ * it, unlike the `Badge` surface it renders against. */
 export const noticeSpacing = style({
     marginTop: alias.spacing.s,
     whiteSpace: "nowrap",

@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { FrakWalletSdkConfig } from "../types/config";
 
-// --- Mocks -------------------------------------------------------------
-
 vi.mock("../config/clientId", () => ({
     getClientId: vi.fn(() => "anon-client-id"),
     getClientIdAsync: vi.fn(async () => "anon-client-id"),

@@ -21,7 +21,7 @@ You are a backend builder. Your job is to create and modify API endpoints, datab
 ## Stack Knowledge
 
 - **Framework**: Elysia.js on Bun
-- **Database**: Drizzle ORM (PostgreSQL + MongoDB)
+- **Database**: Drizzle ORM — PostgreSQL for most domains, libSQL/Turso for WebAuthn credentials
 - **Validation**: TypeBox schemas
 - **Auth**: WebAuthn + JWT sessions
 - **Blockchain**: Viem for Ethereum interactions

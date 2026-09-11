@@ -149,7 +149,7 @@ private struct BestRewardWire: Decodable {
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         // Empty folds to nil, so "the winner is unscoped" is one value rather than two a caller
-        // has to remember to check. Matches Kotlin's `ifEmpty { null }`.
+        // has to remember to check.
         let matched = try container.decodeIfPresent(
             ForgivingArray<ProductDetailsWire>.self,
             forKey: .matchedProducts

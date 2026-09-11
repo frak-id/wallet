@@ -120,7 +120,7 @@ class RewardsDecoderTest {
     }
 
     @Test
-    fun `a non-object entry in the rewards array is skipped, the rest survive (N3, matching iOS)`() {
+    fun `a non-object entry in the rewards array is skipped, the rest survive`() {
         val body =
             """
             {"rewards":[42,{"campaignId":"c1","name":"Good","interactionTypeKey":"purchase","conditions":[]}]}
@@ -133,10 +133,9 @@ class RewardsDecoderTest {
     }
 
     @Test
-    fun `a well-formed campaign object missing a required field still throws (N3, matching iOS)`() {
+    fun `a well-formed campaign object missing a required field still throws`() {
         // objectArray only skips entries that are not JSON objects at all; an object-shaped
-        // entry missing a required field is a contract break and must stay loud, matching iOS's
-        // ForgivingArray.
+        // entry missing a required field is a contract break and must stay loud.
         val body = """{"rewards":[{"name":"Summer","interactionTypeKey":"purchase","conditions":[]}]}"""
 
         val failure = runCatching { RewardsDecoder.decode(body) }.exceptionOrNull()
@@ -305,7 +304,7 @@ class RewardsDecoderTest {
     }
 
     @Test
-    fun `a non-finite amount is a decoding error, not a silently broken TokenAmount (N1)`() {
+    fun `a non-finite amount is a decoding error, not a silently broken TokenAmount`() {
         // Not a bare `NaN` literal: org.json (this classpath's JSON implementation) only
         // attempts numeric parsing when the token starts with a digit or '-', so a bare NaN
         // decodes as the string "NaN" and raises the missing-field error, not the finiteness
@@ -332,7 +331,7 @@ class RewardsDecoderTest {
     }
 
     @Test
-    fun `requireFiniteDouble itself rejects a directly-parsed non-finite value (N1)`() {
+    fun `requireFiniteDouble itself rejects a directly-parsed non-finite value`() {
         // A direct test of the guard, independent of RewardsDecoder's call sites: proves the
         // guard's own contract without depending on which field happens to route through it.
         val source = JsonReader.parseObject("""{"a":1e999}""")
@@ -350,7 +349,7 @@ class RewardsDecoderTest {
     }
 
     @Test
-    fun `a non-finite percent, tier bound, or product-detail field is also a decoding error (N1)`() {
+    fun `a non-finite percent, tier bound, or product-detail field is also a decoding error`() {
         // Covers every numeric wire field a decoded reward can carry; percent in particular
         // feeds display arithmetic directly.
         val percentBody =

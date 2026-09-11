@@ -49,27 +49,17 @@ type ActionsClient = {
 
 const PROVIDER = "takeads" as const;
 const STREAM = "conversions";
-// Per-action retry budget before a permanently-failing ("poison") action is
-// skipped rather than pinning the cursor forever. See the in-memory counter
-// on the orchestrator instance for the caveats of this budget.
+// Retry budget before a poison action is skipped rather than pinning the cursor.
 const MAX_ACTION_RETRIES = 5;
-// Tolerance for clock skew between TakeAds and us. An action whose updatedAt
-// is further in the future than this is treated as corrupt: letting it onto
-// the watermark would persist a future cursor and silently starve ingestion
-// (updatedAtFrom > now returns 0 actions) until real time catches up.
+// Clock-skew tolerance: a further-future `updatedAt` is treated as corrupt,
+// since a future watermark starves ingestion until real time catches up.
 const MAX_FUTURE_SKEW_MS = 60_000;
-// Pages fetched per run. Kept low on purpose: every page is checkpointed (see
-// ingestActions), so anything beyond the cap simply resumes on the next tick.
-// If a backlog ever outpaces the hourly cadence, raise this or shorten the cron
-// period rather than letting one run hold the advisory lock for long.
+// Pages per run; every page is checkpointed, so the rest resumes next tick.
 const PAGE_CAP = 50;
-// How many actions from a single page are dispatched concurrently to the DB.
-// Processing a 500-action page sequentially serialises ~500 round-trips; batching
-// reduces that to ceil(500/20)=25 parallel waves. Keep below the DB pool size.
+// Actions dispatched concurrently to the DB. Keep below the DB pool size.
 const ACTION_BATCH_SIZE = 20;
-// Wall-clock budget per run. The job is hourly and holds an advisory lock for
-// its whole duration, so a large backlog (first run / post-outage) is drained
-// incrementally across ticks rather than blocking all replicas for hours.
+// Wall-clock budget per run: the advisory lock is held for its whole duration,
+// so a large backlog drains across ticks instead of blocking every replica.
 const RUN_BUDGET_MS = 10 * 60_000;
 
 // A TakeAds action only earns a *purchase* reward when it is a SALE carrying a

@@ -1,6 +1,7 @@
 import { localPoint } from "@visx/event";
 import { ParentSize } from "@visx/responsive";
 import { scaleBand, scaleLinear } from "@visx/scale";
+import clsx from "clsx";
 import type { Transition } from "motion/react";
 import {
     Children,
@@ -24,7 +25,6 @@ import {
 } from "./chart-context";
 import { isGradientDefComponent, isPatternDefComponent } from "./chart-defs";
 import { shortDateFmt } from "./chart-formatters";
-import { cn } from "./lib/utils";
 import { useScheduledTooltip } from "./use-scheduled-tooltip";
 
 export type BarOrientation = "vertical" | "horizontal";
@@ -598,7 +598,7 @@ export function BarChart({
 
     return (
         <div
-            className={cn("frak-chart", "relative w-full", className)}
+            className={clsx("frak-chart", "relative w-full", className)}
             ref={containerRef}
             style={{ aspectRatio }}
         >

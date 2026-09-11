@@ -20,7 +20,19 @@ type TextVariant =
     | "overline"
     | "tiny";
 
-const defaultTagMap: Record<TextVariant, string> = {
+type TextTag =
+    | "h1"
+    | "h2"
+    | "h3"
+    | "h4"
+    | "h5"
+    | "h6"
+    | "p"
+    | "span"
+    | "label"
+    | "button";
+
+const defaultTagMap: Record<TextVariant, TextTag> = {
     display1: "h1",
     display: "h1",
     heading1: "h1",
@@ -54,7 +66,7 @@ const defaultWeightMap: Record<TextVariant, Sprinkles["fontWeight"]> = {
     tiny: "semiBold",
 };
 
-const tagToVariant: Partial<Record<string, TextVariant>> = {
+const tagToVariant: Partial<Record<TextTag, TextVariant>> = {
     h1: "heading1",
     h2: "heading2",
     h3: "heading3",
@@ -68,17 +80,7 @@ type TextProps = {
     color?: Sprinkles["color"];
     weight?: Sprinkles["fontWeight"];
     align?: Sprinkles["textAlign"];
-    as?:
-        | "h1"
-        | "h2"
-        | "h3"
-        | "h4"
-        | "h5"
-        | "h6"
-        | "p"
-        | "span"
-        | "label"
-        | "button";
+    as?: TextTag;
     children?: ReactNode;
     className?: string;
     title?: string;
@@ -99,17 +101,7 @@ export function Text({
     ref,
 }: TextProps) {
     const resolvedVariant = variant ?? (as && tagToVariant[as]) ?? "body";
-    const tag = (as ?? defaultTagMap[resolvedVariant]) as
-        | "h1"
-        | "h2"
-        | "h3"
-        | "h4"
-        | "h5"
-        | "h6"
-        | "p"
-        | "span"
-        | "label"
-        | "button";
+    const tag = as ?? defaultTagMap[resolvedVariant];
     const variantClass = textStyles[resolvedVariant];
 
     return (

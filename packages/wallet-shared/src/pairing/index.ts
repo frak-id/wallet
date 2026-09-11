@@ -1,5 +1,4 @@
 // Clients
-export type { PairingWsEventListener } from "./clients/base";
 export { BasePairingClient } from "./clients/base";
 export type {
     OnPairingSuccessCallback,
@@ -57,6 +56,3 @@ export type {
     TargetPairingPendingSignature,
     TargetPairingState,
 } from "./types/index";
-
-// Note: Types are not re-exported from the barrel due to naming conflicts
-// Import types directly from "./pairing/types" if needed

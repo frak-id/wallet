@@ -83,6 +83,11 @@ member on `FrakClient` (`rewards.best`, `config.resolve`, `sharing.buildLink`, �
 `async`. The idiom is `private func client() -> FrakClient? { try? Frak.client }`, then
 `await client()?.rewards.best(...)`.
 
+`track(_:)` and `trackPurchase(...)` never fail with `merchantResolutionFailed`: they enqueue
+durably first and resolve the merchant from cache only (`.cachedOnly`), never over the network.
+An unresolved merchant lands on disk as a `nil` `merchantId` and is filled in by the drain once
+one is available — from config, cache, or a later launch.
+
 Inbound deep links have no automatic handling — wire `appLink.handleReferral(_:)` into
 `onOpenURL` or your router:
 
@@ -118,11 +123,9 @@ is wrong.
 
 - Swift 6 language mode is declared in `Package.swift` (tools-version 6.0,
   `.swiftLanguageMode(.v6)` on all four targets), so a consumer's own `swift build` or
-  Xcode SwiftPM resolve compiles this package the same way CI does. It used to come from
-  `scripts/run.sh` alone, which CI called and a merchant never did — a consumer silently
-  got Swift 5 mode and its hidden concurrency errors. Cost: resolving this package now
-  needs Xcode 16 at minimum. `.unsafeFlags` is not an alternative; SwiftPM refuses it on
-  any package resolved as someone else's dependency, which this always is.
+  Xcode SwiftPM resolve compiles this package the same way CI does. Cost: resolving this
+  package needs Xcode 16 at minimum. `.unsafeFlags` is not an alternative; SwiftPM refuses
+  it on any package resolved as someone else's dependency, which this always is.
 - Tests use **Swift Testing, not XCTest**. XCTest's Swift overlay is a zippered
   macOS/Catalyst dylib and cannot be linked for `arm64-apple-ios15.0-simulator` from
   SwiftPM.
@@ -163,14 +166,6 @@ is wrong.
   and serves reward distribution rather than advertising measurement. Both calls are
   argued in full in the manifest comments — revisit if an ad network ever enters the SDK
   path.
-- **`track(_:)` and `trackPurchase(...)` no longer fail with `merchantResolutionFailed`.**
-  They enqueue durably first and resolve the merchant from cache only (`.cachedOnly`),
-  never over the network; an unresolved merchant lands on disk as a `nil` `merchantId` and
-  is filled in by the drain once one is available (from config, cache, or a later launch).
-  This is a public behaviour change from the old `.required` resolve, even though the
-  signature is unchanged: a caller checking for `.merchantResolutionFailed` from `track`
-  itself will no longer see it there.
-
 ## Open decisions before first publish
 
 - XCFramework build and signing are unbuilt. `bun run --cwd sdk/ios xcframework`

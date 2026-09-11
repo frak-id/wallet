@@ -4,10 +4,6 @@ import { useAuthStore } from "@/stores/authStore";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
 
-/**
- * Hook to get and set demo mode state
- * Automatically invalidates queries when demo mode changes
- */
 export function useDemoMode() {
     const token = useAuthStore((state) => state.token);
     const setAuth = useAuthStore((state) => state.setAuth);
@@ -28,7 +24,6 @@ export function useDemoMode() {
             clearAuth();
         }
 
-        // Invalidate queries if demo mode changed
         queryClient.invalidateQueries();
     };
 
@@ -38,11 +33,6 @@ export function useDemoMode() {
     };
 }
 
-/**
- * Simple hook to check if demo mode is active
- * Returns true if demo mode is enabled via token
- */
 export function useIsDemoMode(): boolean {
-    const { isDemoMode } = useDemoMode();
-    return isDemoMode;
+    return useAuthStore((state) => state.token === "demo-token");
 }

@@ -1,15 +1,6 @@
 import { brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-export const trigger = style({
-    cursor: "pointer",
-    border: "none",
-    padding: 0,
-    background: "none",
-    textAlign: "left",
-    color: "inherit",
-});
-
 export const close = style({
     all: "unset",
     position: "absolute",
@@ -32,9 +23,4 @@ export const footer = style({
     justifyContent: "flex-end",
     gap: "14px",
     padding: "15px 0 0 0",
-});
-
-export const footerAfter = style({
-    padding: "15px 0 0 0",
-    textAlign: "center",
 });

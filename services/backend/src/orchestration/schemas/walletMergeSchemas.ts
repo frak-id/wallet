@@ -50,21 +50,16 @@ export const MergePreviewQuerySchema = t.Object({
 export const MergeSettleBodySchema = t.Object({
     targetAuthenticatorId: t.String({ minLength: 1, maxLength: 512 }),
     /**
-     * Base64-encoded webauthn assertion produced by the loser side over the
-     * deterministic merge-consent challenge (see
-     * `buildMergeConsentChallengeSlots`). Verified server-side before any
-     * on-chain reads — closes the "absorb-other-user's-identity" path where
-     * a malicious winner could craft the on-chain `addPasskey` against
-     * public credential data without the victim consenting.
+     * Base64 webauthn assertion from the loser side over the merge-consent
+     * challenge (`buildMergeConsentChallengeSlots`). Verified before any
+     * on-chain read — without it a winner could absorb a victim's identity
+     * from public credential data alone.
      */
     loserConsentSignature: t.String({ minLength: 1 }),
     /**
-     * Set by the cross-device merge flow. When present, the
-     * orchestrator publishes a `merge-completed` event on both pairing
-     * topics once settlement succeeds — the loser-side payload carries a
-     * freshly-minted webauthn session so the loser device can swap its
-     * stale one without a separate login. Omitted by same-device merges:
-     * those rebind their session via the HTTP response's `session` field.
+     * Cross-device merges only: makes the orchestrator publish
+     * `merge-completed` on both pairing topics, the loser payload carrying a
+     * fresh session. Same-device merges rebind via the response's `session`.
      */
     pairingId: t.Optional(t.String({ minLength: 1, maxLength: 128 })),
 });
@@ -74,17 +69,10 @@ export const MergeSettleResponseSchema = t.Object({
     winner: t.Address(),
     loser: t.Address(),
     /**
-     * Fresh wallet session minted for the requester, present only when the
-     * requester authenticated with the loser credential. Post-merge the
-     * loser credential's binding now points at the winner wallet, so the
-     * requester's previous JWT references a stale `address`. The frontend
-     * applies this session directly (`setSession`) rather than forcing a
-     * re-login round-trip — the consent assertion verified at settle-time
-     * is the security-equivalent proof of credential ownership.
-     *
-     * Omitted when the requester is the winner (their existing JWT already
-     * resolves correctly) or when the merge was triggered by an out-of-band
-     * caller with no session to rebind (reconciler retries).
+     * Fresh session, present only when the requester authenticated with the
+     * loser credential — that credential now binds to the winner wallet, so
+     * the requester's JWT carries a stale `address`. Omitted when the
+     * requester is the winner, or for out-of-band callers with no session.
      */
     session: t.Optional(WalletAuthResponseDto),
 });

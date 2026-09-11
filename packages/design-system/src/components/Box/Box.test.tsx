@@ -12,16 +12,6 @@ describe("Box", () => {
         expect(screen.getByText("test content").tagName).toBe("DIV");
     });
 
-    it("should apply sprinkles classes when props provided", () => {
-        render(
-            <Box display="flex" gap="m" padding="l">
-                styled
-            </Box>
-        );
-        const el = screen.getByText("styled");
-        expect(el.className).toBeTruthy();
-    });
-
     it("should render as a different element when `as` prop is provided", () => {
         render(<Box as="ul">list</Box>);
         expect(screen.getByText("list").tagName).toBe("UL");

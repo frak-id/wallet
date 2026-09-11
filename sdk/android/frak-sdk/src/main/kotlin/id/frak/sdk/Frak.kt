@@ -231,10 +231,9 @@ public object Frak {
     }
 
     /**
-     * Holds the merchant marker AND the consent decision, which is why this file is deliberately
-     * left in Auto Backup: a withdrawal must survive a device transfer. The identity itself is not
-     * in here — the keypair lives in `AndroidKeyStore` and cannot be backed up or transferred at
-     * all — so there is nothing here to exclude. See `PRIVACY.md`.
+     * Holds the merchant marker AND the consent decision, so it is deliberately left in Auto
+     * Backup: a withdrawal must survive a device transfer. The keypair lives in `AndroidKeyStore`
+     * and cannot be backed up at all. See `PRIVACY.md`.
      */
     private const val IDENTITY_FILE_NAME = "id.frak.sdk"
 

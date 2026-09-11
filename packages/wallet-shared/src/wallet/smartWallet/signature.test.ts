@@ -1,5 +1,5 @@
 import type { Address, Hex } from "viem";
-import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { vi } from "vitest";
 import { describe, expect, test } from "../../../tests/vitest-fixtures";
 import type { AccountMetadata } from "./signature";
 
@@ -169,11 +169,11 @@ describe("signature utilities", () => {
             const { signHashViaWebAuthN } = await import("./signature");
             const { WebAuthnP256 } = await import("ox");
             const { formatSignature } = await import("./webAuthN");
-            const { createMockWebAuthNWallet } = await import(
-                "../../test/factories"
-            );
+            const { createMockSession } = await import("../../test/factories");
 
-            const mockWallet = createMockWebAuthNWallet({
+            const mockWallet = createMockSession({
+                publicKey: { x: "0xabc" as Hex, y: "0xdef" as Hex },
+                authenticatorId: "auth-id",
                 token: "token",
             });
 

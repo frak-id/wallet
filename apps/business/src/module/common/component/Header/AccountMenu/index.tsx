@@ -12,10 +12,11 @@ import {
     ProfileIcon,
     SettingsIcon,
 } from "@frak-labs/design-system/icons";
-import { Link, useLocation, useParams } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import clsx from "clsx";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useOptionalActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { useLogout } from "@/module/common/hook/useLogout";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import { activeMerchantStore } from "@/stores/activeMerchantStore";
@@ -27,9 +28,7 @@ export function AccountMenu() {
     const { pathname } = useLocation();
     const [open, setOpen] = useState(false);
     const { merchants, isReadOnly } = useMyMerchants();
-    const { merchantId: activeId } = useParams({ strict: false }) as {
-        merchantId?: string;
-    };
+    const activeId = useOptionalActiveMerchantId();
     const logout = useLogout();
 
     const lastMerchantId = activeMerchantStore((s) => s.lastMerchantId);

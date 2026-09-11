@@ -1,20 +1,11 @@
 /**
- * Tauri WebAuthn Bridge
- *
- * Adapts the frak-webauthn Tauri plugin responses to Credential-like objects
- * that the `ox` WebAuthnP256 library expects.
- *
- * Both iOS (ASAuthorization) and Android (Credential Manager) return the same
- * JSON shape with base64url-encoded fields. This bridge decodes them to
- * ArrayBuffers and wraps in Credential-like objects.
+ * Adapts `tauri-plugin-frak-webauthn` responses to the Credential-like
+ * objects `ox`'s WebAuthnP256 expects. iOS (ASAuthorization) and Android
+ * (Credential Manager) return the same base64url JSON shape.
  */
 
 import { WebAuthN } from "@frak-labs/app-essentials";
-import {
-    IS_ANDROID,
-    IS_IOS,
-    IS_TAURI,
-} from "@frak-labs/app-essentials/utils/platform";
+import { IS_ANDROID, IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import type { WebAuthnP256 } from "ox";
 import { getInvoke } from "../../common/tauri";
 import {
@@ -22,10 +13,6 @@ import {
     bufferToBase64URLString,
 } from "../../common/utils/base64url";
 import { parseNativeWebauthnError } from "./errors";
-
-// ============================================================================
-// Types matching what the plugin returns (base64url JSON)
-// ============================================================================
 
 type PluginRegistrationResponse = {
     id: string;
@@ -60,10 +47,6 @@ type PluginAuthenticationResponse = {
 type OxCreateFn = WebAuthnP256.createCredential.Options["createFn"];
 type OxGetFn = WebAuthnP256.sign.Options["getFn"];
 
-// ============================================================================
-// Base64URL conversion utilities
-// ============================================================================
-
 export function toBase64Url(
     buffer: ArrayBuffer | ArrayBufferView | Uint8Array
 ): string {
@@ -84,10 +67,6 @@ export function fromBase64Url(base64url: string): ArrayBuffer {
     return base64URLStringToBuffer(base64url);
 }
 
-// ============================================================================
-// Tauri plugin invocation
-// ============================================================================
-
 async function invokeTauriPlugin<T>(
     command: string,
     args?: Record<string, unknown>
@@ -98,36 +77,12 @@ async function invokeTauriPlugin<T>(
 
 function getWebAuthnOrigin(): string {
     if (IS_ANDROID) return WebAuthN.androidApkOrigin;
-    if (IS_IOS) return WebAuthN.rpOrigin;
     return WebAuthN.rpOrigin;
 }
 
-// ============================================================================
-// SPKI DER extraction from attestationObject — JS-side fallback
-//
-// TODO(remove-once-ios-rollout-stable): The iOS plugin
-// (`tauri-plugin-frak-webauthn`) now extracts the SPKI natively in Swift and
-// emits it as `response.publicKey`, matching the Android Credential Manager
-// shape. This JS-side scan is kept as a safety net for the rollout window —
-// once we're confident every shipped iOS build returns `publicKey`, drop the
-// helpers below and simplify `getPublicKey` to:
-//
-//     getPublicKey: () => json.response.publicKey
-//         ? fromBase64Url(json.response.publicKey)
-//         : null,
-//
-// Tracking: tied to the next mobile release after the Swift change lands in
-// production (TestFlight + Play Store). Do NOT call into this from new code.
-//
-// Mirrors the byte-scan approach used by Ox's WebAuthn fallback
-// (ox/core/internal/webauthn.ts).
-//
-// CBOR encoding reference:
-//   0x21 = CBOR negative int -2 (COSE label for x coordinate)
-//   0x22 = CBOR negative int -3 (COSE label for y coordinate)
-//   0x58 = CBOR byte string with 1-byte length prefix
-//   0x20 = 32 (coordinate byte length for P-256)
-// ============================================================================
+// SPKI DER fallback for plugin responses without `response.publicKey`.
+// COSE/CBOR labels: 0x21 = x coordinate, 0x22 = y coordinate,
+// 0x58 = byte string with a 1-byte length prefix, 0x20 = 32 bytes (P-256).
 
 const P256_COORDINATE_LENGTH = 0x20;
 const CBOR_BSTR_1BYTE_LEN = 0x58;
@@ -175,10 +130,6 @@ function extractSpkiFromAttestation(
     return spki.buffer;
 }
 
-// ============================================================================
-// Tauri error handling
-// ============================================================================
-
 function extractTauriErrorMessage(e: unknown): string {
     if (e instanceof Error) return e.message;
     if (typeof e === "object" && e !== null && "message" in e) {
@@ -196,10 +147,6 @@ function nativeErrorToError(e: unknown): Error {
     if (gpsCode) (error as Error & { gpsCode?: string }).gpsCode = gpsCode;
     return error;
 }
-
-// ============================================================================
-// Credential Creation (Registration)
-// ============================================================================
 
 function toPluginCreationOptions(
     publicKey: NonNullable<CredentialCreationOptions["publicKey"]>
@@ -295,10 +242,6 @@ export function getTauriCreateFn(): OxCreateFn {
     };
 }
 
-// ============================================================================
-// Credential Request (Authentication / Signing)
-// ============================================================================
-
 function toPluginRequestOptions(
     publicKey: NonNullable<CredentialRequestOptions["publicKey"]>
 ): Record<string, unknown> {
@@ -338,12 +281,10 @@ function fromPluginAuthentication(json: PluginAuthenticationResponse) {
 
 export function getTauriGetFn(opts?: {
     /**
-     * When true, threads `preferImmediatelyAvailable` to the native
-     * `authenticate` command so the OS fails fast with a `no-credential`
-     * signal (iOS `.notInteractive`/1005, Android `TYPE_NO_CREDENTIAL`)
-     * instead of collapsing onto an opaque `NotAllowedError` when no passkey
-     * exists on the device. `ox`'s `getFn` can't carry custom options, so the
-     * flag is captured in this closure and merged into the plugin invoke args.
+     * Threads `preferImmediatelyAvailable` to the native `authenticate` so a
+     * device with no passkey fails fast with a `no-credential` signal instead
+     * of an opaque `NotAllowedError`. Captured in this closure because `ox`'s
+     * `getFn` cannot carry custom options.
      */
     preferImmediatelyAvailable?: boolean;
 }): OxGetFn {

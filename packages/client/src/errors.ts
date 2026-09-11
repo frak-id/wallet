@@ -49,16 +49,6 @@ export function isPermanentHttpError(err: unknown): boolean {
  * Capped at 3 attempts and only triggers on transient failures, so a
  * WebAuthn ceremony rejection or a 4xx validation error never causes a
  * retry. Use together with `transientRetryDelay` for exponential backoff.
- *
- * ```ts
- * useMutation({
- *   retry: transientRetry,
- *   retryDelay: transientRetryDelay,
- *   ...
- * });
- * ```
- *
- * TODO: adopt in `apps/listener/app/module/hooks/useSendInteraction.ts` after preact merge is done
  */
 export function transientRetry(failureCount: number, err: unknown): boolean {
     return failureCount < 3 && isTransientHttpError(err);

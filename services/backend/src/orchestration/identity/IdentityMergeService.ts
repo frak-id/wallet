@@ -28,7 +28,6 @@ import {
 } from "../../domain/rewards/db/schema";
 
 type MergeResult = {
-    success: boolean;
     movedNodes: number;
     migratedPurchases: number;
     migratedPurchaseClaims: number;
@@ -343,7 +342,6 @@ export class IdentityMergeService {
             .where(inArray(identityGroupsTable.id, mergingGroupIds));
 
         const result: MergeResult = {
-            success: true,
             movedNodes: movedNodesResult.length,
             migratedPurchases: migratedPurchasesResult.length,
             migratedPurchaseClaims: migratedPurchaseClaimsResult.length,
@@ -1024,7 +1022,6 @@ export class IdentityMergeService {
 
 function emptyMergeResult(): MergeResult {
     return {
-        success: true,
         movedNodes: 0,
         migratedPurchases: 0,
         migratedPurchaseClaims: 0,

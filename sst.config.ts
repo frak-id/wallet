@@ -27,14 +27,13 @@ export default $config({
         };
     },
     async run() {
-        // Check if we are deploying the example stack
         const isExample = $app?.stage?.startsWith("example");
         if (isExample) {
             await import("./infra/example.ts");
             return;
         }
 
-        // Check if we are deploying on GCP (only `services` are deployed on GCP)
+        // Only `services` are deployed on GCP
         const isGcp = $app?.stage?.startsWith("gcp");
         if (isGcp) {
             await import("./infra/gcp/backend.ts");
@@ -45,7 +44,6 @@ export default $config({
             return;
         }
 
-        // Check if we are running in dev (if yes, import basicly all the stacks and exit)
         if ($dev) {
             // Gcp dev stuff
             await import("./infra/gcp/dev.ts");
@@ -68,16 +66,11 @@ export default $config({
             return;
         }
 
-        // Shopify now lives on the GCP cluster (see the `isGcp` branch above), so
-        // the plain production/dev stages no longer deploy application infra.
-        //
-        // They still must load `infra/config.ts` for its side effect: it declares the
-        // `STAGE` / `BACKEND_URL` / `ERPC_URL` / `FRAK_WALLET_URL` / `OPEN_PANEL_API_URL`
-        // Linkables (plus the shared Secrets). The mobile release builds the wallet under
-        // `sst shell --stage prod`, and the Vite build reads those via `getSstResource()`.
-        // Without this import, `SST_RESOURCE_BACKEND_URL` is absent and the wallet silently
-        // falls back to its hardcoded dev default — shipping a prod app that talks to the
-        // dev backend.
+        // The plain AWS stages deploy no application infra, but must still load
+        // `infra/config.ts` for its side effect: it declares the `STAGE` / `BACKEND_URL` /
+        // `ERPC_URL` / `FRAK_WALLET_URL` / `OPEN_PANEL_API_URL` Linkables that the mobile
+        // release build reads via `getSstResource()` under `sst shell --stage prod`.
+        // Without it the wallet silently falls back to its hardcoded dev backend.
         await import("./infra/config.ts");
     },
 });

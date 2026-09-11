@@ -1,15 +1,5 @@
 /**
- * Ring 0 — pure-TS iframe bootstrap.
- *
- * Runs synchronously on iframe load:
- *  - Creates the RPC listener and registers every handler (lifecycle,
- *    SSO, vanilla factories from `module/hooks/*`, display* factories).
- *  - Emits `iframeLifecycle: "connected"` so the SDK knows the iframe is
- *    alive (no longer waits for i18next — i18n overrides are queued and
- *    drained when Ring 1 mounts; see `i18nOverrideQueue` in step 6).
- *  - Sends the boot ping to the metrics server.
- *  - Honors the `?preload=...` URL hash to warm the Ring 1 + Ring 2
- *    chunks before the first user click.
+ * Ring 0 — pure-TS iframe bootstrap, runs synchronously on iframe load.
  *
  * Keep this module React-free so the eager bundle stays small. UI work
  * is triggered via `uiBus.request` (which auto-mounts Ring 1 lazily).
@@ -63,13 +53,9 @@ function runWhenIdle(callback: () => void): void {
 }
 
 /**
- * Reads `?preload=modal,sharing` from the iframe URL hash and
- * idle-warms the matching Ring 1 + Ring 2 chunks. Each display chunk
- * (Modal / SharingPage's content via lazy-shared) bundles its
- * own `useDisplay*.impl` handler body, so a single `import()` warms
- * both the component and its handler. Used by partner sites that know
- * they will trigger UI within a few hundred ms — eliminates the
- * cold-start dynamic import latency.
+ * Reads `?preload=modal,sharing` from the iframe URL hash and idle-warms the
+ * matching Ring 1 + Ring 2 chunks. Each display chunk bundles its own
+ * `useDisplay*.impl` handler body, so one `import()` warms both.
  */
 function setupPreloadHints(): void {
     if (typeof window === "undefined") return;
@@ -85,19 +71,14 @@ function setupPreloadHints(): void {
 
     if (!wantsModal && !wantsSharing) return;
 
-    // Kick off the i18n locale fetch immediately — no need to wait for
-    // requestIdleCallback. Translations gate the first paint of any UI, so
-    // we want the JSON bundle in memory by the time Ring 1 mounts.
+    // Translations gate the first paint of any UI: fetch them without waiting
+    // for idle time, so the JSON is in memory by the time Ring 1 mounts.
     warmI18nLocale();
 
     const handler = async () => {
         // Always warm Ring 1 (preact + provider tree) when any UI is hinted.
         const promises: Promise<unknown>[] = [import("@/ui/runtime")];
 
-        // Preload the matching display chunk(s). Each chunk co-hosts the
-        // component tree AND its lazy handler body (useDisplay*.impl) via
-        // the `Modal` / `lazy-shared` chunk groups in
-        // vite.config.ts, so a single import warms both files.
         if (wantsModal) {
             promises.push(import("@/module/modal/component/Modal"));
         }
@@ -113,10 +94,8 @@ function setupPreloadHints(): void {
 }
 
 /**
- * Mark the document root with `data-listener="true"` so listener-only
- * styles (e.g. transparent background) apply. This used to live in a
- * React effect; running it eagerly in Ring 0 means it applies before
- * the first paint — slightly snappier and one less Ring 1 dependency.
+ * Mark the document root with `data-listener="true"` so listener-only styles
+ * (e.g. transparent background) apply before the first paint.
  */
 function markRootListener(): void {
     if (typeof document === "undefined") return;
@@ -151,14 +130,8 @@ export function bootstrap(): { cleanup: () => void } {
     const onDisplayModalRequest = createDisplayModalHandler();
     const onDisplaySharingPage = createDisplaySharingPageHandler();
 
-    // Create the listener with combined schema (IFrame + SSO).
-    // We accept all origins with "*" because the actual security validation
-    // happens in walletContextMiddleware (matching merchantId from origin
-    // against stored iframeResolvingContext).
-    //
-    // Middleware stack order (RPC messages only):
-    //  1. loggingMiddleware - Logs requests/responses (development only)
-    //  2. walletContextMiddleware - Augments context with merchantId, sourceUrl, etc.
+    // `allowedOrigins: "*"` is safe only because walletContextMiddleware does
+    // the real check (merchantId from origin vs stored iframeResolvingContext).
     const listener = createRpcListener<
         CombinedRpcSchema,
         WalletRpcContext,
@@ -188,10 +161,9 @@ export function bootstrap(): { cleanup: () => void } {
     // Register SSO handlers (SsoRpcSchema)
     listener.handle("sso_complete", handleSsoComplete);
 
-    // All handlers are wired up — signal readiness to the SDK immediately.
-    // Step 6 introduces the i18n override queue so we no longer wait for
-    // i18next to be initialised; lifecycle messages that need translations
-    // are buffered until Ring 1 drains the queue.
+    // Signal readiness without waiting for i18next: lifecycle messages that
+    // need translations are buffered by the i18n override queue until Ring 1
+    // drains it.
     emitConnected();
 
     setupPreloadHints();

@@ -87,9 +87,6 @@ function pickPersistedState(value: unknown): PendingActionsState {
  * per-`resolve` call, not per-identity, so two resolves for the same
  * `anonymousId` are distinct pending actions rather than overwriting each
  * other. Falls back to the legacy `anonymousId`-keyed form.
- *
- * ROLLOUT-STEP-3: this branch runs dry once ENSURE_BARE_ARM_ENABLED is
- * disabled and the queued bare actions have drained.
  */
 function dedupeKey(action: PendingActionInput): string {
     switch (action.type) {
@@ -97,7 +94,6 @@ function dedupeKey(action: PendingActionInput): string {
             if (action.ticket) {
                 return `ensure:${action.merchantId}:${action.ticket}`;
             }
-            // Legacy anonymousId-keyed dedupe, drains with the bare arm.
             return `ensure:${action.merchantId}:${action.anonymousId}`;
         case "navigation":
             return "navigation";

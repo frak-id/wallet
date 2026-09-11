@@ -261,9 +261,7 @@ actor EventOutbox {
                 break eventLoop
             }
 
-            // Every event `queue.read` returns has already been migrated to a non-nil `rowId`;
-            // this guard exists so a future caller of `drain()` with a hand-built list can't
-            // silently reconcile the wrong row instead of crashing loudly in debug.
+            // Every event `queue.read` returns has already been migrated to a non-nil `rowId`.
             guard let rowId = event.rowId else {
                 assertionFailure("a queued event reaching drain() must already have a rowId")
                 continue
@@ -398,7 +396,7 @@ actor EventOutbox {
     }
 
     /// Sorted keys so a body is byte-identical every time it is built; the queue stores it
-    /// verbatim. Nil-valued keys are absent rather than JSON null, matching the Kotlin twin.
+    /// verbatim. Nil-valued keys are absent rather than JSON null.
     ///
     /// Every value here is a `String`, `Int64` or `[String: String]`, so the fallback is
     /// unreachable — a fallback rather than a trap, since an SDK does not get to bring down

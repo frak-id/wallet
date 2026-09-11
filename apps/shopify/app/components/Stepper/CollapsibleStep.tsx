@@ -2,14 +2,14 @@ import { Collapsible } from "app/components/ui/Collapsible";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { StepItem } from ".";
 
-interface CollapsibleStepProps {
+type CollapsibleStepProps = {
     step: number;
     currentStep: number;
     completed: boolean;
     title: string;
     description?: string;
     children?: ReactNode;
-}
+};
 
 export function CollapsibleStep({
     step,

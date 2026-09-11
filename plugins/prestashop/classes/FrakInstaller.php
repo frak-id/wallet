@@ -8,8 +8,7 @@
  * provisioning. Symmetric uninstall.
  *
  * Extracted from `FrakIntegration::install()` / `uninstall()` so the Module
- * bootstrap stays a thin router. Mirrors the WordPress sibling's split
- * between the entry-point file and `class-frak-plugin.php`'s boot sequence.
+ * bootstrap stays a thin router.
  */
 class FrakInstaller
 {
@@ -20,11 +19,8 @@ class FrakInstaller
      * to add or remove a hook).
      *
      * - `actionFrontControllerSetMedia`: SDK script + JS def injection.
-     *   Replaces the legacy `header` hook + raw `<script>` tag in `head.tpl`
-     *   so the SDK goes through PrestaShop's native asset manager (CCC-aware,
-     *   deduped across modules, defer-attribute capable). Mirrors the
-     *   WordPress sibling's `wp_enqueue_script(..., strategy:defer,
-     *   in_footer:true)` pattern.
+     *   The SDK goes through PrestaShop's native asset manager (CCC-aware,
+     *   deduped across modules, defer-attribute capable).
      * - `header`: minimal — emits resource hints (DNS-prefetch / preconnect)
      *   and the inline FrakSetup config block. Resource hints MUST live in
      *   `<head>` to be effective.
@@ -33,8 +29,7 @@ class FrakInstaller
      *   / high load (PrestaShop docs explicitly recommend post-commit).
      * - `actionOrderSlipAdd`: credit-slip (refund) webhook trigger. Fires on
      *   every `OrderSlip` creation — full refunds, partial refunds, and
-     *   standard returns. Aligns the plugin with WC / Magento siblings'
-     *   "any refund voids attribution" rule, since `actionOrderStatusPost
+     *   standard returns. Needed because `actionOrderStatusPost
      *   Update` does NOT fire on partial refunds (the order keeps its
      *   pre-refund status, only the credit slip is created).
      * - `actionCronJob`: opt-in auto-registration with the `ps_cronjobs`
@@ -92,12 +87,10 @@ class FrakInstaller
      */
     public static function install(Module $module): bool
     {
-        // Fail fast if PrestaShop's bundled Symfony HttpClient is not
-        // loadable. The merchant zip no longer requires `symfony/http-client`
-        // (CHANGELOG: "shared-hosting diet") and we rely on PS 8.1+ shipping
-        // it via `symfony/symfony` 4.x. Surfacing the error here means a
-        // misconfigured PS install rejects the module at upload time instead
-        // of silently failing on the first webhook fire.
+        // Fail fast if PrestaShop's bundled Symfony HttpClient is not loadable:
+        // the merchant zip does not ship one, so a PS install that lacks it
+        // must reject the module at upload time rather than silently failing on
+        // the first webhook fire.
         //
         // `Module::$_errors` is `protected` so we can't push the message to
         // the merchant-facing install error dump from this static helper

@@ -3,9 +3,8 @@ import { styleManager } from "../styles/styleManager";
 import { onDocumentReady } from "../utils/browser/onDocumentReady";
 import { initFrakSdk } from "./initFrakSdk";
 
-// Inject the shared base CSS (vanilla-extract reset rules + theme tokens)
-// ONCE for the SDK. Components no longer bundle these rules in their own
-// cssSource — see sharedBaseCss.css.ts.
+// The reset rules + theme tokens are injected here once for the whole SDK:
+// no component bundles them in its own cssSource (see sharedBaseCss.css.ts).
 styleManager.injectBase("shared", sharedBaseCss);
 
 // Prevent FOUCE: hide undefined custom elements until they're registered
@@ -42,7 +41,6 @@ const COMPONENTS_MAP = {
 
 const observer = new MutationObserver((mutations) => {
     for (const { addedNodes } of mutations) {
-        // Convert NodeList to Array before iteration
         for (const node of Array.from(addedNodes)) {
             if (node.nodeType === Node.ELEMENT_NODE) {
                 discover(node as Element);
@@ -52,14 +50,12 @@ const observer = new MutationObserver((mutations) => {
 });
 
 /**
- * Discover elements in the root element.
- * @param root The root element to discover elements in.
+ * Discover and register every undefined `frak-*` element under `root`.
  */
 async function discover(root: Element | ShadowRoot) {
     const rootTagName =
         root instanceof Element ? root.tagName.toLowerCase() : "";
     const isFrakElement = rootTagName?.startsWith("frak-");
-    // Convert NodeList to Array
     const tags = Array.from(root.querySelectorAll(":not(:defined)"))
         .map((el) => el.tagName.toLowerCase())
         .filter((tag) => tag.startsWith("frak-"));
@@ -69,7 +65,6 @@ async function discover(root: Element | ShadowRoot) {
         tags.push(rootTagName);
     }
 
-    // Make the list unique
     const tagsToRegister = [...new Set(tags)];
 
     await Promise.allSettled(
@@ -79,24 +74,19 @@ async function discover(root: Element | ShadowRoot) {
 
 /**
  * Register an element by tag name.
- * @param tagName The tag name of the element to register.
  */
 async function register(tagName: string) {
-    // If custom element is already defined, early return
     if (customElements.get(tagName)) {
         return Promise.resolve();
     }
 
+    const componentName = tagName.replace(/^frak-/i, "");
+    if (!(componentName in COMPONENTS_MAP)) {
+        console.error(`Component ${tagName} is not supported.`);
+        return;
+    }
+
     try {
-        // Remove the frak- prefix
-        const componentName = tagName.replace(/^frak-/i, "");
-
-        // Check if the component is supported
-        if (!(componentName in COMPONENTS_MAP)) {
-            throw new Error(`Component ${tagName} is not supported.`);
-        }
-
-        // Load the component
         await COMPONENTS_MAP[componentName as keyof typeof COMPONENTS_MAP]();
     } catch (error) {
         console.error(error);

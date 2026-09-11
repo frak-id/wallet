@@ -13,6 +13,8 @@ import {
     trackPurchaseStatus,
 } from "@frak-labs/core-sdk/actions";
 import {
+    applyRewardPlaceholder,
+    formatRewardOrHide,
     type RewardAudience,
     selectDisplayCampaign,
 } from "@frak-labs/core-sdk/rewards";
@@ -33,10 +35,6 @@ import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { componentDefaults } from "@/i18n/defaults";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
-import {
-    applyRewardPlaceholder,
-    formatRewardOrHide,
-} from "@/utils/format/formatReward";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
     badge,

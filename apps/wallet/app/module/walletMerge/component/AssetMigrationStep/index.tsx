@@ -13,7 +13,7 @@ import type { LoserAssetSummary } from "../../hook/useLoserAssetSummary";
 import type { MigrateLoserAssetsMutation } from "../../strategy/types";
 import { FundsList } from "../FundsList";
 import { RemotePeerWaitingCard } from "../RemotePeerWaitingCard";
-import * as styles from "./index.css";
+import * as styles from "../stepLayout.css";
 
 type AssetMigrationStepProps = {
     loser: Address;
@@ -37,27 +37,17 @@ type AssetMigrationStepProps = {
     stepIndicator?: ReactNode;
     /**
      * `true` when the migrate userOp is routed through the paired mobile
-     * (cross-device, desktop=winner). Swaps the on-chain pending hint for
-     * the shared "approve on your other device" card while the WS
-     * signature-request is in flight.
+     * (cross-device, desktop=winner): swaps the pending hint for the
+     * "approve on your other device" card.
      */
     isPeerSigning?: boolean;
 };
 
 /**
- * Pre-settle step that drains the loser smart wallet of its remaining
- * stablecoin balances and pending rewarder claims, moving everything to
- * the winner in a single batched UserOp.
- *
- * The user explicitly taps "Move my funds" — we deliberately do NOT
- * auto-fire on mount. The previous addPassKey prompt was a system passkey
- * prompt, and stacking another on top with no intermediate user action
- * reads as a double-prompt bug on mobile.
- *
- * The summary query is read here (not just at preview time) so the screen
- * stays useful when its load is slow, fails, or drains to empty between
- * preview and migrate — including the defensive auto-advance to settle
- * when the loser has nothing left to move.
+ * Pre-settle step draining the loser smart wallet into the winner in a single
+ * batched UserOp. The user must tap "Move my funds": auto-firing would stack a
+ * second passkey prompt straight after addPassKey, which reads as a
+ * double-prompt bug on mobile.
  */
 export function AssetMigrationStep({
     loser,
@@ -74,11 +64,8 @@ export function AssetMigrationStep({
 }: AssetMigrationStepProps) {
     const { t } = useTranslation();
 
-    // Defensive auto-advance: if we land here with a fully resolved summary
-    // that has no funds (e.g. someone drained the loser between preview and
-    // sign), skip the screen instead of stranding the user on a CTA that
-    // would no-op. The MergeFlow's branch already tries to skip this step
-    // in the same condition; this is the belt-and-braces safety net.
+    // Auto-advance when the loser was drained between preview and sign, so the
+    // user is not stranded on a CTA that would no-op.
     useEffect(() => {
         if (summary.isLoading || summary.isError) return;
         if (summary.data && !summary.data.hasFunds) onCompleted();

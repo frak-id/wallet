@@ -53,13 +53,10 @@ internal object NativeShare {
     /**
      * Puts the install code on the clipboard so the wallet's six-character field can offer it.
      * Marked sensitive from API 33 to keep it out of the system's clipboard-paste preview.
-     * [expiresAtSeconds] is unused here — Android has no `expirationDate` equivalent — kept for
-     * parity with iOS.
      */
     fun copyInstallCode(
         context: Context,
         code: String,
-        @Suppress("UNUSED_PARAMETER") expiresAtSeconds: Long?,
     ): Boolean {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return false
         val clip = ClipData.newPlainText(INSTALL_CODE_LABEL, code)

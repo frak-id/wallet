@@ -46,8 +46,6 @@ export function RewardDetailModal({ item, onClose }: RewardDetailModalProps) {
     );
 }
 
-// --- Header: logo + merchant name + subtitle ---
-
 function DetailHeader({
     item,
     locale,
@@ -69,14 +67,14 @@ function DetailHeader({
                 ) : item.status === "pending" ? (
                     <Text variant="caption" color="tertiary">
                         {t("reward.detail.generatedOn", {
-                            date: formatShortDate(item.createdAt, locale),
+                            date: formatDayMonth(item.createdAt, locale),
                             time: formatTime(item.createdAt, locale),
                         })}
                     </Text>
                 ) : (
                     <Text variant="caption" color="tertiary">
                         {t("reward.detail.updatedAt", {
-                            date: formatShortDate(item.createdAt, locale),
+                            date: formatDayMonth(item.createdAt, locale),
                             time: formatTime(item.createdAt, locale),
                         })}
                     </Text>
@@ -106,15 +104,13 @@ function PurchaseHeader({
             </Text>
             <Text variant="caption" color="tertiary">
                 {t("reward.detail.purchaseMadeOn", {
-                    date: formatShortDate(item.createdAt, locale),
+                    date: formatDayMonth(item.createdAt, locale),
                     time: formatTime(item.createdAt, locale),
                 })}
             </Text>
         </>
     );
 }
-
-// --- Detail card with rows ---
 
 function DetailCard({
     item,
@@ -147,7 +143,7 @@ function DetailCard({
                                 height={16}
                             />
                             <Text variant="bodySmall" weight="medium">
-                                {formatDateShort(item.createdAt, locale)}
+                                {formatNumericDate(item.createdAt, locale)}
                             </Text>
                         </Inline>
                     }
@@ -249,7 +245,10 @@ function StatusRow({
                                     height={16}
                                 />
                                 <Text variant="bodySmall" weight="medium">
-                                    {formatDateShort(item.availableAt, locale)}
+                                    {formatNumericDate(
+                                        item.availableAt,
+                                        locale
+                                    )}
                                 </Text>
                             </Inline>
                         }
@@ -273,7 +272,7 @@ function StatusRow({
                             height={16}
                         />
                         <Text variant="bodySmall" weight="medium">
-                            {formatDateShort(item.settledAt, locale)}
+                            {formatNumericDate(item.settledAt, locale)}
                         </Text>
                     </Inline>
                 }
@@ -291,9 +290,7 @@ function StatusRow({
     );
 }
 
-// --- Pure formatting helpers ---
-
-function formatShortDate(timestamp: number, locale: string): string {
+function formatDayMonth(timestamp: number, locale: string): string {
     return new Date(timestamp).toLocaleDateString(locale, {
         day: "numeric",
         month: "long",
@@ -307,7 +304,7 @@ function formatTime(timestamp: number, locale: string): string {
     });
 }
 
-function formatDateShort(timestamp: number, locale: string): string {
+function formatNumericDate(timestamp: number, locale: string): string {
     return new Date(timestamp).toLocaleDateString(locale, {
         day: "2-digit",
         month: "2-digit",

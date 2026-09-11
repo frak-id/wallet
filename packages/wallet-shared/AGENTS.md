@@ -1,13 +1,13 @@
 # packages/wallet-shared — Compass
 
-Shared state/flows for **wallet + listener ONLY** (enforced by convention). 201 files, 15 domains. Used 153× in wallet, 75× in listener.
+Shared state/flows for **wallet + listener ONLY** (enforced by convention).
 
 ## Key Files
-- `src/stores/` — Zustand: `sessionStore`, `walletStore`, `authenticationStore`, `clientIdStore` (all with `persist` middleware)
+- `src/stores/` — Zustand: `sessionStore`, `authenticationStore`, `clientIdStore`, `detachedPairingSessionStore` (all with `persist` middleware)
 - `src/authentication/` — WebAuthn flows (ox/WebAuthnP256)
 - `src/wallet/smartWallet/` — ERC-4337 kernel smart wallet logic
 - `src/pairing/` — WebSocket + signature device pairing
-- `src/providers/FrakContext.tsx` — SDK integration context
+- `src/providers/BaseProvider.tsx` — the shared provider tree (query client, i18n, wagmi)
 - `src/i18n/` — react-i18next (wallet + listener consume these translations)
 - `src/test/factories.ts` — `createMockSession`, `createMockAddress`, etc.
 
@@ -15,9 +15,8 @@ Shared state/flows for **wallet + listener ONLY** (enforced by convention). 201 
 - **Scope enforcement is cultural, not technical**: do NOT add to business/backend/shopify imports. Violations have happened before.
 - **Zustand selector rule is non-negotiable**: `store((s) => s.field)` — destructuring whole store is an outage in the wallet app.
 - **`idb-keyval` not `idb`**: ~1.73 KB gzipped, works inside service worker context. Heavy IDB wrappers break the SW bundle.
-- **BigInt serialization polyfill**: required by Zustand `persist`; lives in `test-foundation/react-setup.ts` for tests, present in app entrypoints.
-- **Barrel from package root only**: `import { ... } from "@frak-labs/wallet-shared"` — internal paths discouraged.
-- **Known duplication**: `AlertDialog` exists here and in `design-system`; pick based on app context (wallet uses this one).
+- **BigInt serialization polyfill**: required by Zustand `persist`. `setupBigIntSerialization` (`src/polyfills/bigint-serialization.ts`) is called from every app entrypoint; tests get their own copy from `test-foundation/react-setup.ts`.
+- **Barrel from package root only**: `import { ... } from "@frak-labs/wallet-shared"` — internal paths discouraged, except the deep `./polyfills/*` and `./common/*` entries the standalone wallet bundles use to avoid dragging viem in.
 
 ## Anti-Patterns
 Importing in business/backend/shopify · entire-store subscriptions · heavy IDB libs · internal-path imports.

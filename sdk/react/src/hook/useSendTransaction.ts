@@ -18,12 +18,12 @@ type MutationOptions = Omit<
 >;
 
 /** @inline */
-interface UseSendTransactionParams {
+type UseSendTransactionParams = {
     /**
      * Optional mutation options, see {@link @tanstack/react-query!useMutation | `useMutation()`} for more infos
      */
     mutations?: MutationOptions;
-}
+};
 
 /**
  * Hook that return a mutation helping to send a transaction
@@ -55,7 +55,6 @@ export function useSendTransactionAction({
                 throw new ClientNotFound();
             }
 
-            // Send the transaction
             return sendTransaction(client, params);
         },
     });

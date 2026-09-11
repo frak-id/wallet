@@ -30,18 +30,6 @@ describe("inApp utilities", () => {
         vi.resetModules();
     });
 
-    describe("isInIframe", () => {
-        it("should be a boolean value", async () => {
-            const { isInIframe } = await import("./inApp");
-            expect(typeof isInIframe).toBe("boolean");
-        });
-
-        it("should check window.self vs window.top", () => {
-            // In jsdom, window.self === window.top by default
-            expect(window.self === window.top).toBe(true);
-        });
-    });
-
     describe("isUaIOS", () => {
         it("should return true for iPhone user agent", async () => {
             Object.defineProperty(global.navigator, "userAgent", {

@@ -212,9 +212,8 @@ export class NotificationsService {
                     const statusCode =
                         error instanceof Error &&
                         "statusCode" in error &&
-                        typeof (error as { statusCode: unknown }).statusCode ===
-                            "number"
-                            ? (error as { statusCode: number }).statusCode
+                        typeof error.statusCode === "number"
+                            ? error.statusCode
                             : undefined;
 
                     if (statusCode && isGoneStatus(statusCode)) {

@@ -9,11 +9,7 @@ import { useRegister } from "@/module/authentication/hook/useRegister";
 import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
 import * as styles from "./index.css";
 
-/**
- * The register component
- * @constructor
- */
-export function SsoRegisterComponent({
+export function SsoRegister({
     isPrimary,
     onSuccess,
     onError,

@@ -27,7 +27,7 @@
  * **Bundled storage:** the bundled `FRAK_PLACEMENTS` row carries every
  * placement's enable flag AND its option values in a single JSON-encoded
  * payload. The on-disk shape is `{id: {enabled: bool, options: {key: value}}}`.
- * Mirrors the WordPress sibling's `frak_settings` pattern. Rationale:
+ * Rationale:
  *   - One autoloaded row vs N — `ps_configuration` is loaded entirely into
  *     memory on every request; smaller payload is real RAM saved per page.
  *   - One `Configuration::updateValue` write per save vs N — admin save is
@@ -45,11 +45,6 @@
  * merchants who scripted their PrestaShop admin and to keep
  * {@see FrakPlacementRegistryTest} drift-checks meaningful — the form name
  * is decoupled from the storage backend.
- *
- * Mirrors how WordPress lets merchants drop blocks/shortcodes/widgets/Elementor
- * widgets anywhere — PrestaShop's hook system is closer to the WP "widget
- * area" model, so we expose flexibility through opt-in toggles rather than a
- * block editor.
  */
 class FrakPlacementRegistry
 {
@@ -236,9 +231,6 @@ class FrakPlacementRegistry
      * on the first read call and reset by {@see setState()} /
      * {@see clearAll()} / {@see resetCache()} so writes are visible to the
      * same request that issued them.
-     *
-     * Mirrors WordPress's `Frak_Settings::$cache`
-     * ({@see plugins/wordpress/includes/class-frak-settings.php#L87}).
      *
      * @var array<string, array{enabled: bool, options: array<string, mixed>}>|null
      */

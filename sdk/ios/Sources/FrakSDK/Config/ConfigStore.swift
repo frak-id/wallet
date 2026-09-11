@@ -61,18 +61,12 @@ actor ConfigStore {
     private var subscribers: [UUID: AsyncStream<FrakResolvedConfig>.Continuation] = [:]
 
     /// The last config actually published to `updates` — a separate slot from `memory`, which
-    /// `readCache` also writes on a disk hydration that does not publish. Dedup and replay must
-    /// compare against what a subscriber has already seen, not whatever happens to be cached:
-    /// if this used `memory` directly, a warm start would hydrate `memory` from disk first,
-    /// then `fetch`'s revalidation would find an equal config, see no difference against the
-    /// already-updated `memory`, and never publish — leaving a subscriber attached before the
-    /// hydration waiting forever.
+    /// `readCache` also writes on a disk hydration that publishes nothing. Dedup and replay must
+    /// compare against what a subscriber has already seen, not whatever happens to be cached.
     private var lastPublished: FrakResolvedConfig?
 
-    /// Replay-latest, deduped on equal: replaces `DefaultFrakClient`'s own subscriber set, which
-    /// only a direct `resolveConfig()` caller ever fed — background revalidation updated
-    /// `memory` but never this. Equality is `FrakResolvedConfig`'s own conformance over every
-    /// field, so "equal" here genuinely means "no observable change."
+    /// Replay-latest, deduped on equal. Equality is `FrakResolvedConfig`'s own conformance over
+    /// every field, so "equal" here genuinely means "no observable change."
     var updates: AsyncStream<FrakResolvedConfig> {
         AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
             let id = UUID()
@@ -86,13 +80,9 @@ actor ConfigStore {
         }
     }
 
-    /// Best-known config right now, without waiting on `updates` to have published anything,
-    /// and without a network call. Needed because the dominant deep-link flow launches the
-    /// process from the referral URL, so a merchant-arrival check can run before anything has
-    /// called `resolve` — `memory` is still empty, and `updates` alone cannot answer either,
-    /// since a cache hit publishes nothing. `readCache` hydrates `memory` from disk on first
-    /// miss without issuing a request, mirroring the Kotlin twin's `currentConfig`, which reads
-    /// the same slot populated the same way.
+    /// Best-known config right now: no network, and no wait on `updates`. The dominant deep-link
+    /// flow launches the process from the referral URL, so a merchant-arrival check can run
+    /// before anything called `resolve`, and a cache hit publishes nothing.
     func currentConfig(_ query: MerchantQuery) -> FrakResolvedConfig? {
         readCache(query.cacheKey)?.config
     }
@@ -110,11 +100,9 @@ actor ConfigStore {
         subscribers.removeAll()
     }
 
-    /// Minted at the start of `fetch`, before the network call, and compared again at publish
-    /// time. Minting at start records the order fetches were intended in, which is what
-    /// matters — a counter read at publish time would order by completion, exactly what a
-    /// slow-fetch-lands-last race gets wrong. No explicit lock needed: actor isolation is the
-    /// lock.
+    /// Minted at the start of `fetch` and compared again at publish time: minting at start
+    /// records the order fetches were intended in, where a counter read at publish time would
+    /// order by completion. Actor isolation is the lock.
     private var sequenceCounter: Int64 = 0
     private var publishedSequence: Int64 = Int64.min
 
@@ -190,10 +178,6 @@ actor ConfigStore {
         // config regardless — only the shared publish is guarded.
         if sequence > publishedSequence {
             publishedSequence = sequence
-            // Dedup against the previous publish (`lastPublished`), not against `memory`:
-            // `memory` is also written by `readCache`'s disk hydration, which never publishes,
-            // so comparing against `memory` here would silently drop the first revalidation on
-            // a warm start whenever the hydrated and revalidated configs are equal.
             let changed = config != lastPublished
             memory = entry
             writePersisted(entry)

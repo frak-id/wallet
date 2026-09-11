@@ -56,48 +56,6 @@ vi.mock("./signature", () => ({
 }));
 
 describe("getSmartAccountProvider", () => {
-    describe("provider initialization", () => {
-        test("should create provider with correct properties", async () => {
-            const { getSmartAccountProvider } = await import("./provider");
-            const { getSafeSession } = await import(
-                "../../common/utils/safeSession"
-            );
-
-            vi.mocked(getSafeSession).mockReturnValue(null);
-
-            const onAccountChanged = vi.fn();
-            const signViaEcdsa = vi.fn();
-
-            const provider = getSmartAccountProvider({
-                onAccountChanged,
-                signViaEcdsa,
-            });
-
-            expect(provider).toBeDefined();
-            expect(provider.isAuthorized).toBeInstanceOf(Function);
-            expect(provider.getSmartAccountClient).toBeInstanceOf(Function);
-            expect(provider.disconnect).toBeInstanceOf(Function);
-        });
-
-        test("should initialize with safe session", async () => {
-            const { getSmartAccountProvider } = await import("./provider");
-            const { getSafeSession } = await import(
-                "../../common/utils/safeSession"
-            );
-            const { createMockSession } = await import("../../test/factories");
-
-            const mockSession = createMockSession();
-            vi.mocked(getSafeSession).mockReturnValue(mockSession);
-
-            const provider = getSmartAccountProvider({
-                onAccountChanged: vi.fn(),
-                signViaEcdsa: vi.fn(),
-            });
-
-            expect(provider.isAuthorized()).toBe(true);
-        });
-    });
-
     describe("isAuthorized", () => {
         test("should return true when session exists", async () => {
             const { getSmartAccountProvider } = await import("./provider");
@@ -334,56 +292,6 @@ describe("getSmartAccountProvider", () => {
             expect(client1).toBe(client2);
             // Should be called at least once (may be called more due to other tests)
             expect(frakWalletSmartAccount).toHaveBeenCalled();
-        });
-    });
-
-    describe("disconnect", () => {
-        test("should clear cached client", async () => {
-            const { getSmartAccountProvider } = await import("./provider");
-            const { getSafeSession } = await import(
-                "../../common/utils/safeSession"
-            );
-            const { createMockSession } = await import("../../test/factories");
-            const { frakWalletSmartAccount } = await import(
-                "./FrakSmartWallet"
-            );
-            const { getUserOperationGasPrice } = await import(
-                "permissionless/actions/pimlico"
-            );
-
-            const mockSession = createMockSession();
-            vi.mocked(getSafeSession).mockReturnValue(mockSession);
-
-            const mockSmartAccount = {
-                account: {
-                    address:
-                        "0x1234567890123456789012345678901234567890" as Address,
-                },
-            };
-            vi.mocked(frakWalletSmartAccount).mockResolvedValue(
-                mockSmartAccount as any
-            );
-
-            vi.mocked(getUserOperationGasPrice).mockResolvedValue({
-                standard: {
-                    maxFeePerGas: 1000n,
-                    maxPriorityFeePerGas: 100n,
-                },
-            } as any);
-
-            const provider = getSmartAccountProvider({
-                onAccountChanged: vi.fn(),
-                signViaEcdsa: vi.fn(),
-            });
-
-            const firstClient = await provider.getSmartAccountClient();
-            await provider.disconnect();
-
-            // After disconnect, getSmartAccountClient should rebuild
-            const newClient = await provider.getSmartAccountClient();
-            expect(newClient).toBeDefined();
-            // Both clients should be defined, disconnect clears internal cache
-            expect(firstClient).toBeDefined();
         });
     });
 

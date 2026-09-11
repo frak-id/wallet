@@ -81,9 +81,6 @@ export function Area({
     // Stable slice only: hover state lives inside `<SeriesHoverDim>` and
     // `<SeriesHighlightLayer>` so this component (and its expensive
     // <SeriesDashTailOverlay> child) does not re-render on cursor motion.
-    // The reveal-clip is now a single shared clipPath at the chart-shell
-    // level (`time-series-chart-shell.tsx`); we no longer render a per-area
-    // `<ChartRevealClip>` or read `revealEpoch` here.
     const {
         data,
         renderData,

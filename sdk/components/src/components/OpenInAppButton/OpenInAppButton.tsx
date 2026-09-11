@@ -28,7 +28,7 @@ import type { OpenInAppButtonProps } from "./types";
  * ```
  *
  * @example
- * With login action:
+ * Using a custom class:
  * ```html
  * <frak-open-in-app classname="button button-primary"></frak-open-in-app>
  * ```

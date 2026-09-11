@@ -27,7 +27,7 @@ public enum FrakError: Error, Sendable {
     case internalFailure(message: String)
 
     /// Stable discriminator, one per case. A `switch` over ``Kind`` with a `default` survives a
-    /// new case; an exhaustive `switch` over the error does not. Spelled identically on Android.
+    /// new case; an exhaustive `switch` over the error does not.
     public enum Kind: String, Sendable, Hashable, CaseIterable {
         case notInitialized
         case network

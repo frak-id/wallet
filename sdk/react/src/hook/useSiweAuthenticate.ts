@@ -7,7 +7,7 @@ import { ClientNotFound, type FrakRpcError } from "@frak-labs/frame-connector";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 
-/** @inline */
+/** @ignore */
 type MutationOptions = Omit<
     UseMutationOptions<
         SiweAuthenticateReturnType,
@@ -17,13 +17,13 @@ type MutationOptions = Omit<
     "mutationFn" | "mutationKey"
 >;
 
-/** @ignore */
-interface UseSiweAuthenticateParams {
+/** @inline */
+type UseSiweAuthenticateParams = {
     /**
      * Optional mutation options, see {@link @tanstack/react-query!useMutation | `useMutation()`} for more infos
      */
     mutations?: MutationOptions;
-}
+};
 
 /**
  * Hook that return a mutation helping to send perform a SIWE authentication
@@ -59,7 +59,6 @@ export function useSiweAuthenticate({
                 throw new ClientNotFound();
             }
 
-            // Launch the authentication
             return siweAuthenticate(client, params);
         },
     });

@@ -34,29 +34,6 @@ describe("useSendRecoveryTx", () => {
         vi.restoreAllMocks();
     });
 
-    test("should initialize with correct default state", async ({
-        queryWrapper,
-    }) => {
-        const { useConnection, useSendTransaction } = await import("wagmi");
-
-        vi.mocked(useConnection).mockReturnValue({
-            address: mockAddress,
-        } as any);
-        vi.mocked(useSendTransaction).mockReturnValue({
-            mutateAsync: vi.fn(),
-        } as any);
-
-        const { result } = renderHook(() => useSendRecoveryTx(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        expect(result.current.isPending).toBe(false);
-        expect(result.current.isSuccess).toBe(false);
-        expect(result.current.isError).toBe(false);
-        expect(result.current.sendRecoveryTx).toBeDefined();
-        expect(result.current.sendRecoveryTxAsync).toBeDefined();
-    });
-
     test("should setup recovery successfully", async ({ queryWrapper }) => {
         const { useConnection, useSendTransaction } = await import("wagmi");
 

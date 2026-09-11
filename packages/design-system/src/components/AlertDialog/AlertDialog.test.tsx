@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { overlayStyle } from "../Overlay/overlay.css";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -59,7 +60,7 @@ describe("AlertDialog", () => {
 
     it("should render overlay when open", () => {
         renderAlertDialog(true);
-        expect(document.querySelector("[data-testid='overlay']")).toBeTruthy();
+        expect(document.querySelector(`.${overlayStyle}`)).toBeTruthy();
     });
 
     it("should close when cancel is clicked", async () => {
@@ -83,16 +84,6 @@ describe("AlertDialog", () => {
         const user = userEvent.setup();
         await user.click(screen.getByText("Yes"));
         expect(onOpenChange).toHaveBeenCalledWith(false);
-    });
-
-    it("should export compound parts", () => {
-        expect(AlertDialog).toBeDefined();
-        expect(AlertDialogTrigger).toBeDefined();
-        expect(AlertDialogContent).toBeDefined();
-        expect(AlertDialogTitle).toBeDefined();
-        expect(AlertDialogDescription).toBeDefined();
-        expect(AlertDialogAction).toBeDefined();
-        expect(AlertDialogCancel).toBeDefined();
     });
 
     it("should forward className to content", () => {

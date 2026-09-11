@@ -5,11 +5,6 @@ vi.mock("../../config/clientId", () => ({
     initClientId: vi.fn(() => Promise.resolve("mock-client-id-for-test")),
 }));
 
-/**
- * Tests for iframe helper utilities
- * Tests iframe creation, visibility management, and finder functions
- */
-
 import {
     afterEach,
     beforeEach,
@@ -20,40 +15,12 @@ import {
 import { setEnvironment } from "../../config/environment";
 import type { FrakWalletSdkConfig } from "../../types";
 import {
-    baseIframeProps,
     changeIframeVisibility,
     createIframe,
     findIframeInOpener,
 } from "./iframeHelper";
 
 describe("iframeHelper", () => {
-    describe("baseIframeProps", () => {
-        it("should have correct id and name", () => {
-            expect(baseIframeProps.id).toBe("frak-wallet");
-            expect(baseIframeProps.name).toBe("frak-wallet");
-        });
-
-        it("should have correct title", () => {
-            expect(baseIframeProps.title).toBe("Frak Wallet");
-        });
-
-        it("should have correct allow attribute", () => {
-            expect(baseIframeProps.allow).toContain(
-                "publickey-credentials-get"
-            );
-            expect(baseIframeProps.allow).toContain("clipboard-write");
-            expect(baseIframeProps.allow).toContain("web-share");
-        });
-
-        it("should have correct initial style", () => {
-            expect(baseIframeProps.style.width).toBe("0");
-            expect(baseIframeProps.style.height).toBe("0");
-            expect(baseIframeProps.style.border).toBe("0");
-            expect(baseIframeProps.style.position).toBe("absolute");
-            expect(baseIframeProps.style.zIndex).toBe(2000001);
-        });
-    });
-
     describe("createIframe", () => {
         let mockIframe: HTMLIFrameElement;
         let appendChildSpy: ReturnType<typeof vi.fn>;

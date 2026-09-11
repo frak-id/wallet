@@ -1,12 +1,7 @@
 import { t } from "@backend-utils";
 import type { Static } from "elysia";
 
-// =============================================================================
-// INTERACTION TYPE SCHEMA
-// =============================================================================
-// Unified schema for both interaction logs AND campaign triggers
-// =============================================================================
-
+/** Unified schema for both interaction logs and campaign triggers. */
 export const InteractionTypeSchema = t.Union([
     t.Literal("referral"),
     t.Literal("create_referral_link"),
@@ -14,10 +9,6 @@ export const InteractionTypeSchema = t.Union([
     t.Literal("custom"),
 ]);
 export type InteractionType = Static<typeof InteractionTypeSchema>;
-
-// =============================================================================
-// ASSET LOG SCHEMAS
-// =============================================================================
 
 export const AssetStatusSchema = t.Union([
     t.Literal("pending"),
@@ -65,10 +56,6 @@ export const RecipientTypeSchema = t.Union([
     t.Literal("referee"),
 ]);
 export type RecipientType = Static<typeof RecipientTypeSchema>;
-
-// =============================================================================
-// REWARD HISTORY SCHEMAS
-// =============================================================================
 
 const MerchantInfoSchema = t.Object({
     id: t.String(),

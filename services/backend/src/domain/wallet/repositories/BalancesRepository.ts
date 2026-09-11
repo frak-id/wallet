@@ -8,10 +8,6 @@ import { type Address, erc20Abi, formatUnits } from "viem";
 import { multicall } from "viem/actions";
 
 export class BalancesRepository {
-    /**
-     * Get the user balance
-     * @param address
-     */
     async getUserBalance({ address }: { address: Address }) {
         // Get the user balance on every known tokens
         const userBalances = await this.getUserBalanceViaKnownTokens({
@@ -41,9 +37,6 @@ export class BalancesRepository {
         );
     }
 
-    /**
-     * Get the user balance around every known tokens
-     */
     async getUserBalanceViaKnownTokens({ address }: { address: Address }) {
         // Fetch every balance in a single multicall
         const balanceResults = await multicall(viemClient, {
@@ -76,10 +69,6 @@ export class BalancesRepository {
         return userBalances;
     }
 
-    /**
-     * Get a token metadata
-     * @param token
-     */
     async getTokenMetadata({
         token,
     }: {

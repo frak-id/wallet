@@ -22,10 +22,8 @@ export async function setupClient({
 }: {
     config: FrakWalletSdkConfig;
 }): Promise<FrakClient | undefined> {
-    // Prepare the config
     const preparedConfig = prepareConfig(config);
 
-    // Create our iframe
     const iframe = await createIframe({
         config: preparedConfig,
     });
@@ -35,16 +33,13 @@ export async function setupClient({
         return;
     }
 
-    // Create our client
     const client = await createIFrameFrakClient({
         config: preparedConfig,
         iframe,
     });
 
-    // Wait for the client to be all setup
     await client.waitForSetup;
 
-    // Wait for the connection to be established
     const waitForConnection = await client.waitForConnection;
     if (!waitForConnection) {
         console.error("Failed to connect to client");
@@ -54,14 +49,9 @@ export async function setupClient({
     return client;
 }
 
-/**
- * Prepare the config for the Frak Client
- * @param config - The configuration to use for the Frak Wallet SDK
- * @returns The prepared configuration with the supported currency
- */
+/** Normalise the config currency to one the wallet supports. */
 function prepareConfig(config: FrakWalletSdkConfig): FrakWalletSdkConfig {
-    // Get the supported currency (e.g. "eur")
-    const supportedCurrency = getSupportedCurrency(config.metadata?.currency);
+    const supportedCurrency = getSupportedCurrency(config.metadata.currency);
 
     return {
         ...config,

@@ -92,8 +92,7 @@ actor AnonymousIdStore {
     }
 
     /// Destroys the keypair, so the next read mints a new identity. False when the key store
-    /// refused to erase it, exactly as on Android — merchants share erasure logic across both, so
-    /// this must not answer true for an erasure that did not happen.
+    /// refused to erase it: this must not answer true for an erasure that did not happen.
     ///
     /// Clears `generation` first, so a mint in flight cannot publish the destroyed identity.
     @discardableResult

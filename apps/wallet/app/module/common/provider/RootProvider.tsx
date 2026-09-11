@@ -18,10 +18,6 @@ const ReactQueryDevtools = lazy(() =>
     }))
 );
 
-/**
-
- * The storage persister to cache our query data's
- */
 const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
     persister: createAsyncStoragePersister({
         storage: window.localStorage,

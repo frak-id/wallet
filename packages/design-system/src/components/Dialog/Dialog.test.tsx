@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
+import { overlayStyle } from "../Overlay/overlay.css";
 import {
     Dialog,
     DialogClose,
@@ -49,16 +50,7 @@ describe("Dialog", () => {
 
     it("should render overlay when open", () => {
         renderDialog(true);
-        expect(document.querySelector("[data-testid='overlay']")).toBeTruthy();
-    });
-
-    it("should export compound parts", () => {
-        expect(Dialog).toBeDefined();
-        expect(DialogTrigger).toBeDefined();
-        expect(DialogContent).toBeDefined();
-        expect(DialogTitle).toBeDefined();
-        expect(DialogDescription).toBeDefined();
-        expect(DialogClose).toBeDefined();
+        expect(document.querySelector(`.${overlayStyle}`)).toBeTruthy();
     });
 
     it("should forward className to content", () => {

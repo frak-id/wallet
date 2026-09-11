@@ -153,8 +153,6 @@ export async function startupPurchase(
 
 /**
  * Get all the current purchases for a shop
- * @param ctx
- * @returns
  */
 export async function getCurrentPurchases(ctx: AuthenticatedContext) {
     const info = await shopInfo(ctx);

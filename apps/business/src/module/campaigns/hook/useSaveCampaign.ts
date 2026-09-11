@@ -4,7 +4,7 @@ import {
     updateCampaign,
 } from "@/module/campaigns/api/campaignApi";
 import { campaignsQueryKey } from "@/module/campaigns/queries/queryKeys";
-import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import { campaignConfigQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import {
     buildApiPayload,
@@ -68,7 +68,7 @@ export function useSaveCampaign() {
             // the campaign in cache and doesn't suspend (the step 1 → 2
             // transition otherwise swaps the whole page for a fallback).
             queryClient.setQueryData(
-                campaignQueryOptions({
+                campaignConfigQueryOptions({
                     merchantId: draft.merchantId,
                     campaignId: campaign.id,
                     isDemoMode,

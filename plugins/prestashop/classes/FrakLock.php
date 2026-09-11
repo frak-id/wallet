@@ -1,28 +1,12 @@
 <?php
 
 /**
- * MySQL advisory lock wrapper.
+ * MySQL advisory lock wrapper, gating the one call site
+ * ({@see FrakWebhookCron::run()}).
  *
- * Replaces the Symfony Lock + DoctrineDbalStore combo used in the 1.0.1
- * dev iteration — that combo carried `symfony/lock` (244K) plus a
- * `frak_lock_keys` table with its own GC sweep, all to gate one call
- * site ({@see FrakWebhookCron::run()}).
- *
- * MySQL's `GET_LOCK()` is session-scoped: the lock auto-releases when
- *   - `RELEASE_LOCK()` is called explicitly; OR
- *   - the database session ends (PHP shutdown closes the connection).
- *
- * That makes it strictly better than the DBAL-store adapter for our
- * use case:
- *   - No `frak_lock_keys` table.
- *   - No GC: a crashed cron drainer never wedges the lock past its
- *     TTL because the lock dies with the connection.
- *   - One round-trip vs the adapter's INSERT + UPDATE-on-conflict.
- *   - No Symfony Lock vendor surface to ship in the zip.
- *
- * Lock names get a `frak_` prefix so they don't collide with other
- * modules (or PrestaShop core itself) using `GET_LOCK` on the same
- * MySQL instance — the lock namespace is server-wide, not per-database.
+ * `GET_LOCK()` is session-scoped: the lock releases on `RELEASE_LOCK()` or when
+ * the session ends, so a crashed cron drainer never wedges it. Lock names carry
+ * a `frak_` prefix because the namespace is server-wide, not per-database.
  */
 class FrakLock
 {

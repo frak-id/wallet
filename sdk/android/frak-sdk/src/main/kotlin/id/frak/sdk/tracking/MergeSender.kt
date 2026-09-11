@@ -12,7 +12,7 @@ import id.frak.sdk.identity.ProofOp
 internal class MergeSender(
     private val logger: FrakLogger,
 ) : RowSender {
-    // The backend mints a merge token with a 60-minute lifetime (AnonymousMergeService.ts:36); holding longer cannot succeed.
+    // The backend mints a merge token with a 60-minute lifetime; holding longer cannot succeed.
     override val holdTimeoutMillis: Long = 60L * 60 * 1000
 
     override suspend fun deliver(

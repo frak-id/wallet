@@ -18,7 +18,6 @@ import {
     type SharingPageProps,
 } from "./types";
 
-export { getStep2Context } from "./Steps";
 export type {
     SharingActions,
     SharingChrome,

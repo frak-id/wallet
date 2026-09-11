@@ -24,12 +24,8 @@ import {
 import * as styles from "./totp-enrollment.css";
 
 /**
- * Renders the TOTP `otpauthUri` as an SVG QR code client-side (§2.2): the
- * backend only returns the otpauth URI now, not a pre-rendered SVG — this
- * replaces the previous `dangerouslySetInnerHTML` block of a
- * server-generated SVG string with a client-generated one built the same
- * way (`qr`'s built-in SVG output), so it's still just markup, not user
- * input reaching the DOM.
+ * The injected markup is `qr`'s own SVG output built from the otpauth URI, not
+ * user input reaching the DOM.
  */
 function TotpQrCode({ otpauthUri }: { otpauthUri: string }) {
     const qrSvg = useMemo(
@@ -52,10 +48,8 @@ function TotpQrCode({ otpauthUri }: { otpauthUri: string }) {
 }
 
 /**
- * The base32 `secret` param carried by the otpauth URI, grouped in 4-char
- * blocks for legibility — the manual-entry fallback for authenticators that
- * can't scan the QR. Parsed client-side so the raw secret still never leaves
- * the setup response (§2.2).
+ * The base32 `secret` from the otpauth URI in 4-char blocks — the manual-entry
+ * fallback for authenticators that can't scan the QR.
  */
 function manualEntrySecret(otpauthUri: string): string | null {
     const secret = new URL(otpauthUri).searchParams.get("secret");

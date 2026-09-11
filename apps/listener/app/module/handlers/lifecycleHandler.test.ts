@@ -1,10 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-// ---------------------------------------------------------------------------
-// Hoisted mocks — must be declared before any imports from the module under
-// test so vi.mock hoisting works correctly.
-// ---------------------------------------------------------------------------
-
 const mockMergeExecutePost = vi.fn();
 const mockTrackEvent = vi.fn();
 const mockSetContext = vi.fn();

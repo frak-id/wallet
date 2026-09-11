@@ -24,7 +24,7 @@ export function useRunRecovery() {
     const { pushRecoveryPasskeyAsync } = usePushRecoveryPasskey();
     const { claimRecoveredWalletAsync } = useClaimRecoveredWallet();
 
-    const { mutateAsync, mutate, ...mutationStuff } = useMutation({
+    const { mutateAsync, ...mutation } = useMutation({
         mutationKey: recoveryKey.runRecovery,
         gcTime: 0,
         mutationFn: async ({
@@ -61,8 +61,7 @@ export function useRunRecovery() {
     });
 
     return {
-        ...mutationStuff,
+        ...mutation,
         runRecoveryAsync: mutateAsync,
-        runRecovery: mutate,
     };
 }

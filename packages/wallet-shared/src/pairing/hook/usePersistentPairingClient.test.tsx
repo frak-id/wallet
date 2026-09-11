@@ -1,5 +1,5 @@
 import { renderHook } from "@testing-library/react";
-import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { vi } from "vitest";
 import type { StoreApi } from "zustand/vanilla";
 import {
     afterEach,

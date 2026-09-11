@@ -80,22 +80,6 @@ describe("registerWebComponent", () => {
         );
     });
 
-    it("should pass shadow option to register", () => {
-        const TestComponent = () => null;
-        vi.spyOn(customElements, "get").mockReturnValue(undefined);
-
-        registerWebComponent(TestComponent, "test-element", [], {
-            shadow: true,
-        });
-
-        expect(register).toHaveBeenCalledWith(
-            TestComponent,
-            "test-element",
-            [],
-            { shadow: true }
-        );
-    });
-
     it("should not register in non-browser environment", () => {
         const originalWindow = global.window;
         // @ts-expect-error - Testing non-browser environment

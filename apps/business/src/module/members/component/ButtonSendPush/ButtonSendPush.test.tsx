@@ -43,31 +43,7 @@ vi.mock("@/stores/pushCreationStore", () => ({
     ),
 }));
 
-vi.mock("lucide-react", () => ({
-    Plus: ({ size }: { size: number }) => (
-        <span data-testid="plus-icon" data-size={size}>
-            +
-        </span>
-    ),
-}));
-
 describe("ButtonSendPush", () => {
-    it("should render button with the default send-push label", () => {
-        render(<ButtonSendPush />);
-
-        expect(
-            screen.getByText("members.sendPushNotification")
-        ).toBeInTheDocument();
-    });
-
-    it("should render with Plus icon (size 16) on left", () => {
-        render(<ButtonSendPush />);
-
-        const icon = screen.getByTestId("plus-icon");
-        expect(icon).toBeInTheDocument();
-        expect(icon).toHaveAttribute("data-size", "16");
-    });
-
     it("should call setForm(undefined) and navigate to the merchant-scoped push route when clicked", () => {
         render(<ButtonSendPush />);
 

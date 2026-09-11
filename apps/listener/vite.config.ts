@@ -428,22 +428,12 @@ export default defineConfig(async () => {
                             // native core — user-defined `codeSplitting.groups`
                             // cannot redirect it (verified empirically). That tiny
                             // chunk (~0.8 KB) therefore remains separate.
-                            //
-                            // `vite/preload-helper` (1.2 KB) used to be pinned to
-                            // its own chunk; the wider `common` regex below claims
-                            // it now, saving an HTTP request without dragging lazy
-                            // chunks into eager (common is the only static dependency
-                            // root the preload helper has).
-                            // ============================================
-                            // EAGER chunks (loaded on every iframe boot)
-                            // ============================================
-                            //
+
+                            // EAGER chunks (loaded on every iframe boot).
                             // Goal: keep the request count low for partner
-                            // sites. We collapse react / i18n / tanstack /
-                            // misc-eager-node_modules into a single `vendor`
-                            // chunk — the marginal caching gain from finer
-                            // splits doesn't justify the extra HTTP requests
-                            // visible in partner network tabs.
+                            // sites — the marginal caching gain from finer
+                            // splits doesn't justify the extra HTTP requests.
+
                             // ui-runtime hosts everything Preact/React-ish:
                             // preact, i18next, react-i18next, @tanstack/react-query,
                             // plus the listener's own provider tree (`app/ui/`).
@@ -460,7 +450,7 @@ export default defineConfig(async () => {
                                 // is matched broadly here, the eager entry is
                                 // forced to statically import this whole
                                 // chunk, defeating the lazy strategy.
-                                test: /(?:node_modules[\\/](?:preact|i18next|i18next-browser-languagedetector|react-i18next|@tanstack[\\/]react-query|@tanstack[\\/]react-query-persist-client)[\\/])|(?:node_modules[\\/]zustand[\\/]esm[\\/]react(?:[\\/]|\.mjs))|(?:apps[\\/]listener[\\/]app[\\/](?:ui[\\/]|module[\\/]hooks[\\/]useListenerDataPreload))|(?:packages[\\/]wallet-shared[\\/]src[\\/](?:i18n[\\/]config|common[\\/](?:hook[\\/]useGetSafeSdkSession|queryKeys[\\/]sdk)))/,
+                                test: /(?:node_modules[\\/](?:preact|i18next|i18next-browser-languagedetector|react-i18next|@tanstack[\\/]react-query|@tanstack[\\/]react-query-persist-client)[\\/])|(?:node_modules[\\/]zustand[\\/]esm[\\/]react(?:[\\/]|\.mjs))|(?:apps[\\/]listener[\\/]app[\\/]ui[\\/])|(?:packages[\\/]wallet-shared[\\/]src[\\/](?:i18n[\\/]config|common[\\/](?:hook[\\/]useGetSafeSdkSession|queryKeys[\\/]sdk)))/,
                                 priority: 45,
                                 minShareCount: 1,
                             },
@@ -483,9 +473,7 @@ export default defineConfig(async () => {
                                 minShareCount: 1,
                             },
 
-                            // ============================================
-                            // LAZY chunks (loaded on first UI display)
-                            // ============================================
+                            // LAZY chunks (loaded on first UI display).
                             //
                             // • `blockchain-vendor` → viem + wagmi +
                             //   permissionless + BaseProvider + provider glue.
@@ -564,7 +552,7 @@ export default defineConfig(async () => {
                             // lazy handler body (handleDisplayModal) from
                             // useDisplay*.impl so the impl modules land in
                             // the same default chunk as their parent component
-                            // tree — collapsing the previous 1-2 KB shim chunks.
+                            // tree.
                             // (i18n locale chunking is implicit — the per-language
                             // barrel module `wallet-shared/i18n/locales/{en,fr}`
                             // is the single dynamic-import target. Both bundled
@@ -576,15 +564,12 @@ export default defineConfig(async () => {
                             // Modal-only (verified via importer audit) and
                             // pulled `viem.slice` (WalletAddress) +
                             // `lucide-react.Fingerprint` (ButtonAuth) into
-                            // `lazy-shared` — forcing every lazy flow,
-                            // including SharingPage, to load
-                            // `blockchain-vendor`. They are now allowed to
-                            // fall into the Modal chunk via default chunking.
-                            // SharingPage no longer fetches blockchain-vendor.
+                            // `lazy-shared` — which would force every lazy
+                            // flow, including SharingPage, to load
+                            // `blockchain-vendor`. They are left to fall into
+                            // the Modal chunk via default chunking.
 
-                            // ============================================
-                            // SHARED-WITH-LAZY (eager) chunk
-                            // ============================================
+                            // SHARED-WITH-LAZY (eager) chunk.
                             //
                             // Workspace utilities reachable from BOTH the
                             // eager entry and the lazy chunks (Zustand stores,
@@ -607,7 +592,7 @@ export default defineConfig(async () => {
                                 // hook .impl chunks) out of this chunk — they
                                 // belong in `lazy-shared` / their boundary chunk.
                                 tags: ["$initial"],
-                                test: /(?:vite[\\/](?:dist[\\/])?preload-helper)|(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|types|pairing[\\/]types|common[\\/](?:analytics|api|lib|utils|storage|tauri|queryKeys)|common[\\/]hook[\\/](?:useEstimatedReward|useGetSafeSdkSession)))|(?:packages[\\/]app-essentials[\\/])|(?:packages[\\/]rpc[\\/](?:dist|src)[\\/])|(?:sdk[\\/]core[\\/]src[\\/])|(?:apps[\\/]listener[\\/]app[\\/](?:uiBus|queryClient|i18nOverrideQueue)\.ts)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|types|queryKeys|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)|hooks[\\/](?:useDisplayModalListener(?!\.impl)|useDisplaySharingPageListener(?!\.impl)|useOnGet|useSendInteraction(?!Listener\.)|useSendInteractionListener|useUserReferralStatus|useWalletStatusListener|useSsoLink)))/,
+                                test: /(?:vite[\\/](?:dist[\\/])?preload-helper)|(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|types|pairing[\\/]types|common[\\/](?:analytics|api|lib|utils|storage|tauri|queryKeys)|common[\\/]hook[\\/](?:useEstimatedReward|useGetSafeSdkSession)))|(?:packages[\\/]app-essentials[\\/])|(?:packages[\\/]rpc[\\/](?:dist|src)[\\/])|(?:sdk[\\/]core[\\/]src[\\/])|(?:apps[\\/]listener[\\/]app[\\/](?:uiBus|queryClient|i18nOverrideQueue)\.ts)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|types|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)|hooks[\\/](?:useDisplayModalListener(?!\.impl)|useDisplaySharingPageListener(?!\.impl)|useOnGet|useSendInteraction(?!Listener\.)|useSendInteractionListener|useUserReferralStatus|useWalletStatusListener|useSsoLink)))/,
                                 priority: 50,
                                 // Single-importer modules must still land here
                                 // (e.g. wallet-shared/common/api/backendClient.ts

@@ -19,15 +19,10 @@ export const TwoFactorMethodDto = t.Union([
 export type TwoFactorMethod = typeof TwoFactorMethodDto.static;
 
 /**
- * The single 401 shape for "fresh 2FA required" (design doc §4.5/§4.8),
- * shared by the `requireStepUp` macro (`api/business/middleware/session.ts`)
- * and the `2fa/setup` + `link/*` routes (`api/business/auth/`) — three call
- * sites previously reimplemented the same freshness check with inconsistent
- * response shapes. The step-up signal now lives entirely in headers — the
- * `x-frak-auth-error: step-up-required` discriminator plus an
- * `x-frak-auth-methods` list of the offered 2FA methods — so the frontend
- * classifies it without parsing the body, and the body is the same plain
- * `t.ErrorResponse` shape every other error uses.
+ * The single 401 shape for "fresh 2FA required", shared by the `requireStepUp`
+ * macro and the `2fa/setup` + `link/*` routes. The whole step-up signal rides
+ * in headers (`x-frak-auth-error` + `x-frak-auth-methods`) so the frontend
+ * classifies it without parsing the body, which stays a plain `ErrorResponse`.
  */
 export class StepUpRequiredError extends Error {
     readonly methods: TwoFactorMethod[];

@@ -10,8 +10,6 @@ import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 import { buttonReset } from "@/styles/sharedBaseCss.css";
 
-// ─── Shared root styles ──────────────────────────────────
-
 const rootBase = style({
     position: "relative",
     display: "flex",
@@ -22,8 +20,6 @@ export const iconSvg = style({
     width: "100%",
     height: "100%",
 });
-
-// ─── Referral variant (white) ────────────────────────────
 
 export const referral = style([
     base,

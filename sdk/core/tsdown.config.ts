@@ -29,12 +29,7 @@ const buildDefine = {
     "process.env.DEEP_LINK_SCHEME": JSON.stringify("frakwallet://"),
 };
 
-// Stub rrweb in the CDN/IIFE build only. @openpanel/web 1.4.1 dynamically
-// imports its replay module (which depends on rrweb), but the IIFE bundle
-// inlines every dependency (alwaysBundle catch-all). Rolldown's DCE doesn't
-// drop the unreachable `return await import(...)` even with a build-time
-// `__OPENPANEL_REPLAY_URL__` define, so we alias rrweb itself to a noop.
-// Session replay is never enabled in the SDK so this is a behavioural no-op.
+// Aliased in the IIFE build only — see `src/stubs/rrweb.ts`.
 const rrwebStub = fileURLToPath(
     new URL("./src/stubs/rrweb.ts", import.meta.url)
 );

@@ -1,17 +1,19 @@
 import * as coreSdk from "@frak-labs/core-sdk";
 import { fireEvent, render, screen } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import * as sharingPageUtils from "@/actions/sharingPage";
 import * as useClientReadyHook from "@/hooks/useClientReady";
 import * as useRewardHook from "@/hooks/useReward";
 import { ButtonWallet } from "./ButtonWallet";
-import * as buttonWalletUtils from "./utils";
 
-// Mock the utils module
-vi.mock("./utils", () => ({
-    openWalletModal: vi.fn(),
+vi.mock("@/actions/sharingPage", () => ({
+    openSharingPage: vi.fn(),
 }));
 
-// Mock the hooks
+vi.mock("@/utils/browser/safeVibrate", () => ({
+    safeVibrate: vi.fn(),
+}));
+
 vi.mock("@/hooks/useClientReady", () => ({
     useClientReady: vi.fn(() => ({
         shouldRender: true,
@@ -77,7 +79,7 @@ describe("ButtonWallet", () => {
         expect(container.querySelector("button")).toBeNull();
     });
 
-    it("should call openWalletModal on click", () => {
+    it("should open the sharing page on click", () => {
         render(<ButtonWallet />);
         const button = screen.getByRole("button", {
             name: "Share and earn rewards",
@@ -85,7 +87,7 @@ describe("ButtonWallet", () => {
 
         fireEvent.click(button);
 
-        expect(buttonWalletUtils.openWalletModal).toHaveBeenCalledTimes(1);
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledTimes(1);
     });
 
     it("should report share_button_clicked on click", () => {

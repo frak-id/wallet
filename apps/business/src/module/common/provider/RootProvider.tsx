@@ -51,10 +51,6 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
     buster: process.env.APP_VERSION,
 };
 
-/**
- * Client component that manages the data-page attribute on the root element
- * based on the current route
- */
 function RoutePageAttribute() {
     const routerState = useRouterState({
         select: (state) => ({
@@ -65,7 +61,6 @@ function RoutePageAttribute() {
 
     useEffect(() => {
         const rootElement = document.documentElement;
-        if (!rootElement) return;
 
         const isRestricted = routerState.matches.some(
             (match) => match.routeId === "/_restricted"

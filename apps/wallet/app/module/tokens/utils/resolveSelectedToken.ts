@@ -2,19 +2,10 @@ import type { BalanceItem } from "@frak-labs/wallet-shared";
 import { type Address, isAddressEqual } from "viem";
 
 /**
- * Resolve the balance entry a user is currently sending, keyed by token
- * address rather than by object identity.
- *
- * The send screen used to hold the whole `BalanceItem` in state and re-sync it
- * from an effect that both read *and* wrote `selectedToken`. That effect only
- * terminated because its lookup happened to return `undefined` once the
- * amounts converged — a fresh object on every balance refetch would have
- * looped forever, on the token-transfer screen. Deriving during render removes
- * the hazard entirely: state holds an address, the item is looked up.
- *
- * Falls back to the first balance so the screen always has a selection, and
- * so a token that disappears from the list (fully spent, delisted) degrades to
- * a valid entry instead of a stale amount.
+ * Keyed by token address, never by object identity: a fresh `BalanceItem` on
+ * every balance refetch would loop an effect that both reads and writes the
+ * selection. Falls back to the first balance so a token that disappears from
+ * the list degrades to a valid entry instead of a stale amount.
  */
 export function resolveSelectedToken({
     tokens,

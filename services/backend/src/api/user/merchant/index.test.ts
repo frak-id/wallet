@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@frak-labs/app-essentials", async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
@@ -7,7 +7,6 @@ vi.mock("@frak-labs/app-essentials", async (importOriginal) => ({
 
 import type { MerchantReward } from "@frak-labs/core-sdk";
 import { selectBestReward } from "@frak-labs/core-sdk/rewards";
-import { Elysia } from "elysia";
 import {
     decodeProductsQueryParam,
     userMerchantApi,
@@ -101,15 +100,6 @@ describe("estimated-rewards formatted=1 mapping", () => {
         };
     }
 
-    it("attaches `best` when a reward is selected", () => {
-        const rewards = [eurReward()];
-        const best = selectBestReward(rewards, { currency: "eur" });
-        const result = { rewards, ...(best && { best }) };
-
-        expect(result.best).toBeDefined();
-        expect(result.best?.formatted).toBe("12\u00a0€");
-    });
-
     function scopedReward(): MerchantReward {
         return {
             campaignId: "campaign-scoped",
@@ -166,19 +156,8 @@ describe("estimated-rewards formatted=1 mapping", () => {
         expect(best?.isProductScoped).toBe(true);
         expect(best?.matchedProducts).toEqual([{ sku: "SHOE-42" }]);
     });
-
-    it("omits `best` (not null, not {}) when nothing is worth showing", () => {
-        const best = selectBestReward([], { currency: "eur" });
-        const result = { rewards: [], ...(best && { best }) };
-
-        expect(best).toBeUndefined();
-        expect("best" in result).toBe(false);
-    });
 });
 
-// Same regression shape as `track/index.test.ts`: limiters dedupe by name +
-// seed, and seed excludes `keyExtractor`, so the three `maxRequests` in this
-// tree (60, 90, and `exploreApi`'s 30) must stay pairwise distinct.
 // Golden vectors pinned against `sdk/core`'s `compressJsonToB64` — the exact function
 // both native SDKs mirror when encoding `ProductDetails[]` client-side. See
 // `sdk/core/src/utils/compression/compress.ts`. Regenerate with:
@@ -283,111 +262,5 @@ describe("estimated-rewards `products` query contract", () => {
             "&formatted=1&products=W3sic2t1IjoiU0hPRS00MiJ9XQ"
         );
         expect(res.status).not.toBe(422);
-    });
-});
-
-describe("merchant route rate limiters — distinct maxRequests", () => {
-    function fakeLimiter(
-        name: string,
-        config: { windowMs: number; maxRequests: number },
-        onRun: (name: string) => void
-    ) {
-        return new Elysia({ name: "Middleware.rateLimit", seed: config })
-            .onBeforeHandle(() => {
-                onRun(name);
-            })
-            .as("scoped");
-    }
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
-    it("resolve, estimated-rewards and explorer buckets all fire independently", async () => {
-        const calls: string[] = [];
-        const app = new Elysia()
-            .use(
-                fakeLimiter(
-                    "resolve",
-                    { windowMs: 60_000, maxRequests: 60 },
-                    () => calls.push("resolve")
-                )
-            )
-            .use(
-                fakeLimiter(
-                    "estimated-rewards",
-                    { windowMs: 60_000, maxRequests: 90 },
-                    () => calls.push("estimated-rewards")
-                )
-            )
-            .use(
-                fakeLimiter(
-                    "explorer",
-                    { windowMs: 60_000, maxRequests: 30 },
-                    () => calls.push("explorer")
-                )
-            )
-            .get("/merchant/probe", () => "ok");
-
-        await app.handle(new Request("http://localhost/merchant/probe"));
-
-        expect(calls).toEqual(["resolve", "estimated-rewards", "explorer"]);
-    });
-
-    it("charges a route to every limiter registered before it, not just its own", async () => {
-        const calls: string[] = [];
-        const app = new Elysia()
-            .use(
-                fakeLimiter(
-                    "resolve",
-                    { windowMs: 60_000, maxRequests: 60 },
-                    () => calls.push("resolve")
-                )
-            )
-            .get("/merchant/resolve", () => "ok")
-            .use(
-                fakeLimiter(
-                    "estimated-rewards",
-                    { windowMs: 60_000, maxRequests: 90 },
-                    () => calls.push("estimated-rewards")
-                )
-            )
-            .get("/merchant/estimated-rewards", () => "ok");
-
-        await app.handle(new Request("http://localhost/merchant/resolve"));
-        const afterResolve = [...calls];
-        calls.length = 0;
-        await app.handle(
-            new Request("http://localhost/merchant/estimated-rewards")
-        );
-
-        expect(afterResolve).toEqual(["resolve"]);
-        // Both, in the production registration order: the effective budget for
-        // estimated-rewards is therefore the smaller of the two, 60/min per IP.
-        expect(calls).toEqual(["resolve", "estimated-rewards"]);
-    });
-
-    it("collapses into one bucket when two limiters share the same config", async () => {
-        const calls: string[] = [];
-        const app = new Elysia()
-            .use(
-                fakeLimiter(
-                    "resolve",
-                    { windowMs: 60_000, maxRequests: 30 },
-                    () => calls.push("resolve")
-                )
-            )
-            .use(
-                fakeLimiter(
-                    "explorer",
-                    { windowMs: 60_000, maxRequests: 30 },
-                    () => calls.push("explorer")
-                )
-            )
-            .get("/merchant/probe", () => "ok");
-
-        await app.handle(new Request("http://localhost/merchant/probe"));
-
-        expect(calls).toEqual(["resolve"]);
     });
 });

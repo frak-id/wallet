@@ -1,24 +1,8 @@
 /**
- * Lightweight mobile-device detection.
- *
- * Replaces `ua-parser-js`'s `getDevice().type === "mobile"` check, which
- * pulled the full parser (~12 KB gzip) into the bundle just to read a single
- * boolean.
- *
- * Strategy mirrors UAParser v2.0.9:
- *   1. Prefer `navigator.userAgentData.mobile` (User-Agent Client Hints)
- *      when available — Chromium exposes it natively as a boolean and the
- *      classic UA string is being frozen there. UAParser uses the same
- *      signal first (`src/main/ua-parser.mjs:1243`).
- *   2. Fall back to UAParser's catch-all "unidentifiable mobile" regex
- *      (`src/main/ua-parser.mjs:932`). It catches iPhone/iPod (via `phone`),
- *      Android Mobile + WebView (via `Mobile Safari` / `Mobile;` / `Mobile/`),
- *      Windows Phone / IEMobile, and Windows CE PDAs. iPads are intentionally
- *      not matched — UAParser classifies them as tablet, not mobile.
- *
- * Edge cases not covered (require UAParser's vendor tables): BlackBerry and
- * a few exotic Asian-market brands without a `Mobile` token. No current call
- * site depends on those.
+ * Lightweight mobile-device detection, ported from UAParser v2.0.9 so the
+ * full parser (~12 KB gzip) stays out of the bundle. iPads do not match —
+ * UAParser classifies them as tablet. BlackBerry and a few Asian-market
+ * brands without a `Mobile` token need the vendor tables and are missed.
  */
 
 const MOBILE_UA_REGEX =

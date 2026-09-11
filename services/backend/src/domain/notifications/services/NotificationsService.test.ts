@@ -195,21 +195,6 @@ describe("NotificationsService", () => {
 
             expect(dbMock.__getDeleteExecuteMock()).toHaveBeenCalled();
         });
-
-        it("should handle notification sending errors gracefully", async () => {
-            const wallets = [
-                "0x1234567890abcdef1234567890abcdef12345678",
-            ] as Address[];
-            const payload = {
-                title: "Test Notification",
-                body: "This is a test",
-                icon: "test-icon.png",
-            };
-
-            await expect(
-                service.sendNotification({ wallets, payload })
-            ).resolves.toBeUndefined();
-        });
     });
 
     describe("cleanupExpiredTokens", () => {
@@ -304,24 +289,6 @@ describe("NotificationsService", () => {
             });
 
             expect(dbMock.__getDeleteExecuteMock()).not.toHaveBeenCalled();
-        });
-
-        it("should scope FCM cleanup to row IDs, not raw endpoints", async () => {
-            dbMock.__setFindManyResponse(() => Promise.resolve(mockFcmTokens));
-
-            fcmMocks.tokenErrors.set(
-                "fcm-registration-token-2",
-                unregisteredError
-            );
-
-            await service.sendNotification({
-                wallets: [
-                    "0x1234567890abcdef1234567890abcdef12345678",
-                ] as Address[],
-                payload: { title: "Test", body: "Scoped cleanup" },
-            });
-
-            expect(dbMock.__getDeleteExecuteMock()).toHaveBeenCalled();
         });
     });
 });

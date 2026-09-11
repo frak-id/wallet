@@ -31,21 +31,6 @@ export const checkCircle = style({
     color: vars.text.action,
 });
 
-/** 40px light-blue disc holding the notification bell, in a 44px-wide slot
- * (the extra 4px pushes the text block right of the disc). */
-export const bellCircle = style({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    width: "40px",
-    height: "40px",
-    marginRight: alias.spacing.xxs,
-    borderRadius: alias.cornerRadius.full,
-    backgroundColor: vars.surface.secondary,
-    color: vars.text.action,
-});
-
 /** Text column beside an icon: fills the row and lets long copy wrap. */
 export const grow = style({
     flex: 1,

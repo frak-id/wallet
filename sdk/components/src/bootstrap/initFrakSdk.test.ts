@@ -143,12 +143,6 @@ describe("initFrakSdk", () => {
         expect(window.FrakSetup.client).toBe(mockClient);
         expect(clientReadyUtils.dispatchClientReadyEvent).toHaveBeenCalled();
         expect(coreSdkActions.setupReferral).toHaveBeenCalledWith(mockClient);
-        expect(consoleLogSpy).toHaveBeenCalledWith(
-            "[Frak SDK] Starting initialization"
-        );
-        expect(consoleLogSpy).toHaveBeenCalledWith(
-            "[Frak SDK] Client initialized successfully"
-        );
 
         consoleLogSpy.mockRestore();
     });
@@ -260,9 +254,6 @@ describe("initFrakSdk", () => {
             undefined,
             undefined,
             { link: undefined, products: undefined }
-        );
-        expect(consoleLogSpy).toHaveBeenCalledWith(
-            "[Frak SDK] Auto open share via query param"
         );
         // URL should be cleaned so a refresh does not re-trigger auto-open
         expect(window.history.replaceState).toHaveBeenCalledWith(

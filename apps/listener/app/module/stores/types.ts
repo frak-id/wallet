@@ -71,7 +71,7 @@ export type DisplayedModalStep<
 /**
  * Resolving Context Store State
  */
-export interface ResolvingContextStore {
+export type ResolvingContextStore = {
     // State
     context: IFrameResolvingContext | undefined;
     backendSdkConfig: ResolvedSdkConfig | undefined;
@@ -85,12 +85,12 @@ export interface ResolvingContextStore {
         config: ResolvedSdkConfig | undefined
     ) => void;
     setTrustLevel: (level: TrustLevel) => void;
-}
+};
 
 /**
  * Modal Store State
  */
-export interface ModalStore {
+export type ModalStore = {
     // State
     steps: DisplayedModalStep<AnyModalKey>[] | undefined;
     currentStep: number;
@@ -103,12 +103,6 @@ export interface ModalStore {
         initialResult: ModalRpcStepsResultType;
         steps: Omit<DisplayedModalStep<AnyModalKey>, "onResponse">[];
     }) => void;
-    completeStep: (
-        stepKey: AnyModalKey,
-        response: ModalStepTypes["returns"]
-    ) => void;
-    nextStep: () => void;
     clearModal: () => void;
-    setDismissed: (dismissed: boolean) => void;
     dismissModal: (source?: ModalDismissSource) => void;
-}
+};

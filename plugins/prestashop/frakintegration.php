@@ -21,10 +21,6 @@ require_once __DIR__ . '/vendor/autoload.php';
  *   - {@see FrakOrderRender}      : tracker `<script>` + post-purchase Smarty wrapper for order pages.
  *   - {@see FrakDisplayDispatcher}: placement-driven `display*` hooks.
  *   - {@see FrakSmartyPlugins}    : `{frak_banner|share_button|post_purchase}`.
- *
- * Mirrors the WordPress sibling's split between `frak-integration.php` (entry
- * point) and `class-frak-frontend.php` / `class-frak-woocommerce.php` /
- * `class-frak-shortcodes.php` (per-surface handlers).
  */
 class FrakIntegration extends Module
 {
@@ -180,8 +176,7 @@ class FrakIntegration extends Module
      * Credit-slip / refund webhook trigger. Fires on every `OrderSlip`
      * creation — full refunds, partial refunds, and standard returns alike
      * — so the Frak backend voids attribution as soon as the merchant
-     * issues any refund. Mirrors the WC backend's `refunds[]` and Magento's
-     * `sales_order_creditmemo_save_after` rules.
+     * issues any refund.
      */
     public function hookActionOrderSlipAdd($params)
     {
@@ -206,8 +201,7 @@ class FrakIntegration extends Module
     }
 
     /**
-     * Customer-facing My-Account → Orders → Detail view. Mirrors WordPress's
-     * `woocommerce_view_order` coverage — the SDK is idempotent on the
+     * Customer-facing My-Account → Orders → Detail view. The SDK is idempotent on the
      * `(customerId, orderId, token)` triple, so re-firing on every detail-page
      * load is intentional: keeps attribution working when the merchant lands
      * on the order detail without having gone through the post-checkout

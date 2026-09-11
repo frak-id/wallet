@@ -17,19 +17,9 @@ import {
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 const isProd = process.env.NODE_ENV === "production";
 
-// Reference size for the gzipped eager boot JS (login-screen static-import
-// closure, walked by `assertEagerBundleBudget`). Measured ~250 KB after
-// evicting `blockchain-vendor` (viem) from the eager graph — see the
-// `blockchain-vendor` group below.
-//
-// Warn-only here (unlike the listener, which hard-fails): this dashboard boots
-// behind a login, so a bigger eager graph is a perf smell, not an incident.
-// Enforcing it blocked a deploy post-merge and got "fixed" by raising the
-// number, which turns the budget into a moving line. Logged every build so a
-// lazy chunk leaking back into the eager path is still visible.
+// Warn-only gzip reference for the eager boot JS closure (login screen).
 const EAGER_JS_BUDGET_GZIP = 275 * 1024;
 
-// Rolldown code-splitting groups, mirroring `apps/wallet/vite.config.ts`.
 // `tags: ["$initial"]` on `app-shell` limits it to modules statically
 // reachable from the entry; without it, bootstrap/lazy-shared modules leak
 // into feature chunks and force the entry to static-import them.
@@ -52,11 +42,9 @@ function buildChunkGroups() {
             minShareCount: 1,
         },
         {
-            // Post-login only. Sits *below* `app-shell` (unlike wallet's
-            // config): with no eager value-level viem import, a higher
-            // priority would bucket the eager `__vitePreload` helper here and
-            // drag this ~48 KB chunk into the eager closure. Below app-shell,
-            // the helper rides in app-shell and viem stays fully lazy.
+            // Must stay *below* `app-shell`: a higher priority buckets the
+            // eager `__vitePreload` helper here and drags this ~48 KB chunk
+            // into the eager closure.
             name: "blockchain-vendor",
             test: /node_modules[\\/](viem|@noble|@scure)/,
             priority: 25,
@@ -65,8 +53,8 @@ function buildChunkGroups() {
         // `@radix-ui/react-collection` alone, above `ui-vendor` so it claims
         // the package first. Its `OrderedDict extends Map` declares a
         // `toSorted` method es-check reads as `Array.prototype.toSorted`;
-        // isolating it keeps the exemption off lucide-react, cmdk and
-        // react-hook-form, where a genuine above-floor call would be masked.
+        // isolating it keeps the exemption off the rest of `ui-vendor`, where
+        // a genuine above-floor call would be masked.
         {
             name: "radix-collection",
             test: /node_modules[\\/]@radix-ui[\\/]react-collection[\\/]/,
@@ -75,7 +63,7 @@ function buildChunkGroups() {
         },
         {
             name: "ui-vendor",
-            test: /node_modules[\\/](@radix-ui|lucide-react|cmdk|react-hook-form)/,
+            test: /node_modules[\\/](@radix-ui|lucide-react|react-hook-form)/,
             priority: 30,
             minShareCount: 1,
         },
@@ -93,25 +81,19 @@ function buildChunkGroups() {
             priority: 27,
             minShareCount: 1,
         },
-        // No dedicated `design-system` cache bucket (unlike wallet / the
-        // pre-`$initial` config): with the app-shell `$initial` tag, a group
-        // outranking app-shell forces design-system's lazy-only components
-        // eager, and one below it only buckets single-feature usage. Not worth
-        // the churn; eager design-system rides in app-shell.
-        //
         // Eager catch-all: everything statically reachable from the entry.
+        // No dedicated `design-system` bucket: a group outranking app-shell
+        // forces design-system's lazy-only components eager.
         {
             name: "app-shell",
             tags: ["$initial"] as "$initial"[],
             priority: 26,
             minShareCount: 1,
         },
-        // Shared LAZY app machinery used by 2+ features (common UI, plus the
-        // heavily-shared `forms` and `auth` modules). Sits above the feature
-        // groups so a shared module isn't swept into whichever feature matches
-        // its importer first (Rolldown pulls a matched module's deps along).
-        // `forms`/`auth` must NOT sit in `feature-login` — restricted pages
-        // import them, and would then have to fetch the login chunk.
+        // Shared LAZY app machinery used by 2+ features. Sits above the
+        // feature groups so a shared module isn't swept into whichever feature
+        // matches its importer first. `forms`/`auth` must NOT sit in
+        // `feature-login`: restricted pages import them.
         {
             name: "common-lazy",
             test: /[\\/]src[\\/]module[\\/](?:common|forms|auth)[\\/]/,
@@ -168,13 +150,10 @@ export default defineConfig(async () => {
                 budgetGzip: EAGER_JS_BUDGET_GZIP,
                 enforce: false,
             }),
-            // No `build.target` pin here, so JS keeps vite's default
-            // (safari16.4) while CSS compiles at 15.4 via lightningCssConfig.
-            // The asymmetry is deliberate: the 15.4 floor comes from wallet
-            // traffic, and pinning this dashboard to it costs ~14 KB gz of
-            // class-field lowering and breaks its eager budget, for browsers
-            // it does not need. The gate still runs, so an above-floor API
-            // cannot ship unnoticed.
+            // No `build.target` pin: JS keeps vite's default (safari16.4)
+            // while CSS compiles at 15.4 via lightningCssConfig. The 15.4
+            // floor comes from wallet traffic this dashboard does not serve,
+            // and pinning to it costs ~14 KB gz of class-field lowering.
             assertBundleEsVersion({
                 subdir: "assets",
                 // @radix-ui/react-collection defines `toSorted` on its own
@@ -227,12 +206,9 @@ export default defineConfig(async () => {
         build: {
             rolldownOptions: {
                 experimental: {
-                    // Lazy-evaluate barrel re-exports — without this, importing a
-                    // single named export from a workspace package's top-level
-                    // barrel (e.g. `isRunningLocally` from `@frak-labs/app-essentials`)
-                    // pulls the barrel's OTHER re-exports (including the `./blockchain`
-                    // submodule and its real viem imports) into the same eager chunk.
-                    // Proven on the listener build; matches `apps/wallet/vite.config.ts`.
+                    // Lazy-evaluate barrel re-exports: without this, one named
+                    // import from a workspace barrel pulls the barrel's other
+                    // re-exports (and their viem imports) into the eager chunk.
                     lazyBarrel: true,
                 },
                 output: {

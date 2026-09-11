@@ -1,5 +1,6 @@
 import type { TokenMetadataRepository } from "@backend-infrastructure";
 import { log } from "@backend-infrastructure";
+import { buildAttestation } from "@backend-utils";
 import type { Address, Hex } from "viem";
 import { parseUnits } from "viem";
 import type {
@@ -10,11 +11,7 @@ import type {
 import { RewardConfig } from "../config";
 import type { AssetLogSelect } from "../db/schema";
 import type { AssetLogRepository } from "../repositories/AssetLogRepository";
-import {
-    buildAttestation,
-    type InteractionType,
-    type SettlementResult,
-} from "../types";
+import type { InteractionType, SettlementResult } from "../types";
 
 export type AssetLogWithWallet = AssetLogSelect & {
     walletAddress: Address;

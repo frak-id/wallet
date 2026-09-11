@@ -24,11 +24,6 @@ export const kernelAddresses = {
 } as const;
 
 /**
- * The usdc address on arbitrum
- */
-export const usdcArbitrumAddress = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
-
-/**
  * Stablecoin addresses for different environments
  */
 export const stablecoins = {

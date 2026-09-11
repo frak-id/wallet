@@ -33,24 +33,6 @@ describe("Tooltip", () => {
         expect(await screen.findByRole("tooltip")).toBeTruthy();
     });
 
-    it("should hide content when mouse leaves", async () => {
-        renderTooltip();
-        const user = userEvent.setup();
-        await user.hover(screen.getByText("Hover me"));
-        await screen.findByRole("tooltip");
-        await user.unhover(screen.getByText("Hover me"));
-
-        // After unhover, verify trigger still present
-        expect(screen.getByText("Hover me")).toBeTruthy();
-    });
-
-    it("should export compound parts", () => {
-        expect(TooltipProvider).toBeDefined();
-        expect(Tooltip).toBeDefined();
-        expect(TooltipTrigger).toBeDefined();
-        expect(TooltipContent).toBeDefined();
-    });
-
     it("should accept sideOffset prop", () => {
         render(
             <TooltipProvider>

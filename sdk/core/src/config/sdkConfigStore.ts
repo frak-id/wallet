@@ -41,10 +41,7 @@ function freshEmptyConfig(): SdkResolvedConfig {
     return { isResolved: false, merchantId: "" };
 }
 
-// ---------------------------------------------------------------------------
-// localStorage cache (with in-memory parsed copy)
-// ---------------------------------------------------------------------------
-
+// localStorage cache, with an in-memory parsed copy.
 let memoryEntry: CacheEntry | null = null;
 
 function loadCacheEntry(): CacheEntry | null {
@@ -88,10 +85,6 @@ function removeCache(): void {
     } catch {}
 }
 
-// ---------------------------------------------------------------------------
-// Initialise window-backed config (lazily, on first access)
-// ---------------------------------------------------------------------------
-
 // Seed `window.__frakSdkConfig` from the localStorage cache. Do NOT call this at
 // module top-level: that side effect contradicts `sideEffects: false` (a bundler
 // may legally drop it) and forces a localStorage read on every consumer at import.
@@ -101,10 +94,6 @@ function initConfig(): void {
     if (window[GLOBAL_KEY]) return;
     window[GLOBAL_KEY] = readCache() ?? freshEmptyConfig();
 }
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 function getConfig(): SdkResolvedConfig {
     if (!isBrowser) return freshEmptyConfig();
@@ -120,10 +109,6 @@ function dispatch(config: SdkResolvedConfig): void {
 function getTargetDomain(domain?: string): string {
     return domain ?? (isBrowser ? window.location.hostname : "");
 }
-
-// ---------------------------------------------------------------------------
-// Merchant config fetching (resolve)
-// ---------------------------------------------------------------------------
 
 async function fetchFromBackend(
     targetDomain: string,
@@ -158,10 +143,6 @@ async function fetchFromBackend(
         return undefined;
     }
 }
-
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
 
 export const sdkConfigStore = {
     getConfig,

@@ -1,5 +1,3 @@
-// Opted in for `PercentEncoding`, which is `@InternalFrakApi`. Per file, not module-wide, so the
-// marker still applies elsewhere.
 @file:OptIn(InternalFrakApi::class)
 
 package id.frak.sdk.net
