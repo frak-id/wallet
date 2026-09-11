@@ -1,3 +1,4 @@
+import { t as backendT } from "@backend-utils";
 import { Elysia, status, t } from "elysia";
 import type { Address, LocalAccount } from "viem";
 import { vi } from "vitest";
@@ -476,6 +477,10 @@ export const businessSessionContextMock = new Elysia({
 
 vi.mock("../../src/api/business/middleware/session", () => ({
     businessSessionContext: businessSessionContextMock,
+    StepUpRequired401: backendT.Union([
+        backendT.String(),
+        backendT.ErrorResponse,
+    ]),
 }));
 
 vi.mock("@backend-infrastructure", () => ({
