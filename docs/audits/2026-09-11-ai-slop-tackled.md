@@ -6,12 +6,12 @@
 
 ## 0. TL;DR
 
-- **374 of 615 findings and 25 of 69 patterns are closed.** 15 findings and 19 patterns are partially closed (marked **◐** in the audit, which is now the open backlog). 241 findings and 44 patterns remain untouched, on purpose.
+- **375 of 615 findings and 25 of 69 patterns are closed.** 15 findings and 19 patterns are partially closed (marked **◐** in the audit, which is now the open backlog). 240 findings and 44 patterns remain untouched, on purpose.
 - **905 files changed: 101 deleted, 1 added, 3 018 insertions, 27 619 deletions** — a net **−24 601 lines** with no intended behaviour change.
 - **Quality gate green after the pass**: `bun run format`, `bun run lint` (including `lint:comments`, `check:i18n-types`, `check:ios-floor`, `check:safe-area`, `check:publishable`), `typecheck` across all 14 packages, and the full Vitest suite (604 files / ~5 800 tests, minus the ~90 deleted slop tests).
 - **The comment baseline shrank**: `scripts/comment-budget-baseline.json` went from 101 findings across 46 files to **61 across 41** — 16 native files improved past their baseline and the gate now holds them there.
 - **Verification**: an independent reviewer re-opened a 34-item sample. **33 CONFIRMED, 1 OVERSTATED, 0 FALSE**; the overstated one (WA-P4) was finished before this report. No deleted symbol has a live consumer, no published API surface moved, no sentinel files or dangling imports remain.
-- **One real bug was found and deliberately *not* fixed** (LS-1, `apps/shopify`): a `test: !isProd()` condition on a line only reachable when `isProd()` is true, i.e. every production charge is created as a real charge. It moves money — see §6.
+- **One real bug was found and fixed outside this pass** (LS-1, `apps/shopify`, commit `a2be2898c`): `test: process.env.STAGE !== "prod"` on a line only reachable when `isProd()` is true, i.e. every production charge was created as a Shopify **test** charge that is never billed and never paid out. Fixed with a regression test after the deployment chain was traced end to end; the rows it already wrote still need reconciling against Shopify.
 
 ## 1. What counted as a "quick win"
 
@@ -149,7 +149,7 @@ Highlights: `.cursor/rules/` (10 files) and `.opencode/agent/_archive/` (8 files
 | Changes user-visible behaviour | `BA-11` (date formatting via `i18n.language`), `BA-31`/`WA-17`/`WA-35`/`BB-44` (hardcoded strings → new i18n keys), `BB-26`/`BB-30`, `SW-56`, `LS-38` | A cleanup pass must not change what a user sees. These need an owner and a test plan. |
 | Changes a wire/API contract | `BR-1` (dead `'referral_arrival'` literal → changes KPI values), `BR-22` (unauthenticated `getTestToken`), `BR-49`, `PI-48`, `SW-5` (public SDK exports) | Breaking change management, not slop removal. |
 | Rule-vs-reality decisions (§3 of the audit) | `class` in the backend · `as any` in tests · `globalStyle` in `design-system/charts` · gating `.ts`/`.tsx` in `scripts/check-comments.ts` | These need a ruling on the rule, not a patch on the code. **The comment gate is the highest-leverage one**: it already accepts TS at `scripts/check-comments.ts:68`, nothing invokes it that way, and theme 2.1 has now regressed twice. |
-| Real bugs needing an owner | **`LS-1`** — `apps/shopify` billing: `test: !isProd()` on a line reachable only when `isProd()` is true, so production charges are created as real charges · `PI-24` — Magento writes `'client_id'` and reads `"clientId"` · `BA-12` — the recovery-code download is plausibly broken in Safari/Firefox | Fixing these is correct but it is not cleanup: each one changes behaviour that someone must sign off. **`LS-1` should be triaged now, independently of this audit.** |
+| Real bugs needing an owner | **`LS-1`** — `apps/shopify` billing, **fixed separately in `a2be2898c`**, not as part of this pass · `PI-24` — Magento writes `'client_id'` and reads `"clientId"` · `BA-12` — the recovery-code download is plausibly broken in Safari/Firefox | Fixing these is correct but it is not cleanup: each one changes behaviour that someone must sign off. **`LS-1` should be triaged now, independently of this audit.** |
 
 ## 7. Where the audit itself was wrong
 
