@@ -1,16 +1,30 @@
-import type { SortingState, TableOptions } from "@tanstack/react-table";
+import type {
+    ColumnDef,
+    ColumnFiltersState,
+    PaginationState,
+    SortingState,
+    Table,
+    TableOptions,
+} from "@tanstack/react-table";
 import {
     type Column,
-    type ColumnFiltersState,
+    columnFilteringFeature,
+    columnSizingFeature,
+    columnVisibilityFeature,
+    createColumnHelper,
+    createFilteredRowModel,
+    createSortedRowModel,
+    filterFn_includesString,
     flexRender,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getSortedRowModel,
-    type PaginationState,
     type Row,
-    type RowPinningState,
-    type RowSelectionState,
-    useReactTable,
+    rowPaginationFeature,
+    rowSortingFeature,
+    sortFn_alphanumeric,
+    sortFn_basic,
+    sortFn_datetime,
+    sortFn_text,
+    tableFeatures,
+    useTable,
 } from "@tanstack/react-table";
 import clsx from "clsx";
 import type { ReactNode } from "react";
@@ -32,62 +46,90 @@ import {
     tableWrapper,
 } from "./data-table.css";
 
+/**
+ * Row-model factories must sit on `features`; `manualSorting`/`manualFiltering`
+ * gate them per instance. `filterFns`/`sortFns` too: a column defaulting to
+ * `"auto"` resolves a built-in by name, and an unregistered name silently drops
+ * the filter or downgrades sorting to a codepoint compare.
+ */
+const features = tableFeatures({
+    rowSortingFeature,
+    columnFilteringFeature,
+    rowPaginationFeature,
+    columnVisibilityFeature,
+    columnSizingFeature,
+    sortedRowModel: createSortedRowModel(),
+    filteredRowModel: createFilteredRowModel(),
+    filterFns: { includesString: filterFn_includesString },
+    sortFns: {
+        alphanumeric: sortFn_alphanumeric,
+        basic: sortFn_basic,
+        datetime: sortFn_datetime,
+        text: sortFn_text,
+    },
+});
+
 declare module "@tanstack/react-table" {
-    interface ColumnMeta<TData, TValue> {
+    interface ColumnMeta<TFeatures, TData, TValue> {
         align?: "left" | "right";
     }
 }
 
-export type DataTableProps<TData> = {
+/**
+ * Consumers name only their data type, never `typeof features` — which stays
+ * unexported so nobody constructs a table instance directly.
+ */
+export type DataTableColumnDef<TData extends object> = ColumnDef<
+    typeof features,
+    TData
+>;
+export type DataTableRow<TData extends object> = Row<typeof features, TData>;
+export type DataTableColumn<TData extends object> = Column<
+    typeof features,
+    TData
+>;
+export type DataTableTable<TData extends object> = Table<
+    typeof features,
+    TData
+>;
+
+export function createDataTableColumnHelper<TData extends object>() {
+    return createColumnHelper<typeof features, TData>();
+}
+
+export type DataTableProps<TData extends object> = {
     classNameWrapper?: string;
     className?: string;
     preTable?: ReactNode;
     postTable?: ReactNode;
-    /**
-     * Message rendered when there is no data. DS is app-agnostic, so the
-     * consumer passes the translated string (e.g. `t("common.table.empty")`).
-     */
+    /** Translated by the consumer; the design system is app-agnostic. */
     emptyMessage: ReactNode;
     /**
-     * When set, the empty state renders as a full data row: the empty message
-     * in the first column and this placeholder (e.g. `"–"`) in every other,
-     * matching designs that keep the column grid visible. When omitted, the
-     * message spans all columns in a single cell.
+     * Renders the empty state as a full data row — message in the first column,
+     * this placeholder in the rest — instead of one cell spanning all columns.
      */
     emptyPlaceholder?: ReactNode;
-    // Some custom configs
     enableFiltering?: boolean;
-    onRowClick?: (row: Row<TData>) => void;
-    // Some states
+    onRowClick?: (row: DataTableRow<TData>) => void;
     sorting?: SortingState;
     columnFilters?: ColumnFiltersState;
-    rowSelection?: RowSelectionState;
-    rowPinning?: RowPinningState;
     pagination?: PaginationState;
     /**
-     * Per-row data-* attributes. Each entry maps an attribute name (e.g.
-     * `data-selected`) to a function returning its stringified value (or
-     * undefined to omit). Used to drive row-level visual states from CSS
-     * without polluting the column definitions.
+     * Per-row `data-*` attributes, each mapping a name to a function returning
+     * its value or undefined to omit. Drives row state from CSS.
      */
-    rowDataAttributes?: Record<string, (row: Row<TData>) => string | undefined>;
-    /**
-     * Whether any row in the dataset is currently selected. When true the
-     * table receives `data-any-selected="true"` so unselected rows can be
-     * dimmed via CSS.
-     */
+    rowDataAttributes?: Record<
+        string,
+        (row: DataTableRow<TData>) => string | undefined
+    >;
+    /** Sets `data-any-selected` so unselected rows can dim via CSS. */
     anySelected?: boolean;
     /**
-     * Use `table-layout: fixed` so column widths come from `size` (not
-     * content). Columns without a `size` split the remaining width, and a
-     * cell with `overflow: hidden` truncates to its computed width — the only
-     * reliable way to flex-fill a column and ellipsis only on real overflow.
+     * `table-layout: fixed` so widths come from `size`, not content. A cell
+     * with `overflow: hidden` then truncates at its computed width.
      */
     fixedLayout?: boolean;
-} & Omit<
-    TableOptions<TData>,
-    "state" | "getCoreRowModel" | "getSortedRowModel" | "getFilteredRowModel"
->;
+} & Omit<TableOptions<typeof features, TData>, "state" | "features">;
 
 export function DataTable<TData extends object>({
     data,
@@ -102,8 +144,6 @@ export function DataTable<TData extends object>({
     enableFiltering = false,
     onRowClick,
     columnFilters,
-    rowSelection,
-    rowPinning,
     pagination,
     rowDataAttributes,
     anySelected,
@@ -112,27 +152,18 @@ export function DataTable<TData extends object>({
 }: DataTableProps<TData>) {
     const [sortingInner, setSortingInner] = useState<SortingState>([]);
 
-    /**
-     * Build the table instance
-     */
-    const table = useReactTable({
+    const table = useTable({
+        features,
         data,
         columns,
         state: {
             sorting: sorting ?? sortingInner,
             columnFilters,
-            rowSelection,
-            rowPinning,
             pagination,
         },
         onSortingChange: setSortingInner,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: additionalProps.enableSorting
-            ? getSortedRowModel()
-            : undefined,
-        getFilteredRowModel: enableFiltering
-            ? getFilteredRowModel()
-            : undefined,
+        manualSorting: !additionalProps.enableSorting,
+        manualFiltering: !enableFiltering,
         ...additionalProps,
     });
 
@@ -182,7 +213,7 @@ export function DataTable<TData extends object>({
                                         }}
                                     >
                                         {header.isPlaceholder ? null : (
-                                            <Sorting {...header.column}>
+                                            <Sorting column={header.column}>
                                                 {flexRender(
                                                     header.column.columnDef
                                                         .header,
@@ -298,16 +329,15 @@ export function DataTable<TData extends object>({
 }
 
 /**
- * Empty state rendered as a full data row so the column grid stays visible.
- * The message lands in the first data (accessor) column; other data columns
- * show the placeholder; display columns (checkbox, actions) stay blank.
+ * Keeps the column grid visible: message in the first accessor column,
+ * placeholder in other data columns, display columns blank.
  */
-function EmptyRow<TData>({
+function EmptyRow<TData extends object>({
     columns,
     message,
     placeholder,
 }: {
-    columns: Column<TData, unknown>[];
+    columns: DataTableColumn<TData>[];
     message: ReactNode;
     placeholder: ReactNode;
 }) {
@@ -347,16 +377,10 @@ function EmptyRow<TData>({
     );
 }
 
-/**
- * Sorting wrapper for headers
- * @param children
- * @param column
- * @constructor
- */
-function Sorting<TData>({
+function Sorting<TData extends object>({
     children,
-    ...column
-}: PropsWithChildren<Column<TData, unknown>>) {
+    column,
+}: PropsWithChildren<{ column: DataTableColumn<TData> }>) {
     if (!column.getCanSort()) {
         return <span>{children}</span>;
     }
