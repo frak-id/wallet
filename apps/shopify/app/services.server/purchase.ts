@@ -104,7 +104,9 @@ export async function startupPurchase(
                     currencyCode:
                         info.preferredCurrency?.toUpperCase() ?? "EUR",
                 },
-                test: process.env.STAGE !== "prod",
+                // infra normalises the prod stage to "production"; `isProd()`
+                // is the only predicate that recognises every prod spelling.
+                test: !isProd(),
             },
         }
     );

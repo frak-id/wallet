@@ -149,6 +149,26 @@ describe("startupPurchase", () => {
         );
     });
 
+    it.each(["production", "gcp-production", "prod"])(
+        "creates a live (non-test) charge on %s",
+        async (stage) => {
+            process.env.STAGE = stage;
+            vi.mocked(shopInfo).mockResolvedValue(mockShopInfo);
+            mockWhere.mockResolvedValue([]);
+            mockValues.mockResolvedValue(undefined);
+
+            const ctx = makeMockCtx(successGraphqlResponse);
+            await startupPurchase(ctx, { amount: "100", bank: validBank });
+
+            expect(ctx.admin.graphql).toHaveBeenCalledWith(
+                expect.any(String),
+                expect.objectContaining({
+                    variables: expect.objectContaining({ test: false }),
+                })
+            );
+        }
+    );
+
     it("should return confirmation URL on success", async () => {
         process.env.STAGE = "production";
         vi.mocked(shopInfo).mockResolvedValue(mockShopInfo);
