@@ -15,18 +15,7 @@ export const checkIcon = style({
     flexShrink: 0,
 });
 
-export const clearButton = style({
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "24px",
-    height: "24px",
-    background: "transparent",
-    border: "none",
-    padding: 0,
-    cursor: "pointer",
-    color: vars.icon.primary,
-});
+export { clearButton } from "@/module/common/styles/touchTarget.css";
 
 export const suggestionList = style({
     display: "flex",
