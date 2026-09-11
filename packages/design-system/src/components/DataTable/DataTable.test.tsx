@@ -1,5 +1,6 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { DataTable } from "./index";
 
@@ -116,5 +117,156 @@ describe("DataTable", () => {
 
         const table = container.querySelector("table");
         expect(table?.className).toContain("custom-table");
+    });
+});
+
+describe("DataTable sorting", () => {
+    const sortableColumns = [
+        columnHelper.accessor("name", {
+            header: "Name",
+        }),
+        columnHelper.accessor("value", {
+            header: "Value",
+            enableSorting: false,
+        }),
+    ];
+
+    function renderSortable() {
+        const data: TestData[] = [
+            { id: 1, name: "Charlie", value: 30 },
+            { id: 2, name: "Alpha", value: 10 },
+            { id: 3, name: "Bravo", value: 20 },
+        ];
+
+        return render(
+            <DataTable
+                data={data}
+                columns={sortableColumns}
+                emptyMessage={EMPTY_MESSAGE}
+                enableSorting={true}
+            />
+        );
+    }
+
+    function getBodyRowTexts() {
+        return screen
+            .getAllByRole("row")
+            .slice(1)
+            .map((row) => row.textContent);
+    }
+
+    it("sorts ascending on first header click", async () => {
+        const user = userEvent.setup();
+        renderSortable();
+
+        expect(getBodyRowTexts()).toEqual([
+            "Charlie30",
+            "Alpha10",
+            "Bravo20",
+        ]);
+
+        await user.click(screen.getByRole("button", { name: /Name/ }));
+
+        expect(getBodyRowTexts()).toEqual([
+            "Alpha10",
+            "Bravo20",
+            "Charlie30",
+        ]);
+    });
+
+    it("sorts descending on second header click", async () => {
+        const user = userEvent.setup();
+        renderSortable();
+        const nameHeader = screen.getByRole("button", { name: /Name/ });
+
+        await user.click(nameHeader);
+        await user.click(nameHeader);
+
+        expect(getBodyRowTexts()).toEqual([
+            "Charlie30",
+            "Bravo20",
+            "Alpha10",
+        ]);
+    });
+
+    it("leaves row order unchanged for a non-sortable column", async () => {
+        renderSortable();
+
+        expect(
+            screen.queryByRole("button", { name: /Value/ })
+        ).not.toBeInTheDocument();
+
+        const valueHeader = screen.getByText("Value");
+        const user = userEvent.setup();
+        await user.click(valueHeader);
+
+        expect(getBodyRowTexts()).toEqual([
+            "Charlie30",
+            "Alpha10",
+            "Bravo20",
+        ]);
+    });
+
+    it("sorts nullable numeric values with a custom comparator, nulls last in both directions", async () => {
+        type NullableData = {
+            id: number;
+            label: string;
+            score: number | null;
+        };
+        const nullableColumnHelper = createColumnHelper<NullableData>();
+        const nullableColumns = [
+            nullableColumnHelper.accessor("label", {
+                header: "Label",
+            }),
+            nullableColumnHelper.accessor("score", {
+                header: "Score",
+                sortingFn: (rowA, rowB) => {
+                    const a = rowA.original.score;
+                    const b = rowB.original.score;
+                    if (a == null && b == null) return 0;
+                    if (a == null) return 1;
+                    if (b == null) return -1;
+                    return a - b;
+                },
+            }),
+        ];
+        const data: NullableData[] = [
+            { id: 1, label: "Five", score: 5 },
+            { id: 2, label: "NullA", score: null },
+            { id: 3, label: "One", score: 1 },
+            { id: 4, label: "NullB", score: null },
+            { id: 5, label: "Three", score: 3 },
+        ];
+
+        const user = userEvent.setup();
+        render(
+            <DataTable
+                data={data}
+                columns={nullableColumns}
+                emptyMessage={EMPTY_MESSAGE}
+                enableSorting={true}
+            />
+        );
+
+        const scoreHeader = screen.getByRole("button", { name: /Score/ });
+        await user.click(scoreHeader);
+
+        expect(getBodyRowTexts()).toEqual([
+            "NullA",
+            "NullB",
+            "Five5",
+            "Three3",
+            "One1",
+        ]);
+
+        await user.click(scoreHeader);
+
+        expect(getBodyRowTexts()).toEqual([
+            "One1",
+            "Three3",
+            "Five5",
+            "NullA",
+            "NullB",
+        ]);
     });
 });
