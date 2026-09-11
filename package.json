@@ -137,7 +137,7 @@
     "@biomejs/biome": "2.5.13",
     "elysia": "1.4.30",
     "nanoid": "^6.0.1",
-    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-table": "^9.2.4",
     "@radix-ui/react-alert-dialog": "^1.1.23",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-clipboard-manager": "^2.3.3",

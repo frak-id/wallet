@@ -1,8 +1,7 @@
-import { createColumnHelper } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { DataTable } from "./index";
+import { createDataTableColumnHelper, DataTable } from "./index";
 
 type TestData = {
     id: number;
@@ -10,19 +9,19 @@ type TestData = {
     value: number;
 };
 
-const columnHelper = createColumnHelper<TestData>();
+const columnHelper = createDataTableColumnHelper<TestData>();
 
 const EMPTY_MESSAGE = "No results found";
 
 describe("DataTable", () => {
-    const columns = [
+    const columns = columnHelper.columns([
         columnHelper.accessor("name", {
             header: "Name",
         }),
         columnHelper.accessor("value", {
             header: "Value",
         }),
-    ];
+    ]);
 
     it("should render table with data", () => {
         const data: TestData[] = [
@@ -121,7 +120,7 @@ describe("DataTable", () => {
 });
 
 describe("DataTable sorting", () => {
-    const sortableColumns = [
+    const sortableColumns = columnHelper.columns([
         columnHelper.accessor("name", {
             header: "Name",
         }),
@@ -129,7 +128,7 @@ describe("DataTable sorting", () => {
             header: "Value",
             enableSorting: false,
         }),
-    ];
+    ]);
 
     function renderSortable() {
         const data: TestData[] = [
@@ -159,19 +158,11 @@ describe("DataTable sorting", () => {
         const user = userEvent.setup();
         renderSortable();
 
-        expect(getBodyRowTexts()).toEqual([
-            "Charlie30",
-            "Alpha10",
-            "Bravo20",
-        ]);
+        expect(getBodyRowTexts()).toEqual(["Charlie30", "Alpha10", "Bravo20"]);
 
         await user.click(screen.getByRole("button", { name: /Name/ }));
 
-        expect(getBodyRowTexts()).toEqual([
-            "Alpha10",
-            "Bravo20",
-            "Charlie30",
-        ]);
+        expect(getBodyRowTexts()).toEqual(["Alpha10", "Bravo20", "Charlie30"]);
     });
 
     it("sorts descending on second header click", async () => {
@@ -182,11 +173,7 @@ describe("DataTable sorting", () => {
         await user.click(nameHeader);
         await user.click(nameHeader);
 
-        expect(getBodyRowTexts()).toEqual([
-            "Charlie30",
-            "Bravo20",
-            "Alpha10",
-        ]);
+        expect(getBodyRowTexts()).toEqual(["Charlie30", "Bravo20", "Alpha10"]);
     });
 
     it("leaves row order unchanged for a non-sortable column", async () => {
@@ -200,11 +187,7 @@ describe("DataTable sorting", () => {
         const user = userEvent.setup();
         await user.click(valueHeader);
 
-        expect(getBodyRowTexts()).toEqual([
-            "Charlie30",
-            "Alpha10",
-            "Bravo20",
-        ]);
+        expect(getBodyRowTexts()).toEqual(["Charlie30", "Alpha10", "Bravo20"]);
     });
 
     it("sorts nullable numeric values with a custom comparator, nulls last in both directions", async () => {
@@ -213,14 +196,15 @@ describe("DataTable sorting", () => {
             label: string;
             score: number | null;
         };
-        const nullableColumnHelper = createColumnHelper<NullableData>();
-        const nullableColumns = [
+        const nullableColumnHelper =
+            createDataTableColumnHelper<NullableData>();
+        const nullableColumns = nullableColumnHelper.columns([
             nullableColumnHelper.accessor("label", {
                 header: "Label",
             }),
             nullableColumnHelper.accessor("score", {
                 header: "Score",
-                sortingFn: (rowA, rowB) => {
+                sortFn: (rowA, rowB) => {
                     const a = rowA.original.score;
                     const b = rowB.original.score;
                     if (a == null && b == null) return 0;
@@ -229,7 +213,7 @@ describe("DataTable sorting", () => {
                     return a - b;
                 },
             }),
-        ];
+        ]);
         const data: NullableData[] = [
             { id: 1, label: "Five", score: 5 },
             { id: 2, label: "NullA", score: null },
@@ -267,6 +251,72 @@ describe("DataTable sorting", () => {
             "Five5",
             "NullA",
             "NullB",
+        ]);
+    });
+});
+
+describe("DataTable filtering and auto-sort registration", () => {
+    const autoColumns = columnHelper.columns([
+        columnHelper.accessor("name", {
+            header: "Name",
+        }),
+        columnHelper.accessor("value", {
+            header: "Value",
+        }),
+    ]);
+
+    function getBodyRowTexts() {
+        return screen
+            .getAllByRole("row")
+            .slice(1)
+            .map((row) => row.textContent);
+    }
+
+    it("filters rows on a column with no explicit filterFn", () => {
+        const data: TestData[] = [
+            { id: 1, name: "apple", value: 1 },
+            { id: 2, name: "Banana", value: 2 },
+            { id: 3, name: "cherry", value: 3 },
+        ];
+
+        render(
+            <DataTable
+                data={data}
+                columns={autoColumns}
+                emptyMessage={EMPTY_MESSAGE}
+                enableFiltering={true}
+                columnFilters={[{ id: "name", value: "an" }]}
+            />
+        );
+
+        expect(getBodyRowTexts()).toEqual(["Banana2"]);
+    });
+
+    it("sorts a column with no explicit sortFn using natural, case-insensitive order", async () => {
+        const user = userEvent.setup();
+        const data: TestData[] = [
+            { id: 1, name: "Item 10", value: 10 },
+            { id: 2, name: "Item 9", value: 9 },
+            { id: 3, name: "apple", value: 1 },
+            { id: 4, name: "Banana", value: 2 },
+        ];
+
+        render(
+            <DataTable
+                data={data}
+                columns={autoColumns}
+                emptyMessage={EMPTY_MESSAGE}
+                enableSorting={true}
+            />
+        );
+
+        await user.click(screen.getByRole("button", { name: /Name/ }));
+
+        expect(getBodyRowTexts()).toEqual([
+            "apple1",
+            "Banana2",
+            "Item 99",
+            "Item 1010",
         ]);
     });
 });
