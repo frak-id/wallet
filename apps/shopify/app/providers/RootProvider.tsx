@@ -3,6 +3,7 @@ import { QueryClient } from "@tanstack/react-query";
 import {
     PersistQueryClientProvider,
     type PersistQueryClientProviderProps,
+    removeOldestQuery,
 } from "@tanstack/react-query-persist-client";
 import { type PropsWithChildren, useState } from "react";
 import { ClientOnly } from "remix-utils/client-only";
@@ -17,6 +18,8 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
             typeof window !== "undefined" ? window.localStorage : undefined,
         // Throttle for 50ms to prevent storage spamming
         throttleTime: 50,
+        // Without this a full quota leaves the cache unwritable for good.
+        retry: removeOldestQuery,
     }),
     maxAge: Number.POSITIVE_INFINITY,
     dehydrateOptions: {
