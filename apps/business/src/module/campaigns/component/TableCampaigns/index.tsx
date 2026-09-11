@@ -1,7 +1,10 @@
-import { DataTable } from "@frak-labs/design-system/components/DataTable";
+import {
+    DataTable,
+    type DataTableRow,
+} from "@frak-labs/design-system/components/DataTable";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { getRouteApi } from "@tanstack/react-router";
-import type { ColumnFiltersState, Row } from "@tanstack/react-table";
+import type { ColumnFiltersState } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CampaignDetailsSheet } from "@/module/campaigns/component/CampaignDetailsSheet";
@@ -47,7 +50,7 @@ export function TableCampaigns() {
 
     const rowDataAttributes = useMemo(
         () => ({
-            "data-selected": (row: Row<CampaignWithStats>) =>
+            "data-selected": (row: DataTableRow<CampaignWithStats>) =>
                 selectedIds.has(row.original.id) ? "true" : undefined,
         }),
         [selectedIds]

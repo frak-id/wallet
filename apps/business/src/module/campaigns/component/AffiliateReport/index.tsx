@@ -10,14 +10,16 @@ import {
     ChartTooltip,
     NumericYAxis,
 } from "@frak-labs/design-system/components/charts";
-import { DataTable } from "@frak-labs/design-system/components/DataTable";
+import {
+    createDataTableColumnHelper,
+    DataTable,
+} from "@frak-labs/design-system/components/DataTable";
 import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import { vars } from "@frak-labs/design-system/theme";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { KpiCard } from "@/module/campaigns/component/KpiCard";
@@ -247,7 +249,7 @@ function ActionBreakdownCard({
 
 type RevenueRow = AffiliateActionsReport["revenue"][number];
 
-const revenueColumnHelper = createColumnHelper<RevenueRow>();
+const revenueColumnHelper = createDataTableColumnHelper<RevenueRow>();
 
 function RevenueCard({
     revenue,
@@ -260,7 +262,7 @@ function RevenueCard({
 
     const columns = useMemo(
         () =>
-            [
+            revenueColumnHelper.columns([
                 revenueColumnHelper.accessor("currencyCode", {
                     header: t("campaigns.affiliateReport.revenue.currency"),
                     cell: ({ getValue }) => getValue(),
@@ -283,7 +285,7 @@ function RevenueCard({
                         }).format(getValue()),
                     meta: { align: "right" },
                 }),
-            ] as ColumnDef<RevenueRow>[],
+            ]),
         [t, locale]
     );
 

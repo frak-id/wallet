@@ -4,16 +4,18 @@ import type {
 } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Card } from "@frak-labs/design-system/components/Card";
-import { DataTable } from "@frak-labs/design-system/components/DataTable";
+import {
+    createDataTableColumnHelper,
+    DataTable,
+} from "@frak-labs/design-system/components/DataTable";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { EMPTY_AMOUNT } from "../constants";
 import { StatusLegendBar } from "./StatusLegendBar";
 
-const columnHelper = createColumnHelper<OverviewTopCampaign>();
+const columnHelper = createDataTableColumnHelper<OverviewTopCampaign>();
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 
@@ -50,7 +52,7 @@ export function TopCampaignsCard({
     const { t } = useTranslation();
     const columns = useMemo(
         () =>
-            [
+            columnHelper.columns([
                 columnHelper.display({
                     id: "rank",
                     size: 40,
@@ -108,7 +110,7 @@ export function TopCampaignsCard({
                     },
                     meta: { align: "right" },
                 }),
-            ] as ColumnDef<OverviewTopCampaign>[],
+            ]),
         [t]
     );
 

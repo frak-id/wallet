@@ -1,6 +1,9 @@
+import {
+    createDataTableColumnHelper,
+    type DataTableColumnDef,
+    type DataTableRow,
+} from "@frak-labs/design-system/components/DataTable";
 import { Text } from "@frak-labs/design-system/components/Text";
-import type { ColumnDef, Row } from "@tanstack/react-table";
-import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import type { DateRange } from "react-day-picker";
 import { useTranslation } from "react-i18next";
@@ -17,7 +20,7 @@ import { CellSelect, HeaderSelect } from "./CellSelect";
 import { MutedText } from "./MutedText";
 import * as styles from "./table-campaigns.css";
 
-const columnHelper = createColumnHelper<CampaignWithStats>();
+const columnHelper = createDataTableColumnHelper<CampaignWithStats>();
 
 function sortNullableNumber(a?: number | null, b?: number | null): number {
     if (a == null && b == null) return 0;
@@ -37,11 +40,11 @@ export function useCampaignColumns({
     merchantId,
 }: {
     merchantId: string;
-}): ColumnDef<CampaignWithStats>[] {
+}): DataTableColumnDef<CampaignWithStats>[] {
     const { t } = useTranslation();
     return useMemo(
         () =>
-            [
+            columnHelper.columns([
                 columnHelper.display({
                     id: "select",
                     size: 40,
@@ -78,23 +81,28 @@ export function useCampaignColumns({
                 {
                     id: "date",
                     size: 120,
+                    sortDescFirst: true,
                     header: () => t("campaigns.table.published"),
                     accessorFn: (row: CampaignWithStats) => row.publishedAt,
-                    cell: ({ row }: { row: Row<CampaignWithStats> }) => {
+                    cell: ({
+                        row,
+                    }: {
+                        row: DataTableRow<CampaignWithStats>;
+                    }) => {
                         const published = row.original.publishedAt;
                         if (!published) return <MutedText>–</MutedText>;
                         return formatDate(new Date(published));
                     },
-                    sortingFn: (
-                        a: Row<CampaignWithStats>,
-                        b: Row<CampaignWithStats>
+                    sortFn: (
+                        a: DataTableRow<CampaignWithStats>,
+                        b: DataTableRow<CampaignWithStats>
                     ) =>
                         sortNullableDate(
                             a.original.publishedAt,
                             b.original.publishedAt
                         ),
                     filterFn: (
-                        row: Row<CampaignWithStats>,
+                        row: DataTableRow<CampaignWithStats>,
                         _: string,
                         value: DateRange
                     ) => {
@@ -112,9 +120,14 @@ export function useCampaignColumns({
                 {
                     id: "endDate",
                     size: 130,
+                    sortDescFirst: true,
                     header: () => t("campaigns.table.endDate"),
                     accessorFn: (row: CampaignWithStats) => row.expiresAt,
-                    cell: ({ row }: { row: Row<CampaignWithStats> }) => {
+                    cell: ({
+                        row,
+                    }: {
+                        row: DataTableRow<CampaignWithStats>;
+                    }) => {
                         const expires = row.original.expiresAt;
                         if (!expires)
                             return (
@@ -124,9 +137,9 @@ export function useCampaignColumns({
                             );
                         return formatDate(new Date(expires));
                     },
-                    sortingFn: (
-                        a: Row<CampaignWithStats>,
-                        b: Row<CampaignWithStats>
+                    sortFn: (
+                        a: DataTableRow<CampaignWithStats>,
+                        b: DataTableRow<CampaignWithStats>
                     ) =>
                         sortNullableDate(
                             a.original.expiresAt,
@@ -140,7 +153,11 @@ export function useCampaignColumns({
                     header: () => t("campaigns.table.sharingRate"),
                     accessorFn: (row: CampaignWithStats) =>
                         row.stats?.sharingRate ?? null,
-                    cell: ({ row }: { row: Row<CampaignWithStats> }) => {
+                    cell: ({
+                        row,
+                    }: {
+                        row: DataTableRow<CampaignWithStats>;
+                    }) => {
                         const value = row.original.stats?.sharingRate;
                         if (value == null) return <MutedText>–</MutedText>;
                         return (
@@ -149,9 +166,9 @@ export function useCampaignColumns({
                             </Text>
                         );
                     },
-                    sortingFn: (
-                        a: Row<CampaignWithStats>,
-                        b: Row<CampaignWithStats>
+                    sortFn: (
+                        a: DataTableRow<CampaignWithStats>,
+                        b: DataTableRow<CampaignWithStats>
                     ) =>
                         sortNullableNumber(
                             a.original.stats?.sharingRate,
@@ -165,7 +182,11 @@ export function useCampaignColumns({
                     header: () => t("campaigns.table.ctr"),
                     accessorFn: (row: CampaignWithStats) =>
                         row.stats?.ctr ?? null,
-                    cell: ({ row }: { row: Row<CampaignWithStats> }) => {
+                    cell: ({
+                        row,
+                    }: {
+                        row: DataTableRow<CampaignWithStats>;
+                    }) => {
                         const value = row.original.stats?.ctr;
                         if (value == null) return <MutedText>–</MutedText>;
                         return (
@@ -174,9 +195,9 @@ export function useCampaignColumns({
                             </Text>
                         );
                     },
-                    sortingFn: (
-                        a: Row<CampaignWithStats>,
-                        b: Row<CampaignWithStats>
+                    sortFn: (
+                        a: DataTableRow<CampaignWithStats>,
+                        b: DataTableRow<CampaignWithStats>
                     ) =>
                         sortNullableNumber(
                             a.original.stats?.ctr,
@@ -190,7 +211,11 @@ export function useCampaignColumns({
                     header: () => t("campaigns.table.revenue"),
                     accessorFn: (row: CampaignWithStats) =>
                         row.stats?.attributedRevenue ?? null,
-                    cell: ({ row }: { row: Row<CampaignWithStats> }) => {
+                    cell: ({
+                        row,
+                    }: {
+                        row: DataTableRow<CampaignWithStats>;
+                    }) => {
                         const value = row.original.stats?.attributedRevenue;
                         if (value == null) return <MutedText>–</MutedText>;
                         return (
@@ -204,9 +229,9 @@ export function useCampaignColumns({
                             </Text>
                         );
                     },
-                    sortingFn: (
-                        a: Row<CampaignWithStats>,
-                        b: Row<CampaignWithStats>
+                    sortFn: (
+                        a: DataTableRow<CampaignWithStats>,
+                        b: DataTableRow<CampaignWithStats>
                     ) =>
                         sortNullableNumber(
                             a.original.stats?.attributedRevenue,
@@ -218,7 +243,7 @@ export function useCampaignColumns({
                     meta: { align: "right" as const },
                     header: () => t("campaigns.table.budgetSpend"),
                     cell: ({ row }) => <CellBudget row={row} />,
-                    sortingFn: (a, b) =>
+                    sortFn: (a, b) =>
                         sortNullableNumber(
                             a.original.budgetConfig?.[0]?.amount,
                             b.original.budgetConfig?.[0]?.amount
@@ -234,7 +259,7 @@ export function useCampaignColumns({
                         </div>
                     ),
                 }),
-            ] as ColumnDef<CampaignWithStats>[],
+            ]),
         [t, merchantId]
     );
 }

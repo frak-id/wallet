@@ -1,13 +1,12 @@
 import { formatAmount } from "@frak-labs/core-sdk";
-import { DataTable } from "@frak-labs/design-system/components/DataTable";
+import {
+    createDataTableColumnHelper,
+    DataTable,
+} from "@frak-labs/design-system/components/DataTable";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import {
-    type ColumnDef,
-    createColumnHelper,
-    type SortingState,
-} from "@tanstack/react-table";
+import type { SortingState } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
@@ -23,7 +22,7 @@ import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
 import { currencyStore } from "@/stores/currencyStore";
 import { membersStore } from "@/stores/membersStore";
 
-const columnHelper = createColumnHelper<GetMembersPageItem>();
+const columnHelper = createDataTableColumnHelper<GetMembersPageItem>();
 
 /**
  * Table of all the members components
@@ -109,7 +108,7 @@ export function TableMembers() {
     // Build our columns
     const columns = useMemo(
         () =>
-            [
+            columnHelper.columns([
                 columnHelper.accessor("user", {
                     enableSorting: true,
                     header: () => t("members.columns.wallet"),
@@ -143,7 +142,7 @@ export function TableMembers() {
                         }),
                     cell: ({ getValue }) => formatAmount(getValue(), currency),
                 }),
-            ] as ColumnDef<GetMembersPageItem>[],
+            ]),
         [currency, t]
     );
 
