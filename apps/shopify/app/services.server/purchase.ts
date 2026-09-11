@@ -104,7 +104,7 @@ export async function startupPurchase(
                     currencyCode:
                         info.preferredCurrency?.toUpperCase() ?? "EUR",
                 },
-                test: process.env.STAGE !== "prod",
+                test: !isProd(),
             },
         }
     );
