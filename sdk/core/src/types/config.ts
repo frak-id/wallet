@@ -137,7 +137,10 @@ export type FrakWalletSdkConfig = {
  *      "sdk.modal.title": "Titre de modal",
  *      "sdk.modal.description": "Description de modal, avec {{ estimatedReward }} de gains possible",
  *  },
- *  en: "https://example.com/en.json"
+ *  en: {
+ *      "sdk.modal.title": "Modal title",
+ *      "sdk.modal.description": "Modal description, with {{ estimatedReward }} of gains possible",
+ *  }
  * }
  *
  * // Single language config
@@ -160,7 +163,7 @@ export type I18nConfig =
 export type ListenerPreloadOption = "modal" | "sharing";
 
 /**
- * A localized i18n config (inline objects only — URL-based i18n removed)
+ * A localized i18n config (inline objects only, never a URL)
  * @category Config
  */
 export type LocalizedI18nConfig = { [key: string]: string };

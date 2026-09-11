@@ -52,17 +52,12 @@ const bootstrapJob = new KubernetesJob("ElysiaBootstrap", {
 
 const legacyDomain = isProd ? "backend.frak.id" : "backend-dev.frak.id";
 
-/**
- * Deploy elysia using the new service
- */
 export const backendInstance = new KubernetesService(
     "Elysia",
     {
-        // Global config
         namespace: walletNamespace.metadata.name,
         appLabels,
 
-        // Pod config
         pod: {
             containers: [
                 {
@@ -80,13 +75,11 @@ export const backendInstance = new KubernetesService(
                             value: "419430400",
                         },
                     ],
-                    // Mount all the secrets
                     envFrom: [
                         {
                             secretRef: { name: elysiaSecrets.metadata.name },
                         },
                     ],
-                    // Add liveness probe
                     livenessProbe: {
                         httpGet: {
                             path: "/health",
@@ -97,7 +90,6 @@ export const backendInstance = new KubernetesService(
                         timeoutSeconds: 5,
                         failureThreshold: 3,
                     },
-                    // Add readiness probe
                     readinessProbe: {
                         httpGet: {
                             path: "/health",
@@ -108,7 +100,6 @@ export const backendInstance = new KubernetesService(
                         timeoutSeconds: 3,
                         failureThreshold: 2,
                     },
-                    // Ressources requests/limits
                     resources: {
                         requests: {
                             cpu: isProd ? "200m" : "50m",
@@ -120,7 +111,6 @@ export const backendInstance = new KubernetesService(
             ],
         },
 
-        // Service config
         service: {
             ports: [
                 { port: 80, targetPort: 3030, protocol: "TCP", name: "http" },
@@ -135,7 +125,6 @@ export const backendInstance = new KubernetesService(
             ],
         },
 
-        // HPA config
         hpa: {
             min: 1,
             max: 2,
@@ -143,7 +132,6 @@ export const backendInstance = new KubernetesService(
             cpuUtilization: 120,
         },
 
-        // Ingress config
         ingress: {
             host: domainName,
             tlsSecretName: "elysia-tls",

@@ -1,14 +1,6 @@
-import { Binary } from "mongodb";
 import { fetchMongoByIds, fetchMongoIds } from "./mongo";
 import { fetchSqldByIds, fetchSqldIds, type SqldRow } from "./sqld";
-import type { MongoAuthenticator } from "./types";
-
-function toBase64(value: Binary | Buffer | Uint8Array | string): string {
-    if (typeof value === "string") return value;
-    if (value instanceof Binary)
-        return Buffer.from(value.buffer).toString("base64");
-    return Buffer.from(value).toString("base64");
-}
+import { type MongoAuthenticator, toBase64 } from "./types";
 
 function getMismatches(mongo: MongoAuthenticator, sqld: SqldRow): string[] {
     const mismatches: string[] = [];

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthenticatedContext } from "../types/context";
 import {
-    getFrakWebookStatus,
+    getFrakWebhookStatus,
     getMerchantBankStatus,
     getMerchantCampaigns,
     setupFrakWebhook,
@@ -24,17 +24,9 @@ vi.mock("../utils/backendApi", () => ({
 import { backendApi } from "../utils/backendApi";
 import { resolveMerchantId } from "./merchant";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function makeRequest(url: string, headers?: Record<string, string>): Request {
     return new Request(url, headers ? { headers } : undefined);
 }
-
-// ---------------------------------------------------------------------------
-// setupFrakWebhook
-// ---------------------------------------------------------------------------
 
 describe("setupFrakWebhook", () => {
     const mockContext = {} as AuthenticatedContext;
@@ -168,10 +160,6 @@ describe("setupFrakWebhook", () => {
         });
     });
 });
-
-// ---------------------------------------------------------------------------
-// getMerchantCampaigns
-// ---------------------------------------------------------------------------
 
 describe("getMerchantCampaigns", () => {
     const mockContext = {} as AuthenticatedContext;
@@ -341,10 +329,6 @@ describe("getMerchantCampaigns", () => {
     });
 });
 
-// ---------------------------------------------------------------------------
-// getMerchantBankStatus
-// ---------------------------------------------------------------------------
-
 describe("getMerchantBankStatus", () => {
     const mockContext = {} as AuthenticatedContext;
 
@@ -463,11 +447,7 @@ describe("getMerchantBankStatus", () => {
     });
 });
 
-// ---------------------------------------------------------------------------
-// getFrakWebookStatus
-// ---------------------------------------------------------------------------
-
-describe("getFrakWebookStatus", () => {
+describe("getFrakWebhookStatus", () => {
     const mockContext = {} as AuthenticatedContext;
 
     beforeEach(() => {
@@ -477,7 +457,7 @@ describe("getFrakWebookStatus", () => {
     it("should return setup:false when merchant not found", async () => {
         vi.mocked(resolveMerchantId).mockResolvedValue(null);
 
-        const result = await getFrakWebookStatus(
+        const result = await getFrakWebhookStatus(
             mockContext,
             makeRequest("https://test.myshopify.com/app")
         );
@@ -501,7 +481,7 @@ describe("getFrakWebookStatus", () => {
             webhooks: { get: mockGet },
         } as any);
 
-        const result = await getFrakWebookStatus(
+        const result = await getFrakWebhookStatus(
             mockContext,
             makeRequest("https://test.myshopify.com/app", {
                 authorization: "Bearer wh-token",
@@ -524,7 +504,7 @@ describe("getFrakWebookStatus", () => {
             webhooks: { get: mockGet },
         } as any);
 
-        const result = await getFrakWebookStatus(
+        const result = await getFrakWebhookStatus(
             mockContext,
             makeRequest("https://test.myshopify.com/app")
         );
@@ -542,7 +522,7 @@ describe("getFrakWebookStatus", () => {
             webhooks: { get: mockGet },
         } as any);
 
-        const result = await getFrakWebookStatus(
+        const result = await getFrakWebhookStatus(
             mockContext,
             makeRequest("https://test.myshopify.com/app")
         );
@@ -560,7 +540,7 @@ describe("getFrakWebookStatus", () => {
             webhooks: { get: mockGet },
         } as any);
 
-        const result = await getFrakWebookStatus(
+        const result = await getFrakWebhookStatus(
             mockContext,
             makeRequest("https://test.myshopify.com/app")
         );
@@ -581,7 +561,7 @@ describe("getFrakWebookStatus", () => {
             webhooks: { get: mockGet },
         } as any);
 
-        await getFrakWebookStatus(
+        await getFrakWebhookStatus(
             mockContext,
             makeRequest("https://test.myshopify.com/app")
         );
@@ -599,7 +579,7 @@ describe("getFrakWebookStatus", () => {
             webhooks: { get: mockGet },
         } as any);
 
-        await getFrakWebookStatus(
+        await getFrakWebhookStatus(
             mockContext,
             makeRequest(
                 "https://test.myshopify.com/app?id_token=wh-param-token"

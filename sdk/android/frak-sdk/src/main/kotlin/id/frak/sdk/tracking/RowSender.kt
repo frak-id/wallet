@@ -23,8 +23,8 @@ internal fun clientIdHeaders(row: QueuedRow): Map<String, String> =
 
 /**
  * The retry/reject boundary, in one place for every sender: 429 and 5xx ask for later, anything
- * else non-2xx is a verdict. Lived in three copies once, which is one drift away from a kind that
- * spends its failure cap on an outage — the bug this queue exists to prevent.
+ * else non-2xx is a verdict. A second copy is one drift away from a kind that spends its failure
+ * cap on an outage.
  */
 internal fun classifyStatus(response: HttpClient.Response): DeliveryOutcome =
     when {

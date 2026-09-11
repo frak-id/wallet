@@ -9,25 +9,6 @@ describe("CallOut", () => {
         expect(screen.getByText("Call out text")).toBeInTheDocument();
     });
 
-    it("should render all variants", () => {
-        const variants = [
-            "primary",
-            "secondary",
-            "success",
-            "danger",
-            "information",
-            "warning",
-        ] as const;
-
-        variants.forEach((variant) => {
-            const { unmount } = render(
-                <CallOut variant={variant}>Call out</CallOut>
-            );
-            expect(screen.getByText("Call out")).toBeInTheDocument();
-            unmount();
-        });
-    });
-
     it("should render as paragraph element", () => {
         const { container } = render(<CallOut>Content</CallOut>);
 
@@ -42,13 +23,6 @@ describe("CallOut", () => {
 
         const callOut = container.querySelector("p");
         expect(callOut).toHaveClass("custom-callout");
-    });
-
-    it("should default to primary variant", () => {
-        const { container } = render(<CallOut>Content</CallOut>);
-
-        const callOut = container.querySelector("p");
-        expect(callOut).toBeInTheDocument();
     });
 
     it("should render with ReactNode children", () => {

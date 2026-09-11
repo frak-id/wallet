@@ -19,7 +19,7 @@ export const arbitrumSepoliaChainId = 421614 as const;
 
 /**
  * Every chain id the platform recognises for authenticator ↔ wallet bindings.
- * Order is stable so iterating produces deterministic ouptut (mainnet first).
+ * Order is stable so iterating produces deterministic output (mainnet first).
  */
 export const frakChainIds = [arbitrumChainId, arbitrumSepoliaChainId] as const;
 

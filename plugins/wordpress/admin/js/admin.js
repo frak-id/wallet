@@ -336,12 +336,7 @@
 		try {
 			init();
 		} catch ( initError ) {
-			// Surface silently-swallowed init errors (missing DOM node, runtime
-			// exception in one of the listeners) so the admin can at least see
-			// why the page’s buttons aren’t wired.
-			if ( window.console && window.console.error ) {
-				window.console.error( 'Frak admin init failed:', initError );
-			}
+			window.console.error( 'Frak admin init failed:', initError );
 		}
 	}
 

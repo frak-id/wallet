@@ -45,8 +45,8 @@ function toDay(value: string): string {
     return value.slice(0, 10);
 }
 
-/** Resolve the `from`/`to` window, defaulting to the last 30 days. */
-function resolveWindow(query: { from?: string; to?: string }): {
+/** Resolve the `from`/`to` report window, defaulting to the last 30 days. */
+function resolveReportWindow(query: { from?: string; to?: string }): {
     from: string;
     to: string;
 } {
@@ -79,7 +79,7 @@ export class AffiliateReportingOrchestrator {
             await this.affiliateBrandRepository.findByMerchantId(merchantId);
         if (!brand) return null;
 
-        const window = resolveWindow(query);
+        const window = resolveReportWindow(query);
         const client = this.clientFactory();
 
         const [actions, clicks] = await Promise.all([

@@ -1,3 +1,4 @@
+import { sha256Hex } from "@backend-utils";
 import { generateTOTP } from "@oslojs/otp";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminWalletsRepository } from "../../../infrastructure/keys/AdminWalletsRepository";
@@ -200,17 +201,11 @@ describe("TotpService", () => {
             const encryptedSecret =
                 repository.setPendingTotp.mock.calls[0][0].encryptedSecret;
 
-            // sha256("aabbccddee") lowercased-hex — computed via the service's
-            // own hashing by activating and replaying is complex; instead
-            // verify via the public contract: an unknown code fails.
             repository.findById.mockResolvedValue({
                 id: ACCOUNT_ID,
                 totpSecretEnc: encryptedSecret,
                 totpActivatedAt: new Date(),
-                totpRecoveryCodesHash: [
-                    // sha256 of "aabbccddee"
-                    computeSha256Hex("aabbccddee"),
-                ],
+                totpRecoveryCodesHash: [sha256Hex("aabbccddee")],
                 twoFactorAttempts: 0,
                 twoFactorWindowStartedAt: null,
             });
@@ -218,7 +213,7 @@ describe("TotpService", () => {
             // (§1.7): the service just delegates and trusts the boolean.
             repository.consumeTotpRecoveryCode.mockImplementation(
                 async (_id: string, hash: string) =>
-                    hash === computeSha256Hex("aabbccddee")
+                    hash === sha256Hex("aabbccddee")
             );
 
             expect(
@@ -229,7 +224,7 @@ describe("TotpService", () => {
             ).toBe(true);
             expect(repository.consumeTotpRecoveryCode).toHaveBeenCalledWith(
                 ACCOUNT_ID,
-                computeSha256Hex("aabbccddee")
+                sha256Hex("aabbccddee")
             );
             expect(repository.resetTwoFactorAttempts).toHaveBeenCalled();
 
@@ -302,7 +297,7 @@ describe("TotpService", () => {
                 id: ACCOUNT_ID,
                 totpSecretEnc: encryptedSecret,
                 totpActivatedAt: new Date(),
-                totpRecoveryCodesHash: [computeSha256Hex("aabbccddee")],
+                totpRecoveryCodesHash: [sha256Hex("aabbccddee")],
                 twoFactorAttempts: 0,
                 twoFactorWindowStartedAt: null,
             });
@@ -330,8 +325,6 @@ describe("TotpService", () => {
     });
 });
 
-// -- helpers -----------------------------------------------------------------
-
 const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
 function base32Decode(encoded: string): Uint8Array {
@@ -348,12 +341,4 @@ function base32Decode(encoded: string): Uint8Array {
         }
     }
     return new Uint8Array(output);
-}
-
-function computeSha256Hex(input: string): string {
-    // Same normalization + hashing as TotpService.hashRecoveryCode
-    const { createHash } = require("node:crypto");
-    return createHash("sha256")
-        .update(input.trim().toLowerCase())
-        .digest("hex");
 }

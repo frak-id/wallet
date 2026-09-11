@@ -4,9 +4,6 @@ import type { i18n as I18nType } from "i18next";
 
 /**
  * Map an i18n config to a localized i18n config
- * @param value
- * @param i18n
- * @returns
  */
 export async function mapI18nConfig(value: I18nConfig, i18n: I18nType) {
     // If it's directly a localized config, handle it
@@ -46,9 +43,7 @@ export async function mapI18nConfig(value: I18nConfig, i18n: I18nType) {
 type NestedStringRecord = { [key: string]: NestedStringRecord | string };
 
 /**
- * Map an i18n config to a localized i18n config
- * @param value
- * @returns
+ * Map a localized i18n config (inline object, or a URL to fetch) to resources.
  */
 async function mapLocalizedI18nConfig(value: LocalizedI18nConfig) {
     // The resources we will add
@@ -76,9 +71,6 @@ async function mapLocalizedI18nConfig(value: LocalizedI18nConfig) {
 
 /**
  * Check if a value is a localized i18n config
- * @param value
- * @param i18n
- * @returns
  */
 function isLocalizedConfig(
     value: I18nConfig,

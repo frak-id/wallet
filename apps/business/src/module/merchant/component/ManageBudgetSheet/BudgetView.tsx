@@ -33,9 +33,9 @@ export function BudgetView({
     const { t } = useTranslation();
     const { data, isLoading, isError } = useGetMerchantBank({ merchantId });
     // `managerRole === "no_wallet"` (server-derived) is the source of truth
-    // for manager status; `canOnchain` (client-side session signal, §4.9) is
-    // a redundant client-only check that shows the same CTA immediately after
-    // logout/session changes, before a bank refetch would otherwise catch up.
+    // for manager status; `canOnchain` is a redundant client-only check that
+    // shows the same CTA immediately after a session change, before a bank
+    // refetch would otherwise catch up.
     const { canOnchain } = useCapabilities();
 
     if (isLoading) {

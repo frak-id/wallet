@@ -1,8 +1,3 @@
-/**
- * Tests for useReferralInteraction hook
- * Tests automatic referral interaction submission
- */
-
 import { vi } from "vitest";
 
 vi.mock("@frak-labs/core-sdk/actions");

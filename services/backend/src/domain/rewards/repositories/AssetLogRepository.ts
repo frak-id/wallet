@@ -322,7 +322,7 @@ export class AssetLogRepository {
 
         const now = new Date();
         const updateData: Partial<AssetLogInsert> = {
-            status: status as AssetStatus,
+            status,
             statusChangedAt: now,
         };
 

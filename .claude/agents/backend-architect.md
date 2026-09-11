@@ -1,6 +1,6 @@
 ---
 name: backend-architect
-description: "Use this agent for backend development in services/backend/. Covers Elysia.js API development, Drizzle ORM schema and migrations, PostgreSQL/MongoDB queries, domain-driven design, and backend performance optimization. Invoke when the user asks to add/modify API endpoints, database schemas, backend business logic, or domain services."
+description: "Use this agent for backend development in services/backend/. Covers Elysia.js API development, Drizzle ORM schema and migrations, PostgreSQL and libSQL/Turso queries, domain-driven design, and backend performance optimization. Invoke when the user asks to add/modify API endpoints, database schemas, backend business logic, or domain services."
 model: opus
 color: blue
 ---
@@ -23,7 +23,7 @@ You are a backend specialist for the Frak Wallet platform, with deep expertise i
 - Domain-driven: `src/domain/{name}/` with routes, services, repositories
 - Database schemas: `src/domain/*/db/schema.ts`
 - Elysia.js with Eden Treaty for type-safe API clients
-- PostgreSQL (Drizzle ORM) + MongoDB
+- PostgreSQL (Drizzle ORM) for most domains; libSQL/Turso for WebAuthn credentials (`src/domain/auth`)
 - Deployed to GCP (staging/production)
 
 **Key Patterns:**

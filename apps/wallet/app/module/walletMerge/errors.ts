@@ -1,15 +1,7 @@
 /**
- * Error codes surfaced inside the wallet-merge feature. Centralised so
- * SettlingStep's recovery switch, the strategies, and the per-step hooks
- * reference a single source of truth.
- *
- * Two groups:
- *  - `Client*` codes are thrown by code in this app (hooks, components).
- *  - `Server*` codes are surfaced verbatim from the backend (typically
- *    via `/merge/settle`); they cross the network as plain strings and
- *    we string-match them in SettlingStep to map onto recovery actions.
- *    See `services/backend/.../WalletMergeOrchestrator.ts` for the
- *    backend source-of-truth.
+ * Error codes surfaced inside the wallet-merge feature. The last three cross
+ * the network verbatim from `WalletMergeOrchestrator` and are string-matched
+ * in SettlingStep, so their values are a wire contract.
  */
 export const MergeError = {
     AddPassKeyUserOpReverted: "MERGE_ADD_PASSKEY_USER_OP_REVERTED",

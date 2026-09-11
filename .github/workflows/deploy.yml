@@ -157,12 +157,13 @@ jobs:
         run: |
           echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "STAGE=prod" >> $GITHUB_ENV
+            STAGE=prod
           else
-            echo "STAGE=dev" >> $GITHUB_ENV
+            STAGE=dev
           fi
+          echo "STAGE=$STAGE" >> $GITHUB_ENV
 
-          echo "Deployment stage  : ${{ env.STAGE }}"
+          echo "Deployment stage: $STAGE"
 
       - name: "🚀 Deploy Services"
         if: steps.changes.outputs.services == 'true' || github.event.inputs.force_deploy == 'true'

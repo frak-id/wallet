@@ -166,9 +166,6 @@ describe("ButtonShare", () => {
     it.each(["share-modal", "embedded-wallet"])(
         "should route legacy %s clickAction to openSharingPage",
         async (legacyClickAction) => {
-            // Both values were retired in favour of `displaySharingPage`;
-            // existing merchant configs still ship those strings so the
-            // component must gracefully fall through to the sharing-page UI.
             render(<ButtonShare clickAction={legacyClickAction} />);
             const button = screen.getByRole("button");
 

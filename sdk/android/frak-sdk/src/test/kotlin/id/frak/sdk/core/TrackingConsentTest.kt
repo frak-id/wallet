@@ -53,10 +53,6 @@ class TrackingConsentTest {
             assertTrue(consent(store).isEnabled())
         }
 
-    /**
-     * The obvious "simplification" — letting the persisted value win outright — would silently
-     * turn the SDK on inside a merchant's staged-rollout build.
-     */
     @Test
     fun `a persisted grant can never lift a compile-time trackingEnabled false`() =
         runTest {
@@ -83,11 +79,6 @@ class TrackingConsentTest {
             assertEquals("granted", store.getString("tracking-consent"))
         }
 
-    /**
-     * A half-written value is not a denial. Failing towards "off" here would turn one corrupt
-     * preferences entry into an install that never tracks again. The opposite case — a read that
-     * throws — is the test below, and the two answers differ on purpose.
-     */
     @Test
     fun `an unrecognised stored value follows the config rather than reading as a denial`() =
         runTest {
@@ -98,13 +89,7 @@ class TrackingConsentTest {
             assertFalse(consent(store, configDefault = false).isEnabled())
         }
 
-    /**
-     * A read we could not perform is not consent. `runCatching { store.getString(KEY) }.getOrNull()
-     * != DENIED` collapses "key absent" and "the read threw" into the same `null`, turning a
-     * recorded denial into "tracking on" for the whole process on a corrupted preferences file or
-     * a locked direct-boot user. Retryable, not sticky: the second call sees the denial that was
-     * there all along.
-     */
+    // Retryable, not sticky: the second call sees the denial that was there all along.
     @Test
     fun `a read that throws answers no consent and is never memoised`() =
         runTest {

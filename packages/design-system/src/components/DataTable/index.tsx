@@ -112,9 +112,6 @@ export function DataTable<TData extends object>({
 }: DataTableProps<TData>) {
     const [sortingInner, setSortingInner] = useState<SortingState>([]);
 
-    /**
-     * Build the table instance
-     */
     const table = useReactTable({
         data,
         columns,
@@ -347,12 +344,6 @@ function EmptyRow<TData>({
     );
 }
 
-/**
- * Sorting wrapper for headers
- * @param children
- * @param column
- * @constructor
- */
 function Sorting<TData>({
     children,
     ...column

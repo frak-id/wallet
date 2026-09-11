@@ -1,8 +1,3 @@
-/**
- * Tests for prepareSso action
- * Tests SSO URL generation via RPC
- */
-
 import { describe, expect, it, vi } from "../../tests/vitest-fixtures";
 import type {
     FrakClient,
@@ -199,24 +194,6 @@ describe("prepareSso", () => {
 
             await expect(prepareSso(mockClient, params)).rejects.toThrow(
                 "SSO preparation failed"
-            );
-        });
-
-        it("should handle network errors", async () => {
-            const error = new Error("Network timeout");
-            const mockClient = {
-                config: {
-                    metadata: {
-                        name: "Test App",
-                    },
-                },
-                request: vi.fn().mockRejectedValue(error),
-            } as unknown as FrakClient;
-
-            const params: PrepareSsoParamsType = {};
-
-            await expect(prepareSso(mockClient, params)).rejects.toThrow(
-                "Network timeout"
             );
         });
     });

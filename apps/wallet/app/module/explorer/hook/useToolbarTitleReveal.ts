@@ -14,23 +14,11 @@ type ToolbarTitleReveal = {
 };
 
 /**
- * Drive the DetailSheet's two toolbar affordances from scroll position — the
- * sheet counterpart to the Explorer page's in-place title collapse. Both are
- * viewport-based `IntersectionObserver`s whose root top edge is inset by the
- * toolbar band's top offset (the toolbar's own `padding-top`, which resolves to
- * `max(spacing, safe-area inset)` per device), so each flips exactly at the
- * safe-area line — behind the status bar / notch on real devices.
- *
- * - `blurred`: the scroll-edge blur fades in once the hero *picture* passes the
- *   safe-area line, so the large name is softened the moment it scrolls up
- *   behind the status bar rather than showing through sharply. The hero sits
- *   full-bleed behind the notch with the name right beneath it, so this also
- *   frosts the last thin edge of the photo as it leaves — the accepted
- *   trade-off (the spec keeps the blur on in both resting and scrolled states).
- * - `revealed`: the centered toolbar title reveals a beat later, once the large
- *   name itself clears the safe-area line, so the two never overlap.
- *
- * Each is a single boolean toggle at its threshold, not a per-frame re-render.
+ * Drive the DetailSheet's two toolbar affordances from scroll position. Both
+ * are viewport-based `IntersectionObserver`s whose root top edge is inset by
+ * the toolbar band's own `padding-top` (`max(spacing, safe-area inset)`), so
+ * each flips exactly at the safe-area line: `blurred` when the hero picture
+ * crosses it, `revealed` a beat later when the large title does.
  */
 export function useToolbarTitleReveal(): ToolbarTitleReveal {
     const heroRef = useRef<HTMLDivElement>(null);

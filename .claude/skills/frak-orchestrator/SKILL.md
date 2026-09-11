@@ -13,7 +13,7 @@ Routes development tasks to the right specialist agent(s) in the Frak Wallet mon
 
 | Agent | Domain | When to Route |
 |-------|--------|---------------|
-| react-performance-expert | Frontend apps (wallet, business, listener) | React components, hooks, state management, CSS Modules, performance, iframe/postMessage |
+| react-performance-expert | Frontend apps (wallet, business, listener) | React components, hooks, state management, Vanilla Extract styling, performance, iframe/postMessage |
 | sdk-architect | SDK packages (sdk/core, react, components, legacy) | SDK features, API design, framework abstractions, package exports |
 | backend-architect | Backend (services/backend/) | API endpoints, Drizzle schemas, domain services, database queries |
 | shopify-developer | Shopify app (apps/shopify/) | Routes, extensions (post-purchase, web pixel, theme), Shopify GraphQL API, metafields, App Bridge |
@@ -23,14 +23,6 @@ Routes development tasks to the right specialist agent(s) in the Frak Wallet mon
 | feature-plan-analyzer | Plan tracking | Compare implementation against spec, identify remaining work |
 
 ## Workflow
-
-### Phase 0: Context Check
-
-1. Check if `_workspace/` exists in the project root
-2. Determine execution mode:
-   - **No `_workspace/`** → Initial run, proceed to Phase 1
-   - **`_workspace/` exists + user requests modification** → Partial re-run, route only to affected agent(s)
-   - **`_workspace/` exists + new input** → New run, move `_workspace/` to `_workspace_{timestamp}/`
 
 ### Phase 1: Task Analysis
 

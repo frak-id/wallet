@@ -6,11 +6,11 @@ function shellQuote(value: string): string {
 
 const lines = Object.entries(process.env)
     .filter(([key]) => key.startsWith("TO_PRINT_"))
-    .filter(([, value]) => value !== undefined)
+    .filter((entry): entry is [string, string] => entry[1] !== undefined)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(
         ([key, value]) =>
-            `export ${key.replace("TO_PRINT_", "")}=${shellQuote(value ?? "")}`
+            `export ${key.replace("TO_PRINT_", "")}=${shellQuote(value)}`
     );
 
 const content = [

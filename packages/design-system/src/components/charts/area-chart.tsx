@@ -1,4 +1,5 @@
 import { ParentSize } from "@visx/responsive";
+import clsx from "clsx";
 import type { Transition } from "motion/react";
 import {
     Children,
@@ -9,7 +10,6 @@ import {
 } from "react";
 import { Area, type AreaProps } from "./area";
 import type { LineConfig, Margin } from "./chart-context";
-import { cn } from "./lib/utils";
 import { PatternArea } from "./pattern-area";
 import { TimeSeriesChartInner } from "./time-series-chart-shell";
 
@@ -151,7 +151,7 @@ export function AreaChart({
 
     return (
         <div
-            className={cn("frak-chart", "relative w-full", className)}
+            className={clsx("frak-chart", "relative w-full", className)}
             ref={containerRef}
             style={{ aspectRatio, touchAction: "none" }}
         >

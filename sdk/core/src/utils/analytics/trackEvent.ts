@@ -19,7 +19,6 @@ export function trackEvent<K extends keyof SdkEventMap>(
     properties?: SdkEventMap[K]
 ): void {
     if (!client) {
-        console.debug("[Frak] No client provided, skipping event tracking");
         return;
     }
 

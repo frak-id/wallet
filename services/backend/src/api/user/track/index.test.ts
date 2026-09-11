@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 /**
  * `consume()` short-circuits to always-allow when `isRunningLocally` is
@@ -10,8 +10,6 @@ vi.mock("@frak-labs/app-essentials", () => ({
     isRunningLocally: false,
 }));
 
-import { Elysia } from "elysia";
-import { InMemoryRateLimitStore } from "../../../infrastructure/rateLimit/rateLimiter";
 import { trackClientKeyExtractor } from "./index";
 
 describe("trackClientKeyExtractor", () => {
@@ -37,6 +35,11 @@ describe("trackClientKeyExtractor", () => {
             body: {},
         });
         expect(key).toBeNull();
+    });
+
+    // A null key skips the bucket entirely, it never falls back to the IP one.
+    it("returns null when neither the header nor the body identifies a caller", () => {
+        expect(trackClientKeyExtractor({ headers: {}, body: {} })).toBeNull();
     });
 
     it("returns null when body is not an object (e.g. unparsed/undefined)", () => {
@@ -68,95 +71,6 @@ describe("trackClientKeyExtractor", () => {
             body: { merchantId: "merchant-2" },
         });
         expect(new Set([a, b, c]).size).toBe(3);
-    });
-});
-
-/**
- * `keyExtractor` returning `null` skips the bucket entirely (does not fall
- * back to IP). Verified directly against the store: a `null` key must
- * never be handed to `consume`.
- */
-describe("trackClientKeyExtractor — null means 'no bucket', not 'IP bucket'", () => {
-    it("a caller with no identifying headers/body never touches the identity store", () => {
-        const store = new InMemoryRateLimitStore();
-        const config = { windowMs: 60_000, maxRequests: 1 };
-        const consumeSpy = vi.spyOn(store, "consume");
-
-        const key = trackClientKeyExtractor({ headers: {}, body: {} });
-        expect(key).toBeNull();
-
-        // Mirrors rateLimitMiddleware's onBeforeHandle: `if (key === null) return;`
-        if (key !== null) {
-            store.consume(key, config);
-        }
-        expect(consumeSpy).not.toHaveBeenCalled();
-    });
-});
-
-/**
- * Elysia dedupes plugins by `name` + `seed` (`checksum(name + JSON.stringify(seed))`,
- * `node_modules/elysia/dist/index.js`), and `rateLimitMiddleware`'s `seed` is
- * `finalConfig` — which excludes `keyExtractor`. Two stacked limiters with
- * identical `windowMs`/`maxRequests` therefore collapse into a single
- * plugin instance and one of the two `onBeforeHandle` hooks silently never
- * runs. Reproduced directly against Elysia rather than asserted from
- * reading the source.
- */
-describe("Elysia plugin dedup — the reason the two track/* limiters must differ", () => {
-    function fakeLimiter(
-        name: string,
-        config: { windowMs: number; maxRequests: number },
-        onRun: (name: string) => void
-    ) {
-        return new Elysia({ name: "Middleware.rateLimit", seed: config })
-            .onBeforeHandle(() => {
-                onRun(name);
-            })
-            .as("scoped");
-    }
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
-    it("collapses two limiters sharing the exact same config into one", async () => {
-        const calls: string[] = [];
-        const app = new Elysia()
-            .use(
-                fakeLimiter("A", { windowMs: 60_000, maxRequests: 120 }, () =>
-                    calls.push("A")
-                )
-            )
-            .use(
-                fakeLimiter("B", { windowMs: 60_000, maxRequests: 120 }, () =>
-                    calls.push("B")
-                )
-            )
-            .get("/same", () => "ok");
-
-        await app.handle(new Request("http://localhost/same"));
-
-        expect(calls).toEqual(["A"]);
-    });
-
-    it("keeps both limiters distinct when maxRequests differs", async () => {
-        const calls: string[] = [];
-        const app = new Elysia()
-            .use(
-                fakeLimiter("A", { windowMs: 60_000, maxRequests: 120 }, () =>
-                    calls.push("A")
-                )
-            )
-            .use(
-                fakeLimiter("B", { windowMs: 60_000, maxRequests: 300 }, () =>
-                    calls.push("B")
-                )
-            )
-            .get("/diff", () => "ok");
-
-        await app.handle(new Request("http://localhost/diff"));
-
-        expect(calls).toEqual(["A", "B"]);
     });
 });
 

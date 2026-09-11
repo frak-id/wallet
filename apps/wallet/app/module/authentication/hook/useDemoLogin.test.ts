@@ -57,20 +57,6 @@ describe("useDemoLogin", () => {
         vi.restoreAllMocks();
     });
 
-    test("should initialize with correct default state", async ({
-        queryWrapper,
-    }) => {
-        const { result } = renderHook(() => useDemoLogin(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        expect(result.current.isPending).toBe(false);
-        expect(result.current.isSuccess).toBe(false);
-        expect(result.current.isError).toBe(false);
-        expect(result.current.mutate).toBeDefined();
-        expect(result.current.mutateAsync).toBeDefined();
-    });
-
     test("should login successfully with demo credentials", async ({
         queryWrapper,
     }) => {

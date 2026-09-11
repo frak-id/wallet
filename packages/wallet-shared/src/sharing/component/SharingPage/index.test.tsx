@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { getStep2Context, SharingPage, type SharingPageProps } from "./index";
+import { SharingPage, type SharingPageProps } from "./index";
 
 // stand-in `t` echoing the interpolated context/values, so assertions read
 // against concrete text instead of raw keys
@@ -50,24 +50,6 @@ const withReward = (
 ): SharingPageProps => ({
     ...baseProps,
     reward: { status: "ready", ...overrides },
-});
-
-describe("getStep2Context", () => {
-    it("returns undefined when neither gate applies", () => {
-        expect(getStep2Context(false, undefined)).toBeUndefined();
-    });
-
-    it("returns 'min' when only a minimum purchase gates the reward", () => {
-        expect(getStep2Context(false, "10 €")).toBe("min");
-    });
-
-    it("returns 'product' when only a productScope gates the reward", () => {
-        expect(getStep2Context(true, undefined)).toBe("product");
-    });
-
-    it("returns 'min_product' when both gates apply", () => {
-        expect(getStep2Context(true, "10 €")).toBe("min_product");
-    });
 });
 
 describe("SharingPage — product picker (PSC-27)", () => {

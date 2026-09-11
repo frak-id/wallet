@@ -15,8 +15,7 @@
  *     preserve-on-re-install" contract that the install + upgrade paths
  *     both need.
  *
- * Mirrors WordPress's `Frak_Settings` and Magento's `Model/Config`. The
- * SDK-facing config (i18n, modal copy, share-button styling, walletUrl)
+ * The SDK-facing config (i18n, modal copy, share-button styling, walletUrl)
  * lives in `business.frak.id` once the merchant is registered, so the
  * surface here is intentionally minimal.
  */

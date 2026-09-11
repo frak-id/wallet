@@ -179,9 +179,17 @@ Twins mirror their suspending member's return type: `resolveAsync` completes exc
 
 Two async idioms coexist on purpose: a request/response call returns a future, and a *session outcome* — `FrakSharing`'s — stays a `@MainThread` callback, because a sheet reports once, later, from a lifecycle the caller does not own.
 
+Failure is signalled one tier per kind of answer, and a member's tier is an ABI-invisible contract — changing one needs a `!` commit:
+
+- `T?` means **absence** — nothing was there, and that is a normal answer (`anonymousId`, `RewardsApi.best`, `SharingApi.buildLink`'s null arm).
+- A sealed or enum type means **outcome** — several ends are all valid (`OpenAppResult`).
+- `Boolean` means **predicate** (`AppLinkApi.isFrakAppInstalled`).
+- A thrown `FrakError` means **failure** — the call could have worked and did not (`ConfigApi.resolve`, `RewardsApi.campaigns`, `SharingApi.buildLink`, `AppLinkApi.installPageUrl`). Through an `*Async` twin it arrives as a `CompletionException` whose `cause` is the `FrakError`.
+- `TrackingApi` is the one deliberate exception: it returns `FrakResult` and never throws, because it is called from hot paths where a disabled-tracking refusal is expected rather than exceptional.
+
 `Frak.shutdown()` cancels background work and unregisters the deep-link observer; call it to release the SDK deterministically (`initialize` can then run again). It is not a consent control — it records no decision.
 
-`FrakConfig.logSink` (a `fun interface`) and `FrakClient.setTrackingEnabled` are the merchant-facing hooks for logging and consent; see the doc comments on `FrakConfig` and `FrakClient` for the exact contract, and [PRIVACY.md](PRIVACY.md) for what to declare in Play Data Safety. Two caveats before you build a consent flow on `setTrackingEnabled`: the decision is written with `SharedPreferences.apply()`, so a withdrawal lost to a process kill reverts to enabled on the next launch (finding S10); and the web SDK has no equivalent switch today, so a privacy notice written against this behaviour does not hold for a merchant's web integration.
+`FrakConfig.logSink` (a `fun interface`) and `FrakClient.setTrackingEnabled` are the merchant-facing hooks for logging and consent; see the doc comments on `FrakConfig` and `FrakClient` for the exact contract, and [PRIVACY.md](PRIVACY.md) for what to declare in Play Data Safety. One caveat before you build a consent flow on `setTrackingEnabled`: the web SDK has no equivalent switch today, so a privacy notice written against this behaviour does not hold for a merchant's web integration.
 
 The sharing sheet is a Stripe-shaped Builder with two build sites, so XML, Java and Compose callers see the same types:
 
@@ -203,7 +211,7 @@ val sharing = remember { FrakSharing.Builder(::onShareResult) }.build()
 
 ## Status
 
-The MVP surface above is implemented and covered by 550 JVM unit tests as of 2026-08-14 (401 in `frak-sdk`, 149 in `frak-sdk-ui`; count them off `*/build/test-results/testDebugUnitTest/*.xml`, not by grepping `@Test`), including Robolectric coverage in `frak-sdk-ui` for the sharing sheet's sequencing (tier 3 fallback, the 1.5s latency budget, the retry ladder, web view origin pinning).
+The MVP surface above is implemented and covered by JVM unit tests (count them off `*/build/test-results/testDebugUnitTest/*.xml`, not by grepping `@Test`), including Robolectric coverage in `frak-sdk-ui` for the sharing sheet's sequencing (tier 3 fallback, the page-load deadline, the retry ladder, web view origin pinning).
 
 Android has been driven on a device (SM-G998B/Android 15 through development, RMX3511/Android 16 for the 2026-08-13 pass) — `initialize`, the wallet-installed probe, `config.resolve`, `rewards.best`, and since 2026-08-13 **the sharing sheet and the `ComponentDialog` host, in a minified R8 build** (`isMinifyEnabled = true` on the harness release variant): no `ClassNotFoundException`/`NoSuchMethodError`/`VerifyError` across 16 500 logcat lines, 254 SDK classes reaching R8 and 23 shaken out. Still not run on a device: the install handoff, inbound deep links (cold *or* warm), a rotation pass, a leak check, and anything only a multi-destination `NavHost` triggers. The run is also single-screen, so it cannot see anything the harness itself gets wrong. `.github/workflows/apps.yaml` lints, builds and unit-tests this SDK on every push and PR touching `sdk/android/**`, but it does **not** build `example/native-android`: nothing in CI compiles the harness, so a broken harness call site does not go red. The binary-compatibility gate is wired and **ratified**: both `api/*.api` dumps are committed, `apiCheck` runs in CI, and `check` is green — see "Binary compatibility" below.
 
@@ -281,7 +289,7 @@ bun run --cwd sdk/android apiDump    # rewrite api/frak-sdk.api and api/frak-sdk
 bun run --cwd sdk/android apiCheck   # compare; also runs as part of `check`
 ```
 
-**The dumps are not committed yet.** Until they are, `apiCheck` fails with BCV's own message telling you to run `apiDump` — which is the correct state for a build whose surface has just been reshaped and not yet ratified, and not something to work around. Note `apiDump` needs a JDK and the Android SDK; there is nothing to hand-write.
+Note `apiDump` needs a JDK and the Android SDK; there is nothing to hand-write.
 
 **The wiring is hand-rolled, and it has to be.** binary-compatibility-validator registers its `apiDump`/`apiCheck` only when `kotlin-android`, `kotlin` or `kotlin-multiplatform` is applied — and AGP 9 compiles Kotlin itself and *blocks* `org.jetbrains.kotlin.android`, so BCV's Android hook never fires and it silently does nothing ([BCV#312](https://github.com/Kotlin/binary-compatibility-validator/issues/312)). Its documented replacement, KGP's `kotlin { abiValidation { } }`, is closed for the same reason: that DSL is on the extension the standalone Kotlin plugin registers, not the one AGP provides ([KT-78025](https://youtrack.jetbrains.com/issue/KT-78025), open). So `frak-publish.gradle.kts` registers BCV's own `KotlinApiBuildTask`/`KotlinApiCompareTask` against `compileReleaseKotlin` + `compileReleaseJavaWithJavac`, which is what okhttp and elastic/apm-agent-android did for the same gap. Those task types are internal to BCV, so its version is pinned rather than floated. If a future BCV or KGP starts registering the tasks itself, this build fails with "a task with that name already exists" — the signal to delete the block.
 

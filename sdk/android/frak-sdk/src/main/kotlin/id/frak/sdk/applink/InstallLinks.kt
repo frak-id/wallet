@@ -1,4 +1,3 @@
-// Opted in per file rather than module-wide, so tests still see the marker where a merchant would.
 @file:OptIn(InternalFrakApi::class)
 
 package id.frak.sdk.applink

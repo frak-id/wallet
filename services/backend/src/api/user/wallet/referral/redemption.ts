@@ -2,16 +2,14 @@ import { rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AttributionContext } from "../../../../domain/attribution";
-import { identityContext } from "../../../middleware/identity";
+import {
+    identityContext,
+    identityRateLimitKey,
+} from "../../../middleware/identity";
 
 // Per-IP and per-identity rate limits, mirroring `/code/*`. Removing a
 // referrer is a write that's even less hot than redeeming, but we still want
 // the per-identity bucket to prevent a single user fanning out across IPs.
-// biome-ignore lint/suspicious/noExplicitAny: Elysia's scoped-plugin context type does not carry plugin-resolved fields through to `onBeforeHandle`.
-const identityKey = (ctx: any): string | null => {
-    const id = ctx.identityGroupId as string | null | undefined;
-    return id ? `identity:${id}` : null;
-};
 
 /**
  * Soft-delete the caller's active referrer for the given scope.
@@ -43,7 +41,7 @@ export const referralRedemptionRoutes = new Elysia({ prefix: "/redemption" })
             bucket: "referral-redemption-identity",
             windowMs: 60_000,
             maxRequests: 10,
-            keyExtractor: identityKey,
+            keyExtractor: identityRateLimitKey,
         })
     )
     .delete(

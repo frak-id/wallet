@@ -4,7 +4,6 @@ import {
     ComponentResource,
     type ComponentResourceOptions,
     type Input,
-    type Output,
 } from "@pulumi/pulumi";
 
 /**
@@ -21,13 +20,6 @@ export type KubernetesJobArgs = {
     job: {
         // Container configuration
         container: Input<inputs.core.v1.Container>;
-
-        // Optional job configuration
-        backoffLimit?: Input<number>; // Default to 3
-        completions?: Input<number>; // Default to 1
-        parallelism?: Input<number>; // Default to 1
-        ttlSecondsAfterFinished?: Input<number>; // Default to 100
-        activeDeadlineSeconds?: Input<number>; // Optional timeout
     };
 };
 
@@ -38,10 +30,6 @@ export class KubernetesJob extends ComponentResource {
     // Resources
     public readonly job: k8s.batch.v1.Job;
 
-    // Additional outputs
-    public readonly jobName: Output<string>;
-    public readonly succeeded: Output<boolean>;
-
     constructor(
         private name: string,
         private args: KubernetesJobArgs,
@@ -51,16 +39,9 @@ export class KubernetesJob extends ComponentResource {
 
         // Create the job
         this.job = this.createJob();
-        this.jobName = this.job.metadata.name;
-
-        // Track job completion status
-        this.succeeded = this.job.status.succeeded.apply(
-            (succeeded) => succeeded > 0
-        );
 
         this.registerOutputs({
-            jobName: this.jobName,
-            succeeded: this.succeeded,
+            jobName: this.job.metadata.name,
         });
     }
 
@@ -74,12 +55,10 @@ export class KubernetesJob extends ComponentResource {
                     labels: this.args.appLabels,
                 },
                 spec: {
-                    backoffLimit: this.args.job.backoffLimit ?? 3,
-                    completions: this.args.job.completions ?? 1,
-                    parallelism: this.args.job.parallelism ?? 1,
-                    ttlSecondsAfterFinished:
-                        this.args.job.ttlSecondsAfterFinished ?? 100,
-                    activeDeadlineSeconds: this.args.job.activeDeadlineSeconds,
+                    backoffLimit: 3,
+                    completions: 1,
+                    parallelism: 1,
+                    ttlSecondsAfterFinished: 100,
                     template: {
                         metadata: {
                             labels: this.args.appLabels,

@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
-import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { vi } from "vitest";
 import {
     afterEach,
     beforeEach,

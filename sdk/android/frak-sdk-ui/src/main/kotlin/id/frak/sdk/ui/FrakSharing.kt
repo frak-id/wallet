@@ -37,8 +37,6 @@ public class FrakSharing internal constructor(
         public fun onResult(result: SharingResult)
     }
 
-    // See the note atop sharing/SharingRequest.kt.
-
     /** Builds a [FrakSharing] against a hosting Activity. */
     public class Builder(
         private val callback: ResultCallback,

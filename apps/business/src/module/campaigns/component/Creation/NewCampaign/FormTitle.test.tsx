@@ -9,12 +9,6 @@ vi.mock("react-i18next", () => ({
 
 import { FormTitle } from "./FormTitle";
 
-/**
- * `FormTitle` reads its form via `useFormContext<CampaignDraft>()`, but
- * react-hook-form's context is untyped at runtime — a minimal `{ name }`
- * form wired through the same `Form`/`FormProvider` satisfies it exactly like
- * `EditField.test.tsx`'s harness.
- */
 function Harness() {
     const form = useForm({ defaultValues: { name: "" }, mode: "onSubmit" });
 

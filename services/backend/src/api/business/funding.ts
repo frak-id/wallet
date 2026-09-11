@@ -15,17 +15,13 @@ import { erc20Abi, parseEther, parseUnits } from "viem";
 import { readContract, writeContract } from "viem/actions";
 import { StablecoinSchema } from "../../domain/billing/schemas";
 
-/**
- * Funding related routes
- * @param app
- */
+/** Test-token funding, non-prod stages only. */
 export const fundingRoutes = new Elysia({ prefix: "/funding" }).post(
     "/getTestToken",
     async ({ body: { bank, stablecoin } }) => {
-        // Don't allow test token on prod
         if (isRunningInProd) return;
 
-        // If a stablecoin is specified, transfer from monerium-dev account
+        // A specified stablecoin is transferred from the monerium-dev account.
         if (stablecoin) {
             const tokenAddress = currentStablecoins[stablecoin];
             if (!tokenAddress) {

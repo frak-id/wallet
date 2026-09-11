@@ -115,19 +115,10 @@ function parse({ url }: { url: string }): FrakContext | null | undefined {
     return decompress(frakContext);
 }
 
-/**
- * Default utm_source / via value when attribution is requested.
- */
+/** Default utm_source when attribution is requested. */
 const DEFAULT_ATTRIBUTION_SOURCE = "frak";
 
-/**
- * Resolve attribution defaults from the provided context.
- *
- * V2 contexts expose the merchantId (`m`) and, when anonymous, the clientId
- * (`c`), which feed `utm_campaign` and `ref` respectively. When V2 only carries
- * a wallet (`w`), `ref` is intentionally left unset — we don't want wallet
- * addresses leaking into UTM params. V1 contexts have no equivalent.
- */
+/** `utm_source` is the only key that gets a default; the rest are overrides. */
 function resolveAttributionValues(
     overrides: AttributionParams
 ): Record<string, string | undefined> {
@@ -228,7 +219,7 @@ function replaceUrl({
     url?: string;
     context: FrakContextV1 | FrakContextV2 | null;
 }) {
-    if (!window.location?.href || typeof window === "undefined") {
+    if (typeof window === "undefined" || !window.location?.href) {
         console.error("No window found, can't update context");
         return;
     }

@@ -38,18 +38,6 @@ internal object ProofCodec {
     /** Raw `r‖s` ECDSA; low-S normalisation not guaranteed. */
     const val SIG_BYTES: Int = 64
 
-    /** Parses (not lowercases) so signed bytes never depend on the caller's case formatting. */
-    fun uuidToBytes(
-        value: String,
-        label: String,
-    ): ByteArray = Uuid.toBytes(value, label)
-
-    /** Formats 16 raw bytes as a lowercase hyphenated UUID. */
-    fun bytesToUuid(
-        bytes: ByteArray,
-        offset: Int = 0,
-    ): String = Uuid.fromBytes(bytes, offset)
-
     /** First 16 bytes of the SHA-256 digest, RFC-4122 version/variant bits overwritten. */
     fun deriveClientIdFromHash(hash: ByteArray): String {
         require(hash.size >= UUID_BYTES) {
@@ -58,7 +46,7 @@ internal object ProofCodec {
         val bytes = hash.copyOf(UUID_BYTES)
         bytes[6] = ((bytes[6].toInt() and 0x0F) or 0x40).toByte()
         bytes[8] = ((bytes[8].toInt() and 0x3F) or 0x80).toByte()
-        return bytesToUuid(bytes)
+        return Uuid.fromBytes(bytes)
     }
 
     /** [binding] must be empty (written as 32 zero bytes) or exactly [BINDING_BYTES]. */
@@ -79,9 +67,9 @@ internal object ProofCodec {
         var offset = 0
         opBytes.copyInto(out, offset)
         offset += opBytes.size
-        uuidToBytes(merchantId, "merchantId").copyInto(out, offset)
+        Uuid.toBytes(merchantId, "merchantId").copyInto(out, offset)
         offset += UUID_BYTES
-        uuidToBytes(anonymousId, "anonymousId").copyInto(out, offset)
+        Uuid.toBytes(anonymousId, "anonymousId").copyInto(out, offset)
         offset += UUID_BYTES
         binding.copyInto(out, offset)
         offset += BINDING_BYTES

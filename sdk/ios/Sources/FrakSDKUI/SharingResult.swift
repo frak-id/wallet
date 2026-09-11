@@ -15,7 +15,7 @@ public enum SharingResult: Sendable {
     case failed(FrakError)
 
     /// Stable discriminator, one per case. A `switch` over ``Kind`` with a `default` survives a
-    /// new case; an exhaustive `switch` over the result does not. Spelled identically on Android.
+    /// new case; an exhaustive `switch` over the result does not.
     public enum Kind: String, Sendable, Hashable, CaseIterable {
         case shared
         case copied

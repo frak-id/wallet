@@ -9,17 +9,9 @@ export type UtmParams = {
 };
 
 /**
- * Attribution parameters appended to outbound sharing URLs.
- *
- * Defaults are derived from the V2 Frak context when available:
- * - `utmSource`: `"frak"`
- * - `utmMedium`: `"referral"`
- * - `utmCampaign`: merchantId (`context.m`)
- * - `via`: `"frak"`
- * - `ref`: clientId (`context.c`)
- *
- * Fields explicitly set here override the defaults. Existing params on the
- * base URL are preserved (gap-fill policy) to respect merchant-provided UTMs.
+ * Attribution parameters appended to outbound sharing URLs. Only `utmSource`
+ * carries a default (`"frak"`); existing params on the base URL are preserved
+ * (gap-fill policy) to respect merchant-provided UTMs.
  */
 export type AttributionParams = {
     utmSource?: string;

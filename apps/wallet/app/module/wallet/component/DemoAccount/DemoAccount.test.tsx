@@ -122,16 +122,6 @@ describe("DemoAccount", () => {
         expect(container.firstChild).toBeNull();
     });
 
-    it("should render Panel with invisible variant and none size", () => {
-        mockStoreState.demoPrivateKey = "demo-key";
-
-        render(<DemoAccount />);
-
-        const panel = screen.getByTestId("panel");
-        expect(panel).toHaveAttribute("data-variant", "invisible");
-        expect(panel).toHaveAttribute("data-size", "none");
-    });
-
     it("should render warning icon and text", () => {
         mockStoreState.demoPrivateKey = "demo-key";
 

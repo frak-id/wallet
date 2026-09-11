@@ -14,65 +14,40 @@ vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
 }));
 
 describe("biometrics utils", () => {
-    describe("getBiometryTypeLabel", () => {
-        it("should return 'Face ID' for faceId", () => {
-            expect(getBiometryTypeLabel("faceId")).toBe("Face ID");
-        });
-
-        it("should return 'Touch ID' for touchId", () => {
-            expect(getBiometryTypeLabel("touchId")).toBe("Touch ID");
-        });
-
-        it("should return 'Fingerprint' for fingerprint", () => {
-            expect(getBiometryTypeLabel("fingerprint")).toBe("Fingerprint");
-        });
-
-        it("should return 'Iris' for iris", () => {
-            expect(getBiometryTypeLabel("iris")).toBe("Iris");
-        });
-
-        it("should return 'Biometrics' for null", () => {
-            expect(getBiometryTypeLabel(null)).toBe("Biometrics");
-        });
+    it.each([
+        ["faceId", "Face ID"],
+        ["touchId", "Touch ID"],
+        ["fingerprint", "Fingerprint"],
+        ["iris", "Iris"],
+        [null, "Biometrics"],
+    ] as const)("getBiometryTypeLabel(%s) is %s", (biometryType, label) => {
+        expect(getBiometryTypeLabel(biometryType)).toBe(label);
     });
 
-    describe("checkBiometricStatus", () => {
+    describe("outside Tauri", () => {
         beforeEach(() => {
             vi.resetModules();
         });
 
-        it("should return not_tauri error when not in Tauri environment", async () => {
-            const result = await checkBiometricStatus();
-
-            expect(result).toEqual({
+        it("checkBiometricStatus returns a not_tauri error", async () => {
+            expect(await checkBiometricStatus()).toEqual({
                 isAvailable: false,
                 biometryType: null,
                 error: "not_tauri",
             });
         });
-    });
 
-    describe("authenticateWithBiometrics", () => {
-        beforeEach(() => {
-            vi.resetModules();
-        });
-
-        it("should return not_tauri error when not in Tauri environment", async () => {
-            const result = await authenticateWithBiometrics();
-
-            expect(result).toEqual({
+        it("authenticateWithBiometrics returns a not_tauri error", async () => {
+            expect(await authenticateWithBiometrics()).toEqual({
                 success: false,
                 error: "not_tauri",
             });
-        });
-
-        it("should return not_tauri error with custom options when not in Tauri", async () => {
-            const result = await authenticateWithBiometrics({
-                reason: "Custom reason",
-                cancelTitle: "Cancel",
-            });
-
-            expect(result).toEqual({
+            expect(
+                await authenticateWithBiometrics({
+                    reason: "Custom reason",
+                    cancelTitle: "Cancel",
+                })
+            ).toEqual({
                 success: false,
                 error: "not_tauri",
             });

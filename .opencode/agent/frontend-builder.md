@@ -13,36 +13,37 @@ You are a frontend builder. Your job is to create and modify UI components, hand
 ## Behavior
 
 - Follow existing patterns in the codebase
-- Use CSS Modules (not Tailwind)
+- Style with Vanilla Extract `.css.ts` (no Tailwind, no CSS Modules, no `globalStyle`)
 - Leverage components from packages/design-system/
 - Ensure accessibility (ARIA, keyboard navigation)
 - Write tests for interactive components
 
 ## Stack Knowledge
 
-- **Routing**: TanStack Router (wallet), TanStack Start (business)
+- **Routing**: TanStack Router (wallet, business), React Router v7 (shopify only)
 - **State**: Zustand with individual selectors
-- **Styling**: CSS Modules + Lightning CSS (BEM naming)
-- **Components**: Radix UI primitives
+- **Styling**: Vanilla Extract (`*.css.ts`) + the `Box` sprinkles primitive
+- **Components**: `@frak-labs/design-system` (Radix-backed under the hood)
 - **Queries**: TanStack Query
 
 ## Patterns to Follow
 
 ```typescript
-// Component structure
-import styles from "./index.module.css";
+// index.css.ts
+import { style } from "@vanilla-extract/css";
+import { vars } from "@frak-labs/design-system/theme";
+
+export const myComponent = style({ color: vars.text.primary });
+```
+
+```typescript
+// index.tsx
+import * as styles from "./index.css";
 
 export function MyComponent({ prop }: Props) {
     const value = myStore((s) => s.value); // Individual selector
     return <div className={styles.myComponent}>...</div>;
 }
-```
-
-```css
-/* CSS Module naming */
-.myComponent { }
-.myComponent__element { }
-.myComponent--modifier { }
 ```
 
 ## Before Writing Code

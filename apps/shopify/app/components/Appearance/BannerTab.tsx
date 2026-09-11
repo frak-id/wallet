@@ -5,9 +5,9 @@ import { Activated } from "../Activated";
 import { Instructions } from "../Instructions";
 import { ExternalLink } from "../ui/ExternalLink";
 
-interface BannerTabProps {
+type BannerTabProps = {
     isThemeHasFrakBanner: boolean;
-}
+};
 
 export function BannerTab({ isThemeHasFrakBanner }: BannerTabProps) {
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");

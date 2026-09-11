@@ -64,7 +64,8 @@ public struct SharingRequest: Sendable, Hashable {
     public let attribution: AttributionParams?
     /// Narrows the seeded reward to campaigns with this trigger, e.g. `purchase`.
     public let targetInteraction: String?
-    /// Where in the app the share was offered, e.g. `product-page`.
+    /// Which configured placement's copy to render, e.g. `product-page`. Accepted but not yet
+    /// acted on.
     public let placement: String?
     public let logoURL: String?
     /// Per-call overrides for the OS share sheet's title/body/preview image; highest precedence.

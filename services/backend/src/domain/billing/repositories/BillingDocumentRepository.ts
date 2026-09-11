@@ -37,19 +37,11 @@ export function formatReference(
  */
 export class BillingDocumentRepository {
     /**
-     * Atomically allocates the next `{PREFIX}-{year}-{NNNN}` reference from the
-     * global per-`(kind, year)` sequence via `INSERT ... ON CONFLICT DO UPDATE
-     * ... RETURNING` against `billing_document_counters`. The sequence is
-     * global (not per-merchant) so Frak's issued numbering stays continuous
-     * per issuer for VAT (Art. 242 nonies A — see schema.ts comment). The
-     * row-level lock taken by the upsert serializes concurrent allocations —
-     * no `SELECT MAX` race.
-     *
-     * Pass the enclosing `tx` so allocation commits atomically with the
-     * document insert (`create` below) — a failed insert after a successful
-     * bump would otherwise burn a reference number (gap) but, worse, could
-     * hand out the same number to a retried create (duplicate; not acceptable
-     * without the transaction).
+     * Atomically allocates the next `{PREFIX}-{year}-{NNNN}` from the global
+     * per-`(kind, year)` counter; the upsert's row lock serializes concurrent
+     * allocations (numbering rules: see `db/schema.ts`). Pass the enclosing
+     * `tx` so allocation commits with the document insert — without it, a
+     * retried create can hand out the same reference twice.
      */
     async nextReference(
         kind: BillingDocumentKind,

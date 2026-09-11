@@ -18,29 +18,11 @@ import {
 import { getDefineProps, readDefine } from "./vite.defines";
 
 /**
- * Standalone build for `/sharing` and `/install`.
- *
- * Both pages are opened as full-page loads by the web SDK, by the iOS and
- * Android SDK web views, and by Shopify's post-purchase card. Neither needs a
- * blockchain client, a smart account, a session beyond a token check, or a
- * router — yet booting them through the SPA shell cost ~1.2 MB of JS, because
- * `index.html` drags in wagmi, viem, permissionless, TanStack Router, the
- * query persister and every route module before it can paint two buttons.
- *
- * So they get their own entrypoints and their own bundle. The page components
- * are NOT forked: `SharingView` and `InstallView` are the same modules the SPA
- * routes render (see `app/routes/{sharing,install}.tsx`), parameterised by a
- * navigation adapter. Only the packaging differs.
- *
- * Runs as a SECOND pass over the same `dist/`, after the SPA build:
- *   `vite build && vite build --config vite.standalone.config.ts`
- * hence `emptyOutDir: false` and the `standalone/` asset prefix — the SPA
- * build owns `dist/assets/`, this one owns `dist/standalone/`, and neither can
- * clobber the other's hashed files.
- *
- * NOT built for Tauri: the native app has the routes in its route tree already
- * and navigates to them client-side, so `tauri.conf.json`'s
- * `beforeBuildCommand` deliberately runs only the SPA build.
+ * Standalone build for `/sharing` and `/install` — the same `SharingView` /
+ * `InstallView` modules the SPA routes render, without the SPA shell.
+ * Runs as a SECOND pass over the same `dist/`, hence `emptyOutDir: false` and
+ * the `standalone/` asset prefix. NOT built for Tauri: the native app already
+ * has these routes in its route tree and navigates to them client-side.
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -51,16 +33,8 @@ const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 /**
  * Hard ceiling on the gzipped eager boot JS per entry (the transitive
  * static-import closure from the HTML, walked by `assertEagerBundleBudget`).
- *
- * This is the number the whole exercise exists to protect: the SPA shell these
- * pages used to boot through is ~390 KB gz. Anything that pushes past this
- * limit — a stray `@frak-labs/wallet-shared` barrel import that drags viem in,
- * a design-system component that pulls Radix, a full locale bundle — fails the
- * build instead of quietly regressing an SDK-critical path.
- *
- * Measured at the time of writing: 97.8 KB gz for `/sharing`, 79.5 KB for
- * `/install`. Raise it only with a measurement and a reason, never to unblock
- * a build — that turns the ratchet into a moving line.
+ * Raise it only with a measurement and a reason, never to unblock a build —
+ * that turns the ratchet into a moving line.
  */
 const EAGER_JS_BUDGET_GZIP = 105 * 1024;
 

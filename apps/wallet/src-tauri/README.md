@@ -233,63 +233,21 @@ Production builds use:
 
 The WebAuthn configuration is centralized in `packages/app-essentials/src/webauthn/index.ts`:
 
-> Setting up the dev variant from scratch (Apple Portal, Play Console, Firebase, .well-known)
-> is documented in [`docs/dev-variant-setup.md`](./docs/dev-variant-setup.md).
-
 - **RP ID**: Determined by environment (prod/dev/local)
 - **RP Origins**: Includes web origin + mobile app origins
 - **Android Origin**: APK signing key hash format
 - **iOS Origin**: `tauri://localhost`
 
-## Troubleshooting
-
-### iOS
-
-**Issue**: Build fails with code signing errors
-- **Solution**: Ensure Xcode is properly configured with your Apple Developer account
-- Check Team ID in `tauri.conf.json` matches your account
-
-**Issue**: Simulator not found
-- **Solution**: List available simulators: `xcrun simctl list devices`
-- Update the device name in `infra/gcp/wallet.ts` if needed
-
-**Issue**: Associated Domains not working
-- **Solution**: Verify the domain is configured in Apple Developer Portal
-- Check `gen/apple/app_iOS/app_iOS.entitlements` matches your domain
-
-### Android
-
-**Issue**: Build fails with NDK errors
-- **Solution**: Ensure Android NDK is installed and `ANDROID_NDK_HOME` is set
-
-**Issue**: WebAuthn not working
-- **Solution**: Verify APK key hash matches your signing key
-- Check Digital Asset Links are properly configured on the server
-
-**Issue**: Backend connection fails
-- **Solution**: Ensure SST dev is running and backend is accessible
-- Check that `BACKEND_URL` uses local IP (not localhost) for emulators
-
 ## Testing
 
-### Unit Tests
+The Tauri bridge is covered by `packages/wallet-shared`'s unit tests:
 
-Run unit tests for Tauri bridge:
 ```bash
-cd packages/wallet-shared
-bun run test
+bun run test --project wallet-shared-unit
 ```
 
-### Manual Testing Checklist
-
-- [ ] WebAuthn registration works on iOS
-- [ ] WebAuthn authentication works on iOS
-- [ ] WebAuthn registration works on Android
-- [ ] WebAuthn authentication works on Android
-- [ ] Recovery file download works (Android share plugin)
-- [ ] Safe area insets are respected
-- [ ] App icons display correctly
-- [ ] Backend connectivity works in dev mode
+An Android emulator cannot reach `localhost`: point `BACKEND_URL` at the host's
+LAN IP when running against a local SST dev backend.
 
 ## Version Management
 
@@ -328,11 +286,3 @@ Script: `apps/wallet/src-tauri/icons/sources/regenerate.sh`
 - **Code Signing**: Required for both iOS and Android production builds
 - **WebAuthn Origins**: Properly validated on backend to prevent origin spoofing
 - **Associated Domains**: Required for iOS WebAuthn credential sharing
-
-## Additional Resources
-
-- [Tauri Documentation](https://tauri.app/v2/)
-- [Tauri Mobile Guide](https://tauri.app/v2/guides/mobile/)
-- [WebAuthn Specification](https://www.w3.org/TR/webauthn-2/)
-- [iOS Associated Domains](https://developer.apple.com/documentation/xcode/supporting-universal-links-in-your-app)
-- [Android Digital Asset Links](https://developers.google.com/digital-asset-links)

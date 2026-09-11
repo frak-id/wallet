@@ -7,14 +7,7 @@ const capPeriods: Record<BudgetType, number | null> = {
     global: null, // Null for global budgets
 };
 
-/**
- * Get the cap period for a given budget type. Narrowed to the actual
- * `BudgetType` union (plus the empty-string "no selection yet" sentinel
- * every call site passes) so the return type is honestly `number | null`
- * — no unsound `as BudgetType` cast that could silently return `undefined`
- * for an arbitrary string.
- * @param type
- */
+/** Cap period in seconds; `""` is the "no selection yet" sentinel call sites pass. */
 export function getCapPeriod(type?: "" | BudgetType): number | null {
     if (!type) return 0;
     return capPeriods[type];

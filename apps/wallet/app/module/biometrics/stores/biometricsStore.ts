@@ -24,6 +24,8 @@ type BiometricsActions = {
     setBiometryType: (type: BiometryType) => void;
 };
 
+type BiometricsStore = BiometricsState & BiometricsActions;
+
 const initialState: BiometricsState = {
     enabled: false,
     lockTimeout: "immediate",
@@ -33,7 +35,7 @@ const initialState: BiometricsState = {
     biometryType: null,
 };
 
-export const biometricsStore = create<BiometricsState & BiometricsActions>()(
+export const biometricsStore = create<BiometricsStore>()(
     persist(
         (set) => ({
             ...initialState,
@@ -66,27 +68,21 @@ export const biometricsStore = create<BiometricsState & BiometricsActions>()(
     )
 );
 
-export const selectBiometricsEnabled = (
-    state: BiometricsState & BiometricsActions
-) => state.enabled;
+export const selectBiometricsEnabled = (state: BiometricsStore) =>
+    state.enabled;
 
-export const selectBiometricsLockTimeout = (
-    state: BiometricsState & BiometricsActions
-) => state.lockTimeout;
+export const selectBiometricsLockTimeout = (state: BiometricsStore) =>
+    state.lockTimeout;
 
-export const selectIsLocked = (state: BiometricsState & BiometricsActions) =>
-    state.isLocked;
+export const selectIsLocked = (state: BiometricsStore) => state.isLocked;
 
-export const selectLastActiveTimestamp = (
-    state: BiometricsState & BiometricsActions
-) => state.lastActiveTimestamp;
+export const selectLastActiveTimestamp = (state: BiometricsStore) =>
+    state.lastActiveTimestamp;
 
-export const selectIsAvailable = (state: BiometricsState & BiometricsActions) =>
-    state.isAvailable;
+export const selectIsAvailable = (state: BiometricsStore) => state.isAvailable;
 
-export const selectBiometryType = (
-    state: BiometricsState & BiometricsActions
-) => state.biometryType;
+export const selectBiometryType = (state: BiometricsStore) =>
+    state.biometryType;
 
 export function getLockTimeoutMs(timeout: BiometricLockTimeout): number {
     switch (timeout) {

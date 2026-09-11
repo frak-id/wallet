@@ -24,11 +24,6 @@ import { customHex } from "../../../utils/drizzle/customTypes";
  */
 export type IdentityType = "anonymous_fingerprint" | "wallet" | "email";
 
-export type PendingPurchaseValidation = {
-    orderId: string;
-    purchaseToken: string;
-};
-
 export type MergedGroup = {
     groupId: string;
     mergedAt: string;
@@ -67,8 +62,7 @@ export const identityNodesTable = pgTable(
         identityType: text("identity_type").$type<IdentityType>().notNull(),
         identityValue: text("identity_value").notNull(),
         merchantId: uuid("merchant_id"),
-        validationData:
-            jsonb("validation_data").$type<PendingPurchaseValidation>(),
+        validationData: jsonb("validation_data"),
         createdAt: timestamp("created_at").defaultNow(),
         // Soft-unlink marker on the loser wallet node after a merge; keeps the loser->group mapping resolvable by findGroupByIdentity.
         unlinkedAt: timestamp("unlinked_at"),
@@ -87,14 +81,11 @@ export const identityNodesTable = pgTable(
 
 /**
  * Reason values written on a wallet binding row.
- *  - `initial`   — first binding when a credential is registered.
- *  - `merged`    — written by the wallet-merge flow when the previous active
- *                  binding for `(authenticator, chain)` gets repointed to a
- *                  winner wallet.
- *  - `recovery`  — reserved for the recovery flow refactor; not yet written
- *                  by any current code path.
+ *  - `initial` — first binding when a credential is registered.
+ *  - `merged` — written by the wallet-merge flow when the previous active
+ *    binding for `(authenticator, chain)` gets repointed to a winner wallet.
  */
-export type BindingReason = "initial" | "merged" | "recovery";
+export type BindingReason = "initial" | "merged";
 
 /**
  * Mapping of WebAuthn credential → smart-account address, per chain,

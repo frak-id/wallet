@@ -14,17 +14,13 @@
  * Storage: tiny key-value cache ({@see FrakCache}), namespaced under
  * `merchant.` and `merchant_unresolved.` keys. The cache table sits
  * outside `ps_configuration` so cold merchant data never bloats the
- * per-request autoload payload — PrestaShop has no `autoload=no` flag
- * (unlike WordPress's `update_option(..., false)`), so a custom backing
- * store is the only way to keep cold config cold.
+ * per-request autoload payload — PrestaShop has no `autoload=no` flag, so a
+ * custom backing store is the only way to keep cold config cold.
  *
  * HTTP: shares the {@see FrakHttpClient} singleton with
  * {@see FrakWebhookHelper} so the TLS handshake against `backend.frak.id`
  * is reused when a single order transition first resolves the merchant
  * and then dispatches the webhook on the same request.
- *
- * Mirrors the WordPress `Frak_Merchant` contract so the two plugins stay
- * conceptually aligned (same record shape, same invalidation triggers).
  */
 class FrakMerchantResolver
 {
@@ -32,7 +28,7 @@ class FrakMerchantResolver
     public const CACHE_KEY_PREFIX = 'merchant.';
     /** Cache key prefix for the negative-cache sentinel. */
     public const NEGATIVE_CACHE_PREFIX = 'merchant_unresolved.';
-    /** Negative-cache TTL in seconds. Mirrors the WP plugin (5 minutes). */
+    /** Negative-cache TTL in seconds. */
     public const NEGATIVE_CACHE_TTL = 300;
 
     public static function getId(): ?string

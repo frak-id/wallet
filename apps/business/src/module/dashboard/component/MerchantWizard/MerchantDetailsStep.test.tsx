@@ -162,8 +162,6 @@ describe("MerchantDetailsStep platform-admin fields (inputLabel delegated to DS 
             "merchant.create.fields.domain.nameLabel"
         );
 
-        // Typing `https://example.com` passes through `https://`, which the
-        // backend used to 500 on.
         const enabledFor = (value: string) => {
             useDnsTxtRecordToSet.mockClear();
             fireEvent.change(input, { target: { value } });

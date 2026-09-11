@@ -53,14 +53,6 @@ describe("DetailSheet", () => {
         expect(screen.getByText("Only body")).toBeTruthy();
     });
 
-    it("should export compound parts", () => {
-        expect(DetailSheet).toBeDefined();
-        expect(DetailSheetHero).toBeDefined();
-        expect(DetailSheetActions).toBeDefined();
-        expect(DetailSheetBody).toBeDefined();
-        expect(DetailSheetFooter).toBeDefined();
-    });
-
     it("should forward className to root", () => {
         render(
             <DetailSheet className="custom-detail-sheet">

@@ -600,8 +600,7 @@ struct FrakClientTests {
         }
     }
 
-    /// Regression: bug 1.
-    @Test("track lands the event on disk with no cached merchant and no reachable network (bug 1)")
+    @Test("track lands the event on disk with no cached merchant and no reachable network")
     func trackDoesNotBlockOnAMerchantResolve() async throws {
         let queueURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -620,8 +619,9 @@ struct FrakClientTests {
         #expect(rows.first?.merchantId == nil)
     }
 
-    /// Regression: bug 2.
-    @Test("handleReferralLink durably queues an inbound merge with no cached merchant and no reachable network (bug 2)")
+    @Test(
+        "handleReferralLink durably queues an inbound merge with no cached merchant and no reachable network"
+    )
     func mergeIsDurableWithoutANetworkResolve() async throws {
         let queueURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -640,7 +640,7 @@ struct FrakClientTests {
         #expect(merged?.merchantId == nil)
     }
 
-    // MARK: - drain triggers (fix 3)
+    // MARK: - drain triggers
 
     @Test("a config update triggers a drain with no explicit flush call, and stops after shutdown")
     func configUpdateTriggersADrain() async throws {

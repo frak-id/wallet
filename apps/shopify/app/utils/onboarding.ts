@@ -46,10 +46,8 @@ export const stepValidations: StepValidation = {
 export const MAX_STEP = Object.keys(stepValidations).length;
 
 /**
- * Validates if a specific step is completed based on the provided data
- * @param step - The step number to validate
- * @param data - The onboarding step data
- * @returns boolean indicating if the step is invalid (used for button disabled state)
+ * Inverted on purpose: returns true when the step is NOT complete, so it can
+ * feed a button's `disabled` prop directly.
  */
 export function validateStep(step: number, data: OnboardingStepData): boolean {
     const validator = stepValidations[step];
@@ -93,12 +91,9 @@ export function applicableStepCount(
 }
 
 /**
- * Checks if the entire onboarding process is complete.
- * For legacy (non-OS-2.0) themes, pass `isThemeSupported = false` so that
- * theme-specific steps (5–7) are non-critical and never trap the merchant.
- * @param data - The complete onboarding data
- * @param isThemeSupported - false for legacy/non-OS-2.0 themes (default true)
- * @returns object with completion status and failed steps
+ * Checks if the entire onboarding process is complete. For legacy (non-OS-2.0)
+ * themes, pass `isThemeSupported = false` so that theme-specific steps (5–7)
+ * are non-critical and never trap the merchant.
  */
 export function validateCompleteOnboarding(
     data: OnboardingStepData,
@@ -140,9 +135,7 @@ export function validateCompleteOnboarding(
 }
 
 /**
- * Gets a human-readable status message for onboarding completion
- * @param validationResult - Result from validateCompleteOnboarding
- * @returns Status message object
+ * Human-readable summary of the missing steps, or null when complete.
  */
 export function getOnboardingStatusMessage(validationResult: {
     isComplete: boolean;

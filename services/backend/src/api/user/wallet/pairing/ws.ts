@@ -82,7 +82,7 @@ export const wsRoute = new Elysia()
             );
         },
         message: async (ws, message) => {
-            log.debug({ message }, `[Pairing] websocket message from ${ws.id}`);
+            log.debug(`[Pairing] websocket message from ${ws.id}`);
 
             const walletJwt = ws.data.query?.wallet;
             const wallet = await parseWallet(walletJwt);

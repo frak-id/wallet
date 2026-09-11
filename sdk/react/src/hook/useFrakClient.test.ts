@@ -1,8 +1,3 @@
-/**
- * Tests for useFrakClient hook
- * Tests that the hook correctly retrieves the FrakClient from context
- */
-
 import { renderHook } from "@testing-library/react";
 import { createElement } from "react";
 import { describe, expect, test } from "../../tests/vitest-fixtures";

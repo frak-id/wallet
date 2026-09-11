@@ -1,11 +1,7 @@
 import type { Currency } from "@frak-labs/core-sdk";
 
-/**
- * Query-key builders for the `campaigns` (list/overview) and `campaign`
- * (single) namespaces. Colocated so the query options and the mutation hooks
- * that invalidate them share one key shape. Scoped variants prefix their base
- * key, so invalidating a base still matches every variant derived from it.
- */
+// Scoped variants prefix their base key, so invalidating a base still matches
+// every variant derived from it.
 
 /** Root list/overview key (`["campaigns"]`); invalidating it clears them all. */
 export function campaignsQueryKey() {

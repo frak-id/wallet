@@ -1,15 +1,10 @@
 import { vars } from "@frak-labs/design-system/theme";
-import {
-    alias,
-    brand,
-    shadow as shadowToken,
-    transition,
-} from "@frak-labs/design-system/tokens";
-import { style } from "@vanilla-extract/css";
+import { alias, brand, transition } from "@frak-labs/design-system/tokens";
 import { recipe } from "@vanilla-extract/recipes";
 
 export const panel = recipe({
     base: {
+        position: "relative",
         borderRadius: alias.cornerRadius.l,
         transition: `background ${transition.slow}`,
         backgroundSize: "cover",
@@ -21,16 +16,6 @@ export const panel = recipe({
             primary: {
                 backgroundColor: vars.surface.elevated,
                 backdropFilter: "blur(40px)",
-            },
-            secondary: {
-                backdropFilter: "blur(40px)",
-            },
-            outlined: {
-                border: `2px solid ${vars.border.default}`,
-                background: "transparent",
-            },
-            empty: {
-                background: "transparent",
             },
             invisible: {
                 background: "transparent",
@@ -56,22 +41,4 @@ export const panel = recipe({
         variant: "primary",
         size: "normal",
     },
-});
-
-export const shadow = style({
-    boxShadow: shadowToken.panel,
-});
-
-export const dismissible = style({
-    position: "relative",
-});
-
-export const dismissButton = style({
-    all: "unset",
-    position: "absolute",
-    top: "5px",
-    right: "9px",
-    width: brand.scale[300],
-    height: brand.scale[300],
-    cursor: "pointer",
 });

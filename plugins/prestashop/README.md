@@ -120,8 +120,6 @@ PHPStan runs against a real PrestaShop checkout. The `composer analyse` script c
 
 The `test/docker-compose.yaml` file spins a local PrestaShop instance (PrestaShop + MySQL on `localhost:8080`) for manual smoke testing — see the demo credentials in the file.
 
-The full architecture and refactor roadmap lives in [`docs/prestashop-refactor-plan.md`](../../docs/prestashop-refactor-plan.md).
-
 ## Release
 
 The release flow lives in [`.github/workflows/release-php-plugins.yml`](../../.github/workflows/release-php-plugins.yml):

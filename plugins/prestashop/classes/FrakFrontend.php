@@ -8,9 +8,8 @@
  *   - `actionFrontControllerSetMedia`: SDK script registered through
  *     PrestaShop's native asset manager.
  *
- * Mirrors the WordPress sibling's `Frak_Frontend` (head + asset wiring) so
- * the two plugins read as a coherent family. Extracted from the
- * `FrakIntegration` bootstrap to keep the Module class a thin hook router.
+ * Extracted from the `FrakIntegration` bootstrap to keep the Module class a
+ * thin hook router.
  */
 class FrakFrontend
 {
@@ -71,9 +70,6 @@ class FrakFrontend
      *   - `priority => 200` runs the SDK after PrestaShop's own scripts so
      *     the inline `window.FrakSetup` block from {@see self::head()} is
      *     guaranteed to be evaluated before the deferred SDK boots.
-     *   - Mirrors the WordPress sibling's
-     *     `wp_enqueue_script('frak-sdk', ..., strategy:defer, in_footer:true)`
-     *     ({@see plugins/wordpress/includes/class-frak-frontend.php}).
      *
      * @param Context $context Forwarded from the Module instance so the helper
      *                         stays a stateless static call.

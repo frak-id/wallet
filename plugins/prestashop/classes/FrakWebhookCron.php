@@ -35,9 +35,6 @@
  * that exhausted MAX_ATTEMPTS) writes to `PrestaShopLogger`. Transient
  * failures and per-tick housekeeping are queryable via the queue table
  * itself — `FrakWebhookQueue::stats()` exposes them on the admin panel.
- *
- * Mirrors `plugins/magento/Model/Retry/CronRetry.php` so the two plugins
- * share the same retry semantics.
  */
 class FrakWebhookCron
 {

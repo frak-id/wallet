@@ -1,7 +1,3 @@
-/**
- * Tests for generateSsoUrl / ssoParamsToCompressed
- */
-
 import { describe, expect, it } from "../../../tests/vitest-fixtures";
 import { decompressJsonFromB64 } from "../compression/decompress";
 import type { CompressedSsoData } from "./sso";

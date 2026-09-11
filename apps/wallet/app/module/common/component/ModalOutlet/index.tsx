@@ -78,14 +78,7 @@ const PendingGainsModal = lazy(() =>
 /** The modal is closed on catch, so the boundary has nothing left to render. */
 const renderNothing = () => null;
 
-/**
- * Global modal outlet — mounted once at the app root.
- *
- * Reads the current `ModalState` from the Zustand store and renders
- * the matching modal component.  Each modal receives an `onClose`
- * callback that resets the store, keeping modal components completely
- * decoupled from state management.
- */
+/** Global modal outlet — mounted once at the app root. */
 export function ModalOutlet() {
     const modal = modalStore(selectModal);
     const closeModal = modalStore((s) => s.closeModal);
@@ -108,7 +101,7 @@ export function ModalOutlet() {
             }}
             errorComponent={renderNothing}
         >
-            {/* Seven modals share `DetailOverlay` at this position; without a
+            {/* Six modals share `DetailOverlay` at this position; without a
                 key, closing one over another reuses the instance and its
                 already-closing state, so the survivor cannot close. */}
             <Suspense fallback={null} key={modal.id}>

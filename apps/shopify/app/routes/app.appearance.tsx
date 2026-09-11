@@ -209,31 +209,10 @@ async function handleSaveExplorer(
     }
 }
 
-// Best-effort: the listing/metafield save has already committed by the time
-// this runs, so a removed image is no longer referenced. A failed storage
-// delete therefore only leaves a benign orphan (unreferenced file) — not worth
-// failing the whole save and blocking the merchant behind an error toast. Log
-// and continue.
-async function replayDeferredDeletions(
-    context: Awaited<ReturnType<typeof authenticate.admin>>,
-    request: Request,
-    deletedTypes: string[],
-    stillReferenced: Set<string>
-): Promise<void> {
-    for (const type of deletedTypes) {
-        if (stillReferenced.has(type)) continue;
-        const deleteResult = await deleteMerchantMedia(context, request, type);
-        if (!deleteResult.success) {
-            log.warn(
-                { type },
-                "Deferred media deletion failed; leaving orphaned file"
-            );
-        }
-    }
-}
-
 // Replay any deferred deletions recorded on the form, skipping types still
-// referenced by the just-saved state. No-op when the form carried none.
+// referenced by the just-saved state. Best-effort: the save has already
+// committed, so a failed storage delete only leaves a benign orphan — not worth
+// blocking the merchant behind an error toast.
 async function replayFormDeletions(
     context: Awaited<ReturnType<typeof authenticate.admin>>,
     request: Request,
@@ -245,12 +224,16 @@ async function replayFormDeletions(
         return;
     }
     const deletedTypes: string[] = JSON.parse(deletedMediaTypesData as string);
-    await replayDeferredDeletions(
-        context,
-        request,
-        deletedTypes,
-        stillReferenced
-    );
+    for (const type of deletedTypes) {
+        if (stillReferenced.has(type)) continue;
+        const deleteResult = await deleteMerchantMedia(context, request, type);
+        if (!deleteResult.success) {
+            log.warn(
+                { type },
+                "Deferred media deletion failed; leaving orphaned file"
+            );
+        }
+    }
 }
 
 // The customizations form only manages the logo, so the sole still-referenced

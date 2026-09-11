@@ -191,7 +191,7 @@ export class IdentityWeightService {
         const walletResult = this.checkWalletPriority(weight1, weight2);
         if (walletResult) return walletResult;
 
-        const historyWinner = this.compareHistoryWeight(weight1, weight2);
+        const historyWinner = pickHeavierWeight(weight1, weight2);
         return {
             anchorGroupId: historyWinner.groupId,
             mergingGroupId:
@@ -233,15 +233,11 @@ export class IdentityWeightService {
         let anchor: GroupWeight;
         if (walletsWithGroups.length > 0) {
             anchor = walletsWithGroups.reduce((best, current) =>
-                this.compareHistoryWeight(best, current) === best
-                    ? best
-                    : current
+                pickHeavierWeight(best, current) === best ? best : current
             );
         } else {
             anchor = weights.reduce((best, current) =>
-                this.compareHistoryWeight(best, current) === best
-                    ? best
-                    : current
+                pickHeavierWeight(best, current) === best ? best : current
             );
         }
 
@@ -297,12 +293,5 @@ export class IdentityWeightService {
         }
 
         return null;
-    }
-
-    private compareHistoryWeight(
-        weight1: GroupWeight,
-        weight2: GroupWeight
-    ): GroupWeight {
-        return pickHeavierWeight(weight1, weight2);
     }
 }

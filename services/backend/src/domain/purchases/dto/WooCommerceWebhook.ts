@@ -1,25 +1,25 @@
 export type WooCommerceOrderUpdateWebhookDto = Readonly<{
-    id: number; // order_id
-    status: WooCommerceOrderStatus; // The financial status of the order (could include "paid", "refunded", etc.)
-    total: string; // Total price of the order
-    currency: string; // Currency code (ISO 4217)
-    date_created_gmt: string; // The creation date of the order
-    date_modified_gmt?: string; // The date when the order was last updated
-    date_completed_gmt?: string; // The date when the order was last updated
-    date_paid_gmt?: string; // The date when the order was last updated
-    customer_id: number; // The customer id
-    order_key: string; // The key of the order
-    transaction_id: string; // The id of the transaction
+    id: number;
+    status: WooCommerceOrderStatus;
+    total: string;
+    currency: string; // ISO 4217
+    date_created_gmt: string;
+    date_modified_gmt?: string;
+    date_completed_gmt?: string;
+    date_paid_gmt?: string;
+    customer_id: number;
+    order_key: string;
+    transaction_id: string;
     line_items: {
-        id: number; // The line item id, unique within the order
-        product_id: number; // The product id
-        quantity: number; // The quantity of the product
+        id: number; // Unique within the order
+        product_id: number;
+        quantity: number;
         price: number; // Unit price after discounts, tax excluded (total / quantity)
         // Line total after discounts, tax excluded, and its tax counterpart.
         total?: string;
         total_tax?: string;
-        name: string; // The name of the product
-        sku?: string; // The SKU of the product
+        name: string;
+        sku?: string;
         image: {
             id?: string;
             src?: string;
@@ -33,12 +33,9 @@ export type WooCommerceOrderUpdateWebhookDto = Readonly<{
         reason?: string;
         total: string;
     }[];
-    // Coupons applied to the order. Forwarded for future analytics use
-    // (campaign-aware reward weighting, code-specific attribution); the
-    // current handler does not read this. Personalised coupon codes can
-    // theoretically embed customer hints (`JOHN-DOE-25`) so we forward only
-    // `id` / `code` / `discount` and drop `discount_tax`, `taxes`, and
-    // `meta_data` at the plugin edge — see the WooCommerce filter in
+    // Personalised coupon codes can embed customer hints (`JOHN-DOE-25`), so
+    // only `id` / `code` / `discount` are forwarded: `discount_tax`, `taxes`
+    // and `meta_data` are stripped at the plugin edge, see
     // `Frak_WC_Webhook_Registrar::strip_coupon_lines()`.
     coupon_lines?: {
         id: number;

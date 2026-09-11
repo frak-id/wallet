@@ -17,29 +17,12 @@ export { SheetToolbar } from "./SheetToolbar";
 export type SheetSide = "top" | "right" | "bottom" | "left";
 export type SheetSize = "default" | "wide";
 
-/**
- * Stateless root — pairs trigger + content.
- */
 export const Sheet = RadixDialog.Root;
 
-/**
- * Element that opens the sheet on click.
- */
 export const SheetTrigger = RadixDialog.Trigger;
 
-/**
- * Close trigger for the sheet.
- */
 export const SheetClose = RadixDialog.Close;
 
-/**
- * Portal target for the sheet content (rarely needed directly).
- */
-export const SheetPortal = RadixDialog.Portal;
-
-/**
- * Accessible title for the sheet.
- */
 export function SheetTitle({
     className,
     ...props
@@ -52,9 +35,6 @@ export function SheetTitle({
     );
 }
 
-/**
- * Accessible description for the sheet.
- */
 export function SheetDescription({
     className,
     ...props
@@ -67,16 +47,10 @@ export function SheetDescription({
     );
 }
 
-/**
- * Header layout for sheet content.
- */
 export function SheetHeader({ className, ...props }: ComponentProps<"div">) {
     return <div className={clsx(sheetHeaderStyle, className)} {...props} />;
 }
 
-/**
- * Footer layout for sheet content.
- */
 export function SheetFooter({ className, ...props }: ComponentProps<"div">) {
     return <div className={clsx(sheetFooterStyle, className)} {...props} />;
 }
@@ -96,9 +70,6 @@ type SheetContentProps = ComponentPropsWithRef<typeof RadixDialog.Content> & {
     padded?: boolean;
 };
 
-/**
- * Styled sheet content — portaled, animated, with overlay.
- */
 export function SheetContent({
     side = "right",
     size = "default",

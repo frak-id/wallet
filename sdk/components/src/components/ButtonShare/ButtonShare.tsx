@@ -4,6 +4,7 @@ import {
     sanitizeSharingProducts,
     trackEvent,
 } from "@frak-labs/core-sdk";
+import { applyRewardPlaceholder } from "@frak-labs/core-sdk/rewards";
 import { useCallback, useMemo } from "preact/hooks";
 import { openSharingPage } from "@/actions/sharingPage";
 import { useClientReady } from "@/hooks/useClientReady";
@@ -13,7 +14,6 @@ import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
 import { componentDefaults } from "@/i18n/defaults";
-import { applyRewardPlaceholder } from "@/utils/format/formatReward";
 import type { ButtonShareProps } from "./types";
 
 /**
@@ -87,13 +87,10 @@ export function ButtonShare({
 
     useLightDomStyles("frak-button-share", placementId, componentConfig?.css);
 
-    const resolvedTargetInteraction = useMemo<InteractionTypeKey | undefined>(
-        () =>
-            placement?.targetInteraction !== undefined
-                ? (placement.targetInteraction as InteractionTypeKey)
-                : targetInteraction,
-        [placement?.targetInteraction, targetInteraction]
-    );
+    const resolvedTargetInteraction: InteractionTypeKey | undefined =
+        placement?.targetInteraction !== undefined
+            ? (placement.targetInteraction as InteractionTypeKey)
+            : targetInteraction;
 
     const resolvedText =
         componentConfig?.text ??
@@ -101,14 +98,9 @@ export function ButtonShare({
         componentDefaults[lang].buttonShare.text;
     const resolvedNoRewardText = componentConfig?.noRewardText ?? noRewardText;
 
-    const wantsReward = useMemo(
-        () => resolvedText.includes("{REWARD}"),
-        [resolvedText]
-    );
-    const resolvedClickAction = useMemo(
-        () => componentConfig?.clickAction ?? rawClickAction ?? "sharing-page",
-        [componentConfig?.clickAction, rawClickAction]
-    );
+    const wantsReward = resolvedText.includes("{REWARD}");
+    const resolvedClickAction =
+        componentConfig?.clickAction ?? rawClickAction ?? "sharing-page";
     const { shouldRender, isHidden, isClientReady } = useClientReady();
     // Sanitized once: the array feeds both reward selection below and the
     // sharing-page RPC on click.
@@ -140,10 +132,8 @@ export function ButtonShare({
             has_reward: Boolean(reward),
             click_action: resolvedClickAction,
         });
-        // Every click routes to the full-page sharing UI. Legacy configs
-        // (`share-modal`, `embedded-wallet`) land here too — both of those
-        // surfaces were retired in favour of `displaySharingPage`, so every
-        // share CTA now goes through the same UI.
+        // Every click routes to the full-page sharing UI, including the
+        // `share-modal` and `embedded-wallet` configs.
         openSharingPage(resolvedTargetInteraction, placementId, {
             products: parsedProducts,
         });

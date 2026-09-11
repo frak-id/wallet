@@ -305,8 +305,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
 
     /**
      * Persist the webhook secret. Empty submissions clear the row and disable
-     * dispatch — mirrors the WordPress plugin's pattern. The secret is owned
-     * by the Frak business dashboard (single source of truth, stored on
+     * dispatch. The secret is owned by the Frak business dashboard (single source of truth, stored on
      * `merchantWebhooksTable.hookSignatureKey`); the admin pastes it here so
      * outbound HMAC signatures match what the backend verifies.
      */

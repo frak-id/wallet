@@ -5,7 +5,6 @@ import { vi } from "vitest";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
 import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
-// Mock authenticatorStorage
 vi.mock("@frak-labs/wallet-shared", async () => {
     const actual = await vi.importActual("@frak-labs/wallet-shared");
     return {
@@ -103,17 +102,5 @@ describe("usePreviousAuthenticators", () => {
         });
 
         expect(result.current.error).toBe(mockError);
-    });
-
-    test("should be enabled by default", ({ queryWrapper }) => {
-        vi.spyOn(walletShared.authenticatorStorage, "getAll").mockResolvedValue(
-            []
-        );
-
-        const { result } = renderHook(() => usePreviousAuthenticators(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        expect(result.current.isLoading).toBe(true);
     });
 });

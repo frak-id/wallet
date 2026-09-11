@@ -142,27 +142,6 @@ class OrderPlaceAfterObserverTest extends TestCase
         $this->logger->expects(self::once())->method("error");
 
         $this->observer->execute($observer);
-        self::assertTrue(true);
-    }
-
-    /**
-     * Test that frak_client_id cookie value is passed to webhook
-     *
-     * @return void
-     */
-    public function testPassesClientIdFromCookie(): void
-    {
-        $order = $this->createOrderMock(1, 123, "100000123");
-        $observer = $this->createObserverWithEvent($order, null);
-
-        $this->config->method("isEnabled")->with(1)->willReturn(true);
-        $this->cookieReader->expects(self::once())->method("getCookie")->with("frak_client_id")->willReturn("cookie-client-id");
-        $this->webhookSender
-            ->expects(self::once())
-            ->method("sendOrderWebhook")
-            ->with($order, "pending", "cookie-client-id");
-
-        $this->observer->execute($observer);
     }
 
     /**

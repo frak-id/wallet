@@ -308,11 +308,6 @@ export function createRpcClient<
             const messageOrigin = new URL(event.origin).origin.toLowerCase();
             const expectedOrigin = new URL(targetOrigin).origin.toLowerCase();
             if (messageOrigin !== expectedOrigin) {
-                console.log(
-                    "Not expected origin",
-                    messageOrigin,
-                    expectedOrigin
-                );
                 return;
             }
         } catch (e) {
@@ -366,14 +361,7 @@ export function createRpcClient<
      * Send a message through the transport with middleware
      */
     async function sendMessage(message: RpcMessage<ExtractMethod<TSchema>>) {
-        let processedMessage = message;
-        try {
-            processedMessage = await executeOnRequestMiddleware(message);
-        } catch (error) {
-            console.error("[RPC Client] Middleware error on request:", error);
-            throw error;
-        }
-
+        const processedMessage = await executeOnRequestMiddleware(message);
         emittingTransport.postMessage(processedMessage, targetOrigin);
     }
 

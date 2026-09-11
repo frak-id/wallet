@@ -18,7 +18,6 @@ export {
     kernelAddresses,
     type Stablecoin,
     stablecoins,
-    usdcArbitrumAddress,
 } from "./addresses";
 export {
     arbitrumChainId,

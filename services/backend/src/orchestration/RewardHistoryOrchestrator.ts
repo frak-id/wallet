@@ -1,4 +1,8 @@
-import type { TokenMetadata, TokenPrice } from "@backend-infrastructure";
+import {
+    log,
+    type TokenMetadata,
+    type TokenPrice,
+} from "@backend-infrastructure";
 import type { Address } from "viem";
 import type { ReferralLinkRepository } from "../domain/attribution/repositories/ReferralLinkRepository";
 import type { ReferralLinkSourceData } from "../domain/attribution/schemas";
@@ -117,12 +121,14 @@ export class RewardHistoryOrchestrator {
         uniqueTokens: Address[]
     ): Promise<Map<Address, TokenMetadata>> {
         try {
-            const batchResult =
-                await this.balancesRepository.getTokenMetadataBatch(
-                    uniqueTokens
-                );
-            return batchResult;
-        } catch {
+            return await this.balancesRepository.getTokenMetadataBatch(
+                uniqueTokens
+            );
+        } catch (err) {
+            log.warn(
+                { err, tokenCount: uniqueTokens.length },
+                "Token metadata batch failed, falling back to UNKNOWN/18"
+            );
             return new Map(
                 uniqueTokens.map((token) => [
                     token,

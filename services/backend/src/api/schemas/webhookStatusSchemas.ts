@@ -1,5 +1,4 @@
 import { t } from "@backend-utils";
-import type { Static } from "elysia";
 import { WebhookPlatformSchema } from "../../domain/purchases/schemas";
 
 export const WebhookStatusResponseSchema = t.Union([
@@ -20,4 +19,3 @@ export const WebhookStatusResponseSchema = t.Union([
         ),
     }),
 ]);
-export type WebhookStatusResponse = Static<typeof WebhookStatusResponseSchema>;

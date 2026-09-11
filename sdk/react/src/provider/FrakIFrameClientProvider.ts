@@ -60,8 +60,8 @@ export function FrakIFrameClientProvider({
     // below can run once it exists.
     const [iframe, setIframe] = useState<HTMLIFrameElement | null>(null);
 
-    // Seed the listener URL with the derived anonymous id. This provider used
-    // to omit `clientId` entirely, so the listener fell back to its own store.
+    // Seed the listener URL with the derived anonymous id; without it the
+    // listener falls back to its own store.
     const { data: iframeSrc } = useQuery({
         queryKey: ["frak", "listener-url", config.env],
         queryFn: async () => {
@@ -100,13 +100,11 @@ export function FrakIFrameClientProvider({
           })
         : null;
 
-    // Create the component that will provide the client
     const providerComponent = createElement(
         FrakIFrameClientContext.Provider,
         { value: client },
         children
     );
 
-    // Return both components
     return createElement(Fragment, null, iFrame, providerComponent);
 }

@@ -13,11 +13,7 @@ export const legacyRouteMapper = (app: Elysia) =>
 
             const newUrl = new URL(newPath, `http://${headers.host}`);
             log.debug(
-                {
-                    path,
-                    newUrl: newUrl.toString(),
-                    headers,
-                },
+                { path, newUrl: newUrl.toString() },
                 "Handling legacy route, calling the new controller via the app invocation"
             );
 

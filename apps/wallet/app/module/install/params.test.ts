@@ -45,7 +45,7 @@ describe("parseInstallProofFragment", () => {
 });
 
 describe("resolveInstallProof", () => {
-    test("uses the fragment when there is one, exactly as before", () => {
+    test("uses the fragment when there is one", () => {
         expect(resolveInstallProof("#p=from-fragment")).toBe("from-fragment");
     });
 
@@ -91,7 +91,7 @@ describe("buildInstallProcessingEnsureAction", () => {
         });
     });
 
-    test("fragment stripped (no proof): falls back to the bare legacy pair, byte-identical to today", () => {
+    test("fragment stripped (no proof): falls back to the bare merchantId/anonymousId pair", () => {
         const action = buildInstallProcessingEnsureAction({
             merchantId: "merchant-1",
             anonymousId: "anon-1",

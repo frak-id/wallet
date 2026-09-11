@@ -1,5 +1,6 @@
 import { HiddenVisually } from "@frak-labs/design-system/components/HiddenVisually";
 import clsx from "clsx";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import type {
     ButtonHTMLAttributes,
     ComponentProps,
@@ -129,8 +130,6 @@ const PaginationEllipsis = ({
     );
 };
 PaginationEllipsis.displayName = "PaginationEllipsis";
-
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 
 export {
     Pagination,

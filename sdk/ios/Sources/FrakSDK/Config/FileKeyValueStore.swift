@@ -10,8 +10,8 @@ final class FileKeyValueStore: KeyValueStore, @unchecked Sendable {
     private let logger: FrakLogger
 
     private let lock = NSLock()
-    /// Nil until the first access reads the file, matching the Kotlin twin: construction happens
-    /// under `Frak.initialize`, which does no I/O.
+    /// Nil until the first access reads the file: construction happens under `Frak.initialize`,
+    /// which does no I/O.
     private var values: [String: String]?
     /// Set when the file exists but could not be read; cleared by the next successful read.
     private var unreadable = false

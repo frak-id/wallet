@@ -16,7 +16,6 @@ describe("setupSsoUrlListener", () => {
     let mockWaitForConnection: Promise<boolean>;
     let originalLocation: Location;
     let originalHistory: History;
-    let consoleLogSpy: ReturnType<typeof vi.spyOn>;
     let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
@@ -29,8 +28,6 @@ describe("setupSsoUrlListener", () => {
             sendLifecycle: vi.fn(),
         } as any;
 
-        // Mock console methods
-        consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
         consoleErrorSpy = vi
             .spyOn(console, "error")
             .mockImplementation(() => {});
@@ -41,7 +38,6 @@ describe("setupSsoUrlListener", () => {
 
     afterEach(() => {
         vi.clearAllMocks();
-        consoleLogSpy.mockRestore();
         consoleErrorSpy.mockRestore();
 
         // Restore original values
@@ -104,10 +100,6 @@ describe("setupSsoUrlListener", () => {
             clientLifecycle: "sso-redirect-complete",
             data: { compressed: compressedSso },
         });
-
-        expect(consoleLogSpy).toHaveBeenCalledWith(
-            "[SSO URL Listener] Forwarded compressed SSO data to iframe"
-        );
     });
 
     it("should clean URL immediately after detecting SSO parameter", async () => {
@@ -129,10 +121,6 @@ describe("setupSsoUrlListener", () => {
             {},
             "",
             "https://example.com/test"
-        );
-
-        expect(consoleLogSpy).toHaveBeenCalledWith(
-            "[SSO URL Listener] SSO parameter detected and URL cleaned"
         );
     });
 

@@ -5,8 +5,6 @@ import {
     Drawer,
     DrawerContent,
     DrawerDescription,
-    DrawerFooter,
-    DrawerHeader,
     DrawerTitle,
     DrawerTrigger,
 } from "./index";
@@ -34,15 +32,5 @@ describe("Drawer", () => {
         expect(await screen.findByText("Drawer title")).toBeInTheDocument();
         expect(screen.getByText("Drawer description")).toBeInTheDocument();
         expect(screen.getByText("Body content")).toBeInTheDocument();
-    });
-
-    it("should expose the compound parts", () => {
-        expect(Drawer).toBeDefined();
-        expect(DrawerTrigger).toBeDefined();
-        expect(DrawerContent).toBeDefined();
-        expect(DrawerTitle).toBeDefined();
-        expect(DrawerDescription).toBeDefined();
-        expect(DrawerHeader).toBeDefined();
-        expect(DrawerFooter).toBeDefined();
     });
 });

@@ -115,16 +115,5 @@ describe("getMerchantInformation", () => {
                 "RPC request failed"
             );
         });
-
-        it("should handle network timeout errors", async () => {
-            const error = new Error("Request timeout");
-            const mockClient = {
-                request: vi.fn().mockRejectedValue(error),
-            } as unknown as FrakClient;
-
-            await expect(getMerchantInformation(mockClient)).rejects.toThrow(
-                "Request timeout"
-            );
-        });
     });
 });

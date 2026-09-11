@@ -55,8 +55,6 @@ export function MoneriumOrderDetailModal({
     );
 }
 
-// --- Header: bank icon (with badge) + direction + amount + date ---
-
 function DetailHeader({
     order,
     locale,
@@ -155,8 +153,6 @@ function HeroBadge({ state }: { state: MoneriumOrderState }) {
     return null;
 }
 
-// --- Detail card ---
-
 function DetailCard({ order, t }: { order: MoneriumOrder; t: TFunction }) {
     const memo = order.memo?.trim();
     const walletName = t("monerium.order.detail.walletName");
@@ -231,8 +227,6 @@ function DetailCard({ order, t }: { order: MoneriumOrder; t: TFunction }) {
         </Stack>
     );
 }
-
-// --- Helpers ---
 
 function formatOrderDateTime(
     order: MoneriumOrder,

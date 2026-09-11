@@ -5,9 +5,6 @@ import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { merchantQueryKey } from "@/module/merchant/queries/queryKeys";
 
-/**
- * Hook to fund a bank
- */
 export function useFundTestBank() {
     const isDemoMode = useIsDemoMode();
     const queryClient = useQueryClient();

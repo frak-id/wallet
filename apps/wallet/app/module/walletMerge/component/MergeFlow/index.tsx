@@ -2,7 +2,7 @@ import { type Flow, startFlow } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { looserAssetSummaryQueryOpt } from "../../hook/useLoserAssetSummary";
+import { loserAssetSummaryQueryOptions } from "../../hook/useLoserAssetSummary";
 import { useMergePreview } from "../../hook/useMergePreview";
 import { useLocalMergeStrategy } from "../../strategy/useLocalMergeStrategy";
 import { useRemoteMergeStrategy } from "../../strategy/useRemoteMergeStrategy";
@@ -41,19 +41,9 @@ type MergeFlowProps = {
 };
 
 /**
- * Multi-step orchestrator for the wallet-merge flow.
- *
- * Each user-visible step is a self-contained screen owning at most one
- * webauthn prompt. The merge owns its own bundler clients (winner +
- * loser) via the active strategy, so the live wagmi session is never
- * mutated — the consent, addPassKey, and migration userOps each sign
- * with the appropriate credential through either the local WebAuthn
- * ceremony or the merge's origin pairing, never by swapping the live
- * session.
- *
- * Step ordering, animations, copy, and back-navigation are identical
- * between local and remote — only what happens inside each mutation
- * differs, encapsulated by the `MergeStrategy` chosen on `mode`.
+ * Multi-step orchestrator for the wallet-merge flow. The merge owns its own
+ * bundler clients (winner + loser) via the active strategy, so the live wagmi
+ * session is never mutated.
  */
 export function MergeFlow({
     email,
@@ -100,7 +90,7 @@ export function MergeFlow({
     );
 
     const assetSummary = useQuery(
-        looserAssetSummaryQueryOpt({
+        loserAssetSummaryQueryOptions({
             loser: preview.data?.loser,
         })
     );
@@ -121,12 +111,9 @@ export function MergeFlow({
     }, [needsSwitch, discovery, currentAuthenticatorId]);
 
     // Both strategies must run unconditionally to honour the rules of hooks;
-    // the one we use is picked off `discovery.mode`. Each strategy calls its
-    // own React Query hooks INTERNALLY and exposes the resulting mutation
-    // objects as plain fields — we read them as data, never re-invoke them,
-    // so the count of hook calls inside this component stays stable across
-    // a mode switch. Before discovery resolves we default to `localStrategy`
-    // (harmless — only DiscoveryStep is rendered and it doesn't read it).
+    // the one we use is picked off `discovery.mode`. Their mutation objects are
+    // read as data, never re-invoked, so the hook count stays stable across a
+    // mode switch.
     const localStrategy = useLocalMergeStrategy();
     const remoteStrategy = useRemoteMergeStrategy({
         needsSwitch,
@@ -136,12 +123,9 @@ export function MergeFlow({
     const strategy =
         discovery?.mode === "remote" ? remoteStrategy : localStrategy;
 
-    // Tear down on EVERY unmount, success included — `strategy.cancel`
-    // also drops the detached pairing session snapshot, which would
-    // otherwise survive a successful merge and leak into the next flow.
-    // Aborts additionally cancel pending signature-requests so a late
-    // peer reply doesn't land against the abandoned flow. No-op for the
-    // local strategy (which exposes no `cancel`).
+    // Tear down on EVERY unmount, success included — `strategy.cancel` also
+    // drops the detached pairing session snapshot, which would otherwise
+    // survive a successful merge and leak into the next flow.
     useEffect(() => {
         return () => {
             strategy.cancel?.();
@@ -238,10 +222,6 @@ export function MergeFlow({
 
     if (step.kind === "sign") {
         if (!winnerAuthenticatorId || !preview.data.winnerPublicKey) {
-            // Should never hit — `winnerAuthenticatorId` is derived from a
-            // resolved preview, and `winnerPublicKey` is part of the same
-            // preview payload. Keeps the type narrowing tight without
-            // adding a runtime branch the user would ever see.
             return null;
         }
         const consentSignature = step.consentSignature;

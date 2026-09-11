@@ -72,10 +72,9 @@ class Frak_WooCommerce {
 	 * the exact two endpoints that carry an order — every other frontend page
 	 * pays zero PHP for tracking.
 	 *
-	 * Order-status → webhook dispatch lives in WooCommerce's native webhook
-	 * pipeline now (see {@see Frak_WC_Webhook_Registrar}); we no longer hook
-	 * `woocommerce_order_status_changed` from PHP because WC's own
-	 * `woocommerce_update_order` trigger + queued delivery + retry handles it.
+	 * Order-status → webhook dispatch is not hooked from PHP at all: it lives in
+	 * WooCommerce's native webhook pipeline (see {@see Frak_WC_Webhook_Registrar}),
+	 * which owns the trigger, queued delivery and retries.
 	 */
 	public static function init() {
 		add_action( 'woocommerce_thankyou', array( __CLASS__, 'render_purchase_tracker_for_order' ) );

@@ -16,10 +16,8 @@ import type {
  * Permission state shape returned by the `frak-firebase` plugin.
  *
  * Mirrors `@tauri-apps/api/core` PermissionState — declared inline because the
- * merged plugin no longer ships a typed JS bindings package. Both halves
- * (FCM + Crashlytics) are consumed via raw `invoke()` strings (see
- * `packages/wallet-shared/src/common/analytics/crashlytics.ts` for the
- * Crashlytics half).
+ * plugin ships no typed JS bindings. Both halves (FCM + Crashlytics) are
+ * consumed via raw `invoke()` strings.
  */
 type PermissionState =
     | "granted"

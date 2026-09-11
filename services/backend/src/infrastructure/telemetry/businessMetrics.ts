@@ -6,8 +6,6 @@ import { register } from "./registry";
  * jobs (not per-item in hot loops), keeping overhead negligible.
  */
 
-// --- Reward settlement (money path) ---
-
 const settlementRewardsTotal = register(
     new Counter({
         name: "settlement_rewards_total",
@@ -38,8 +36,6 @@ const settlementRequeuedTotal = register(
     })
 );
 
-// --- Reward calculation (interaction -> pending reward) ---
-
 const rewardInteractionsTotal = register(
     new Counter({
         name: "reward_interactions_processed_total",
@@ -49,16 +45,12 @@ const rewardInteractionsTotal = register(
     })
 );
 
-// --- Webhooks (forced-200 error path is otherwise invisible) ---
-
 const webhookErrorsTotal = register(
     new Counter({
         name: "webhook_errors_total",
         help: "E-commerce webhook handler errors (returned as HTTP 200 'ko:')",
     })
 );
-
-// --- Notifications ---
 
 const notificationsSentTotal = register(
     new Counter({
@@ -68,8 +60,6 @@ const notificationsSentTotal = register(
         labelNames: ["channel", "outcome"] as const,
     })
 );
-
-// --- Affiliate ingestion health ---
 
 const affiliateWatermarkLag = register(
     new Gauge({

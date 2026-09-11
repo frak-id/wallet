@@ -1,10 +1,6 @@
 import { sessionStore } from "../../stores/sessionStore";
 import type { SdkSession, Session } from "../../types/Session";
 
-/**
- * Get an item from the local storage
- * @param key
- */
 export function getFromLocalStorage<T>(key: string) {
     if (typeof window === "undefined") {
         return undefined;

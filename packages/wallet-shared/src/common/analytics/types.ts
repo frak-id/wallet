@@ -29,13 +29,3 @@ export type AnalyticsGlobalProperties = {
      */
     sdk_anonymous_id?: string;
 };
-
-/**
- * Different types of authentication events
- */
-export type AnalyticsAuthenticationType =
-    | "register"
-    | "login"
-    | "sso"
-    | "pairing"
-    | "demo";

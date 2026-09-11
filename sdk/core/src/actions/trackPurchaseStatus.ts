@@ -3,7 +3,7 @@ import { getBackendUrl } from "../config/environment";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 
 /**
- * Function used to track the status of a purchase
+ * Register a purchase for tracking:
  * when a purchase is tracked, the `purchaseCompleted` interactions will be automatically send for the user when we receive the purchase confirmation via webhook.
  *
  * @param args.customerId - The customer id that made the purchase (on your side)

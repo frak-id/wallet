@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import type { AssetLogRepository } from "../../rewards/repositories/AssetLogRepository";
 import type { CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
@@ -17,10 +17,6 @@ vi.mock("@backend-infrastructure", () => ({
 }));
 
 describe("RuleEngineService", () => {
-    beforeAll(() => {
-        // Setup any global mocks if needed
-    });
-
     afterAll(() => {
         vi.restoreAllMocks();
     });
@@ -96,7 +92,6 @@ describe("RuleEngineService", () => {
     ): CalculatedReward => ({
         recipient: "referee",
         recipientIdentityGroupId: "test-user-group",
-        recipientWallet: null,
         type: "token",
         amount: 100,
         token: null,
@@ -665,26 +660,15 @@ describe("RuleEngineService", () => {
     });
 
     describe("buildTimeContext", () => {
-        it("should build time context with correct structure", () => {
-            const testDate = new Date("2025-02-25T14:30:45Z");
-            const context = buildTimeContext(testDate);
+        it("derives day, hour and date from the given UTC date", () => {
+            const context = buildTimeContext(new Date("2025-02-25T14:30:45Z"));
 
-            expect(context).toHaveProperty("dayOfWeek");
-            expect(context).toHaveProperty("hourOfDay");
-            expect(context).toHaveProperty("date");
-            expect(context).toHaveProperty("timestamp");
+            expect(context.dayOfWeek).toBe(2);
             expect(context.hourOfDay).toBe(14);
             expect(context.date).toBe("2025-02-25");
-        });
-
-        it("should use current date when no date provided", () => {
-            const context = buildTimeContext();
-
-            expect(context).toHaveProperty("dayOfWeek");
-            expect(context).toHaveProperty("hourOfDay");
-            expect(context).toHaveProperty("date");
-            expect(context).toHaveProperty("timestamp");
-            expect(typeof context.timestamp).toBe("number");
+            expect(context.timestamp).toBe(
+                Math.floor(new Date("2025-02-25T14:30:45Z").getTime() / 1000)
+            );
         });
     });
 

@@ -41,13 +41,9 @@ export function FrakConfigProvider(
 ) {
     const { children, config } = parameters;
 
-    // Publish the wallet/backend origins as early as the config exists — core
-    // actions read them from the singleton, and some (`trackPurchaseStatus`)
-    // can fire without ever touching the iframe client. It cannot be an
-    // effect: children's own effects and queries run first and would read the
-    // wrong stage. A state initializer is the next-earliest hook, and unlike a
-    // bare call in the render body it runs once per provider rather than on
-    // every render.
+    // Not an effect: children's own effects and queries run first and would
+    // read the wrong stage from the core singleton. A state initializer is the
+    // earliest hook that still runs once per provider, not per render.
     useState(() => setEnvironment(config.env));
 
     return createElement(
@@ -58,7 +54,7 @@ export function FrakConfigProvider(
                 domain:
                     config.domain ??
                     (typeof window !== "undefined"
-                        ? window?.location?.host
+                        ? window.location.host
                         : undefined) ??
                     "not-found",
             },

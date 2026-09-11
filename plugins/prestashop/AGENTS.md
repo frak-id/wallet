@@ -28,21 +28,21 @@ vendor/bin/phpcs --standard=phpcs.xml.dist   # Style (PSR-12 baseline)
 - **HMAC is base64, not hex**: `base64_encode(hash_hmac('sha256', $body, $secret, true))`. Forgetting the third arg silently fails verification on the backend.
 - **Webhook URL is `/webhook/custom`** — reuses the cross-platform Elysia route, no `/webhook/prestashop`.
 - **Webhook secret is pasted from `business.frak.id`** — no local generation.
-- **Cron has two paths**: `actionCronJob` hook (auto-discovered by `ps_cronjobs`) + `controllers/front/cron.php` URL (token-guarded via `hash_equals`). Both share `FrakWebhookCron::run()`; Symfony Lock prevents double-drain.
+- **Cron has two paths**: `actionCronJob` hook (auto-discovered by `ps_cronjobs`) + `controllers/front/cron.php` URL (token-guarded via `hash_equals`). Both share `FrakWebhookCron::run()`; `FrakLock` (MySQL `GET_LOCK`) prevents double-drain.
 - **Placements driven by `FrakPlacementRegistry`** — adding a placement = one entry + matching `hookXxx()` delegating to `FrakDisplayDispatcher::dispatch()`. Install/uninstall/migrator/dispatch all read the same list.
 - **Hidden `__present` markers for placement checkboxes** — unchecked checkboxes don't submit; without the marker merchants can never disable a placement.
-- **One shared DBAL connection + one shared HttpClient**: `FrakInfra::connection()` (Cache + Lock + queue) and `FrakHttpClient::getInstance()` (resolver + webhook). Never instantiate fresh.
+- **One shared HttpClient**: `FrakHttpClient::getInstance()` (resolver + webhook). Never instantiate fresh.
 - **PHPStan against real PS sources**: `composer analyse` clones `PrestaShop/PrestaShop@8.2.6` into `.cache/prestashop-core/`. Bump in `composer.json#ps-core:fetch` + workflow cache key to roll forward.
 - **Vendor ships in the zip**: `build.sh` runs `composer install --no-dev`; `.distignore` excludes `composer.json`/`composer.lock` so merchants can't re-run composer.
 - **All `FRAK_*` Configuration access via `FrakConfig`** — typed accessor, no magic strings.
 - **Backend-driven SDK config**: only `metadata.{name,logoUrl}` is injected on `window.FrakSetup`; everything else (i18n, modal, share copy) lives on `business.frak.id`.
 
 ## Anti-Patterns
-Hand-editing `config.xml` / `frakintegration.php` versions (let `build.sh` propagate) · committing `vendor/` (gitignored) · fire-and-forget webhook HTTP without queue fallback · `actionOrderStatusUpdate` instead of `actionOrderStatusPostUpdate` · hex HMAC signature · hard-coding placement hooks outside `FrakPlacementRegistry` · omitting `__present` markers · putting maintenance buttons inside the main settings form · fresh DBAL/HttpClient instances bypassing `FrakInfra`/`FrakHttpClient` · hard-coding `backend.frak.id` / `cdn.jsdelivr.net` outside `FrakUrls` · raw `Configuration::get/updateValue('FRAK_*')` outside `FrakConfig` · reintroducing per-merchant SDK config (lives on dashboard).
+Hand-editing `config.xml` / `frakintegration.php` versions (let `build.sh` propagate) · committing `vendor/` (gitignored) · fire-and-forget webhook HTTP without queue fallback · `actionOrderStatusUpdate` instead of `actionOrderStatusPostUpdate` · hex HMAC signature · hard-coding placement hooks outside `FrakPlacementRegistry` · omitting `__present` markers · putting maintenance buttons inside the main settings form · fresh HttpClient instances bypassing `FrakHttpClient` · hard-coding `backend.frak.id` / `cdn.jsdelivr.net` outside `FrakUrls` · raw `Configuration::get/updateValue('FRAK_*')` outside `FrakConfig` · reintroducing per-merchant SDK config (lives on dashboard).
 
 ## Release Flow
 - CI: `.github/workflows/php-plugins.yaml` runs `cs` + `analyse` + `test` on every push.
-- Release: dispatch `release-php-plugins.yml` with the new version + `release_prestashop=true` (combinable with `release_magento` / `release_wordpress` for a multi-plugin train) → single `release/php-<version>` bump-PR with one `release:<plugin>` label per selected plugin → merge → per-plugin tag + zip + GitHub release.
+- Release: dispatch `release-php-plugins.yml` with `prestashop_version` set (leave the other `*_version` inputs empty to skip them, or fill them for a multi-plugin train) → one `release/php-<slug>-<version>…` bump-PR carrying a `release:<plugin>` label per selected plugin → merge → per-plugin tag + zip + GitHub release.
 
 ## See Also
 Parent `/AGENTS.md` · `plugins/wordpress/AGENTS.md` · `plugins/magento/AGENTS.md` · `services/backend/` (webhook receiver).

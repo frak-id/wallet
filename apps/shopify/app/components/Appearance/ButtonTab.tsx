@@ -7,12 +7,12 @@ import { Activated } from "../Activated";
 import { Instructions } from "../Instructions";
 import { ExternalLink } from "../ui/ExternalLink";
 
-interface ButtonTabProps {
+type ButtonTabProps = {
     isThemeHasFrakButton: boolean;
     firstProduct?: {
         handle: string;
     } | null;
-}
+};
 
 export function ButtonTab({
     isThemeHasFrakButton,

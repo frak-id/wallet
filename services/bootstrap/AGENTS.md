@@ -3,9 +3,13 @@
 One-shot orchestrator that runs before the backend can serve traffic. Packaged as a Bun image and deployed as a K8s `Job` (`infra/gcp/backend.ts` → `bootstrapJob`); backend `KubernetesService` declares `dependsOn: [bootstrapJob]`.
 
 ## Steps (sequential, fail-fast)
+The live order is `src/index.ts` — read it rather than trusting this list.
 1. **Postgres Drizzle migrations** (`src/migrate-pg.ts`) — programmatic via `drizzle-orm/postgres-js/migrator`. Resolves the migrations folder + tracking table the same way `drizzle.config.ts` does (local / `_v2` / prod / dev).
 2. **libSQL Drizzle migrations** (`src/migrate-libsql.ts`) — WebAuthn auth schema. Skipped if `LIBSQL_URL` is unset.
-3. **RustFS bucket provisioning** (`src/ensure-buckets.ts`) — creates `images-${STAGE}` with public-read policy via `@aws-sdk/client-s3` (Bun.s3 has no bucket-level ops). Idempotent. Skipped if `RUSTFS_ENDPOINT` is unset.
+3. **Auth-binding back-fill** (`src/backfill-auth-bindings.ts`) — idempotent, batched. Skipped if `LIBSQL_URL` is unset.
+4. **Business-account back-fill** (`src/backfill-business-accounts.ts`) — idempotent; no-ops until the `business_accounts` migration is applied.
+5. **RustFS bucket provisioning** (`src/ensure-buckets.ts`) — creates `images-${STAGE}` (public-read) and `billing-${STAGE}` (private) via `@aws-sdk/client-s3` (Bun.s3 has no bucket-level ops). Idempotent. Skipped if `RUSTFS_ENDPOINT` is unset.
+6. **Image size-variant back-fill** (`src/backfill-image-variants.ts`) — idempotent.
 
 ## Quick Commands
 ```bash

@@ -24,8 +24,8 @@
 - Apply appropriate commands per package location
 
 ## Code Standards
-- Use absolute imports with @/ paths
-- CSS Modules for styling
+- Use absolute imports with @/ paths (except `apps/shopify`, which is relative-only)
+- Vanilla Extract `.css.ts` for styling
 - Functional patterns over classes
 - Early returns for readability
 - Types over interfaces
@@ -34,5 +34,5 @@
 - React 19, TanStack Query, Viem/Wagmi
 - WebAuthn-first authentication
 - Account Abstraction (ERC-4337)
-- Elysia.js backend, PostgreSQL/MongoDB
+- Elysia.js backend, PostgreSQL (Drizzle) + libSQL/Turso for WebAuthn credentials
 - SST v3 + Pulumi infrastructure

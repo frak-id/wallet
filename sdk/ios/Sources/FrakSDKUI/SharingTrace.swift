@@ -4,8 +4,7 @@ import os
 /// Tap-to-paint timings for one sheet, logged at `.debug` on subsystem `id.frak.sdk` and so
 /// dropped unless that subsystem is turned up with `log config --mode "level:debug"`.
 ///
-/// Not routed through `FrakLogger`, which is `internal` to `FrakSDK`. Android has no counterpart
-/// to keep these strings in step with any more — `SharingTrace.kt` was dropped in `c863486df`.
+/// Not routed through `FrakLogger`, which is `internal` to `FrakSDK`.
 struct SharingTrace {
     private let logger = Logger(subsystem: "id.frak.sdk", category: "FrakSharing")
     /// `Date`, not `DispatchTime`: the latter is `mach_absolute_time`, which is on Apple's

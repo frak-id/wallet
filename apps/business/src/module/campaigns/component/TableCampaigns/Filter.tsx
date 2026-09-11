@@ -7,7 +7,6 @@ import {
 import { CalendarIcon, RefreshIcon } from "@frak-labs/design-system/icons";
 import type { ColumnFiltersState } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { useMemo } from "react";
 import type { DateRange } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
@@ -40,28 +39,14 @@ export function TableCampaignFilters({
     const { t, i18n } = useTranslation();
     const locale = getDateFnsLocale(i18n.language);
 
-    // Extract current values from columnFilters
-    const currentTitle = useMemo(
-        () =>
-            (columnFilters.find((filter) => filter.id === "name")
-                ?.value as string) || "",
-        [columnFilters]
-    );
-
-    const currentDate = useMemo(
-        () =>
-            columnFilters.find((filter) => filter.id === "date")?.value as
-                | DateRange
-                | undefined,
-        [columnFilters]
-    );
-
-    const currentStatus = useMemo<CampaignTab>(
-        () =>
-            (columnFilters.find((filter) => filter.id === "status")
-                ?.value as CampaignTab) ?? "all",
-        [columnFilters]
-    );
+    const currentTitle =
+        (columnFilters.find((filter) => filter.id === "name")
+            ?.value as string) || "";
+    const currentDate = columnFilters.find((filter) => filter.id === "date")
+        ?.value as DateRange | undefined;
+    const currentStatus =
+        (columnFilters.find((filter) => filter.id === "status")
+            ?.value as CampaignTab) ?? "all";
 
     // Helper to update the campaign-name filter
     const setTitleFilter = (value: string) => {

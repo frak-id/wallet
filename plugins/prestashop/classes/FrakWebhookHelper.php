@@ -1,41 +1,13 @@
 <?php
 
 /**
- * Order webhook sender.
+ * Order webhook sender: POSTs to `/ext/merchant/{merchantId}/webhook/custom`.
  *
- * Resolves the Frak merchant for the current shop, signs the payload with
- * HMAC-SHA256 keyed on `FRAK_WEBHOOK_SECRET`, and POSTs to the merchant
- * webhook endpoint that mirrors the Magento / WooCommerce contract:
- *   `POST /ext/merchant/{merchantId}/webhook/custom`
- *
- * The signature is the **base64 encoding of the raw HMAC-SHA256 digest**
- * (`base64_encode(hash_hmac('sha256', $body, $secret, true))`) — matching
- * `validateBodyHmac` in `services/backend/src/utils/bodyHmac.ts`, which
- * decodes the `x-hmac-sha256` header via `Buffer.from(sig, 'base64')`.
- * Sending the default hex digest produces signatures that are 88 bytes
- * after base64-decoding (vs the expected 32-byte raw digest) and fail
- * verification — see commit history for the original hex regression.
- *
- * Two delivery paths:
- *   - {@see send()} — single-shot, used by `hookActionOrderStatusPostUpdate`
- *     and the unit tests. Takes an optional pre-loaded `Order` so the hook
- *     handler doesn't have to round-trip the DB twice.
- *   - {@see sendBatch()} — parallel via Symfony HttpClient's `stream()`,
- *     used by the cron drainer. 25 sequential 2 s requests collapse to a
- *     single `stream()` window which fans out via the underlying transport
- *     (HTTP/2 multiplexing where supported, curl_multi otherwise).
- *
- * Per-request memo: secret + webhook URL are looked up at most once via
- * `self::$secretCache` / `self::$urlCache`. The HttpClient itself lives
- * on {@see FrakHttpClient} so the resolver and the helper share
- * one connection pool — TLS state warmed by an earlier resolver call
- * carries over to the immediately-following webhook send.
- *
- * Failure handling: this helper returns a result array on failure rather
- * than logging. The caller owns the failure response — `FrakOrderWebhook`
- * persists the row to the retry queue, the cron drainer escalates only
- * when a row is parked. Single source of truth for the merchant log
- * surface.
+ * The `x-hmac-sha256` signature is the base64 of the RAW HMAC-SHA256 digest
+ * (`base64_encode(hash_hmac('sha256', $body, $secret, true))`); the backend
+ * decodes it with `Buffer.from(sig, 'base64')`, so the default hex digest
+ * decodes to 88 bytes instead of 32 and always fails verification.
+ * {@see send()} is the single-shot path, {@see sendBatch()} the cron drainer's.
  */
 class FrakWebhookHelper
 {
@@ -294,9 +266,8 @@ class FrakWebhookHelper
 
     /**
      * POST a JSON payload to the merchant webhook endpoint with HMAC signing.
-     * Sync path — used by {@see send()}. The batch path uses
-     * {@see client()} + `stream()` directly so it can dispatch every
-     * request concurrently.
+     * Sync path — used by {@see send()}; {@see sendBatch()} dispatches
+     * concurrently through `stream()` instead.
      *
      * @return array{http_code:int,response:string,execution_time:float}
      */

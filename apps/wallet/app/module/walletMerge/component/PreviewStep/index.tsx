@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import type { LoserAssetSummary } from "../../hook/useLoserAssetSummary";
 import { FundsList } from "../FundsList";
+import { footer } from "../stepLayout.css";
 import { WalletCard } from "../WalletCard";
 import * as styles from "./index.css";
 
@@ -68,7 +69,7 @@ export function PreviewStep({
             onBack={onCancel}
             stepIndicator={stepIndicator}
             footer={
-                <Box className={styles.footer}>
+                <Box className={footer}>
                     <Button
                         type="button"
                         variant="primary"

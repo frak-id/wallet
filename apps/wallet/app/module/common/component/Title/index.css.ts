@@ -20,23 +20,10 @@ export const title = recipe({
                 fontSize: fontSize.s,
                 fontWeight: brand.typography.fontWeight.medium,
             },
-            big: {
-                fontSize: fontSize.l,
-                fontWeight: brand.typography.fontWeight.semiBold,
-            },
-        },
-        align: {
-            left: {
-                justifyContent: "flex-start",
-            },
-            center: {
-                justifyContent: "center",
-            },
         },
     },
     defaultVariants: {
         size: "medium",
-        align: "left",
     },
 });
 

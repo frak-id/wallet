@@ -45,7 +45,7 @@ export function usePushRecoveryPasskey() {
     // Get the viem client for the given chain
     const client = useClient();
 
-    const { mutateAsync, mutate, ...mutationStuff } = useMutation({
+    const { mutateAsync, ...mutation } = useMutation({
         mutationKey: recoveryKey.performRecovery,
         gcTime: 0,
         mutationFn: async ({
@@ -115,8 +115,7 @@ export function usePushRecoveryPasskey() {
     });
 
     return {
-        ...mutationStuff,
+        ...mutation,
         pushRecoveryPasskeyAsync: mutateAsync,
-        pushRecoveryPasskey: mutate,
     };
 }

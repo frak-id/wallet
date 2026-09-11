@@ -8,13 +8,8 @@ actor IdentityMerge {
     static let tokenKey = "fmt"
     static let executePath = "/user/identity/merge/execute"
 
-    private let logger: FrakLogger
     private var consumed: Set<String> = []
     private var arrivals: Set<String> = []
-
-    init(logger: FrakLogger) {
-        self.logger = logger
-    }
 
     static func parseToken(_ url: String) -> String? {
         URLQuery.parse(url)?.exactValue(for: tokenKey).flatMap { $0.isEmpty ? nil : $0 }

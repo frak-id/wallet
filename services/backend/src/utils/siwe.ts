@@ -42,23 +42,19 @@ export function parseClaimedSiweAddress(message: string): Address | null {
 }
 
 /**
- * Core SIWE verification shared by every caller that needs "prove control of
- * this wallet right now" (login, `siwe` 2FA, wallet linking, merchant
- * registration, ownership transfer): parse → validate the domain against the
- * request origin → verify the ERC-1271/6492-aware signature. Three call
- * sites previously reimplemented this exact sequence with subtly different
- * error handling; this is the one core, with statement policy left to the
- * caller (registration/transfer pin an exact expected statement, login/2FA
- * accept any well-formed one).
+ * Core SIWE verification for every "prove control of this wallet right now"
+ * caller: parse → validate the domain against the request origin → verify the
+ * ERC-1271/6492-aware signature. Statement policy is left to the caller
+ * (registration/transfer pin an exact statement, login/2FA accept any).
  */
 export async function verifySiweSignature(params: {
     message: string;
     signature: Hex;
     requestOrigin: string;
     /**
-     * Enforce message freshness via `issuedAt` (login + wallet link, plan
-     * §1.3). Off by default so callers with their own replay binding (the
-     * `siwe` 2FA path pins a per-session nonce) are unaffected.
+     * Enforce message freshness via `issuedAt`. Off by default so callers with
+     * their own replay binding (the `siwe` 2FA path pins a per-session nonce)
+     * are unaffected.
      */
     requireFreshness?: boolean;
 }): Promise<SiweVerifyResult> {

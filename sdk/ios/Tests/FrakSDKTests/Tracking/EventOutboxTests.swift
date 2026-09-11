@@ -310,9 +310,9 @@ struct EventOutboxTests {
         #expect(pending.isEmpty)
     }
 
-    // MARK: - the two bugs this port fixes
+    // MARK: - row shape on disk
 
-    @Test("a nil merchant at track time lands the row with the m key entirely absent (bug 1)")
+    @Test("a nil merchant at track time lands the row with the m key entirely absent")
     func nilMerchantLeavesMAbsentOnDisk() async throws {
         let fixture = Fixture()
         await fixture.tracker.track(merchantId: nil, clientId: Self.clientId, interaction: .custom("cold-start"))
@@ -324,7 +324,7 @@ struct EventOutboxTests {
         #expect(pending.first?.merchantId == nil)
     }
 
-    @Test("a merge refused with 503 survives with failures unchanged and arms the backoff (bug 2)")
+    @Test("a merge refused with 503 survives with failures unchanged and arms the backoff")
     func merge503SurvivesWithBackoffArmed() async {
         let fixture = Fixture(signProof: { _, _, _ in "proof" })
         fixture.backend.respond(StubResponse(status: 503, body: ""))
@@ -384,10 +384,10 @@ struct EventOutboxTests {
             await fixture.tracker.trackMerge(mergeToken: token, anonymousId: Self.clientId, merchantId: Self.merchantId)
         }
 
-        await arrive(IdentityMerge(logger: FrakLogger(level: .none)))
+        await arrive(IdentityMerge())
         // A fresh instance: its `consumed` set is empty, exactly like after a relaunch, so only
         // `trackMerge`'s own disk check can catch the replay.
-        await arrive(IdentityMerge(logger: FrakLogger(level: .none)))
+        await arrive(IdentityMerge())
 
         let pending = await fixture.pending()
         #expect(pending.filter { $0.idempotencyKey == token }.count == 1)

@@ -2,7 +2,6 @@ import { motion } from "motion/react";
 import { memo, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useChart, useChartStable } from "./chart-context";
-import { cn } from "./lib/utils";
 
 export interface BarXAxisProps {
     /** Width of the date ticker box for fade calculation. Default: 50 */
@@ -47,7 +46,6 @@ function BarXAxisLabel({
         }
     }
 
-    // Zero-width container approach for perfect centering
     return (
         <div
             className="absolute"
@@ -61,7 +59,7 @@ function BarXAxisLabel({
         >
             <motion.span
                 animate={{ opacity }}
-                className={cn("whitespace-nowrap text-chart-label text-xs")}
+                className="whitespace-nowrap text-chart-label text-xs"
                 initial={{ opacity: 1 }}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
             >

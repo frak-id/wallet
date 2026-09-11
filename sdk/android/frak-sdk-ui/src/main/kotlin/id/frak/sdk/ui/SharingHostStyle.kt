@@ -15,7 +15,7 @@ internal object SharingHostStyle {
     /** Top-corner radius, as a CSS length. Consumed by the wallet's `containerChromeless` styles. */
     const val CSS_VAR_TOP_RADIUS: String = "--frak-host-top-radius"
 
-    /** Page background. Consumed by the `body` rule in `packages/design-system/src/defaults.css.ts`. */
+    /** Page background. Consumed by the design system's `body` rule. */
     const val CSS_VAR_SURFACE: String = "--frak-host-surface"
 
     /**

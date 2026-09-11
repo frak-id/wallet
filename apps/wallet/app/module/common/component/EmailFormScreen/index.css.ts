@@ -24,21 +24,6 @@ export const clearButton = style({
     color: vars.icon.primary,
 });
 
-/**
- * Banner block shared by the registration `already-used` notice and the
- * post-auth `conflict` notice. Same shape (warning surface, padded body),
- * each consumer plugs its own copy + CTA inside.
- */
-export const banner = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.s,
-    padding: alias.spacing.m,
-    borderRadius: alias.spacing.s,
-    background: vars.surface.warning,
-    color: vars.text.primary,
-});
-
 export const inlineError = style({
     paddingInline: alias.spacing.m,
 });

@@ -129,12 +129,9 @@ export type EvaluationResult = {
     }[];
     /**
      * True when a matched percentage or tiered reward could not convert the
-     * purchase amount into token units (no FX rate for the purchase currency
+     * purchase amount into token units (no FX rate for the purchase currency,
      * or token price unavailable). The orchestrator leaves the interaction
-     * unprocessed so the next cron run retries it — failure is logged only,
-     * nothing is persisted. TODO: if production logs ever show a row stuck
-     * on this path (starving the batch), add an attempt counter + backoff
-     * on interaction_logs.
+     * unprocessed so the next cron run retries it; nothing is persisted.
      */
     deferForUnpriceableReward: boolean;
     /** Why pricing failed — logged by the orchestrator, not persisted. */

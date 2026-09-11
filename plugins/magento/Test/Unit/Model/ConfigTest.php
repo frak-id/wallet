@@ -21,27 +21,28 @@ class ConfigTest extends TestCase
         $this->config = new Config($this->scopeConfig);
     }
 
-    public function testIsEnabledReturnsTrue(): void
+    /**
+     * @dataProvider isEnabledProvider
+     */
+    public function testIsEnabled(bool $flag): void
     {
         $this->scopeConfig
-            ->expects(self::once())
             ->method("isSetFlag")
             ->with("fraklabs_sdk/general/enabled", ScopeInterface::SCOPE_STORE, null)
-            ->willReturn(true);
+            ->willReturn($flag);
 
-        self::assertTrue($this->config->isEnabled());
+        self::assertSame($flag, $this->config->isEnabled());
     }
 
-    public function testIsEnabledReturnsFalse(): void
+    /**
+     * @return array<string, array{0: bool}>
+     */
+    public static function isEnabledProvider(): array
     {
-        $this->scopeConfig
-            ->expects(self::exactly(2))
-            ->method("isSetFlag")
-            ->with("fraklabs_sdk/general/enabled", ScopeInterface::SCOPE_STORE, null)
-            ->willReturn(false);
-
-        self::assertFalse($this->config->isEnabled());
-        self::assertFalse($this->config->isEnabled());
+        return [
+            "enabled" => [true],
+            "disabled" => [false],
+        ];
     }
 
     public function testGetMerchantId(): void
@@ -186,7 +187,6 @@ class ConfigTest extends TestCase
         $storeId = 42;
 
         $this->scopeConfig
-            ->expects(self::exactly(3))
             ->method("getValue")
             ->willReturnMap([
                 ["fraklabs_sdk/general/merchant_id", ScopeInterface::SCOPE_STORE, $storeId, "merchant-store-42"],

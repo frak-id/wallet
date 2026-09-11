@@ -21,7 +21,7 @@ import { type ReactNode, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
 import { useUpdateCampaignConfig } from "@/module/campaigns/hook/useUpdateCampaignConfig";
-import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import { campaignConfigQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import {
     BUDGET_TYPE_LABEL,
     type BudgetType,
@@ -64,7 +64,7 @@ export function ConfigTab({ campaignId }: { campaignId: string }) {
     const merchantId = useActiveMerchantId();
     const isDemoMode = useIsDemoMode();
     const { data: campaign, isPending } = useQuery(
-        campaignQueryOptions({ merchantId, campaignId, isDemoMode })
+        campaignConfigQueryOptions({ merchantId, campaignId, isDemoMode })
     );
 
     if (isPending) {
@@ -120,10 +120,6 @@ function ConfigContent({ campaign }: { campaign: Campaign }) {
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Shared bits                                                         */
-/* ------------------------------------------------------------------ */
-
 /** Label on the left, value on the right, hairline-separated rows. */
 function DefinitionRow({
     label,
@@ -171,10 +167,6 @@ function EditPencilButton({
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Trigger                                                             */
-/* ------------------------------------------------------------------ */
-
 function TriggerGlyph({ trigger }: { trigger: CampaignTrigger }) {
     switch (trigger) {
         case "purchase":
@@ -211,10 +203,6 @@ function TriggerSection({ trigger }: { trigger: CampaignTrigger }) {
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Rewards                                                             */
-/* ------------------------------------------------------------------ */
-
 function RewardsSection({
     rewards,
     currency,
@@ -225,7 +213,7 @@ function RewardsSection({
     const { t } = useTranslation();
     const title = t("campaigns.details.config.rewards.title");
 
-    if (!rewards || rewards.length === 0) {
+    if (rewards.length === 0) {
         return (
             <Section title={title}>
                 <Card radius="m">
@@ -438,10 +426,6 @@ function ChainingNote({ chaining }: { chaining: RewardChaining }) {
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Conditions                                                          */
-/* ------------------------------------------------------------------ */
-
 const operatorLabels: Record<string, string> = {
     eq: "=",
     neq: "≠",
@@ -548,10 +532,6 @@ function ConditionGroupDisplay({ group }: { group: ConditionGroup }) {
         </Stack>
     );
 }
-
-/* ------------------------------------------------------------------ */
-/* Product scope                                                       */
-/* ------------------------------------------------------------------ */
 
 /**
  * Which cart line items the campaign covers. Unlike order-level conditions,
@@ -689,10 +669,6 @@ function ConditionsSection({ conditions }: { conditions: RuleConditions }) {
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Limits & timing                                                     */
-/* ------------------------------------------------------------------ */
-
 function formatDuration(seconds: number, locale: string): string {
     const unitFormat = (value: number, unit: "day" | "hour" | "minute") =>
         getNumberFormat(locale, {
@@ -773,10 +749,6 @@ function LimitsSection({ rule }: { rule: CampaignRuleDefinition }) {
         </Section>
     );
 }
-
-/* ------------------------------------------------------------------ */
-/* Budget                                                              */
-/* ------------------------------------------------------------------ */
 
 const BUDGET_PERIODS: BudgetType[] = ["global", "daily", "weekly", "monthly"];
 
@@ -983,10 +955,6 @@ function BudgetEditor({
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Targeting                                                           */
-/* ------------------------------------------------------------------ */
-
 function TargetingSection({ metadata }: { metadata: CampaignMetadata | null }) {
     const { t } = useTranslation();
     const goal = metadata?.goal;
@@ -1059,10 +1027,6 @@ function TargetingSection({ metadata }: { metadata: CampaignMetadata | null }) {
         </Section>
     );
 }
-
-/* ------------------------------------------------------------------ */
-/* Schedule                                                            */
-/* ------------------------------------------------------------------ */
 
 function ScheduleRows({
     campaign,

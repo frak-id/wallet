@@ -1,29 +1,26 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Overlay } from ".";
+import { overlayStyle } from "./overlay.css";
 
 describe("Overlay", () => {
     it("should render the overlay element", () => {
-        render(<Overlay />);
-        expect(screen.getByTestId("overlay")).toBeTruthy();
+        const { container } = render(<Overlay />);
+        expect(container.querySelector(`.${overlayStyle}`)).toBeTruthy();
     });
 
     it("should call onClick when clicked", () => {
         const handleClick = vi.fn();
-        render(<Overlay onClick={handleClick} />);
-        fireEvent.click(screen.getByTestId("overlay"));
+        const { container } = render(<Overlay onClick={handleClick} />);
+        const el = container.querySelector(`.${overlayStyle}`);
+        if (!el) throw new Error("overlay not rendered");
+        fireEvent.click(el);
         expect(handleClick).toHaveBeenCalledOnce();
     });
 
     it("should forward className", () => {
-        render(<Overlay className="custom-overlay" />);
-        const el = screen.getByTestId("overlay");
-        expect(el.className).toContain("custom-overlay");
-    });
-
-    it("should render without optional props", () => {
-        render(<Overlay />);
-        const el = screen.getByTestId("overlay");
-        expect(el).toBeTruthy();
+        const { container } = render(<Overlay className="custom-overlay" />);
+        const el = container.querySelector(`.${overlayStyle}`);
+        expect(el?.className).toContain("custom-overlay");
     });
 });

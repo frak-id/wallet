@@ -1,5 +1,4 @@
 import type { TFunction } from "i18next";
-import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
 import {
@@ -11,10 +10,8 @@ import type { OriginPairingState as OriginPairingStateType } from "../../types";
 import { StatusBoxModal } from "../PairingStatusBox";
 
 /**
- * Component displaying the live origin pairing state
- *  - Only visible if the session is a distant-webauthn one (if not we don't need to display anything)
- *
- * Visible on the listener modal and the wallet
+ * Live origin pairing state, on the listener modal and the wallet. Renders
+ * nothing unless the session is a distant-webauthn one.
  */
 export function OriginPairingState() {
     const session = useStore(sessionStore, selectDistantWebauthnSession);
@@ -22,13 +19,9 @@ export function OriginPairingState() {
     return <InnerOriginPairingState />;
 }
 
-/**
- * Inner component displaying the live origin pairing state
- *  -> Should be a smmall box with an indicator a right doti ndicator
- *  -> dot: red "idle", orange "connecting", green "paired"
- */
+/** Dot colour: red "idle", orange "connecting", green "paired". */
 function InnerOriginPairingState() {
-    const client = useMemo(() => getOriginPairingClient(), []);
+    const client = getOriginPairingClient();
     const state = useStore(client.store);
     const { t } = useTranslation();
 

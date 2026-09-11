@@ -1,20 +1,7 @@
 /**
- * Shared Wallet Testing Mocks
- *
- * This file provides common mocks for wallet-related dependencies used by both
- * the wallet app and wallet-shared package:
- *
- * - Wagmi hooks (useConnection, useConnect, useBalance, etc.)
- * - TanStack Router hooks (useNavigate, useLocation, etc.) - via tanstack-router-mock.ts
- * - WebAuthn API (ox library)
- * - IndexedDB (idb-keyval)
- *
- * Projects using these mocks:
- * - apps/wallet
- * - packages/wallet-shared
- *
- * Note: These are global mocks. Tests can customize behavior using vi.mocked()
- * to override specific mock implementations for individual test cases.
+ * Global mocks shared by `apps/wallet` and `packages/wallet-shared`: wagmi,
+ * `@tanstack/react-router`, ox's WebAuthn and `idb-keyval`. Override a single
+ * case with `vi.mocked()` rather than re-mocking the module.
  */
 
 import { vi } from "vitest";
@@ -65,7 +52,7 @@ vi.mock("wagmi", () => ({
     })),
 }));
 
-// Mock ox WebAuthn API (migrated from @simplewebauthn)
+// Mock ox WebAuthn API
 vi.mock("ox", async () => {
     const actual = await vi.importActual<any>("ox");
     return {

@@ -1,9 +1,4 @@
-/**
- * Shared form-validation patterns for the billing module's admin forms
- * (AddDepositSheet / AddWithdrawSheet). Split out of `queryKeys.ts`, which is
- * about React Query cache keys, not input validation — the two were
- * unrelated concerns living in the same file.
- */
+// Shared form-validation patterns for the billing admin forms.
 
 /** Positive decimal amount, e.g. "1200" or "12.50". */
 export const DECIMAL_PATTERN = /^\d+(\.\d+)?$/;

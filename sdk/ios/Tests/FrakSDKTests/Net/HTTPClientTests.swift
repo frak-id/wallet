@@ -57,7 +57,7 @@ struct HTTPClientTests {
         _ = try await client.get("/path", query: ["present": "a b+c", "absent": nil])
     }
 
-    @Test("percent-encodes characters URLComponents would leave unescaped in a query value (N2)")
+    @Test("percent-encodes characters URLComponents would leave unescaped in a query value")
     func percentEncodesReservedCharactersUrlComponentsWouldLeaveAlone() async throws {
         // `!`, `$`, `&`, `=` are in URLComponents' own "allowed" set for a query value, so
         // `percentEncodedQuery` leaves them unescaped even inside a value, where they'd otherwise
@@ -142,7 +142,7 @@ struct HTTPClientTests {
         }
     }
 
-    @Test("a non-transient URLError, like a certificate trust failure, is not retried (N6)")
+    @Test("a non-transient URLError, like a certificate trust failure, is not retried")
     func nonTransientFailureIsNotRetried() async throws {
         let attempts = Counter()
         let client = makeClient { _ in

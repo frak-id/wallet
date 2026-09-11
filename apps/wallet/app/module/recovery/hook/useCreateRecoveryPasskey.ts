@@ -23,7 +23,7 @@ export type RecoveryCredential = {
  * recovered wallet later via the claim endpoint.
  */
 export function useCreateRecoveryPasskey() {
-    const { mutateAsync, mutate, ...mutationStuff } = useMutation({
+    const { mutateAsync, ...mutation } = useMutation({
         mutationKey: recoveryKey.createRecoveryPasskey,
         gcTime: 0,
         mutationFn: async (): Promise<RecoveryCredential> => {
@@ -48,8 +48,7 @@ export function useCreateRecoveryPasskey() {
     });
 
     return {
-        ...mutationStuff,
+        ...mutation,
         createRecoveryPasskeyAsync: mutateAsync,
-        createRecoveryPasskey: mutate,
     };
 }

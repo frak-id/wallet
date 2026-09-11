@@ -1,7 +1,10 @@
 import { matchesShopDomain } from "@backend-utils";
 import { isAddressEqual } from "viem";
 import type { MerchantAdminRepository } from "../repositories/MerchantAdminRepository";
-import type { MerchantRepository } from "../repositories/MerchantRepository";
+import type {
+    MerchantRepository,
+    MerchantSelect,
+} from "../repositories/MerchantRepository";
 import type { MerchantIdentity } from "../schemas";
 
 type MerchantRole = "owner" | "admin" | "none";
@@ -156,7 +159,7 @@ export class MerchantAuthorizationService {
      */
     async getShopDomainMatchedMerchants(
         shopDomain: string
-    ): Promise<Awaited<ReturnType<MerchantRepository["findAll"]>>> {
+    ): Promise<MerchantSelect[]> {
         const all = await this.merchantRepository.findAll();
         return all.filter((merchant) =>
             this.matchesShopDomain(merchant, shopDomain)

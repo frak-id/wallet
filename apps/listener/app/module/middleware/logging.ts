@@ -10,27 +10,7 @@ import type {
 } from "@/module/types/context";
 
 /**
- * Logging middleware for wallet RPC communication
- *
- * Logs RPC requests and responses for debugging purposes.
- * Only active in local development to avoid performance overhead in production.
- *
- * Performance:
- * - Zero overhead in production (early return)
- * - Minimal overhead in development (console.log is async)
- *
- * @example
- * ```ts
- * const listener = createRpcListener<IFrameRpcSchema, WalletRpcContext>({
- *   transport: window,
- *   allowedOrigins: '*',
- *   middleware: [
- *     compressionMiddleware,
- *     loggingMiddleware,  // Logs decompressed data
- *     walletContextMiddleware
- *   ]
- * })
- * ```
+ * Logs RPC requests and responses, in local development only.
  */
 export const loggingMiddleware: RpcMiddleware<
     CombinedRpcSchema,
@@ -38,7 +18,6 @@ export const loggingMiddleware: RpcMiddleware<
 > = {
     onRequest: (message, context): RpcMiddlewareContext<WalletRpcContext> => {
         const msg = message as { id: string; topic: string; data: unknown };
-        // Only log in local development
         if (!isRunningLocally) {
             return context;
         }
@@ -47,16 +26,14 @@ export const loggingMiddleware: RpcMiddleware<
             topic: msg.topic,
             origin: context.origin,
             id: msg.id,
-            // Don't log full data to avoid noise
             hasData: msg.data,
         });
 
         return context;
     },
 
-    onResponse: (message, response, _context): RpcResponse => {
+    onResponse: (message, response, context): RpcResponse => {
         const msg = message as { id: string; topic: string };
-        // Only log in local development
         if (!isRunningLocally) {
             return response;
         }
@@ -64,16 +41,15 @@ export const loggingMiddleware: RpcMiddleware<
         if (response.error) {
             console.error("[Wallet RPC] Error response:", {
                 topic: msg.topic,
-                origin: _context.origin,
+                origin: context.origin,
                 id: msg.id,
                 error: response.error,
             });
         } else {
             console.log("[Wallet RPC] Success response:", {
                 topic: msg.topic,
-                origin: _context.origin,
+                origin: context.origin,
                 id: msg.id,
-                // Don't log full result to avoid noise
                 hasResult: response.result,
             });
         }

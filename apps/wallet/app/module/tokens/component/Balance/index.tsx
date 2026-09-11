@@ -14,7 +14,7 @@ import { formatCurrency, useGetUserBalance } from "@frak-labs/wallet-shared";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { modalStore } from "@/module/stores/modalStore";
-import { useGetPendingRewards } from "../../hooks/useGetPendingRewards";
+import { useGetPendingRewards } from "@/module/tokens/hook/useGetPendingRewards";
 import * as styles from "./index.css";
 
 export function Balance() {

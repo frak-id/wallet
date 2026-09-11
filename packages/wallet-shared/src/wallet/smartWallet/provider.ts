@@ -47,8 +47,6 @@ export function getSmartAccountProvider({
     onAccountChanged,
     signViaEcdsa,
 }: SmartAccountProviderParameters): SmartAccountProviderType {
-    console.log("Building a new smart account provider");
-
     // The current smart account
     let currentSmartAccountClient: SmartAccountConnectorClient | undefined;
 

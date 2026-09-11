@@ -145,12 +145,6 @@ export function AddEmail() {
     );
 
     if (flowState.kind === "merging") {
-        // `currentAuthenticatorId` is captured from the session at flow
-        // entry (see the `onMerge` handler below) and held on the flow
-        // state for the lifetime of the merge. We deliberately do **not**
-        // re-read it from the live session here: keeping it stable lets
-        // MergeFlow derive winner/loser invariants without re-resolving
-        // them every render.
         return (
             <MergeFlow
                 email={flowState.email}

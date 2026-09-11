@@ -182,7 +182,7 @@ export const productCard = style({
     textAlign: "left",
 
     // Black rather than the design-system blue: the picker sits under a
-    // merchant-tinted reward card, and the old checkmark was black too.
+    // merchant-tinted reward card.
     vars: { [radioAccent]: vars.text.primary },
 
     // Mirror the radio's focus ring onto the row: 20px is a small target on a
@@ -195,7 +195,7 @@ export const productCard = style({
     },
 });
 
-/** Stretched so a tap anywhere on the row selects, as the whole card once did. */
+/** Stretched so a tap anywhere on the row selects. */
 export const productCardLabel = style({
     flex: 1,
     cursor: "pointer",

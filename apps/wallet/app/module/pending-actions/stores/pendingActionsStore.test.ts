@@ -34,7 +34,7 @@ describe("pendingActionsStore — dedupe key", () => {
         pendingActionsStore.getState().clearAll();
     });
 
-    test("falls back to anonymousId-keyed dedupe when no ticket is present (ROLLOUT-STEP-3)", () => {
+    test("falls back to anonymousId-keyed dedupe when no ticket is present", () => {
         pendingActionsStore.getState().clearAll();
 
         pendingActionsStore.getState().addAction({

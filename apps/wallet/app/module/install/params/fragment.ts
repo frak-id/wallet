@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-    INSTALL_PARAMS,
-    type InstallActivation,
-    type InstallParamKey,
-    installParamCodec,
-} from "./table";
+import { INSTALL_PARAMS, type InstallActivation } from "./table";
 
 /**
  * Read the post-install probe's params out of a location fragment. Absent
@@ -20,9 +15,9 @@ export function parseInstallFragment(hash: string): InstallActivation | null {
     const params = new URLSearchParams(raw);
     const activation: Record<string, unknown> = {};
 
-    for (const key of Object.keys(INSTALL_PARAMS) as InstallParamKey[]) {
+    for (const [key, decode] of Object.entries(INSTALL_PARAMS)) {
         if (!params.has(key)) continue;
-        const decoded = installParamCodec(key).decode(params.get(key));
+        const decoded = decode(params.get(key));
         if (decoded !== undefined) activation[key] = decoded;
     }
 

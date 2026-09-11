@@ -1,8 +1,6 @@
 /// What to look a reward up for.
 ///
-/// One value rather than a parameter list so the two SDKs read the same on the hottest path:
-/// Android has to group these (a Kotlin default argument is a binary break), and a request that
-/// grows a field grows it in one place on both.
+/// One value rather than a parameter list, so a request that grows a field grows it in one place.
 public struct RewardRequest: Sendable, Hashable {
     /// Which interaction the reward is for, e.g. `purchase`. Free-form; a typo silently never matches.
     public var targetInteraction: String?

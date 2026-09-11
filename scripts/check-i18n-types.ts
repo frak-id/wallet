@@ -1,15 +1,8 @@
 /**
- * Fails when `packages/wallet-shared/src/types/i18n/resources.d.ts` has drifted
- * from the EN locale it is generated from.
- *
- * The generator reads the EN locale only, and the generated literals are values
- * rather than key constraints, so an edit to `translation.json` without a regen
- * type-checks clean and drifts silently.
- *
- * Coverage is narrower than the name suggests: the generator resolves the JSON
- * namespace but fails to load the `.ts` locale modules (`index`, `listener`,
- * `standalone`), so keys defined only in those are outside this gate. It writes
- * to a temp path and compares, so the working tree is never touched.
+ * Fails when `packages/wallet-shared/src/types/i18n/resources.d.ts` has drifted from
+ * the EN locale it is generated from: the generated literals are values rather than
+ * key constraints, so an unregenerated `translation.json` edit type-checks clean.
+ * Regenerate with `bun run --cwd packages/wallet-shared i18n:types`.
  */
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";

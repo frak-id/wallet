@@ -126,49 +126,10 @@ do_version() {
 	log "Every version site is in step at $SDK_VERSION."
 }
 
-# NOT IMPLEMENTED. The shipped artifact will be a signed binary XCFramework referenced
-# from a consumer's Package.swift by remote zip + checksum. None of that exists yet.
-#
-# Intended shape:
-#
-#   1. Archive one slice per destination, with library evolution on for ABI stability:
-#
-#      for dest in "generic/platform=iOS" "generic/platform=iOS Simulator"; do
-#          xcodebuild archive \
-#              -scheme FrakSDK \
-#              -destination "$dest" \
-#              -archivePath "build/$dest.xcarchive" \
-#              SKIP_INSTALL=NO \
-#              BUILD_LIBRARY_FOR_DISTRIBUTION=YES
-#      done
-#
-#   2. Combine the slices, carrying the .swiftmodule from each archive:
-#
-#      xcodebuild -create-xcframework \
-#          -framework "build/iOS.xcarchive/Products/.../FrakSDK.framework" \
-#          -framework "build/iOS Simulator.xcarchive/Products/.../FrakSDK.framework" \
-#          -output "build/FrakSDK.xcframework"
-#
-#   3. Sign it — `codesign --timestamp -s "<Apple Distribution cert>"`.
-#
-#   4. Zip, checksum with `swift package compute-checksum`, publish, and reference from
-#      a distribution manifest via `.binaryTarget(name:url:checksum:)`.
-#
-#   5. Verify PrivacyInfo.xcprivacy propagates into a real consumer app, not just a local
-#      build — AppsFlyer's issue #281 shows the manifest failing to bundle in the static
-#      SPM variant.
-#
-# Repeat for FrakSDKUI. Needs an Xcode project or scheme SwiftPM can archive; `swift
-# build` alone cannot produce a framework.
+# NOT IMPLEMENTED. Binary distribution needs an Xcode project or scheme SwiftPM can archive;
+# `swift build` alone cannot produce a framework.
 do_xcframework() {
-	die "xcframework is not implemented.
-
-XCFramework assembly and .binaryTarget distribution are 05-build-and-release.md
-§3.1 work, deferred until the SDK has run on a device. Source distribution via SwiftPM
-works today.
-
-The intended xcodebuild archive / -create-xcframework outline is in the comments above
-do_xcframework() in $0."
+	die "xcframework is not implemented. Source distribution via SwiftPM works today."
 }
 
 # Lays out exactly what the SwiftPM mirror (frak-id/frak-ios-sdk) publishes, into $1.

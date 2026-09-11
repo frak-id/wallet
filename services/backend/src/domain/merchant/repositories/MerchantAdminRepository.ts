@@ -55,12 +55,6 @@ export class MerchantAdminRepository {
         });
     }
 
-    async findByWallet(wallet: Address): Promise<MerchantAdminSelect[]> {
-        return db.query.merchantAdminsTable.findMany({
-            where: eq(merchantAdminsTable.wallet, wallet),
-        });
-    }
-
     async findByIdentity(
         identity: MerchantIdentity
     ): Promise<MerchantAdminSelect[]> {

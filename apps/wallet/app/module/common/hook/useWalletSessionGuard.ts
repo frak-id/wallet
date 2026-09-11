@@ -77,28 +77,17 @@ function routeNonLocalSession(
 }
 
 /**
- * Whether the session can be re-authenticated with a LOCAL biometric prompt.
- *
- * Only local webauthn sessions (`type` undefined or `"webauthn"`) hold a
- * passkey on THIS device. A distant (paired) session's credential lives on
- * another device, and an ecdsa (demo) session has no passkey at all — for both,
- * the biometric ReauthModal can never succeed, so they must be recovered by
- * logging out and re-pairing / re-registering instead.
+ * Only local webauthn sessions hold a passkey on THIS device; a distant
+ * (paired) or ecdsa (demo) session can never satisfy the biometric prompt.
  */
 function canReauthLocally(session: { type?: string }): boolean {
     return session.type === undefined || session.type === "webauthn";
 }
 
 /**
- * Evaluate the current wallet token and take the appropriate action:
- *
- * - No session      → nothing (user isn't logged in; route guards handle it).
- * - Expired (+60s)  → open blocking re-auth modal.
- * - Grace window    → show passive snooze-able banner (once per tab).
- * - Healthy         → nothing.
- *
- * Suppressed while the Tauri BiometricLock is engaged to avoid stacking
- * a second biometric prompt on top of the lock screen.
+ * - Expired (+60s) → open blocking re-auth modal.
+ * - Grace window   → show passive snooze-able banner (once per tab).
+ * - No session / healthy → nothing.
  */
 function evaluate() {
     // Suppress while Tauri biometric lock is engaged.
@@ -130,13 +119,8 @@ function evaluate() {
 }
 
 /**
- * Mount this inside `SessionStateManager` (RootProvider.tsx).
- *
- * Checks token expiry on:
- *  - Mount (once, after hydration)
- *  - `visibilitychange` to `visible` (tab re-focus)
- *  - A coarse 5-minute interval
- *  - Server-confirmed 401 via `subscribeToWalletAuthExpired`
+ * Mount this inside `SessionStateManager` (RootProvider.tsx): it checks token
+ * expiry on mount, tab re-focus, a coarse interval and a server-confirmed 401.
  */
 export function useWalletSessionGuard() {
     // Subscribe to Tauri lock state so we can re-evaluate after unlock.

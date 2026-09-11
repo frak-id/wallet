@@ -32,23 +32,10 @@ All calls are no-ops on web / desktop (only wired on `#[cfg(mobile)]`).
 **Survives:** uninstall on the same device, and new-device setup when the
 user is signed into iCloud.
 
-**Required entitlements** (add to `src-tauri/gen/apple/app_iOS/app_iOS.entitlements`):
-
-```xml
-<key>com.apple.developer.ubiquity-kvstore-identifier</key>
-<string>$(TeamIdentifierPrefix)id.frak.wallet</string>
-
-<key>keychain-access-groups</key>
-<array>
-    <string>$(AppIdentifierPrefix)id.frak.wallet</string>
-</array>
-```
-
-**Required Apple Developer Portal config:**
-
-1. Enable the **iCloud** capability on the `id.frak.wallet` App ID.
-2. Enable **Key-value storage** (no container needed — uses the App ID).
-3. Regenerate the provisioning profile.
+**Required entitlements and Apple Developer Portal setup** are documented once, in
+`apps/wallet/src-tauri/README.md` → "iCloud Key-Value Storage (recovery hint)".
+The keys are templated on Xcode build variables so the prod and dev App IDs share
+one entitlements file — do not hardcode a bundle id here.
 
 Storage limits: 1 MB total per app / 1024 keys max (per-value cap is
 implicit via the total quota). Our payload is well under 256 B so we're
@@ -101,18 +88,8 @@ falls back when the service is missing or needs an update.
   leak the hint. Same trust model as any other iCloud KV / Block Store
   data; document this in the privacy policy.
 
-## Suggested wiring in the wallet
+## Wiring in the wallet
 
-In the registration and login success paths:
-
-```ts
-await recoveryHintStorage.set({
-    lastAuthenticatorId: authenticatorId,
-    lastWallet: wallet,
-    lastLoginAt: Date.now(),
-});
-```
-
-On first launch (e.g. in `usePreviousAuthenticators` or the login route),
-read the hint and prefer it over an empty state — that's the reinstall
-recovery path.
+`packages/wallet-shared/src/common/storage/recoveryHint.ts` wraps the plugin;
+`src/stores/authenticationStore.ts` writes the hint on authentication success
+and clears it on logout. Tests: `src/stores/authenticationStore.test.ts`.

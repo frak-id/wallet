@@ -23,22 +23,13 @@ type CampaignActionResult = {
     error: string | null;
 };
 
-type CampaignTransitionIntent =
-    | "pause-campaign"
-    | "resume-campaign"
-    | "archive-campaign"
-    | "delete-campaign";
-
 type CampaignTransitionHandler = (
     context: AuthenticatedContext,
     request: Request,
     campaignId: string
 ) => Promise<unknown | null>;
 
-const campaignTransitionHandlers: Record<
-    CampaignTransitionIntent,
-    { handler: CampaignTransitionHandler; error: string }
-> = {
+const campaignTransitionHandlers = {
     "pause-campaign": {
         handler: pauseMerchantCampaign,
         error: "Failed to pause campaign",
@@ -55,7 +46,18 @@ const campaignTransitionHandlers: Record<
         handler: deleteMerchantCampaign,
         error: "Failed to delete campaign",
     },
-};
+} satisfies Record<
+    string,
+    { handler: CampaignTransitionHandler; error: string }
+>;
+
+type CampaignTransitionIntent = keyof typeof campaignTransitionHandlers;
+
+function isCampaignTransitionIntent(
+    value: unknown
+): value is CampaignTransitionIntent {
+    return typeof value === "string" && value in campaignTransitionHandlers;
+}
 
 async function handleCampaignTransition(
     context: AuthenticatedContext,
@@ -94,12 +96,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
     const intent = formData.get("intent");
 
-    if (
-        intent === "pause-campaign" ||
-        intent === "resume-campaign" ||
-        intent === "archive-campaign" ||
-        intent === "delete-campaign"
-    ) {
+    if (isCampaignTransitionIntent(intent)) {
         return data(
             await handleCampaignTransition(context, request, formData, intent)
         );
@@ -114,12 +111,8 @@ export default function CampaignsPage() {
     const businessUrl = rootData?.businessUrl ?? "";
     const merchantId = rootData?.merchantId;
     const shopDomain = rootData?.shop?.myshopifyDomain;
-    // Path prefix that targets the merchant-scoped business app routes when
-    // we know the merchant id, otherwise falls back to the legacy path which
-    // the business app redirects to the user's first merchant. The fallback
-    // protects deep links generated before onboarding step 1 completes.
-    // Routed through the Shopify SSO login entrypoint so the merchant doesn't
-    // have to manually re-authenticate in the business app.
+    // Without a merchant id (deep link generated before onboarding step 1), the
+    // business app redirects `/campaigns` to the user's first merchant.
     const campaignsPathPrefix = merchantId
         ? `/m/${merchantId}/campaigns`
         : "/campaigns";
@@ -159,8 +152,16 @@ export default function CampaignsPage() {
                     <NewsletterShareLink />
                 </s-stack>
             ) : (
-                // TODO: Link to the settings / setup instructions
-                <p>Nope</p>
+                <s-section>
+                    <s-banner tone="warning">
+                        <s-text>
+                            {t("common.dashboardDataUnavailableTitle")}
+                        </s-text>
+                        <s-text>
+                            {t("common.dashboardDataUnavailableDescription")}
+                        </s-text>
+                    </s-banner>
+                </s-section>
             )}
         </s-page>
     );

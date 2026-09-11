@@ -120,10 +120,9 @@ export function fireEnsureActions(
  * failure.
  */
 async function executeEnsure(action: EnsureAction): Promise<void> {
-    // The backend resolves ticket -> proof+anonymousId -> bare anonymousId.
-    // Once ENSURE_BARE_ARM_ENABLED is disabled the bare arm answers 400
-    // PROOF_OR_TOKEN_REQUIRED and the proof arm 403 PROOF_INVALID; both are
-    // non-retryable, so a stale action drops instead of burning its full TTL.
+    // The backend resolves ticket -> proof+anonymousId -> bare anonymousId;
+    // 400 PROOF_OR_TOKEN_REQUIRED and 403 PROOF_INVALID are non-retryable, so
+    // a stale action drops instead of burning its full TTL.
     const { error } = await authenticatedBackendApi.user.identity.ensure.post({
         merchantId: action.merchantId,
         ...(action.anonymousId && { anonymousId: action.anonymousId }),

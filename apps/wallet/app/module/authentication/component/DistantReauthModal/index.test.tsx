@@ -1,9 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-// ---------------------------------------------------------------------------
-// Hoisted mocks
-// ---------------------------------------------------------------------------
 const mocks = vi.hoisted(() => {
     let _onOpenChange: ((open: boolean) => void) | null = null;
     let _onPairingSuccess: (() => void | Promise<void>) | null = null;
@@ -30,10 +27,6 @@ const mocks = vi.hoisted(() => {
 
         // useLogout
         logout: vi.fn(),
-
-        // getSafeSession / isExpired
-        getSafeSession: vi.fn<() => { token: string } | null>(() => null),
-        isExpired: vi.fn<() => boolean>(() => true),
 
         // useQueryClient
         invalidateQueries: vi.fn(),
@@ -81,14 +74,6 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     };
 });
 
-vi.mock("@frak-labs/wallet-shared/common/utils/safeSession", () => ({
-    getSafeSession: mocks.getSafeSession,
-}));
-
-vi.mock("@frak-labs/wallet-shared/common/utils/tokenExpiry", () => ({
-    isExpired: mocks.isExpired,
-}));
-
 vi.mock("@/module/authentication/hook/useLogout", () => ({
     useLogout: () => ({ logout: mocks.logout, isLoggingOut: false }),
 }));
@@ -113,8 +98,6 @@ vi.mock("@frak-labs/design-system/icons", async (importOriginal) => {
     return { ...actual, QrCodeIcon: () => <svg data-testid="qr-icon" /> };
 });
 
-// ---------------------------------------------------------------------------
-
 import type React from "react";
 import { DistantReauthModal } from "./index";
 
@@ -122,16 +105,12 @@ const HINTS = ["cred-abc"];
 
 beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getSafeSession.mockReturnValue(null); // token is dead by default
-    mocks.isExpired.mockReturnValue(true);
     mocks.pairingViewHints = undefined;
 });
 
 afterEach(() => {
     vi.clearAllMocks();
 });
-
-// ---------------------------------------------------------------------------
 
 describe("DistantReauthModal", () => {
     test("(a) phase 1 shows Reconnect button, PairingView NOT rendered", () => {

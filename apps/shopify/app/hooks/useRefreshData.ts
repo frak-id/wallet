@@ -1,5 +1,3 @@
-"use client";
-
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useRevalidator } from "react-router";

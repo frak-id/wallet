@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTauriNotificationAdapter } from "./tauriAdapter";
 
-// Mocks for the tauri-plugin-frak-firebase IPC surface. After the FCM +
-// Crashlytics merge, the adapter no longer imports `tauri-plugin-fcm` — every
-// call goes through `getInvoke()` (raw `invoke("plugin:frak-firebase|...")`)
-// or the `@tauri-apps/api/core` permission helpers / `addPluginListener`.
+// Mocks for the tauri-plugin-frak-firebase IPC surface: every call goes
+// through `getInvoke()` (raw `invoke("plugin:frak-firebase|...")`) or the
+// `@tauri-apps/api/core` permission helpers / `addPluginListener`.
 
 const {
     invokeMock,

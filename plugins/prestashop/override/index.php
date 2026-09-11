@@ -1,13 +1,8 @@
 <?php
 
 /**
- * Directory index stub for the Frak PrestaShop module.
- *
- * The `override/` directory is intentionally empty — PrestaShop expects it
- * to exist on every module (the build script previously created it as a
- * runtime safeguard). Committing this stub keeps the directory tracked in
- * git so the source layout matches the released zip layout, and serves the
- * usual directory-listing prevention.
+ * Directory index stub. `override/` is intentionally empty, but PrestaShop
+ * expects it on every module, so this file keeps it tracked in git.
  *
  * @license GPL-3.0-only
  */

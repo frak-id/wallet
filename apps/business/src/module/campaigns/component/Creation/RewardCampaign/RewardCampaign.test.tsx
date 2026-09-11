@@ -18,13 +18,6 @@ import {
 import * as styles from "./reward.css";
 import { DEFAULT_REWARD_FORM, type RewardFormValues } from "./utils";
 
-/**
- * `EligibilityField`/`LockupField` only need a `Control<RewardFormValues>` —
- * no `useFormContext`, no store/router/save-campaign plumbing — so a minimal
- * `useForm` harness (mirroring `BudgetCapField.test.tsx`) is enough
- * to exercise the migrated label/hint contract without mocking the rest of
- * the wizard page.
- */
 function Harness() {
     const form = useForm<RewardFormValues>({
         defaultValues: DEFAULT_REWARD_FORM,
@@ -38,12 +31,7 @@ function Harness() {
     );
 }
 
-/**
- * `CpaReveal` (the Target-CPA field) also only needs `control` + `setValue`
- * from `useForm` — no store/router/save-campaign plumbing — so the same
- * minimal harness shape covers it. `useCurrencyGlyph` reads a context with a
- * `"\u20ac"` default, so no provider is required.
- */
+/** `useCurrencyGlyph` reads a context with a `"\u20ac"` default — no provider needed. */
 function CpaRevealHarness() {
     const form = useForm<RewardFormValues>({
         defaultValues: DEFAULT_REWARD_FORM,
@@ -169,10 +157,6 @@ describe("LockupField (StepperField label/hint passthrough)", () => {
     });
 });
 
-/**
- * `RecipientBox` (the ambassador/referee split inputs inside `CpaReveal`) only
- * needs `control` — same minimal harness shape as the other reveal fields.
- */
 function RecipientBoxHarness({ hint }: { hint?: string }) {
     const form = useForm<RewardFormValues>({
         defaultValues: DEFAULT_REWARD_FORM,

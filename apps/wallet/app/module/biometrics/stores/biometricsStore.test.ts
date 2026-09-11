@@ -1,14 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import {
-    biometricsStore,
-    getLockTimeoutMs,
-    selectBiometricsEnabled,
-    selectBiometricsLockTimeout,
-    selectBiometryType,
-    selectIsAvailable,
-    selectIsLocked,
-    selectLastActiveTimestamp,
-} from "./biometricsStore";
+import { biometricsStore, getLockTimeoutMs } from "./biometricsStore";
 
 describe("biometricsStore", () => {
     beforeEach(() => {
@@ -129,62 +120,6 @@ describe("biometricsStore", () => {
                     "fingerprint"
                 );
             });
-        });
-    });
-
-    describe("selectors", () => {
-        it("selectBiometricsEnabled should return enabled state", () => {
-            const state = biometricsStore.getState();
-            expect(selectBiometricsEnabled(state)).toBe(false);
-
-            biometricsStore.getState().setEnabled(true);
-            expect(selectBiometricsEnabled(biometricsStore.getState())).toBe(
-                true
-            );
-        });
-
-        it("selectBiometricsLockTimeout should return lockTimeout state", () => {
-            const state = biometricsStore.getState();
-            expect(selectBiometricsLockTimeout(state)).toBe("immediate");
-
-            biometricsStore.getState().setLockTimeout("15min");
-            expect(
-                selectBiometricsLockTimeout(biometricsStore.getState())
-            ).toBe("15min");
-        });
-
-        it("selectIsLocked should return isLocked state", () => {
-            expect(selectIsLocked(biometricsStore.getState())).toBe(false);
-
-            biometricsStore.getState().lock();
-            expect(selectIsLocked(biometricsStore.getState())).toBe(true);
-        });
-
-        it("selectLastActiveTimestamp should return lastActiveTimestamp state", () => {
-            expect(selectLastActiveTimestamp(biometricsStore.getState())).toBe(
-                null
-            );
-
-            biometricsStore.getState().updateLastActive();
-            expect(
-                selectLastActiveTimestamp(biometricsStore.getState())
-            ).not.toBeNull();
-        });
-
-        it("selectIsAvailable should return isAvailable state", () => {
-            expect(selectIsAvailable(biometricsStore.getState())).toBe(null);
-
-            biometricsStore.getState().setAvailable(true);
-            expect(selectIsAvailable(biometricsStore.getState())).toBe(true);
-        });
-
-        it("selectBiometryType should return biometryType state", () => {
-            expect(selectBiometryType(biometricsStore.getState())).toBe(null);
-
-            biometricsStore.getState().setBiometryType("touchId");
-            expect(selectBiometryType(biometricsStore.getState())).toBe(
-                "touchId"
-            );
         });
     });
 });

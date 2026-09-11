@@ -18,42 +18,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     log.info({ topic, shop }, "Received webhook");
 
     switch (topic) {
-        /*
-        When a shop is uninstalled, the APP_UNINSTALLED webhook is sent to the app.
-        The app should use this information to delete any data that it has stored for the shop.
-
-        PAYLOAD app/uninstalled
-        */
         case "APP_UNINSTALLED":
             if (session) {
-                // Webhook requests can trigger multiple times and after an app has already been uninstalled.
-                // If this webhook already ran, the session may have been deleted previously.
+                // Redelivered after the app is already gone, so the session may
+                // have been deleted by an earlier run of this same webhook.
                 await drizzleDb
                     .delete(sessionTable)
                     .where(eq(sessionTable.shop, shop));
             }
             break;
-        /*
-        GDPR compliance webhooks
-        https://shopify.dev/docs/apps/build/privacy-law-compliance#subscribe-to-compliance-webhooks
-
-        Hooks can be tested using the Shopify CLI:
-        shopify app webhook trigger --topic=customers/data_request --address=$SHOPIFY_URL/webhooks/app/compliance --api-version=2026-04
-        */
 
         case "APP_PURCHASES_ONE_TIME_UPDATE":
-            /*
-         PAYLOAD app_purchases_one_time/update
-
-         {
-            admin_graphql_api_id: 'gid://shopify/AppPurchaseOneTime/3843850573',
-            name: 'Frak bank - 15.00usd - 2025-05-08T15:25:17.829Z',
-            status: 'ACTIVE',
-            admin_graphql_api_shop_id: 'gid://shopify/Shop/85403009357',
-            created_at: '2025-05-08T11:25:18-04:00',
-            updated_at: '2025-05-08T11:25:29-04:00'
-        }
-        */
             try {
                 const purchaseId = Number.parseInt(
                     payload.app_purchase_one_time.admin_graphql_api_id.replace(
@@ -84,57 +59,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             }
             break;
 
+        // GDPR compliance topics. Subscribed because Shopify requires it, and
+        // acknowledged with a 200: this app stores only sessions and purchase
+        // rows, neither of which holds customer PII, so there is nothing to
+        // return or redact.
+        // https://shopify.dev/docs/apps/build/privacy-law-compliance
         case "CUSTOMERS_DATA_REQUEST":
-        /*
-         When a customer requests their data, the CUSTOMERS_DATA_REQUEST webhook is sent to the app.
-         The app should use this information to prepare the data for the customer.
-         Data must be sent to the customer directly on his email address.
-
-         PAYLOAD customers/data_request
-
-         {
-            "shop_id": 954889,
-            "shop_domain": "{shop}.myshopify.com",
-            "orders_requested": [299938, 280263, 220458],
-            "customer": {
-                "id": 191167,
-                "email": "john@example.com",
-                "phone":  "555-625-1199"
-            },
-            "data_request": {
-                "id": 9999
-            }
-         }
-         */
         case "CUSTOMERS_REDACT":
-        /*
-         When a customer requests to be forgotten, the CUSTOMERS_REDACT webhook is sent to the app.
-
-         PAYLOAD customers/redact
-
-         {
-            "shop_id": 954889,
-            "shop_domain": "{shop}.myshopify.com",
-            "customer": {
-                "id": 191167,
-                "email": "john@example.com",
-                "phone": "555-625-1199"
-            },
-            "orders_to_redact": [299938, 280263, 220458]
-         }
-         */
         case "SHOP_REDACT":
-        /*
-         When a shop is uninstalled, the SHOP_REDACT webhook is sent to the app.
-         The app should use this information to delete any data that it has stored for the shop.
-
-         PAYLOAD shop/redact
-
-         {
-            "shop_id": 954889,
-            "shop_domain": "{shop}.myshopify.com"
-         }
-         */
+            break;
     }
 
     return new Response();

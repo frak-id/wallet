@@ -1,11 +1,9 @@
 import Foundation
 
 /// Encodes `[ProductDetails]` for the `products` query parameter of
-/// `GET /user/merchant/estimated-rewards`: `base64url(utf8(JSON.stringify(...)))`, identical
-/// to `sdk/core`'s `compressJsonToB64` (`sdk/core/src/utils/compression/compress.ts`) despite
-/// the name — it is encoding, not compression. Kept beside `RewardRepository`, the only
-/// caller; this is not the `products=` parameter the hosted sharing page reads (see
-/// `FrakSDKUI/SharingSheetModel.productsJSON`), which stays plain JSON for the page's router.
+/// `GET /user/merchant/estimated-rewards`: `base64url(utf8(JSON.stringify(...)))`, identical to
+/// `sdk/core`'s `compressJsonToB64` despite the name — it is encoding, not compression. Not the
+/// `products=` parameter the hosted sharing page reads, which stays plain JSON for its router.
 enum ProductDetailsQueryEncoder {
     /// Above this, the parameter is dropped rather than sent — see `encode(_:logger:)`.
     static let maxEncodedLength = 8192

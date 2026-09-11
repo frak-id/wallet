@@ -2,23 +2,11 @@ import { t } from "@backend-utils";
 import type { Static } from "elysia";
 
 /**
- * Schemas for the per-campaign details endpoint
- * (`GET /business/merchant/:merchantId/campaigns/:campaignId/details`).
- *
- * Powers the `CampaignDetailsSheet` on the business dashboard: economic
- * KPIs, CPA breakdown, ambassador stats and the top-ambassador leaderboard.
- *
- * Field names mirror the legacy `campaignDetails.json` mock 1:1 so the
- * frontend type swap is purely a `typeof mock` → `CampaignDetailsResponse`
- * change. Two caveats worth knowing:
- *
- *  1. `cpaBreakdown.segments[].key = 'frak'` is an overlay derived from a
- *     hardcoded `PLATFORM_FEE_PCT` constant — the schema's `RecipientType`
- *     enum has only `referrer` and `referee` so there is no real platform
- *     fee asset_log row to sum.
- *  2. `metaCpa` / `metaEquivalentCost` / `savedVsMeta` / `cheaperPct` use a
- *     static industry benchmark per currency (see `campaignBenchmarks.ts`)
- *     — there is no Meta Ads integration. Numbers are marketing-grade.
+ * Schemas for `GET /business/merchant/:merchantId/campaigns/:campaignId/details`.
+ * Two fields are not measured data: `cpaBreakdown.segments[].key = 'frak'` is
+ * derived from the hardcoded `PLATFORM_FEE_PCT` (no platform-fee asset_log
+ * rows exist), and the `meta*` / `savedVsMeta` figures come from the static
+ * benchmarks in `campaignBenchmarks.ts` — there is no Meta Ads integration.
  */
 
 /** ISO 4217 currency code (e.g. `"EUR"`) sourced from the modal `purchases.currency_code`. */

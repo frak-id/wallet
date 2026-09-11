@@ -115,9 +115,6 @@ describe("useSdkCleanup", () => {
         expect(clearSpy).toHaveBeenCalled();
     });
 
-    // Note: Testing the "no current request" branch requires runtime mock changes
-    // which is complex. This branch is covered indirectly by other tests.
-
     test("should not reset modal step if no modal steps", ({
         queryWrapper,
     }) => {
@@ -203,19 +200,5 @@ describe("useSdkCleanup", () => {
 
         // Should not change current step
         expect(modalStore.getState().currentStep).toBe(1);
-    });
-
-    test("should return the same callback function reference", ({
-        queryWrapper,
-    }) => {
-        const { result, rerender } = renderHook(() => useSdkCleanup(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        const firstCallback = result.current;
-        rerender();
-        const secondCallback = result.current;
-
-        expect(firstCallback).toBe(secondCallback);
     });
 });

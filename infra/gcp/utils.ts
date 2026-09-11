@@ -1,7 +1,6 @@
 import type { Output } from "@pulumi/pulumi";
 import { isProd, normalizedStageName } from "../utils";
 
-// Base domain: v2.gcp.frak.id or v2.gcp-dev.frak.id for V2, gcp.frak.id or gcp-dev.frak.id for V1
 export const baseDomainName = isProd ? "gcp.frak.id" : "gcp-dev.frak.id";
 
 export const domainName = `backend.${baseDomainName}`;

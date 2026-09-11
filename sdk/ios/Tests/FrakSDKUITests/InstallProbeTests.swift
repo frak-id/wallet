@@ -5,10 +5,6 @@
 
     @testable import FrakSDKUI
 
-    /// Type-checked against the iOS simulator SDK, executed by neither `swift test` stage:
-    /// the host run has `canImport(UIKit)` false, so everything here compiles and runs nowhere.
-    /// Exists so a wrong call order breaks the build,
-    /// and so intended behaviour is pinned in one place if a future device pass runs this suite.
     @Suite("InstallProbe")
     @MainActor
     struct InstallProbeTests {

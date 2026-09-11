@@ -51,7 +51,7 @@ actor DefaultFrakClient {
         let http = HTTPClient(baseURL: backendURL ?? settings.env.backend, session: session, logger: logger)
         self.configStore = ConfigStore(http: http, store: store, logger: logger)
         self.rewards = RewardRepository(http: http, logger: logger)
-        self.merge = IdentityMerge(logger: logger)
+        self.merge = IdentityMerge()
         // Assigned to a local first: `self` isn't fully initialized yet, so the closures below
         // (built before `self.tracker` is assigned) capture this local, never `self`.
         let merchantIdentity = MerchantIdentity(
@@ -203,10 +203,9 @@ actor DefaultFrakClient {
         await tracker.shutdown()
     }
 
-    /// `ConfigStore` owns the stream now; this forwards it unchanged. `nil` when `FrakConfig`
-    /// carries neither a `merchantId` nor a `packageId` — a config that cannot identify a
-    /// merchant cannot be hydrated from disk either, so that case degrades to `nil` like a
-    /// genuine cache miss.
+    /// Forwards `ConfigStore`'s stream unchanged. `nil` when `FrakConfig` carries neither a
+    /// `merchantId` nor a `packageId` — a config that cannot identify a merchant cannot be
+    /// hydrated from disk either, so that case degrades to `nil` like a genuine cache miss.
     var currentConfig: FrakResolvedConfig? {
         get async {
             guard let query = try? MerchantQuery.from(settings) else { return nil }
@@ -218,11 +217,9 @@ actor DefaultFrakClient {
         get async { await configStore.updates }
     }
 
-    /// Deliberately not gated on consent, unlike every tracking entry point. This request
-    /// carries no user identifier at all — `x-frak-client-id` is set only by
-    /// `InteractionTracker` — so refusing it with tracking off bought no privacy and cost the
-    /// merchant their own config, their campaign list and their reward copy. `campaigns`/
-    /// `bestReward` inherit that through `fetchRewards`, which resolves the merchant first.
+    /// Deliberately not gated on consent, unlike every tracking entry point: this request carries
+    /// no user identifier at all, so refusing it with tracking off buys no privacy and costs the
+    /// merchant their config, campaigns and reward copy. `campaigns`/`bestReward` inherit that.
     func resolveConfig(forceRefresh: Bool = false) async throws -> FrakResolvedConfig {
         try await frakCall {
             let query = try MerchantQuery.from(settings)
@@ -368,7 +365,7 @@ actor DefaultFrakClient {
         // Claimed only once the gates are passed. `trackMerge` owns the cold-start replay guard,
         // where the check and the append are one hop.
         guard await merge.claim(mergeToken) else { return }
-        // `.cachedOnly`: never touches the network, unlike the deleted `pair()` call.
+        // `.cachedOnly`: never touches the network.
         let merchantId = try? await merchantIdentity.merchant(.cachedOnly)
         await tracker.trackMerge(
             mergeToken: mergeToken,
@@ -445,8 +442,8 @@ actor DefaultFrakClient {
 
     func installPageURL(returnScheme: String, sessionId: String) async throws -> String {
         guard await consent.isEnabled() else { throw FrakError.trackingDisabled }
-        // `try`, not `try?`: a cancellation during resolution now propagates instead of
-        // reading as a resolution failure, matching Android.
+        // `try`, not `try?`: a cancellation during resolution propagates instead of reading as
+        // a resolution failure.
         guard let install = try await merchantIdentity.pair(.optional) else {
             throw FrakError.merchantResolutionFailed(
                 reason: "an install link needs both an anonymous id and a merchant; one of them is missing"

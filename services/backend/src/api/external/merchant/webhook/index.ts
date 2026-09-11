@@ -6,14 +6,14 @@ import { shopifyWebhook } from "./shopifyWebhook";
 import { wooCommerceWebhook } from "./wooCommerceWebhook";
 
 export const webhookRoutes = new Elysia()
-    .onBeforeHandle(({ path, headers }) => {
-        log.debug({ path, headers }, "Handling purchase webhook");
+    .onBeforeHandle(({ path }) => {
+        log.debug({ path }, "Handling purchase webhook");
     })
     .use(shopifyWebhook)
     .use(wooCommerceWebhook)
     .use(magentoWebhook)
     .use(customWebhook)
-    .onError(({ error, code, path, headers, set }) => {
+    .onError(({ error, code, path, set }) => {
         const msg = "message" in error ? error.message : undefined;
         log.error(
             {
@@ -21,7 +21,6 @@ export const webhookRoutes = new Elysia()
                 errorMsg: msg,
                 code,
                 reqPath: path,
-                reqHeaders: headers,
             },
             "Error while handling purchase webhook"
         );

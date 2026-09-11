@@ -130,7 +130,7 @@ internal class SharingWebViewHandle(
     /**
      * Called from [SharingWebViewClient.onRenderProcessGone], which cannot reach this handle
      * itself. Clearing [documentReady] is what stops the next sheet activating by fragment into a
-     * document that no longer exists.
+     * document that has been reclaimed.
      */
     fun onRendererGone() {
         rendererGone = true
@@ -139,9 +139,6 @@ internal class SharingWebViewHandle(
 
     /** Points the view at a session. Resets per-load state; see [SharingWebViewBinding]. */
     fun bind(binding: SharingWebViewBinding) {
-        // Belt and braces: nothing sets a non-default cache mode any more, and a pinned one would
-        // be inherited silently by the pool's re-warm and by every later sheet.
-        view.settings.cacheMode = WebSettings.LOAD_DEFAULT
         client.binding = binding
     }
 
@@ -418,10 +415,7 @@ internal class SharingWebViewClient(
         if (request.isForMainFrame) handleMainFrameFailure(view, unreachable = false)
     }
 
-    /**
-     * The network itself did not answer. Another attempt over it is pointless, so the ladder skips
-     * straight to its cache-only rung rather than spending the sheet's budget on a dead radio.
-     */
+    /** The network itself did not answer; another attempt would spend the sheet's budget on a dead radio. */
     private fun isUnreachable(error: WebResourceError): Boolean =
         error.errorCode == WebViewClient.ERROR_HOST_LOOKUP || error.errorCode == WebViewClient.ERROR_CONNECT
 
@@ -443,7 +437,7 @@ internal class SharingWebViewClient(
         if (retryPending) return
         val url = pendingMainFrameUrl
         if (url == null) {
-            giveUp(view)
+            giveUp()
             return
         }
         // A document this ladder has not been spent on yet gets the whole thing.
@@ -453,12 +447,12 @@ internal class SharingWebViewClient(
         }
         // Nothing to retry against, and no cached copy to fall back on.
         if (unreachable) {
-            giveUp(view)
+            giveUp()
             return
         }
         val delayMillis = RETRY_LADDER.getOrNull(retryCount)
         if (delayMillis == null) {
-            giveUp(view)
+            giveUp()
             return
         }
         retryCount++
@@ -467,8 +461,7 @@ internal class SharingWebViewClient(
     }
 
     /** The ladder is spent. */
-    private fun giveUp(view: WebView) {
-        view.settings.cacheMode = WebSettings.LOAD_DEFAULT
+    private fun giveUp() {
         settled = true
         binding.onLoadFailed()
     }

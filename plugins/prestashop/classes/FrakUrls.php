@@ -10,9 +10,6 @@
  *   - The resource hints in `<head>` and the deferred script tag agree on
  *     the same CDN host (otherwise the `dns-prefetch` / `preconnect` warm
  *     a different host than the one that actually serves the SDK).
- *
- * Mirrors the WordPress sibling's `class-frak-utils.php` constants block
- * — both plugins read from the same canonical Frak hosts.
  */
 class FrakUrls
 {
@@ -30,9 +27,8 @@ class FrakUrls
      * `{WEBHOOK_MERCHANT_PREFIX}{merchantId}{WEBHOOK_PATH_SUFFIX}` —
      * see {@see FrakWebhookHelper::getWebhookUrl()}.
      *
-     * Reuses the existing `customWebhook` Elysia route on the backend (DTO
-     * matches what the PrestaShop / Magento / WooCommerce plugins all send).
-     * No platform-specific `/webhook/prestashop` route exists.
+     * The backend exposes no platform-specific `/webhook/prestashop` route —
+     * this is the shared `customWebhook` Elysia route.
      */
     public const WEBHOOK_MERCHANT_PREFIX = self::BACKEND_BASE . '/ext/merchant/';
     public const WEBHOOK_PATH_SUFFIX = '/webhook/custom';

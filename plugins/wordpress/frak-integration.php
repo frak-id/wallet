@@ -44,8 +44,8 @@ unset( $frak_plugin_header );
 //
 // When the vendor folder is missing (developer checkout unzipped instead of
 // the packaged `dist/*.zip`, or a composer install that bailed out) we surface
-// an explicit admin notice rather than silently no-op'ing — previously the
-// plugin activated but every class-lookup would fatally error on first hit.
+// an explicit admin notice: without it the plugin activates and every
+// class-lookup fatally errors on first hit.
 if ( ! file_exists( FRAK_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 	add_action(
 		'admin_notices',

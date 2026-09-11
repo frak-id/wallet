@@ -94,6 +94,23 @@ const standalonePageAlias = isTauri
           },
       ];
 
+// Shared by `server.proxy` and `preview.proxy`.
+const devProxy = {
+    // Proxy listener app from separate dev server
+    "/listener": {
+        target: "https://localhost:3002",
+        changeOrigin: true,
+        secure: false, // Allow self-signed certs in dev
+        ws: true,
+    },
+    // Monerium sandbox doesn't whitelist localhost origins.
+    "/monerium-api": {
+        target: "https://api.monerium.dev",
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/monerium-api/, ""),
+    },
+};
+
 // Code-splitting groups for Rolldown. Same shape for web and Tauri.
 //
 // Tauri's `tauri://` protocol handler is faster than HTTP/2+CDN per asset
@@ -129,9 +146,8 @@ function buildChunkGroups() {
         // query-core/...` that match BOTH this regex AND the blockchain regex.
         // Higher priority wins (Rolldown), so tanstack-vendor must outrank
         // blockchain-vendor or query-core gets duplicated across both chunks.
-        // We also fold zustand here — same state-management family, same leakage
-        // pattern: it was previously split between `index` (17KB) and
-        // `blockchain-vendor` (15KB) for ~32KB of duplication.
+        // We also fold zustand here — same state-management family, same
+        // leakage pattern.
         {
             name: "tanstack-vendor",
             test: /[\\/]node_modules[\\/](?:@tanstack|zustand)[\\/]/,
@@ -199,8 +215,8 @@ function buildChunkGroups() {
         // feature then static-imports from that one, turning isolated navigations
         // into multi-chunk fetches.
         //
-        // `minShareCount: 2` keeps single-feature internals (e.g. auth-only
-        // `Back`/`Password` components) inside their feature chunk; only modules
+        // `minShareCount: 2` keeps single-feature internals inside their own
+        // feature chunk; only modules
         // reachable from 2+ entries get hoisted here. `minSize: 0` overrides the
         // global 4KB threshold so even a 3KB shared module emits as its own chunk.
         {
@@ -425,21 +441,7 @@ export default defineConfig(
                 // while a stale/wrong-platform squatter keeps :3010.
                 strictPort: isTauri,
                 allowedHosts: isSandbox ? true : undefined,
-                proxy: {
-                    // Proxy listener app from separate dev server
-                    "/listener": {
-                        target: "https://localhost:3002",
-                        changeOrigin: true,
-                        secure: false, // Allow self-signed certs in dev
-                        ws: true, // Proxy websockets if needed
-                    },
-                    // Monerium sandbox doesn't whitelist localhost origins.
-                    "/monerium-api": {
-                        target: "https://api.monerium.dev",
-                        changeOrigin: true,
-                        rewrite: (path) => path.replace(/^\/monerium-api/, ""),
-                    },
-                },
+                proxy: devProxy,
             },
             server: {
                 port: isTauri ? 3010 : 3000,
@@ -461,21 +463,7 @@ export default defineConfig(
                           port: 3010,
                       }
                     : undefined,
-                proxy: {
-                    // Proxy listener app from separate dev server
-                    "/listener": {
-                        target: "https://localhost:3002",
-                        changeOrigin: true,
-                        secure: false, // Allow self-signed certs in dev
-                        ws: true, // Proxy websockets if needed
-                    },
-                    // Monerium sandbox doesn't whitelist localhost origins.
-                    "/monerium-api": {
-                        target: "https://api.monerium.dev",
-                        changeOrigin: true,
-                        rewrite: (path) => path.replace(/^\/monerium-api/, ""),
-                    },
-                },
+                proxy: devProxy,
                 watch: {
                     // Tell vite to ignore watching `src-tauri`
                     ignored: ["**/src-tauri/**"],
@@ -505,13 +493,11 @@ export default defineConfig(
                         // public APIs (proven on the listener build).
                         lazyBarrel: true,
                     },
-                    // Enable aggressive tree shaking
                     treeshake: {
-                        moduleSideEffects: "no-external", // External packages (node_modules) have no side effects
-                        propertyReadSideEffects: false, // Reading properties doesn't cause side effects
+                        moduleSideEffects: "no-external",
+                        propertyReadSideEffects: false,
                     },
                     optimization: {
-                        // This will to remove some stuff that will be defined, like stage depend variable
                         inlineConst: { mode: "all", pass: 3 },
                     },
                     output: {

@@ -7,19 +7,10 @@ import {
     dialogTitleStyle,
 } from "./dialog.css";
 
-/**
- * Stateless root — pairs trigger + content.
- */
 export const Dialog = RadixDialog.Root;
 
-/**
- * Element that opens the dialog on click.
- */
 export const DialogTrigger = RadixDialog.Trigger;
 
-/**
- * Accessible title for the dialog.
- */
 export function DialogTitle({
     className,
     children,
@@ -36,9 +27,6 @@ export function DialogTitle({
     );
 }
 
-/**
- * Accessible description for the dialog.
- */
 export function DialogDescription({
     className,
     children,
@@ -55,18 +43,12 @@ export function DialogDescription({
     );
 }
 
-/**
- * Close button for the dialog.
- */
 export const DialogClose = RadixDialog.Close;
 
 type DialogContentProps = ComponentPropsWithRef<typeof RadixDialog.Content> & {
     children: ReactNode;
 };
 
-/**
- * Styled dialog content — portaled, animated, with overlay.
- */
 export function DialogContent({
     children,
     className,

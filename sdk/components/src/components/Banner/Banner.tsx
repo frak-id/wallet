@@ -9,6 +9,7 @@ import {
     getMergeToken,
     REFERRAL_SUCCESS_EVENT,
 } from "@frak-labs/core-sdk/actions";
+import { applyRewardPlaceholder } from "@frak-labs/core-sdk/rewards";
 import { InAppBanner } from "@frak-labs/design-system/components/InAppBanner";
 import { LogoFrakWithName } from "@frak-labs/design-system/icons";
 import {
@@ -26,7 +27,6 @@ import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
 import { componentDefaults } from "@/i18n/defaults";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
-import { applyRewardPlaceholder } from "@/utils/format/formatReward";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
     cssSource,
@@ -168,7 +168,6 @@ export function Banner({
         trackedImpressionModeRef.current = mode;
         // `reward` is intentionally omitted — async arrival would produce
         // a second impression event.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode, dismissed, isClientReady, isPreview, placementId]);
 
     // Listen for the referral success event (only when not in preview or in-app browser mode)

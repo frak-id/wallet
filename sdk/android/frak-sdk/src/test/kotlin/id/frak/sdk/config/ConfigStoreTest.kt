@@ -98,7 +98,7 @@ class ConfigStoreTest {
         }
 
     @Test
-    fun `background revalidation reaches the updates stream, not just memory (C3)`() =
+    fun `background revalidation reaches the updates stream, not just memory`() =
         runTest {
             val configStore = newStore(this)
             transport.respond(200, BODY)
@@ -123,13 +123,9 @@ class ConfigStoreTest {
             )
         }
 
-    /**
-     * Memory, [ConfigStore.updates] and the persisted entry are one slot shared across every key, so
-     * two different keys can race to publish into it. Runs on a real [Dispatchers.IO] [CoroutineScope],
-     * not the TestScope: blocking inside `open()` would starve the scheduler the test needs.
-     */
+    // Real [Dispatchers.IO], not the TestScope: blocking inside `open()` would starve its scheduler.
     @Test
-    fun `an older fetch that starts first but lands last does not overwrite a newer publish (C4)`() =
+    fun `an older fetch that starts first but lands last does not overwrite a newer publish`() =
         runTest {
             val firstQuery = MerchantQuery.from(frakConfig(merchantId = MERCHANT_ID))
             val secondQuery = MerchantQuery.from(frakConfig(packageId = "com.example.second"))
@@ -344,7 +340,7 @@ class ConfigStoreTest {
 
             collector.cancel()
             assertEquals(
-                "currentConfig's disk hydration must not publish to the stream — only fetch() does (C3)",
+                "currentConfig's disk hydration must not publish to the stream — only fetch() does",
                 listOf<String?>(null),
                 emissions,
             )

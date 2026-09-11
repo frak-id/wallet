@@ -15,16 +15,6 @@ describe("Stack", () => {
         expect(a.parentElement?.tagName).toBe("DIV");
     });
 
-    it("should apply sprinkle classes for flex column and gap", () => {
-        render(
-            <Stack space="m">
-                <span>content</span>
-            </Stack>
-        );
-        const el = screen.getByText("content").parentElement;
-        expect(el?.className).toBeTruthy();
-    });
-
     it("should change rendered element when as prop provided", () => {
         render(
             <Stack space="s" as="ul">

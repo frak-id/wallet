@@ -10,11 +10,6 @@ type AuthenticateWithPhoneProps = {
     onSuccess?: OnPairingSuccessCallback;
 };
 
-/**
- * Authenticate with phone
- * @param text The text to display on the button
- * @returns A button to authenticate with phone
- */
 export function AuthenticateWithPhone({
     text,
     onSuccess,

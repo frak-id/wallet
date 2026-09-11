@@ -1,25 +1,28 @@
 import { WebAuthN } from "@frak-labs/app-essentials";
+import { afterAll, beforeAll, vi } from "vitest";
 import { describe, expect, test } from "../../../tests/vitest-fixtures";
 import { getRegisterOptions } from "./registerOptions";
 
 describe("getRegisterOptions", () => {
-    test("should return registration options with correct structure", () => {
-        const date = new Date();
-        const day = date.getDate().toString().padStart(2, "0");
-        const month = (date.getMonth() + 1).toString().padStart(2, "0");
-        const year = date.getFullYear().toString();
-        const expectedUsername = `${WebAuthN.defaultUsername}-${day}-${month}-${year}`;
+    beforeAll(() => {
+        vi.useFakeTimers();
+        // Local-time construction: the username is built from local getters.
+        vi.setSystemTime(new Date(2026, 2, 7, 12, 0, 0));
+    });
 
-        const result = getRegisterOptions();
+    afterAll(() => {
+        vi.useRealTimers();
+    });
 
-        expect(result).toEqual({
+    test("should return registration options with a date-stamped username", () => {
+        expect(getRegisterOptions()).toEqual({
             rp: {
                 id: WebAuthN.rpId,
                 name: WebAuthN.rpName,
             },
             user: {
-                name: expectedUsername,
-                displayName: expectedUsername,
+                name: `${WebAuthN.defaultUsername}-07-03-2026`,
+                displayName: `${WebAuthN.defaultUsername}-07-03-2026`,
             },
             timeout: 180_000,
             attestation: "direct",
@@ -29,32 +32,5 @@ describe("getRegisterOptions", () => {
                 requireResidentKey: false,
             },
         });
-    });
-
-    test("should generate username with current date", () => {
-        const date = new Date();
-        const day = date.getDate().toString().padStart(2, "0");
-        const month = (date.getMonth() + 1).toString().padStart(2, "0");
-        const year = date.getFullYear().toString();
-        const expectedUsername = `${WebAuthN.defaultUsername}-${day}-${month}-${year}`;
-
-        const result = getRegisterOptions();
-
-        expect(result.user.name).toBe(expectedUsername);
-        expect(result.user.displayName).toBe(expectedUsername);
-    });
-
-    test("should set timeout to 3 minutes", () => {
-        const result = getRegisterOptions();
-
-        expect(result.timeout).toBe(180_000);
-    });
-
-    test("should require resident key and user verification", () => {
-        const result = getRegisterOptions();
-
-        expect(result.authenticatorSelection.residentKey).toBe("preferred");
-        expect(result.authenticatorSelection.requireResidentKey).toBe(false);
-        expect(result.authenticatorSelection.userVerification).toBe("required");
     });
 });

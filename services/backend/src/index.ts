@@ -167,14 +167,14 @@ log.info(
  */
 if (isRunningLocally && tls) {
     const httpPort = 3031;
-    const localHttpsServer = Bun.serve({
+    const localHttpMirrorServer = Bun.serve({
         port: httpPort,
         fetch: app.fetch,
     });
     log.info(`HTTP mirror for mobile dev at http://localhost:${httpPort}`);
 
-    process.on("SIGTERM", () => localHttpsServer.stop(true));
-    process.on("SIGINT", () => localHttpsServer.stop(true));
+    process.on("SIGTERM", () => localHttpMirrorServer.stop(true));
+    process.on("SIGINT", () => localHttpMirrorServer.stop(true));
 }
 
 /**

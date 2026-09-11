@@ -32,7 +32,7 @@ function stripIssuedAt(message: string): string {
         .join("\n");
 }
 
-describe("verifySiweSignature freshness (§1.3)", () => {
+describe("verifySiweSignature freshness", () => {
     it("accepts a freshly-issued message", async () => {
         const result = await verifySiweSignature({
             message: buildMessage(new Date()),
@@ -54,7 +54,6 @@ describe("verifySiweSignature freshness (§1.3)", () => {
             requestOrigin: ORIGIN,
             requireFreshness: true,
         });
-        expect(result).toEqual({ valid: false, error: expect.any(String) });
         expect(result).toMatchObject({ valid: false });
         if (!result.valid) expect(result.error).toMatch(/expired/i);
     });

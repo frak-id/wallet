@@ -1,14 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildBusinessDashboardUrl, isAbsoluteUrl, parseChargeId } from "./url";
 
-/**
- * Tests for URL utility functions extracted from routes and hooks.
- */
-
-/* ------------------------------------------------------------------ */
-/*  isAbsoluteUrl                                                      */
-/* ------------------------------------------------------------------ */
-
 describe("isAbsoluteUrl", () => {
     it("returns true for https URLs", () => {
         expect(isAbsoluteUrl("https://example.com")).toBe(true);
@@ -47,10 +39,6 @@ describe("isAbsoluteUrl", () => {
     });
 });
 
-/* ------------------------------------------------------------------ */
-/*  parseChargeId                                                      */
-/* ------------------------------------------------------------------ */
-
 describe("parseChargeId", () => {
     it("parses valid numeric string", () => {
         expect(parseChargeId("12345")).toBe(12345);
@@ -76,10 +64,6 @@ describe("parseChargeId", () => {
         expect(parseChargeId("9999999999")).toBe(9999999999);
     });
 });
-
-/* ------------------------------------------------------------------ */
-/*  buildBusinessDashboardUrl                                          */
-/* ------------------------------------------------------------------ */
 
 describe("buildBusinessDashboardUrl", () => {
     it("routes through /login/shopify with shop + redirect when shop is present", () => {

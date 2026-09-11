@@ -114,8 +114,6 @@ class WebhookSender
     }
 
     /**
-     * Map internal status string to webhook status
-     *
      * @param string $status
      * @return string
      */

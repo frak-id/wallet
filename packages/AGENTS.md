@@ -12,12 +12,12 @@ bun run typecheck                           # runs across all packages from root
 | Package | Purpose | Consumers (workspace) |
 |---------|---------|------------------------|
 | `wallet-shared` | Shared state/flows (auth, smart wallet, pairing) | wallet, listener ONLY |
-| `design-system` | Vanilla Extract tokens + 28 components + Box | wallet, sdk/components |
+| `design-system` | Vanilla Extract tokens + components + Box | wallet, sdk/components |
 | `app-essentials` | ABIs, addresses, viem provider, WebAuthn RP | backend, business, wallet, listener, wallet-shared, sdk/components |
 | `rpc` (published as `@frak-labs/frame-connector`) | Iframe/postMessage RPC | all SDKs, listener |
 | `client` | Elysia Eden Treaty client | wallet, business, shopify |
 | `dev-tooling` | Centralised Vite + Lightning CSS configs | business, listener, sdk/legacy |
-| `test-foundation` | Vitest shared config + mocks + fixtures | 12 of 13 Vitest projects (shopify is standalone) |
+| `test-foundation` | Vitest shared config + mocks + fixtures | every Vitest project (`scripts/` reaches in directly — it is outside the workspace) |
 | `ui-preview` | Embedded preview widgets | business, shopify |
 
 ## Non-Obvious Patterns
@@ -26,7 +26,7 @@ bun run typecheck                           # runs across all packages from root
 - **Subpath exports are explicit**: wildcard re-exports forbidden. Public API is locked per-package.
 - **`test-foundation` setup order matters**: `shared-setup → react-setup → RTL → wallet-mocks → apps-setup → project-setup`. Breaking the order breaks hoisting-safe mocks.
 - **`app-essentials` is workspace-only** (not published). Only runtime dep: `viem`.
-- **Lightning CSS targets** (for CSS Modules apps) are centralised in `dev-tooling`, derived from `BROWSER_TARGET` — Safari 15.4+, Chrome 111+, Edge 111+, Firefox 114+.
+- **Lightning CSS targets** are centralised in `dev-tooling`, derived from `BROWSER_TARGET` — Safari 15.4+, Chrome 111+, Edge 111+, Firefox 114+.
 - **Zustand rule**: individual selectors mandatory everywhere.
 
 ## Anti-Patterns

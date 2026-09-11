@@ -39,7 +39,7 @@ export function TableCampaigns() {
     }, [merchantId, clearSelection]);
 
     const selectedCampaigns = useMemo(
-        () => (data ?? []).filter((c) => selectedIds.has(c.id)),
+        () => data.filter((c) => selectedIds.has(c.id)),
         [data, selectedIds]
     );
 

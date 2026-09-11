@@ -58,7 +58,7 @@ function getApiBaseUrl(): string {
 
 const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-async function handleNonOk(response: Response): Promise<never> {
+async function throwApiError(response: Response): Promise<never> {
     let message = response.statusText || "Request failed";
     try {
         const body = await response.json();
@@ -89,7 +89,7 @@ export async function exchangeCodeForTokens(
         body,
     });
 
-    if (!response.ok) await handleNonOk(response);
+    if (!response.ok) await throwApiError(response);
     return (await response.json()) as MoneriumTokenResponse;
 }
 
@@ -128,7 +128,7 @@ async function doRefreshWithBackoff(): Promise<void> {
                 },
                 body,
             });
-            if (!response.ok) await handleNonOk(response);
+            if (!response.ok) await throwApiError(response);
             const tokens = (await response.json()) as MoneriumTokenResponse;
             moneriumStore
                 .getState()
@@ -209,7 +209,7 @@ async function moneriumFetch<T>(
             return moneriumFetch<T>(path, options, true);
         }
 
-        return handleNonOk(response);
+        return throwApiError(response);
     } catch (err) {
         // Log only at the outer call to avoid double-reporting on the
         // 401-refresh-retry path.

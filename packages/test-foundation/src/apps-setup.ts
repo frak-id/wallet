@@ -1,17 +1,6 @@
 /**
- * Shared Test Setup for Frontend Apps (Wallet, Listener, Business)
- *
- * This setup file provides environment variable mocking and common mocks
- * that are specific to frontend applications. It extends the shared-setup.ts
- * with app-specific configuration.
- *
- * Environment Variables:
- * - Core variables used by all apps (STAGE, BACKEND_URL, etc.)
- * - Analytics variables for OpenPanel tracking
- *
- * Mocks:
- * - OpenPanel analytics
- * - document.cookie (for demo mode and other cookie-based features)
+ * Env stubs and a writable `document.cookie` for the frontend apps
+ * (wallet, listener, business). Runs after `shared-setup.ts`.
  */
 
 import { vi } from "vitest";

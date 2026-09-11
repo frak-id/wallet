@@ -86,8 +86,6 @@ describe("isRewardFormValid (tiered)", () => {
         expect(isRewardFormValid(tieredValues)).toBe(true);
     });
 
-    // The split is no longer forced to equal 80% of the CPA — the distribution
-    // bar shows the recommendation, but any positive amounts are accepted.
     it("passes when a tier's split doesn't match its CPA", () => {
         const offReco: RewardFormValues = {
             ...tieredValues,
@@ -269,10 +267,6 @@ describe("tieredRangesOverlap", () => {
         ).toBe(false);
     });
 });
-
-/* ------------------------------------------------------------------ */
-/*  Product scope <-> reward basis                                     */
-/* ------------------------------------------------------------------ */
 
 const scopedDraft = (
     productScope: CampaignDraft["rule"]["productScope"]

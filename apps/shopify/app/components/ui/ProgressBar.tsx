@@ -1,10 +1,10 @@
 import * as styles from "./ProgressBar.css";
 
-interface ProgressBarProps {
+type ProgressBarProps = {
     progress: number;
     size?: "small" | "medium";
     tone?: "primary" | "success";
-}
+};
 
 export function ProgressBar({
     progress,

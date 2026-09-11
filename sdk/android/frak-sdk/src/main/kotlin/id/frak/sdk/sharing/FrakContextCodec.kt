@@ -32,8 +32,6 @@ internal object FrakContextCodec {
 
     private const val MAX_TIMESTAMP = 0xFFFF_FFFFL
 
-    // Shared with the identity proof layout via core.Uuid: both codecs read/write raw UUID
-    // bytes, but neither codec depends on the other.
     private val UUID_REGEX = Uuid.REGEX
 
     /** Shape only, no EIP-55 checksum: every consumer treats addresses case-insensitively. */
@@ -103,7 +101,7 @@ internal object FrakContextCodec {
         if (bytes.size != expected) return null
 
         var offset = HEADER_BYTES
-        val merchantId = readUuid(bytes, offset)
+        val merchantId = Uuid.fromBytes(bytes, offset)
         offset += UUID_BYTES
 
         var timestamp = 0L
@@ -114,7 +112,7 @@ internal object FrakContextCodec {
 
         var clientId: String? = null
         if (hasClient) {
-            clientId = readUuid(bytes, offset)
+            clientId = Uuid.fromBytes(bytes, offset)
             offset += UUID_BYTES
         }
 
@@ -136,11 +134,4 @@ internal object FrakContextCodec {
         if (bytes.size == V1_BYTES) return FrakContext.V1("0x" + Hex.encode(bytes, 0, ADDRESS_BYTES))
         return decode(bytes)
     }
-
-    // Shared with the identity proof layout via core.Uuid: both codecs format the same 16 raw
-    // bytes as a lowercase hyphenated UUID, but neither codec depends on the other.
-    private fun readUuid(
-        bytes: ByteArray,
-        offset: Int,
-    ): String = Uuid.fromBytes(bytes, offset)
 }

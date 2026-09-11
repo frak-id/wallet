@@ -42,13 +42,7 @@ type UseLoserAssetSummaryArgs = {
     loser?: Address;
 };
 
-/**
- * Read the live on-chain summary in one multicall. Exported (not just used
- * by the hook) so the migration mutation can re-run the exact same read
- * via `queryClient.fetchQuery` right before building its UserOp — keeping
- * the read path single-sourced between the preview surface and the
- * settle-time submission.
- */
+/** Read the live on-chain summary in one multicall. */
 async function fetchLoserAssetSummary(
     loser: Address
 ): Promise<LoserAssetSummary> {
@@ -100,10 +94,8 @@ async function fetchLoserAssetSummary(
         }
     );
 
-    // Largest holdings first so dust never pushes a meaningful balance
-    // off the visible area. Comparator returns the bigint sign instead of
-    // a Number cast — keeps full precision when balances differ by sub-cent
-    // amounts at high decimals.
+    // Largest holdings first. The comparator returns the bigint sign instead
+    // of a Number cast — keeps precision at high decimals.
     entries.sort((a, b) => {
         const aTotal = a.balance + a.claimable;
         const bTotal = b.balance + b.claimable;
@@ -118,7 +110,7 @@ async function fetchLoserAssetSummary(
     };
 }
 
-export function looserAssetSummaryQueryOpt({
+export function loserAssetSummaryQueryOptions({
     loser,
 }: UseLoserAssetSummaryArgs) {
     return queryOptions({

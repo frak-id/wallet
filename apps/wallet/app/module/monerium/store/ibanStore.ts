@@ -29,7 +29,6 @@ type IbanStoreState = {
     addIban: (entry: IbanEntry) => void;
     removeIban: (iban: string) => void;
     setLastUsedIban: (iban: string | null) => void;
-    clearIbans: () => void;
 };
 
 /**
@@ -97,8 +96,6 @@ export const ibanStore = create<IbanStoreState>()(
                 set({
                     lastUsedIban: iban ? normalizeIban(iban) : null,
                 }),
-
-            clearIbans: () => set({ knownIbans: [], lastUsedIban: null }),
         }),
         {
             name: "frak_iban_store",

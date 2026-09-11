@@ -21,14 +21,14 @@ struct IdentityMergeTests {
 
     @Test("claim burns a token once")
     func claimBurnsOnce() async {
-        let merge = IdentityMerge(logger: FrakLogger(level: .none))
+        let merge = IdentityMerge()
         #expect(await merge.claim(Self.token))
         #expect(await merge.claim(Self.token) == false)
     }
 
     @Test("claim refuses an empty token")
     func claimRefusesEmpty() async {
-        let merge = IdentityMerge(logger: FrakLogger(level: .none))
+        let merge = IdentityMerge()
         #expect(await merge.claim("") == false)
     }
 }

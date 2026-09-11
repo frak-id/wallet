@@ -1,9 +1,5 @@
 // Generic, framework-agnostic utilities. Keep this surface narrow.
-export { Deferred } from "@frak-labs/frame-connector";
-
-// Analytics
 export { trackEvent } from "./analytics";
-// Browser / deep linking
 export {
     type DeepLinkFallbackOptions,
     isChromiumAndroid,
@@ -17,14 +13,10 @@ export {
     isMobile,
     redirectToExternalBrowser,
 } from "./browser/inAppBrowser";
-// Cache
 export { clearAllCache, withCache } from "./cache";
-// Compression / encoding
 export { base64urlDecode, base64urlEncode } from "./compression/b64";
 export { compressJsonToB64 } from "./compression/compress";
 export { decompressJsonFromB64 } from "./compression/decompress";
-
-// Formatting / i18n
 export { formatAmount } from "./format/formatAmount";
 export {
     formatAmountParts,
@@ -34,17 +26,13 @@ export {
 export { getCurrencyAmountKey } from "./format/getCurrencyAmountKey";
 export { getSupportedCurrency } from "./format/getSupportedCurrency";
 export { getSupportedLocale } from "./format/getSupportedLocale";
-
-// Language detection
 export { detectPageLanguage } from "./i18n/detectPageLanguage";
-// Iframe DOM helpers
 export {
     baseIframeProps,
     buildListenerUrl,
     createIframe,
     findIframeInOpener,
 } from "./iframe/iframeHelper";
-// Product list sanitization
 export {
     coerceProductCandidates,
     decodeProductsParam,
@@ -53,15 +41,12 @@ export {
     sanitizeProductDetailsList,
     sanitizeSharingProducts,
 } from "./product/sanitizeProducts";
-
-// SSO URL builder
 export {
     type AppSpecificSsoMetadata,
     type CompressedSsoData,
     type FullSsoParams,
     generateSsoUrl,
 } from "./sso/sso";
-// URL query params (case-insensitive key matching)
 export {
     deleteQueryParamCaseInsensitive,
     getQueryParamCaseInsensitive,

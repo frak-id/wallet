@@ -5,10 +5,6 @@ import { useDeepLinkFallback } from "./useDeepLinkFallback";
 
 const EXPECTED_ORIGIN = "https://example.com";
 
-// Note: useDeepLinkFallback no longer imports from @frak-labs/core-sdk
-// (deep link conversion is handled by the parent SDK)
-
-// Mock emitLifecycleEvent from wallet-shared
 vi.mock("@frak-labs/wallet-shared/common/utils/lifecycleEvents", () => ({
     emitLifecycleEvent: vi.fn(),
 }));

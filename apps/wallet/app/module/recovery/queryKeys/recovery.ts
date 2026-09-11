@@ -1,12 +1,6 @@
 import type { Address } from "viem";
 
-/**
- * Query keys for recovery-related queries
- */
 export namespace recoveryKey {
-    /**
-     * The base key
-     */
     const base = "recovery" as const;
 
     export const all = [base] as const;
@@ -24,9 +18,6 @@ export namespace recoveryKey {
             ] as const,
     };
 
-    /**
-     * Mutation keys for recovery-related mutations
-     */
     export const createRecoveryPasskey = [base, "create-passkey"] as const;
     export const performRecovery = [base, "perform-recovery"] as const;
     export const claimRecovery = [base, "claim-recovery"] as const;

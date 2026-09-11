@@ -14,23 +14,12 @@ type BackfillStats = {
 };
 
 /**
- * Phase-0 eager migration (business-walletless-auth design doc §5):
- * every wallet that owns or administers a merchant gets a `business_account`
- * with its `wallet_address` column set, and `merchants.owner_account_id` /
- * `merchant_admins.account_id` are backfilled from those accounts.
+ * Every wallet that owns or administers a merchant gets a `business_account`, and
+ * `merchants.owner_account_id` / `merchant_admins.account_id` are backfilled from it.
+ * Idempotent, and no-ops until the human-written migration has been applied.
  *
- * The merchant tables are addressed with raw SQL (not the backend Drizzle
- * schema) on purpose: `domain/merchant/db/schema.ts` drags in API-layer type
- * imports (`@backend-utils`) that bootstrap's tsconfig should not resolve.
- * The business-auth schema is import-clean, so typed inserts are used there.
- *
- * Idempotent — wallets that already have an account (`wallet_address` set)
- * are skipped (partial unique index `business_accounts_wallet_idx`), and the
- * UPDATE statements only touch rows whose account column is still NULL.
- *
- * Gracefully no-ops when the `business_accounts` table (or the new merchant
- * columns) does not exist yet — those migrations are human-written and may
- * land after this code deploys.
+ * The merchant tables are addressed with raw SQL because `domain/merchant/db/schema.ts`
+ * drags in `@backend-utils` imports that bootstrap's tsconfig should not resolve.
  */
 export async function runBusinessAccountBackfill(): Promise<void> {
     const pgClient = postgres(buildPostgresUrl(), { max: 1 });

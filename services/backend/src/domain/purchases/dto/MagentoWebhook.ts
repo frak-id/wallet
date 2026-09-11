@@ -14,10 +14,10 @@ export type MagentoOrderWebhookDto = Readonly<{
         productId: string;
         quantity: number;
         price: string;
-        name: string; // Product name
-        title: string; // Product name
+        name: string;
+        title: string;
         image?: string;
-        sku?: string; // Product SKU
+        sku?: string;
     }[];
 }>;
 

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateCampaign } from "@/module/campaigns/api/campaignApi";
 import { campaignsQueryKey } from "@/module/campaigns/queries/queryKeys";
-import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import { campaignConfigQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { setStartDate } from "@/stores/campaignStore";
 import type { BudgetConfig, Campaign } from "@/types/Campaign";
@@ -74,8 +74,11 @@ export function useUpdateCampaignConfig() {
             // Seed the shared campaign detail cache (which the details sheet
             // reads) so it repaints immediately.
             queryClient.setQueryData(
-                campaignQueryOptions({ merchantId, campaignId, isDemoMode })
-                    .queryKey,
+                campaignConfigQueryOptions({
+                    merchantId,
+                    campaignId,
+                    isDemoMode,
+                }).queryKey,
                 updated
             );
             // Refresh the list/overview in the background — not awaited, so Save

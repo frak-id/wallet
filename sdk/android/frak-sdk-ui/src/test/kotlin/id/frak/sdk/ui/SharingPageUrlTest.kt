@@ -79,7 +79,7 @@ class SharingPageUrlTest {
         assertFalse(url.contains("logoUrl"))
         assertFalse(url.contains("&seedReward="))
         assertFalse(url.contains("products"))
-        assertFalse(url.contains("confirmed"))
+        assertFalse(url.contains("view=confirmation"))
     }
 
     @Test

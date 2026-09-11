@@ -132,8 +132,7 @@ internal class RewardRepository(
         mutex.withLock {
             backoff.recordSuccess(backoffKey)
             // Sweep before inserting: `products` puts a caller-controlled string in the key, so
-            // the map is no longer bounded by a handful of merchant/currency/audience
-            // combinations. Dropping expired entries here bounds it to one TTL window.
+            // nothing else bounds this map. Dropping expired entries bounds it to one TTL window.
             val cutoff = now() - CACHE_TTL_MILLIS
             cache.values.removeAll { it.fetchedAtMillis <= cutoff }
             cache[key] = Entry(result, now())

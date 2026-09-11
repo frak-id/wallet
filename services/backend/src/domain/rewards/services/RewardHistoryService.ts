@@ -5,7 +5,6 @@ import type { PurchaseInfo, RewardHistoryItem } from "../schemas";
 import type {
     CreateReferralLinkPayload,
     DetailedAssetLog,
-    InteractionType,
     PurchasePayload,
 } from "../types";
 
@@ -67,7 +66,7 @@ export class RewardHistoryService {
             amount: this.buildTokenAmount(log.amount, price),
             status: log.status,
             role: log.recipientType,
-            trigger: this.getTrigger(log.interactionType),
+            trigger: log.interactionType ?? "custom",
             txHash: log.onchainTxHash ?? undefined,
             createdAt: log.createdAt,
             settledAt: log.settledAt ?? undefined,
@@ -133,11 +132,5 @@ export class RewardHistoryService {
         }
 
         return undefined;
-    }
-
-    private getTrigger(
-        interactionType: InteractionType | null
-    ): InteractionType {
-        return interactionType ?? "custom";
     }
 }

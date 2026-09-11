@@ -51,7 +51,6 @@ export async function sendInteraction(
             params: [params, { clientId }],
         });
     } catch {
-        // Silent failure - fire-and-forget
         console.warn("[Frak SDK] Failed to send interaction:", params.type);
     }
 }

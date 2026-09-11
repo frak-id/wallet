@@ -98,15 +98,6 @@ describe("useLogout", () => {
         expect(window.localStorage.getItem("frak_userSetupLater")).toBeNull();
     });
 
-    // NOTE: the `panelDismissed*` sweep in `cleanLocalStorage` iterates
-    // `Object.keys(window.localStorage)`, which the shared harness's
-    // `StorageImpl` (packages/test-foundation/src/shared-setup.ts) does not
-    // support — its backing Map is a class field, so `Object.keys` returns
-    // `data` rather than the stored keys. Asserting the sweep requires
-    // making `StorageImpl` proxy its own enumerable keys, which is shared
-    // test infra used by every workspace and is tracked separately. The
-    // fixed-key removal above is unaffected.
-
     test("preserves the persisted quick-login authenticator hint", async ({
         queryWrapper,
     }) => {

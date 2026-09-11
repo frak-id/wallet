@@ -47,13 +47,8 @@ export function maxRewardPercent(reward: EstimatedReward): number {
     return 0;
 }
 
-// A reward with no money value (an uncapped percentage, or a percent-only
-// tier set) still renders as "X %", so it is worth surfacing. We give it a
-// positive ranking weight derived from its percent but scaled far below any
-// real-money reward, so the two invariants the UI relies on hold: (1) a reward
-// with real money always outranks a percentage-only reward, and (2) a
-// percentage-only reward still outranks a zero-value reward. Together they
-// guarantee the reward the ranking picks is always one we can display.
+// Scaled far below any real-money reward so both display invariants hold: real
+// money outranks a percentage-only reward, which outranks a zero-value one.
 const PERCENT_ONLY_RANK_WEIGHT = 1e-6;
 
 /**

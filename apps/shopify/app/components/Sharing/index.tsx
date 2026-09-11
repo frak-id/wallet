@@ -4,22 +4,15 @@ import { useTranslation } from "react-i18next";
 import { useRouteLoaderData } from "react-router";
 
 /**
- * Build the canonical share URL for a given storefront host.
- *
- * Mirrors `buildShareUrl` from `services.server/metafields.ts` — kept
- * client-side so the merchant UI can render the link without an extra
- * loader round-trip. The SDK loader treats `?frakAction=share` as a
- * directive to auto-open the sharing modal (see `handleActionQueryParam`
- * in `sdk/components/src/bootstrap/initFrakSdk.ts`).
+ * Client-side twin of `buildShareUrl` in `services.server/metafields.ts` — keep
+ * both in sync, `?frakAction=share` is an SDK contract.
  */
 function buildShareUrl(domain: string): string {
     return `https://${domain}/?frakAction=share`;
 }
 
 /**
- * Card surfacing a copy-paste sharing link merchants can drop into
- * newsletters / emails. Clicking the link auto-opens the storefront
- * sharing modal pre-filled with the merchant's active reward config.
+ * Card surfacing a copy-paste sharing link merchants can drop into newsletters.
  */
 export function NewsletterShareLink() {
     const { t } = useTranslation();

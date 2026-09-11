@@ -1,13 +1,6 @@
 /**
- * Zustand store for modal management
- *
- * Centralises which modal is currently visible so parent components
- * don't need one `useState` per modal. Modals are stacked: opening
- * a new one pushes the previous onto the stack, and closing pops it.
- *
- * Each variant in `ModalState` can carry its own typed props,
- * so callers pass data at open-time and the `ModalOutlet`
- * forwards it to the correct component.
+ * Modals are stacked: opening a new one pushes the previous onto the stack,
+ * and closing pops it.
  *
  * TODO: Replace with route-based modals once TanStack Router parallel
  * routing lands: https://github.com/TanStack/router/pull/6302

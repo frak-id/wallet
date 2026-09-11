@@ -5,11 +5,7 @@ import type { PreviousAuthenticatorModel } from "@frak-labs/wallet-shared";
 import { useLogin } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 
-/**
- * The login component
- * @constructor
- */
-export function SsoLoginComponent({
+export function SsoLogin({
     isPrimary,
     onSuccess,
     onError,

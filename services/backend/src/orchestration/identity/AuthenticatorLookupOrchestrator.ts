@@ -4,21 +4,11 @@ import type { IdentityRepository } from "../../domain/identity/repositories/Iden
 import type { WalletBindingRepository } from "../../domain/identity/repositories/WalletBindingRepository";
 
 /**
- * Resolution of a wallet + its current-chain credentials from an identity
- * input (today: an email). Returned shape is shared by:
- *  - `POST /user/wallet/auth/email` conflict branch — when a user types an
- *    email already attached to another wallet.
- *  - `POST /user/wallet/auth/emailStatus` — pre-registration check used by
- *    the UI to short-circuit the WebAuthn ceremony.
- *
- * `wallet` is omitted when the resolved identity group has no active wallet
- * node (anonymous-only group). `authenticatorIds` is an empty array when the
- * wallet has no active binding on the current chain (e.g. cross-env
- * account); it holds every active binding so the WebAuthn ceremony can offer
- * the user any passkey currently routed to the wallet — post-merge a wallet
- * routinely accepts 2+ credentials.
+ * `wallet` is omitted for an anonymous-only group. `authenticatorIds` holds
+ * every active binding on the current chain (empty for a cross-env account),
+ * since post-merge a wallet routinely accepts 2+ credentials.
  */
-export type IdentityWalletLookup = {
+type IdentityWalletLookup = {
     groupId: string;
     wallet?: Address;
     authenticatorIds: string[];
@@ -38,11 +28,8 @@ export type EmailResolution =
     | { status: "unavailable" };
 
 /**
- * Cross-domain helper that resolves identity-graph nodes (postgres) to the
- * credential currently bound to the underlying wallet (postgres binding
- * table → libSQL credential row). Both reads are postgres-only now, but
- * the orchestrator placement is kept since the surrounding flow still
- * spans the identity ↔ auth boundary.
+ * Resolves identity-graph nodes to the credentials bound to the underlying
+ * wallet — spans the identity ↔ auth boundary.
  */
 export class AuthenticatorLookupOrchestrator {
     constructor(

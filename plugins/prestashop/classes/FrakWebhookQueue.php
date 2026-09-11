@@ -32,8 +32,7 @@
  *     to keep the SQL injection surface zero. Numeric columns
  *     (`id_order`, `attempts`) are cast to `int` at the boundary.
  *
- * Backoff schedule mirrors the Magento sister plugin
- * (`plugins/magento/Model/Retry/CronRetry.php`): 5 m, 15 m, 1 h, 6 h, 24 h,
+ * Backoff schedule: 5 m, 15 m, 1 h, 6 h, 24 h,
  * with `MAX_ATTEMPTS = 5`. Failures past the cap transition to `failed` and
  * stop polling — the `last_error` column captures the final error so the
  * merchant can investigate from `PrestaShopLogger` correlated with the queue
@@ -54,7 +53,7 @@ class FrakWebhookQueue
     /**
      * Backoff between attempts, in seconds. Index `n` is the wait BEFORE
      * attempt `n + 1` (so after the first failure we wait 5 minutes, after
-     * the second 15 minutes, etc.). Mirrors Magento's schedule.
+     * the second 15 minutes, etc.).
      *
      * @var int[]
      */

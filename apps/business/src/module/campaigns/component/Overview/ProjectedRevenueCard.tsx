@@ -204,8 +204,6 @@ function addBuckets(
 /**
  * Naive linear extrapolation — averages the slope across the last
  * `FORECAST_LOOKBACK` buckets and projects `FORECAST_BUCKETS` ahead.
- * Same logic that used to live in the backend orchestrator; moved here
- * so the response stays cacheable and forecast horizon is FE-tunable.
  */
 function projectForecast(
     values: number[],

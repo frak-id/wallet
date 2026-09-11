@@ -6,7 +6,6 @@ import { Balance } from "./index";
 const mockUseGetUserBalance = vi.fn();
 const mockUseGetPendingRewards = vi.fn();
 const mockT = vi.fn((key: string) => key);
-const mockNavigate = vi.fn();
 
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const actual =
@@ -25,11 +24,7 @@ vi.mock("react-i18next", () => ({
     }),
 }));
 
-vi.mock("@tanstack/react-router", () => ({
-    useNavigate: () => mockNavigate,
-}));
-
-vi.mock("@/module/tokens/hooks/useGetPendingRewards", () => ({
+vi.mock("@/module/tokens/hook/useGetPendingRewards", () => ({
     useGetPendingRewards: () => mockUseGetPendingRewards(),
 }));
 
@@ -40,7 +35,6 @@ describe("Balance", () => {
         mockUseGetPendingRewards.mockReturnValue({
             totalClaimable: 0,
             pendingRewards: [],
-            queryData: {},
         });
     });
     it("should render balance label via i18n", () => {
@@ -139,7 +133,6 @@ describe("Balance", () => {
             screen.getByRole("button", { name: "wallet.transferToBank" })
         );
 
-        expect(mockNavigate).not.toHaveBeenCalled();
         expect(modalStore.getState().modal).toEqual({
             id: "emptyTransfer",
         });
@@ -162,7 +155,6 @@ describe("Balance", () => {
 
         fireEvent.click(pendingCardButton as HTMLButtonElement);
 
-        expect(mockNavigate).not.toHaveBeenCalled();
         expect(modalStore.getState().modal).toEqual({
             id: "emptyPendingGains",
         });
@@ -177,7 +169,6 @@ describe("Balance", () => {
         mockUseGetPendingRewards.mockReturnValue({
             totalClaimable: 50,
             pendingRewards: [],
-            queryData: {},
         });
 
         render(<Balance />);
@@ -210,7 +201,6 @@ describe("Balance", () => {
 
         fireEvent.click(lifetimeCardButton as HTMLButtonElement);
 
-        expect(mockNavigate).not.toHaveBeenCalled();
         expect(modalStore.getState().modal).toEqual({
             id: "emptyTransferredGains",
         });

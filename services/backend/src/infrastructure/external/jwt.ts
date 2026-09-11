@@ -98,7 +98,7 @@ type UnwrapSchema<
     Fallback = unknown,
 > = Schema extends TSchema ? Static<NonNullable<Schema>> : Fallback;
 
-interface JWTPayloadSpec {
+type JWTPayloadSpec = {
     iss?: string;
     sub?: string;
     aud?: string | string[];
@@ -106,38 +106,19 @@ interface JWTPayloadSpec {
     nbf?: number;
     exp?: number;
     iat?: number;
-}
+};
 
-interface JWTOption<Schema extends TSchema | undefined = undefined>
-    extends JWSHeaderParameters,
-        Omit<JWTPayload, "nbf" | "exp"> {
-    /**
-     * JWT Secret
-     */
-    secret: string | Uint8Array;
-    /**
-     * Type strict validation for JWT payload
-     */
-    schema?: Schema;
-    /**
-     * Potential epxiration delay in seconds if exp isn't provided.
-     */
-    expirationDelayInSecond?: number;
-
-    /**
-     * JWT Not Before
-     *
-     * @see [RFC7519#section-4.1.5](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5)
-     */
-
-    nbf?: string | number;
-    /**
-     * JWT Expiration Time
-     *
-     * @see [RFC7519#section-4.1.4](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4)
-     */
-    exp?: string | number;
-}
+type JWTOption<Schema extends TSchema | undefined = undefined> =
+    JWSHeaderParameters &
+        Omit<JWTPayload, "nbf" | "exp"> & {
+            secret: string | Uint8Array;
+            /** Type strict validation for JWT payload */
+            schema?: Schema;
+            /** Expiration delay in seconds, applied when `exp` isn't provided. */
+            expirationDelayInSecond?: number;
+            nbf?: string | number;
+            exp?: string | number;
+        };
 
 /**
  * Create a JWT Context

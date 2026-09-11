@@ -59,10 +59,7 @@ const VIEWS_BREAKDOWN = "properties.merchant_id";
 export class ExplorerOrchestrator {
     constructor(private readonly pricingRepository: PricingRepository) {}
 
-    private readonly cache = new LRUCache<
-        string,
-        { value: ExplorerQueryResult }
-    >({
+    private readonly cache = new LRUCache<string, ExplorerQueryResult>({
         max: 128,
         ttl: 30_000,
     });
@@ -84,11 +81,11 @@ export class ExplorerOrchestrator {
 
         const cached = this.cache.get(cacheKey);
         if (cached) {
-            return cached.value;
+            return cached;
         }
 
         const result = await this.fetchMerchants(limit, offset);
-        this.cache.set(cacheKey, { value: result });
+        this.cache.set(cacheKey, result);
         return result;
     }
 

@@ -1,19 +1,9 @@
 #!/usr/bin/env bun
 
 /**
- * Extract the SHA-256 fingerprint from an Android keystore and output
- * both formats needed by the Frak Wallet infrastructure:
- *
- *   1. Colon-hex  → ANDROID_SHA256_FINGERPRINT (assetlinks.json + SST secret)
- *   2. Base64url  → WebAuthn android:apk-key-hash origin
- *
- * Usage:
- *   bun scripts/extract-android-fingerprint.ts <keystore> <alias>
- *   bun scripts/extract-android-fingerprint.ts <colon-hex-fingerprint>
- *
- * Examples:
- *   bun scripts/extract-android-fingerprint.ts release.keystore my-key-alias
- *   bun scripts/extract-android-fingerprint.ts "47:AE:0B:7B:04:9D:C7:..."
+ * Extract the SHA-256 fingerprint of an Android keystore in the two formats the
+ * infra needs: colon-hex for `ANDROID_SHA256_FINGERPRINT` (assetlinks.json + SST
+ * secret) and base64url for the WebAuthn `android:apk-key-hash` origin.
  */
 
 function colonHexToBase64url(colonHex: string): string {
@@ -52,7 +42,6 @@ async function extractFromKeystore(
         process.exit(1);
     }
 
-    // Extract SHA-256 fingerprint from keytool output
     const match = stdout.match(
         /SHA256:\s*([0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){31})/
     );
@@ -81,8 +70,6 @@ function printResults(colonHex: string): void {
     );
 }
 
-// --- Main ---
-
 const args = process.argv.slice(2);
 
 if (args.length === 0) {
@@ -96,10 +83,8 @@ if (args.length === 0) {
 }
 
 if (args.length === 1 && isColonHex(args[0])) {
-    // Direct colon-hex input
     printResults(args[0]);
 } else if (args.length >= 2) {
-    // Keystore + alias
     const fingerprint = await extractFromKeystore(args[0], args[1]);
     printResults(fingerprint);
 } else {

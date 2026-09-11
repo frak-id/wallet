@@ -35,10 +35,8 @@ function orderMethods(methods: TwoFactorMethod[]): TwoFactorMethod[] {
 }
 
 /**
- * Heading render slots. Injected so the modal can bind the title/description to
- * Radix (`DialogTitle`/`DialogDescription` → accessible `aria-labelledby`/
- * `-describedby`), which this component can't render itself since it has no
- * `Dialog` ancestor in the inline case. Defaults to plain visible headings.
+ * Injected so the modal can bind the title/description to Radix; this component
+ * has no `Dialog` ancestor in the inline case.
  */
 export type TwoFactorHeadingSlot = (props: {
     children: ReactNode;
@@ -57,15 +55,9 @@ const DefaultDescription: TwoFactorHeadingSlot = ({ children }) => (
 );
 
 /**
- * Presentational 2FA challenge/verify UI — no `Dialog` wrapper, so it can sit
- * either inside `TwoFactorModal` (step-up re-auth, §4.5) or inline on
- * `/login/2fa` within the branded login shell (no modal over a blank page).
- * The heading elements are injected via `Title`/`Description` so the modal can
- * bind them to Radix for an accessible dialog name while the inline case uses
- * plain visible headings.
- *
- * Interaction: the highest-priority available method is auto-selected and its
- * challenge shown immediately; "Try another way" reveals the alternatives.
+ * Presentational 2FA challenge/verify UI with no `Dialog` wrapper, so it can
+ * sit inside `TwoFactorModal` (step-up re-auth) or inline on `/login/2fa`.
+ * The highest-priority available method is auto-selected.
  */
 export function TwoFactorChallengePanel({
     methods,

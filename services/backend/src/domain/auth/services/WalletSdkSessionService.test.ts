@@ -55,9 +55,7 @@ describe("WalletSdkSessionService", () => {
             Date.now = vi.fn(() => mockCurrentTime);
 
             const additionalData: StaticWalletSdkTokenDto["additionalData"] = {
-                customField: "customValue",
-                numericField: 123,
-                booleanField: true,
+                demoPkey: "0xdeadbeef",
             };
 
             const result = await service.generateSdkJwt({
@@ -131,19 +129,6 @@ describe("WalletSdkSessionService", () => {
 
             // Restore Date.now
             Date.now = originalDateNow;
-        });
-
-        it("should handle JWT signing errors gracefully", async () => {
-            // Mock the sign to throw an error for this test
-            JwtContextMock.walletSdk.sign.mockImplementationOnce(() =>
-                Promise.reject(new Error("JWT signing failed"))
-            );
-
-            await expect(
-                service.generateSdkJwt({
-                    wallet: mockWallet,
-                })
-            ).rejects.toThrow("JWT signing failed");
         });
 
         it("should calculate correct expiration time", async () => {

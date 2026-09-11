@@ -7,8 +7,7 @@ struct MergeSender: RowSender {
 
     let logger: FrakLogger
 
-    // The backend mints the token with exactly a 60-minute lifetime
-    // (services/backend/src/domain/identity/services/AnonymousMergeService.ts:36); holding longer cannot succeed.
+    // The backend mints the token with exactly a 60-minute lifetime; holding longer cannot succeed.
     var holdTimeout: TimeInterval { 60 * 60 }
 
     func deliver(row: QueuedRow, ctx: SendContext) async throws(CancellationError) -> DeliveryOutcome {

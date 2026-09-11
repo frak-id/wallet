@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-// ---------------------------------------------------------------------------
-// Hoisted mocks
-// ---------------------------------------------------------------------------
-
 const mockInitiatePost = vi.fn();
 const mockTrackEvent = vi.fn();
 

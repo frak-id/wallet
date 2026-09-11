@@ -8,11 +8,6 @@
  * source of truth for attribute → HTML mapping so every hook surface
  * emits identical output.
  *
- * Mirrors `Frak_Component_Renderer` in the WordPress plugin — same
- * camelCase attr keys, same tag names, same `buttonStyle` preset
- * abstraction (PrestaShop's bootstrap classes substitute for WP's
- * `wp-element-button`).
- *
  * Callers pass camelCase attribute keys; the renderer normalises them to
  * kebab-case HTML attributes per the per-component map below.
  */
@@ -55,12 +50,7 @@ class FrakComponentRenderer
      * convenience that prepends Bootstrap button classes onto `classname`
      * so the rendered button picks up the merchant theme's Bootstrap
      * styling without the merchant having to type the class names manually.
-     *
-     * Kept parallel with the WordPress plugin's
-     * `Frak_Component_Renderer::SHARE_BUTTON_STYLE_CLASSES` (which uses
-     * `wp-element-button wp-block-button__link` instead). Default preset
-     * is `secondary` to preserve the visual baseline of the legacy
-     * PrestaShop module (which hard-coded `btn btn-secondary`).
+     * The default preset is `secondary`.
      *
      * @var array<string, string>
      */
@@ -70,22 +60,7 @@ class FrakComponentRenderer
         'none' => '',
     ];
 
-    /**
-     * `json_encode` flags used everywhere we embed JSON inside an HTML or JS
-     * payload (component attrs, `window.FrakSetup` blob, post-purchase product
-     * list, tracker payload, …):
-     *
-     *   - `JSON_UNESCAPED_SLASHES`: the default escapes `/` as `\/` which
-     *     bloats URLs and isn't required for valid JSON — unescaped slashes
-     *     are still valid inside both HTML attribute values and JS string
-     *     literals.
-     *   - `JSON_UNESCAPED_UNICODE`: encode non-ASCII characters as themselves
-     *     instead of `\uXXXX` escapes. UTF-8 is the canonical browser charset
-     *     and emitting raw unicode keeps the payload compact (and grep-able).
-     *
-     * Public so {@see FrakFrontend}, {@see FrakOrderRender}, and any future
-     * caller that emits JSON-into-HTML uses the same encoding contract.
-     */
+    /** Shared flags for every JSON payload embedded into HTML or JS. */
     public const JSON_FLAGS = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
 
     /**
@@ -94,8 +69,7 @@ class FrakComponentRenderer
      * `customerId`, `orderId`, `token` are listed alongside the public SDK
      * attrs because the PrestaShop hooks (`displayOrderConfirmation` /
      * `displayOrderDetail`) already supply them via {@see FrakOrderResolver}
-     * — no per-render endpoint resolution required (unlike WP, which has
-     * to resolve `is_wc_endpoint_url()` from inside the renderer).
+     * — no per-render endpoint resolution required.
      *
      * `products` carries the JSON-stringified line-item list emitted by
      * {@see FrakOrderResolver::getPostPurchaseData()}; preact-custom-element
@@ -165,8 +139,7 @@ class FrakComponentRenderer
 
     /**
      * Build the inline `<script>` that fires `trackPurchaseStatus` once the
-     * Frak SDK client is ready. Mirrors WordPress's
-     * `Frak_WooCommerce::render_purchase_tracker_for_order()` one-liner.
+     * Frak SDK client is ready.
      *
      * Designed to be emitted on every order-page hook dispatch — independent
      * of whether the visible `<frak-post-purchase>` component placement is
@@ -215,9 +188,6 @@ class FrakComponentRenderer
      * Keys without underscores are passed through unchanged so camelCase
      * input (e.g. a hook callback already using the renderer's expected
      * shape) still works.
-     *
-     * Mirrors `Frak_Component_Renderer::snake_keys_to_camel()` in the
-     * WordPress plugin so both surfaces accept the same input shapes.
      *
      * @param array<string, mixed> $attrs Arbitrary attribute map.
      * @return array<string, mixed>

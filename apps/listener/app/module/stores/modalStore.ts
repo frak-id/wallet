@@ -57,26 +57,6 @@ export const modalStore = create<ModalStore>((set, get) => ({
         });
     },
 
-    completeStep: (stepKey, response) => {
-        const { results, currentStep, steps } = get();
-        if (!results || !steps) return;
-
-        // Update results
-        set({
-            results: {
-                ...results,
-                [stepKey]: response,
-            },
-        });
-
-        // Move to next step
-        set({ currentStep: currentStep + 1 });
-    },
-
-    nextStep: () => {
-        set((state) => ({ currentStep: state.currentStep + 1 }));
-    },
-
     clearModal: () => {
         set({
             steps: undefined,
@@ -84,10 +64,6 @@ export const modalStore = create<ModalStore>((set, get) => ({
             results: undefined,
             dismissed: false,
         });
-    },
-
-    setDismissed: (dismissed) => {
-        set({ dismissed });
     },
 
     dismissModal: (source: ModalDismissSource = "close_btn") => {
@@ -140,12 +116,6 @@ export const modalStore = create<ModalStore>((set, get) => ({
 export const selectCurrentStep = (state: ModalStore) =>
     state.steps?.[state.currentStep];
 
-// Get the active step index
-export const selectActiveStep = (state: ModalStore) => state.currentStep;
-
-// Get the modal results
-export const selectResults = (state: ModalStore) => state.results;
-
 // Get the steps
 export const selectSteps = (state: ModalStore) => state.steps;
 
@@ -181,23 +151,5 @@ export const selectShouldFinish = (state: ModalStore) => {
 // Check if the modal is dismissed
 export const selectIsDismissed = (state: ModalStore) => state.dismissed;
 
-// Get the displayed steps with current step info
-export const selectDisplayedSteps = (state: ModalStore) => {
-    const { steps, currentStep, dismissed } = state;
-    if (!steps) return undefined;
-
-    return {
-        steps,
-        currentStep,
-        dismissed,
-    };
-};
-
 // Get just the current step index
 export const selectCurrentStepIndex = (state: ModalStore) => state.currentStep;
-
-// Get the current step object at the current index
-export const selectCurrentStepObject = (state: ModalStore) => {
-    const { steps, currentStep } = state;
-    return steps?.[currentStep];
-};

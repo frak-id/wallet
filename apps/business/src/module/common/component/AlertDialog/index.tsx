@@ -1,5 +1,4 @@
 import {
-    AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
@@ -17,85 +16,44 @@ export type AlertDialogComponentProps = {
     title?: ReactNode | string;
     description?: string | ReactNode;
     text?: ReactNode | string;
-    button?: {
-        label?: ReactNode | string;
-        className?: string;
-        disabled?: boolean;
-    };
     buttonElement?: ReactNode;
-    footer?: { className?: string; after?: ReactNode };
-    onSuccess?: () => void;
     action?: ReactNode;
-    actionClose?: boolean;
-    showCloseButton?: boolean;
     cancel?: ReactNode;
-    defaultOpen?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
-    classNameContent?: string;
-    classNameTitle?: string;
 };
 
 export function AlertDialog({
     title,
     description,
     text,
-    button: { label, className: btnClass = "", disabled } = {},
     buttonElement,
-    footer: { className: footerClass = "", after: footerAfter } = {},
     action,
-    actionClose = false,
-    showCloseButton = true,
     cancel,
-    defaultOpen = false,
     open,
     onOpenChange,
-    classNameContent = "",
-    classNameTitle = "",
 }: AlertDialogComponentProps) {
     const { t } = useTranslation();
     return (
-        <DSAlertDialog
-            defaultOpen={defaultOpen}
-            open={open}
-            onOpenChange={onOpenChange}
-        >
-            {label && (
-                <AlertDialogTrigger asChild>
-                    <button
-                        type="button"
-                        className={clsx(styles.trigger, btnClass)}
-                        disabled={disabled}
-                    >
-                        {label}
-                    </button>
-                </AlertDialogTrigger>
-            )}
+        <DSAlertDialog open={open} onOpenChange={onOpenChange}>
             {buttonElement && (
                 <AlertDialogTrigger asChild>{buttonElement}</AlertDialogTrigger>
             )}
             <AlertDialogContent
-                className={clsx(
-                    styles.content,
-                    showCloseButton && styles.withCloseButton,
-                    classNameContent
-                )}
+                className={clsx(styles.content, styles.withCloseButton)}
             >
-                {showCloseButton && (
-                    <AlertDialogCancel asChild>
-                        <button
-                            type="button"
-                            className={styles.close}
-                            aria-label={t("common.close")}
-                        >
-                            <X />
-                        </button>
-                    </AlertDialogCancel>
-                )}
+                <AlertDialogCancel asChild>
+                    <button
+                        type="button"
+                        className={styles.close}
+                        aria-label={t("common.close")}
+                    >
+                        <X />
+                    </button>
+                </AlertDialogCancel>
+                {/* Radix requires a title and a description node even when empty */}
                 {title ? (
-                    <AlertDialogTitle className={classNameTitle}>
-                        {title}
-                    </AlertDialogTitle>
+                    <AlertDialogTitle>{title}</AlertDialogTitle>
                 ) : (
                     <AlertDialogTitle />
                 )}
@@ -107,18 +65,12 @@ export function AlertDialog({
                     <AlertDialogDescription />
                 )}
                 {text && <div>{text}</div>}
-                <div className={clsx(styles.footer, footerClass)}>
+                <div className={styles.footer}>
                     {cancel && (
                         <AlertDialogCancel asChild>{cancel}</AlertDialogCancel>
                     )}
-                    {actionClose && action && (
-                        <AlertDialogAction asChild>{action}</AlertDialogAction>
-                    )}
-                    {!actionClose && action}
+                    {action}
                 </div>
-                {footerAfter && (
-                    <div className={styles.footerAfter}>{footerAfter}</div>
-                )}
             </AlertDialogContent>
         </DSAlertDialog>
     );

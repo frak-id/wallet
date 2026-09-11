@@ -25,11 +25,6 @@
  * Both `timeout` (per-operation) and `max_duration` (full request) clamp
  * at the same window so a misbehaving backend cannot wedge the cron tick
  * or the order-status hook past its allotted budget.
- *
- * Extracted from {@see FrakInfra} (formerly `FrakDb`) to keep that class
- * focused on database-bound infrastructure (DBAL connection + the Cache
- * and Lock adapters built against it). HTTP transport has no shared
- * state with the database connection.
  */
 class FrakHttpClient
 {
@@ -75,10 +70,9 @@ class FrakHttpClient
     /**
      * Whether `\Symfony\Component\HttpClient\HttpClient` is loadable via
      * the registered autoloaders. The merchant zip ships only the plugin's
-     * classmap (composer.json no longer requires `symfony/http-client`); we
-     * rely on PrestaShop 8.1+ bundling `symfony/symfony` 4.x with the
-     * HttpClient component, which PS's autoloader exposes under the
-     * `Symfony\Component\HttpClient` PSR-4 prefix.
+     * classmap, so this relies on PrestaShop 8.1+ bundling `symfony/symfony`
+     * 4.x with the HttpClient component, which PS's autoloader exposes under
+     * the `Symfony\Component\HttpClient` PSR-4 prefix.
      *
      * Used by:
      *   - {@see getInstance()}                — runtime guard.

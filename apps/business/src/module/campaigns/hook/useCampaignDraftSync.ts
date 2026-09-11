@@ -2,7 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { isDemoMode } from "@/config/auth";
-import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import { campaignConfigQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { queryClient } from "@/module/common/provider/RootProvider";
@@ -17,7 +17,7 @@ export async function draftCampaignLoader({
     // Guard in the loader so redirects fire inside the router lifecycle,
     // not from a queryFn rethrown during render by useSuspenseQuery.
     const campaign = await queryClient.ensureQueryData(
-        campaignQueryOptions({
+        campaignConfigQueryOptions({
             merchantId: params.merchantId,
             campaignId: params.campaignId,
             isDemoMode: isDemoMode(),
@@ -37,7 +37,7 @@ export function useCampaignDraftSync(campaignId: string) {
     const isDemo = useIsDemoMode();
     const merchantId = useActiveMerchantId();
     const { data: campaign } = useSuspenseQuery(
-        campaignQueryOptions({
+        campaignConfigQueryOptions({
             merchantId,
             campaignId,
             isDemoMode: isDemo,

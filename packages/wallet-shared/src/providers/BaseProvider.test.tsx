@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { vi } from "vitest";
 import { describe, expect, test } from "../../tests/vitest-fixtures";
 import { WagmiProviderWithDynamicConfig } from "./BaseProvider";
 

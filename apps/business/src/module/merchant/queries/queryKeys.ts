@@ -1,18 +1,8 @@
 import type { Address } from "viem";
 
-/**
- * Query-key builders for everything under the `merchant` namespace. Colocated
- * so the many hooks that read merchant data and the mutations that invalidate
- * it can never drift on key shape — a mismatch would silently break cache
- * invalidation. Scoped variants prefix the base key, so invalidating a base
- * key still matches every variant derived from it.
- */
+// Scoped variants prefix the base key, so invalidating a base key still
+// matches every variant derived from it.
 
-/**
- * Root merchant key. Every merchant-scoped query prefixes this, so a single
- * `invalidateQueries({ queryKey: merchantQueryKey() })` clears the whole
- * merchant cache tree.
- */
 export function merchantQueryKey() {
     return ["merchant"] as const;
 }

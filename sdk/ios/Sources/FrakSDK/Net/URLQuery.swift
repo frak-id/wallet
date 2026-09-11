@@ -45,7 +45,7 @@ struct URLQuery {
     /// The decoded value at `key`, or nil. Case-folded because channels lowercase query keys in
     /// transit, but an exact match wins, so `?fctx=stale&fCtx=real` resolves to `real`. The value
     /// is percent-decoded because a channel that re-encodes a link turns `-` into `%2D` and the
-    /// base64url payload would then fail to decode. Mirrors `utils/url/queryParams.ts`.
+    /// base64url payload would then fail to decode.
     func value(for key: String) -> String? {
         let match =
             parameters.first { $0.key == key }

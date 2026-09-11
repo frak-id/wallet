@@ -9,9 +9,6 @@ import { useDemoLogin } from "@/module/authentication/hook/useDemoLogin";
 
 export function useLoginDemo(options?: UseMutationOptions<Session>) {
     const { mutateAsync: demoLogin } = useDemoLogin();
-    /**
-     * Mutation used to launch the login demo process
-     */
     const {
         isPending: isLoginInProgress,
         isSuccess,

@@ -2,7 +2,7 @@ import Foundation
 
 // base64url without padding (RFC 4648 §5). Backend never sees padding, so emitting
 // any breaks parsing. Foundation's base64 accepts stray `+`/`/` and silently drops
-// leftover bits at the end; both closed here to match the Kotlin decoder.
+// leftover bits at the end; both closed here.
 enum Base64URL {
     private static let alphabet = Set(
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"

@@ -46,32 +46,11 @@ class Frak_Plugin {
 	}
 
 	/**
-	 * Plugin init callback.
-	 *
-	 * Detects the runtime context up-front so the per-request cost stays
-	 * minimal:
-	 *   - WP-CLI / cron: only the webhook registrar is wired — its
-	 *     option-update hooks keep the WC webhook in sync when
-	 *     `wp option update frak_webhook_secret` or a domain change runs
-	 *     from the CLI, or when cron mutates those options. Frontend SDK
-	 *     injection, admin UI, and block registration are irrelevant.
-	 *   - Admin: settings UI + webhook registrar (the only context that
-	 *     actually mutates `frak_webhook_secret` / `frak_merchant` /
-	 *     `home` / `siteurl` — registering those 6 option-update hooks on
-	 *     every frontend request was dead weight).
-	 *   - Frontend: SDK injection, blocks, shortcodes, widgets, WC tracker.
-	 *
-	 * Blocks and shortcodes are registered here (every non-CLI context —
-	 * admin + frontend) so the block editor iframe and TinyMCE shortcode
-	 * resolution see the same set of insertion surfaces. Widgets register
-	 * their `widgets_init` callback earlier from {@see boot()} to skip the
-	 * `init → widgets_init` dependency chain.
-	 *
-	 * The SDK itself loads on the frontend regardless of theme type — the
-	 * previous `wp_is_block_theme()` gate was a vestige of the now-removed
-	 * floating wallet button and is no longer needed: modern classic themes
-	 * call `wp_footer()` reliably and the SDK is enqueued via the standard
-	 * `wp_enqueue_scripts` pipeline with `strategy: defer`.
+	 * Plugin init callback. Wires each runtime context to only what it needs:
+	 * WP-CLI / cron get the webhook registrar, admin adds the settings UI,
+	 * frontend gets SDK injection and the WC tracker. Blocks and shortcodes
+	 * register in both non-CLI contexts so the block editor iframe and TinyMCE
+	 * resolve against the same set of insertion surfaces.
 	 */
 	public static function init() {
 		$has_wc = class_exists( 'WooCommerce' );

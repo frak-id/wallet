@@ -4,7 +4,7 @@ import type { WalletStatusReturnType } from "../types/rpc/walletStatus";
 import { ensureIdentity } from "./ensureIdentity";
 
 /**
- * Function used to watch the current frak wallet status
+ * Watch the current Frak wallet status
  * @param client - The current Frak Client
  * @param callback - The callback that will receive any wallet status change
  * @returns A promise resolving with the initial wallet status
@@ -24,36 +24,26 @@ export function watchWalletStatus(
     client: FrakClient,
     callback?: (status: WalletStatusReturnType) => void
 ): Promise<WalletStatusReturnType> {
-    // If no callback is provided, just do a request with deferred result
     if (!callback) {
         return client
             .request({ method: "frak_listenToWalletStatus" })
             .then((result) => {
-                // Handle side effects of this request
                 walletStatusSideEffect(client, result);
-
-                // Return the result
                 return result;
             });
     }
 
-    // Otherwise, listen to the wallet status and return the first one received
     const firstResult = new Deferred<WalletStatusReturnType>();
     let hasResolved = false;
 
-    // Start the listening request, and return the first result
     client.listenerRequest(
         {
             method: "frak_listenToWalletStatus",
         },
         (status) => {
-            // Handle side effects of this request
             walletStatusSideEffect(client, status);
-
-            // Transmit the status to the callback
             callback(status);
 
-            // If the promise hasn't resolved yet, resolve it
             if (!hasResolved) {
                 firstResult.resolve(status);
                 hasResolved = true;
@@ -64,10 +54,7 @@ export function watchWalletStatus(
     return firstResult.promise;
 }
 
-/**
- * Helper to save a potential interaction token
- * @param interactionToken
- */
+/** Persist the interaction token and refresh the analytics globals. */
 function walletStatusSideEffect(
     client: FrakClient,
     status: WalletStatusReturnType
@@ -76,7 +63,6 @@ function walletStatusSideEffect(
         return;
     }
 
-    // Update the global properties
     client.openPanel?.setGlobalProperties({
         wallet: status.wallet ?? null,
     });

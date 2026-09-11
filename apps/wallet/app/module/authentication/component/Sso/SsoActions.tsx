@@ -4,8 +4,8 @@ import { WalletIcon } from "@frak-labs/design-system/icons";
 import { authenticationStore, sessionStore } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
-import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
-import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
+import { SsoLogin } from "@/module/authentication/component/Sso/SsoLogin";
+import { SsoRegister } from "@/module/authentication/component/Sso/SsoRegister";
 import { useLoginDemo } from "@/module/authentication/hook/useLoginDemo";
 
 export function SsoActions({
@@ -48,7 +48,7 @@ export function SsoActions({
     if (lastAuthenticator) {
         return (
             <>
-                <SsoLoginComponent
+                <SsoLogin
                     onSuccess={onSuccess}
                     onError={onError}
                     isPrimary={true}
@@ -58,7 +58,7 @@ export function SsoActions({
                         transports: lastAuthenticator.transports,
                     }}
                 />
-                <SsoRegisterComponent
+                <SsoRegister
                     onSuccess={onSuccess}
                     onError={onError}
                     isPrimary={false}
@@ -70,12 +70,12 @@ export function SsoActions({
     // If no previous wallet
     return (
         <>
-            <SsoRegisterComponent
+            <SsoRegister
                 onSuccess={onSuccess}
                 onError={onError}
                 isPrimary={true}
             />
-            <SsoLoginComponent
+            <SsoLogin
                 onSuccess={onSuccess}
                 onError={onError}
                 isPrimary={false}

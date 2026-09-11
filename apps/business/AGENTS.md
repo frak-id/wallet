@@ -1,6 +1,6 @@
 # apps/business — Compass
 
-TanStack Router SPA merchant dashboard. Largest app (415 TS/TSX). Campaigns/members/analytics. Served behind nginx in production.
+TanStack Router SPA merchant dashboard. Largest app. Campaigns/members/analytics. Served behind nginx in production.
 
 ## Quick Commands
 
@@ -14,8 +14,7 @@ bun run test         # business-unit Vitest project
 ## Key Files
 
 - `src/routes/__root.tsx` — root shell · `src/routes/_restricted/` — auth guards for dashboard
-- `src/module/{campaigns,merchant,members,dashboard,forms,login,settings,embedded,common}/` — features
-  - `campaigns/` = 8 hooks · `merchant/` = 23 hooks
+- `src/module/{auth,campaigns,common,dashboard,forms,login,members,merchant,settings}/` — features
 - `src/stores/` — Zustand stores (separate from modules)
 - `nginx.conf` — production SPA fallback; local `preview` differs from prod
 - `vite.config.ts` — `define` block bakes config at build time
@@ -23,7 +22,7 @@ bun run test         # business-unit Vitest project
 ## Non-Obvious Patterns
 
 - **Build-time config only**: `.env` changes need full rebuild — no runtime env reflection.
-- **Individual Zustand selectors are mandatory here**: this app is the most sensitive to re-render storms (345 files, many subscribers).
+- **Individual Zustand selectors are mandatory here**: this app is the most sensitive to re-render storms (many subscribers).
 - **Production = nginx with pre-compressed gzip**: CI generates `.gz` siblings; vite `preview` does not serve them — expect size/cache differences.
 - **Restricted-route pattern**: `_restricted` layout centralises auth; do NOT add guards per-route.
 - **UI**: uses `@frak-labs/design-system` (Vanilla Extract) + `@frak-labs/ui-preview`.
@@ -36,4 +35,4 @@ Runtime env var reads · whole-store Zustand subscription · CSS Modules or plai
 
 ## See Also
 
-Parent `/AGENTS.md` · `services/backend/AGENTS.md` (API contract) · `packages/client/` (Eden Treaty) · `packages/{ui,ui-preview}/`.
+Parent `/AGENTS.md` · `services/backend/AGENTS.md` (API contract) · `packages/client/` (Eden Treaty) · `packages/ui-preview/`.

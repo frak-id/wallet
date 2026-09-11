@@ -57,10 +57,7 @@ export { recordError } from "./recordError";
 export type { Flow } from "./startFlow";
 export { startFlow } from "./startFlow";
 export { trackEvent } from "./trackEvent";
-export type {
-    AnalyticsAuthenticationType,
-    AnalyticsGlobalProperties,
-} from "./types";
+export type { AnalyticsGlobalProperties } from "./types";
 
 /**
  * Normalise an unknown thrown value into an analytics-friendly shape.

@@ -90,21 +90,11 @@ export async function createIframe({
 }
 
 /**
- * Build the listener iframe URL.
- *
- * Exported so every iframe creator (here and `@frak-labs/react-sdk`'s
- * provider) builds the same URL — they drifted before, and a missing
- * `clientId` param silently costs the listener its SDK-seeded identity.
- *
- * Query params:
- *  - `clientId` — anonymous SDK client identifier used for funnel joining.
- *    Omitted entirely when derivation failed; never serialised as
- *    `"undefined"`. The listener then falls back to its persisted store.
- *
- * Hash params (consumed by `apps/listener/app/bootstrap.ts#setupPreloadHints`):
- *  - `preload=modal,sharing` — idle-warms the matching Ring 1 + Ring 2 chunks.
- *    Skipped entirely when no preload hints are provided so the listener
- *    doesn't pay for warm-ups that nobody asked for.
+ * Build the listener iframe URL, shared with `@frak-labs/react-sdk`'s provider
+ * so both emit the same one. A missing `clientId` costs the listener its
+ * SDK-seeded identity, so it is omitted entirely rather than serialised as
+ * `"undefined"`; `preload` rides the hash, read by
+ * `apps/listener/app/bootstrap.ts#setupPreloadHints`.
  */
 export function buildListenerUrl({
     walletUrl = getWalletUrl(),

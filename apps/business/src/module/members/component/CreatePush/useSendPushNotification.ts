@@ -8,13 +8,8 @@ import { deriveScheduledAt } from "./schedule";
 import type { FormCreatePushNotification } from "./types";
 
 /**
- * Route a composed broadcast to the right endpoint and return the Eden result.
- *
- * - new + immediate → `POST /send`
- * - new + scheduled → `POST /schedule`
- * - edit            → `PUT /broadcasts/:id` (updates the scheduled row in
- *   place; a scheduled notification stays scheduled and can't be switched to
- *   immediate delivery, so a delivery time is required)
+ * Route a composed broadcast to the right endpoint. An edit updates the
+ * scheduled row in place: it stays scheduled, so a delivery time is required.
  */
 function submitBroadcast(params: {
     merchantId: string;
@@ -51,12 +46,8 @@ function submitBroadcast(params: {
 }
 
 /**
- * Pull a human-readable message out of an Eden Treaty error.
- *
- * Eden returns `{ value, status }` where `value` is the body returned by
- * the Elysia handler — usually `{ message: string }`, sometimes a plain
- * string (legacy handlers). We walk both shapes before falling back to a
- * generic message so backend errors surface to the user.
+ * Pull a human-readable message out of an Eden Treaty error: `value` holds the
+ * handler body, either `{ message }` or a bare string.
  */
 function extractSendError(error: unknown): string {
     if (typeof error === "string") return error;
@@ -72,13 +63,7 @@ function extractSendError(error: unknown): string {
     return "Failed to send push notification";
 }
 
-/**
- * Publish the composed push notification (see `submitBroadcast` for the
- * endpoint routing).
- *
- * On success the draft is cleared, the history query refreshed and the user
- * returns to the members list.
- */
+/** Publish the composed push notification. */
 export function useSendPushNotification(merchantId: string) {
     const clearForm = pushCreationStore((state) => state.clearForm);
     const navigate = useNavigate();

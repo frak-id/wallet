@@ -30,8 +30,6 @@ import {
 
 /**
  * The component for the login step of a modal
- * @param onClose
- * @constructor
  */
 export function LoginModalStep({
     params,
@@ -88,10 +86,8 @@ export function LoginModalStep({
     }, [lastAuthenticator]);
 
     const { login, isSuccess, isLoading, error } = useLogin({
-        // On success, transmit the wallet address up a level.
-        // webauthnProof is optional in the SDK type; we no longer cache the
-        // raw WebAuthn signature (lastWebAuthnAction was removed in the token
-        // refactor).
+        // `webauthnProof` is optional in the SDK type, and the raw WebAuthn
+        // signature is not cached anywhere, so it is always undefined here.
         onSuccess: (session) => {
             onFinish({ wallet: session.address, webauthnProof: undefined });
         },

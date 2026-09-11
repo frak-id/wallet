@@ -24,16 +24,9 @@ import * as styles from "./index.css";
 
 /**
  * Modal that opens automatically whenever the wallet receives a signature
- * request from a paired device, replacing the legacy "signing toast".
- *
- * Behavior:
- *  - Auto-opens on mount or when a new pending signature arrives.
- *  - Always displays the oldest pending request first.
- *  - When multiple are pending, shows a small "1 / N" counter.
- *  - Sign / reject re-uses the existing wallet-shared mutations.
- *  - Dismissing the modal (Escape, click outside, swipe down) keeps the
- *    requests pending and surfaces a prominent banner across all routes.
- *  - Self-gates on a webauthn session — safe to mount at the route root.
+ * request from a paired device — oldest pending first, "1 / N" when several.
+ * Dismissing it keeps the requests pending and surfaces a banner across all
+ * routes. Self-gates on a webauthn session — safe to mount at the route root.
  */
 export function TargetSignatureModal() {
     const session = useStore(sessionStore, selectWebauthnSession);

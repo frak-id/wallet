@@ -43,7 +43,6 @@
         "@vanilla-extract/css": "catalog:",
         "@vanilla-extract/recipes": "catalog:",
         "clsx": "catalog:",
-        "cmdk": "^1.1.1",
         "countries-list": "^3.4.1",
         "date-fns": "^4.4.0",
         "i18next": "catalog:",

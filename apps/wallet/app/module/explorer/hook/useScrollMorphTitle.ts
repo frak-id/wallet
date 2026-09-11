@@ -2,12 +2,11 @@ import { brand, fontSize } from "@frak-labs/design-system/tokens";
 import { type RefObject, useEffect, useRef } from "react";
 import { useAppShellScroll } from "@/module/common/component/AppShell";
 
-// Typography end-points the scroll progress interpolates between: page title
-// (fontSize 3xl / bold) at rest, toolbar title (fontSize m / semiBold) once
-// collapsed. Derived from the same DS tokens the resting CSS uses so a token
-// change can't desync the two. The size ratio drives a `transform: scale()`
-// instead of writing `font-size` per frame (compositor-only, no reflow/
-// re-rasterization); weight snaps at the midpoint instead of interpolating.
+// Typography end-points the scroll progress interpolates between, derived from
+// the same DS tokens the resting CSS uses so a token change can't desync the
+// two. The size ratio drives a `transform: scale()` instead of writing
+// `font-size` per frame (compositor-only, no reflow); weight snaps at the
+// midpoint instead of interpolating.
 const BIG_FONT_PX = Number.parseInt(fontSize["3xl"], 10);
 const SMALL_FONT_PX = Number.parseInt(fontSize.m, 10);
 const SMALL_SCALE = SMALL_FONT_PX / BIG_FONT_PX;
@@ -26,10 +25,8 @@ type ScrollMorphTitle = {
 /**
  * In-place variant of the iOS large-title collapse: the title is pinned in the
  * toolbar band and only its scale changes, driven from scroll progress by a
- * rAF-throttled listener. Because the title never moves, the per-frame scale
- * change has no position to desync from, so there is no scroll wobble. Styles
- * are written imperatively (and via `transform`, not `font-size`) to avoid a
- * re-render and a layout/paint pass every frame.
+ * rAF-throttled listener. Styles are written imperatively (and via `transform`,
+ * not `font-size`) to avoid a re-render and a layout pass every frame.
  */
 export function useScrollMorphTitle(): ScrollMorphTitle {
     const scrollRef = useAppShellScroll();

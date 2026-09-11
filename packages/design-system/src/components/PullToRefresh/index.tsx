@@ -22,15 +22,9 @@ type PullToRefreshProps = {
 };
 
 /**
- * Pull-to-refresh wrapper for touch devices.
- * On non-touch environments, renders children unchanged with no listeners.
- *
- * Attaches listeners to `scrollContainerRef` so the scroll container
- * (typically <main> in AppShell) is the event target, not window/document.
- *
- * Hot deps (`onRefresh`, `refreshing`) are read through refs inside
- * handlers so the listener-attaching effect does NOT re-run on every
- * refresh cycle or whenever a consumer passes an inline callback.
+ * Listeners go on `scrollContainerRef`, not window/document, so the scroll
+ * container is the event target. Hot deps (`onRefresh`, `refreshing`) are read
+ * through refs inside the handlers so the attaching effect never re-runs.
  */
 export function PullToRefresh({
     onRefresh,
@@ -41,17 +35,8 @@ export function PullToRefresh({
     disabled = false,
     children,
 }: PullToRefreshProps) {
-    // Touch capability is sniffed once at first render and never re-evaluated.
-    // Hybrid devices (e.g. Surface, iPad with trackpad) that toggle between
-    // touch and pointer mid-session will keep whichever mode they advertised
-    // at mount. This is an accepted trade-off: the wallet is mobile-first, the
-    // check is cheap, and re-running it per render would only add complexity
-    // without a real-world signal to react to (no spec event for input-mode
-    // changes). Consumers needing live re-evaluation can remount this component.
-    //
-    // Both checks are required: some Chromium desktop builds expose
-    // `ontouchstart` even without a touchscreen. `maxTouchPoints > 0` confirms
-    // real touch hardware and excludes those false positives.
+    // Sniffed once at mount, so a hybrid device keeps the mode it advertised
+    // then. Both checks are needed: desktop Chromium stubs `ontouchstart`.
     const isTouch =
         typeof window !== "undefined" &&
         "ontouchstart" in window &&

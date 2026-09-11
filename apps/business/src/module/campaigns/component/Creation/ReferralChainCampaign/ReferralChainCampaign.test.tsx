@@ -10,11 +10,8 @@ import { LabeledNumberField } from "./index";
 import type { ReferralChainFormValues } from "./utils";
 
 /**
- * `LabeledNumberField` is the only referral-chain migration with bespoke
- * label/hint wiring: a manual `useId` + standalone `FieldLabel` + hand-written
- * `aria-describedby` (rather than the DS composed `label`/`hint` props). A
- * minimal `useForm` harness (mirroring `BudgetCampaign.test.tsx`) exercises that
- * association contract without the wizard page.
+ * `LabeledNumberField` wires label/hint by hand (`useId` + `FieldLabel` +
+ * `aria-describedby`) instead of the DS composed `label`/`hint` props.
  */
 function Harness() {
     const form = useForm<ReferralChainFormValues>({

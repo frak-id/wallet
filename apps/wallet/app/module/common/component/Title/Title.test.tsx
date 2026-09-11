@@ -30,24 +30,10 @@ describe("Title", () => {
         expect(screen.getByText("Title with icon")).toBeInTheDocument();
     });
 
-    it("should render all size variants", () => {
-        const sizes = ["medium", "big"] as const;
+    it("should render a h1 for the page size", () => {
+        const { container } = render(<Title size="page">Title</Title>);
 
-        sizes.forEach((size) => {
-            const { unmount } = render(<Title size={size}>Title</Title>);
-            expect(screen.getByText("Title")).toBeInTheDocument();
-            unmount();
-        });
-    });
-
-    it("should render all align variants", () => {
-        const aligns = ["left", "center"] as const;
-
-        aligns.forEach((align) => {
-            const { unmount } = render(<Title align={align}>Title</Title>);
-            expect(screen.getByText("Title")).toBeInTheDocument();
-            unmount();
-        });
+        expect(container.querySelector("h1")).toBeInTheDocument();
     });
 
     it("should apply custom className", () => {
@@ -66,19 +52,5 @@ describe("Title", () => {
 
         const textSpan = container.querySelector("span");
         expect(textSpan).toHaveClass("custom-text");
-    });
-
-    it("should default to medium size", () => {
-        const { container } = render(<Title>Title</Title>);
-
-        const title = container.querySelector("h2");
-        expect(title).toBeInTheDocument();
-    });
-
-    it("should default to left align", () => {
-        const { container } = render(<Title>Title</Title>);
-
-        const title = container.querySelector("h2");
-        expect(title).toBeInTheDocument();
     });
 });

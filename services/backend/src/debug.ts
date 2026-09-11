@@ -1,5 +1,7 @@
 import { Elysia } from "elysia";
 
+const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+
 export const debugRoutes = new Elysia({ prefix: "/debug" })
     .get("/memory", async () => {
         const { heapStats } = await import("bun:jsc");
@@ -7,10 +9,10 @@ export const debugRoutes = new Elysia({ prefix: "/debug" })
         const jsc = heapStats();
 
         return {
-            rss: `${(mem.rss / 1024 / 1024).toFixed(1)}MB`,
-            heapUsed: `${(mem.heapUsed / 1024 / 1024).toFixed(1)}MB`,
-            heapTotal: `${(mem.heapTotal / 1024 / 1024).toFixed(1)}MB`,
-            external: `${(mem.external / 1024 / 1024).toFixed(1)}MB`,
+            rss: mb(mem.rss),
+            heapUsed: mb(mem.heapUsed),
+            heapTotal: mb(mem.heapTotal),
+            external: mb(mem.external),
             jsc,
         };
     })
@@ -27,13 +29,13 @@ export const debugRoutes = new Elysia({ prefix: "/debug" })
 
         return {
             before: {
-                rss: `${(memBefore.rss / 1024 / 1024).toFixed(1)}MB`,
-                heapUsed: `${(memBefore.heapUsed / 1024 / 1024).toFixed(1)}MB`,
+                rss: mb(memBefore.rss),
+                heapUsed: mb(memBefore.heapUsed),
                 jsc: before,
             },
             after: {
-                rss: `${(memAfter.rss / 1024 / 1024).toFixed(1)}MB`,
-                heapUsed: `${(memAfter.heapUsed / 1024 / 1024).toFixed(1)}MB`,
+                rss: mb(memAfter.rss),
+                heapUsed: mb(memAfter.heapUsed),
                 jsc: after,
             },
             pinned: after.protectedObjectTypeCounts,

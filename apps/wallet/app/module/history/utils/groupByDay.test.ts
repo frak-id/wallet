@@ -179,27 +179,4 @@ describe("groupByDay", () => {
 
         expect(result.Today).toHaveLength(3);
     });
-
-    test("should handle very old timestamps", () => {
-        const oldTimestamp = Math.floor(
-            new Date("2020-01-01").getTime() / 1000
-        );
-        const items = [{ timestamp: oldTimestamp, id: 1 }];
-
-        const result = groupByDay(items, defaultOptions);
-
-        const keys = Object.keys(result);
-        expect(keys).toHaveLength(1);
-        expect(result[keys[0]]).toHaveLength(1);
-    });
-
-    test("should return record object with string keys", () => {
-        const now = Math.floor(nowMs() / 1000);
-        const items = [{ timestamp: now, id: 1 }];
-
-        const result = groupByDay(items, defaultOptions);
-
-        expect(typeof result).toBe("object");
-        expect(Array.isArray(result)).toBe(false);
-    });
 });

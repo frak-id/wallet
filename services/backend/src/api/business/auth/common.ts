@@ -14,18 +14,9 @@ import {
 } from "../middleware/resolveBusinessAuth";
 
 /**
- * Full SIWE verification (parse + domain validation against the request
- * origin + ERC-1271/6492-aware signature check). Returns the proven address.
- * Shared by login, the `siwe` 2FA method and wallet linking. Thin wrapper
- * over the shared `verifySiweSignature` core (`@backend-utils`) that keeps
- * this call site's original `{ address, nonce } | { error }` return shape
- * and logging.
- */
-/**
- * Client IP for a session mint (§2.12), using the same extraction the rate
- * limiter relies on (trusted proxy headers → Bun socket address). Returns
- * `undefined` (not `null`) so it drops cleanly into the optional
- * `session.create({ ip })` field.
+ * Client IP for a session mint, using the same extraction the rate limiter
+ * relies on (trusted proxy headers → Bun socket address). Returns `undefined`
+ * (not `null`) so it drops cleanly into the optional `session.create({ ip })`.
  */
 export function resolveClientIp(ctx: {
     request: Request;
@@ -41,11 +32,17 @@ export function resolveClientIp(ctx: {
     );
 }
 
+/**
+ * Full SIWE verification (parse + domain validation against the request origin
+ * + ERC-1271/6492-aware signature check), returning the proven address. Wraps
+ * the shared `verifySiweSignature` core with this call site's
+ * `{ address, nonce } | { error }` shape and logging.
+ */
 export async function verifySiweProof(params: {
     message: string;
     signature: Hex;
     origin: string;
-    /** Enforce `issuedAt` freshness (login + wallet link, plan §1.3). */
+    /** Enforce `issuedAt` freshness (login + wallet link). */
     requireFreshness?: boolean;
 }): Promise<
     { address: Address; nonce: string | undefined } | { error: string }

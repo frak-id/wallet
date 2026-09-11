@@ -11,7 +11,7 @@ import {
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import type { SessionTable } from "../schema/sessionTable";
 
-export interface SessionInput {
+export type SessionInput = {
     id: string;
     shop: string;
     state: string;
@@ -20,7 +20,7 @@ export interface SessionInput {
     expires?: Date;
     accessToken?: string;
     onlineAccessInfo?: { associated_user: { id: number } };
-}
+};
 
 /**
  * Convert a session object to a database row for insertion.

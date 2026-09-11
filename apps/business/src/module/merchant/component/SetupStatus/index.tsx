@@ -32,7 +32,7 @@ export function MerchantSetupStatus({ merchantId }: { merchantId: string }) {
                     <Spinner />
                 ) : (
                     <SetupStatusItems
-                        items={data.items ?? []}
+                        items={data.items}
                         hasWarning={data.hasWarning}
                     />
                 )}

@@ -8,19 +8,10 @@ import type { Address } from "viem";
 /**
  * Build a Frak-contextualised sharing link.
  *
- * Centralises the `FrakContextManager.update` + `mergeAttribution` boilerplate
- * that used to be duplicated across every sharing entry point (wallet sharing
- * page, listener sharing page, listener modal, explorer).
- *
- * The V2 context requires `merchantId` and a sharer identifier. Callers should
- * pass `wallet` whenever an authenticated session is available — it's the
- * strongest identity signal (WebAuthn-bound, global across merchants, survives
- * localStorage clears). `clientId` serves as the anonymous fallback; when both
- * are present we embed both for best attribution.
- *
- * Returns `null` when `merchantId` / `baseUrl` are missing, or when neither
- * `clientId` nor `wallet` is available — preserves the caller-side "don't
- * render share UI without a link" contract.
+ * The V2 context needs `merchantId` plus a sharer identifier: `wallet` is the
+ * strongest (WebAuthn-bound, survives localStorage clears), `clientId` the
+ * anonymous fallback, and both are embedded when available. Returns `null`
+ * when `merchantId` / `baseUrl` or every sharer identifier is missing.
  */
 export function buildSharingLink(opts: {
     clientId: string | undefined;

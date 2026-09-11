@@ -2,19 +2,17 @@ import { IS_ANDROID } from "@frak-labs/app-essentials/utils/platform";
 import { recordError } from "@frak-labs/wallet-shared";
 
 /**
- * Initialize safe area insets for Android/Tauri using native plugin
- * Only runs on Android - iOS has native env() support
+ * Initialize safe area insets for Android/Tauri using the native plugin.
+ * Android only — iOS has native `env()` support.
  */
 export async function initSafeAreaInsets() {
     if (typeof window === "undefined") return;
 
-    // Only run on Android - iOS has native env() support
     if (!IS_ANDROID) {
         return;
     }
 
     try {
-        // Dynamic import to avoid loading on non-Tauri environments
         const { getInsets } = await import("tauri-plugin-safe-area-insets");
         const insets = (await getInsets()) as {
             top: number;
@@ -23,7 +21,6 @@ export async function initSafeAreaInsets() {
             right: number;
         };
 
-        // Set CSS variables from native insets
         document.documentElement.style.setProperty(
             "--safe-area-inset-top",
             `${insets.top}px`

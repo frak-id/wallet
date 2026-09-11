@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import * as styles from "./route-error.css";
 
-type ErrorBoundaryProps = {
+type ErrorPanelProps = {
     error: unknown;
     reset?: () => void;
     title?: string;
@@ -17,7 +17,7 @@ type ErrorBoundaryProps = {
     fallbackAction?: ReactNode;
 };
 
-function ErrorBoundary({
+function ErrorPanel({
     error,
     reset,
     title,
@@ -25,7 +25,7 @@ function ErrorBoundary({
     showRetry = true,
     showTechnicalDetails = false,
     fallbackAction,
-}: ErrorBoundaryProps) {
+}: ErrorPanelProps) {
     const { t } = useTranslation();
     const resolvedTitle = title ?? t("errors.generic.title");
     // A throw site can raise any value, so `error` is `unknown`; only a real
@@ -117,7 +117,7 @@ export function RouteError({
 }) {
     const { t } = useTranslation();
     return (
-        <ErrorBoundary
+        <ErrorPanel
             error={error}
             reset={reset}
             title={title}

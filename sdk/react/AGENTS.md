@@ -1,20 +1,25 @@
 # sdk/react — Compass
 
-React bindings for `@frak-labs/core-sdk`. NPM only (no CDN). 10 public hooks, 2 providers. Peer deps: React 18+, TanStack Query 5+, Viem 2+.
+React bindings for `@frak-labs/core-sdk`. NPM only (no CDN). Peer deps: React 18+, TanStack Query 5+, Viem 2+.
 
 ## Key Files
-- `src/hook/` — `useFrakClient`, `useFrakConfig`, `useWalletStatus`, `useDisplayModal`, `useSiweAuthenticate`, `useOpenSso`, `usePrepareSso`, `useSendTransactionAction`, `useGetMerchantInformation`, `useReferralInteraction`
+- `src/hook/` — one hook per core action; `src/hook/index.ts` is the list
 - `src/provider/` — `FrakConfigProvider` (REQUIRED at app root), `FrakIFrameClientProvider`
 - `src/index.ts` — barrel
 
 ## Hook Pattern
+Query hooks take a `{ query }` bag, mutation hooks a `{ mutations }` one, and
+both throw `ClientNotFound` rather than running without a client:
 ```ts
-export function useWalletStatus(options?: UseQueryOptions) {
+export function useGetMerchantInformation({ query }: UseGetMerchantInformationParams = {}) {
   const client = useFrakClient();
   return useQuery({
-    queryKey: ["walletStatus"],
-    queryFn: () => watchWalletStatus(client),
-    ...options,
+    ...query,
+    queryKey: ["frak-sdk", "get-merchant-information"],
+    queryFn: async () => {
+      if (!client) throw new ClientNotFound();
+      return getMerchantInformation(client);
+    },
   });
 }
 ```
@@ -24,7 +29,7 @@ export function useWalletStatus(options?: UseQueryOptions) {
 - **All hooks wrap core-sdk actions** — never re-implement logic here; delegate to `sdk/core`.
 - **TanStack Query v5 API only** — do not mix with v4 patterns (`isLoading` vs `isPending`, etc.).
 - **No CDN**: do not add IIFE/globalName config.
-- **Test via `renderHook`** with `@frak-labs/test-foundation` `queryWrapper` fixture; mocks live there.
+- **Test via `renderHook`** with the `queryWrapper` / `mockFrakProviders` fixtures from `tests/vitest-fixtures.ts` (which extends `@frak-labs/wallet-shared`'s).
 
 ## See Also
 Parent `sdk/AGENTS.md` · `sdk/core/AGENTS.md` (underlying actions) · `packages/test-foundation/AGENTS.md`.

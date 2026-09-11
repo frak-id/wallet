@@ -161,21 +161,11 @@ resolves a merchant that already allows it.
 
 ## Layout
 
-```
-tests/
-├── fixtures.ts              # Playwright fixtures (pages, helpers, api)
-├── global.setup.ts          # on-device setup → ON_DEVICE_STORAGE_STATE
-├── global-paired.setup.ts   # pairing setup → PAIRED_STORAGE_STATE
-├── api/                     # backend.api (route/WS mocks, mockLoginSuccess), rpc.api, analytics.api
-├── helpers/                 # mockedWebauthn, webauthn (virtual), sdk, pairingTab, clipboard, storage, stack
-│   └── webauthn/            # hand-rolled attestation/assertion (signature.ts) + types
-├── pages/                   # auth, home, history, settings, pairing, modal page objects
-└── specs/
-    ├── authentication/      # on-device-login/register, pairing-desktop
-    ├── home/ history/ settings/
-    ├── sdk/                 # modal-*-fresh
-    └── sharing/             # referral chain across two contexts
-```
+`fixtures.ts` wires the page objects, helpers and API mocks into the Playwright
+fixture bag; `global.setup.ts` / `global-paired.setup.ts` produce the two storage
+states the projects above consume. Everything else is `ls`: `api/`, `helpers/`
+(with the hand-rolled WebAuthn attestation/assertion under `helpers/webauthn/`),
+`pages/` and `specs/`.
 
 ## Gotchas (learned the hard way)
 

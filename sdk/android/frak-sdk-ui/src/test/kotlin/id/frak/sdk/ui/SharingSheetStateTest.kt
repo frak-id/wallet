@@ -397,8 +397,8 @@ class SharingSheetStateTest {
             shadowOf(getMainLooper()).idle()
 
             // Deliberately no page action. `ready` rides two requestAnimationFrames, and a WebView
-            // produces no frames until the sheet has attached it and drawn it — so on a cold start
-            // this is the path that used to raise the chooser over a page that was already there.
+            // produces no frames until the sheet has attached it and drawn it — the cold-start path
+            // where the chooser can be raised over a page that is already there.
             advanceTimeBy(SHEET_LOAD_DEADLINE_MILLIS * 2)
             advanceUntilIdle()
 

@@ -1,8 +1,3 @@
-/**
- * Tests for usePrepareSso hook
- * Tests TanStack Query wrapper for preparing SSO URLs
- */
-
 import { vi } from "vitest";
 
 vi.mock("@frak-labs/core-sdk/actions");

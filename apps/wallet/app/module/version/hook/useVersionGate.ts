@@ -37,8 +37,8 @@ const minVersionQueryOptions = {
         const { data, error } =
             await authenticatedBackendApi.common.version.get();
         // Propagate Eden errors so TanStack Query keeps its retry/backoff
-        // semantics; previous `return null` masked failures and silently
-        // disabled the hard-update floor until the next stale window.
+        // semantics — a swallowed failure silently disables the hard-update
+        // floor until the next stale window.
         if (error) throw error;
         if (!data) throw new Error("Missing version response from backend");
         return data.minVersion;

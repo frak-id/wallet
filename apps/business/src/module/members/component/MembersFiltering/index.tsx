@@ -7,12 +7,8 @@ import { Button } from "@/module/common/component/Button";
 import { Form } from "@/module/forms/Form";
 import type { GetMembersParam } from "@/module/members/api/getMerchantMembers";
 import { InteractionsFiltering } from "@/module/members/component/MembersFiltering/InteractionsFiltering";
-import { MembershipDateFiltering } from "@/module/members/component/MembersFiltering/MembershipDateFiltering";
 import { membersStore } from "@/stores/membersStore";
 
-/**
- * Filter for the members fetching process
- */
 export type FormMembersFiltering = GetMembersParam["filter"] & {};
 
 /**
@@ -22,25 +18,16 @@ export type FormMembersFiltering = GetMembersParam["filter"] & {};
  * not editable here: members are always scoped to the merchant in the URL
  * (the header switcher is the source of truth for cross-merchant moves).
  */
-/**
- * Which filter fields to render. `"all"` (default) keeps both — used by the
- * push-creation audience panel. The members table's "Filters" popover renders
- * only `"interactions"`; its date range lives in a separate range picker.
- */
-export type MembersFilteringSection = "all" | "interactions";
-
 export function MembersFiltering({
     onFilterSet,
     initialValue,
     disabled,
     showResetButton,
-    section = "all",
 }: {
     onFilterSet: (filter: FormMembersFiltering) => void;
     initialValue?: FormMembersFiltering;
     disabled?: boolean;
     showResetButton?: boolean;
-    section?: MembersFilteringSection;
 }) {
     const { t } = useTranslation();
     const setFiltersDirtyCount = membersStore(
@@ -53,12 +40,8 @@ export function MembersFiltering({
     });
 
     function resetForm() {
-        // Only clear the slice this section owns; preserve the other so the
-        // interactions popover doesn't wipe a date range set elsewhere.
+        // Preserve the date range, which the separate range picker owns.
         const cleared: FormMembersFiltering = { ...initialValue };
-        if (section === "all") {
-            cleared.firstInteractionTimestamp = undefined;
-        }
         cleared.interactions = undefined;
         form.reset(cleared);
         onFilterSet(cleared);
@@ -71,11 +54,6 @@ export function MembersFiltering({
 
             // Always preserve the merchant scope set by the route loader.
             data.merchantIds = initialValue?.merchantIds;
-
-            // Fix firstInteractionTimestamp if no filter provided
-            data.firstInteractionTimestamp = fixFirstInteractionTimestamp(
-                data.firstInteractionTimestamp
-            );
 
             onFilterSet(data);
         },
@@ -90,9 +68,6 @@ export function MembersFiltering({
     return (
         <Form {...form}>
             <Stack space="m">
-                {section === "all" && (
-                    <MembershipDateFiltering {...commonProps} />
-                )}
                 <InteractionsFiltering {...commonProps} />
 
                 {showResetButton && (
@@ -111,10 +86,6 @@ export function MembersFiltering({
     );
 }
 
-/**
- * Fix interactions min and max values
- * @param interactions
- */
 const fixInteractions = (
     interactions: FormMembersFiltering["interactions"]
 ) => {
@@ -122,17 +93,4 @@ const fixInteractions = (
         return undefined;
     }
     return interactions;
-};
-
-/**
- * Fix firstInteractionTimestamp min and max values
- * @param firstInteractionTimestamp
- */
-const fixFirstInteractionTimestamp = (
-    firstInteractionTimestamp: FormMembersFiltering["firstInteractionTimestamp"]
-) => {
-    if (!(firstInteractionTimestamp?.min || firstInteractionTimestamp?.max)) {
-        return undefined;
-    }
-    return firstInteractionTimestamp;
 };

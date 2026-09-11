@@ -6,14 +6,12 @@ import { MergeError } from "../errors";
 import { buildAssetMigrationCalls } from "../utils/buildAssetMigrationCalls";
 import { buildMergeBundlerClient } from "../utils/buildMergeBundlerClient";
 import { gatePairing, type MergeTransport } from "../utils/transport";
-import { looserAssetSummaryQueryOpt } from "./useLoserAssetSummary";
+import { loserAssetSummaryQueryOptions } from "./useLoserAssetSummary";
 
 /**
- * Bound on every receipt wait inside this hook. Receipts that take
- * longer than this fall through to the state-recheck recovery path
- * below — the userOp may have landed without us observing the receipt
- * (bundler indexing lag, RPC hiccup), so we re-read the loser summary
- * before failing.
+ * Bound on every receipt wait here: a timeout falls through to the
+ * state-recheck recovery path, since the userOp may have landed without us
+ * observing the receipt.
  */
 const RECEIPT_WAIT_TIMEOUT_MS = 20_000;
 
@@ -33,38 +31,15 @@ export type MigrateLoserAssetsResult = {
 };
 
 /**
- * `{ transport: "local" }` for the same-device merge and for the
- * cross-device case where the LOSER passkey lives on this device.
- * `{ transport: "paired", ensurePairing }` for the cross-device case
- * where the loser passkey lives on the peer (signing routes through
- * the merge's already-open origin pairing).
+ * `{ transport: "local" }` when the LOSER passkey lives on this device,
+ * `{ transport: "paired", ensurePairing }` when it lives on the peer.
  */
 type UseMigrateLoserAssetsArgs = MergeTransport;
 
 /**
- * Mutation that moves the loser's transferable assets to the winner just
- * before settle.
- *
- * Re-reads the summary on entry — the cached preview value is by then
- * potentially stale (consent/sign biometric prompts gave network time to
- * drift) — then builds and submits a single batched UserOp from the loser
- * smart account. The kernel `executeBatch` runs every call atomically:
- * either every claim + transfer lands, or the whole batch reverts and we
- * surface a retryable error. We wait ≥8 confirmations on the receipt to
- * match the threshold the settle path enforces on the addPassKey hash.
- *
- * Empty summaries short-circuit to a `{ txHash: undefined, entriesMigrated: 0 }`
- * success so the migrate step can auto-advance to settle without rendering
- * a CTA.
- *
- * Idempotency: a successful run drains the loser of stablecoins and
- * claimables, so a subsequent invocation reads an empty summary and
- * no-ops. This is also our recovery path if the user backs out and
- * re-enters the merge flow — the on-chain `addPassKey` is already
- * idempotent, and migrate auto-skips when nothing remains. A revert
- * (stale claimable, RPC race, etc.) surfaces as a retryable error; the
- * user-triggered retry re-reads the summary so the rebuilt UserOp matches
- * fresh chain state.
+ * Moves the loser's transferable assets to the winner just before settle, as
+ * one atomic batched UserOp. Idempotent: a successful run empties the summary,
+ * so a re-entry (or a retry after a revert) reads it and no-ops.
  */
 export function useMigrateLoserAssets(args: UseMigrateLoserAssetsArgs) {
     return useMutation<MigrateLoserAssetsResult, Error, MigrateLoserAssetsArgs>(
@@ -75,14 +50,11 @@ export function useMigrateLoserAssets(args: UseMigrateLoserAssetsArgs) {
                 { loser, winner, loserAuthenticatorId, loserPublicKey },
                 { client: queryClient }
             ) => {
-                // Re-read the loser summary fresh, bypassing cache. Used
-                // both for the idempotent entry short-circuit and for
-                // the post-wait recovery path — a successful drain
-                // empties the summary, so a stale-cache result would
-                // mask the recovered-success case.
+                // Bypasses the cache: a stale summary would mask both the
+                // entry short-circuit and the recovered-success case.
                 const refreshSummary = () =>
                     queryClient.fetchQuery(
-                        looserAssetSummaryQueryOpt({ loser })
+                        loserAssetSummaryQueryOptions({ loser })
                     );
 
                 const summary = await refreshSummary();
@@ -107,13 +79,9 @@ export function useMigrateLoserAssets(args: UseMigrateLoserAssetsArgs) {
 
                 const userOpHash = await client.sendUserOperation({ calls });
 
-                // Wait for the userOp + L2 confirmations. Any failure —
-                // timeout, network blip, bundler indexing lag, or a
-                // real revert — falls through to the catch where we
-                // re-read the loser summary. If the drain landed the
-                // summary is empty and we resolve as a recovered
-                // success; otherwise we propagate the original error
-                // so the migrate step's retry UI shows up.
+                // Any failure falls through to the catch, which re-reads the
+                // summary: an empty one means the drain landed anyway and we
+                // resolve as a recovered success.
                 try {
                     const userOpReceipt =
                         await client.waitForUserOperationReceipt({

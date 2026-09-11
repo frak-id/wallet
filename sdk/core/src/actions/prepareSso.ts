@@ -5,13 +5,8 @@ import type {
 } from "../types";
 
 /**
- * Generate SSO URL without opening popup
- *
- * This is a **synchronous**, client-side function that generates the SSO URL
- * without any RPC calls to the wallet iframe. Use this when you need:
- * - Custom URL modifications before opening popup
- * - Pre-generation for advanced popup strategies
- * - URL inspection/logging before SSO flow
+ * Ask the wallet iframe for an SSO URL without opening the popup, so the
+ * caller can inspect or extend it before opening it itself.
  *
  * @param client - The current Frak Client
  * @param args - The SSO parameters
@@ -19,16 +14,14 @@ import type {
  *
  * @example
  * ```ts
- * // Generate URL for inspection
- * const { ssoUrl } = prepareSso(client, {
+ * const { ssoUrl } = await prepareSso(client, {
  *   metadata: { logoUrl: "..." },
  *   directExit: true
  * });
- * console.log("Opening SSO:", ssoUrl);
- *
- * // Add custom params
- * const customUrl = `${ssoUrl}&tracking=abc123`;
- * await openSso(client, { metadata, ssoPopupUrl: customUrl });
+ * await openSso(client, {
+ *   metadata: { logoUrl: "..." },
+ *   ssoPopupUrl: `${ssoUrl}&tracking=abc123`,
+ * });
  * ```
  *
  * @remarks

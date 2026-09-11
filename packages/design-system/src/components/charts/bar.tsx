@@ -348,7 +348,6 @@ export function Bar(props: BarProps) {
     const { barScale, bandWidth, barXAccessor } = useChartStable();
 
     if (!(barScale && bandWidth && barXAccessor)) {
-        console.warn("Bar component must be used within a BarChart");
         return null;
     }
 

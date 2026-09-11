@@ -15,16 +15,6 @@ describe("Inline", () => {
         expect(x.parentElement?.tagName).toBe("DIV");
     });
 
-    it("should apply sprinkle classes for flex wrap", () => {
-        render(
-            <Inline space="s">
-                <span>item</span>
-            </Inline>
-        );
-        const el = screen.getByText("item").parentElement;
-        expect(el?.className).toBeTruthy();
-    });
-
     it("should change rendered element when as prop provided", () => {
         render(
             <Inline space="s" as="nav">

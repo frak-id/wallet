@@ -26,8 +26,6 @@ export function NavigationCampaignsSwitcher({
     const isMobile = useResponsiveValue({ mobile: true, tablet: false });
     const merchantId = useOptionalActiveMerchantId();
 
-    // TODO: remove the legacy fallback once all entry points land users
-    // inside a `/m/$merchantId/...` route.
     const listUrl = merchantId
         ? `/m/${merchantId}/campaigns/list`
         : "/campaigns/list";

@@ -17,8 +17,8 @@ const DEFAULT_ROOTS = [
     "sdk/android/frak-sdk-ui/src",
     "sdk/ios/Sources",
     "sdk/ios/Tests",
-    // The manifests, not just the sources: `Package.swift` is a Swift file that sits one
-    // directory above `Sources` and was outside every root this list used to name.
+    // `Package.swift` is a Swift file sitting one directory above `Sources`, so each
+    // manifest has to be named on its own.
     "sdk/ios/Package.swift",
     "example/native-android/app/src",
     "example/native-ios/Sources",
@@ -309,5 +309,5 @@ console.log(
         .map(([r, n]) => `${r}=${n}`)
         .join(", ")}`
 );
-console.log("Budget lives in AGENTS.md → 'Comments were cut back on purpose'.");
+console.log("Budget lives in AGENTS.md → 'Comments are on a budget'.");
 process.exit(1);

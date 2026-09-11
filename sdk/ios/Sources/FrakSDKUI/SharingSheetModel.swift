@@ -108,8 +108,8 @@
         private var sessionActivated = false
         /// The page's buttons that are mid-round-trip. The footer stays enabled throughout, so
         /// without this a second tap stacks a second chooser, bills a second reward-bearing
-        /// interaction, or races two install pages on the one shared web view. A set, matching
-        /// Android's `SharingSheetState.claimed`, so `shareAgain` reopens them all at once.
+        /// interaction, or races two install pages on the one shared web view. A set, so
+        /// `shareAgain` reopens them all at once.
         private var claimed: Set<SharingPageAction.Kind> = []
         /// On the wallet's install page rather than the sharing page, so `onPageUnavailable` can
         /// tell a failed install page apart from a failed sharing page.
@@ -504,10 +504,9 @@
         private func navigateNow(_ webView: SharingWebView, _ navigation: SharingNavigation) {
             webView.navigate(navigation)
             // Only a finished document can be activated, so tap-to-content is already met.
-            // Only the first activation off the warm document is watched. The page emits `ready`
-            // from an effect keyed on `warm`/`sid` (`useHostBridge.ts`), so a later same-session
-            // activation — a confirmation, a `shareAgain` — re-runs nothing and would strand a
-            // watchdog nobody can clear.
+            // Only the first activation off the warm document is watched: the page emits `ready`
+            // from an effect keyed on `warm`/`sid`, so a later same-session activation re-runs
+            // nothing and would strand a watchdog nobody can clear.
             if case .activate = navigation {
                 let watch = sharingShouldWatchActivation(
                     sessionActivated: sessionActivated,
@@ -625,7 +624,6 @@
                 config = try await resolveConfig()
             } catch is FrakError {
                 return SharingSession(
-                    walletOrigin: walletOrigin,
                     returnScheme: returnScheme,
                     link: link,
                     shareTitle: fallback.title,
@@ -644,7 +642,6 @@
             trace.mark("  reward seeded")
 
             return SharingSession(
-                walletOrigin: walletOrigin,
                 returnScheme: returnScheme,
                 link: link,
                 // Only read if the page never loads; otherwise the page reports its own copy.

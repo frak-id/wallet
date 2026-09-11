@@ -12,7 +12,7 @@ import type {
 } from "../schemas";
 
 type MerchantInsert = typeof merchantsTable.$inferInsert;
-type MerchantSelect = typeof merchantsTable.$inferSelect;
+export type MerchantSelect = typeof merchantsTable.$inferSelect;
 
 export class MerchantRepository {
     private readonly domainCache = new LRUCache<

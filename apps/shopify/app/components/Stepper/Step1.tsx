@@ -9,9 +9,8 @@ import { useFetcher } from "react-router";
 import { CollapsibleStep } from "./CollapsibleStep";
 
 /**
- * §4.12 inline embedded mint — one POST to `/api/register`, no wallet, no
- * popup, no polling. Replaces the old Frak-wallet-login + popup + setup-code
- * + popup-close-polling chain (design doc §4.12).
+ * Inline embedded merchant registration — one POST to `/api/register`, no
+ * wallet, no popup, no polling.
  */
 export function Step1({
     onboardingData,
@@ -27,9 +26,7 @@ export function Step1({
     const isConnected = !!merchantId;
     const isSubmitting = fetcher.state !== "idle";
 
-    // Once the register call resolves with a merchantId, refresh loader data
-    // once so the step flips to "connected" — replaces the old popup-close
-    // polling loop.
+    // Refresh loader data once, so the step flips to "connected".
     const hasRefreshedRef = useRef(false);
     useEffect(() => {
         if (fetcher.data?.merchantId && !hasRefreshedRef.current) {

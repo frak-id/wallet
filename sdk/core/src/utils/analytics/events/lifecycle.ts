@@ -1,8 +1,4 @@
-export type SdkHandshakeFailureReason =
-    | "timeout"
-    | "origin"
-    | "asset_push"
-    | "unknown";
+export type SdkHandshakeFailureReason = "timeout" | "asset_push" | "unknown";
 
 export type SdkLifecycleEventMap = {
     sdk_initialized: {

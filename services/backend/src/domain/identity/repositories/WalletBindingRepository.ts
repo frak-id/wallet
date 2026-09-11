@@ -157,19 +157,11 @@ export class WalletBindingRepository {
     }
 
     /**
-     * Seed the initial binding for a credential on the given chain. Used by
-     * register (current-chain only) and by the lazy back-fill path on login.
-     *
-     * Idempotent via `ON CONFLICT DO NOTHING` on the partial unique
-     * `(authenticator_id, chain_id) WHERE unlinked_at IS NULL`. Safe to retry
-     * against a fresh credential or after a confirmed-empty
-     * `getActiveBinding` result.
-     *
-     * Does NOT detect divergence — if the credential's active binding was
-     * previously repointed (e.g. via a merge), the conflict-skip silently
-     * leaves the merged binding in place even when the caller passes a
-     * different `smartWalletAddress`. Callers must therefore only invoke
-     * this during register or against a confirmed-empty binding.
+     * Seed the initial binding for a credential on the given chain (register,
+     * and the lazy back-fill on login). Idempotent via `ON CONFLICT DO NOTHING`
+     * on the partial unique index, but it does NOT detect divergence: when the
+     * active binding was repointed by a merge, the conflict-skip silently keeps
+     * it. Only call during register or against a confirmed-empty binding.
      */
     async seedInitialBinding({
         credentialId,
@@ -227,32 +219,11 @@ export class WalletBindingRepository {
     }
 
     /**
-     * Unlink the current active binding for `(credentialId, chainId)` and
-     * insert a new active row pointing at `toSmartWalletAddress`. Used by
-     * the wallet-merge orchestrator.
-     *
-     * Idempotent: if the active row already points at `toSmartWalletAddress`,
-     * the call short-circuits and returns the existing row unchanged. This
-     * makes settle() retries safe — a client replaying the same request after
-     * a successful merge sees a no-op here instead of churning the history
-     * table with redundant `merged` rows.
-     *
-     * Concurrency: a `SELECT ... FOR UPDATE` row lock serialises concurrent
-     * repoints for the same (credentialId, chainId). The second caller waits
-     * for the first to commit, then reads the now-merged row and exits via
-     * the idempotency check above.
-     *
-     * Runs inside the caller's transaction when `tx` is provided so the
-     * binding repoint commits atomically with the identity-graph merge ops.
-     * When called without `tx`, opens its own short-lived transaction.
-     *
-     * Cache invalidation fires unconditionally at the end of this method
-     * — see `invalidateBinding` below. When `tx` is provided we accept a
-     * bounded race window (cache reads during the outer in-flight
-     * transaction may repopulate from pre-commit state). The 60s TTL caps
-     * the staleness; chasing proper post-commit eviction would require a
-     * deferred-hook abstraction Drizzle doesn't provide and isn't worth
-     * the extra plumbing for the actual merge flow's read pattern.
+     * Unlink the active binding for `(credentialId, chainId)` and insert a new
+     * active row for `toSmartWalletAddress`. Idempotent: an active row already
+     * pointing there short-circuits, so merge retries never churn the history
+     * table. A `SELECT ... FOR UPDATE` serialises concurrent repoints. Runs in
+     * the caller's `tx` when given, otherwise opens its own transaction.
      */
     async repointBinding({
         credentialId,
@@ -326,12 +297,9 @@ export class WalletBindingRepository {
         };
 
         const fresh = tx ? await run(tx) : await db.transaction(run);
-        // Cache eviction inside the caller's transaction window leaves a
-        // narrow race where a concurrent reader could repopulate the cache
-        // from pre-commit state. The 60s TTL bounds that staleness; chasing
-        // proper post-commit eviction would either require a deferred hook
-        // (Drizzle has none) or push the responsibility onto every caller.
-        // Accepting the bounded race is the simpler tradeoff.
+        // Evicting inside the caller's transaction window leaves a narrow race
+        // where a concurrent reader repopulates the cache from pre-commit
+        // state; the 60s TTL bounds that staleness.
         this.invalidateBinding(credentialId, chainId);
         return fresh;
     }

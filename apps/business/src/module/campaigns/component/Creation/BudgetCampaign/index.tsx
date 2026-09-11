@@ -119,8 +119,6 @@ function budgetValuesToDraft(
     };
 }
 
-/* ------------------------------------------------------------------ */
-
 function BudgetPeriodField({
     control,
 }: {

@@ -1,4 +1,3 @@
-import CoreGraphics
 import Foundation
 import FrakSDK
 
@@ -224,7 +223,6 @@ struct IPv4Address {
 /// `link` is built locally and works offline; `pageURL` needs the network and can legitimately
 /// be absent while `link` is not — that's what the native-share fallback fires from.
 struct SharingSession: Equatable {
-    let walletOrigin: String
     let returnScheme: String
     let link: String
     /// The copy used when no page reports its own: either there was never a page, or one
@@ -239,7 +237,6 @@ struct SharingSession: Equatable {
     private let activationFragment: String?
 
     init(
-        walletOrigin: String,
         returnScheme: String,
         link: String,
         shareTitle: String?,
@@ -249,7 +246,6 @@ struct SharingSession: Equatable {
         warmBaseURL: String? = nil,
         activationFragment: String? = nil
     ) {
-        self.walletOrigin = walletOrigin
         self.returnScheme = returnScheme
         self.link = link
         self.shareTitle = shareTitle
@@ -382,8 +378,8 @@ enum SharingExternalRoute: Equatable {
 
 /// Classifies an outbound link from the sharing/install page.
 func sharingExternalRoute(_ url: URL) -> SharingExternalRoute {
-    // Case-insensitive, like Android's `normalizeScheme()`: `URL` keeps whatever case the page
-    // wrote, and an exact compare would silently drop a legitimate `HTTPS:` link.
+    // Case-insensitive: `URL` keeps whatever case the page wrote, and an exact compare would
+    // silently drop a legitimate `HTTPS:` link.
     let scheme = url.scheme?.lowercased()
     guard scheme == "https" || scheme == "http" else { return .ignore }
     return isAppStoreListing(url) ? .walletStoreListing : .openURL(url)
@@ -471,7 +467,7 @@ private func tier3Defaults(for lang: FrakLanguage) -> Tier3ShareData {
 /// Deliberately the FIRST product, not the page's carousel selection: the selection lives in
 /// the page, and tier 3 exists for sessions where that page never painted or died — reading
 /// it back would need the page streaming selection changes to the host, a wire-contract
-/// addition for a copy-only corner. Mirrors the Android twin.
+/// addition for a copy-only corner.
 func tier3ShareData(
     request: SharingRequest,
     productName: String?,
@@ -538,8 +534,9 @@ func sharingPageProductsJSON(_ products: [SharingProduct]) -> String? {
 
 /// A `Double` that `JSONSerialization` will print the way `JSON.stringify` does.
 ///
-/// Passed straight through it prints at full binary precision (`79.9` becomes `79.900000000000006`), which fails
-/// an `eq` product-scope comparison that Android wins. Nil for NaN/Infinity, which have no JSON literal.
+/// Passed straight through it prints at full binary precision (`79.9` becomes
+/// `79.900000000000006`), which fails an `eq` product-scope comparison. Nil for NaN/Infinity,
+/// which have no JSON literal.
 private func sharingPageJSONNumber(_ value: Double) -> NSDecimalNumber? {
     guard value.isFinite else { return nil }
     // `-0.0` would leave as "-0"; `JSON.stringify(-0)` writes "0".
@@ -570,27 +567,4 @@ func sharingBuildIsWorthRetrying(_ error: FrakError) -> Bool {
     default:
         return false
     }
-}
-
-/// Tunable defaults for `FrakSharingConfiguration`. `heightFraction` is mirrored on the other
-/// platform; keep both in step. `install` is iOS-only.
-public enum FrakSharingDefaults {
-    public static let heightFraction: CGFloat = 0.85
-
-    /// The store page, not the overlay: it reports whether it drew, it can be styled through a
-    /// custom product page, and it hands the sheet back when the user closes it.
-    public static let install: FrakInstallPresentation = .storeProductPage
-
-    /// Follows the opt-in `isFrakAppInstalled()` already requires; see `FrakSharingConfiguration`.
-    public static let detectInstall = true
-}
-
-/// The range a caller-supplied `heightFraction` is clamped into.
-let sharingHeightFractionRange: ClosedRange<CGFloat> = 0.3...1.0
-
-/// Clamps a merchant-supplied `heightFraction` into `sharingHeightFractionRange`. A non-finite
-/// input answers the default, since `min`/`max` treat NaN as out of range without signalling.
-func clampedSharingHeightFraction(_ fraction: CGFloat) -> CGFloat {
-    guard fraction.isFinite else { return FrakSharingDefaults.heightFraction }
-    return min(max(fraction, sharingHeightFractionRange.lowerBound), sharingHeightFractionRange.upperBound)
 }

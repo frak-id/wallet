@@ -12,10 +12,6 @@ import {
  * so we test the transformation logic independently.
  */
 
-/* ------------------------------------------------------------------ */
-/*  sessionToRow — mapping Session fields to DB row                    */
-/* ------------------------------------------------------------------ */
-
 describe("sessionToRow", () => {
     it("maps all fields correctly", () => {
         const session: SessionInput = {
@@ -66,10 +62,6 @@ describe("sessionToRow", () => {
         expect(row.accessToken).toBeUndefined();
     });
 });
-
-/* ------------------------------------------------------------------ */
-/*  rowToSession — mapping DB row back to Session params               */
-/* ------------------------------------------------------------------ */
 
 describe("rowToSessionParams", () => {
     it("maps all fields from row", () => {
@@ -154,10 +146,6 @@ describe("rowToSessionParams", () => {
         expect(params).not.toHaveProperty("onlineAccessInfo");
     });
 });
-
-/* ------------------------------------------------------------------ */
-/*  Round-trip consistency                                              */
-/* ------------------------------------------------------------------ */
 
 describe("round-trip session<->row", () => {
     it("preserves core fields through conversion cycle", () => {

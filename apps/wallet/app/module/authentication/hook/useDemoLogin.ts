@@ -9,7 +9,7 @@ import {
     startFlow,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
-import { type Address, type Hex, stringToHex } from "viem";
+import { type Hex, stringToHex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 type DemoLoginArgs = {
@@ -44,7 +44,7 @@ export function useDemoLogin() {
                 await authenticatedWalletApi.auth.ecdsaLogin.post({
                     expectedChallenge: challenge,
                     signature,
-                    wallet: account.address as Address,
+                    wallet: account.address,
                     demoPkey: pkey,
                     merchantId: merchantId || undefined,
                 });

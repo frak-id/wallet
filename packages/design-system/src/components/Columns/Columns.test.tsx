@@ -20,20 +20,6 @@ describe("Columns", () => {
         expect(left.closest("div")).toBeInTheDocument();
     });
 
-    it("should apply sprinkle classes on Columns container", () => {
-        render(
-            <Columns space="m">
-                <Column>
-                    <span>content</span>
-                </Column>
-            </Columns>
-        );
-        const content = screen.getByText("content");
-        // Navigate up to find the columns container
-        const columnsEl = content.closest("div")?.parentElement;
-        expect(columnsEl?.className).toBeTruthy();
-    });
-
     it("should render Column with content width (natural width via flexShrink)", () => {
         render(
             <Columns space="s">
@@ -63,18 +49,5 @@ describe("Columns", () => {
         const half = screen.getByText("half");
         // Column with width="1/2" grows as one gap-aware share (basis 0)
         expect(half.parentElement?.style.flex).toBe("1 1 0%");
-    });
-
-    it("should render Column without width as flexGrow fill", () => {
-        render(
-            <Columns space="s">
-                <Column>
-                    <span>fill</span>
-                </Column>
-            </Columns>
-        );
-        const fill = screen.getByText("fill");
-        // The column element gets a sprinkle class (for flexGrow: 1)
-        expect(fill.parentElement?.className).toBeTruthy();
     });
 });

@@ -16,7 +16,7 @@ import {
 } from "app/components/Webhook";
 import { useRefreshData } from "app/hooks/useRefreshData";
 import { useVisibilityChange } from "app/hooks/useVisibilityChange";
-import { getFrakWebookStatus } from "app/services.server/backendMerchant";
+import { getFrakWebhookStatus } from "app/services.server/backendMerchant";
 import { log } from "app/services.server/logger";
 import {
     resolveMerchantId,
@@ -48,7 +48,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
                 return null;
             }),
             resolveMerchantId(context),
-            getFrakWebookStatus(context, request),
+            getFrakWebhookStatus(context, request),
             getWebhooks(context),
             (async () => {
                 try {
@@ -162,7 +162,7 @@ function WebhookSection({
     merchantId,
 }: {
     webhooks: Awaited<ReturnType<typeof getWebhooks>>;
-    frakWebhook: Awaited<ReturnType<typeof getFrakWebookStatus>>;
+    frakWebhook: Awaited<ReturnType<typeof getFrakWebhookStatus>>;
     merchantId: string | null;
 }) {
     const isWebhookExists = webhooks.length > 0;

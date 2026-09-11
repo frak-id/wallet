@@ -1,5 +1,4 @@
 import { t } from "@backend-utils";
-import type { Static } from "elysia";
 
 const WebPushSubscriptionBodySchema = t.Object({
     type: t.Literal("web-push"),
@@ -24,4 +23,3 @@ export const RegisterTokenBodySchema = t.Union([
     WebPushSubscriptionBodySchema,
     FcmTokenBodySchema,
 ]);
-export type RegisterTokenBody = Static<typeof RegisterTokenBodySchema>;

@@ -11,14 +11,9 @@
  *   - Opt-in `<frak-post-purchase>` card wrapped in a theme-overridable
  *     Smarty partial (rendered through {@see FrakDisplayDispatcher}).
  *
- * Mirrors WordPress's `Frak_WooCommerce::render_purchase_tracker_for_order`
- * + post-purchase block render path. Both plugins emit the same
- * `(customerId, orderId, token)` payload so the backend has one contract
- * to maintain.
- *
- * Split out from the legacy `FrakOrderHooks` class so server-side webhook
- * orchestration ({@see FrakOrderWebhook}) and client-side rendering live
- * in separate translation units.
+ * The `(customerId, orderId, token)` payload is the backend's one contract
+ * across every plugin. Server-side webhook orchestration lives apart, in
+ * {@see FrakOrderWebhook}.
  */
 class FrakOrderRender
 {

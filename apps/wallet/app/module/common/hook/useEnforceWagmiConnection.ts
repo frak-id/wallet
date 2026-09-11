@@ -11,18 +11,9 @@ import { type Address, type Hex, isAddressEqual } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { useConfig, useConnect } from "wagmi";
 
-/**
- * Hook that enforce wagmi connection
- */
 export function useEnforceWagmiConnection() {
-    /**
-     * Get the current wagmi state
-     */
     const { state, connectors } = useConfig();
 
-    /**
-     * Extract the frak connector
-     */
     const frakConnector = useMemo(
         () =>
             connectors.find(
@@ -31,9 +22,6 @@ export function useEnforceWagmiConnection() {
         [connectors]
     );
 
-    /**
-     * Connect to the frak connector
-     */
     const { mutate: connect, isPending } = useConnect();
 
     useEffect(() => {
@@ -56,16 +44,9 @@ export function useEnforceWagmiConnection() {
         }
 
         // And then connect to it
-        console.log("Manually connecting to frak wallet connector", {
-            status: state.status,
-            current: state.current,
-        });
         connect({ connector: frakConnector });
     }, [connect, frakConnector, isPending, state.current, state.status]);
 
-    /**
-     * Update the ecdsa signer
-     */
     useEffect(() => {
         if (!frakConnector) {
             return;
@@ -100,13 +81,6 @@ export function useEnforceWagmiConnection() {
                     // Sign the message
                     return account.signMessage({ message: { raw: hash } });
                 }
-                console.warn("No valid pkey found", {
-                    potentialAddresses: potentialPkeys.map((pkey) =>
-                        pkey ? privateKeyToAccount(pkey).address : "undefined"
-                    ),
-                    address,
-                });
-
                 throw new Error("No valid pkey found");
             }
         );

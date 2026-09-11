@@ -68,9 +68,9 @@ function LegacyBankMigrationContent({
     if (isLoading) return <Spinner />;
     if (!status || status.withdrawable === 0n) return null;
 
-    // Onchain action (§4.9): a walletless session cannot sign the migration
-    // transaction — show the wallet-link CTA instead of the migrate button,
-    // unless the parent (BudgetView) already renders one for this session.
+    // A walletless session cannot sign the migration transaction — show the
+    // wallet-link CTA instead of the migrate button, unless the parent
+    // (BudgetView) already renders one for this session.
     if (!canOnchain) return hideWalletlessNotice ? null : <LinkWalletNotice />;
 
     const decimals = tokenMeta?.decimals ?? 6;

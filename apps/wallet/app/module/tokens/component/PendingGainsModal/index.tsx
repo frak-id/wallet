@@ -15,8 +15,8 @@ import { encodeFunctionData } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
 import { useConnection, useSendTransaction } from "wagmi";
 import { CloseButton } from "@/module/common/component/CloseButton";
+import { useGetPendingRewards } from "@/module/tokens/hook/useGetPendingRewards";
 import { rewarderClaimBatchAbi } from "@/module/tokens/utils/abi";
-import { useGetPendingRewards } from "../../hooks/useGetPendingRewards";
 import * as styles from "./index.css";
 
 type PendingGainsModalProps = {

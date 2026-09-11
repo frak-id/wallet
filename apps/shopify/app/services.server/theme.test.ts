@@ -11,18 +11,6 @@ import {
     type ThemeBlockInfo,
 } from "./theme";
 
-/**
- * Tests for theme block detection logic from theme.ts.
- *
- * The service functions depend on GraphQL for fetching theme files,
- * but the core logic of parsing JSON templates and detecting blocks
- * is testable in isolation.
- */
-
-/* ------------------------------------------------------------------ */
-/*  Theme ID extraction                                                */
-/* ------------------------------------------------------------------ */
-
 describe("extractThemeId", () => {
     it("extracts numeric ID from full gid", () => {
         expect(
@@ -40,10 +28,6 @@ describe("extractThemeId", () => {
         expect(extractThemeId("no-digits-here")).toBe("");
     });
 });
-
-/* ------------------------------------------------------------------ */
-/*  Frak activation detection (settings_data.json parsing)             */
-/* ------------------------------------------------------------------ */
 
 describe("detectFrakActivated", () => {
     it("returns true when listener block is present and enabled", () => {
@@ -95,10 +79,6 @@ describe("detectFrakActivated", () => {
         expect(detectFrakActivated(blocks)).toBe(true);
     });
 });
-
-/* ------------------------------------------------------------------ */
-/*  Frak button detection (product.json main section parsing)          */
-/* ------------------------------------------------------------------ */
 
 describe("detectFrakButton", () => {
     it("returns true when a section contains a referral_button block", () => {
@@ -205,10 +185,6 @@ describe("detectFrakButton", () => {
     });
 });
 
-/* ------------------------------------------------------------------ */
-/*  Frak banner detection in settings_data sections                    */
-/* ------------------------------------------------------------------ */
-
 describe("detectFrakBannerInSections", () => {
     it("returns true when a section has a banner block enabled", () => {
         const sections = {
@@ -308,10 +284,6 @@ describe("detectFrakBannerInSections", () => {
     });
 });
 
-/* ------------------------------------------------------------------ */
-/*  Schema block parsing (Liquid schema detection)                     */
-/* ------------------------------------------------------------------ */
-
 describe("detectAppBlockSupport", () => {
     it("returns true when schema has @app block type", () => {
         const liquid = `
@@ -365,14 +337,6 @@ describe("detectAppBlockSupport", () => {
         expect(detectAppBlockSupport(liquid)).toBe(false);
     });
 });
-
-/* ------------------------------------------------------------------ */
-/*  doesThemeSupportBlock — resilience on custom / vintage themes       */
-/*                                                                     */
-/*  Regression coverage for the "Application Error" on fresh install:   */
-/*  a fully custom / non-OS-2.0 theme has no usable templates/          */
-/*  product.json, which used to throw on unguarded dereferences.       */
-/* ------------------------------------------------------------------ */
 
 let shopCounter = 0;
 
@@ -464,14 +428,8 @@ describe("doesThemeSupportBlock", () => {
     });
 });
 
-/* ------------------------------------------------------------------ */
-/*  doesThemeSupportAppEmbed — vintage vs truly-unsupported themes      */
-/*                                                                     */
-/*  App embeds work on ALL theme architectures (incl. vintage like     */
-/*  Debut) as long as theme.liquid renders `content_for_header`. This  */
-/*  separates the "intermediate" case from a genuinely broken theme.   */
-/* ------------------------------------------------------------------ */
-
+// App embeds work on ALL theme architectures (incl. vintage like Debut) as long
+// as theme.liquid renders `content_for_header`.
 describe("doesThemeSupportAppEmbed", () => {
     function fileBody(content: string) {
         return {

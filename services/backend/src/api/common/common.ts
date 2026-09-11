@@ -4,17 +4,11 @@ import {
 } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { isAddress } from "viem";
 
-/**
- * Common utility routes used across the ecosystem
- * These endpoints provide shared functionality for admin wallets, pricing, etc.
- */
 export const commonRoutes = new Elysia({ name: "Routes.common" })
     .get(
         "/adminWallet",
         async ({ query }) => {
-            // Case of a requested type
             if (query.key) {
                 const account =
                     await adminWalletsRepository.getKeySpecificAccount({
@@ -42,10 +36,6 @@ export const commonRoutes = new Elysia({ name: "Routes.common" })
     .get(
         "/rate",
         async ({ query: { token } }) => {
-            if (!isAddress(token)) {
-                return status(400, "Invalid token");
-            }
-
             const rate = await pricingRepository.getTokenPrice({ token });
             if (!rate) {
                 return status(400, "Invalid token");

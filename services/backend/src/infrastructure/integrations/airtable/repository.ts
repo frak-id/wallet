@@ -22,9 +22,7 @@ type AirtableCreateResponse = {
     records: AirtableRecord[];
 };
 
-/**
- * Slack always returns HTTP 200 — must check `ok` field
- */
+/** Slack always returns HTTP 200 — the `ok` field carries the real outcome. */
 type SlackResponse = {
     ok: boolean;
     error?: string;
@@ -53,7 +51,6 @@ export class AirtableRepository {
             },
         });
 
-        // Initialize Slack if token is available
         const slackToken = process.env.SLACK_BOT_TOKEN;
         if (slackToken) {
             this.slackApi = ky.create({
@@ -63,9 +60,6 @@ export class AirtableRepository {
         }
     }
 
-    /**
-     * Check if a record with the given email already exists in the specified table
-     */
     async checkDuplicateEmail(
         tableType: TableType,
         email: string
@@ -88,9 +82,6 @@ export class AirtableRepository {
         }
     }
 
-    /**
-     * Create a new record in the specified table
-     */
     async createRecord(
         tableType: TableType,
         data: AirtableRequestBody
@@ -98,7 +89,6 @@ export class AirtableRepository {
         const config = AIRTABLE_CONFIG[tableType];
 
         try {
-            // Map request body fields to Airtable field names
             const mappedFields = mapToAirtableFields(data);
 
             const response = await this.airtableApi
@@ -115,10 +105,6 @@ export class AirtableRepository {
         }
     }
 
-    /**
-     * Send a Slack notification about the new record
-     * Slack always returns HTTP 200 — must check response.ok
-     */
     async sendSlackNotification(
         tableType: TableType,
         data: AirtableRequestBody
@@ -158,7 +144,6 @@ export class AirtableRepository {
                 })
                 .json<SlackResponse>();
 
-            // Slack always returns HTTP 200 — must check ok field
             if (!response.ok) {
                 throw new Error(`Slack API error: ${response.error}`);
             }
@@ -168,14 +153,10 @@ export class AirtableRepository {
         }
     }
 
-    /**
-     * Process a complete request: check duplicates, create record, send notification
-     */
     async processRequest(
         tableType: TableType,
         data: AirtableRequestBody
     ): Promise<{ recordId: string; message: string }> {
-        // Check for duplicates
         const isDuplicate = await this.checkDuplicateEmail(
             tableType,
             data.email
@@ -184,10 +165,8 @@ export class AirtableRepository {
             throw new Error("Record with this email already exists");
         }
 
-        // Create the record
         const recordId = await this.createRecord(tableType, data);
 
-        // Send Slack notification
         try {
             await this.sendSlackNotification(tableType, data);
         } catch (error) {

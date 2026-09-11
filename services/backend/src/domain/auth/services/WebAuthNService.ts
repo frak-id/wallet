@@ -31,16 +31,10 @@ export class WebAuthNService {
         private readonly authenticatorRepository: AuthenticatorRepository
     ) {}
 
-    /**
-     * Parse a compressed webauthn response
-     */
     parseCompressedResponse<T>(response: string): T {
         return JSON.parse(Buffer.from(response, "base64").toString("utf-8"));
     }
 
-    /**
-     * Get a wallet address from an authenticator
-     */
     async getWalletAddress({
         authenticatorId,
         pubKey,
@@ -57,9 +51,6 @@ export class WebAuthNService {
         return this.senderAddressFromInitCode(initCode);
     }
 
-    /**
-     * Get a wallet address from an authenticator
-     */
     async getEcdsaWalletAddress({ ecdsaAddress }: { ecdsaAddress: Address }) {
         const initCode = KernelWallet.getFallbackWalletInitCode({
             ecdsaAddress,

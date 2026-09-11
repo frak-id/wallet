@@ -1,16 +1,6 @@
-/**
- * useWalletSessionGuard tests
- *
- * Suppression is derived from the mocked modal store (mocks.modalRef), so a
- * re-auth modal that is "open" suppresses further prompts and closing it
- * (mocks.closeModalForTest) re-enables them.
- */
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-// ---------------------------------------------------------------------------
-// Hoisted mocks — defined before any module is loaded.
-// ---------------------------------------------------------------------------
 const mocks = vi.hoisted(() => {
     // Mutable auth-expired callback so individual tests can trigger it.
     let _authExpiredCb: (() => void) | null = null;
@@ -143,8 +133,6 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     };
 });
 
-// ---------------------------------------------------------------------------
-
 beforeEach(() => {
     vi.clearAllMocks();
     mocks.isLocked = false;
@@ -161,8 +149,6 @@ beforeEach(() => {
 afterEach(() => {
     vi.useRealTimers();
 });
-
-// ---------------------------------------------------------------------------
 
 describe("useWalletSessionGuard", () => {
     test("does nothing when session is healthy", async () => {

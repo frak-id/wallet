@@ -4,7 +4,6 @@ import { BellRing } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
-import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 import type { NotificationModel } from "@/module/notification/storage/NotificationModel";
@@ -14,33 +13,18 @@ export const Route = createFileRoute("/_wallet/_protected/notifications")({
     component: NotificationsPage,
 });
 
-/**
- * NotificationsPage
- *
- * View to display user notifications history
- *
- * @returns {JSX.Element} The rendered notifications page
- */
 function NotificationsPage() {
     const { t } = useTranslation();
-    const { data: notifications, isLoading } = useQuery({
+    const { data: notifications } = useQuery({
         queryKey: notificationKey.history.baseKey,
         queryFn: async () => {
             // Notifications are already sorted by timestamp in storage
             // Error handling is done in the storage layer
             return await notificationStorage.getAll();
         },
-        // Add default value to prevent loading state on first render
+        // Default value, so the page never renders a loading state
         initialData: [],
     });
-
-    if (isLoading) {
-        return (
-            <div>
-                <Skeleton count={3} height={110} />
-            </div>
-        );
-    }
 
     if (notifications.length === 0) {
         return (
@@ -56,7 +40,7 @@ function NotificationsPage() {
 
     return (
         <div>
-            {notifications?.map((notificationItem, index) => (
+            {notifications.map((notificationItem, index) => (
                 <Notification
                     key={`${notificationItem.timestamp}-${notificationItem.id}-${index}`}
                     notification={notificationItem}

@@ -1,11 +1,7 @@
 <?php
 
 /**
- * Directory index stub for the Frak PrestaShop module.
- *
- * Belt-and-braces against shops whose web server has `Options Indexes`
- * enabled, which would otherwise list every file in this directory. Mirrors
- * the convention shipped with every official PrestaShop module.
+ * Directory index stub: blocks listing on shops that serve `Options Indexes`.
  *
  * @license GPL-3.0-only
  */

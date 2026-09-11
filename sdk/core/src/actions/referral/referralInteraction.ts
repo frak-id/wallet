@@ -7,7 +7,7 @@ import {
 } from "./processReferral";
 
 /**
- * Function used to handle referral interactions
+ * Resolve the referral context in the current URL against the wallet status
  * @param client - The current Frak Client
  * @param args
  * @param args.options - Some options for the referral interaction
@@ -26,12 +26,9 @@ export async function referralInteraction(
         options?: ProcessReferralOptions;
     } = {}
 ) {
-    // Get the current frak context
     const frakContext = FrakContextManager.parse({
         url: window.location.href,
     });
-
-    // Get the current wallet status
     const currentWalletStatus = await watchWalletStatus(client);
 
     try {

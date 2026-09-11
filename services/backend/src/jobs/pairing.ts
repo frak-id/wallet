@@ -99,11 +99,9 @@ CronRegistry.register(
                 );
             }
 
-            // 2) Already-processed rows older than the retention threshold →
-            //    plain GC, no reject emit (the request was completed). Doing this
-            //    here ensures the table doesn't grow unbounded; the previous
-            //    implementation routed these through `cancelSignatureRequest`
-            //    which filters `isNull(processedAt)` and silently skipped them.
+            // 2) Already-processed rows past the retention threshold → plain GC,
+            //    no reject emit. `cancelSignatureRequest` cannot do it: it
+            //    filters on `isNull(processedAt)`.
             const gcResult = await db
                 .delete(pairingSignatureRequestTable)
                 .where(

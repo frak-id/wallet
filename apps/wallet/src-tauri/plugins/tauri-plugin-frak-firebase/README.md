@@ -12,31 +12,6 @@ coordinate change instead of two.
 All commands are no-ops on web / desktop (the native bridge is only wired
 under `#[cfg(mobile)]`).
 
-## Why merge?
-
-Before this plugin existed, the wallet shell ran two independent Firebase
-consumers:
-
-1. `tauri-plugin-fcm` (external crates.io `^0.2.0`) — push notifications.
-2. `tauri-plugin-frak-crashlytics` (in-tree) — crash reporting.
-
-Both pulled `firebase-ios-sdk` via SwiftPM independently. Both called
-`FirebaseApp.configure()` with nil-guards to avoid double-init crashes. Both
-required matching version pins to avoid two copies of Firebase being linked
-into the iOS binary (which silently broke Crashlytics' signal-handler
-registration — see commit `04019eb03`).
-
-Merging into a single plugin:
-
-- **Halves SPM resolution work.** One `firebase-ios-sdk` clone, one cache slot
-  in the CI SwiftPM artifact cache, one pre-warm pass.
-- **Eliminates the `FirebaseApp.configure()` nil-guard.** Single owner means
-  the guard is dead code; the merged plugin calls `configure()` exactly once
-  from `init()` (before the Tauri WebView attaches — Crashlytics' NSException
-  + Mach signal handlers arm before any user code runs).
-- **One Android Firebase BoM** to bump on upgrades.
-- **One CI dSYM upload glob** to maintain.
-
 ## Surface
 
 ### FCM (vendored from srod/tauri-plugin-fcm)
@@ -78,7 +53,11 @@ The native plugin reads, reports, and deletes that file on the next launch.
 `ios/Package.swift` depends on `firebase-ios-sdk` from `12.13.0` (single
 source) and links:
 
-- `FirebaseCore` — owned by this plugin (sole caller of `FirebaseApp.configure()`).
+- `FirebaseCore` — owned by this plugin, the sole caller of `FirebaseApp.configure()`,
+  which runs exactly once from `init()`. It must stay there: Crashlytics' NSException
+  and Mach signal handlers only arm at `configure()`, and this is the last point
+  before the Tauri WebView attaches and user code can crash. Do not add a nil-guard
+  — a second caller is the bug, not something to tolerate.
 - `FirebaseMessaging` — FCM push notifications.
 - `FirebaseCrashlytics` — crash reporting + non-fatal recording.
 

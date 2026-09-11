@@ -114,10 +114,9 @@ describe("ReferralLinkRepository", () => {
     });
 
     describe("wouldCreateCycle (recursive CTE)", () => {
-        it("should detect direct cycle (B→A exists, proposed A→B)", async () => {
+        it("maps a would_cycle row onto the boolean result", async () => {
             const repository = new ReferralLinkRepository();
 
-            // CTE returns would_cycle = true
             mockExecute.mockResolvedValue([{ would_cycle: true }]);
 
             const result = await repository.wouldCreateCycle(
@@ -127,39 +126,6 @@ describe("ReferralLinkRepository", () => {
 
             expect(result).toBe(true);
             expect(mockExecute).toHaveBeenCalledTimes(1);
-        });
-
-        it("should detect indirect cycle (A→B→C exists, proposed C→A)", async () => {
-            const repository = new ReferralLinkRepository();
-
-            mockExecute.mockResolvedValue([{ would_cycle: true }]);
-
-            const result = await repository.wouldCreateCycle(
-                groupC, // referrer
-                groupA // referee
-            );
-
-            expect(result).toBe(true);
-        });
-
-        it("should allow valid chain (no cycle)", async () => {
-            const repository = new ReferralLinkRepository();
-
-            mockExecute.mockResolvedValue([{ would_cycle: false }]);
-
-            const result = await repository.wouldCreateCycle(groupA, groupC);
-
-            expect(result).toBe(false);
-        });
-
-        it("should allow when referrer has no chain", async () => {
-            const repository = new ReferralLinkRepository();
-
-            mockExecute.mockResolvedValue([{ would_cycle: false }]);
-
-            const result = await repository.wouldCreateCycle(groupA, groupB);
-
-            expect(result).toBe(false);
         });
 
         it("should default to false on empty result", async () => {

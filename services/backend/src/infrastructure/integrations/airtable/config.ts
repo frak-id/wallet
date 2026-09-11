@@ -30,10 +30,10 @@ export const AirtableRequestBodyType = t.Union([
 
 export type AirtableRequestBody = typeof AirtableRequestBodyType.static;
 
-interface AirtableTableConfig {
+type AirtableTableConfig = {
     tableId: string;
     baseId: string;
-}
+};
 
 export const AIRTABLE_CONFIG: Record<TableType, AirtableTableConfig> = {
     demo_request: {
@@ -51,4 +51,4 @@ export const AIRTABLE_CONFIG: Record<TableType, AirtableTableConfig> = {
             process.env.AIRTABLE_NEWSLETTER_TABLE_ID || "tblEt670VPBhsVkXC",
         baseId: "appsfnUHGcLzwO4Bv",
     },
-} as const;
+};

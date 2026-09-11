@@ -32,19 +32,9 @@ import {
     decodeFrakContextV2,
     encodeFrakContextV2,
 } from "../src/context/frakContextV2Codec";
+import { bytesToHex, hexToBytes } from "../src/identity/canonical";
 import type { FrakContext, FrakContextV2 } from "../src/types";
 import { base64urlEncode } from "../src/utils/compression/b64";
-
-const bytesToHex = (bytes: Uint8Array): string =>
-    Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-
-const hexToBytes = (hex: string): Uint8Array => {
-    const out = new Uint8Array(hex.length / 2);
-    for (let i = 0; i < out.length; i++) {
-        out[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-    }
-    return out;
-};
 
 // Hardcoded, test-only identifiers. Never use these for anything but golden
 // fixture generation — they are public, by design.

@@ -43,6 +43,8 @@ const purchaseInteraction = {
 
 describe("RewardLifecycleOrchestrator", () => {
     describe("cancelForRefund", () => {
+        // The repository returns null both when no interaction exists and when
+        // one exists but failed the `cancelled_at IS NULL` precondition.
         it("returns empty result when no active purchase interaction exists", async () => {
             const { orchestrator, assetLog, interactionLog, campaignRule } =
                 buildOrchestrator();
@@ -65,27 +67,6 @@ describe("RewardLifecycleOrchestrator", () => {
                 merchantId: "m1",
                 externalId: "order-42",
             });
-            expect(
-                assetLog.cancelPendingByInteractionLogs
-            ).not.toHaveBeenCalled();
-            expect(campaignRule.restoreBudgetsBatch).not.toHaveBeenCalled();
-        });
-
-        it("returns empty result when interaction was already cancelled (idempotent)", async () => {
-            const { orchestrator, assetLog, interactionLog, campaignRule } =
-                buildOrchestrator();
-            // Repository contract: returns null when no row matched the
-            // `cancelled_at IS NULL` precondition (already cancelled).
-            vi.mocked(
-                interactionLog.cancelPurchaseInteractionByExternalId
-            ).mockResolvedValue(null);
-
-            const result = await orchestrator.cancelForRefund({
-                merchantId: "m1",
-                externalId: "order-42",
-            });
-
-            expect(result.affectedCount).toBe(0);
             expect(
                 assetLog.cancelPendingByInteractionLogs
             ).not.toHaveBeenCalled();

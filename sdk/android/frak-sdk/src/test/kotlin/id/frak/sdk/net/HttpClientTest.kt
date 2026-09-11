@@ -97,7 +97,7 @@ class HttpClientTest {
         }
 
     @Test
-    fun `a DNS lookup failure is retried, matching iOS's cannotFindHost-dnsLookupFailed`() =
+    fun `a DNS lookup failure is retried`() =
         runTest {
             var attempts = 0
             val client =

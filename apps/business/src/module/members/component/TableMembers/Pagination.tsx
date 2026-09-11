@@ -8,9 +8,9 @@ export function Pagination({ totalResult }: { totalResult: number }) {
 
     const handlePageChange = useCallback(
         (page: number) =>
-            setFilters?.((prevState) => ({
+            setFilters((prevState) => ({
                 ...prevState,
-                offset: (page - 1) * (prevState?.limit ?? 10),
+                offset: (page - 1) * (prevState.limit ?? 10),
             })),
         [setFilters]
     );

@@ -1,5 +1,5 @@
 import type { Hex } from "viem";
-import type { PrepareSsoParamsType, SsoMetadata } from "../../types";
+import type { Language, PrepareSsoParamsType, SsoMetadata } from "../../types";
 import { compressJsonToB64 } from "../compression/compress";
 
 export type AppSpecificSsoMetadata = SsoMetadata & {
@@ -117,7 +117,7 @@ export type CompressedSsoData = {
     // direct exit
     d?: boolean;
     // language
-    l?: "en" | "fr";
+    l?: Language;
     // merchant id
     m: string;
     // metadata

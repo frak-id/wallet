@@ -1,7 +1,5 @@
 /**
- * Load a script
- * @param id
- * @param url
+ * Load a script once, keyed on `id`
  */
 export async function loadScript(
     id: string,

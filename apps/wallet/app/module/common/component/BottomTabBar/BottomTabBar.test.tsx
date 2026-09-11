@@ -88,13 +88,4 @@ describe("BottomTabBar", () => {
         expect(glider?.style.width).toBe("calc(33.3333%)");
         expect(glider?.style.transform).toBe("translateX(200%)");
     });
-
-    it("should render the progressive blur background", () => {
-        const { container } = render(
-            <BottomTabBar tabs={mockTabs} activeKey="a" />
-        );
-
-        const background = container.querySelector("[aria-hidden='true']");
-        expect(background).toBeInTheDocument();
-    });
 });

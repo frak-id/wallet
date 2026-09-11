@@ -24,11 +24,11 @@ export type HandlerResult<TExtra = Record<string, unknown>> = {
     isDuplicate: boolean;
 } & TExtra;
 
-export interface InteractionHandler<
+export type InteractionHandler<
     TInput extends { merchantId: string },
     TPayload,
     TExtra = Record<string, unknown>,
-> {
+> = {
     getInteractionType(input: TInput): InteractionType;
 
     buildExternalEventId(
@@ -45,7 +45,5 @@ export interface InteractionHandler<
         payload: TPayload
     ): Promise<TExtra>;
 
-    validateContext?(input: TInput, context: HandlerContext): void;
-
     shouldCreateInteractionLog?(input: TInput, payload: TPayload): boolean;
-}
+};

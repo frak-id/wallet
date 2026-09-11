@@ -15,21 +15,6 @@ vi.mock("@backend-infrastructure", () => ({
     db: { transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb({})) },
 }));
 
-/**
- * Regression tests for `WalletMergeOrchestrator` — the wallet-to-wallet
- * authenticated merge path. Priorities, per the review brief:
- *
- *  1. `detectSettledMerge` / `resolveSettledLoser` — a retried `settle()`
- *     against an already-settled merge must converge on the same success
- *     response instead of re-running the merge or throwing
- *     `MERGE_SAME_WALLET`; the JWT-replay cross-check must reject a
- *     mismatched loser claim.
- *  2. `settle()` cache invalidation — `invalidateWeight` must run for
- *     BOTH the absorbed group(s) and the winner group.
- *  3. `preview()` edge cases — tie-break outcome, and two wallets that
- *     already resolve to the same identity group.
- */
-
 const REQUESTER_WALLET = "0x1111111111111111111111111111111111111111" as const;
 const TARGET_WALLET = "0x2222222222222222222222222222222222222222" as const;
 const REQUESTER_CRED = "requester-cred";
@@ -62,7 +47,6 @@ function makeMergeResult(
     }> = {}
 ) {
     return {
-        success: true,
         movedNodes: 0,
         migratedPurchases: 0,
         migratedPurchaseClaims: 0,

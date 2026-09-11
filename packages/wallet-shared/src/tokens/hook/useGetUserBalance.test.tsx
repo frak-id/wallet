@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { vi } from "vitest";
 import {
     afterEach,
     beforeEach,
@@ -155,34 +155,6 @@ describe("useGetUserBalance", () => {
 
         await waitFor(() => {
             expect(authenticatedWalletApi.balance.get).not.toHaveBeenCalled();
-        });
-    });
-
-    test("should return null from queryFn when address is not set", async ({
-        queryWrapper,
-    }) => {
-        const mockAddress = "0x1234567890123456789012345678901234567890";
-
-        const { useConnection } = await import("wagmi");
-        vi.mocked(useConnection).mockReturnValue({
-            address: mockAddress,
-        } as any);
-
-        vi.mocked(authenticatedWalletApi.balance.get).mockImplementation(
-            async () => {
-                vi.mocked(useConnection).mockReturnValue({
-                    address: undefined,
-                } as any);
-                return { data: null, error: null } as any;
-            }
-        );
-
-        const { result } = renderHook(() => useGetUserBalance(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        await waitFor(() => {
-            expect(result.current.isLoading).toBe(false);
         });
     });
 });

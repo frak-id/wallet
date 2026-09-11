@@ -1,6 +1,6 @@
 # services/backend — Compass
 
-Elysia.js API with DDD (12 domains + orchestration layer). Bun runtime. PostgreSQL (Drizzle) for most domains + libSQL/Turso for WebAuthn credentials. Packaged via `Dockerfile` (binary built with `bun build:binary` for Linux/ARM64). Bootstrapping (Drizzle migrations + RustFS bucket provisioning) lives in `services/bootstrap/` as a one-shot K8s Job.
+Elysia.js API with DDD (one folder per domain under `src/domain/` + an orchestration layer). Bun runtime. PostgreSQL (Drizzle) for most domains + libSQL/Turso for WebAuthn credentials. Packaged via `Dockerfile` (binary built with `bun build:binary` for Linux/ARM64). Bootstrapping (Drizzle migrations + RustFS bucket provisioning) lives in `services/bootstrap/` as a one-shot K8s Job.
 
 ## Quick Commands
 ```bash
@@ -13,10 +13,9 @@ Drizzle migration commands (`db:generate`, `db:migrate`, `db:studio`, libSQL var
 ```
 src/
 ├── api/                 # BFF: user, business, external, common
-├── orchestration/       # 14+ orchestrators (grouped in subfolders: identity/, reward/, interaction-submission/) — ONLY place for cross-domain logic
+├── orchestration/       # Orchestrators, some loose, some grouped in subfolders — ONLY place for cross-domain logic
 │   └── context.ts       # Orchestrator singletons (imports from domain contexts)
-├── domain/{attribution, auth, campaign, campaign-bank, identity, media,
-│           merchant, notifications, pairing, purchases, rewards, wallet}/
+├── domain/*/            # One folder per bounded domain (`ls src/domain`)
 │   ├── db/schema.ts     # Drizzle schema (pgTable — except `auth` which uses sqliteTable for libSQL)
 │   ├── repositories/    # Data access
 │   ├── services/        # Pure business logic (no cross-domain imports)

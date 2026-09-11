@@ -1,4 +1,5 @@
 import type { Hex } from "viem";
+import type { Language } from "../config";
 
 /**
  * SSO Metadata
@@ -37,7 +38,7 @@ export type PrepareSsoParamsType = {
      * Language of the SSO page (optional)
      * It will default to the current user language (or "en" if unsupported language)
      */
-    lang?: "en" | "fr";
+    lang?: Language;
     /**
      * Custom SSO metadata
      */

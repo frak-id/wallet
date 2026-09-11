@@ -4,19 +4,19 @@ import { log } from "../external/logger";
 import { infraMetrics } from "../telemetry/infraMetrics";
 import { getClientIp } from "./ipExtraction";
 
-interface RateLimitWindow {
+type RateLimitWindow = {
     currentCount: number;
     // Count from the sub-window immediately preceding currentStart.
     previousCount: number;
     currentStart: number;
     // windowMs this entry was created with, for reset/purge bookkeeping.
     windowMs: number;
-}
+};
 
-interface RateLimitConfig {
+type RateLimitConfig = {
     windowMs: number;
     maxRequests: number;
-}
+};
 
 const defaultConfig: RateLimitConfig = {
     windowMs: 60_000,

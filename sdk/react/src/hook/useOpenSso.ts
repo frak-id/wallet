@@ -11,12 +11,12 @@ type MutationOptions = Omit<
 >;
 
 /** @inline */
-interface UseOpenSsoParams {
+type UseOpenSsoParams = {
     /**
      * Optional mutation options, see {@link @tanstack/react-query!useMutation | `useMutation()`} for more infos
      */
     mutations?: MutationOptions;
-}
+};
 
 /**
  * Hook that return a mutation helping to open the SSO page

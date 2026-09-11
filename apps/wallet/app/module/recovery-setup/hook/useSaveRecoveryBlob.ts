@@ -10,7 +10,7 @@ import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-set
 export function useSaveRecoveryBlob() {
     const queryClient = useQueryClient();
 
-    const { mutate, mutateAsync, ...mutationStuff } = useMutation({
+    const { mutateAsync, ...mutation } = useMutation({
         mutationKey: recoverySetupKey.saveBlob,
         gcTime: 0,
         mutationFn: async ({ blob }: { blob: string }) => {
@@ -27,8 +27,7 @@ export function useSaveRecoveryBlob() {
     });
 
     return {
-        ...mutationStuff,
-        saveRecoveryBlob: mutate,
+        ...mutation,
         saveRecoveryBlobAsync: mutateAsync,
     };
 }

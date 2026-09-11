@@ -12,7 +12,7 @@ import {
     getAffiliateReportMock,
 } from "@/module/campaigns/api/affiliateReportApi";
 import {
-    getCampaignDetail,
+    getCampaignConfig,
     getCampaignDetails,
     getMerchantCampaigns,
 } from "@/module/campaigns/api/campaignApi";
@@ -120,15 +120,6 @@ export const overviewAnalyticsQueryOptions = ({
 /**
  * Per-campaign analytics for the campaign details sheet — sourced from
  * `GET /business/merchant/:merchantId/campaigns/:campaignId/details`.
- *
- * Backend caveats baked into the schema docs:
- *  - `cpaBreakdown.segments[].key='frak'` is a hardcoded platform-fee
- *    overlay (no `platform` recipient_type on `asset_logs` yet).
- *  - `metaCpa` / Meta comparison fields use a static industry benchmark
- *    per currency, not real Meta Ads data.
- *  - `ambassadorStats.activePct` and `topAmbassadors[].shares` are
- *    best-effort campaign-attributed (merchant-scoped `create_referral_link`
- *    counts joined to ambassadors who earned on this campaign).
  */
 export const campaignDetailsQueryOptions = ({
     merchantId,
@@ -175,7 +166,7 @@ export const affiliateReportQueryOptions = ({
         initialData: isDemoMode ? getAffiliateReportMock() : undefined,
     });
 
-export const campaignQueryOptions = ({
+export const campaignConfigQueryOptions = ({
     merchantId,
     campaignId,
     isDemoMode,
@@ -187,7 +178,7 @@ export const campaignQueryOptions = ({
     queryOptions({
         queryKey: campaignConfigQueryKey(merchantId, campaignId, isDemoMode),
         queryFn: () =>
-            getCampaignDetail({ merchantId, campaignId, isDemoMode }),
+            getCampaignConfig({ merchantId, campaignId, isDemoMode }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
         // initialData must be merchant-scoped: with a merchant-keyed
         // cache entry and `staleTime: Infinity`, seeding the wrong

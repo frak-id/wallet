@@ -44,20 +44,13 @@ struct HTTPClient: Sendable {
     /// memory and what an oversized or misbehaving response could force into UserDefaults.
     static let maxResponseBodyBytes: Int64 = 1024 * 1024
 
-    /// Wall-clock ceiling for a whole request, both attempts included. This is the SDK's
-    /// single authoritative timeout mechanism: `Deadline.run` races the request against this
-    /// one wall-clock bound and is what actually fires on a hang. The session's own timeouts
-    /// (see `defaultSession`) are set well above this deadline, so they exist only as a
-    /// defense-in-depth backstop against `URLSession` wedging, not as the mechanism that fires.
-    /// Matches Android's effective per-request budget of ~20s, though the two platforms enforce
-    /// it differently: Android's per-attempt timeouts are tight enough to be the mechanism that
-    /// actually fires there, where here it is `Deadline.run`.
+    /// Wall-clock ceiling for a whole request, both attempts included. `Deadline.run` races the
+    /// request against this bound and is what actually fires on a hang; the session's own
+    /// timeouts (see `defaultSession`) sit above it as a backstop only.
     static let overallDeadlineSeconds: TimeInterval = 20
 
-    /// Set above `overallDeadlineSeconds` so neither can ever be the mechanism that actually
-    /// ends a request — `Deadline.run` always wins first. Not `.infinity`/unset: this bounds the
-    /// abandoned-socket tail when `Deadline.run`'s own cancellation fails to unblock a wedged
-    /// `URLSessionTask`, so it sits just above the deadline rather than at three times it.
+    /// Above `overallDeadlineSeconds` so `Deadline.run` always wins first. Not unset: this bounds
+    /// the abandoned-socket tail when that cancellation fails to unblock a wedged task.
     private static let sessionBackstopSeconds: TimeInterval = 30
 
     static let defaultSession: URLSession = {
@@ -215,12 +208,9 @@ struct HTTPClient: Sendable {
         }
     }
 
-    /// DEBUG-level only, symmetric with Android's `HttpClient`. Logs method, host, path and
-    /// status/duration — never the query string (a merchant id or the anonymous id can ride in
-    /// it, e.g. `campaigns?anonymousId=…`) and never a header value (an auth token lives
-    /// there). `os.Logger` interpolation stays `.private` even though a path alone is rarely
-    /// sensitive, since a future route could add a path parameter without anyone revisiting
-    /// this call site.
+    /// DEBUG-level only. Never the query string (a merchant id or the anonymous id can ride in
+    /// it) and never a header value; `os.Logger` interpolation stays `.private` so a route that
+    /// later adds a path parameter cannot leak it.
     private func logResult(_ request: URLRequest, status: Int?, start: Date) {
         guard let logger else { return }
         let durationMs = Int(Date().timeIntervalSince(start) * 1000)
@@ -232,12 +222,9 @@ struct HTTPClient: Sendable {
     }
 
     private func attemptUnlogged(_ request: URLRequest) async throws -> Response {
-        // Not a true streaming read: `session.data(for:)` buffers the entire body before this
-        // function runs, so unlike Android's `readBytesUpTo` this does not bound peak memory
-        // during the read — a chunked response with no (or a lying) Content-Length can still be
-        // buffered in full before the check below ever runs. What is guaranteed: an oversized
-        // body is never returned to a caller that would persist it, and an honest large
-        // response with a real Content-Length is rejected before the transfer finishes.
+        // Not a true streaming read: `session.data(for:)` buffers the entire body first, so a
+        // chunked or lying Content-Length is still buffered in full. What is guaranteed: an
+        // oversized body never reaches a caller that would persist it.
         let (data, response) = try await session.data(for: request, delegate: redirectDelegate)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw FrakError.network(underlying: URLError(.badServerResponse))

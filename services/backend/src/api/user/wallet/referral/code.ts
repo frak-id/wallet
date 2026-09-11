@@ -3,16 +3,14 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { ReferralCodeContext } from "../../../../domain/referral-code";
 import { OrchestrationContext } from "../../../../orchestration/context";
-import { identityContext } from "../../../middleware/identity";
+import {
+    identityContext,
+    identityRateLimitKey,
+} from "../../../middleware/identity";
 
 // Single shared rate limit for all /code/* routes: per-IP (DDoS defence)
 // + per-identity (prevents a single user fanning out across networks).
 // Identity bucket reads `identityGroupId` resolved by `identityContext`.
-// biome-ignore lint/suspicious/noExplicitAny: Elysia's scoped-plugin context type does not carry plugin-resolved fields through to `onBeforeHandle`.
-const identityKey = (ctx: any): string | null => {
-    const id = ctx.identityGroupId as string | null | undefined;
-    return id ? `identity:${id}` : null;
-};
 
 export const referralCodeRoutes = new Elysia({ prefix: "/code" })
     .use(identityContext)
@@ -28,7 +26,7 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
             bucket: "referral-code-identity",
             windowMs: 60_000,
             maxRequests: 10,
-            keyExtractor: identityKey,
+            keyExtractor: identityRateLimitKey,
         })
     )
     // Domain code throws `HttpError` from `@backend-utils`; Elysia auto-maps

@@ -8,6 +8,7 @@
  */
 
 import { isRunningLocally } from "@frak-labs/app-essentials/utils/env";
+import { useGetSafeSdkSession } from "@frak-labs/wallet-shared/common/hook/useGetSafeSdkSession";
 import {
     fallbackLng,
     interpolation,
@@ -20,7 +21,6 @@ import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { drainPendingI18nOverrides } from "@/i18nOverrideQueue";
 import { ensureI18nBundle } from "@/i18nPreload";
-import { useListenerDataPreload } from "@/module/hooks/useListenerDataPreload";
 import { ListenerUiProvider } from "@/ui/ListenerUiProvider";
 import { ListenerUiRenderer } from "@/ui/ListenerUiRenderer";
 import { RootProvider } from "@/ui/RootProvider";
@@ -76,7 +76,9 @@ export async function mountUiRuntime(): Promise<void> {
  * renderer itself is happy as a pure component.
  */
 function ListenerHost() {
-    useListenerDataPreload();
+    // Warming the SDK session lets later interaction-track calls reuse a valid
+    // token instead of re-issuing one.
+    useGetSafeSdkSession();
     return <ListenerUiRenderer />;
 }
 

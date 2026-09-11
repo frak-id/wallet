@@ -1,6 +1,3 @@
-/**
- * Query / mutation keys for the version-gate module.
- */
 export namespace versionKey {
     const base = "version" as const;
 

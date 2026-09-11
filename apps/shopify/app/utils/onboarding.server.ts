@@ -1,4 +1,4 @@
-import { getFrakWebookStatus } from "app/services.server/backendMerchant";
+import { getFrakWebhookStatus } from "app/services.server/backendMerchant";
 import { log } from "app/services.server/logger";
 import { firstProductPublished } from "app/services.server/shop";
 import {
@@ -61,7 +61,7 @@ const stepDataFetchers = {
     ): Promise<OnboardingStepData> => {
         try {
             const merchantId = await resolveMerchantId(context);
-            const frakWebhook = await getFrakWebookStatus(context, request);
+            const frakWebhook = await getFrakWebhookStatus(context, request);
             return { frakWebhook, merchantId };
         } catch (error) {
             log.error(

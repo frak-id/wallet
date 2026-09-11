@@ -124,9 +124,7 @@ export function InstallView({
     );
 }
 
-// ---------------------------------------------------------------------------
-//  Processing screen — shown on Tauri or when already logged in on web
-// ---------------------------------------------------------------------------
+// Processing screen — shown on Tauri or when already logged in on web.
 
 const MIN_PROCESSING_MS = 500;
 
@@ -335,9 +333,7 @@ function InstallProcessing({
     );
 }
 
-// ---------------------------------------------------------------------------
-//  Install code view — web only, when the user needs to download the app
-// ---------------------------------------------------------------------------
+// Install code view — web only, when the user needs to download the app.
 
 function InstallCodeHero({
     t,

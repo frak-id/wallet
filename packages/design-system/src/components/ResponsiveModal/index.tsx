@@ -18,40 +18,18 @@ import {
 import { responsiveModalHeaderStyle } from "./responsiveModal.css";
 
 type ResponsiveModalProps = {
-    /**
-     * Controlled open state.
-     */
     open: boolean;
-    /**
-     * Called when the open state should change.
-     */
     onOpenChange: (open: boolean) => void;
-    /**
-     * Accessible title (visually hidden but read by screen readers).
-     */
+    /** Visually hidden, read by screen readers. */
     title: string;
-    /**
-     * Accessible description (visually hidden but read by screen readers).
-     */
+    /** Visually hidden, read by screen readers. */
     description: string;
-    /**
-     * Optional header content rendered above the body (typically a close button).
-     * In the Drawer variant it is placed inside the DrawerHeader;
-     * in the Dialog variant it is rendered before the children.
-     */
+    /** Rendered inside the DrawerHeader on mobile, before the children on tablet+. */
     header?: ReactNode;
-    /**
-     * The modal body content.
-     */
     children: ReactNode;
 };
 
-/**
- * Renders a Dialog (centred overlay) on tablet+ and a bottom Drawer on mobile.
- *
- * Both variants receive the same accessible title / description
- * (visually hidden) and the same body content.
- */
+/** Dialog (centred overlay) on tablet+, bottom Drawer on mobile. */
 export function ResponsiveModal({
     open,
     onOpenChange,

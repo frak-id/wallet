@@ -8,12 +8,9 @@ type BannerVariant = "referral" | "inapp";
 type BannerOutcome = "clicked" | "dismissed";
 type PostPurchaseVariant = "referrer" | "referee";
 /**
- * Resolved click action reported with `share_button_clicked`.
- *
- * Every click now opens the sharing page, so this only describes the stored
- * merchant config. The named values are the ones the product has shipped;
- * arbitrary strings stay accepted so a config predating the migration is
- * reported faithfully rather than coerced.
+ * Resolved click action reported with `share_button_clicked`. It describes the
+ * stored merchant config only — every click opens the sharing page. Arbitrary
+ * strings stay accepted so an unknown config is reported, not coerced.
  */
 type ShareClickAction =
     | "share-modal"
@@ -27,13 +24,6 @@ export type SdkComponentEventMap = {
     share_button_clicked: ButtonBaseProps & {
         click_action: ShareClickAction;
     };
-    share_modal_error: ButtonBaseProps & {
-        error?: string;
-    };
-
-    // Wallet button (floating) — opens the sharing page and reports
-    // `share_button_clicked` like the share button, since both tags now
-    // land on the same surface.
 
     // Open in app — path lets us compare deep-link destinations once we add more.
     open_in_app_clicked: {

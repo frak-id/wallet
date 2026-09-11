@@ -1,6 +1,6 @@
 # routes/ — React Router v7 Flat Routes
 
-17 route files. Three categories: `app.*` (authenticated admin), `api.*` (JSON endpoints), `auth.*` (OAuth), plus standalone `webhooks.tsx` and `purchase.tsx`.
+Three categories: `app.*` (authenticated admin), `api.*` (JSON endpoints), `auth.*` (OAuth), plus standalone `webhooks.tsx`, `purchase.tsx`, `health.tsx` and `robots[.]txt.tsx`.
 
 ## ROUTE HIERARCHY
 
@@ -18,9 +18,10 @@
 /auth/*                    → auth.$.tsx (catch-all auth)
 /auth/login                → auth.login/route.tsx + error.server.tsx
 /api/purchase              → api.purchase.tsx (JSON)
-/api/mint                  → api.mint.tsx (JSON)
+/api/register              → api.register.tsx (JSON, inline embedded merchant registration)
 /purchase                  → purchase.tsx (standalone, no auth)
 /webhooks                  → webhooks.tsx (webhook handler)
+/health, /robots.txt       → health.tsx, robots[.]txt.tsx
 ```
 
 ## PATTERN
@@ -60,21 +61,6 @@ export async function action({ request }: Route.ActionArgs) {
 | `webhooks`   | `authenticate.webhook(request)` | `{ shop, topic, payload }` |
 | `purchase`   | None                            | Standalone page            |
 
-## SERVICE DEPENDENCIES
-
-| Route                  | Services Called                                                                                                                                                                               |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `app.tsx`              | `shopInfo`, `resolveMerchantId`, `doesThemeSupportBlock`, `fetchAllOnboardingData`                                                                                                            |
-| `app.appearance`       | `getI18nCustomizations`, `getAppearanceMetafield`, `doesThemeHasFrakButton`, `firstProductPublished`, `updateI18nCustomizations`, `updateAppearanceMetafield` |
-| `app.campaigns`        | `getOnchainProductInfo`                                                                                                                                                                       |
-| `app.funding`          | `getOnchainProductInfo`, `getCurrentPurchases`                                                                                                                                                |
-| `app.onboarding`       | `clearOnChainShopCache` (action only)                                                                                                                                                         |
-| `app.settings`         | `getOnchainProductInfo`, `getWebPixel`, `doesThemeHasFrakActivated`, `getMainThemeId`, `resolveMerchantId`, `frakWebhookStatus`, `getWebhooks`                                                 |
-| `app.settings.pixel`   | `createWebPixel`, `deleteWebPixel` (action only)                                                                                                                                              |
-| `app.settings.webhook` | `createWebhook`, `deleteWebhook` (action only)                                                                                                                                                |
-| `api.purchase`         | `startupPurchase`                                                                                                                                                                             |
-| `api.mint`             | `getProductSetupCode`                                                                                                                                                                         |
-
 ## CONVENTIONS
 
 - **Parallel fetching**: `Promise.all()` in loaders when multiple services needed.
@@ -83,7 +69,6 @@ export async function action({ request }: Route.ActionArgs) {
 - **Return `Response.json()`**: Not plain objects from loaders/actions.
 - **Layout data access**: Child routes use `useRouteLoaderData<typeof loader>("routes/app")` for parent data.
 - **Route types**: `Route.LoaderArgs` / `Route.ActionArgs` from React Router v7 type generation.
-- **Types over interfaces**: Prefer `type` aliases. Use `interface` only when declaration merging is required.
 
 ## ANTI-PATTERNS
 

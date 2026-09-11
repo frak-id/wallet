@@ -1,8 +1,3 @@
-/**
- * Tests for openSso action, focused on proof-of-possession minting for the
- * popup flow.
- */
-
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../config/clientId", () => ({

@@ -177,9 +177,7 @@ function upgrade_module_1_0_1($module)
     //    it, upgraded installs silently lose the `ps_cronjobs` integration
     //    while fresh installs keep it. `actionOrderSlipAdd` is the credit-
     //    slip / refund hook — fires on every refund (full + partial) so
-    //    upgraded installs gain partial-refund coverage without a reinstall,
-    //    matching the WC / Magento siblings' "any refund voids attribution"
-    //    contract.
+    //    upgraded installs gain partial-refund coverage without a reinstall.
     $core_hooks = [
         'header',
         'actionFrontControllerSetMedia',

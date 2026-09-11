@@ -69,7 +69,9 @@ type RowMenuItemProps = ButtonHTMLAttributes<HTMLButtonElement> & {
     /** Render destructive (red) styling. */
     destructive?: boolean;
     children: ReactNode;
-} & ({ asChild: true; icon?: never } | { asChild?: false; icon?: ReactNode }); // its own icon, so the two are mutually exclusive at the type level. // `icon` only applies to the default button; an `asChild` child carries
+    // `icon` only applies to the default button; an `asChild` child carries
+    // its own icon, so the two are mutually exclusive at the type level.
+} & ({ asChild: true; icon?: never } | { asChild?: false; icon?: ReactNode });
 
 /**
  * A single menu row. Renders a `<button>` by default (with an optional leading

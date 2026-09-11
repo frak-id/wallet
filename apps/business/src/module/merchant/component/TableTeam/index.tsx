@@ -114,9 +114,8 @@ function AdminRow({
 
     const canRemove = useMemo(() => {
         if (admin.isOwner) return false;
-        // Removal is now row-id-keyed (DELETE /:adminId, §2.7), so
-        // walletless admins are removable too — a full-access caller can
-        // remove anyone, otherwise only the admin's own row (self-removal).
+        // A full-access caller can remove anyone; otherwise only the
+        // admin's own row (self-removal).
         if (hasAccess) return true;
         if (admin.wallet !== null) {
             return isAddressEqual(

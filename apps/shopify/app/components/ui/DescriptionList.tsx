@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 import * as styles from "./DescriptionList.css";
 
-interface DescriptionListItem {
+type DescriptionListItem = {
     term: string;
     description: ReactNode;
-}
+};
 
-interface DescriptionListProps {
+type DescriptionListProps = {
     items: DescriptionListItem[];
-}
+};
 
 export function DescriptionList({ items }: DescriptionListProps) {
     return (

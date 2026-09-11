@@ -20,12 +20,11 @@ type MoneriumFlowState = {
     /** Current visible screen. */
     screen: MoneriumFlowScreen;
 
-    /* ── Transfer form data (survives screen transitions) ────────── */
+    // Transfer form data, survives screen transitions.
     amount: string;
     note: string;
     selectedIbanOverride: IbanEntry | null;
 
-    /* ── Actions ─────────────────────────────────────────────────── */
     goTo: (screen: MoneriumFlowScreen) => void;
     setAmount: (amount: string) => void;
     setNote: (note: string) => void;
@@ -54,8 +53,6 @@ export const moneriumFlowStore = create<MoneriumFlowState>()((set) => ({
     setSelectedIban: (selectedIbanOverride) => set({ selectedIbanOverride }),
     resetTransfer: () => set({ ...transferDefaults, screen: "loading" }),
 }));
-
-/* ── Selectors ───────────────────────────────────────────────────── */
 
 export const selectScreen = (s: MoneriumFlowState) => s.screen;
 export const selectAmount = (s: MoneriumFlowState) => s.amount;

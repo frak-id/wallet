@@ -74,7 +74,6 @@ if (!$dev) {
     businessImage = image.ref;
 }
 
-// Wallet service (owns the ingress and routes paths)
 export const businessService = new KubernetesService(
     "business",
     {
@@ -116,7 +115,6 @@ export const businessService = new KubernetesService(
             ],
         },
 
-        // Ingress config with path-based routing
         ingress: {
             host: `${subDomain}.frak.id`,
             tlsSecretName: "business-tls",

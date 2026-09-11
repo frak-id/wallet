@@ -125,11 +125,6 @@ describe("useMediaQuery", () => {
         });
     });
 
-    // Note: SSR tests are skipped because the hook only checks `typeof window !== "undefined"`
-    // and doesn't check if `window.matchMedia` exists. The hook would throw an error
-    // if `matchMedia` doesn't exist, so we can't test that scenario without modifying
-    // the hook implementation.
-
     it("should update when query changes", () => {
         const { rerender } = renderHook(({ query }) => useMediaQuery(query), {
             initialProps: { query: "(min-width: 768px)" },

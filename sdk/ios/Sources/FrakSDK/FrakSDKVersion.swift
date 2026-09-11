@@ -1,10 +1,9 @@
 public enum FrakSDKVersion {
-    // Kept in sync by hand with package.json until a release pipeline owns both.
+    // Hand-written, and gated as a set with every other version site by `check:native-versions`.
     public static let current: String = "1.0.0-beta.3"
 
-    // `@_spi` is Swift's twin of Android's `@InternalFrakApi`: it works here (rather than plain
-    // `internal`) because this package is distributed as source through SwiftPM, so a consumer
-    // still compiles against these declarations and needs an explicit opt-in to reach them.
+    // `@_spi` rather than plain `internal`: this package is distributed as source through
+    // SwiftPM, so a consumer compiles against these declarations and needs an explicit opt-in.
 
     /// Wire plumbing for `HTTPClient`; not merchant API.
     @_spi(FrakInternal)

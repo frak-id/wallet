@@ -179,9 +179,7 @@ export const headers: HeadersFunction = (headersArgs) => {
 
 /**
  * Show the navigation menu only if the theme supports the block and onboarding
- * critical steps are complete. Wallet connection is no longer required here —
- * it is requested at the point of need (product registration, bank actions).
- * @param isThemeSupported
+ * critical steps are complete.
  */
 function Navigation({
     isThemeSupported,

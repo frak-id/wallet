@@ -1,46 +1,15 @@
 # components/ — Polaris UI Components
 
-36 files across 14 feature directories. All use Shopify Polaris v13. No custom design system.
-
-## STRUCTURE
-
-```
-components/
-├── Stepper/              # 6-step onboarding wizard (9 files, largest)
-│   ├── index.tsx         # Orchestrator: Suspense/Await, step validation
-│   ├── CollapsibleStep.tsx
-│   └── Step1–6.tsx
-├── Campaign/             # Campaign creation + status table
-├── Funding/              # Bank display + Purchase creation
-│   ├── Bank.tsx
-│   └── Purchase.tsx
-├── Appearance/           # Theme customization tabs
-│   ├── ButtonTab.tsx
-│   ├── CustomizationsTab.tsx
-├── Customizations/       # Logo field (wording editors are Frak-managed, removed)
-│   └── Field.tsx         # LogoField
-├── ModalPreview/         # Markdown → React preview (uses CSS modules)
-├── SocialPreview/        # Social media preview (uses CSS modules)
-├── WalletGated/          # Wallet connection gate + timeout error (connection gate)
-├── Webhook/              # Webhook status + create/delete
-├── Pixel/                # Web pixel create/delete
-├── Instructions/         # Reusable instruction card
-├── ConnectedShopInfo/    # Read-only shop info display
-├── Activated/            # Success badge
-└── Skeleton/             # Polaris skeleton loader
-```
+Feature-organized Polaris v13 UI. No custom design system. `Stepper/` is the
+largest feature (the onboarding wizard); `ui/` holds the shared primitives.
 
 ## CONVENTIONS
 
 - **Entry point**: Always `index.tsx`. No barrel files.
 - **Feature isolation**: Each dir = one feature. Cross-imports between features are rare.
-- **Custom CSS** (rare — Polaris handles most styling): CSS Modules in `ModalPreview/`
-  and `SocialPreview/`; vanilla-extract (`*.css.ts`) in `Appearance/ExplorerTab` (two-column
-  layout around a shared `@frak-labs/ui-preview` vanilla-extract style). New custom CSS should
-  prefer vanilla-extract, per the FRA-278 `.module.css` → vanilla-extract migration. Everything
-  else stays Polaris-only.
+- **Custom CSS** (rare — Polaris handles most styling): vanilla-extract `*.css.ts` only.
+  There are no CSS Modules in this app; do not add `.module.css`.
 - **Props**: Prefer `type {ComponentName}Props` aliases.
-- **Types over interfaces**: Prefer `type` aliases. Use `interface` only when declaration merging is required.
 
 ## UI PATTERNS
 
@@ -70,7 +39,7 @@ components/
 
 ## STEPPER ARCHITECTURE
 
-6-step onboarding wizard. Each step wraps in `CollapsibleStep`.
+One `StepN` component per key in `utils/onboarding.ts`'s `stepValidations`. Each wraps in `CollapsibleStep`.
 
 **Data flow**: Route loader → `fetchAllOnboardingData()` → `<Suspense><Await>` → `validateCompleteOnboarding()` → render steps with enable/disable.
 

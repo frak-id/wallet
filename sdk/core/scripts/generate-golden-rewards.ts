@@ -1,86 +1,9 @@
 /**
- * Generates `src/rewards/fixtures/golden-rewards.json` — the frozen
- * cross-platform reward-selection and currency-formatting fixtures.
- *
- * Re-runnable, but deliberately produces IDENTICAL output every time: every
- * input below is a hardcoded constant, there is no randomness, and no time is
- * read from the clock — the reference "now" is the pinned epoch constant
- * `FIXED_NOW_MS`. A fixture regenerated with fresh inputs each run is a
- * round-trip test, not a golden fixture — round-trip tests pass even when two
- * implementations are identically wrong. The whole point of this corpus is to
- * catch the case where Kotlin and Swift reimplement `formatEstimatedReward`
- * and `selectBestReward` and are consistently, silently different from the TS.
- *
- * Run: `bun run fixtures:generate:rewards` from `sdk/core/`.
- *
- * Consumers (must never diverge, by construction):
- *  - `src/rewards/format.test.ts`, `src/rewards/value.test.ts`,
- *    `src/rewards/select.test.ts` (this package)
- *  - `src/utils/format/formatAmount.test.ts` (this package)
- *  - native SDKs read this same repo path via `@frak-labs/core-sdk/rewards/fixtures`;
- *    never copy it
- *
- * ---------------------------------------------------------------------------
- * WHY EVERY EXPECTED STRING IS RECORDED TWICE — DO NOT "CLEAN THIS UP"
- * ---------------------------------------------------------------------------
- * Each formatted string is emitted BOTH literally (`formatted`) AND as an
- * explicit array of codepoint labels (`formattedCodepoints`, e.g.
- * `["U+0031", "U+202F", "U+0032", ..., "U+00A0", "U+20AC"]`).
- *
- * This looks like duplicated data. It is not, and deleting either half makes
- * this corpus much worse. ICU currency formatting emits characters that are
- * invisible in every diff viewer, most editors and most test runners:
- *
- *  - fr-FR (EUR) groups thousands with U+202F NARROW NO-BREAK SPACE, but
- *    separates the amount from the "€" with U+00A0 NO-BREAK SPACE. Two
- *    DIFFERENT invisible spaces inside the SAME string — `"1 234,56 €"` above
- *    is `1 <U+202F> 2 3 4 , 5 6 <U+00A0> €`.
- *  - Older CLDR data (pre-CLDR-34 / pre-ICU-63, which ships on older Android
- *    API levels) uses U+00A0 for the group separator too.
- *  - Some locales use U+2212 MINUS SIGN rather than ASCII "-" for negatives.
- *
- * A Kotlin or Swift assertion failing on `expected "1 234,56 €" but was
- * "1 234,56 €"` is an unreadable mystery that costs an afternoon. The same
- * failure printed as `U+202F` vs `U+00A0` at index 1 is a one-glance
- * diagnosis. So: assert on `formatted`, print `formattedCodepoints` on
- * failure. Keep both.
- *
- * For the same reason the emitted JSON is post-processed to pure ASCII — every
- * codepoint above U+007F is written as a `\uXXXX` escape (so U+00A0 is
- * `\u00a0`, and even "€" is `\u20ac`). That makes the file safe to open, diff
- * and review in any editor, and means an editor that trims or normalises
- * whitespace cannot silently corrupt it. Any future generator writing into
- * this corpus must preserve that property.
- *
- * ---------------------------------------------------------------------------
- * ICU BASELINE — READ BEFORE DEBUGGING A SEPARATOR MISMATCH
- * ---------------------------------------------------------------------------
- * Generated under ICU 74.2 / CLDR 44 (Bun 1.3.x, Node 24.x bundles the same
- * major). The fr-FR expectations are only interpretable against a known
- * baseline, so it is recorded here rather than in the JSON — putting it in the
- * JSON would break byte-determinism across machines with different runtimes.
- *
- * Locales covered — exactly the three the SDK can ever emit (see
- * `src/constants/locales.ts`; `getSupportedCurrency` falls everything else
- * back to `eur`), all left-to-right, no RTL and therefore no U+200E/U+200F
- * directional marks anywhere in this corpus:
- *
- *   eur -> fr-FR    usd -> en-US    gbp -> en-GB
- *
- * Known fragility, stated plainly: the fr-FR entries whose value is >= 1000
- * are ICU-version-dependent. They assert U+202F as the group separator, which
- * is the CLDR 34 / ICU 63 behaviour; a runtime with older CLDR data emits
- * U+00A0 there instead and the fixture fails for a reason that is nobody's
- * bug. Treat a U+202F vs U+00A0 group-separator mismatch as an ENVIRONMENT
- * finding — report the runtime's ICU/CLDR version — not a code defect. fr-FR
- * values below 1000 carry only the long-stable U+00A0 before "€"; en-US and
- * en-GB use ASCII separators and symbols and are not at risk.
- *
- * Negative amounts are deliberately EXCLUDED from this corpus. Negative
- * currency formatting is a second uncontrolled ICU drift axis (ASCII U+002D
- * vs U+2212 MINUS SIGN, and sign placement relative to the symbol), and the
- * SDK never displays a negative reward. Do not "fill the gap" without
- * re-reading this paragraph.
+ * Generates `src/rewards/fixtures/golden-rewards.json` (`bun run
+ * fixtures:generate:rewards`), byte-identical on every run: all inputs are
+ * hardcoded and "now" is `FIXED_NOW_MS`, so the native ports diff against
+ * frozen output. Generated under ICU 74.2 / CLDR 44 — a U+202F vs U+00A0
+ * group-separator mismatch is a runtime CLDR difference, not a defect.
  */
 
 import {
@@ -115,7 +38,7 @@ const FIXED_NOW_ISO = new Date(FIXED_NOW_MS).toISOString();
 
 const unix = (iso: string) => Math.floor(new Date(iso).getTime() / 1000);
 
-/** See the header: the diagnosable half of every expected string. */
+/** fr-FR mixes U+202F and U+00A0: one label per codepoint makes it readable. */
 const codepoints = (value: string): string[] =>
     Array.from(value, (char) => {
         const code = char.codePointAt(0) ?? 0;
@@ -224,8 +147,6 @@ type Fixture =
     | SelectDisplayCampaignFixture
     | SelectBestRewardFixture;
 
-// --- Hardcoded reward inputs -----------------------------------------------
-
 /** Same value in every currency — used when the currency key is not the point. */
 const flat = (value: number): TokenAmountType => ({
     amount: value,
@@ -303,8 +224,6 @@ const tieredMixed: EstimatedReward = {
         { minValue: 100, amount: perCurrency(15, 16.5, 12.75) },
     ],
 };
-
-// --- Hardcoded campaign inputs ---------------------------------------------
 
 const campaign = (opts: {
     id: string;
@@ -403,8 +322,6 @@ const PRODUCTS_MATCHING_SCOPE: ProductDetails[] = [
     { productId: "p-1", sku: "SKU-42", name: "Scoped item", quantity: 1 },
     { productId: "p-2", sku: "SKU-99", name: "Other item", quantity: 2 },
 ];
-
-// --- Fixture builders ------------------------------------------------------
 
 function formatAmountFixture(
     name: string,
@@ -565,8 +482,6 @@ function selectBestRewardFixture(
             : null,
     };
 }
-
-// --- Corpus ----------------------------------------------------------------
 
 /**
  * The five amounts every currency is exercised with: zero, a small integer, a
@@ -966,9 +881,9 @@ function buildFixtures(): Fixture[] {
 }
 
 /**
- * Escape every codepoint above U+007F as `\uXXXX` so the corpus is pure ASCII.
- * See the header: this is what makes the invisible ICU spaces reviewable in a
- * diff, and it must be preserved by any future generator.
+ * Escape every codepoint above U+007F as `\uXXXX` so the corpus is pure ASCII:
+ * that keeps the invisible ICU spaces reviewable in a diff, and safe from an
+ * editor that normalises whitespace.
  */
 function toAsciiJson(value: unknown): string {
     return JSON.stringify(value, null, 4).replace(

@@ -207,41 +207,31 @@ export const businessSessionContext = new Elysia({
         };
     })
     .macro({
-        // NOTE on macro semantics: Elysia passes the route-side value as the
-        // macro argument (`{ requireStepUp: true }` ⇒ `enabled = true`).
-        // Guards must therefore no-op on a FALSY argument — the previous
-        // `(skip?: boolean)` shape silently disabled every `macro: true`
-        // usage.
-        //
-        // NOTE: the design doc (§4.5) sketched `requireWallet` and
-        // `businessAuthenticated` macros, but no backend route needs them —
-        // plain authentication gates live in the handlers (via the
-        // plugin-resolved sessions), and wallet-signed bank actions are pure
-        // frontend transactions (doc §1.2, `useCapabilities()`).
+        // Elysia passes the route-side value as the macro argument
+        // (`{ requireStepUp: true }` ⇒ `enabled = true`), so a guard must
+        // no-op on a falsy argument or it disables every `macro: true` usage.
         /**
          * Sensitive-action guard: requires a 2FA verification within the
-         * 5-minute freshness window (§4.8 of the design doc). Embedded
-         * Shopify sessions are exempt — Shopify admin enforces its own
-         * staff 2FA (§4.11). On a stale session, emits the
-         * `x-frak-auth-error: step-up-required` protocol so the Eden fetch
+         * 5-minute freshness window. Embedded Shopify sessions are exempt —
+         * Shopify admin enforces its own staff 2FA. On a stale session, emits
+         * the `x-frak-auth-error: step-up-required` protocol so the Eden fetch
          * wrapper can open the right 2FA modal and transparently retry.
          */
         requireStepUp(enabled?: boolean) {
             if (!enabled) return;
 
             return {
-                // Consumes the plugin-resolved session (§2.3) rather than
+                // Consumes the plugin-resolved session rather than
                 // re-verifying the Shopify JWT + re-resolving the DB session.
                 beforeHandle: async ({ shopifySession, businessSession }) => {
-                    // Embedded Shopify admin session — exempt (§4.11).
+                    // Embedded Shopify admin session — exempt.
                     if (shopifySession) return;
 
                     if (!businessSession) {
                         return status(401, "Unauthorized");
                     }
 
-                    // Shared step-up freshness gate (S1) — throws the
-                    // `StepUpRequiredError` protocol when stale/never-verified.
+                    // Throws `StepUpRequiredError` when stale/never-verified.
                     await assertStepUpFresh(businessSession);
                 },
             };
@@ -251,15 +241,14 @@ export const businessSessionContext = new Elysia({
          * (deposits/withdrawals/monthly-bills). Deliberately independent from
          * `getMerchantPermissions`, whose platform-admin grant is read-only
          * (`read: true, write: false`) and must never authorize mutations.
-         * Wallet allow-list or verified @frak-labs.com email (§7.3); the
-         * Shopify session path is always rejected here.
+         * Wallet allow-list or verified @frak-labs.com email; the Shopify
+         * session path is always rejected here.
          */
         platformAdminAuthenticated(enabled?: boolean) {
             if (!enabled) return;
 
             return {
-                // Consumes the plugin-resolved session (§2.3); the Shopify
-                // session path is never a platform admin, so it's ignored.
+                // The Shopify session path is never a platform admin.
                 beforeHandle: async ({ businessSession }) => {
                     if (!businessSession) {
                         return status(401, "Unauthorized");

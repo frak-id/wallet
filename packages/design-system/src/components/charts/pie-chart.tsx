@@ -1,5 +1,6 @@
 import { Group } from "@visx/group";
 import { ParentSize } from "@visx/responsive";
+import clsx from "clsx";
 import { pie as d3Pie } from "d3-shape";
 import type { Transition } from "motion/react";
 import {
@@ -14,7 +15,6 @@ import {
     useRef,
     useState,
 } from "react";
-import { cn } from "./lib/utils";
 import {
     defaultPieColors,
     type PieArcData,
@@ -306,7 +306,7 @@ export function PieChart({
     if (fixedSize) {
         return (
             <div
-                className={cn(
+                className={clsx(
                     "frak-chart",
                     "relative flex items-center justify-center",
                     className
@@ -339,7 +339,7 @@ export function PieChart({
     // Otherwise use ParentSize for responsive sizing
     return (
         <div
-            className={cn(
+            className={clsx(
                 "frak-chart",
                 "relative aspect-square w-full",
                 className

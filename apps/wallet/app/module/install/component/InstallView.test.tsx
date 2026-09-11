@@ -84,12 +84,6 @@ function Layout({ children }: { children: React.ReactNode }) {
     return <div data-testid="processing-layout">{children}</div>;
 }
 
-/**
- * The processing branch is what the refactor actually moved: it used to go
- * through `useExecutePendingActions` (and therefore TanStack Router) and now
- * calls the router-free drain plus an injected navigation adapter, so that the
- * standalone `/install` entrypoint can render the very same component.
- */
 describe("InstallView — processing branch", () => {
     beforeEach(({ mockSession }) => {
         vi.clearAllMocks();
@@ -521,7 +515,7 @@ describe("InstallView — install-code branch, post-install detection", () => {
         window.location.hash = "";
     });
 
-    test("no fragment arrives: behaviour is byte-identical to today", async ({
+    test("no fragment arrives: falls back to the bare merchantId/anonymousId pair", async ({
         queryWrapper,
     }) => {
         render(

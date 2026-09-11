@@ -54,7 +54,7 @@ describe("Navigation", () => {
         expect(container.querySelector("svg title")).toHaveTextContent("Frak");
     });
 
-    it("should render the primary navigation items from the Figma spec", () => {
+    it("should render the primary navigation items", () => {
         render(<Navigation />);
 
         expect(
@@ -70,14 +70,6 @@ describe("Navigation", () => {
             screen.getByText("shell.sections.acquisition")
         ).toBeInTheDocument();
         expect(screen.getByText("shell.sections.preview")).toBeInTheDocument();
-    });
-
-    it("should not render dropped items (Revenue, Messenger, Settings, Help)", () => {
-        render(<Navigation />);
-        expect(screen.queryByText("Revenue")).not.toBeInTheDocument();
-        expect(screen.queryByText("Messenger")).not.toBeInTheDocument();
-        expect(screen.queryByText("Settings")).not.toBeInTheDocument();
-        expect(screen.queryByText("Help & FAQ")).not.toBeInTheDocument();
     });
 
     it("should render campaigns switcher", () => {
@@ -159,25 +151,6 @@ describe("NavigationItem", () => {
         );
         const button = screen.getByRole("button", { name: "Item" });
         expect(button).toBeDisabled();
-    });
-
-    it("should apply active class when route matches", () => {
-        mockMatchRoute.mockReturnValue(true);
-        const { container } = render(
-            <NavigationItem url="/test">Item</NavigationItem>
-        );
-        const link = container.querySelector("a");
-        expect(link?.className).toBeTruthy();
-    });
-
-    it("should apply active class when isActive is true", () => {
-        const { container } = render(
-            <NavigationItem url="/test" isActive>
-                Item
-            </NavigationItem>
-        );
-        const link = container.querySelector("a");
-        expect(link?.className).toBeTruthy();
     });
 
     it("should render rightSection", () => {

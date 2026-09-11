@@ -4,17 +4,9 @@ import { getInvoke } from "../tauri";
 /**
  * Bridge to the local `tauri-plugin-frak-firebase` plugin (Crashlytics half).
  *
- * Forwards user identification, custom keys, breadcrumb logs and non-fatal
- * errors to Firebase Crashlytics on iOS and Android. All calls are no-ops
- * outside Tauri mobile so it's safe to invoke them from shared code.
- *
- * Native (NSException, JVM uncaught, NDK signal) crash capture is wired by
- * the Crashlytics SDK itself — this module only adds the **context** that
- * makes those reports actionable.
- *
- * Failures are swallowed and surfaced to the console so a misconfigured
- * Firebase project can't take down the calling code path. Crashlytics is
- * an observability sink, not a critical-path dependency.
+ * The facade is `undefined` outside Tauri mobile, so callers must use `?.`.
+ * Failures are swallowed: Crashlytics is an observability sink, never a
+ * critical-path dependency.
  */
 
 const INVOKE_SET_USER_ID = "plugin:frak-firebase|set_user_id";
@@ -23,23 +15,25 @@ const INVOKE_LOG = "plugin:frak-firebase|log";
 const INVOKE_RECORD_ERROR = "plugin:frak-firebase|record_error";
 const INVOKE_SET_COLLECTION_ENABLED =
     "plugin:frak-firebase|set_collection_enabled";
-// Smoke-test commands — deliberately produce a crash so the Crashlytics
-// dashboard end-to-end wiring can be verified on TestFlight / Play Internal
-// builds (matching signing identity → matching dSYM/mapping upload).
 const INVOKE_TEST_CRASH_NATIVE = "plugin:frak-firebase|test_crash_native";
 const INVOKE_TEST_RUST_PANIC = "plugin:frak-firebase|test_rust_panic";
 
-async function tauriInvoke<T>(cmd: string, args?: unknown): Promise<T> {
-    const invoke = await getInvoke();
-    return invoke<T>(cmd, args as Record<string, unknown> | undefined);
+async function safeInvoke(
+    cmd: string,
+    label: string,
+    args?: Record<string, unknown>
+): Promise<void> {
+    try {
+        const invoke = await getInvoke();
+        await invoke<void>(cmd, args);
+    } catch (err) {
+        console.warn(`crashlytics.${label} failed`, err);
+    }
 }
 
 /**
- * Coerce arbitrary key values to a string. Crashlytics native APIs accept
- * heterogeneous types but stringifying on the JS side keeps the dashboard
- * uniform and avoids platform-specific surprises (e.g. `Boolean(true)` vs
- * `"true"`). Numbers / booleans / Date are passed through `String()`;
- * objects fall back to JSON.
+ * Stringify on the JS side so the dashboard stays uniform across the two
+ * native APIs, which each coerce heterogeneous values their own way.
  */
 function stringifyValue(value: unknown): string {
     if (typeof value === "string") return value;
@@ -62,136 +56,61 @@ function stringifyValue(value: unknown): string {
 export const crashlytics = !IS_TAURI
     ? undefined
     : {
-          /**
-           * Identify the current user (typically the wallet address). Pass an
-           * empty string to clear it on logout.
-           */
+          /** Pass an empty string to clear the user on logout. */
           async setUserId(userId: string): Promise<void> {
-              if (!IS_TAURI) return;
-              try {
-                  await tauriInvoke<void>(INVOKE_SET_USER_ID, { userId });
-              } catch (err) {
-                  console.warn("crashlytics.setUserId failed", err);
-              }
+              await safeInvoke(INVOKE_SET_USER_ID, "setUserId", { userId });
           },
 
-          /**
-           * Attach a custom key/value to subsequent crash reports. Useful for
-           * splits like `env`, `feature_flag`, `last_route`. Crashlytics keeps
-           * up to 64 keys per app — old keys are evicted FIFO once the cap is hit.
-           */
+          /** Crashlytics keeps up to 64 keys per app, evicted FIFO. */
           async setKey(key: string, value: unknown): Promise<void> {
-              if (!IS_TAURI) return;
-              try {
-                  await tauriInvoke<void>(INVOKE_SET_KEY, {
-                      key,
-                      value: stringifyValue(value),
-                  });
-              } catch (err) {
-                  console.warn("crashlytics.setKey failed", err);
-              }
+              await safeInvoke(INVOKE_SET_KEY, "setKey", {
+                  key,
+                  value: stringifyValue(value),
+              });
           },
 
-          /**
-           * Append a breadcrumb log entry. The next crash report will include
-           * the most recent ~64 KB of logs. Prefer short, structured messages
-           * over verbose dumps.
-           */
+          /** Breadcrumb; the next report carries the most recent ~64 KB. */
           async log(message: string): Promise<void> {
-              if (!IS_TAURI) return;
-              try {
-                  await tauriInvoke<void>(INVOKE_LOG, { message });
-              } catch (err) {
-                  console.warn("crashlytics.log failed", err);
-              }
+              await safeInvoke(INVOKE_LOG, "log", { message });
           },
 
           /**
-           * Record a non-fatal error. Shows up in Crashlytics under the same
-           * dashboard as fatal crashes, distinguished by the "non-fatal" badge.
-           *
-           * The original error's `stack` is attached as a breadcrumb on the next
-           * report so the JS frames survive the native bridge — Crashlytics's own
-           * exception-grouping uses `name` + `message`.
+           * Record a non-fatal error. `stack` rides along as a breadcrumb —
+           * Crashlytics groups on `name` + `message` only.
            */
           async recordError(err: unknown): Promise<void> {
-              if (!IS_TAURI) return;
-              try {
-                  const error =
-                      err instanceof Error ? err : new Error(String(err));
-                  await tauriInvoke<void>(INVOKE_RECORD_ERROR, {
-                      name: error.name || "Error",
-                      message: error.message || "",
-                      stack: error.stack,
-                  });
-              } catch (innerErr) {
-                  console.warn("crashlytics.recordError failed", innerErr);
-              }
+              const error = err instanceof Error ? err : new Error(String(err));
+              await safeInvoke(INVOKE_RECORD_ERROR, "recordError", {
+                  name: error.name || "Error",
+                  message: error.message || "",
+                  stack: error.stack,
+              });
           },
 
-          /**
-           * Toggle Crashlytics collection at runtime. Takes effect on the next
-           * app start (per Firebase SDK behaviour). Use this to back a Settings
-           * opt-out toggle.
-           */
+          /** Takes effect on the next app start (Firebase SDK behaviour). */
           async setCollectionEnabled(enabled: boolean): Promise<void> {
-              if (!IS_TAURI) return;
-              try {
-                  await tauriInvoke<void>(INVOKE_SET_COLLECTION_ENABLED, {
-                      enabled,
-                  });
-              } catch (err) {
-                  console.warn("crashlytics.setCollectionEnabled failed", err);
-              }
+              await safeInvoke(
+                  INVOKE_SET_COLLECTION_ENABLED,
+                  "setCollectionEnabled",
+                  { enabled }
+              );
           },
 
           /**
-           * Smoke-test: trigger a synthetic *native* fatal so the
-           * Crashlytics dashboard end-to-end wiring can be verified.
-           *
-           * On iOS this calls `Crashlytics.crashlytics().crash()` which
-           * raises `SIGABRT`; on Android it throws an uncaught
-           * `RuntimeException` from the main thread. Either way the SDK's
-           * signal/exception handler captures the crash, persists it, and
-           * uploads it on the next launch. **The current session dies.**
-           *
-           * Do NOT call from production code paths. Wire to a hidden
-           * settings / debug button so it can only be triggered intentionally.
+           * Smoke test: kills the current session with a real native crash
+           * (SIGABRT on iOS, uncaught exception on Android). Wire to a hidden
+           * debug button only.
            */
           async testCrashNative(): Promise<void> {
-              if (!IS_TAURI) return;
-              try {
-                  await tauriInvoke<void>(INVOKE_TEST_CRASH_NATIVE);
-              } catch (err) {
-                  console.warn("crashlytics.testCrashNative failed", err);
-              }
+              await safeInvoke(INVOKE_TEST_CRASH_NATIVE, "testCrashNative");
           },
 
           /**
-           * Smoke-test: trigger a synthetic *Rust* panic so the panic-hook
-           * → disk → next-launch forwarding pipeline can be verified.
-           *
-           * In release builds (`panic = "abort"`) this also crashes the
-           * process via `SIGABRT`, so Crashlytics records two reports across
-           * two launches:
-           *   - fatal native crash (this launch)
-           *   - non-fatal `RustPanic` issue with the persisted JSON payload
-           *     (next launch — the native plugin reads + reports + deletes)
-           *
-           * In dev builds (`panic = "unwind"`) the JS promise rejects, the
-           * panic hook still writes to disk, and you only see the non-fatal
-           * on the next launch.
-           *
-           * Same warning as `testCrashNative` — do NOT call from production.
+           * Smoke test for the panic-hook → disk → next-launch pipeline. In
+           * release builds (`panic = "abort"`) the process dies too. Wire to
+           * a hidden debug button only.
            */
           async testRustPanic(): Promise<void> {
-              if (!IS_TAURI) return;
-              try {
-                  await tauriInvoke<void>(INVOKE_TEST_RUST_PANIC);
-              } catch (err) {
-                  // Expected in dev builds (panic="unwind" → promise rejects).
-                  // Release builds never reach here — the process dies first.
-                  console.warn("crashlytics.testRustPanic returned", err);
-              }
+              await safeInvoke(INVOKE_TEST_RUST_PANIC, "testRustPanic");
           },
       };
