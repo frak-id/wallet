@@ -9,10 +9,14 @@ import {
 // ── DB mock ──────────────────────────────────────────────────────────────────
 const mockWhere = vi.fn();
 const mockValues = vi.fn();
+const mockSelect = vi.fn((_projection?: Record<string, unknown>) => ({
+    from: () => ({ where: mockWhere }),
+}));
 
 vi.mock("../db.server", () => ({
     drizzleDb: {
-        select: () => ({ from: () => ({ where: mockWhere }) }),
+        select: (projection?: Record<string, unknown>) =>
+            mockSelect(projection),
         insert: () => ({ values: mockValues }),
     },
 }));
@@ -274,27 +278,33 @@ describe("getCurrentPurchases", () => {
 
 // ── getPurchase ───────────────────────────────────────────────────────────────
 describe("getPurchase", () => {
+    const fakePurchase = {
+        amount: "50",
+        currency: "usd",
+        status: "active" as const,
+        txHash: null,
+        txStatus: null,
+    };
+
     it("should return purchase when found", async () => {
-        const fakePurchase = {
-            id: 1,
-            shopId: 12345,
-            shop: "test.myshopify.com",
-            purchaseId: 7,
-            confirmationUrl: "https://shopify.com/confirm/7",
-            amount: "50",
-            currency: "usd",
-            status: "active" as const,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            txHash: null,
-            txStatus: null,
-            bank: "0x1234567890abcdef1234567890abcdef12345678",
-        };
         mockWhere.mockResolvedValue([fakePurchase]);
 
         const result = await getPurchase(7);
 
         expect(result).toEqual(fakePurchase);
+    });
+
+    it("never exposes the shop domain or bank address", async () => {
+        mockWhere.mockResolvedValue([fakePurchase]);
+        mockSelect.mockClear();
+
+        await getPurchase(7);
+
+        const columns = Object.keys(mockSelect.mock.calls[0]?.[0] ?? {});
+        expect(columns).not.toHaveLength(0);
+        for (const secret of ["shop", "shopId", "bank", "confirmationUrl"]) {
+            expect(columns).not.toContain(secret);
+        }
     });
 
     it("should return undefined when not found", async () => {
