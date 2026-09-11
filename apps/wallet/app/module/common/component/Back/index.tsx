@@ -42,7 +42,6 @@ export function Back({
                     replace={replace}
                     aria-disabled={disabled}
                     aria-label={ariaLabel}
-                    viewTransition
                     className={styles.actionButton}
                 >
                     <GlassButton icon={icon} disabled={disabled} />
