@@ -1,3 +1,4 @@
+import { tablet } from "@frak-labs/design-system/breakpoints";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, easing, transition } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
@@ -9,17 +10,17 @@ import {
 export const header = style({
     position: "fixed",
     top: 0,
-    left: "240px",
+    left: "64px",
     right: 0,
     zIndex: 1,
     height: "70px",
-    padding: `0 ${alias.spacing.l}`,
+    padding: `0 ${alias.spacing.s}`,
     background: vars.surface.background,
     borderBottom: `1px solid ${vars.border.subtle}`,
     "@media": {
-        "screen and (max-width: 768px)": {
-            left: "64px",
-            padding: `0 ${alias.spacing.s}`,
+        [`screen and (min-width: ${tablet}px)`]: {
+            left: "240px",
+            padding: `0 ${alias.spacing.l}`,
         },
     },
 });
@@ -40,11 +41,11 @@ export const headerLeft = style({
 export const headerRight = style({
     display: "flex",
     alignItems: "center",
-    gap: alias.spacing.l,
+    gap: alias.spacing.s,
     flexShrink: 0,
     "@media": {
-        "screen and (max-width: 768px)": {
-            gap: alias.spacing.s,
+        [`screen and (min-width: ${tablet}px)`]: {
+            gap: alias.spacing.l,
         },
     },
 });
@@ -89,10 +90,10 @@ export const breadcrumbCurrent = style({
 export const actionGroup = style({
     display: "flex",
     alignItems: "center",
-    gap: alias.spacing.m,
+    gap: alias.spacing.xs,
     "@media": {
-        "screen and (max-width: 768px)": {
-            gap: alias.spacing.xs,
+        [`screen and (min-width: ${tablet}px)`]: {
+            gap: alias.spacing.m,
         },
     },
 });
@@ -106,10 +107,13 @@ export const demoModeLink = style([
     },
 ]);
 
+// Stacked on `actionGroup` at equal specificity, so this rule wins: `flex`, not
+// `block`, or the group stops being a flex container.
 export const hideOnMobile = style({
+    display: "none",
     "@media": {
-        "screen and (max-width: 768px)": {
-            display: "none",
+        [`screen and (min-width: ${tablet}px)`]: {
+            display: "flex",
         },
     },
 });

@@ -1,3 +1,4 @@
+import { desktop, tablet } from "@frak-labs/design-system/breakpoints";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
@@ -14,7 +15,7 @@ export const pageBottomSpacer = style({
 export const footer = style({
     position: "fixed",
     bottom: 0,
-    left: SIDEBAR_WIDTH_DESKTOP,
+    left: SIDEBAR_WIDTH_MOBILE,
     right: 0,
     height: "96px",
     display: "flex",
@@ -23,8 +24,8 @@ export const footer = style({
     pointerEvents: "none",
     zIndex: 10,
     "@media": {
-        "screen and (max-width: 768px)": {
-            left: SIDEBAR_WIDTH_MOBILE,
+        [`screen and (min-width: ${tablet}px)`]: {
+            left: SIDEBAR_WIDTH_DESKTOP,
         },
     },
 });
@@ -44,7 +45,7 @@ export const scrollEdge = style({
 export const footerBare = style({
     left: 0,
     "@media": {
-        "screen and (max-width: 768px)": {
+        [`screen and (min-width: ${tablet}px)`]: {
             left: 0,
         },
     },
@@ -62,15 +63,15 @@ export const contentWrapper = style({
     position: "relative",
     width: "100%",
     pointerEvents: "auto",
-    paddingLeft: "126px",
-    paddingRight: alias.spacing.l,
+    paddingLeft: alias.spacing.s,
+    paddingRight: alias.spacing.s,
     "@media": {
-        "screen and (max-width: 1024px)": {
+        [`screen and (min-width: ${tablet}px)`]: {
             paddingLeft: alias.spacing.l,
+            paddingRight: alias.spacing.l,
         },
-        "screen and (max-width: 768px)": {
-            paddingLeft: alias.spacing.s,
-            paddingRight: alias.spacing.s,
+        [`screen and (width > ${desktop}px)`]: {
+            paddingLeft: "126px",
         },
     },
 });

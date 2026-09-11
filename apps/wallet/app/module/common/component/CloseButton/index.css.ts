@@ -1,6 +1,7 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { recipe } from "@vanilla-extract/recipes";
+import { touchTarget } from "@/module/common/styles/touchTarget.css";
 
 export const closeButton = recipe({
     base: {
@@ -12,12 +13,13 @@ export const closeButton = recipe({
         cursor: "pointer",
         padding: 0,
         color: vars.icon.secondary,
+        ...touchTarget,
     },
     variants: {
         variant: {
             floating: {},
             inline: {
-                position: "static",
+                position: "relative",
                 top: "auto",
                 right: "auto",
                 display: "flex",

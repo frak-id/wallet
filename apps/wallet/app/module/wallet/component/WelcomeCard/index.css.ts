@@ -8,11 +8,21 @@ export const cardContainer = style({
     position: "relative",
 });
 
+// The card is itself a button, so the region grows down and left, where a
+// near-miss would navigate. Up and right leave the card and hit nothing.
 export const dismissButton = style({
     position: "absolute",
     top: alias.spacing.xs,
     right: alias.spacing.xs,
     zIndex: 1,
+    selectors: {
+        "&::after": {
+            top: 0,
+            left: "auto",
+            right: 0,
+            transform: "none",
+        },
+    },
 });
 
 export const slider = recipe({
