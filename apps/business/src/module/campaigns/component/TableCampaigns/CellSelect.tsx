@@ -1,9 +1,12 @@
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
-import type { Row, Table } from "@tanstack/react-table";
+import type {
+    DataTableRow,
+    DataTableTable,
+} from "@frak-labs/design-system/components/DataTable";
 import type { CampaignWithStats } from "@/module/campaigns/hook/useCampaignsWithStats";
 import { campaignSelectionStore } from "@/stores/campaignSelectionStore";
 
-export function CellSelect({ row }: { row: Row<CampaignWithStats> }) {
+export function CellSelect({ row }: { row: DataTableRow<CampaignWithStats> }) {
     const id = row.original.id;
     const checked = campaignSelectionStore((state) =>
         state.selectedIds.has(id)
@@ -21,7 +24,11 @@ export function CellSelect({ row }: { row: Row<CampaignWithStats> }) {
     );
 }
 
-export function HeaderSelect({ table }: { table: Table<CampaignWithStats> }) {
+export function HeaderSelect({
+    table,
+}: {
+    table: DataTableTable<CampaignWithStats>;
+}) {
     const selectedIds = campaignSelectionStore((state) => state.selectedIds);
     const setMany = campaignSelectionStore((state) => state.setMany);
     const clear = campaignSelectionStore((state) => state.clear);

@@ -1,6 +1,8 @@
-import { DataTable } from "@frak-labs/design-system/components/DataTable";
+import {
+    createDataTableColumnHelper,
+    DataTable,
+} from "@frak-labs/design-system/components/DataTable";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { CampaignDetailsStats } from "@/module/campaigns/queries/queryOptions";
@@ -9,7 +11,7 @@ import { truncateWallet } from "./truncateWallet";
 
 type Ambassador = CampaignDetailsStats["topAmbassadors"][number];
 
-const columnHelper = createColumnHelper<Ambassador>();
+const columnHelper = createDataTableColumnHelper<Ambassador>();
 
 /**
  * Top-3 ranks show a medal; the rest show the number (Figma leaderboard).
@@ -39,7 +41,7 @@ export function TopAmbassadorsTable({
 
     const columns = useMemo(
         () =>
-            [
+            columnHelper.columns([
                 columnHelper.display({
                     id: "rank",
                     size: 38,
@@ -96,7 +98,7 @@ export function TopAmbassadorsTable({
                         </Text>
                     ),
                 }),
-            ] as ColumnDef<Ambassador>[],
+            ]),
         [t, fmt]
     );
 

@@ -1,11 +1,11 @@
+import type { DataTableRow } from "@frak-labs/design-system/components/DataTable";
 import { Text } from "@frak-labs/design-system/components/Text";
-import type { Row } from "@tanstack/react-table";
 import type { CampaignWithStats } from "@/module/campaigns/hook/useCampaignsWithStats";
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import { MutedText } from "./MutedText";
 import * as styles from "./table-campaigns.css";
 
-export function CellBudget({ row }: { row: Row<CampaignWithStats> }) {
+export function CellBudget({ row }: { row: DataTableRow<CampaignWithStats> }) {
     const { budgetConfig, budgetUsed } = row.original;
     const firstBudget = budgetConfig?.[0];
 

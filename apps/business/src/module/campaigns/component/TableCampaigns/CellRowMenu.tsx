@@ -1,3 +1,4 @@
+import type { DataTableRow } from "@frak-labs/design-system/components/DataTable";
 import {
     ArchiveIcon,
     BarChartIcon,
@@ -8,7 +9,6 @@ import {
     PlayIcon,
 } from "@frak-labs/design-system/icons";
 import { Link } from "@tanstack/react-router";
-import type { Row } from "@tanstack/react-table";
 import clsx from "clsx";
 import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
@@ -29,7 +29,7 @@ import { campaignStore } from "@/stores/campaignStore";
 import type { CampaignListItemWithActions } from "@/types/Campaign";
 
 type Props = {
-    row: Row<CampaignListItemWithActions>;
+    row: DataTableRow<CampaignListItemWithActions>;
     merchantId: string;
 };
 
