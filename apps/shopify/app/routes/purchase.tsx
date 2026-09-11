@@ -3,7 +3,7 @@ import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { useCallback } from "react";
 import type { LoaderFunctionArgs } from "react-router";
 import { data, useLoaderData } from "react-router";
-import type { PurchaseTable } from "../../db/schema/purchaseTable";
+
 import { DescriptionList } from "../components/ui/DescriptionList";
 import { log } from "../services.server/logger";
 import { getPurchase } from "../services.server/purchase";
@@ -58,7 +58,7 @@ export default function PostPurchase() {
 function PurchasePresent({
     purchase,
 }: {
-    purchase: PurchaseTable["$inferSelect"];
+    purchase: NonNullable<Awaited<ReturnType<typeof getPurchase>>>;
 }) {
     return (
         <>
