@@ -13,6 +13,8 @@
 import { readFileSync } from "node:fs";
 
 const INFO_PLIST = "apps/wallet/src-tauri/gen/apple/app_iOS/Info.plist";
+const ENTITLEMENTS =
+    "apps/wallet/src-tauri/gen/apple/app_iOS/app_iOS.entitlements";
 const PROD_CONFIG = "apps/wallet/src-tauri/tauri.conf.json";
 const DEV_CONFIG = "apps/wallet/src-tauri/tauri.conf.dev.json";
 
@@ -110,8 +112,33 @@ if (missing.length > 0) {
     );
 }
 
+// The entitlements file is the other half of the same generated directory, and
+// a dev-variant simulator build rewrites both in place. It leaked to a commit
+// twice while `Info.plist` was caught, so gate them together: passkey
+// autofill, universal links and the keychain group all key off these values,
+// and `verify-ios-artifact.sh` only runs post-upload.
+const entitlements = read(ENTITLEMENTS);
+const devIdentifier = dev.identifier;
+const entitlementLeaks = [
+    ...entitlements.matchAll(/<string>([^<]*)<\/string>/g),
+]
+    .map((match) => match[1])
+    .filter(
+        (value) =>
+            value.includes(devIdentifier) ||
+            /(?:webcredentials|applinks):.*-dev\./.test(value)
+    );
+if (entitlementLeaks.length > 0) {
+    die(
+        `${ENTITLEMENTS} carries dev values: ${entitlementLeaks.join(", ")}\n` +
+            "   This is the output of a FRAK_VARIANT=dev build. The tracked copy must stay on\n" +
+            "   prod — restore it with:\n" +
+            `     git checkout -- ${ENTITLEMENTS}`
+    );
+}
+
 console.log(
     `✅ iOS Info.plist on prod URL types — ${prod.schemes
         .map((scheme) => `${scheme}://`)
-        .join(", ")} as ${prod.identifier}`
+        .join(", ")} as ${prod.identifier}; entitlements clean`
 );
