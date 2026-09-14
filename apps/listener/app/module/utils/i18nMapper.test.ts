@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { mapI18nConfig } from "./i18nMapper";
+import { addCustomizedResources, mapI18nConfig } from "./i18nMapper";
 
 describe("mapI18nConfig", () => {
     let mockI18n: any;
@@ -10,6 +10,7 @@ describe("mapI18nConfig", () => {
             languages: ["en", "fr", "de"],
             options: { supportedLngs: ["en", "fr", "de"] },
             addResourceBundle: vi.fn(),
+            getResourceBundle: vi.fn(),
         };
         vi.stubGlobal("fetch", vi.fn());
     });
@@ -303,6 +304,41 @@ describe("mapI18nConfig", () => {
                 "en",
                 "customized",
                 expect.objectContaining({ app: { title: "English" } }),
+                true,
+                true
+            );
+        });
+
+        it("keeps the default subtree when an override would flatten it to a string", async () => {
+            mockI18n.getResourceBundle.mockReturnValue({
+                sdk: {
+                    sharingPage: {
+                        steps: {
+                            "1": { title: "Default", description: "Default" },
+                        },
+                        dismiss: "Later",
+                    },
+                },
+            });
+
+            addCustomizedResources(mockI18n, "en", {
+                "sdk.sharingPage.steps.1": "Share in 1 click",
+                "sdk.sharingPage.dismiss": "Share in 1 click",
+            });
+
+            expect(mockI18n.addResourceBundle).toHaveBeenCalledWith(
+                "en",
+                "customized",
+                {
+                    sdk: {
+                        sharingPage: {
+                            dismiss: "Share in 1 click",
+                            // Empty: the `steps.1` override was dropped, and a deep
+                            // merge of `{}` leaves the default subtree intact.
+                            steps: {},
+                        },
+                    },
+                },
                 true,
                 true
             );

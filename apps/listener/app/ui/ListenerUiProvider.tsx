@@ -14,7 +14,6 @@ import type {
 } from "@frak-labs/frame-connector";
 import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared/common/hook/useFormattedEstimatedReward";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
-import { translationKeyPathToObject } from "@frak-labs/wallet-shared/common/utils/translationKeyPathToObject";
 import type { TranslationKey } from "@frak-labs/wallet-shared/types";
 import type { i18n, TOptions } from "i18next";
 import {
@@ -32,7 +31,10 @@ import { useStore } from "zustand";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { ResolvedSdkConfig } from "@/module/stores/types";
 import { mapDeprecatedModalMetadata } from "@/module/utils/deprecatedModalMetadataMapper";
-import { mapI18nConfig } from "@/module/utils/i18nMapper";
+import {
+    addCustomizedResources,
+    mapI18nConfig,
+} from "@/module/utils/i18nMapper";
 import { uiBus } from "@/uiBus";
 
 /**
@@ -213,13 +215,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 deprecatedModalMetadata &&
                 Object.keys(deprecatedModalMetadata).length > 0
             ) {
-                i18n.addResourceBundle(
-                    lang,
-                    "customized",
-                    translationKeyPathToObject(deprecatedModalMetadata),
-                    true,
-                    true
-                );
+                addCustomizedResources(i18n, lang, deprecatedModalMetadata);
             }
 
             const requestI18n =
@@ -235,13 +231,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 globalTranslations &&
                 Object.keys(globalTranslations).length > 0
             ) {
-                i18n.addResourceBundle(
-                    lang,
-                    "customized",
-                    translationKeyPathToObject(globalTranslations),
-                    true,
-                    true
-                );
+                addCustomizedResources(i18n, lang, globalTranslations);
             }
 
             addPlacementTranslations({
@@ -418,13 +408,7 @@ function addPlacementTranslations({
     if (!placementTranslations) return;
     if (Object.keys(placementTranslations).length === 0) return;
 
-    i18n.addResourceBundle(
-        lang,
-        "customized",
-        translationKeyPathToObject(placementTranslations),
-        true,
-        true
-    );
+    addCustomizedResources(i18n, lang, placementTranslations);
 }
 
 /**
