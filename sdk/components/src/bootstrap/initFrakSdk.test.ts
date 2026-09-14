@@ -14,6 +14,7 @@ vi.mock("@frak-labs/core-sdk", async () => {
     return {
         ...actual,
         setupClient: vi.fn(),
+        trackEvent: vi.fn(),
     };
 });
 
@@ -263,6 +264,40 @@ describe("initFrakSdk", () => {
         );
 
         consoleLogSpy.mockRestore();
+    });
+
+    it("should report sharing_page_auto_opened for a frakAction=share launch", async () => {
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue({
+            config: { domain: "example.com" },
+        } as any);
+        Object.defineProperty(window, "location", {
+            value: {
+                href: "https://example.com/?frakAction=share&placement=klaviyo&link=https%3A%2F%2Fexample.com%2Fa",
+            },
+            writable: true,
+        });
+
+        await initFrakSdk();
+
+        expect(coreSdkIndex.trackEvent).toHaveBeenCalledWith(
+            expect.anything(),
+            "sharing_page_auto_opened",
+            { placement: "klaviyo", has_link: true, has_products: false }
+        );
+    });
+
+    it("should not report sharing_page_auto_opened without the query param", async () => {
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue({
+            config: { domain: "example.com" },
+        } as any);
+
+        await initFrakSdk();
+
+        expect(coreSdkIndex.trackEvent).not.toHaveBeenCalledWith(
+            expect.anything(),
+            "sharing_page_auto_opened",
+            expect.anything()
+        );
     });
 
     it("should forward link, placement and products query params to openSharingPage", async () => {

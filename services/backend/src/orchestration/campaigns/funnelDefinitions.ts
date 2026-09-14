@@ -31,13 +31,9 @@ export const WALLET_SHARING_SOURCES = [
 
 /**
  * Sources from which a share was initiated on the merchant's own
- * site (SDK listener iframe, modal, embedded widget).
+ * site (SDK listener iframe, modal).
  */
-export const WEBSITE_SHARING_SOURCES = [
-    "sharing_page_listener",
-    "modal",
-    "embedded_wallet",
-];
+export const WEBSITE_SHARING_SOURCES = ["sharing_page_listener", "modal"];
 
 /**
  * OpenPanel's autotracked `device` property is `"mobile" | "desktop"

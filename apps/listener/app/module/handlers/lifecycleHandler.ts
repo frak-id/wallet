@@ -390,12 +390,15 @@ async function handleResolvedConfig(
         ...(mergeSourceProof && { mergeSourceProof }),
     });
 
-    // Stitch SDK ↔ listener funnels: if the SDK propagated its persistent
-    // anonymous id through the resolved-config payload, expose it as a
-    // global OpenPanel property so every listener event is joinable with
-    // the corresponding SDK events.
+    // Stitch SDK ↔ listener funnels: the anonymous id both identifies the SDK
+    // events (`sdk_anonymous_id`) and keys the OpenPanel device (`__deviceId`),
+    // so the two sides land on one profile. Normally already set from the
+    // iframe's `clientId` param; this covers a launch that carried none.
     if (data.sdkAnonymousId) {
-        updateGlobalProperties({ sdk_anonymous_id: data.sdkAnonymousId });
+        updateGlobalProperties({
+            sdk_anonymous_id: data.sdkAnonymousId,
+            __deviceId: data.sdkAnonymousId,
+        });
     }
 
     store.setBackendConfig(data.merchantId, data.sdkConfig);

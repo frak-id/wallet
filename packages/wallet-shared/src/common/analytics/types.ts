@@ -19,6 +19,12 @@ export type AnalyticsGlobalProperties = {
     iframeReferrer?: string;
     // Partner-site URL the iframe is resolving against
     contextUrl?: string;
+    /**
+     * Merchant the current surface is acting for. Global rather than per-event
+     * so every modal, auth and onboarding event is attributable, and so a
+     * funnel breakdown by merchant sees it on every step.
+     */
+    merchant_id?: string;
     // Session / build
     session_id?: string;
     app_version?: string;
@@ -28,4 +34,10 @@ export type AnalyticsGlobalProperties = {
      * events can be joined with SDK events in OpenPanel funnels.
      */
     sdk_anonymous_id?: string;
+    /**
+     * Overrides OpenPanel's own device derivation (project + IP + user agent,
+     * rotated daily). Set from the same id as `sdk_anonymous_id` so a funnel
+     * can span the partner page, the iframe and the wallet.
+     */
+    __deviceId?: string;
 };

@@ -3,8 +3,6 @@ export type SharingSource =
     | "sharing_page_wallet"
     | "sharing_page_listener"
     | "modal"
-    /** Retired surface; kept so historical events stay comparable, nothing emits it any more. */
-    | "embedded_wallet"
     | "explorer_detail"
     | "welcome_card";
 
@@ -12,6 +10,12 @@ type SharingLinkProps = {
     source: SharingSource;
     merchant_id?: string;
     link?: string;
+    /**
+     * A native host opened the page this share came from. `source` cannot say
+     * so on its own: the standalone page and the in-wallet route both report
+     * `sharing_page_wallet`.
+     */
+    native?: boolean;
 };
 
 /**

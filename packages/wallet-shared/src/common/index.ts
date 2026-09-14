@@ -66,6 +66,7 @@ export {
     initAnalytics,
     openPanel,
     recordError,
+    setAnalyticsDeviceId,
     setInstallSource,
     setProfileId,
     startFlow,

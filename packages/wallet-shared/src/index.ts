@@ -119,6 +119,7 @@ export {
     STORE_PACKAGE_ID,
     sdkKey,
     selectFormattedReward,
+    setAnalyticsDeviceId,
     setInstallSource,
     setProfileId,
     startFlow,

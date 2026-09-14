@@ -111,6 +111,36 @@ describe("ButtonWallet", () => {
         );
     });
 
+    it("should report share_button_impression once the button renders", () => {
+        render(<ButtonWallet placement="hero" />);
+
+        expect(coreSdk.trackEvent).toHaveBeenCalledWith(
+            expect.anything(),
+            "share_button_impression",
+            {
+                placement: "hero",
+                target_interaction: undefined,
+                has_reward: false,
+            }
+        );
+    });
+
+    it("should not report share_button_impression while the SDK is hidden", () => {
+        vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            shouldRender: true,
+            isHidden: true,
+            isClientReady: true,
+        });
+
+        render(<ButtonWallet />);
+
+        expect(coreSdk.trackEvent).not.toHaveBeenCalledWith(
+            expect.anything(),
+            "share_button_impression",
+            expect.anything()
+        );
+    });
+
     it("should display reward when useReward is true and reward is available", () => {
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: "10 eur",

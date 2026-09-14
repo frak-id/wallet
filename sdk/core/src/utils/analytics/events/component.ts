@@ -19,10 +19,22 @@ type ShareClickAction =
     | (string & {});
 
 export type SdkComponentEventMap = {
-    // Share button — click carries the resolved action + reward presence so
-    // we can compare per-merchant configuration impact on conversion.
+    // Share button — both `<frak-button-share>` and `<frak-button-wallet>`
+    // report this pair, so the impression denominator matches the click.
+    share_button_impression: ButtonBaseProps;
     share_button_clicked: ButtonBaseProps & {
         click_action: ShareClickAction;
+    };
+
+    /**
+     * `?frakAction=share` opened the sharing page with no component and no
+     * click behind it. The one sharing entry point a user never sees, so it
+     * is counted here rather than inferred from a missing click.
+     */
+    sharing_page_auto_opened: {
+        placement?: string;
+        has_link: boolean;
+        has_products: boolean;
     };
 
     // Open in app — path lets us compare deep-link destinations once we add more.

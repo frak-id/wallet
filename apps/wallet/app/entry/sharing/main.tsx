@@ -62,6 +62,7 @@ if (guardHostClientId()) {
                     window.location.assign(installUrl),
                 toWallet: () => window.location.assign("/wallet"),
             }}
-        />
+        />,
+        { deviceId: search.clientId }
     ).catch(reportBootstrapFailure);
 }

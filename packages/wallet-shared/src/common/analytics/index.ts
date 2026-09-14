@@ -47,6 +47,7 @@ export {
     getOrCreateSessionId,
     identifyAuthenticatedUser,
     initAnalytics,
+    setAnalyticsDeviceId,
     setInstallSource,
     setProfileId,
     updateGlobalProperties,
