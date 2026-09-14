@@ -41,12 +41,15 @@
             },
             "card": {
                 "amount": "{{ estimatedReward }}",
+                "amount_noReward": "Earn rewards on every purchase",
                 "label": "Credited to your account",
                 "upTo": "Up to",
                 "tagline1": "Earn {{ estimatedReward }},",
                 "tagline1_tiered": "Earn up to {{ estimatedReward }},",
+                "tagline1_noReward": "A friend buys through your link,",
                 "tagline2": "on every purchase!",
-                "tagline2_product": "on selected products!"
+                "tagline2_product": "on selected products!",
+                "tagline2_noReward": "you get rewarded."
             },
             "products": {
                 "label": "Choose one product to share"
@@ -85,6 +88,7 @@
                 "a5": "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way.",
                 "q6": "How is my reward calculated?",
                 "a6": "The amount shown is the maximum reward you can earn. Depending on the brand, your reward may be a fixed amount, a percentage of the purchase, or vary by tier based on the order amount.",
+                "a6_noReward": "It depends on the brand's reward program: a fixed amount, a percentage of the purchase, or an amount that varies by tier. This brand has no active reward right now, so no amount is shown.",
                 "reward": {
                     "referrerLabel": "Reward as an ambassador",
                     "refereeLabel": "Reward for your referee",
@@ -101,9 +105,12 @@
             },
             "confirmation": {
                 "title": "Thank you for sharing!\nDon't miss out on your {{ estimatedReward }}.",
+                "title_noReward": "Thank you for sharing!\nTrack what you earn.",
                 "subtitle": "Install the Frak app, official partner of {{ productName }}, and track your earnings in real time.",
                 "cardPopupTitle": "You just won {{ estimatedReward }}! 🎉",
+                "cardPopupTitle_noReward": "A friend just bought! 🎉",
                 "cardPopupDescription": "A purchase was made through your link. {{ estimatedReward }} has been transferred to your wallet.",
+                "cardPopupDescription_noReward": "A purchase was made through your link. Install the app to track your purchases.",
                 "benefits": {
                     "wallet": {
                         "title": "Your wallet secured in 10 seconds",
@@ -119,6 +126,7 @@
                     }
                 },
                 "cta": "Collect my {{ estimatedReward }}",
+                "cta_noReward": "Install the app",
                 "shareAgain": "Share again"
             }
         }

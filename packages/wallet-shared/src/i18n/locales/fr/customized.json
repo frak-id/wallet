@@ -42,12 +42,15 @@
             },
             "card": {
                 "amount": "{{ estimatedReward }}",
+                "amount_noReward": "Des récompenses à chaque achat",
                 "label": "Crédité sur votre compte",
                 "upTo": "Jusqu'à",
                 "tagline1": "Gagnez {{ estimatedReward }},",
                 "tagline1_tiered": "Gagnez jusqu'à {{ estimatedReward }},",
+                "tagline1_noReward": "Un ami achète via votre lien,",
                 "tagline2": "à chaque achat réalisé !",
-                "tagline2_product": "sur une sélection de produits !"
+                "tagline2_product": "sur une sélection de produits !",
+                "tagline2_noReward": "vous êtes récompensé."
             },
             "products": {
                 "label": "Choisissez un produit à partager"
@@ -86,6 +89,7 @@
                 "a5": "Frak permet aux marques de récompenser leur communauté pour le bouche-à-oreille, de manière transparente et décentralisée.",
                 "q6": "Comment est calculée ma récompense ?",
                 "a6": "Le montant affiché correspond à la récompense maximale possible. Selon la marque, votre récompense peut être un montant fixe, un pourcentage de l'achat, ou varier selon des paliers en fonction du montant de la commande.",
+                "a6_noReward": "Cela dépend du programme de la marque : un montant fixe, un pourcentage de l'achat, ou un montant variable selon des paliers. Cette marque n'a pas de récompense active pour le moment, aucun montant n'est donc affiché.",
                 "reward": {
                     "referrerLabel": "Récompense en tant que parrain",
                     "refereeLabel": "Récompense en tant que filleul",
@@ -102,9 +106,12 @@
             },
             "confirmation": {
                 "title": "Merci pour votre partage !\nNe passez pas à côté de vos {{ estimatedReward }}.",
+                "title_noReward": "Merci pour votre partage !\nSuivez vos gains.",
                 "subtitle": "Installez l'app Frak, partenaire officiel de {{ productName }}, et suivez vos gains en temps réel.",
                 "cardPopupTitle": "Vous venez de gagner {{ estimatedReward }} ! 🎉",
+                "cardPopupTitle_noReward": "Un ami vient d'acheter ! 🎉",
                 "cardPopupDescription": "Un achat a été réalisé via votre lien. {{ estimatedReward }} ont été transférés dans votre porte-monnaie.",
+                "cardPopupDescription_noReward": "Un achat a été réalisé via votre lien. Installez l'app pour suivre vos achats.",
                 "benefits": {
                     "wallet": {
                         "title": "Votre porte-monnaie sécurisé en 10 secondes",
@@ -120,6 +127,7 @@
                     }
                 },
                 "cta": "Récupérer mes {{ estimatedReward }}",
+                "cta_noReward": "Installer l'application",
                 "shareAgain": "Partager à nouveau"
             }
         }
