@@ -16,6 +16,7 @@ function renderConfirmation(
             installUrl="/install?m=1&a=2"
             merchant={{ name: "Acme" }}
             chrome={{ mode: "full" }}
+            reward={{ status: "loading" }}
             t={t}
             onDismiss={vi.fn()}
             onShareAgain={vi.fn()}

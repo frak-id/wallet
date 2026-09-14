@@ -445,4 +445,20 @@ test.describe("Sharing page — no advertisable reward", () => {
             await shoot(page, `sharing-no-reward-${lng}.png`);
         });
     }
+
+    test("keeps the confirmation clear of an amount it does not have", async ({
+        page,
+    }) => {
+        await page.setViewportSize(VIEWPORTS.iphone);
+        await mockNoReward(page);
+        await open(page, sharingUrl({ view: "confirmation", lng: "en" }));
+        await page.getByRole("dialog").waitFor({ state: "visible" });
+        await expect(page.getByText("Track what you earn.")).toBeVisible();
+        await page.evaluate(() => document.fonts.ready);
+
+        await expect(page.getByText(STRANDED_SEPARATOR)).toHaveCount(0);
+        await expect(page.getByText(INTERPOLATED_AMOUNT)).toHaveCount(0);
+
+        await shoot(page, "sharing-no-reward-confirmation.png");
+    });
 });
