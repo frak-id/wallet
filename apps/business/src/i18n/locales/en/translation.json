@@ -2030,7 +2030,8 @@
                 "none": "None",
                 "clear": "Clear",
                 "defaultTierHint": "These defaults only reach buttons whose integration sets a placement. Set values on a placement to cover the rest.",
-                "propagationHint": "A change can take up to 10 minutes to appear on your storefront."
+                "propagationHint": "A change can take up to 10 minutes to appear on your storefront.",
+                "previewHint": "This preview does not include your storefront's own styling."
             }
         },
         "globalCss": {

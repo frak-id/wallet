@@ -24,6 +24,7 @@ import { ButtonShareFields } from "./fields/ButtonShareFields";
 import { PostPurchaseFields } from "./fields/PostPurchaseFields";
 import { RewardTokenHint } from "./fields/shared";
 import { resolveBuiltInLang, resolvePreviewWording } from "./localizable";
+import { styleValuesToCssProperties } from "./style/styleCodec";
 import { COMPONENT_LABEL_KEYS } from "./translations";
 import type {
     ComponentSettingsFormValues,
@@ -322,21 +323,30 @@ export function ComponentPreview({
     lang: WordingLang;
     configLang: Language | null | undefined;
 }) {
+    const { t } = useTranslation();
     const values = form.watch();
     const defaults = componentDefaults[resolveBuiltInLang(lang, configLang)];
 
     switch (selectedComponent) {
         case "buttonShare":
             return (
-                <ShareButtonPreview
-                    text={resolvePreviewWording(
-                        values.buttonShare.text,
-                        lang,
-                        defaults.buttonShare.text
-                    )}
-                    currency={currency}
-                    shopName={shopName}
-                />
+                <Stack space="xxs">
+                    <ShareButtonPreview
+                        text={resolvePreviewWording(
+                            values.buttonShare.text,
+                            lang,
+                            defaults.buttonShare.text
+                        )}
+                        currency={currency}
+                        shopName={shopName}
+                        style={styleValuesToCssProperties(
+                            values.buttonShare.style
+                        )}
+                    />
+                    <Text variant="caption" color="tertiary">
+                        {t("customize.components.style.previewHint")}
+                    </Text>
+                </Stack>
             );
         case "postPurchase":
             return (

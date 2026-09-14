@@ -996,6 +996,7 @@ export default interface Resources {
           "none": "None",
           "paddingHorizontal": "Horizontal padding (px)",
           "paddingVertical": "Vertical padding (px)",
+          "previewHint": "This preview does not include your storefront's own styling.",
           "propagationHint": "A change can take up to 10 minutes to appear on your storefront.",
           "textColor": "Text colour",
           "textSize": "Text size (px)",

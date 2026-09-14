@@ -2030,7 +2030,8 @@
                 "none": "Aucun",
                 "clear": "Effacer",
                 "defaultTierHint": "Ces valeurs par défaut ne s'appliquent qu'aux boutons dont l'intégration définit un emplacement. Renseignez un emplacement pour couvrir les autres.",
-                "propagationHint": "Une modification peut mettre jusqu'à 10 minutes à apparaître sur votre boutique."
+                "propagationHint": "Une modification peut mettre jusqu'à 10 minutes à apparaître sur votre boutique.",
+                "previewHint": "Cet aperçu n'inclut pas le style propre à votre boutique."
             }
         },
         "globalCss": {
