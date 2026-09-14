@@ -45,5 +45,6 @@ bootstrapStandalonePage(
             toRegister: () => window.location.replace("/register"),
         }}
         processingLayout={ProcessingLayout}
-    />
+    />,
+    { deviceId: search.a }
 ).catch(reportBootstrapFailure);

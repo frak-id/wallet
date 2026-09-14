@@ -33,6 +33,18 @@ export function updateGlobalProperties(
 }
 
 /**
+ * Pin the OpenPanel device to the SDK's anonymous id, so cross-surface funnels
+ * stitch on a stable value instead of a daily-rotated IP + user-agent hash.
+ * No-op without an id: the derived device stays in place for organic traffic.
+ *
+ * Call before the surface's first event — a later change re-keys the session.
+ */
+export function setAnalyticsDeviceId(deviceId?: string | null) {
+    if (!deviceId) return;
+    updateGlobalProperties({ __deviceId: deviceId });
+}
+
+/**
  * Set a profile-level property. If the user is already identified it's
  * pushed to OpenPanel immediately; otherwise buffered and flushed on the
  * next `identifyAuthenticatedUser` call.

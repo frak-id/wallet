@@ -1,5 +1,5 @@
 import { type InteractionTypeKey, trackEvent } from "@frak-labs/core-sdk";
-import { useCallback } from "preact/hooks";
+import { useCallback, useEffect, useRef } from "preact/hooks";
 import { openSharingPage } from "@/actions/sharingPage";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useLang } from "@/hooks/useLang";
@@ -122,6 +122,28 @@ export function ButtonWallet({
         placement?.components?.buttonWallet?.position ??
         window.FrakSetup?.modalWalletConfig?.metadata?.position ??
         "right";
+
+    const trackedImpressionRef = useRef(false);
+
+    // Paired with the click below: this tag shares `share_button_clicked` with
+    // `<frak-button-share>`, so it must report impressions or the ratio breaks.
+    // `reward` stays out of the deps — async arrival would double-fire.
+    useEffect(() => {
+        if (trackedImpressionRef.current) return;
+        if (!isClientReady || !shouldRender || isHidden) return;
+        trackEvent(window.FrakSetup?.client, "share_button_impression", {
+            placement: placementId,
+            target_interaction: resolvedTargetInteraction,
+            has_reward: Boolean(reward),
+        });
+        trackedImpressionRef.current = true;
+    }, [
+        isClientReady,
+        shouldRender,
+        isHidden,
+        placementId,
+        resolvedTargetInteraction,
+    ]);
 
     // Mirrors `<frak-button-share>`: both tags open the same surface, so both
     // must report the click or the sharing funnel loses its origin.

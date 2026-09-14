@@ -5,7 +5,7 @@ import {
     trackEvent,
 } from "@frak-labs/core-sdk";
 import { applyRewardPlaceholder } from "@frak-labs/core-sdk/rewards";
-import { useCallback, useMemo } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef } from "preact/hooks";
 import { openSharingPage } from "@/actions/sharingPage";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
@@ -123,6 +123,28 @@ export function ButtonShare({
             applyRewardPlaceholder(resolvedText, undefined)
         );
     }, [wantsReward, resolvedText, resolvedNoRewardText, reward]);
+
+    const trackedImpressionRef = useRef(false);
+
+    // `reward` is read but kept out of the deps: it arrives async, and a
+    // re-run would bill a second impression for one render of the button.
+    useEffect(() => {
+        if (isPreview || trackedImpressionRef.current) return;
+        if (!isClientReady || !shouldRender || isHidden) return;
+        trackEvent(window.FrakSetup?.client, "share_button_impression", {
+            placement: placementId,
+            target_interaction: resolvedTargetInteraction,
+            has_reward: Boolean(reward),
+        });
+        trackedImpressionRef.current = true;
+    }, [
+        isPreview,
+        isClientReady,
+        shouldRender,
+        isHidden,
+        placementId,
+        resolvedTargetInteraction,
+    ]);
 
     const onClick = useCallback(() => {
         if (isPreview) return;

@@ -115,5 +115,13 @@ function handleActionQueryParam() {
     deleteQueryParamCaseInsensitive(url.searchParams, "products");
     window.history.replaceState({}, "", url.toString());
 
+    // Ahead of the open, so the funnel reads auto-open → `sharing_page_opened`
+    // the same way a click reads `share_button_clicked` → `sharing_page_opened`.
+    trackEvent(window.FrakSetup?.client, "sharing_page_auto_opened", {
+        placement,
+        has_link: Boolean(link),
+        has_products: Boolean(products?.length),
+    });
+
     openSharingPage(undefined, placement, { link, products });
 }

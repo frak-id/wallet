@@ -8,6 +8,7 @@
 
 import { persist } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
+import { setAnalyticsDeviceId } from "../common/analytics/globalProps";
 import type { ClientIdStore } from "./types";
 
 export const clientIdStore = createStore<ClientIdStore>()(
@@ -17,7 +18,12 @@ export const clientIdStore = createStore<ClientIdStore>()(
             clientId: null,
 
             // Actions
-            setClientId: (clientId) => set({ clientId }),
+            // The analytics device id trails this store so every wallet-side
+            // surface reports the same device as the partner page it came from.
+            setClientId: (clientId) => {
+                set({ clientId });
+                setAnalyticsDeviceId(clientId);
+            },
             clearClientId: () => set({ clientId: null }),
         }),
         {

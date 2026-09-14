@@ -149,8 +149,13 @@ export async function createIFrameFrakClient({
         openPanel = new OpenPanel({
             apiUrl: process.env.OPEN_PANEL_API_URL,
             clientId: process.env.OPEN_PANEL_SDK_CLIENT_ID,
-            trackScreenViews: true,
-            trackOutgoingLinks: true,
+            // Off on a merchant's page: `sdk_initialized` already counts page
+            // loads, component impressions are the CTA denominator, and both
+            // auto-trackers collect the merchant's own traffic, not ours.
+            trackScreenViews: false,
+            trackOutgoingLinks: false,
+            // Never enable: `data-track` would let partner markup name events
+            // and ship arbitrary `data-*` values into our project.
             trackAttributes: false,
             // We use a filter to ensure we got the open panel instance initialized
             //  A bit hacky, but this way we are sure that we got everything needed for the first event ever sent
@@ -165,6 +170,7 @@ export async function createIFrameFrakClient({
                         sdk_version: process.env.SDK_VERSION,
                         ...(resolvedClientId && {
                             user_anonymous_client_id: resolvedClientId,
+                            __deviceId: resolvedClientId,
                         }),
                     };
                 }
@@ -172,10 +178,15 @@ export async function createIFrameFrakClient({
                 return true;
             },
         });
+        // `__deviceId` overrides OpenPanel's project + IP + user-agent device
+        // hash, which rotates daily and collides behind shared egress. Keying on
+        // the SDK's own persistent id is what lets a funnel cross from this page
+        // into the iframe and the wallet, which resolve the same id.
         openPanel.setGlobalProperties({
             sdk_version: process.env.SDK_VERSION,
             ...(resolvedClientId && {
                 user_anonymous_client_id: resolvedClientId,
+                __deviceId: resolvedClientId,
             }),
         });
         openPanel.init();

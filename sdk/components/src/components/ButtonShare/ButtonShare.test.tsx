@@ -197,6 +197,36 @@ describe("ButtonShare", () => {
         );
     });
 
+    it("should report share_button_impression once the button renders", () => {
+        render(<ButtonShare placement="hero" />);
+
+        expect(coreSdk.trackEvent).toHaveBeenCalledWith(
+            window.FrakSetup?.client,
+            "share_button_impression",
+            {
+                placement: "hero",
+                target_interaction: undefined,
+                has_reward: false,
+            }
+        );
+    });
+
+    it("should not report share_button_impression while the SDK is hidden", () => {
+        vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            shouldRender: true,
+            isHidden: true,
+            isClientReady: true,
+        });
+
+        render(<ButtonShare />);
+
+        expect(coreSdk.trackEvent).not.toHaveBeenCalledWith(
+            expect.anything(),
+            "share_button_impression",
+            expect.anything()
+        );
+    });
+
     it("should pass targetInteraction to useReward hook when {REWARD} placeholder is present", () => {
         render(
             <ButtonShare
