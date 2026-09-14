@@ -21,9 +21,14 @@ export function membersPageQueryKey(
     ] as const;
 }
 
-/** Push-notification broadcast history for a merchant. */
-export function pushHistoryQueryKey(merchantId: string) {
-    return ["push", "history", merchantId] as const;
+/** Mode-scoped push-notification broadcast history for a merchant. */
+export function pushHistoryQueryKey(merchantId: string, isDemoMode: boolean) {
+    return [
+        "push",
+        "history",
+        merchantId,
+        isDemoMode ? "demo" : "live",
+    ] as const;
 }
 
 /**

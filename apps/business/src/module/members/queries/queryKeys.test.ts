@@ -18,7 +18,18 @@ describe("members query keys", () => {
             scoped,
             "live",
         ]);
-        expect(pushHistoryQueryKey("m1")).toEqual(["push", "history", "m1"]);
+        expect(pushHistoryQueryKey("m1", false)).toEqual([
+            "push",
+            "history",
+            "m1",
+            "live",
+        ]);
+        expect(pushHistoryQueryKey("m1", true)).toEqual([
+            "push",
+            "history",
+            "m1",
+            "demo",
+        ]);
         expect(audienceCountQueryKey({ merchantIds: ["m1"] }, true)).toEqual([
             "create-push",
             "audience-count",
