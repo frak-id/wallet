@@ -25,6 +25,7 @@ import {
 } from "./fields/fieldDefaults";
 import { CUSTOM_CSS_ENABLED } from "./flags";
 import { SECTION_KEYS } from "./sections";
+import { DEFAULT_TIER } from "./style/styleCodec";
 import type {
     ComponentSettingsFormValues,
     ComponentType,
@@ -161,6 +162,7 @@ function GlobalComponentsPanel({
                             selectedComponent={selectedComponent}
                             form={form}
                             lang={activeLang}
+                            tier={DEFAULT_TIER}
                         />
                     </AdvancedDisclosure>
                 </Stack>

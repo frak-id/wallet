@@ -235,6 +235,7 @@ function PlacementSettingsPanel({
                             selectedComponent={selectedComponent}
                             form={form}
                             lang={activeLang}
+                            tier={placementId}
                         />
                     </AdvancedDisclosure>
                 </Stack>

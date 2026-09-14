@@ -2015,6 +2015,22 @@
                 "inappDescription": "In-app description",
                 "inappCta": "In-app CTA",
                 "css": "Component CSS"
+            },
+            "style": {
+                "title": "Button style",
+                "background": "Background",
+                "textColor": "Text colour",
+                "borderColor": "Border colour",
+                "borderWidth": "Border width (px)",
+                "textSize": "Text size (px)",
+                "paddingVertical": "Vertical padding (px)",
+                "paddingHorizontal": "Horizontal padding (px)",
+                "marginTop": "Top margin (px)",
+                "marginBottom": "Bottom margin (px)",
+                "none": "None",
+                "clear": "Clear",
+                "defaultTierHint": "These defaults only reach buttons whose integration sets a placement. Set values on a placement to cover the rest.",
+                "propagationHint": "A change can take up to 10 minutes to appear on your storefront."
             }
         },
         "globalCss": {

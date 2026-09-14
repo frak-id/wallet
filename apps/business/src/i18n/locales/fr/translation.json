@@ -2015,6 +2015,22 @@
                 "inappDescription": "Description in-app",
                 "inappCta": "CTA in-app",
                 "css": "CSS du composant"
+            },
+            "style": {
+                "title": "Style du bouton",
+                "background": "Arrière-plan",
+                "textColor": "Couleur du texte",
+                "borderColor": "Couleur de la bordure",
+                "borderWidth": "Épaisseur de la bordure (px)",
+                "textSize": "Taille du texte (px)",
+                "paddingVertical": "Marge intérieure verticale (px)",
+                "paddingHorizontal": "Marge intérieure horizontale (px)",
+                "marginTop": "Marge supérieure (px)",
+                "marginBottom": "Marge inférieure (px)",
+                "none": "Aucun",
+                "clear": "Effacer",
+                "defaultTierHint": "Ces valeurs par défaut ne s'appliquent qu'aux boutons dont l'intégration définit un emplacement. Renseignez un emplacement pour couvrir les autres.",
+                "propagationHint": "Une modification peut mettre jusqu'à 10 minutes à apparaître sur votre boutique."
             }
         },
         "globalCss": {

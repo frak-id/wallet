@@ -985,6 +985,22 @@ export default interface Resources {
           "copy": "Copy {REWARD}",
           "hint": "Tip: insert <token>{REWARD}</token> in any text to show the live campaign reward."
         },
+        "style": {
+          "background": "Background",
+          "borderColor": "Border colour",
+          "borderWidth": "Border width (px)",
+          "clear": "Clear",
+          "defaultTierHint": "These defaults only reach buttons whose integration sets a placement. Set values on a placement to cover the rest.",
+          "marginBottom": "Bottom margin (px)",
+          "marginTop": "Top margin (px)",
+          "none": "None",
+          "paddingHorizontal": "Horizontal padding (px)",
+          "paddingVertical": "Vertical padding (px)",
+          "propagationHint": "A change can take up to 10 minutes to appear on your storefront.",
+          "textColor": "Text colour",
+          "textSize": "Text size (px)",
+          "title": "Button style"
+        },
         "targetInteraction": {
           "error": "Maximum length is 200 characters",
           "hint": "Event name that triggers reward calculation for this placement (e.g. purchase_completed, signup)",

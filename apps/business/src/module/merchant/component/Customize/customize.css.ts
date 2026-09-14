@@ -110,6 +110,49 @@ export const advancedBody = style({
     paddingTop: alias.spacing.xs,
 });
 
+export const colorRow = style({
+    display: "flex",
+    alignItems: "center",
+    gap: alias.spacing.xs,
+});
+
+export const colorSwatch = style({
+    width: "32px",
+    height: "32px",
+    padding: 0,
+    flexShrink: 0,
+    cursor: "pointer",
+    borderRadius: alias.cornerRadius.s,
+    border: `1px solid ${vars.border.default}`,
+    backgroundColor: vars.surface.muted,
+    selectors: {
+        "&:disabled": { cursor: "not-allowed", opacity: 0.5 },
+    },
+});
+
+export const styleGhostButton = style([
+    interactive,
+    focusRing,
+    {
+        all: "unset",
+        boxSizing: "border-box",
+        cursor: "pointer",
+        flexShrink: 0,
+        paddingInline: alias.spacing.xs,
+        paddingBlock: "2px",
+        borderRadius: alias.cornerRadius.s,
+        color: vars.text.secondary,
+        fontSize: fontSize.xs,
+        selectors: {
+            "&:hover": { color: vars.text.primary },
+            "&[aria-pressed='true']": {
+                color: vars.text.primary,
+                backgroundColor: vars.surface.muted,
+            },
+        },
+    },
+]);
+
 export const cssTextarea = style({
     all: "unset",
     boxSizing: "border-box",

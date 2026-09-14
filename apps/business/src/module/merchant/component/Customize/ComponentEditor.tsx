@@ -28,6 +28,7 @@ import { COMPONENT_LABEL_KEYS } from "./translations";
 import type {
     ComponentSettingsFormValues,
     ComponentType,
+    StyleTier,
     WordingLang,
 } from "./types";
 import { COMPONENT_TYPES, SUPPORTED_WORDING_LANGS } from "./types";
@@ -138,10 +139,12 @@ export function ComponentFields({
     selectedComponent,
     form,
     lang,
+    tier,
 }: {
     selectedComponent: ComponentType;
     form: UseFormReturn<ComponentSettingsFormValues>;
     lang: WordingLang;
+    tier: StyleTier;
 }) {
     return (
         <Stack space="m">
@@ -150,6 +153,7 @@ export function ComponentFields({
                 selectedComponent={selectedComponent}
                 form={form}
                 lang={lang}
+                tier={tier}
             />
         </Stack>
     );
@@ -159,14 +163,16 @@ function ComponentFieldsBody({
     selectedComponent,
     form,
     lang,
+    tier,
 }: {
     selectedComponent: ComponentType;
     form: UseFormReturn<ComponentSettingsFormValues>;
     lang: WordingLang;
+    tier: StyleTier;
 }) {
     switch (selectedComponent) {
         case "buttonShare":
-            return <ButtonShareFields form={form} lang={lang} />;
+            return <ButtonShareFields form={form} lang={lang} tier={tier} />;
         case "postPurchase":
             return <PostPurchaseFields form={form} lang={lang} />;
         case "banner":

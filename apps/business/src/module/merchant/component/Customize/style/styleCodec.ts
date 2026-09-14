@@ -18,6 +18,10 @@ export type ParsedStyle = {
     foreignCss: string;
 };
 
+export function isHexColor(value: string): boolean {
+    return HEX_COLOR.test(value);
+}
+
 function isColor(value: unknown, allowTransparent: boolean): value is string {
     if (typeof value !== "string") return false;
     if (allowTransparent && value === TRANSPARENT) return true;
