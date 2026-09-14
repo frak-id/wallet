@@ -37,6 +37,7 @@ export const resolvingContextStore = createStore<ResolvingContextStore>()(
             updateGlobalProperties({
                 isIframe: true,
                 contextUrl: context.sourceUrl,
+                merchant_id: context.merchantId,
             });
         },
 
@@ -59,6 +60,9 @@ export const resolvingContextStore = createStore<ResolvingContextStore>()(
                       }
                     : state.context,
             }));
+            // `setContext` runs before the backend answers, so the id can still
+            // be empty there and only resolve here.
+            if (merchantId) updateGlobalProperties({ merchant_id: merchantId });
         },
     })
 );

@@ -23,6 +23,7 @@ import {
     resolveWebauthnErrorView,
     sessionStore,
     ssoKey,
+    updateGlobalProperties,
     useWebauthnErrorToast,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
@@ -92,6 +93,11 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
             metadata: metadata ?? undefined,
             proof,
         });
+
+        // Registration and onboarding run on this origin, away from the
+        // listener that knows the merchant, so the attribution is set here or
+        // those events carry none at all.
+        if (merchantId) updateGlobalProperties({ merchant_id: merchantId });
 
         // Save the client id if provided
         if (compressedParam.cId) {

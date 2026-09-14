@@ -86,10 +86,6 @@ export type InstallEventMap = {
     };
     install_open_wallet_clicked: MerchantMaybe;
 
-    // PWA "Add to Home Screen" — separate from the mobile-app retrieval flow
-    // but kept here to keep every install-themed event under one domain.
-    install_pwa_initiated: undefined;
-
     // Android Play Install Referrer (passive attribution)
     install_referrer_checked: undefined;
     install_referrer_resolved: {

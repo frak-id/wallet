@@ -117,7 +117,25 @@ describe("outcome hand-off", () => {
             source: "sharing_page_wallet",
             merchant_id: merchantId,
             handed_off: true,
+            native: false,
         });
+    });
+
+    it("marks a share native when a host drew the chrome", () => {
+        const { result } = setup(
+            { share: () => true },
+            { chrome: { mode: "none" } }
+        );
+
+        act(() => result.current.actions.onShare());
+
+        expect(trackEvent).toHaveBeenCalledWith(
+            "sharing_link_started",
+            expect.objectContaining({
+                source: "sharing_page_wallet",
+                native: true,
+            })
+        );
     });
 
     it("reports a handed-off share even with no link of its own", () => {

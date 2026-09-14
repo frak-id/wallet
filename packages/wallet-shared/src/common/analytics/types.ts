@@ -19,6 +19,12 @@ export type AnalyticsGlobalProperties = {
     iframeReferrer?: string;
     // Partner-site URL the iframe is resolving against
     contextUrl?: string;
+    /**
+     * Merchant the current surface is acting for. Global rather than per-event
+     * so every modal, auth and onboarding event is attributable, and so a
+     * funnel breakdown by merchant sees it on every step.
+     */
+    merchant_id?: string;
     // Session / build
     session_id?: string;
     app_version?: string;

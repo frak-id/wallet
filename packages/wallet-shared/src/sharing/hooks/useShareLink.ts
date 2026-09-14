@@ -80,6 +80,8 @@ export function useShareLink(
     options: {
         source: SharingSource;
         merchantId?: string;
+        /** Set by the sharing page when a native host opened it. */
+        native?: boolean;
         onShared?: () => void;
     } & MutationOptions
 ) {
@@ -91,7 +93,8 @@ export function useShareLink(
         (typeof navigator !== "undefined" &&
             typeof navigator.share === "function");
 
-    const { source, merchantId, onShared, ...mutationOptions } = options;
+    const { source, merchantId, native, onShared, ...mutationOptions } =
+        options;
 
     const mutation = useMutation({
         ...mutationOptions,
@@ -108,6 +111,7 @@ export function useShareLink(
                 source,
                 merchant_id: merchantId,
                 link,
+                native,
             });
 
             // Tauri (iOS / Android) routes through the native plugin because
@@ -128,6 +132,7 @@ export function useShareLink(
                         source,
                         merchant_id: merchantId,
                         link,
+                        native,
                     });
                     onShared?.();
                     return true;
@@ -152,6 +157,7 @@ export function useShareLink(
                     source,
                     merchant_id: merchantId,
                     link,
+                    native,
                 });
                 onShared?.();
                 return true;

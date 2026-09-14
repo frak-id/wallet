@@ -203,15 +203,19 @@ export function useSharingPageController({
         [rawT, estimatedReward, appName]
     );
 
+    // No chrome means a native host drew its own, which is the only signal
+    // separating an SDK-driven sheet from the in-wallet sharing route.
+    const native = chrome.mode === "none";
+
     // A warm page reports a preload, then the view when its activation flips
     // `warm` — which is why `warm` is in the dep list.
     useEffect(() => {
         trackEvent(warm ? "sharing_page_preloaded" : "sharing_page_viewed", {
             merchant_id: merchantId,
             sdk_version: sdkVersion,
-            native: chrome.mode === "none",
+            native,
         });
-    }, [merchantId, sdkVersion, warm, chrome.mode]);
+    }, [merchantId, sdkVersion, warm, native]);
 
     const confirmationScope = useMemo(
         () =>
@@ -332,6 +336,7 @@ export function useSharingPageController({
         {
             source,
             merchantId,
+            native,
             onShared: outcomes.recordSharing,
             onSuccess: (result) => {
                 if (!result) return;
@@ -350,13 +355,22 @@ export function useSharingPageController({
                 source,
                 merchant_id: merchantId,
                 handed_off: true,
+                native,
             });
             outcomes.recordSharing?.();
             return;
         }
         if (!sharingLink) return;
         triggerSharing();
-    }, [outcomes, shareData, sharingLink, triggerSharing, source, merchantId]);
+    }, [
+        outcomes,
+        shareData,
+        sharingLink,
+        triggerSharing,
+        source,
+        merchantId,
+        native,
+    ]);
 
     const onCopy = useCallback(() => {
         // Ahead of the hand-off, and unconditionally: `outcomes.copy` reports
@@ -380,11 +394,12 @@ export function useSharingPageController({
             // have replaced it, and either way this is the link we put there.
             link: wroteLocally ? (sharingLink ?? undefined) : undefined,
             handed_off: handedOff,
+            native,
         });
         outcomes.recordSharing?.();
         toast.success(t("sharing.btn.copySuccess"));
         confirm("copied");
-    }, [outcomes, sharingLink, copy, source, merchantId, t, confirm]);
+    }, [outcomes, sharingLink, copy, source, merchantId, native, t, confirm]);
 
     const onShareAgain = useCallback(() => {
         // A host may re-present this same URL; a stale flag would land the user
