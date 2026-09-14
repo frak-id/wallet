@@ -2,7 +2,6 @@ import { sessionStore, trackEvent } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
-import { panelDismissedPrefix } from "@/module/common/component/Panel";
 import { notificationAdapter } from "@/module/notification/adapter";
 
 function cleanLocalStorage() {
@@ -17,11 +16,6 @@ function cleanLocalStorage() {
     ];
     for (const item of localStorageItems) {
         window.localStorage.removeItem(item);
-    }
-    for (const key of Object.keys(window.localStorage)) {
-        if (key.startsWith(panelDismissedPrefix)) {
-            window.localStorage.removeItem(key);
-        }
     }
 }
 

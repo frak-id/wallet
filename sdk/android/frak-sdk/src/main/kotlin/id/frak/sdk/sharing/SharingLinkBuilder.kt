@@ -8,7 +8,7 @@ internal object SharingLinkBuilder {
     /** The parameter every share link carries the referral context in. */
     const val CONTEXT_KEY: String = "fCtx"
 
-    /** `utm_source` when nothing else supplies one, matching `frakContext.ts`. */
+    /** `utm_source` when nothing else supplies one, matching the web SDK. */
     private const val DEFAULT_SOURCE = "frak"
 
     /** Null when [baseUrl] isn't an http(s) URL, or context can't be encoded (no identity to build from). */

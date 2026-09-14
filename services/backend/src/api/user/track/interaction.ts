@@ -44,11 +44,16 @@ export const trackInteractionRoute = new Elysia().post(
                 }
             );
 
+        // `arrival` is the only type contributing a type-specific field.
+        const extra = result as { referralLinkId?: string | null };
+
         return {
             identityGroupId,
             interactionLogId: result.interactionLog?.id ?? null,
             isDuplicate: result.isDuplicate,
-            ...buildTypeSpecificResponse(body.type, result),
+            ...(body.type === "arrival" && {
+                referralLinkId: extra.referralLinkId ?? null,
+            }),
         };
     },
     {
@@ -63,9 +68,8 @@ export const trackInteractionRoute = new Elysia().post(
                 // response by Elysia, not just undocumented. The native SDKs read only the
                 // status code, so nothing there depends on it.
                 isDuplicate: t.Boolean(),
-                // Only `buildTypeSpecificResponse("arrival", …)` contributes a
-                // field, and it is null when no referral link was registered.
-                // `sharing` and `custom` add nothing, hence optional.
+                // Only the `arrival` type contributes this field, and it is
+                // null when no referral link was registered.
                 referralLinkId: t.Optional(t.Union([t.String(), t.Null()])),
             }),
             // 400: `resolveSdkIdentity` saw a client id with no merchantId, or
@@ -78,21 +82,3 @@ export const trackInteractionRoute = new Elysia().post(
         },
     }
 );
-
-function buildTypeSpecificResponse(
-    type: "arrival" | "sharing" | "custom",
-    result: Record<string, unknown>
-): Record<string, unknown> {
-    switch (type) {
-        case "arrival":
-            return {
-                referralLinkId: result.referralLinkId,
-            };
-        case "sharing":
-            return {};
-        case "custom":
-            return {};
-        default:
-            return {};
-    }
-}

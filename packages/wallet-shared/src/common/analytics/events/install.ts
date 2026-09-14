@@ -32,9 +32,7 @@ type MerchantMaybe = {
 };
 
 export type InstallEventMap = {
-    // ---------------------------------------------------------------------
     // /install page (web-side gateway)
-    // ---------------------------------------------------------------------
     install_page_viewed: MerchantMaybe & {
         has_anonymous_id: boolean;
         // Gate 2's order-derived credential. Sizes the Shopify share of this
@@ -92,9 +90,7 @@ export type InstallEventMap = {
     // but kept here to keep every install-themed event under one domain.
     install_pwa_initiated: undefined;
 
-    // ---------------------------------------------------------------------
     // Android Play Install Referrer (passive attribution)
-    // ---------------------------------------------------------------------
     install_referrer_checked: undefined;
     install_referrer_resolved: {
         has_merchant: boolean;
@@ -107,9 +103,7 @@ export type InstallEventMap = {
         error_type: string;
     };
 
-    // ---------------------------------------------------------------------
     // Magic install code (user-entered fallback)
-    // ---------------------------------------------------------------------
     install_code_page_viewed: undefined;
     install_code_submitted: undefined;
     install_code_resolved: {
@@ -122,9 +116,7 @@ export type InstallEventMap = {
         error_code: string;
     };
 
-    // ---------------------------------------------------------------------
     // Ensure outcome (cross-cutting — all three mechanisms converge here)
-    // ---------------------------------------------------------------------
     identity_ensure_executed: {
         source: InstallSource;
     };

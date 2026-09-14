@@ -99,9 +99,8 @@ class Frak_Admin {
 		wp_enqueue_style( 'frak-admin', plugin_dir_url( __DIR__ ) . 'admin/css/admin.css', array(), $version );
 
 		// Emit the AJAX bootstrap payload as a plain JSON object on
-		// `window.frak_ajax` — `wp_localize_script` used to do this, but it
-		// forces the value through `esc_attr`-style mangling and is slated
-		// for eventual deprecation. `wp_add_inline_script` with `'before'`
+		// `window.frak_ajax`: `wp_localize_script` would force it through
+		// `esc_attr`-style mangling. `wp_add_inline_script` with `'before'`
 		// runs prior to the deferred admin script executing.
 		$ajax_payload = array(
 			'ajax_url'  => admin_url( 'admin-ajax.php' ),

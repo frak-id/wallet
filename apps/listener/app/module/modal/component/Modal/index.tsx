@@ -39,7 +39,6 @@ import { TransactionModalStep } from "@/module/modal/component/Transaction";
 import {
     modalStore,
     selectCurrentStep,
-    selectCurrentStepObject,
     selectIsDismissed,
     selectShouldFinish,
 } from "@/module/stores/modalStore";
@@ -238,11 +237,6 @@ function ListenerModalInner({
 
 /**
  * Main component for the modal — alert dialog wrapper
- * @param title
- * @param open
- * @param onOpenChange
- * @param children
- * @constructor
  */
 function ModalComponent({
     open,
@@ -329,7 +323,7 @@ function ModalHeader({
  */
 function CurrentModalTitle({ metadataTitle }: { metadataTitle?: ReactNode }) {
     const { t, i18n } = useListenerTranslation();
-    const currentStep = modalStore(selectCurrentStepObject);
+    const currentStep = modalStore(selectCurrentStep);
 
     const stepTitle = useMemo(() => {
         if (!currentStep) return undefined;
@@ -365,7 +359,7 @@ function CurrentModalMetadataInfo() {
     // Consolidate subscriptions using useShallow for better performance
     const { currentStep, isDismissed } = modalStore(
         useShallow((state) => ({
-            currentStep: selectCurrentStepObject(state),
+            currentStep: selectCurrentStep(state),
             isDismissed: selectIsDismissed(state),
         }))
     );
@@ -375,7 +369,8 @@ function CurrentModalMetadataInfo() {
     const descriptionKey = useMemo((): ModalKey | null => {
         if (!currentStep) return null;
 
-        // If we are in the final step, and the modal was dismissed, used the dismissed metadata
+        // If we are in the final step, and the modal was dismissed, use the
+        // dismissed metadata
         if (currentStep.key === "final" && isDismissed) {
             return `sdk.modal.${currentStep.key}.dismissed.description` as ModalKey;
         }
@@ -406,7 +401,6 @@ function CurrentModalMetadataInfo() {
 
 /**
  * Return the right inner component depending on the current modal step
- * @constructor
  */
 function CurrentModalStepComponent({
     onError,
@@ -437,12 +431,7 @@ function CurrentModalStepComponent({
      * Return the right modal depending on the state
      */
     return useMemo(() => {
-        // Extract some info about the current modal step
         if (!currentStep) return null;
-
-        // Capture the key up front so the defensive default branch can still
-        // report it — inside `default`, `currentStep` narrows to `never`.
-        const stepKey = currentStep.key;
 
         // Display the right component depending on the step
         switch (currentStep.key) {
@@ -470,8 +459,6 @@ function CurrentModalStepComponent({
                 );
             case "final":
                 return <FinalModalStep onFinish={currentStep.onResponse} />;
-            default:
-                return <>Can't handle {stepKey} yet</>;
         }
     }, [currentStep, onError]);
 }

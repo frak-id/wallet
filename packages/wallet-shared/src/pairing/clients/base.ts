@@ -1,4 +1,3 @@
-import type { Treaty } from "@elysiajs/eden";
 import type { StoreApi } from "zustand/vanilla";
 import { createStore } from "zustand/vanilla";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
@@ -16,10 +15,6 @@ import {
 type PairingWs = ReturnType<
     typeof authenticatedWalletApi.pairings.ws.subscribe
 >;
-
-export type PairingWsEventListener = (
-    event: Treaty.WSEvent<"message", unknown>
-) => void;
 
 type ConnectionParams =
     | {
@@ -186,10 +181,6 @@ export abstract class BasePairingClient<
         this._store.setState(updater);
     }
 
-    /* ---------------------------------------------------------------------- */
-    /*                          Lifecycle primitives                          */
-    /* ---------------------------------------------------------------------- */
-
     /** Stop the heartbeat ping timer. */
     private stopHeartbeat() {
         if (this.pingInterval) {
@@ -265,10 +256,6 @@ export abstract class BasePairingClient<
         this.rejectAllRequests(reason);
     }
 
-    /* ---------------------------------------------------------------------- */
-    /*                          Public surface                                 */
-    /* ---------------------------------------------------------------------- */
-
     /**
      * Graceful disconnect. Closes the WS but keeps Zustand state and any
      * in-flight requests untouched — caller may choose to reconnect later.
@@ -307,10 +294,6 @@ export abstract class BasePairingClient<
     /** Reconnect to the pairing websocket. Subclass-specific. */
     abstract reconnect(): void;
 
-    /* ---------------------------------------------------------------------- */
-    /*                          Connection management                          */
-    /* ---------------------------------------------------------------------- */
-
     /**
      * Check WebSocket liveness, cleaning up zombie connections.
      * A zombie occurs when the OS kills the socket while the app is backgrounded
@@ -332,7 +315,6 @@ export abstract class BasePairingClient<
             return true;
         }
 
-        console.log("[Pairing] Cleaning up zombie WebSocket connection");
         // Zombie: socket is CLOSED but no close event fired. Drop the ref
         // and reset reconnect counters, but DO NOT reset state — the caller
         // is expected to re-establish the connection silently.
@@ -395,10 +377,6 @@ export abstract class BasePairingClient<
         this.onCloseHook = connectFn;
     }
 
-    /* ---------------------------------------------------------------------- */
-    /*                          Event handling                                 */
-    /* ---------------------------------------------------------------------- */
-
     protected setupEventListeners(connection: PairingWs, epoch: number) {
         // A socket's listeners act only while their epoch is the live one. Once
         // superseded (a newer connect, or a closeSocket), any late event from
@@ -410,7 +388,6 @@ export abstract class BasePairingClient<
             "message",
             ({ data }: { data: unknown }) => {
                 if (isStale()) return;
-                console.log("Received message", data);
                 if (!this.isWsMessageData(data)) {
                     console.error("Invalid message received", data);
                     return;
@@ -422,7 +399,6 @@ export abstract class BasePairingClient<
 
         connection.on("open", () => {
             if (isStale()) return;
-            console.log("Pairing websocket opened");
             this.resetReconnectState();
             this.flushOutbound();
             this.onSocketOpen();
@@ -485,7 +461,6 @@ export abstract class BasePairingClient<
     }
 
     private handleClose({ code, reason }: CloseEvent) {
-        console.log("Pairing websocket closed", { code, reason });
         this.stopHeartbeat();
         this.connection = null;
 

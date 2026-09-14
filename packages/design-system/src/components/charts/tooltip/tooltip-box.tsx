@@ -1,9 +1,9 @@
+import clsx from "clsx";
 import { motion, useSpring } from "motion/react";
 import type { RefObject } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { type SpringConfig, useChartConfig } from "../chart-config-context";
-import { cn } from "../lib/utils";
 
 export interface TooltipBoxProps {
     /** X position in pixels (relative to container) */
@@ -152,7 +152,7 @@ function TooltipBoxInner({
     return createPortal(
         <motion.div
             animate={{ opacity: 1 }}
-            className={cn("pointer-events-none absolute z-50", className)}
+            className={clsx("pointer-events-none absolute z-50", className)}
             exit={{ opacity: 0 }}
             initial={{ opacity: 0 }}
             ref={tooltipRef}

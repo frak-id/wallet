@@ -25,7 +25,7 @@ import {
 
 /**
  * DNS proof identity for the session: wallet when present (legacy JWT +
- * wallet accounts), business account otherwise (walletless, §4.10).
+ * wallet accounts), business account otherwise (walletless).
  */
 function dnsOwnerFromSession(
     session: ResolvedBusinessAuth
@@ -96,7 +96,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
             const dnsCheck = MerchantContext.repositories.dnsCheck;
             const normalizedDomain = dnsCheck.getNormalizedDomain(domain);
 
-            // §4.10 third bypass: surfaced here too, so the frontend can show
+            // Shopify-session domain bypass: surfaced here too, so the UI shows
             // the "Domain verified thanks to your Shopify session" banner
             // before the user ever touches the DNS TXT flow.
             const verifiedViaShopify = await isVerifiedViaShopify(
@@ -147,10 +147,10 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
         async ({ body, request, shopifySession, businessSession }) => {
             const origin = request.headers.get("origin") ?? "";
 
-            // §4.12 inline embedded mint: a verified App Bridge token with NO
-            // business session at all is a third, distinct identity. Reuse
-            // the session the `businessSessionContext` plugin already verified
-            // (§2.3) rather than re-verifying the token here.
+            // Inline embedded mint: a verified App Bridge token with NO
+            // business session at all is a third, distinct identity. Reuse the
+            // session `businessSessionContext` already verified rather than
+            // re-verifying the token here.
             const shopifyRegistration = businessSession
                 ? null
                 : resolveShopifySessionIdentity(shopifySession, body);
@@ -159,7 +159,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 return registerFromShopifySession(shopifyRegistration);
             }
 
-            // Identity resolution (§4.10):
+            // Identity resolution:
             //  - SIWE proof in the body → wallet path (works for legacy JWT
             //    sessions too; account attached when the session has one).
             //  - No proof → walletless path: requires a full DB session (the
@@ -202,7 +202,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 ? await isPlatformAdminAuth(businessSession)
                 : false;
 
-            // §4.10 third DNS bypass: a Shopify SSO session whose proven shop
+            // Third DNS bypass: a Shopify SSO session whose proven shop
             // domain matches the registering domain (subdomain-aware) already
             // proved ownership via OAuth. Cross-domain lookup happens here (the
             // BFF layer), never inside MerchantRegistrationService.
@@ -241,8 +241,8 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
             return { merchantId, verifiedViaShopify };
         },
         {
-            // Merchant mint is a sensitive action (§4.8): fresh 2FA required.
-            // Embedded Shopify sessions are exempt inside the macro (§4.11).
+            // Merchant mint is a sensitive action: fresh 2FA required.
+            // Embedded Shopify sessions are exempt inside the macro.
             requireStepUp: true,
             body: t.Object({
                 // SIWE ownership proof — optional: walletless accounts
@@ -250,15 +250,15 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 message: t.Optional(t.String()),
                 signature: t.Optional(t.Hex()),
                 // Optional here at the schema level: required for the
-                // wallet/account paths (checked at runtime, §4.10), but the
-                // §4.12 embedded-mint path derives the domain from the
+                // wallet/account paths (checked at runtime), but the
+                // embedded-mint path derives the domain from the
                 // Shopify token and never reads this field.
                 domain: t.Optional(t.String()),
                 name: t.Optional(t.String()),
                 setupCode: t.Optional(t.String()),
                 defaultRewardToken: t.Optional(t.Hex()),
                 allowedDomains: t.Optional(t.Array(t.String())),
-                // §4.12 inline embedded mint only: the storefront's primary
+                // Inline embedded mint only: the storefront's primary
                 // domain, when it differs from the token's myshopify domain.
                 // Registers under `primaryDomain` (with the myshopify domain
                 // added to `allowedDomains`) only when it matches the
@@ -267,7 +267,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 // unrelated/unverified custom domain can never be claimed
                 // through this identity.
                 primaryDomain: t.Optional(t.String()),
-                // §4.12 inline embedded mint only: shop's preferred currency,
+                // Inline embedded mint only: shop's preferred currency,
                 // mapped to the matching Frak stablecoin server-side.
                 currency: t.Optional(
                     t.Union([
@@ -295,7 +295,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 200: t.Object({
                     merchantId: t.String(),
                     // Drives the "Domain verified thanks to your Shopify
-                    // session" banner (§4.10) instead of the DNS TXT flow.
+                    // session" banner instead of the DNS TXT flow.
                     verifiedViaShopify: t.Boolean(),
                 }),
                 400: t.ErrorResponse,
@@ -305,11 +305,6 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
         }
     );
 
-/**
- * Does the session's account hold a Shopify identity whose shop domain
- * matches (or is a subdomain match of) the domain being registered? An
- * account holds at most one Shopify identity (§4.3).
- */
 /**
  * Resolve the account's email for the walletless setup-code path (the code
  * binds to it). Kept at the BFF layer since the merchant domain must not read
@@ -322,6 +317,11 @@ async function accountEmail(accountId: string | null): Promise<string | null> {
     return account?.email ?? null;
 }
 
+/**
+ * Does the session's account hold a Shopify identity whose shop domain matches
+ * (or is a subdomain match of) the domain being registered? An account holds
+ * at most one Shopify identity.
+ */
 async function isVerifiedViaShopify(
     accountId: string | null,
     registeringDomain: string
@@ -357,8 +357,8 @@ type ShopifySessionRegistration = {
 };
 
 /**
- * §4.12: shape the inline embedded-mint identity from the already-verified
- * App Bridge session (verified once by `businessSessionContext`, §2.3), or
+ * Shape the inline embedded-mint identity from the already-verified
+ * App Bridge session (verified once by `businessSessionContext`), or
  * `null` when there is no (valid) Shopify session — the caller falls through
  * to the normal wallet/account branches in that case.
  */
@@ -394,9 +394,9 @@ function resolveShopifySessionIdentity(
 }
 
 /**
- * §4.12 domain selection (C1 / plan §1.1). Decides which domain the embedded
- * merchant registers under and which domains alias it for resolution:
- *  - primary domain verifiably the same shop (subdomain-aware, §4.10) →
+ * Embedded-mint domain selection: which domain the embedded merchant
+ * registers under, and which domains alias it for resolution:
+ *  - primary domain verifiably the same shop (subdomain-aware) →
  *    register under it, alias the myshopify domain;
  *  - primary domain is a real (unverifiable) custom domain → register under
  *    the myshopify domain so it can't be *claimed*, but alias the custom
@@ -439,9 +439,8 @@ function resolveEmbeddedMintDomains(
 }
 
 /**
- * §4.12 inline embedded mint: register (or resolve, on a 409 race) the
- * merchant for an embedded Shopify caller — no wallet, no business session,
- * no DNS TXT, no popup. See design doc §4.12 for the full rationale.
+ * Inline embedded mint: register (or resolve, on a 409 race) the merchant for
+ * an embedded Shopify caller — no wallet, no business session, no DNS TXT.
  */
 async function registerFromShopifySession(
     params: ShopifySessionRegistration
@@ -490,7 +489,7 @@ async function registerFromShopifySession(
         // Race between two shop admins hitting "Connect" at once (or a
         // re-install after a previous successful registration): resolve to
         // the existing merchant instead of surfacing an error the embedded
-        // UI can't do anything useful with (§4.12 edge cases).
+        // UI can't do anything useful with.
         if (error instanceof HttpError && error.status === 409) {
             const existing =
                 await MerchantContext.repositories.merchant.findByDomain(
@@ -515,8 +514,8 @@ async function registerFromShopifySession(
 
 /**
  * Shared post-registration side effects (affiliate brand link + bank
- * deploy), factored out so both the wallet/account path and the §4.12
- * embedded-session path trigger them identically.
+ * deploy), so both the wallet/account path and the embedded-session path
+ * trigger them identically.
  */
 async function onMerchantRegistered(params: {
     merchantId: string;

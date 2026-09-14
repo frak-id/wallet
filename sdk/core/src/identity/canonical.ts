@@ -194,9 +194,7 @@ export function hexToBytes(hex: string): Uint8Array {
     );
 }
 
-// ---------------------------------------------------------------------------
-// base64url (no padding) — the only encoding left on the wire.
-// ---------------------------------------------------------------------------
+// base64url (no padding) — the only encoding on the wire.
 
 export function bytesToBase64Url(bytes: Uint8Array): string {
     let binary = "";

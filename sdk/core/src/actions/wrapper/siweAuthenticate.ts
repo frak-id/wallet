@@ -56,7 +56,7 @@ export type SiweAuthenticateModalParams = {
 };
 
 /**
- * Function used to launch a siwe authentication
+ * Run a SIWE authentication, and resolve with the message and its signature
  * @param client - The current Frak Client
  * @param args - The parameters
  * @returns The SIWE authentication result (message + signature) in a promise

@@ -1,12 +1,9 @@
 /**
- * Stub for rrweb. The IIFE/CDN bundles inline every dependency
- * (alwaysBundle catch-all), which would also pull in rrweb via the dynamic
- * `replay` chunk loaded by @openpanel/web. Session replay is disabled in our
- * SDK, so we alias rrweb to a noop record() to keep the CDN bundle small.
- *
- * The NPM ESM/CJS builds don't need this alias: @openpanel/web 1.4.1+ loads
- * rrweb through a dynamic `import("./replay-…")`, so consumers' bundlers can
- * tree-shake / code-split it on their own.
+ * Noop stub aliased over rrweb in the IIFE/CDN bundles, which inline every
+ * dependency and would otherwise pull it in through @openpanel/web's dynamic
+ * `replay` chunk — rolldown's DCE keeps that `await import(...)` even behind a
+ * build-time define, so the alias is the only lever. Session replay is never
+ * enabled, and the NPM builds keep the real dynamic import for consumers.
  */
 export function record() {
     return () => {};

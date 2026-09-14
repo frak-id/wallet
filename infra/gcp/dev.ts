@@ -34,7 +34,6 @@ export const dbEnv = {
 
 const libsqlUrl = `http://localhost:${sqldLocalPort}`;
 
-// Backend dev command
 new sst.x.DevCommand("backend", {
     dev: {
         title: "Backend",
@@ -58,7 +57,6 @@ new sst.x.DevCommand("backend", {
     },
 });
 
-// Drizzle migration for libsql (authenticator)
 new sst.x.DevCommand("db-migrate-libsql", {
     dev: {
         title: "Migrate libsql",

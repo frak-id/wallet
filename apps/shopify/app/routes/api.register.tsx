@@ -9,10 +9,9 @@ import { data } from "react-router";
 import { authenticate } from "../shopify.server";
 
 /**
- * §4.12 inline embedded mint — replaces the old popup + setup-code flow.
  * Registers (or resolves, on a 409 race with another shop admin) the current
- * shop as a Frak merchant using the App Bridge session token as the sole
- * domain proof. No wallet, no DNS TXT record, no separate window.
+ * shop as a Frak merchant, using the App Bridge session token as the sole
+ * domain proof.
  */
 export async function action({ request }: ActionFunctionArgs) {
     if (request.method !== "POST") {

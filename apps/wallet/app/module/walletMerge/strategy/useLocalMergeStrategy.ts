@@ -4,14 +4,8 @@ import { useSendAddPassKeyTx } from "../hook/useSendAddPassKeyTx";
 import type { MergeStrategy } from "./types";
 
 /**
- * Same-device merge strategy: every primitive runs locally on this device.
- * Both passkeys (winner + loser) are physically resident here, so all
- * three mutations build their bundler clients with `transport: "local"`
- * and prompt biometrics through the device's WebAuthn ceremony.
- *
- * Calls the underlying mutation hooks here so the returned strategy holds
- * ready-to-use mutation objects — matches the contract enforced by
- * `MergeStrategy` (see the rules-of-hooks note in `types.ts`).
+ * Same-device merge strategy: both passkeys are resident here, so every
+ * mutation builds its bundler client with `transport: "local"`.
  */
 export function useLocalMergeStrategy(): MergeStrategy {
     const loserConsent = useLoserConsent();

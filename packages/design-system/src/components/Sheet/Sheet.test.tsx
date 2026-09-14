@@ -62,15 +62,6 @@ describe("Sheet", () => {
         renderSheet(true, { hideCloseButton: true });
         expect(screen.queryByRole("button", { name: "Close" })).toBeNull();
     });
-
-    it("should expose the compound parts", () => {
-        expect(Sheet).toBeDefined();
-        expect(SheetTrigger).toBeDefined();
-        expect(SheetContent).toBeDefined();
-        expect(SheetTitle).toBeDefined();
-        expect(SheetDescription).toBeDefined();
-        expect(SheetClose).toBeDefined();
-    });
 });
 
 describe("sheetContent recipe", () => {

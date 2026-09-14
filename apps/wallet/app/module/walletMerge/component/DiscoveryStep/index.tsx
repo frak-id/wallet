@@ -145,7 +145,7 @@ export function DiscoveryStep({
             client.softReset();
             detachedPairingSessionStore.getState().clearDetachedSession();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // Mount-once on purpose: re-running would open a second pairing.
     }, []);
 
     const runLocalProbe = useCallback(async () => {

@@ -15,7 +15,7 @@ type QueryOptions = Omit<
 >;
 
 /** @inline */
-interface UseGetMerchantInformationParams {
+type UseGetMerchantInformationParams = {
     /**
      * Optional query options, see {@link @tanstack/react-query!useQuery | `useQuery()`} for more infos
      */
@@ -24,7 +24,7 @@ interface UseGetMerchantInformationParams {
      * Time in ms to cache the result at the core SDK level. Default: 30_000 (30s). Set to 0 to disable.
      */
     cacheTime?: number;
-}
+};
 
 /**
  * Hook that return a query helping to get the current merchant information

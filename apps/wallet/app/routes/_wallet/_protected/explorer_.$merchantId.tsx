@@ -6,20 +6,7 @@ import { modalStore } from "@/module/stores/modalStore";
 
 /**
  * Deep link target for campaign-launch notifications: opens the explorer with
- * the merchant's detail modal already open. Resolves the merchant by id and
- * opens the `explorerDetail` modal over this route, which renders the explorer
- * list underneath so closing the modal reveals it.
- *
- * Flow: resolve the merchant, redirect to the canonical `/explorer` while NO
- * modal is open (so `useHardwareBack`'s blocker stays inactive and won't eat
- * the modal), then open the `explorerDetail` modal once navigation settles.
- *
- * Returning the URL to `/explorer` is also what makes warm-start work: a repeat
- * deep link to `/explorer/{id}` is then always a real location change (vs a
- * no-op same-URL navigation), so the route re-mounts and re-fires every time.
- *
- * Shipping this route now lets backend notifications point at
- * `/explorer/{merchantId}` later without a new app release.
+ * the merchant's `explorerDetail` modal already open, list underneath.
  */
 export const Route = createFileRoute(
     "/_wallet/_protected/explorer_/$merchantId"
@@ -34,13 +21,11 @@ function ExplorerMerchantPage() {
     const handled = useRef(false);
 
     useEffect(() => {
-        // Act once the lookup has settled (found, not-found, or errored) — NOT on
-        // `isLoading`, which is briefly false before data attaches and would
-        // fire with no merchant. Always redirect to /explorer: it un-strands a
-        // failed lookup (list, no modal) and keeps warm-start working (the URL
-        // returns to /explorer, so a repeat deep link is a real navigation, not
-        // a no-op). Redirect first (no modal open → useHardwareBack's blocker is
-        // inactive), then open the modal only when a merchant resolved.
+        // Act once the lookup has settled (found, not-found, or errored) — NOT
+        // on `isLoading`, which is briefly false before data attaches. Always
+        // redirect to /explorer first: no modal is open yet, so
+        // `useHardwareBack`'s blocker stays inactive, and returning the URL
+        // keeps a repeat deep link a real navigation instead of a no-op.
         if (handled.current || !isSettled) return;
         handled.current = true;
         const resolved = merchant;

@@ -23,13 +23,9 @@ type HashProtectedBackup = BackupData & { validationHash: string };
 /**
  * Hash JSON data with SHA256 using the Web Crypto API.
  *
- * Output is byte-identical to `viem.sha256(new TextEncoder().encode(...))`
- * (`"0x" + 64 lowercase hex chars`) so existing customer backups continue to
- * validate without any migration. Replacing viem with `crypto.subtle.digest`
- * removes ~the entire viem chunk from the eager iframe bundle.
- *
- * @param data - Data to hash
- * @returns SHA256 hash as `0x`-prefixed lowercase hex string
+ * Output must stay byte-identical to `viem.sha256(new TextEncoder().encode(...))`
+ * (`"0x" + 64 lowercase hex chars`), or already-issued customer backups stop
+ * validating.
  */
 export async function hashJson(data: unknown): Promise<string> {
     const buf = new TextEncoder().encode(JSON.stringify(data));
@@ -41,8 +37,6 @@ export async function hashJson(data: unknown): Promise<string> {
 
 /**
  * Restore received backup data
- * @param backup
- * @param domain
  */
 export async function restoreBackupData({
     backup,
@@ -113,7 +107,6 @@ export async function pushBackupData(args?: { domain?: string }) {
     // Get the domain from args (optional for cleanup scenarios)
     const domain = args?.domain;
     if (!domain) {
-        console.log("[Backup] No domain provided - skipping backup");
         return;
     }
     // Get the current backup data from stores
@@ -147,10 +140,6 @@ export async function pushBackupData(args?: { domain?: string }) {
         );
         return;
     }
-    // Never log `backup` itself: it carries the live session and SDK tokens,
-    // and console stripping only runs on prod builds.
-    console.log("[Backup] Pushing new backup data to parent client");
-
     // Add hash to backup data
     const hashProtected: HashProtectedBackup = {
         ...backup,

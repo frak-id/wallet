@@ -1,8 +1,3 @@
-/**
- * Tests for base64url encoding and decoding utilities
- * Tests encoding, decoding, and round-trip operations
- */
-
 import { describe, expect, it, test } from "../../../tests/vitest-fixtures";
 import { base64urlDecode, base64urlEncode } from "./b64";
 

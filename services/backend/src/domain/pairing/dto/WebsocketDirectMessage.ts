@@ -49,11 +49,8 @@ export type WsPingRequest = {
  * origin knows at send time.
  */
 export type WsSignatureRequestBase = {
-    // The id of the request
     id: string;
-    // The request
     request: Hex;
-    // Some optional context
     context?: object;
     // How the response should be shaped. Defaults to "onchain" when
     // omitted (legacy clients).
@@ -66,9 +63,7 @@ export type WsSignatureRequestBase = {
  * difference is the transport context.
  */
 export type WsSignatureResponseBase = {
-    // The pairing id
     pairingId: string;
-    // The id of the request
     id: string;
     // The signature response. Hex for `signatureKind: "onchain"`
     // (default), base64 WebAuthn assertion JSON for
@@ -96,7 +91,6 @@ export type WsSignatureRequest = {
 export type WsPongRequest = {
     type: "pong";
     payload: {
-        // The pairing id on which the pong is sent
         pairingId: string;
     };
 };
@@ -119,9 +113,7 @@ export type WsSignatureResponseRequest = {
 export type WsSignatureRejectRequest = {
     type: "signature-reject";
     payload: {
-        // The id of the request
         id: string;
-        // The reason of the rejection (typed)
         reason: SignatureRejectReason;
         // Optional pairing id (target must include it; origin can omit it,
         // server resolves it from the wallet token)

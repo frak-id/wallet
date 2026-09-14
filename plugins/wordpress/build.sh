@@ -1,11 +1,26 @@
 #!/bin/bash
-
+#
 # WordPress Plugin Build Script for Frak Integration
+#
+# Version is read (in order of priority):
+#   1. First CLI argument                    -> ./build.sh 1.2.3
+#   2. $VERSION environment variable         -> VERSION=1.2.3 ./build.sh
+#   3. `Version:` header in the entry file   -> fallback
+
+set -euo pipefail
 
 PLUGIN_NAME="frak-integration"
-VERSION="${1:-${VERSION:-$(grep -E '^\s*\*\s*Version:' frak-integration.php | head -n1 | awk '{print $3}')}}"
 BUILD_DIR="build"
 DIST_DIR="dist"
+
+VERSION="${1:-${VERSION:-}}"
+if [ -z "$VERSION" ]; then
+  VERSION=$(grep -E '^\s*\*\s*Version:' frak-integration.php | head -n1 | awk '{print $3}')
+fi
+if [ -z "$VERSION" ]; then
+  echo "::error::Unable to resolve plugin version (pass as arg, VERSION env var, or fix the Version: header in frak-integration.php)"
+  exit 1
+fi
 
 echo "Building ${PLUGIN_NAME} version ${VERSION}..."
 
@@ -54,5 +69,5 @@ echo "Build complete! Package created: ${DIST_DIR}/${PLUGIN_NAME}-${VERSION}.zip
 # List package contents for verification
 echo ""
 echo "Package contents:"
-unzip -l ${DIST_DIR}/${PLUGIN_NAME}-${VERSION}.zip | grep -E "Name|----|${PLUGIN_NAME}/" | head -20
+unzip -l ${DIST_DIR}/${PLUGIN_NAME}-${VERSION}.zip | grep -E "Name|----|${PLUGIN_NAME}/" | head -20 || true
 echo "..."

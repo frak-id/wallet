@@ -3,21 +3,8 @@
  */
 
 import type { SsoMetadata } from "@frak-labs/core-sdk";
-import type { Signature } from "ox";
-import type { SignMetadata } from "ox/WebAuthnP256";
 import type { Address, Hex } from "viem";
 import type { SdkSession, Session } from "../types/Session";
-
-/**
- * WebAuthn authentication response structure
- */
-export type AuthenticationResponseJSON = {
-    id: string;
-    response: {
-        metadata: SignMetadata;
-        signature: Signature.Signature<false>;
-    };
-};
 
 /**
  * Detached pairing session — written by the merge flow on both origin and
@@ -126,11 +113,6 @@ export type AuthenticationStore = {
     setLastAuthenticationAt: (timestamp: number | null) => void;
     setSsoContext: (context: SsoContext | null) => void;
 };
-/**
- * Client ID Store Types
- *
- * TODO: Evolve to Record<merchantId, clientId> for per-merchant tracking
- */
 export type ClientIdStore = {
     // State
     clientId: string | null;

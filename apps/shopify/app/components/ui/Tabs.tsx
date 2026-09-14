@@ -1,16 +1,16 @@
 import type { ReactNode } from "react";
 
-interface Tab {
+type Tab = {
     id: string;
     content: string;
-}
+};
 
-interface TabsProps {
+type TabsProps = {
     tabs: Tab[];
     selected: number;
     onSelect: (index: number) => void;
     children?: ReactNode;
-}
+};
 
 /**
  * Tab switcher for App Home. No native `s-tabs` exists, so it's hand-rolled

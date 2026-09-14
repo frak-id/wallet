@@ -136,15 +136,4 @@ describe("Select", () => {
             screen.getByRole("combobox").classList.contains("custom-trigger")
         ).toBe(true);
     });
-
-    it("should export all compound parts", () => {
-        expect(Select).toBeDefined();
-        expect(SelectTrigger).toBeDefined();
-        expect(SelectContent).toBeDefined();
-        expect(SelectItem).toBeDefined();
-        expect(SelectValue).toBeDefined();
-        expect(SelectGroup).toBeDefined();
-        expect(SelectLabel).toBeDefined();
-        expect(SelectSeparator).toBeDefined();
-    });
 });

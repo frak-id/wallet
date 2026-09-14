@@ -3,12 +3,6 @@ import { isProd, normalizedStageName } from "./utils";
 // Get some info about the deployment env
 const isLocal = $dev ?? false;
 
-/**
- * Get a static variable depending on the stack
- * @param string
- * @param string
- * @param local
- */
 export function getStaticVariable({
     prod,
     dev,

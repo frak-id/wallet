@@ -114,7 +114,7 @@ class WebhookSender
     }
 
     /**
-     * Map internal status string to webhook status
+     * Any status other than confirmed or refunded collapses to "pending".
      *
      * @param string $status
      * @return string

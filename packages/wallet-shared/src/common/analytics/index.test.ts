@@ -1,5 +1,13 @@
 import type { Address, Hex } from "viem";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+    afterEach,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi,
+} from "vitest";
 import type { WebAuthNWallet } from "../../types/WebAuthN";
 import {
     extractAuthError,
@@ -64,6 +72,12 @@ vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
 }));
 
 describe("Analytics", () => {
+    // Every assertion below goes through the instance; `apps-setup` stubs the
+    // env that builds it, so a missing one must fail here and not silently.
+    beforeAll(() => {
+        expect(openPanel).toBeDefined();
+    });
+
     beforeEach(() => {
         vi.clearAllMocks();
     });
@@ -74,15 +88,13 @@ describe("Analytics", () => {
 
     describe("setProfileId", () => {
         it("sets the profile id on the openpanel instance", () => {
-            if (!openPanel) return;
             setProfileId("test-profile-id");
-            expect(openPanel.profileId).toBe("test-profile-id");
+            expect(openPanel?.profileId).toBe("test-profile-id");
         });
 
         it("accepts undefined", () => {
-            if (!openPanel) return;
             setProfileId(undefined);
-            expect(openPanel.profileId).toBeUndefined();
+            expect(openPanel?.profileId).toBeUndefined();
         });
     });
 
@@ -129,7 +141,6 @@ describe("Analytics", () => {
 
     describe("updateGlobalProperties", () => {
         it("merges onto existing global props", () => {
-            if (!openPanel) return;
             updateGlobalProperties({ wallet: "0x1234" as Address });
             expect(mockSetGlobalProperties).toHaveBeenCalledWith(
                 expect.objectContaining({ wallet: "0x1234" })
@@ -146,7 +157,6 @@ describe("Analytics", () => {
         };
 
         it("updates wallet + session_id + identifies the profile + emits user_logged_in", () => {
-            if (!openPanel) return;
             identifyAuthenticatedUser(baseSession);
             expect(mockSetGlobalProperties).toHaveBeenCalledWith(
                 expect.objectContaining({ wallet: baseSession.address })
@@ -163,7 +173,6 @@ describe("Analytics", () => {
         });
 
         it("defaults session_type to webauthn when absent", () => {
-            if (!openPanel) return;
             const session = {
                 ...baseSession,
                 type: undefined,
@@ -179,7 +188,6 @@ describe("Analytics", () => {
         });
 
         it("does NOT emit the domain _completed event", () => {
-            if (!openPanel) return;
             identifyAuthenticatedUser(baseSession);
             const tracked = mockTrack.mock.calls.map((c) => c[0]);
             expect(tracked).toContain("user_logged_in");

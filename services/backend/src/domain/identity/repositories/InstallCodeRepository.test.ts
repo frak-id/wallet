@@ -12,10 +12,6 @@ function renderLastStatement(): { sql: string; params: unknown[] } {
     return { sql: query.sql, params: query.params };
 }
 
-/**
- * `db.execute` is mocked, so the reuse predicate — remaining life, attempt
- * cap, race safety — is NOT covered here. Row mapping only.
- */
 describe("InstallCodeRepository.create", () => {
     const row = {
         id: "id-1",
@@ -149,13 +145,6 @@ describe("InstallCodeRepository.create", () => {
     });
 });
 
-/**
- * `findByCode` counts the attempt in the same UPDATE ... RETURNING as the
- * lookup, so the exhaustion check and the increment can't race across
- * concurrent guesses. The mock's `update` chain ignores the `where`
- * condition, so these tests only exercise row mapping and the "absent
- * means null" contract, not the generated SQL predicate itself.
- */
 describe("InstallCodeRepository.findByCode", () => {
     beforeEach(() => {
         dbMock.__reset();

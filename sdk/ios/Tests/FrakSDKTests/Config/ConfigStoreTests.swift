@@ -98,7 +98,7 @@ struct ConfigStoreTests {
         #expect(try await store.resolve(query(), forceRefresh: false).name == "Acme Renamed")
     }
 
-    @Test("background revalidation reaches the updates stream, not just memory (C3)")
+    @Test("background revalidation reaches the updates stream, not just memory")
     func backgroundRevalidationReachesUpdatesStream() async throws {
         let clock = Clock()
         let log = RequestLog()
@@ -159,13 +159,6 @@ struct ConfigStoreTests {
         #expect(log.count == 2)
     }
 
-    // C4's "an older fetch that starts first but lands last does not overwrite a newer publish"
-    // case has no deterministic test here: it needs two requests genuinely in flight through one
-    // ConfigStore/URLSession with the first response held back until the second publishes, and
-    // URLSession does not guarantee concurrent custom-URLProtocol loads over one session — a
-    // serialised second request would wedge the test on HTTPClient's Deadline instead of failing
-    // it. This pins only what is provable without concurrent I/O: guard/publish ordering and
-    // cross-key isolation.
     @Test("a fetch for one key does not publish over a different key's already-published result")
     func differentKeyFetchDoesNotOverwritePublishedResult() async throws {
         let clock = Clock()
@@ -414,7 +407,7 @@ struct ConfigStoreTests {
         }
         #expect(
             received.value == 0,
-            "currentConfig's disk hydration must not publish to the stream — only fetch() does (C3)"
+            "currentConfig's disk hydration must not publish to the stream — only fetch() does"
         )
     }
 

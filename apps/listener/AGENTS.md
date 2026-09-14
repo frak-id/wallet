@@ -11,12 +11,12 @@ bun run test         # listener-unit Vitest project
 ```
 
 ## Key Files
-- `app/entry.client.tsx` — iframe bootstrap
-- `app/views/listener.tsx` — RPC setup (single view, no routing)
-- `app/module/hooks/` — RPC message handler implementations (core logic, add new handlers here); `app/bootstrap.ts` registers 10
+- `app/entry.client.ts` — iframe entry point (Ring 0, pure TS)
+- `app/bootstrap.ts` — RPC listener creation + handler registration (single view, no routing)
+- `app/module/hooks/` — RPC message handler implementations (core logic, add new handlers here)
 - `app/module/handlers/` — handler wrappers · `app/module/middleware/` — request/response middleware
 - `app/module/{modal,sharing}/` — wallet UI rendered over partner site
-- `app/module/stores/` — Zustand (modal + context state) · `app/module/providers/` — RootProvider (Wagmi, QueryClient)
+- `app/module/stores/` — Zustand (modal + context state) · `app/ui/` — Ring 1 Preact runtime + provider tree (Wagmi, QueryClient)
 
 ## Non-Obvious Patterns
 - **No routing**: single-view iframe; adding a route means rethinking the architecture.

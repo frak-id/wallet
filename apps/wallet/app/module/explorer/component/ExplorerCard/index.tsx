@@ -48,10 +48,9 @@ function ExplorerCardComponent({ merchant, priority }: ExplorerCardProps) {
 
     const cardRef = useRef<HTMLElement>(null);
 
-    // Fires once when the card crosses 50% visible. Replaces the legacy
-    // global `screen_view` denominator on the wallet funnel so impressions
-    // can be scoped per merchant. Re-mounts re-emit by design (list refetch
-    // counts as a new view).
+    // Fires once when the card crosses 50% visible, so impressions are scoped
+    // per merchant. Re-mounts re-emit by design (a list refetch counts as a
+    // new view).
     const isViewed = useOneShotInView(cardRef, { threshold: 0.5 });
     useEffect(() => {
         if (!isViewed) return;

@@ -21,17 +21,14 @@ export type RecoveryStatusResponse = Static<
 export const RecoveryBlobResponseSchema = t.Object({
     blob: t.Union([t.String(), t.Null()]),
 });
-export type RecoveryBlobResponse = Static<typeof RecoveryBlobResponseSchema>;
 
 export const SaveRecoveryBlobBodySchema = t.Object({
     blob: t.String({ minLength: 1, maxLength: 1024 }),
 });
-export type SaveRecoveryBlobBody = Static<typeof SaveRecoveryBlobBodySchema>;
 
 export const SaveRecoveryResponseSchema = t.Object({
     status: t.Literal("success"),
 });
-export type SaveRecoveryResponse = Static<typeof SaveRecoveryResponseSchema>;
 
 /**
  * Acknowledgement for a recovery blob deletion. Idempotent: returns `deleted`
@@ -41,16 +38,10 @@ export type SaveRecoveryResponse = Static<typeof SaveRecoveryResponseSchema>;
 export const DeleteRecoveryResponseSchema = t.Object({
     status: t.Literal("deleted"),
 });
-export type DeleteRecoveryResponse = Static<
-    typeof DeleteRecoveryResponseSchema
->;
 
 export const RequestRecoveryEmailBodySchema = t.Object({
     email: t.String({ format: "email", maxLength: 320 }),
 });
-export type RequestRecoveryEmailBody = Static<
-    typeof RequestRecoveryEmailBodySchema
->;
 
 /**
  * Deliberately generic acknowledgement — identical whether or not the address
@@ -60,6 +51,3 @@ export type RequestRecoveryEmailBody = Static<
 export const RequestRecoveryEmailResponseSchema = t.Object({
     status: t.Literal("requested"),
 });
-export type RequestRecoveryEmailResponse = Static<
-    typeof RequestRecoveryEmailResponseSchema
->;

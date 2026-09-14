@@ -76,7 +76,7 @@ struct PersistedDeviceKeyStore: DeviceKeyStore {
     }
 
     /// Nil both when there is nothing stored and when what is stored cannot be used here, so
-    /// `loadOrCreate` mints either way. The Android twin has the same shape for the same reason.
+    /// `loadOrCreate` mints either way.
     private func load() -> DeviceKey? {
         guard let stored = store.string(forKey: Self.storageKey) else { return nil }
         guard let blob = Base64URL.decode(stored) else { return nil }

@@ -7,49 +7,34 @@ import { BalanceResponseSchema } from "../../schemas";
 
 export const balanceRoutes = new Elysia({ prefix: "/balance" })
     .use(sessionContext)
-    // Get current user balance
     .get(
         "",
         async ({ walletSession }) => {
-            // Get all the user balances
             const balances =
                 await WalletContext.repositories.balances.getUserBalance({
                     address: walletSession.address,
                 });
 
-            // For each balances, get the eur price
-            const mappedBalances = (
-                await Promise.all(
-                    balances.map(async (tokenBalance) => {
-                        // Get the eur price of the token
-                        const price = await pricingRepository.getTokenPrice({
-                            token: tokenBalance.contractAddress,
-                        });
+            const mappedBalances = await Promise.all(
+                balances.map(async (tokenBalance) => {
+                    const price = await pricingRepository.getTokenPrice({
+                        token: tokenBalance.contractAddress,
+                    });
 
-                        // Return the well formatted balance
-                        return {
-                            token: tokenBalance.contractAddress,
-                            name: tokenBalance.metadata.name,
-                            symbol: tokenBalance.metadata.symbol,
-                            decimals: tokenBalance.metadata.decimals,
-                            rawBalance: toHex(tokenBalance.rawBalance),
-                            // Formatted amount
-                            amount: tokenBalance.balance,
-                            eurAmount: price
-                                ? tokenBalance.balance * price.eur
-                                : 0,
-                            usdAmount: price
-                                ? tokenBalance.balance * price.usd
-                                : 0,
-                            gbpAmount: price
-                                ? tokenBalance.balance * price.gbp
-                                : 0,
-                        };
-                    })
-                )
-            ).filter((v) => v !== null && v !== undefined);
+                    return {
+                        token: tokenBalance.contractAddress,
+                        name: tokenBalance.metadata.name,
+                        symbol: tokenBalance.metadata.symbol,
+                        decimals: tokenBalance.metadata.decimals,
+                        rawBalance: toHex(tokenBalance.rawBalance),
+                        amount: tokenBalance.balance,
+                        eurAmount: price ? tokenBalance.balance * price.eur : 0,
+                        usdAmount: price ? tokenBalance.balance * price.usd : 0,
+                        gbpAmount: price ? tokenBalance.balance * price.gbp : 0,
+                    };
+                })
+            );
 
-            // Get the total balance
             const totalBalance = mappedBalances.reduce(
                 (acc, { amount, eurAmount, usdAmount, gbpAmount }) => ({
                     amount: acc.amount + amount,

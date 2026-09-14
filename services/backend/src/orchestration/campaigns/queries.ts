@@ -6,12 +6,7 @@ import {
 } from "../../domain/rewards/db/schema";
 import { db } from "../../infrastructure/persistence/postgres";
 
-/**
- * Shared SQL fragments + subquery builders for the campaign reporting
- * orchestrators. The "attributed purchases" CTE pattern shows up six
- * times in the legacy code — extracting it here is the single biggest
- * dedup win.
- */
+/** Shared SQL fragments + subquery builders for the campaign reporting orchestrators. */
 
 /**
  * Base predicate set for an "attributed purchase" — an un-cancelled

@@ -18,12 +18,12 @@ type MutationOptions = Omit<
 >;
 
 /** @inline */
-interface UseDisplaySharingPageParams {
+type UseDisplaySharingPageParams = {
     /**
      * Optional mutation options, see {@link @tanstack/react-query!useMutation | `useMutation()`} for more infos
      */
     mutations?: MutationOptions;
-}
+};
 
 /**
  * Hook that return a mutation helping to display a sharing page to the user

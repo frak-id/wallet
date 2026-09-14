@@ -75,30 +75,10 @@ extensions.configure<KotlinAndroidProjectExtension> {
     }
 }
 
-// Central requires a `-javadoc` artifact to exist and never opens it, so this ships a stub.
-//
-// AGP's own `withJavadocJar()` is not usable here. Its `javaDocReleaseGeneration` runs a bundled
-// Dokka 1.x whose relocated ASM predates the `PermittedSubclasses` class-file attribute, so it
-// throws in `ClassVisitor.visitPermittedSubclass` on the first `sealed` type it reads — and this
-// SDK has seven public sealed hierarchies (`FrakError`, `FrakEnvironment`, `FrakResult`,
-// `FrakContext`, `MerchantQuery`, the rewards tree, `Interaction`'s internal `Kind`).
-//
-// The trigger is reading a sealed type as a *binary*, not compiling one: Dokka reads a module's
-// own Kotlin sources through descriptors and only falls back to ASM for dependencies. That is why
-// `:frak-sdk` published a real 571 KB Dokka jar and only `:frak-sdk-ui`, which sees `:frak-sdk` as
-// a jar, ever failed. Publishing a real jar for one module and a stub for the other would be worse
-// than a stub for both — same coordinate family, silently different contract.
-//
-// Not fixable from here: AGP resolves the Dokka worker classpath in a detached configuration, so
-// there is no configuration to force a newer Dokka or compiler onto. Applying Dokka 2 directly is
-// the real fix and is deliberately not attempted yet: its Gradle plugin hooks the `kotlin-android`
-// plugin that AGP 9 blocks, which is exactly the wall that forced the hand-rolled ABI gate below
-// (BCV#312, KT-78025). Revisit when AGP ships a Dokka that reads JVM 17 class files, or when Dokka
-// 2 registers against AGP 9 without the Kotlin plugin.
-//
-// KDoc is not lost: `withSourcesJar()` above publishes every source file, and that is what an IDE
-// actually reads on navigate-to-source.
-// An entirely empty jar reads as a build bug to whoever opens it next, so the stub says why.
+// Central requires a `-javadoc` artifact to exist and never opens it, so this ships a stub: AGP's
+// `withJavadocJar()` runs a bundled Dokka 1.x that throws on any `sealed` type it reads as a
+// binary. KDoc is not lost — `withSourcesJar()` above is what an IDE reads. The reasoning is in
+// the README's "Open decisions"; an entirely empty jar reads as a build bug, so the stub says why.
 val javadocStub =
     tasks.register("javadocStub") {
         val notice = layout.buildDirectory.file("frak-javadoc-stub/README.md")

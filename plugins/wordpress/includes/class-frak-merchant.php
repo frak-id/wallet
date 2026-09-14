@@ -139,8 +139,4 @@ class Frak_Merchant {
 		delete_transient( self::NEGATIVE_CACHE_KEY );
 		return $record;
 	}
-
-	// Normalised host is provided by {@see Frak_Utils::current_host()} so the
-	// merchant cache key and the webhook registrar agree on the same
-	// normalisation (lower-cased, leading `www.` stripped).
 }

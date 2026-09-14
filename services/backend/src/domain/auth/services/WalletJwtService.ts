@@ -28,14 +28,10 @@ export type MintForCredentialResult = {
 };
 
 /**
- * Pure JWT-mint primitive for a `(credential, wallet)` pair. Owns the
+ * Pure JWT-mint primitive for a `(credential, wallet)` pair, owning the
  * wallet-JWT + SDK-companion-JWT pairing and the `WalletAuthResponseDto`
- * shape, nothing else.
- *
- * Wallet resolution (current-chain binding lookup, derivation fallback,
- * lazy back-fill) lives one layer up in `WalletSessionOrchestrator`, which
- * is the entry point every API handler should call. This service is the
- * orchestrator's inner mint primitive — direct callers should be rare.
+ * shape. Wallet resolution lives one layer up in `WalletSessionOrchestrator`,
+ * the entry point API handlers should call.
  */
 export class WalletJwtService {
     constructor(private readonly sdkSessionService: WalletSdkSessionService) {}

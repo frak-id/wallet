@@ -19,6 +19,7 @@ import {
     assetLogsTable,
     interactionLogsTable,
 } from "../../domain/rewards/db/schema";
+import { interactionTypes } from "../../domain/rewards/schemas";
 import {
     aggregateFunnelSteps,
     buildFunnelSeries,
@@ -630,7 +631,7 @@ export class CampaignOverviewOrchestrator {
         //
         // `converted` joins the `referrer` reward in asset_logs so only
         // referred purchases count — without it, organic buyers leak in and
-        // share-less merchants show conversions. Left join keeps referral_arrival
+        // share-less merchants show conversions. Left join keeps referral rows
         // feeding `referred`; COUNT(DISTINCT) dedupes multi-level referrer rows.
         const { current, previous } = resolved;
         const createdAt = interactionLogsTable.createdAt;
@@ -638,10 +639,10 @@ export class CampaignOverviewOrchestrator {
         const rewardMatch = assetLogsTable.id;
         const rows = await db
             .select({
-                referredCurrent: sql<number>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${type} = 'referral_arrival' AND ${between(createdAt, current.from, current.to)})`,
-                referredPrevious: sql<number>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${type} = 'referral_arrival' AND ${between(createdAt, previous.from, previous.to)})`,
-                convertedCurrent: sql<number>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${type} = 'purchase' AND ${rewardMatch} IS NOT NULL AND ${between(createdAt, current.from, current.to)})`,
-                convertedPrevious: sql<number>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${type} = 'purchase' AND ${rewardMatch} IS NOT NULL AND ${between(createdAt, previous.from, previous.to)})`,
+                referredCurrent: sql<number>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${type} = ${interactionTypes.referral} AND ${between(createdAt, current.from, current.to)})`,
+                referredPrevious: sql<number>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${type} = ${interactionTypes.referral} AND ${between(createdAt, previous.from, previous.to)})`,
+                convertedCurrent: sql<number>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${type} = ${interactionTypes.purchase} AND ${rewardMatch} IS NOT NULL AND ${between(createdAt, current.from, current.to)})`,
+                convertedPrevious: sql<number>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${type} = ${interactionTypes.purchase} AND ${rewardMatch} IS NOT NULL AND ${between(createdAt, previous.from, previous.to)})`,
             })
             .from(interactionLogsTable)
             .leftJoin(

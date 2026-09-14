@@ -213,18 +213,14 @@ describe("PullToRefresh", () => {
                 </PullToRefresh>
             );
 
-            // Finger lands at Y=100 while scrolled. Simulate scrolling: a
-            // burst of touchmoves while scrollTop > 0 (real hardware fires
-            // dozens of these per gesture). Each one should keep startY in
-            // sync with the finger.
+            // Finger lands at Y=100 while scrolled; each guarded touchmove
+            // keeps startY in sync with the finger.
             container.dispatchEvent(makeTouchEvent("touchstart", 100));
             container.dispatchEvent(makeTouchEvent("touchmove", 150));
             container.dispatchEvent(makeTouchEvent("touchmove", 180));
 
-            // Container reaches the top. Finger continues just 20px further.
-            // Without the fix, dy would be (200 - 100) = 100 — above
-            // threshold. With the fix, startY tracks the last guarded
-            // touchmove (Y=180), so dy is only 20.
+            // Container reaches the top 20px further on: startY is the last
+            // guarded touchmove (Y=180), so dy is 20, not 100.
             Object.defineProperty(container, "scrollTop", {
                 value: 0,
                 configurable: true,

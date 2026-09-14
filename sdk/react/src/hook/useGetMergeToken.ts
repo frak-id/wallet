@@ -10,7 +10,7 @@ type QueryOptions = Omit<
 >;
 
 /** @inline */
-interface UseGetMergeTokenParams {
+type UseGetMergeTokenParams = {
     /**
      * Optional query options, see {@link @tanstack/react-query!useQuery | `useQuery()`} for more infos
      */
@@ -19,7 +19,7 @@ interface UseGetMergeTokenParams {
      * Time in ms to cache the result at the core SDK level. Default: 30_000 (30s). Set to 0 to disable.
      */
     cacheTime?: number;
-}
+};
 
 /**
  * Hook that return a query to fetch a merge token for the current anonymous identity

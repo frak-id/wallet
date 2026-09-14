@@ -1,11 +1,8 @@
 import { db } from "@backend-infrastructure";
-import { HttpError } from "@backend-utils";
+import { HttpError, isUniqueViolation } from "@backend-utils";
 import { and, eq, inArray } from "drizzle-orm";
 import { type AffiliateBrandSelect, affiliateBrandTable } from "../db/schema";
 import type { AffiliateProvider } from "../provider";
-
-/** Postgres unique-violation error code. */
-const UNIQUE_VIOLATION = "23505";
 
 export class AffiliateBrandRepository {
     /**
@@ -91,9 +88,7 @@ export class AffiliateBrandRepository {
 
 /** Detects a unique-violation on `affiliate_brand_provider_external_unique`. */
 function isProviderExternalUniqueViolation(error: unknown): boolean {
-    const pgError = error as { code?: string; constraint_name?: string };
-    return (
-        pgError?.code === UNIQUE_VIOLATION &&
-        (pgError?.constraint_name?.includes("provider_external") ?? false)
-    );
+    if (!isUniqueViolation(error)) return false;
+    const { constraint_name } = error as { constraint_name?: string };
+    return constraint_name?.includes("provider_external") ?? false;
 }

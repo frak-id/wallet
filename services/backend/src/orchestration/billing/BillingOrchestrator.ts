@@ -26,11 +26,9 @@ export class DepositNotFoundError extends Error {
 }
 
 /**
- * The fiat leg each stablecoin is pegged to — the common unit reward tokens
- * are converted through when the withdraw's linked deposit is in this
- * currency (§4). Kept local to this orchestrator: it's the only place that
- * needs to pick a single `TokenPrice` leg for the withdraw-restitution
- * conversion.
+ * The fiat leg each stablecoin is pegged to — the unit reward tokens are
+ * converted through for the withdraw-restitution conversion, the only place
+ * that needs to pick a single `TokenPrice` leg.
  */
 const STABLECOIN_FIAT_LEG: Record<Stablecoin, "eur" | "usd" | "gbp"> = {
     eure: "eur",
@@ -38,10 +36,6 @@ const STABLECOIN_FIAT_LEG: Record<Stablecoin, "eur" | "usd" | "gbp"> = {
     usde: "usd",
     usdc: "usd",
 };
-
-function fiatKeyForStablecoin(currency: Stablecoin): "eur" | "usd" | "gbp" {
-    return STABLECOIN_FIAT_LEG[currency];
-}
 
 /**
  * Any withdraw-input validation failure (wrong/voided linked deposit, kind
@@ -260,7 +254,7 @@ export class BillingOrchestrator {
 
         // Fiat leg the deposit currency is pegged to — the common unit every
         // reward token is converted into before the 1:1 division.
-        const fiatKey = fiatKeyForStablecoin(depositCurrency);
+        const fiatKey = STABLECOIN_FIAT_LEG[depositCurrency];
         const depositToken = getTokenAddressForStablecoin(depositCurrency);
         const depositPrice = await this.pricing.getTokenPrice({
             token: depositToken,

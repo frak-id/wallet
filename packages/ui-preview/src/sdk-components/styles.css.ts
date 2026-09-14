@@ -1,8 +1,6 @@
 import { fadeInDown } from "@frak-labs/design-system/keyframes";
 import { style } from "@vanilla-extract/css";
 
-// ─── Banner Preview ─────────────────────────────────────
-
 export const bannerContainer = style({
     display: "flex",
     flexDirection: "row",
@@ -56,8 +54,6 @@ export const bannerCta = style({
     textTransform: "uppercase",
     cursor: "default",
 });
-
-// ─── Post-Purchase Preview ──────────────────────────────
 
 export const postPurchaseCard = style({
     display: "flex",
@@ -133,8 +129,6 @@ export const postPurchaseCustomImage = style({
     height: 80,
     objectFit: "contain",
 });
-
-// ─── Share Button Preview ───────────────────────────────
 
 export const shareButton = style({
     display: "inline-flex",

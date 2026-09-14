@@ -1,11 +1,5 @@
-/** Where a param may arrive: `query` at load only, `both` also via the activation fragment. */
-export type InstallParamTransport = "query" | "both";
-
-export type InstallParamCodec<T> = {
-    /** Returns `undefined` for anything the param cannot legally be. */
-    decode: (raw: unknown) => T | undefined;
-    transport: InstallParamTransport;
-};
+/** Returns `undefined` for anything the param cannot legally be. */
+type InstallParamDecoder<T> = (raw: unknown) => T | undefined;
 
 const str = (raw: unknown): string | undefined =>
     typeof raw === "string" ? raw : undefined;
@@ -34,23 +28,17 @@ const oneOf =
  * — the two key sets have nothing in common.
  */
 export const INSTALL_PARAMS = {
-    p: { decode: str, transport: "both" },
-    sid: { decode: str, transport: "both" },
-    probe: { decode: oneOf("ok", "disabled", "undeclared"), transport: "both" },
-    installed: { decode: oneOf("1"), transport: "both" },
-    dt: { decode: int, transport: "both" },
-    via: { decode: oneOf("overlay", "product"), transport: "both" },
-} as const satisfies Record<string, InstallParamCodec<unknown>>;
+    p: str,
+    sid: str,
+    probe: oneOf("ok", "disabled", "undeclared"),
+    installed: oneOf("1"),
+    dt: int,
+    via: oneOf("overlay", "product"),
+} as const satisfies Record<string, InstallParamDecoder<unknown>>;
 
 export type InstallParamKey = keyof typeof INSTALL_PARAMS;
 
 /** The decoded shape of a fragment activation. */
 export type InstallActivation = {
-    [K in InstallParamKey]?: ReturnType<(typeof INSTALL_PARAMS)[K]["decode"]>;
+    [K in InstallParamKey]?: ReturnType<(typeof INSTALL_PARAMS)[K]>;
 };
-
-export function installParamCodec(
-    key: InstallParamKey
-): InstallParamCodec<unknown> {
-    return INSTALL_PARAMS[key];
-}

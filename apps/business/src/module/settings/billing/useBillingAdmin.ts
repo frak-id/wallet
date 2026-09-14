@@ -9,15 +9,9 @@ import { authenticatedBackendApi } from "@/api/backendClient";
 import { documentsQueryKey } from "./queryKeys";
 
 /**
- * A deposit/withdraw mutation returns as soon as the row is written, but its
- * side-effects settle a beat later: a reissue voids then recreates, a void
- * cascades to linked withdraws + clears the affected monthly bill's cached
- * PDF, and PDF (re)generation runs async. An invalidate fired the instant the
- * call resolves can therefore refetch the pre-settle state and leave the table
- * showing the stale document. So invalidate twice — immediately, then once
- * more after a short delay so the list converges on the final state without a
- * manual reload. The trailing pass uses the default `active`-only refetch, so
- * it no-ops (just marks stale) if the user already left the page.
+ * A deposit/withdraw mutation returns before its side-effects settle (cascading
+ * voids, async PDF regeneration), so an immediate invalidate can refetch the
+ * pre-settle state. Hence a second, delayed invalidate.
  */
 const SETTLE_REINVALIDATE_MS = 5_000;
 

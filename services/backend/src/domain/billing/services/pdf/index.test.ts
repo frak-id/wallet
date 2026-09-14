@@ -93,22 +93,14 @@ const monthlyBillDto: BillingPdfDocumentDto = {
 describe("BillingPdfService", () => {
     const service = new BillingPdfService();
 
-    it("renders a valid deposit PDF", async () => {
-        const bytes = await service.render(depositDto);
-        expect(bytes.length).toBeGreaterThan(0);
-        const header = Buffer.from(bytes.slice(0, 5)).toString("latin1");
-        expect(header).toBe("%PDF-");
-    });
+    const smokeCases: [string, BillingPdfDocumentDto][] = [
+        ["deposit", depositDto],
+        ["withdraw", withdrawDto],
+        ["monthly bill", monthlyBillDto],
+    ];
 
-    it("renders a valid withdraw PDF", async () => {
-        const bytes = await service.render(withdrawDto);
-        expect(bytes.length).toBeGreaterThan(0);
-        const header = Buffer.from(bytes.slice(0, 5)).toString("latin1");
-        expect(header).toBe("%PDF-");
-    });
-
-    it("renders a valid monthly bill PDF", async () => {
-        const bytes = await service.render(monthlyBillDto);
+    it.each(smokeCases)("renders a valid %s PDF", async (_kind, dto) => {
+        const bytes = await service.render(dto);
         expect(bytes.length).toBeGreaterThan(0);
         const header = Buffer.from(bytes.slice(0, 5)).toString("latin1");
         expect(header).toBe("%PDF-");

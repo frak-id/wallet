@@ -5,8 +5,7 @@ Grafana dashboards + monitoring assets for Frak services.
 ## Backend overview dashboard
 
 `dashboards/backend-overview.json` — a ready-to-import Grafana dashboard for the
-Elysia backend (`services/backend`), built on the Prometheus metrics it exposes
-(see `services/backend/docs/prometheus-metrics-plan.md`).
+Elysia backend (`services/backend`), built on the Prometheus metrics it exposes.
 
 ### How metrics reach Prometheus
 

@@ -5,10 +5,6 @@
  * PrestaShop {@see Order} object: customer/order/token context plus optional
  * line-item data for the SDK's sharing-page UI.
  *
- * Sibling of WordPress's `Frak_WooCommerce::get_post_purchase_data()`. Kept
- * deliberately parallel so both plugins emit the same `<frak-post-purchase>`
- * payload shape and the backend has one contract to maintain.
- *
  * Stateless static class. The hooks (`displayOrderConfirmation` /
  * `displayOrderDetail`) already receive a resolved `Order`, so no per-request
  * caching is needed — every call site has direct access to the object.
@@ -19,8 +15,7 @@ class FrakOrderResolver
      * Default cap on the number of order line items forwarded to the
      * `<frak-post-purchase products>` HTML attribute. Big carts would
      * otherwise serialise to multi-kilobyte attribute values; the sharing
-     * page UI also gets cluttered past ~6 items. Mirrors the WordPress
-     * plugin's `Frak_WooCommerce::DEFAULT_PRODUCT_CAP`.
+     * page UI also gets cluttered past ~6 items.
      *
      * @var int
      */
@@ -52,8 +47,7 @@ class FrakOrderResolver
      * `<frak-post-purchase>` HTML attributes and the inline tracker script.
      *
      * `secure_key` is PrestaShop's per-cart MD5 token; combined with the
-     * order id it becomes the same anti-tamper opaque token shape used by
-     * the WooCommerce / Magento integrations on the backend.
+     * order id it becomes the anti-tamper opaque token the backend expects.
      * @param Order $order PrestaShop Order object resolved by the calling hook.
      * @return array{customerId: string, orderId: string, token: string}
      */
@@ -140,8 +134,7 @@ class FrakOrderResolver
      *
      * Format: `{secure_key}_{orderId}` — the cart `secure_key` is
      * PrestaShop's per-cart MD5 anti-tamper handle; appending the order id
-     * matches the WordPress / Magento siblings' contract so the backend
-     * has a single token shape across all three plugins.
+     * yields the single token shape the backend expects.
      *
      * Centralised here so {@see getContext()} (SDK component) and
      * {@see getWebhookPayload()} (backend webhook) cannot drift on the

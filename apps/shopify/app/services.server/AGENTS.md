@@ -1,6 +1,6 @@
 # services.server/ — Server Business Logic
 
-11 service files + 9 test files. All Shopify Admin API + external API interactions live here. **Never import these from client code.**
+All Shopify Admin API + external API interactions live here. **Never import these from client code.**
 
 ## PATTERN
 
@@ -34,8 +34,10 @@ export async function doSomething(
 | **purchase.ts**         | One-time app purchases, DB tracking                        | None     | Shopify GraphQL + Drizzle          |
 | **purchase.helpers.ts** | Validation (amount, bank address), GID parsing             | None     | Pure functions                     |
 | **merchant.ts**         | Merchant ID resolution (cache → metafield → backend)       | LRU 5min | Shopify GraphQL + backend API      |
-| **backendMerchant.ts**  | Campaigns + bank status from Frak backend                  | LRU 5s   | backend API                        |
-| **mint.ts**             | Product setup code generation                              | None     | Pure crypto (keccak256)            |
+| **backendMerchant.ts**  | Campaigns, bank + Frak webhook status from the backend     | LRU 5s   | backend API                        |
+| **frakEnv.ts**          | Frak wallet/backend URLs per stage                         | None     | Pure                               |
+| **logger.ts**           | pino logger + `levelForStatus`                             | None     | Pure                               |
+| **requestId.ts**        | Ingress correlation id extraction + request context        | None     | Pure                               |
 
 ## CONVENTIONS
 
@@ -45,23 +47,7 @@ export async function doSomething(
 - **Generic helpers**: `metafields.ts` has `readMetafield<T>()` / `writeMetafield<T>()` — reuse for new metafields.
 - **Error handling**: try-catch, return `null`/`undefined` on failure. Never throw from services.
 - **Logging**: use the structured pino logger (`import { log } from "./logger"`), never `console.*` (on GKE `console.warn` is misclassified as ERROR severity). Pattern: `log.error({ err, merchantId }, "short message")`. Per-request `reqId`/`shop`/`merchantId`/`route` are attached automatically via the request context (root `middleware` + `setRequestContext`). For backend/HTTP errors branch severity with `levelForStatus(status)` (404 → info, other 4xx → warn, 5xx → error).
-- **Tests**: Co-located `*.test.ts` files (9 total). Run with `bun run test`.
-- **Types over interfaces**: Prefer `type` aliases. Use `interface` only when declaration merging is required.
-
-## WHERE TO LOOK
-
-| Task                    | File                  | Key exports                                                                                                                                                   |
-| ----------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Query shop data         | `shop.ts`             | `shopInfo()`, `firstProductPublished()`, `normalizeDomain()`                                                                                                  |
-| Read/write metafields   | `metafields.ts`       | `getI18nCustomizations()`, `updateI18nCustomizations()`, `getAppearanceMetafield()`, `updateAppearanceMetafield()`, `getMerchantIdMetafield()`, `getShopId()` |
-| Check theme integration | `theme.ts`            | `doesThemeSupportBlock()`, `doesThemeHasFrakActivated()`, `doesThemeHasFrakButton()`, `getMainThemeId()`                    |
-| Manage web pixel        | `webPixel.ts`         | `getWebPixel()`, `createWebPixel()`, `deleteWebPixel()`                                                                                                       |
-| Manage webhooks         | `webhook.ts`          | `getWebhooks()`, `createWebhook()`, `deleteWebhook()`, `frakWebhookStatus()`                                                                                  |
-| App purchases           | `purchase.ts`         | `startupPurchase()`, `getCurrentPurchases()`, `getPurchase()`                                                                                                 |
-| Purchase validation     | `purchase.helpers.ts` | `validatePurchaseAmount()`, `validateBank()`, `parseShopifyGid()`                                                                                             |
-| Resolve merchant        | `merchant.ts`         | `resolveMerchantId()`                                                                                                                                         |
-| Fetch merchant data     | `backendMerchant.ts`  | `getMerchantCampaigns()`, `getMerchantBankStatus()`                                                                                                          |
-| Setup codes             | `mint.ts`             | `getProductSetupCode()`                                                                                                                                       |
+- **Tests**: Co-located `*.test.ts` files. Run with `bun run test`.
 
 ## DEPENDENCY GRAPH
 
@@ -72,8 +58,7 @@ shop.ts (foundation — most services depend on it)
   ├─ theme.ts → shopInfo() for shop domain
   ├─ purchase.ts → shopInfo() for shop info + ID
   ├─ webhook.ts → shopInfo() for product ID
-  ├─ merchant.ts → shopInfo() for normalized domain
-  └─ mint.ts → shopInfo() for normalized domain
+  └─ merchant.ts → shopInfo() for normalized domain
 
 merchant.ts (mid-tier — resolves merchantId)
   ↑

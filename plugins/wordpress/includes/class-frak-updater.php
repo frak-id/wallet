@@ -72,8 +72,7 @@ class Frak_Updater {
 
 	/**
 	 * Tag prefix the WordPress release workflow stamps on every tag.
-	 * Mirrors Magento's own `magento-` prefix; both are namespaced because
-	 * the monorepo houses multiple plugins.
+	 * Namespaced because the monorepo houses multiple plugins.
 	 */
 	private const TAG_PREFIX = 'wordpress-';
 

@@ -7,13 +7,6 @@ export const formItem = recipe({
     base: {},
     variants: {
         variant: {
-            radio: {
-                display: "inline-flex",
-                alignItems: "center",
-                gap: alias.spacing.xs,
-                borderRadius: alias.cornerRadius.xs,
-                padding: "7px",
-            },
             checkbox: {
                 display: "flex",
                 gap: alias.spacing.xs,
@@ -38,7 +31,6 @@ export const formLabel = recipe({
     },
     variants: {
         variant: {
-            radio: { paddingBottom: 0 },
             checkbox: {
                 color: brand.colors.neutral.grey500,
                 lineHeight: "20px",
@@ -57,7 +49,6 @@ export const formLabel = recipe({
                 color: vars.text.secondary,
                 whiteSpace: "normal",
             },
-            dark: {},
         },
         selected: {
             true: { color: `${brand.colors.primary[500]} !important` },
@@ -76,18 +67,6 @@ export const formDescription = style({
 export const formTitle = style({
     fontSize: "16px",
 });
-
-export const validMessage = style({
-    color: vars.text.success,
-});
-
-// Radio checked highlight
-globalStyle(
-    `${formItem.classNames.variants.variant.radio}:has(button[data-state="checked"])`,
-    {
-        background: "#818c9c24",
-    }
-);
 
 // Checkbox spacing
 globalStyle(

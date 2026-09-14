@@ -5,7 +5,10 @@ import {
 } from "@frak-labs/wallet-shared";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import {
+    PersistQueryClientProvider,
+    removeOldestQuery,
+} from "@tanstack/react-query-persist-client";
 import { lazy, type PropsWithChildren, Suspense, useEffect } from "react";
 import { useConnection } from "wagmi";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
@@ -18,15 +21,13 @@ const ReactQueryDevtools = lazy(() =>
     }))
 );
 
-/**
-
- * The storage persister to cache our query data's
- */
 const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
     persister: createAsyncStoragePersister({
         storage: window.localStorage,
         // Throttle for 50ms to prevent storage spamming
         throttleTime: 50,
+        // Without this a full quota leaves the cache unwritable for good.
+        retry: removeOldestQuery,
     }),
     maxAge: Number.POSITIVE_INFINITY,
     dehydrateOptions: {

@@ -97,10 +97,6 @@ const MODELS = [
     descKey: string;
 }>;
 
-/* ------------------------------------------------------------------ */
-/*  Shared field bits                                                  */
-/* ------------------------------------------------------------------ */
-
 function UnitIcon({ unit }: { unit: UnitKind }) {
     const glyph = useCurrencyGlyph();
     if (unit === "percent") {
@@ -280,10 +276,6 @@ function RecoBar({ onApply }: { onApply: () => void }) {
     );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Campaign type                                                      */
-/* ------------------------------------------------------------------ */
-
 function CampaignTypeField({
     control,
 }: {
@@ -315,10 +307,6 @@ function CampaignTypeField({
         </div>
     );
 }
-
-/* ------------------------------------------------------------------ */
-/*  Reward model + reveals                                             */
-/* ------------------------------------------------------------------ */
 
 function RevealHeader() {
     const { t } = useTranslation();
@@ -643,10 +631,6 @@ function PercentageReveal({
         />
     );
 }
-
-/* ------------------------------------------------------------------ */
-/*  Tiered (static)                                                    */
-/* ------------------------------------------------------------------ */
 
 /** Unit (€/%) Select, restyled as a grey filled 56px field. */
 function UnitSelectField({
@@ -1175,10 +1159,6 @@ function TieredReveal({
     );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Eligibility + lockup                                               */
-/* ------------------------------------------------------------------ */
-
 // Exported for unit testing.
 export function EligibilityField({
     control,
@@ -1304,8 +1284,6 @@ export function LockupField({
         </Stack>
     );
 }
-
-/* ------------------------------------------------------------------ */
 
 export function RewardCampaign() {
     const { t } = useTranslation();

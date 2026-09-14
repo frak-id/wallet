@@ -1,8 +1,3 @@
-/**
- * Tests for FrakConfigProvider
- * Tests that the provider correctly provides config to child components
- */
-
 import { getEnvironment, setEnvironment } from "@frak-labs/core-sdk";
 import { render } from "@testing-library/react";
 import React, { createElement } from "react";

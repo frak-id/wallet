@@ -6,16 +6,9 @@ import {
     insertIntoSqld,
     type SqldRow,
 } from "./sqld";
-import type { MongoAuthenticator } from "./types";
+import { type MongoAuthenticator, toBase64 } from "./types";
 
 const BATCH_SIZE = 100;
-
-function toBase64(value: Binary | Buffer | Uint8Array | string): string {
-    if (typeof value === "string") return value;
-    if (value instanceof Binary)
-        return Buffer.from(value.buffer).toString("base64");
-    return Buffer.from(value).toString("base64");
-}
 
 function mongoToSqld(doc: MongoAuthenticator): SqldRow {
     return {

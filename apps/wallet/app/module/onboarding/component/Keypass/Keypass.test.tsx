@@ -73,29 +73,14 @@ describe("Keypass", () => {
             expect(drawer).toBeInTheDocument();
         });
 
-        const buttons = screen.getAllByRole("button");
-        const continueButton = buttons.find((btn) =>
-            btn.textContent?.includes("onboarding.continue")
-        );
-
-        if (continueButton) {
-            fireEvent.click(continueButton);
-            expect(mockRegister).toHaveBeenCalled();
+        const continueButton = screen
+            .getAllByRole("button")
+            .find((btn) => btn.textContent?.includes("onboarding.continue"));
+        if (!continueButton) {
+            throw new Error("Continue button was not rendered");
         }
-    });
 
-    it("should render as always open (controlled by outlet)", async () => {
-        const onClose = vi.fn();
-        const onAuthSuccess = vi.fn();
-
-        render(<Keypass onClose={onClose} onAuthSuccess={onAuthSuccess} />);
-
-        await waitFor(() => {
-            const drawer = document.querySelector("[data-vaul-drawer]");
-            expect(drawer).toBeInTheDocument();
-        });
-
-        const drawer = document.querySelector("[data-vaul-drawer]");
-        expect(drawer).toBeInTheDocument();
+        fireEvent.click(continueButton);
+        expect(mockRegister).toHaveBeenCalled();
     });
 });

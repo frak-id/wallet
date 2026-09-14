@@ -8,19 +8,10 @@ import {
     alertDialogTitleStyle,
 } from "./alertDialog.css";
 
-/**
- * Stateless root — pairs trigger + content.
- */
 export const AlertDialog = RadixAlertDialog.Root;
 
-/**
- * Element that opens the alert dialog on click.
- */
 export const AlertDialogTrigger = RadixAlertDialog.Trigger;
 
-/**
- * Accessible title for the alert dialog.
- */
 export function AlertDialogTitle({
     className,
     children,
@@ -37,9 +28,6 @@ export function AlertDialogTitle({
     );
 }
 
-/**
- * Accessible description for the alert dialog.
- */
 export function AlertDialogDescription({
     className,
     children,
@@ -56,14 +44,8 @@ export function AlertDialogDescription({
     );
 }
 
-/**
- * Confirms the alert dialog action.
- */
 export const AlertDialogAction = RadixAlertDialog.Action;
 
-/**
- * Cancels the alert dialog.
- */
 export const AlertDialogCancel = RadixAlertDialog.Cancel;
 
 type AlertDialogContentProps = ComponentPropsWithRef<
@@ -72,9 +54,6 @@ type AlertDialogContentProps = ComponentPropsWithRef<
     children: ReactNode;
 };
 
-/**
- * Styled alert dialog content — portaled, animated, with overlay.
- */
 export function AlertDialogContent({
     children,
     className,

@@ -3,8 +3,6 @@ import { replaceVariables } from "../utils/variables";
 import { GiftIcon } from "./GiftIcon";
 import * as styles from "./styles.css";
 
-// ─── Banner Preview ─────────────────────────────────────
-
 export type BannerPreviewProps = {
     title: string;
     description: string;
@@ -54,8 +52,6 @@ export function BannerPreview({
         </div>
     );
 }
-
-// ─── Post-Purchase Preview ──────────────────────────────
 
 export type PostPurchasePreviewProps = {
     messageText: string;
@@ -122,8 +118,6 @@ export function PostPurchasePreview({
         </div>
     );
 }
-
-// ─── Share Button Preview ───────────────────────────────
 
 export type ShareButtonPreviewProps = {
     text: string;

@@ -236,13 +236,11 @@ function currentStartUnix(rule: CampaignRuleDefinition): number | undefined {
     return values.length > 0 ? Math.min(...values) : undefined;
 }
 
-// Merge a scoped start-date gate into an existing rule: drop any current
-// top-level `time.timestamp` gate and, when a date is given, add a fresh
-// `>=` condition (unix seconds). Triggers, rewards and every other condition
-// are left untouched, which is what makes this safe to run on published
-// campaigns where the full rule is otherwise locked.
-// Drop any existing top-level start gate and append the new one (when set).
-// Generic so the flat-array branch keeps its narrow `RuleCondition[]` type.
+// Drop any current top-level `time.timestamp` gate and, when a date is given,
+// append a fresh `>=` condition (unix seconds). Every other condition is left
+// untouched, which is what makes this safe on published campaigns where the
+// full rule is otherwise locked. Generic so the flat-array branch keeps its
+// narrow `RuleCondition[]` type.
 function withStartGate<T extends RuleCondition | ConditionGroup>(
     nodes: T[],
     gate: RuleCondition | null
@@ -307,12 +305,12 @@ type StatusTransition = {
     to: CampaignStatus;
 };
 
-const VALID_TRANSITIONS: Record<string, StatusTransition> = {
+const VALID_TRANSITIONS = {
     publish: { from: ["draft"], to: "active" },
     pause: { from: ["active"], to: "paused" },
     resume: { from: ["paused"], to: "active" },
     archive: { from: ["draft", "active", "paused"], to: "archived" },
-};
+} satisfies Record<string, StatusTransition>;
 
 export class CampaignManagementService {
     constructor(
@@ -526,13 +524,7 @@ export class CampaignManagementService {
             );
         }
 
-        const transition = VALID_TRANSITIONS[action];
-        if (!transition) {
-            throw HttpError.badRequest(
-                "UNKNOWN_ACTION",
-                `Unknown action: ${action}`
-            );
-        }
+        const transition: StatusTransition = VALID_TRANSITIONS[action];
 
         if (!transition.from.includes(campaign.status)) {
             throw HttpError.conflict(

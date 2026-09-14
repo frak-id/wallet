@@ -316,7 +316,7 @@ struct EventQueueTests {
         #expect(!stored.payload.contains("\"r\":"))
     }
 
-    @Test("bounds the file from append alone, without a read ever running (2.6)")
+    @Test("bounds the file from append alone, without a read ever running")
     func boundsTheFileFromAppendAlone() async throws {
         let (queue, fileURL) = makeQueue()
         // No read() call in this test: append alone must bound the file, since a backing-off
@@ -350,7 +350,7 @@ struct EventQueueTests {
         #expect(ids == ids.sorted())
     }
 
-    @Test("reconcile leaves the file untouched when nothing was delivered or retried (4.4)")
+    @Test("reconcile leaves the file untouched when nothing was delivered or retried")
     func reconcileSkipsTheWriteWhenNothingChanged() async throws {
         let (queue, fileURL) = makeQueue()
         await queue.append(event("a"))
@@ -489,7 +489,7 @@ struct EventQueueTests {
     // FileProtectionType is unavailable on macOS, the only host this target is verified on;
     // applyProtection() is a no-op there, so there is nothing to assert.
     #if canImport(UIKit)
-        @Test("protects the file so it is unreadable before first unlock (S3)")
+        @Test("protects the file so it is unreadable before first unlock")
         func protectsTheFile() async throws {
             let (queue, fileURL) = makeQueue()
             await queue.append(event("a"))

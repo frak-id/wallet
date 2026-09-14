@@ -29,40 +29,7 @@ describe("referralInteraction", () => {
         });
     });
 
-    test("should parse context from window location", async () => {
-        const { FrakContextManager } = await import("../../context");
-        const { watchWalletStatus } = await import("../index");
-        const { processReferral } = await import("./processReferral");
-
-        vi.mocked(FrakContextManager.parse).mockReturnValue({} as any);
-        vi.mocked(watchWalletStatus).mockResolvedValue(null as any);
-        vi.mocked(processReferral).mockResolvedValue("success");
-
-        await referralInteraction(mockClient);
-
-        expect(FrakContextManager.parse).toHaveBeenCalledWith({
-            url: "https://example.com?frak=test",
-        });
-    });
-
-    test("should get current wallet status", async () => {
-        const { FrakContextManager } = await import("../../context");
-        const { watchWalletStatus } = await import("../index");
-        const { processReferral } = await import("./processReferral");
-
-        vi.mocked(FrakContextManager.parse).mockReturnValue({} as any);
-        vi.mocked(watchWalletStatus).mockResolvedValue({
-            key: "connected",
-            wallet: "0x123" as Hex,
-        } as any);
-        vi.mocked(processReferral).mockResolvedValue("success");
-
-        await referralInteraction(mockClient);
-
-        expect(watchWalletStatus).toHaveBeenCalledWith(mockClient);
-    });
-
-    test("should call processReferral with all parameters", async () => {
+    test("should forward the parsed context and wallet status to processReferral", async () => {
         const { FrakContextManager } = await import("../../context");
         const { watchWalletStatus } = await import("../index");
         const { processReferral } = await import("./processReferral");
@@ -75,28 +42,18 @@ describe("referralInteraction", () => {
         vi.mocked(watchWalletStatus).mockResolvedValue(mockWalletStatus as any);
         vi.mocked(processReferral).mockResolvedValue("success");
 
-        await referralInteraction(mockClient, {
+        const result = await referralInteraction(mockClient, {
             options: mockOptions,
         });
 
+        expect(FrakContextManager.parse).toHaveBeenCalledWith({
+            url: "https://example.com?frak=test",
+        });
         expect(processReferral).toHaveBeenCalledWith(mockClient, {
             walletStatus: mockWalletStatus,
             frakContext: mockContext,
             options: mockOptions,
         });
-    });
-
-    test("should return result from processReferral", async () => {
-        const { FrakContextManager } = await import("../../context");
-        const { watchWalletStatus } = await import("../index");
-        const { processReferral } = await import("./processReferral");
-
-        vi.mocked(FrakContextManager.parse).mockReturnValue({} as any);
-        vi.mocked(watchWalletStatus).mockResolvedValue(null as any);
-        vi.mocked(processReferral).mockResolvedValue("success");
-
-        const result = await referralInteraction(mockClient);
-
         expect(result).toBe("success");
     });
 
@@ -121,25 +78,5 @@ describe("referralInteraction", () => {
         expect(consoleSpy).toHaveBeenCalled();
 
         consoleSpy.mockRestore();
-    });
-
-    test("should work with empty options", async () => {
-        const { FrakContextManager } = await import("../../context");
-        const { watchWalletStatus } = await import("../index");
-        const { processReferral } = await import("./processReferral");
-
-        vi.mocked(FrakContextManager.parse).mockReturnValue({} as any);
-        vi.mocked(watchWalletStatus).mockResolvedValue(null as any);
-        vi.mocked(processReferral).mockResolvedValue("no-referrer");
-
-        const result = await referralInteraction(mockClient, {});
-
-        expect(result).toBe("no-referrer");
-        expect(processReferral).toHaveBeenCalledWith(
-            mockClient,
-            expect.objectContaining({
-                options: undefined,
-            })
-        );
     });
 });

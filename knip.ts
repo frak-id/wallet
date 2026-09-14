@@ -1,10 +1,7 @@
 import type { KnipConfig } from "knip";
 
 const config: KnipConfig = {
-    // Exclude types analysis for now
-    // exclude: ["types"],
     ignore: ["**/*.d.ts"],
-    // Include all the workspaces
     workspaces: {
         ".": {
             entry: ["infra/*.ts"],
@@ -13,8 +10,7 @@ const config: KnipConfig = {
         "example/vanilla-js": {
             // Plain vite app. index.html boots src/main.ts (registered by the
             // vite plugin, and by knip's default `src/{index,cli,main}` entry),
-            // and the only other source is src/types/vite-env.d.ts. There is no
-            // app/ directory -- the previous app/ globs matched nothing.
+            // and the only other source is src/types/vite-env.d.ts.
             project: ["src/**/*.ts"],
         },
         "example/wallet-ethcc": {
@@ -104,8 +100,8 @@ const config: KnipConfig = {
             project: ["src/**/*.ts"],
         },
         "packages/ui-preview": {
-            // `exports`: "." -> src/index.ts (from the manifest) and
-            // "./components/*" -> src/*/index.tsx, restated below. project also
+            // `exports` is "." -> src/index.ts only; the entry glob below is
+            // wider on purpose so preview roots stay reachable. project also
             // covers src/utils/variables.test.tsx, run by vitest.config.ts.
             entry: ["src/*/index.{ts,tsx}"],
             project: ["src/**/*.{ts,tsx}"],

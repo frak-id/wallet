@@ -1,22 +1,11 @@
 /**
- * Build-time stub for every `@tauri-apps/*` and `tauri-plugin-*` package.
+ * Build-time stub for every `@tauri-apps/*` and `tauri-plugin-*` package,
+ * wired through `resolve.alias` in the consumer's `vite.config.ts`.
  *
- * In non-Tauri builds (web wallet, listener) every code path that reaches a
- * Tauri import is statically eliminated by Rolldown via the `IS_TAURI` /
- * `IS_IOS` / `IS_ANDROID` constants. Even so, intra-`@tauri-apps` static
- * imports keep the runtime (`invoke` / `transformCallback` /
- * `__TAURI_INTERNALS__`) alive in the shared chunk because Rolldown plans the
- * dynamic-import chunk graph before constant folding.
- *
- * Aliasing every Tauri runtime path to this module via `resolve.alias` in the
- * consumer's `vite.config.ts` short-circuits that: the bundler resolves Tauri
- * symbols against this empty implementation, so the real Tauri runtime never
- * enters the chunk graph in the first place.
- *
- * The named bindings below cover every symbol the wallet-shared and
- * (transitively) consumer code can destructure from a Tauri package — they
- * exist solely so the bundler resolves the symbols. None of them ever
- * execute at runtime: every call site is dead code under `IS_TAURI = false`.
+ * `IS_TAURI = false` already kills every call site, but Rolldown plans the
+ * dynamic-import chunk graph before constant folding, so without this alias
+ * the Tauri runtime still lands in the shared chunk. Every binding below
+ * exists only so the bundler can resolve a symbol; none ever executes.
  */
 
 const tauriUnavailable = (): never => {
@@ -64,17 +53,6 @@ export const authenticate = tauriUnavailable;
 // `@tauri-apps/plugin-fs`
 export const writeTextFile = tauriUnavailable;
 export const BaseDirectory = {} as never;
-
-// Historic `tauri-plugin-fcm` symbols. The wallet shell no longer imports
-// from this package (the merged `tauri-plugin-frak-firebase` plugin uses raw
-// `invoke()` strings and `@tauri-apps/api/core` permission helpers), but we
-// keep the stub exports in place so any transitive import still resolves to a
-// safe no-op rather than the real Firebase SDK on web builds.
-export const getToken = tauriUnavailable;
-export const onTokenRefresh = tauriUnavailable;
-export const register = tauriUnavailable;
-export const deleteToken = tauriUnavailable;
-export const createChannel = tauriUnavailable;
 
 // `tauri-plugin-safe-area-insets`
 export const getInsets = tauriUnavailable;

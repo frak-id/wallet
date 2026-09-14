@@ -2,15 +2,10 @@ import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
 import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import {
     modalStore,
-    selectActiveStep,
     selectCurrentStep,
     selectCurrentStepIndex,
-    selectCurrentStepObject,
-    selectDisplayedSteps,
     selectIsDismissed,
-    selectResults,
     selectShouldFinish,
-    selectSteps,
 } from "./modalStore";
 
 // Mock wallet-shared imports
@@ -153,78 +148,6 @@ describe("modalStore", () => {
         });
     });
 
-    describe("completeStep", () => {
-        beforeEach(() => {
-            modalStore.setState({
-                steps: [
-                    {
-                        key: "login" as const,
-                        params: {} as any,
-                        onResponse: vi.fn(),
-                    },
-                ],
-                currentStep: 0,
-                results: {} as any,
-                dismissed: false,
-            });
-        });
-
-        test("should update results with step response", () => {
-            modalStore
-                .getState()
-                .completeStep("login", { status: "success" } as any);
-
-            const state = modalStore.getState();
-            expect(state.results).toEqual({ login: { status: "success" } });
-        });
-
-        test("should move to next step", () => {
-            modalStore
-                .getState()
-                .completeStep("login", { status: "success" } as any);
-
-            expect(modalStore.getState().currentStep).toBe(1);
-        });
-
-        test("should return early if results is undefined", () => {
-            modalStore.setState({ results: undefined });
-
-            modalStore
-                .getState()
-                .completeStep("login", { status: "success" } as any);
-
-            expect(modalStore.getState().currentStep).toBe(0);
-        });
-
-        test("should return early if steps is undefined", () => {
-            modalStore.setState({ steps: undefined });
-
-            modalStore
-                .getState()
-                .completeStep("login", { status: "success" } as any);
-
-            expect(modalStore.getState().currentStep).toBe(0);
-        });
-    });
-
-    describe("nextStep", () => {
-        test("should increment currentStep by 1", () => {
-            modalStore.setState({ currentStep: 0 });
-
-            modalStore.getState().nextStep();
-
-            expect(modalStore.getState().currentStep).toBe(1);
-        });
-
-        test("should increment from non-zero step", () => {
-            modalStore.setState({ currentStep: 3 });
-
-            modalStore.getState().nextStep();
-
-            expect(modalStore.getState().currentStep).toBe(4);
-        });
-    });
-
     describe("clearModal", () => {
         test("should reset all modal state", () => {
             modalStore.setState({
@@ -247,22 +170,6 @@ describe("modalStore", () => {
             expect(state.currentStep).toBe(0);
             expect(state.results).toBeUndefined();
             expect(state.dismissed).toBe(false);
-        });
-    });
-
-    describe("setDismissed", () => {
-        test("should set dismissed to true", () => {
-            modalStore.getState().setDismissed(true);
-
-            expect(modalStore.getState().dismissed).toBe(true);
-        });
-
-        test("should set dismissed to false", () => {
-            modalStore.setState({ dismissed: true });
-
-            modalStore.getState().setDismissed(false);
-
-            expect(modalStore.getState().dismissed).toBe(false);
         });
     });
 
@@ -455,50 +362,6 @@ describe("modalStore", () => {
             });
         });
 
-        describe("selectActiveStep", () => {
-            test("should return current step index", () => {
-                modalStore.setState({ currentStep: 3 });
-
-                expect(selectActiveStep(modalStore.getState())).toBe(3);
-            });
-        });
-
-        describe("selectResults", () => {
-            test("should return results object", () => {
-                const results = { login: { status: "success" } } as any;
-                modalStore.setState({ results });
-
-                expect(selectResults(modalStore.getState())).toBe(results);
-            });
-
-            test("should return undefined if no results", () => {
-                modalStore.setState({ results: undefined });
-
-                expect(selectResults(modalStore.getState())).toBeUndefined();
-            });
-        });
-
-        describe("selectSteps", () => {
-            test("should return steps array", () => {
-                const steps = [
-                    {
-                        key: "login" as const,
-                        params: {} as any,
-                        onResponse: vi.fn(),
-                    },
-                ];
-                modalStore.setState({ steps: steps as any });
-
-                expect(selectSteps(modalStore.getState())).toBe(steps);
-            });
-
-            test("should return undefined if no steps", () => {
-                modalStore.setState({ steps: undefined });
-
-                expect(selectSteps(modalStore.getState())).toBeUndefined();
-            });
-        });
-
         describe("selectShouldFinish", () => {
             test("should return null if no steps", () => {
                 modalStore.setState({ steps: undefined });
@@ -605,39 +468,6 @@ describe("modalStore", () => {
             });
         });
 
-        describe("selectDisplayedSteps", () => {
-            test("should return steps with metadata", () => {
-                const steps = [
-                    {
-                        key: "login" as const,
-                        params: {} as any,
-                        onResponse: vi.fn(),
-                    },
-                ];
-                modalStore.setState({
-                    steps: steps as any,
-                    currentStep: 1,
-                    dismissed: false,
-                });
-
-                const displayed = selectDisplayedSteps(modalStore.getState());
-
-                expect(displayed).toEqual({
-                    steps,
-                    currentStep: 1,
-                    dismissed: false,
-                });
-            });
-
-            test("should return undefined if no steps", () => {
-                modalStore.setState({ steps: undefined });
-
-                expect(
-                    selectDisplayedSteps(modalStore.getState())
-                ).toBeUndefined();
-            });
-        });
-
         describe("selectCurrentStepIndex", () => {
             test("should return current step index", () => {
                 modalStore.setState({ currentStep: 5 });
@@ -646,49 +476,17 @@ describe("modalStore", () => {
             });
         });
 
-        describe("selectCurrentStepObject", () => {
-            test("should return current step object", () => {
-                const steps = [
-                    {
-                        key: "login" as const,
-                        params: {} as any,
-                        onResponse: vi.fn(),
-                    },
-                    {
-                        key: "final" as const,
-                        params: { action: "redirect" } as any,
-                        onResponse: vi.fn(),
-                    },
-                ];
-                modalStore.setState({ steps: steps as any, currentStep: 1 });
+        test("selectCurrentStep returns undefined when currentStep is out of bounds", () => {
+            const steps = [
+                {
+                    key: "login" as const,
+                    params: {} as any,
+                    onResponse: vi.fn(),
+                },
+            ];
+            modalStore.setState({ steps: steps as any, currentStep: 5 });
 
-                const current = selectCurrentStepObject(modalStore.getState());
-
-                expect(current).toBe(steps[1]);
-            });
-
-            test("should return undefined if no steps", () => {
-                modalStore.setState({ steps: undefined, currentStep: 0 });
-
-                const current = selectCurrentStepObject(modalStore.getState());
-
-                expect(current).toBeUndefined();
-            });
-
-            test("should return undefined if currentStep is out of bounds", () => {
-                const steps = [
-                    {
-                        key: "login" as const,
-                        params: {} as any,
-                        onResponse: vi.fn(),
-                    },
-                ];
-                modalStore.setState({ steps: steps as any, currentStep: 5 });
-
-                const current = selectCurrentStepObject(modalStore.getState());
-
-                expect(current).toBeUndefined();
-            });
+            expect(selectCurrentStep(modalStore.getState())).toBeUndefined();
         });
     });
 

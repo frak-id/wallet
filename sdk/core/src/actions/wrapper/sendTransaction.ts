@@ -22,7 +22,7 @@ export type SendTransactionParams = {
 };
 
 /**
- * Function used to send a user transaction, simple wrapper around the displayModal function to ease the send transaction process
+ * Send a user transaction through the modal, and resolve with its hash
  * @param client - The current Frak Client
  * @param args - The parameters
  * @returns The hash of the transaction that was sent in a promise

@@ -23,28 +23,13 @@ export const mergeTokenKeys = {
 };
 
 /**
- * Shared `queryOptions` for fetching an identity merge token from
- * `POST /user/identity/merge/initiate`.
+ * `queryOptions` for `POST /user/identity/merge/initiate`. Pass
+ * `sourceAnonymousId` (clientId) for an anonymous SDK session, omit it for an
+ * authenticated wallet (`x-wallet-auth` resolves the group server-side).
  *
- * Two sources are supported:
- *  - **Anonymous SDK session** (listener): pass `sourceAnonymousId` (clientId).
- *    The token ties the per-merchant anonymous fingerprint group.
- *  - **Authenticated wallet** (wallet app explorer): omit `sourceAnonymousId`.
- *    `authenticatedBackendApi` automatically attaches `x-wallet-auth`, and
- *    the backend resolves the wallet's identity group from the session.
- *
- * When both are available (e.g. listener with an authenticated SDK session),
- * the backend merges the wallet and anonymous groups before minting the
- * token — so the resulting token carries the combined identity.
- *
- * Consumers wrap this with `useQuery` and add their own `enabled` gate
- * (e.g. wallet-session presence) as needed.
- *
- * The `sourceAnonymousId` arm carries `proof` when the SDK pushed one on
- * `resolved-config` (`sdkIdentity.proofs.mergeSource`). It is `frak-merge-v1`
- * with an EMPTY binding — the execute-side proof binds `SHA-256(mergeToken)`
- * and would 403 here. Naming a `sourceAnonymousId` without one is refused
- * outright.
+ * The `proof` accompanying `sourceAnonymousId` is `frak-merge-v1` with an
+ * EMPTY binding — the execute-side proof binds `SHA-256(mergeToken)` and 403s
+ * here. A `sourceAnonymousId` without a proof is refused outright.
  */
 export function mergeTokenQueryOptions(args: {
     merchantId: string | undefined;

@@ -20,22 +20,12 @@
 import { p256 } from "@noble/curves/nist.js";
 import {
     buildProofMessage,
+    bytesToHex,
     deriveClientIdFromHash,
     encodeProof,
+    hexToBytes,
 } from "../src/identity/canonical";
 import type { ProofOp } from "../src/identity/types";
-
-const bytesToHex = (bytes: Uint8Array): string =>
-    Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-
-const hexToBytes = (hex: string): Uint8Array => {
-    const clean = hex.length % 2 === 0 ? hex : `0${hex}`;
-    const out = new Uint8Array(clean.length / 2);
-    for (let i = 0; i < out.length; i++) {
-        out[i] = Number.parseInt(clean.slice(i * 2, i * 2 + 2), 16);
-    }
-    return out;
-};
 
 async function sha256Hex(bytes: Uint8Array): Promise<Uint8Array> {
     const digest = await crypto.subtle.digest("SHA-256", bytes as BufferSource);

@@ -12,23 +12,11 @@ import type {
     ExtractReturnType,
     RpcResponse,
 } from "@frak-labs/frame-connector";
+import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared/common/hook/useFormattedEstimatedReward";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
 import { translationKeyPathToObject } from "@frak-labs/wallet-shared/common/utils/translationKeyPathToObject";
-import type { i18n, TOptions } from "i18next";
-import { useStore } from "zustand";
-import { mapI18nConfig } from "@/module/utils/i18nMapper";
-
-/**
- * TFunction overloads expect `Omit<TOptions, "context"> & { context?: string }` rather than raw
- * TOptions (whose $Dictionary intersection widens `context` to `any`). This alias bridges the gap.
- */
-type TranslationOptions = Omit<TOptions, "context"> & { context?: string };
-
-/** Keys resolvable in this app: it registers `customized` + `common` only. */
-type ListenerKey = TranslationKey<"customized" | "common">;
-
-import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared/common/hook/useFormattedEstimatedReward";
 import type { TranslationKey } from "@frak-labs/wallet-shared/types";
+import type { i18n, TOptions } from "i18next";
 import {
     createContext,
     type PropsWithChildren,
@@ -40,10 +28,21 @@ import {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { ResolvedSdkConfig } from "@/module/stores/types";
 import { mapDeprecatedModalMetadata } from "@/module/utils/deprecatedModalMetadataMapper";
+import { mapI18nConfig } from "@/module/utils/i18nMapper";
 import { uiBus } from "@/uiBus";
+
+/**
+ * TFunction overloads expect `Omit<TOptions, "context"> & { context?: string }` rather than raw
+ * TOptions (whose $Dictionary intersection widens `context` to `any`). This alias bridges the gap.
+ */
+type TranslationOptions = Omit<TOptions, "context"> & { context?: string };
+
+/** Keys resolvable in this app: it registers `customized` + `common` only. */
+type ListenerKey = TranslationKey<"customized" | "common">;
 
 export type GenericWalletUiType = {
     appName: string;
@@ -60,7 +59,6 @@ export type GenericWalletUiType = {
 
 /**
  * Type for the modal ui type
- *  - todo: Should it contain same stuff as the atom? Like prepared steps etc?
  */
 export type ModalUiType = {
     type: "modal";
@@ -326,9 +324,8 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
     ]);
 
     // Memoised so the context identity only changes when a member actually
-    // changes. `setRequest`/`clearRequest` are already `useCallback([])` and
-    // `translation` is memoised above, so an inline literal here was the sole
-    // reason all 17 consumer sites re-rendered on every provider render.
+    // changes: an inline literal here re-renders every consumer site on every
+    // provider render.
     const contextValue = useMemo(
         () => ({
             currentRequest,
@@ -356,7 +353,7 @@ export function useListenerUI() {
             "useListenerUI must be used within a ListenerUiContext"
         );
     }
-    return context as UIContext;
+    return context;
 }
 
 /**
@@ -366,7 +363,7 @@ export function useListenerWithRequestUI() {
     const uiContext = useListenerUI();
     if (!uiContext.currentRequest) {
         throw new Error(
-            "uselListenerWithReauestUI must be used with a current request"
+            "useListenerWithRequestUI must be used with a current request"
         );
     }
     return uiContext as Omit<UIContext, "currentRequest"> & {

@@ -25,6 +25,16 @@ import { OrchestrationContext } from "../../orchestration/context";
  * Identity resolution is idempotent and cached (`IdentityRepository` uses an
  * LRU), so the plugin-level resolve is cheap for returning users.
  */
+/**
+ * Rate-limit key for a per-identity bucket. `null` means "no bucket" — an
+ * unauthenticated caller falls back to the per-IP limiter only.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: Elysia's scoped-plugin context type does not carry plugin-resolved fields through to `onBeforeHandle`.
+export const identityRateLimitKey = (ctx: any): string | null => {
+    const id = ctx.identityGroupId as string | null | undefined;
+    return id ? `identity:${id}` : null;
+};
+
 export const identityContext = new Elysia({ name: "Context.identity" })
     .resolve(
         async ({

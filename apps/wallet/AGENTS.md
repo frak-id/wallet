@@ -8,16 +8,16 @@ bun run dev              # Builds SW first, then SST dev
 bun run build            # SW + SPA build + standalone build (in that order — the SPA pass empties dist/)
 bun run build:sw         # Service worker ONLY — MUST run before dev/build or app silently breaks
 bun run build:standalone # /sharing + /install only; enforces the eager-JS budget
-bun run typecheck        # TanStack Router typegen runs first (auto)
+bun run typecheck        # bare `tsc --noEmit`; needs `generate:routes` first if routeTree.gen.ts is missing
 bun run test             # wallet-unit project
-bun run test:e2e         # Playwright (13 specs) in tests/specs/
+bun run test:e2e         # Playwright specs in tests/specs/
 ```
 
 ## Key Files
 - `app/main.tsx` — Tauri bootstrap + safe area handling
 - `app/service-worker.ts` — critical for offline + pairing; `bun run build:sw` emits it
 - `app/routes/__root.tsx` — global layout · `app/routes/_wallet/_protected/` — guarded routes
-- `app/module/{authentication,wallet,tokens,pairing,recovery,biometrics,notification,history,settings}/` — features
+- `app/module/` — one directory per feature
 - `app/routeTree.gen.ts` — AUTO-GENERATED, never edit · `tests/vitest-fixtures.ts` — test fixtures
 - `src-tauri/` — iOS (TestFlight) + Android (Play Store) shell
 - `vite.standalone.config.ts` + `{sharing,install}.html` + `app/entry/` — the standalone pages
@@ -26,7 +26,6 @@ bun run test:e2e         # Playwright (13 specs) in tests/specs/
 ## Non-Obvious Patterns
 - **SW build is a gate**: forgetting `build:sw` produces a blank app with no useful error.
 - **Dual `@/*` alias**: resolves both `./app/*` AND `../../packages/design-system/src/*` — import collisions can be silent.
-- **Vanilla Extract only**: the `.module.css` migration is COMPLETE — zero CSS Modules remain. All styles go in `.css.ts` + `Box` sprinkles.
 - **i18n location surprise**: translations live in `packages/wallet-shared/src/i18n/locales/`; regen types via root `bun run i18n:types`.
 - **Tauri detection** drives WebAuthn RP config in `@frak-labs/app-essentials` — tests must set `isTauri` explicitly.
 - **Business logic lives elsewhere**: ~90% of auth/session/smart-wallet code is in `@frak-labs/wallet-shared` — don't duplicate here.

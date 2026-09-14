@@ -20,10 +20,6 @@ export function FiltersCount({ filter }: { filter?: FormMembersFiltering }) {
     );
 }
 
-/**
- * Filter out undefined values from the object
- * @param obj
- */
 function filterOutUndefined(obj: FormMembersFiltering): string[] {
     const result: string[] = [];
 

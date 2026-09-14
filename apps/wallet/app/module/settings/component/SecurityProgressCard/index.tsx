@@ -11,11 +11,9 @@ import { useWalletSecurityStatus } from "@/module/settings/hook/useWalletSecurit
 import * as styles from "./index.css";
 
 /**
- * Profile security hero. Replaces the per-state add-email / verify-email /
- * recovery rows with one card that shows how protected the wallet is and the
- * single next action to take. Once everything is set the card becomes a calm
- * "secured" summary — green check, the protecting email, and no CTA (recovery
- * management lives in its own persistent profile row from then on).
+ * Profile security hero: how protected the wallet is, plus the single next
+ * action to take. Once everything is set it becomes a calm "secured" summary
+ * with no CTA — recovery management lives in its own profile row from then on.
  */
 export function SecurityProgressCard() {
     const { t } = useTranslation();

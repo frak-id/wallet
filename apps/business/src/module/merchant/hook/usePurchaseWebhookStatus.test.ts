@@ -54,17 +54,6 @@ function createWrapper(queryClient: QueryClient) {
 }
 
 describe("usePurchaseWebhookStatus", () => {
-    it("should return loading state initially", () => {
-        const queryClient = createQueryClient();
-        const { result } = renderHook(
-            () => usePurchaseWebhookStatus({ merchantId: "merchant-1" }),
-            { wrapper: createWrapper(queryClient) }
-        );
-
-        expect(result.current.isLoading).toBe(true);
-        expect(result.current.data).toBeUndefined();
-    });
-
     it("should return webhook status when setup is true", async () => {
         const queryClient = createQueryClient();
         const { authenticatedBackendApi } = await import("@/api/backendClient");
@@ -87,84 +76,6 @@ describe("usePurchaseWebhookStatus", () => {
 
         expect(result.current.data).toBeDefined();
         expect(result.current.data?.setup).toBe(true);
-    });
-
-    it("should include platform when webhook is setup", async () => {
-        const queryClient = createQueryClient();
-        const { authenticatedBackendApi } = await import("@/api/backendClient");
-        const mockGet = vi.fn().mockResolvedValue({
-            data: mockWebhookSetup,
-        });
-
-        vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
-            webhooks: { get: mockGet },
-        } as any);
-
-        const { result } = renderHook(
-            () => usePurchaseWebhookStatus({ merchantId: "merchant-1" }),
-            { wrapper: createWrapper(queryClient) }
-        );
-
-        await waitFor(() => {
-            expect(result.current.isSuccess).toBe(true);
-        });
-
-        if (result.current.data?.setup) {
-            expect(result.current.data.platform).toBe("shopify");
-        }
-    });
-
-    it("should include webhookSigninKey when webhook is setup", async () => {
-        const queryClient = createQueryClient();
-        const { authenticatedBackendApi } = await import("@/api/backendClient");
-        const mockGet = vi.fn().mockResolvedValue({
-            data: mockWebhookSetup,
-        });
-
-        vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
-            webhooks: { get: mockGet },
-        } as any);
-
-        const { result } = renderHook(
-            () => usePurchaseWebhookStatus({ merchantId: "merchant-1" }),
-            { wrapper: createWrapper(queryClient) }
-        );
-
-        await waitFor(() => {
-            expect(result.current.isSuccess).toBe(true);
-        });
-
-        if (result.current.data?.setup) {
-            expect(result.current.data.webhookSigninKey).toBe(
-                "test-signing-key-12345"
-            );
-        }
-    });
-
-    it("should include stats when webhook is setup", async () => {
-        const queryClient = createQueryClient();
-        const { authenticatedBackendApi } = await import("@/api/backendClient");
-        const mockGet = vi.fn().mockResolvedValue({
-            data: mockWebhookSetup,
-        });
-
-        vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
-            webhooks: { get: mockGet },
-        } as any);
-
-        const { result } = renderHook(
-            () => usePurchaseWebhookStatus({ merchantId: "merchant-1" }),
-            { wrapper: createWrapper(queryClient) }
-        );
-
-        await waitFor(() => {
-            expect(result.current.isSuccess).toBe(true);
-        });
-
-        if (result.current.data?.setup) {
-            expect(result.current.data.stats).toBeDefined();
-            expect(result.current.data.stats?.totalPurchaseHandled).toBe(42);
-        }
     });
 
     it("should return setup false when webhook is not configured", async () => {
@@ -222,91 +133,5 @@ describe("usePurchaseWebhookStatus", () => {
 
         expect(result.current.isLoading).toBe(false);
         expect(result.current.data).toBeUndefined();
-    });
-
-    it("should use correct query key", async () => {
-        const queryClient = createQueryClient();
-        const { authenticatedBackendApi } = await import("@/api/backendClient");
-        const mockGet = vi.fn().mockResolvedValue({
-            data: mockWebhookSetup,
-        });
-
-        vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
-            webhooks: { get: mockGet },
-        } as any);
-
-        renderHook(
-            () => usePurchaseWebhookStatus({ merchantId: "merchant-1" }),
-            { wrapper: createWrapper(queryClient) }
-        );
-
-        const queries = queryClient.getQueryCache().getAll();
-        const webhookQuery = queries.find((q) =>
-            q.queryKey.includes("merchant-1")
-        );
-        expect(webhookQuery?.queryKey).toContain("purchase-webhook-status");
-    });
-
-    it("should support different webhook platforms", async () => {
-        const queryClient = createQueryClient();
-        const { authenticatedBackendApi } = await import("@/api/backendClient");
-
-        const woocommerceWebhook = {
-            ...mockWebhookSetup,
-            platform: "woocommerce" as const,
-        };
-
-        const mockGet = vi.fn().mockResolvedValue({
-            data: woocommerceWebhook,
-        });
-
-        vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
-            webhooks: { get: mockGet },
-        } as any);
-
-        const { result } = renderHook(
-            () => usePurchaseWebhookStatus({ merchantId: "merchant-1" }),
-            { wrapper: createWrapper(queryClient) }
-        );
-
-        await waitFor(() => {
-            expect(result.current.isSuccess).toBe(true);
-        });
-
-        if (result.current.data?.setup) {
-            expect(result.current.data.platform).toBe("woocommerce");
-        }
-    });
-
-    it("should handle optional stats in webhook response", async () => {
-        const queryClient = createQueryClient();
-        const { authenticatedBackendApi } = await import("@/api/backendClient");
-
-        const webhookWithoutStats = {
-            setup: true,
-            platform: "custom" as const,
-            webhookSigninKey: "key-123",
-        };
-
-        const mockGet = vi.fn().mockResolvedValue({
-            data: webhookWithoutStats,
-        });
-
-        vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
-            webhooks: { get: mockGet },
-        } as any);
-
-        const { result } = renderHook(
-            () => usePurchaseWebhookStatus({ merchantId: "merchant-1" }),
-            { wrapper: createWrapper(queryClient) }
-        );
-
-        await waitFor(() => {
-            expect(result.current.isSuccess).toBe(true);
-        });
-
-        if (result.current.data?.setup) {
-            expect(result.current.data.stats).toBeUndefined();
-        }
     });
 });

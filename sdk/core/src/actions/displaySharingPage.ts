@@ -5,7 +5,7 @@ import type {
 } from "../types";
 
 /**
- * Function used to display a sharing page
+ * Display the full-page sharing UI and resolve on the first user action
  * @param client - The current Frak Client
  * @param params - The parameters to customize the sharing page (products, link override, metadata)
  * @param placement - Optional placement ID to associate with this display request

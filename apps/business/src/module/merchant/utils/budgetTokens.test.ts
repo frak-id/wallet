@@ -3,7 +3,6 @@ import {
     type BudgetToken,
     getTokenStatus,
     splitTokensByFunding,
-    statusBadgeVariant,
 } from "./budgetTokens";
 
 describe("getTokenStatus", () => {
@@ -42,13 +41,5 @@ describe("splitTokensByFunding", () => {
         ]);
         expect(funded).toHaveLength(2);
         expect(empty).toHaveLength(1);
-    });
-});
-
-describe("statusBadgeVariant", () => {
-    it("maps token status to badge variants", () => {
-        expect(statusBadgeVariant.active).toBe("success");
-        expect(statusBadgeVariant.warning).toBe("warning");
-        expect(statusBadgeVariant.paused).toBe("error");
     });
 });

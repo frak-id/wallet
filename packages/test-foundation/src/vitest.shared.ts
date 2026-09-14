@@ -1,29 +1,8 @@
 /**
- * Shared Vitest Configuration
+ * Shared Vitest config; project configs `mergeConfig` over it.
  *
- * This configuration provides common settings used across all test projects
- * in the monorepo. Individual project configs extend this and add project-specific
- * customization (plugins, setupFiles, coverage includes/excludes, etc.).
- *
- * Usage:
- * import { defineConfig, mergeConfig } from "vitest/config";
- * import sharedConfig, { getReactTestPlugins } from "../../vitest.shared";
- *
- * export default mergeConfig(
- *   sharedConfig,
- *   defineConfig({
- *     plugins: getReactTestPlugins(),
- *     ... other project-specific config ...
- *   })
- * );
- *
- * Note on setupFiles:
- * Each project must specify its own setupFiles paths (e.g., "./tests/vitest-setup.ts",
- * "@frak-labs/test-foundation/shared-setup") because Vitest resolves these paths relative to
- * the project's config file location. This is a Vitest architectural requirement and
- * cannot be abstracted into this shared config. While this creates some repetition,
- * the actual setup logic is properly shared in the @frak-labs/test-foundation package to maintain
- * DRY principles.
+ * `setupFiles` cannot live here: Vitest resolves those paths relative to the
+ * project's own config file, so every project repeats them.
  */
 
 import { maxWorkers } from "@frak-labs/test-foundation/vitest.workers";
@@ -37,13 +16,8 @@ export default defineConfig({
         tsconfigPaths: true,
     },
     test: {
-        // Enable global test APIs (describe, it, expect, vi, etc.)
         globals: true,
-
-        // Use jsdom for browser-like environment (DOM API, window, document)
         environment: "jsdom",
-
-        // Timeouts for tests and hooks (10 seconds each)
         testTimeout: 10000,
         hookTimeout: 10000,
 
@@ -51,21 +25,14 @@ export default defineConfig({
         // Invalidated by lockfile hash, so a dependency change resets it.
         fsModuleCache: true,
 
-        // Pool configuration for optimized parallel execution
-        // Threads pool provides better performance for CPU-intensive tests
-        // Note: In Vitest 4.0, poolOptions was removed - all options are now top-level
         pool: "threads",
-
-        // Full isolation ensures test independence (safer but slightly slower)
         isolate: true,
 
         // Shared with scripts/vitest.config.ts: every project must agree.
         maxWorkers,
 
-        // Run test files in parallel for better performance
         fileParallelism: true,
 
-        // Test execution sequencing for deterministic runs
         // Tests within a file run sequentially: many suites mutate shared
         // globals (window.location, global.fetch, sessionStorage, module-level
         // caches) and rely on beforeEach for isolation, which only works under
@@ -75,7 +42,6 @@ export default defineConfig({
             concurrent: false,
         },
 
-        // Optimized reporters for CI vs local development
         reporters: process.env.CI
             ? [
                   "verbose", // Detailed output for CI logs
@@ -87,9 +53,7 @@ export default defineConfig({
                   ["html", { outputFile: "coverage/test-report.html" }],
               ],
 
-        // Coverage configuration (V8 provider with 40% thresholds)
-        // Disabled by default locally to improve test speed (~20% faster)
-        // Enable with --coverage flag or automatically in CI
+        // Off locally for speed; `--coverage` or CI turns it on.
         coverage: {
             enabled: process.env.CI === "true",
             provider: "v8",
@@ -126,61 +90,14 @@ export default defineConfig({
 });
 
 /**
- * Plugin Configuration Helpers
- *
- * These helpers provide consistent plugin configurations across test projects,
- * reducing boilerplate and ensuring all projects use the same plugin setup.
- */
-
-/**
- * Standard Vite plugins for React projects
- *
- * Includes:
- * - @vitejs/plugin-react: JSX transformation and React Fast Refresh
- *
- * Used by: wallet, listener, business apps
- *
- * Note: Uses dynamic imports to avoid loading dependencies for projects that don't need them.
- * TypeScript path aliases are resolved natively via resolve.tsconfigPaths in the shared config.
- *
- * @returns Array of Vite plugins for React projects
- *
- * @example
- * ```typescript
- * plugins: getReactTestPlugins()
- * ```
+ * Vite plugins for React test projects. Imported dynamically so a project
+ * without React never loads `@vitejs/plugin-react`.
  */
 export async function getReactTestPlugins(): Promise<VitePlugin[]> {
-    // Dynamic import to avoid loading React plugin for projects that don't use it
-    // Using any cast to suppress type errors - works at runtime but bypasses type-checking
     const { default: react } = (await import(
         /* @vite-ignore */ "@vitejs/plugin-react"
     )) as any;
     return [react()];
 }
 
-/**
- * Minimal plugins for React-only projects without TypeScript path mapping
- *
- * Includes:
- * - @vitejs/plugin-react: JSX transformation and React Fast Refresh
- *
- * Used by: wallet-shared package (uses relative imports, no path aliases)
- *
- * Note: Uses dynamic import to avoid loading React plugin for projects that don't need it.
- *
- * @returns Array containing only the React plugin
- *
- * @example
- * ```typescript
- * plugins: getReactOnlyPlugins()
- * ```
- */
-export async function getReactOnlyPlugins(): Promise<VitePlugin[]> {
-    // Dynamic import to avoid loading React plugin for projects that don't use it
-    // Using any cast to suppress type errors - works at runtime but bypasses type-checking
-    const { default: react } = (await import(
-        /* @vite-ignore */ "@vitejs/plugin-react"
-    )) as any;
-    return [react()];
-}
+export const getReactOnlyPlugins = getReactTestPlugins;

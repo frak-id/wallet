@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import * as styles from "./Collapsible.css";
 
-interface CollapsibleProps {
+type CollapsibleProps = {
     open: boolean;
     id: string;
     transition?: {
@@ -9,7 +9,7 @@ interface CollapsibleProps {
         timingFunction: string;
     };
     children: ReactNode;
-}
+};
 
 export function Collapsible({
     open,

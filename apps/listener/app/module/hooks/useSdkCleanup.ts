@@ -22,25 +22,19 @@ export function useSdkCleanup() {
             { targetOrigin: "*" }
         );
 
-        // Clean the session store, this will force a rerender on the displayed component depending on it
         sessionStore.getState().setSession(null);
         sessionStore.getState().setSdkSession(null);
 
-        // Remove all the iframe local storage
         localStorage.clear();
-
-        // Clear tanstack side
         queryClient.clear();
 
-        // Get current modal state directly from store (avoid dependency array issues)
+        // Read the store directly so the callback identity stays stable.
         const currentModalSteps = modalStore.getState();
-
-        // If we don't have anything displayed, or it's not the modal displayed
         if (!currentRequest || !currentModalSteps.steps) {
             return;
         }
 
-        // If we are displaying a modal, and it's not the login page, we need to go back to the login page
+        // A modal past the login step must go back to it after a cleanup.
         const loginStep = currentModalSteps.steps.findIndex(
             (step) => step.key === "login"
         );

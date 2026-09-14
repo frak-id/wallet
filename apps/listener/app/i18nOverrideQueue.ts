@@ -81,8 +81,7 @@ export function drainPendingI18nOverrides(i18n: I18nType): void {
 }
 
 /**
- * Test-only escape hatch.
- * todo: to be deleted
+ * Test-only escape hatch for the module-level queue state.
  */
 export function _resetI18nOverrideQueueForTests(): void {
     activeI18n = null;

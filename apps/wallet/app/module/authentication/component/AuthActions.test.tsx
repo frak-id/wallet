@@ -1,9 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-// ---------------------------------------------------------------------------
-// Hoisted mocks
-// ---------------------------------------------------------------------------
 const mocks = vi.hoisted(() => ({
     // useLogin — one shared login spy; each useLogin() call's options are
     // captured in order so tests can drive the instance's onError directly.
@@ -109,8 +106,6 @@ vi.mock("@frak-labs/design-system/icons", async (importOriginal) => {
     const actual = await importOriginal<object>();
     return { ...actual, FaceIdIcon: () => <svg data-testid="faceid-icon" /> };
 });
-
-// ---------------------------------------------------------------------------
 
 import { authKey } from "@frak-labs/wallet-shared";
 import { fireEvent } from "@testing-library/react";

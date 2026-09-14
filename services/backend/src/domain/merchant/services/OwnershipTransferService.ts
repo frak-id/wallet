@@ -59,20 +59,13 @@ export class OwnershipTransferService {
 
         await this.assertIsOwner(merchant, params.actor, params);
 
-        if (
-            params.target.wallet &&
-            merchant.ownerWallet &&
-            isAddressEqual(params.target.wallet, merchant.ownerWallet)
-        ) {
-            throw HttpError.conflict(
-                "SAME_OWNER",
-                "Cannot transfer to the same owner"
-            );
-        }
-        if (
-            params.target.accountId &&
-            params.target.accountId === merchant.ownerAccountId
-        ) {
+        const isSameOwner =
+            (params.target.wallet &&
+                merchant.ownerWallet &&
+                isAddressEqual(params.target.wallet, merchant.ownerWallet)) ||
+            (params.target.accountId &&
+                params.target.accountId === merchant.ownerAccountId);
+        if (isSameOwner) {
             throw HttpError.conflict(
                 "SAME_OWNER",
                 "Cannot transfer to the same owner"

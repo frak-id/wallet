@@ -1,8 +1,3 @@
-/**
- * Tests for formatAmount utility function
- * Tests currency formatting with proper locale support
- */
-
 import { describe, expect, it } from "../../../tests/vitest-fixtures";
 import goldenRewards from "../../rewards/fixtures/golden-rewards.json";
 import type { Currency } from "../../types";

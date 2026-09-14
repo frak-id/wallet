@@ -1,11 +1,14 @@
 import type { UserReferralStatusType } from "@frak-labs/core-sdk";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { queryOptions } from "@frak-labs/wallet-shared/common/utils/queryOptions";
-import { listenerMerchantKey } from "@/module/queryKeys/merchant";
 
 export function userReferralStatusQueryOptions(merchantId?: string) {
     return queryOptions({
-        queryKey: listenerMerchantKey.referralStatus.byMerchant(merchantId),
+        queryKey: [
+            "merchant",
+            "referralStatus",
+            merchantId ?? "no-merchant-id",
+        ] as const,
         queryFn: async (): Promise<UserReferralStatusType | null> => {
             if (!merchantId) return null;
 

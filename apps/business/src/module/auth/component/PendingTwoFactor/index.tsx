@@ -17,23 +17,16 @@ import {
     useTwoFactorStore,
 } from "@/stores/twoFactorStore";
 
-/**
- * Fallback hint when a pending (password) login reaches this page without a
- * stored methods list. Only a hint for the initial render — the challenge
- * panel then fetches the account's authoritative enrolled methods and, if
- * there are none, shows the "set up 2FA in Settings" fallback. Shopify SSO
- * never gets here (its session is usable without a login-time challenge).
- */
+// Initial-render hint only: the challenge panel then fetches the account's
+// authoritative enrolled methods.
 const DEFAULT_CHALLENGE_METHODS: TwoFactorMethod[] = ["email", "totp"];
 
 const routeApi = getRouteApi("/login/2fa");
 
 /**
- * `/login/2fa` (§2, §4.7): completes a pending login — either a password
- * login already stored in `authStore` (methods known, §4.6), or a Shopify
- * SSO callback redirect carrying `#token=…` in the URL hash (never the
- * query string, so the opaque session token never hits server logs /
- * Referer headers).
+ * `/login/2fa`: completes a pending login — a password login stored in
+ * `authStore`, or a Shopify SSO callback carrying `#token=…` in the URL hash
+ * (never the query string, so the token never hits server logs / Referer).
  */
 export function PendingTwoFactor() {
     const { t } = useTranslation();

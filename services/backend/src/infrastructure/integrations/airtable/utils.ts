@@ -1,9 +1,6 @@
 import { log } from "@backend-infrastructure/external/logger";
 import type { AirtableRequestBody } from "./config";
 
-/**
- * Mapping from request body field names to Airtable field names
- */
 const AIRTABLE_FIELD_MAPPING: Record<string, string> = {
     lastName: "Last Name",
     firstName: "First Name",
@@ -15,32 +12,26 @@ const AIRTABLE_FIELD_MAPPING: Record<string, string> = {
     country: "Country",
     visits: "Average Website Visitors",
     channels: "Acquisition Channels",
-} as const;
+};
 
-/**
- * Generic function to map request body fields to Airtable field names
- */
 export function mapToAirtableFields(
     data: AirtableRequestBody
 ): Record<string, unknown> {
     const mappedFields: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(data)) {
-        // Skip undefined values
         if (value === undefined) {
             continue;
         }
 
         const airtableFieldName = AIRTABLE_FIELD_MAPPING[key];
         if (airtableFieldName) {
-            // Handle array fields (like channels) by joining them with comma
             if (Array.isArray(value)) {
                 mappedFields[airtableFieldName] = value.join(", ");
             } else {
                 mappedFields[airtableFieldName] = value;
             }
         } else {
-            // If no mapping found, log a warning but still include the field
             log.warn({ key }, "No Airtable field mapping found for key");
             mappedFields[key] = value;
         }

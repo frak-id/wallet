@@ -191,7 +191,7 @@ export async function processReferral(
             : null;
 
     FrakContextManager.replaceUrl({
-        url: window.location?.href,
+        url: window.location.href,
         context: replaceContext,
     });
 

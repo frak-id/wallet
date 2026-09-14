@@ -14,10 +14,6 @@ const SHARE_URL_KEY = "share_url";
 const SHARE_BUTTON_HTML_KEY = "share_button_html";
 const LEGACY_INSTALL_DISMISSED_KEY = "legacy_install_dismissed";
 
-/* -------------------------------------------------------------------------- */
-/*                Translatable text metaobject (Frak i18n)                    */
-/* -------------------------------------------------------------------------- */
-
 /**
  * Per-locale merchant-customisable strings for the banner block, the
  * referral share button, and the post-purchase checkout extension.
@@ -334,10 +330,6 @@ async function writeMetafields<T>(
     };
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                    i18n                                    */
-/* -------------------------------------------------------------------------- */
-
 /**
  * Parse a stored i18n metafield value into the normalized multi-language structure.
  */
@@ -464,10 +456,6 @@ export function buildMetafieldValue(
     return {};
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                 Appearance                                 */
-/* -------------------------------------------------------------------------- */
-
 /**
  * Normalize appearance: return null if logoUrl is empty/missing.
  */
@@ -500,10 +488,6 @@ export async function updateAppearanceMetafield(
     return writeMetafield(context, APPEARANCE_KEY, polishedAppearance);
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                Merchant ID                                 */
-/* -------------------------------------------------------------------------- */
-
 /**
  * Read the cached merchantId from shop metafields.
  */
@@ -533,10 +517,6 @@ export async function getShopId(ctx: AuthenticatedContext): Promise<string> {
     const info = await shopInfo(ctx);
     return info.id;
 }
-
-/* -------------------------------------------------------------------------- */
-/*              Frak i18n metaobject — singleton entry orchestrator           */
-/* -------------------------------------------------------------------------- */
 
 const i18nMetaobjectSyncedShops = new LRUCache<string, boolean>({
     max: 512,
@@ -882,10 +862,6 @@ async function syncFrakI18nFrTranslations(
     return registerFrakI18nFrTranslations(context, entryId, missing);
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                Wallet URL                                  */
-/* -------------------------------------------------------------------------- */
-
 /**
  * Read the wallet URL from shop metafields.
  */
@@ -917,10 +893,6 @@ export async function writeEnvMetafields(
         { key: BACKEND_URL_KEY, value: backendUrl },
     ]);
 }
-
-/* -------------------------------------------------------------------------- */
-/*                              Components URL                                */
-/* -------------------------------------------------------------------------- */
 
 /**
  * Read the components CDN URL from shop metafields.
@@ -981,20 +953,9 @@ export async function setLegacyInstallDismissed(
     );
 }
 
-/* -------------------------------------------------------------------------- */
-/*                          Klaviyo share helpers                             */
-/* -------------------------------------------------------------------------- */
-
 /**
- * Read the Klaviyo share URL pattern from shop metafields.
- *
- * The value is a fully-qualified URL that, when visited, auto-opens the
- * Frak sharing page on the merchant's storefront via the `frakAction=share`
- * query param handled by the SDK loader.
- *
- * Merchants reference this metafield from their email-tool templates
- * (Klaviyo, Omnisend, Customer.io …) to drop a ready-to-use CTA without
- * hard-coding the storefront host.
+ * Read the share URL pattern merchants reference from their email-tool
+ * templates (Klaviyo, Omnisend, …) instead of hard-coding the storefront host.
  */
 export async function getShareUrlMetafield({
     admin: { graphql },
@@ -1003,8 +964,7 @@ export async function getShareUrlMetafield({
 }
 
 /**
- * Write the Klaviyo share URL pattern. Wraps `writeMetafield` so the value
- * is JSON-encoded the same way every other Frak metafield is.
+ * Write the share URL pattern.
  */
 export async function writeShareUrlMetafield(
     context: AuthenticatedContext,
@@ -1017,12 +977,8 @@ export async function writeShareUrlMetafield(
 }
 
 /**
- * Read the Klaviyo paste-in share button HTML snippet from shop metafields.
- *
- * The value is a self-contained `<a>` tag with inline styles — valid in
- * every major email client, no external CSS, no JS. The snippet is built
- * server-side (see `ensureKlaviyoShareMetafields`) so it always reflects
- * the current storefront domain.
+ * Read the paste-in share button HTML snippet. Built server-side by
+ * `ensureKlaviyoShareMetafields`, so it always reflects the current domain.
  */
 export async function getShareButtonHtmlMetafield({
     admin: { graphql },
@@ -1031,7 +987,7 @@ export async function getShareButtonHtmlMetafield({
 }
 
 /**
- * Write the Klaviyo paste-in share button HTML snippet.
+ * Write the paste-in share button HTML snippet.
  */
 export async function writeShareButtonHtmlMetafield(
     context: AuthenticatedContext,
@@ -1044,41 +1000,19 @@ export async function writeShareButtonHtmlMetafield(
 }
 
 /**
- * Build the canonical share URL for a given storefront host.
- *
- * The SDK loader treats `?frakAction=share` as a directive to auto-open
- * the sharing page on the next page load — see `handleActionQueryParam`
- * in `sdk/components/src/bootstrap/initFrakSdk.ts`.
+ * Build the canonical share URL for a given storefront host. `?frakAction=share`
+ * is an SDK contract — `handleActionQueryParam` in
+ * `sdk/components/src/bootstrap/initFrakSdk.ts` reads it.
  */
 export function buildShareUrl(domain: string): string {
     return `https://${domain}/?frakAction=share`;
 }
 
 /**
- * Build the paste-in email share button HTML snippet.
- *
- * Inline styles only (email clients strip `<style>` blocks) and a fallback
- * font stack so the CTA renders consistently across Gmail / Outlook / Apple
- * Mail. Merchants can swap the `background-color` / `color` to match their
- * brand without breaking the layout.
+ * Build the paste-in email share button HTML snippet. Inline styles only —
+ * email clients strip `<style>` blocks.
  */
 export function buildShareButtonHtml(domain: string): string {
     const shareUrl = buildShareUrl(domain);
     return `<a href="${shareUrl}" style="display:inline-block;padding:12px 28px;background-color:#121212;color:#ffffff;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;line-height:1.4;border-radius:6px;">Share &amp; earn</a>`;
-}
-
-/**
- * Read both Klaviyo share metafields in a single pass.
- *
- * Returned by the appearance loader so the admin UI can show what merchants
- * are about to paste into Klaviyo, alongside copy-to-clipboard buttons.
- */
-export async function getKlaviyoShareMetafields(
-    context: AuthenticatedContext
-): Promise<{ shareUrl: string | null; shareButtonHtml: string | null }> {
-    const [shareUrl, shareButtonHtml] = await Promise.all([
-        getShareUrlMetafield(context),
-        getShareButtonHtmlMetafield(context),
-    ]);
-    return { shareUrl, shareButtonHtml };
 }

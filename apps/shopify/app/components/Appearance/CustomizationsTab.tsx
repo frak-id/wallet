@@ -22,12 +22,12 @@ import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { LogoField } from "../Customizations/Field";
 
-interface CustomizationsTabProps {
+type CustomizationsTabProps = {
     initialCustomizations: I18nCustomizations;
     initialAppearanceMetafield: AppearanceMetafieldValue;
     mediaFiles?: MediaFile[];
     ref?: React.Ref<AppearanceFormHandle>;
-}
+};
 
 export function CustomizationsTab({
     initialCustomizations,

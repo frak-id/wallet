@@ -12,13 +12,6 @@ vi.mock("@/module/campaigns/hook/useCampaignCurrencyGlyph", () => ({
 
 import { BudgetCapField, type BudgetFormValues } from "./index";
 
-/**
- * `BudgetCapField` only needs a `Control<BudgetFormValues>` — no
- * `useFormContext`, no store/router/save-campaign plumbing — so a minimal
- * `useForm` harness (mirroring `FormTitle.test.tsx`) is enough to
- * exercise the migrated label/hint/error contract without mocking the rest
- * of the wizard page.
- */
 function Harness() {
     const form = useForm<BudgetFormValues>({
         defaultValues: { period: "global", amount: 0 },

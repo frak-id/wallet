@@ -3,30 +3,18 @@ import { useCallback, useEffect, useRef } from "react";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 /**
- * Hook to emit redirect with fallback callback support.
- * Listens for deep-link-failed event from parent SDK.
- *
- * Routes deep links through the parent SDK via lifecycle events.
- * The parent handles intent:// conversion and visibility-based
- * fallback detection (fires deep-link-failed when app not found).
+ * Emit a deep-link redirect through the parent SDK, with a fallback callback
+ * run when the parent reports `deep-link-failed`.
  */
 export function useDeepLinkFallback() {
     const fallbackRef = useRef<(() => void) | null>(null);
 
-    /**
-     * Emit redirect event to parent SDK and register fallback callback.
-     * If deep link fails, the registered callback will be executed.
-     *
-     * All platforms route through parent SDK via postMessage.
-     * The parent converts to intent:// on Chromium Android (via
-     * window.location.href which Chrome resolves properly, unlike
-     * window.open which opens a raw intent:// tab).
-     */
     const emitRedirectWithFallback = useCallback(
         (deepLinkUrl: string, onFallback: () => void) => {
             fallbackRef.current = onFallback;
 
-            // The parent handles intent:// conversion on Chromium Android and
+            // The parent handles intent:// conversion on Chromium Android (via
+            // `window.location.href`, which `window.open` gets wrong) and
             // visibility-based fallback detection. The pairing id in the URL
             // is only for the merchant, so an unresolved origin sends nothing.
             const origin = resolvingContextStore.getState().context?.origin;

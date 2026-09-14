@@ -2,7 +2,6 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useChart, useChartStable } from "./chart-context";
 import { getShortDateFmt } from "./chart-formatters";
-import { cn } from "./lib/utils";
 
 export interface XAxisProps {
     /** Number of ticks to show (including first and last). Default: 5. Used when `tickMode` is `"domain"`. */
@@ -44,9 +43,6 @@ function XAxisLabel({
         }
     }
 
-    // Zero-width container approach for perfect centering
-    // The wrapper is positioned exactly at x with width:0
-    // The inner span overflows and is centered via text-align
     return (
         <div
             className="absolute"
@@ -59,7 +55,7 @@ function XAxisLabel({
             }}
         >
             <span
-                className={cn("whitespace-nowrap text-chart-label text-xs")}
+                className="whitespace-nowrap text-chart-label text-xs"
                 style={{
                     opacity,
                     transition: "opacity 0.4s ease-in-out",

@@ -4,10 +4,9 @@
  * Smarty function plugin registration + handlers for the Frak module.
  *
  * Lets theme files and CMS pages drop `<frak-X>` components anywhere via
- * `{frak_banner}`, `{frak_share_button}`, `{frak_post_purchase}`. Mirrors
- * the WordPress sibling's `[frak_*]` shortcode contract byte-for-byte:
- * snake_case attribute keys are normalised to camelCase at the boundary so
- * templates read naturally (`{frak_banner referral_title="..."}`).
+ * `{frak_banner}`, `{frak_share_button}`, `{frak_post_purchase}`. snake_case
+ * attribute keys are normalised to camelCase at the boundary so templates
+ * read naturally (`{frak_banner referral_title="..."}`).
  *
  * Smarty plugins are scoped per-Smarty-instance and registered lazily; we
  * re-register on every module instantiation because PrestaShop instantiates
@@ -21,8 +20,7 @@ class FrakSmartyPlugins
 {
     /**
      * Idempotency flag. Set on first registration so subsequent module
-     * instantiations within the same request short-circuit. Mirrors
-     * WordPress's `Frak_Plugin::init()`-runs-once pattern.
+     * instantiations within the same request short-circuit.
      */
     private static bool $registered = false;
 
@@ -72,8 +70,7 @@ class FrakSmartyPlugins
      * `{frak_banner placement="home" referral_title="..."}` Smarty handler.
      *
      * Snake-cases attribute keys at the boundary so merchants can write
-     * naturally-readable templates (`referral_title` over `referralTitle`)
-     * — mirrors the WordPress shortcode contract.
+     * naturally-readable templates (`referral_title` over `referralTitle`).
      *
      * @param array<string, mixed> $params Smarty-supplied attribute pairs.
      * @param mixed                $smarty Smarty instance (unused).

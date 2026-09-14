@@ -17,10 +17,7 @@ export type {
     RecipientType,
 };
 
-// =============================================================================
-// DETAILED ASSET LOG (joined view for reward history)
-// =============================================================================
-
+/** Joined view for reward history. */
 export type DetailedAssetLog = {
     id: string;
     amount: string;
@@ -41,10 +38,6 @@ export type DetailedAssetLog = {
     merchantDomain: string;
     merchantExplorerConfig: ExplorerConfig | null;
 };
-
-// =============================================================================
-// INTERACTION LOG TYPES
-// =============================================================================
 
 /**
  * Payload for referral arrival interaction.
@@ -105,14 +98,6 @@ export type InteractionPayload =
     | PurchasePayload
     | CustomPayload;
 
-// =============================================================================
-// ASSET LOG TYPES
-// =============================================================================
-
-// =============================================================================
-// SETTLEMENT TYPES
-// =============================================================================
-
 export type SettlementResult = {
     settledCount: number;
     failedCount: number;
@@ -136,15 +121,6 @@ export type SettlementResult = {
     }[];
 };
 
-export { buildAttestation } from "@backend-utils";
-
-// =============================================================================
-// PROCESSING TYPES
-// =============================================================================
-
-/**
- * Parameters for creating an asset log entry.
- */
 export type CreateAssetLogParams = {
     identityGroupId: string;
     merchantId: string;

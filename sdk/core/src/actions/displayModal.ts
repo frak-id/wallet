@@ -6,7 +6,7 @@ import type {
 } from "../types";
 
 /**
- * Function used to display a modal
+ * Display a modal and resolve with the result of every requested step
  * @param client - The current Frak Client
  * @param args
  * @param args.steps - The different steps of the modal

@@ -1,6 +1,5 @@
 /**
  * When the document is ready, run the callback
- * @param callback
  */
 export function onDocumentReady(callback: () => void) {
     if (

@@ -1,8 +1,3 @@
-/**
- * Tests for watchWalletStatus action
- * Tests wallet status watching and side effects
- */
-
 import { vi } from "vitest";
 
 // Mock Deferred before imports

@@ -44,11 +44,7 @@ type SsoCompleteHandler = RpcPromiseHandler<
 let pendingSsoRequest: Deferred<{ wallet: Hex }> | undefined;
 
 /**
- * Process SSO completion - shared logic for both RPC and lifecycle handlers
- * Stores session and resolves pending requests
- *
- * @param sessionData - Session data from SSO
- * @param sdkSession - SDK session data
+ * Store the SSO session and resolve any pending `frak_openSso` request.
  */
 export async function processSsoCompletion(
     sessionData: Session,
@@ -75,10 +71,6 @@ export async function processSsoCompletion(
         // Resolve pending RPC call if exists
         pendingSsoRequest?.resolve({ wallet: session.address });
         pendingSsoRequest = undefined;
-
-        console.log("[SSO] Authentication completed successfully", {
-            address: session.address,
-        });
     } catch (error) {
         console.error("[SSO] Error handling completion:", error);
         // Session-persistence failure after a successful SSO round-trip leaves
@@ -103,14 +95,7 @@ export async function processSsoCompletion(
 }
 
 /**
- * Handle sso_complete RPC method
- *
- * This is called by the SSO window via RPC instead of custom postMessage.
- * It stores the session and resolves any pending deferred promises.
- *
- * @param params - [session, sdkJwt]
- * @param _context - Request context (unused)
- * @returns Promise resolving to { success: true }
+ * Handle `sso_complete`, sent by the SSO window once authentication is done.
  */
 export const handleSsoComplete: SsoCompleteHandler = async (
     params,
@@ -124,22 +109,8 @@ export const handleSsoComplete: SsoCompleteHandler = async (
 };
 
 /**
- * Handle frak_prepareSso RPC method
- *
- * Generates SSO URL server-side (wallet iframe)
- * This is now primarily for backward compatibility or edge cases where
- * client-side generation isn't suitable. Most popup flows use SDK-side generation.
- *
- * @param params - PrepareSsoParamsType
- * @param context
- * @returns {ssoUrl: string}
- *
- * @remarks
- * As of the new architecture, SDK's prepareSso() generates URLs client-side
- * without calling this RPC handler. This handler remains for:
- * - Backward compatibility
- * - Custom wallet-side URL generation logic if needed
- * - Testing/debugging purposes
+ * Handle `frak_prepareSso` — wallet-side SSO URL generation. Most popup flows
+ * generate the URL SDK-side and never reach this handler.
  */
 export const handlePrepareSso: PrepareSsoHandler = (params, context) => {
     // Extract request infos
@@ -161,24 +132,9 @@ export const handlePrepareSso: PrepareSsoHandler = (params, context) => {
 };
 
 /**
- * Handle frak_openSso RPC method
- *
- * Two execution modes based on openInSameWindow:
- *
- * **Redirect Mode** (openInSameWindow: true):
- * - Wallet generates SSO URL
- * - Triggers redirect via lifecycle event to SDK iframe
- * - Returns immediately with undefined wallet
- * - Wallet address set after redirect completes
- *
- * **Popup Mode** (openInSameWindow: false/omitted):
- * - SDK already opened popup with generated URL (synchronous)
- * - This handler just waits for SSO completion
- * - Returns when popup sends sso_complete message
- *
- * @param params - Full OpenSsoParamsType
- * @param context - Wallet RPC context with merchantId
- * @returns Promise<{wallet: Hex | undefined}>
+ * Handle `frak_openSso`. In redirect mode the wallet builds the URL and returns
+ * `wallet: undefined` immediately; in popup mode the SDK already opened the
+ * popup and this handler only waits for `sso_complete`.
  */
 export const handleOpenSso: OpenSsoHandler = async (params, context) => {
     // If we are on the server side directly exit with an error
@@ -219,10 +175,6 @@ export const handleOpenSso: OpenSsoHandler = async (params, context) => {
         // Return immediately (wallet will be set after redirect completes)
         return { wallet: undefined };
     }
-
-    // Popup mode: SDK already opened popup, just wait for completion
-    // Note: URL was generated client-side by SDK using generateSsoUrl()
-    // Popup is already open at this point (SDK called window.open() before this RPC)
 
     pendingSsoRequest = new Deferred<{ wallet: Hex }>();
 

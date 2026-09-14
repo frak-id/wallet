@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SdkSession } from "../../types/Session";
 
-// ------------------------------------------------------------------
-// Hoisted mocks (must match what ensureFreshSdkSession imports)
-// ------------------------------------------------------------------
-
 const mocks = vi.hoisted(() => ({
     getSafeSdkSession: vi.fn<() => SdkSession | null>(),
     getSafeSession: vi.fn<() => { token: string } | null>(),
@@ -38,8 +34,6 @@ vi.mock("../api/backendClient", () => ({
         },
     },
 }));
-
-// ------------------------------------------------------------------
 
 const FRESH_SDK: SdkSession = {
     token: "fresh-token",

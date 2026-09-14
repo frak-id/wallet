@@ -1,4 +1,3 @@
-// Opted in for `PercentEncoding` per file, not module-wide, so the marker still bites elsewhere.
 @file:OptIn(InternalFrakApi::class)
 
 package id.frak.sdk.ui

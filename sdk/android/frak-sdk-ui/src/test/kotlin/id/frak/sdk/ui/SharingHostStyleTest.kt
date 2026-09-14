@@ -14,7 +14,7 @@ import org.robolectric.annotation.Config
 class SharingHostStyleTest {
     @Test
     fun `names match what the wallet stylesheets read`() {
-        // changing either means changing `packages/design-system/src/hostSheet.ts` in the same commit
+        // changing either means changing the design system's host sheet in the same commit
         assertEquals("--frak-host-top-radius", SharingHostStyle.CSS_VAR_TOP_RADIUS)
         assertEquals("--frak-host-surface", SharingHostStyle.CSS_VAR_SURFACE)
     }

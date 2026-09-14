@@ -3,21 +3,19 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import type { ReactNode } from "react";
 import * as styles from "./index.css";
 
-export interface TitleProps {
+type TitleProps = {
     icon?: ReactNode;
     className?: string;
     classNameText?: string;
-    children?: string | ReactNode;
-    size?: "page" | "medium" | "big";
-    align?: "left" | "center";
-}
+    children?: ReactNode;
+    size?: "page" | "medium";
+};
 
 export function Title({
     icon,
     className = "",
     classNameText = "",
     size = "medium",
-    align = "left",
     children,
 }: TitleProps) {
     const tag = size === "page" ? "h1" : "h2";
@@ -25,7 +23,7 @@ export function Title({
     return (
         <Box
             as={tag}
-            className={[styles.title({ size, align }), className]
+            className={[styles.title({ size }), className]
                 .filter(Boolean)
                 .join(" ")}
         >

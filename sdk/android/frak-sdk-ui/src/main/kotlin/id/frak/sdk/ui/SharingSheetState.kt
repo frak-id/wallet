@@ -332,8 +332,7 @@ internal class SharingSheetState(
         // accepted chooser raises a second one and closes the sheet under it.
         settleContent()
         // And it is a paint signal by the same argument: a user cannot drive a document that is not
-        // on screen. This is what replaces the skeleton's old max-hold timer — evidence rather than
-        // a deadline. Not [SharingPageAction.Error], which is the page saying it rendered nothing.
+        // on screen. Not [SharingPageAction.Error], which is the page saying it rendered nothing.
         if (action != SharingPageAction.Error) onPageVisible()
         when (action) {
             SharingPageAction.Install -> {
@@ -362,7 +361,7 @@ internal class SharingSheetState(
 
             is SharingPageAction.Code -> {
                 // The SDK owns the clipboard here since the page cannot set the sensitive flag.
-                NativeShare.copyInstallCode(context, action.value, action.expiresAtSeconds)
+                NativeShare.copyInstallCode(context, action.value)
             }
 
             SharingPageAction.Dismiss -> {

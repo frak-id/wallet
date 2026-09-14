@@ -104,7 +104,9 @@ export async function startupPurchase(
                     currencyCode:
                         info.preferredCurrency?.toUpperCase() ?? "EUR",
                 },
-                test: process.env.STAGE !== "prod",
+                // infra normalises the prod stage to "production"; `isProd()`
+                // is the only predicate that recognises every prod spelling.
+                test: !isProd(),
             },
         }
     );
@@ -153,8 +155,6 @@ export async function startupPurchase(
 
 /**
  * Get all the current purchases for a shop
- * @param ctx
- * @returns
  */
 export async function getCurrentPurchases(ctx: AuthenticatedContext) {
     const info = await shopInfo(ctx);
@@ -165,9 +165,20 @@ export async function getCurrentPurchases(ctx: AuthenticatedContext) {
         .where(eq(purchaseTable.shopId, trimmedShopId));
 }
 
+/**
+ * Public status lookup for the Shopify return URL, which carries no session.
+ * Projected to what the page renders: the row also holds the shop domain and
+ * the on-chain bank address, and `charge_id` is guessable.
+ */
 export async function getPurchase(id: number) {
     const purchases = await drizzleDb
-        .select()
+        .select({
+            amount: purchaseTable.amount,
+            currency: purchaseTable.currency,
+            status: purchaseTable.status,
+            txHash: purchaseTable.txHash,
+            txStatus: purchaseTable.txStatus,
+        })
         .from(purchaseTable)
         .where(eq(purchaseTable.purchaseId, id));
     if (purchases.length > 0) {

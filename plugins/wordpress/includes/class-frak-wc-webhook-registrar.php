@@ -3,17 +3,10 @@
  * WooCommerce webhook registrar.
  *
  * Owns the lifecycle of the WooCommerce `WC_Webhook` row that ships order
- * updates to the Frak backend. Previously the plugin hand-rolled the HTTP
- * call (HMAC signing, Action Scheduler dispatch, log ring buffer); now it
- * delegates everything to WooCommerce's native webhook system, which already
- * handles signing (base64 HMAC-SHA256 → `X-WC-Webhook-Signature`), retries
- * (5 attempts before auto-disable), and delivery logging (visible under
- * `WooCommerce → Status → Logs` with source `webhooks-delivery`).
- *
- * The backend `/ext/merchant/:id/webhook/woocommerce` endpoint accepts WC's
- * native payload shape and HMAC header, so no custom PHP dispatcher is
- * needed — the plugin's job collapses to "ensure the right webhook exists,
- * with the right URL, with the right secret".
+ * updates to the Frak backend. Delivery itself belongs to WooCommerce's
+ * native webhook system — signing (base64 HMAC-SHA256 →
+ * `X-WC-Webhook-Signature`), retries and logging — which the backend
+ * `/ext/merchant/:id/webhook/woocommerce` endpoint accepts as-is.
  *
  * @package Frak_Integration
  */
@@ -25,9 +18,8 @@ class Frak_WC_Webhook_Registrar {
 
 	/**
 	 * Topic the webhook listens on. `order.updated` fires on every `wp_update_post`
-	 * save for the `shop_order` CPT (and the HPOS equivalent), which matches the
-	 * legacy `woocommerce_order_status_changed` trigger the plugin previously
-	 * used — status transitions, refunds, and cancellations all save the order.
+	 * save for the `shop_order` CPT (and the HPOS equivalent), so status
+	 * transitions, refunds and cancellations are all covered.
 	 */
 	public const TOPIC = 'order.updated';
 
@@ -300,10 +292,6 @@ class Frak_WC_Webhook_Registrar {
 	private static function build_delivery_url( string $merchant_id ): string {
 		return 'https://backend.frak.id/ext/merchant/' . rawurlencode( $merchant_id ) . '/webhook/woocommerce';
 	}
-
-	// Normalised host is provided by {@see Frak_Utils::current_host()} so the
-	// webhook registrar and the merchant cache agree on the same normalisation
-	// (lower-cased, leading `www.` stripped).
 
 	/**
 	 * Load the existing Frak webhook by stored id, or null when it was deleted

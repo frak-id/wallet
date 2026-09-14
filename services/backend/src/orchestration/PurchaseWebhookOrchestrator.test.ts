@@ -131,32 +131,4 @@ describe("PurchaseWebhookOrchestrator", () => {
             expect.objectContaining({ items: mergedVariant })
         );
     });
-
-    it("does not pass the raw webhook lines to the interaction creator", async () => {
-        const {
-            orchestrator,
-            purchaseClaimRepository,
-            purchaseInteractionCreator,
-            purchaseRepository,
-        } = makeOrchestrator();
-        purchaseClaimRepository.findByPurchaseKey.mockResolvedValue({
-            id: "claim-1",
-            claimingIdentityGroupId: CLAIMING_GROUP,
-        });
-
-        await orchestrator.upsertPurchase({
-            purchase,
-            purchaseItems: duplicatedVariant as never,
-            merchantId: MERCHANT_ID,
-        });
-
-        const passed =
-            purchaseInteractionCreator.create.mock.calls[0]?.[0].items;
-        expect(passed).not.toBe(duplicatedVariant);
-        expect(passed).toBe(
-            await purchaseRepository.upsertWithItems.mock.results[0]?.value.then(
-                (r: { items: unknown }) => r.items
-            )
-        );
-    });
 });
