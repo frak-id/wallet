@@ -9,7 +9,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { Minus, Plus } from "lucide-react";
 import { RewardBreakdown } from "./RewardBreakdown";
 import * as styles from "./sharingPage.css";
-import type { SharingReward, SharingT } from "./types";
+import { noRewardContext, type SharingReward, type SharingT } from "./types";
 
 /**
  * The FAQ entries, in display order. `id` is the i18n key suffix (`faq.q1`), not
@@ -56,7 +56,12 @@ export function Faq({ reward, t }: { reward: SharingReward; t: SharingT }) {
                         </AccordionTrigger>
                         <AccordionContent>
                             <div className={styles.faqContent}>
-                                {t(`sdk.sharingPage.faq.a${item.id}`)}
+                                {t(
+                                    `sdk.sharingPage.faq.a${item.id}`,
+                                    reward.status === "empty"
+                                        ? noRewardContext
+                                        : undefined
+                                )}
                                 {"slot" in item &&
                                     item.slot === "rewardBreakdown" &&
                                     breakdown && (

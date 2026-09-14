@@ -126,6 +126,13 @@ export type SharingPageProps = {
     t: SharingT;
 };
 
+/**
+ * i18next context selecting the reward-free variant of a sharing-page key.
+ * A typo here falls back to the rewarded base string rather than failing, and
+ * the options bag is untyped, so the compiler cannot catch it.
+ */
+export const noRewardContext = { context: "noReward" } as const;
+
 /** Whether the host, rather than this page, draws the surrounding chrome. */
 export function isChromeless(chrome: SharingChrome): boolean {
     return chrome.mode === "none";

@@ -3,7 +3,12 @@ import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { CardBackground } from "@frak-labs/design-system/icons";
 import { MerchantLogo } from "../MerchantLogo";
 import * as styles from "./sharingPage.css";
-import type { SharingMerchant, SharingReward, SharingT } from "./types";
+import {
+    noRewardContext,
+    type SharingMerchant,
+    type SharingReward,
+    type SharingT,
+} from "./types";
 
 /**
  * The hero "credit card": headline reward, tagline and merchant logo, with the
@@ -19,10 +24,12 @@ export function RewardCard({
     t: SharingT;
 }) {
     const isLoading = reward.status === "loading";
+    const isEmpty = reward.status === "empty";
     const isTiered =
         reward.status === "ready" && reward.payoutType === "tiered";
     const isProductScoped =
         reward.status === "ready" && reward.isProductScoped === true;
+    const emptyContext = isEmpty ? noRewardContext : undefined;
 
     return (
         <section className={styles.creditCard}>
@@ -35,28 +42,33 @@ export function RewardCard({
                                 {t("sdk.sharingPage.card.upTo")}
                             </span>
                         )}
-                        <span className={styles.creditCardAmount}>
-                            {isLoading ? (
-                                <Skeleton
-                                    variant="rect"
-                                    width={90}
-                                    height={36}
-                                />
-                            ) : (
-                                <CreditCardAmount
-                                    amount={t("sdk.sharingPage.card.amount")}
-                                    parts={
-                                        reward.status === "ready"
-                                            ? reward.parts
-                                            : undefined
-                                    }
-                                />
-                            )}
+                        <span
+                            className={
+                                isEmpty
+                                    ? styles.creditCardAmountEmpty
+                                    : styles.creditCardAmount
+                            }
+                        >
+                            <CardAmount
+                                isLoading={isLoading}
+                                isEmpty={isEmpty}
+                                amount={t(
+                                    "sdk.sharingPage.card.amount",
+                                    emptyContext
+                                )}
+                                parts={
+                                    reward.status === "ready"
+                                        ? reward.parts
+                                        : undefined
+                                }
+                            />
                         </span>
                     </div>
-                    <span className={styles.creditCardLabel}>
-                        {t("sdk.sharingPage.card.label")}
-                    </span>
+                    {!isEmpty && (
+                        <span className={styles.creditCardLabel}>
+                            {t("sdk.sharingPage.card.label")}
+                        </span>
+                    )}
                 </div>
                 <div className={styles.creditCardBottom}>
                     <span className={styles.creditCardBottomText}>
@@ -64,7 +76,7 @@ export function RewardCard({
                             isRewardLoading={isLoading}
                             text={t(
                                 "sdk.sharingPage.card.tagline1",
-                                isTiered ? { context: "tiered" } : undefined
+                                isTiered ? { context: "tiered" } : emptyContext
                             )}
                         />
                         <br />
@@ -74,7 +86,7 @@ export function RewardCard({
                                 "sdk.sharingPage.card.tagline2",
                                 isProductScoped
                                     ? { context: "product" }
-                                    : undefined
+                                    : emptyContext
                             )}
                         />
                     </span>
@@ -87,6 +99,25 @@ export function RewardCard({
             </div>
         </section>
     );
+}
+
+/** The headline amount slot: loading skeleton, reward-free phrase, or the amount. */
+function CardAmount({
+    isLoading,
+    isEmpty,
+    amount,
+    parts,
+}: {
+    isLoading: boolean;
+    isEmpty: boolean;
+    amount: string;
+    parts?: RewardAmountParts;
+}) {
+    if (isLoading) {
+        return <Skeleton variant="rect" width={90} height={36} />;
+    }
+    if (isEmpty) return <>{amount}</>;
+    return <CreditCardAmount amount={amount} parts={parts} />;
 }
 
 /** A single credit-card tagline line, skeletonized while the reward loads. */

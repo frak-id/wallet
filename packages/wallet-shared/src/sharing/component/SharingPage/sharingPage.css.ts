@@ -124,6 +124,18 @@ export const creditCardAmount = style({
     lineHeight: 1,
 });
 
+/**
+ * The reward-free headline: same slot as `creditCardAmount`, but label scale.
+ * The 42px amount size cannot hold a phrase inside the 330×171
+ * `overflow: hidden` card — it would be clipped rather than fail visibly.
+ */
+export const creditCardAmountEmpty = style({
+    display: "inline-flex",
+    fontSize: fontSize.s,
+    fontWeight: 600,
+    lineHeight: "20px",
+});
+
 export const creditCardCurrency = style({
     fontSize: "22px",
     fontWeight: 700,
