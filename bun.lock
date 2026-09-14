@@ -363,6 +363,7 @@
       },
       "devDependencies": {
         "@frak-labs/backend-elysia": "workspace:*",
+        "@typescript/native": "catalog:",
         "elysia": "catalog:",
         "typescript": "catalog:",
       },

@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "license": "GNU GPL 3.0",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "exports": {
@@ -17,6 +20,7 @@
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
+    "@typescript/native": "catalog:",
     "elysia": "catalog:",
     "typescript": "catalog:"
   }
