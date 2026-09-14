@@ -1,5 +1,6 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import { fromLocalizedText, toLocalizedText } from "../localizable";
+import { parseStyleCss } from "../style/styleCodec";
 import type {
     BannerFormValues,
     ButtonShareFormValues,
@@ -16,10 +17,13 @@ function getButtonShareDefaults(
     components: PlacementComponents
 ): ButtonShareFormValues {
     const bs = components?.buttonShare;
+    const { values, foreignCss } = parseStyleCss(bs?.rawCss);
     return {
         text: toLocalizedText(bs?.text),
         noRewardText: toLocalizedText(bs?.noRewardText),
         css: bs?.rawCss ?? "",
+        style: values,
+        foreignCss,
     };
 }
 
