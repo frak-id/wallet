@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { pushHistoryQueryKey } from "@/module/members/queries/queryKeys";
 import { pushCreationStore } from "@/stores/pushCreationStore";
 import type { NotificationPayload } from "@/types/NotificationPayload";
@@ -12,9 +13,8 @@ import type { FormCreatePushNotification } from "./types";
  *
  * - new + immediate → `POST /send`
  * - new + scheduled → `POST /schedule`
- * - edit            → `PUT /broadcasts/:id` (updates the scheduled row in
- *   place; a scheduled notification stays scheduled and can't be switched to
- *   immediate delivery, so a delivery time is required)
+ * - edit → `PUT /broadcasts/:id`, which requires a delivery time: a scheduled
+ *   broadcast cannot be switched to immediate.
  */
 function submitBroadcast(params: {
     merchantId: string;
@@ -83,6 +83,7 @@ export function useSendPushNotification(merchantId: string) {
     const clearForm = pushCreationStore((state) => state.clearForm);
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const isDemoMode = useIsDemoMode();
 
     return useMutation({
         mutationKey: ["push", "publish"],
@@ -118,7 +119,7 @@ export function useSendPushNotification(merchantId: string) {
             // Refresh the push-history table so the freshly sent/scheduled
             // broadcast shows up without a manual reload.
             queryClient.invalidateQueries({
-                queryKey: pushHistoryQueryKey(merchantId),
+                queryKey: pushHistoryQueryKey(merchantId, isDemoMode),
             });
             navigate({
                 to: "/m/$merchantId/members",

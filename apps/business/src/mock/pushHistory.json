@@ -1,0 +1,129 @@
+{
+    "broadcasts": [
+        {
+            "id": "b1000000-0000-0000-0000-000000000001",
+            "payload": {
+                "title": "Flash sale — 30% off everything this weekend only",
+                "body": "Two days, every category. Tap to browse before it ends.",
+                "icon": "https://picsum.photos/seed/frak-push-1/96",
+                "data": { "url": "https://example.com/flash-sale" }
+            },
+            "targets": {
+                "filter": {
+                    "merchantIds": ["11111111-1111-1111-1111-111111111111"]
+                }
+            },
+            "scheduledAt": 1789894800000,
+            "claimedAt": null,
+            "createdAt": 1789200000000,
+            "sentCount": 0,
+            "openedCount": 0
+        },
+        {
+            "id": "b1000000-0000-0000-0000-000000000002",
+            "payload": {
+                "title": "Your reward is waiting",
+                "body": "You earned 12€ in referral rewards. Claim them now.",
+                "data": { "url": "https://example.com/rewards" }
+            },
+            "targets": {
+                "filter": {
+                    "merchantIds": ["11111111-1111-1111-1111-111111111111"],
+                    "interactions": { "min": 3 }
+                }
+            },
+            "scheduledAt": 1789752600000,
+            "claimedAt": null,
+            "createdAt": 1789190000000,
+            "sentCount": 0,
+            "openedCount": 0
+        },
+        {
+            "id": "b1000000-0000-0000-0000-000000000003",
+            "payload": {
+                "title": "New autumn collection just landed",
+                "body": "Fresh arrivals picked for you.",
+                "icon": "https://picsum.photos/seed/frak-push-3/96",
+                "data": { "url": "https://example.com/autumn" }
+            },
+            "targets": null,
+            "scheduledAt": 1789208100000,
+            "claimedAt": 1789208160000,
+            "createdAt": 1789205000000,
+            "sentCount": 12480,
+            "openedCount": 5236
+        },
+        {
+            "id": "b1000000-0000-0000-0000-000000000004",
+            "payload": {
+                "title": "Thanks for sharing — here's 5€",
+                "body": "Your friend made their first order.",
+                "data": { "url": "https://example.com/referral" }
+            },
+            "targets": {
+                "wallets": [
+                    "0x1111111111111111111111111111111111111111",
+                    "0x2222222222222222222222222222222222222222",
+                    "0x3333333333333333333333333333333333333333"
+                ]
+            },
+            "scheduledAt": 1788854400000,
+            "claimedAt": 1788854460000,
+            "createdAt": 1788850000000,
+            "sentCount": 3,
+            "openedCount": 3
+        },
+        {
+            "id": "b1000000-0000-0000-0000-000000000005",
+            "payload": {
+                "title": "Last chance: summer styles end tonight",
+                "body": "Final hours on the summer range.",
+                "data": { "url": "https://example.com/summer" }
+            },
+            "targets": {
+                "filter": {
+                    "merchantIds": ["11111111-1111-1111-1111-111111111111"],
+                    "firstInteractionTimestamp": { "max": 1788000000000 }
+                }
+            },
+            "scheduledAt": 1788360300000,
+            "claimedAt": 1788360360000,
+            "createdAt": 1788355000000,
+            "sentCount": 8104,
+            "openedCount": 972
+        },
+        {
+            "id": "b1000000-0000-0000-0000-000000000006",
+            "payload": {
+                "title": "We missed you",
+                "body": "Here's 10% off your next order.",
+                "data": { "url": "https://example.com/winback" }
+            },
+            "targets": {
+                "wallets": [
+                    "0x4444444444444444444444444444444444444444",
+                    "0x5555555555555555555555555555555555555555"
+                ]
+            },
+            "scheduledAt": 1787829600000,
+            "claimedAt": 1787829660000,
+            "createdAt": 1787825000000,
+            "sentCount": 2,
+            "openedCount": 0
+        },
+        {
+            "id": "b1000000-0000-0000-0000-000000000007",
+            "payload": {
+                "title": "Welcome to the club",
+                "body": "Your membership is live. Start earning on every share.",
+                "icon": "https://picsum.photos/seed/frak-push-7/96"
+            },
+            "targets": null,
+            "scheduledAt": 1787155500000,
+            "claimedAt": 1787155560000,
+            "createdAt": 1787150000000,
+            "sentCount": 21937,
+            "openedCount": 14602
+        }
+    ]
+}
