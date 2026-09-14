@@ -18,6 +18,8 @@ export type SharingMerchant = {
 /** The reward headline and everything the copy varies on. */
 export type SharingReward =
     | { status: "loading" }
+    /** Settled: the merchant currently has nothing to advertise for this selection. */
+    | { status: "empty" }
     | {
           status: "ready";
           payoutType?: EstimatedReward["payoutType"];

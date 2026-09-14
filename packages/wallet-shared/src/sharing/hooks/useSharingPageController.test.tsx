@@ -20,10 +20,22 @@ vi.mock("../../common/hook/useCopyToClipboardWithState", () => ({
 }));
 
 let lastRewardQuery: { products?: unknown } | undefined;
+type RewardHookResult = {
+    data?: { formatted?: string };
+    isPending?: boolean;
+    isError?: boolean;
+};
+// Settled-empty by default; the reward-view tests select each arm explicitly.
+let rewardHookReturn: (args: { products?: unknown }) => RewardHookResult =
+    () => ({
+        data: undefined,
+        isPending: false,
+        isError: false,
+    });
 vi.mock("../../common/hook/useFormattedEstimatedReward", () => ({
     useFormattedEstimatedReward: (args: { products?: unknown }) => {
         lastRewardQuery = args;
-        return { data: undefined, isLoading: false };
+        return rewardHookReturn(args);
     },
 }));
 
@@ -84,7 +96,17 @@ function setup(
 beforeEach(() => {
     sessionStorage.clear();
     vi.clearAllMocks();
+    rewardHookReturn = () => ({
+        data: undefined,
+        isPending: false,
+        isError: false,
+    });
 });
+
+/** The `estimatedReward` interpolation the controller injected into the last `t` call. */
+function lastEstimatedReward(rawT: ReturnType<typeof vi.fn>) {
+    return rawT.mock.calls.at(-1)?.[1]?.estimatedReward;
+}
 
 describe("outcome hand-off", () => {
     it("does not share locally when the host takes the share", () => {
@@ -371,6 +393,108 @@ describe("confirmation lifecycle", () => {
         act(() => result.current.actions.onConfirmationDismiss());
 
         expect(dismiss).toHaveBeenCalled();
+    });
+});
+
+describe("reward view", () => {
+    it("reports still-resolving when the query is in flight with no seed", () => {
+        rewardHookReturn = () => ({
+            data: undefined,
+            isPending: true,
+            isError: false,
+        });
+
+        const { result } = setup();
+
+        expect(result.current.reward).toEqual({ status: "loading" });
+    });
+
+    it("uses the seed and skips the skeleton while the query is in flight", () => {
+        rewardHookReturn = () => ({
+            data: undefined,
+            isPending: true,
+            isError: false,
+        });
+        const rawT = vi.fn((key: string) => key);
+
+        const { result } = setup({}, { seedReward: "10 EUR", t: rawT });
+
+        expect(result.current.reward).toEqual({ status: "ready" });
+        expect(lastEstimatedReward(rawT)).toBe("10 EUR");
+    });
+
+    it("reports reward-free once the query settles empty, dropping the seed", () => {
+        rewardHookReturn = () => ({
+            data: undefined,
+            isPending: false,
+            isError: false,
+        });
+        const rawT = vi.fn((key: string) => key);
+
+        const { result } = setup({}, { seedReward: "10 EUR", t: rawT });
+
+        expect(result.current.reward).toEqual({ status: "empty" });
+        expect(lastEstimatedReward(rawT)).toBe("");
+    });
+
+    it("keeps a settled reward through a failed background refetch", () => {
+        // TanStack Query keeps stale `data` when a background refetch fails, so
+        // `isError` alone must not blank an already-rendered reward.
+        rewardHookReturn = () => ({
+            data: { formatted: "10 EUR" },
+            isPending: false,
+            isError: true,
+        });
+        const rawT = vi.fn((key: string) => key);
+
+        const { result } = setup({}, { t: rawT });
+
+        expect(result.current.reward.status).toBe("ready");
+        expect(lastEstimatedReward(rawT)).toBe("10 EUR");
+    });
+
+    it("reports still-resolving, not reward-free, when the query rejects", () => {
+        rewardHookReturn = () => ({
+            data: undefined,
+            isPending: false,
+            isError: true,
+        });
+
+        const { result } = setup();
+
+        expect(result.current.reward).toEqual({ status: "loading" });
+    });
+
+    it("reports reward-free in the same render when the selection changes to a product with no reward", () => {
+        rewardHookReturn = (args) => {
+            const products = args.products as { title?: string }[] | undefined;
+            const scopedToB = products?.some(
+                (product) => product.title === "Product B"
+            );
+            return scopedToB
+                ? { data: undefined, isPending: false, isError: false }
+                : {
+                      data: { formatted: "10 EUR" },
+                      isPending: false,
+                      isError: false,
+                  };
+        };
+
+        const { result } = setup(
+            {},
+            {
+                products: [
+                    { title: "Product A", link: "https://acme.example/a" },
+                    { title: "Product B", link: "https://acme.example/b" },
+                ],
+            }
+        );
+
+        expect(result.current.reward.status).toBe("ready");
+
+        act(() => result.current.products?.onSelect(1));
+
+        expect(result.current.reward).toEqual({ status: "empty" });
     });
 });
 
