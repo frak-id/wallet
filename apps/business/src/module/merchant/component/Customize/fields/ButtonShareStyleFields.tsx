@@ -34,7 +34,10 @@ function ColorRow({
     allowTransparent?: boolean;
 }) {
     const { t } = useTranslation();
-    const lastValid = useRef("");
+    const stored = form.getValues(name);
+    const lastValid = useRef(
+        typeof stored === "string" && isHexColor(stored) ? stored : ""
+    );
 
     return (
         <FormField

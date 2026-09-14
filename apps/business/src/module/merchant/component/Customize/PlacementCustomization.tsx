@@ -128,7 +128,10 @@ function PlacementSettingsPanel({
                         ...placement,
                         components: {
                             ...placement?.components,
-                            ...formValuesToComponents(currentValues),
+                            ...formValuesToComponents(
+                                currentValues,
+                                placementId
+                            ),
                         },
                         targetInteraction: valueOrUndefined(
                             currentValues.targetInteraction

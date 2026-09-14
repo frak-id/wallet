@@ -96,7 +96,9 @@ function GlobalComponentsPanel({
 
     const onSubmit = useCallback(
         (v: ComponentSettingsFormValues) =>
-            editSdkConfig({ components: formValuesToComponents(v) }),
+            editSdkConfig({
+                components: formValuesToComponents(v, DEFAULT_TIER),
+            }),
         [editSdkConfig]
     );
 

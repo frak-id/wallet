@@ -1,11 +1,12 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import { fromLocalizedText, toLocalizedText } from "../localizable";
-import { parseStyleCss } from "../style/styleCodec";
+import { parseStyleCss, serializeStyleCss } from "../style/styleCodec";
 import type {
     BannerFormValues,
     ButtonShareFormValues,
     ComponentSettingsFormValues,
     PostPurchaseFormValues,
+    StyleTier,
 } from "../types";
 import { valueOrUndefined } from "../utils";
 
@@ -67,14 +68,25 @@ export function componentsToFormValues(components: PlacementComponents) {
     };
 }
 
-/** Editable form values -> stored components (shared by default + placement). */
-export function formValuesToComponents(v: ComponentSettingsFormValues) {
+/**
+ * Editable form values -> stored components (shared by default + placement).
+ * The share button's `rawCss` is recomposed from the style controls and the
+ * CSS the codec did not author, so the tier decides the emitted selector.
+ */
+export function formValuesToComponents(
+    v: ComponentSettingsFormValues,
+    tier: StyleTier
+) {
     return {
         buttonShare: {
             text: fromLocalizedText(v.buttonShare.text),
             noRewardText: fromLocalizedText(v.buttonShare.noRewardText),
             clickAction: "sharing-page" as const,
-            rawCss: valueOrUndefined(v.buttonShare.css),
+            rawCss: serializeStyleCss(
+                v.buttonShare.style,
+                v.buttonShare.foreignCss,
+                tier
+            ),
         },
         postPurchase: {
             badgeText: fromLocalizedText(v.postPurchase.badgeText),
