@@ -12,8 +12,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./server": "./src/server/index.ts",
-    "./server/*": "./src/server/*",
-    "./types/*": "./src/types/*"
+    "./server/*": "./src/server/*"
   },
   "dependencies": {
     "@elysiajs/eden": "catalog:"
