@@ -1,12 +1,24 @@
 import { t } from "@backend-utils";
 import type { Static } from "elysia";
 
-/** Unified schema for both interaction logs and campaign triggers. */
+/**
+ * Unified vocabulary for both interaction logs and campaign triggers.
+ *
+ * Reach for these instead of a bare string inside a `sql` template: the column is
+ * `text().$type<InteractionType>()`, so a literal written there is checked by nothing.
+ */
+export const interactionTypes = {
+    referral: "referral",
+    createReferralLink: "create_referral_link",
+    purchase: "purchase",
+    custom: "custom",
+} as const;
+
 export const InteractionTypeSchema = t.Union([
-    t.Literal("referral"),
-    t.Literal("create_referral_link"),
-    t.Literal("purchase"),
-    t.Literal("custom"),
+    t.Literal(interactionTypes.referral),
+    t.Literal(interactionTypes.createReferralLink),
+    t.Literal(interactionTypes.purchase),
+    t.Literal(interactionTypes.custom),
 ]);
 export type InteractionType = Static<typeof InteractionTypeSchema>;
 

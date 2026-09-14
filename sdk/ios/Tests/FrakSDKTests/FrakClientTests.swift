@@ -191,7 +191,7 @@ struct FrakClientTests {
         #expect(log.urls.contains { $0.contains("currency=usd") })
     }
 
-    @Test("campaigns forceRefresh also forces the config resolve, not just the rewards fetch (D6)")
+    @Test("campaigns forceRefresh also forces the config resolve, not just the rewards fetch")
     func campaignsForceRefreshAlsoForcesConfigResolve() async throws {
         let log = RequestLog()
         let client = makeClient { request in

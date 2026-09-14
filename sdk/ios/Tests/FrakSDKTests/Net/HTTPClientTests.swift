@@ -285,7 +285,7 @@ struct HTTPClientTests {
         }
     }
 
-    @Test("a request is logged at debug level without the query string or header values (D3)")
+    @Test("a request is logged at debug level without the query string or header values")
     func requestIsLoggedWithoutQueryOrHeaders() async throws {
         let sink = RecordingLogSink()
         let logger = FrakLogger(level: .debug, sink: sink)
@@ -300,7 +300,7 @@ struct HTTPClientTests {
         #expect(!line.contains("super-secret-merchant-id"), "the query string must never be logged")
     }
 
-    @Test("nothing is logged when no logger is configured (D3)")
+    @Test("nothing is logged when no logger is configured")
     func nothingLoggedWithoutConfiguredLogger() async throws {
         // makeClient's default logger is nil.
         let client = makeClient { _ in StubResponse(status: 200, body: "{}") }
@@ -310,7 +310,7 @@ struct HTTPClientTests {
         #expect(response.status == 200)
     }
 
-    @Test("a failed attempt is logged too, without a status (D3)")
+    @Test("a failed attempt is logged too, without a status")
     func failedAttemptIsLoggedWithoutStatus() async throws {
         let sink = RecordingLogSink()
         let logger = FrakLogger(level: .debug, sink: sink)

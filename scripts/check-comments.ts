@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Enforces the comment budget from the root AGENTS.md on Kotlin/Swift, which biome cannot parse.
+ * Enforces the comment budget from the root AGENTS.md across Kotlin, Swift and TS/TSX.
  * Run: `bun run lint:comments`, or pass explicit paths to scope it to a diff.
  */
 import {
@@ -23,12 +23,44 @@ const DEFAULT_ROOTS = [
     "example/native-android/app/src",
     "example/native-ios/Sources",
     "example/native-ios/Package.swift",
+    "apps/wallet/app",
+    "apps/business/src",
+    "apps/listener/app",
+    "apps/shopify/app",
+    "services/backend/src",
+    "services/bootstrap/src",
+    "services/credential-sync/src",
+    "packages",
+    "sdk/core/src",
+    "sdk/react/src",
+    "sdk/components/src",
+    "sdk/legacy/src",
+    "scripts",
+    "infra",
 ];
+
+/** Trees that are installed, emitted or vendored — never authored, so never budgeted. */
+const IGNORED_DIRS = new Set([
+    "node_modules",
+    "build",
+    ".build",
+    "dist",
+    "coverage",
+    ".sst",
+    ".pulumi",
+    ".react-router",
+    ".vite",
+    ".turbo",
+    "drizzle",
+]);
+
+/** Emitted TS: route trees, i18n resources and every ambient declaration file. */
+const isGenerated = (f: string) => f.endsWith(".gen.ts") || f.endsWith(".d.ts");
 
 /** Comment text lines allowed per block; opening and closing delimiters do not count. */
 const MAX_CONTENT_LINES = 5;
 
-/** Phrases that turn a comment into a changelog. Word-bounded: "refused to" is not "used to". */
+/** Phrases that turn a comment into a changelog. Word-bounded, so "refused to" does not match. */
 const HISTORY_PHRASES = [
     "used to",
     "no longer",
@@ -75,11 +107,15 @@ function walk(dir: string, out: string[] = []): string[] {
         return out;
     }
     for (const entry of entries) {
+        if (IGNORED_DIRS.has(entry)) continue;
         const full = join(dir, entry);
-        if (statSync(full).isDirectory()) {
-            if (entry === "build" || entry === ".build") continue;
+        // A dangling symlink (common under node_modules) throws rather than reporting a
+        // type, and an unguarded throw here would abort the whole run.
+        const stat = statSync(full, { throwIfNoEntry: false });
+        if (!stat) continue;
+        if (stat.isDirectory()) {
             walk(full, out);
-        } else if (isSource(full)) {
+        } else if (isSource(full) && !isGenerated(full)) {
             out.push(full);
         }
     }
@@ -131,7 +167,8 @@ const isTestDeclaration = (l: string) => {
         s.startsWith("@Test") ||
         s.startsWith("@ParameterizedTest") ||
         /^\s*(public\s+)?func test/.test(s) ||
-        s.startsWith("@Test(")
+        // Vitest: `it("…"`, `test("…"`, `describe("…"`, plus their `.each`/`.skip` variants.
+        /^(it|test|describe)\b[\w.]*\s*[(<]/.test(s)
     );
 };
 
