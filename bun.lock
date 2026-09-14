@@ -632,6 +632,7 @@
       "devDependencies": {
         "@frak-labs/dev-tooling": "workspace:*",
         "@rolldown/plugin-node-polyfills": "catalog:",
+        "@typescript/native": "catalog:",
         "tsdown": "catalog:",
         "typescript": "catalog:",
       },

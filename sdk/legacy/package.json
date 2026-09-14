@@ -39,6 +39,7 @@
   "browser": "./dist/bundle/bundle.js",
   "scripts": {
     "lint": "biome lint .",
+    "typecheck": "tsc --noEmit",
     "format:check": "biome check .",
     "format": "biome check --write .",
     "clean": "rimraf dist",
@@ -53,6 +54,7 @@
   "devDependencies": {
     "@frak-labs/dev-tooling": "workspace:*",
     "@rolldown/plugin-node-polyfills": "catalog:",
+    "@typescript/native": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:"
   }
