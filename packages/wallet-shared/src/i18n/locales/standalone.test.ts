@@ -6,9 +6,19 @@ import { defaultNS, fallbackLng, supportedLngs } from "../config";
 /**
  * Keys the standalone `/sharing` + `/install` entrypoints resolve at runtime.
  * They are bundled by name, so one missing export renders the key itself.
+ * `resources.d.ts` is generated from `en` only, so a `_noReward` variant
+ * missing from `fr` typechecks clean and silently renders the base string.
  */
 const REQUIRED_KEYS = [
     "installCode.title",
+    "sdk.sharingPage.card.amount_noReward",
+    "sdk.sharingPage.card.tagline1_noReward",
+    "sdk.sharingPage.card.tagline2_noReward",
+    "sdk.sharingPage.confirmation.title_noReward",
+    "sdk.sharingPage.confirmation.cardPopupTitle_noReward",
+    "sdk.sharingPage.confirmation.cardPopupDescription_noReward",
+    "sdk.sharingPage.confirmation.cta_noReward",
+    "sdk.sharingPage.faq.a6_noReward",
 ] as const satisfies readonly DefaultTranslationKey[];
 
 async function standaloneInstance(lng: "en" | "fr") {

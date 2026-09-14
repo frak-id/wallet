@@ -1,3 +1,4 @@
+import type { BestReward } from "@frak-labs/core-sdk/rewards";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -21,7 +22,7 @@ vi.mock("../../common/hook/useCopyToClipboardWithState", () => ({
 
 let lastRewardQuery: { products?: unknown } | undefined;
 type RewardHookResult = {
-    data?: { formatted?: string };
+    data?: Partial<BestReward>;
     isPending?: boolean;
     isError?: boolean;
 };
@@ -463,6 +464,46 @@ describe("reward view", () => {
         const { result } = setup();
 
         expect(result.current.reward).toEqual({ status: "loading" });
+    });
+
+    it("selects the ready arm with the settled query's full reward breakdown", () => {
+        // Referrer and referee are the same type, so a swap would still compile.
+        const data: Partial<BestReward> = {
+            formatted: "10 %",
+            payoutType: "percentage",
+            minPurchaseAmount: "50 EUR",
+            isProductScoped: true,
+            lockupDurationDays: 7,
+            referrerReward: {
+                payoutType: "percentage",
+                percent: 10,
+                percentOf: "purchase_amount",
+            },
+            refereeReward: {
+                payoutType: "percentage",
+                percent: 5,
+                percentOf: "purchase_amount",
+            },
+            minPurchaseValue: 50,
+            parts: { integer: "10", unit: "%", unitPosition: "suffix" },
+        };
+        rewardHookReturn = () => ({ data, isPending: false, isError: false });
+
+        const { result } = setup();
+
+        expect(result.current.reward).toEqual({
+            status: "ready",
+            payoutType: "percentage",
+            minPurchaseAmount: "50 EUR",
+            isProductScoped: true,
+            lockupDurationDays: 7,
+            breakdown: {
+                referrer: data.referrerReward,
+                referee: data.refereeReward,
+                minPurchaseValue: 50,
+            },
+            parts: data.parts,
+        });
     });
 
     it("reports reward-free in the same render when the selection changes to a product with no reward", () => {
