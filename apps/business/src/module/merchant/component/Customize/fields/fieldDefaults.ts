@@ -22,7 +22,6 @@ function getButtonShareDefaults(
     return {
         text: toLocalizedText(bs?.text),
         noRewardText: toLocalizedText(bs?.noRewardText),
-        css: bs?.rawCss ?? "",
         style: values,
         foreignCss,
     };

@@ -2,7 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("react-i18next", () => ({
-    useTranslation: () => ({ t: (key: string) => key }),
+    useTranslation: () => ({
+        t: (key: string, options?: { label?: string }) =>
+            options?.label ? `${key}:${options.label}` : key,
+    }),
     Trans: ({ i18nKey }: { i18nKey: string }) => i18nKey,
 }));
 
@@ -32,7 +35,6 @@ function Harness({
             buttonShare: {
                 text: emptyText,
                 noRewardText: emptyText,
-                css: "",
                 style,
                 foreignCss: "",
             },
@@ -42,6 +44,26 @@ function Harness({
     return (
         <Form {...form}>
             <ButtonShareStyleFields form={form} tier={tier} />
+        </Form>
+    );
+}
+
+function SyncHarness({ style }: { style: ButtonShareStyleValues }) {
+    const form = useForm<ComponentSettingsFormValues>({
+        values: {
+            targetInteraction: "",
+            buttonShare: {
+                text: emptyText,
+                noRewardText: emptyText,
+                style,
+                foreignCss: "",
+            },
+        } as ComponentSettingsFormValues,
+    });
+    currentForm = form;
+    return (
+        <Form {...form}>
+            <ButtonShareStyleFields form={form} tier="product" />
         </Form>
     );
 }
@@ -134,6 +156,26 @@ describe("ButtonShareStyleFields", () => {
         fireEvent.blur(input);
 
         expect(styleValues().fg).toBe("#112233");
+    });
+
+    it("names the swatch separately from the hex input beside it", () => {
+        renderBlock();
+        const swatch = screen.getByTestId("buttonShare.style.fg-swatch");
+
+        expect(swatch.getAttribute("aria-label")).toMatch(
+            /^customize\.components\.style\.swatchLabel:/
+        );
+    });
+
+    it("reverts to the re-synced colour after the form switches placement", () => {
+        const { rerender } = render(<SyncHarness style={{ fg: "#112233" }} />);
+        rerender(<SyncHarness style={{ fg: "#445566" }} />);
+
+        const input = screen.getByTestId("buttonShare.style.fg-hex");
+        fireEvent.change(input, { target: { value: "nonsense" } });
+        fireEvent.blur(input);
+
+        expect(styleValues().fg).toBe("#445566");
     });
 
     it("leaves a colour unset when an invalid entry has no valid predecessor", () => {

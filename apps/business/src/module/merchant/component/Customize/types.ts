@@ -54,7 +54,6 @@ export type ButtonShareStyleValues = {
 export type ButtonShareFormValues = {
     text: LocalizedText;
     noRewardText: LocalizedText;
-    css: string;
     style: ButtonShareStyleValues;
     foreignCss: string;
 };

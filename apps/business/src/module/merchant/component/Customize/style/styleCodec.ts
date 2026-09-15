@@ -65,12 +65,14 @@ function parsePayload(json: string): ButtonShareStyleValues | undefined {
  * Splits stored `rawCss` into the block's values and the CSS it does not own.
  * An absent, malformed or unterminated marker yields empty values and leaves
  * the whole string foreign, so no merchant CSS is ever discarded.
+ * Scanning from the last marker keeps a damaged earlier block from swallowing
+ * the one written most recently.
  */
 export function parseStyleCss(rawCss: string | undefined | null): ParsedStyle {
     const source = rawCss ?? "";
     const foreignOnly: ParsedStyle = { values: {}, foreignCss: source.trim() };
 
-    const open = source.indexOf(MARKER_OPEN);
+    const open = source.lastIndexOf(MARKER_OPEN);
     if (open === -1) return foreignOnly;
 
     const payloadStart = open + MARKER_OPEN.length;

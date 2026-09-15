@@ -190,12 +190,25 @@ describe("parseStyleCss", () => {
         });
     });
 
-    it("keeps the first marker and treats a second one as foreign", () => {
+    it("keeps the last marker and treats an earlier one as foreign", () => {
         const first = serializeStyleCss({ fs: 12 }, "", PLACEMENT_TIER);
         const second = serializeStyleCss({ fs: 20 }, "", PLACEMENT_TIER);
         const parsed = parseStyleCss(`${first}\n${second}`);
-        expect(parsed.values).toEqual({ fs: 12 });
-        expect(parsed.foreignCss).toBe(second);
+        expect(parsed.values).toEqual({ fs: 20 });
+        expect(parsed.foreignCss).toBe(first);
+    });
+
+    it("recovers the newest values when a damaged block precedes them", () => {
+        const damaged = `/* frak:style {"bg":"#111111"} */\n.button{background:#111111!important}`;
+        const rewritten = serializeStyleCss(
+            { bg: "#ff0000" },
+            damaged,
+            PLACEMENT_TIER
+        );
+
+        const parsed = parseStyleCss(rewritten);
+        expect(parsed.values).toEqual({ bg: "#ff0000" });
+        expect(parsed.foreignCss).toBe(damaged);
     });
 
     it("ignores an unknown key in an otherwise valid marker", () => {

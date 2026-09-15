@@ -42,10 +42,7 @@ function ColorRow({
     allowTransparent?: boolean;
 }) {
     const { t } = useTranslation();
-    const stored = form.getValues(name);
-    const lastValid = useRef(
-        typeof stored === "string" && isHexColor(stored) ? stored : ""
-    );
+    const lastValid = useRef("");
 
     return (
         <FormField
@@ -56,10 +53,11 @@ function ColorRow({
                 const isNone = raw === TRANSPARENT;
                 const swatch = isHexColor(raw) ? raw : SWATCH_FALLBACK;
 
-                const commit = (next: string) => {
-                    if (isHexColor(next)) lastValid.current = next;
-                    field.onChange(next);
-                };
+                // Tracks the rendered value, not just typed input: switching
+                // placement re-syncs the form without remounting this row.
+                if (isHexColor(raw)) lastValid.current = raw;
+
+                const commit = (next: string) => field.onChange(next);
 
                 return (
                     <EditField label={label}>
@@ -89,7 +87,10 @@ function ColorRow({
                                 <input
                                     type="color"
                                     className={styles.colorSwatch}
-                                    aria-label={label}
+                                    aria-label={t(
+                                        "customize.components.style.swatchLabel",
+                                        { label }
+                                    )}
                                     disabled={isNone}
                                     value={swatch}
                                     data-testid={`${name}-swatch`}

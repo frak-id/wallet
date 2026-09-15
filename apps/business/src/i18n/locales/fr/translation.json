@@ -2036,7 +2036,8 @@
                 "groupText": "Texte",
                 "groupPadding": "Espacement intérieur",
                 "groupMargin": "Espacement extérieur",
-                "groupSurface": "Fond et bordure"
+                "groupSurface": "Fond et bordure",
+                "swatchLabel": "Sélecteur de couleur : {{label}}"
             }
         },
         "globalCss": {

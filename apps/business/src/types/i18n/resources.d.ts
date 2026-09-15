@@ -1003,6 +1003,7 @@ export default interface Resources {
           "paddingHorizontal": "Horizontal (px)",
           "paddingVertical": "Vertical (px)",
           "previewHint": "Properties you leave empty follow your storefront's styling, so they may differ from this preview.",
+          "swatchLabel": "Colour picker: {{label}}",
           "textColor": "Colour",
           "textSize": "Size (px)",
           "title": "Button style"

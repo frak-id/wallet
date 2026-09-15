@@ -36,7 +36,7 @@ export function ButtonShareFields({
                 />
                 <ComponentCssField
                     form={form}
-                    name="buttonShare.css"
+                    name="buttonShare.foreignCss"
                     label={t("customize.components.fields.css")}
                     placeholder={".frak-button-share { ... }"}
                 />

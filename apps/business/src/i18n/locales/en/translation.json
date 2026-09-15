@@ -2036,7 +2036,8 @@
                 "groupText": "Text",
                 "groupPadding": "Inner spacing",
                 "groupMargin": "Outer spacing",
-                "groupSurface": "Background and border"
+                "groupSurface": "Background and border",
+                "swatchLabel": "Colour picker: {{label}}"
             }
         },
         "globalCss": {
