@@ -1,5 +1,24 @@
 # @frak-labs/components
 
+## 1.2.1
+
+### Patch Changes
+
+- [#304](https://github.com/frak-id/wallet/pull/304) [`6380588`](https://github.com/frak-id/wallet/commit/6380588a1abd3f649049ef54d2cfe52e0f163a15) Thanks [@srod](https://github.com/srod)! - Make the package installable from npm.
+
+  `@frak-labs/design-system` was listed as a runtime dependency, but it is a private workspace package that is never published — every release since 1.0.13 shipped a manifest pointing at a registry entry that does not exist, so `npm install @frak-labs/components` failed on resolution. The build already inlines design-system into `dist/`, so the entry declared a dependency the bundle does not have. It is now a devDependency, which the publish step strips.
+
+- [#308](https://github.com/frak-id/wallet/pull/308) [`132c7d5`](https://github.com/frak-id/wallet/commit/132c7d5f935ab74bb5b9451ec21246d8fa279e63) Thanks [@KONFeature](https://github.com/KONFeature)! - Close the two gaps in sharing entry-point coverage.
+
+  `share_button_impression` is new, and fires from both `<frak-button-share>` and `<frak-button-wallet>`. Both tags already reported `share_button_clicked`, so instrumenting only one of them would have produced a click-through rate above 100%. Payload matches `share_button_clicked` (`placement`, `target_interaction`, `has_reward`) so the two divide cleanly, and it fires once per mount — `reward` is deliberately outside the effect's dependencies, since its async arrival would otherwise bill a second impression for one render.
+
+  `sharing_page_auto_opened` is new and covers `?frakAction=share`, which opened the sharing page while emitting nothing at all. A `sharing_page_opened` originating from an emailed link was indistinguishable from one caused by a click. It carries `placement`, `has_link` and `has_products`, and fires ahead of the open so the sequence reads the same way a click does.
+
+  Every sharing entry point now reports exactly one trigger event, so their relative volumes are directly comparable.
+
+- Updated dependencies [[`132c7d5`](https://github.com/frak-id/wallet/commit/132c7d5f935ab74bb5b9451ec21246d8fa279e63), [`132c7d5`](https://github.com/frak-id/wallet/commit/132c7d5f935ab74bb5b9451ec21246d8fa279e63)]:
+  - @frak-labs/core-sdk@1.4.1
+
 ## 1.2.0
 
 ### Minor Changes

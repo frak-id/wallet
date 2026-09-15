@@ -1,5 +1,25 @@
 # @frak-labs/core-sdk
 
+## 1.4.1
+
+### Patch Changes
+
+- [#308](https://github.com/frak-id/wallet/pull/308) [`132c7d5`](https://github.com/frak-id/wallet/commit/132c7d5f935ab74bb5b9451ec21246d8fa279e63) Thanks [@KONFeature](https://github.com/KONFeature)! - Key OpenPanel on the SDK's anonymous id, and stop auto-tracking partner pages.
+
+  SDK events now carry `__deviceId` set to the persistent anonymous client id, overriding OpenPanel's own device derivation (project + IP + user agent, rotated daily). The listener, the SSO popup and the standalone `/sharing` + `/install` pages resolve the same id, so a funnel can span the partner page, the iframe and the wallet instead of depending on an IP and user agent staying identical for under a day. As a side effect the wallet origin no longer collapses every merchant's visitors into one anonymous profile.
+
+  `trackScreenViews` and `trackOutgoingLinks` are now off. Both collected the merchant's own traffic rather than referral signal: `sdk_initialized` already fires once per page load, and `banner_impression` / `post_purchase_impression` are the correct denominators for CTA funnels. `trackAttributes` stays off — `data-track` would let partner markup choose event names and ship arbitrary `data-*` values.
+
+  Note that SDK events no longer carry a populated `__path`: the web SDK only sets it from a screen view. Merchant attribution is unaffected (`merchant_id` and `domain` are global properties), and component events still carry `placement`.
+
+- [#308](https://github.com/frak-id/wallet/pull/308) [`132c7d5`](https://github.com/frak-id/wallet/commit/132c7d5f935ab74bb5b9451ec21246d8fa279e63) Thanks [@KONFeature](https://github.com/KONFeature)! - Close the two gaps in sharing entry-point coverage.
+
+  `share_button_impression` is new, and fires from both `<frak-button-share>` and `<frak-button-wallet>`. Both tags already reported `share_button_clicked`, so instrumenting only one of them would have produced a click-through rate above 100%. Payload matches `share_button_clicked` (`placement`, `target_interaction`, `has_reward`) so the two divide cleanly, and it fires once per mount — `reward` is deliberately outside the effect's dependencies, since its async arrival would otherwise bill a second impression for one render.
+
+  `sharing_page_auto_opened` is new and covers `?frakAction=share`, which opened the sharing page while emitting nothing at all. A `sharing_page_opened` originating from an emailed link was indistinguishable from one caused by a click. It carries `placement`, `has_link` and `has_products`, and fires ahead of the open so the sequence reads the same way a click does.
+
+  Every sharing entry point now reports exactly one trigger event, so their relative volumes are directly comparable.
+
 ## 1.4.0
 
 ### Minor Changes
