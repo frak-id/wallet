@@ -11,7 +11,7 @@ export const TRANSPARENT = "transparent";
 const HEX_COLOR = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 
 const COLOR_KEYS = ["bg", "fg", "bc"] as const;
-const NUMERIC_KEYS = ["bw", "fs", "py", "px", "mt", "mb"] as const;
+const NUMERIC_KEYS = ["bw", "fs", "py", "px", "mt", "mb", "ml", "mr"] as const;
 
 export type ParsedStyle = {
     values: ButtonShareStyleValues;
@@ -111,6 +111,8 @@ function toDeclarations(values: ButtonShareStyleValues): string {
     }
     if (values.mt !== undefined) push("margin-top", `${values.mt}px`);
     if (values.mb !== undefined) push("margin-bottom", `${values.mb}px`);
+    if (values.ml !== undefined) push("margin-left", `${values.ml}px`);
+    if (values.mr !== undefined) push("margin-right", `${values.mr}px`);
 
     return declarations.join(";");
 }
@@ -167,6 +169,12 @@ export function styleValuesToCssProperties(
         }),
         ...(safeValues.mb !== undefined && {
             marginBottom: `${safeValues.mb}px`,
+        }),
+        ...(safeValues.ml !== undefined && {
+            marginLeft: `${safeValues.ml}px`,
+        }),
+        ...(safeValues.mr !== undefined && {
+            marginRight: `${safeValues.mr}px`,
         }),
     };
 }

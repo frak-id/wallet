@@ -2019,26 +2019,32 @@
             "style": {
                 "title": "Button style",
                 "background": "Background",
-                "textColor": "Text colour",
+                "textColor": "Colour",
                 "borderColor": "Border colour",
-                "borderWidth": "Border width (px)",
-                "textSize": "Text size (px)",
-                "paddingVertical": "Vertical padding (px)",
-                "paddingHorizontal": "Horizontal padding (px)",
-                "marginTop": "Top margin (px)",
-                "marginBottom": "Bottom margin (px)",
+                "borderWidth": "Border thickness (px)",
+                "textSize": "Size (px)",
+                "paddingVertical": "Vertical (px)",
+                "paddingHorizontal": "Horizontal (px)",
+                "marginTop": "Top (px)",
+                "marginBottom": "Bottom (px)",
                 "none": "None",
                 "clear": "Clear",
-                "defaultTierHint": "These defaults only reach buttons whose integration sets a placement. Set values on a placement to cover the rest.",
-                "propagationHint": "A change can take up to 10 minutes to appear on your storefront.",
-                "previewHint": "This preview does not include your storefront's own styling."
+                "defaultTierHint": "These values only reach buttons whose integration sets a placement; the others keep your theme's styling.",
+                "previewHint": "Properties you leave empty follow your storefront's styling, so they may differ from this preview.",
+                "marginLeft": "Left (px)",
+                "marginRight": "Right (px)",
+                "groupText": "Text",
+                "groupPadding": "Inner spacing",
+                "groupMargin": "Outer spacing",
+                "groupSurface": "Background and border"
             }
         },
         "globalCss": {
             "title": "Global CSS",
             "description": "CSS styles applied to all SDK components across every placement. Placement-level CSS can override these defaults.",
             "toggle": "Custom CSS"
-        }
+        },
+        "propagationHint": "A saved change can take up to 10 minutes to appear on your storefront."
     },
     "welcomePopup": {
         "title": "🚀 Your new Frak dashboard is here",

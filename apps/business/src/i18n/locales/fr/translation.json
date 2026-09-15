@@ -2019,26 +2019,32 @@
             "style": {
                 "title": "Style du bouton",
                 "background": "Arrière-plan",
-                "textColor": "Couleur du texte",
+                "textColor": "Couleur",
                 "borderColor": "Couleur de la bordure",
                 "borderWidth": "Épaisseur de la bordure (px)",
-                "textSize": "Taille du texte (px)",
-                "paddingVertical": "Marge intérieure verticale (px)",
-                "paddingHorizontal": "Marge intérieure horizontale (px)",
-                "marginTop": "Marge supérieure (px)",
-                "marginBottom": "Marge inférieure (px)",
+                "textSize": "Taille (px)",
+                "paddingVertical": "Vertical (px)",
+                "paddingHorizontal": "Horizontal (px)",
+                "marginTop": "Haut (px)",
+                "marginBottom": "Bas (px)",
                 "none": "Aucun",
                 "clear": "Effacer",
-                "defaultTierHint": "Ces valeurs par défaut ne s'appliquent qu'aux boutons dont l'intégration définit un emplacement. Renseignez un emplacement pour couvrir les autres.",
-                "propagationHint": "Une modification peut mettre jusqu'à 10 minutes à apparaître sur votre boutique.",
-                "previewHint": "Cet aperçu n'inclut pas le style propre à votre boutique."
+                "defaultTierHint": "Ces valeurs ne s'appliquent qu'aux boutons dont l'intégration définit un emplacement ; les autres gardent le style de votre thème.",
+                "previewHint": "Les propriétés que vous ne renseignez pas suivent le style de votre boutique et peuvent donc différer de cet aperçu.",
+                "marginLeft": "Gauche (px)",
+                "marginRight": "Droite (px)",
+                "groupText": "Texte",
+                "groupPadding": "Espacement intérieur",
+                "groupMargin": "Espacement extérieur",
+                "groupSurface": "Fond et bordure"
             }
         },
         "globalCss": {
             "title": "CSS global",
             "description": "Styles CSS appliqués à tous les composants SDK, tous emplacements confondus. Le CSS par emplacement peut les surcharger.",
             "toggle": "CSS personnalisé"
-        }
+        },
+        "propagationHint": "Une modification enregistrée peut mettre jusqu'à 10 minutes à apparaître sur votre boutique."
     },
     "welcomePopup": {
         "title": "🚀 Votre nouveau dashboard Frak est arrivé",

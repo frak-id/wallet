@@ -20,6 +20,8 @@ const everyControl: ButtonShareStyleValues = {
     px: 24,
     mt: 4,
     mb: 8,
+    ml: 12,
+    mr: 16,
 };
 
 function roundTrip(
@@ -217,6 +219,8 @@ describe("styleValuesToCssProperties", () => {
             paddingRight: "24px",
             marginTop: "4px",
             marginBottom: "8px",
+            marginLeft: "12px",
+            marginRight: "16px",
         });
     });
 

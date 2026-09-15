@@ -343,7 +343,7 @@ export function ComponentPreview({
                             values.buttonShare.style
                         )}
                     />
-                    <Text variant="caption" color="tertiary">
+                    <Text variant="caption" color="tertiary" align="center">
                         {t("customize.components.style.previewHint")}
                     </Text>
                 </Stack>

@@ -47,6 +47,8 @@ export type ButtonShareStyleValues = {
     px?: number;
     mt?: number;
     mb?: number;
+    ml?: number;
+    mr?: number;
 };
 
 export type ButtonShareFormValues = {

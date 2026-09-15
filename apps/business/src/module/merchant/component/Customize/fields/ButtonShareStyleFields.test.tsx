@@ -57,7 +57,7 @@ function styleValues(): ButtonShareStyleValues {
 }
 
 const COLOR_CONTROLS = ["bg", "fg", "bc"];
-const SIZE_CONTROLS = ["bw", "fs", "py", "px", "mt", "mb"];
+const SIZE_CONTROLS = ["bw", "fs", "py", "px", "mt", "mb", "ml", "mr"];
 
 describe("ButtonShareStyleFields", () => {
     it("renders every style control and no others", () => {

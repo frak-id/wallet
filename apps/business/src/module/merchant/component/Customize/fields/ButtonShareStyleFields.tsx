@@ -12,7 +12,15 @@ import { DEFAULT_TIER, isHexColor, TRANSPARENT } from "../style/styleCodec";
 import type { ComponentSettingsFormValues, StyleTier } from "../types";
 
 type ColorName = `buttonShare.style.${"bg" | "fg" | "bc"}`;
-type SizeName = `buttonShare.style.${"bw" | "fs" | "py" | "px" | "mt" | "mb"}`;
+type SizeName = `buttonShare.style.${
+    | "bw"
+    | "fs"
+    | "py"
+    | "px"
+    | "mt"
+    | "mb"
+    | "ml"
+    | "mr"}`;
 
 const SWATCH_FALLBACK = "#000000";
 
@@ -56,7 +64,7 @@ function ColorRow({
                 return (
                     <EditField label={label}>
                         <div className={styles.colorRow}>
-                            <FormControl>
+                            <FormControl className={styles.colorField}>
                                 <Input
                                     variant="bare"
                                     tone="muted"
@@ -77,38 +85,42 @@ function ColorRow({
                                     }}
                                 />
                             </FormControl>
-                            <input
-                                type="color"
-                                className={styles.colorSwatch}
-                                aria-label={label}
-                                disabled={isNone}
-                                value={swatch}
-                                data-testid={`${name}-swatch`}
-                                onChange={(event) => commit(event.target.value)}
-                            />
-                            <button
-                                type="button"
-                                className={styles.styleGhostButton}
-                                data-testid={`${name}-clear`}
-                                onClick={() => field.onChange("")}
-                            >
-                                {t("customize.components.style.clear")}
-                            </button>
-                            {allowTransparent && (
+                            <div className={styles.colorActions}>
+                                <input
+                                    type="color"
+                                    className={styles.colorSwatch}
+                                    aria-label={label}
+                                    disabled={isNone}
+                                    value={swatch}
+                                    data-testid={`${name}-swatch`}
+                                    onChange={(event) =>
+                                        commit(event.target.value)
+                                    }
+                                />
                                 <button
                                     type="button"
-                                    aria-pressed={isNone}
                                     className={styles.styleGhostButton}
-                                    data-testid={`${name}-none`}
-                                    onClick={() =>
-                                        field.onChange(
-                                            isNone ? "" : TRANSPARENT
-                                        )
-                                    }
+                                    data-testid={`${name}-clear`}
+                                    onClick={() => field.onChange("")}
                                 >
-                                    {t("customize.components.style.none")}
+                                    {t("customize.components.style.clear")}
                                 </button>
-                            )}
+                                {allowTransparent && (
+                                    <button
+                                        type="button"
+                                        aria-pressed={isNone}
+                                        className={styles.styleGhostButton}
+                                        data-testid={`${name}-none`}
+                                        onClick={() =>
+                                            field.onChange(
+                                                isNone ? "" : TRANSPARENT
+                                            )
+                                        }
+                                    >
+                                        {t("customize.components.style.none")}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </EditField>
                 );
@@ -152,6 +164,23 @@ function SizeRow({
     );
 }
 
+function StyleGroup({
+    label,
+    children,
+}: {
+    label: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <Stack space="xxs">
+            <Text variant="caption" color="tertiary">
+                {label}
+            </Text>
+            <div className={styles.settingsGrid}>{children}</div>
+        </Stack>
+    );
+}
+
 /**
  * Visual controls for the share button. Values compile into the component's
  * existing `rawCss`, so nothing here exposes CSS to the merchant.
@@ -170,17 +199,24 @@ export function ButtonShareStyleFields({
             <Text variant="bodySmall" weight="medium" color="secondary">
                 {t("customize.components.style.title")}
             </Text>
-            <div className={styles.settingsGrid}>
+            <StyleGroup label={t("customize.components.style.groupText")}>
+                <ColorRow
+                    form={form}
+                    name="buttonShare.style.fg"
+                    label={t("customize.components.style.textColor")}
+                />
+                <SizeRow
+                    form={form}
+                    name="buttonShare.style.fs"
+                    label={t("customize.components.style.textSize")}
+                />
+            </StyleGroup>
+            <StyleGroup label={t("customize.components.style.groupSurface")}>
                 <ColorRow
                     form={form}
                     name="buttonShare.style.bg"
                     label={t("customize.components.style.background")}
                     allowTransparent
-                />
-                <ColorRow
-                    form={form}
-                    name="buttonShare.style.fg"
-                    label={t("customize.components.style.textColor")}
                 />
                 <ColorRow
                     form={form}
@@ -192,11 +228,8 @@ export function ButtonShareStyleFields({
                     name="buttonShare.style.bw"
                     label={t("customize.components.style.borderWidth")}
                 />
-                <SizeRow
-                    form={form}
-                    name="buttonShare.style.fs"
-                    label={t("customize.components.style.textSize")}
-                />
+            </StyleGroup>
+            <StyleGroup label={t("customize.components.style.groupPadding")}>
                 <SizeRow
                     form={form}
                     name="buttonShare.style.py"
@@ -207,6 +240,8 @@ export function ButtonShareStyleFields({
                     name="buttonShare.style.px"
                     label={t("customize.components.style.paddingHorizontal")}
                 />
+            </StyleGroup>
+            <StyleGroup label={t("customize.components.style.groupMargin")}>
                 <SizeRow
                     form={form}
                     name="buttonShare.style.mt"
@@ -217,15 +252,22 @@ export function ButtonShareStyleFields({
                     name="buttonShare.style.mb"
                     label={t("customize.components.style.marginBottom")}
                 />
-            </div>
+                <SizeRow
+                    form={form}
+                    name="buttonShare.style.ml"
+                    label={t("customize.components.style.marginLeft")}
+                />
+                <SizeRow
+                    form={form}
+                    name="buttonShare.style.mr"
+                    label={t("customize.components.style.marginRight")}
+                />
+            </StyleGroup>
             {tier === DEFAULT_TIER && (
                 <Text variant="caption" color="tertiary">
                     {t("customize.components.style.defaultTierHint")}
                 </Text>
             )}
-            <Text variant="caption" color="tertiary">
-                {t("customize.components.style.propagationHint")}
-            </Text>
         </Stack>
     );
 }

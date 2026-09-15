@@ -116,16 +116,41 @@ export const colorRow = style({
     gap: alias.spacing.xs,
 });
 
+export const colorField = style({
+    flex: 1,
+    minWidth: 0,
+});
+
+/** Reserves the widest action set, so a row without "none" keeps field width. */
+export const colorActions = style({
+    display: "flex",
+    alignItems: "center",
+    gap: alias.spacing.xs,
+    flexShrink: 0,
+    minWidth: "150px",
+});
+
+/** The hairline sits on the swatch itself, so a near-white colour stays visible. */
 export const colorSwatch = style({
     width: "32px",
     height: "32px",
     padding: 0,
     flexShrink: 0,
     cursor: "pointer",
+    appearance: "none",
+    background: "none",
+    border: "none",
     borderRadius: alias.cornerRadius.s,
-    border: `1px solid ${vars.border.default}`,
-    backgroundColor: vars.surface.muted,
     selectors: {
+        "&::-webkit-color-swatch-wrapper": { padding: 0 },
+        "&::-webkit-color-swatch": {
+            border: `1px solid ${vars.border.default}`,
+            borderRadius: alias.cornerRadius.s,
+        },
+        "&::-moz-color-swatch": {
+            border: `1px solid ${vars.border.default}`,
+            borderRadius: alias.cornerRadius.s,
+        },
         "&:disabled": { cursor: "not-allowed", opacity: 0.5 },
     },
 });

@@ -135,6 +135,8 @@ describe("formValuesToComponents", () => {
             fs: 12,
             py: 10,
             px: 24,
+            ml: 12,
+            mr: 16,
         };
         const saved = formValuesToComponents(
             formValues(undefined, { style }),
