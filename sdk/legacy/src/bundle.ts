@@ -1,16 +1,18 @@
-import { createIFrameFrakClient } from "@frak-labs/core-sdk";
-import { websiteOverrides } from "./specifics";
-import { onDocumentReady } from "./utils/onDocumentReady";
-
 /**
- * This whole script is only a flat pass to the newer SDK versions
+ * Retired compatibility surface. Nothing here connects to a wallet.
+ *
+ * Every entry point returns a promise that never settles. The integrations left
+ * on this bundle chain their setup off the first call and log from their own
+ * failure branches, so stalling is the only silent outcome: resolving would run
+ * their error paths, rejecting would run their catch blocks.
  */
 
-export * from "@frak-labs/core-sdk";
-export * from "@frak-labs/core-sdk/actions";
+const stalled = <T>(..._args: unknown[]): Promise<T> =>
+    new Promise<T>(() => undefined);
 
-// Export old `createIFrameNexusClient` to be retro compatible
-export const createIFrameNexusClient = createIFrameFrakClient;
-
-// Run website specific overrides
-onDocumentReady(websiteOverrides);
+export const createIframe = stalled;
+export const createIFrameNexusClient = stalled;
+export const createIFrameFrakClient = stalled;
+export const displayModal = stalled;
+export const watchWalletStatus = stalled;
+export const referralInteraction = stalled;

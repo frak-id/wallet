@@ -12,7 +12,7 @@
     }
   ],
   "version": "0.0.57",
-  "description": "Legacy SDK, only used here to provide nice wrapper and redirection for older implementation, to not break anything and keep them updated with latest security updates.",
+  "description": "Retired. Inert stubs that keep old pages from throwing — use @frak-labs/core-sdk.",
   "repository": {
     "url": "https://github.com/frak-id/wallet",
     "directory": "sdk/legacy"
@@ -26,7 +26,7 @@
     "smart-wallet"
   ],
   "license": "GNU GPL 3.0",
-  "sideEffects": false,
+  "sideEffects": true,
   "private": false,
   "publishConfig": {
     "access": "public"
@@ -48,12 +48,8 @@
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing legacy...'"
   },
-  "dependencies": {
-    "@frak-labs/core-sdk": "workspace:*"
-  },
   "devDependencies": {
     "@frak-labs/dev-tooling": "workspace:*",
-    "@rolldown/plugin-node-polyfills": "catalog:",
     "@typescript/native": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:"

@@ -627,12 +627,8 @@
     "sdk/legacy": {
       "name": "@frak-labs/nexus-sdk",
       "version": "0.0.57",
-      "dependencies": {
-        "@frak-labs/core-sdk": "workspace:*",
-      },
       "devDependencies": {
         "@frak-labs/dev-tooling": "workspace:*",
-        "@rolldown/plugin-node-polyfills": "catalog:",
         "@typescript/native": "catalog:",
         "tsdown": "catalog:",
         "typescript": "catalog:",
