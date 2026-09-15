@@ -15,6 +15,14 @@ independently — see [`../android/CHANGELOG.md`](../android/CHANGELOG.md).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-08
+
+### Changed
+
+- **First stable release.** No API or behaviour change since `1.0.0-beta.3`; the beta line is
+  promoted as it stands. From this version the public surface of `FrakSDK` and `FrakSDKUI` follows
+  semantic versioning — a breaking change takes a new major.
+
 ## [1.0.0-beta.3] - 2026-09-04
 
 ### Added

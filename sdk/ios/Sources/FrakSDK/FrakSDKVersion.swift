@@ -1,6 +1,6 @@
 public enum FrakSDKVersion {
     // Hand-written, and gated as a set with every other version site by `check:native-versions`.
-    public static let current: String = "1.0.0-beta.3"
+    public static let current: String = "1.0.0"
 
     // `@_spi` rather than plain `internal`: this package is distributed as source through
     // SwiftPM, so a consumer compiles against these declarations and needs an explicit opt-in.

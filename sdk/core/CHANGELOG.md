@@ -1,5 +1,85 @@
 # @frak-labs/core-sdk
 
+## 1.4.0
+
+### Minor Changes
+
+- [#294](https://github.com/frak-id/wallet/pull/294) [`2d6912c`](https://github.com/frak-id/wallet/commit/2d6912ce8fbca937ed058ce957870bc77a6e8f98) Thanks [@srod](https://github.com/srod)! - Keep sku-only products in the sharing payload, and stop a malformed share URL from unmounting the listener.
+
+  `SharingPageProduct.title` becomes optional, and `sanitizeSharingProducts` keeps an entry that carries only scope fields. A `<frak-button-share products='[{"sku":"SHOE-42"}]'>` previously lost its product context entirely — `normalizeSharingProduct` dropped any entry without a title — while the byte-identical attribute on `<frak-banner>`, which goes through `sanitizeProductDetailsList`, kept it. Since every share CTA now routes `products` to the sharing page, that drop also cost the scope on sharing-page reward ranking. A title is a display concern; a sku is a matching one, so the two no longer travel together: the full array reaches reward selection while only titled entries draw a product card.
+
+  `FrakContextManager.parse` and `update` now return `null`, and `remove` returns its input unchanged, when handed a URL the platform cannot parse. `update`'s doc comment already promised null-on-failure and did not deliver: `new URL("shop.example.com")` throws `TypeError: Invalid URL`, and `<frak-post-purchase>` derives its share base from a bare host, so the throw landed in a render-phase `useMemo` inside a listener tree that has no ErrorBoundary — blanking the whole Frak iframe on the primary post-purchase CTA rather than just the overlay. `<frak-post-purchase>` also normalises a bare host to `https://` before sharing, and degrades to no link when the value cannot be salvaged.
+
+  `minor` on `core-sdk`: `title` moving from required to optional is source-compatible for a caller _writing_ a product, but a consumer _reading_ `product.title` as a non-optional `string` now gets `string | undefined` and must handle it — a type-level break for anyone who did that, so it is not a patch. `patch` on `components`: no exported signature changes, only the link resolution behind `<frak-post-purchase>`.
+
+- [#294](https://github.com/frak-id/wallet/pull/294) [`ee02d5b`](https://github.com/frak-id/wallet/commit/ee02d5bdb51e3eb141e290aa5114acb3a5e9c0d1) Thanks [@srod](https://github.com/srod)! - Remove the embedded wallet and the modal's sharing step. Every share surface now goes through the sharing page.
+
+  The drawer the listener rendered over the partner site is gone, along with the RPC method that opened it:
+
+  - `displayEmbeddedWallet()` is removed from `@frak-labs/core-sdk/actions`.
+  - `frak_displayEmbeddedWallet` is removed from `IFrameRpcSchema`; the listener no longer registers a handler for it.
+  - The `DisplayEmbeddedWalletParamsType`, `DisplayEmbeddedWalletResultType`, `LoggedInEmbeddedView`, `LoggedOutEmbeddedView`, `EmbeddedViewActionSharing` and `EmbeddedViewActionReferred` types are removed.
+
+  Nothing has to change on the merchant side:
+
+  - `<frak-button-wallet>` keeps working. It opens the sharing page now, so the tag, its attributes and its Magento/legacy integrations are untouched. One observable addition: the tag now reports `share_button_clicked` on every tap (it previously emitted nothing), with `click_action: "sharing-page"` always — since this button never carried a legacy config, it cannot show up in a legacy-config query, but any dashboard counting `share_button_clicked` volume now includes wallet-button taps alongside `<frak-button-share>`'s, with no field telling the two tags apart. `has_reward` on this event is best-effort: it reads an asynchronously fetched reward, so a tap landing before that resolves reports `false` even when a reward exists.
+  - `<frak-button-share click-action="embedded-wallet">` keeps working and lands on the sharing page, exactly like the retired `"share-modal"` value already did. `clickAction` no longer selects a surface — every click opens the sharing page — so it stays typed to accept any string and the resolved value is still reported on the `share_button_clicked` event, which is how you find merchants still on a legacy config. With the embedded wallet gone the setting has no alternative left to select, so the WordPress and PrestaShop plugins stop emitting it entirely.
+  - `window.FrakSetup.modalWalletConfig` is deprecated and narrowed to `{ metadata?: { position?: "left" | "right" } }`. Only the button position is still read, so integrations that inject it (Magento) keep their configured anchor.
+
+  Stored merchant configs are left alone: the backend still accepts and emits `clickAction: "embedded-wallet"` and `components.buttonWallet`, both of which now resolve to the sharing page.
+
+  The legacy modal's sharing step is removed with it. It was the last caller of a surface `displaySharingPage` already replaced — `<frak-button-share>` stopped using the modal flow in `@frak-labs/components` 1.0.3 — and production shows no partner traffic reaching it.
+
+  This part is a breaking change, hence the major:
+
+  - `modalBuilder().sharing()` is removed. Use `displaySharingPage()` for a share flow, or `modalBuilder().reward()` when you only need the success screen.
+  - `FinalActionType` no longer has its `sharing` variant; a `final` step takes `{ key: "reward" }`. Passing `{ key: "sharing" }` to `displayModal()` is now a type error rather than a silently dead path.
+
+  The modal's login, SIWE and transaction steps are unchanged, as are `sendTransaction()` and `siweAuthenticate()`, which build their own steps and never touched the final one.
+
+  A partner bundle cached before this release can still send `{ key: "sharing" }` over RPC. The listener coerces any non-reward final action to the reward screen on the way in, so such a call renders the reward screen rather than pairing sharing copy with a dismiss button.
+
+  `@frak-labs/nexus-sdk` takes a patch: its Gapianne integration drops an unreachable wallet-button helper and a stale i18n override.
+
+- [#294](https://github.com/frak-id/wallet/pull/294) [`2b5f2cc`](https://github.com/frak-id/wallet/commit/2b5f2cc5892267400e13fd039887332891675455) Thanks [@srod](https://github.com/srod)! - Replace `config.walletUrl` with `config.env`, which states both the wallet and backend origins instead of guessing the backend from the wallet URL by substring-matching known hosts.
+
+  ```ts
+  // before
+  { walletUrl: "https://wallet-dev.frak.id" }
+
+  // after
+  { env: "dev" }
+
+  // local, or any host the presets don't know
+  { env: { wallet: "https://localhost:3000", backend: "https://localhost:3030" } }
+  ```
+
+  `env` defaults to `"prod"`, so integrations that never set `walletUrl` need no change. Anything that did must move to `env`.
+
+  `env` is page-level, not scoped to a single client or provider: the last integration to set one wins, and doing so logs a warning. Omitting `env` leaves the published value as is.
+
+  An unknown stage name, or an object missing either origin, is reported with `console.error` and falls back to production rather than failing silently. Trailing slashes are stripped.
+
+  New exports: the `FrakEnvironment` type, plus `setEnvironment` / `getEnvironment`.
+
+- [#294](https://github.com/frak-id/wallet/pull/294) [`c42f254`](https://github.com/frak-id/wallet/commit/c42f2540e42e5c776e04f83ccdcb19b1c389887f) Thanks [@srod](https://github.com/srod)! - Carry the order's checkout token through `displaySharingPage`, so `<frak-post-purchase>` reaches the same identity fallback the Shopify checkout extension already used.
+
+  `DisplaySharingPageParamsType` gains an optional `checkoutToken`, `openSharingPage` forwards it, and `<frak-post-purchase>` sends the `token` it already holds for purchase tracking. The listener's sharing page then resolves the anonymous id from the order when the SDK holds none, and builds its install link from the token instead of returning nothing — a cleared or ad-blocked `localStorage` previously left that CTA dead.
+
+  Only a _proven_ id travels: an `anonymousId` without its `frak-install-v1` proof is refused by `install-code/generate`, so the token is preferred over it rather than the reverse, and the two are never sent together.
+
+  Scope worth knowing: this fixes the install CTA for that buyer, not the share link. When the order resolves to a server-minted (`frakmint_`) id, the FrakContext v2 codec — which encodes UUIDs only — cannot carry it, so the share link stays empty. Such an id is now discarded at the client boundary rather than passed on to die inside the encoder.
+
+  The token is a bearer credential: `GET /user/identity/order-client` is unauthenticated, and `install_codes.checkout_token` is stored as plain text and is not single-use. This change widens the set of platforms that put it in a URL — from Shopify's checkout token to WooCommerce and PrestaShop, both of which build theirs from the order key (`<order_key>_<id>` and `<secure_key>_<id>`). On WooCommerce that same key already gates order lookup by URL, so the value is reused rather than newly exposed. Same exposure class as the existing Shopify surface, more surfaces.
+
+### Patch Changes
+
+- [#294](https://github.com/frak-id/wallet/pull/294) [`ce242a0`](https://github.com/frak-id/wallet/commit/ce242a0a094230bc23fcfa377793b2b924ac913e) Thanks [@srod](https://github.com/srod)! - Run the legacy-id migration and the identity keygen once per origin, rather than once per copy of the SDK on the page.
+
+  A page routinely holds more than one copy — the CDN `components` bundle beside an npm `@frak-labs/core-sdk` import — and each has its own module state while sharing one `localStorage`. The guards were module-level, so a first load carrying a legacy id sent one `/merge/initiate` + `/merge/execute` pair per copy, and a first visit could generate two keys: the losing copy then signed proofs with the winner's stored key, covering an anonymous id it never reported.
+
+  Both now claim a `navigator.locks` lock. Where the API is absent (any non-secure context) behaviour is unchanged.
+
 ## 1.3.0
 
 ### Minor Changes

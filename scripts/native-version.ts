@@ -1,9 +1,10 @@
 #!/usr/bin/env bun
 /**
- * Gates every file carrying a native SDK version against that SDK's source of truth, and reads
- * release notes out of its CHANGELOG. Run: `bun run check:native-versions [android|ios]`.
+ * Gates every file carrying a native SDK version against that SDK's source of truth, reads its
+ * release notes out of the CHANGELOG, and moves both. Run: `bun run check:native-versions
+ * [android|ios]`, or `bun scripts/native-version.ts bump <android|ios> <version>` to cut a release.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 
 type Platform = "android" | "ios";
 
@@ -149,18 +150,24 @@ function changelogSection(platform: Platform, version: string): string | null {
     return (end === -1 ? rest : rest.slice(0, end)).join("\n").trim();
 }
 
-function check(platform: Platform): void {
-    const spec = SPECS[platform];
-    const expected = truthVersion(platform);
-
+/** Every site whose captured value disagrees with `expected`, formatted for an error. */
+function driftedSites(platform: Platform, expected: string): string[] {
     const drifted: string[] = [];
-    for (const site of spec.sites) {
+    for (const site of SPECS[platform].sites) {
         for (const found of extract(site)) {
             if (found !== expected) {
                 drifted.push(`   ${site.file}: "${found}" (${site.why})`);
             }
         }
     }
+    return drifted;
+}
+
+function check(platform: Platform): void {
+    const spec = SPECS[platform];
+    const expected = truthVersion(platform);
+
+    const drifted = driftedSites(platform, expected);
     if (drifted.length > 0) {
         die(
             `${spec.label}: ${spec.truth.file} says "${expected}", but:\n${drifted.join("\n")}\n` +
@@ -186,7 +193,126 @@ function check(platform: Platform): void {
     );
 }
 
-const [command = "check", target] = process.argv.slice(2);
+/** One prerelease identifier: numeric ones rank below alphanumeric, and compare as numbers. */
+function compareIdentifier(l: string, r: string): number {
+    const lNumeric = /^\d+$/.test(l);
+    const rNumeric = /^\d+$/.test(r);
+    if (lNumeric !== rNumeric) return lNumeric ? -1 : 1;
+    if (lNumeric) return Number(l) < Number(r) ? -1 : 1;
+    return l < r ? -1 : 1;
+}
+
+/** A prerelease ranks below one that extends it, so 1.0.0-beta < 1.0.0-beta.1. */
+function comparePre(a: string[], b: string[]): number {
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+        const l = a[i];
+        const r = b[i];
+        if (l === undefined || r === undefined) return l === undefined ? -1 : 1;
+        if (l !== r) return compareIdentifier(l, r);
+    }
+    return 0;
+}
+
+/** Semver precedence. A prerelease sorts below its own release, so 1.0.0-beta.3 < 1.0.0. */
+function compare(a: string, b: string): number {
+    const [aCore = "", aPre = ""] = a.split("-", 2);
+    const [bCore = "", bPre = ""] = b.split("-", 2);
+    const x = aCore.split(".").map(Number);
+    const y = bCore.split(".").map(Number);
+    for (let i = 0; i < 3; i++) {
+        if (x[i] !== y[i]) return (x[i] ?? 0) < (y[i] ?? 0) ? -1 : 1;
+    }
+    if (aPre === "" || bPre === "") {
+        if (aPre === bPre) return 0;
+        return aPre === "" ? 1 : -1;
+    }
+    return comparePre(aPre.split("."), bPre.split("."));
+}
+
+/**
+ * Rewrites the captured spans only, so a pattern matching more than the version cannot clobber the
+ * rest of the line. The `d` flag supplies the offsets the capture-value form throws away.
+ */
+function rewriteSite(site: Site, version: string): void {
+    const before = read(site.file);
+    const indexed = new RegExp(site.pattern.source, `${site.pattern.flags}d`);
+    const spans = [...before.matchAll(indexed)].flatMap((m) =>
+        (m.indices ?? [])
+            .slice(1)
+            .filter((s): s is [number, number] => s !== undefined)
+    );
+    if (spans.length !== site.values) {
+        die(
+            `${site.file}: expected ${site.values} version reference(s) (${site.why}), found ${spans.length}.`
+        );
+    }
+    let after = before;
+    for (const [start, end] of spans.sort((l, r) => r[0] - l[0])) {
+        after = after.slice(0, start) + version + after.slice(end);
+    }
+    writeFileSync(site.file, after);
+}
+
+/** Inserts `## [version] - date`, leaving the entries written under `[Unreleased]` beneath it. */
+function promoteChangelog(platform: Platform, version: string): void {
+    const spec = SPECS[platform];
+    const lines = read(spec.changelog).split("\n");
+    const at = lines.findIndex((l) => /^##\s+\[Unreleased\]/i.test(l));
+    if (at === -1) {
+        die(`${spec.changelog} has no "## [Unreleased]" heading to promote.`);
+    }
+    const date = new Date().toISOString().slice(0, 10);
+    lines.splice(at + 1, 0, "", `## [${version}] - ${date}`);
+    writeFileSync(spec.changelog, lines.join("\n"));
+}
+
+function bump(platform: Platform, next: string): void {
+    const spec = SPECS[platform];
+    if (!SEMVER.test(next)) {
+        die(`"${next}" is not a semver version.`);
+    }
+
+    // Bumping a drifted tree would bake the drift in and report success.
+    const current = truthVersion(platform);
+    const drifted = driftedSites(platform, current);
+    if (drifted.length > 0) {
+        die(
+            `${spec.label}: the sites are already out of step with ${spec.truth.file} ("${current}"):\n${drifted.join("\n")}\n` +
+                "   Reconcile them before bumping."
+        );
+    }
+    if (compare(next, current) <= 0) {
+        die(
+            `${spec.label}: "${next}" does not follow "${current}".\n` +
+                "   A published version is immutable on Maven Central and the SwiftPM mirror."
+        );
+    }
+    if (changelogSection(platform, next) !== null) {
+        die(`${spec.changelog} already has a "## [${next}]" section.`);
+    }
+    if (!changelogSection(platform, "Unreleased")) {
+        die(
+            `${spec.changelog}: "## [Unreleased]" is empty — there is nothing to release.\n` +
+                "   Write the entries first; the workflow publishes that section as the release body."
+        );
+    }
+
+    for (const site of [spec.truth, ...spec.sites]) {
+        rewriteSite(site, next);
+    }
+    promoteChangelog(platform, next);
+
+    console.log(`✅ ${spec.label} ${current} → ${next}`);
+    for (const file of new Set([
+        spec.truth.file,
+        ...spec.sites.map((s) => s.file),
+    ])) {
+        console.log(`   ${file}`);
+    }
+    console.log(`   ${spec.changelog} — [Unreleased] promoted`);
+}
+
+const [command = "check", target, value] = process.argv.slice(2);
 
 if (target !== undefined && target !== "android" && target !== "ios") {
     die(`Unknown platform "${target}" — expected android or ios.`);
@@ -221,6 +347,19 @@ switch (command) {
         break;
     }
 
+    // Per-platform on purpose: the two trains version independently, and a default of both would
+    // quietly re-couple them.
+    case "bump": {
+        if (!target || !value)
+            die(
+                "bump needs a platform and a version: native-version.ts bump <android|ios> <version>"
+            );
+        bump(target, value);
+        break;
+    }
+
     default:
-        die(`Unknown command "${command}" — expected check, version or notes.`);
+        die(
+            `Unknown command "${command}" — expected check, version, notes or bump.`
+        );
 }

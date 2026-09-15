@@ -218,7 +218,7 @@
     },
     "apps/wallet": {
       "name": "@frak-labs/nexus-wallet",
-      "version": "1.0.98",
+      "version": "1.0.99",
       "dependencies": {
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/client": "workspace:*",
@@ -474,7 +474,7 @@
     },
     "packages/ui-preview": {
       "name": "@frak-labs/ui-preview",
-      "version": "0.0.13",
+      "version": "0.0.14",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/design-system": "workspace:*",
@@ -504,7 +504,7 @@
     },
     "packages/wallet-shared": {
       "name": "@frak-labs/wallet-shared",
-      "version": "0.0.16",
+      "version": "0.0.17",
       "dependencies": {
         "@elysiajs/eden": "catalog:",
         "@frak-labs/app-essentials": "workspace:*",
@@ -556,11 +556,11 @@
     },
     "sdk/android": {
       "name": "@frak-labs-sdk/native-android",
-      "version": "1.0.0-beta.3",
+      "version": "1.0.0",
     },
     "sdk/components": {
       "name": "@frak-labs/components",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
@@ -594,7 +594,7 @@
     },
     "sdk/core": {
       "name": "@frak-labs/core-sdk",
-      "version": "1.3.0",
+      "version": "1.4.0",
       "dependencies": {
         "@frak-labs/frame-connector": "workspace:*",
         "@noble/curves": "catalog:",
@@ -622,11 +622,11 @@
     },
     "sdk/ios": {
       "name": "@frak-labs-sdk/native-ios",
-      "version": "1.0.0-beta.3",
+      "version": "1.0.0",
     },
     "sdk/legacy": {
       "name": "@frak-labs/nexus-sdk",
-      "version": "0.0.57",
+      "version": "0.0.58",
       "devDependencies": {
         "@frak-labs/dev-tooling": "workspace:*",
         "@typescript/native": "catalog:",
@@ -636,7 +636,7 @@
     },
     "sdk/react": {
       "name": "@frak-labs/react-sdk",
-      "version": "1.3.0",
+      "version": "1.4.0",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
@@ -671,7 +671,7 @@
     },
     "services/backend": {
       "name": "@frak-labs/backend-elysia",
-      "version": "0.0.29",
+      "version": "0.0.30",
       "dependencies": {
         "@bogeychan/elysia-logger": "^0.1.10",
         "@elysiajs/cors": "^1.4.2",

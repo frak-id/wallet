@@ -1,5 +1,64 @@
 # @frak-labs/react-sdk
 
+## 1.4.0
+
+### Minor Changes
+
+- [#294](https://github.com/frak-id/wallet/pull/294) [`ee02d5b`](https://github.com/frak-id/wallet/commit/ee02d5bdb51e3eb141e290aa5114acb3a5e9c0d1) Thanks [@srod](https://github.com/srod)! - Remove the embedded wallet and the modal's sharing step. Every share surface now goes through the sharing page.
+
+  The drawer the listener rendered over the partner site is gone, along with the RPC method that opened it:
+
+  - `displayEmbeddedWallet()` is removed from `@frak-labs/core-sdk/actions`.
+  - `frak_displayEmbeddedWallet` is removed from `IFrameRpcSchema`; the listener no longer registers a handler for it.
+  - The `DisplayEmbeddedWalletParamsType`, `DisplayEmbeddedWalletResultType`, `LoggedInEmbeddedView`, `LoggedOutEmbeddedView`, `EmbeddedViewActionSharing` and `EmbeddedViewActionReferred` types are removed.
+
+  Nothing has to change on the merchant side:
+
+  - `<frak-button-wallet>` keeps working. It opens the sharing page now, so the tag, its attributes and its Magento/legacy integrations are untouched. One observable addition: the tag now reports `share_button_clicked` on every tap (it previously emitted nothing), with `click_action: "sharing-page"` always — since this button never carried a legacy config, it cannot show up in a legacy-config query, but any dashboard counting `share_button_clicked` volume now includes wallet-button taps alongside `<frak-button-share>`'s, with no field telling the two tags apart. `has_reward` on this event is best-effort: it reads an asynchronously fetched reward, so a tap landing before that resolves reports `false` even when a reward exists.
+  - `<frak-button-share click-action="embedded-wallet">` keeps working and lands on the sharing page, exactly like the retired `"share-modal"` value already did. `clickAction` no longer selects a surface — every click opens the sharing page — so it stays typed to accept any string and the resolved value is still reported on the `share_button_clicked` event, which is how you find merchants still on a legacy config. With the embedded wallet gone the setting has no alternative left to select, so the WordPress and PrestaShop plugins stop emitting it entirely.
+  - `window.FrakSetup.modalWalletConfig` is deprecated and narrowed to `{ metadata?: { position?: "left" | "right" } }`. Only the button position is still read, so integrations that inject it (Magento) keep their configured anchor.
+
+  Stored merchant configs are left alone: the backend still accepts and emits `clickAction: "embedded-wallet"` and `components.buttonWallet`, both of which now resolve to the sharing page.
+
+  The legacy modal's sharing step is removed with it. It was the last caller of a surface `displaySharingPage` already replaced — `<frak-button-share>` stopped using the modal flow in `@frak-labs/components` 1.0.3 — and production shows no partner traffic reaching it.
+
+  This part is a breaking change, hence the major:
+
+  - `modalBuilder().sharing()` is removed. Use `displaySharingPage()` for a share flow, or `modalBuilder().reward()` when you only need the success screen.
+  - `FinalActionType` no longer has its `sharing` variant; a `final` step takes `{ key: "reward" }`. Passing `{ key: "sharing" }` to `displayModal()` is now a type error rather than a silently dead path.
+
+  The modal's login, SIWE and transaction steps are unchanged, as are `sendTransaction()` and `siweAuthenticate()`, which build their own steps and never touched the final one.
+
+  A partner bundle cached before this release can still send `{ key: "sharing" }` over RPC. The listener coerces any non-reward final action to the reward screen on the way in, so such a call renders the reward screen rather than pairing sharing copy with a dismiss button.
+
+  `@frak-labs/nexus-sdk` takes a patch: its Gapianne integration drops an unreachable wallet-button helper and a stale i18n override.
+
+- [#294](https://github.com/frak-id/wallet/pull/294) [`2b5f2cc`](https://github.com/frak-id/wallet/commit/2b5f2cc5892267400e13fd039887332891675455) Thanks [@srod](https://github.com/srod)! - Replace `config.walletUrl` with `config.env`, which states both the wallet and backend origins instead of guessing the backend from the wallet URL by substring-matching known hosts.
+
+  ```ts
+  // before
+  { walletUrl: "https://wallet-dev.frak.id" }
+
+  // after
+  { env: "dev" }
+
+  // local, or any host the presets don't know
+  { env: { wallet: "https://localhost:3000", backend: "https://localhost:3030" } }
+  ```
+
+  `env` defaults to `"prod"`, so integrations that never set `walletUrl` need no change. Anything that did must move to `env`.
+
+  `env` is page-level, not scoped to a single client or provider: the last integration to set one wins, and doing so logs a warning. Omitting `env` leaves the published value as is.
+
+  An unknown stage name, or an object missing either origin, is reported with `console.error` and falls back to production rather than failing silently. Trailing slashes are stripped.
+
+  New exports: the `FrakEnvironment` type, plus `setEnvironment` / `getEnvironment`.
+
+### Patch Changes
+
+- Updated dependencies [[`2d6912c`](https://github.com/frak-id/wallet/commit/2d6912ce8fbca937ed058ce957870bc77a6e8f98), [`ee02d5b`](https://github.com/frak-id/wallet/commit/ee02d5bdb51e3eb141e290aa5114acb3a5e9c0d1), [`2b5f2cc`](https://github.com/frak-id/wallet/commit/2b5f2cc5892267400e13fd039887332891675455), [`ce242a0`](https://github.com/frak-id/wallet/commit/ce242a0a094230bc23fcfa377793b2b924ac913e), [`c42f254`](https://github.com/frak-id/wallet/commit/c42f2540e42e5c776e04f83ccdcb19b1c389887f)]:
+  - @frak-labs/core-sdk@1.4.0
+
 ## 1.3.0
 
 ### Minor Changes
