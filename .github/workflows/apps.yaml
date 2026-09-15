@@ -519,6 +519,10 @@ jobs:
       # this action is what provides it on a runner.
       - name: "📱 Setup Android SDK"
         uses: android-actions/setup-android@v4
+        with:
+          # The legacy `tools` package is gone from Google's repo; the action's default
+          # `tools platform-tools` makes sdkmanager exit 1.
+          packages: platform-tools
 
       # Caches ~/.gradle (dependencies + wrapper dists), keyed off the build scripts.
       # Works with the plain `./gradlew` calls inside `run.sh` — it configures the

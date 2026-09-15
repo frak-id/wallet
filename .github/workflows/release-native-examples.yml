@@ -119,6 +119,10 @@ jobs:
       # `scripts/run.sh` resolves ANDROID_HOME or dies with "SDK location not found".
       - name: "📱 Setup Android SDK"
         uses: android-actions/setup-android@v4
+        with:
+          # The legacy `tools` package is gone from Google's repo; the action's default
+          # `tools platform-tools` makes sdkmanager exit 1.
+          packages: platform-tools
 
       - name: "🐘 Setup Gradle"
         uses: gradle/actions/setup-gradle@v5

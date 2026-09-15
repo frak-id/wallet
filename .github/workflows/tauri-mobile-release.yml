@@ -512,6 +512,10 @@ jobs:
 
       - name: "📱 Setup Android SDK"
         uses: android-actions/setup-android@v4
+        with:
+          # The legacy `tools` package is gone from Google's repo; the action's default
+          # `tools platform-tools` makes sdkmanager exit 1.
+          packages: platform-tools
 
       - name: "💾 Cache Gradle wrapper"
         uses: actions/cache@v5
