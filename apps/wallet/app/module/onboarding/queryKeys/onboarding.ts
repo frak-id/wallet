@@ -1,6 +1,3 @@
-/**
- * Query keys for the onboarding module.
- */
 export namespace onboardingKey {
     const base = "onboarding" as const;
 

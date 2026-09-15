@@ -3,7 +3,6 @@ import { base64urlDecode } from "./b64";
 
 /**
  * Decompress json data
- * @param data
  * @ignore
  */
 export function decompressJsonFromB64<T>(data: string): T | null {

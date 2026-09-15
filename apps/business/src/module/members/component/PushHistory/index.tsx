@@ -1,9 +1,11 @@
-import { DataTable } from "@frak-labs/design-system/components/DataTable";
+import {
+    createDataTableColumnHelper,
+    DataTable,
+} from "@frak-labs/design-system/components/DataTable";
 import { ProgressBar } from "@frak-labs/design-system/components/ProgressBar";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { createColumnHelper } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,7 +20,7 @@ import * as styles from "./push-history.css";
 import type { PushHistoryItem } from "./types";
 import { usePushHistory } from "./usePushHistory";
 
-const columnHelper = createColumnHelper<PushHistoryItem>();
+const columnHelper = createDataTableColumnHelper<PushHistoryItem>();
 
 /**
  * History of every push broadcast sent (or scheduled) for the active
@@ -42,57 +44,56 @@ export function PushHistory() {
     );
 
     const columns = useMemo(
-        () => [
-            columnHelper.accessor("title", {
-                // Notification is a fixed 285px column per the design; the
-                // other columns split the remaining width equally.
-                size: 285,
-                header: () => t("push.history.columns.notification"),
-                cell: ({ getValue }) => (
-                    <span
-                        className={styles.notificationCell}
-                        title={getValue()}
-                    >
-                        {getValue()}
-                    </span>
-                ),
-            }),
-            columnHelper.accessor("status", {
-                header: () => t("push.history.columns.status"),
-                cell: ({ getValue }) => (
-                    <PushHistoryStatusBadge status={getValue()} />
-                ),
-            }),
-            columnHelper.accessor("scheduledAt", {
-                header: () => t("push.history.columns.scheduledFor"),
-                cell: ({ getValue }) =>
-                    format(getValue(), "MMM d, yyyy - HH:mm", {
-                        locale: getDateFnsLocale(i18n.language),
-                    }),
-            }),
-            columnHelper.accessor("walletCount", {
-                header: () => t("push.history.columns.audience"),
-                cell: ({ getValue }) => {
-                    const walletCount = getValue();
-                    return walletCount === null
-                        ? t("push.history.audience.all")
-                        : t("push.history.audience.members", {
-                              count: walletCount,
-                          });
-                },
-            }),
-            columnHelper.display({
-                id: "sentOpened",
-                header: () => t("push.history.columns.sentOpened"),
-                cell: ({ row }) => <SentOpenedCell item={row.original} />,
-            }),
-            columnHelper.display({
-                id: "actions",
-                size: 48,
-                meta: { align: "right" },
-                cell: ({ row }) => <CellRowMenu item={row.original} />,
-            }),
-        ],
+        () =>
+            columnHelper.columns([
+                columnHelper.accessor("title", {
+                    size: 285,
+                    header: () => t("push.history.columns.notification"),
+                    cell: ({ getValue }) => (
+                        <span
+                            className={styles.notificationCell}
+                            title={getValue()}
+                        >
+                            {getValue()}
+                        </span>
+                    ),
+                }),
+                columnHelper.accessor("status", {
+                    header: () => t("push.history.columns.status"),
+                    cell: ({ getValue }) => (
+                        <PushHistoryStatusBadge status={getValue()} />
+                    ),
+                }),
+                columnHelper.accessor("scheduledAt", {
+                    header: () => t("push.history.columns.scheduledFor"),
+                    cell: ({ getValue }) =>
+                        format(getValue(), "MMM d, yyyy - HH:mm", {
+                            locale: getDateFnsLocale(i18n.language),
+                        }),
+                }),
+                columnHelper.accessor("walletCount", {
+                    header: () => t("push.history.columns.audience"),
+                    cell: ({ getValue }) => {
+                        const walletCount = getValue();
+                        return walletCount === null
+                            ? t("push.history.audience.all")
+                            : t("push.history.audience.members", {
+                                  count: walletCount,
+                              });
+                    },
+                }),
+                columnHelper.display({
+                    id: "sentOpened",
+                    header: () => t("push.history.columns.sentOpened"),
+                    cell: ({ row }) => <SentOpenedCell item={row.original} />,
+                }),
+                columnHelper.display({
+                    id: "actions",
+                    size: 48,
+                    meta: { align: "right" },
+                    cell: ({ row }) => <CellRowMenu item={row.original} />,
+                }),
+            ]),
         [t, i18n.language]
     );
 

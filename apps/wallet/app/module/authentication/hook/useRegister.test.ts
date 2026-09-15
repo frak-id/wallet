@@ -79,19 +79,6 @@ describe("useRegister", () => {
         vi.restoreAllMocks();
     });
 
-    test("should initialize with correct default state", async ({
-        queryWrapper,
-    }) => {
-        const { result } = renderHook(() => useRegister(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        expect(result.current.isRegisterInProgress).toBe(false);
-        expect(result.current.isSuccess).toBe(false);
-        expect(result.current.isError).toBe(false);
-        expect(result.current.register).toBeDefined();
-    });
-
     test("should register successfully and store session", async ({
         queryWrapper,
     }) => {

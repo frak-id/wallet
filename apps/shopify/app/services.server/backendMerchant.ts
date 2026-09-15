@@ -3,10 +3,7 @@ import type {
     CampaignListResponse,
 } from "@frak-labs/backend-elysia/api/schemas";
 import type {
-    BudgetConfigItem,
-    CampaignMetadata,
     CampaignResponse,
-    CampaignRuleDefinition,
     CampaignStatus,
 } from "@frak-labs/backend-elysia/domain/campaign";
 import type { BankStatus } from "@frak-labs/backend-elysia/domain/campaign-bank";
@@ -24,10 +21,6 @@ export type {
     CampaignResponse,
     CampaignStatus,
 };
-
-// ---------------------------------------------------------------------------
-// JWT extraction — Shopify App Bridge session token
-// ---------------------------------------------------------------------------
 
 /**
  * Extract the Shopify session token JWT from the request.
@@ -50,13 +43,10 @@ function extractSessionToken(request: Request): string | null {
  *
  * Always forwards the ingress correlation id (`x-request-id`) so a backend log
  * line for this call can be tied back to the originating Shopify request; the
- * Shopify session token is added when available. Previously this returned
- * `undefined` entirely when there was no session token, which dropped the
- * correlation id for every unauthenticated backend call.
+ * Shopify session token is added when available.
  *
- * Exported for `api.register.tsx` (§4.12 inline embedded mint), the one
- * caller that needs the header before a `merchantId` exists — every other
- * consumer of this module resolves the merchant first.
+ * Exported for `api.register.tsx`, the one caller that needs the header before
+ * a `merchantId` exists.
  */
 export function buildBackendHeaders(request: Request): Record<string, string> {
     const headers: Record<string, string> = {};
@@ -76,10 +66,7 @@ export function buildBackendHeaders(request: Request): Record<string, string> {
     return headers;
 }
 
-// ---------------------------------------------------------------------------
-// Caches — short TTL, navigation-scoped
-// ---------------------------------------------------------------------------
-
+// Short TTL, navigation-scoped.
 const campaignsCache = new LRUCache<string, CampaignListResponse>({
     max: 512,
     ttl: 5_000,
@@ -89,10 +76,6 @@ const bankStatusCache = new LRUCache<string, BankStatus>({
     max: 512,
     ttl: 5_000,
 });
-
-// ---------------------------------------------------------------------------
-// Service functions
-// ---------------------------------------------------------------------------
 
 /**
  * Fetch campaigns for the current merchant from the Frak backend.
@@ -169,88 +152,6 @@ export async function getMerchantBankStatus(
         return data;
     } catch (error) {
         log.error({ err: error, merchantId }, "bank fetch error");
-        return null;
-    }
-}
-
-/**
- * Create a campaign draft for the current merchant.
- */
-export async function createMerchantCampaign(
-    context: AuthenticatedContext,
-    request: Request,
-    body: {
-        name: string;
-        rule: CampaignRuleDefinition;
-        budgetConfig: BudgetConfigItem[];
-        metadata: CampaignMetadata;
-        priority: number;
-    }
-): Promise<CampaignResponse | null> {
-    const merchantId = await resolveMerchantId(context);
-    if (!merchantId) {
-        return null;
-    }
-
-    try {
-        const { data, error } = await backendApi.business
-            .merchant({ merchantId })
-            .campaigns.post(body, {
-                headers: buildBackendHeaders(request),
-            });
-        if (error) {
-            log[levelForStatus(error.status)](
-                { merchantId, status: error.status },
-                "campaign create failed"
-            );
-            return null;
-        }
-
-        // Invalidate campaigns cache after creation
-        campaignsCache.delete(merchantId);
-        return data as CampaignResponse;
-    } catch (error) {
-        log.error({ err: error, merchantId }, "campaign create error");
-        return null;
-    }
-}
-
-/**
- * Publish a draft campaign (transitions draft → active).
- */
-export async function publishMerchantCampaign(
-    context: AuthenticatedContext,
-    request: Request,
-    campaignId: string
-): Promise<CampaignResponse | null> {
-    const merchantId = await resolveMerchantId(context);
-    if (!merchantId) {
-        return null;
-    }
-
-    try {
-        const { data, error } = await backendApi.business
-            .merchant({ merchantId })
-            .campaigns({ campaignId })
-            .publish.post(
-                {},
-                {
-                    headers: buildBackendHeaders(request),
-                }
-            );
-        if (error) {
-            log[levelForStatus(error.status)](
-                { merchantId, status: error.status },
-                "campaign publish failed"
-            );
-            return null;
-        }
-
-        // Invalidate campaigns cache after publish
-        campaignsCache.delete(merchantId);
-        return data as CampaignResponse;
-    } catch (error) {
-        log.error({ err: error, merchantId }, "campaign publish error");
         return null;
     }
 }
@@ -500,14 +401,7 @@ export async function setupFrakWebhook(
     }
 }
 
-export type FrakWebhookStatusReturnType = {
-    userErrors: {
-        message: string;
-    }[];
-    setup: boolean;
-};
-
-export async function getFrakWebookStatus(
+export async function getFrakWebhookStatus(
     context: AuthenticatedContext,
     request: Request
 ) {
@@ -526,7 +420,14 @@ export async function getFrakWebookStatus(
                 headers: buildBackendHeaders(request),
             });
         if (error) {
-            throw error;
+            log.error(
+                { err: error, merchantId, status: error.status },
+                "frak webhook status fetch error"
+            );
+            return {
+                userErrors: [{ message: "Error fetching frak webhook status" }],
+                setup: false,
+            };
         }
         return {
             userErrors: [],

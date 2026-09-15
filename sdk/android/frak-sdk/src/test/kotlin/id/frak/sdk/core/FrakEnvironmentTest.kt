@@ -111,11 +111,9 @@ class FrakEnvironmentTest {
     }
 
     @Test
-    fun `Custom accepts a bracketed IPv6 loopback host, with and without a port (matches iOS)`() {
-        // Android previously extracted the host with substringBefore(':'), so the first ':' in
-        // "[::1]" was mistaken for the port separator and the host became "[" — rejected, while
-        // iOS's URLComponents correctly parses "::1". java.net.URI is bracket-aware too, so all
-        // three of these must be accepted on Android as well.
+    fun `Custom accepts a bracketed IPv6 loopback host, with and without a port`() {
+        // java.net.URI is bracket-aware: a naive substringBefore(':') would mistake the first ':'
+        // in "[::1]" for the port separator and reject the host.
         val withPort = FrakEnvironment.Custom(wallet = "http://[::1]:3000", backend = "https://b")
         val withoutPort = FrakEnvironment.Custom(wallet = "http://[::1]", backend = "https://b")
         val httpsWithPort = FrakEnvironment.Custom(wallet = "https://[::1]:3000", backend = "https://b")
@@ -129,7 +127,7 @@ class FrakEnvironmentTest {
     }
 
     @Test
-    fun `Custom rejects an origin java-net-URI cannot parse, matching iOS's URLComponents returning nil`() {
+    fun `Custom rejects an origin java-net-URI cannot parse`() {
         val spaceInHost = FrakEnvironment.Custom(wallet = "http://exa mple.com", backend = "https://b")
 
         assertNotEquals("http://exa mple.com", spaceInHost.wallet)

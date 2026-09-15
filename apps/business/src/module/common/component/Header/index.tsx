@@ -26,9 +26,6 @@ const MERCHANT_PATH = /^\/m\/[^/]+\/merchant(\/|$)/;
 const MEMBERS_PATH = /^\/m\/[^/]+\/members$/;
 const PUSH_PATH = /^\/m\/[^/]+\/push$/;
 
-// TODO: drop the legacy `/campaigns`, `/dashboard`, `/merchant/` branches
-// once all entry points are merchant-scoped and the legacy redirect
-// routes (`_restricted/{campaigns,dashboard,merchant}.tsx`) are removed.
 export function Header() {
     const { t } = useTranslation();
     const isDemoMode = useIsDemoMode();
@@ -40,8 +37,6 @@ export function Header() {
         pathname === "/dashboard" ||
         MERCHANT_PATH.test(pathname) ||
         pathname.startsWith("/merchant/");
-    const showExport =
-        CAMPAIGNS_PATH.test(pathname) || pathname.startsWith("/campaigns");
     const showSendPush =
         MEMBERS_PATH.test(pathname) || PUSH_PATH.test(pathname);
 
@@ -64,7 +59,7 @@ export function Header() {
                                 </Badge>
                             </Link>
                         )}
-                        {showExport && (
+                        {showCreateCampaign && (
                             <Button
                                 variant="secondary"
                                 size="small"

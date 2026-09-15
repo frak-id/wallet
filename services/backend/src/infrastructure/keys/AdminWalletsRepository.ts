@@ -11,9 +11,6 @@ type AccountPredefinedKeys =
     | "bank-manager"
     | (string & {});
 
-/**
- * Build the repositories that we will use to interface with our different wallets
- */
 export class AdminWalletsRepository {
     private cache: LRUCache<string, Hex> = new LRUCache({
         max: 1024,
@@ -22,9 +19,6 @@ export class AdminWalletsRepository {
         max: 64,
     });
 
-    /**
-     * Get a value from cache or fetch it
-     */
     private async getFromCacheOrFetch(
         key: string,
         fetcher: () => Promise<Hex>
@@ -39,16 +33,12 @@ export class AdminWalletsRepository {
         return fetchedValue;
     }
 
-    /**
-     * Get the master private key
-     */
     private async getMasterPrivateKey() {
         return this.getFromCacheOrFetch("master-pkey", async () => {
             if (!process.env.MASTER_KEY_SECRET) {
                 throw new Error("Missing MASTER_KEY_SECRET");
             }
 
-            // If we got it in env
             const value = JSON.parse(process.env.MASTER_KEY_SECRET) as {
                 masterPrivateKey: string;
             };
@@ -59,27 +49,15 @@ export class AdminWalletsRepository {
         });
     }
 
-    /**
-     * Get a derived key from the master private key
-     */
     private async getDerivedKey(key: string) {
         return this.getFromCacheOrFetch(`derived-key-${key}`, async () => {
-            // Get master private key
             const masterPrivateKey = await this.getMasterPrivateKey();
-            if (!masterPrivateKey) {
-                throw new Error("Missing master private key");
-            }
-
-            // Derivative for random product
             const hmac = createHmac("sha256", hexToBytes(masterPrivateKey));
             hmac.update(key);
             return `0x${hmac.digest("hex")}` as Hex;
         });
     }
 
-    /**
-     * Get an account specific to a key
-     */
     public async getKeySpecificAccount({
         key,
     }: {
@@ -90,16 +68,9 @@ export class AdminWalletsRepository {
     }
 
     /**
-     * Derive raw key bytes from the master secret for a given label — same
-     * cached HMAC-SHA256 derivation as `getKeySpecificAccount`, but returned
-     * as bytes rather than wrapped into a viem account. For non-wallet
-     * secrets derived from the same root (e.g. TOTP encryption keys, §6 of
-     * the design doc), so every derived secret shares one tested derivation
-     * path instead of each caller re-deriving from `MASTER_KEY_SECRET`
-     * independently. Distinct label namespace from `getKeySpecificAccount`
-     * (`AccountPredefinedKeys` are un-prefixed) is the caller's
-     * responsibility — e.g. `"totp-encryption"` vs the wallet key
-     * `"bank-manager"`.
+     * Raw key bytes for a non-wallet secret, from the same cached derivation
+     * as `getKeySpecificAccount`. Labels share one namespace with
+     * `AccountPredefinedKeys`, so keep them prefixed (`"totp-encryption"`).
      */
     public async deriveKeyBytes(label: string): Promise<Uint8Array> {
         const hex = await this.getDerivedKey(label);
@@ -107,7 +78,8 @@ export class AdminWalletsRepository {
     }
 
     /**
-     * Get an account specific to a key
+     * Per-key mutex, so callers serialising nonce usage on one admin account
+     * all take the same lock.
      */
     public getMutexForAccount({ key }: { key: AccountPredefinedKeys }) {
         const lock = this.mutexLocks.get(key);

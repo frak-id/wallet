@@ -249,8 +249,9 @@ function bindShareLinkSamples() {
 }
 
 /**
- * Merchant id both native harnesses initialize with. The native SDK drops an arrival whose
- * `fCtx` merchant differs from the app's own, so the link can't carry this site's merchant.
+ * Merchant id the native harnesses initialize with on their Development stage. The native SDK
+ * drops an arrival whose `fCtx` merchant differs from the app's own, so the link can't carry this
+ * site's merchant — and a harness switched to Production drops it too.
  */
 const NATIVE_EXAMPLE_MERCHANT_ID = "0a799880-ba54-4276-a734-db8721911bab";
 

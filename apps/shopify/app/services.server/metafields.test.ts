@@ -9,19 +9,6 @@ import {
     stripEmptyEntries,
 } from "./metafields";
 
-/**
- * Tests for metafield logic from metafields.ts.
- *
- * The service functions depend on GraphQL, so we extract and test:
- * - i18n customization parsing (flat vs multi-language detection)
- * - buildMetafieldValue logic (storage format selection)
- * - Appearance metafield polishing
- */
-
-/* ------------------------------------------------------------------ */
-/*  i18n parsing — mirrors getI18nCustomizations internal logic       */
-/* ------------------------------------------------------------------ */
-
 describe("parseI18nMetafield", () => {
     it("returns defaults when value is null", () => {
         expect(parseI18nMetafield(null)).toEqual({ fr: {}, en: {} });
@@ -63,10 +50,6 @@ describe("parseI18nMetafield", () => {
         expect(result.fr).toEqual({});
     });
 });
-
-/* ------------------------------------------------------------------ */
-/*  buildMetafieldValue — mirrors the private function                 */
-/* ------------------------------------------------------------------ */
 
 describe("buildMetafieldValue", () => {
     it("returns both languages when both have data", () => {
@@ -118,10 +101,6 @@ describe("buildMetafieldValue", () => {
     });
 });
 
-/* ------------------------------------------------------------------ */
-/*  stripEmptyEntries — guards against persisting empty overrides      */
-/* ------------------------------------------------------------------ */
-
 describe("stripEmptyEntries", () => {
     it("returns empty object when input is undefined", () => {
         expect(stripEmptyEntries(undefined)).toEqual({});
@@ -160,10 +139,6 @@ describe("stripEmptyEntries", () => {
     });
 });
 
-/* ------------------------------------------------------------------ */
-/*  Appearance metafield polishing                                     */
-/* ------------------------------------------------------------------ */
-
 describe("polishAppearance", () => {
     it("returns appearance when logoUrl is present", () => {
         const appearance = { logoUrl: "https://example.com/logo.png" };
@@ -178,10 +153,6 @@ describe("polishAppearance", () => {
         expect(polishAppearance({})).toBeNull();
     });
 });
-
-/* ------------------------------------------------------------------ */
-/*  FR translation register — INVALID_LOCALE_FOR_SHOP swallow          */
-/* ------------------------------------------------------------------ */
 
 describe("registerFrakI18nFrTranslations", () => {
     const translations = [

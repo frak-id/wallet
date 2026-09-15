@@ -6,4 +6,3 @@ const baseUrl = process.env.BACKEND_URL ?? "https://localhost:3030";
 export const backendApi = treaty<App>(baseUrl, {
     fetch: { credentials: "include" },
 });
-export const businessApi = backendApi.business;

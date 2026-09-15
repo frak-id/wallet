@@ -56,11 +56,11 @@ vi.mock("@/module/notification/hook/useNotificationSetupStatus", () => ({
     useNotificationStatus: mockUseNotificationStatus,
 }));
 
-// `describe.sequential` because the tests share localStorage and the
-// global IntersectionObserver — running them concurrently leaves
-// multiple WelcomeCard renders in the same DOM and the queries see
-// elements from sibling tests.
-describe.sequential("WelcomeCard", () => {
+// These tests share localStorage and the global IntersectionObserver, so
+// they depend on the workspace's in-file sequential execution: concurrent
+// runs would leave multiple WelcomeCard renders in the same DOM and the
+// queries would see elements from sibling tests.
+describe("WelcomeCard", () => {
     const originalIntersectionObserver = global.IntersectionObserver;
     const mockScrollTo = vi.fn();
     let intersectionObserverCallback: IntersectionObserverCallback | null =

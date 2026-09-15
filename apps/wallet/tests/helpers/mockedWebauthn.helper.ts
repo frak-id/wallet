@@ -1,5 +1,12 @@
 import { randomBytes } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import {
+    existsSync,
+    mkdirSync,
+    readFileSync,
+    rmSync,
+    writeFileSync,
+} from "node:fs";
+import { dirname } from "node:path";
 import { p256 } from "@noble/curves/nist.js";
 import type { Frame, Page } from "@playwright/test";
 import { AUTHENTICATOR_STATE } from "../../playwright.config";
@@ -40,6 +47,17 @@ declare global {
 export class MockedWebAuthNHelper {
     private credentialProps?: CredentialProps;
     private readonly authenticatorFile: string;
+    private credentialIsNew = false;
+
+    /**
+     * True when {@link setup} generated this credential rather than restoring
+     * one — i.e. no wallet can exist for it yet. Lets a caller choose register
+     * over login without inferring it from a login timeout, which also fires
+     * when a real login is merely slow.
+     */
+    get isFreshCredential(): boolean {
+        return this.credentialIsNew;
+    }
 
     constructor(
         private readonly page: Page,
@@ -52,6 +70,16 @@ export class MockedWebAuthNHelper {
         }
     }
 
+    /**
+     * Drop this authenticator's persisted credential.
+     *
+     * For a context minted per run: leaving the file behind would both litter
+     * the storage dir and let a later run reuse the wallet.
+     */
+    forgetCredential() {
+        rmSync(this.authenticatorFile, { force: true });
+    }
+
     async setup() {
         // Restore credentials
         await this.restoreCredentialProps();
@@ -60,6 +88,7 @@ export class MockedWebAuthNHelper {
         if (!this.credentialProps) {
             this.credentialProps = await this.generateCredentialProp();
             this.saveCredentialProps();
+            this.credentialIsNew = true;
         }
 
         // Expose the functions to the browser context
@@ -312,7 +341,9 @@ export class MockedWebAuthNHelper {
             aaguid: Buffer.from(this.credentialProps.aaguid).toString("base64"),
         };
 
-        // Save the authenticator state to the file
+        // The storage dir exists only once a `storageState` write has created
+        // it; a project with no setup dependency reaches here first.
+        mkdirSync(dirname(this.authenticatorFile), { recursive: true });
         writeFileSync(
             this.authenticatorFile,
             JSON.stringify(jsonOutput, null, 2)

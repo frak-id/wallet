@@ -110,6 +110,85 @@ export const advancedBody = style({
     paddingTop: alias.spacing.xs,
 });
 
+export const colorRow = style({
+    display: "flex",
+    alignItems: "center",
+    gap: alias.spacing.xs,
+});
+
+export const colorField = style({
+    flex: 1,
+    minWidth: 0,
+});
+
+/** Reserves the widest action set, so a row without "none" keeps field width. */
+export const colorActions = style({
+    display: "flex",
+    alignItems: "center",
+    gap: alias.spacing.xs,
+    flexShrink: 0,
+    minWidth: "150px",
+});
+
+/** The hairline sits on the swatch itself, so a near-white colour stays visible. */
+export const colorSwatch = style({
+    width: "32px",
+    height: "32px",
+    padding: 0,
+    flexShrink: 0,
+    cursor: "pointer",
+    appearance: "none",
+    background: "none",
+    border: "none",
+    borderRadius: alias.cornerRadius.s,
+    selectors: {
+        "&::-webkit-color-swatch-wrapper": { padding: 0 },
+        "&::-webkit-color-swatch": {
+            border: `1px solid ${vars.border.default}`,
+            borderRadius: alias.cornerRadius.s,
+        },
+        "&::-moz-color-swatch": {
+            border: `1px solid ${vars.border.default}`,
+            borderRadius: alias.cornerRadius.s,
+        },
+        "&:disabled": { cursor: "not-allowed", opacity: 0.5 },
+    },
+});
+
+export const styleHeader = style({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: alias.spacing.xs,
+});
+
+export const styleGhostButton = style([
+    interactive,
+    focusRing,
+    {
+        all: "unset",
+        boxSizing: "border-box",
+        cursor: "pointer",
+        flexShrink: 0,
+        paddingInline: alias.spacing.xs,
+        paddingBlock: "2px",
+        borderRadius: alias.cornerRadius.s,
+        color: vars.text.secondary,
+        fontSize: fontSize.xs,
+        selectors: {
+            "&:hover": { color: vars.text.primary },
+            "&[aria-pressed='true']": {
+                color: vars.text.primary,
+                backgroundColor: vars.surface.muted,
+            },
+            "&:disabled": {
+                cursor: "default",
+                color: vars.text.disabled,
+            },
+        },
+    },
+]);
+
 export const cssTextarea = style({
     all: "unset",
     boxSizing: "border-box",

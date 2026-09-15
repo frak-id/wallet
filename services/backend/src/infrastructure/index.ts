@@ -22,7 +22,7 @@ export { sessionContext } from "./macro";
 // Events
 export { eventEmitter } from "./messaging/events";
 // Database
-export { getLibsqlClient, getLibsqlDb } from "./persistence/libsql";
+export { getLibsqlDb } from "./persistence/libsql";
 export {
     db,
     type PgRunner,

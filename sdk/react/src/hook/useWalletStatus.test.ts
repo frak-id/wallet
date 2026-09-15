@@ -1,8 +1,3 @@
-/**
- * Tests for useWalletStatus hook
- * Tests TanStack Query wrapper for watching wallet status
- */
-
 import { vi } from "vitest";
 
 vi.mock("@frak-labs/core-sdk/actions");

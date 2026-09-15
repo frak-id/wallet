@@ -10,7 +10,7 @@ import {
 } from "@/module/auth/hooks/useLinkWallet";
 
 /**
- * Walletless-owner CTA (§4.9): shown wherever an onchain bank action (bank
+ * Walletless-owner CTA: shown wherever an onchain bank action (bank
  * open/close, allowance, withdraw, legacy migration) would otherwise render
  * — the explicit path out of the read-only state.
  */

@@ -112,8 +112,6 @@ public class FrakConfig internal constructor(
     public val logLevel: FrakLogLevel,
     public val logSink: FrakLogSink?,
 ) {
-    // See the note atop sharing/SharingRequest.kt.
-
     /**
      * `Builder()` exists alongside `Builder(merchantId)` because [merchantId] is optional. The empty
      * one is primary: a shared `constructor(String?)` would erase to the same JVM descriptor as

@@ -7,8 +7,8 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import * as styles from "./route-error.css";
 
-type ErrorBoundaryProps = {
-    error: Error;
+type ErrorPanelProps = {
+    error: unknown;
     reset?: () => void;
     title?: string;
     message?: string;
@@ -17,7 +17,7 @@ type ErrorBoundaryProps = {
     fallbackAction?: ReactNode;
 };
 
-function ErrorBoundary({
+function ErrorPanel({
     error,
     reset,
     title,
@@ -25,16 +25,19 @@ function ErrorBoundary({
     showRetry = true,
     showTechnicalDetails = false,
     fallbackAction,
-}: ErrorBoundaryProps) {
+}: ErrorPanelProps) {
     const { t } = useTranslation();
     const resolvedTitle = title ?? t("errors.generic.title");
+    // A throw site can raise any value, so `error` is `unknown`; only a real
+    // Error carries a message and a stack worth rendering.
+    const asError = error instanceof Error ? error : undefined;
     const errorMessage =
-        message || error.message || t("errors.boundary.message");
+        message || asError?.message || t("errors.boundary.message");
 
     const shouldShowTechnicalDetails =
         showTechnicalDetails &&
         process.env.NODE_ENV !== "production" &&
-        error.stack;
+        asError?.stack;
 
     const titleId = "error-title";
     const messageId = "error-message";
@@ -73,7 +76,7 @@ function ErrorBoundary({
                         <summary className={styles.detailsSummary}>
                             {t("errors.boundary.technicalDetails")}
                         </summary>
-                        <pre className={styles.stack}>{error.stack}</pre>
+                        <pre className={styles.stack}>{asError?.stack}</pre>
                     </details>
                 )}
 
@@ -114,7 +117,7 @@ export function RouteError({
 }) {
     const { t } = useTranslation();
     return (
-        <ErrorBoundary
+        <ErrorPanel
             error={error}
             reset={reset}
             title={title}

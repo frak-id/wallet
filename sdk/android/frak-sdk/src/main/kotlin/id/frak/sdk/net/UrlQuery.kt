@@ -1,5 +1,3 @@
-// Opted in for `PercentEncoding`, which is `@InternalFrakApi`. Per file, not module-wide, so the
-// marker still applies elsewhere.
 @file:OptIn(InternalFrakApi::class)
 
 package id.frak.sdk.net
@@ -20,7 +18,7 @@ internal class UrlQuery private constructor(
     /**
      * The value is percent-decoded, and the key match falls back to case-insensitive because
      * channels mangle casing — but an exact match wins, so `?fctx=stale&fCtx=real` resolves to
-     * `real`, as `sdk/core/src/utils/url/queryParams.ts` does.
+     * `real`, as the web SDK does.
      */
     fun get(key: String): String? =
         (

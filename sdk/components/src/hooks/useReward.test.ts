@@ -4,9 +4,9 @@ import { renderHook, waitFor } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useReward } from "./useReward";
 
-// Sequential: tests share vi.mock state (getMerchantInformation) and
-// window.FrakSetup.client, incompatible with concurrent execution.
-describe.sequential("useReward", () => {
+// Tests share `getMerchantInformation` mock state and window.FrakSetup.client;
+// `sequence.concurrent: false` in vitest.shared.ts is what keeps them ordered.
+describe("useReward", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });

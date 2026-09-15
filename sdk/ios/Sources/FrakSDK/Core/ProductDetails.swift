@@ -2,17 +2,12 @@ import Foundation
 
 /// The purchase line-item fields a campaign's `productScope` can target.
 ///
-/// Mirrors the backend's `PRODUCT_SCOPE_FIELDS` allowlist and `sdk/core`'s `ProductDetails`
-/// exactly (`sdk/core/src/types/product.ts`) — a field outside this set cannot have been
-/// published on a campaign, so adding one here without a matching backend change would be
-/// dead weight.
+/// Mirrors the backend's `PRODUCT_SCOPE_FIELDS` allowlist exactly — a field outside this set
+/// cannot have been published on a campaign.
 ///
 /// `Double`, not `Int`, for every numeric: the wire type is a JSON number and the backend
-/// compares numerically; an `Int` would silently truncate a fractional `unitPrice`.
-///
-/// Decoding lives on a private wire type in `RewardsDecoder.swift`: a synthesized `Decodable`
-/// throws on a present-but-wrong-typed value even for an `Optional` property, which would let one
-/// reshaped field inside `matchedProducts` take down the whole rewards response.
+/// compares numerically; an `Int` would silently truncate a fractional `unitPrice`. Decoding
+/// lives on a private wire type: a synthesized `Decodable` throws on a wrong-typed optional.
 public struct ProductDetails: Sendable, Hashable {
     public let productId: String?
     public let sku: String?

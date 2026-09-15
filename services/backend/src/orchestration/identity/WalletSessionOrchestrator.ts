@@ -15,25 +15,10 @@ import type { WalletBindingRepository } from "../../domain/identity/repositories
 type Pubkey = { x: Hex; y: Hex };
 
 /**
- * Deep entry point that turns a freshly-verified WebAuthn credential into a
- * wallet session, folding three concerns that every login/register/sdk
- * handler previously did inline:
- *
- *   1. Resolve the credential's current wallet via the active binding row
- *      on the current chain. Post-merge this is the only correct source —
- *      the deterministic derivation still returns the pre-merge address.
- *   2. Lazy back-fill: when no binding row exists yet (legacy credential),
- *      derive the address from the pubkey and best-effort seed the initial
- *      binding so the next login skips the derivation step.
- *   3. Mint the wallet JWT + SDK companion JWT via the inner
- *      {@link WalletJwtService} primitive.
- *
- * Two entry verbs, one shared invariant:
- *  - {@link sessionForVerifiedCredential} — wallet is unknown; consult the
- *    binding table and fall back to derivation. Used by login/register/sdk.
- *  - {@link mintSessionForExplicitWallet} — wallet is supplied by the
- *    caller (e.g. the wallet-merge orchestrator already knows the winner).
- *    Skips binding consultation and just mints.
+ * Turns a verified WebAuthn credential into a wallet session. The active
+ * binding row on the current chain is the only correct wallet source —
+ * deterministic derivation returns the pre-merge address — and is back-filled
+ * from the pubkey when a legacy credential has no binding row yet.
  */
 export class WalletSessionOrchestrator {
     constructor(

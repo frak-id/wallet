@@ -1,17 +1,19 @@
 import * as coreSdk from "@frak-labs/core-sdk";
 import { fireEvent, render, screen } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import * as sharingPageUtils from "@/actions/sharingPage";
 import * as useClientReadyHook from "@/hooks/useClientReady";
 import * as useRewardHook from "@/hooks/useReward";
 import { ButtonWallet } from "./ButtonWallet";
-import * as buttonWalletUtils from "./utils";
 
-// Mock the utils module
-vi.mock("./utils", () => ({
-    openWalletModal: vi.fn(),
+vi.mock("@/actions/sharingPage", () => ({
+    openSharingPage: vi.fn(),
 }));
 
-// Mock the hooks
+vi.mock("@/utils/browser/safeVibrate", () => ({
+    safeVibrate: vi.fn(),
+}));
+
 vi.mock("@/hooks/useClientReady", () => ({
     useClientReady: vi.fn(() => ({
         shouldRender: true,
@@ -24,9 +26,9 @@ vi.mock("@/hooks/useReward", () => ({
     useReward: vi.fn(() => ({ reward: undefined })),
 }));
 
-// Sequential: tests mutate vi.mock state for shared hooks and window globals,
-// incompatible with the workspace default of `sequence.concurrent: true`.
-describe.sequential("ButtonWallet", () => {
+// Tests mutate vi.mock state for shared hooks and window globals, so they
+// depend on the workspace's in-file sequential execution.
+describe("ButtonWallet", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
@@ -77,7 +79,7 @@ describe.sequential("ButtonWallet", () => {
         expect(container.querySelector("button")).toBeNull();
     });
 
-    it("should call openWalletModal on click", () => {
+    it("should open the sharing page on click", () => {
         render(<ButtonWallet />);
         const button = screen.getByRole("button", {
             name: "Share and earn rewards",
@@ -85,7 +87,7 @@ describe.sequential("ButtonWallet", () => {
 
         fireEvent.click(button);
 
-        expect(buttonWalletUtils.openWalletModal).toHaveBeenCalledTimes(1);
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledTimes(1);
     });
 
     it("should report share_button_clicked on click", () => {
@@ -106,6 +108,36 @@ describe.sequential("ButtonWallet", () => {
                 has_reward: false,
                 click_action: "sharing-page",
             }
+        );
+    });
+
+    it("should report share_button_impression once the button renders", () => {
+        render(<ButtonWallet placement="hero" />);
+
+        expect(coreSdk.trackEvent).toHaveBeenCalledWith(
+            expect.anything(),
+            "share_button_impression",
+            {
+                placement: "hero",
+                target_interaction: undefined,
+                has_reward: false,
+            }
+        );
+    });
+
+    it("should not report share_button_impression while the SDK is hidden", () => {
+        vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            shouldRender: true,
+            isHidden: true,
+            isClientReady: true,
+        });
+
+        render(<ButtonWallet />);
+
+        expect(coreSdk.trackEvent).not.toHaveBeenCalledWith(
+            expect.anything(),
+            "share_button_impression",
+            expect.anything()
         );
     });
 

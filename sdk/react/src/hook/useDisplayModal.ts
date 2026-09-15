@@ -19,12 +19,12 @@ type MutationOptions<T extends ModalStepTypes[]> = Omit<
 >;
 
 /** @inline */
-interface UseDisplayModalParams<T extends ModalStepTypes[] = ModalStepTypes[]> {
+type UseDisplayModalParams<T extends ModalStepTypes[] = ModalStepTypes[]> = {
     /**
      * Optional mutation options, see {@link @tanstack/react-query!useMutation | `useMutation()`} for more infos
      */
     mutations?: MutationOptions<T>;
-}
+};
 
 /**
  * Hook that return a mutation helping to display a modal to the user

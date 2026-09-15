@@ -1,14 +1,15 @@
 import { type InteractionTypeKey, trackEvent } from "@frak-labs/core-sdk";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useRef } from "preact/hooks";
+import { openSharingPage } from "@/actions/sharingPage";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useLang } from "@/hooks/useLang";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
 import { componentDefaults } from "@/i18n/defaults";
 import { buildStyleContent } from "@/styles/sharedCss";
-import { GiftIcon } from "./assets/GiftIcon";
+import { safeVibrate } from "@/utils/browser/safeVibrate";
+import { WalletGiftIcon } from "./assets/WalletGiftIcon";
 import type { ButtonWalletProps } from "./types";
-import { openWalletModal } from "./utils";
 
 const componentCss = `
 .button {
@@ -52,12 +53,9 @@ const componentCss = `
 `;
 
 /**
- * Floating circular button that opens the Frak sharing page.
- *
- * Historically this opened the embedded wallet drawer; that surface was
- * retired, so the button now routes to the full-page sharing UI like every
- * other share CTA. The `frak-button-wallet` tag name is kept because it is
- * public API (merchant markup, Magento template).
+ * Floating circular button that opens the Frak sharing page. The
+ * `frak-button-wallet` tag name is public API (merchant markup, Magento
+ * template), so it stays even though it no longer names the surface.
  *
  * @param args
  * @returns The wallet button with `<button>` tag
@@ -106,30 +104,49 @@ export function ButtonWallet({
     const lang = useLang();
     const placement = usePlacement(placementId);
 
-    const resolvedTargetInteraction = useMemo<InteractionTypeKey | undefined>(
-        () =>
-            placement?.targetInteraction !== undefined
-                ? (placement.targetInteraction as InteractionTypeKey)
-                : targetInteraction,
-        [placement?.targetInteraction, targetInteraction]
-    );
+    const resolvedTargetInteraction: InteractionTypeKey | undefined =
+        placement?.targetInteraction !== undefined
+            ? (placement.targetInteraction as InteractionTypeKey)
+            : targetInteraction;
 
-    const shouldUseReward = useMemo(
-        () => rawUseReward === true,
-        [rawUseReward]
-    );
+    const shouldUseReward = rawUseReward === true;
     const { shouldRender, isHidden, isClientReady } = useClientReady();
     const { reward } = useReward(
         shouldUseReward && isClientReady,
         resolvedTargetInteraction
     );
-    const [position, setPosition] = useState<"left" | "right">("right");
 
-    // Mirrors `<frak-button-share>`: since this button was repointed at the
-    // sharing page both tags open the same surface, so both must report the
-    // click. Without it, wallet-button traffic would land on the sharing page
-    // with no originating `share_button_clicked` and the funnel would not add
-    // up.
+    // `modalWalletConfig` is a merchant-injected config (Magento) and only its
+    // position hint is still honoured.
+    const position =
+        placement?.components?.buttonWallet?.position ??
+        window.FrakSetup?.modalWalletConfig?.metadata?.position ??
+        "right";
+
+    const trackedImpressionRef = useRef(false);
+
+    // Paired with the click below: this tag shares `share_button_clicked` with
+    // `<frak-button-share>`, so it must report impressions or the ratio breaks.
+    // `reward` stays out of the deps — async arrival would double-fire.
+    useEffect(() => {
+        if (trackedImpressionRef.current) return;
+        if (!isClientReady || !shouldRender || isHidden) return;
+        trackEvent(window.FrakSetup?.client, "share_button_impression", {
+            placement: placementId,
+            target_interaction: resolvedTargetInteraction,
+            has_reward: Boolean(reward),
+        });
+        trackedImpressionRef.current = true;
+    }, [
+        isClientReady,
+        shouldRender,
+        isHidden,
+        placementId,
+        resolvedTargetInteraction,
+    ]);
+
+    // Mirrors `<frak-button-share>`: both tags open the same surface, so both
+    // must report the click or the sharing funnel loses its origin.
     const onClick = useCallback(() => {
         trackEvent(window.FrakSetup.client, "share_button_clicked", {
             placement: placementId,
@@ -137,19 +154,9 @@ export function ButtonWallet({
             has_reward: Boolean(reward),
             click_action: "sharing-page",
         });
-        openWalletModal(resolvedTargetInteraction, placementId);
+        safeVibrate();
+        openSharingPage(resolvedTargetInteraction, placementId);
     }, [placementId, resolvedTargetInteraction, reward]);
-
-    useEffect(() => {
-        const placementPosition = placement?.components?.buttonWallet?.position;
-        // `modalWalletConfig` is the retired embedded-wallet config; only its
-        // position hint is still honoured, for integrations (Magento) that
-        // keep injecting it. Deliberately not a dep: it's set before mount
-        // and never mutated, so the placement position is the only live input.
-        const configPosition =
-            window.FrakSetup?.modalWalletConfig?.metadata?.position;
-        setPosition(placementPosition ?? configPosition ?? "right");
-    }, [placement?.components?.buttonWallet?.position]);
 
     if (!shouldRender || isHidden) {
         return null;
@@ -180,7 +187,7 @@ export function ButtonWallet({
                 class={buttonClass}
                 onClick={onClick}
             >
-                <GiftIcon />
+                <WalletGiftIcon />
                 {reward && <span class="reward">{reward}</span>}
             </button>
         </>

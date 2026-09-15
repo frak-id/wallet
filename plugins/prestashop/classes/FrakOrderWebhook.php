@@ -10,17 +10,9 @@
  * the outbound HTTP call fires, and fall back to the retry queue on
  * failure.
  *
- * Mirrors WordPress's `Frak_WC_Webhook_Registrar` and Magento's
- * `Observer/OrderStatusUpdateObserver` — same `(merchantId, externalId,
- * status)` idempotency contract on the backend so all three plugins
- * de-duplicate cleanly. Aligns the credit-slip path with the WC backend's
- * "any non-empty refunds[] -> refunded" rule and Magento's
- * `sales_order_creditmemo_save_after` -> `refunded` mapping: any refund
- * (full or partial) voids attribution.
- *
- * Split out from the legacy `FrakOrderHooks` class so server-side webhook
- * orchestration and client-side rendering live in separate translation
- * units. {@see FrakOrderRender} owns the render path.
+ * The backend dedupes on `(merchantId, externalId, status)`, and any refund
+ * — full or partial — voids attribution. {@see FrakOrderRender} owns the
+ * render path.
  */
 class FrakOrderWebhook
 {
@@ -109,13 +101,7 @@ class FrakOrderWebhook
      * refunds, shipping-only refunds, and standard returns alike
      * ({@see PrestaShop\PrestaShop\Adapter\Order\Refund\OrderSlipCreator::createOrderSlip()}).
      *
-     * Always emits `refunded` regardless of slip type, mirroring the
-     * sister-plugin contract:
-     *   - WC backend: any non-empty `refunds[]` -> `refunded`
-     *     (`services/backend/src/api/external/merchant/webhook/wooCommerceWebhook.ts:142`).
-     *   - Magento: `sales_order_creditmemo_save_after` -> `refunded`
-     *     (`plugins/magento/Observer/OrderStatusUpdateObserver.php`).
-     *   - Shopify backend: `partially_refunded` -> `refunded`.
+     * Always emits `refunded` regardless of slip type.
      *
      * Why we don't try to differentiate full vs partial: the backend's
      * `PurchaseStatusSchema` only carries 4 statuses (pending/confirmed/

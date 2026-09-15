@@ -6,6 +6,14 @@ import {
 } from "@frak-labs/app-essentials/utils/platform";
 import { OpenPanel } from "@openpanel/web";
 import { isInIframe } from "../lib/inApp";
+import type { AnalyticsSurface } from "./types";
+
+let currentSurface: AnalyticsSurface | undefined;
+
+/** Call before the first event, so the `filter` fallback below can carry it. */
+export function setAnalyticsSurface(surface: AnalyticsSurface) {
+    currentSurface = surface;
+}
 
 export function getPlatformInfo() {
     const tauri = IS_TAURI;
@@ -84,6 +92,7 @@ export function getInitProperties() {
         isIframe: isInIframe,
         isPwa: isStandalonePwa(),
         iframeReferrer: referrer,
+        surface: currentSurface,
         ...getPlatformInfo(),
     };
 }

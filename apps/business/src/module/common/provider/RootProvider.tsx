@@ -3,17 +3,27 @@ import {
     FrakIFrameClientProvider,
 } from "@frak-labs/react-sdk";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
     PersistQueryClientProvider,
     type PersistQueryClientProviderProps,
+    removeOldestQuery,
 } from "@tanstack/react-query-persist-client";
 import { useRouterState } from "@tanstack/react-router";
-import { type PropsWithChildren, useEffect } from "react";
+import { lazy, type PropsWithChildren, Suspense, useEffect } from "react";
 import { frakWalletSdkConfig } from "@/config/frakWallet";
 import { TwoFactorModal } from "@/module/auth/component/TwoFactorModal";
 import { openPanel } from "../utils/openPanel";
 import { queryClient } from "./queryClient";
+
+// Lazy + DEV-gated. A static import defeats the render-site guard: the
+// namespace re-export inside @tanstack/react-query-devtools keeps its own
+// `NODE_ENV` check from being tree-shaken, so the whole panel ships eagerly
+// (~18.6 KB gz) once the component is merely referenced. Mirrors apps/wallet.
+const ReactQueryDevtools = lazy(() =>
+    import("@tanstack/react-query-devtools").then((m) => ({
+        default: m.ReactQueryDevtools,
+    }))
+);
 
 /**
  * Re-exported for use in TanStack Router loaders and existing importers.
@@ -29,6 +39,8 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
         storage: window.localStorage,
         // Throttle for 50ms to prevent storage spamming
         throttleTime: 50,
+        // Without this a full quota leaves the cache unwritable for good.
+        retry: removeOldestQuery,
     }),
     maxAge: Number.POSITIVE_INFINITY,
     dehydrateOptions: {
@@ -38,12 +50,10 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
             return isValid && isStorable;
         },
     },
+    // Invalidate the cache when the deployed version changes
+    buster: process.env.APP_VERSION,
 };
 
-/**
- * Client component that manages the data-page attribute on the root element
- * based on the current route
- */
 function RoutePageAttribute() {
     const routerState = useRouterState({
         select: (state) => ({
@@ -54,7 +64,6 @@ function RoutePageAttribute() {
 
     useEffect(() => {
         const rootElement = document.documentElement;
-        if (!rootElement) return;
 
         const isRestricted = routerState.matches.some(
             (match) => match.routeId === "/_restricted"
@@ -89,7 +98,15 @@ export function RootProvider({ children }: PropsWithChildren) {
             <FrakConfigProvider config={frakWalletSdkConfig}>
                 <FrakIFrameClientProvider>
                     <RoutePageAttribute />
-                    <ReactQueryDevtools initialIsOpen={false} />
+                    {import.meta.env.DEV && (
+                        // Own boundary: the nearest ancestor Suspense is the
+                        // router's, shared with the whole app, so an unwrapped
+                        // lazy devtools import gates first paint behind
+                        // PendingLoader in dev.
+                        <Suspense fallback={null}>
+                            <ReactQueryDevtools initialIsOpen={false} />
+                        </Suspense>
+                    )}
                     {children}
                     <TwoFactorModal />
                 </FrakIFrameClientProvider>

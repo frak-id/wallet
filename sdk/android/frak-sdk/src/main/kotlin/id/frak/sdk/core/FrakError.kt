@@ -12,7 +12,7 @@ public sealed class FrakError(
 ) : Exception(message, cause) {
     /**
      * Stable discriminator, one per arm. A `when` over [Kind] with an `else` survives a new arm;
-     * a `when` over the hierarchy does not. [wireValue] is spelled identically on iOS.
+     * a `when` over the hierarchy does not.
      */
     public enum class Kind(
         public val wireValue: String,
@@ -49,7 +49,7 @@ public sealed class FrakError(
      * request was attempted. Any cached copy is served in preference to raising this.
      */
     public class BackingOff(
-        /** Seconds, like [Server.retryAfterSeconds] and iOS's twin. Fractional: the floor is 0.5s. */
+        /** Seconds, like [Server.retryAfterSeconds]. Fractional: the floor is 0.5s. */
         public val retryAfterSeconds: Double,
     ) : FrakError(
             Kind.BACKING_OFF,

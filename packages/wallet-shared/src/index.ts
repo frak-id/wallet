@@ -119,6 +119,7 @@ export {
     STORE_PACKAGE_ID,
     sdkKey,
     selectFormattedReward,
+    setAnalyticsDeviceId,
     setInstallSource,
     setProfileId,
     startFlow,
@@ -151,6 +152,7 @@ export {
     mergeTokenQueryOptions,
 } from "./identity";
 export {
+    activePairingsQueryOptions,
     BasePairingClient,
     type BasePairingState,
     getOriginPairingClient,
@@ -167,7 +169,6 @@ export {
     type PairingSignatureErrorCause,
     PairingStatus,
     PairingView,
-    type PairingWsEventListener,
     pairingKey,
     type SignatureRejectCode,
     type SignatureRejectReason,
@@ -245,7 +246,7 @@ export {
     selectWebauthnSession,
     sessionStore,
 } from "./stores/sessionStore";
-export { useGetUserBalance } from "./tokens";
+export { useGetUserBalance, userBalanceQueryOptions } from "./tokens";
 export type {
     AssetStatus,
     BalanceItem,

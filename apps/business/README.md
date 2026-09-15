@@ -1,6 +1,6 @@
 # Frak Business Dashboard
 
-The Frak Business Dashboard is a comprehensive SaaS application built with TanStack Router (SPA) for companies to manage their referral campaigns, track performance metrics, and interact with blockchain-based reward systems.
+The Frak Business Dashboard is a TanStack Router SPA for merchants to manage their referral campaigns, track performance metrics, and interact with blockchain-based reward systems.
 
 ## Overview
 
@@ -17,9 +17,9 @@ This application provides:
 - **Framework**: TanStack Router (SPA)
 - **State Management**: Zustand with persist middleware
 - **Data Fetching**: TanStack Query (React Query)
-- **Blockchain**: Viem, Wagmi, Account Abstraction
-- **UI Components**: Radix UI primitives
-- **Styling**: CSS Modules (no Tailwind)
+- **Blockchain**: Viem, Account Abstraction
+- **UI Components**: Radix UI primitives + `@frak-labs/design-system`
+- **Styling**: Vanilla Extract `.css.ts` (no Tailwind, no CSS Modules)
 - **Build Tool**: Vite
 - **Production Server**: nginx (static files)
 - **Authentication**: JWT via backend API + Zustand store
@@ -70,11 +70,10 @@ bun run test:coverage
 ### Directory Structure
 
 - `src/routes/` - File-based routing (TanStack Router)
-- `src/module/` - Feature modules (campaigns, members, products, etc.)
+- `src/module/` - Feature modules (campaigns, members, merchant, etc.)
 - `src/config/` - App configuration (auth, environment)
 - `src/stores/` - Zustand state stores
-- `src/components/` - Shared components
-- `src/styles/` - Global CSS and themes
+- `src/styles/` - Global styles and themes
 
 ### Module-Based Architecture
 
@@ -99,54 +98,29 @@ const value = useStore((state) => state.value);
 const { value } = useStore();
 ```
 
-### Routing
+### Routing and data fetching
 
-This project uses TanStack Router with file-based routing. Routes are defined as files in `src/routes/`.
-
-To add a new route:
-1. Create a new file in `src/routes/` (e.g., `about.tsx`)
-2. TanStack Router will automatically generate the route
-
-For navigation, use the `Link` component:
-```tsx
-import { Link } from "@tanstack/react-router";
-
-<Link to="/about">About</Link>
-```
-
-### Data Fetching
-
-Data fetching uses a combination of:
-1. **TanStack Query** - For client-side data fetching and caching
-2. **TanStack Router Loaders** - For route-level data loading
-
-Example with loader:
-```tsx
-export const Route = createFileRoute("/campaigns")({
-  loader: async () => {
-    const campaigns = await getCampaigns();
-    return { campaigns };
-  },
-  component: CampaignsPage,
-});
-```
+File-based TanStack Router over `src/routes/`; `routeTree.gen.ts` is generated, never
+edited by hand. Auth is centralised in the `_restricted` layout — do not add per-route
+guards. Server data comes from `@frak-labs/client` (Eden Treaty), so backend types flow
+through; do not hand-roll fetches.
 
 ## Code Style
 
 - **TypeScript only** - Prefer `types` over `interfaces`
 - **Functional patterns** - Avoid classes
-- **CSS Modules** - All styling uses CSS Modules (no Tailwind)
+- **Vanilla Extract** - All styling lives in `.css.ts` files (no Tailwind, no `globalStyle`)
 - **Early returns** - For better readability
 - **Performance-first** - This app handles high workloads
 
 ## Important Notes
 
 - Always use `bun` as the package manager (never npm, pnpm, or yarn)
-- Use CSS Modules for styling (Tailwind is NOT used)
+- Use Vanilla Extract `.css.ts` for styling (Tailwind is NOT used)
 - Run `bun run typecheck` before committing changes
 - Follow module-based architecture for new features
 
 ## Related Documentation
 
-- See `CLAUDE.md` in the monorepo root for overall project guidelines
-- See `.cursor/rules/012-frontend-business.mdc` for AI assistant guidelines
+- `apps/business/AGENTS.md` — the non-obvious rules for this app
+- `/AGENTS.md` — the monorepo compass

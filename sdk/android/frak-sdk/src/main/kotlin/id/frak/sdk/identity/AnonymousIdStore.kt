@@ -22,13 +22,10 @@ import kotlin.coroutines.coroutineContext
  * One P-256 keypair per app installation, and the id derived from it:
  * `clientId = uuid_from(SHA-256(pubkey_uncompressed)[0..16])`.
  *
- * The key is the identity; the id is never read back from storage, only re-derived from the key
- * and memoised. No unprovable fallback: when the platform can't produce key material,
- * [anonymousId] is null, not a random unsigned id.
- *
- * Generation is a suspend/coroutine-native single-flight, so a keystore round-trip never blocks
- * a caller's thread. [startEagerGeneration] kicks off the mint as soon as this store exists; a
- * caller racing that warm-up awaits the same in-flight [Deferred] instead of re-entering [load].
+ * The key is the identity; the id is never read back from storage, only re-derived and memoised.
+ * No unprovable fallback: when the platform can't produce key material, [anonymousId] is null,
+ * not a random unsigned id. Generation is a coroutine-native single-flight, so a keystore
+ * round-trip never blocks a caller's thread.
  */
 internal class AnonymousIdStore(
     private val keyStore: DeviceKeyStore,
@@ -99,20 +96,12 @@ internal class AnonymousIdStore(
     }
 
     /**
-     * Destroys the keypair; caller purges anything queued under the dead id, but only when this
-     * returns true. A throwing `deleteEntry` leaves the entry alive, so the next [anonymousId]
-     * call would re-derive the same id — a false return lets the caller keep events under the id
-     * they were actually captured under.
+     * Destroys the keypair; the caller purges anything queued under the dead id, but only when
+     * this returns true — a throwing `deleteEntry` leaves the entry alive and the next
+     * [anonymousId] re-derives the same id.
      *
-     * [generation] is cleared under the same lock a fresh mint reads it from, so an in-flight
-     * generation cannot publish the old identity after this call: [current] sees `generation ==
-     * null` and starts a new one. The in-flight [Deferred], if any, is also cancelled first, so a
-     * racing [load] cannot write [MERCHANT_MARKER_KEY] back after the removal below.
-     *
-     * The keystore delete and the `SharedPreferences` removal both move to [ioDispatcher] after
-     * `generation = null`: this is a suspend fun a merchant calls from `Dispatchers.Main`, and
-     * nothing reached inside `withContext` calls back into this store, so [mutex] (not reentrant)
-     * is never re-acquired.
+     * [generation] is cancelled and cleared under the same lock a fresh mint reads it from, so an
+     * in-flight generation can neither publish the destroyed identity nor write the marker back.
      */
     suspend fun reset(): Boolean =
         mutex.withLock {
@@ -133,11 +122,9 @@ internal class AnonymousIdStore(
      * `await()` happens outside the lock: awaiting a keystore round-trip while holding [mutex]
      * would serialise every reader behind the first one in.
      *
-     * A refusal is never cached: a keystore can refuse for reasons that pass (a locked device, a
-     * transient JCE hiccup), and caching it would turn one refusal into a permanent one. After a
-     * [Deferred] resolves to null, [generation] clears only if it is still the exact same
-     * instance (`===`) this call awaited, so a concurrent [reset] or newer [current] is not
-     * clobbered.
+     * A refusal is never cached: a keystore can refuse for reasons that pass. [generation] clears
+     * only if it is still the exact instance (`===`) this call awaited, so a concurrent [reset]
+     * or a newer [current] is not clobbered.
      */
     private suspend fun current(): Identity? {
         // The one gate: checked before `generation` is read, so a denied consent short-circuits
@@ -173,17 +160,10 @@ internal class AnonymousIdStore(
         return identity
     }
 
-    /**
-     * [startEagerGeneration] always runs before any suspend function on this store is reachable.
-     * A null [eagerScope] here means that invariant broke; logs and falls back to the
-     * identity-unavailable outcome rather than crashing the merchant's app.
-     */
+    /** [startEagerGeneration] always runs first; a null [eagerScope] means that invariant broke. */
     private fun requireEagerScope(): CoroutineScope =
         eagerScope ?: run {
-            logger.error(
-                "AnonymousIdStore.startEagerGeneration did not run before anonymousId()/signProof()/reset(); " +
-                    "this is an SDK bug, please report it. Tracking will be inert.",
-            )
+            logger.error("AnonymousIdStore.startEagerGeneration did not run. This is an SDK bug — please report it.")
             CoroutineScope(ioDispatcher)
         }
 
@@ -197,7 +177,7 @@ internal class AnonymousIdStore(
             val key = keyStore.loadOrCreate()
             // A reset() that ran while this was in flight already removed the marker and
             // cancelled this call; writing it back here would resurrect it for a key this
-            // generation no longer owns.
+            // generation does not own.
             if (coroutineContext.isActive) {
                 store.putString(MERCHANT_MARKER_KEY, merchantMarker)
             }

@@ -756,6 +756,40 @@
         "openLogin": {
             "login": "Se connecter avec la biométrie",
             "webauthnNotSupported": "WebAuthn n'est pas pris en charge sur cet appareil"
+        },
+        "modal": {
+            "explorerDetail": {
+                "ariaLabel": "Détails du commerçant"
+            },
+            "welcomeDetail": {
+                "ariaLabel": "Bienvenue sur Frak"
+            },
+            "moneriumBankFlow": {
+                "ariaLabel": "Virement bancaire"
+            },
+            "rewardDetail": {
+                "ariaLabel": "Détails de la récompense"
+            },
+            "moneriumOrderDetail": {
+                "ariaLabel": "Détails du transfert"
+            },
+            "editReferralCode": {
+                "ariaLabel": "Modifier votre code de parrainage"
+            },
+            "moneriumCallback": {
+                "ariaLabel": "Connexion de votre compte bancaire"
+            }
+        },
+        "modalError": {
+            "title": "Impossible d'ouvrir",
+            "message": "L'application a été mise à jour depuis le chargement de cette page. Rechargez pour continuer.",
+            "messageOffline": "Vous êtes hors ligne, le chargement a échoué. Cela fonctionnera dès votre retour en ligne.",
+            "reload": "Recharger"
+        },
+        "errorFallback": {
+            "title": "Une erreur est survenue",
+            "message": "Rechargez la page pour continuer.",
+            "reload": "Recharger"
         }
     },
     "biometrics": {

@@ -59,11 +59,6 @@ const useFormField = () => {
     const { getFieldState, formState } = useFormContext();
 
     const fieldState = getFieldState(fieldContext.name, formState);
-
-    if (!fieldContext) {
-        throw new Error("useFormField should be used within <FormField>");
-    }
-
     const { id } = itemContext;
 
     return {
@@ -133,18 +128,15 @@ const FormLabel = ({
 FormLabel.displayName = "FormLabel";
 
 const FormControl = ({ ref, ...props }: ComponentPropsWithRef<typeof Slot>) => {
-    const { error, formItemId, formDescriptionId, formMessageId } =
-        useFormField();
+    const { error, formItemId, formMessageId } = useFormField();
 
     return (
         <Slot
             ref={ref}
             id={formItemId}
-            aria-describedby={
-                !error
-                    ? `${formDescriptionId}`
-                    : `${formDescriptionId} ${formMessageId}`
-            }
+            // `FormDescription` renders outside `FormItem`, so its id never
+            // resolved from here.
+            aria-describedby={error ? formMessageId : undefined}
             aria-invalid={!!error}
             {...props}
         />

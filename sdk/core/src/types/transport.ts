@@ -15,15 +15,15 @@ export type IFrameTransport = {
      */
     waitForSetup: Promise<void>;
     /**
-     * Function used to perform a single request via the iframe transport
+     * Perform a single request via the iframe transport
      */
     request: RpcClient<IFrameRpcSchema, LifecycleMessage>["request"];
     /**
-     * Function used to listen to a request response via the iframe transport
+     * Stream the responses of a request via the iframe transport
      */
     listenerRequest: RpcClient<IFrameRpcSchema, LifecycleMessage>["listen"];
     /**
-     * Function used to destroy the iframe transport
+     * Tear down the iframe transport
      */
     destroy: () => Promise<void>;
 };

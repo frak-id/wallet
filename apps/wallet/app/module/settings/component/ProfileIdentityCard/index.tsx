@@ -133,7 +133,7 @@ function IdentityRow({
     );
 }
 
-export function PairingIdentityRow() {
+function PairingIdentityRow() {
     const wsTargetPartner = useStore(
         getTargetPairingClient().store,
         (s) => s.partnerDevice
@@ -143,9 +143,7 @@ export function PairingIdentityRow() {
         (s) => s.partnerDevice
     );
 
-    const currentDeviceLabel = useMemo(() => {
-        return wsTargetPartner ?? originWsPartner ?? null;
-    }, [originWsPartner, wsTargetPartner]);
+    const currentDeviceLabel = wsTargetPartner ?? originWsPartner ?? null;
 
     if (!currentDeviceLabel) return null;
 

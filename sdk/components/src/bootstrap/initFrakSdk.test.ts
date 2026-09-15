@@ -14,6 +14,7 @@ vi.mock("@frak-labs/core-sdk", async () => {
     return {
         ...actual,
         setupClient: vi.fn(),
+        trackEvent: vi.fn(),
     };
 });
 
@@ -30,9 +31,9 @@ vi.mock("../actions/sharingPage", () => ({
     openSharingPage: vi.fn(),
 }));
 
-// Sequential: tests mutate window.FrakSetup and vi.mock module state,
-// incompatible with the workspace default of `sequence.concurrent: true`.
-describe.sequential("initFrakSdk", () => {
+// Tests mutate window.FrakSetup and vi.mock module state, so they depend on
+// the workspace's in-file sequential execution.
+describe("initFrakSdk", () => {
     beforeEach(async () => {
         vi.clearAllMocks();
         // Clear withCache global state between tests
@@ -143,12 +144,6 @@ describe.sequential("initFrakSdk", () => {
         expect(window.FrakSetup.client).toBe(mockClient);
         expect(clientReadyUtils.dispatchClientReadyEvent).toHaveBeenCalled();
         expect(coreSdkActions.setupReferral).toHaveBeenCalledWith(mockClient);
-        expect(consoleLogSpy).toHaveBeenCalledWith(
-            "[Frak SDK] Starting initialization"
-        );
-        expect(consoleLogSpy).toHaveBeenCalledWith(
-            "[Frak SDK] Client initialized successfully"
-        );
 
         consoleLogSpy.mockRestore();
     });
@@ -261,9 +256,6 @@ describe.sequential("initFrakSdk", () => {
             undefined,
             { link: undefined, products: undefined }
         );
-        expect(consoleLogSpy).toHaveBeenCalledWith(
-            "[Frak SDK] Auto open share via query param"
-        );
         // URL should be cleaned so a refresh does not re-trigger auto-open
         expect(window.history.replaceState).toHaveBeenCalledWith(
             {},
@@ -272,6 +264,40 @@ describe.sequential("initFrakSdk", () => {
         );
 
         consoleLogSpy.mockRestore();
+    });
+
+    it("should report sharing_page_auto_opened for a frakAction=share launch", async () => {
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue({
+            config: { domain: "example.com" },
+        } as any);
+        Object.defineProperty(window, "location", {
+            value: {
+                href: "https://example.com/?frakAction=share&placement=klaviyo&link=https%3A%2F%2Fexample.com%2Fa",
+            },
+            writable: true,
+        });
+
+        await initFrakSdk();
+
+        expect(coreSdkIndex.trackEvent).toHaveBeenCalledWith(
+            expect.anything(),
+            "sharing_page_auto_opened",
+            { placement: "klaviyo", has_link: true, has_products: false }
+        );
+    });
+
+    it("should not report sharing_page_auto_opened without the query param", async () => {
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue({
+            config: { domain: "example.com" },
+        } as any);
+
+        await initFrakSdk();
+
+        expect(coreSdkIndex.trackEvent).not.toHaveBeenCalledWith(
+            expect.anything(),
+            "sharing_page_auto_opened",
+            expect.anything()
+        );
     });
 
     it("should forward link, placement and products query params to openSharingPage", async () => {

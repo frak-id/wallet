@@ -52,7 +52,7 @@ export async function getMerchantCampaigns({
     } as CampaignListResponse;
 }
 
-export async function getCampaignDetail({
+export async function getCampaignConfig({
     merchantId,
     campaignId,
     isDemoMode,

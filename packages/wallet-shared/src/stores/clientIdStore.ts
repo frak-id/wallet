@@ -1,23 +1,16 @@
 /**
- * Zustand store for client ID management
+ * Anonymous client ID received from the SDK (partner-site localStorage),
+ * sent on backend calls as `x-frak-client-id`.
  *
- * Stores the anonymous client ID received from the SDK (partner site localStorage).
- * Used for identity tracking in backend API calls via x-frak-client-id header.
- *
- * TODO: Evolve to Record<merchantId, clientId> for per-merchant clientId storage.
- * This will allow the wallet to track clientId usage across multiple merchants,
- * enabling client-side handling of token merging edge cases when backend
- * identity resolution misses some correlations.
+ * TODO: evolve to `Record<merchantId, clientId>` so multi-merchant token
+ * merges can be resolved client-side.
  */
 
 import { persist } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
+import { setAnalyticsDeviceId } from "../common/analytics/globalProps";
 import type { ClientIdStore } from "./types";
 
-/**
- * Client ID store managing the current anonymous client identifier
- * Uses persist middleware to sync with localStorage
- */
 export const clientIdStore = createStore<ClientIdStore>()(
     persist(
         (set) => ({
@@ -25,7 +18,12 @@ export const clientIdStore = createStore<ClientIdStore>()(
             clientId: null,
 
             // Actions
-            setClientId: (clientId) => set({ clientId }),
+            // The analytics device id trails this store so every wallet-side
+            // surface reports the same device as the partner page it came from.
+            setClientId: (clientId) => {
+                set({ clientId });
+                setAnalyticsDeviceId(clientId);
+            },
             clearClientId: () => set({ clientId: null }),
         }),
         {

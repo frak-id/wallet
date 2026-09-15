@@ -36,12 +36,11 @@ export function Calendar({
                 day_button: `${button({ variant: "ghost" })} ${styles.day}`,
                 selected: styles.daySelected,
                 today: styles.dayToday,
-                outside: `day-outside ${styles.dayOutside}`,
+                outside: styles.dayOutside,
                 disabled: styles.dayDisabled,
                 range_start: styles.rangeStart,
                 range_middle: styles.rangeMiddle,
                 range_end: styles.rangeEnd,
-                hidden: "invisible",
                 ...classNames,
             }}
             components={{

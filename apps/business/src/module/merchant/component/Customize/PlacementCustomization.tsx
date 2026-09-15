@@ -17,6 +17,7 @@ import {
     ComponentFields,
     ComponentImagePicker,
     ComponentPreview,
+    ComponentStyleFields,
     ComponentTypeTabs,
     WordingLangTabs,
 } from "./ComponentEditor";
@@ -128,7 +129,10 @@ function PlacementSettingsPanel({
                         ...placement,
                         components: {
                             ...placement?.components,
-                            ...formValuesToComponents(currentValues),
+                            ...formValuesToComponents(
+                                currentValues,
+                                placementId
+                            ),
                         },
                         targetInteraction: valueOrUndefined(
                             currentValues.targetInteraction
@@ -237,6 +241,14 @@ function PlacementSettingsPanel({
                             lang={activeLang}
                         />
                     </AdvancedDisclosure>
+
+                    <ComponentStyleFields
+                        selectedComponent={selectedComponent}
+                        form={form}
+                        lang={activeLang}
+                        configLang={sdkConfig.lang}
+                        tier={placementId}
+                    />
                 </Stack>
             </Card>
         </Form>

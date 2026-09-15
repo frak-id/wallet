@@ -3,8 +3,6 @@ import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias, brand } from "../../tokens.css";
 
-/* ----- keyframes ----- */
-
 const checkPopIn = keyframes({
     "0%": { opacity: 0, transform: "scale(0.4)" },
     "100%": { opacity: 1, transform: "scale(1)" },
@@ -14,8 +12,6 @@ const connectorSweep = keyframes({
     "0%": { transform: "scaleY(0)" },
     "100%": { transform: "scaleY(1)" },
 });
-
-/* ----- root ----- */
 
 export const root = style({
     display: "flex",
@@ -27,8 +23,6 @@ export const root = style({
     padding: 0,
     listStyle: "none",
 });
-
-/* ----- step row ----- */
 
 export const item = style({
     width: "100%",
@@ -51,8 +45,6 @@ export const stepInteractive = style({
     cursor: "pointer",
 });
 
-/* ----- indicator column (indicator + connector) ----- */
-
 export const indicatorColumn = style({
     display: "flex",
     flexDirection: "column",
@@ -61,8 +53,6 @@ export const indicatorColumn = style({
     flexShrink: 0,
     width: 32,
 });
-
-/* ----- indicator circle ----- */
 
 export const indicator = recipe({
     base: {
@@ -134,8 +124,6 @@ export const checkIconPop = style({
     },
 });
 
-/* ----- connector line ----- */
-
 export const connectorWrap = style({
     position: "relative",
     width: 1,
@@ -164,8 +152,6 @@ export const connectorFillSweep = style({
         },
     },
 });
-
-/* ----- cell text ----- */
 
 export const cell = style({
     display: "flex",

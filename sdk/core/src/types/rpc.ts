@@ -20,43 +20,12 @@ import type { UserReferralStatusType } from "./rpc/userReferralStatus";
 import type { WalletStatusReturnType } from "./rpc/walletStatus";
 
 /**
- * RPC interface that's used for the iframe communication
+ * RPC interface used for the iframe communication.
  *
- * Define all the methods available within the iFrame RPC client with response type annotations
+ * `frak_listenToWalletStatus` is the only streaming method — it emits on every
+ * wallet status change; every other method resolves once.
  *
  * @group RPC Schema
- *
- * @remarks
- * Each method in the schema now includes a ResponseType field that indicates:
- * - "promise": One-shot request that resolves once
- * - "stream": Streaming request that can emit multiple values
- *
- * ### Methods:
- *
- * #### frak_listenToWalletStatus
- *  - Params: None
- *  - Returns: {@link WalletStatusReturnType}
- *  - Response Type: stream (emits updates when wallet status changes)
- *
- * #### frak_displayModal
- * - Params: [requests: {@link ModalRpcStepsInput}, metadata?: {@link ModalRpcMetadata}, configMetadata: {@link FrakWalletSdkConfig}["metadata"], placement?: string]
- * - Returns: {@link ModalRpcStepsResultType}
- * - Response Type: promise (one-shot)
- *
- * #### frak_sso
- *  - Params: [params: {@link OpenSsoParamsType}, name: string, customCss?: string]
- *  - Returns: {@link OpenSsoReturnType}
- *  - Response Type: promise (one-shot)
- *
- * #### frak_getMerchantInformation
- *  - Params: None
- *  - Returns: {@link GetMerchantInformationReturnType}
- *  - Response Type: promise (one-shot)
- *
- * #### frak_displaySharingPage
- * - Params: [request: {@link DisplaySharingPageParamsType}, configMetadata: {@link FrakWalletSdkConfig}["metadata"], placement?: string]
- * - Returns: {@link DisplaySharingPageResultType}
- * - Response Type: promise (one-shot)
  */
 export type IFrameRpcSchema = [
     /**

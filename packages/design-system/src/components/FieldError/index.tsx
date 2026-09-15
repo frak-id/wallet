@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { AriaRole, ReactNode } from "react";
 import { ExclamationCircleIcon } from "../../icons";
 import { Box } from "../Box";
 import { Text } from "../Text";
@@ -9,6 +9,8 @@ type FieldErrorProps = {
     className?: string;
     /** Forwarded to the root so callers can wire `aria-describedby`. */
     id?: string;
+    /** Defaults to the polite `"status"`; pass `"alert"` to interrupt. */
+    role?: AriaRole;
 };
 
 /**
@@ -16,7 +18,12 @@ type FieldErrorProps = {
  * in the error colour. Renders nothing when it has no message, so callers can
  * mount it unconditionally below a field and feed it the current error.
  */
-export function FieldError({ children, className, id }: FieldErrorProps) {
+export function FieldError({
+    children,
+    className,
+    id,
+    role = "status",
+}: FieldErrorProps) {
     if (!children) {
         return null;
     }
@@ -24,6 +31,9 @@ export function FieldError({ children, className, id }: FieldErrorProps) {
         <Box
             as="span"
             id={id}
+            // Live: the message can change while mounted, which
+            // `aria-describedby` alone never re-announces.
+            role={role}
             className={`${styles.root}${className ? ` ${className}` : ""}`}
         >
             <ExclamationCircleIcon

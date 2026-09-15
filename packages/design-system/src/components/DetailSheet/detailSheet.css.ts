@@ -1,12 +1,12 @@
 import { style } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
-import { alias, zIndex } from "../../tokens.css";
+import { alias, safeArea, zIndex } from "../../tokens.css";
 
 export const containerStyle = style({
     display: "flex",
     flexDirection: "column",
     minHeight: "100dvh",
-    paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
+    paddingTop: safeArea.top,
     "@media": {
         "screen and (min-width: 1024px)": {
             minHeight: "auto",
@@ -28,7 +28,7 @@ export const actionsStyle = style({
     top: 0,
     left: 0,
     right: 0,
-    paddingTop: `max(${alias.spacing.m}, var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))`,
+    paddingTop: `max(${alias.spacing.m}, ${safeArea.top})`,
     paddingLeft: alias.spacing.m,
     paddingRight: alias.spacing.m,
     zIndex: zIndex.modal,
@@ -59,7 +59,7 @@ export const footerStyle = style({
     zIndex: 2,
     flexShrink: 0,
     padding: `${alias.spacing.m}`,
-    paddingBottom: `max(${alias.spacing.xl}, env(safe-area-inset-bottom))`,
+    paddingBottom: `max(${alias.spacing.xl}, ${safeArea.bottom})`,
     backgroundColor: vars.surface.background2,
     display: "flex",
     flexDirection: "column",

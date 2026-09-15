@@ -10,7 +10,7 @@ import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-set
 export function useDeleteRecoveryBlob() {
     const queryClient = useQueryClient();
 
-    const { mutate, mutateAsync, ...mutationStuff } = useMutation({
+    const { mutateAsync, ...mutation } = useMutation({
         mutationKey: recoverySetupKey.deleteBlob,
         gcTime: 0,
         mutationFn: async () => {
@@ -27,8 +27,7 @@ export function useDeleteRecoveryBlob() {
     });
 
     return {
-        ...mutationStuff,
-        deleteRecoveryBlob: mutate,
+        ...mutation,
         deleteRecoveryBlobAsync: mutateAsync,
     };
 }

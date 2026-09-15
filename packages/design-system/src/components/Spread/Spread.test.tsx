@@ -15,17 +15,6 @@ describe("Spread", () => {
         expect(screen.getByText("a").parentElement?.tagName).toBe("DIV");
     });
 
-    it("applies the base spread class", () => {
-        render(
-            <Spread>
-                <span>content</span>
-            </Spread>
-        );
-        expect(
-            screen.getByText("content").parentElement?.className
-        ).toBeTruthy();
-    });
-
     it("changes flex-direction class between horizontal and vertical", () => {
         const { rerender } = render(
             <Spread direction="horizontal">

@@ -28,8 +28,8 @@ const BASELINE_TTL_MS = 24 * 60 * 60 * 1000;
 const ISO_4217 = /^[A-Za-z]{3}$/;
 
 /**
- * Fiat FX rates from free, keyless providers: Frankfurter (ECB reference
- * rates, ~30 currencies) with open.er-api.com as fallback (161 currencies).
+ * Fiat FX rates from free, keyless providers: Frankfurter (rates blended
+ * across 94 central banks, 205 currencies) with open.er-api.com as fallback.
  * One cached table per base currency covers every quote pair.
  */
 export class FxRateRepository {
@@ -51,7 +51,7 @@ export class FxRateRepository {
 
     constructor() {
         this.frankfurter = ky.create({
-            prefix: "https://api.frankfurter.dev/v1/",
+            prefix: "https://api.frankfurter.dev/v2/",
             headers: { accept: "application/json" },
         });
         this.erApi = ky.create({
@@ -135,14 +135,23 @@ export class FxRateRepository {
         base: string
     ): Promise<RateTable | undefined> {
         try {
-            const response = await this.frankfurter.get<{
-                rates: RateTable | undefined;
-            }>("latest", { searchParams: { base } });
-            const data = await response.json();
-            if (!data.rates || Object.keys(data.rates).length === 0) {
+            // v2 answers with one flat row per pair, not a keyed map
+            const response = await this.frankfurter.get<
+                { quote?: string; rate?: number }[]
+            >("rates", { searchParams: { base } });
+            const rows = await response.json();
+            if (!Array.isArray(rows)) return undefined;
+
+            const table: RateTable = {};
+            for (const row of rows) {
+                if (typeof row?.quote !== "string") continue;
+                if (typeof row.rate !== "number") continue;
+                table[row.quote.toUpperCase()] = row.rate;
+            }
+            if (Object.keys(table).length === 0) {
                 return undefined;
             }
-            return data.rates;
+            return table;
         } catch (error) {
             log.warn(
                 { error, base },

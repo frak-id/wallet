@@ -64,8 +64,12 @@ export default function App() {
                     content="width=device-width,initial-scale=1"
                 />
                 <link rel="preconnect" href="https://cdn.shopify.com/" />
+                {/* `polaris.js` appends this same sheet with `crossOrigin=""`;
+                    preload under that exact mode or the entry is not reused. */}
                 <link
-                    rel="stylesheet"
+                    rel="preload"
+                    as="style"
+                    crossOrigin=""
                     href="https://cdn.shopify.com/static/fonts/inter/v4/styles.css"
                 />
                 <Meta />

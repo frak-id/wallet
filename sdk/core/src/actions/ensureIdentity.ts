@@ -17,7 +17,7 @@ const ENSURE_STORAGE_PREFIX = "frak-identity-ensured-";
  * The call is:
  * - **Idempotent** — if already linked, backend returns immediately
  * - **Deduplicated** — fires once per browser session per (merchant, clientId)
- * - **Fire-and-forget** — errors are logged but never thrown
+ * - **Fire-and-forget** — errors are swallowed, never thrown; retry next session
  *
  * @param interactionToken - The SDK JWT from wallet status (x-wallet-sdk-auth)
  *

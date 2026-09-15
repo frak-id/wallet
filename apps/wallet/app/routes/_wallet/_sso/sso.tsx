@@ -23,6 +23,7 @@ import {
     resolveWebauthnErrorView,
     sessionStore,
     ssoKey,
+    updateGlobalProperties,
     useWebauthnErrorToast,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
@@ -92,6 +93,11 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
             metadata: metadata ?? undefined,
             proof,
         });
+
+        // Registration and onboarding run on this origin, away from the
+        // listener that knows the merchant, so the attribution is set here or
+        // those events carry none at all.
+        if (merchantId) updateGlobalProperties({ merchant_id: merchantId });
 
         // Save the client id if provided
         if (compressedParam.cId) {
@@ -188,8 +194,8 @@ function Sso() {
      * redirects / closes.
      *
      * Wrapped in a mutation so `isCompleting` drives the CTA loading state: the
-     * primary button is disabled while the handoff is in flight, which replaces
-     * the old manual re-entrancy ref as the double-submit guard.
+     * primary button is disabled while the handoff is in flight, which is the
+     * double-submit guard.
      */
     const { mutate: onSuccess, isPending: isCompleting } = useMutation({
         mutationKey: ssoKey.complete,
@@ -225,27 +231,17 @@ function Sso() {
 
                 if (listenerIframe) {
                     try {
-                        // Create RPC client targeting the listener iframe
                         const ssoClient = createRpcClient<SsoRpcSchema>({
                             emittingTransport: listenerIframe,
                             listeningTransport: window,
                             targetOrigin: window.location.origin,
                         });
 
-                        console.log(
-                            "[SSO] Sent completion message to listener iframe via RPC",
-                            {
-                                address: session.address,
-                            }
-                        );
-
-                        // Send SSO completion via RPC
                         await ssoClient.request({
                             method: "sso_complete",
                             params: [session, sdkSession],
                         });
 
-                        // Cleanup the client
                         ssoClient.cleanup();
                     } catch (error) {
                         recordError(error, {

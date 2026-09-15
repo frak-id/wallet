@@ -18,7 +18,6 @@ const Command: typeof DevCommand = await import(
     .then((m) => m.DevCommand)
     .catch(() => {
         console.debug("SST Command not found, using a placeholder constructor");
-        // @ts-expect-error: Not exported in the SST platform
         return sst.x.DevCommand;
     });
 
@@ -264,6 +263,7 @@ export class KubernetesService extends ComponentResource {
         const hasPathRoutes =
             this.args.ingress.pathRoutes &&
             this.args.ingress.pathRoutes.length > 0;
+        const serviceName = this.service.metadata.name;
 
         // Mapper for the ingress rules
         const hostToRule = (host: Input<string>) => {
@@ -274,7 +274,7 @@ export class KubernetesService extends ComponentResource {
                     pathType: "Prefix",
                     backend: {
                         service: {
-                            name: this.service?.metadata?.name ?? "",
+                            name: serviceName,
                             port: { number: 80 },
                         },
                     },

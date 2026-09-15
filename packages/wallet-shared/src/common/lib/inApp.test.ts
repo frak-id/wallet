@@ -1,30 +1,33 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const PATCHED_NAVIGATOR_KEYS = ["userAgent", "maxTouchPoints"] as const;
+
 describe("inApp utilities", () => {
-    let originalWindow: typeof window;
-    let originalNavigator: typeof navigator;
+    // Each case redefines `navigator.userAgent` / `maxTouchPoints` in place.
+    // Capture the descriptors and restore them the same way: Vitest 5
+    // propagates global assignments to the underlying jsdom window, so a plain
+    // `global.navigator = ...` throws — `navigator` is getter-only there.
+    let navigatorDescriptors: Record<string, PropertyDescriptor>;
 
     beforeEach(() => {
-        originalWindow = global.window;
-        originalNavigator = global.navigator;
+        navigatorDescriptors = {};
+        for (const key of PATCHED_NAVIGATOR_KEYS) {
+            const descriptor = Object.getOwnPropertyDescriptor(
+                globalThis.navigator,
+                key
+            );
+            if (descriptor) navigatorDescriptors[key] = descriptor;
+        }
     });
 
     afterEach(() => {
-        global.window = originalWindow;
-        global.navigator = originalNavigator;
+        for (const key of PATCHED_NAVIGATOR_KEYS) {
+            const descriptor = navigatorDescriptors[key];
+            if (descriptor) {
+                Object.defineProperty(globalThis.navigator, key, descriptor);
+            }
+        }
         vi.resetModules();
-    });
-
-    describe("isInIframe", () => {
-        it("should be a boolean value", async () => {
-            const { isInIframe } = await import("./inApp");
-            expect(typeof isInIframe).toBe("boolean");
-        });
-
-        it("should check window.self vs window.top", () => {
-            // In jsdom, window.self === window.top by default
-            expect(window.self === window.top).toBe(true);
-        });
     });
 
     describe("isUaIOS", () => {

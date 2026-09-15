@@ -17,7 +17,6 @@ struct SharingSheetLogicTests {
         activationFragment: String? = nil
     ) -> SharingSession {
         SharingSession(
-            walletOrigin: "https://wallet.frak.id",
             returnScheme: "frak-com.acme.app",
             link: "https://merchant.example/p?fCtx=abc",
             shareTitle: "Share and earn",

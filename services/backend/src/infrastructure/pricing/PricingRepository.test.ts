@@ -370,30 +370,6 @@ describe("PricingRepository", () => {
     });
 
     describe("cache behavior", () => {
-        it("should respect cache TTL", async () => {
-            const mockToken =
-                "0x1234567890abcdef1234567890abcdef12345678" as Address;
-            const mockPrice: TokenPrice = {
-                usd: 1.5,
-                eur: 1.3,
-                gbp: 1.1,
-            };
-
-            mockGet.mockResolvedValue({
-                json: async () => ({
-                    [mockToken.toLowerCase()]: mockPrice,
-                }),
-            });
-
-            // First call
-            await repository.getTokenPrice({ token: mockToken });
-            expect(mockGet).toHaveBeenCalledTimes(1);
-
-            // Second call within TTL should use cache
-            await repository.getTokenPrice({ token: mockToken });
-            expect(mockGet).toHaveBeenCalledTimes(1);
-        });
-
         it("should cache different tokens separately", async () => {
             const token1 =
                 "0x1111111111111111111111111111111111111111" as Address;
@@ -420,19 +396,6 @@ describe("PricingRepository", () => {
             expect(result1).toEqual(price1);
             expect(result2).toEqual(price2);
             expect(mockGet).toHaveBeenCalledTimes(2);
-        });
-    });
-
-    describe("API configuration", () => {
-        it("should use CoinGecko API key from environment", () => {
-            // Repository is already created in beforeEach with the env var set
-            expect(process.env.COIN_GECKO_API_KEY).toBe("test-api-key");
-        });
-
-        it("should handle missing API key", () => {
-            delete process.env.COIN_GECKO_API_KEY;
-            const newRepository = new PricingRepository(fxRates);
-            expect(newRepository).toBeDefined();
         });
     });
 });

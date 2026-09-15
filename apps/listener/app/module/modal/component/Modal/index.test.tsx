@@ -44,7 +44,6 @@ vi.mock("@/module/stores/modalStore", async () => {
     return {
         modalStore,
         selectCurrentStep: () => null,
-        selectCurrentStepObject: () => null,
         selectIsDismissed: () => false,
         selectShouldFinish: (state: { shouldFinish: unknown }) =>
             state.shouldFinish,

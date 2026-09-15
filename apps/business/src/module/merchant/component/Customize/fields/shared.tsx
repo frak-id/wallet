@@ -134,7 +134,7 @@ export function ComponentCssField({
     placeholder,
 }: {
     form: UseFormReturn<ComponentSettingsFormValues>;
-    name: `${"buttonShare" | "postPurchase" | "banner"}.css`;
+    name: `${"postPurchase" | "banner"}.css` | "buttonShare.foreignCss";
     label: string;
     placeholder: string;
 }) {

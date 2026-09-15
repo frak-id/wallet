@@ -3,15 +3,9 @@ import { normalizedStageName } from "../utils";
 import { cachedImage, getRegistryPath } from "./utils";
 
 /**
- * Each image is self-contained (multi-stage Dockerfile). The shared SDK build
- * layer is no longer materialized as a separate "base" image; instead, every
- * Dockerfile builds the SDK locally inside a `sdk-builder` stage, and the
- * in-cluster zot registry cache (wired by `cachedImage`) makes the cost of that
- * step amortized — identical input layers (Node 24 install, bun install, SDK
- * build output) dedupe at the blob level across images.
- *
- * `mode: max` on the cache export means intermediate stages are pushed too,
- * which is what makes the dedup actually happen.
+ * Each image is self-contained: every Dockerfile builds the SDK in its own
+ * `sdk-builder` stage, and the in-cluster zot cache (`cachedImage`, `mode: max`,
+ * so intermediate stages are pushed) dedupes those layers across images.
  */
 
 /**

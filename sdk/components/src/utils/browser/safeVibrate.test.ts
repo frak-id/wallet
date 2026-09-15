@@ -30,15 +30,8 @@ describe("safeVibrate", () => {
         const originalVibrate = (navigator as any).vibrate;
         delete (navigator as any).vibrate;
 
-        const consoleLogSpy = vi
-            .spyOn(console, "log")
-            .mockImplementation(() => {});
-
         expect(() => safeVibrate()).not.toThrow();
-        expect(consoleLogSpy).toHaveBeenCalledWith("Vibration not supported");
 
-        // Restore
         (navigator as any).vibrate = originalVibrate;
-        consoleLogSpy.mockRestore();
     });
 });

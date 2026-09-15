@@ -184,3 +184,133 @@ describe("useExecutePendingActions — executeEnsure body", () => {
         });
     });
 });
+
+describe("useExecutePendingActions — navigation drain", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockEnsurePost.mockResolvedValue({ error: null });
+        pendingActionsStore.getState().clearAll();
+    });
+
+    afterEach(() => {
+        pendingActionsStore.getState().clearAll();
+    });
+
+    test("navigates to the pending target, consumes it, and reports it handled", async ({
+        queryWrapper,
+    }) => {
+        pendingActionsStore.getState().addAction({
+            type: "navigation",
+            to: "/pairing",
+            search: { id: "abc" },
+        });
+
+        const { useExecutePendingActions } = await import(
+            "./useExecutePendingActions"
+        );
+        const { result } = renderHook(() => useExecutePendingActions(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        let handled: boolean | undefined;
+        await act(async () => {
+            handled = await result.current.executePendingActions();
+        });
+
+        expect(handled).toBe(true);
+        expect(mockNavigate).toHaveBeenCalledWith({
+            to: "/pairing",
+            search: { id: "abc" },
+            replace: true,
+        });
+        // Consumed: a second drain must not navigate again.
+        expect(pendingActionsStore.getState().getValidActions()).toHaveLength(
+            0
+        );
+    });
+
+    test("reports not-handled and never navigates when nothing is pending", async ({
+        queryWrapper,
+    }) => {
+        const { useExecutePendingActions } = await import(
+            "./useExecutePendingActions"
+        );
+        const { result } = renderHook(() => useExecutePendingActions(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        let handled: boolean | undefined;
+        await act(async () => {
+            handled = await result.current.executePendingActions();
+        });
+
+        expect(handled).toBe(false);
+        expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    test("skipNavigation drains ensures but leaves the navigation queued", async ({
+        queryWrapper,
+    }) => {
+        pendingActionsStore.getState().addAction({
+            type: "navigation",
+            to: "/pairing",
+            search: { id: "abc" },
+        });
+
+        const { useExecutePendingActions } = await import(
+            "./useExecutePendingActions"
+        );
+        const { result } = renderHook(() => useExecutePendingActions(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await act(async () => {
+            await result.current.executePendingActions({
+                skipNavigation: true,
+            });
+        });
+
+        expect(mockNavigate).not.toHaveBeenCalled();
+        expect(pendingActionsStore.getState().getValidActions()).toHaveLength(
+            1
+        );
+    });
+
+    test("a navigation target rejected at hydration never reaches navigate", async ({
+        queryWrapper,
+    }) => {
+        localStorage.setItem(
+            "frak_pending_actions_store",
+            JSON.stringify({
+                state: {
+                    actions: [
+                        {
+                            type: "navigation",
+                            to: "https://evil.example/steal",
+                            id: "nav-evil",
+                            createdAt: 1_700_000_000_000,
+                            expiresAt: 4_000_000_000_000,
+                        },
+                    ],
+                },
+                version: 1,
+            })
+        );
+        await pendingActionsStore.persist.rehydrate();
+
+        const { useExecutePendingActions } = await import(
+            "./useExecutePendingActions"
+        );
+        const { result } = renderHook(() => useExecutePendingActions(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        let handled: boolean | undefined;
+        await act(async () => {
+            handled = await result.current.executePendingActions();
+        });
+
+        expect(handled).toBe(false);
+        expect(mockNavigate).not.toHaveBeenCalled();
+    });
+});

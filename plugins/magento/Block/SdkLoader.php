@@ -87,8 +87,8 @@ class SdkLoader extends Template
      * The wallet + backend origin pair for the SDK's `env` config.
      *
      * Resolution lives on {@see Config::getEnvironment()} so the tracker and
-     * the webhook resolve the same backend; this block only reports the
-     * half-configured case, which it is the surface positioned to surface.
+     * the webhook resolve the same backend; this block only warns when just
+     * one of the two origins is configured.
      *
      * @return array{wallet: string, backend: string}
      */

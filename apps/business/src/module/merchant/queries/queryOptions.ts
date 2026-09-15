@@ -9,9 +9,6 @@ import merchantsMockData from "@/mock/merchants.json";
 import { useAuthStore } from "@/stores/authStore";
 import { merchantDetailQueryKey, myMerchantsQueryKey } from "./queryKeys";
 
-/**
- * Check demo mode via param or Zustand store
- */
 function checkDemoMode(isDemoModeParam: boolean): boolean {
     if (isDemoModeParam) return true;
     return useAuthStore.getState().token === "demo-token";
@@ -52,9 +49,6 @@ function getMerchantMockData(merchantId: string): MerchantData {
     return (merchant ?? merchantsMockData.owned[0]) as MerchantData;
 }
 
-/**
- * Query options for fetching merchant data
- */
 export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
     queryOptions({
         queryKey: merchantDetailQueryKey(merchantId, isDemoMode),
@@ -113,9 +107,6 @@ function getMyMerchantsMockData(): {
     };
 }
 
-/**
- * Query options for fetching user's merchants
- */
 export const myMerchantsQueryOptions = (isDemoMode: boolean) =>
     queryOptions({
         queryKey: myMerchantsQueryKey(isDemoMode),

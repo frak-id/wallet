@@ -1,13 +1,5 @@
-import { vi } from "vitest";
+import { afterEach, vi } from "vitest";
 import { beforeEach, describe, expect, test } from "@/tests/fixtures";
-
-let mockIsRunningLocally = false;
-
-vi.mock("@frak-labs/app-essentials/utils/env", () => ({
-    get isRunningLocally() {
-        return mockIsRunningLocally;
-    },
-}));
 
 vi.mock("@frak-labs/frame-connector", () => ({
     FrakRpcError: class FrakRpcError extends Error {
@@ -39,7 +31,11 @@ function makeContext(origin: string) {
 describe("walletContextMiddleware", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockIsRunningLocally = false;
+        vi.stubEnv("DEV", false);
+    });
+
+    afterEach(() => {
+        vi.unstubAllEnvs();
     });
 
     test("should throw when no resolving context available", async () => {
@@ -91,7 +87,7 @@ describe("walletContextMiddleware", () => {
     });
 
     test("should throw on origin mismatch in production", async () => {
-        mockIsRunningLocally = false;
+        vi.stubEnv("DEV", false);
 
         const { resolvingContextStore } = await import(
             "@/module/stores/resolvingContextStore"
@@ -117,7 +113,7 @@ describe("walletContextMiddleware", () => {
     });
 
     test("should allow origin mismatch in local development", async () => {
-        mockIsRunningLocally = true;
+        vi.stubEnv("DEV", true);
 
         const { resolvingContextStore } = await import(
             "@/module/stores/resolvingContextStore"

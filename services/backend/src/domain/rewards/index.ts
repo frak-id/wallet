@@ -38,6 +38,4 @@ export type {
     SettlementResult,
 } from "./types";
 
-export { buildAttestation } from "./types";
-
 export { purchaseExternalEventId } from "./utils";

@@ -1,28 +1,11 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 
 /**
- * Mirror `window.visualViewport.height` into a `--viewport-height` CSS
- * variable on `:root`. The app shell consumes it as
- * `height: var(--viewport-height, 100dvh)` so the layout shrinks when the
- * soft keyboard opens, keeping pinned footers above it. Also publishes
- * `--keyboard-open` (`0`/`1`), read by initSafeAreaInsets to collapse the
- * nav-bar inset while the keyboard is up.
- *
- * Why not `100dvh` alone: on Tauri iOS (WKWebView) `dvh` does not react to
- * the keyboard at all, and on Tauri Android the WebView often runs in
- * edge-to-edge mode where `android:windowSoftInputMode="adjustResize"` is
- * not honored — `dvh` stays at the full screen height even with the IME
- * visible. Reading `visualViewport.height` works in both cases: when the
- * native shell already resized the WebView, `vv.height` matches the (already
- * shrunk) layout viewport so the variable is a no-op; when it didn't, the
- * variable provides the missing shrinkage.
- *
- * Scope: gated on `IS_TAURI` because regular browsers/PWA handle keyboard
- * insets correctly through `dvh` and the upcoming `interactive-widget`
- * viewport directive, and we don't want to fight them.
- *
- * Returns a cleanup function (used by tests; production callers don't need
- * it since the listeners live for the document's lifetime).
+ * Mirror `window.visualViewport.height` into a `--viewport-height` CSS variable
+ * (plus `--keyboard-open`) so the shell shrinks when the soft keyboard opens.
+ * Tauri-only: on iOS WKWebView `dvh` ignores the keyboard, and on edge-to-edge
+ * Android `adjustResize` is often not honored, so `dvh` stays at full height.
+ * Returns a cleanup that detaches the listeners.
  */
 export function initKeyboardInset(): () => void {
     if (typeof window === "undefined") return () => {};

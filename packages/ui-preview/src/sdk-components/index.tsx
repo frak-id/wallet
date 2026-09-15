@@ -1,9 +1,8 @@
 import type { Currency } from "@frak-labs/core-sdk";
+import type { CSSProperties } from "react";
 import { replaceVariables } from "../utils/variables";
 import { GiftIcon } from "./GiftIcon";
 import * as styles from "./styles.css";
-
-// ─── Banner Preview ─────────────────────────────────────
 
 export type BannerPreviewProps = {
     title: string;
@@ -54,8 +53,6 @@ export function BannerPreview({
         </div>
     );
 }
-
-// ─── Post-Purchase Preview ──────────────────────────────
 
 export type PostPurchasePreviewProps = {
     messageText: string;
@@ -123,12 +120,12 @@ export function PostPurchasePreview({
     );
 }
 
-// ─── Share Button Preview ───────────────────────────────
-
 export type ShareButtonPreviewProps = {
     text: string;
     currency: Currency;
     shopName: string;
+    /** Dashboard style-control values, applied over the default appearance. */
+    style?: CSSProperties;
 };
 
 /**
@@ -139,9 +136,15 @@ export function ShareButtonPreview({
     text,
     currency,
     shopName,
+    style,
 }: ShareButtonPreviewProps) {
     return (
-        <button type="button" className={styles.shareButton}>
+        <button
+            type="button"
+            className={styles.shareButton}
+            style={style}
+            data-testid="share-button-preview"
+        >
             {replaceVariables(text, currency, shopName)}
         </button>
     );

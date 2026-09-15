@@ -14,7 +14,7 @@ import {
     useGetUserBalance,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute } from "@tanstack/react-router";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
     FieldErrors,
     SubmitHandler,
@@ -24,8 +24,8 @@ import type {
 } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import type { Hex } from "viem";
-import { parseUnits } from "viem";
+import type { Address, Hex } from "viem";
+import { isAddressEqual, parseUnits } from "viem";
 import { useWriteContract } from "wagmi";
 import { useBiometricConfirm } from "@/module/biometrics";
 import { Back } from "@/module/common/component/Back";
@@ -36,7 +36,7 @@ import { TokenModalList } from "@/module/tokens/component/TokenModalList";
 import { TransactionError } from "@/module/tokens/component/TransactionError";
 import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess";
 import { erc20TransferAbi } from "@/module/tokens/utils/abi";
-import { getUpdatedToken } from "@/module/tokens/utils/getUpdatedToken";
+import { resolveSelectedToken } from "@/module/tokens/utils/resolveSelectedToken";
 import { validateAmount } from "@/module/tokens/utils/validateAmount";
 import * as styles from "./tokens.send.css";
 
@@ -114,6 +114,8 @@ const AmountInput = function AmountInput({
         });
     }, [selectedToken, setValue]);
 
+    // The user picked a token. The effect below clears the amount for the
+    // other trigger: the backend swapping the token out from under them.
     const handleTokenChange = useCallback(
         (token: BalanceItem) => {
             setSelectedToken(token);
@@ -209,9 +211,35 @@ function TokensSendPage() {
 
     const { userBalance, refetch } = useGetUserBalance();
 
-    const [selectedToken, setSelectedToken] = useState<
-        BalanceItem | undefined
+    // Keyed by address, not by object identity: the balance query hands back a
+    // fresh `BalanceItem` on every refetch, so holding the item itself forced
+    // the re-sync effect this replaces.
+    const [selectedTokenAddress, setSelectedTokenAddress] = useState<
+        Address | undefined
     >();
+    const selectedToken = useMemo(
+        () =>
+            resolveSelectedToken({
+                tokens: userBalance?.balances,
+                selectedAddress: selectedTokenAddress,
+            }),
+        [userBalance, selectedTokenAddress]
+    );
+    const handleSelectToken = useCallback((token: BalanceItem) => {
+        setSelectedTokenAddress(token.token);
+    }, []);
+
+    // The backend drops tokens whose balance hits zero, so a refetch can remove
+    // the pick and `resolveSelectedToken` substitutes another. Adopt it and
+    // drop the amount typed for the old asset, like `handleTokenChange` does
+    // for a user pick. `selectedTokenAddress` is the ask, `selectedToken` the
+    // show; a transient `undefined` leaves the ask alone so the amount survives.
+    useEffect(() => {
+        if (!selectedToken || !selectedTokenAddress) return;
+        if (isAddressEqual(selectedToken.token, selectedTokenAddress)) return;
+        setSelectedTokenAddress(selectedToken.token);
+        resetField("amount");
+    }, [selectedToken, selectedTokenAddress, resetField]);
 
     const {
         mutateAsync: writeContractAsync,
@@ -221,21 +249,6 @@ function TokensSendPage() {
         isSuccess,
         isError,
     } = useWriteContract();
-
-    useEffect(() => {
-        if (!userBalance) return;
-
-        if (!selectedToken) {
-            setSelectedToken(userBalance.balances[0]);
-            return;
-        }
-
-        const findTokenUpdated = getUpdatedToken({
-            tokens: userBalance.balances,
-            selectedToken,
-        });
-        if (findTokenUpdated) setSelectedToken(findTokenUpdated);
-    }, [userBalance, selectedToken]);
 
     // Open the send flow on mount; end as "abandoned" on unmount if the user
     // never submitted. Merchant/prefill context rides on tokens_send_started.
@@ -321,7 +334,7 @@ function TokensSendPage() {
                             errors={errors}
                             selectedToken={selectedToken}
                             setValue={setValue}
-                            setSelectedToken={setSelectedToken}
+                            setSelectedToken={handleSelectToken}
                             resetField={resetField}
                         />
                     )}

@@ -38,7 +38,7 @@ private struct SdkConfigWire: Decodable {
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         // A wrong-typed or unrecognised optional field reads as nil rather than failing the
-        // whole decode. Empty strings normalise to nil, matching the Android twin.
+        // whole decode. Empty strings normalise to nil.
         value = ResolvedSdkConfig(
             name: (try? container.decodeIfPresent(String.self, forKey: .name))?.nonEmpty,
             logoURL: (try? container.decodeIfPresent(String.self, forKey: .logoURL))?.nonEmpty,
@@ -222,6 +222,6 @@ private struct AttributionWire: Decodable {
 }
 
 extension String {
-    /// nil for an empty string, self otherwise. Matches the Android twin's `JsonReader.string`.
+    /// nil for an empty string, self otherwise.
     fileprivate var nonEmpty: String? { isEmpty ? nil : self }
 }

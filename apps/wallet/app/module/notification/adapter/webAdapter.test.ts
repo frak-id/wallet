@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createWebNotificationAdapter } from "./webAdapter";
 
-describe.sequential("createWebNotificationAdapter", () => {
+describe("createWebNotificationAdapter", () => {
     const originalServiceWorker = globalThis.navigator.serviceWorker;
     const originalPushManager = globalThis.window.PushManager;
     const originalNotification = globalThis.window.Notification;

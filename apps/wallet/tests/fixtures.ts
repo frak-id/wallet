@@ -5,6 +5,8 @@ import { RpcApi } from "./api/rpc.api";
 import { ClipboardHelper } from "./helpers/clipboard.helper";
 import { MockedWebAuthNHelper } from "./helpers/mockedWebauthn.helper";
 import { PairingTabHelper } from "./helpers/pairingTab.helper";
+import { createReferee, type RefereeHelper } from "./helpers/referee.helper";
+import { createReferrer, type ReferrerHelper } from "./helpers/referrer.helper";
 import { SdkHelper } from "./helpers/sdk.helper";
 import { StorageHelper } from "./helpers/storage.helper";
 import { WebAuthNHelper } from "./helpers/webauthn.helper";
@@ -23,6 +25,9 @@ type TestFixtures = {
     storageHelper: StorageHelper;
     clipboardHelper: ClipboardHelper;
     sdkHelper: SdkHelper;
+    // Sharing referral: two isolated contexts against a real backend
+    referrer: ReferrerHelper;
+    referee: RefereeHelper;
     // APIs
     backendApi: BackendApi;
     analyticsApi: AnalyticsApi;
@@ -80,6 +85,19 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
     },
     sdkHelper: async ({ page }, use) => {
         await use(new SdkHelper(page));
+    },
+    // Both test-scoped. The referee must be: attribution is permanent per
+    // (merchant, referee), so a shared identity would make every test after
+    // the first assert nothing. The referrer was tried at worker scope to
+    // save a login per spec, and reverted — reusing one page across tests
+    // left listener state behind that stopped the sharing modal opening.
+    referrer: async ({ context }, use) => {
+        await use(await createReferrer(context, "referrer"));
+    },
+    referee: async ({ browser }, use) => {
+        const referee = await createReferee(browser);
+        await use(referee);
+        await referee.close();
     },
     // APIs
     backendApi: async ({ page }, use) => {

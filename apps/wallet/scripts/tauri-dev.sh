@@ -1,6 +1,6 @@
 #!/bin/bash
 # Tauri development helper script
-# Handles starting dev server and launching mobile simulators
+# Handles starting dev server and launching mobile simulators or physical devices
 
 set -e
 
@@ -13,7 +13,6 @@ BACKEND_HTTP_PORT=3031
 DEV_SERVER_URL="http://localhost:$DEV_SERVER_PORT"
 VITE_PID=""
 TAURI_PID=""
-
 cleanup() {
     trap - EXIT INT TERM
     for pid in $VITE_PID $TAURI_PID; do
@@ -120,6 +119,58 @@ detect_lan_ip() {
         [ -n "$ip" ] && break
     done
     echo "$ip"
+}
+
+# Names of the iPhones/iPads reachable right now, one per line. CoreDevice remembers
+# every device ever paired, so filter on a live transport: a stale entry would
+# otherwise win the sole-device pick below and the run would target nothing.
+list_ios_devices() {
+    local json
+    json="$(mktemp)"
+    xcrun devicectl list devices --quiet --json-output "$json" >/dev/null 2>&1 || return 0
+    /usr/bin/python3 -c '
+import json, sys
+with open(sys.argv[1]) as f:
+    devices = json.load(f)["result"]["devices"]
+for d in devices:
+    conn = d.get("connectionProperties", {})
+    if conn.get("pairingState") != "paired":
+        continue
+    if conn.get("tunnelState") == "unavailable" and not conn.get("transportType"):
+        continue
+    print(d.get("deviceProperties", {}).get("name", "?"))
+' "$json"
+    rm -f "$json"
+}
+
+# Echoes the name of the single connected device, or aborts with the list. The Tauri
+# CLI matches this name against hardware first, so a name is enough (no UDID).
+select_ios_device() {
+    local devices count
+    devices="$(list_ios_devices)"
+    if [ -z "$devices" ]; then
+        echo "[tauri-dev] ERROR: no paired iOS device found. Plug the iPhone in, unlock it, trust this Mac," >&2
+        echo "[tauri-dev]        and enable Settings > Privacy & Security > Developer Mode." >&2
+        exit 1
+    fi
+    count="$(echo "$devices" | wc -l | tr -d ' ')"
+    if [ "$count" -ne 1 ]; then
+        echo "[tauri-dev] ERROR: $count devices connected — pick one with TAURI_IOS_DEVICE:" >&2
+        echo "$devices" | awk '{print "[tauri-dev]        " $0}' >&2
+        exit 1
+    fi
+    echo "$devices"
+}
+
+# Xcode's IPA step runs `/usr/bin/rsync` (openrsync) but resolves the server side of
+# that same transfer from PATH: a Homebrew rsync there answers openrsync's
+# --extended-attributes with "unknown option" and the export dies as "Copy failed".
+# Pin both ends to /usr/bin/rsync via a shim dir rather than reordering the whole PATH.
+rsync_shim_dir() {
+    local dir="$WALLET_DIR/src-tauri/target/.rsync-shim"
+    mkdir -p "$dir"
+    ln -sf /usr/bin/rsync "$dir/rsync"
+    echo "$dir"
 }
 
 setup_adb_reverse() {
@@ -236,17 +287,28 @@ run_android() {
     wait $TAURI_PID
 }
 
+# $1 is the target kind: "simulator" (default) or "device" (a real, cabled iPhone).
 run_ios() {
+    local target_kind="${1:-simulator}"
+    shift || true
+
     # Device selection, in priority order:
     #   1. positional arg        — ./scripts/tauri-dev.sh ios "Rodolphe's iPad"
     #   2. TAURI_IOS_DEVICE env  — TAURI_IOS_DEVICE="iPad" bun run tauri:ios:dev
-    #   3. "iPhone 17" simulator default.
+    #   3. the sole connected iPhone (device kind), else the "iPhone 17" simulator.
     # Always pass an explicit device: with none, the Tauri CLI auto-selects
     # detected hardware before ever prompting — a Wi-Fi-paired iPad silently
     # hijacks every simulator run (its interactive picker is unreachable in
     # practice, and sst panes have no TTY anyway).
-    local device="${1:-${TAURI_IOS_DEVICE:-iPhone 17}}"
-    echo "[tauri-dev] iOS target: \"$device\" (override: TAURI_IOS_DEVICE=... or ./scripts/tauri-dev.sh ios \"<name>\")"
+    local device="${1:-${TAURI_IOS_DEVICE:-}}"
+    if [ -z "$device" ]; then
+        if [ "$target_kind" = "device" ]; then
+            device="$(select_ios_device)"
+        else
+            device="iPhone 17"
+        fi
+    fi
+    echo "[tauri-dev] iOS target: \"$device\" ($target_kind; override: TAURI_IOS_DEVICE=... or ./scripts/tauri-dev.sh ios \"<name>\")"
     # See run_android: vite bakes platform flags from env. Set TAURI_ENV_PLATFORM
     # so the dev-server bundle gets IS_IOS=true (env() handles iOS insets, but the
     # flag still gates other native init). Export before `start_dev_server`.
@@ -254,6 +316,29 @@ run_ios() {
     export TAURI_ENV_PLATFORM=ios
     # Match the sst pane environment for one-off `sst dev` runs (see run_android).
     export BACKEND_URL="${BACKEND_URL:-http://localhost:$BACKEND_HTTP_PORT}"
+
+    local lan_ip
+    lan_ip="$(detect_lan_ip)"
+
+    # On a real device localhost is the phone, so both the dev server and the backend
+    # must be reached at this Mac's LAN IP. `--host` rewrites tauri.conf's devUrl;
+    # TAURI_DEV_HOST is what vite.config reads to point the HMR socket at the same
+    # address (it bakes it at server start, hence: export before `start_dev_server`).
+    local host_args=()
+    if [ "$target_kind" = "device" ]; then
+        if [ -z "$lan_ip" ]; then
+            echo "[tauri-dev] ERROR: no LAN IP detected — a physical device cannot reach the dev server." >&2
+            echo "[tauri-dev]        Connect this Mac to the same Wi-Fi as the iPhone, or use the simulator." >&2
+            exit 1
+        fi
+        export TAURI_DEV_HOST="$lan_ip"
+        host_args=(--host "$lan_ip")
+        echo "[tauri-dev] iOS: serving the dev bundle on http://$lan_ip:$DEV_SERVER_PORT"
+
+        # Only a device run archives + exports, so the shim is device-only.
+        PATH="$(rsync_shim_dir):$PATH"
+        export PATH
+    fi
 
     # SST's DevCommand pins BACKEND_URL to the backend's
     # plain-HTTP mirror for mobile webviews). Android reaches it via
@@ -265,8 +350,6 @@ run_ios() {
     # run before `start_dev_server`: vite bakes BACKEND_URL at build time.
     # Simulators keep working either way — the Mac can reach its own LAN IP.
     if [ "${BACKEND_URL:-}" = "http://localhost:$BACKEND_HTTP_PORT" ]; then
-        local lan_ip
-        lan_ip="$(detect_lan_ip)"
         if [ -n "$lan_ip" ]; then
             export BACKEND_URL="http://$lan_ip:$BACKEND_HTTP_PORT"
             echo "[tauri-dev] iOS: rewrote BACKEND_URL to $BACKEND_URL (device-reachable LAN address)"
@@ -283,7 +366,7 @@ run_ios() {
     # gen/apple/sync-ios-variant.sh inside the Xcode build; this leaves the tracked
     # Info.plist and entitlements on dev values afterwards.
     # Foreground; the EXIT trap cleans up the vite dev server.
-    FRAK_VARIANT=dev bun run tauri ios dev --config src-tauri/tauri.conf.dev.json --no-dev-server -c '{"build":{"beforeDevCommand":""}}' "$device"
+    FRAK_VARIANT=dev bun run tauri ios dev --config src-tauri/tauri.conf.dev.json --no-dev-server -c '{"build":{"beforeDevCommand":""}}' "${host_args[@]}" "$device"
 }
 
 run_dev_only() {
@@ -298,18 +381,23 @@ case "${1:-}" in
         ;;
     ios)
         shift
-        run_ios "$@"
+        run_ios simulator "$@"
+        ;;
+    ios-device)
+        shift
+        run_ios device "$@"
         ;;
     dev)
         run_dev_only
         ;;
     *)
-        echo "Usage: $0 {android|ios|dev}"
+        echo "Usage: $0 {android|ios|ios-device|dev}"
         echo ""
         echo "Commands:"
-        echo "  dev      - Start Tauri dev server only"
-        echo "  android  - Start dev server + launch Android emulator"
-        echo "  ios      - Start dev server + iOS (default: iPhone 17 sim; select: ios \"<name>\" or TAURI_IOS_DEVICE)"
+        echo "  dev         - Start Tauri dev server only"
+        echo "  android     - Start dev server + launch Android emulator"
+        echo "  ios         - Start dev server + iOS simulator (default: iPhone 17; select: ios \"<name>\" or TAURI_IOS_DEVICE)"
+        echo "  ios-device  - Start dev server + a cabled iPhone (sole connected device, or TAURI_IOS_DEVICE / ios-device \"<name>\")"
         exit 1
         ;;
 esac

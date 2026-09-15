@@ -9,14 +9,9 @@ import {
 } from "./progressCheckIconAnimated.css";
 
 /**
- * Animated counterpart of `ProgressCheckIcon`.
- *
- * Plays once on mount: the bold ring draws a full 360° (~600ms), then a
- * check draws inside (~300ms). Honors `prefers-reduced-motion: reduce` by
- * skipping the animation and rendering the end state directly.
- *
- * Like the static variant, all paths use `currentColor` so the parent's
- * `color` drives the visual.
+ * Plays once on mount: the ring draws a full 360° (~600ms), then a check draws
+ * inside (~300ms). Honors `prefers-reduced-motion: reduce` by rendering the end
+ * state directly.
  */
 export function ProgressCheckIconAnimated(props: SVGProps<SVGSVGElement>) {
     return (

@@ -100,7 +100,6 @@ export function TransferModal({ onClose }: TransferModalProps) {
             }
         >
             <Box display={"flex"} flexDirection={"column"} gap={"l"}>
-                {/* Header: icon disc + title + description */}
                 <Box
                     display={"flex"}
                     flexDirection={"column"}
@@ -117,7 +116,6 @@ export function TransferModal({ onClose }: TransferModalProps) {
                     </Text>
                 </Box>
 
-                {/* Option rows */}
                 <Box display={"flex"} flexDirection={"column"} gap={"none"}>
                     <OptionRow
                         icon={<BankIcon width={24} height={24} />}

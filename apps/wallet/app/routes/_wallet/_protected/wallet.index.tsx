@@ -1,5 +1,9 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { PullToRefresh } from "@frak-labs/design-system/components/PullToRefresh";
+import {
+    getSafeSession,
+    userBalanceQueryOptions,
+} from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback } from "react";
@@ -14,6 +18,18 @@ import { WelcomeCard } from "@/module/wallet/component/WelcomeCard";
 
 export const Route = createFileRoute("/_wallet/_protected/wallet/")({
     component: WalletPage,
+    // Warm the balance in parallel with the route transition. The address is
+    // read outside React the same way `_protected.tsx`'s `beforeLoad` does.
+    // `void prefetchQuery` (not `ensureQueryData`) so navigation never waits on
+    // the network and never rejects: offline, the screen still renders and
+    // `useGetUserBalance` surfaces its own loading/error state.
+    loader: ({ context }) => {
+        const address = getSafeSession()?.address;
+        if (!address) return;
+        void context.queryClient.prefetchQuery(
+            userBalanceQueryOptions(address)
+        );
+    },
 });
 
 function WalletPage() {

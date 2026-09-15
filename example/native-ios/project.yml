@@ -37,13 +37,18 @@ targets:
         # wallet detection.
         INFOPLIST_FILE: Sources/FrakExampleiOSApp/Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: id.frak.example.ios
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Defaults for a local build. `scripts/run.sh archive` overrides both on the
+        # xcodebuild command line, because App Store Connect rejects a build number it
+        # has already seen.
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
-        # Signing is scoped by SDK so the two run paths stay independent.
+        # Signing is scoped by SDK so the run paths stay independent.
         # Simulator: ad-hoc, no provisioning profile or dev team, so `run`/`build`
         # work on any checkout. Device: real signing, which xcodebuild cannot fake.
-        # `scripts/run.sh device` supplies DEVELOPMENT_TEAM and -allowProvisioningUpdates;
-        # leaving the team out here keeps a contributor's own team a one-var override.
+        # `run.sh device` supplies DEVELOPMENT_TEAM and -allowProvisioningUpdates; `run.sh
+        # archive` additionally overrides CODE_SIGN_IDENTITY to "Apple Distribution".
+        # Leaving the team out here keeps a contributor's own team a one-var override.
         CODE_SIGN_IDENTITY: ""
         CODE_SIGNING_REQUIRED: "NO"
         CODE_SIGNING_ALLOWED: "NO"

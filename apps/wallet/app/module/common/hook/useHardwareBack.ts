@@ -4,11 +4,16 @@ import { useEffect } from "react";
 import { modalStore } from "@/module/stores/modalStore";
 
 /**
- * Intercepts back navigation (browser & Tauri Android) so that
- * pressing back pops the modal stack instead of navigating away.
+ * Intercepts back navigation (browser, Tauri Android hardware button, iOS
+ * edge-swipe) so it pops the modal stack instead of navigating away.
  *
- * Uses TanStack Router's navigation blocker for browser back,
- * and Tauri's `onBackButtonPress` for the Android hardware button.
+ * Uses TanStack Router's navigation blocker for browser back and the iOS
+ * edge-swipe, and Tauri's `onBackButtonPress` for the Android hardware button.
+ *
+ * The iOS swipe is a continuous gesture WKWebView commits before `popstate`
+ * fires, so the blocker can only reverse it: the route slides away and snaps
+ * back as the modal closes. Making modals real history entries is what removes
+ * that, and is the same fix as the TODO below.
  *
  * On Tauri, the listener is only registered while a modal is open.
  * When unregistered, AppPlugin falls back to its native default

@@ -290,6 +290,9 @@ export default interface Resources {
           "privacy": "Privacy notice",
           "terms": "Terms & conditions"
         },
+        "products": {
+          "label": "Choose one product to share"
+        },
         "reward": {
           "tagline": "You earn a reward every time a friend makes a purchase through your link.",
           "title": "Share with your friends"
@@ -844,6 +847,11 @@ export default interface Resources {
         "pairing": "Scan with the phone holding your passkey to reconnect the same wallet.",
         "title": "Reconnect your wallet"
       },
+      "errorFallback": {
+        "message": "Reload the page to continue.",
+        "reload": "Reload",
+        "title": "Something went wrong"
+      },
       "installWebApp": "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time",
       "invite": {
         "text": "Earn $5 for each friend you invite. T&C apply",
@@ -1006,6 +1014,35 @@ export default interface Resources {
           "description": "{{email}} is linked to your wallet. Everything from your other account moved over: referrals, history, rewards.",
           "title": "Your accounts are now one"
         }
+      },
+      "modal": {
+        "editReferralCode": {
+          "ariaLabel": "Edit your referral code"
+        },
+        "explorerDetail": {
+          "ariaLabel": "Merchant details"
+        },
+        "moneriumBankFlow": {
+          "ariaLabel": "Bank transfer"
+        },
+        "moneriumCallback": {
+          "ariaLabel": "Connecting your bank account"
+        },
+        "moneriumOrderDetail": {
+          "ariaLabel": "Transfer details"
+        },
+        "rewardDetail": {
+          "ariaLabel": "Reward details"
+        },
+        "welcomeDetail": {
+          "ariaLabel": "Welcome to Frak"
+        }
+      },
+      "modalError": {
+        "message": "The app was updated since this page loaded. Reload to continue.",
+        "messageOffline": "You're offline, so this couldn't load. It'll work once you're back online.",
+        "reload": "Reload",
+        "title": "Couldn't open that"
       },
       "notifications": {
         "noNotifications": "No notifications"

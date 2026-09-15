@@ -92,5 +92,3 @@ function addMetadataToMap(
         map.set(`sdk.modal.${key}.secondaryAction_reward`, secondaryActionText);
     }
 }
-
-// todo: msg pack stuff: https://github.com/nlohmann/json/discussions/2581 - https://jsonjoy.com/blog/json-codec-benchmarks

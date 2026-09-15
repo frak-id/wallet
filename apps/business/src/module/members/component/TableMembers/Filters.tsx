@@ -19,7 +19,6 @@ import { getDateFnsLocale } from "@/module/common/utils/dateLocale";
 import {
     type FormMembersFiltering,
     MembersFiltering,
-    type MembersFilteringSection,
 } from "@/module/members/component/MembersFiltering";
 import { FiltersCount } from "@/module/members/component/TableMembers/FiltersCount";
 import { membersStore } from "@/stores/membersStore";
@@ -99,7 +98,6 @@ export function TableMembersFilters() {
                 }
             />
             <FilterPopover
-                section="interactions"
                 icon={<FiltersIcon />}
                 label={
                     <>
@@ -122,13 +120,11 @@ export function TableMembersFilters() {
 }
 
 function FilterPopover({
-    section,
     icon,
     label,
     initialValue,
     onFilterSet,
 }: {
-    section: MembersFilteringSection;
     icon: ReactNode;
     label: ReactNode;
     initialValue?: FormMembersFiltering;
@@ -149,7 +145,6 @@ function FilterPopover({
                 className={styles.filtersPopoverContent}
             >
                 <MembersFiltering
-                    section={section}
                     initialValue={initialValue}
                     onFilterSet={onFilterSet}
                     showResetButton={true}

@@ -104,7 +104,9 @@ function applyFilters(
     return filtered;
 }
 
-function getMembersMockSync(params: GetMembersParam): GetMembersResponseDto {
+export function getMerchantMembersMock(
+    params: GetMembersParam
+): GetMembersResponseDto {
     const { limit = 20, offset = 0, sort, filter } = params;
 
     let filteredMembers = [...membersData.members];
@@ -147,21 +149,6 @@ function getMembersMockSync(params: GetMembersParam): GetMembersResponseDto {
         totalResult: filteredMembers.length,
         members: mappedMembers as unknown as GetMembersPageItem[],
     };
-}
-
-export async function getMerchantMembersMock(
-    params: GetMembersParam
-): Promise<GetMembersResponseDto> {
-    return getMembersMockSync(params);
-}
-
-/**
- * Synchronous version for TanStack Query initialData
- */
-export function getMerchantMembersMockInitialData(
-    params: GetMembersParam
-): GetMembersResponseDto {
-    return getMembersMockSync(params);
 }
 
 export async function getMerchantsMembersCountMock(

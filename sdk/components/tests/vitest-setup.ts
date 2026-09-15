@@ -10,12 +10,16 @@
  * - shared-setup.ts: Browser API mocks (crypto, MessageChannel, IntersectionObserver, etc.)
  * - window.FrakSetup: Global SDK configuration and client mocks
  * - @frak-labs/core-sdk: Core SDK action mocks
- * - @frak-labs/frame-connector: Error class mocks
  */
 
 import { afterEach, beforeEach, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/preact";
+import { cleanup, configure } from "@testing-library/preact";
+
+// RTL's `waitFor` keeps its own 1s budget, independent of `testTimeout`. Ten
+// projects sharing `cpus-1` workers put a cold transform inside that window,
+// so a test awaiting a resolved promise fails on scheduling, not behaviour.
+configure({ asyncUtilTimeout: 5000 });
 
 // Mock window.FrakSetup global
 declare global {
@@ -117,38 +121,5 @@ vi.mock("@frak-labs/core-sdk/actions", async () => {
         prepareSso: vi.fn(),
         trackPurchaseStatus: vi.fn(),
         watchWalletStatus: vi.fn(),
-    };
-});
-
-// Mock @frak-labs/frame-connector errors
-vi.mock("@frak-labs/frame-connector", async () => {
-    const actual = await vi.importActual<
-        typeof import("@frak-labs/frame-connector")
-    >("@frak-labs/frame-connector");
-
-    // Create mock error classes that extend Error
-    class MockFrakRpcError extends Error {
-        code: string;
-        constructor(message: string, code?: string) {
-            super(message);
-            this.name = "FrakRpcError";
-            this.code = code ?? "UNKNOWN_ERROR";
-        }
-    }
-
-    class MockClientNotFound extends Error {
-        constructor(message: string) {
-            super(message);
-            this.name = "ClientNotFound";
-        }
-    }
-
-    return {
-        ...actual,
-        FrakRpcError: MockFrakRpcError,
-        ClientNotFound: MockClientNotFound,
-        RpcErrorCodes: {
-            clientAborted: "CLIENT_ABORTED",
-        },
     };
 });

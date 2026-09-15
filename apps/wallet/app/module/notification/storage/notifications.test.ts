@@ -11,7 +11,7 @@ vi.mock("idb-keyval", () => ({
     createStore: vi.fn(() => ({})), // Return a mock store object
 }));
 
-describe.sequential("notificationStorage", () => {
+describe("notificationStorage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });

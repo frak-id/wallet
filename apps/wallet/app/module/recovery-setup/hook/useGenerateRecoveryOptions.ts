@@ -14,7 +14,7 @@ import { encodeRecoveryBlob } from "@/module/recovery-setup/utils/recoveryBlob";
  * mutation — it leaves solely as ciphertext.
  */
 export function useGenerateRecoveryOptions() {
-    const { mutate, mutateAsync, ...mutationStuff } = useMutation({
+    const { mutateAsync, ...mutation } = useMutation({
         mutationKey: recoverySetupKey.generateOptions,
         gcTime: 0,
         mutationFn: async ({
@@ -52,8 +52,7 @@ export function useGenerateRecoveryOptions() {
     });
 
     return {
-        ...mutationStuff,
+        ...mutation,
         generateRecoveryOptionsAsync: mutateAsync,
-        generateRecoveryOptions: mutate,
     };
 }

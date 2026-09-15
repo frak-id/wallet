@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { pushHistoryQueryKey } from "@/module/members/queries/queryKeys";
 import { pushCreationStore } from "@/stores/pushCreationStore";
 import type { NotificationPayload } from "@/types/NotificationPayload";
@@ -8,13 +9,9 @@ import { deriveScheduledAt } from "./schedule";
 import type { FormCreatePushNotification } from "./types";
 
 /**
- * Route a composed broadcast to the right endpoint and return the Eden result.
- *
- * - new + immediate → `POST /send`
- * - new + scheduled → `POST /schedule`
- * - edit            → `PUT /broadcasts/:id` (updates the scheduled row in
- *   place; a scheduled notification stays scheduled and can't be switched to
- *   immediate delivery, so a delivery time is required)
+ * Route a composed broadcast: new + immediate → `POST /send`, new + scheduled →
+ * `POST /schedule`, edit → `PUT /broadcasts/:id`. An edit updates the scheduled
+ * row in place, so it stays scheduled and always needs a delivery time.
  */
 function submitBroadcast(params: {
     merchantId: string;
@@ -51,12 +48,8 @@ function submitBroadcast(params: {
 }
 
 /**
- * Pull a human-readable message out of an Eden Treaty error.
- *
- * Eden returns `{ value, status }` where `value` is the body returned by
- * the Elysia handler — usually `{ message: string }`, sometimes a plain
- * string (legacy handlers). We walk both shapes before falling back to a
- * generic message so backend errors surface to the user.
+ * Pull a human-readable message out of an Eden Treaty error: `value` holds the
+ * handler body, either `{ message }` or a bare string.
  */
 function extractSendError(error: unknown): string {
     if (typeof error === "string") return error;
@@ -72,17 +65,12 @@ function extractSendError(error: unknown): string {
     return "Failed to send push notification";
 }
 
-/**
- * Publish the composed push notification (see `submitBroadcast` for the
- * endpoint routing).
- *
- * On success the draft is cleared, the history query refreshed and the user
- * returns to the members list.
- */
+/** Publish the composed push notification. */
 export function useSendPushNotification(merchantId: string) {
     const clearForm = pushCreationStore((state) => state.clearForm);
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const isDemoMode = useIsDemoMode();
 
     return useMutation({
         mutationKey: ["push", "publish"],
@@ -118,7 +106,7 @@ export function useSendPushNotification(merchantId: string) {
             // Refresh the push-history table so the freshly sent/scheduled
             // broadcast shows up without a manual reload.
             queryClient.invalidateQueries({
-                queryKey: pushHistoryQueryKey(merchantId),
+                queryKey: pushHistoryQueryKey(merchantId, isDemoMode),
             });
             navigate({
                 to: "/m/$merchantId/members",

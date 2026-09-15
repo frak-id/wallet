@@ -1,8 +1,3 @@
-/**
- * Tests for FrakIFrameClientProvider
- * Tests iframe creation and FrakClient provider
- */
-
 import { vi } from "vitest";
 
 vi.mock("@frak-labs/core-sdk", async () => {
@@ -74,9 +69,6 @@ describe("FrakIFrameClientProvider", () => {
             wrapper: Wrapper,
         });
 
-        // Regression: this provider used to omit `clientId` entirely, so the
-        // listener never received an SDK-seeded identity and silently fell
-        // back to its own persisted store.
         await waitFor(() => {
             const iframe = document.querySelector("iframe");
             expect(iframe?.src).toContain("clientId=");

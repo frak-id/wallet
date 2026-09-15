@@ -6,24 +6,11 @@ import type { ComponentPropsWithRef } from "react";
 import { ChevronDownIcon } from "../../icons";
 import { selectStyles, triggerLength } from "./select.css";
 
-/**
- * Root — stateless wrapper pairing trigger + content.
- */
 export const Select = SelectPrimitive.Root;
 
-/**
- * Group — groups related items under a label.
- */
 export const SelectGroup = SelectPrimitive.Group;
 
-/**
- * Value — displays the selected value inside the trigger.
- */
 export const SelectValue = SelectPrimitive.Value;
-
-/* ------------------------------------------------------------------ */
-/*  Trigger                                                           */
-/* ------------------------------------------------------------------ */
 
 type SelectTriggerLength = NonNullable<
     RecipeVariants<typeof triggerLength>
@@ -75,10 +62,6 @@ export function SelectTrigger({
     );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Scroll buttons                                                    */
-/* ------------------------------------------------------------------ */
-
 function SelectScrollUpButton(
     props: ComponentPropsWithRef<typeof SelectPrimitive.ScrollUpButton>
 ) {
@@ -109,10 +92,6 @@ function SelectScrollDownButton(
     );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Content                                                           */
-/* ------------------------------------------------------------------ */
-
 export function SelectContent({
     ref,
     className,
@@ -142,10 +121,6 @@ export function SelectContent({
     );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Item                                                              */
-/* ------------------------------------------------------------------ */
-
 export function SelectItem({
     ref,
     className,
@@ -161,10 +136,6 @@ export function SelectItem({
     );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Label                                                             */
-/* ------------------------------------------------------------------ */
-
 export function SelectLabel({
     ref,
     className,
@@ -174,10 +145,6 @@ export function SelectLabel({
 
     return <SelectPrimitive.Label ref={ref} className={combined} {...props} />;
 }
-
-/* ------------------------------------------------------------------ */
-/*  Separator                                                         */
-/* ------------------------------------------------------------------ */
 
 export function SelectSeparator({
     ref,

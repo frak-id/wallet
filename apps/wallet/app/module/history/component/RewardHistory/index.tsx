@@ -163,8 +163,6 @@ function MerchantLogoWithBadge({
     );
 }
 
-// --- Pure helpers ---
-
 function formatRewardDate(
     timestamp: number,
     locale: string,
@@ -194,8 +192,6 @@ function formatRewardDate(
     });
     return `${dayMonth}, ${time}`;
 }
-
-// --- Sub-components ---
 
 const displayAmountIcons: Partial<
     Record<

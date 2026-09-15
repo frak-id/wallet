@@ -23,7 +23,6 @@ type PendingEnsureAction = {
      * the Play referrer's `proof=` key. Sent alongside
      * `merchantId`/`anonymousId` on `/identity/ensure`, binding exactly
      * those two fields.
-     * ROLLOUT-STEP-3: gated by ENSURE_BARE_ARM_ENABLED, not by a release.
      */
     proof?: string;
 };

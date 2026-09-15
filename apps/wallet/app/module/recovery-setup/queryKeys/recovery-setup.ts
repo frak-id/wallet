@@ -4,9 +4,6 @@ import type { Hex } from "viem";
  * Query keys for recovery setup-related queries
  */
 export namespace recoverySetupKey {
-    /**
-     * The base key
-     */
     const base = "recovery-setup" as const;
 
     export const all = [base] as const;
@@ -16,9 +13,6 @@ export namespace recoverySetupKey {
      */
     export const backendStatus = [base, "backend-status"] as const;
 
-    /**
-     * Mutation keys
-     */
     export const generateOptions = [base, "generate-options"] as const;
     export const saveBlob = [base, "save-blob"] as const;
     export const deleteBlob = [base, "delete-blob"] as const;

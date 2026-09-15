@@ -22,7 +22,7 @@ import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-set
 export function useClaimRecoveredWallet() {
     const queryClient = useQueryClient();
 
-    const { mutateAsync, mutate, ...mutationStuff } = useMutation({
+    const { mutateAsync, ...mutation } = useMutation({
         mutationKey: recoveryKey.claimRecovery,
         gcTime: 0,
         mutationFn: async ({
@@ -68,8 +68,7 @@ export function useClaimRecoveredWallet() {
     });
 
     return {
-        ...mutationStuff,
+        ...mutation,
         claimRecoveredWalletAsync: mutateAsync,
-        claimRecoveredWallet: mutate,
     };
 }

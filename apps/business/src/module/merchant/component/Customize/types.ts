@@ -31,10 +31,50 @@ export type PresetLang = (typeof PRESET_LANGS)[number];
 // Empty string means "not set" for that tier; empties are dropped at save.
 export type LocalizedText = Record<WordingLang, string>;
 
+// Tier the style block writes for: the `default` literal, or a placement id.
+// Only the default tier self-scopes; the backend wraps every other tier.
+export type StyleTier = string;
+
+// Padding and margin each carry one unit for the whole group (`pu` / `mu`);
+// absent means px, so values stored before units existed still read back.
+export const SPACING_UNITS = ["px", "%"] as const;
+export type SpacingUnit = (typeof SPACING_UNITS)[number];
+
+// The four weights a theme reliably ships; anything else risks the browser
+// synthesising a face the merchant never sees in the dashboard.
+export const FONT_WEIGHTS = [400, 500, 600, 700] as const;
+export type FontWeight = (typeof FONT_WEIGHTS)[number];
+
+// One optional entry per style control; absent means the control is unset and
+// emits nothing. Colours are hex, except `bg` which also takes `transparent`.
+export type ButtonShareStyleValues = {
+    bg?: string;
+    fg?: string;
+    bw?: number;
+    bc?: string;
+    fs?: number;
+    fw?: FontWeight;
+    py?: number;
+    px?: number;
+    pu?: SpacingUnit;
+    mt?: number;
+    mb?: number;
+    ml?: number;
+    mr?: number;
+    mu?: SpacingUnit;
+};
+
+// InputNumber writes "" for an emptied number, so the form holds that too.
+// Every codec entry point normalizes, so "" never reaches a declaration.
+export type ButtonShareStyleFormValues = {
+    [K in keyof ButtonShareStyleValues]: ButtonShareStyleValues[K] | "";
+};
+
 export type ButtonShareFormValues = {
     text: LocalizedText;
     noRewardText: LocalizedText;
-    css: string;
+    style: ButtonShareStyleFormValues;
+    foreignCss: string;
 };
 
 export type PostPurchaseFormValues = {

@@ -1,6 +1,8 @@
 import type { PushBroadcast } from "@frak-labs/backend-elysia/domain/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import pushHistoryMock from "@/mock/pushHistory.json";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { pushHistoryQueryKey } from "@/module/members/queries/queryKeys";
 import type { PushHistoryItem } from "./types";
 
@@ -32,12 +34,8 @@ function toPushHistoryItem(broadcast: PushBroadcast): PushHistoryItem {
             url: broadcast.payload.data?.url,
         },
         target: broadcast.targets ?? undefined,
-        // Wallet audiences carry their exact size. Segment audiences are
-        // re-resolved live by the composer's audience panel on edit, so a
-        // scheduled segment (no delivered count yet) seeds a non-zero
-        // placeholder the panel overwrites with the live count — rather than
-        // 0, which would fail the edit form's `canPublish` and leave the
-        // broadcast un-editable.
+        // A segment with no delivered count seeds 1, not 0: `canPublish`
+        // rejects 0 and the broadcast becomes un-editable.
         targetCount:
             walletCount ?? (broadcast.sentCount || (isSegment ? 1 : 0)),
     };
@@ -51,9 +49,18 @@ function toPushHistoryItem(broadcast: PushBroadcast): PushHistoryItem {
  * scoped by merchant so cache isolation stays correct when switching merchants.
  */
 export function usePushHistory(merchantId: string) {
+    const isDemoMode = useIsDemoMode();
     return useQuery({
-        queryKey: pushHistoryQueryKey(merchantId),
+        queryKey: pushHistoryQueryKey(merchantId, isDemoMode),
         queryFn: async (): Promise<PushHistoryItem[]> => {
+            // The wire shape is mocked, not the view model, so demo rows go
+            // through the same derivation as live ones.
+            if (isDemoMode) {
+                return (pushHistoryMock.broadcasts as PushBroadcast[]).map(
+                    toPushHistoryItem
+                );
+            }
+
             const { data, error } =
                 await authenticatedBackendApi.notifications.broadcasts.get({
                     query: { merchantId },
@@ -75,9 +82,12 @@ export function usePushHistory(merchantId: string) {
  */
 export function useDeletePushBroadcast(merchantId: string) {
     const queryClient = useQueryClient();
+    const isDemoMode = useIsDemoMode();
     return useMutation({
         mutationKey: ["push", "history", "delete", merchantId],
         mutationFn: async (id: string): Promise<string> => {
+            if (isDemoMode) return id;
+
             const { error } = await authenticatedBackendApi.notifications
                 .broadcasts({ id })
                 .delete({}, { query: { merchantId } });
@@ -88,7 +98,7 @@ export function useDeletePushBroadcast(merchantId: string) {
         },
         onSuccess: (id) => {
             queryClient.setQueryData<PushHistoryItem[]>(
-                pushHistoryQueryKey(merchantId),
+                pushHistoryQueryKey(merchantId, isDemoMode),
                 (prev) => prev?.filter((item) => item.id !== id) ?? []
             );
         },

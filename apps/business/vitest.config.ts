@@ -18,13 +18,9 @@ export default mergeConfig(
                 "@frak-labs/test-foundation/apps-setup",
             ],
             include: ["src/**/*.{test,spec}.{ts,tsx}"],
-            exclude: [".output/**", ".tanstack/**"],
             coverage: {
                 include: ["src/**/*.{ts,tsx}"],
                 exclude: [
-                    // Build output directories (TanStack Start specific)
-                    ".output/**",
-                    ".tanstack/**",
                     // Route files (TanStack Router specific)
                     "routes/**/*.tsx",
                     "src/router.tsx",

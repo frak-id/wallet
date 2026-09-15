@@ -1,7 +1,4 @@
-// Load-bearing, not redundant: consuming apps compile this file through their
-// own tsconfig, whose `include` does not cover this package's `src`. Without
-// the reference the lazy `es-check` import is an implicit `any` in every
-// consumer.
+// See `es-version.ts` for why the reference below is load-bearing.
 /// <reference path="./es-check.d.ts" />
 import { readFileSync } from "node:fs";
 import * as fs from "node:fs/promises";
@@ -70,29 +67,10 @@ const LIGHTNINGCSS_TARGETS = {
     safari: (15 << 16) | (4 << 8),
 };
 
-/**
- * Shared Lightning CSS configuration for all Vite-based apps in the monorepo.
- * Provides consistent CSS processing with optimal performance and modern features.
- *
- * @example
- * ```ts
- * import { lightningCssConfig } from "@frak-labs/dev-tooling";
- *
- * export default defineConfig({
- *   css: lightningCssConfig,
- * });
- * ```
- */
+/** Shared Lightning CSS config for every Vite app in the monorepo. */
 export const lightningCssConfig = {
     transformer: "lightningcss" as const,
     lightningcss: {
-        /**
-         * CSS Modules configuration
-         * - dashedIdents: false -> Use camelCase for class names (e.g., .my-class -> styles.myClass)
-         */
-        cssModules: {
-            dashedIdents: false,
-        },
         /**
          * Browser targets, packed from the shared floor.
          */

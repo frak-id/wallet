@@ -15,7 +15,7 @@
 #     at RUNTIME in server code and are injected by Kubernetes via `envFrom`
 #     a Secret — they are NOT baked into the image.
 
-ARG BUN_VERSION=1.4.0
+ARG BUN_VERSION=1.4.2
 
 FROM oven/bun:${BUN_VERSION} AS tooling
 # Node 24 is required for the SDK build step (vanilla-extract VM-sandbox quirks).

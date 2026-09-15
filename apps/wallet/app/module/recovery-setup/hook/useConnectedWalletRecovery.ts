@@ -7,9 +7,9 @@ import { useOnChainRecovery } from "@/module/recovery/hook/useOnChainRecovery";
  */
 export function useConnectedWalletRecovery() {
     const { address } = useConnection();
-    const { data, ...queryStuff } = useOnChainRecovery(address);
+    const { data, ...query } = useOnChainRecovery(address);
     return {
-        ...queryStuff,
+        ...query,
         onChainRecovery: data,
     };
 }

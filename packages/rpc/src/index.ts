@@ -1,53 +1,35 @@
 /**
- * @frak-labs/frame-connector
+ * Type-safe RPC over cross-window `postMessage`, generic over the consumer's
+ * own schema type.
  *
- * Type-safe RPC communication layer for cross-window postMessage
- *
- * This package provides a framework-agnostic, generic RPC system for
- * bidirectional communication over postMessage. It's designed to be
- * completely generic over the RPC schema type - consumers provide their
- * own schema definitions.
- *
- * @example Client-side usage
+ * @example Client side
  * ```ts
- * import { createRpcClient } from '@frak-labs/frame-connector'
- * import type { IFrameRpcSchema } from '@frak-labs/core-sdk'
- *
  * const client = createRpcClient<IFrameRpcSchema>({
- *   transport: window,
+ *   emittingTransport: window,
+ *   listeningTransport: window,
  *   targetOrigin: 'https://wallet.frak.id'
  * })
  *
- * await client.connect()
- *
- * // One-shot request
- * const result = await client.request('frak_sendInteraction', [productId, interaction])
- *
- * // Streaming request
- * for await (const status of client.stream('frak_listenToWalletStatus')) {
- *   console.log('Status:', status)
- * }
+ * const result = await client.request({
+ *   method: 'frak_sendInteraction',
+ *   params: [interaction]
+ * })
+ * const unsubscribe = client.listen(
+ *   { method: 'frak_listenToWalletStatus' },
+ *   (status) => setStatus(status)
+ * )
  * ```
  *
- * @example Server-side usage
+ * @example Listener side
  * ```ts
- * import { createRpcListener } from '@frak-labs/frame-connector'
- * import type { IFrameRpcSchema } from '@frak-labs/core-sdk'
- *
  * const listener = createRpcListener<IFrameRpcSchema>({
  *   transport: window,
  *   allowedOrigins: ['https://example.com']
  * })
  *
- * listener.handle('frak_sendInteraction', async (params, context) => {
- *   // Handle the interaction
- *   return { status: 'success', hash: '0x...' }
- * })
- *
- * listener.handleStream('frak_listenToWalletStatus', (params, emit, context) => {
- *   // Emit wallet status updates
- *   emit({ key: 'connected', wallet: '0x...' })
- * })
+ * listener.handle('frak_sendInteraction', async (params, context) => ({
+ *   status: 'success'
+ * }))
  * ```
  *
  * @module @frak-labs/frame-connector

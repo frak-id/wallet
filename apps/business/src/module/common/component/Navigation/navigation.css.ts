@@ -1,3 +1,4 @@
+import { tablet } from "@frak-labs/design-system/breakpoints";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
@@ -7,47 +8,47 @@ export const navigation = style({
     position: "fixed",
     left: 0,
     top: 0,
-    width: "240px",
+    width: "64px",
     height: "100dvh",
-    padding: "48px 32px",
+    padding: "16px 8px",
     background: vars.surface.background,
     borderRight: `1px solid ${vars.border.subtle}`,
     "@media": {
-        "screen and (max-width: 767px)": {
-            width: "64px",
-            padding: "16px 8px",
+        [`screen and (min-width: ${tablet}px)`]: {
+            width: "240px",
+            padding: "48px 32px",
         },
     },
 });
 
 export const logoWrapper = style({
     color: vars.text.primary,
-    marginBottom: alias.spacing.l,
+    marginBottom: alias.spacing.m,
     display: "flex",
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "center",
     "@media": {
-        "screen and (max-width: 767px)": {
-            justifyContent: "center",
-            marginBottom: alias.spacing.m,
+        [`screen and (min-width: ${tablet}px)`]: {
+            justifyContent: "flex-start",
+            marginBottom: alias.spacing.l,
         },
     },
 });
 
 export const logoFull = style({
-    display: "block",
+    display: "none",
     "@media": {
-        "screen and (max-width: 767px)": {
-            display: "none",
+        [`screen and (min-width: ${tablet}px)`]: {
+            display: "block",
         },
     },
 });
 
 export const logoBadge = style({
-    display: "none",
+    display: "block",
     "@media": {
-        "screen and (max-width: 767px)": {
-            display: "block",
+        [`screen and (min-width: ${tablet}px)`]: {
+            display: "none",
         },
     },
 });
@@ -95,9 +96,10 @@ export const collapsibleContent = style({
 export const sectionLabel = style({
     listStyle: "none",
     padding: `${alias.spacing.xxs} ${alias.spacing.s}`,
+    display: "none",
     "@media": {
-        "screen and (max-width: 767px)": {
-            display: "none",
+        [`screen and (min-width: ${tablet}px)`]: {
+            display: "list-item",
         },
     },
 });
@@ -148,6 +150,8 @@ export const itemListEntry = style({
 export const item = style([
     itemBase,
     {
+        justifyContent: "center",
+        padding: 0,
         "@media": {
             "(hover: hover)": {
                 selectors: {
@@ -157,9 +161,10 @@ export const item = style([
                     },
                 },
             },
-            "screen and (max-width: 767px)": {
-                justifyContent: "center",
-                padding: 0,
+            [`screen and (min-width: ${tablet}px)`]: {
+                justifyContent: "normal",
+                paddingLeft: alias.spacing.s,
+                paddingRight: alias.spacing.s,
             },
         },
     },
@@ -173,6 +178,7 @@ export const subItem = style([
     itemBase,
     {
         paddingLeft: "40px",
+        display: "none",
         "@media": {
             "(hover: hover)": {
                 selectors: {
@@ -182,8 +188,8 @@ export const subItem = style([
                     },
                 },
             },
-            "screen and (max-width: 767px)": {
-                display: "none",
+            [`screen and (min-width: ${tablet}px)`]: {
+                display: "flex",
             },
         },
     },
@@ -201,19 +207,20 @@ export const itemIcon = style({
 
 export const itemLabel = style({
     flexGrow: 1,
+    display: "none",
     "@media": {
-        "screen and (max-width: 767px)": {
-            display: "none",
+        [`screen and (min-width: ${tablet}px)`]: {
+            display: "inline",
         },
     },
 });
 
 export const itemRight = style({
     marginLeft: "auto",
-    display: "inline-flex",
+    display: "none",
     "@media": {
-        "screen and (max-width: 767px)": {
-            display: "none",
+        [`screen and (min-width: ${tablet}px)`]: {
+            display: "inline-flex",
         },
     },
 });

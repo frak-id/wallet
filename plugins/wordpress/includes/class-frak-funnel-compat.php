@@ -1,50 +1,11 @@
 <?php
 /**
- * Funnel-builder compatibility layer.
+ * Funnel-builder compatibility layer for FunnelKit and CartFlows thank-you
+ * contexts, which can bypass `woocommerce_thankyou`.
  *
- * Detects FunnelKit (Funnel Builder + One-Click Upsell + Aero Checkout)
- * and CartFlows thank-you contexts and ensures the inline `trackPurchaseStatus`
- * script fires there, even when those plugins bypass WooCommerce's standard
- * `woocommerce_thankyou` hook.
- *
- * Why this exists:
- * Unlike Shopify (which rides the Frak `clientId` through cart attributes
- * back into the order webhook), WooCommerce webhooks are blind to the
- * browser identity. The backend `PurchaseWebhookOrchestrator` records the
- * order in `pending_claim` state and **no reward is issued** until a
- * browser-side `trackPurchaseStatus` call lands and links the order to
- * the user's `clientId`. The native `woocommerce_thankyou` hook fires
- * that call on standard thank-you pages, but funnel builders that swap
- * the thank-you template can bypass it. This class plugs every well-known
- * funnel surface so attribution stays intact without merchant action.
- *
- * Hooks attached (each is a no-op when the corresponding plugin is absent):
- *   - `wfocu_custom_purchase_tracking` — fires on FunnelKit's standard
- *     thank-you page AND after every successful WFOCU one-click upsell
- *     offer. Carries `transaction_id` in the payload.
- *   - `wp_footer` — late-bound fallback that detects:
- *       * FunnelKit Funnel Builder thank-you steps via
- *         `function_exists('wffn_is_thankyou_page')`.
- *       * CartFlows thank-you steps via `_is_wcf_thankyou_type()` (with a
- *         direct post-type + `wcf-step-type` meta probe as fallback for
- *         white-label forks that drop the helper).
- *
- * Idempotency: emission goes through {@see Frak_WooCommerce::render_purchase_tracker_for_order()}
- * which keeps a per-order-id latch so each distinct order id emits at most
- * once per request — `woocommerce_thankyou`, `woocommerce_view_order`,
- * `wfocu_custom_purchase_tracking` and the `wp_footer` fallback all funnel
- * through the same dedupe surface. Different order ids in the same request
- * still each get their own emission, which matters on WFOCU final TY pages
- * that can carry both a parent order and a child upsell order.
- *
- * Trust model: callers (FunnelKit / CartFlows) have already gone through
- * their own checkout / order-completion flow before invoking these
- * surfaces. For URL-derived order ids (`?wcf-order` / `?wc_order`) we
- * additionally validate the matching `?wcf-key` / `?key` query var
- * against `$order->get_order_key()` — defence-in-depth that mirrors
- * {@see Frak_WooCommerce::resolve_current_order()} and protects against
- * a buggy custom template that bypasses CartFlows's own
- * `secure_thank_you_page()` gate.
+ * A WooCommerce order stays in `pending_claim` and pays out nothing until a
+ * browser-side `trackPurchaseStatus` call links it to a `clientId`, so a
+ * thank-you template that never fires the tracker silently loses attribution.
  *
  * @package Frak_Integration
  */
@@ -52,8 +13,7 @@
 /**
  * Class Frak_Funnel_Compat
  *
- * Stateless static class — mirrors the pattern used by {@see Frak_WooCommerce}.
- * All handlers are static so no instance is held in memory between requests.
+ * Stateless static class; all handlers are static.
  */
 class Frak_Funnel_Compat {
 

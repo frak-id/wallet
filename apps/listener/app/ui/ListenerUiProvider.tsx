@@ -12,23 +12,10 @@ import type {
     ExtractReturnType,
     RpcResponse,
 } from "@frak-labs/frame-connector";
-import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
-import { translationKeyPathToObject } from "@frak-labs/wallet-shared/common/utils/translationKeyPathToObject";
-import type { i18n, TOptions } from "i18next";
-import { useStore } from "zustand";
-import { mapI18nConfig } from "@/module/utils/i18nMapper";
-
-/**
- * TFunction overloads expect `Omit<TOptions, "context"> & { context?: string }` rather than raw
- * TOptions (whose $Dictionary intersection widens `context` to `any`). This alias bridges the gap.
- */
-type TranslationOptions = Omit<TOptions, "context"> & { context?: string };
-
-/** Keys resolvable in this app: it registers `customized` + `common` only. */
-type ListenerKey = TranslationKey<"customized" | "common">;
-
 import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared/common/hook/useFormattedEstimatedReward";
+import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
 import type { TranslationKey } from "@frak-labs/wallet-shared/types";
+import type { i18n, TOptions } from "i18next";
 import {
     createContext,
     type PropsWithChildren,
@@ -40,10 +27,24 @@ import {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { ResolvedSdkConfig } from "@/module/stores/types";
 import { mapDeprecatedModalMetadata } from "@/module/utils/deprecatedModalMetadataMapper";
+import {
+    addCustomizedResources,
+    mapI18nConfig,
+} from "@/module/utils/i18nMapper";
 import { uiBus } from "@/uiBus";
+
+/**
+ * TFunction overloads expect `Omit<TOptions, "context"> & { context?: string }` rather than raw
+ * TOptions (whose $Dictionary intersection widens `context` to `any`). This alias bridges the gap.
+ */
+type TranslationOptions = Omit<TOptions, "context"> & { context?: string };
+
+/** Keys resolvable in this app: it registers `customized` + `common` only. */
+type ListenerKey = TranslationKey<"customized" | "common">;
 
 export type GenericWalletUiType = {
     appName: string;
@@ -60,7 +61,6 @@ export type GenericWalletUiType = {
 
 /**
  * Type for the modal ui type
- *  - todo: Should it contain same stuff as the atom? Like prepared steps etc?
  */
 export type ModalUiType = {
     type: "modal";
@@ -159,7 +159,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             clearTimeoutRef.current = null;
         }
         setCurrentRequest(request);
-        emitLifecycleEvent({ iframeLifecycle: "show" });
+        emitLifecycleEvent({ iframeLifecycle: "show" }, { targetOrigin: "*" });
     }, []);
 
     // Clear the current request + hide the iframe
@@ -169,7 +169,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             clearTimeout(clearTimeoutRef.current);
         }
 
-        emitLifecycleEvent({ iframeLifecycle: "hide" });
+        emitLifecycleEvent({ iframeLifecycle: "hide" }, { targetOrigin: "*" });
 
         // Delay clearing to prevent flashing on rapid close/open
         clearTimeoutRef.current = setTimeout(() => {
@@ -215,13 +215,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 deprecatedModalMetadata &&
                 Object.keys(deprecatedModalMetadata).length > 0
             ) {
-                i18n.addResourceBundle(
-                    lang,
-                    "customized",
-                    translationKeyPathToObject(deprecatedModalMetadata),
-                    true,
-                    true
-                );
+                addCustomizedResources(i18n, lang, deprecatedModalMetadata);
             }
 
             const requestI18n =
@@ -237,13 +231,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 globalTranslations &&
                 Object.keys(globalTranslations).length > 0
             ) {
-                i18n.addResourceBundle(
-                    lang,
-                    "customized",
-                    translationKeyPathToObject(globalTranslations),
-                    true,
-                    true
-                );
+                addCustomizedResources(i18n, lang, globalTranslations);
             }
 
             addPlacementTranslations({
@@ -325,15 +313,21 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
         populateI18nResources,
     ]);
 
+    // Memoised so the context identity only changes when a member actually
+    // changes: an inline literal here re-renders every consumer site on every
+    // provider render.
+    const contextValue = useMemo(
+        () => ({
+            currentRequest,
+            setRequest,
+            clearRequest,
+            translation,
+        }),
+        [currentRequest, setRequest, clearRequest, translation]
+    );
+
     return (
-        <ListenerUiContext.Provider
-            value={{
-                currentRequest,
-                setRequest,
-                clearRequest,
-                translation,
-            }}
-        >
+        <ListenerUiContext.Provider value={contextValue}>
             {children}
         </ListenerUiContext.Provider>
     );
@@ -349,7 +343,7 @@ export function useListenerUI() {
             "useListenerUI must be used within a ListenerUiContext"
         );
     }
-    return context as UIContext;
+    return context;
 }
 
 /**
@@ -359,7 +353,7 @@ export function useListenerWithRequestUI() {
     const uiContext = useListenerUI();
     if (!uiContext.currentRequest) {
         throw new Error(
-            "uselListenerWithReauestUI must be used with a current request"
+            "useListenerWithRequestUI must be used with a current request"
         );
     }
     return uiContext as Omit<UIContext, "currentRequest"> & {
@@ -414,13 +408,7 @@ function addPlacementTranslations({
     if (!placementTranslations) return;
     if (Object.keys(placementTranslations).length === 0) return;
 
-    i18n.addResourceBundle(
-        lang,
-        "customized",
-        translationKeyPathToObject(placementTranslations),
-        true,
-        true
-    );
+    addCustomizedResources(i18n, lang, placementTranslations);
 }
 
 /**

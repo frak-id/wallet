@@ -17,7 +17,6 @@ export {
     rewarderHubAbi,
     type Stablecoin,
     stablecoins,
-    usdcArbitrumAddress,
 } from "./blockchain";
 
 export {

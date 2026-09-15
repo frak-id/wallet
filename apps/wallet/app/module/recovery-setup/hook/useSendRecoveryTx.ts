@@ -24,10 +24,7 @@ export function useSendRecoveryTx(
     const { address } = useConnection();
     const { mutateAsync: sendTransactionAsync } = useSendTransaction();
 
-    /**
-     * Perform the recovery setup
-     */
-    const { mutate, mutateAsync, ...mutationStuff } = useMutation({
+    const { mutateAsync, ...mutation } = useMutation({
         ...options,
         mutationKey: recoverySetupKey.setup(address),
         gcTime: 0,
@@ -59,8 +56,7 @@ export function useSendRecoveryTx(
     });
 
     return {
-        ...mutationStuff,
+        ...mutation,
         sendRecoveryTxAsync: mutateAsync,
-        sendRecoveryTx: mutate,
     };
 }

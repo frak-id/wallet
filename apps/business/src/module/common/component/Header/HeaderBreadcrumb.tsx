@@ -1,8 +1,9 @@
 import { Text } from "@frak-labs/design-system/components/Text";
-import { Link, useLocation, useParams } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import type { TFunction } from "i18next";
 import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
+import { useOptionalActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { pageNav } from "@/module/common/i18n/pageLabel";
 import {
     breadcrumb,
@@ -49,15 +50,13 @@ function labelFor(segment: string, t: TFunction): string {
 export function HeaderBreadcrumb() {
     const { t } = useTranslation();
     const { pathname } = useLocation();
-    const params = useParams({ strict: false }) as {
-        merchantId?: string;
-    };
+    const merchantId = useOptionalActiveMerchantId();
 
     const rawSegments = pathname.split("/").filter(Boolean);
 
     // Strip the `/m/$merchantId` prefix — it isn't a navigable crumb.
     const segments = (() => {
-        if (params.merchantId && rawSegments[0] === "m") {
+        if (merchantId && rawSegments[0] === "m") {
             return rawSegments.slice(2);
         }
         return rawSegments;
@@ -73,8 +72,8 @@ export function HeaderBreadcrumb() {
             {segments.map((segment, index) => {
                 const isLast = index === segments.length - 1;
                 const tail = segments.slice(0, index + 1).join("/");
-                const href = params.merchantId
-                    ? `/m/${params.merchantId}/${tail}`
+                const href = merchantId
+                    ? `/m/${merchantId}/${tail}`
                     : `/${tail}`;
                 return (
                     <Fragment key={href}>

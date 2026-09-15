@@ -1,9 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-// ---------------------------------------------------------------------------
-// Hoisted mocks
-// ---------------------------------------------------------------------------
 const mocks = vi.hoisted(() => {
     let _onOpenChange: ((open: boolean) => void) | null = null;
 
@@ -76,8 +73,6 @@ vi.mock("react-i18next", () => ({
         t: (key: string, fallback?: string) => fallback ?? key,
     }),
 }));
-
-// ---------------------------------------------------------------------------
 
 import type React from "react";
 import { ReauthModal } from "./index";

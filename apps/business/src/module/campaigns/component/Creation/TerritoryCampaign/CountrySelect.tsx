@@ -111,8 +111,23 @@ export function CountrySelect({ value, onChange, error }: CountrySelectProps) {
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
+            {/* Not a `<button>`: the field nests its own chip-remove and
+                clear buttons. Radix hands `asChild` a click handler only, so
+                these attributes replace what the button element would give. */}
             <PopoverTrigger asChild>
                 <div
+                    role="combobox"
+                    tabIndex={0}
+                    aria-expanded={open}
+                    aria-haspopup="dialog"
+                    aria-label={t(
+                        "campaigns.create.territory.card.placeholder"
+                    )}
+                    onKeyDown={(e) => {
+                        if (e.key !== "Enter" && e.key !== " ") return;
+                        e.preventDefault();
+                        setOpen((prev) => !prev);
+                    }}
                     className={`${styles.trigger}${error ? ` ${styles.triggerError}` : ""}`}
                 >
                     <div

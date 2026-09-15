@@ -1,7 +1,14 @@
 import { style } from "@vanilla-extract/css";
 import { fadeInDown } from "../keyframes.css";
 import { vars } from "../theme.css";
-import { alias, brand, fontSize, onDark, overlay } from "../tokens.css";
+import {
+    alias,
+    brand,
+    fontSize,
+    onDark,
+    overlay,
+    safeArea,
+} from "../tokens.css";
 
 /**
  * Shared in-app browser banner styles.
@@ -16,7 +23,7 @@ import { alias, brand, fontSize, onDark, overlay } from "../tokens.css";
 
 export const container = style({
     position: "fixed",
-    top: `max(${alias.spacing.xs}, env(safe-area-inset-top))`,
+    top: `max(${alias.spacing.xs}, ${safeArea.top})`,
     left: alias.spacing.m,
     right: alias.spacing.m,
     zIndex: 1000,

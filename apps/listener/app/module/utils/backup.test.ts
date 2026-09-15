@@ -34,6 +34,12 @@ vi.mock("@frak-labs/wallet-shared/stores/sessionStore", () => ({
     },
 }));
 
+vi.mock("@/module/stores/resolvingContextStore", () => ({
+    resolvingContextStore: {
+        getState: vi.fn(() => ({ context: { origin: "https://example.com" } })),
+    },
+}));
+
 /**
  * Build a minimal JWT-shaped token carrying an `exp` claim (seconds), so the
  * backup freshness comparison (which decodes the JWT) can order tokens.
@@ -331,9 +337,10 @@ describe("backup", () => {
             const { restoreBackupData } = await import("./backup");
             await restoreBackupData({ backup: encoded, domain: "example.com" });
 
-            expect(emitLifecycleEvent).toHaveBeenCalledWith({
-                iframeLifecycle: "remove-backup",
-            });
+            expect(emitLifecycleEvent).toHaveBeenCalledWith(
+                { iframeLifecycle: "remove-backup" },
+                { targetOrigin: "*" }
+            );
             expect(setSession).not.toHaveBeenCalled();
         });
 
@@ -403,6 +410,36 @@ describe("backup", () => {
             expect(emitLifecycleEvent).not.toHaveBeenCalled();
         });
 
+        test("should drop do-backup and warn when no origin resolved", async () => {
+            const { emitLifecycleEvent } = await import(
+                "@frak-labs/wallet-shared/common/utils/lifecycleEvents"
+            );
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
+            );
+            const { resolvingContextStore } = await import(
+                "@/module/stores/resolvingContextStore"
+            );
+            const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+            vi.mocked(sessionStore.getState).mockReturnValue({
+                session: { address: "0x123", token: "valid-token" },
+                sdkSession: undefined,
+            } as never);
+            vi.mocked(resolvingContextStore.getState).mockReturnValueOnce({
+                context: undefined,
+            } as never);
+
+            const { pushBackupData } = await import("./backup");
+            await pushBackupData({ domain: "example.com" });
+
+            expect(emitLifecycleEvent).not.toHaveBeenCalled();
+            expect(warn).toHaveBeenCalledWith(
+                expect.stringContaining("Origin not resolved")
+            );
+            warn.mockRestore();
+        });
+
         test("should emit remove-backup when no session tokens exist", async () => {
             const { emitLifecycleEvent } = await import(
                 "@frak-labs/wallet-shared/common/utils/lifecycleEvents"
@@ -419,9 +456,10 @@ describe("backup", () => {
             const { pushBackupData } = await import("./backup");
             await pushBackupData({ domain: "example.com" });
 
-            expect(emitLifecycleEvent).toHaveBeenCalledWith({
-                iframeLifecycle: "remove-backup",
-            });
+            expect(emitLifecycleEvent).toHaveBeenCalledWith(
+                { iframeLifecycle: "remove-backup" },
+                { targetOrigin: "*" }
+            );
         });
 
         test("should emit remove-backup when no sessions at all", async () => {
@@ -440,9 +478,10 @@ describe("backup", () => {
             const { pushBackupData } = await import("./backup");
             await pushBackupData({ domain: "example.com" });
 
-            expect(emitLifecycleEvent).toHaveBeenCalledWith({
-                iframeLifecycle: "remove-backup",
-            });
+            expect(emitLifecycleEvent).toHaveBeenCalledWith(
+                { iframeLifecycle: "remove-backup" },
+                { targetOrigin: "*" }
+            );
         });
 
         test("should encode and emit do-backup with a valid hash that round-trips through restoreBackupData", async () => {
@@ -462,7 +501,8 @@ describe("backup", () => {
             await pushBackupData({ domain: "example.com" });
 
             expect(emitLifecycleEvent).toHaveBeenCalledWith(
-                expect.objectContaining({ iframeLifecycle: "do-backup" })
+                expect.objectContaining({ iframeLifecycle: "do-backup" }),
+                { targetOrigin: "https://example.com" }
             );
 
             // Round-trip: feed the produced backup straight back into
@@ -530,10 +570,13 @@ describe("backup", () => {
             expect(decoded.validationHash).toMatch(/^0x[0-9a-f]{64}$/);
             expect(decoded.expireAtTimestamp).toBeGreaterThan(Date.now());
 
-            expect(emitLifecycleEvent).toHaveBeenCalledWith({
-                iframeLifecycle: "do-backup",
-                data: { backup: emittedBackup },
-            });
+            expect(emitLifecycleEvent).toHaveBeenCalledWith(
+                {
+                    iframeLifecycle: "do-backup",
+                    data: { backup: emittedBackup },
+                },
+                { targetOrigin: "https://example.com" }
+            );
         });
     });
 });

@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-// ---------------------------------------------------------------------------
-// Hoisted mocks — must be declared before any imports from the module under
-// test so vi.mock hoisting works correctly.
-// ---------------------------------------------------------------------------
-
 const mockEnsureFreshSdkSession = vi.fn();
 const mockGetSafeSession = vi.fn();
 const mockPushBackupData = vi.fn();
@@ -32,14 +27,7 @@ vi.mock("@/module/utils/backup", () => ({
     pushBackupData: (...args: unknown[]) => mockPushBackupData(...args),
 }));
 
-// ---------------------------------------------------------------------------
-// Import the module under test AFTER mocks are set up.
-// ---------------------------------------------------------------------------
 import { createWalletStatusHandler } from "./useWalletStatusListener";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 const DOMAIN = "example.com";
 const SOURCE_URL = `https://www.${DOMAIN}/page`;
@@ -67,10 +55,6 @@ const MOCK_WALLET = {
 };
 
 const FRESH_SDK = { token: "sdk-token-fresh", expires: Date.now() + 86400000 };
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 describe("createWalletStatusHandler — emitCurrentStatus", () => {
     beforeEach(() => {

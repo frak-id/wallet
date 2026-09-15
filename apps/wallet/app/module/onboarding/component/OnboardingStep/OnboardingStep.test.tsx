@@ -8,7 +8,7 @@ const hero: OnboardingHeroProps = {
     image: "test.webp",
 };
 
-describe.sequential("OnboardingStep", () => {
+describe("OnboardingStep", () => {
     it("renders the step title and primary CTA", () => {
         render(
             <OnboardingStep

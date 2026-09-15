@@ -14,7 +14,7 @@ function setHtmlLang(value: string) {
     document.documentElement.lang = value;
 }
 
-describe.sequential("useLang", () => {
+describe("useLang", () => {
     afterEach(() => {
         sdkConfigStore.clearCache();
         sdkConfigStore.reset();

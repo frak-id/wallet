@@ -73,7 +73,6 @@ function CurrencyRadioGroup({
             value={value}
             onValueChange={(next) => next && onChange(next as Stablecoin)}
         >
-            {/* Note: original gap was `0 m` (row=0, col=m); Tiles applies uniform m gap — accepted delta */}
             <Tiles columns={2} space="m">
                 {CURRENCIES.map((currency) => {
                     const meta = currencyMetadata[currency];

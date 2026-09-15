@@ -1,5 +1,4 @@
 // Clients
-export type { PairingWsEventListener } from "./clients/base";
 export { BasePairingClient } from "./clients/base";
 export type {
     OnPairingSuccessCallback,
@@ -21,7 +20,10 @@ export { PairingView } from "./component/PairingView";
 // Hooks
 export { useCancelAllSignatureRequests } from "./hook/useCancelAllSignatureRequests";
 export { useDeletePairing } from "./hook/useDeletePairing";
-export { useGetActivePairings } from "./hook/useListPairings";
+export {
+    activePairingsQueryOptions,
+    useGetActivePairings,
+} from "./hook/useListPairings";
 
 export {
     isPairingNotFoundError,
@@ -54,6 +56,3 @@ export type {
     TargetPairingPendingSignature,
     TargetPairingState,
 } from "./types/index";
-
-// Note: Types are not re-exported from the barrel due to naming conflicts
-// Import types directly from "./pairing/types" if needed

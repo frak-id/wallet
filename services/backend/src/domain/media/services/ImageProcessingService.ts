@@ -1,5 +1,4 @@
 import { HttpError } from "@backend-utils";
-import sharp from "sharp";
 import {
     type DownscaleVariant,
     generateWebpVariants,
@@ -43,17 +42,16 @@ export class ImageProcessingService {
 
         const constraints = imageTypeConfigs[type];
 
-        // Read metadata to validate dimensions before processing
-        const metadata = await sharp(inputBuffer).metadata();
-        const width = metadata.width;
-        const height = metadata.height;
-
-        if (!width || !height) {
-            throw HttpError.badRequest(
-                "INVALID_IMAGE",
-                "Could not read image dimensions"
-            );
-        }
+        // Read metadata to validate dimensions before processing. A format Bun
+        // cannot decode rejects here, so the catch keeps it a 400 rather than a 500.
+        const { width, height } = await new Bun.Image(inputBuffer)
+            .metadata()
+            .catch(() => {
+                throw HttpError.badRequest(
+                    "INVALID_IMAGE",
+                    "Could not read image dimensions"
+                );
+            });
 
         // Check minimum size
         if (width < constraints.minWidth || height < constraints.minHeight) {

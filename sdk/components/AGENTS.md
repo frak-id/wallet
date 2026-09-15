@@ -5,17 +5,20 @@ Preact-based Web Components (Custom Elements). Hybrid Light DOM / Shadow DOM. CD
 ## Component Matrix
 | Element | DOM | Reason |
 |---------|-----|--------|
-| `<frak-button-wallet>` | **Shadow DOM** | Floating overlay must NOT inherit merchant styles. Legacy name: opens the sharing page |
+| `<frak-button-wallet>` | **Shadow DOM** | Floating overlay must NOT inherit merchant styles. Tag name does not match the surface: it opens the sharing page |
 | `<frak-button-share>` | Light DOM | MUST inherit merchant theme `.button` styles |
 | `<frak-open-in-app>` | Light DOM | MUST inherit merchant theme styles (mobile-only renderer) |
+| `<frak-post-purchase>` | Light DOM | MUST inherit merchant theme styles; see the `token` note below |
+| `<frak-banner>` | Light DOM | MUST inherit merchant theme styles |
 
 ## Key Files
-- `src/components/{ButtonWallet,ButtonShare,OpenInAppButton}/`
+- `src/components/{ButtonWallet,ButtonShare,OpenInAppButton,PostPurchase,Banner}/`
 - `src/hooks/useLightDomStyles.ts` — injects base + placement CSS into `<head>`
-- `src/utils/sharedCss.ts` — `sharedCss` (Shadow DOM) + `lightDomBaseCss` (Light DOM)
-- `src/utils/styleManager.ts` — singleton `<head>` injection with dedup
-- `src/utils/registerWebComponent.ts` — custom-element registration helper (scoping happens inside via shared helpers)
-- CDN entry points: `src/utils/loader.ts`, `src/utils/initFrakSdk.ts`, `src/utils/clientReady.ts`
+- `src/styles/sharedBaseCss.css.ts` — the one entry allowed to emit reset/theme CSS
+- `src/styles/sharedCss.ts` — `sharedCss` (Shadow DOM), `lightDomBaseCss` (Light DOM), `buildStyleContent()`
+- `src/styles/styleManager.ts` — singleton `<head>` injection with dedup
+- `src/webcomponent/registerWebComponent.ts` — custom-element registration helper
+- CDN entry points: `src/bootstrap/{loader,initFrakSdk,clientReady}.ts`
 
 ## Non-Obvious Patterns
 - **Specificity ladder (Light DOM)** — order matters:

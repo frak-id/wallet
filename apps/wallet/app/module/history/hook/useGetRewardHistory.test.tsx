@@ -105,8 +105,6 @@ describe("useGetRewardHistory", () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        expect(result.current.items).toBeDefined();
-        expect(Array.isArray(result.current.items)).toBe(true);
         expect(result.current.items[0]?.createdAt).toBe(
             mockItem.createdAt.getTime()
         );
@@ -161,16 +159,10 @@ describe("useGetRewardHistory", () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        if (result.current.items.length > 0) {
-            const item = result.current.items[0];
-            expect(item).toHaveProperty("amount");
-            expect(item).toHaveProperty("createdAt");
-            expect(item).toHaveProperty("merchant");
-            expect(item).toHaveProperty("token");
-            expect(item).toHaveProperty("status");
-            expect(item).toHaveProperty("role");
-            expect(item).toHaveProperty("trigger");
-        }
+        expect(result.current.items[0]).toEqual({
+            ...mockItem,
+            createdAt: mockItem.createdAt.getTime(),
+        });
     });
 
     test("should return total count", async ({

@@ -97,7 +97,7 @@ class HttpClientTest {
         }
 
     @Test
-    fun `a DNS lookup failure is retried, matching iOS's cannotFindHost-dnsLookupFailed`() =
+    fun `a DNS lookup failure is retried`() =
         runTest {
             var attempts = 0
             val client =
@@ -343,7 +343,7 @@ class HttpClientTest {
         }
 
     @Test
-    fun `a request is logged at debug level without the query string or header values (D3)`() =
+    fun `a request is logged at debug level without the query string or header values`() =
         runTest {
             transport.respond(200, "{}")
             val sink = RecordingLogSink()
@@ -364,7 +364,7 @@ class HttpClientTest {
         }
 
     @Test
-    fun `nothing is logged when no logger is configured (D3)`() =
+    fun `nothing is logged when no logger is configured`() =
         runTest {
             transport.respond(200, "{}")
 
@@ -372,7 +372,7 @@ class HttpClientTest {
         }
 
     @Test
-    fun `a failed attempt is logged too, without a status (D3)`() =
+    fun `a failed attempt is logged too, without a status`() =
         runTest {
             transport.fail(java.io.EOFException("boom"))
             val sink = RecordingLogSink()

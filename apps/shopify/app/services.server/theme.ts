@@ -71,7 +71,7 @@ const mainThemeIdCache = new LRUCache<string, GetMainThemeIdReturnType>({
 });
 
 /**
- * GraphQL query to fetch main theme id
+ * Resolve the shop's main theme, cached for 30s per shop.
  */
 export async function getMainThemeId(
     context: AuthenticatedContext
@@ -102,13 +102,6 @@ query getMainThemeId {
     return { gid, id };
 }
 
-/**
- *
- * @param graphql
- * @param gid
- * @param templates
- * @returns
- */
 async function getTemplateFiles(
     graphql: AuthenticatedContext["admin"]["graphql"],
     gid: string,
@@ -324,11 +317,11 @@ export async function doesThemeSupportAppEmbed(
     }
 }
 
-export interface ThemeBlockInfo {
+export type ThemeBlockInfo = {
     type: string;
     disabled?: boolean;
     settings?: Record<string, unknown>;
-}
+};
 
 /**
  * Extract numeric theme ID from a Shopify GID.

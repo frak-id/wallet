@@ -78,8 +78,6 @@ export class InteractionSubmissionOrchestrator {
         input: TInput,
         context: HandlerContext
     ): Promise<HandlerResult<TExtra>> {
-        handler.validateContext?.(input, context);
-
         const payload = await handler.buildPayload(input, context);
 
         let interactionLog: InteractionLogResult = null;

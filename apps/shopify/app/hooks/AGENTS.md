@@ -1,6 +1,6 @@
 # hooks/ — Client-Side Data Hooks
 
-4 hooks. Three patterns: React Query data fetching, `useMemo` URL builders, utility listeners.
+Three patterns: React Query data fetching, `useMemo` URL builders, utility listeners.
 
 ## INVENTORY
 
@@ -33,22 +33,21 @@ export function useOnChainShopInfo() {
 - `enabled`: Guard with `!!param` to prevent queries when data missing.
 - Return: Destructure `data` into named field + spread `...query`.
 - Error: Return fallback data (e.g., hardcoded rates), never throw.
-- **Types over interfaces**: Prefer `type` aliases. Use `interface` only when declaration merging is required.
 
 ## VIEM MULTICALL PATTERN
 
 ```ts
 const results = await multicall(viemClient, {
   contracts: [
-    { address, abi: interactionCampaignAbi, functionName: "getMetadata" },
-    { address, abi: interactionCampaignAbi, functionName: "isActive" },
+    { address, abi: campaignBankAbi, functionName: "getConfig" },
+    { address, abi: erc20Abi, functionName: "balanceOf", args: [address] },
   ],
   allowFailure: false,
 });
 ```
 
 - `allowFailure: false` — strict mode, fails if any call fails.
-- ABIs from `utils/abis/campaignAbis.ts` (7 contracts).
+- ABIs from `@frak-labs/app-essentials/blockchain` — there is no local `abis/` dir.
 - Chain: Arbitrum (prod) or Arbitrum Sepolia (dev). RPC via erpc.gcp.frak.id with 50ms batching.
 
 ## URL BUILDER PATTERN

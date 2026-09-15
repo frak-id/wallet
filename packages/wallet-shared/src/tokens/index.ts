@@ -1,2 +1,5 @@
 // Hooks
-export { useGetUserBalance } from "./hook/useGetUserBalance";
+export {
+    useGetUserBalance,
+    userBalanceQueryOptions,
+} from "./hook/useGetUserBalance";

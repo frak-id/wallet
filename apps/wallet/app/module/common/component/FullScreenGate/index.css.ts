@@ -16,7 +16,7 @@ export const gate = style({
     backgroundColor: vars.surface.background2,
     paddingLeft: alias.spacing.l,
     paddingRight: alias.spacing.l,
-    paddingTop: `calc(env(safe-area-inset-top, 0px) + ${alias.spacing.l})`,
+    paddingTop: `calc(${safeArea.top} + ${alias.spacing.l})`,
     paddingBottom: `calc(${safeArea.bottom} + ${alias.spacing.l})`,
 });
 

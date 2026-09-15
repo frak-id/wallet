@@ -132,6 +132,11 @@ export async function assertEsVersion({
         ...(withIgnore && ignore ? { ignore: ignore.features } : {}),
     });
 
+    // Pinned to an exact es-check version, not a caret: 9.7.1 added
+    // `Uint8ArrayFromHex`/`Uint8ArrayToHex` detection, which fires on
+    // @noble/hashes' `hasHexBuiltin` — a guarded feature test with a full
+    // fallback, so it is safe at the floor. Detection has no receiver or
+    // guard analysis, so the report is a false positive.
     // Lazy: this module is reachable from every vite config, which every
     // vitest run loads. A static import pulls es-check (plus acorn and
     // fast-glob) into test startup for a gate that only runs at build

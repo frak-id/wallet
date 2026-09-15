@@ -56,6 +56,10 @@ jobs:
           java-version: "17"
 
       - uses: android-actions/setup-android@v4
+        with:
+          # The legacy `tools` package is gone from Google's repo; the action's default
+          # `tools platform-tools` makes sdkmanager exit 1.
+          packages: platform-tools
       - uses: gradle/actions/setup-gradle@v5
         with:
           build-root-directory: sdk/android

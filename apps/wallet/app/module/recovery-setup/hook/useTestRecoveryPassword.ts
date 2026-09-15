@@ -8,7 +8,7 @@ import { decodeRecoveryBlob } from "@/module/recovery-setup/utils/recoveryBlob";
  * ciphertext, then attempt to decrypt it. The password never reaches the backend.
  */
 export function useTestRecoveryPassword() {
-    const { mutate, mutateAsync, ...mutationStuff } = useMutation({
+    const { mutateAsync, ...mutation } = useMutation({
         mutationKey: recoverySetupKey.testPassword,
         gcTime: 0,
         mutationFn: async ({
@@ -30,8 +30,7 @@ export function useTestRecoveryPassword() {
     });
 
     return {
-        ...mutationStuff,
-        testPassword: mutate,
+        ...mutation,
         testPasswordAsync: mutateAsync,
     };
 }

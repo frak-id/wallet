@@ -138,7 +138,7 @@ struct ResolvedConfigDecoderTests {
         #expect(config.lang == .en)
     }
 
-    @Test("an empty optional string reads as absent, not as an empty string (2.10)")
+    @Test("an empty optional string reads as absent, not as an empty string")
     func emptyOptionalStringReadsAsAbsent() throws {
         let body = """
             {"merchantId":"m","productId":"0x00","name":"Acme","domain":"acme.example",
@@ -193,11 +193,8 @@ struct ResolvedConfigDecoderTests {
         #expect(sdkConfig.placements.count == 1)
     }
 
-    // 9.3 / 9.3t: no test on either platform had ever supplied a good and a bad placement in
-    // the same payload. Swift's synthesized dictionary decoding fails wholesale on one bad
-    // value, which used to drop every good placement along with it; Android's `objectMap`
-    // (`net/JsonReader.kt`) has always skipped only the bad entry.
-    @Test("a malformed placement is dropped, the well-formed one next to it survives (9.3)")
+    // Swift's synthesized dictionary decoding fails wholesale on one bad value.
+    @Test("a malformed placement is dropped, the well-formed one next to it survives")
     func malformedPlacementIsDroppedNotEveryPlacement() throws {
         let body = """
             {"merchantId":"m","productId":"0x00","name":"Acme","domain":"acme.example",

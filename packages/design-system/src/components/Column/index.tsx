@@ -13,20 +13,10 @@ type ColumnWidth =
     | "3/5";
 
 /**
- * Maps each fraction to its flex-grow share (the numerator).
- *
- * IMPORTANT — widths are proportional *grow shares*, not absolute fractions.
- * Each fraction contributes its numerator as a flex-grow weight over a zero
- * basis, so a column's rendered width is `numerator / (sum of the row's
- * numerators)`. This only equals the written fraction when the columns in a
- * row share one denominator and sum to a whole, e.g. `1/2 + 1/2`, `1/3 + 2/3`,
- * `1/4 + 1/4 + 1/4 + 1/4`, `2/5 + 3/5`. Consequences of misuse:
- *   - a lone `<Column width="1/4">` fills the whole row (share 1 of 1),
- *   - mixed denominators (`1/2 + 1/3`) split by numerators (1:1 → 50/50),
- *     NOT by the literal fractions.
- * This is the gap-native trade-off vs Braid's percentage-basis model: it keeps
- * rows from overflowing by the `Columns` gutter, at the cost of fractions only
- * being honoured within a complete, single-denominator row.
+ * Fraction → flex-grow share (the numerator), not an absolute width: a column
+ * renders at `numerator / (sum of the row's numerators)`. It only equals the
+ * written fraction in a complete single-denominator row (`1/3 + 2/3`); a lone
+ * `1/4` fills the row and `1/2 + 1/3` splits 50/50.
  */
 const widthToGrow: Record<Exclude<ColumnWidth, "content">, number> = {
     "1/2": 1,
@@ -45,26 +35,15 @@ export type ColumnProps = {
 };
 
 /**
- * Column — child of <Columns />, controls its own width.
- *
- * - `width="content"` → natural width (flexShrink: 0)
- * - `width="1/2"` etc → proportional grow share — pair fractions that sum to a
- *   whole within a row (see `widthToGrow` above); they are NOT absolute widths
- * - no width → fills remaining space (one share)
- *
  * Widths use inline `style` because the `flex` shorthand is incompatible with
- * class-based sprinkles. `flex-basis: 0` + `min-width: 0` make the fractions
- * gap-aware: the parent `Columns` gap is subtracted first, then the remaining
- * width is split by each column's grow share — so `1/2 + 1/2` is a true 50/50
- * with the gutter and never overflows.
+ * class-based sprinkles. `flex-basis: 0` + `min-width: 0` make the shares
+ * gap-aware, so the parent `Columns` gutter is subtracted before the split.
  */
 export function Column({ width, children }: ColumnProps) {
-    // "content" → natural width via flexShrink: 0
     if (width === "content") {
         return <Box flexShrink={0}>{children}</Box>;
     }
 
-    // fraction (or fill) → proportional grow with a zero basis
     const grow = width !== undefined ? widthToGrow[width] : 1;
     const style: CSSProperties = { flex: `${grow} 1 0%`, minWidth: 0 };
     return <Box style={style}>{children}</Box>;

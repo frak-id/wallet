@@ -1,9 +1,4 @@
 import type { TranslationKey } from "@frak-labs/wallet-shared/types";
-// Order matches the runtime render order in `WelcomeCard`
-// (intro → notifications → invite). The tuple is only consumed for
-// `WelcomeSlideId` derivation and `isWelcomeSlideId` validation, but
-// keeping it aligned avoids confusion when a future reader greps for
-// slide order.
 export const allWelcomeSlideIds = ["intro", "notifications", "invite"] as const;
 
 export type WelcomeSlideId = (typeof allWelcomeSlideIds)[number];

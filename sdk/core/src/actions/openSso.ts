@@ -7,7 +7,7 @@ export const ssoPopupFeatures =
 export const ssoPopupName = "frak-sso";
 
 /**
- * Function used to open the SSO
+ * Open the SSO so the user can create or recover a wallet
  * @param client - The current Frak Client
  * @param args - The SSO parameters
  *

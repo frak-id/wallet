@@ -44,7 +44,7 @@ const CONFIG_SITES: ConfigSite[] = [
     {
         file: "sdk/legacy/tsdown.config.ts",
         outDirs: ["sdk/legacy/dist/bundle"],
-        why: "the NexusSDK IIFE on jsdelivr — not a cdn/ path, so a glob misses it",
+        why: "the retired NexusSDK bundle on jsdelivr — empty, but still a published path",
     },
     {
         file: "sdk/react/tsdown.config.ts",

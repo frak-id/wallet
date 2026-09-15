@@ -128,8 +128,7 @@ actor RewardRepository {
 
         backoff.recordSuccess(backoffKey)
         // Sweep before inserting: `products` puts a caller-controlled, up-to-4KB string in the
-        // key, so the map is no longer bounded by the handful of merchant/currency/audience
-        // combinations it used to hold. Dropping expired entries here bounds the map to what
+        // key, so nothing else bounds this map. Dropping expired entries here bounds it to what
         // was actually asked for inside one TTL window.
         let cutoff = now().addingTimeInterval(-Self.cacheTTL)
         cache = cache.filter { $0.value.fetchedAt > cutoff }

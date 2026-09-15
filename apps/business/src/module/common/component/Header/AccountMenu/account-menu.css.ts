@@ -1,3 +1,4 @@
+import { tablet } from "@frak-labs/design-system/breakpoints";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, zIndex } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
@@ -47,22 +48,23 @@ export const avatarIcon = style({
 });
 
 export const label = style({
+    display: "none",
     "@media": {
-        "screen and (max-width: 768px)": {
-            display: "none",
+        [`screen and (min-width: ${tablet}px)`]: {
+            display: "inline",
         },
     },
 });
 
 export const chevron = style({
-    display: "inline-flex",
+    display: "none",
     alignItems: "center",
     justifyContent: "center",
     color: vars.icon.tertiary,
     transition: "transform 0.15s ease",
     "@media": {
-        "screen and (max-width: 768px)": {
-            display: "none",
+        [`screen and (min-width: ${tablet}px)`]: {
+            display: "inline-flex",
         },
     },
 });

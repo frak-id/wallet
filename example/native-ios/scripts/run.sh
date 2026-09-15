@@ -30,7 +30,7 @@ SCHEME="FrakExampleiOSApp"
 PROJECT="$APP_DIR/$SCHEME.xcodeproj"
 DERIVED="$APP_DIR/build"
 # Frak Labs. Override for a contributor signing with their own Apple team; the bundle
-# id must stay id.frak.example.ios either way, since the dev merchant allow-lists it.
+# id must stay id.frak.example.ios either way, since both stages' merchants allow-list it.
 DEVELOPMENT_TEAM="${FRAK_DEVELOPMENT_TEAM:-57DZ6Z2235}"
 
 # Logs go to stderr: `boot_simulator` returns the UDID on stdout, so anything
@@ -111,6 +111,119 @@ do_build_only() {
 		--sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
 		-Xswiftc -target -Xswiftc arm64-apple-ios15.0-simulator \
 		-Xswiftc -swift-version -Xswiftc 6
+}
+
+# App Store Connect distribution artifact.
+#
+# Needs an ASC API key, which is also what lets -allowProvisioningUpdates mint the App
+# Store profile unattended:
+#   FRAK_ASC_KEY_PATH    .p8 private key
+#   FRAK_ASC_KEY_ID      key id
+#   FRAK_ASC_ISSUER_ID   issuer id
+# Build number comes from FRAK_BUILD_NUMBER; App Store Connect rejects a repeat.
+do_archive() {
+	generate_project
+
+	# Unauthenticated falls back to whatever Apple ID Xcode is signed in as, which is enough to
+	# mint the profile locally. CI has no such account and always passes the key.
+	local auth=()
+	if [ -n "${FRAK_ASC_KEY_PATH:-}" ]; then
+		: "${FRAK_ASC_KEY_ID:?set FRAK_ASC_KEY_ID alongside FRAK_ASC_KEY_PATH}"
+		: "${FRAK_ASC_ISSUER_ID:?set FRAK_ASC_ISSUER_ID alongside FRAK_ASC_KEY_PATH}"
+		auth=(
+			-authenticationKeyPath "$FRAK_ASC_KEY_PATH"
+			-authenticationKeyID "$FRAK_ASC_KEY_ID"
+			-authenticationKeyIssuerID "$FRAK_ASC_ISSUER_ID"
+		)
+	fi
+
+	local version="${FRAK_VERSION_NAME:-1.0}"
+	local build="${FRAK_BUILD_NUMBER:-1}"
+	local archive="$DERIVED/$SCHEME.xcarchive"
+	local export_dir="$DERIVED/export"
+
+	rm -rf "$archive" "$export_dir"
+	mkdir -p "$DERIVED"
+
+	log "Archiving $version ($build) for team $DEVELOPMENT_TEAM..."
+	# The archive stays on the project's development identity: a CODE_SIGN_IDENTITY override
+	# here would also hit the SwiftPM SDK targets, which xcodebuild rejects as a conflict with
+	# automatic signing. `-exportArchive` below re-signs for distribution.
+	run_xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
+		-configuration Release \
+		-destination 'generic/platform=iOS' \
+		-archivePath "$archive" \
+		-allowProvisioningUpdates \
+		${auth[@]+"${auth[@]}"} \
+		DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
+		CODE_SIGN_STYLE=Automatic \
+		MARKETING_VERSION="$version" \
+		CURRENT_PROJECT_VERSION="$build" \
+		archive
+
+	# Written per run rather than committed: it has to carry the resolved team id.
+	cat >"$DERIVED/ExportOptions.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>teamID</key>
+	<string>$DEVELOPMENT_TEAM</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>uploadSymbols</key>
+	<true/>
+	<key>destination</key>
+	<string>export</string>
+</dict>
+</plist>
+EOF
+
+	log "Exporting .ipa..."
+	# Apple's rsync only: the export pipeline shells out to rsync, and Homebrew's 3.x fails it
+	# with a bare "Copy failed". Harmless on CI, where only the system one exists.
+	PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH" \
+		run_xcodebuild -exportArchive \
+		-archivePath "$archive" \
+		-exportPath "$export_dir" \
+		-exportOptionsPlist "$DERIVED/ExportOptions.plist" \
+		-allowProvisioningUpdates \
+		${auth[@]+"${auth[@]}"}
+
+	local ipa
+	ipa="$(find "$export_dir" -name '*.ipa' -maxdepth 1 | head -1)"
+	[ -n "$ipa" ] || die "Export produced no .ipa under $export_dir"
+	log "IPA: $ipa"
+	echo "$ipa"
+}
+
+# Separate from `archive` so a failed upload can be retried without rebuilding.
+do_upload() {
+	: "${FRAK_ASC_KEY_PATH:?set FRAK_ASC_KEY_PATH to the App Store Connect .p8}"
+	: "${FRAK_ASC_KEY_ID:?set FRAK_ASC_KEY_ID}"
+	: "${FRAK_ASC_ISSUER_ID:?set FRAK_ASC_ISSUER_ID}"
+
+	local ipa="${1:-}"
+	if [ -z "$ipa" ]; then
+		ipa="$(find "$DERIVED/export" -name '*.ipa' -maxdepth 1 2>/dev/null | head -1)"
+	fi
+	[ -n "$ipa" ] || die "No .ipa found. Run '$0 archive' first."
+
+	# altool only reads the key from a directory it owns, by filename convention.
+	local keys_dir="$DERIVED/private_keys"
+	mkdir -p "$keys_dir"
+	cp "$FRAK_ASC_KEY_PATH" "$keys_dir/AuthKey_$FRAK_ASC_KEY_ID.p8"
+	# Expanded now rather than when the trap fires: `keys_dir` is local and out of scope by
+	# then, which under `set -u` fails the run after a successful upload.
+	trap "rm -rf $(printf '%q' "$keys_dir")" EXIT
+
+	log "Uploading $ipa to App Store Connect..."
+	API_PRIVATE_KEYS_DIR="$keys_dir" xcrun altool --upload-app -f "$ipa" -t ios \
+		--apiKey "$FRAK_ASC_KEY_ID" \
+		--apiIssuer "$FRAK_ASC_ISSUER_ID"
+	log "Uploaded. TestFlight processing takes a few minutes."
 }
 
 do_run() {
@@ -265,20 +378,24 @@ case "${1:-run}" in
 run) do_run ;;
 device) do_device ;;
 build) do_build_only ;;
+archive) do_archive ;;
+upload) shift || true; do_upload "${1:-}" ;;
 logs) do_logs ;;
 xcode) do_xcode ;;
 lint) do_lint ;;
 format) do_format ;;
 *)
-	echo "Usage: $0 {run|device|logs|build|xcode|lint|format}"
+	echo "Usage: $0 {run|device|logs|build|archive|upload|xcode|lint|format}"
 	echo ""
-	echo "  run    - generate + build + install + launch on a simulator, then stream logs"
-	echo "  device - same, on a physical iPhone (needs Developer Mode and a signing team)"
-	echo "  logs   - relaunch on a physical iPhone and stream the SDK log output"
-	echo "  build  - compile-only typecheck (Swift 6 strict concurrency), no simulator"
-	echo "  xcode  - regenerate the project and open it in Xcode"
-	echo "  lint   - swift-format lint (strict), no simulator"
-	echo "  format - swift-format rewrite in place"
+	echo "  run     - generate + build + install + launch on a simulator, then stream logs"
+	echo "  device  - same, on a physical iPhone (needs Developer Mode and a signing team)"
+	echo "  logs    - relaunch on a physical iPhone and stream the SDK log output"
+	echo "  build   - compile-only typecheck (Swift 6 strict concurrency), no simulator"
+	echo "  archive - signed App Store .ipa (needs FRAK_ASC_* and a signing team)"
+	echo "  upload  - send an archived .ipa to App Store Connect / TestFlight"
+	echo "  xcode   - regenerate the project and open it in Xcode"
+	echo "  lint    - swift-format lint (strict), no simulator"
+	echo "  format  - swift-format rewrite in place"
 	exit 1
 	;;
 esac

@@ -87,8 +87,6 @@ export function MoneriumOrderHistoryItem({ order }: { order: MoneriumOrder }) {
     );
 }
 
-// --- Sub-components ---
-
 function OrderIcon({ state }: { state: MoneriumOrderState }) {
     return (
         <div className={styles.iconWrapper}>
@@ -161,8 +159,6 @@ function DisplayAmount({
         </Inline>
     );
 }
-
-// --- Helpers ---
 
 function buildSubtitle(
     order: MoneriumOrder,

@@ -1,8 +1,3 @@
-/**
- * Tests for displayModal action
- * Tests modal display via RPC with various step configurations
- */
-
 import type { Address } from "viem";
 import { describe, expect, it, vi } from "../../tests/vitest-fixtures";
 import type {
@@ -323,28 +318,6 @@ describe("displayModal", () => {
 
             await expect(displayModal(mockClient, params)).rejects.toThrow(
                 "Modal display failed"
-            );
-        });
-
-        it("should handle network errors", async () => {
-            const error = new Error("Network timeout");
-            const mockClient = {
-                config: {
-                    metadata: {
-                        name: "Test App",
-                    },
-                },
-                request: vi.fn().mockRejectedValue(error),
-            } as unknown as FrakClient;
-
-            const params: DisplayModalParamsType<ModalStepTypes[]> = {
-                steps: {
-                    login: { allowSso: true },
-                },
-            };
-
-            await expect(displayModal(mockClient, params)).rejects.toThrow(
-                "Network timeout"
             );
         });
     });

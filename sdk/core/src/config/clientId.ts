@@ -26,19 +26,11 @@ let cachedClientId: string | null = null;
 let initPromise: Promise<string> | null = null;
 
 /**
- * Generate/load the P-256 key and derive the anonymous id from it. Idempotent
- * — concurrent callers reuse the in-flight promise, so N calls in one tick
- * perform exactly one keygen.
- *
- * Rejects when derivation is impossible (no `crypto.getRandomValues`, no
- * `localStorage`, unusable signer) — no fallback to an unprovable id;
- * callers that must not throw use {@link getClientId} instead. The rejected
- * promise is left cached so a device that can't keygen isn't retried forever.
- *
- * When this visit migrates a pre-derivation client, the legacy id is folded
- * into the new one here. Only the local keygen/derivation is awaited — the
- * merge itself is NOT awaited, so the caller can seed the iframe with the
- * derived id immediately while the merge stays off the critical path.
+ * Generate/load the P-256 key and derive the anonymous id from it. Idempotent:
+ * concurrent callers reuse the in-flight promise, and a rejection stays cached
+ * so a device that cannot keygen is not retried forever (callers that must not
+ * throw use {@link getClientId}). Only the keygen is awaited — a legacy-id
+ * merge is fired off it and deliberately left off the critical path.
  */
 export async function initClientId(): Promise<string> {
     if (cachedClientId) return cachedClientId;

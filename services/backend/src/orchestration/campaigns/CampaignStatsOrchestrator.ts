@@ -18,6 +18,7 @@ import {
     assetLogsTable,
     interactionLogsTable,
 } from "../../domain/rewards/db/schema";
+import { interactionTypes } from "../../domain/rewards/schemas";
 import { db } from "../../infrastructure/persistence/postgres";
 import type { PricingRepository } from "../../infrastructure/pricing/PricingRepository";
 import type { CampaignDetailsResponse } from "../schemas/campaignDetailsSchemas";
@@ -115,9 +116,9 @@ export class CampaignStatsOrchestrator {
         const rows = await db
             .select({
                 campaignRuleId: assetLogsTable.campaignRuleId,
-                referredInteractions: sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = 'referral_arrival' THEN ${interactionLogsTable.id} END)`,
-                purchaseInteractions: sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = 'purchase' THEN ${interactionLogsTable.id} END)`,
-                createReferralLinkInteractions: sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = 'create_referral_link' THEN ${interactionLogsTable.id} END)`,
+                referredInteractions: sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = ${interactionTypes.referral} THEN ${interactionLogsTable.id} END)`,
+                purchaseInteractions: sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = ${interactionTypes.purchase} THEN ${interactionLogsTable.id} END)`,
+                createReferralLinkInteractions: sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = ${interactionTypes.createReferralLink} THEN ${interactionLogsTable.id} END)`,
             })
             .from(assetLogsTable)
             .leftJoin(

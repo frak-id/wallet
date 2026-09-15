@@ -9,7 +9,7 @@ import { Trans, useTranslation } from "react-i18next";
  * Manual share-button install for themes without in-page app blocks
  * (intermediate + legacy). Mirrors the OS-2.0 ButtonTab intent but via a
  * copy-paste web-component tag plus deep-links to the theme editor and the
- * Frak business editor — the same shape the Settings → Theme page used to show.
+ * Frak business editor.
  */
 const BUTTON_TAG = '<frak-button-share classname="btn"></frak-button-share>';
 

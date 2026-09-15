@@ -54,7 +54,7 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     };
 });
 
-describe.sequential("useUnsubscribeFromPushNotification", () => {
+describe("useUnsubscribeFromPushNotification", () => {
     beforeEach(({ queryWrapper }: WalletTestFixtures) => {
         queryWrapper.client.clear();
 

@@ -1,6 +1,6 @@
 # sdk/ — Compass
 
-Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **strict**: `rpc → core → legacy → react → components`. Linked via Changesets: `frame-connector`, `core-sdk`, `react-sdk`.
+Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **strict**: `rpc → core → react → components`. Linked via Changesets: `frame-connector`, `core-sdk`, `react-sdk`. `legacy` is still in the `build:sdk` sequence but no longer depends on anything, so its position there is arbitrary.
 
 `android/` and `ios/` are **native SDKs, not npm packages** — different toolchains, different registries, different release train. They are excluded from `build:sdk`, biome, knip and Changesets. See the section at the bottom.
 
@@ -12,14 +12,14 @@ Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **str
 @frak-labs/core-sdk         ─── actions, clients, bundle
            │              ╲
 @frak-labs/react-sdk      @frak-labs/components (Preact, Web Components)
-           │
-@frak-labs/nexus-sdk (legacy, Knip-ignored, IIFE as NexusSDK)
+
+@frak-labs/nexus-sdk (legacy) ─── retired, detached, ships inert stubs
 ```
 
 ## Build System (tsdown / Rolldown)
 
 - **NPM**: `{ format: ["esm", "cjs"], outDir: "dist", dts: true }`
-- **CDN**: `{ format: "iife", globalName: "FrakSDK", outDir: "cdn", deps: { alwaysBundle: [/.*/] } }` — fully self-contained bundle. `sdk/legacy` is the exception: same IIFE shape, `NexusSDK` global, but it emits to `dist/bundle`, so a `sdk/*/cdn` glob misses a bundle merchants load from jsdelivr.
+- **CDN**: `{ format: "iife", globalName: "FrakSDK", outDir: "cdn", deps: { alwaysBundle: [/.*/] } }` — fully self-contained bundle. `sdk/legacy` is the exception: it emits its `NexusSDK` global to `dist/bundle`, so a `sdk/*/cdn` glob misses it. That path stays registered in `check:es-output`.
 - **`development` export condition**: apps in this monorepo consume `src/index.ts` directly (no rebuild in dev loop)
 
 ## Non-Obvious Patterns
@@ -33,7 +33,7 @@ Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **str
   4. Add React hook in `sdk/react/src/hook/use<Name>.ts` (wrap with TanStack Query)
 - **Action pattern**: `client.request({ method, params })` — never call transports directly.
 - **Hook pattern**: `useFrakClient()` + `useQuery`/`useMutation` — never recreate clients.
-- **Legacy is Knip-ignored** — do not add new exports there.
+- **`sdk/legacy` is retired, and its stubs must never settle.** `src/bundle.ts` exposes six no-op exports behind the `NexusSDK` global, each returning a forever-pending promise. That is not laziness: the integrations still loading this bundle chain their setup off the first call, so resolving runs their `console.error` branches, rejecting runs their catch blocks, and resolving successfully runs their success paths — which log every page load. Stalling is the only silent outcome. It publishes only to keep the npm name and the jsdelivr URL alive, and it is Knip-ignored, so nothing will flag an export you add — do not add one.
 - **`bun run build:sdk` means "build the JS SDKs"** and must keep meaning that. Native builds are separate scripts — there is no Turborepo here to hang them off, only sequential Bun `--filter` calls.
 
 ## Quick Commands

@@ -17,6 +17,8 @@ import {
     BottomTabBar,
     type TabItem,
 } from "@/module/common/component/BottomTabBar";
+import { ErrorBoundary } from "@/module/common/component/ErrorBoundary";
+import { ModalErrorToast } from "@/module/common/component/ModalErrorToast";
 import { SessionExpiringBanner } from "@/module/common/component/SessionExpiringBanner";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { EnsureConflictToast } from "@/module/pending-actions/component/EnsureConflictToast";
@@ -36,9 +38,6 @@ import { AppShellScrollContext } from "./scrollContext";
 // and treat scrollContext.tsx as an internal detail.
 export { useAppShellScroll } from "./scrollContext";
 
-/**
- * Tab definitions matching the existing Navigation component routes.
- */
 const tabs: TabItem[] = [
     { key: "/wallet", label: "Porte-monnaie", icon: <WalletIcon /> },
     { key: "/explorer", label: "Explorer", icon: <ExplorerIcon /> },
@@ -50,10 +49,6 @@ const tabs: TabItem[] = [
 // rather than walking through every tab the user visited.
 const TAB_HOME_KEY = "/wallet";
 
-/**
- * Resolve active tab key from current pathname.
- * Matches the first tab whose key is a prefix of the current path.
- */
 function resolveActiveTab(pathname: string): string {
     for (const tab of tabs) {
         if (pathname === tab.key || pathname.startsWith(`${tab.key}/`)) {
@@ -73,8 +68,6 @@ type AppShellProps = Readonly<{
 }>;
 
 /**
- * Unified app shell: sizing (safe areas, nav margin) + optional bottom tab bar.
- * No header — wallet app removed header area.
  * Exposes the main scroll container via AppShellScrollContext for pull-to-refresh.
  */
 export function AppShell({
@@ -115,6 +108,7 @@ export function AppShell({
                     <PairingInProgress />
                     <WebauthnErrorToast />
                     <EnsureConflictToast />
+                    <ModalErrorToast />
                 </BannerStack>
                 <Box
                     as="main"
@@ -127,7 +121,7 @@ export function AppShell({
                             : mainContentNoNav
                     }
                 >
-                    {children ?? <Outlet />}
+                    <ErrorBoundary>{children ?? <Outlet />}</ErrorBoundary>
                 </Box>
                 {navigation && (
                     <Box className={bottomBar}>

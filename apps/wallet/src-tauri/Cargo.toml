@@ -41,6 +41,11 @@ tauri-plugin-clipboard-manager = "2"
 tauri-plugin-share = "2.0.5"
 tauri-plugin-fs = "2.5.1"
 
+# iOS-only: raw WKWebView messaging for the edge-swipe back gesture, which
+# wry leaves off and Tauri exposes no config for.
+[target.'cfg(target_os = "ios")'.dependencies]
+objc2 = "0.6"
+
 # Optimized release profile for smaller, faster builds.
 # `strip = false` keeps Rust debug symbols in the unstripped `.so` so the
 # Firebase Crashlytics Gradle plugin can extract + upload them via

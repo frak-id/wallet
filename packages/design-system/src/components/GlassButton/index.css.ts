@@ -15,10 +15,15 @@ export const glassCircle = style({
     padding: 0,
     color: "inherit",
     borderRadius: "9999px",
-    outline: "none",
+    // Transparent when idle so the ring never shifts layout. `:focus-visible`
+    // keeps pointer taps ring-free; the parent form covers the span variant
+    // nested in a focusable `<Back>` wrapper, where the wrapper holds focus.
+    outline: "2px solid transparent",
+    outlineOffset: 2,
     selectors: {
-        "&:focus": { outline: "none" },
-        "&:focus-visible": { outline: "none" },
+        "&:focus-visible, :focus-visible > &": {
+            outlineColor: vars.border.focus,
+        },
     },
 });
 
@@ -34,13 +39,9 @@ export const glassIcon = style({
     display: "flex",
 });
 
-// The vendor rule uses `blur(var(--frost-blur-radius))`, which Lightning CSS
-// (the Safari floor) strips as invalid. Re-declared here with the static value
-// (frostBlurRadius is a constant 3) so it ships in build-time CSS — a runtime
-// <style> tag would be blocked by the Tauri production CSP. Only the
-// unprefixed property: Lightning CSS adds the `-webkit-` prefix itself, and
-// declaring both makes it collapse the pair to `-webkit-` only (Chrome
-// ignores it — no blur on web).
+// Lightning CSS strips the vendor `blur(var(--frost-blur-radius))`, so the
+// constant (3) is restated in build-time CSS (a runtime <style> hits the Tauri
+// CSP). Unprefixed only: adding `-webkit-` collapses to it, and Chrome ignores it.
 globalStyle(`${glassCircle} .liquid-glass::after`, {
     backdropFilter: "blur(3px)",
 });

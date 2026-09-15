@@ -9,6 +9,7 @@
 
 # testing
 **/coverage
+**/.vitest
 
 # next.js
 /.next/
@@ -90,3 +91,4 @@ sst-env.d.ts
 
 .pi-subagents/
 .pi/subagents/
+.worktrees/

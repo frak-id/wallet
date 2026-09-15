@@ -24,6 +24,11 @@ export const trigger = style({
     border: "none",
     cursor: "pointer",
     textAlign: "left",
+
+    // Keyboard-only ring, matching the DS Select trigger.
+    ":focus-visible": {
+        boxShadow: `0 0 0 2px ${vars.border.focus}`,
+    },
 });
 
 /** Invalid state — fills the field with the error surface (declared after

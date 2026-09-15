@@ -2,7 +2,6 @@ import { constantTimeStringEqual } from "@backend-utils";
 import { hmac } from "@oslojs/crypto/hmac";
 import { SHA256 } from "@oslojs/crypto/sha2";
 import { encodeHexLowerCase } from "@oslojs/encoding";
-import { OAuth2Client } from "arctic";
 
 const SHOP_DOMAIN_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/;
 
@@ -30,10 +29,9 @@ export type ShopifyIdentity = {
  * (`infrastructure/external/shopifyJwt.ts`) — that one stays untouched and
  * exempt from all of this (§4.11).
  *
- * No arctic built-in provider exists for Shopify (checked: not in
- * `arctic`'s provider list) — built manually on arctic's generic
- * `OAuth2Client` per §3, plus the HMAC query verification arctic doesn't do
- * for any provider.
+ * The authorize URL and the HMAC query verification are both built here:
+ * Shopify's online-token flow needs `grant_options[]`, and no OAuth2 client
+ * library verifies Shopify's query signature.
  */
 export class ShopifySsoService {
     /** Shop domain format Shopify issues at the `myshopify.com` level. */
@@ -43,31 +41,24 @@ export class ShopifySsoService {
 
     /**
      * Authorization URL for a given shop. `grant_options[]=per-user` is what
-     * makes the resulting token an online (staff-identity) token instead of
-     * an offline app-install token — arctic's `createAuthorizationURL` has
-     * no first-class support for extra query params, so it's appended after.
-     * `OAuth2Client` is endpoint-agnostic (the shop-specific authorize URL is
-     * passed per-call), so no per-shop client instance is needed.
+     * makes the resulting token an online (staff-identity) token instead of an
+     * offline app-install token. No `scope` param is sent: Shopify then falls
+     * back to the scopes configured on the app itself.
      */
     createAuthorizationUrl(params: {
         shop: string;
         callbackUrl: string;
         state: string;
     }): URL {
+        const url = new URL(`https://${params.shop}/admin/oauth/authorize`);
+        url.searchParams.set("response_type", "code");
         // Coalesce to "" so this file type-checks under consumer packages that
         // compile backend source without its ambient `global.d.ts` (the empty
         // credential just yields an unusable authorize URL at runtime, which
         // is the same failure mode as a missing secret).
-        const client = new OAuth2Client(
-            process.env.SHOPIFY_CLIENT_ID ?? "",
-            process.env.SHOPIFY_API_SECRET ?? "",
-            params.callbackUrl
-        );
-        const url = client.createAuthorizationURL(
-            `https://${params.shop}/admin/oauth/authorize`,
-            params.state,
-            []
-        );
+        url.searchParams.set("client_id", process.env.SHOPIFY_CLIENT_ID ?? "");
+        url.searchParams.set("redirect_uri", params.callbackUrl);
+        url.searchParams.set("state", params.state);
         url.searchParams.set("grant_options[]", "per-user");
         return url;
     }
@@ -116,9 +107,8 @@ export class ShopifySsoService {
         if (!clientId || !clientSecret) return null;
 
         // Shopify's token endpoint returns `associated_user` directly in the
-        // JSON body (not inside a JWT), which arctic's typed OAuth2Tokens
-        // does not model — call it as a raw POST per Shopify's token-exchange
-        // spec rather than forcing arctic's client through it.
+        // JSON body rather than inside a JWT, so this is a raw POST per
+        // Shopify's token-exchange spec.
         const response = await fetch(
             `https://${params.shop}/admin/oauth/access_token`,
             {

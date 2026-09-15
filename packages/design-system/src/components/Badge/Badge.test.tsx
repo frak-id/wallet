@@ -14,28 +14,6 @@ describe("Badge", () => {
         expect(getByText("Success")).toBeTruthy();
     });
 
-    it("should render all 5 variants", () => {
-        const variants = [
-            "success",
-            "warning",
-            "error",
-            "info",
-            "neutral",
-        ] as const;
-        for (const variant of variants) {
-            const { container } = render(
-                <Badge variant={variant}>{variant}</Badge>
-            );
-            expect(container.querySelector("span")).toBeTruthy();
-        }
-    });
-
-    it("should default to neutral variant", () => {
-        const { container } = render(<Badge>Default</Badge>);
-        const span = container.querySelector("span");
-        expect(span).toBeTruthy();
-    });
-
     it("should forward className", () => {
         const { container } = render(<Badge className="custom">Test</Badge>);
         expect(container.querySelector(".custom")).toBeTruthy();

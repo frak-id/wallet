@@ -3,6 +3,7 @@ import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecy
 import { getTokenExpMs } from "@frak-labs/wallet-shared/common/utils/tokenExpiry";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import type { SdkSession, Session } from "@frak-labs/wallet-shared/types";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 /**
  * Represent backed up data
@@ -22,13 +23,9 @@ type HashProtectedBackup = BackupData & { validationHash: string };
 /**
  * Hash JSON data with SHA256 using the Web Crypto API.
  *
- * Output is byte-identical to `viem.sha256(new TextEncoder().encode(...))`
- * (`"0x" + 64 lowercase hex chars`) so existing customer backups continue to
- * validate without any migration. Replacing viem with `crypto.subtle.digest`
- * removes ~the entire viem chunk from the eager iframe bundle.
- *
- * @param data - Data to hash
- * @returns SHA256 hash as `0x`-prefixed lowercase hex string
+ * Output must stay byte-identical to `viem.sha256(new TextEncoder().encode(...))`
+ * (`"0x" + 64 lowercase hex chars`), or already-issued customer backups stop
+ * validating.
  */
 export async function hashJson(data: unknown): Promise<string> {
     const buf = new TextEncoder().encode(JSON.stringify(data));
@@ -40,8 +37,6 @@ export async function hashJson(data: unknown): Promise<string> {
 
 /**
  * Restore received backup data
- * @param backup
- * @param domain
  */
 export async function restoreBackupData({
     backup,
@@ -74,11 +69,13 @@ export async function restoreBackupData({
         throw new Error("Invalid backup data");
     }
 
-    // If the backup is older than a week ago, ask to remove it and return
+    // Expired: ask the parent to drop it. Carries no credentials, so the
+    // wildcard is fine here where `do-backup` below must fail closed.
     if (data.expireAtTimestamp < Date.now()) {
-        emitLifecycleEvent({
-            iframeLifecycle: "remove-backup",
-        });
+        emitLifecycleEvent(
+            { iframeLifecycle: "remove-backup" },
+            { targetOrigin: "*" }
+        );
         return;
     }
 
@@ -110,7 +107,6 @@ export async function pushBackupData(args?: { domain?: string }) {
     // Get the domain from args (optional for cleanup scenarios)
     const domain = args?.domain;
     if (!domain) {
-        console.log("[Backup] No domain provided - skipping backup");
         return;
     }
     // Get the current backup data from stores
@@ -127,18 +123,23 @@ export async function pushBackupData(args?: { domain?: string }) {
         // Backup will expire in a week
         expireAtTimestamp: Date.now() + 7 * 24 * 60 * 60_000,
     };
-    console.log("[Backup] Pushing new backup data to parent client", {
-        backup,
-    });
-
-    // If nothing to back up, just remove it
+    // If nothing to back up, just remove it. Carries no credentials.
     if (!backup.session?.token && !backup.sdkSession?.token) {
-        emitLifecycleEvent({
-            iframeLifecycle: "remove-backup",
-        });
+        emitLifecycleEvent(
+            { iframeLifecycle: "remove-backup" },
+            { targetOrigin: "*" }
+        );
         return;
     }
 
+    // A credential payload with no known recipient has no correct target.
+    const origin = resolvingContextStore.getState().context?.origin;
+    if (!origin) {
+        console.warn(
+            "[Backup] Origin not resolved, session will not persist on the merchant page"
+        );
+        return;
+    }
     // Add hash to backup data
     const hashProtected: HashProtectedBackup = {
         ...backup,
@@ -151,8 +152,8 @@ export async function pushBackupData(args?: { domain?: string }) {
     );
 
     // And then push the event
-    emitLifecycleEvent({
-        iframeLifecycle: "do-backup",
-        data: { backup: encoded },
-    });
+    emitLifecycleEvent(
+        { iframeLifecycle: "do-backup", data: { backup: encoded } },
+        { targetOrigin: origin }
+    );
 }

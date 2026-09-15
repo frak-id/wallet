@@ -28,9 +28,9 @@ vi.mock("@/actions/sharingPage", () => ({
     openSharingPage: vi.fn(),
 }));
 
-// Sequential: tests mutate vi.mock state for shared hooks and window globals,
-// incompatible with the workspace default of `sequence.concurrent: true`.
-describe.sequential("ButtonShare", () => {
+// Tests mutate vi.mock state for shared hooks and window globals, so they
+// depend on the workspace's in-file sequential execution.
+describe("ButtonShare", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         // Reset mocks to default state
@@ -166,9 +166,6 @@ describe.sequential("ButtonShare", () => {
     it.each(["share-modal", "embedded-wallet"])(
         "should route legacy %s clickAction to openSharingPage",
         async (legacyClickAction) => {
-            // Both values were retired in favour of `displaySharingPage`;
-            // existing merchant configs still ship those strings so the
-            // component must gracefully fall through to the sharing-page UI.
             render(<ButtonShare clickAction={legacyClickAction} />);
             const button = screen.getByRole("button");
 
@@ -197,6 +194,36 @@ describe.sequential("ButtonShare", () => {
                 click_action: "sharing-page",
                 has_reward: false,
             })
+        );
+    });
+
+    it("should report share_button_impression once the button renders", () => {
+        render(<ButtonShare placement="hero" />);
+
+        expect(coreSdk.trackEvent).toHaveBeenCalledWith(
+            window.FrakSetup?.client,
+            "share_button_impression",
+            {
+                placement: "hero",
+                target_interaction: undefined,
+                has_reward: false,
+            }
+        );
+    });
+
+    it("should not report share_button_impression while the SDK is hidden", () => {
+        vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            shouldRender: true,
+            isHidden: true,
+            isClientReady: true,
+        });
+
+        render(<ButtonShare />);
+
+        expect(coreSdk.trackEvent).not.toHaveBeenCalledWith(
+            expect.anything(),
+            "share_button_impression",
+            expect.anything()
         );
     });
 

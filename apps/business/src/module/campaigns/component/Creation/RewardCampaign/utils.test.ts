@@ -86,8 +86,6 @@ describe("isRewardFormValid (tiered)", () => {
         expect(isRewardFormValid(tieredValues)).toBe(true);
     });
 
-    // The split is no longer forced to equal 80% of the CPA — the distribution
-    // bar shows the recommendation, but any positive amounts are accepted.
     it("passes when a tier's split doesn't match its CPA", () => {
         const offReco: RewardFormValues = {
             ...tieredValues,
@@ -122,6 +120,67 @@ describe("isRewardFormValid (tiered)", () => {
             ],
         };
         expect(isRewardFormValid(overlapping)).toBe(false);
+    });
+
+    // `CampaignManagementService` rejects a tier percent over 100 at publish.
+    it("fails when a percent-unit tier exceeds 100", () => {
+        const over: RewardFormValues = {
+            ...tieredValues,
+            globalCpaTiers: [
+                { from: 0, to: 100, cpa: 10, unit: "amount" },
+                { from: 100, to: "", cpa: 150, unit: "percent" },
+            ],
+        };
+        expect(isRewardFormValid(over)).toBe(false);
+    });
+
+    it("allows an amount-unit tier above 100", () => {
+        const bigAmount: RewardFormValues = {
+            ...tieredValues,
+            globalCpaTiers: [
+                { from: 0, to: 100, cpa: 150, unit: "amount" },
+                { from: 100, to: "", cpa: 10, unit: "percent" },
+            ],
+        };
+        expect(isRewardFormValid(bigAmount)).toBe(true);
+    });
+});
+
+// The backend caps a percentage reward at 100, so the wizard must reject one
+// here rather than let it fail at publish.
+describe("isRewardFormValid (percentage)", () => {
+    const percentageValues: RewardFormValues = {
+        ...DEFAULT_REWARD_FORM,
+        model: "percentage",
+        targetCpaPercent: 10,
+        ambassadorPercent: 6,
+        refereePercent: 2,
+    };
+
+    it("passes at a normal percentage", () => {
+        expect(isRewardFormValid(percentageValues)).toBe(true);
+    });
+
+    it("passes at exactly 100", () => {
+        expect(
+            isRewardFormValid({
+                ...percentageValues,
+                targetCpaPercent: 100,
+                ambassadorPercent: 60,
+                refereePercent: 20,
+            })
+        ).toBe(true);
+    });
+
+    it("fails above 100", () => {
+        expect(
+            isRewardFormValid({
+                ...percentageValues,
+                targetCpaPercent: 150,
+                ambassadorPercent: 90,
+                refereePercent: 30,
+            })
+        ).toBe(false);
     });
 });
 
@@ -208,10 +267,6 @@ describe("tieredRangesOverlap", () => {
         ).toBe(false);
     });
 });
-
-/* ------------------------------------------------------------------ */
-/*  Product scope <-> reward basis                                     */
-/* ------------------------------------------------------------------ */
 
 const scopedDraft = (
     productScope: CampaignDraft["rule"]["productScope"]

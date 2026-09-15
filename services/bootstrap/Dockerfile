@@ -5,15 +5,12 @@
 #
 # Bundled into a single `dist/index.js` via Bun's bundler (same approach as
 # services/credential-sync); the runtime image ships dist/ + drizzle/ SQL files
-# plus a minimal node_modules holding `sharp` and `@libsql/client` (native
-# bindings, kept external from the bundle — same approach as services/backend,
-# which is also why the runtime is the Debian-flavored oven/bun image rather
-# than alpine: their glibc prebuilds are first-class, musl ones are not).
+# and no node_modules at all — nothing here needs a native binding.
 # The `drizzle/` directory must be present at runtime because drizzle-orm's
 # migrator reads `.sql` files from disk (`./drizzle/{prod,dev,v2,local,libsql}`
 # paths resolved relative to cwd).
 
-ARG BUN_VERSION=1.4.0
+ARG BUN_VERSION=1.4.2
 
 FROM oven/bun:${BUN_VERSION} AS deps
 WORKDIR /app
@@ -43,21 +40,12 @@ ENV NODE_ENV=production
 WORKDIR /app/services/bootstrap
 RUN bun run build
 
-# Pre-install the runtime-only native modules (sharp, @libsql/client) into a
-# scratch directory so the final image gets a clean, minimal node_modules layer.
-FROM oven/bun:${BUN_VERSION} AS runtime-deps
-WORKDIR /runtime
-RUN --mount=type=cache,id=bun-store,target=/root/.bun/install/cache,sharing=locked \
-    bun init -y >/dev/null \
-    && bun add sharp @libsql/client
-
 FROM oven/bun:${BUN_VERSION}
 WORKDIR /app/services/bootstrap
 
 COPY --from=builder --chown=bun:bun /app/services/bootstrap/package.json ./
 COPY --from=builder --chown=bun:bun /app/services/bootstrap/dist ./dist
 COPY --from=builder --chown=bun:bun /app/services/bootstrap/drizzle ./drizzle
-COPY --from=runtime-deps --chown=bun:bun /runtime/node_modules ./node_modules
 
 USER bun
 

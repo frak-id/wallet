@@ -18,7 +18,6 @@ import {
     type SharingPageProps,
 } from "./types";
 
-export { getStep2Context } from "./Steps";
 export type {
     SharingActions,
     SharingChrome,
@@ -113,7 +112,7 @@ export function SharingPage({
                     </section>
 
                     {products && renderableProducts(products).length > 0 && (
-                        <ProductList products={products} />
+                        <ProductList products={products} t={t} />
                     )}
 
                     <Steps reward={reward} t={t} />

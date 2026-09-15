@@ -54,7 +54,7 @@ export async function createIFrameFrakClient({
 }): Promise<FrakClient> {
     // Idempotent with `createIframe`'s own call: the client is also created
     // directly (React provider, tests) with an iframe it didn't build.
-    const frakWalletUrl = setEnvironment(config?.env).wallet;
+    const frakWalletUrl = setEnvironment(config.env).wallet;
 
     // Precedence: explicit `metadata.lang` → page `<html lang>` → browser
     // language. Lets a page authored in a given language drive SDK copy even
@@ -77,7 +77,6 @@ export async function createIFrameFrakClient({
     // of delaying it. Analytics must never block client creation, hence the catch.
     const resolvedClientId = await getClientIdAsync().catch(() => undefined);
 
-    // Create lifecycle manager
     const lifecycleManager = createIFrameLifecycleManager({
         iframe,
         targetOrigin: frakWalletUrl,
@@ -90,7 +89,6 @@ export async function createIFrameFrakClient({
     // lifecycle manager resolves the `isConnected` promise.
     const handshakeStartedAt = Date.now();
 
-    // Validate iframe
     if (!iframe.contentWindow) {
         throw new FrakRpcError(
             RpcErrorCodes.configError,
@@ -98,13 +96,11 @@ export async function createIFrameFrakClient({
         );
     }
 
-    // Create RPC client with middleware and lifecycle handlers
     const rpcClient = createRpcClient<IFrameRpcSchema, FrakLifecycleEvent>({
         emittingTransport: iframe.contentWindow,
         listeningTransport: window,
         targetOrigin: frakWalletUrl,
         middleware: [
-            // Ensure we are connected and context is sent before sending request
             {
                 async onRequest(_message, ctx) {
                     const isConnected = await lifecycleManager.isConnected;
@@ -119,16 +115,13 @@ export async function createIFrameFrakClient({
                 },
             },
         ],
-        // Add lifecycle handlers to process iframe lifecycle events
         lifecycleHandlers: {
             iframeLifecycle: (event, _context) => {
-                // Delegate to lifecycle manager  (cast for type compatibility)
                 lifecycleManager.handleEvent(event);
             },
         },
     });
 
-    // Setup heartbeat
     const stopHeartbeat = setupHeartbeat(rpcClient, lifecycleManager);
 
     // Assigned by `postConnectionSetup`, which runs after `destroy` is built.
@@ -148,18 +141,21 @@ export async function createIFrameFrakClient({
         sdkConfigStore.reset();
     };
 
-    // Init open panel
     let openPanel: OpenPanel | undefined;
     if (
         process.env.OPEN_PANEL_API_URL &&
         process.env.OPEN_PANEL_SDK_CLIENT_ID
     ) {
-        console.log("[Frak SDK] Initializing OpenPanel");
         openPanel = new OpenPanel({
             apiUrl: process.env.OPEN_PANEL_API_URL,
             clientId: process.env.OPEN_PANEL_SDK_CLIENT_ID,
-            trackScreenViews: true,
-            trackOutgoingLinks: true,
+            // Off on a merchant's page: `sdk_initialized` already counts page
+            // loads, component impressions are the CTA denominator, and both
+            // auto-trackers collect the merchant's own traffic, not ours.
+            trackScreenViews: false,
+            trackOutgoingLinks: false,
+            // Never enable: `data-track` would let partner markup name events
+            // and ship arbitrary `data-*` values into our project.
             trackAttributes: false,
             // We use a filter to ensure we got the open panel instance initialized
             //  A bit hacky, but this way we are sure that we got everything needed for the first event ever sent
@@ -174,6 +170,7 @@ export async function createIFrameFrakClient({
                         sdk_version: process.env.SDK_VERSION,
                         ...(resolvedClientId && {
                             user_anonymous_client_id: resolvedClientId,
+                            __deviceId: resolvedClientId,
                         }),
                     };
                 }
@@ -181,10 +178,15 @@ export async function createIFrameFrakClient({
                 return true;
             },
         });
+        // `__deviceId` overrides OpenPanel's project + IP + user-agent device
+        // hash, which rotates daily and collides behind shared egress. Keying on
+        // the SDK's own persistent id is what lets a funnel cross from this page
+        // into the iframe and the wallet, which resolve the same id.
         openPanel.setGlobalProperties({
             sdk_version: process.env.SDK_VERSION,
             ...(resolvedClientId && {
                 user_anonymous_client_id: resolvedClientId,
+                __deviceId: resolvedClientId,
             }),
         });
         openPanel.init();
@@ -222,7 +224,6 @@ export async function createIFrameFrakClient({
             });
     }
 
-    // Perform the post connection setup
     const waitForSetup = postConnectionSetup({
         config,
         rpcClient,
@@ -255,17 +256,13 @@ export async function createIFrameFrakClient({
     };
 }
 
-/**
- * Setup the heartbeat
- * @param rpcClient - RPC client to send lifecycle events
- * @param lifecycleManager - Lifecycle manager to track connection
- */
+/** Ping until the iframe answers, then stop; returns the teardown. */
 function setupHeartbeat(
     rpcClient: SdkRpcClient,
     lifecycleManager: IframeLifecycleManager
 ) {
     const HEARTBEAT_INTERVAL = 250; // Fallback discovery ping until we are connected
-    const HEARTBEAT_TIMEOUT = 30_000; // 30 seconds timeout
+    const HEARTBEAT_TIMEOUT = 30_000;
     let heartbeatInterval: NodeJS.Timeout;
     let timeoutId: NodeJS.Timeout;
 
@@ -274,25 +271,16 @@ function setupHeartbeat(
             clientLifecycle: "heartbeat",
         });
 
-    // Start sending heartbeats
     async function startHeartbeat() {
-        sendHeartbeat(); // Send initial heartbeat
+        sendHeartbeat();
         heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
 
-        // Set up timeout
-        timeoutId = setTimeout(() => {
-            stopHeartbeat();
-            console.log("Heartbeat timeout: connection failed");
-        }, HEARTBEAT_TIMEOUT);
+        timeoutId = setTimeout(stopHeartbeat, HEARTBEAT_TIMEOUT);
 
-        // Once connected, stop it
         await lifecycleManager.isConnected;
-
-        // We are now connected, stop the heartbeat
         stopHeartbeat();
     }
 
-    // Stop sending heartbeats
     function stopHeartbeat() {
         if (heartbeatInterval) {
             clearInterval(heartbeatInterval);
@@ -304,7 +292,6 @@ function setupHeartbeat(
 
     startHeartbeat();
 
-    // Return cleanup function
     return stopHeartbeat;
 }
 
@@ -368,10 +355,6 @@ async function hashMergeToken(token: string): Promise<Uint8Array | undefined> {
  * Produce the named, domain-separated proofs carried on `resolved-config`.
  * Never throws and never blocks the handshake: `signProof` resolves to
  * `null` (never rejects) when no key is available.
- *
- * ROLLOUT-STEP-1: `proofs.install` travels on `resolved-config` and the
- * listener forwards it into the `/install` URL as a `#p=` fragment — the
- * wallet's install route still needs to read it and send it to the backend.
  */
 async function buildSdkIdentity({
     merchantId,
@@ -592,33 +575,30 @@ async function postConnectionSetup({
         );
     }
 
-    // Push raw CSS if needed
     async function pushCss() {
         const cssLink = config.customizations?.css;
         if (!cssLink) return;
         rpcClient.sendLifecycle({
-            clientLifecycle: "modal-css" as const,
+            clientLifecycle: "modal-css",
             data: { cssLink },
         });
     }
 
-    // Push i18n if needed
     async function pushI18n() {
         const i18n = config.customizations?.i18n;
         if (!i18n) return;
         rpcClient.sendLifecycle({
-            clientLifecycle: "modal-i18n" as const,
+            clientLifecycle: "modal-i18n",
             data: { i18n },
         });
     }
 
-    // Push local backup if needed
     async function pushBackup() {
         if (typeof window === "undefined") return;
         const backup = window.localStorage.getItem(BACKUP_KEY);
         if (!backup) return;
         rpcClient.sendLifecycle({
-            clientLifecycle: "restore-backup" as const,
+            clientLifecycle: "restore-backup",
             data: { backup },
         });
     }

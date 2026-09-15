@@ -61,6 +61,7 @@
         "build:watch": "tsdown --watch",
         "check-exports": "attw --pack .",
         "typecheck": "tsc --noEmit",
+        "test": "vitest run",
         "prepublish": "bun run lint && bun run build",
         "publish": "echo 'Publishing rpc...'"
     },
@@ -69,11 +70,14 @@
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "catalog:",
+        "@frak-labs/test-foundation": "workspace:*",
         "@rolldown/plugin-node-polyfills": "catalog:",
         "@types/node": "catalog:",
         "@typescript/native": "catalog:",
+        "@vitest/ui": "catalog:",
         "tsdown": "catalog:",
         "typescript": "catalog:",
-        "viem": "catalog:"
+        "viem": "catalog:",
+        "vitest": "catalog:"
     }
 }

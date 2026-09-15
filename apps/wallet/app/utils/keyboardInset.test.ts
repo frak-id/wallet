@@ -50,7 +50,7 @@ function createFakeViewport(height: number): FakeVisualViewport {
     };
 }
 
-describe.sequential("initKeyboardInset", () => {
+describe("initKeyboardInset", () => {
     const originalInnerHeight = window.innerHeight;
     const originalVisualViewport = window.visualViewport;
     let rafCallbacks: Array<() => void> = [];

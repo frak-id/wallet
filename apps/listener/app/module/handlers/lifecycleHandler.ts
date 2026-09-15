@@ -21,6 +21,7 @@ import {
 } from "@/module/stores/resolvingContextStore";
 import type { ResolvedSdkConfig } from "@/module/stores/types";
 import { restoreBackupData } from "@/module/utils/backup";
+import { extractDomain } from "@/module/utils/extractDomain";
 import { processSsoCompletion } from "./ssoHandler";
 
 /**
@@ -88,7 +89,7 @@ export const clientLifecycleHandler: LifecycleHandler<
  */
 export function emitConnected(): void {
     if (typeof window === "undefined") return;
-    emitLifecycleEvent({ iframeLifecycle: "connected" });
+    emitLifecycleEvent({ iframeLifecycle: "connected" }, { targetOrigin: "*" });
 }
 
 async function handleRestoreBackup(
@@ -146,14 +147,6 @@ function applyModalCss(cssLink: unknown): void {
     style.rel = "stylesheet";
     style.href = cssLink;
     document.head.appendChild(style);
-}
-
-function extractDomain(origin: string): string {
-    try {
-        return new URL(origin).host.replace(/^www\./, "");
-    } catch {
-        return "";
-    }
 }
 
 function isValidResolvedConfigPayload(data: unknown): data is {
@@ -362,6 +355,9 @@ async function handleResolvedConfig(
     }
 
     const originDomain = extractDomain(context.origin);
+    // Only for operator-facing messages; never used for the allow-list check
+    // below, which must compare against `null` and fail closed.
+    const originLabel = originDomain ?? "<unparseable origin>";
     const store = resolvingContextStore.getState();
 
     const isOriginAllowed = data.allowedDomains
@@ -373,12 +369,12 @@ async function handleResolvedConfig(
     } else if (data.merchantId) {
         store.setTrustLevel("dev-override");
         console.warn(
-            `[Frak] Running on ${originDomain} with config for ${data.domain}. Register ${originDomain} in your dashboard for production use.`
+            `[Frak] Running on ${originLabel} with config for ${data.domain}. Register ${originLabel} in your dashboard for production use.`
         );
     } else {
         store.setTrustLevel("unverified");
         console.warn(
-            `[Frak] Domain proof failed: origin ${originDomain} not in allowedDomains. Running in display-only mode (modals and wallet status will work, interactions are disabled).`,
+            `[Frak] Domain proof failed: origin ${originLabel} not in allowedDomains. Running in display-only mode (modals and wallet status will work, interactions are disabled).`,
             data.allowedDomains
         );
     }
@@ -394,12 +390,15 @@ async function handleResolvedConfig(
         ...(mergeSourceProof && { mergeSourceProof }),
     });
 
-    // Stitch SDK ↔ listener funnels: if the SDK propagated its persistent
-    // anonymous id through the resolved-config payload, expose it as a
-    // global OpenPanel property so every listener event is joinable with
-    // the corresponding SDK events.
+    // Stitch SDK ↔ listener funnels: the anonymous id both identifies the SDK
+    // events (`sdk_anonymous_id`) and keys the OpenPanel device (`__deviceId`),
+    // so the two sides land on one profile. Normally already set from the
+    // iframe's `clientId` param; this covers a launch that carried none.
     if (data.sdkAnonymousId) {
-        updateGlobalProperties({ sdk_anonymous_id: data.sdkAnonymousId });
+        updateGlobalProperties({
+            sdk_anonymous_id: data.sdkAnonymousId,
+            __deviceId: data.sdkAnonymousId,
+        });
     }
 
     store.setBackendConfig(data.merchantId, data.sdkConfig);

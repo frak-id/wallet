@@ -41,7 +41,7 @@ vi.mock("tauri-plugin-safe-area-insets", () => ({
 
 import { initSafeAreaInsets } from "./safeArea";
 
-describe.sequential("initSafeAreaInsets", () => {
+describe("initSafeAreaInsets", () => {
     beforeEach(() => {
         isAndroidMock.mockReset().mockReturnValue(false);
         isTauriMock.mockReset().mockReturnValue(false);

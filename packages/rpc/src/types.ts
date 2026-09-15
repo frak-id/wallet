@@ -179,59 +179,12 @@ export type LifecycleHandler<TLifecycleEvent = unknown> = (
 ) => void | Promise<void>;
 
 /**
- * Unified middleware function for RPC requests (both listener and client)
- * Works on both listener-side (with context augmentation) and client-side (empty context)
- *
- * Key features:
- * - Can mutate message.data directly for efficiency (compression, validation)
- * - Can mutate response.result directly for transformation
- * - Listener-side: Can augment context by returning modified context
- * - Client-side: Uses TContext = {} (empty context), always returns unchanged
+ * Middleware for RPC requests, shared by listener and client. `message.data`
+ * and `response.result` may be mutated in place; the listener side augments
+ * the context by returning a new one, the client side has `TContext = {}`.
  *
  * @typeParam TSchema - The RPC schema type
- * @typeParam TContext - Custom context type to augment base context (empty {} for client-side)
- *
- * @example Listener-side with context augmentation
- * ```ts
- * type WalletContext = { productId: string, sourceUrl: string }
- * const contextMiddleware: RpcMiddleware<MySchema, WalletContext> = {
- *   onRequest: async (message, context) => {
- *     // Read from store and augment context
- *     const productId = await getProductId(context.origin)
- *     return { ...context, productId, sourceUrl: context.origin }
- *   }
- * }
- * ```
- *
- * @example Client-side (empty context)
- * ```ts
- * const compressionMiddleware: RpcMiddleware<MySchema> = {
- *   onRequest: async (message, context) => {
- *     // Mutate message.data directly
- *     message.data = compress(message.data)
- *     return context  // Empty context, unchanged
- *   },
- *   onResponse: async (message, response, context) => {
- *     // Mutate response.result directly
- *     response.result = decompress(response.result)
- *     return response
- *   }
- * }
- * ```
- *
- * @example Shared middleware (works on both sides)
- * ```ts
- * const loggingMiddleware: RpcMiddleware<MySchema> = {
- *   onRequest: async (message, context) => {
- *     console.log(`[RPC] ${message.topic}`, context.origin || 'client')
- *     return context
- *   },
- *   onResponse: async (message, response, context) => {
- *     console.log(`[RPC] ${message.topic} completed`)
- *     return response
- *   }
- * }
- * ```
+ * @typeParam TContext - Context augmentation (empty `{}` for client-side)
  */
 export type RpcMiddleware<
     TSchema extends RpcSchema,

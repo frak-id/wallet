@@ -1,5 +1,4 @@
 import type { pino } from "@bogeychan/elysia-logger";
-import { Cron } from "croner";
 import { log } from "../infrastructure/external/logger";
 import {
     eventEmitter,
@@ -17,14 +16,13 @@ type MutexCronConfig = {
     name: string;
     /**
      * ```plain
-     * ┌────────────── second (optional)
-     * │ ┌──────────── minute
-     * │ │ ┌────────── hour
-     * │ │ │ ┌──────── day of month
-     * │ │ │ │ ┌────── month
-     * │ │ │ │ │ ┌──── day of week
-     * │ │ │ │ │ │
-     * * * * * * *
+     * ┌──────────── minute
+     * │ ┌────────── hour
+     * │ │ ┌──────── day of month
+     * │ │ │ ┌────── month
+     * │ │ │ │ ┌──── day of week
+     * │ │ │ │ │
+     * * * * * *
      * ```
      */
     pattern: string;
@@ -38,7 +36,7 @@ type MutexCronConfig = {
  * instead of async-mutex. At most one pending re-run, no unbounded Promise queuing.
  */
 export class MutexCron {
-    private cron: Cron | null = null;
+    private cron: Bun.CronJob | null = null;
     private isRunning = false;
     private hasPending = false;
     private cooldownTimer: ReturnType<typeof setTimeout> | null = null;
@@ -84,19 +82,21 @@ export class MutexCron {
             }
         };
 
-        this.cron = new Cron(
+        // Returning the promise is what gives Bun its no-overlap guarantee: the
+        // next fire time is computed only once this settles. The catch is the
+        // last line of defence — an unhandled rejection here would exit the process.
+        this.cron = Bun.cron(
             pattern,
-            {
-                protect: true,
-                unref: true,
-                catch: (error, job) =>
+            () =>
+                execute().catch((error) =>
                     this.logger.warn(
-                        { error, name: job.name },
+                        { error },
                         "[Cron] error while processing cron"
-                    ),
-            },
-            () => execute()
+                    )
+                ),
+            { tz: "UTC" }
         );
+        this.cron.unref();
 
         if (triggerKeys) {
             for (const key of triggerKeys) {

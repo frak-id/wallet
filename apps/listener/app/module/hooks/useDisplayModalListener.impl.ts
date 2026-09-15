@@ -32,10 +32,8 @@ type OnDisplayModalRequest = RpcPromiseHandler<
     WalletRpcContext
 >;
 
-// Module-level subscription handle, replacing the per-render ref the
-// React hook used. The Listener is mounted once for the iframe lifetime,
-// so a singleton matches the previous semantics (the supersede path
-// always tore down the previous subscription before creating a new one).
+// The listener is mounted once for the iframe lifetime, so a single handle is
+// enough: the supersede path tears the previous subscription down first.
 let activeUnsubscribe: (() => void) | null = null;
 
 type DisplayModalDeps = {
@@ -128,8 +126,6 @@ export const handleDisplayModal = async (
         ? backendConfig?.placements?.[placementId]
         : undefined;
 
-    // Create emitter that resolves the deferred
-    // This maintains backward compatibility with any legacy code
     const emitter = async (
         response: RpcResponse<
             ExtractReturnType<IFrameRpcSchema, "frak_displayModal">

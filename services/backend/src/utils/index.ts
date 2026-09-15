@@ -24,8 +24,8 @@ export {
     type TwoFactorMethod,
     TwoFactorMethodDto,
 } from "./stepUpRequired";
-
 export { type ErrorResponse, type TokenAmount, t } from "./typebox/typeSystem";
+export { describeUserAgent } from "./userAgent";
 export {
     type DateRange,
     endOfIsoDay,

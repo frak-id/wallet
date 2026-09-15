@@ -1,6 +1,6 @@
 # packages/design-system — Compass
 
-Vanilla Extract design system. Sprinkles-based responsive; `[data-theme='dark']` switching.
+Vanilla Extract design system. Sprinkles-based responsive; light theme only — `semanticDark` is defined and tested, but no theme block is emitted.
 
 ## Key Files
 
@@ -9,14 +9,7 @@ Vanilla Extract design system. Sprinkles-based responsive; `[data-theme='dark']`
 - `src/sprinkles.css.ts` — responsive conditions (mobile/tablet/desktop) + color-mode
 - `src/breakpoints.ts` · `src/reset.css.ts` · `src/reset-globals.css.ts` · `src/defaults.css.ts`
 - `src/components/Box/` — polymorphic layout primitive (sprinkles-powered)
-- `src/components/` — components grouped by role (+ vendored `charts/`):
-  - Layout: Box, Stack, Inline, Column, Columns
-  - Typography/feedback: Text, Badge, Spinner, Skeleton, ProgressBar, AlertMessage, StatusBanner, FieldError, EmptyState
-  - Inputs: Button, Input, TextArea, Select, Checkbox, RadioGroup, Switch, Slider, TimeInput
-  - Overlays: Dialog, Drawer, Sheet, DetailSheet, ResponsiveModal, Popover, Tooltip, ConfirmationTooltip, Accordion, AlertDialog, Overlay, ToastSurface
-  - Surfaces/data: Card, Table, Avatar, StatCard, DeltaIndicator, IconCircle, NumberedCircle, Stepper, Tabs, LegendItem
-  - Glass/mobile: GlassButton, GlassCloseButton, InAppBanner, BannerStack, PullToRefresh
-  - Charts: `charts/` (vendored visx) + FunnelChart
+- `src/components/` — one directory per component; `charts/` is vendored visx (bklit), `FunnelChart` is ours
 
 ## Usage
 
@@ -31,10 +24,10 @@ import { brand, alias } from "@frak-labs/design-system/tokens";
 ## Non-Obvious Patterns
 
 - **Subpath exports are strict** — no wildcards. Public API is per-component: `@frak-labs/design-system/components/<Name>`.
-- **Named exports only** — no default exports. _Exception:_ `src/components/charts/**` is vendored from bklit (visx) and kept close to upstream, so those files may carry `export default` alongside named exports. The public surface (`charts/index.ts` + the `AreaChart`/`BarChart`/`DonutChart` re-export wrappers) stays named-only.
+- **Named exports only** — no default exports anywhere in `src/`, vendored `charts/**` included.
 - **Semantic tokens, not raw colors**: `vars.text.*`, `vars.surface.*`, `vars.border.*`, `vars.icon.*`. Brand/scale tokens are for defining aliases, not for direct component use.
 - **Sprinkles do NOT accept raw CSS**: only values from the token contract. Unknown values fail at compile time.
-- **Theme switch** lives on `[data-theme='dark']` selector; `html` element owns the attribute.
+- **No dark theme ships**: `theme.css.ts` emits `:root` only. `semanticDark` and the `darkMode` sprinkles condition are inert until a switch exists.
 - **Radix primitives** back Dialog/Accordion/Checkbox/Select/Switch/Tooltip. `lucide-react` for icons. `vaul` for Drawer.
 - **Tests co-located** (`*.test.tsx`), jsdom, run via design-system-unit project.
 - **Variant styling — `recipe()` is the default.** Use `recipe()` (from `@vanilla-extract/recipes`) for any component with variants, single- or multi-axis — it owns `base` + variants + `defaultVariants`/`compoundVariants`, and multi-axis components collapse to one `component({ size, tone })` call instead of hand-joining parallel maps. Use `styleVariants()` **only** for an enumerated/iterated key→class map that is looped over rather than selected by a component prop (e.g. `Spinner` `leafRotations`). Use plain `style()` for one-offs with no variants.
@@ -45,4 +38,4 @@ Default exports · wildcard re-exports · raw hex in components · bypassing `Bo
 
 ## See Also
 
-Parent `packages/AGENTS.md` · `apps/wallet/AGENTS.md` (primary consumer, migration in progress) · `sdk/components/AGENTS.md` (Web Components consumer).
+Parent `packages/AGENTS.md` · `apps/wallet/AGENTS.md` (primary consumer) · `sdk/components/AGENTS.md` (Web Components consumer).

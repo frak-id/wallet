@@ -4,51 +4,82 @@ import type { i18n as I18nType } from "i18next";
 
 /**
  * Map an i18n config to a localized i18n config
- * @param value
- * @param i18n
- * @returns
  */
 export async function mapI18nConfig(value: I18nConfig, i18n: I18nType) {
     // If it's directly a localized config, handle it
     if (isLocalizedConfig(value, i18n)) {
         // Handle as a localized config (direct translations)
         const mapped = await mapLocalizedI18nConfig(value);
-        i18n.addResourceBundle(
-            i18n.language,
-            "customized",
-            mapped,
-            true, // Deep merge
-            true // Overwrite
-        );
+        addCustomizedResources(i18n, i18n.language, mapped);
         return;
     }
 
     // Otherwise, add each language override
     const loadNamespaceAsync = Object.entries(value).map(
-        async ([lang, value]) => {
-            const mapped = await mapLocalizedI18nConfig(value);
-            // Add the resources
-            i18n.addResourceBundle(
+        async ([lang, value]) =>
+            addCustomizedResources(
+                i18n,
                 lang,
-                "customized",
-                mapped,
-                // Deep override
-                true,
-                // Overwrite
-                true
-            );
-        }
+                await mapLocalizedI18nConfig(value)
+            )
     );
     // Wait for all the namespaces to be loaded
     await Promise.allSettled(loadNamespaceAsync);
 }
 
+/**
+ * Deep-merge caller supplied translations into the `customized` namespace, given either
+ * flat key paths or an already nested object.
+ */
+export function addCustomizedResources(
+    i18n: I18nType,
+    lang: string,
+    translations: Record<string, unknown>
+) {
+    const overrides = translationKeyPathToObject(translations);
+    const defaults = i18n.getResourceBundle(lang, "customized");
+    i18n.addResourceBundle(
+        lang,
+        "customized",
+        dropSubtreeOverrides(overrides, defaults),
+        // Deep merge
+        true,
+        // Overwrite
+        true
+    );
+}
+
+/**
+ * A string override on a key that defaults to a subtree replaces the whole subtree, and
+ * every child then renders as its raw key path — a merchant setting
+ * `sdk.sharingPage.steps.1` blanks the `steps.1.title` the page reads. Keep the default.
+ */
+function dropSubtreeOverrides(
+    overrides: NestedStringRecord,
+    defaults: NestedStringRecord | undefined
+): NestedStringRecord {
+    if (!defaults) return overrides;
+
+    const kept: NestedStringRecord = {};
+    for (const [key, value] of Object.entries(overrides)) {
+        const fallback = defaults[key];
+        if (!isRecord(fallback)) {
+            kept[key] = value;
+        } else if (isRecord(value)) {
+            kept[key] = dropSubtreeOverrides(value, fallback);
+        }
+    }
+    return kept;
+}
+
+function isRecord(value: unknown): value is NestedStringRecord {
+    return typeof value === "object" && value !== null;
+}
+
 type NestedStringRecord = { [key: string]: NestedStringRecord | string };
 
 /**
- * Map an i18n config to a localized i18n config
- * @param value
- * @returns
+ * Map a localized i18n config (inline object, or a URL to fetch) to resources.
  */
 async function mapLocalizedI18nConfig(value: LocalizedI18nConfig) {
     // The resources we will add
@@ -76,9 +107,6 @@ async function mapLocalizedI18nConfig(value: LocalizedI18nConfig) {
 
 /**
  * Check if a value is a localized i18n config
- * @param value
- * @param i18n
- * @returns
  */
 function isLocalizedConfig(
     value: I18nConfig,

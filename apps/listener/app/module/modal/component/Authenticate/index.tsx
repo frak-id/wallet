@@ -19,8 +19,6 @@ type BuiltSiweMessage =
 
 /**
  * The component for the siwe authentication step of a modal
- * @param onClose
- * @constructor
  */
 export function SiweAuthenticateModalStep({
     params,

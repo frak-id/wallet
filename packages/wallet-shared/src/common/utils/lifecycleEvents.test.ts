@@ -21,7 +21,7 @@ describe("emitLifecycleEvent", () => {
         });
     });
 
-    it("should post message to parent window with wildcard origin", () => {
+    it("should pass an explicit wildcard through to postMessage", () => {
         Object.defineProperty(window, "parent", {
             value: { postMessage: postMessageSpy },
             writable: true,
@@ -32,31 +32,10 @@ describe("emitLifecycleEvent", () => {
             iframeLifecycle: "show" as const,
         };
 
-        emitLifecycleEvent(event);
+        emitLifecycleEvent(event, { targetOrigin: "*" });
 
         expect(postMessageSpy).toHaveBeenCalledWith(event, "*");
         expect(postMessageSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it("should handle different lifecycle event types", () => {
-        Object.defineProperty(window, "parent", {
-            value: { postMessage: postMessageSpy },
-            writable: true,
-            configurable: true,
-        });
-
-        const events = [
-            { iframeLifecycle: "show" as const },
-            { iframeLifecycle: "hide" as const },
-        ];
-
-        for (const event of events) {
-            emitLifecycleEvent(event);
-        }
-
-        expect(postMessageSpy).toHaveBeenCalledTimes(2);
-        expect(postMessageSpy).toHaveBeenNthCalledWith(1, events[0], "*");
-        expect(postMessageSpy).toHaveBeenNthCalledWith(2, events[1], "*");
     });
 
     it("should handle missing parent window gracefully", () => {
@@ -70,7 +49,9 @@ describe("emitLifecycleEvent", () => {
             iframeLifecycle: "show" as const,
         };
 
-        expect(() => emitLifecycleEvent(event)).not.toThrow();
+        expect(() =>
+            emitLifecycleEvent(event, { targetOrigin: "*" })
+        ).not.toThrow();
         expect(consoleWarnSpy).not.toHaveBeenCalled();
     });
 
@@ -90,11 +71,53 @@ describe("emitLifecycleEvent", () => {
             iframeLifecycle: "show" as const,
         };
 
-        emitLifecycleEvent(event);
+        emitLifecycleEvent(event, { targetOrigin: "*" });
 
         expect(consoleWarnSpy).toHaveBeenCalledWith(
             "Unable to post lifecycle event",
             error
+        );
+    });
+
+    it("should target the supplied origin", () => {
+        Object.defineProperty(window, "parent", {
+            value: { postMessage: postMessageSpy },
+            writable: true,
+            configurable: true,
+        });
+
+        emitLifecycleEvent(
+            { iframeLifecycle: "do-backup", data: { backup: "payload" } },
+            { targetOrigin: "https://merchant.example" }
+        );
+
+        expect(postMessageSpy).toHaveBeenCalledWith(
+            { iframeLifecycle: "do-backup", data: { backup: "payload" } },
+            "https://merchant.example"
+        );
+    });
+
+    it("should honour the supplied origin on the user-activation branch", () => {
+        Object.defineProperty(window, "parent", {
+            value: { postMessage: postMessageSpy },
+            writable: true,
+            configurable: true,
+        });
+
+        emitLifecycleEvent(
+            { iframeLifecycle: "show" as const },
+            {
+                includeUserActivation: true,
+                targetOrigin: "https://merchant.example",
+            }
+        );
+
+        expect(postMessageSpy).toHaveBeenCalledWith(
+            { iframeLifecycle: "show" },
+            {
+                targetOrigin: "https://merchant.example",
+                includeUserActivation: true,
+            }
         );
     });
 });

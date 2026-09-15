@@ -1,5 +1,7 @@
-// Re-export orchestration schemas (used by API routes, kept in orchestration for orchestrator use)
-
+export {
+    type RewardHistoryResponse,
+    RewardHistoryResponseSchema,
+} from "../../domain/rewards/schemas";
 export {
     type AffiliateActionsReport,
     type AffiliateClicksReport,
@@ -136,31 +138,15 @@ export {
     type ResolvedPlacement,
     type ResolvedSdkConfig,
 } from "./merchantApiSchemas";
+export { RegisterTokenBodySchema } from "./notificationTokenSchemas";
 export {
-    type RegisterTokenBody,
-    RegisterTokenBodySchema,
-} from "./notificationTokenSchemas";
-export {
-    type DeleteRecoveryResponse,
     DeleteRecoveryResponseSchema,
-    type RecoveryBlobResponse,
     RecoveryBlobResponseSchema,
     type RecoveryStatusResponse,
     RecoveryStatusResponseSchema,
-    type RequestRecoveryEmailBody,
     RequestRecoveryEmailBodySchema,
-    type RequestRecoveryEmailResponse,
     RequestRecoveryEmailResponseSchema,
-    type SaveRecoveryBlobBody,
     SaveRecoveryBlobBodySchema,
-    type SaveRecoveryResponse,
     SaveRecoveryResponseSchema,
 } from "./recoverySchemas";
-export {
-    type RewardHistoryResponse,
-    RewardHistoryResponseSchema,
-} from "./rewardHistorySchemas";
-export {
-    type WebhookStatusResponse,
-    WebhookStatusResponseSchema,
-} from "./webhookStatusSchemas";
+export { WebhookStatusResponseSchema } from "./webhookStatusSchemas";

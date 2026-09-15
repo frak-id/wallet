@@ -4,7 +4,7 @@
 # for the full caching-strategy commentary; the structure is intentionally identical
 # so the tooling/deps/sdk-builder layers dedupe at the blob level inside zot.
 
-ARG BUN_VERSION=1.4.0
+ARG BUN_VERSION=1.4.2
 
 FROM oven/bun:${BUN_VERSION} AS tooling
 RUN --mount=type=cache,id=apt-cache,target=/var/cache/apt,sharing=locked \
@@ -45,13 +45,15 @@ ARG FRAK_WALLET_URL
 ARG BACKEND_URL
 ARG ERPC_URL
 ARG OPEN_PANEL_API_URL
+ARG COMMIT_HASH
 
 ENV NODE_ENV=$NODE_ENV \
     STAGE=$STAGE \
     FRAK_WALLET_URL=$FRAK_WALLET_URL \
     BACKEND_URL=$BACKEND_URL \
     ERPC_URL=$ERPC_URL \
-    OPEN_PANEL_API_URL=$OPEN_PANEL_API_URL
+    OPEN_PANEL_API_URL=$OPEN_PANEL_API_URL \
+    COMMIT_HASH=$COMMIT_HASH
 
 WORKDIR /app/apps/business
 RUN --mount=type=secret,id=OPEN_PANEL_BUSINESS_CLIENT_ID \

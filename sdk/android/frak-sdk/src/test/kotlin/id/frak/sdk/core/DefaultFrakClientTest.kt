@@ -44,7 +44,7 @@ class DefaultFrakClientTest {
     private val store = InMemoryKeyValueStore()
 
     @Test
-    fun `campaigns forceRefresh also forces the config resolve, not just the rewards fetch (D6)`() =
+    fun `campaigns forceRefresh also forces the config resolve, not just the rewards fetch`() =
         runTest {
             val client = newClient(testScheduler)
             transport.respond(200, BODY)

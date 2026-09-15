@@ -5,12 +5,12 @@ export function GbpIcon(props: SVGProps<SVGSVGElement>) {
     return (
         <svg
             aria-hidden="true"
-            {...props}
             width="24"
             height="24"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
+            {...props}
         >
             <g clipPath="url(#clip0_234_79943)">
                 <path

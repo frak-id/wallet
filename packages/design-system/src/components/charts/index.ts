@@ -28,5 +28,20 @@ export {
     type PieSliceLabelsProps,
 } from "./pie-slice-labels";
 export { ReferenceLine, type ReferenceLineProps } from "./reference-line";
-export * from "./tooltip";
+export {
+    ChartTooltip,
+    type ChartTooltipProps,
+    DateTicker,
+    type DateTickerProps,
+    type IndicatorWidth,
+    TooltipBox,
+    type TooltipBoxProps,
+    TooltipContent,
+    type TooltipContentProps,
+    TooltipDot,
+    type TooltipDotProps,
+    TooltipIndicator,
+    type TooltipIndicatorProps,
+    type TooltipRow,
+} from "./tooltip";
 export { XAxis, type XAxisProps } from "./x-axis";

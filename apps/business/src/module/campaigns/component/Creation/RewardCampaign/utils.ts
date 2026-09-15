@@ -518,7 +518,9 @@ export function rewardFormToDraft(
 function isCpaTierComplete(tier: CpaTierRow, isLast: boolean): boolean {
     const fromOk = tier.from !== "";
     const toOk = isLast || tier.to !== "";
-    const cpaOk = Number(tier.cpa) > 0;
+    const cpa = Number(tier.cpa);
+    // `> 100` mirrors the backend's own tier check, which rejects at publish.
+    const cpaOk = cpa > 0 && (tier.unit !== "percent" || cpa <= 100);
     return fromOk && toOk && cpaOk;
 }
 
@@ -608,6 +610,9 @@ export function isRewardFormValid(
     if (values.model === "percentage") {
         return (
             values.targetCpaPercent > 0 &&
+            // The backend rejects a percent reward over 100 at publish; the
+            // pool is what the two shares are derived from, so cap it here.
+            values.targetCpaPercent <= 100 &&
             splitMatchesPool(
                 values.targetCpaPercent,
                 values.ambassadorPercent,

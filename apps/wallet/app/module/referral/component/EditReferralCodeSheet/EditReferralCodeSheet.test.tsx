@@ -64,7 +64,7 @@ const renderSheet = (overrides?: {
     return { ...utils, sheet, onClose, onSaved };
 };
 
-describe.sequential("EditReferralCodeSheet", () => {
+describe("EditReferralCodeSheet", () => {
     it("renders the title, attention block and form", () => {
         const { sheet } = renderSheet();
         expect(sheet.getByText("wallet.referral.edit.title")).toBeTruthy();

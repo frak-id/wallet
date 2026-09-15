@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# We are doing that just because sst dev command fck up with the ssh flag param
+# The tunnels live in a script because `sst dev` mangles the quoting of the
+# `--ssh-flag` arguments when they are passed inline from a dev command.
 
 # Kill the whole process group (this script is its own session/group leader,
 # set by sst via Setsid) so gcloud/kubectl grandchildren die too, not just

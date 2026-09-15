@@ -29,23 +29,11 @@ export type BusinessEmailCodePurpose =
     | "password_reset";
 
 /**
- * First-class business identity, decoupled from the wallet. A business
- * account holds AT MOST one of each login method — email/password, Shopify
- * identity, wallet — inlined as nullable columns rather than a
- * one-row-per-credential child table: teams never share an account (each
- * member gets their own via `merchant_admins`), so "N credentials of the
- * same type per account" never happens and the extra table/join bought
- * nothing (design doc §4.3, §9 table-count rationale). TOTP enrollment is
- * inlined the same way — it's already 1:1 with the account.
- *
- * A jsonb `credentials` blob was considered and rejected: per-type
- * uniqueness (one wallet ⇒ one account, one shopify identity ⇒ one account)
- * needs real (partial) unique indexes, which on jsonb degrade to fragile
- * expression indexes that silently stop matching the moment the JSON shape
- * changes — typed nullable columns keep the constraints in the schema, not
- * in application discipline.
- *
- * Email is stored lowercased app-side.
+ * First-class business identity, decoupled from the wallet: at most one of
+ * each login method (email/password, Shopify, wallet) plus TOTP enrollment,
+ * inlined as nullable columns rather than a child table so per-type uniqueness
+ * stays a real partial unique index (design doc §4.3). Email is stored
+ * lowercased app-side.
  */
 export const businessAccountsTable = pgTable(
     "business_accounts",

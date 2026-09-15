@@ -2,6 +2,7 @@ import { isRunningLocally } from "@frak-labs/app-essentials/utils/env";
 import {
     initAnalytics,
     recordError,
+    setAnalyticsDeviceId,
 } from "@frak-labs/wallet-shared/common/analytics";
 import {
     defaultNS,
@@ -135,9 +136,15 @@ async function initI18n() {
  * Rejects only when the document is malformed; every other failure is reported
  * through `recordError` and left to the page's own empty state.
  */
-export async function bootstrapStandalonePage(page: ReactNode): Promise<void> {
+export async function bootstrapStandalonePage(
+    page: ReactNode,
+    { deviceId }: { deviceId?: string } = {}
+): Promise<void> {
     setupBigIntSerialization();
-    initAnalytics();
+    initAnalytics("wallet_standalone");
+    // Before any event: this page is opened by a host that already owns the
+    // anonymous id, and re-keying after the first event splits the session.
+    setAnalyticsDeviceId(deviceId);
     wireErrorReporting();
 
     await initI18n();

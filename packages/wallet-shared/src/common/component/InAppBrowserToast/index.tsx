@@ -20,11 +20,17 @@ type InAppBrowserToastProps = {
      * reliable escape path.
      */
     parentUrl?: string;
+    /**
+     * Resolved merchant origin, supplied on the iframe path. The redirect
+     * carries a merge token, so it must not reach an unexpected parent.
+     */
+    targetOrigin?: string;
 };
 
 export function InAppBrowserToast({
     getMergeToken,
     parentUrl,
+    targetOrigin,
 }: InAppBrowserToastProps) {
     const { t } = useTranslation();
     const [isDismissed, setIsDismissed] = useSessionFlag(
@@ -39,8 +45,9 @@ export function InAppBrowserToast({
             if (isIPad) {
                 // iPad WKWebView blocks all programmatic escapes:
                 // x-safari-https://, window.open, <a target="_blank">,
-                // navigator.share (no Safari option in share sheet).
-                // Clipboard copy + instruction is the only path.
+                // navigator.share. Clipboard copy + instruction is the only
+                // path, and no origin guard applies: the merge token goes
+                // to the user's clipboard, not to a frame that can read it.
                 trackEvent("in_app_browser_redirected", {
                     target: "sd-iframe-clipboard",
                 });
@@ -58,18 +65,7 @@ export function InAppBrowserToast({
                           })
                 );
             } else {
-                // iPhone/other: lifecycle event → parent uses x-safari-https://
-                trackEvent("in_app_browser_redirected", {
-                    target: "sd-iframe",
-                });
-                const mergeToken = await getMergeToken?.();
-                emitLifecycleEvent({
-                    iframeLifecycle: "redirect",
-                    data: {
-                        baseRedirectUrl: `${process.env.BACKEND_URL ?? getBackendUrl()}/common/social?u=`,
-                        mergeToken,
-                    },
-                });
+                await redirectViaParent(targetOrigin, getMergeToken);
             }
         } else {
             trackEvent("in_app_browser_redirected", {
@@ -77,7 +73,7 @@ export function InAppBrowserToast({
             });
             redirectToExternalBrowser(window.location.href);
         }
-    }, [getMergeToken, parentUrl, t]);
+    }, [getMergeToken, parentUrl, targetOrigin, t]);
 
     // Auto-redirect on first detection — skip on iPad since
     // clipboard copy without user gesture has no visible feedback.
@@ -107,6 +103,32 @@ export function InAppBrowserToast({
             onAction={handleRedirect}
             onDismiss={handleDismiss}
         />
+    );
+}
+
+/**
+ * iPhone/other: the parent escapes via x-safari-https://. The redirect carries
+ * a merge token, so an unresolved origin sends nothing.
+ */
+async function redirectViaParent(
+    targetOrigin: string | undefined,
+    getMergeToken?: () => Promise<string | undefined>
+) {
+    if (!targetOrigin) {
+        console.warn("[InAppBrowser] Origin not resolved, redirect dropped");
+        return;
+    }
+    trackEvent("in_app_browser_redirected", { target: "sd-iframe" });
+    const mergeToken = await getMergeToken?.();
+    emitLifecycleEvent(
+        {
+            iframeLifecycle: "redirect",
+            data: {
+                baseRedirectUrl: `${process.env.BACKEND_URL ?? getBackendUrl()}/common/social?u=`,
+                mergeToken,
+            },
+        },
+        { targetOrigin }
     );
 }
 

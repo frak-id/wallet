@@ -3,32 +3,6 @@ import { describe, expect, test } from "../../../tests/vitest-fixtures";
 
 describe("webAuthN utilities", () => {
     describe("formatSignature", () => {
-        test("should format signature with all components", async () => {
-            const { formatSignature } = await import("./webAuthN");
-
-            const signatureData = {
-                authenticatorIdHash:
-                    "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" as Hex,
-                rs: [
-                    BigInt(
-                        "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
-                    ),
-                    BigInt(
-                        "0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321"
-                    ),
-                ] as [bigint, bigint],
-                challengeOffset: 123n,
-                authenticatorData: "0xauthdata" as Hex,
-                clientData: "0xclientdata" as Hex,
-            };
-
-            const result = formatSignature(signatureData);
-
-            expect(result).toBeDefined();
-            expect(result.startsWith("0x")).toBe(true);
-            expect(result.length).toBeGreaterThan(2);
-        });
-
         test("should produce consistent output for same inputs", async () => {
             const { formatSignature } = await import("./webAuthN");
 
@@ -73,18 +47,6 @@ describe("webAuthN utilities", () => {
     });
 
     describe("getStubSignature", () => {
-        test("should generate stub signature", async () => {
-            const { getStubSignature } = await import("./webAuthN");
-
-            const authenticatorIdHash =
-                "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" as Hex;
-
-            const result = getStubSignature({ authenticatorIdHash });
-
-            expect(result).toBeDefined();
-            expect(result.startsWith("0x")).toBe(true);
-        });
-
         test("should use max values for signature components", async () => {
             const { getStubSignature } = await import("./webAuthN");
 

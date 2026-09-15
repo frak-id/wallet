@@ -3,14 +3,8 @@ import type { FrakLifecycleEvent } from "../types";
 import type { IFrameRpcSchema } from "../types/rpc";
 
 /**
- * Listen for SSO redirect with compressed data in URL
- * Forwards compressed data to iframe via lifecycle event
- * Cleans URL immediately after detection
- *
- * Performance: One-shot URL check, no polling, no re-renders
- *
- * @param rpcClient - RPC client instance to send lifecycle events
- * @param waitForConnection - Promise that resolves when iframe is connected
+ * Forward a compressed `sso` URL param to the iframe as a lifecycle event and
+ * strip it from the URL immediately, so it never lands in browser history.
  */
 export function setupSsoUrlListener(
     rpcClient: RpcClient<IFrameRpcSchema, FrakLifecycleEvent>,
@@ -20,29 +14,20 @@ export function setupSsoUrlListener(
         return;
     }
 
-    // One-shot URL check - no need for MutationObserver or polling
     const url = new URL(window.location.href);
     const compressedSso = url.searchParams.get("sso");
 
-    // Early return if no SSO parameter
     if (!compressedSso) {
         return;
     }
 
-    // Forward compressed data directly to iframe (no decompression on SDK side)
-    // Iframe will decompress and process
+    // Forwarded compressed: the iframe owns decompression.
     waitForConnection
         .then(() => {
-            // Send lifecycle event with compressed string
-            // This is a one-way notification, no response expected
             rpcClient.sendLifecycle({
                 clientLifecycle: "sso-redirect-complete",
                 data: { compressed: compressedSso },
             });
-
-            console.log(
-                "[SSO URL Listener] Forwarded compressed SSO data to iframe"
-            );
         })
         .catch((error) => {
             console.error(
@@ -51,10 +36,6 @@ export function setupSsoUrlListener(
             );
         });
 
-    // Clean URL immediately to prevent exposure in browser history
-    // Use replaceState to avoid navigation/re-render
     url.searchParams.delete("sso");
     window.history.replaceState({}, "", url.toString());
-
-    console.log("[SSO URL Listener] SSO parameter detected and URL cleaned");
 }

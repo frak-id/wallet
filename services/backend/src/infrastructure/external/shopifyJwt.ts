@@ -5,14 +5,8 @@ import { log } from "./logger";
 const CLOCK_TOLERANCE_SECONDS = 60;
 
 /**
- * Verify a Shopify session token JWT (HS256, signed by Shopify with the app's API secret).
- * Returns the decoded payload or null if validation fails.
- *
- * Validation steps:
- *  1. Verify HS256 signature using SHOPIFY_API_SECRET
- *  2. Check exp/nbf with 10s clock tolerance
- *  3. Check aud matches SHOPIFY_CLIENT_ID
- *  4. Check iss and dest domains match
+ * Verify a Shopify session token JWT (HS256, signed by Shopify with the app's
+ * API secret). Returns the decoded payload, or null if validation fails.
  */
 export async function verifyShopifySessionToken(
     token: string
@@ -40,7 +34,6 @@ export async function verifyShopifySessionToken(
             }
         );
 
-        // Validate iss and dest domains match
         const issDomain = extractHostname(payload.iss);
         const destDomain = extractHostname(payload.dest);
         if (!issDomain || !destDomain || issDomain !== destDomain) {

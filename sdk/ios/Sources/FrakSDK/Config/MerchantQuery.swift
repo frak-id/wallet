@@ -14,8 +14,8 @@ enum MerchantQuery: Sendable {
         case .id(let merchantId, let lang):
             return ["merchantId": merchantId, "lang": lang]
         case .bundleId(let bundleId, let lang):
-            // The backend's query parameter is `packageId` on both platforms; only the
-            // Swift-facing name is `bundleId`.
+            // The backend's query parameter is `packageId`; only the Swift-facing name is
+            // `bundleId`.
             return ["packageId": bundleId, "platform": Self.iosPlatform, "lang": lang]
         }
     }

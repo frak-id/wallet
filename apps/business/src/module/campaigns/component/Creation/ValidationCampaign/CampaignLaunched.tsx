@@ -5,7 +5,6 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
-    BellIcon,
     CheckIcon,
     DownloadIcon,
     NumberBadgeIcon,
@@ -14,17 +13,10 @@ import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
-import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { campaignStore } from "@/stores/campaignStore";
 import * as styles from "./campaign-launched.css";
 
 const COMMUNICATION_GUIDE_URL = "https://canva.link/9w9o1ld8415iywl";
-
-// TODO: flip to true once the backend sends a publish notification to
-// ambassadors. Today campaign publish only transitions status and emits no
-// notification, so the card would claim a push that never fires. Card JSX and
-// i18n keys are kept in place for re-enable.
-const SHOW_AMBASSADOR_NOTIFICATION = false;
 
 const TIPS = [
     {
@@ -47,7 +39,6 @@ export function CampaignLaunched() {
     const merchantId = useActiveMerchantId();
     const draft = campaignStore((s) => s.draft);
     const reset = campaignStore((s) => s.reset);
-    const { data: merchant } = useMerchant({ merchantId });
 
     const campaignId = draft.id;
 
@@ -96,39 +87,6 @@ export function CampaignLaunched() {
                                 </Text>
                             </Stack>
                         </Stack>
-
-                        {SHOW_AMBASSADOR_NOTIFICATION && (
-                            <Card
-                                radius="l"
-                                variant="elevated"
-                                padding="default"
-                            >
-                                <Inline space="m" alignY="top" wrap={false}>
-                                    <div className={styles.bellCircle}>
-                                        <BellIcon width={24} height={24} />
-                                    </div>
-                                    <Stack space="xxs" className={styles.grow}>
-                                        <Text variant="body" weight="medium">
-                                            {t(
-                                                "campaigns.create.success.notifyTitle"
-                                            )}
-                                        </Text>
-                                        <Text
-                                            variant="bodySmall"
-                                            color="secondary"
-                                        >
-                                            {t(
-                                                "campaigns.create.success.notifyBody",
-                                                {
-                                                    merchant:
-                                                        merchant?.name ?? "",
-                                                }
-                                            )}
-                                        </Text>
-                                    </Stack>
-                                </Inline>
-                            </Card>
-                        )}
 
                         <Card radius="m" variant="elevated" padding="none">
                             <Box paddingTop="m" paddingBottom="l" paddingX="m">

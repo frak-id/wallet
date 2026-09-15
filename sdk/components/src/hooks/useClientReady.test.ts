@@ -24,9 +24,9 @@ vi.mock("@/bootstrap/clientReady", async () => {
 });
 
 // Sequential: tests mutate module-level state (sdkConfigStore singleton +
-// window.FrakSetup), which is incompatible with the workspace default of
-// `sequence.concurrent: true`.
-describe.sequential("useClientReady", () => {
+// window.FrakSetup), so they depend on the workspace's in-file sequential
+// execution.
+describe("useClientReady", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         sdkConfigStore.setConfig({

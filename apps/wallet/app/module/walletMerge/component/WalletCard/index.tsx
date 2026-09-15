@@ -4,7 +4,7 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
-import { shortenAddress } from "../../utils/shortenAddress";
+import { shortenAddress } from "@/module/common/utils/shortenAddress";
 import * as styles from "./index.css";
 
 type WalletCardProps = {

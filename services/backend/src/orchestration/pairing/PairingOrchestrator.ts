@@ -1,8 +1,8 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { JwtContext, log } from "@backend-infrastructure";
+import { describeUserAgent } from "@backend-utils";
 import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import type { ElysiaWS } from "elysia/ws";
-import { UAParser } from "ua-parser-js";
 import { isAddressEqual } from "viem";
 import type {
     StaticWalletTokenDto,
@@ -128,7 +128,7 @@ export class PairingOrchestrator {
         ws: ElysiaWS;
         authenticatorHints?: string[] | null;
     }) {
-        const deviceName = this.uaToDeviceName(userAgent);
+        const deviceName = describeUserAgent(userAgent);
 
         // Hyphenless lowercase 32-char hex (UUID v4 entropy, fewer bytes
         // on the wire so the QR code can use the QR alphanumeric mode
@@ -387,7 +387,7 @@ export class PairingOrchestrator {
             return;
         }
 
-        const targetName = this.uaToDeviceName(userAgent);
+        const targetName = describeUserAgent(userAgent);
         await this.pairingRepository.markResolved({
             pairingId: pairing.pairingId,
             wallet: wallet.address,
@@ -450,7 +450,7 @@ export class PairingOrchestrator {
                     type: "partner-connected",
                     payload: {
                         pairingId: wallet.pairingId,
-                        deviceName: this.uaToDeviceName(userAgent),
+                        deviceName: describeUserAgent(userAgent),
                     },
                 },
                 "target"
@@ -484,7 +484,7 @@ export class PairingOrchestrator {
             return;
         }
 
-        const deviceName = this.uaToDeviceName(userAgent);
+        const deviceName = describeUserAgent(userAgent);
         const pairingIds = pairings.map((p) => p.pairingId);
 
         for (const pairingId of pairingIds) {
@@ -521,12 +521,6 @@ export class PairingOrchestrator {
                 },
             });
         }
-    }
-
-    private uaToDeviceName(userAgent?: string): string {
-        if (!userAgent) return "Unknown";
-        const parsed = UAParser(userAgent);
-        return `${parsed.browser.name} on ${parsed.os.name}`;
     }
 
     private sendDirect(

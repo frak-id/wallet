@@ -57,17 +57,11 @@ function vanillaExtractInlinePlugin(): Plugin {
                 identOption,
             });
 
-            // Rewrite ALL side-effect .vanilla.css imports into named imports
-            // VE generates: import 'file.vanilla.css?source=...'
-            // We rewrite to: import { cssSource as css_N } from 'file.vanilla.css?source=...'
-            //
-            // Exception: reset/theme/sprinkles CSS is injected ONCE globally
-            // via `sharedBaseCss.css.ts` (see loader.ts and useLightDomStyles).
-            // For every OTHER source file, those imports are dropped here so
-            // each component's <style> tag only contains component-specific
-            // rules and we never re-emit ~28KB of shared rules per component
-            // (which previously caused cascade-ordering bugs across <style>
-            // tags when components mounted in certain orders).
+            // Rewrite side-effect `.vanilla.css` imports into named imports so
+            // each component's <style> carries only its own rules. Reset/theme/
+            // sprinkles are injected once globally via `sharedBaseCss.css.ts`
+            // (see loader.ts and useLightDomStyles), so those imports are
+            // dropped everywhere else — re-emitting them breaks cascade order.
             const isSharedBaseFile = filePath.endsWith("/sharedBaseCss.css.ts");
             const sharedCssRe =
                 /\/(reset|theme|sprinkles|sharedBaseCss)\.css\.ts\.vanilla\.css/;
@@ -226,11 +220,7 @@ const preactCompatAlias: Record<string, string> = {
     "preact/jsx-runtime": preactJsxRuntime,
 };
 
-// Stub rrweb in the CDN bundle only. @openpanel/web 1.4.1 dynamically imports
-// its replay module (which depends on rrweb), but the CDN config bundles every
-// dependency inline (`alwaysBundle: [/.*/]`), so we alias rrweb to a noop to
-// keep that bundle small. The NPM build leaves the dynamic import alone so
-// downstream bundlers can tree-shake / code-split it.
+// Aliased in the CDN bundle only — see `../core/src/stubs/rrweb.ts`.
 const rrwebStub = fileURLToPath(
     new URL("../core/src/stubs/rrweb.ts", import.meta.url)
 );
@@ -276,12 +266,10 @@ export default defineConfig([
         outDir: "./cdn",
         deps: { alwaysBundle: [/.*/] },
         alias: { ...preactCompatAlias, rrweb: rrwebStub },
-        // NOTE: no `treeshake.moduleSideEffects` override here. The package
-        // manifest's `sideEffects` allowlist is the single authority for what
-        // may be shaken, and a blanket override would silently mask a manifest
-        // that no longer covers the component entrypoints — which is exactly
-        // how the registration calls were dropped from this bundle before.
-        // `assertComponentRegistrations` fails the build if that regresses.
+        // NOTE: no `treeshake.moduleSideEffects` override here — the package
+        // manifest's `sideEffects` allowlist is the single authority, and a
+        // blanket override would mask a manifest that misses a component
+        // entrypoint. `assertComponentRegistrations` guards that.
         define: {
             "process.env.BUILD_TIMESTAMP": JSON.stringify(Date.now()),
             "process.env.CDN_TAG": JSON.stringify(

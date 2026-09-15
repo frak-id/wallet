@@ -53,6 +53,8 @@ if (!$dev) {
             BACKEND_URL: businessEnv.BACKEND_URL,
             ERPC_URL: businessEnv.ERPC_URL,
             OPEN_PANEL_API_URL: businessEnv.OPEN_PANEL_API_URL,
+            // Query-persister cache buster; empty locally disables busting.
+            COMMIT_HASH: process.env.COMMIT_HASH ?? "",
         },
         // Secrets passed via BuildKit (not stored in layers)
         secrets: {
@@ -72,7 +74,6 @@ if (!$dev) {
     businessImage = image.ref;
 }
 
-// Wallet service (owns the ingress and routes paths)
 export const businessService = new KubernetesService(
     "business",
     {
@@ -114,7 +115,6 @@ export const businessService = new KubernetesService(
             ],
         },
 
-        // Ingress config with path-based routing
         ingress: {
             host: `${subDomain}.frak.id`,
             tlsSecretName: "business-tls",

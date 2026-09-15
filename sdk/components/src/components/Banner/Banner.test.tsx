@@ -46,9 +46,9 @@ import * as usePlacementHook from "@/hooks/usePlacement";
 import * as useRewardHook from "@/hooks/useReward";
 
 // Sequential: tests mutate window event listeners and vi.mock state for
-// shared hooks, incompatible with the workspace default of
-// `sequence.concurrent: true`.
-describe.sequential("Banner", () => {
+// shared hooks, so they depend on the workspace's in-file sequential
+// execution.
+describe("Banner", () => {
     beforeEach(() => {
         cleanup();
         vi.clearAllMocks();
@@ -69,8 +69,6 @@ describe.sequential("Banner", () => {
     afterEach(() => {
         cleanup();
     });
-
-    // ─── Rendering guards ───
 
     it("should not render when shouldRender is false", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
@@ -98,8 +96,6 @@ describe.sequential("Banner", () => {
         const { container } = render(<Banner />);
         expect(container.querySelector(".frak-banner")).toBeNull();
     });
-
-    // ─── In-app browser mode ───
 
     it("should render in-app banner when isInAppBrowser is true and allowInappRedirect is enabled", () => {
         coreSdkMock.isInAppBrowser = true;
@@ -200,8 +196,6 @@ describe.sequential("Banner", () => {
             "Custom CTA"
         );
     });
-
-    // ─── Referral mode ───
 
     it("should render referral banner after frak:referral-success event", async () => {
         const { container } = render(<Banner />);
@@ -335,8 +329,6 @@ describe.sequential("Banner", () => {
         });
     });
 
-    // ─── Mode priority ───
-
     it("should prioritize in-app mode over referral event", async () => {
         coreSdkMock.isInAppBrowser = true;
 
@@ -359,8 +351,6 @@ describe.sequential("Banner", () => {
         });
     });
 
-    // ─── Custom classname ───
-
     it("should apply classname prop to banner element", () => {
         coreSdkMock.isInAppBrowser = true;
 
@@ -378,8 +368,6 @@ describe.sequential("Banner", () => {
         const banner = container.querySelector("[role='alert']");
         expect(banner).toBeInTheDocument();
     });
-
-    // ─── Interaction prop ───
 
     it("should pass interaction prop to useReward", async () => {
         const { container } = render(<Banner interaction="referral" />);

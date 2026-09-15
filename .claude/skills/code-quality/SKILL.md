@@ -5,7 +5,9 @@ description: "Run code quality checks on the Frak Wallet monorepo: typecheck, li
 
 # Code Quality Check
 
-Run the standard quality checks for the Frak Wallet monorepo. Execute checks in order of speed — fast failures first.
+Run the quality gate defined in the root `AGENTS.md` ("Quick Commands"). That file is
+authoritative — if it and this skill disagree, it wins. Execute in order of speed so
+the fast failures come first.
 
 ## Check Sequence
 
@@ -21,6 +23,12 @@ bun run lint
 ```
 Report any linting errors. Fix auto-fixable issues. For manual fixes, provide the specific file:line and what needs to change.
 
+Biome cannot parse Kotlin or Swift, so the native sources are NOT covered by the above.
+When a change touches `sdk/{android,ios}` or `example/native-*`, also run:
+```bash
+bun run --filter '*/native-*' lint
+```
+
 ### 3. Type Check (slower)
 ```bash
 bun run typecheck
@@ -31,7 +39,8 @@ This runs across all workspace packages. Report any type errors with file paths 
 ```bash
 bun run test
 ```
-This runs Vitest across all 10 test projects. For targeted testing:
+This runs Vitest across every project (one per `vitest.config.ts`, discovered by glob
+from the root `vitest.config.ts`). For targeted testing:
 - Wallet app: `cd apps/wallet && bun run test`
 - Backend: `cd services/backend && bun run test`
 - Specific file: `cd {project} && bun run test {file-pattern}`

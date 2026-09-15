@@ -1,4 +1,4 @@
-import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { vi } from "vitest";
 import {
     afterEach,
     beforeEach,
@@ -7,7 +7,11 @@ import {
     test,
 } from "../../../tests/vitest-fixtures";
 import type { SdkSession } from "../../types/Session";
-import { getSafeSdkSession, getSafeSession } from "./safeSession";
+import {
+    getFromLocalStorage,
+    getSafeSdkSession,
+    getSafeSession,
+} from "./safeSession";
 
 vi.mock("../../stores/sessionStore", async () => {
     const actual = await vi.importActual<
@@ -244,6 +248,22 @@ describe("safeSession utilities", () => {
     });
 
     describe("getFromLocalStorage", () => {
+        test("should read and parse a stored value", () => {
+            const stored = { nested: { value: 123 }, array: [1, 2, 3] };
+            localStorage.setItem("complex-key", JSON.stringify(stored));
+
+            expect(getFromLocalStorage("complex-key")).toEqual(stored);
+        });
+
+        test("should return undefined for a missing or empty entry", () => {
+            localStorage.setItem("empty-key", "");
+
+            expect(getFromLocalStorage("non-existent-key")).toBeUndefined();
+            expect(getFromLocalStorage("empty-key")).toBeUndefined();
+        });
+    });
+
+    describe("getSafeSession without a persisted store", () => {
         test("should handle missing localStorage items", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
 
