@@ -31,10 +31,31 @@ export type PresetLang = (typeof PRESET_LANGS)[number];
 // Empty string means "not set" for that tier; empties are dropped at save.
 export type LocalizedText = Record<WordingLang, string>;
 
+// Tier the style block writes for: the `default` literal, or a placement id.
+// Only the default tier self-scopes; the backend wraps every other tier.
+export type StyleTier = string;
+
+// One optional entry per style control; absent means the control is unset and
+// emits nothing. Colours are hex, except `bg` which also takes `transparent`.
+export type ButtonShareStyleValues = {
+    bg?: string;
+    fg?: string;
+    bw?: number;
+    bc?: string;
+    fs?: number;
+    py?: number;
+    px?: number;
+    mt?: number;
+    mb?: number;
+    ml?: number;
+    mr?: number;
+};
+
 export type ButtonShareFormValues = {
     text: LocalizedText;
     noRewardText: LocalizedText;
-    css: string;
+    style: ButtonShareStyleValues;
+    foreignCss: string;
 };
 
 export type PostPurchaseFormValues = {

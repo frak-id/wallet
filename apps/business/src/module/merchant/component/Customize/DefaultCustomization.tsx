@@ -25,6 +25,7 @@ import {
 } from "./fields/fieldDefaults";
 import { CUSTOM_CSS_ENABLED } from "./flags";
 import { SECTION_KEYS } from "./sections";
+import { DEFAULT_TIER } from "./style/styleCodec";
 import type {
     ComponentSettingsFormValues,
     ComponentType,
@@ -95,7 +96,9 @@ function GlobalComponentsPanel({
 
     const onSubmit = useCallback(
         (v: ComponentSettingsFormValues) =>
-            editSdkConfig({ components: formValuesToComponents(v) }),
+            editSdkConfig({
+                components: formValuesToComponents(v, DEFAULT_TIER),
+            }),
         [editSdkConfig]
     );
 
@@ -161,6 +164,7 @@ function GlobalComponentsPanel({
                             selectedComponent={selectedComponent}
                             form={form}
                             lang={activeLang}
+                            tier={DEFAULT_TIER}
                         />
                     </AdvancedDisclosure>
                 </Stack>

@@ -24,10 +24,12 @@ import { ButtonShareFields } from "./fields/ButtonShareFields";
 import { PostPurchaseFields } from "./fields/PostPurchaseFields";
 import { RewardTokenHint } from "./fields/shared";
 import { resolveBuiltInLang, resolvePreviewWording } from "./localizable";
+import { styleValuesToCssProperties } from "./style/styleCodec";
 import { COMPONENT_LABEL_KEYS } from "./translations";
 import type {
     ComponentSettingsFormValues,
     ComponentType,
+    StyleTier,
     WordingLang,
 } from "./types";
 import { COMPONENT_TYPES, SUPPORTED_WORDING_LANGS } from "./types";
@@ -138,10 +140,12 @@ export function ComponentFields({
     selectedComponent,
     form,
     lang,
+    tier,
 }: {
     selectedComponent: ComponentType;
     form: UseFormReturn<ComponentSettingsFormValues>;
     lang: WordingLang;
+    tier: StyleTier;
 }) {
     return (
         <Stack space="m">
@@ -150,6 +154,7 @@ export function ComponentFields({
                 selectedComponent={selectedComponent}
                 form={form}
                 lang={lang}
+                tier={tier}
             />
         </Stack>
     );
@@ -159,14 +164,16 @@ function ComponentFieldsBody({
     selectedComponent,
     form,
     lang,
+    tier,
 }: {
     selectedComponent: ComponentType;
     form: UseFormReturn<ComponentSettingsFormValues>;
     lang: WordingLang;
+    tier: StyleTier;
 }) {
     switch (selectedComponent) {
         case "buttonShare":
-            return <ButtonShareFields form={form} lang={lang} />;
+            return <ButtonShareFields form={form} lang={lang} tier={tier} />;
         case "postPurchase":
             return <PostPurchaseFields form={form} lang={lang} />;
         case "banner":
@@ -316,21 +323,30 @@ export function ComponentPreview({
     lang: WordingLang;
     configLang: Language | null | undefined;
 }) {
+    const { t } = useTranslation();
     const values = form.watch();
     const defaults = componentDefaults[resolveBuiltInLang(lang, configLang)];
 
     switch (selectedComponent) {
         case "buttonShare":
             return (
-                <ShareButtonPreview
-                    text={resolvePreviewWording(
-                        values.buttonShare.text,
-                        lang,
-                        defaults.buttonShare.text
-                    )}
-                    currency={currency}
-                    shopName={shopName}
-                />
+                <Stack space="xxs">
+                    <ShareButtonPreview
+                        text={resolvePreviewWording(
+                            values.buttonShare.text,
+                            lang,
+                            defaults.buttonShare.text
+                        )}
+                        currency={currency}
+                        shopName={shopName}
+                        style={styleValuesToCssProperties(
+                            values.buttonShare.style
+                        )}
+                    />
+                    <Text variant="caption" color="tertiary" align="center">
+                        {t("customize.components.style.previewHint")}
+                    </Text>
+                </Stack>
             );
         case "postPurchase":
             return (

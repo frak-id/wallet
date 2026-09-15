@@ -985,6 +985,29 @@ export default interface Resources {
           "copy": "Copy {REWARD}",
           "hint": "Tip: insert <token>{REWARD}</token> in any text to show the live campaign reward."
         },
+        "style": {
+          "background": "Background",
+          "borderColor": "Border colour",
+          "borderWidth": "Border thickness (px)",
+          "clear": "Clear",
+          "defaultTierHint": "These values only reach buttons whose integration sets a placement; the others keep your theme's styling.",
+          "groupMargin": "Outer spacing",
+          "groupPadding": "Inner spacing",
+          "groupSurface": "Background and border",
+          "groupText": "Text",
+          "marginBottom": "Bottom (px)",
+          "marginLeft": "Left (px)",
+          "marginRight": "Right (px)",
+          "marginTop": "Top (px)",
+          "none": "None",
+          "paddingHorizontal": "Horizontal (px)",
+          "paddingVertical": "Vertical (px)",
+          "previewHint": "Properties you leave empty follow your storefront's styling, so they may differ from this preview.",
+          "swatchLabel": "Colour picker: {{label}}",
+          "textColor": "Colour",
+          "textSize": "Size (px)",
+          "title": "Button style"
+        },
         "targetInteraction": {
           "error": "Maximum length is 200 characters",
           "hint": "Event name that triggers reward calculation for this placement (e.g. purchase_completed, signup)",
@@ -1061,6 +1084,7 @@ export default interface Resources {
         },
         "title": "SDK Customization"
       },
+      "propagationHint": "A saved change can take up to 10 minutes to appear on your storefront.",
       "save": "Save",
       "sharing": {
         "description": "The title and text shown when a visitor shares through their phone or messaging app.",

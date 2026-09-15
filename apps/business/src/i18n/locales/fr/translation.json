@@ -2015,13 +2015,37 @@
                 "inappDescription": "Description in-app",
                 "inappCta": "CTA in-app",
                 "css": "CSS du composant"
+            },
+            "style": {
+                "title": "Style du bouton",
+                "background": "Arrière-plan",
+                "textColor": "Couleur",
+                "borderColor": "Couleur de la bordure",
+                "borderWidth": "Épaisseur de la bordure (px)",
+                "textSize": "Taille (px)",
+                "paddingVertical": "Vertical (px)",
+                "paddingHorizontal": "Horizontal (px)",
+                "marginTop": "Haut (px)",
+                "marginBottom": "Bas (px)",
+                "none": "Aucun",
+                "clear": "Effacer",
+                "defaultTierHint": "Ces valeurs ne s'appliquent qu'aux boutons dont l'intégration définit un emplacement ; les autres gardent le style de votre thème.",
+                "previewHint": "Les propriétés que vous ne renseignez pas suivent le style de votre boutique et peuvent donc différer de cet aperçu.",
+                "marginLeft": "Gauche (px)",
+                "marginRight": "Droite (px)",
+                "groupText": "Texte",
+                "groupPadding": "Espacement intérieur",
+                "groupMargin": "Espacement extérieur",
+                "groupSurface": "Fond et bordure",
+                "swatchLabel": "Sélecteur de couleur : {{label}}"
             }
         },
         "globalCss": {
             "title": "CSS global",
             "description": "Styles CSS appliqués à tous les composants SDK, tous emplacements confondus. Le CSS par emplacement peut les surcharger.",
             "toggle": "CSS personnalisé"
-        }
+        },
+        "propagationHint": "Une modification enregistrée peut mettre jusqu'à 10 minutes à apparaître sur votre boutique."
     },
     "welcomePopup": {
         "title": "🚀 Votre nouveau dashboard Frak est arrivé",
