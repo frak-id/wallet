@@ -15,6 +15,7 @@ import {
     ComponentFields,
     ComponentImagePicker,
     ComponentPreview,
+    ComponentStyleFields,
     ComponentTypeTabs,
     WordingLangTabs,
 } from "./ComponentEditor";
@@ -164,9 +165,16 @@ function GlobalComponentsPanel({
                             selectedComponent={selectedComponent}
                             form={form}
                             lang={activeLang}
-                            tier={DEFAULT_TIER}
                         />
                     </AdvancedDisclosure>
+
+                    <ComponentStyleFields
+                        selectedComponent={selectedComponent}
+                        form={form}
+                        lang={activeLang}
+                        configLang={sdkConfig.lang}
+                        tier={DEFAULT_TIER}
+                    />
                 </Stack>
             </Card>
         </Form>

@@ -17,6 +17,7 @@ import {
     ComponentFields,
     ComponentImagePicker,
     ComponentPreview,
+    ComponentStyleFields,
     ComponentTypeTabs,
     WordingLangTabs,
 } from "./ComponentEditor";
@@ -238,9 +239,16 @@ function PlacementSettingsPanel({
                             selectedComponent={selectedComponent}
                             form={form}
                             lang={activeLang}
-                            tier={placementId}
                         />
                     </AdvancedDisclosure>
+
+                    <ComponentStyleFields
+                        selectedComponent={selectedComponent}
+                        form={form}
+                        lang={activeLang}
+                        configLang={sdkConfig.lang}
+                        tier={placementId}
+                    />
                 </Stack>
             </Card>
         </Form>
