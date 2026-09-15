@@ -2,8 +2,11 @@ import type { CSSProperties } from "react";
 import type {
     ButtonShareStyleFormValues,
     ButtonShareStyleValues,
+    FontWeight,
+    SpacingUnit,
     StyleTier,
 } from "../types";
+import { FONT_WEIGHTS, SPACING_UNITS } from "../types";
 
 const MARKER_OPEN = "/* frak:style ";
 const MARKER_CLOSE = "/* /frak:style */";
@@ -14,8 +17,83 @@ export const TRANSPARENT = "transparent";
 
 const HEX_COLOR = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 
-const COLOR_KEYS = ["bg", "fg", "bc"] as const;
-const NUMERIC_KEYS = ["bw", "fs", "py", "px", "mt", "mb", "ml", "mr"] as const;
+export const COLOR_KEYS = ["bg", "fg", "bc"] as const;
+export const PADDING_KEYS = ["py", "px"] as const;
+export const MARGIN_KEYS = ["mt", "mb", "ml", "mr"] as const;
+const NUMERIC_KEYS = ["bw", "fs", ...PADDING_KEYS, ...MARGIN_KEYS] as const;
+const UNIT_KEYS = ["pu", "mu"] as const;
+
+export type ColorKey = (typeof COLOR_KEYS)[number];
+export type PaddingKey = (typeof PADDING_KEYS)[number];
+export type MarginKey = (typeof MARGIN_KEYS)[number];
+
+const DEFAULT_UNIT: SpacingUnit = "px";
+
+type EmittedEntry = {
+    key: keyof ButtonShareStyleValues;
+    unit?: "pu" | "mu";
+    /** Numeric CSS that takes no length unit, e.g. `font-weight`. */
+    unitless?: boolean;
+    css: readonly (readonly [string, string])[];
+};
+
+// One table drives both emitters below, so a property can never reach the
+// served CSS without also reaching the dashboard preview.
+const EMITTED: readonly EmittedEntry[] = [
+    { key: "bg", css: [["background", "background"]] },
+    { key: "fg", css: [["color", "color"]] },
+    {
+        key: "bw",
+        css: [
+            ["border-style", "borderStyle"],
+            ["border-width", "borderWidth"],
+        ],
+    },
+    { key: "bc", css: [["border-color", "borderColor"]] },
+    { key: "fs", css: [["font-size", "fontSize"]] },
+    { key: "fw", unitless: true, css: [["font-weight", "fontWeight"]] },
+    {
+        key: "py",
+        unit: "pu",
+        css: [
+            ["padding-top", "paddingTop"],
+            ["padding-bottom", "paddingBottom"],
+        ],
+    },
+    {
+        key: "px",
+        unit: "pu",
+        css: [
+            ["padding-left", "paddingLeft"],
+            ["padding-right", "paddingRight"],
+        ],
+    },
+    { key: "mt", unit: "mu", css: [["margin-top", "marginTop"]] },
+    { key: "mb", unit: "mu", css: [["margin-bottom", "marginBottom"]] },
+    { key: "ml", unit: "mu", css: [["margin-left", "marginLeft"]] },
+    { key: "mr", unit: "mu", css: [["margin-right", "marginRight"]] },
+];
+
+/** `border-width` needs its companion `border-style` before it takes effect. */
+const IMPLIED: Partial<Record<keyof ButtonShareStyleValues, string>> = {
+    bw: "solid",
+};
+
+function renderedValue(
+    values: ButtonShareStyleValues,
+    entry: EmittedEntry,
+    property: string
+): string | undefined {
+    const raw = values[entry.key];
+    if (raw === undefined) return undefined;
+    if (IMPLIED[entry.key] && property.endsWith("style")) {
+        return IMPLIED[entry.key];
+    }
+    if (typeof raw !== "number") return raw;
+    if (entry.unitless) return String(raw);
+    const unit = entry.unit ? (values[entry.unit] ?? DEFAULT_UNIT) : "px";
+    return `${raw}${unit}`;
+}
 
 export type ParsedStyle = {
     values: ButtonShareStyleValues;
@@ -36,10 +114,22 @@ function isSize(value: unknown): value is number {
     return typeof value === "number" && Number.isInteger(value) && value >= 0;
 }
 
+function isUnit(value: unknown): value is SpacingUnit {
+    return SPACING_UNITS.includes(value as SpacingUnit);
+}
+
+function isFontWeight(value: unknown): value is FontWeight {
+    return FONT_WEIGHTS.includes(value as FontWeight);
+}
+
 /**
  * Keeps only entries the codec can emit safely. Anything else is dropped, so a
  * serialized marker can never contain a comment terminator.
  */
+export function normalizeStyleValues(input: unknown): ButtonShareStyleValues {
+    return normalizeValues(input);
+}
+
 function normalizeValues(input: unknown): ButtonShareStyleValues {
     if (typeof input !== "object" || input === null) return {};
     const source = input as Record<string, unknown>;
@@ -52,6 +142,17 @@ function normalizeValues(input: unknown): ButtonShareStyleValues {
     for (const key of NUMERIC_KEYS) {
         const value = source[key];
         if (isSize(value)) values[key] = value;
+    }
+
+    if (isFontWeight(source.fw)) values.fw = source.fw;
+
+    // A unit only decorates sizes, so an orphan one is dropped rather than
+    // stored as a styled state that emits nothing.
+    for (const key of UNIT_KEYS) {
+        const value = source[key];
+        const group = key === "pu" ? PADDING_KEYS : MARGIN_KEYS;
+        const hasSize = group.some((sizeKey) => values[sizeKey] !== undefined);
+        if (isUnit(value) && hasSize) values[key] = value;
     }
 
     return values;
@@ -96,29 +197,15 @@ export function parseStyleCss(rawCss: string | undefined | null): ParsedStyle {
 
 function toDeclarations(values: ButtonShareStyleValues): string {
     const declarations: string[] = [];
-    const push = (property: string, value: string) =>
-        declarations.push(`${property}:${value}!important`);
 
-    if (values.bg !== undefined) push("background", values.bg);
-    if (values.fg !== undefined) push("color", values.fg);
-    if (values.bw !== undefined) {
-        push("border-style", "solid");
-        push("border-width", `${values.bw}px`);
+    for (const entry of EMITTED) {
+        for (const [property] of entry.css) {
+            const value = renderedValue(values, entry, property);
+            if (value !== undefined) {
+                declarations.push(`${property}:${value}!important`);
+            }
+        }
     }
-    if (values.bc !== undefined) push("border-color", values.bc);
-    if (values.fs !== undefined) push("font-size", `${values.fs}px`);
-    if (values.py !== undefined) {
-        push("padding-top", `${values.py}px`);
-        push("padding-bottom", `${values.py}px`);
-    }
-    if (values.px !== undefined) {
-        push("padding-left", `${values.px}px`);
-        push("padding-right", `${values.px}px`);
-    }
-    if (values.mt !== undefined) push("margin-top", `${values.mt}px`);
-    if (values.mb !== undefined) push("margin-bottom", `${values.mb}px`);
-    if (values.ml !== undefined) push("margin-left", `${values.ml}px`);
-    if (values.mr !== undefined) push("margin-right", `${values.mr}px`);
 
     return declarations.join(";");
 }
@@ -151,36 +238,14 @@ export function styleValuesToCssProperties(
     values: ButtonShareStyleFormValues
 ): CSSProperties {
     const safeValues = normalizeValues(values);
-    return {
-        ...(safeValues.bg !== undefined && { background: safeValues.bg }),
-        ...(safeValues.fg !== undefined && { color: safeValues.fg }),
-        ...(safeValues.bw !== undefined && {
-            borderStyle: "solid",
-            borderWidth: `${safeValues.bw}px`,
-        }),
-        ...(safeValues.bc !== undefined && { borderColor: safeValues.bc }),
-        ...(safeValues.fs !== undefined && {
-            fontSize: `${safeValues.fs}px`,
-        }),
-        ...(safeValues.py !== undefined && {
-            paddingTop: `${safeValues.py}px`,
-            paddingBottom: `${safeValues.py}px`,
-        }),
-        ...(safeValues.px !== undefined && {
-            paddingLeft: `${safeValues.px}px`,
-            paddingRight: `${safeValues.px}px`,
-        }),
-        ...(safeValues.mt !== undefined && {
-            marginTop: `${safeValues.mt}px`,
-        }),
-        ...(safeValues.mb !== undefined && {
-            marginBottom: `${safeValues.mb}px`,
-        }),
-        ...(safeValues.ml !== undefined && {
-            marginLeft: `${safeValues.ml}px`,
-        }),
-        ...(safeValues.mr !== undefined && {
-            marginRight: `${safeValues.mr}px`,
-        }),
-    };
+    const properties: Record<string, string> = {};
+
+    for (const entry of EMITTED) {
+        for (const [property, camel] of entry.css) {
+            const value = renderedValue(safeValues, entry, property);
+            if (value !== undefined) properties[camel] = value;
+        }
+    }
+
+    return properties;
 }

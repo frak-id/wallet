@@ -67,7 +67,7 @@
     "apps/listener/app/i18nPreload.ts": 3,
     "apps/listener/app/module/component/SsoButton.tsx": 3,
     "apps/listener/app/module/component/ToastLoading.tsx": 2,
-    "apps/listener/app/module/handlers/lifecycleHandler.ts": 2,
+    "apps/listener/app/module/handlers/lifecycleHandler.ts": 1,
     "apps/listener/app/module/hooks/coerceFinalActionToReward.test.ts": 1,
     "apps/listener/app/module/hooks/useDisplayModalListener.impl.ts": 1,
     "apps/listener/app/module/hooks/useDisplayModalListener.ts": 1,

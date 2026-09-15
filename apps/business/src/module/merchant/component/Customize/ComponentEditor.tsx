@@ -1,29 +1,24 @@
 import { componentDefaults } from "@frak-labs/components/i18n/defaults";
 import type { Currency, Language } from "@frak-labs/core-sdk";
 import { Stack } from "@frak-labs/design-system/components/Stack";
-import {
-    Tabs,
-    TabsList,
-    TabsTrigger,
-} from "@frak-labs/design-system/components/Tabs";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { ChevronDownIcon, ChevronUpIcon } from "@frak-labs/design-system/icons";
 import {
     BannerPreview,
     PostPurchasePreview,
     ShareButtonPreview,
 } from "@frak-labs/ui-preview";
-import type { ReactNode } from "react";
 import { useState } from "react";
 import type { FieldPath, UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
-import * as styles from "./customize.css";
+import { AdvancedDisclosure } from "./Disclosure";
 import { BannerFields } from "./fields/BannerFields";
 import { ButtonShareFields } from "./fields/ButtonShareFields";
+import { ButtonShareStyleFields } from "./fields/ButtonShareStyleFields";
 import { PostPurchaseFields } from "./fields/PostPurchaseFields";
 import { RewardTokenHint } from "./fields/shared";
 import { resolveBuiltInLang, resolvePreviewWording } from "./localizable";
+import { SegmentedTabs } from "./SegmentedTabs";
 import { styleValuesToCssProperties } from "./style/styleCodec";
 import { COMPONENT_LABEL_KEYS } from "./translations";
 import type {
@@ -48,27 +43,12 @@ export function WordingLangTabs({
     onSelect: (lang: WordingLang) => void;
 }) {
     return (
-        <Tabs
+        <SegmentedTabs
             value={selected}
-            onValueChange={(value) => onSelect(value as WordingLang)}
-        >
-            <TabsList
-                variant="segmented"
-                fullWidth
-                className={styles.segmentedTrack}
-            >
-                {SUPPORTED_WORDING_LANGS.map((lang) => (
-                    <TabsTrigger
-                        key={lang}
-                        value={lang}
-                        variant="segmented"
-                        fullWidth
-                    >
-                        {WORDING_LANG_LABELS[lang]}
-                    </TabsTrigger>
-                ))}
-            </TabsList>
-        </Tabs>
+            options={SUPPORTED_WORDING_LANGS}
+            labelFor={(lang) => WORDING_LANG_LABELS[lang]}
+            onSelect={onSelect}
+        />
     );
 }
 
@@ -81,71 +61,25 @@ export function ComponentTypeTabs({
 }) {
     const { t } = useTranslation();
     return (
-        <Tabs
+        <SegmentedTabs
             value={selected}
-            onValueChange={(value) => onSelect(value as ComponentType)}
-        >
-            <TabsList
-                variant="segmented"
-                fullWidth
-                className={styles.segmentedTrack}
-            >
-                {COMPONENT_TYPES.map((componentType) => (
-                    <TabsTrigger
-                        key={componentType}
-                        value={componentType}
-                        variant="segmented"
-                        fullWidth
-                    >
-                        {t(COMPONENT_LABEL_KEYS[componentType])}
-                    </TabsTrigger>
-                ))}
-            </TabsList>
-        </Tabs>
+            options={COMPONENT_TYPES}
+            labelFor={(componentType) => t(COMPONENT_LABEL_KEYS[componentType])}
+            onSelect={onSelect}
+        />
     );
 }
 
-export function AdvancedDisclosure({
-    label,
-    isOpen,
-    onToggle,
-    children,
-}: {
-    label: string;
-    isOpen: boolean;
-    onToggle: () => void;
-    children: ReactNode;
-}) {
-    return (
-        <div>
-            <button
-                type="button"
-                className={styles.advancedToggle}
-                onClick={onToggle}
-                aria-expanded={isOpen}
-            >
-                {isOpen ? (
-                    <ChevronUpIcon width={16} height={16} />
-                ) : (
-                    <ChevronDownIcon width={16} height={16} />
-                )}
-                {label}
-            </button>
-            {isOpen && <div className={styles.advancedBody}>{children}</div>}
-        </div>
-    );
-}
+export { AdvancedDisclosure };
 
 export function ComponentFields({
     selectedComponent,
     form,
     lang,
-    tier,
 }: {
     selectedComponent: ComponentType;
     form: UseFormReturn<ComponentSettingsFormValues>;
     lang: WordingLang;
-    tier: StyleTier;
 }) {
     return (
         <Stack space="m">
@@ -154,7 +88,6 @@ export function ComponentFields({
                 selectedComponent={selectedComponent}
                 form={form}
                 lang={lang}
-                tier={tier}
             />
         </Stack>
     );
@@ -164,21 +97,60 @@ function ComponentFieldsBody({
     selectedComponent,
     form,
     lang,
-    tier,
 }: {
     selectedComponent: ComponentType;
     form: UseFormReturn<ComponentSettingsFormValues>;
     lang: WordingLang;
-    tier: StyleTier;
 }) {
     switch (selectedComponent) {
         case "buttonShare":
-            return <ButtonShareFields form={form} lang={lang} tier={tier} />;
+            return <ButtonShareFields form={form} lang={lang} />;
         case "postPurchase":
             return <PostPurchaseFields form={form} lang={lang} />;
         case "banner":
             return <BannerFields form={form} lang={lang} />;
     }
+}
+
+/** Share-button styling, in its own disclosure beside the wording settings. */
+export function ComponentStyleFields({
+    selectedComponent,
+    form,
+    lang,
+    configLang,
+    tier,
+}: {
+    selectedComponent: ComponentType;
+    form: UseFormReturn<ComponentSettingsFormValues>;
+    lang: WordingLang;
+    configLang: Language | null | undefined;
+    tier: StyleTier;
+}) {
+    const { t } = useTranslation();
+    const [isOpen, setIsOpen] = useState(false);
+
+    if (selectedComponent !== "buttonShare") return null;
+
+    const defaults = componentDefaults[resolveBuiltInLang(lang, configLang)];
+    const previewLabel = resolvePreviewWording(
+        form.watch("buttonShare.text"),
+        lang,
+        defaults.buttonShare.text
+    );
+
+    return (
+        <AdvancedDisclosure
+            label={t("customize.components.style.section")}
+            isOpen={isOpen}
+            onToggle={() => setIsOpen(!isOpen)}
+        >
+            <ButtonShareStyleFields
+                form={form}
+                tier={tier}
+                previewLabel={previewLabel}
+            />
+        </AdvancedDisclosure>
+    );
 }
 
 /**
@@ -230,7 +202,8 @@ export function ComponentImagePicker({
     );
 }
 
-type PostPurchasePreviewMode = "referee" | "referrer";
+const POST_PURCHASE_PREVIEW_MODES = ["referee", "referrer"] as const;
+type PostPurchasePreviewMode = (typeof POST_PURCHASE_PREVIEW_MODES)[number];
 
 /**
  * Post-purchase modal preview with a referee/referrer toggle: both audiences
@@ -269,25 +242,14 @@ function PostPurchasePreviewModes({
 
     return (
         <Stack space="s">
-            <Tabs
+            <SegmentedTabs
                 value={mode}
-                onValueChange={(value) =>
-                    setMode(value as PostPurchasePreviewMode)
+                options={POST_PURCHASE_PREVIEW_MODES}
+                labelFor={(value) =>
+                    t(`customize.components.postPurchasePreview.${value}`)
                 }
-            >
-                <TabsList
-                    variant="segmented"
-                    fullWidth
-                    className={styles.segmentedTrack}
-                >
-                    <TabsTrigger value="referee" variant="segmented" fullWidth>
-                        {t("customize.components.postPurchasePreview.referee")}
-                    </TabsTrigger>
-                    <TabsTrigger value="referrer" variant="segmented" fullWidth>
-                        {t("customize.components.postPurchasePreview.referrer")}
-                    </TabsTrigger>
-                </TabsList>
-            </Tabs>
+                onSelect={setMode}
+            />
             <PostPurchasePreview
                 badgeText={resolvePreviewWording(
                     values.postPurchase.badgeText,
@@ -323,30 +285,22 @@ export function ComponentPreview({
     lang: WordingLang;
     configLang: Language | null | undefined;
 }) {
-    const { t } = useTranslation();
     const values = form.watch();
     const defaults = componentDefaults[resolveBuiltInLang(lang, configLang)];
 
     switch (selectedComponent) {
         case "buttonShare":
             return (
-                <Stack space="xxs">
-                    <ShareButtonPreview
-                        text={resolvePreviewWording(
-                            values.buttonShare.text,
-                            lang,
-                            defaults.buttonShare.text
-                        )}
-                        currency={currency}
-                        shopName={shopName}
-                        style={styleValuesToCssProperties(
-                            values.buttonShare.style
-                        )}
-                    />
-                    <Text variant="caption" color="tertiary" align="center">
-                        {t("customize.components.style.previewHint")}
-                    </Text>
-                </Stack>
+                <ShareButtonPreview
+                    text={resolvePreviewWording(
+                        values.buttonShare.text,
+                        lang,
+                        defaults.buttonShare.text
+                    )}
+                    currency={currency}
+                    shopName={shopName}
+                    style={styleValuesToCssProperties(values.buttonShare.style)}
+                />
             );
         case "postPurchase":
             return (

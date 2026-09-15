@@ -35,6 +35,16 @@ export type LocalizedText = Record<WordingLang, string>;
 // Only the default tier self-scopes; the backend wraps every other tier.
 export type StyleTier = string;
 
+// Padding and margin each carry one unit for the whole group (`pu` / `mu`);
+// absent means px, so values stored before units existed still read back.
+export const SPACING_UNITS = ["px", "%"] as const;
+export type SpacingUnit = (typeof SPACING_UNITS)[number];
+
+// The four weights a theme reliably ships; anything else risks the browser
+// synthesising a face the merchant never sees in the dashboard.
+export const FONT_WEIGHTS = [400, 500, 600, 700] as const;
+export type FontWeight = (typeof FONT_WEIGHTS)[number];
+
 // One optional entry per style control; absent means the control is unset and
 // emits nothing. Colours are hex, except `bg` which also takes `transparent`.
 export type ButtonShareStyleValues = {
@@ -43,12 +53,15 @@ export type ButtonShareStyleValues = {
     bw?: number;
     bc?: string;
     fs?: number;
+    fw?: FontWeight;
     py?: number;
     px?: number;
+    pu?: SpacingUnit;
     mt?: number;
     mb?: number;
     ml?: number;
     mr?: number;
+    mu?: SpacingUnit;
 };
 
 // InputNumber writes "" for an emptied number, so the form holds that too.

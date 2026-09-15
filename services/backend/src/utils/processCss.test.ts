@@ -44,6 +44,22 @@ describe("processCss", () => {
         expect(processCss('/* frak:style {"bg":"x"}')).toBe("");
     });
 
+    it("collapses the four padding longhands into one important shorthand", () => {
+        expect(
+            processCss(
+                ".button{padding-top:4%!important;padding-bottom:4%!important;padding-left:10%!important;padding-right:10%!important}"
+            )
+        ).toBe(".button{padding:4% 10%!important}");
+    });
+
+    it("keeps a percentage margin on its own longhand", () => {
+        expect(
+            processCss(
+                ".button{margin-top:2%!important;margin-bottom:0%!important}"
+            )
+        ).toBe(".button{margin-top:2%!important;margin-bottom:0%!important}");
+    });
+
     it("lets the later of two rules sharing a selector win", () => {
         expect(
             processCss(
@@ -70,6 +86,17 @@ describe("processScopedCss", () => {
             )
         ).toBe(
             "frak-button-share[placement=hero] .button{background:0 0!important}"
+        );
+    });
+
+    it("keeps a percentage through the scoping wrap", () => {
+        expect(
+            processScopedCss(
+                ".button{padding-top:4%!important}",
+                PLACEMENT_SCOPE
+            )
+        ).toBe(
+            "frak-button-share[placement=hero] .button{padding-top:4%!important}"
         );
     });
 

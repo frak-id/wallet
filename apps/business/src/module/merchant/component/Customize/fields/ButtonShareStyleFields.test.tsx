@@ -11,6 +11,7 @@ vi.mock("react-i18next", () => ({
 
 import { useForm } from "react-hook-form";
 import { Form } from "@/module/forms/Form";
+import { buildLook } from "../style/presets";
 import { serializeStyleCss, TRANSPARENT } from "../style/styleCodec";
 import type {
     ButtonShareStyleFormValues,
@@ -28,7 +29,7 @@ function Harness({
     style,
 }: {
     tier: string;
-    style: ButtonShareStyleValues;
+    style: ButtonShareStyleFormValues;
 }) {
     const form = useForm<ComponentSettingsFormValues>({
         defaultValues: {
@@ -44,27 +45,11 @@ function Harness({
     currentForm = form;
     return (
         <Form {...form}>
-            <ButtonShareStyleFields form={form} tier={tier} />
-        </Form>
-    );
-}
-
-function SyncHarness({ style }: { style: ButtonShareStyleValues }) {
-    const form = useForm<ComponentSettingsFormValues>({
-        values: {
-            targetInteraction: "",
-            buttonShare: {
-                text: emptyText,
-                noRewardText: emptyText,
-                style,
-                foreignCss: "",
-            },
-        } as ComponentSettingsFormValues,
-    });
-    currentForm = form;
-    return (
-        <Form {...form}>
-            <ButtonShareStyleFields form={form} tier="product" />
+            <ButtonShareStyleFields
+                form={form}
+                tier={tier}
+                previewLabel="Share & earn"
+            />
         </Form>
     );
 }
@@ -79,72 +64,349 @@ function styleValues(): ButtonShareStyleFormValues {
     return currentForm.getValues().buttonShare.style;
 }
 
-const COLOR_CONTROLS = ["bg", "fg", "bc"];
-const SIZE_CONTROLS = ["bw", "fs", "py", "px", "mt", "mb", "ml", "mr"];
+/** Radix tab triggers commit on mousedown, which `click` alone does not fire. */
+function selectTab(testId: string) {
+    fireEvent.mouseDown(screen.getByTestId(testId), { button: 0 });
+}
 
-describe("ButtonShareStyleFields", () => {
-    it("renders every style control and no others", () => {
+describe("ButtonShareStyleFields — presets", () => {
+    it("starts on the theme look with nothing stored", () => {
         renderBlock();
-        for (const key of COLOR_CONTROLS) {
+
+        expect(screen.getByTestId("style-look-theme")).toHaveAttribute(
+            "data-state",
+            "active"
+        );
+        expect(serializeStyleCss(styleValues(), "", "product")).toBeUndefined();
+    });
+
+    it("hides the colour and size controls while the theme look is active", () => {
+        renderBlock();
+
+        expect(screen.queryByTestId("style-accent-hex")).toBeNull();
+        expect(screen.queryByTestId("style-size-m")).toBeNull();
+    });
+
+    it("writes a whole look when a preset is picked", () => {
+        renderBlock();
+        selectTab("style-look-solid");
+
+        const values = styleValues();
+        expect(values.bg).toBe("#1e1e1e");
+        expect(values.fg).toBe("#ffffff");
+        expect(values.bw).toBe(0);
+        expect(values.py).toBe(12);
+    });
+
+    it("keeps the outline look transparent and borders it with the accent", () => {
+        renderBlock();
+        selectTab("style-look-outline");
+
+        const values = styleValues();
+        expect(values.bg).toBe(TRANSPARENT);
+        expect(values.bc).toBe("#1e1e1e");
+        expect(values.bw).toBe(1);
+    });
+
+    it("re-reads the active look from the stored values", () => {
+        renderBlock(buildLook("outline", "m", "#3366cc"));
+
+        expect(screen.getByTestId("style-look-outline")).toHaveAttribute(
+            "data-state",
+            "active"
+        );
+    });
+
+    it("offers exactly three looks until one is hand-edited", () => {
+        renderBlock();
+
+        expect(screen.getAllByRole("tab")).toHaveLength(3);
+        expect(screen.queryByTestId("style-look-custom")).toBeNull();
+    });
+
+    it("never shows an accent picker beside the looks", () => {
+        renderBlock(buildLook("solid", "m", "#1e1e1e"));
+
+        expect(screen.queryByTestId("style-accent-hex")).toBeNull();
+        expect(screen.queryByTestId("style-accent-swatch")).toBeNull();
+    });
+
+    it("carries the hand-set colour across a look change", () => {
+        renderBlock({ ...buildLook("outline", "m", "#3366cc") });
+        selectTab("style-look-solid");
+
+        expect(styleValues().bg).toBe("#3366cc");
+    });
+
+    it("rescales the look without losing its colours", () => {
+        renderBlock(buildLook("solid", "m", "#1e1e1e"));
+        selectTab("style-size-l");
+
+        const values = styleValues();
+        expect(values.fs).toBe(17);
+        expect(values.px).toBe(26);
+        expect(values.bg).toBe("#1e1e1e");
+    });
+
+    it("falls back to the custom look once a colour is hand-edited", () => {
+        renderBlock(buildLook("solid", "m", "#1e1e1e"));
+        fireEvent.click(screen.getByTestId("buttonShare.style.bc-clear"));
+        fireEvent.change(screen.getByTestId("buttonShare.style.bc-hex"), {
+            target: { value: "#abcdef" },
+        });
+
+        expect(screen.getByTestId("style-look-custom")).toHaveAttribute(
+            "data-state",
+            "active"
+        );
+    });
+
+    it("keeps the size control available in the custom look", () => {
+        renderBlock({ ...buildLook("solid", "m", "#1e1e1e"), bc: "#abcdef" });
+
+        expect(screen.getByTestId("style-size-m")).toBeInTheDocument();
+    });
+
+    it("clears every control at once, on screen as well as in the values", () => {
+        renderBlock({
+            ...buildLook("outline", "l", "#3366cc"),
+            fw: 700,
+            mt: 12,
+            mu: "%",
+        });
+
+        fireEvent.click(screen.getByTestId("buttonShare.style.clear-all"));
+
+        expect(serializeStyleCss(styleValues(), "", "product")).toBeUndefined();
+        expect(screen.getByTestId("buttonShare.style.fg-hex")).toHaveValue("");
+        expect(screen.getByTestId("buttonShare.style.fs-input")).toHaveValue(
+            null
+        );
+        expect(screen.getByTestId("style-look-theme")).toHaveAttribute(
+            "data-state",
+            "active"
+        );
+    });
+
+    it("disables the clear-all once nothing is stored", () => {
+        renderBlock();
+        expect(
+            screen.getByTestId("buttonShare.style.clear-all")
+        ).toBeDisabled();
+    });
+
+    it("ignores keys left behind by an empty registered field", () => {
+        renderBlock({ bg: "", fg: "", bc: "", pu: "%" });
+
+        expect(
+            screen.getByTestId("buttonShare.style.clear-all")
+        ).toBeDisabled();
+        expect(screen.getByTestId("style-look-theme")).toHaveAttribute(
+            "data-state",
+            "active"
+        );
+    });
+});
+
+describe("ButtonShareStyleFields — box model", () => {
+    it("keeps margins when the look changes", () => {
+        renderBlock({ mt: 16, mb: 8 });
+        selectTab("style-look-solid");
+
+        expect(styleValues().mt).toBe(16);
+        expect(styleValues().mb).toBe(8);
+    });
+
+    it("edits one margin side at a time when unlinked", () => {
+        renderBlock({ mt: 4, mb: 8, ml: 0, mr: 0 });
+        fireEvent.change(screen.getByTestId("boxModel-mt"), {
+            target: { value: "20" },
+        });
+
+        expect(styleValues().mt).toBe(20);
+        expect(styleValues().mb).toBe(8);
+    });
+
+    it("writes all four sides while the margin link is on", () => {
+        renderBlock({ mt: 4, mb: 4, ml: 4, mr: 4 });
+        fireEvent.change(screen.getByTestId("boxModel-ml"), {
+            target: { value: "12" },
+        });
+
+        expect(styleValues()).toMatchObject({
+            mt: 12,
+            mb: 12,
+            ml: 12,
+            mr: 12,
+        });
+    });
+
+    it("rebuilds the link state when the tier changes", () => {
+        const linked = { mt: 4, mb: 4, ml: 4, mr: 4 };
+        const unlinked = { mt: 4, mb: 9, ml: 0, mr: 0 };
+        const { rerender } = render(
+            <Harness key="a" tier="a" style={linked} />
+        );
+
+        // A keyed remount is what ComponentStyleFields does per placement.
+        rerender(<Harness key="b" tier="b" style={unlinked} />);
+        fireEvent.change(screen.getByTestId("boxModel-mt"), {
+            target: { value: "20" },
+        });
+
+        expect(styleValues().mt).toBe(20);
+        expect(styleValues().mb).toBe(9);
+    });
+
+    it("unlinks the margin sides on demand", () => {
+        renderBlock({ mt: 4, mb: 4, ml: 4, mr: 4 });
+        fireEvent.click(screen.getByTestId("boxModel-margin-link"));
+        fireEvent.change(screen.getByTestId("boxModel-mt"), {
+            target: { value: "30" },
+        });
+
+        expect(styleValues().mt).toBe(30);
+        expect(styleValues().mb).toBe(4);
+    });
+
+    it("mirrors a padding edge onto its axis", () => {
+        renderBlock({ py: 10, px: 20 });
+        fireEvent.change(screen.getByTestId("boxModel-py-mirror"), {
+            target: { value: "6" },
+        });
+
+        expect(styleValues().py).toBe(6);
+        expect(styleValues().px).toBe(20);
+    });
+
+    it("ties both padding axes when the link is on", () => {
+        renderBlock({ py: 8, px: 8 });
+        fireEvent.change(screen.getByTestId("boxModel-px"), {
+            target: { value: "14" },
+        });
+
+        expect(styleValues()).toMatchObject({ py: 14, px: 14 });
+    });
+
+    it("clamps a margin to the control ceiling", () => {
+        renderBlock();
+        fireEvent.change(screen.getByTestId("boxModel-mt"), {
+            target: { value: "900" },
+        });
+
+        expect(styleValues().mt).toBe(120);
+    });
+
+    it("leaves a cleared spacing cell unset rather than zero", () => {
+        renderBlock({ mt: 4 });
+        fireEvent.change(screen.getByTestId("boxModel-mt"), {
+            target: { value: "" },
+        });
+
+        expect(styleValues().mt).toBeUndefined();
+    });
+
+    it("steps a spacing cell with the arrow keys", () => {
+        renderBlock({ py: 10 });
+        fireEvent.keyDown(screen.getByTestId("boxModel-py"), {
+            key: "ArrowUp",
+            shiftKey: true,
+        });
+
+        expect(styleValues().py).toBe(20);
+    });
+
+    it("shows the button wording in the core cell", () => {
+        renderBlock();
+        expect(screen.getByText("Share & earn")).toBeInTheDocument();
+    });
+});
+
+describe("ButtonShareStyleFields — spacing units", () => {
+    it("starts both groups on pixels", () => {
+        renderBlock({ py: 10, mt: 10 });
+
+        expect(screen.getByTestId("boxModel-padding-unit")).toHaveTextContent(
+            "px"
+        );
+        expect(screen.getByTestId("boxModel-margin-unit")).toHaveTextContent(
+            "px"
+        );
+    });
+
+    it("flips a group to percentages without touching the other", () => {
+        renderBlock({ py: 10, mt: 10 });
+        fireEvent.click(screen.getByTestId("boxModel-padding-unit"));
+
+        expect(styleValues().pu).toBe("%");
+        expect(styleValues().mu).toBeUndefined();
+    });
+
+    it("emits the percentage through the codec", () => {
+        renderBlock({ py: 4, mt: 10 });
+        fireEvent.click(screen.getByTestId("boxModel-padding-unit"));
+
+        expect(serializeStyleCss(styleValues(), "", "product")).toContain(
+            "padding-top:4%!important"
+        );
+    });
+
+    it("flips back to pixels on a second press", () => {
+        renderBlock({ mt: 10, mu: "%" });
+        fireEvent.click(screen.getByTestId("boxModel-margin-unit"));
+
+        expect(styleValues().mu).toBe("px");
+    });
+
+    it("pulls an over-range value down when switching to percentages", () => {
+        renderBlock({ mt: 118, mb: 4 });
+        fireEvent.click(screen.getByTestId("boxModel-margin-unit"));
+
+        expect(styleValues().mt).toBe(100);
+        expect(styleValues().mb).toBe(4);
+    });
+
+    it("clamps a typed percentage to 100", () => {
+        renderBlock({ mt: 10, mu: "%" });
+        fireEvent.change(screen.getByTestId("boxModel-mt"), {
+            target: { value: "250" },
+        });
+
+        expect(styleValues().mt).toBe(100);
+    });
+
+    it("keeps the margin unit across a look change", () => {
+        renderBlock({ mt: 8, mu: "%" });
+        selectTab("style-look-solid");
+
+        expect(styleValues().mu).toBe("%");
+    });
+});
+
+describe("ButtonShareStyleFields — colours and border", () => {
+    it("lists every colour row without a nested disclosure", () => {
+        renderBlock();
+
+        for (const key of ["bg", "fg", "bc"]) {
             expect(
                 screen.getByTestId(`buttonShare.style.${key}-hex`)
             ).toBeInTheDocument();
         }
-        for (const key of SIZE_CONTROLS) {
-            expect(
-                screen.getByTestId(`buttonShare.style.${key}-input`)
-            ).toBeInTheDocument();
-        }
-        expect(screen.queryAllByRole("textbox")).toHaveLength(
-            COLOR_CONTROLS.length
-        );
         expect(
-            screen.queryByTestId("buttonShare.style.radius-input")
-        ).toBeNull();
+            screen.getByTestId("buttonShare.style.bw-input")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByTestId("buttonShare.style.fs-input")
+        ).toBeInTheDocument();
     });
 
     it("offers the transparent choice on the background only", () => {
         renderBlock();
+
         expect(
             screen.getByTestId("buttonShare.style.bg-none")
         ).toBeInTheDocument();
         expect(screen.queryByTestId("buttonShare.style.fg-none")).toBeNull();
-        expect(screen.queryByTestId("buttonShare.style.bc-none")).toBeNull();
-    });
-
-    it("sets the transparent token and disables the swatch when none is toggled", () => {
-        renderBlock();
-        fireEvent.click(screen.getByTestId("buttonShare.style.bg-none"));
-
-        expect(styleValues().bg).toBe(TRANSPARENT);
-        expect(
-            screen.getByTestId("buttonShare.style.bg-swatch")
-        ).toBeDisabled();
-        expect(screen.getByTestId("buttonShare.style.bg-hex")).toBeDisabled();
-    });
-
-    it("releases the transparent token when none is toggled off", () => {
-        renderBlock({ bg: TRANSPARENT });
-        fireEvent.click(screen.getByTestId("buttonShare.style.bg-none"));
-
-        expect(styleValues().bg).toBe("");
-        expect(
-            screen.getByTestId("buttonShare.style.bg-swatch")
-        ).not.toBeDisabled();
-    });
-
-    it("accepts a hex value typed one character at a time", () => {
-        renderBlock();
-        const input = screen.getByTestId("buttonShare.style.fg-hex");
-
-        for (const partial of ["#", "#0", "#00", "#000", "#0000", "#00000"]) {
-            fireEvent.change(input, { target: { value: partial } });
-            expect(styleValues().fg).toBe(partial);
-        }
-
-        fireEvent.change(input, { target: { value: "#000000" } });
-        fireEvent.blur(input);
-        expect(styleValues().fg).toBe("#000000");
     });
 
     it("reverts an invalid hex to the last valid value on blur", () => {
@@ -159,101 +421,59 @@ describe("ButtonShareStyleFields", () => {
         expect(styleValues().fg).toBe("#112233");
     });
 
-    it("names the swatch separately from the hex input beside it", () => {
-        renderBlock();
-        const swatch = screen.getByTestId("buttonShare.style.fg-swatch");
-
-        expect(swatch.getAttribute("aria-label")).toMatch(
-            /^customize\.components\.style\.swatchLabel:/
-        );
-    });
-
-    it("reverts to the re-synced colour after the form switches placement", () => {
-        const { rerender } = render(<SyncHarness style={{ fg: "#112233" }} />);
-        rerender(<SyncHarness style={{ fg: "#445566" }} />);
-
-        const input = screen.getByTestId("buttonShare.style.fg-hex");
-        fireEvent.change(input, { target: { value: "nonsense" } });
-        fireEvent.blur(input);
-
-        expect(styleValues().fg).toBe("#445566");
-    });
-
-    it("leaves a colour unset when an invalid entry has no valid predecessor", () => {
-        renderBlock();
-        const input = screen.getByTestId("buttonShare.style.bc-hex");
-
-        fireEvent.change(input, { target: { value: "zzz" } });
-        fireEvent.blur(input);
-
-        expect(styleValues().bc).toBe("");
-        expect(serializeStyleCss(styleValues(), "", "product")).toBeUndefined();
-    });
-
-    it("clears every control at once", () => {
-        renderBlock({
-            bg: "#ffffff",
-            fg: "#000000",
-            bc: "#123456",
-            bw: 2,
-            fs: 14,
-            py: 8,
-            px: 16,
-            mt: 4,
-            mb: 4,
-            ml: 6,
-            mr: 6,
-        });
-
-        fireEvent.click(screen.getByTestId("buttonShare.style.clear-all"));
-
-        expect(serializeStyleCss(styleValues(), "", "product")).toBeUndefined();
-        expect(screen.getByTestId("buttonShare.style.fg-hex")).toHaveValue("");
-        expect(screen.getByTestId("buttonShare.style.fs-input")).toHaveValue(
-            null
-        );
-    });
-
-    it("clears a colour back to unset so it emits no declaration", () => {
-        renderBlock({ fg: "#112233", bc: "#000000" });
-        fireEvent.click(screen.getByTestId("buttonShare.style.fg-clear"));
-
-        expect(styleValues().fg).toBe("");
-        expect(serializeStyleCss(styleValues(), "", "product")).not.toContain(
-            "color:#112233"
-        );
-    });
-
-    it("coerces a negative spacing value on blur instead of blocking", () => {
-        renderBlock();
-        const input = screen.getByTestId("buttonShare.style.py-input");
-
-        fireEvent.change(input, { target: { value: "-8" } });
-        fireEvent.blur(input);
-
-        expect(styleValues().py).toBe(0);
-    });
-
-    it("coerces a fractional size to an integer on blur", () => {
+    it("clamps an out-of-range text size on blur", () => {
         renderBlock();
         const input = screen.getByTestId("buttonShare.style.fs-input");
 
-        fireEvent.change(input, { target: { value: "12.6" } });
+        fireEvent.change(input, { target: { value: "400" } });
         fireEvent.blur(input);
 
-        expect(styleValues().fs).toBe(13);
+        expect(styleValues().fs).toBe(48);
     });
 
-    it("leaves a cleared size unset rather than zero", () => {
-        renderBlock({ mt: 4 });
-        const input = screen.getByTestId("buttonShare.style.mt-input");
+    it("offers the weight select with the theme default selected", () => {
+        renderBlock();
+        expect(
+            screen.getByTestId("buttonShare.style.fw-select")
+        ).toHaveTextContent("customize.components.style.weight_theme");
+    });
 
-        fireEvent.change(input, { target: { value: "" } });
+    it("shows the stored weight", () => {
+        renderBlock({ fw: 600 });
+        expect(
+            screen.getByTestId("buttonShare.style.fw-select")
+        ).toHaveTextContent("customize.components.style.weight_600");
+    });
+
+    it("keeps the weight across a look change", () => {
+        renderBlock({ fw: 700 });
+        selectTab("style-look-solid");
+
+        expect(styleValues().fw).toBe(700);
+    });
+
+    it("drops the weight when everything is cleared", () => {
+        renderBlock({ fw: 700 });
+        fireEvent.click(screen.getByTestId("buttonShare.style.clear-all"));
+
+        expect(serializeStyleCss(styleValues(), "", "product")).toBeUndefined();
+        expect(
+            screen.getByTestId("buttonShare.style.fw-select")
+        ).toHaveTextContent("customize.components.style.weight_theme");
+    });
+
+    it("coerces a fractional border width on blur", () => {
+        renderBlock();
+        const input = screen.getByTestId("buttonShare.style.bw-input");
+
+        fireEvent.change(input, { target: { value: "2.6" } });
         fireEvent.blur(input);
 
-        expect(styleValues().mt).toBeUndefined();
+        expect(styleValues().bw).toBe(3);
     });
+});
 
+describe("ButtonShareStyleFields — tier hint", () => {
     it("shows the default-tier caption only at the default tier", () => {
         renderBlock({}, "default");
         expect(

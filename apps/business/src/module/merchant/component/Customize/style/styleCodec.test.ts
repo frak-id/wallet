@@ -107,6 +107,94 @@ describe("serializeStyleCss", () => {
     });
 });
 
+describe("font weight", () => {
+    it("emits the weight without a length unit", () => {
+        expect(serializeStyleCss({ fw: 600 }, "", "product")).toContain(
+            "font-weight:600!important"
+        );
+    });
+
+    it("round-trips through the marker", () => {
+        const css = serializeStyleCss({ fw: 700 }, "", "product");
+        expect(parseStyleCss(css).values).toEqual({ fw: 700 });
+    });
+
+    it("rejects a weight outside the offered set", () => {
+        const values = { fw: 350 } as unknown as ButtonShareStyleValues;
+        expect(serializeStyleCss(values, "", "product")).toBeUndefined();
+    });
+
+    it("rejects a non-numeric weight", () => {
+        const values = { fw: "bold" } as unknown as ButtonShareStyleValues;
+        expect(serializeStyleCss(values, "", "product")).toBeUndefined();
+    });
+
+    it("carries the weight into the dashboard preview unitless", () => {
+        expect(styleValuesToCssProperties({ fw: 500 })).toMatchObject({
+            fontWeight: "500",
+        });
+    });
+
+    it("keeps the px unit on the sizes beside it", () => {
+        const css = serializeStyleCss({ fw: 600, fs: 15 }, "", "product");
+        expect(css).toContain("font-weight:600!important");
+        expect(css).toContain("font-size:15px!important");
+    });
+});
+
+describe("spacing units", () => {
+    it("emits px when no unit is stored", () => {
+        const css = serializeStyleCss({ py: 12, mt: 8 }, "", "product");
+        expect(css).toContain("padding-top:12px!important");
+        expect(css).toContain("margin-top:8px!important");
+    });
+
+    it("emits percentages for both axes of a percentage padding", () => {
+        const css = serializeStyleCss(
+            { py: 4, px: 10, pu: "%" },
+            "",
+            "product"
+        );
+        expect(css).toContain("padding-top:4%!important");
+        expect(css).toContain("padding-left:10%!important");
+    });
+
+    it("keeps the two groups on independent units", () => {
+        const css = serializeStyleCss(
+            { px: 5, pu: "%", mt: 16, mu: "px" },
+            "",
+            "product"
+        );
+        expect(css).toContain("padding-left:5%!important");
+        expect(css).toContain("margin-top:16px!important");
+    });
+
+    it("round-trips a unit through the marker", () => {
+        const css = serializeStyleCss({ mt: 3, mu: "%" }, "", "product");
+        expect(parseStyleCss(css).values).toEqual({ mt: 3, mu: "%" });
+    });
+
+    it("drops a unit with no spacing to decorate", () => {
+        const css = serializeStyleCss({ fs: 14, pu: "%" }, "", "product");
+        expect(parseStyleCss(css).values).toEqual({ fs: 14 });
+    });
+
+    it("rejects a unit the emitter cannot write", () => {
+        const values = { mt: 4, mu: "rem" } as unknown as Parameters<
+            typeof serializeStyleCss
+        >[0];
+        expect(serializeStyleCss(values, "", "product")).toContain(
+            "margin-top:4px!important"
+        );
+    });
+
+    it("carries the unit into the dashboard preview", () => {
+        expect(
+            styleValuesToCssProperties({ py: 6, pu: "%", mt: 2, mu: "%" })
+        ).toMatchObject({ paddingTop: "6%", marginTop: "2%" });
+    });
+});
+
 describe("parseStyleCss", () => {
     it("reads back every control exactly as it was written", () => {
         expect(roundTrip(everyControl).values).toEqual(everyControl);

@@ -181,6 +181,10 @@ export const styleGhostButton = style([
                 color: vars.text.primary,
                 backgroundColor: vars.surface.muted,
             },
+            "&:disabled": {
+                cursor: "default",
+                color: vars.text.disabled,
+            },
         },
     },
 ]);
