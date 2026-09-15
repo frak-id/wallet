@@ -1,6 +1,13 @@
 import type { Address } from "viem";
 
 /**
+ * Which build emitted the event. `wallet_standalone` is `sharing.html` /
+ * `install.html`, which a native host opens as a full page load — the SPA
+ * route renders the same views and is otherwise indistinguishable.
+ */
+export type AnalyticsSurface = "wallet" | "wallet_standalone" | "listener";
+
+/**
  * Global open panel properties — kept intentionally small.
  *
  * Environment + session fields live here (propagated on every event).
@@ -11,6 +18,7 @@ export type AnalyticsGlobalProperties = {
     // Identity
     wallet?: Address;
     // Environment (compile-time / once-per-session)
+    surface: AnalyticsSurface;
     isIframe: boolean;
     isPwa: boolean;
     isTauri?: boolean;

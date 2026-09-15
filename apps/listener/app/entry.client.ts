@@ -11,6 +11,6 @@ import { bootstrap } from "@/bootstrap";
 // Required by zustand persist.
 setupBigIntSerialization();
 
-initAnalytics();
+initAnalytics("listener");
 
 bootstrap();

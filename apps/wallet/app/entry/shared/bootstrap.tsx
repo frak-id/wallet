@@ -141,7 +141,7 @@ export async function bootstrapStandalonePage(
     { deviceId }: { deviceId?: string } = {}
 ): Promise<void> {
     setupBigIntSerialization();
-    initAnalytics();
+    initAnalytics("wallet_standalone");
     // Before any event: this page is opened by a host that already owns the
     // anonymous id, and re-keying after the first event splits the session.
     setAnalyticsDeviceId(deviceId);

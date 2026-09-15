@@ -39,7 +39,7 @@ setEnvironment({
 // Initialise analytics (OpenPanel + crashlytics globals) once at bootstrap.
 // Side-effect was previously triggered by importing the analytics module;
 // the explicit call keeps tree-shaking honest now that the side-effect is gone.
-initAnalytics();
+initAnalytics("wallet");
 
 // Lazy-load the English bundle on demand. French is bundled (it's our
 // fallbackLng), so most loads skip the ~13 KB gzipped EN payload. Registered

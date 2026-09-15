@@ -1,7 +1,12 @@
 import type { Session } from "../../types/Session";
 import { crashlytics } from "./crashlytics";
-import { getInitProperties, getPlatformInfo, openPanel } from "./openpanel";
-import type { AnalyticsGlobalProperties } from "./types";
+import {
+    getInitProperties,
+    getPlatformInfo,
+    openPanel,
+    setAnalyticsSurface,
+} from "./openpanel";
+import type { AnalyticsGlobalProperties, AnalyticsSurface } from "./types";
 
 const SESSION_ID_STORAGE_KEY = "frak_analytics_session_id";
 
@@ -79,17 +84,19 @@ export function getOrCreateSessionId(): string {
 
 /**
  * Initialise OpenPanel and merge the baseline global properties
- * (platform + iframe flags + session / build).
+ * (surface + platform + iframe flags + session / build).
  */
-export function initAnalytics() {
+export function initAnalytics(surface: AnalyticsSurface) {
     // Crashlytics keys mirror the most useful OpenPanel globals so crash
     // reports can be filtered by platform / version / runtime context
     // without round-tripping the OpenPanel dashboard. Run regardless of
     // openPanel availability — listener may ship without an OpenPanel
     // client id but we still want crash context.
+    setAnalyticsSurface(surface);
     const initProps = getInitProperties();
     const platformInfo = getPlatformInfo();
     void crashlytics?.setKey("platform", platformInfo.platform);
+    void crashlytics?.setKey("surface", surface);
     if (process.env.APP_VERSION && crashlytics)
         void crashlytics.setKey("app_version", process.env.APP_VERSION);
 
@@ -97,6 +104,7 @@ export function initAnalytics() {
     openPanel.init();
     updateGlobalProperties({
         ...initProps,
+        surface,
         session_id: getOrCreateSessionId(),
         app_version: process.env.APP_VERSION,
     });
