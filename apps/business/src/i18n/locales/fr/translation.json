@@ -2029,7 +2029,7 @@
                 "marginBottom": "Bas (px)",
                 "none": "Aucun",
                 "clear": "Effacer",
-                "defaultTierHint": "Ces valeurs ne s'appliquent qu'aux boutons dont l'intégration définit un emplacement ; les autres gardent le style de votre thème.",
+                "defaultTierHint": "Ces valeurs s'appliquent à tous les boutons d'une page dès qu'au moins un d'entre eux définit un emplacement dans votre intégration. Si aucun ne le fait, la page garde le style de votre thème.",
                 "previewHint": "Les propriétés que vous ne renseignez pas suivent le style de votre boutique et peuvent donc différer de cet aperçu.",
                 "marginLeft": "Gauche (px)",
                 "marginRight": "Droite (px)",

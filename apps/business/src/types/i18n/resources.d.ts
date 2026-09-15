@@ -990,7 +990,7 @@ export default interface Resources {
           "borderColor": "Border colour",
           "borderWidth": "Border thickness (px)",
           "clear": "Clear",
-          "defaultTierHint": "These values only reach buttons whose integration sets a placement; the others keep your theme's styling.",
+          "defaultTierHint": "These values apply to every share button on a page as soon as at least one of them defines a placement in your integration. If none does, the page keeps your theme's styling.",
           "groupMargin": "Outer spacing",
           "groupPadding": "Inner spacing",
           "groupSurface": "Background and border",
