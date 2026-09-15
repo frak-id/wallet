@@ -51,10 +51,16 @@ export type ButtonShareStyleValues = {
     mr?: number;
 };
 
+// InputNumber writes "" for an emptied number, so the form holds that too.
+// Every codec entry point normalizes, so "" never reaches a declaration.
+export type ButtonShareStyleFormValues = {
+    [K in keyof ButtonShareStyleValues]: ButtonShareStyleValues[K] | "";
+};
+
 export type ButtonShareFormValues = {
     text: LocalizedText;
     noRewardText: LocalizedText;
-    style: ButtonShareStyleValues;
+    style: ButtonShareStyleFormValues;
     foreignCss: string;
 };
 

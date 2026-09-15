@@ -2037,7 +2037,8 @@
                 "groupPadding": "Espacement intérieur",
                 "groupMargin": "Espacement extérieur",
                 "groupSurface": "Fond et bordure",
-                "swatchLabel": "Sélecteur de couleur : {{label}}"
+                "swatchLabel": "Sélecteur de couleur : {{label}}",
+                "clearAll": "Tout effacer"
             }
         },
         "globalCss": {

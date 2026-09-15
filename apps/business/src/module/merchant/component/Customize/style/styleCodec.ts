@@ -1,5 +1,9 @@
 import type { CSSProperties } from "react";
-import type { ButtonShareStyleValues, StyleTier } from "../types";
+import type {
+    ButtonShareStyleFormValues,
+    ButtonShareStyleValues,
+    StyleTier,
+} from "../types";
 
 const MARKER_OPEN = "/* frak:style ";
 const MARKER_CLOSE = "/* /frak:style */";
@@ -125,7 +129,7 @@ function toDeclarations(values: ButtonShareStyleValues): string {
  * because the backend serves it unwrapped.
  */
 export function serializeStyleCss(
-    values: ButtonShareStyleValues,
+    values: ButtonShareStyleFormValues,
     foreignCss: string,
     tier: StyleTier
 ): string | undefined {
@@ -144,7 +148,7 @@ export function serializeStyleCss(
 
 /** Same properties the serializer emits, for the dashboard preview. */
 export function styleValuesToCssProperties(
-    values: ButtonShareStyleValues
+    values: ButtonShareStyleFormValues
 ): CSSProperties {
     const safeValues = normalizeValues(values);
     return {

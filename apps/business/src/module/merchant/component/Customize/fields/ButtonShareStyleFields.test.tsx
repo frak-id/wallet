@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import { Form } from "@/module/forms/Form";
 import { serializeStyleCss, TRANSPARENT } from "../style/styleCodec";
 import type {
+    ButtonShareStyleFormValues,
     ButtonShareStyleValues,
     ComponentSettingsFormValues,
 } from "../types";
@@ -73,7 +74,7 @@ function renderBlock(style: ButtonShareStyleValues = {}, tier = "product") {
     return render(<Harness tier={tier} style={style} />);
 }
 
-function styleValues(): ButtonShareStyleValues {
+function styleValues(): ButtonShareStyleFormValues {
     if (!currentForm) throw new Error("form never rendered");
     return currentForm.getValues().buttonShare.style;
 }
@@ -187,6 +188,30 @@ describe("ButtonShareStyleFields", () => {
 
         expect(styleValues().bc).toBe("");
         expect(serializeStyleCss(styleValues(), "", "product")).toBeUndefined();
+    });
+
+    it("clears every control at once", () => {
+        renderBlock({
+            bg: "#ffffff",
+            fg: "#000000",
+            bc: "#123456",
+            bw: 2,
+            fs: 14,
+            py: 8,
+            px: 16,
+            mt: 4,
+            mb: 4,
+            ml: 6,
+            mr: 6,
+        });
+
+        fireEvent.click(screen.getByTestId("buttonShare.style.clear-all"));
+
+        expect(serializeStyleCss(styleValues(), "", "product")).toBeUndefined();
+        expect(screen.getByTestId("buttonShare.style.fg-hex")).toHaveValue("");
+        expect(screen.getByTestId("buttonShare.style.fs-input")).toHaveValue(
+            null
+        );
     });
 
     it("clears a colour back to unset so it emits no declaration", () => {

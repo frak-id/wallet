@@ -155,6 +155,13 @@ export const colorSwatch = style({
     },
 });
 
+export const styleHeader = style({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: alias.spacing.xs,
+});
+
 export const styleGhostButton = style([
     interactive,
     focusRing,

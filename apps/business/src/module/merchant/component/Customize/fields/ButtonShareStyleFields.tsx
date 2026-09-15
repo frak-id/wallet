@@ -9,7 +9,11 @@ import { Input } from "@/module/forms/Input";
 import { InputNumber } from "@/module/forms/InputNumber";
 import * as styles from "../customize.css";
 import { DEFAULT_TIER, isHexColor, TRANSPARENT } from "../style/styleCodec";
-import type { ComponentSettingsFormValues, StyleTier } from "../types";
+import type {
+    ButtonShareStyleFormValues,
+    ComponentSettingsFormValues,
+    StyleTier,
+} from "../types";
 
 type ColorName = `buttonShare.style.${"bg" | "fg" | "bc"}`;
 type SizeName = `buttonShare.style.${
@@ -23,6 +27,22 @@ type SizeName = `buttonShare.style.${
     | "mr"}`;
 
 const SWATCH_FALLBACK = "#000000";
+
+// Every key present and defined: react-hook-form walks only the keys it is
+// given, and skips re-rendering a field it sets to undefined.
+const CLEARED_STYLE: ButtonShareStyleFormValues = {
+    bg: "",
+    fg: "",
+    bc: "",
+    bw: "",
+    fs: "",
+    py: "",
+    px: "",
+    mt: "",
+    mb: "",
+    ml: "",
+    mr: "",
+};
 
 /** Keeps an out-of-range entry from reaching storage without failing the save. */
 function coerceSize(value: unknown): number | undefined {
@@ -197,9 +217,23 @@ export function ButtonShareStyleFields({
 
     return (
         <Stack space="s">
-            <Text variant="bodySmall" weight="medium" color="secondary">
-                {t("customize.components.style.title")}
-            </Text>
+            <div className={styles.styleHeader}>
+                <Text variant="bodySmall" weight="medium" color="secondary">
+                    {t("customize.components.style.title")}
+                </Text>
+                <button
+                    type="button"
+                    className={styles.styleGhostButton}
+                    data-testid="buttonShare.style.clear-all"
+                    onClick={() =>
+                        form.setValue("buttonShare.style", CLEARED_STYLE, {
+                            shouldDirty: true,
+                        })
+                    }
+                >
+                    {t("customize.components.style.clearAll")}
+                </button>
+            </div>
             <StyleGroup label={t("customize.components.style.groupText")}>
                 <ColorRow
                     form={form}

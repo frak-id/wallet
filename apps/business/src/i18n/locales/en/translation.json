@@ -2037,7 +2037,8 @@
                 "groupPadding": "Inner spacing",
                 "groupMargin": "Outer spacing",
                 "groupSurface": "Background and border",
-                "swatchLabel": "Colour picker: {{label}}"
+                "swatchLabel": "Colour picker: {{label}}",
+                "clearAll": "Clear all"
             }
         },
         "globalCss": {
