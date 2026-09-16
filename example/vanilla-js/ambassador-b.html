@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B — Le club · page ambassadeur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+    const detectFrakEnv = <%- detectFrakEnv %>;
+
+    (async () => {
+        const env = await detectFrakEnv(<%= useLocal %>, <%- remoteEnv %>);
+
+        window.FrakSetup = {
+            config: {
+                env,
+                metadata: { name: "Vanilla JS", lang: "fr", currency: "eur" },
+            },
+        };
+
+        const sdkScript = document.createElement('script');
+        sdkScript.type = 'module';
+        sdkScript.src = '<%- sdkScriptSrc %>';
+        sdkScript.onerror = () => {
+            console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+        };
+        document.head.appendChild(sdkScript);
+    })();
+</script>
+<style>
+:root{
+  /* Demo chrome: the example harness, not the page. */
+  --page:#3a3f47; --bar:#2d3139; --deep:#1e2127;
+
+  /* Page content: the SDK's own design-system tokens, re-exposed at runtime
+     by src/ambassador.ts. Literals are the current token values, so the page
+     is correct before the SDK lands and if adoption ever fails. */
+  --brand:var(--frak-surface-primary,#0043ef);
+  --brand-ink:var(--frak-surface-primaryHover,#0036bf);
+  --ink:var(--frak-text-primary,#000000);
+  --muted:var(--frak-text-secondary,#525252);
+  --line:var(--frak-border-default,#e2e2e2);
+  --cream:var(--frak-surface-muted,#f7f7f7);
+  --sand:var(--frak-surface-secondary,#f2f6fe);
+  --ok:var(--frak-text-success,#09be67);
+  --gold:var(--frak-text-warning,#ec7e00);
+  --radius:12px; --font:Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;padding:20px;font-family:var(--font);color:var(--ink);background:var(--page);
+  display:flex;flex-direction:column;align-items:center;min-height:100vh}
+img{max-width:100%;display:block}
+h1,h2,h3{margin:0;line-height:1.15}
+p{margin:0;line-height:1.65}
+a{color:inherit}
+.wrap{max-width:100%;margin:0 auto;padding:0 28px}
+
+/* ---- demo chrome, same as index.html ---- */
+.page-title{color:#fff}
+.demo-bar,.component-card,.notes{max-width:960px;width:100%;box-sizing:border-box;border-radius:12px}
+.demo-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 20px;margin-bottom:20px;
+  background:var(--bar);color:#ccc;font-size:14px}
+.demo-bar strong{color:#fff}
+/* Chrome keeps the example's own link blue: the Frak brand blue is too dark
+   against #2d3139. */
+.demo-bar a{color:#2196F3;text-decoration:none}
+.demo-bar a.on{color:#fff;text-decoration:underline}
+.demo-bar .sp{margin-left:auto;color:#aaa;font-family:monospace;font-size:12px}
+
+/* The page paints no background of its own — it inherits the merchant
+   surface, so the card supplies the light one its text needs. */
+.component-card{background:#fff;overflow:hidden}
+
+/* Panels sit on that white card, so they take the tint rather than white. */
+.quote,.side,.store,details{background:var(--cream)}
+.perk{background:#fff}
+
+/* ---- hero ---- */
+.hero{background:var(--sand);padding:0;overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;padding-top:60px;padding-bottom:60px}
+@media(max-width:860px){.hero .wrap{grid-template-columns:1fr;gap:32px;padding-top:40px}}
+.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.hero h1{font-size:clamp(34px,5.6vw,52px);font-weight:700;margin:14px 0 16px;max-width:14ch}
+.hero .sub{color:var(--muted);max-width:44ch;margin-bottom:26px;font-size:17px}
+/* Matches the SDK house CTA (PostPurchase.cta / Ambassador.ctaButton):
+   black pill on vars.text.primary, white text, uppercase, bold. */
+.cta{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--ink);color:#fff;
+  border:0;border-radius:999px;padding:15px 32px;font:bold 14px/1 var(--font);letter-spacing:.03em;
+  text-transform:uppercase;cursor:pointer;text-decoration:none}
+.cta:hover{background:var(--brand)}
+.cta:disabled{opacity:.7;cursor:default}
+.cta.light{background:#fff;color:var(--ink)}
+.cta.light:hover{background:var(--cream)}
+.social{display:flex;align-items:center;gap:12px;margin-top:22px}
+.faces{display:flex}
+.faces span{width:34px;height:34px;border-radius:50%;border:2.5px solid var(--sand);margin-left:-10px;
+  display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
+.faces span:first-child{margin-left:0}
+.social p{font-size:14px;color:var(--muted)}
+.social b{color:var(--ink)}
+.heroart{position:relative;aspect-ratio:4/5;border-radius:12px;overflow:hidden;
+  background:linear-gradient(150deg,#668ef5,#0043ef 55%,#00288f)}
+.heroart .grain{position:absolute;inset:0;opacity:.5;
+  background:radial-gradient(circle at 25% 20%,#ffffff26,transparent 42%),radial-gradient(circle at 75% 75%,#99b4f940,transparent 45%)}
+/* The gradient stands in for the merchant's own hero photo; without a caption
+   it reads as an unexplained blue box. */
+.heroart .artnote{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:5px;padding:0 24px;text-align:center;color:#ffffffd9;
+  font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.heroart .artnote small{font-size:11.5px;font-weight:400;letter-spacing:0;text-transform:none;opacity:.85}
+.heroart .tag{position:absolute;left:18px;bottom:18px;right:18px;background:#ffffffee;border-radius:12px;
+  padding:14px 16px;display:flex;align-items:center;gap:12px}
+.heroart .tag b{display:block;font-size:22px;color:var(--brand);line-height:1.1}
+.heroart .tag small{color:var(--muted);font-size:12.5px}
+.heroart .tag .pill{margin-left:auto;background:var(--brand);color:#fff;font-size:11px;font-weight:700;
+  padding:6px 11px;border-radius:99px;letter-spacing:.04em}
+
+/* ---- sections ---- */
+section.band{padding:66px 0}
+.band.alt{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.band h2{font-size:clamp(26px,4vw,36px);margin-bottom:12px}
+.band .lede{color:var(--muted);max-width:54ch;margin-bottom:34px;font-size:16.5px}
+.center{text-align:center}
+.center .lede{margin-left:auto;margin-right:auto}
+
+/* perks */
+.perks{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:900px){.perks{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.perks{grid-template-columns:1fr}}
+.perk{background:var(--cream);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.band.alt .perk{background:var(--cream)}
+.perk .ic{width:40px;height:40px;border-radius:11px;background:#fff;border:1px solid var(--line);
+  display:grid;place-items:center;font-size:19px;margin-bottom:14px}
+.perk h3{font-size:16px;margin-bottom:6px}
+.perk p{font-size:14px;color:var(--muted)}
+.perk .amt{font-size:26px;font-weight:800;color:var(--brand);letter-spacing:-.02em;margin-bottom:2px}
+
+/* win-win */
+.winwin{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:stretch}
+@media(max-width:760px){.winwin{grid-template-columns:1fr}.winwin .amp{display:none}}
+.side{background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px;text-align:center}
+.side.you{border-color:var(--brand);box-shadow:0 0 0 3px #0043ef12}
+.side .who{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.side .amt{font-size:46px;font-weight:800;color:var(--brand);letter-spacing:-.035em;margin:8px 0 4px}
+.side.them .amt{color:var(--gold)}
+.side p{font-size:14.5px;color:var(--muted)}
+.amp{display:grid;place-items:center;font-size:22px;color:var(--muted);font-weight:600}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;counter-reset:s}
+@media(max-width:760px){.steps{grid-template-columns:1fr;gap:20px}}
+.step{position:relative;padding-top:8px}
+.step .n{width:36px;height:36px;border-radius:50%;background:var(--brand);color:#fff;display:grid;
+  place-items:center;font-weight:700;font-size:15px;margin-bottom:14px}
+.step h3{font-size:17px;margin-bottom:7px}
+.step p{font-size:14.5px;color:var(--muted)}
+
+/* testimonials */
+.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:860px){.quotes{grid-template-columns:1fr}}
+.quote{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+.quote p{font-size:15.5px;margin-bottom:16px}
+.quote .who{display:flex;align-items:center;gap:11px}
+.quote .av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px}
+.quote .who b{display:block;font-size:14px}
+.quote .who small{color:var(--muted);font-size:12.5px}
+
+/* store */
+.store{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center}
+@media(max-width:760px){.store{grid-template-columns:1fr;text-align:center}.qr{display:none}}
+.badges{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.badge{display:flex;align-items:center;gap:10px;background:#14171c;color:#fff;border-radius:11px;
+  padding:9px 16px;text-decoration:none;min-width:158px}
+.badge .b1{font-size:10px;opacity:.75;display:block;line-height:1.2}
+.badge .b2{font-size:15px;font-weight:600;display:block;line-height:1.2}
+.qr{text-align:center}
+.qr svg{border:8px solid #fff;border-radius:12px;box-shadow:0 2px 10px #0000000f}
+.qr span{display:block;font-size:12px;color:var(--muted);margin-top:8px}
+
+/* faq */
+details{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:10px}
+details[open]{border-color:var(--brand)}
+summary{font-weight:600;cursor:pointer;font-size:15px;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";float:right;color:var(--brand);font-weight:700}
+details[open] summary::after{content:"–"}
+details p{margin-top:10px;font-size:14.5px;color:var(--muted)}
+
+/* closing */
+.closing{background:var(--brand);color:#fff;padding:66px 20px;text-align:center}
+.closing h2{font-size:clamp(26px,4.6vw,38px);margin-bottom:12px}
+.closing p{opacity:.85;max-width:46ch;margin:0 auto 26px}
+.poweredby{text-align:center;padding:22px 0;font-size:12.5px;color:var(--muted);background:var(--cream)}
+
+/* notes */
+.notes{margin:20px 0 0}
+.notes details{background:var(--bar);border:1px solid #3a414e;color:#ccc;padding:16px 18px}
+.notes summary{color:#fff}
+.notes p,.notes li{color:#aaa;font-size:14px;line-height:1.6}
+.notes ul{margin:8px 0 0;padding-left:18px}
+.notes h4{color:#fff;margin:16px 0 4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.notes code{background:var(--deep);padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style>
+</head>
+<body>
+
+<h1 class="page-title">Page ambassadeur — B · Le club</h1>
+
+<nav class="demo-bar" data-frak-nav></nav>
+
+<main class="component-card">
+
+  <section class="hero"><div class="wrap">
+    <div>
+      <div class="eyebrow">Le Cercle Vanilla JS</div>
+      <h1>Devenez ambassadeur de Vanilla JS.</h1>
+      <p class="sub">Vous parlez déjà de nous autour de vous. Le Cercle vous en remercie&nbsp;: une récompense sur chaque commande que vous inspirez, et quelques attentions réservées à nos ambassadeurs.</p>
+      <button type="button" class="cta" data-frak-share>Rejoindre le Cercle</button>
+      <div class="social">
+        <div class="faces">
+          <span style="background:#0043ef">AL</span><span style="background:#ec7e00">MC</span>
+          <span style="background:#09be67">JD</span><span style="background:#525252">SR</span>
+        </div>
+        <p><b>1 240 ambassadrices et ambassadeurs</b><br>ont déjà rejoint le Cercle</p>
+      </div>
+    </div>
+    <div class="heroart">
+      <div class="grain" aria-hidden="true"></div>
+      <span class="artnote" aria-hidden="true">
+        Photo de la marque
+        <small>Emplacement fourni par le marchand</small>
+      </span>
+      <div class="tag">
+        <div><b data-frak-reward="{REWARD}">7,20 €</b><small>pour vous, par commande</small></div>
+        <span class="pill">+ 0,80 € offerts à votre filleul</span>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="band alt"><div class="wrap">
+    <h2>Ce que le Cercle vous apporte</h2>
+    <p class="lede">Une rémunération réelle, et le traitement qu'on réserve à celles et ceux qui font connaître Vanilla JS.</p>
+    <div class="perks">
+      <div class="perk"><div class="ic">💶</div><div class="amt" data-frak-reward="{REWARD}">7,20 €</div>
+        <h3>Par commande</h3><p>Versés dès la validation, sans plafond ni palier à atteindre.</p></div>
+      <div class="perk"><div class="ic">🎁</div>
+        <h3>Un coffret découverte</h3><p>Offert dès votre troisième filleul, avec les nouveautés avant tout le monde.</p></div>
+      <div class="perk"><div class="ic">🔑</div>
+        <h3>Accès anticipé</h3><p>Les éditions limitées vous sont ouvertes 48 h avant leur mise en ligne.</p></div>
+      <div class="perk"><div class="ic">✉️</div>
+        <h3>La lettre du Cercle</h3><p>Les coulisses, les prochaines sorties, les invitations.</p></div>
+    </div>
+  </div></section>
+
+  <section class="band"><div class="wrap center">
+    <h2>Vos proches y gagnent aussi</h2>
+    <p class="lede">Recommander Vanilla JS ne coûte rien à personne. Votre filleul reçoit un cash-back sur sa première commande — vous n'avez pas à vous excuser d'envoyer votre lien.</p>
+    <div class="winwin">
+      <div class="side you">
+        <div class="who">Vous</div>
+        <div class="amt" data-frak-reward="{REWARD}">7,20 €</div>
+        <p>Crédités sur votre porte-monnaie dès que la commande est validée.</p>
+      </div>
+      <div class="amp">+</div>
+      <div class="side them">
+        <div class="who">Votre filleul</div>
+        <div class="amt">0,80 €</div>
+        <p>Un cash-back sur sa première commande, au même prix que tout le monde.</p>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="band alt"><div class="wrap">
+    <h2>Comment ça marche</h2>
+    <p class="lede">Trois étapes, une seule fois.</p>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Vous partagez</h3>
+        <p>Un lien personnel est généré pour vous. Vous l'envoyez par message, en story, ou de vive voix.</p></div>
+      <div class="step"><div class="n">2</div><h3>Vos proches commandent</h3>
+        <p>Ils reçoivent leur cash-back, vous recevez votre récompense. Sans code à saisir, sans formulaire.</p></div>
+      <div class="step"><div class="n">3</div><h3>Vous êtes payé</h3>
+        <p>Vos gains arrivent dans votre porte-monnaie Frak, transférables sur votre compte bancaire quand vous le souhaitez.</p></div>
+    </div>
+  </div></section>
+
+  <section class="band"><div class="wrap">
+    <h2>Ils font partie du Cercle</h2>
+    <p class="lede">&nbsp;</p>
+    <div class="quotes">
+      <div class="quote">
+        <p>« J'offrais déjà le baume à toutes mes copines. Autant que ça me rapporte quelque chose. »</p>
+        <div class="who"><span class="av" style="background:#0043ef">AL</span>
+          <span><b>Amélie L.</b><small>Ambassadrice depuis mars</small></span></div>
+      </div>
+      <div class="quote">
+        <p>« 92 € le mois dernier, juste avec une story. Je n'ai rien vendu, j'ai juste dit ce que j'utilise. »</p>
+        <div class="who"><span class="av" style="background:#ec7e00">MC</span>
+          <span><b>Marie-Claire B.</b><small>Ambassadrice depuis janvier</small></span></div>
+      </div>
+      <div class="quote">
+        <p>« Ce que j'aime c'est que mes amis reçoivent aussi quelque chose. Ça change tout pour oser envoyer le lien. »</p>
+        <div class="who"><span class="av" style="background:#09be67">JD</span>
+          <span><b>Julien D.</b><small>Ambassadeur depuis février</small></span></div>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="band alt"><div class="wrap">
+    <div class="store">
+      <div>
+        <h2>Gardez un œil sur vos gains</h2>
+        <p class="lede" style="margin-bottom:0">L'application vous prévient dès qu'un proche commande et regroupe vos gains sur toutes les marques partenaires.</p>
+        <div class="badges">
+          <a class="badge" data-frak-install aria-disabled="true"><span>&#63743;</span><span><span class="b1">Télécharger dans</span><span class="b2">App Store</span></span></a>
+          <a class="badge" data-frak-install aria-disabled="true"><span>&#9654;</span><span><span class="b1">Disponible sur</span><span class="b2">Google Play</span></span></a>
+        </div>
+      </div>
+      <div class="qr">
+        <svg width="118" height="118" viewBox="0 0 29 29" shape-rendering="crispEdges" role="img" aria-label="QR code de téléchargement">
+          <rect width="29" height="29" fill="#fff"/>
+          <g fill="#14171c">
+            <path d="M0 0h7v7H0z M2 2h3v3H2z M22 0h7v7h-7z M24 2h3v3h-3z M0 22h7v7H0z M2 24h3v3H2z"/>
+            <path d="M9 0h1v3H9z M11 1h1v2h-1z M13 0h1v4h-1z M16 2h1v2h-1z M18 0h1v3h-1z
+                     M9 5h2v1H9z M12 5h1v1h-1z M15 5h3v1h-3z M19 4h1v3h-1z
+                     M0 9h3v1H0z M4 9h1v2H4z M6 9h2v1H6z M0 12h1v2H0z M2 11h1v3H2z M5 13h2v1H5z
+                     M0 16h2v1H0z M3 16h1v2H3z M5 16h1v1H5z M0 19h1v2H0z M2 19h3v1H2z M6 18h1v3H6z
+                     M22 9h1v2h-1z M24 9h2v1h-2z M27 10h1v2h-1z M22 13h3v1h-3z M26 13h2v1h-2z
+                     M22 16h1v3h-1z M24 17h2v1h-2z M27 16h1v2h-1z M23 20h2v1h-2z M26 19h1v2h-1z
+                     M9 9h2v2H9z M12 10h2v1h-2z M15 9h1v3h-1z M17 10h2v2h-2z
+                     M9 13h1v2H9z M11 13h3v1h-3z M15 14h2v1h-2z M18 13h1v2h-1z
+                     M10 16h2v1h-2z M13 16h1v3h-1z M15 17h3v1h-3z M19 16h1v2h-1z
+                     M9 20h3v1H9z M13 21h2v1h-2z M16 20h1v2h-1z M18 21h2v1h-2z
+                     M9 24h1v2H9z M11 23h2v1h-2z M14 24h2v1h-2z M17 23h1v3h-1z M19 24h2v1h-2z
+                     M9 27h3v1H9z M13 26h1v2h-1z M15 27h2v1h-2z M18 26h2v1h-2z
+                     M22 23h2v1h-2z M25 23h1v2h-1z M27 24h1v2h-1z M22 26h1v2h-1z M24 26h3v1h-3z"/>
+          </g>
+        </svg>
+        <span>Scannez pour installer</span>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="band"><div class="wrap">
+    <h2>Questions fréquentes</h2>
+    <p class="lede">&nbsp;</p>
+    <details open><summary>Comment est-ce que je reçois mon argent ?</summary>
+      <p>À chaque commande générée par votre lien, vos gains sont crédités automatiquement et instantanément dans votre porte-monnaie Frak. Vous les transférez sur votre compte bancaire quand vous le souhaitez, sans commission.</p></details>
+    <details><summary>Faut-il être influenceur pour rejoindre le Cercle ?</summary>
+      <p>Non. Le Cercle est ouvert à toutes nos clientes et tous nos clients. La plupart de nos ambassadeurs ont moins de 500 abonnés.</p></details>
+    <details><summary>Mes proches paient-ils plus cher ?</summary>
+      <p>Jamais. Ils paient le même prix que tout le monde et reçoivent en plus un cash-back sur leur première commande.</p></details>
+    <details><summary>Y a-t-il un engagement ?</summary>
+      <p>Aucun. Vous partagez quand vous en avez envie, et vous pouvez quitter le Cercle à tout moment.</p></details>
+    <details><summary>Qui est Frak ?</summary>
+      <p>Notre partenaire technique : il suit les parrainages et verse les récompenses. Aucune donnée personnelle n'est conservée, et votre porte-monnaie s'ouvre par biométrie.</p></details>
+  </div></section>
+
+  <div class="closing">
+    <h2>Le Cercle vous attend</h2>
+    <p>Quelques secondes pour obtenir votre lien. Le reste, vous le faisiez déjà gratuitement.</p>
+    <button type="button" class="cta light" data-frak-share>Rejoindre le Cercle</button>
+  </div>
+  <p class="poweredby">Programme propulsé par <strong>Frak</strong></p>
+
+</main>
+
+<div class="notes"><details>
+  <summary>Notes — direction B</summary>
+  <h4>Le pari</h4>
+  <p>Le blocage n'est pas « combien », c'est « est-ce que c'est pour des gens comme moi ». On répond par l'appartenance, et on paie quand même. C'est la seule des trois directions qui justifie un lien permanent en pied de page et qui intéressera l'équipe marque du marchand.</p>
+  <h4>Le levier le plus fort</h4>
+  <p>« Vos proches y gagnent aussi ». La première objection au parrainage n'est pas la récompense, c'est la gêne d'envoyer un lien intéressé à ses amis. Le cash-back filleul lève exactement ça — et il existe déjà dans le produit, personne ne le met en avant.</p>
+  <h4>Ce qui est réellement câblé</h4>
+  <ul>
+    <li><strong>Les trois montants « vous »</strong> (hero, avantage, win-win) — vraie récompense parrain du backend.</li>
+    <li><strong>Les deux CTA « Rejoindre le Cercle »</strong> — vraie feuille de partage, placement <code>ambassador</code>.</li>
+    <li><strong>Les badges stores</strong> — vraie URL <code>/install</code> du wallet, sans identifiant ni preuve : l'install n'est pas attribuée, ce qui ne mesure rien sur une démo.</li>
+  </ul>
+  <h4>Ce que la maquette invente</h4>
+  <ul>
+    <li><strong>Le 0,80 € du filleul</strong> reste en dur : le SDK ne résout que le côté parrain sur cette page. C'est pourtant le pilier de la section win-win.</li>
+    <li><strong>Les avantages non monétaires</strong> (coffret, accès anticipé, lettre) : aucun champ « perks » n'existe côté marchand aujourd'hui. À créer, ou à retirer de la direction.</li>
+    <li><strong>Le compteur d'ambassadeurs</strong> : la donnée existe dans le dashboard business, elle n'est pas exposée publiquement.</li>
+    <li><strong>Les témoignages</strong> : fournis par le marchand. Sans eux la section tombe — c'est la direction la plus gourmande en contenu.</li>
+  </ul>
+  <h4>Le problème d'état vide</h4>
+  <p>Un marchand qui ne fournit ni photo, ni avantages, ni témoignages obtient une page triste. C'est l'argument le plus fort pour les slots HTML plutôt que 20 attributs : le marchand écrit son contenu, le composant fournit seulement le défaut.</p>
+  <h4>Vouvoiement</h4>
+  <p>Cette page vouvoie, contrairement à frak.id qui tutoie. Un composant SDK partagé doit pouvoir faire les deux — c'est une décision de copy par marchand, pas un défaut global.</p>
+  <h4>Chiffres</h4>
+  <p>7,20 € / 0,80 € : CPA 10 €, commission Frak 20 %, répartition 90/10. Le 0,80 € du filleul est faible pour une section qui en fait un pilier — la répartition 80/20 recommandée dans l'app business donnerait 6,40 / 1,60, bien plus vendeur ici. <strong>À trancher.</strong></p>
+</details></div>
+
+<script type="module" src="/src/ambassador.ts"></script>
+</body>
+</html>

@@ -16,7 +16,7 @@
             "!**/tsconfig.json",
             "!**/tsconfig.*.json",
             "!**/package.json",
-            "!example/vanilla-js/index.html",
+            "!example/vanilla-js/*.html",
             "!**/routeTree.gen.ts",
             "!services/backend/user-openapi.json",
             "!sdk/core/src/**/fixtures/*.json",

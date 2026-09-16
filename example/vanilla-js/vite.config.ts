@@ -27,6 +27,25 @@ export default defineConfig(({ mode }) => {
         );
     }
 
+    const injectData = {
+        useLocal,
+        remoteEnv: JSON.stringify(
+            process.env.FRAK_WALLET_URL
+                ? {
+                      wallet: process.env.FRAK_WALLET_URL,
+                      backend:
+                          process.env.BACKEND_URL ??
+                          "https://backend.gcp-dev.frak.id",
+                  }
+                : "dev"
+        ),
+        detectFrakEnv: detectFrakEnv.toString(),
+        sdkScriptSrc: scriptSrc,
+        injectReactScan: DEBUG
+            ? `<script src="//unpkg.com/react-scan/dist/auto.global.js"></script>`
+            : "",
+    };
+
     return {
         server: {
             port: 3013,
@@ -40,27 +59,24 @@ export default defineConfig(({ mode }) => {
             }),
         },
         plugins: [
+            // The plugin derives rollupOptions.input from this list. Declaring
+            // input directly instead flips it to MPA mode and drops the ejs
+            // data for every page.
             createHtmlPlugin({
-                inject: {
-                    data: {
-                        useLocal,
-                        remoteEnv: JSON.stringify(
-                            process.env.FRAK_WALLET_URL
-                                ? {
-                                      wallet: process.env.FRAK_WALLET_URL,
-                                      backend:
-                                          process.env.BACKEND_URL ??
-                                          "https://backend.gcp-dev.frak.id",
-                                  }
-                                : "dev"
-                        ),
-                        detectFrakEnv: detectFrakEnv.toString(),
-                        sdkScriptSrc: scriptSrc,
-                        injectReactScan: DEBUG
-                            ? `<script src="//unpkg.com/react-scan/dist/auto.global.js"></script>`
-                            : "",
-                    },
-                },
+                pages: [
+                    "index.html",
+                    "ambassador-a.html",
+                    "ambassador-b.html",
+                    "ambassador-c.html",
+                    "ambassador-d.html",
+                    "ambassador-f.html",
+                    "ambassador-h.html",
+                    "ambassador-j.html",
+                ].map((file) => ({
+                    filename: file,
+                    template: file,
+                    injectOptions: { data: injectData },
+                })),
             }),
         ],
     };

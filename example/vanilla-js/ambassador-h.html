@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>H — Objections · page ambassadeur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+    const detectFrakEnv = <%- detectFrakEnv %>;
+
+    (async () => {
+        const env = await detectFrakEnv(<%= useLocal %>, <%- remoteEnv %>);
+
+        window.FrakSetup = {
+            config: {
+                env,
+                metadata: { name: "Vanilla JS", lang: "fr", currency: "eur" },
+            },
+        };
+
+        const sdkScript = document.createElement('script');
+        sdkScript.type = 'module';
+        sdkScript.src = '<%- sdkScriptSrc %>';
+        sdkScript.onerror = () => {
+            console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+        };
+        document.head.appendChild(sdkScript);
+    })();
+</script>
+<style>
+:root{
+  /* Demo chrome: the example harness, not the page. */
+  --page:#3a3f47; --bar:#2d3139; --deep:#1e2127;
+
+  /* Page content: the SDK's own design-system tokens, re-exposed at runtime
+     by src/ambassador.ts. Literals are the current token values, so the page
+     is correct before the SDK lands and if adoption ever fails. */
+  --brand:var(--frak-surface-primary,#0043ef);
+  --ink:var(--frak-text-primary,#000000);
+  --muted:var(--frak-text-secondary,#525252);
+  --line:var(--frak-border-default,#e2e2e2);
+  --cream:var(--frak-surface-muted,#f7f7f7);
+  --ok:var(--frak-text-success,#09be67);
+  --radius:12px; --font:Arial, sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:20px;font-family:var(--font);color:var(--ink);background:var(--page);
+  display:flex;flex-direction:column;align-items:center;min-height:100vh}
+h1,h2,h3{margin:0;line-height:1.15}
+p{margin:0;line-height:1.65}
+a{color:inherit}
+.wrap{max-width:100%;margin:0 auto;padding:0 28px}
+.narrow{max-width:640px;margin:0 auto}
+
+/* ---- demo chrome, same as index.html ---- */
+.page-title{color:#fff}
+.demo-bar,.component-card,.notes{max-width:960px;width:100%;box-sizing:border-box;border-radius:12px}
+.demo-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 20px;margin-bottom:20px;
+  background:var(--bar);color:#ccc;font-size:14px}
+.demo-bar strong{color:#fff}
+/* Chrome keeps the example's own link blue: the Frak brand blue is too dark
+   against #2d3139. */
+.demo-bar a{color:#2196F3;text-decoration:none}
+.demo-bar a.on{color:#fff;text-decoration:underline}
+.demo-bar .sp{margin-left:auto;color:#aaa;font-family:monospace;font-size:12px}
+
+/* The page paints no background of its own — it inherits the merchant
+   surface, so the card supplies the light one its text needs. */
+.component-card{background:#fff;overflow:hidden}
+.appbar{background:var(--cream)}
+
+/* ---- head ---- */
+.head{padding:62px 0 8px}
+.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.head h1{font-size:clamp(26px,4.6vw,40px);font-weight:800;letter-spacing:-.03em;margin:14px 0 12px}
+.head .sub{color:var(--muted);max-width:50ch}
+
+/* ---- the questions ----
+   No card, no accordion: everything is open, everything is readable in one
+   pass. The page is the answer sheet, hiding an answer would contradict it. */
+.qa{padding:34px 0 10px}
+.q{padding:26px 0;border-top:1px solid var(--line)}
+.q:first-child{border-top:0}
+.q h2{font-size:clamp(18px,2.8vw,22px);margin-bottom:10px}
+.q p{font-size:15.5px;color:var(--muted)}
+.q p + p{margin-top:10px}
+.q b{color:var(--ink)}
+.q .figure{display:inline-block;margin-top:12px;background:var(--cream);border:1px solid var(--line);
+  border-radius:10px;padding:10px 14px;font-size:14px;font-variant-numeric:tabular-nums}
+
+/* ---- close ---- */
+.close{padding:16px 0 56px}
+/* Matches the SDK house CTA (PostPurchase.cta / Ambassador.ctaButton):
+   black pill on vars.text.primary, white text, uppercase, bold. */
+.cta{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--ink);color:#fff;
+  border:0;border-radius:999px;padding:15px 32px;font:bold 14px/1 var(--font);letter-spacing:.03em;
+  text-transform:uppercase;cursor:pointer;text-decoration:none}
+.cta:hover{background:var(--brand)}
+.cta:disabled{opacity:.7;cursor:default}
+.closebox{border:1px solid var(--line);border-radius:18px;padding:34px 28px;text-align:center}
+.closebox h2{font-size:23px;margin-bottom:9px}
+.closebox p{color:var(--muted);max-width:42ch;margin:0 auto 22px;font-size:15px}
+.trustline{margin-top:13px;font-size:13px;color:var(--muted)}
+
+.appbar{display:flex;align-items:center;gap:18px;background:#fff;border:1px solid var(--line);
+  border-radius:16px;padding:20px 22px;margin-top:26px}
+@media(max-width:700px){.appbar{flex-direction:column;text-align:center}}
+.appbar .grow{flex:1}
+.appbar h3{font-size:16px;margin-bottom:5px}
+.appbar p{font-size:14px;color:var(--muted)}
+.badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.badge{display:flex;align-items:center;gap:9px;background:#14171c;color:#fff;border-radius:10px;
+  padding:8px 14px;text-decoration:none;min-width:150px}
+.badge .b1{font-size:9.5px;opacity:.75;display:block;line-height:1.2}
+.badge .b2{font-size:14px;font-weight:600;display:block;line-height:1.2}
+.poweredby{text-align:center;margin-top:28px;font-size:12.5px;color:var(--muted)}
+
+/* notes */
+.notes{margin:20px 0 0}
+.notes details{background:var(--bar);border:1px solid #3a414e;color:#ccc;padding:16px 18px}
+.notes summary{color:#fff;font-weight:600;cursor:pointer}
+.notes p,.notes li{color:#aaa;font-size:14px;line-height:1.6}
+.notes ul{margin:8px 0 0;padding-left:18px}
+.notes h4{color:#fff;margin:16px 0 4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.notes code{background:var(--deep);padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style>
+</head>
+<body>
+
+<h1 class="page-title">Page ambassadeur — H · Objections</h1>
+
+<nav class="demo-bar" data-frak-nav></nav>
+
+<main class="component-card">
+
+  <section class="head"><div class="wrap narrow">
+    <div class="eyebrow">Parrainage</div>
+    <h1>Vos questions, sans détour.</h1>
+    <p class="sub">Nous vous proposons de recommander notre marque et d'être payé pour ça. C'est une proposition qui mérite des réponses précises avant un grand bouton.</p>
+  </div></section>
+
+  <section class="qa"><div class="wrap narrow">
+
+    <div class="q">
+      <h2>Combien je touche, exactement ?</h2>
+      <p><b><span data-frak-reward="{REWARD}">7,20 €</span></b> par commande passée avec votre lien, quel que soit son montant. Pas de palier à atteindre, pas de plafond, pas d'expiration.</p>
+      <p>Votre proche reçoit <b>0,80 €</b> de cash-back de son côté, sans que le prix affiché change pour lui.</p>
+      <span class="figure">Commande de 22 € → 7,20 € pour vous, 0,80 € pour lui</span>
+    </div>
+
+    <div class="q">
+      <h2>Est-ce que c'est un système pyramidal ?</h2>
+      <p>Non, et la différence est nette : vous n'avancez jamais d'argent, vous ne recrutez personne dans une structure, et vos gains viennent d'une <b>commande réelle</b> — pas de l'inscription d'un filleul.</p>
+      <p>Si personne n'achète, personne ne gagne, et vous n'avez rien perdu.</p>
+    </div>
+
+    <div class="q">
+      <h2>Qu'est-ce que vous prenez au passage ?</h2>
+      <p>Nous versons une récompense de <b>10 €</b> par commande parrainée. Frak, notre partenaire technique, en prélève <b>20 %</b> ; le reste est partagé entre vous et votre filleul.</p>
+      <p>Ce coût remplace une part de notre budget publicitaire. Nous préférons le verser à nos clients plutôt qu'à une régie.</p>
+    </div>
+
+    <div class="q">
+      <h2>Mes proches vont-ils voir que je suis payé ?</h2>
+      <p>Rien ne l'affiche automatiquement, et rien ne l'empêche non plus. Notre conseil est de le dire : une recommandation assumée se défend mieux qu'une recommandation découverte.</p>
+    </div>
+
+    <div class="q">
+      <h2>Qu'est-ce que vous savez de moi, et de mes proches ?</h2>
+      <p>Le suivi repose sur un identifiant anonyme attaché au lien. Nous ne récupérons ni votre carnet d'adresses, ni les coordonnées de vos filleuls, et votre porte-monnaie s'ouvre avec votre biométrie — sans mot de passe ni RIB.</p>
+      <p>Nous savons combien de commandes proviennent de votre lien. Pas qui vous connaissez.</p>
+    </div>
+
+    <div class="q">
+      <h2>Quand est-ce que je suis payé, et comment ?</h2>
+      <p>À la validation de la commande de votre filleul, sans seuil de déblocage. Vous transférez vos gains sur votre compte bancaire quand vous le souhaitez, sans commission.</p>
+    </div>
+
+    <div class="q">
+      <h2>Et si je n'en parle à personne ?</h2>
+      <p>Il ne se passe rien. Aucun engagement, aucun compte à activer, aucune relance. Votre lien reste valable si vous changez d'avis dans six mois.</p>
+    </div>
+
+  </div></section>
+
+  <section class="close"><div class="wrap narrow">
+    <div class="closebox">
+      <h2>Si ces réponses vous conviennent</h2>
+      <p>Votre lien est généré immédiatement. Vous verrez à qui l'envoyer ensuite.</p>
+      <button type="button" class="cta" data-frak-share>Obtenir mon lien</button>
+      <p class="trustline">Gratuit · sans engagement · sans donnée bancaire</p>
+    </div>
+
+    <div class="appbar">
+      <div class="grow">
+        <h3>L'application Frak</h3>
+        <p>Une alerte dès qu'un proche commande, et vos gains de toutes les marques partenaires au même endroit.</p>
+        <div class="badges">
+          <a class="badge" data-frak-install aria-disabled="true"><span>&#63743;</span><span><span class="b1">Télécharger dans</span><span class="b2">App Store</span></span></a>
+          <a class="badge" data-frak-install aria-disabled="true"><span>&#9654;</span><span><span class="b1">Disponible sur</span><span class="b2">Google Play</span></span></a>
+        </div>
+      </div>
+    </div>
+
+    <p class="poweredby">Programme propulsé par <strong>Frak</strong></p>
+  </div></section>
+
+</main>
+
+<div class="notes"><details>
+  <summary>Notes — direction H</summary>
+  <h4>Le pari</h4>
+  <p>Chez une marque premium, ou face à un public méfiant, le grand chiffre et le bouton en capitales <em>sont</em> l'objection. H retire toute la mécanique de persuasion et ne garde que les réponses, dans l'ordre où elles se posent — argent, pyramide, marge, regard des proches, données.</p>
+  <h4>Ce que H est seule à faire</h4>
+  <p>Nommer ce que personne d'autre n'écrit : la commission de Frak, le soupçon de MLM que les notes de A signalaient sans y répondre, et ce que la marque sait du carnet d'adresses. C'est aussi, de loin, la meilleure page à faire citer par un moteur de réponse : une question par titre, une réponse factuelle dessous.</p>
+  <h4>Ce qui est réellement câblé</h4>
+  <ul>
+    <li><strong>Le montant ambassadeur</strong> — <code>getMerchantInformation</code> + <code>selectBestReward</code>, côté parrain.</li>
+    <li><strong>Le CTA</strong> — <code>displaySharingPage</code> avec le placement <code>ambassador</code>.</li>
+    <li><strong>Les badges stores</strong> — vraie URL <code>/install</code> du wallet depuis <code>getEnvironment()</code>.</li>
+  </ul>
+  <h4>Ce qui reste en dur</h4>
+  <p>Toute l'économie affichée — récompense marchand de 10 €, commission de 20 %, part filleul de 0,80 €. Aucune de ces valeurs n'est exposée au SDK, et <strong>les publier engage</strong> : une page qui annonce un taux de commission devient fausse au premier changement de campagne. C'est le principal coût de la direction.</p>
+  <h4>Le risque</h4>
+  <p>Une page qui commence par « est-ce que c'est un système pyramidal ? » plante l'idée chez ceux qui ne l'avaient pas. Elle ne se juge pas au taux de clic mais à la qualité des ambassadeurs recrutés — à mesurer sur le nombre de partages par inscrit, pas sur le nombre d'inscrits.</p>
+</details></div>
+
+<script type="module" src="/src/ambassador.ts"></script>
+</body>
+</html>
