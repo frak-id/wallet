@@ -142,6 +142,38 @@ describe("font weight", () => {
     });
 });
 
+describe("text transform", () => {
+    it("emits the keyword without a unit", () => {
+        expect(serializeStyleCss({ tt: "lowercase" }, "", "product")).toContain(
+            "text-transform:lowercase!important"
+        );
+    });
+
+    it("emits none, so a theme that uppercases stops doing it", () => {
+        expect(serializeStyleCss({ tt: "none" }, "", "product")).toContain(
+            "text-transform:none!important"
+        );
+    });
+
+    it("round-trips through the marker", () => {
+        const css = serializeStyleCss({ tt: "uppercase" }, "", "product");
+        expect(parseStyleCss(css).values).toEqual({ tt: "uppercase" });
+    });
+
+    it("rejects a keyword outside the offered set", () => {
+        const values = {
+            tt: "full-width",
+        } as unknown as ButtonShareStyleValues;
+        expect(serializeStyleCss(values, "", "product")).toBeUndefined();
+    });
+
+    it("carries the keyword into the dashboard preview", () => {
+        expect(styleValuesToCssProperties({ tt: "capitalize" })).toMatchObject({
+            textTransform: "capitalize",
+        });
+    });
+});
+
 describe("spacing units", () => {
     it("emits px when no unit is stored", () => {
         const css = serializeStyleCss({ py: 12, mt: 8 }, "", "product");

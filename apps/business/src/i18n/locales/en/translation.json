@@ -2060,7 +2060,13 @@
                 "weight_500": "Medium",
                 "weight_600": "Semi-bold",
                 "weight_700": "Bold",
-                "clearAll": "Clear all"
+                "clearAll": "Clear all",
+                "textCase": "Case",
+                "case_theme": "From theme",
+                "case_none": "As typed",
+                "case_uppercase": "UPPERCASE",
+                "case_lowercase": "lowercase",
+                "case_capitalize": "Capitalised"
             }
         },
         "globalCss": {

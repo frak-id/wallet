@@ -5,8 +5,9 @@ import type {
     FontWeight,
     SpacingUnit,
     StyleTier,
+    TextTransform,
 } from "../types";
-import { FONT_WEIGHTS, SPACING_UNITS } from "../types";
+import { FONT_WEIGHTS, SPACING_UNITS, TEXT_TRANSFORMS } from "../types";
 
 const MARKER_OPEN = "/* frak:style ";
 const MARKER_CLOSE = "/* /frak:style */";
@@ -52,6 +53,7 @@ const EMITTED: readonly EmittedEntry[] = [
     { key: "bc", css: [["border-color", "borderColor"]] },
     { key: "fs", css: [["font-size", "fontSize"]] },
     { key: "fw", unitless: true, css: [["font-weight", "fontWeight"]] },
+    { key: "tt", css: [["text-transform", "textTransform"]] },
     {
         key: "py",
         unit: "pu",
@@ -122,6 +124,10 @@ function isFontWeight(value: unknown): value is FontWeight {
     return FONT_WEIGHTS.includes(value as FontWeight);
 }
 
+function isTextTransform(value: unknown): value is TextTransform {
+    return TEXT_TRANSFORMS.includes(value as TextTransform);
+}
+
 /**
  * Keeps only entries the codec can emit safely. Anything else is dropped, so a
  * serialized marker can never contain a comment terminator.
@@ -145,6 +151,7 @@ function normalizeValues(input: unknown): ButtonShareStyleValues {
     }
 
     if (isFontWeight(source.fw)) values.fw = source.fw;
+    if (isTextTransform(source.tt)) values.tt = source.tt;
 
     // A unit only decorates sizes, so an orphan one is dropped rather than
     // stored as a styled state that emits nothing.

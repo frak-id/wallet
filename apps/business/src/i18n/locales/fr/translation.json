@@ -2060,7 +2060,13 @@
                 "weight_500": "Moyen",
                 "weight_600": "Semi-gras",
                 "weight_700": "Gras",
-                "clearAll": "Tout effacer"
+                "clearAll": "Tout effacer",
+                "textCase": "Casse",
+                "case_theme": "Du thème",
+                "case_none": "Tel que saisi",
+                "case_uppercase": "MAJUSCULES",
+                "case_lowercase": "minuscules",
+                "case_capitalize": "Première Lettre En Majuscule"
             }
         },
         "globalCss": {
