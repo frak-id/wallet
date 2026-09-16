@@ -38,8 +38,9 @@ import type {
     ComponentSettingsFormValues,
     FontWeight,
     StyleTier,
+    TextTransform,
 } from "../types";
-import { FONT_WEIGHTS } from "../types";
+import { FONT_WEIGHTS, TEXT_TRANSFORMS } from "../types";
 import { BoxModelControl } from "./BoxModelControl";
 import { ColorRow } from "./ColorRow";
 
@@ -51,7 +52,7 @@ type SizeName = "bw" | "fs";
 
 // Radix needs a concrete value per item, so "inherit" gets its own token
 // rather than the empty string.
-const WEIGHT_INHERIT = "theme";
+const INHERIT = "theme";
 
 const LOOK_OPTIONS: readonly LookChoice[] = [...LOOKS, "custom"];
 
@@ -64,6 +65,7 @@ const CLEARED_STYLE: ButtonShareStyleFormValues = {
     bw: "",
     fs: "",
     fw: "",
+    tt: "",
     py: "",
     px: "",
     pu: "",
@@ -117,30 +119,35 @@ function SizeRow({
     );
 }
 
-function WeightRow({
+/** Select whose unset state means "inherit whatever the theme sets". */
+function ChoiceRow<T extends string | number>({
     form,
+    name,
     label,
+    inheritLabel,
+    options,
+    labelFor,
+    parse,
 }: {
     form: UseFormReturn<ComponentSettingsFormValues>;
+    name: "fw" | "tt";
     label: string;
+    inheritLabel: string;
+    options: readonly T[];
+    labelFor: (option: T) => string;
+    parse: (raw: string) => T;
 }) {
-    const { t } = useTranslation();
-
     return (
         <FormField
             control={form.control}
-            name={`${STYLE_FIELD}.fw`}
+            name={`${STYLE_FIELD}.${name}`}
             render={({ field }) => (
                 <EditField label={label}>
                     <Select
-                        value={
-                            field.value ? String(field.value) : WEIGHT_INHERIT
-                        }
+                        value={field.value ? String(field.value) : INHERIT}
                         onValueChange={(next) =>
                             field.onChange(
-                                next === WEIGHT_INHERIT
-                                    ? undefined
-                                    : (Number(next) as FontWeight)
+                                next === INHERIT ? undefined : parse(next)
                             )
                         }
                     >
@@ -149,24 +156,22 @@ function WeightRow({
                                 ref={field.ref}
                                 variant="bare"
                                 tone="muted"
-                                data-testid="buttonShare.style.fw-select"
+                                data-testid={`buttonShare.style.${name}-select`}
                             >
                                 <SelectValue />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            <SelectItem value={WEIGHT_INHERIT}>
-                                {t("customize.components.style.weight_theme")}
+                            <SelectItem value={INHERIT}>
+                                {inheritLabel}
                             </SelectItem>
-                            {FONT_WEIGHTS.map((weight) => (
+                            {options.map((option) => (
                                 <SelectItem
-                                    key={weight}
-                                    value={String(weight)}
-                                    data-testid={`buttonShare.style.fw-${weight}`}
+                                    key={option}
+                                    value={String(option)}
+                                    data-testid={`buttonShare.style.${name}-${option}`}
                                 >
-                                    {t(
-                                        `customize.components.style.weight_${weight}`
-                                    )}
+                                    {labelFor(option)}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -315,9 +320,33 @@ export function ButtonShareStyleFields({
                             name="fs"
                             label={t("customize.components.style.textSize")}
                         />
-                        <WeightRow
+                        <ChoiceRow
                             form={form}
+                            name="fw"
                             label={t("customize.components.style.textWeight")}
+                            inheritLabel={t(
+                                "customize.components.style.weight_theme"
+                            )}
+                            options={FONT_WEIGHTS}
+                            labelFor={(weight) =>
+                                t(`customize.components.style.weight_${weight}`)
+                            }
+                            parse={(raw) => Number(raw) as FontWeight}
+                        />
+                        <ChoiceRow
+                            form={form}
+                            name="tt"
+                            label={t("customize.components.style.textCase")}
+                            inheritLabel={t(
+                                "customize.components.style.case_theme"
+                            )}
+                            options={TEXT_TRANSFORMS}
+                            labelFor={(transform) =>
+                                t(
+                                    `customize.components.style.case_${transform}`
+                                )
+                            }
+                            parse={(raw) => raw as TextTransform}
                         />
                     </div>
                 </Stack>

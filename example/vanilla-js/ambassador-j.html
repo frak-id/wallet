@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>J — Le vrai chiffre · page ambassadeur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+    const detectFrakEnv = <%- detectFrakEnv %>;
+
+    (async () => {
+        const env = await detectFrakEnv(<%= useLocal %>, <%- remoteEnv %>);
+
+        window.FrakSetup = {
+            config: {
+                env,
+                metadata: { name: "Vanilla JS", lang: "fr", currency: "eur" },
+            },
+        };
+
+        const sdkScript = document.createElement('script');
+        sdkScript.type = 'module';
+        sdkScript.src = '<%- sdkScriptSrc %>';
+        sdkScript.onerror = () => {
+            console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+        };
+        document.head.appendChild(sdkScript);
+    })();
+</script>
+<style>
+:root{
+  /* Demo chrome: the example harness, not the page. */
+  --page:#3a3f47; --bar:#2d3139; --deep:#1e2127;
+
+  /* Page content: the SDK's own design-system tokens, re-exposed at runtime
+     by src/ambassador.ts. Literals are the current token values, so the page
+     is correct before the SDK lands and if adoption ever fails. */
+  --brand:var(--frak-surface-primary,#0043ef);
+  --ink:var(--frak-text-primary,#000000);
+  --muted:var(--frak-text-secondary,#525252);
+  --line:var(--frak-border-default,#e2e2e2);
+  --cream:var(--frak-surface-muted,#f7f7f7);
+  --tintblue:var(--frak-surface-secondary,#f2f6fe);
+  --ok:var(--frak-text-success,#09be67);
+  --radius:12px; --font:Arial, sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:20px;font-family:var(--font);color:var(--ink);background:var(--page);
+  display:flex;flex-direction:column;align-items:center;min-height:100vh}
+h1,h2,h3{margin:0;line-height:1.15}
+p{margin:0;line-height:1.65}
+a{color:inherit}
+.wrap{max-width:100%;margin:0 auto;padding:0 28px}
+.narrow{max-width:700px;margin:0 auto}
+
+/* ---- demo chrome, same as index.html ---- */
+.page-title{color:#fff}
+.demo-bar,.statebar,.component-card,.notes{max-width:960px;width:100%;box-sizing:border-box;border-radius:12px}
+.demo-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 20px;margin-bottom:12px;
+  background:var(--bar);color:#ccc;font-size:14px}
+.demo-bar strong{color:#fff}
+/* Chrome keeps the example's own link blue: the Frak brand blue is too dark
+   against #2d3139. */
+.demo-bar a{color:#2196F3;text-decoration:none}
+.demo-bar a.on{color:#fff;text-decoration:underline}
+.demo-bar .sp{margin-left:auto;color:#aaa;font-family:monospace;font-size:12px}
+.statebar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 20px;margin-bottom:20px;
+  background:var(--deep);color:#aaa;font-size:12.5px}
+
+/* The page paints no background of its own — it inherits the merchant
+   surface, so the card supplies the light one its text needs. */
+.component-card{background:#fff;overflow:hidden}
+.stat,.col,.appbar,details.faq{background:var(--cream)}
+
+/* ---- hero ---- */
+.hero{padding:60px 0 36px}
+.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.hero h1{font-size:clamp(26px,4.8vw,42px);font-weight:800;letter-spacing:-.03em;margin:14px 0 14px;
+  max-width:20ch}
+.hero .sub{color:var(--muted);max-width:52ch}
+
+/* ---- the three numbers ----
+   Deliberately flat: no colour on the bad number, no colour on the good one.
+   The page's whole argument is that it is not selecting what it shows. */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:30px}
+@media(max-width:620px){.stats{grid-template-columns:1fr}}
+.stat{background:#fff;padding:24px 18px;text-align:center}
+.stat b{display:block;font-size:clamp(28px,5vw,38px);font-weight:800;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;line-height:1}
+.stat span{display:block;font-size:13px;color:var(--muted);margin-top:9px;line-height:1.45}
+.statsnote{margin-top:14px;font-size:13px;color:var(--muted)}
+
+/* ---- what separates them ---- */
+section.band{padding:48px 0}
+.band h2{font-size:clamp(21px,3.6vw,28px);margin-bottom:10px}
+.band .lede{color:var(--muted);max-width:52ch;margin-bottom:26px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.col{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px}
+.col.works{border-color:var(--ok)}
+.col h3{font-size:15px;margin-bottom:14px;letter-spacing:.04em;text-transform:uppercase;font-size:12.5px;
+  color:var(--muted)}
+.col.works h3{color:var(--ok)}
+.col ul{margin:0;padding-left:18px;font-size:14.5px;color:var(--muted);line-height:1.8}
+.col li b{color:var(--ink);font-weight:600}
+
+/* ---- honest reward line ---- */
+.rewardbox{border:1px solid var(--line);border-radius:16px;padding:24px;background:var(--tintblue);
+  display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.rewardbox div{flex:1;min-width:220px}
+.rewardbox h3{font-size:17px;margin-bottom:6px}
+.rewardbox p{font-size:14px;color:var(--muted)}
+.rewardbox b{font-size:clamp(28px,5vw,38px);font-weight:800;color:var(--brand);letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---- close ---- */
+/* Matches the SDK house CTA (PostPurchase.cta / Ambassador.ctaButton):
+   black pill on vars.text.primary, white text, uppercase, bold. */
+.cta{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--ink);color:#fff;
+  border:0;border-radius:999px;padding:15px 32px;font:bold 14px/1 var(--font);letter-spacing:.03em;
+  text-transform:uppercase;cursor:pointer;text-decoration:none}
+.cta:hover{background:var(--brand)}
+.cta:disabled{opacity:.7;cursor:default}
+.closebox{border:1px solid var(--line);border-radius:18px;padding:36px 28px;text-align:center}
+.closebox h2{font-size:23px;margin-bottom:9px}
+.closebox p{color:var(--muted);max-width:44ch;margin:0 auto 22px;font-size:15px}
+.trustline{margin-top:13px;font-size:13px;color:var(--muted)}
+
+.appbar{display:flex;align-items:center;gap:18px;background:#fff;border:1px solid var(--line);
+  border-radius:16px;padding:20px 22px;margin-top:26px}
+@media(max-width:700px){.appbar{flex-direction:column;text-align:center}}
+.appbar .grow{flex:1}
+.appbar h3{font-size:16px;margin-bottom:5px}
+.appbar p{font-size:14px;color:var(--muted)}
+.badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.badge{display:flex;align-items:center;gap:9px;background:#14171c;color:#fff;border-radius:10px;
+  padding:8px 14px;text-decoration:none;min-width:150px}
+.badge .b1{font-size:9.5px;opacity:.75;display:block;line-height:1.2}
+.badge .b2{font-size:14px;font-weight:600;display:block;line-height:1.2}
+
+details.faq{background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+  padding:15px 17px;margin-bottom:9px}
+details.faq[open]{border-color:var(--brand)}
+details.faq summary{font-weight:600;cursor:pointer;font-size:14.5px;list-style:none}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary::after{content:"+";float:right;color:var(--brand);font-weight:700}
+details.faq[open] summary::after{content:"–"}
+details.faq p{margin-top:9px;font-size:14px;color:var(--muted)}
+.poweredby{text-align:center;margin-top:28px;font-size:12.5px;color:var(--muted)}
+
+/* notes */
+.notes{margin:20px 0 0}
+.notes details{background:var(--bar);border:1px solid #3a414e;color:#ccc;padding:16px 18px}
+.notes summary{color:#fff;font-weight:600;cursor:pointer}
+.notes p,.notes li{color:#aaa;font-size:14px;line-height:1.6}
+.notes ul{margin:8px 0 0;padding-left:18px}
+.notes h4{color:#fff;margin:16px 0 4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.notes code{background:var(--deep);padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style>
+</head>
+<body>
+
+<h1 class="page-title">Page ambassadeur — J · Le vrai chiffre</h1>
+
+<nav class="demo-bar" data-frak-nav></nav>
+
+<div class="statebar">
+  <span>Les statistiques affichées sont factices : aucune donnée agrégée d'ambassadeurs n'est exposée au domaine marchand. C'est la mesure exacte de ce que la direction demanderait.</span>
+</div>
+
+<main class="component-card">
+
+  <section class="hero"><div class="wrap narrow">
+    <div class="eyebrow">Parrainage</div>
+    <h1>Six ambassadeurs sur dix ne gagnent rien. Voilà pourquoi.</h1>
+    <p class="sub">La plupart des programmes vous montrent ce que gagnent les meilleurs. Nous préférons vous montrer la distribution complète, et ce qui sépare les deux.</p>
+
+    <div class="stats">
+      <div class="stat"><b>61 %</b><span>des inscrits ne partagent jamais leur lien</span></div>
+      <div class="stat"><b>21,60 €</b><span>gagnés en un an par l'ambassadeur médian qui partage</span></div>
+      <div class="stat"><b>312 €</b><span>gagnés par les 10 % les plus actifs</span></div>
+    </div>
+    <p class="statsnote">Sur douze mois, tous marchands partenaires confondus. Les inscrits sans aucun partage sont inclus dans le premier chiffre et exclus du second.</p>
+  </div></section>
+
+  <section class="band"><div class="wrap narrow">
+    <h2>Ce qui fait la différence</h2>
+    <p class="lede">L'écart ne vient pas de la taille de l'audience. Il vient de qui reçoit le lien.</p>
+    <div class="cols">
+      <div class="col works">
+        <h3>Ce qui marche</h3>
+        <ul>
+          <li>Envoyer à <b>une personne précise</b> à qui le produit servait déjà</li>
+          <li>Partager <b>juste après</b> avoir reçu sa propre commande</li>
+          <li><b>Dire que vous êtes rémunéré</b> — ça se voit moins comme un aveu que comme une découverte</li>
+          <li>Reparler du produit <b>une seconde fois</b>, des semaines plus tard</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3>Ce qui ne marche pas</h3>
+        <ul>
+          <li>Publier le lien <b>en story</b> ou sur un mur, sans contexte</li>
+          <li>L'envoyer <b>à tout le monde</b> en même temps</li>
+          <li>Recommander un produit <b>que vous n'avez pas acheté</b></li>
+          <li>Attendre que le lien travaille seul&nbsp;: il ne circule pas de lui-même</li>
+        </ul>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="band"><div class="wrap narrow">
+    <div class="rewardbox">
+      <div>
+        <h3>Ce que vous touchez par commande</h3>
+        <p>Montant fixe, quel que soit le panier. Pas de palier, pas de plafond, pas d'expiration.</p>
+      </div>
+      <b data-frak-reward="{REWARD}">7,20 €</b>
+    </div>
+  </div></section>
+
+  <section class="band"><div class="wrap narrow">
+    <div class="closebox">
+      <h2>Trois commandes, et vous êtes au-dessus de la médiane</h2>
+      <p>C'est un objectif atteignable, et c'est exactement pour ça que nous ne vous en promettons pas trente.</p>
+      <button type="button" class="cta" data-frak-share>Obtenir mon lien</button>
+      <p class="trustline">Gratuit · sans engagement · sans donnée bancaire</p>
+    </div>
+
+    <div class="appbar">
+      <div class="grow">
+        <h3>L'application Frak</h3>
+        <p>Une alerte dès qu'un proche commande, et vos gains de toutes les marques partenaires au même endroit.</p>
+        <div class="badges">
+          <a class="badge" data-frak-install aria-disabled="true"><span>&#63743;</span><span><span class="b1">Télécharger dans</span><span class="b2">App Store</span></span></a>
+          <a class="badge" data-frak-install aria-disabled="true"><span>&#9654;</span><span><span class="b1">Disponible sur</span><span class="b2">Google Play</span></span></a>
+        </div>
+      </div>
+    </div>
+
+    <h2 style="font-size:19px;margin:34px 0 14px">Questions fréquentes</h2>
+    <details class="faq"><summary>Pourquoi montrer un chiffre aussi bas ?</summary>
+      <p>Parce qu'un ambassadeur déçu ne repartage jamais. Nous préférons un inscrit sur trois qui reste, plutôt que trois qui abandonnent après une semaine.</p></details>
+    <details class="faq"><summary>D'où viennent ces statistiques ?</summary>
+      <p>Des commandes parrainées sur les douze derniers mois, chez l'ensemble des marques partenaires. Elles sont mises à jour chaque trimestre.</p></details>
+    <details class="faq"><summary>Puis-je faire mieux que la médiane ?</summary>
+      <p>Probablement, si vous suivez la colonne de gauche. Ceux qui dépassent 300 € par an n'ont pas une grande audience, ils envoient leur lien à des personnes choisies.</p></details>
+
+    <p class="poweredby">Programme propulsé par <strong>Frak</strong></p>
+  </div></section>
+
+</main>
+
+<div class="notes"><details>
+  <summary>Notes — direction J</summary>
+  <h4>Le pari</h4>
+  <p>A projette un gain annuel avec trois curseurs optimistes. J fait l'inverse et annonce que la majorité ne gagnera rien. L'hypothèse : le visiteur se méfie déjà du chiffre qu'on lui montre, et une page qui sous-promet obtient une confiance qu'aucun simulateur n'achète.</p>
+  <h4>Ce que J est seule à faire</h4>
+  <p>Expliquer <em>comment</em> bien partager, et pas seulement pourquoi. La colonne « ce qui marche » est le seul contenu du lot qui améliore la performance d'un ambassadeur déjà inscrit — c'est une page qu'on relit, là où A ne se lit qu'une fois.</p>
+  <h4>Ce qui est réellement câblé</h4>
+  <ul>
+    <li><strong>Le montant par commande</strong> — <code>getMerchantInformation</code> + <code>selectBestReward</code>, côté parrain.</li>
+    <li><strong>Le CTA</strong> — <code>displaySharingPage</code> avec le placement <code>ambassador</code>.</li>
+    <li><strong>Les badges stores</strong> — vraie URL <code>/install</code> du wallet depuis <code>getEnvironment()</code>.</li>
+  </ul>
+  <h4>Ce que ça coûte au produit</h4>
+  <p>Les trois statistiques du hero n'existent nulle part côté marchand, et elles sont <strong>transverses</strong> : médiane, taux d'inactifs, décile supérieur, agrégés sur l'ensemble des marchands. Il faut donc les calculer côté backend, les rafraîchir, et accepter qu'un marchand publie une donnée qui n'est pas la sienne. C'est aussi la seule direction où une donnée fausse est une allégation commerciale trompeuse.</p>
+  <h4>Le risque</h4>
+  <p>Un titre qui annonce l'échec peut simplement faire fermer l'onglet. J devrait perdre nettement en taux d'inscription et gagner en partages par inscrit — si les deux baissent, l'honnêteté ne paie pas ici et A tranche définitivement.</p>
+</details></div>
+
+<script type="module" src="/src/ambassador.ts"></script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C — Mon lien · page ambassadeur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+    const detectFrakEnv = <%- detectFrakEnv %>;
+
+    (async () => {
+        const env = await detectFrakEnv(<%= useLocal %>, <%- remoteEnv %>);
+
+        window.FrakSetup = {
+            config: {
+                env,
+                metadata: { name: "Vanilla JS", lang: "fr", currency: "eur" },
+            },
+        };
+
+        const sdkScript = document.createElement('script');
+        sdkScript.type = 'module';
+        sdkScript.src = '<%- sdkScriptSrc %>';
+        sdkScript.onerror = () => {
+            console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+        };
+        document.head.appendChild(sdkScript);
+    })();
+</script>
+<style>
+:root{
+  /* Demo chrome: the example harness, not the page. */
+  --page:#3a3f47; --bar:#2d3139; --deep:#1e2127;
+
+  /* Page content: the SDK's own design-system tokens, re-exposed at runtime
+     by src/ambassador.ts. Literals are the current token values, so the page
+     is correct before the SDK lands and if adoption ever fails. */
+  --brand:var(--frak-surface-primary,#0043ef);
+  --brand-ink:var(--frak-surface-primaryHover,#0036bf);
+  --ink:var(--frak-text-primary,#000000);
+  --muted:var(--frak-text-secondary,#525252);
+  --line:var(--frak-border-default,#e2e2e2);
+  --cream:var(--frak-surface-muted,#f7f7f7);
+  --ok:var(--frak-text-success,#09be67);
+  --gold:var(--frak-text-warning,#ec7e00);
+  --radius:12px; --font:Arial, sans-serif;
+}
+*{box-sizing:border-box}
+/* An explicit `display` on .earnstrip/.pending outranks the UA [hidden] rule. */
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{margin:0;padding:20px;font-family:var(--font);color:var(--ink);background:var(--page);
+  display:flex;flex-direction:column;align-items:center;min-height:100vh}
+h1,h2,h3{margin:0;line-height:1.15}
+p{margin:0;line-height:1.65}
+a{color:inherit}
+.wrap{max-width:100%;margin:0 auto;padding:0 28px}
+.narrow{max-width:660px;margin:0 auto}
+
+/* ---- demo chrome, same as index.html ---- */
+.page-title{color:#fff}
+.demo-bar,.statebar,.component-card,.notes{max-width:960px;width:100%;box-sizing:border-box;border-radius:12px}
+.demo-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 20px;margin-bottom:12px;
+  background:var(--bar);color:#ccc;font-size:14px}
+.demo-bar strong{color:#fff}
+/* Chrome keeps the example's own link blue: the Frak brand blue is too dark
+   against #2d3139. */
+.demo-bar a{color:#2196F3;text-decoration:none}
+.demo-bar a.on{color:#fff;text-decoration:underline}
+.demo-bar .sp{margin-left:auto;color:#aaa;font-family:monospace;font-size:12px}
+.statebar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 20px;margin-bottom:20px;
+  background:var(--deep);color:#aaa;font-size:12.5px}
+.statebar button{background:#3a414e;color:#ccc;border:1px solid #5b616d;border-radius:99px;
+  padding:4px 13px;font:500 12.5px var(--font);cursor:pointer}
+.statebar button[aria-pressed=true]{background:#fff;color:#222;border-color:#fff}
+
+/* The page paints no background of its own — it inherits the merchant
+   surface, so the card supplies the light one its text needs. */
+.component-card{background:#fff;overflow:hidden}
+
+/* Panels sit on that white card, so they take the tint rather than white. */
+.linkcard,.step,.appbar,details.faq{background:var(--cream)}
+
+.statebar .realshare{margin-left:auto;background:#fff;color:#222;border-color:#fff;font-weight:700}
+
+/* ---- the tool ---- */
+.tool{padding:52px 0 40px}
+.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.tool h1{font-size:clamp(26px,4.4vw,36px);margin:12px 0 8px}
+.tool .sub{color:var(--muted);margin-bottom:28px}
+
+.linkcard{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;
+  box-shadow:0 1px 2px #0000000a}
+.linklabel{font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:9px}
+.linkrow{display:flex;gap:10px;align-items:stretch}
+@media(max-width:560px){.linkrow{flex-direction:column}}
+.linkfield{flex:1;display:flex;align-items:center;background:var(--cream);border:1.5px solid var(--line);
+  border-radius:11px;padding:0 15px;font-size:15.5px;font-weight:600;min-height:52px;overflow:hidden;
+  white-space:nowrap;text-overflow:ellipsis}
+/* Matches the SDK house CTA (PostPurchase.cta / Ambassador.ctaButton):
+   black on vars.text.primary, white text, uppercase, bold. */
+.copybtn{background:var(--ink);color:#fff;border:0;border-radius:11px;padding:0 26px;min-height:52px;
+  font:bold 14px var(--font);letter-spacing:.03em;text-transform:uppercase;cursor:pointer;
+  white-space:nowrap;transition:background .15s}
+.copybtn:hover{background:var(--brand)}
+.copybtn.done{background:var(--ok)}
+
+.shares{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+@media(max-width:560px){.shares{grid-template-columns:repeat(2,1fr)}}
+.share{display:flex;flex-direction:column;align-items:center;gap:7px;background:var(--cream);
+  border:1px solid var(--line);border-radius:12px;padding:14px 8px;text-decoration:none;
+  font-size:13px;font-weight:600;color:var(--ink);transition:border-color .15s}
+.share:hover{border-color:var(--brand)}
+.share .ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#fff;font-size:15px}
+
+.earnstrip{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:22px}
+@media(max-width:560px){.earnstrip{grid-template-columns:1fr}}
+.earn{background:#fff;padding:18px 16px;text-align:center}
+.earn b{display:block;font-size:26px;font-weight:800;color:var(--brand);letter-spacing:-.025em;
+  font-variant-numeric:tabular-nums}
+.earn span{font-size:12.5px;color:var(--muted)}
+.earn.muted b{color:var(--muted)}
+
+.pending{margin-top:14px;background:#fff8ec;border:1px solid #f4d9a8;border-radius:12px;
+  padding:13px 16px;font-size:14px;color:#8e6b3f;display:flex;gap:10px;align-items:flex-start}
+.reward-line{margin-top:16px;text-align:center;font-size:14.5px;color:var(--muted)}
+.reward-line b{color:var(--ink)}
+
+/* below the fold */
+.more{padding:8px 0 60px}
+.more h2{font-size:20px;margin:36px 0 14px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+@media(max-width:700px){.steps{grid-template-columns:1fr;gap:16px}}
+.step{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.step .n{width:30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;display:grid;
+  place-items:center;font-weight:700;font-size:13.5px;margin-bottom:11px}
+.step h3{font-size:15.5px;margin-bottom:6px}
+.step p{font-size:14px;color:var(--muted)}
+
+.appbar{display:flex;align-items:center;gap:20px;background:#fff;border:1px solid var(--line);
+  border-radius:16px;padding:20px 22px;margin-top:14px}
+@media(max-width:700px){.appbar{flex-direction:column;text-align:center}.appbar .qr{display:none}}
+.appbar h3{font-size:16.5px;margin-bottom:5px}
+.appbar p{font-size:14px;color:var(--muted)}
+.appbar .grow{flex:1}
+.badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.badge{display:flex;align-items:center;gap:9px;background:#14171c;color:#fff;border-radius:10px;
+  padding:8px 14px;text-decoration:none;min-width:150px}
+.badge .b1{font-size:9.5px;opacity:.75;display:block;line-height:1.2}
+.badge .b2{font-size:14px;font-weight:600;display:block;line-height:1.2}
+.qr svg{border:7px solid #fff;border-radius:10px;box-shadow:0 2px 8px #0000000f}
+
+details.faq{background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+  padding:15px 17px;margin-bottom:9px}
+details.faq[open]{border-color:var(--brand)}
+details.faq summary{font-weight:600;cursor:pointer;font-size:14.5px;list-style:none}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary::after{content:"+";float:right;color:var(--brand);font-weight:700}
+details.faq[open] summary::after{content:"–"}
+details.faq p{margin-top:9px;font-size:14px;color:var(--muted)}
+.poweredby{text-align:center;margin-top:30px;font-size:12.5px;color:var(--muted)}
+
+/* notes */
+.notes{margin:20px 0 0}
+.notes details{background:var(--bar);border:1px solid #3a414e;padding:16px 18px;color:#ccc}
+.notes summary{color:#fff;font-weight:600;cursor:pointer}
+.notes p,.notes li{color:#aaa;font-size:14px;line-height:1.6}
+.notes ul{margin:8px 0 0;padding-left:18px}
+.notes h4{color:#fff;margin:16px 0 4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.notes code{background:var(--deep);padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style>
+</head>
+<body>
+
+<h1 class="page-title">Page ambassadeur — C · Mon lien</h1>
+
+<nav class="demo-bar" data-frak-nav></nav>
+
+<div class="statebar">
+  <span>État du visiteur&nbsp;:</span>
+  <button data-state="new" aria-pressed="true">Première visite</button>
+  <button data-state="back" aria-pressed="false">Ambassadeur qui revient</button>
+  <span>— lien, partages et gains ci-dessous sont factices : aucune API ne les expose au domaine marchand.</span>
+  <button type="button" class="realshare" data-frak-share>Ouvrir la vraie feuille de partage</button>
+</div>
+
+<main class="component-card">
+
+  <section class="tool"><div class="wrap narrow">
+    <div class="eyebrow">Parrainage</div>
+    <h1 data-t="title">Votre lien de parrainage</h1>
+    <p class="sub" data-t="sub">Envoyez-le à qui vous voulez. Vous êtes payé à chaque commande passée avec.</p>
+
+    <div class="linkcard">
+      <div class="linklabel">VOTRE LIEN PERSONNEL</div>
+      <div class="linkrow">
+        <div class="linkfield" id="link">vanilla-js.example/r/a8f2k</div>
+        <button class="copybtn" id="copy">Copier</button>
+      </div>
+
+      <div class="shares">
+        <a class="share" href="#"><span class="ic" style="background:#25d366">✆</span>WhatsApp</a>
+        <a class="share" href="#"><span class="ic" style="background:#5b616d">✉</span>SMS</a>
+        <a class="share" href="#"><span class="ic" style="background:#c13584">◎</span>Instagram</a>
+        <a class="share" href="#"><span class="ic" style="background:#0043ef">@</span>E-mail</a>
+      </div>
+
+      <p class="reward-line"><b data-frak-reward="{REWARD}">7,20 €</b> pour vous &nbsp;·&nbsp; <b>0,80 €</b> pour votre filleul &nbsp;·&nbsp; à chaque commande</p>
+
+    </div>
+
+    <div class="earnstrip" data-block="earnings" hidden>
+      <div class="earn"><b>43,20 €</b><span>Gagnés au total</span></div>
+      <div class="earn"><b>6</b><span>Filleuls</span></div>
+      <div class="earn muted"><b>14,40 €</b><span>En attente de validation</span></div>
+    </div>
+
+    <div class="pending" data-block="pending" hidden>
+      <span>⏳</span>
+      <span>Deux commandes sont en cours de validation. Vos gains seront crédités dès leur expédition.</span>
+    </div>
+  </div></section>
+
+  <section class="more"><div class="wrap narrow">
+
+    <h2>Comment ça marche</h2>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Vous partagez</h3>
+        <p>Votre lien est déjà prêt ci-dessus. Aucun code à saisir pour vos proches.</p></div>
+      <div class="step"><div class="n">2</div><h3>Ils commandent</h3>
+        <p>Ils reçoivent un cash-back, au même prix que tout le monde.</p></div>
+      <div class="step"><div class="n">3</div><h3>Vous êtes payé</h3>
+        <p>Vos gains sont crédités à la validation, transférables sur votre compte bancaire.</p></div>
+    </div>
+
+    <h2>Suivre vos gains</h2>
+    <div class="appbar">
+      <div class="grow">
+        <h3>L'application Frak</h3>
+        <p>Une alerte dès qu'un proche commande, et vos gains de toutes les marques partenaires au même endroit.</p>
+        <div class="badges">
+          <a class="badge" data-frak-install aria-disabled="true"><span>&#63743;</span><span><span class="b1">Télécharger dans</span><span class="b2">App Store</span></span></a>
+          <a class="badge" data-frak-install aria-disabled="true"><span>&#9654;</span><span><span class="b1">Disponible sur</span><span class="b2">Google Play</span></span></a>
+        </div>
+      </div>
+      <div class="qr">
+        <svg width="104" height="104" viewBox="0 0 29 29" shape-rendering="crispEdges" role="img" aria-label="QR code de téléchargement">
+          <rect width="29" height="29" fill="#fff"/>
+          <g fill="#14171c">
+            <path d="M0 0h7v7H0z M2 2h3v3H2z M22 0h7v7h-7z M24 2h3v3h-3z M0 22h7v7H0z M2 24h3v3H2z"/>
+            <path d="M9 0h1v3H9z M11 1h1v2h-1z M13 0h1v4h-1z M16 2h1v2h-1z M18 0h1v3h-1z
+                     M9 5h2v1H9z M12 5h1v1h-1z M15 5h3v1h-3z M19 4h1v3h-1z
+                     M0 9h3v1H0z M4 9h1v2H4z M6 9h2v1H6z M0 12h1v2H0z M2 11h1v3H2z M5 13h2v1H5z
+                     M0 16h2v1H0z M3 16h1v2H3z M5 16h1v1H5z M0 19h1v2H0z M2 19h3v1H2z M6 18h1v3H6z
+                     M22 9h1v2h-1z M24 9h2v1h-2z M27 10h1v2h-1z M22 13h3v1h-3z M26 13h2v1h-2z
+                     M22 16h1v3h-1z M24 17h2v1h-2z M27 16h1v2h-1z M23 20h2v1h-2z M26 19h1v2h-1z
+                     M9 9h2v2H9z M12 10h2v1h-2z M15 9h1v3h-1z M17 10h2v2h-2z
+                     M9 13h1v2H9z M11 13h3v1h-3z M15 14h2v1h-2z M18 13h1v2h-1z
+                     M10 16h2v1h-2z M13 16h1v3h-1z M15 17h3v1h-3z M19 16h1v2h-1z
+                     M9 20h3v1H9z M13 21h2v1h-2z M16 20h1v2h-1z M18 21h2v1h-2z
+                     M9 24h1v2H9z M11 23h2v1h-2z M14 24h2v1h-2z M17 23h1v3h-1z M19 24h2v1h-2z
+                     M9 27h3v1H9z M13 26h1v2h-1z M15 27h2v1h-2z M18 26h2v1h-2z
+                     M22 23h2v1h-2z M25 23h1v2h-1z M27 24h1v2h-1z M22 26h1v2h-1z M24 26h3v1h-3z"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <h2>Questions fréquentes</h2>
+    <details class="faq"><summary>Quand est-ce que je reçois mon argent ?</summary>
+      <p>Vos gains sont crédités dès qu'une commande passée avec votre lien est validée. Vous les transférez sur votre compte bancaire quand vous le souhaitez, sans commission.</p></details>
+    <details class="faq"><summary>Mes proches paient-ils plus cher ?</summary>
+      <p>Non. Ils paient le même prix et reçoivent en plus un cash-back sur leur commande.</p></details>
+    <details class="faq"><summary>Mon lien expire-t-il ?</summary>
+      <p>Non, il est permanent. Vous pouvez le réutiliser autant de fois que vous le voulez.</p></details>
+    <details class="faq"><summary>Qui est Frak ?</summary>
+      <p>Notre partenaire technique : il suit les parrainages et verse les récompenses. Aucune donnée personnelle n'est conservée.</p></details>
+
+    <p class="poweredby">Programme propulsé par <strong>Frak</strong></p>
+  </div></section>
+
+</main>
+
+<div class="notes"><details>
+  <summary>Notes — direction C</summary>
+  <h4>Le pari</h4>
+  <p>Il n'y a pas de blocage : le visiteur a cliqué « Parrainage » dans le pied de page, il est déjà convaincu. On arrête de vendre et on livre le lien en cinq secondes. Tout le reste passe sous la ligne de flottaison.</p>
+  <h4>Ce que C est seule à faire</h4>
+  <p>Servir la <strong>deuxième visite</strong>. Utilisez le sélecteur en haut pour basculer sur « ambassadeur qui revient » : gains, filleuls, commandes en attente. A et B traitent l'acquisition, C traite la rétention — or ce sont les partageurs récurrents qui font le chiffre d'un programme de parrainage.</p>
+  <h4>Ce qui est réellement câblé</h4>
+  <ul>
+    <li>Le montant « pour vous », les badges stores, et le bouton « Ouvrir la vraie feuille de partage ».</li>
+    <li>Le champ du lien, les boutons de partage, les gains et les filleuls sont factices — volontairement, c'est la mesure exacte de ce que C demanderait au produit.</li>
+  </ul>
+  <h4>Ce que ça coûte au produit</h4>
+  <ul>
+    <li><strong>Le changement le plus lourd des trois.</strong> Aujourd'hui « partager » redirige vers la page de partage du wallet. Afficher le lien directement sur le domaine marchand est un comportement nouveau.</li>
+    <li>Les gains cumulés, le nombre de filleuls et les commandes en attente ne sont pas exposés au SDK — et le plan de la page ambassadeur les exclut explicitement du périmètre.</li>
+    <li>Cela suppose une identité résolue côté page marchand pour reconnaître un ambassadeur qui revient.</li>
+  </ul>
+  <h4>Le risque</h4>
+  <p>Cette page convertit l'intention mais ne la crée pas — exactement le reproche que le plan adresse déjà à la page de partage du wallet. En destination de pied de page pour du trafic froid, elle sous-vend le programme.</p>
+  <h4>Piste</h4>
+  <p>C n'est peut-être pas une troisième page mais le <strong>second état</strong> de A ou B : page complète à la première visite, outil compact quand l'ambassadeur revient.</p>
+</details></div>
+
+<script>
+// Copy to clipboard
+var copyBtn = document.getElementById("copy");
+copyBtn.addEventListener("click", function(){
+  var text = document.getElementById("link").textContent.trim();
+  var done = function(){
+    copyBtn.textContent = "Copié ✓";
+    copyBtn.classList.add("done");
+    setTimeout(function(){ copyBtn.textContent = "Copier"; copyBtn.classList.remove("done"); }, 1800);
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(done, done);
+  } else { done(); }
+});
+
+// Visitor-state toggle (mock only)
+var COPY = {
+  "new":  { title:"Votre lien de parrainage",
+            sub:"Envoyez-le à qui vous voulez. Vous êtes payé à chaque commande passée avec." },
+  "back": { title:"Content de vous revoir",
+            sub:"Votre lien n'a pas changé. Vos gains sont à jour ci-dessous." }
+};
+var blocks = document.querySelectorAll("[data-block]");
+document.querySelectorAll(".statebar button").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var state = btn.dataset.state;
+    document.querySelectorAll(".statebar button").forEach(function(b){
+      b.setAttribute("aria-pressed", String(b === btn));
+    });
+    document.querySelector('[data-t="title"]').textContent = COPY[state].title;
+    document.querySelector('[data-t="sub"]').textContent   = COPY[state].sub;
+    blocks.forEach(function(b){ b.hidden = (state !== "back"); });
+  });
+});
+</script>
+
+<script type="module" src="/src/ambassador.ts"></script>
+</body>
+</html>

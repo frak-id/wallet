@@ -45,6 +45,16 @@ export type SpacingUnit = (typeof SPACING_UNITS)[number];
 export const FONT_WEIGHTS = [400, 500, 600, 700] as const;
 export type FontWeight = (typeof FONT_WEIGHTS)[number];
 
+// `none` is not the same as unset: a theme that uppercases its buttons only
+// stops doing it when an explicit `text-transform:none` overrides it.
+export const TEXT_TRANSFORMS = [
+    "none",
+    "uppercase",
+    "lowercase",
+    "capitalize",
+] as const;
+export type TextTransform = (typeof TEXT_TRANSFORMS)[number];
+
 // One optional entry per style control; absent means the control is unset and
 // emits nothing. Colours are hex, except `bg` which also takes `transparent`.
 export type ButtonShareStyleValues = {
@@ -54,6 +64,7 @@ export type ButtonShareStyleValues = {
     bc?: string;
     fs?: number;
     fw?: FontWeight;
+    tt?: TextTransform;
     py?: number;
     px?: number;
     pu?: SpacingUnit;

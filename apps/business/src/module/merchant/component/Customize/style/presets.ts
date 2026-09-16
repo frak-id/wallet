@@ -101,7 +101,9 @@ export function buildLook(
 }
 
 /** Cleared controls hold `""`; presets omit the key. Both mean "unset". */
-function unset(value: unknown): unknown {
+function unset(
+    value: string | number | null | undefined
+): string | number | undefined {
     return value === "" || value === null ? undefined : value;
 }
 
@@ -164,13 +166,13 @@ export function matchLook(values: ButtonShareStyleValues): LookMatch {
     };
 }
 
-/** Applies a preset over the current values, preserving spacing and weight. */
+/** Applies a preset over the current values, preserving spacing and text. */
 export function applyLook(
     values: ButtonShareStyleValues,
     look: Look,
     size: SizeStep,
     accent: string
 ): ButtonShareStyleValues {
-    const { mt, mb, ml, mr, mu, fw } = values;
-    return { ...buildLook(look, size, accent), mt, mb, ml, mr, mu, fw };
+    const { mt, mb, ml, mr, mu, fw, tt } = values;
+    return { ...buildLook(look, size, accent), mt, mb, ml, mr, mu, fw, tt };
 }

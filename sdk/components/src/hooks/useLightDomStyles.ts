@@ -22,7 +22,9 @@ export function useLightDomStyles(
     }, [tag]);
 
     useEffect(() => {
-        if (!placementId || !placementCss) return;
-        styleManager.injectPlacement(tag, placementId, placementCss);
+        if (!placementCss) return;
+        // Without a placement the css is the global tier, which the backend
+        // serves self-scoped; the empty key can't collide with a placement id.
+        styleManager.injectPlacement(tag, placementId ?? "", placementCss);
     }, [tag, placementId, placementCss]);
 }

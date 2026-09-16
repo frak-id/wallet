@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D — Le cadeau d'abord · page ambassadeur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+    const detectFrakEnv = <%- detectFrakEnv %>;
+
+    (async () => {
+        const env = await detectFrakEnv(<%= useLocal %>, <%- remoteEnv %>);
+
+        window.FrakSetup = {
+            config: {
+                env,
+                metadata: { name: "Vanilla JS", lang: "fr", currency: "eur" },
+            },
+        };
+
+        const sdkScript = document.createElement('script');
+        sdkScript.type = 'module';
+        sdkScript.src = '<%- sdkScriptSrc %>';
+        sdkScript.onerror = () => {
+            console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+        };
+        document.head.appendChild(sdkScript);
+    })();
+</script>
+<style>
+:root{
+  /* Demo chrome: the example harness, not the page. */
+  --page:#3a3f47; --bar:#2d3139; --deep:#1e2127;
+
+  /* Page content: the SDK's own design-system tokens, re-exposed at runtime
+     by src/ambassador.ts. Literals are the current token values, so the page
+     is correct before the SDK lands and if adoption ever fails. */
+  --brand:var(--frak-surface-primary,#0043ef);
+  --brand-ink:var(--frak-surface-primaryHover,#0036bf);
+  --ink:var(--frak-text-primary,#000000);
+  --muted:var(--frak-text-secondary,#525252);
+  --line:var(--frak-border-default,#e2e2e2);
+  --cream:var(--frak-surface-muted,#f7f7f7);
+  --tintblue:var(--frak-surface-secondary,#f2f6fe);
+  --ok:var(--frak-text-success,#09be67);
+  --radius:12px; --font:Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;padding:20px;font-family:var(--font);color:var(--ink);background:var(--page);
+  display:flex;flex-direction:column;align-items:center;min-height:100vh}
+h1,h2,h3{margin:0;line-height:1.15}
+p{margin:0;line-height:1.6}
+a{color:inherit}
+.wrap{max-width:100%;margin:0 auto;padding:0 28px}
+
+/* ---- demo chrome, same as index.html ---- */
+.page-title{color:#fff}
+.demo-bar,.component-card,.notes{max-width:960px;width:100%;box-sizing:border-box;border-radius:12px}
+.demo-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 20px;margin-bottom:20px;
+  background:var(--bar);color:#ccc;font-size:14px}
+.demo-bar strong{color:#fff}
+/* Chrome keeps the example's own link blue: the Frak brand blue is too dark
+   against #2d3139. */
+.demo-bar a{color:#2196F3;text-decoration:none}
+.demo-bar a.on{color:#fff;text-decoration:underline}
+.demo-bar .sp{margin-left:auto;color:#aaa;font-family:monospace;font-size:12px}
+
+/* The page paints no background of its own — it inherits the merchant
+   surface, so the card supplies the light one its text needs. */
+.component-card{background:#fff;overflow:hidden}
+
+/* Panels sit on that white card, so they take the tint rather than white. */
+.side,.step,.appbar,details.faq{background:var(--cream)}
+
+/* ---- hero ---- */
+.hero{padding:64px 0 46px;text-align:center}
+.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.gift{font-size:clamp(60px,13vw,120px);font-weight:800;line-height:.9;letter-spacing:-.045em;
+  color:var(--brand);margin:14px 0 6px}
+.gift small{font-size:.32em;font-weight:700;letter-spacing:-.02em}
+.hero h1{font-size:clamp(20px,3.4vw,28px);font-weight:600;max-width:20ch;margin:0 auto 10px}
+.hero .sub{color:var(--muted);max-width:48ch;margin:0 auto 26px}
+/* Matches the SDK house CTA (PostPurchase.cta / Ambassador.ctaButton):
+   black pill on vars.text.primary, white text, uppercase, bold. */
+.cta{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--ink);color:#fff;
+  border:0;border-radius:999px;padding:15px 32px;font:bold 14px/1 var(--font);letter-spacing:.03em;
+  text-transform:uppercase;cursor:pointer;text-decoration:none}
+.cta:hover{background:var(--brand)}
+.cta:disabled{opacity:.7;cursor:default}
+.trustline{margin-top:14px;font-size:13px;color:var(--muted)}
+
+/* ---- the two sides ---- */
+section.band{padding:52px 0}
+.band h2{font-size:clamp(22px,4vw,30px);margin-bottom:10px}
+.band .lede{color:var(--muted);max-width:52ch;margin-bottom:28px}
+.sides{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:stretch}
+@media(max-width:760px){.sides{grid-template-columns:1fr}}
+.side{background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px}
+/* The friend's side leads: the whole point of the direction is that the
+   ambassador's cut is the secondary line, never the headline. */
+.side.them{border:1.5px solid var(--brand);background:var(--tintblue)}
+.side .who{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.side.them .who{color:var(--brand)}
+.side .big{font-size:clamp(34px,6vw,50px);font-weight:800;letter-spacing:-.03em;margin:10px 0 8px;
+  font-variant-numeric:tabular-nums}
+.side.them .big{color:var(--brand)}
+.side p{font-size:14.5px;color:var(--muted)}
+.side ul{margin:14px 0 0;padding-left:18px;color:var(--muted);font-size:14px;line-height:1.75}
+
+/* ---- steps ---- */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:760px){.steps{grid-template-columns:1fr}}
+.step{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.step .n{width:30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;display:grid;
+  place-items:center;font-weight:700;font-size:13.5px;margin-bottom:11px}
+.step h3{font-size:15.5px;margin-bottom:6px}
+.step p{font-size:14px;color:var(--muted)}
+
+/* ---- app ---- */
+.appbar{display:flex;align-items:center;gap:20px;background:#fff;border:1px solid var(--line);
+  border-radius:16px;padding:22px}
+@media(max-width:760px){.appbar{flex-direction:column;text-align:center}}
+.appbar .grow{flex:1}
+.appbar h3{font-size:16.5px;margin-bottom:5px}
+.appbar p{font-size:14px;color:var(--muted)}
+.badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.badge{display:flex;align-items:center;gap:9px;background:#14171c;color:#fff;border-radius:10px;
+  padding:8px 14px;text-decoration:none;min-width:150px}
+.badge .b1{font-size:9.5px;opacity:.75;display:block;line-height:1.2}
+.badge .b2{font-size:14px;font-weight:600;display:block;line-height:1.2}
+
+/* ---- faq ---- */
+details.faq{background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 18px;margin-bottom:10px}
+details.faq[open]{border-color:var(--brand)}
+details.faq summary{font-weight:600;cursor:pointer;font-size:15px;list-style:none}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary::after{content:"+";float:right;color:var(--brand);font-weight:700}
+details.faq[open] summary::after{content:"–"}
+details.faq p{margin-top:10px;font-size:14.5px;color:var(--muted)}
+
+/* ---- closing ---- */
+.closing{background:var(--brand);color:#fff;border-radius:22px;padding:52px 28px;text-align:center}
+.closing h2{font-size:clamp(24px,4.4vw,36px);margin-bottom:10px}
+.closing p{opacity:.85;max-width:46ch;margin:0 auto 24px}
+.closing .cta{background:#fff;color:var(--brand)}
+.poweredby{text-align:center;margin-top:26px;font-size:12.5px;color:var(--muted)}
+
+/* notes */
+.notes{margin:20px 0 0}
+.notes details{background:var(--bar);border:1px solid #3a414e;color:#ccc;padding:16px 18px}
+.notes summary{color:#fff;font-weight:600;cursor:pointer}
+.notes p,.notes li{color:#aaa;font-size:14px;line-height:1.6}
+.notes ul{margin:8px 0 0;padding-left:18px}
+.notes h4{color:#fff;margin:16px 0 4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.notes code{background:var(--deep);padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style>
+</head>
+<body>
+
+<h1 class="page-title">Page ambassadeur — D · Le cadeau d'abord</h1>
+
+<nav class="demo-bar" data-frak-nav></nav>
+
+<main class="component-card">
+
+  <section class="hero"><div class="wrap">
+    <div class="eyebrow">À offrir</div>
+    <div class="gift">0,80<small> €</small></div>
+    <h1>de cash-back pour chaque proche à qui vous en parlez.</h1>
+    <p class="sub">Vous ne vendez rien. Vous transmettez une réduction que vos proches n'auraient pas eue autrement — et vous êtes remercié pour ça.</p>
+    <button type="button" class="cta" data-frak-share>Offrir à mes proches</button>
+    <p class="trustline">Gratuit · sans engagement · ils paient le même prix que vous</p>
+  </div></section>
+
+  <section class="band"><div class="wrap">
+    <h2>Ce qu'ils reçoivent, ce que vous recevez</h2>
+    <p class="lede">Dans cet ordre. Le cash-back est pour eux&nbsp;; votre récompense est notre façon de vous remercier de l'avoir transmis.</p>
+    <div class="sides">
+      <div class="side them">
+        <div class="who">Pour votre proche</div>
+        <div class="big">0,80 €</div>
+        <p>Un cash-back sur sa première commande, sans code à saisir et sans inscription préalable.</p>
+        <ul>
+          <li>Même prix que sur le site, remise en plus</li>
+          <li>Aucune donnée bancaire à fournir</li>
+          <li>Crédité automatiquement à la validation</li>
+        </ul>
+      </div>
+      <div class="side">
+        <div class="who">Pour vous</div>
+        <div class="big" data-frak-reward="{REWARD}">7,20 €</div>
+        <p>Versés quand sa commande est validée. Pas de plafond, pas de palier à atteindre.</p>
+        <ul>
+          <li>Transférable sur votre compte bancaire</li>
+          <li>Sans commission au transfert</li>
+        </ul>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="band"><div class="wrap">
+    <h2>Comment ça marche</h2>
+    <p class="lede">Trois étapes, aucune inscription à remplir.</p>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Vous transmettez</h3>
+        <p>Un message, un lien. Vos proches n'ont aucun code à retenir ni à saisir.</p></div>
+      <div class="step"><div class="n">2</div><h3>Ils en profitent</h3>
+        <p>Leur cash-back est appliqué à leur commande, au même prix affiché que pour tout le monde.</p></div>
+      <div class="step"><div class="n">3</div><h3>Vous êtes remercié</h3>
+        <p>Votre récompense est créditée à la validation de leur commande.</p></div>
+    </div>
+  </div></section>
+
+  <section class="band"><div class="wrap">
+    <div class="appbar">
+      <div class="grow">
+        <h3>L'application Frak</h3>
+        <p>Une alerte quand un proche profite de votre cash-back, et vos récompenses de toutes les marques partenaires au même endroit.</p>
+        <div class="badges">
+          <a class="badge" data-frak-install aria-disabled="true"><span>&#63743;</span><span><span class="b1">Télécharger dans</span><span class="b2">App Store</span></span></a>
+          <a class="badge" data-frak-install aria-disabled="true"><span>&#9654;</span><span><span class="b1">Disponible sur</span><span class="b2">Google Play</span></span></a>
+        </div>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="band"><div class="wrap">
+    <h2>Questions fréquentes</h2>
+    <p class="lede">&nbsp;</p>
+    <details class="faq" open><summary>J'ai l'impression de vendre à mes amis.</summary>
+      <p>C'est l'inverse : ce que vous leur transmettez est une réduction qu'ils n'auraient pas eue en achetant directement. Ils paient moins cher que vous le jour où vous avez commandé.</p></details>
+    <details class="faq"><summary>Mes proches paient-ils plus cher avec mon lien ?</summary>
+      <p>Non. Le prix affiché est le même pour tout le monde, et le cash-back vient s'y ajouter.</p></details>
+    <details class="faq"><summary>Et si personne ne commande ?</summary>
+      <p>Il ne se passe rien. Le lien est permanent et sans engagement, vous pouvez le transmettre plus tard.</p></details>
+    <details class="faq"><summary>Dois-je m'inscrire à quelque chose ?</summary>
+      <p>Non. Votre porte-monnaie se crée au premier partage et s'ouvre avec votre biométrie, sans mot de passe ni RIB.</p></details>
+    <details class="faq"><summary>C'est quoi Frak ?</summary>
+      <p>Notre partenaire technique : il suit les parrainages et verse les récompenses. Aucune donnée personnelle n'est conservée.</p></details>
+  </div></section>
+
+  <section class="band"><div class="wrap">
+    <div class="closing">
+      <h2>Faites-en profiter quelqu'un</h2>
+      <p>Une personne à qui ce produit servirait vraiment. C'est tout ce qu'il faut.</p>
+      <button type="button" class="cta" data-frak-share>Offrir à mes proches</button>
+    </div>
+    <p class="poweredby">Programme propulsé par <strong>Frak</strong></p>
+  </div></section>
+
+</main>
+
+<div class="notes"><details>
+  <summary>Notes — direction D</summary>
+  <h4>Le pari</h4>
+  <p>A répond à « est-ce que ça vaut mon temps ? ». D répond à l'objection qui vient juste après, et qui bloque davantage de monde : « je ne veux pas avoir l'air de vendre à mes proches ». Le hero vend donc la remise du filleul, et la récompense de l'ambassadeur passe en second — visible, jamais en titre.</p>
+  <h4>À tester contre A</h4>
+  <p>C'est le A/B le plus direct du lot : même structure, même CTA, même câblage, seul l'ordre des deux montants change. Si D gagne, la hiérarchie se généralise à toutes les autres directions&nbsp;; si elle perd, l'objection est théorique et A tranche.</p>
+  <h4>Ce qui est réellement câblé</h4>
+  <ul>
+    <li><strong>Le montant ambassadeur</strong> — <code>getMerchantInformation</code> + <code>selectBestReward</code>, côté parrain. Sans campagne active, la page garde la valeur écrite en dur.</li>
+    <li><strong>Les deux CTA</strong> — <code>displaySharingPage</code> avec le placement <code>ambassador</code>.</li>
+    <li><strong>Les badges stores</strong> — vraie URL <code>/install</code> du wallet depuis <code>getEnvironment()</code>, sans identifiant ni preuve, comme sur A.</li>
+  </ul>
+  <h4>Ce qui reste en dur</h4>
+  <p>Le <strong>montant du filleul</strong> (0,80 €), qui est pourtant le chiffre du hero. <code>selectBestReward</code> sait le résoudre — <code>audience: "referee"</code> — mais <code>src/ambassador.ts</code> n'expose qu'un seul montant à la page. Si la direction est retenue, c'est le premier câblage à ajouter, sinon le hero peut contredire ce que le filleul recevra vraiment.</p>
+  <h4>Le risque</h4>
+  <p>Une remise filleul faible (0,80 € contre 7,20 €) affaiblit le hero&nbsp;: mettre en avant le plus petit des deux chiffres n'a de sens que si la répartition est moins déséquilibrée. C'est un argument pour le 80/20 évoqué dans les notes de A — et la décision de répartition devient ici une décision de page, pas seulement de campagne.</p>
+</details></div>
+
+<script type="module" src="/src/ambassador.ts"></script>
+</body>
+</html>
