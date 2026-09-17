@@ -53,25 +53,142 @@
         }
     };
 
-    const opaque = (bg) => !!bg && !/rgba\(0, 0, 0, 0\)|transparent/.test(bg);
+    /* Computed colours arrive as rgb(), rgba() or color(srgb ... / a). */
+    const alphaOf = (v) => {
+        const slash = /\/\s*([\d.]+)(%?)\s*\)/.exec(v);
+        if (slash) return +slash[1] / (slash[2] ? 100 : 1);
+        const p = (v || "").match(/[\d.]+/g);
+        if (!p) return 0;
+        return /^rgba/.test(v) && p.length >= 4 ? +p[3] : 1;
+    };
+
+    /* A sample that renders as nothing must never be written as a knob. */
+    const isTransparent = (v) => {
+        if (!v || v === "transparent") return true;
+        return /^(rgba?|color)\(/.test(v) && alphaOf(v) === 0;
+    };
 
     const rgbOf = (v) => {
-        const p = (v || "").match(/[\d.]+/g) || [0, 0, 0];
-        return [+p[0], +p[1], +p[2]];
+        const p = ((v || "").match(/[\d.]+/g) || []).map(Number);
+        if (p.length < 3) return [0, 0, 0];
+        /* color(srgb ...) carries 0-1 channels; everything else is 0-255. */
+        const scale = /^color\(/.test(v) ? 255 : 1;
+        return [p[0] * scale, p[1] * scale, p[2] * scale];
     };
     const dist = (x, y) => {
         const [a1, b1, c1] = rgbOf(x),
             [a2, b2, c2] = rgbOf(y);
         return Math.hypot(a1 - a2, b1 - b2, c1 - c2);
     };
+    const lum = (v) => {
+        const ch = (n) => {
+            const s = n / 255;
+            return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+        };
+        const [r, g, b] = rgbOf(v);
+        return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+    };
+    const contrast = (x, y) => {
+        const [hi, lo] = [lum(x), lum(y)].sort((m, n) => n - m);
+        return (hi + 0.05) / (lo + 0.05);
+    };
+    /* Flatten a translucent colour onto the opaque one beneath it. */
+    const over = (fg, bg) => {
+        const a = alphaOf(fg);
+        if (a >= 1) return fg;
+        const [r1, g1, b1] = rgbOf(fg),
+            [r2, g2, b2] = rgbOf(bg);
+        const mix = (x, y) => x * a + y * (1 - a);
+        return `rgb(${mix(r1, r2)}, ${mix(g1, g2)}, ${mix(b1, b2)})`;
+    };
     const pageBackground = () => {
         let n = document.body;
         while (n) {
             const bg = getComputedStyle(n).backgroundColor;
-            if (opaque(bg)) return bg;
+            if (!isTransparent(bg)) return bg;
             n = n.parentElement;
         }
         return "rgb(255, 255, 255)";
+    };
+    /* A fill this close to the page cannot read as a button. */
+    const FLAT_FILL = 30;
+    /* Under this WCAG ratio a sampled text colour is unreadable on our backdrop. */
+    const READABLE = 3;
+
+    /* Noms communs, jamais de marques : un widget nommé dans sa seule langue
+       maison passe au travers, d'où la structure d'abord. */
+    const WIDGET_WORDS =
+        /cookie|consent|newsletter|popup|modal|sr-only|visually-hidden|skip-to/i;
+    const names = (el) => `${el.getAttribute("class") || ""} ${el.id}`;
+    const inCartForm = (el) =>
+        el.closest('form[action*="/cart"], form[action*="/panier"]') !== null;
+
+    /* Un formulaire qui demande une adresse est une inscription, quel qu'en
+       soit l'éditeur. Divi nomme le champ sans lui donner de type. */
+    const inSignupForm = (el) => {
+        const form = el.closest("form");
+        if (!form || inCartForm(el)) return false;
+        return (
+            form.querySelector(
+                'input[type="email"], input[name*="email" i]'
+            ) !== null
+        );
+    };
+
+    const isOverlayBox = (el) => {
+        const role = el.getAttribute("role");
+        if (
+            el.tagName === "DIALOG" ||
+            role === "dialog" ||
+            role === "alertdialog"
+        )
+            return true;
+        if (el.getAttribute("aria-modal") === "true") return true;
+        return getComputedStyle(el).position === "fixed";
+    };
+
+    /* S'arrête sous <body> : les bandeaux de consentement posent une classe
+       d'état sur la racine, qui rejetterait alors tous les boutons. */
+    const insideWidget = (el) => {
+        if (inSignupForm(el)) return true;
+        const cart = inCartForm(el);
+        let node = el;
+        while (node && node !== document.body) {
+            if (WIDGET_WORDS.test(names(node))) return true;
+            if (!cart && isOverlayBox(node)) return true;
+            node = node.parentElement;
+        }
+        return false;
+    };
+
+    /* Le premier ancêtre peint, pas la page : un bouton pâle sur un panneau
+       pâle reste plat même si le corps derrière eux est blanc. */
+    const backdropOf = (el) => {
+        let node = el.parentElement;
+        while (node) {
+            const bg = getComputedStyle(node).backgroundColor;
+            if (!isTransparent(bg)) return bg;
+            node = node.parentElement;
+        }
+        return pageBackground();
+    };
+
+    /* Garé hors-cadre : c'est ainsi qu'un tiroir fermé cache un vrai CTA qui
+       mesure pourtant sa taille pleine. */
+    const isOnScreen = (el) => {
+        const r = el.getBoundingClientRect();
+        return r.right > 0 && r.left < window.innerWidth;
+    };
+
+    /* Readable brand: laid out, not hidden, and unlike the page behind it. */
+    const isBrandButton = (el) => {
+        if (insideWidget(el)) return false;
+        if (el.offsetWidth < 80 || el.offsetHeight < 20) return false;
+        if (!isOnScreen(el)) return false;
+        const st = getComputedStyle(el);
+        if (st.visibility === "hidden") return false;
+        if (isTransparent(st.backgroundColor)) return false;
+        return dist(st.backgroundColor, backdropOf(el)) > FLAT_FILL;
     };
 
     /* Une classe qui peut bouger une boîte n'est jamais adoptée : le rayon
@@ -85,9 +202,10 @@
         const st = getComputedStyle(el);
         if (st.position === "fixed" || st.position === "sticky") return null;
         const bordered =
-            parseFloat(st.borderTopWidth) > 0 && opaque(st.borderTopColor);
+            parseFloat(st.borderTopWidth) > 0 &&
+            !isTransparent(st.borderTopColor);
         const filled =
-            opaque(st.backgroundColor) && st.backgroundColor !== pageBg;
+            !isTransparent(st.backgroundColor) && st.backgroundColor !== pageBg;
         if (!bordered && !filled) return null;
         if (bordered && dist(st.borderTopColor, pageBg) > 120) return null;
         return st.borderTopLeftRadius;
@@ -123,13 +241,131 @@
                 .childNodes
         );
 
+        const page = block.firstElementChild;
+        const mine = (el) => page.contains(el);
+        const set = (k, v) => {
+            page.style.setProperty(`--frak-amb-${k}`, v);
+            return `${k} → ${v}`;
+        };
         const host =
             (selector && document.querySelector(selector)) ||
             document.querySelector("#main") ||
             document.querySelector("main") ||
             document.body;
 
-        const cardRadius = censusRadius();
+        /* Chrome headings and wordmarks are not content headings. */
+        const isContentHeading = (el) => {
+            if (el.closest("header,nav,[role=banner]")) return false;
+            return !/logo|brand|site-title|wordmark/i.test(
+                `${el.className} ${el.id}`
+            );
+        };
+
+        /* A hidden heading is still their typography, but chrome never is:
+           sampling nothing leaves our own clamp() in place. */
+        const hostEl = (sel) => {
+            const theirs = [...document.querySelectorAll(sel)].filter(
+                (el) => !mine(el)
+            );
+            const visible = theirs.filter((el) => el.offsetHeight > 0);
+            return (
+                visible.find(isContentHeading) || theirs.find(isContentHeading)
+            );
+        };
+
+        const primaryButton = () => {
+            const cart = document.querySelector(
+                'form[action*="/cart/add"] [type=submit], form[action*="/cart"] button[type=submit]'
+            );
+            if (cart && !mine(cart) && isBrandButton(cart)) return cart;
+            const theirs = [
+                ...document.querySelectorAll(
+                    "button, .btn, [type=submit], a.button, a.wp-block-button__link, a.et_pb_button"
+                ),
+            ].filter((el) => !mine(el) && isBrandButton(el));
+            return (
+                theirs.sort(
+                    (x, y) =>
+                        y.offsetWidth * y.offsetHeight -
+                        x.offsetWidth * x.offsetHeight
+                )[0] || null
+            );
+        };
+
+        const typo = (el, role, backdrop) => {
+            if (!el) return [];
+            const s = getComputedStyle(el);
+            const knobs = [
+                [`${role}-size`, s.fontSize],
+                [`${role}-weight`, s.fontWeight],
+                [`${role}-spacing`, s.letterSpacing],
+            ];
+            /* A colour chosen for the merchant's backdrop can vanish on ours. */
+            if (contrast(over(s.color, backdrop), backdrop) >= READABLE) {
+                knobs.push([`${role}-color`, s.color]);
+            }
+            return knobs;
+        };
+
+        const writeKnobs = (knobs) => {
+            let written = 0;
+            for (const [k, v] of knobs) {
+                if (!v || isTransparent(v)) continue;
+                set(k, v);
+                written += 1;
+            }
+            return written;
+        };
+
+        const buttonKnobs = (button) => {
+            if (!button) return [];
+            const f = getComputedStyle(button);
+            return [
+                ["accent", f.backgroundColor],
+                ["accent-ink", f.color],
+                ["cta-radius", f.borderRadius.split(" ")[0]],
+                ["cta-transform", f.textTransform],
+            ];
+        };
+
+        /* Chooses what to copy. Layout-dependent, so it must run before the
+           host content is hidden: a hidden element measures zero. */
+        const sampleHost = () => {
+            const pageBg = pageBackground();
+            const button = primaryButton();
+            return {
+                pageBg,
+                buttonBg: button
+                    ? getComputedStyle(button).backgroundColor
+                    : pageBg,
+                h1: hostEl("h1"),
+                h2: hostEl("h2"),
+                button,
+                radius: censusRadius(),
+            };
+        };
+
+        /* Re-reads the remembered elements: hidden or not, they are theirs. */
+        const knobsFrom = (src) => [
+            ...typo(src.h1, "h1", src.pageBg),
+            ...typo(src.h2, "h2", src.pageBg),
+            ...typo(src.button, "cta", src.buttonBg),
+            ...buttonKnobs(src.button),
+            ...(src.radius ? [["radius", src.radius]] : []),
+        ];
+
+        const applyTheme = (src) => {
+            const written = writeKnobs(knobsFrom(src));
+            return (
+                written +
+                " valeurs échantillonnées" +
+                (src.button ? "" : " (aucun bouton trouvé)")
+            );
+        };
+
+        /* Layout is measured here, while the host content is still laid out. */
+        const sample = sampleHost();
+        const autoTheme = () => applyTheme(sample);
 
         if (replace) {
             const hidden = [...host.children].map((el) => ({
@@ -151,13 +387,6 @@
             ),
             behavior: "smooth",
         });
-
-        const page = block.firstElementChild;
-        const mine = (el) => page.contains(el);
-        const set = (k, v) => {
-            page.style.setProperty(`--frak-amb-${k}`, v);
-            return `${k} → ${v}`;
-        };
 
         /* The host's own content may be deliberately pulled under a sticky header
        (oolution sets #MainContent{margin-top:-120px}); we have no hero to
@@ -198,74 +427,6 @@
             return gap > 0
                 ? `dégagé de ${Math.round(gap + 24)}px`
                 : "aucun dégagement nécessaire";
-        };
-
-        const hostEl = (sel) => {
-            const theirs = [...document.querySelectorAll(sel)].filter(
-                (el) => !mine(el)
-            );
-            return theirs.find((el) => el.offsetHeight > 0) || theirs[0];
-        };
-
-        const primaryButton = () => {
-            const cart = document.querySelector(
-                'form[action*="/cart/add"] [type=submit], form[action*="/cart"] button[type=submit]'
-            );
-            if (cart && !mine(cart)) return cart;
-            const theirs = [
-                ...document.querySelectorAll(
-                    "button, .btn, [type=submit], a.button"
-                ),
-            ].filter(
-                (el) =>
-                    !mine(el) && opaque(getComputedStyle(el).backgroundColor)
-            );
-            const visible = theirs.filter((el) => el.offsetWidth > 80);
-            return (
-                visible.sort(
-                    (x, y) =>
-                        y.offsetWidth * y.offsetHeight -
-                        x.offsetWidth * x.offsetHeight
-                )[0] || theirs[0]
-            );
-        };
-
-        const typo = (el, role) => {
-            if (!el) return [];
-            const s = getComputedStyle(el);
-            return [
-                [`${role}-size`, s.fontSize],
-                [`${role}-weight`, s.fontWeight],
-                [`${role}-spacing`, s.letterSpacing],
-                [`${role}-color`, s.color],
-            ];
-        };
-
-        const autoTheme = () => {
-            const button = primaryButton();
-            const knobs = [
-                ...typo(hostEl("h1"), "h1"),
-                ...typo(hostEl("h2"), "h2"),
-                ...typo(button, "cta"),
-            ];
-            if (button) {
-                const f = getComputedStyle(button);
-                knobs.push(
-                    ["accent", f.backgroundColor],
-                    ["accent-ink", f.color],
-                    ["cta-radius", f.borderRadius.split(" ")[0]],
-                    ["cta-transform", f.textTransform]
-                );
-            }
-            if (cardRadius) knobs.push(["radius", cardRadius]);
-            knobs.forEach(([k, v]) => {
-                if (v) set(k, v);
-            });
-            return (
-                knobs.length +
-                " valeurs échantillonnées" +
-                (button ? "" : " (aucun bouton trouvé)")
-            );
         };
 
         /* --- 3b : adoption de classes, sous conditions --- */
