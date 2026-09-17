@@ -69,6 +69,7 @@ const NAV_PAGES: [string, string][] = [
     ["j", "J · Le vrai chiffre"],
     ["k", "K · Le mix"],
     ["k-min", "K min · CSS minimal"],
+    ["l", "L · Le parcours"],
 ];
 
 /** Demo chrome only: one list for every direction, current one marked. */

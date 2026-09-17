@@ -57,7 +57,12 @@
   border:1px solid color-mix(in srgb,currentColor 20%,transparent)}
 
 .frak-hero{display:grid;gap:2em;grid-template-columns:repeat(auto-fit,minmax(18em,1fr));align-items:center}
-.frak-art{aspect-ratio:4/5;display:grid;place-items:center;text-align:center;padding:1em;
+.frak-tag{position:absolute;inset:auto 1em 1em;display:flex;flex-wrap:wrap;align-items:center;gap:.75em;
+  text-align:start;padding:.9em 1em}
+.frak-tag b{display:block;font-size:1.4em;line-height:1.1}
+.frak-tag small{display:block;font-size:.8em}
+.frak-pill{margin-inline-start:auto;padding:.45em .8em;font-size:.72em;font-weight:700}
+.frak-art{position:relative;aspect-ratio:4/5;display:grid;place-items:center;text-align:center;padding:1em;
   border:1px dashed color-mix(in srgb,currentColor 35%,transparent)}
 .frak-faces{display:flex;flex-wrap:wrap;gap:.5em;align-items:center}
 /* A circle is structure, not taste: without this the avatars fall back to bare
@@ -109,21 +114,44 @@ body{margin:0;padding:20px;background:#3a3f47;display:flex;flex-direction:column
 </style>
 
 <style id="merchant-theme">
-/* Stand-in for the merchant's own stylesheet. Toggle it off to see exactly
-   what we ship. Nothing here is ours, and nothing here is in the bundle. */
-.component-card{background:#fffdf8;color:#1a1a1a;font-family:Georgia,serif;line-height:1.6}
-.component-card h1{font-size:2.6rem;font-weight:400;letter-spacing:-.02em;margin:0}
-.component-card h2{font-size:1.7rem;font-weight:400;margin:0}
+/* Stand-in for the merchant's own stylesheet — here B's hero reproduced.
+   Toggle it off to see exactly what we ship. Nothing here is ours, and nothing
+   here is in the bundle. Every line is CSS, since this page has no knobs. */
+.component-card{background:var(--frak-surface-secondary,#f2f6fe);color:var(--frak-text-primary,#000);
+  font-family:Arial,sans-serif;line-height:1.6}
+.component-card h1{font-size:clamp(34px,5.6vw,52px);font-weight:700;letter-spacing:-.02em;margin:0;
+  line-height:1.15;max-width:14ch}
+.component-card h2{font-size:clamp(26px,4vw,36px);font-weight:700;margin:0;line-height:1.15}
 .component-card h3{font-size:1.05rem;font-weight:700;margin:0}
 .component-card p{margin:0}
-.component-card button,.component-card .btn{background:#1a1a1a;color:#fffdf8;border:0;padding:.9rem 2rem;
-  font:inherit;font-size:.95rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
-.component-card button:hover{background:#7a5c2e}
-.component-card summary{cursor:pointer;font-weight:700;padding:.6rem 0}
-.component-card details{border-bottom:1px solid #e6e0d4}
-.component-card .frak-amount{color:#7a5c2e}
-.component-card .frak-faces span{color:#fffdf8;background:#7a5c2e;border-color:#7a5c2e;
-  font-family:Arial,sans-serif}
+.component-card button,.component-card .btn{background:var(--frak-text-primary,#000);color:#fff;border:0;
+  border-radius:999px;padding:15px 32px;font:bold 14px/1 Arial,sans-serif;letter-spacing:.03em;
+  text-transform:uppercase;cursor:pointer}
+.component-card button:hover{background:var(--frak-surface-primary,#0043ef)}
+.component-card summary{cursor:pointer;font-weight:600;padding:.6rem 0}
+.component-card details{border-bottom:1px solid var(--frak-border-default,#e2e2e2)}
+.component-card .frak-amount{color:var(--frak-surface-primary,#0043ef)}
+.component-card .frak-hero>div:first-child>.frak-muted:first-child{color:var(--frak-text-warning,#ec7e00);
+  font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;opacity:1}
+.component-card .frak-art{border:0;border-radius:12px;
+  background:linear-gradient(150deg,#668ef5,#0043ef 55%,#00288f)}
+.component-card .frak-art .frak-muted{color:#fff;opacity:.85;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase}
+.component-card .frak-art .frak-muted small{font-weight:400;letter-spacing:0;text-transform:none}
+.component-card .frak-faces{gap:0}
+.component-card .frak-faces span{inline-size:34px;block-size:34px;font-size:12px;margin-left:-10px;
+  color:#fff;background:var(--frak-surface-primary,#0043ef);font-family:Arial,sans-serif;
+  border:2.5px solid var(--frak-surface-secondary,#f2f6fe)}
+.component-card .frak-faces span:first-child{margin-left:0}
+.component-card .frak-faces span:nth-child(2){background:var(--frak-text-warning,#ec7e00)}
+.component-card .frak-faces span:nth-child(3){background:var(--frak-text-success,#09be67)}
+.component-card .frak-faces span:nth-child(4){background:var(--frak-text-secondary,#525252)}
+.component-card .frak-faces p{margin-left:12px}
+.component-card .frak-tag{background:#fff;border-radius:12px}
+.component-card .frak-tag b{color:var(--frak-surface-primary,#0043ef)}
+.component-card .frak-tag small{color:var(--frak-text-secondary,#525252)}
+.component-card .frak-pill{background:var(--frak-surface-primary,#0043ef);color:#fff;
+  border-radius:99px;letter-spacing:.04em}
 </style>
 </head>
 <body>
@@ -154,6 +182,10 @@ body{margin:0;padding:20px;background:#3a3f47;display:flex;flex-direction:column
     </div>
     <div class="frak-art">
       <p class="frak-muted">Photo de la marque<br><small>Emplacement fourni par le marchand</small></p>
+      <div class="frak-tag">
+        <div><b data-frak-reward="{REWARD}">7,20 €</b><small>pour vous, par commande</small></div>
+        <span class="frak-pill" data-frak-reward-referee="+ {REWARD} offerts à votre filleul">+ 0,80 € offerts à votre filleul</span>
+      </div>
     </div>
   </section>
 

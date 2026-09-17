@@ -74,6 +74,7 @@ export default defineConfig(({ mode }) => {
                     "ambassador-j.html",
                     "ambassador-k.html",
                     "ambassador-k-min.html",
+                    "ambassador-l.html",
                 ].map((file) => ({
                     filename: file,
                     template: file,

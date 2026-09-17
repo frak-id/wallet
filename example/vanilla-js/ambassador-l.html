@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>K — Le mix · page ambassadeur</title>
+<title>L — Le parcours · page ambassadeur</title>
 <script>
     const detectFrakEnv = <%- detectFrakEnv %>;
 
@@ -164,6 +164,24 @@
   align-items:center;background:var(--_surface);border:1px solid var(--_border);
   border-radius:var(--_radius);padding:1.75em}
 
+/* Both sides of the deal sit in the same card grid, so the two amounts are
+   read as one comparison rather than two claims. */
+.frak-card .frak-amount{font-size:clamp(2em,6vw,3em)}
+
+.frak-linkcard{display:grid;gap:1.1em;background:var(--_surface);
+  border:1px solid var(--_border);border-radius:var(--_radius);padding:1.5em}
+.frak-linkrow{display:flex;flex-wrap:wrap;gap:.6em;align-items:center}
+/* min-width:0 is what lets a long link ellipsize instead of widening the
+   flex item past the card. */
+.frak-linkfield{flex:1 1 14em;min-width:0;padding:.85em 1.1em;overflow:hidden;
+  white-space:nowrap;text-overflow:ellipsis;border:1px solid var(--_border);
+  border-radius:var(--_radius)}
+.frak-shares{display:flex;flex-wrap:wrap;gap:.5em}
+.frak-share{display:inline-flex;align-items:center;gap:.45em;cursor:pointer;
+  background:none;color:inherit;border:1px solid var(--_border);
+  border-radius:var(--_cta-radius);padding:.55em 1em;font:inherit;font-size:.85em}
+.frak-share:hover{opacity:.7}
+
 [data-frak-page] details{border-bottom:1px solid var(--_border);padding:.9em 0}
 [data-frak-page] summary{cursor:pointer;font-weight:700;list-style:none}
 [data-frak-page] summary::-webkit-details-marker{display:none}
@@ -237,7 +255,7 @@ body{margin:0;padding:20px;background:#3a3f47;display:flex;flex-direction:column
 </head>
 <body>
 
-<p class="page-title">Page ambassadeur — K · Le mix</p>
+<p class="page-title">Page ambassadeur — L · Le parcours</p>
 
 <nav class="demo-bar" data-frak-nav></nav>
 
@@ -301,22 +319,39 @@ body{margin:0;padding:20px;background:#3a3f47;display:flex;flex-direction:column
     </div>
   </section>
 
-  <section>
-    <h2>Comment vous êtes payé</h2>
-    <p class="frak-lede">La question que tout le monde se pose en premier.</p>
+  <section class="frak-center">
+    <h2>Vos proches y gagnent aussi</h2>
+    <p class="frak-lede">Recommander Vanilla JS ne coûte rien à personne. Votre filleul reçoit un cash-back sur sa première commande&nbsp;: vous n'avez pas à vous excuser d'envoyer votre lien.</p>
     <div class="frak-cols">
-      <div class="frak-card">
-        <h3>Crédité instantanément</h3>
-        <p class="frak-muted">Dès qu'une commande est validée, le montant arrive dans votre porte-monnaie Frak. Pas d'attente, pas de seuil de déblocage.</p>
+      <div class="frak-card frak-center">
+        <p class="frak-muted frak-small">Vous</p>
+        <p class="frak-amount" data-frak-reward="{REWARD}">7,20<small> €</small></p>
+        <p class="frak-muted">Crédités sur votre porte-monnaie dès que la commande est validée.</p>
       </div>
-      <div class="frak-card">
-        <h3>Vers votre compte bancaire</h3>
-        <p class="frak-muted">Vous transférez quand vous voulez, sans commission. C'est votre argent, pas des points ni un bon d'achat.</p>
+      <div class="frak-card frak-center">
+        <p class="frak-muted frak-small">Votre filleul</p>
+        <p class="frak-amount" data-frak-reward-referee="{REWARD}">0,80<small> €</small></p>
+        <p class="frak-muted">Un cash-back sur sa première commande, au même prix que tout le monde.</p>
       </div>
-      <div class="frak-card">
-        <h3>Sans donnée bancaire</h3>
-        <p class="frak-muted">Pas de RIB à donner pour commencer, pas de mot de passe. Votre porte-monnaie s'ouvre avec votre biométrie.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Votre lien de parrainage</h2>
+    <p class="frak-lede">Envoyez-le à qui vous voulez. Vous êtes payé à chaque commande passée avec.</p>
+    <div class="frak-linkcard">
+      <p class="frak-muted frak-small">Votre lien personnel</p>
+      <div class="frak-linkrow">
+        <p class="frak-linkfield" id="amb-link">vanilla-js.example/r/a8f2k</p>
+        <button type="button" class="frak-cta" id="amb-copy">Copier</button>
       </div>
+      <div class="frak-shares">
+        <button type="button" class="frak-share" data-frak-share>WhatsApp</button>
+        <button type="button" class="frak-share" data-frak-share>SMS</button>
+        <button type="button" class="frak-share" data-frak-share>Instagram</button>
+        <button type="button" class="frak-share" data-frak-share>E-mail</button>
+      </div>
+      <p class="frak-muted frak-small"><strong data-frak-reward="{REWARD}">7,20 €</strong> pour vous · <strong data-frak-reward-referee="{REWARD}">0,80 €</strong> pour votre filleul · à chaque commande</p>
     </div>
   </section>
 
@@ -378,20 +413,28 @@ body{margin:0;padding:20px;background:#3a3f47;display:flex;flex-direction:column
 </main>
 
 <div class="notes"><details>
-  <summary>Notes — direction K</summary>
-  <h4>La composition</h4>
-  <ul>
-    <li><strong>Hero</strong> — celui de B, sans le mot « Cercle » : le statut et la preuve sociale restent, le nom de club disparaît, et avec lui les avantages qui le justifiaient (coffret, accès anticipé, lettre).</li>
+  <summary>Notes — direction L</summary>
+  <h4>La composition — sept temps</h4>
+  <ol>
+    <li><strong>Le club</strong> — le hero de B, sans le mot « Cercle » : le statut et la preuve sociale restent, le nom de club disparaît.</li>
     <li><strong>Le montant</strong> — le hero de A, rétrogradé en second bloc : il confirme la promesse du premier au lieu de l'ouvrir.</li>
-    <li><strong>Comment vous êtes payé</strong>, <strong>app</strong> et <strong>FAQ</strong> — ceux de A, passés au vouvoiement.</li>
-  </ul>
+    <li><strong>Comment ça marche</strong> — les trois gestes, inchangés.</li>
+    <li><strong>Vos proches y gagnent aussi</strong> — le win-win de B, rebâti dans le vocabulaire de K.</li>
+    <li><strong>Votre lien de parrainage</strong> — la carte de C.</li>
+    <li><strong>Suivre vos gains</strong> — le bloc app et badges.</li>
+    <li><strong>FAQ</strong>.</li>
+  </ol>
+  <h4>Ce que L retire à K</h4>
+  <p><strong>« Comment vous êtes payé » a sauté</strong> : la liste demandée ne le contient pas, et à sept régions le bloc était déjà long. Les trois objections qu'il traitait — versement instantané, virement sans commission, pas de RIB — ne sont plus répondues que par la FAQ, qui est repliable&nbsp;: <strong>c'est une perte réelle</strong>, pas une simplification. Si une seule doit revenir, c'est « sans donnée bancaire », la plus bloquante à l'inscription.</p>
+  <h4>Le lien affiché est faux</h4>
+  <p><code>vanilla-js.example/r/a8f2k</code> est une chaîne en dur, reprise telle quelle de C. <strong>Aucune action du SDK ne renvoie de lien brut</strong> : le partage passe par <code>displaySharingPage</code>, qui ouvre une feuille native. Le bouton « Copier » copie donc une URL morte — acceptable sur une page de démo, <strong>bloquant sur une vraie boutique</strong>. Les quatre boutons de canal, eux, sont câblés pour de bon (<code>data-frak-share</code>) et ouvrent tous la même feuille, qui choisit ensuite le canal : ils sont fidèles à la maquette de C, pas à son mécanisme. Cette région ne peut pas être injectée chez un marchand tant qu'une action « donne-moi le lien » n'existe pas.</p>
   <h4>Le parti pris de style</h4>
   <p>La page arrive <strong>finie</strong> : un marchand qui n'écrit pas une ligne de CSS obtient un bloc dessiné, pas un document nu. Deux règles tiennent l'ensemble.</p>
   <ul>
     <li><strong>La typographie est toujours héritée.</strong> <code>font-family</code> n'est déclaré nulle part, à la seule exception des badges de téléchargement (artwork de marque imposé) — c'est cette omission qui fait que le bloc paraît natif sur n'importe quelle boutique.</li>
     <li><strong>Tout le reste est une variable à valeur par défaut</strong>, et il y en a six : accent, encre sur accent, surface, bordure, rayon, visuel. Un panneau de réglages écrit la variable&nbsp;; personne n'écrit de CSS. Surface et bordure se déduisent par défaut de la couleur de texte héritée (<code>color-mix</code>), donc un thème sombre fonctionne sans qu'on lui demande quoi que ce soit.</li>
   </ul>
-  <p>La case « Thème marchand simulé » reproduit le hero de <strong>B</strong>. Elle a coûté un réglage de plus, <code>--frak-amb-cta-bg</code>&nbsp;: A, B et C peignent leurs <em>chiffres</em> en bleu de marque et leurs <em>boutons</em> en noir, et le commentaire de B précise que ce noir est le CTA maison du SDK — un accent unique ne pouvait pas rendre les deux. <strong>Le reste n'est pas atteignable par réglage</strong> et descend en CSS marchand&nbsp;: le sur-titre orange, les pastilles d'avatars multicolores et leur chevauchement, le blanc sur le dégradé du visuel, la graisse et la largeur du titre. C'est la mesure exacte de ce que les huit variables ne couvrent pas. Un écart assumé avec B&nbsp;: B ne teinte que sa bande de hero et garde le reste en blanc, alors qu'ici toute la carte est teintée — une bande pleine largeur demanderait des marges négatives dans la carte de démo. Décochée, il reste les valeurs par défaut : c'est ce que voit un marchand qui ne configure rien. <strong>La variante <a href="ambassador-k-min.html">K min</a></strong> conserve l'approche inverse — n'embarquer qu'une grille et tout hériter — pour comparaison.</p>
+  <p>La case « Thème marchand simulé » reproduit le hero de <strong>B</strong>. Elle a coûté un réglage de plus, <code>--frak-amb-cta-bg</code>&nbsp;: A, B et C peignent leurs <em>chiffres</em> en bleu de marque et leurs <em>boutons</em> en noir, et le commentaire de B précise que ce noir est le CTA maison du SDK — un accent unique ne pouvait pas rendre les deux. <strong>Le reste n'est pas atteignable par réglage</strong> et descend en CSS marchand&nbsp;: le sur-titre orange, les pastilles d'avatars multicolores et leur chevauchement, le blanc sur le dégradé du visuel, la graisse et la largeur du titre. C'est la mesure exacte de ce que les huit variables ne couvrent pas. Décochée, il reste les valeurs par défaut : c'est ce que voit un marchand qui ne configure rien. <strong>La variante <a href="ambassador-k-min.html">K min</a></strong> conserve l'approche inverse — n'embarquer qu'une grille et tout hériter — pour comparaison.</p>
   <p>Seule exception aux six variables : les badges stores, dont Apple et Google imposent le visuel tel quel.</p>
   <h4>Test terrain — saintlazare.fr</h4>
   <p>Le bloc a été injecté tel quel dans une fiche produit de <strong>saintlazare.fr</strong> (PrestaShop, thème « cosmetics »), sans rien changer chez eux. L'héritage fonctionne : titres en Montserrat, corps en FuturaNewBook, couleur de texte reprise — le bloc passe pour un module du thème.</p>
@@ -430,6 +473,19 @@ body{margin:0;padding:20px;background:#3a3f47;display:flex;flex-direction:column
 var themeToggle = document.getElementById("theme-toggle");
 themeToggle.addEventListener("change", function(){
   document.getElementById("merchant-theme").disabled = !themeToggle.checked;
+});
+
+// Demo only: copies the placeholder string, since no SDK action returns a link.
+var copyBtn = document.getElementById("amb-copy");
+copyBtn.addEventListener("click", function(){
+  var text = document.getElementById("amb-link").textContent.trim();
+  var done = function(){
+    copyBtn.textContent = "Copi\u00e9";
+    setTimeout(function(){ copyBtn.textContent = "Copier"; }, 1800);
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(done, done);
+  } else { done(); }
 });
 </script>
 
