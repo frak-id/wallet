@@ -67,6 +67,8 @@ const NAV_PAGES: [string, string][] = [
     ["f", "F · Remboursé"],
     ["h", "H · Objections"],
     ["j", "J · Le vrai chiffre"],
+    ["k", "K · Le mix"],
+    ["k-min", "K min · CSS minimal"],
 ];
 
 /** Demo chrome only: one list for every direction, current one marked. */
