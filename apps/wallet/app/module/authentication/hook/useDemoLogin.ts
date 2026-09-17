@@ -1,3 +1,4 @@
+import { buildCurrentLoginChallenge } from "@frak-labs/app-essentials";
 import type { Flow, Session } from "@frak-labs/wallet-shared";
 import {
     authenticatedWalletApi,
@@ -10,7 +11,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { type Hex, stringToHex } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { privateKeyToAccount } from "viem/accounts";
 
 type DemoLoginArgs = {
     pkey: Hex;
@@ -33,7 +34,7 @@ export function useDemoLogin() {
             const account = privateKeyToAccount(pkey);
 
             // Generate the msg to sign with the challenge
-            const challenge = generatePrivateKey();
+            const challenge = buildCurrentLoginChallenge();
             const message = `I want to connect to Frak and I accept the CGU.\n Verification code:${challenge}`;
 
             const signature = await account.signMessage({

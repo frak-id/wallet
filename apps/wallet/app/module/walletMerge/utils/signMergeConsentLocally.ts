@@ -1,6 +1,6 @@
 import {
     buildMergeConsentChallenge,
-    formatMergeConsentHourSlot,
+    formatUtcHourSlot,
     WebAuthN,
 } from "@frak-labs/app-essentials";
 import { getTauriGetFn } from "@frak-labs/wallet-shared";
@@ -35,7 +35,7 @@ export async function signMergeConsentLocally({
     const challengeString = buildMergeConsentChallenge({
         winner,
         loserAuthenticatorId,
-        hourSlot: formatMergeConsentHourSlot(new Date()),
+        hourSlot: formatUtcHourSlot(new Date()),
     });
     const challenge = stringToHex(challengeString);
 

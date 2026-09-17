@@ -113,6 +113,9 @@ export const elysiaEnv = {
     JWT_BUSINESS_SECRET: jwtBusinessSecret.value,
     PLATFORM_ADMIN_WALLETS: platformAdminWallets.value,
     PRODUCT_SETUP_CODE_SALT: productSetupCodeSalt.value,
+    // Flip to "true" to reject login challenges that carry no `frak-login:`
+    // prefix, once `login_challenge_total{verdict="legacy"}` reaches zero.
+    WALLET_REQUIRE_FRESH_LOGIN_CHALLENGE: "false",
 
     // Notifications
     VAPID_PUBLIC_KEY: vapidPublicKey.value,
