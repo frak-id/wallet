@@ -62,6 +62,7 @@ export function SharingPage({
             <PostShareConfirmation
                 installUrl={installUrl}
                 merchant={merchant}
+                reward={reward}
                 t={t}
                 chrome={chrome}
                 onDismiss={actions.onConfirmationDismiss}
