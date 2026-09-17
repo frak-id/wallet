@@ -125,38 +125,79 @@ function waitForClient(): Promise<FrakClient> {
 }
 
 /**
- * Same selection `useReward` performs: best live referral reward for the
- * referrer side. Percentage payouts carry no amount to advertise, so they
- * resolve as no-reward and the page keeps its built-in wording.
+ * Same selection `useReward` performs, resolved for both sides of the
+ * referral from one merchant fetch. Percentage payouts carry no amount to
+ * advertise, so they resolve as no-reward and the page keeps its
+ * built-in wording.
  */
-async function resolveReward(client: FrakClient): Promise<string | undefined> {
+async function resolveRewards(
+    client: FrakClient
+): Promise<{ referrer?: string; referee?: string }> {
     try {
         const merchantInfo = await getMerchantInformation(client);
-        const best = selectBestReward(merchantInfo.rewards, {
-            currency: client.config.metadata?.currency,
-            targetInteraction: "referral",
-            audience: "referrer",
-        });
-        if (best && best.payoutType !== "percentage") return best.formatted;
+        const select = (audience: "referrer" | "referee") => {
+            const best = selectBestReward(merchantInfo.rewards, {
+                currency: client.config.metadata?.currency,
+                targetInteraction: "referral",
+                audience,
+            });
+            return best && best.payoutType !== "percentage"
+                ? best.formatted
+                : undefined;
+        };
+        return { referrer: select("referrer"), referee: select("referee") };
     } catch {
         // Reward text is non-critical — the page renders without it.
     }
-    return undefined;
+    return {};
 }
 
 /**
- * `data-frak-reward` with no value swaps the element text for the amount;
- * with a value it is a template carrying `{REWARD}`. The markup already
- * holds a readable fallback, so a failed lookup changes nothing.
+ * The trailing currency sign is separated so an authored `<small>` can keep
+ * carrying it; a leading sign ($7.20) must stay glued to the number.
  */
-function applyReward(reward: string | undefined) {
-    const targets =
-        document.querySelectorAll<HTMLElement>("[data-frak-reward]");
-    for (const el of targets) {
-        const template = el.dataset.frakReward?.trim() || "{REWARD}";
-        if (!reward) continue;
-        el.textContent = applyRewardPlaceholder(template, reward);
-    }
+function splitFormattedReward(
+    formatted: string
+): { lead: string; trail: string } | undefined {
+    const match = /^(.*\d)([^\d]+)$/.exec(formatted.trim());
+    if (!match?.[2].trim()) return undefined;
+    return { lead: match[1], trail: match[2] };
+}
+
+/**
+ * `data-frak-reward` and `data-frak-reward-referee` with no value swap the
+ * element text for the amount; with a value they are templates carrying
+ * `{REWARD}`. The markup already holds a readable fallback, so a failed
+ * lookup changes nothing. A bare `{REWARD}` over a styled `<small>` keeps
+ * that child: only the number is rewritten, the sign stays small.
+ */
+function applyRewards(rewards: { referrer?: string; referee?: string }) {
+    const apply = (
+        selector: string,
+        key: string,
+        reward: string | undefined
+    ) => {
+        for (const el of document.querySelectorAll<HTMLElement>(selector)) {
+            if (!reward) continue;
+            const template = el.dataset[key]?.trim() || "{REWARD}";
+            const whole = applyRewardPlaceholder(template, reward);
+            const parts =
+                template === "{REWARD}"
+                    ? splitFormattedReward(reward)
+                    : undefined;
+            const tail = el.lastElementChild;
+            const head = el.firstChild;
+            if (!parts || !tail || !head || head.nodeType !== Node.TEXT_NODE) {
+                el.textContent = whole;
+                continue;
+            }
+            const pad = /^\s*/.exec(tail.textContent ?? "")?.[0] ?? "";
+            head.textContent = parts.lead;
+            tail.textContent = `${pad}${parts.trail.trimStart()}`;
+        }
+    };
+    apply("[data-frak-reward]", "frakReward", rewards.referrer);
+    apply("[data-frak-reward-referee]", "frakRewardReferee", rewards.referee);
 }
 
 function bindShare(client: FrakClient) {
@@ -650,11 +691,11 @@ async function init() {
     bindShare(client);
     bindInstall(merchantId);
 
-    const reward = await resolveReward(client);
-    applyReward(reward);
+    const rewards = await resolveRewards(client);
+    applyRewards(rewards);
 
     status(
-        `SDK prêt · marchand ${merchantId ?? "non résolu"} · récompense ${reward ?? "non résolue"} · ${tokens} tokens · auto-thème : ${autoTheme()}`
+        `SDK prêt · marchand ${merchantId ?? "non résolu"} · récompense ${rewards.referrer ?? "non résolue"} / filleul ${rewards.referee ?? "non résolue"} · ${tokens} tokens · auto-thème : ${autoTheme()}`
     );
 }
 
