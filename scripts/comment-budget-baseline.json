@@ -446,7 +446,7 @@
     "sdk/core/src/identity/derive.ts": 1,
     "sdk/core/src/identity/index.ts": 1,
     "sdk/core/src/identity/sign.test.ts": 2,
-    "sdk/core/src/identity/sign.ts": 7,
+    "sdk/core/src/identity/sign.ts": 6,
     "sdk/core/src/identity/types.ts": 3,
     "sdk/core/src/rewards/example.ts": 1,
     "sdk/core/src/rewards/format.test.ts": 2,
