@@ -505,6 +505,7 @@ export default interface Resources {
       "codelessTitle": "Don't lose your {{estimatedReward}}!",
       "copyCode": "Copy the code",
       "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
+      "dismiss": "Close",
       "download": "Download the app",
       "infoDescription": "When opening the app, tap <1>\"I have a reward code\"</1>.",
       "infoTitle": "Code valid for 3 days",

@@ -11,6 +11,7 @@ import { defaultNS, fallbackLng, supportedLngs } from "../config";
  */
 const REQUIRED_KEYS = [
     "installCode.title",
+    "installCode.dismiss",
     "sdk.sharingPage.card.amount_noReward",
     "sdk.sharingPage.card.tagline1_noReward",
     "sdk.sharingPage.card.tagline2_noReward",
