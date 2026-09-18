@@ -28,27 +28,15 @@ export const containerChromeless = style({
 });
 
 export const header = style({
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: `${alias.spacing.xs} ${alias.spacing.m}`,
-    backgroundColor: vars.surface.background,
-    position: "sticky",
     top: 0,
     zIndex: zIndex.sticky,
 });
 
 export const dismissButton = style({
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    padding: 0,
     color: vars.text.primary,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
 });
 
+// `alias.size` jumps 16px to 36px, so both logo heights stay literals.
 export const logo = style({
     height: "24px",
     width: "auto",
@@ -63,17 +51,10 @@ export const merchantLogo = style({
 
 export const main = style({
     flex: 1,
-    padding: alias.spacing.m,
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.l,
 });
 
 export const heroSection = style({
     textAlign: "center",
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.xs,
 });
 
 /** The hero's children are centred text; the installed state's icon disc has
@@ -124,9 +105,6 @@ export const footer = style({
     padding: `${alias.spacing.m}`,
     paddingBottom: `max(${alias.spacing.l}, ${safeArea.bottom})`,
     backgroundColor: vars.surface.background,
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.s,
 });
 
 export const downloadButton = style({
@@ -157,12 +135,11 @@ export const downloadButton = style({
     },
 });
 
+// `Button` size="none" carries the recipe's semibold; this control is a text
+// link, not a button label.
 export const installedCodeToggle = style({
-    background: "none",
-    border: "none",
-    cursor: "pointer",
     color: vars.text.secondary,
     textDecoration: "underline",
-    padding: 0,
     alignSelf: "center",
+    fontWeight: 400,
 });
