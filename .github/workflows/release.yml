@@ -106,6 +106,22 @@ jobs:
           done
           echo "created_any=${created_any}" >> "$GITHUB_OUTPUT"
 
+      # The pointer must never name a version jsDelivr cannot serve yet.
+      - name: "⏳ Wait for jsDelivr to serve the published version"
+        if: steps.mode.outputs.will_publish == 'true'
+        run: bun scripts/wait-for-jsdelivr.ts
+
+      - name: Setup SST Cache
+        if: steps.mode.outputs.will_publish == 'true'
+        uses: actions/cache@v5
+        with:
+          path: |
+            .sst/platform/
+            .sst/provider-lock.json
+            .sst/esbuild.json
+          key: ${{ runner.os }}-sst-v2-${{ hashFiles('./sst.config.ts') }}
+          restore-keys: ${{ runner.os }}-sst-v2-
+
       - name: "👥 Configure AWS Credentials"
         if: steps.mode.outputs.will_publish == 'true'
         uses: aws-actions/configure-aws-credentials@v6
@@ -114,11 +130,11 @@ jobs:
           aws-region: eu-west-1
           retry-max-attempts: 5
 
-      # jsDelivr now serves the exact version published above — flip the
-      # sdk.frak.id pointer to it so it doesn't wait on the CDN's own TTL.
-      - name: "📌 Flip SDK pointer"
+      # Points sdk.frak.id/components.js at the version published above
+      # (infra/sdk-pointer.ts reads sdk/components/package.json).
+      - name: "📌 Deploy SDK pointer"
         if: steps.mode.outputs.will_publish == 'true'
-        run: bun run flip:sdk-pointer -- --stage prod
+        run: bun sst deploy --stage sdk-pointer
 
       - uses: gacts/purge-jsdelivr-cache@v1
         if: steps.mode.outputs.will_publish == 'true' && steps.sdk_tags.outputs.created_any == 'true'

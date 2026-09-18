@@ -3,58 +3,58 @@
 ## What ships in this PR
 
 A stable, first-party URL — `https://sdk.frak.id/components.js` (prod) /
-`https://sdk-dev.frak.id/components.js` (dev) — pointing at the same shim
-`sdk/components/cdn/components.js` already builds, which itself pins one
-exact jsDelivr version (`@frak-labs/components@<version>/cdn/loader.js`).
-The pointer is served from S3 behind a CloudFront `sst.aws.Router`, with
-`Cache-Control: public, max-age=300, stale-while-revalidate=86400,
-stale-if-error=604800` — short enough that a release becomes live for
-merchants in minutes instead of jsDelivr's 7-day floating-tag TTL, without
-giving up the CDN's edge caching or its origin failover.
+`https://sdk-dev.frak.id/components.js` (dev) — serving the same one-line
+shim `sdk/components/cdn/components.js` builds, which pins one exact jsDelivr
+version (`@frak-labs/components@<version>/cdn/loader.js`). It is an S3
+object behind a CloudFront `sst.aws.Router`, with `Cache-Control: public,
+max-age=300, stale-while-revalidate=86400, stale-if-error=604800` — a
+release reaches merchants in minutes instead of jsDelivr's 7-day
+floating-tag TTL, while the loader and chunks stay on jsDelivr as immutable
+exact-version URLs, so no bandwidth moves.
 
-`infra/sdk-pointer.ts` creates the bucket, router and a one-time seed object
-(pointing at `@latest` / `@beta` on jsDelivr) so the URL is never a 404
-before the first release. `scripts/flip-sdk-pointer.ts` is what each release
-workflow runs afterward to overwrite that seed with the just-published exact
-version and invalidate the CloudFront cache.
+The pointer is entirely Pulumi-managed. `infra/sdk-pointer.ts` generates the
+object content from `sdk/components/package.json`, so `bun sst deploy --stage
+sdk-pointer` (or `sdk-pointer-dev`) *is* the flip: a version change is a
+diff on the object, and the Router invalidates `/components.js` whenever the
+version token changes. The stages are separate from `prod`/`dev` on purpose:
+the release workflow and `deploy.yml` both run on `main`, and separate stages
+mean separate state locks.
 
-Out of scope for this PR: switching any merchant-facing default to
-`sdk.frak.id` (`infra/config.ts` `componentsUrl`, the WordPress/PrestaShop
-plugins, `apps/shopify` `listener.liquid` + `buildFrakSnippet`). Those still
-point at the jsDelivr `@latest`/`@beta` aliases directly and are a follow-up
-PR.
+Out of scope here: switching any merchant-facing default to `sdk.frak.id`
+(`infra/config.ts` `componentsUrl`, the WordPress/PrestaShop plugins,
+`apps/shopify` `listener.liquid` + `buildFrakSnippet`). Those still load
+jsDelivr `@latest`/`@beta` directly and are a follow-up PR.
 
 ## Deploy order
 
-1. `bun sst deploy --stage prod` (and `--stage dev`) creates the bucket, the
-   router + CloudFront distribution, and seeds `components.js`.
-2. The next SDK release (`release.yml` for prod, `beta-release.yml` for dev)
-   runs `bun run flip:sdk-pointer -- --stage <stage>` after `npm publish`,
-   which polls jsDelivr for the exact version and then overwrites the
-   pointer and invalidates it.
+1. Merge. Nothing deploys yet — `deploy.yml` never touches these stages.
+2. The next SDK release (`release.yml` on `main`, `beta-release.yml` on
+   `dev`) publishes to npm, waits until jsDelivr serves
+   `@<version>/cdn/loader.js` (`scripts/wait-for-jsdelivr.ts`), then runs
+   `bun sst deploy --stage sdk-pointer[-dev]`. The first run creates the
+   bucket, the distribution and the ACM certificate (a few minutes); later
+   runs only rewrite the object and invalidate.
 3. Verify: `curl -I https://sdk.frak.id/components.js` — expect `200`,
    `content-type: text/javascript; charset=utf-8`, the `Cache-Control`
-   above, and the CORS/COEP headers from the CloudFront Function
-   (`access-control-allow-origin: *`, `cross-origin-resource-policy:
-   cross-origin`, `timing-allow-origin: *`, `x-content-type-options:
-   nosniff`).
+   above, and the edge-injected headers (`access-control-allow-origin: *`,
+   `cross-origin-resource-policy: cross-origin`, `timing-allow-origin: *`,
+   `x-content-type-options: nosniff`).
 4. Follow-up PR: move merchant-facing defaults to `sdk.frak.id` /
    `sdk-dev.frak.id` — `infra/config.ts` `componentsUrl`,
    `plugins/wordpress`, `plugins/prestashop` `FrakUrls`, and
-   `apps/shopify`'s `listener.liquid` + `buildFrakSnippet` — and add a
-   `<link rel="preconnect">` to both `sdk.frak.id` (or `sdk-dev.frak.id`)
-   and `cdn.jsdelivr.net`, since the pointer still redirects the actual
-   module fetch there.
+   `apps/shopify`'s `listener.liquid` + `buildFrakSnippet` — and
+   `<link rel="preconnect">` to both the pointer host and
+   `cdn.jsdelivr.net`, since the module fetch still goes there.
 
-## Rollback
-
-The bucket has `versioning: true`. To revert a bad flip:
+## Rollback / hotfix pin
 
 ```bash
-aws s3api list-object-versions --bucket frak-sdk-pointer-<stage> --prefix components.js
-aws s3api copy-object --bucket frak-sdk-pointer-<stage> --copy-source "frak-sdk-pointer-<stage>/components.js?versionId=<previous-version-id>" --key components.js
-aws cloudfront create-invalidation --distribution-id <id> --paths /components.js
+SDK_POINTER_VERSION=1.2.1 bun sst deploy --stage sdk-pointer
 ```
+
+Any published version works; `scripts/wait-for-jsdelivr.ts` honours the
+same variable if you want the readiness check first. The bucket also keeps
+object versions (`versioning: true`) as a last resort.
 
 ## Residual risks
 
@@ -62,13 +62,12 @@ aws cloudfront create-invalidation --distribution-id <id> --paths /components.js
   Route53 in account `262732185023`, so the Router's `domain` can create the
   alias record and validate the ACM certificate on its own; and
   `github-action-deploy-role` carries `PowerUserAccess` with an OIDC trust
-  on `repo:frak-id/*:*`, which covers `s3:PutObject`,
-  `cloudfront:ListDistributions` and `cloudfront:CreateInvalidation` from
-  both release workflows. Neither is a first-run surprise.
-- `sst.config.ts` only loads `infra/sdk-pointer.ts` for the literal `prod`
-  and `dev` stages: the bucket name and the `sdk[-dev].frak.id` alias are
-  globally exclusive, so a personal AWS stage must never try to claim them.
-- Safari does not honor `stale-while-revalidate`, so a Safari client past
-  the 5-minute `max-age` blocks on a synchronous refetch instead of serving
-  stale-while-refreshing in the background — a ~150 byte response, so the
-  added latency is small, but it is not free like it is on Chrome/Firefox.
+  on `repo:frak-id/*:*`, which covers the deploy from both release
+  workflows.
+- Deploying `sdk-pointer` from a branch points every merchant on the
+  pointer at that branch's `package.json` version. It is published as long
+  as the branch is `main` after a release; from anywhere else, run the
+  readiness script first or set `SDK_POINTER_VERSION`.
+- Safari does not honour `stale-while-revalidate`, so a Safari client past
+  the 5-minute `max-age` blocks on a synchronous refetch of ~150 bytes
+  instead of refreshing in the background as Chrome/Firefox do.

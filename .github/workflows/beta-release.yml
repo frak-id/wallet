@@ -138,6 +138,20 @@ jobs:
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # The pointer must never name a version jsDelivr cannot serve yet.
+      - name: "⏳ Wait for jsDelivr to serve the published version"
+        run: bun scripts/wait-for-jsdelivr.ts
+
+      - name: Setup SST Cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            .sst/platform/
+            .sst/provider-lock.json
+            .sst/esbuild.json
+          key: ${{ runner.os }}-sst-v2-${{ hashFiles('./sst.config.ts') }}
+          restore-keys: ${{ runner.os }}-sst-v2-
+
       - name: "👥 Configure AWS Credentials"
         uses: aws-actions/configure-aws-credentials@v6
         with:
@@ -145,8 +159,10 @@ jobs:
           aws-region: eu-west-1
           retry-max-attempts: 5
 
-      - name: "📌 Flip SDK pointer"
-        run: bun run flip:sdk-pointer -- --stage dev
+      # Points sdk-dev.frak.id/components.js at the beta version published
+      # above (infra/sdk-pointer.ts reads the rewritten package.json).
+      - name: "📌 Deploy SDK pointer"
+        run: bun sst deploy --stage sdk-pointer-dev
 
       - uses: gacts/purge-jsdelivr-cache@v1
         with:

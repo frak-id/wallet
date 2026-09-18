@@ -4,7 +4,10 @@ export default $config({
     app(input) {
         return {
             name: "wallet",
-            removal: input?.stage === "prod" ? "retain" : "remove",
+            removal:
+                input?.stage === "prod" || input?.stage === "sdk-pointer"
+                    ? "retain"
+                    : "remove",
             home: "aws",
             // Only watch infra config for changes — dev commands (Vite, Bun)
             // handle their own file watching. Avoids SST watching build outputs
@@ -27,6 +30,13 @@ export default $config({
         };
     },
     async run() {
+        // `sdk-pointer` / `sdk-pointer-dev`: deployed by the SDK release workflows
+        // right after `npm publish`, never by deploy.yml.
+        if ($app?.stage?.startsWith("sdk-pointer")) {
+            await import("./infra/sdk-pointer.ts");
+            return;
+        }
+
         const isExample = $app?.stage?.startsWith("example");
         if (isExample) {
             await import("./infra/example.ts");
@@ -72,14 +82,5 @@ export default $config({
         // release build reads via `getSstResource()` under `sst shell --stage prod`.
         // Without it the wallet silently falls back to its hardcoded dev backend.
         await import("./infra/config.ts");
-
-        // Only CI's two stages may claim the global bucket names and the
-        // `sdk[-dev].frak.id` aliases; a personal AWS stage must not.
-        const { isPointerStage } = await import(
-            "./infra/sdk-pointer.shared.ts"
-        );
-        if (isPointerStage($app.stage)) {
-            await import("./infra/sdk-pointer.ts");
-        }
     },
 });
