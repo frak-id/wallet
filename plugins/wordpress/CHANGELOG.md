@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.1.11] - 2026-09-18
+
 ### Added
 
 - **The post-purchase `products` attribute now carries product-scope fields.** `Frak_WooCommerce::extract_order_products()` previously emitted only `title`, `imageUrl` and `link`, so a product-scoped campaign had no line-item data to match against and every scoped campaign matched every product — the sharing page could advertise a reward the order could not earn. Each entry now also carries `sku` (variation-level, the field variant scoping keys on), `productId`, `quantity` and `unitPrice`. Empty values are omitted rather than sent as empty strings, because an empty-string SKU satisfies `exists`, `neq` and `not_in` and would silently join a negated scope's matched set.
@@ -215,7 +217,9 @@ version on dispatch.
 
 - Initial release of the Frak WordPress plugin.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.10...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.11...HEAD
+
+[1.1.11]: https://github.com/frak-id/wallet/compare/wordpress-1.1.10...wordpress-1.1.11
 
 [1.1.10]: https://github.com/frak-id/wallet/compare/wordpress-1.1.9...wordpress-1.1.10
 
