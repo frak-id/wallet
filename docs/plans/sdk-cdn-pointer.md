@@ -48,7 +48,10 @@ Covered: `infra/config.ts` `componentsUrl` (flows into Shopify as
 `buildFrakSnippet.ts` copy-paste snippet (both derive the preconnect host and
 the fallback tag from the resolved URL: `sdk-dev.frak.id` → `@beta`, else
 `@latest`), `sdk/components`
-README, `plugins/wordpress`, and `plugins/prestashop`. `plugins/magento` is
+README, `plugins/wordpress`, `plugins/prestashop`, and the deployed
+`example/vanilla-js` demo (`vanilla.frak-labs.com`, stage `example`), which
+loads `sdk-dev.frak.id` like a dev-stage merchant — the place to watch a
+beta release propagate. `plugins/magento` is
 excluded by policy (dead scaffolding, see `plugins/magento/AGENTS.md`).
 
 ## Deploy order
