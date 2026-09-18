@@ -1,3 +1,4 @@
+import { buildCurrentLoginChallengeHex } from "@frak-labs/app-essentials";
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import {
@@ -10,11 +11,19 @@ import {
 import type { PreviousAuthenticatorModel } from "../../common/storage/PreviousAuthenticatorModel";
 import { useLogin } from "./useLogin";
 
-vi.mock("@frak-labs/app-essentials", () => ({
-    WebAuthN: {
-        rpId: "test.frak.id",
-    },
-}));
+// The real challenge builders are kept: the deterministic login challenge is
+// part of what these tests assert. Only `WebAuthN` is stubbed, since its rp id
+// is environment-derived.
+vi.mock("@frak-labs/app-essentials", async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import("@frak-labs/app-essentials")>();
+    return {
+        ...original,
+        WebAuthN: {
+            rpId: "test.frak.id",
+        },
+    };
+});
 
 vi.mock("ox", () => ({
     WebAuthnP256: {
@@ -80,6 +89,9 @@ vi.mock("../../stores/detachedPairingSessionStore", () => ({
     },
 }));
 
+const FIXED_NOW = new Date("2026-05-20T14:37:12.345Z");
+const EXPECTED_CHALLENGE = "0x6672616b2d6c6f67696e3a323032362d30352d3230543134";
+
 describe("useLogin", () => {
     const mockAuthResponse = {
         id: "credential-id",
@@ -105,9 +117,14 @@ describe("useLogin", () => {
     beforeEach(({ queryWrapper }) => {
         queryWrapper.client.clear();
         vi.clearAllMocks();
+        // Pin the clock so the UTC-hour login challenge is a fixed value and
+        // cannot straddle an hour boundary mid-test.
+        vi.useFakeTimers({ shouldAdvanceTime: true });
+        vi.setSystemTime(FIXED_NOW);
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.clearAllMocks();
     });
 
@@ -186,7 +203,7 @@ describe("useLogin", () => {
                 credentialId: undefined,
                 rpId: "test.frak.id",
                 userVerification: "required",
-                challenge: expect.stringMatching(/^0x[a-f0-9]{64}$/),
+                challenge: EXPECTED_CHALLENGE,
             })
         );
         expect(setSession).toHaveBeenCalledWith(
@@ -197,6 +214,10 @@ describe("useLogin", () => {
             })
         );
         expect(setSdkSession).toHaveBeenCalledWith(mockSessionData.sdkJwt);
+    });
+
+    test("signs the deterministic UTC-hour challenge, not a random one", () => {
+        expect(buildCurrentLoginChallengeHex()).toBe(EXPECTED_CHALLENGE);
     });
 
     test("should login with specific authenticator", async ({
@@ -277,7 +298,7 @@ describe("useLogin", () => {
                 credentialId: "specific-auth-id",
                 rpId: "test.frak.id",
                 userVerification: "required",
-                challenge: expect.stringMatching(/^0x[a-f0-9]{64}$/),
+                challenge: EXPECTED_CHALLENGE,
             })
         );
     });
@@ -494,7 +515,7 @@ describe("useLogin", () => {
 
         expect(authenticatedWalletApi.auth.login.post).toHaveBeenCalledWith(
             expect.objectContaining({
-                expectedChallenge: expect.stringMatching(/^0x[a-f0-9]{64}$/),
+                expectedChallenge: EXPECTED_CHALLENGE,
                 authenticatorResponse: expect.any(String),
             })
         );

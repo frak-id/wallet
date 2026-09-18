@@ -519,6 +519,7 @@ vi.mock("@backend-infrastructure", () => ({
         rewardInteractions: vi.fn(),
         webhookError: vi.fn(),
         notificationsSent: vi.fn(),
+        loginChallenge: vi.fn(),
         affiliateWatermarkLagSeconds: vi.fn(),
     },
     infraMetrics: {

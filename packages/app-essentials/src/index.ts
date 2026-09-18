@@ -33,9 +33,16 @@ export {
     validateUrl,
 } from "./utils";
 export {
+    buildCurrentLoginChallenge,
+    buildCurrentLoginChallengeHex,
+    buildLoginChallenge,
+    buildLoginChallengeSlots,
     buildMergeConsentChallenge,
     buildMergeConsentChallengeSlots,
-    formatMergeConsentHourSlot,
+    formatUtcHourSlot,
+    isLoginChallenge,
+    LOGIN_CHALLENGE_PREFIX,
     MERGE_CONSENT_PREFIX,
+    utcHourSlotWindow,
     WebAuthN,
 } from "./webauthn";

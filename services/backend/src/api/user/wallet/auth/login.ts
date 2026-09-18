@@ -2,7 +2,11 @@ import { JwtContext, viemClient } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { verifyMessage } from "viem/actions";
-import { AuthContext, WalletAuthResponseDto } from "../../../../domain/auth";
+import {
+    AuthContext,
+    checkLoginChallenge,
+    WalletAuthResponseDto,
+} from "../../../../domain/auth";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { FrakClientIdHeaderSchema } from "../../../schemas";
 
@@ -23,6 +27,17 @@ export const loginRoutes = new Elysia()
                 proof,
             },
         }) => {
+            // Bound the replay window before spending a signature check:
+            // the challenge is embedded in the signed message below, so a
+            // captured payload cannot be re-dated.
+            const challengeCheck = checkLoginChallenge({
+                challenge: expectedChallenge,
+                route: "ecdsaLogin",
+            });
+            if (!challengeCheck.accepted) {
+                return status(404, challengeCheck.reason);
+            }
+
             // Rebuild the message that have been signed
             const message = `I want to connect to Frak and I accept the CGU.\n Verification code:${expectedChallenge}`;
 
@@ -107,6 +122,17 @@ export const loginRoutes = new Elysia()
                 proof,
             },
         }) => {
+            // Bound the replay window before the signature check: the
+            // challenge is signed into the assertion's clientDataJSON, so a
+            // captured assertion cannot be re-dated onto a live hour slot.
+            const challengeCheck = checkLoginChallenge({
+                challenge: expectedChallenge,
+                route: "login",
+            });
+            if (!challengeCheck.accepted) {
+                return status(404, challengeCheck.reason);
+            }
+
             // Check if that's a valid webauthn signature
             const verificationnResult =
                 await AuthContext.services.webAuthN.isValidSignature({

@@ -35,10 +35,6 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
 });
 
 vi.mock("viem/accounts", () => ({
-    generatePrivateKey: vi.fn(
-        () =>
-            "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
-    ),
     privateKeyToAccount: vi.fn(() => ({
         address: "0xDemoWallet123456789012345678901234567890",
         signMessage: vi.fn().mockResolvedValue("0xsignature"),
@@ -224,6 +220,9 @@ describe("useDemoLogin", () => {
         ).toHaveBeenCalledWith(
             expect.objectContaining({
                 demoPkey: mockPrivateKey,
+                expectedChallenge: expect.stringMatching(
+                    /^frak-login:\d{4}-\d{2}-\d{2}T\d{2}$/
+                ),
             })
         );
     });

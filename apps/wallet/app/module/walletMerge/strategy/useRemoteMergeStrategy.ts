@@ -1,6 +1,6 @@
 import {
     buildMergeConsentChallenge,
-    formatMergeConsentHourSlot,
+    formatUtcHourSlot,
 } from "@frak-labs/app-essentials";
 import {
     authKey,
@@ -228,7 +228,7 @@ function useRemoteLoserConsent({
             const challengeString = buildMergeConsentChallenge({
                 winner,
                 loserAuthenticatorId,
-                hourSlot: formatMergeConsentHourSlot(new Date()),
+                hourSlot: formatUtcHourSlot(new Date()),
             });
             const challenge = stringToHex(challengeString);
             await ensurePairing();

@@ -261,7 +261,7 @@
     "packages/app-essentials/src/utils/email.ts": 1,
     "packages/app-essentials/src/utils/packageId.ts": 2,
     "packages/app-essentials/src/utils/platform.ts": 2,
-    "packages/app-essentials/src/webauthn/mergeConsent.ts": 3,
+    "packages/app-essentials/src/webauthn/mergeConsent.ts": 2,
     "packages/client/src/errors.ts": 1,
     "packages/design-system/src/components/AlertMessage/alertMessage.css.ts": 2,
     "packages/design-system/src/components/Input/Input.test.tsx": 2,

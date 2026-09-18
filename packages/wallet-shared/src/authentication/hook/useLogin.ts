@@ -1,8 +1,10 @@
-import { WebAuthN } from "@frak-labs/app-essentials";
+import {
+    buildCurrentLoginChallengeHex,
+    WebAuthN,
+} from "@frak-labs/app-essentials";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { WebAuthnP256 } from "ox";
-import { generatePrivateKey } from "viem/accounts";
 import {
     extractAuthError,
     type Flow,
@@ -99,8 +101,8 @@ export function useLogin(
         ...options,
         mutationKey: authKey.login,
         mutationFn: async (args?: UseLoginArgs) => {
-            // Only pass getFn if defined (Tauri), omit for web to use browser default.
-            const challenge = generatePrivateKey();
+            // Deterministic UTC-hour challenge; backend accepts this slot ±1h.
+            const challenge = buildCurrentLoginChallengeHex();
             // `silentLogin` enables the native preferImmediatelyAvailableCredentials
             // flag so a device with no passkey fails fast onto the `no-credential`
             // kind instead of an opaque NotAllowedError (Android: NoCredentialException;
