@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>K — Le mix · page ambassadeur</title>
+<%- sdkPreconnect %>
 <script>
     const detectFrakEnv = <%- detectFrakEnv %>;
 
@@ -18,10 +19,17 @@
         };
 
         const sdkScript = document.createElement('script');
-        sdkScript.type = 'module';
+        if (<%= sdkIsModule %>) sdkScript.type = 'module';
         sdkScript.src = '<%- sdkScriptSrc %>';
+        // Deployed builds fall back like a merchant page; locally a 404 must stay loud.
         sdkScript.onerror = () => {
             console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+            const fallbackSrc = '<%- sdkFallbackSrc %>';
+            if (!fallbackSrc) return;
+            const fallback = document.createElement('script');
+            fallback.src = fallbackSrc;
+            fallback.defer = true;
+            document.head.appendChild(fallback);
         };
         document.head.appendChild(sdkScript);
     })();

@@ -9,6 +9,13 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
+# id-token: write for the AWS OIDC role assumption (sdk pointer flip).
+# contents: write + pull-requests: write for changesets/action's Version PR.
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
 jobs:
   release:
     name: "🚀 Release SDK"
@@ -98,6 +105,36 @@ jobs:
             fi
           done
           echo "created_any=${created_any}" >> "$GITHUB_OUTPUT"
+
+      # The pointer must never name a version jsDelivr cannot serve yet.
+      - name: "⏳ Wait for jsDelivr to serve the published version"
+        if: steps.mode.outputs.will_publish == 'true'
+        run: bun scripts/wait-for-jsdelivr.ts
+
+      - name: Setup SST Cache
+        if: steps.mode.outputs.will_publish == 'true'
+        uses: actions/cache@v5
+        with:
+          path: |
+            .sst/platform/
+            .sst/provider-lock.json
+            .sst/esbuild.json
+          key: ${{ runner.os }}-sst-v2-${{ hashFiles('./sst.config.ts') }}
+          restore-keys: ${{ runner.os }}-sst-v2-
+
+      - name: "👥 Configure AWS Credentials"
+        if: steps.mode.outputs.will_publish == 'true'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
+          aws-region: eu-west-1
+          retry-max-attempts: 5
+
+      # Points sdk.frak.id/components.js at the version published above
+      # (infra/sdk-pointer.ts reads sdk/components/package.json).
+      - name: "📌 Deploy SDK pointer"
+        if: steps.mode.outputs.will_publish == 'true'
+        run: bun sst deploy --stage sdk-pointer
 
       - uses: gacts/purge-jsdelivr-cache@v1
         if: steps.mode.outputs.will_publish == 'true' && steps.sdk_tags.outputs.created_any == 'true'

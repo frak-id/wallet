@@ -3,25 +3,16 @@
 /**
  * Front-office asset and head injection for the Frak PrestaShop module.
  *
- * Owns the two always-on front-office hooks:
- *   - `header`: resource hints + inline `window.FrakSetup` config block.
- *   - `actionFrontControllerSetMedia`: SDK script registered through
- *     PrestaShop's native asset manager.
- *
- * Extracted from the `FrakIntegration` bootstrap to keep the Module class a
- * thin hook router.
+ * `header` renders resource hints, `window.FrakSetup` config, and the SDK
+ * `<script>` itself (see {@see self::sdkScriptTag()} for why it lives here).
+ * `actionFrontControllerSetMedia` is currently a no-op, see {@see self::setMedia()}.
  */
 class FrakFrontend
 {
     /**
-     * Front-office `<head>` fragment — kept minimal. Emits resource hints
-     * (`dns-prefetch` + `preconnect`) so the browser warms the TLS
-     * handshake to `cdn.jsdelivr.net` while parsing continues, plus the
-     * inline `window.FrakSetup` config block (kept inline so the SDK reads
-     * a non-empty config when it runs from the deferred script tag).
-     *
-     * The SDK script tag itself lives in {@see self::setMedia()} — outside
-     * the `<head>` dispatch path, in PrestaShop's native asset pipeline.
+     * Front-office `<head>` fragment: resource hints for both SDK hosts,
+     * then the inline `window.FrakSetup` config, then the SDK `<script>`
+     * itself — in that order, so the config exists before the SDK reads it.
      */
     public static function head(): string
     {
@@ -46,56 +37,48 @@ class FrakFrontend
             $logo_url_js = '""';
         }
 
-        return '<link rel="dns-prefetch" href="' . FrakUrls::CDN_BASE . '">'
+        // The pointer's script fetch is no-cors, so its preconnect must NOT
+        // carry `crossorigin`; the shim's `import()` from jsDelivr is a
+        // CORS-mode module fetch, so that preconnect must.
+        return '<link rel="dns-prefetch" href="' . FrakUrls::SDK_POINTER_HOST . '">'
+            . '<link rel="preconnect" href="' . FrakUrls::SDK_POINTER_HOST . '">'
+            . '<link rel="dns-prefetch" href="' . FrakUrls::CDN_BASE . '">'
             . '<link rel="preconnect" href="' . FrakUrls::CDN_BASE . '" crossorigin>'
             . '<script>window.FrakSetup=Object.assign(window.FrakSetup||{},{config:{metadata:{'
             . 'name:' . $shop_name_js . ','
             . 'logoUrl:' . $logo_url_js
-            . '}}});</script>';
+            . '}}});</script>'
+            . self::sdkScriptTag();
     }
 
     /**
-     * Register the SDK external script via PrestaShop's native asset manager.
-     * Runs on every front-office request (the hook fires before the
-     * controller renders), so the `<script>` ends up in the position the
-     * asset manager picks (typically bottom-of-body) with the `defer`
-     * attribute we requested.
-     *
-     * Why `actionFrontControllerSetMedia` instead of inline `<script>` in
-     * `head.tpl`:
-     *   - PrestaShop's CCC (Combine, Compress, Cache) pipeline is asset-
-     *     manager aware: registered remote scripts are deduped if another
-     *     module asks for the same URL, and the merchant retains control
-     *     via `Performance → CCC`.
-     *   - `priority => 200` runs the SDK after PrestaShop's own scripts so
-     *     the inline `window.FrakSetup` block from {@see self::head()} is
-     *     guaranteed to be evaluated before the deferred SDK boots.
+     * The SDK `<script>` tag with an `onerror` fallback to jsDelivr. Raw
+     * markup because `registerJavascript()`'s `attribute` is whitelisted to
+     * `async`/`defer` (`JavascriptManagerCore::$valid_attribute`). The pointer
+     * file is a single `import()`, so a failed fetch ran nothing to double-run.
+     */
+    private static function sdkScriptTag(): string
+    {
+        $fallback = "var s=document.createElement('script');"
+            . "s.src='" . FrakUrls::SDK_FALLBACK_SCRIPT . "';"
+            . 's.defer=true;document.head.appendChild(s)';
+
+        return '<script src="' . FrakUrls::SDK_POINTER_SCRIPT . '" defer'
+            . ' onerror="' . $fallback . '"></script>';
+    }
+
+    /**
+     * Intentionally inert: the SDK script is raw markup in {@see self::head()}
+     * (see {@see self::sdkScriptTag()}). Kept as the registered
+     * `actionFrontControllerSetMedia` target so no hook migration is needed.
      *
      * @param Context $context Forwarded from the Module instance so the helper
      *                         stays a stateless static call.
      */
     public static function setMedia($context): void
     {
-        if (!isset($context->controller) || !method_exists($context->controller, 'registerJavascript')) {
+        if (!isset($context->controller)) {
             return;
         }
-        // Skip on AJAX: registerJavascript writes into the asset queue that
-        // only the full HTML response materialises. AJAX endpoints (cart
-        // updates, search-as-you-type, theme JSON polls) never render the
-        // queue, so registering here is wasted work — noticeable on chatty
-        // themes that fire dozens of XHRs per page lifecycle.
-        if (!empty($context->controller->ajax)) {
-            return;
-        }
-        $context->controller->registerJavascript(
-            'frak-sdk',
-            FrakUrls::SDK_SCRIPT,
-            [
-                'server' => 'remote',
-                'position' => 'bottom',
-                'priority' => 200,
-                'attribute' => 'defer',
-            ]
-        );
     }
 }

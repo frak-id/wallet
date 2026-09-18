@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Example Vanilla JS</title>
     <link rel="icon" href="/favicon.ico" sizes="32x32"/>
+    <%- sdkPreconnect %>
     <script>
         const detectFrakEnv = <%- detectFrakEnv %>;
 
@@ -38,11 +39,17 @@
 
             // Load SDK components script
             const sdkScript = document.createElement('script');
-            sdkScript.type = 'module';
+            if (<%= sdkIsModule %>) sdkScript.type = 'module';
             sdkScript.src = '<%- sdkScriptSrc %>';
-            // Without this a 404 is silent: no client ever lands and every action hangs.
+            // Deployed builds fall back like a merchant page; locally a 404 must stay loud.
             sdkScript.onerror = () => {
                 console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+                const fallbackSrc = '<%- sdkFallbackSrc %>';
+                if (!fallbackSrc) return;
+                const fallback = document.createElement('script');
+                fallback.src = fallbackSrc;
+                fallback.defer = true;
+                document.head.appendChild(fallback);
             };
             document.head.appendChild(sdkScript);
         })();

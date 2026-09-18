@@ -72,7 +72,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         env: frakEnv(),
         componentsUrl:
             process.env.FRAK_COMPONENTS_URL ||
-            "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest",
+            "https://sdk.frak.id/components.js",
         shopifyLogoUrl: `${process.env.SHOPIFY_APP_URL ?? ""}/shopify-logo.svg`,
         // Defensive: a custom/unsupported theme should degrade to
         // "not supported", never reject the streamed promise and crash the

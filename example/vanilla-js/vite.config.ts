@@ -9,16 +9,20 @@ const DEBUG = false;
 const projectRootDir = resolve(__dirname);
 const bundleDir = resolve(projectRootDir, "../../sdk/components/cdn");
 
+// The deployed demo talks to the dev stage, so it loads the SDK exactly like
+// a dev-stage merchant: dev pointer, jsDelivr @beta fallback, both preconnected.
+const POINTER_ORIGIN = "https://sdk-dev.frak.id";
+const JSDELIVR_ORIGIN = "https://cdn.jsdelivr.net";
+
 export default defineConfig(({ mode }) => {
     // Determine if we should use local resources
     // Use local when: running locally (no SST) OR in development mode
     const useLocal = isRunningLocally || mode === "development";
 
-    // In local development, use local loader directly
-    // Otherwise, use CDN components.js (which loads from CDN)
+    // Locally the module loader is used directly; there is no shim to fall back from.
     const scriptSrc = useLocal
         ? `/@fs${bundleDir}/loader.js`
-        : "https://cdn.jsdelivr.net/npm/@frak-labs/components@beta/cdn/loader.js";
+        : `${POINTER_ORIGIN}/components.js`;
 
     // The page boots the SDK from this bundle alone; a missing one 404s silently.
     if (useLocal && !existsSync(`${bundleDir}/loader.js`)) {
@@ -41,6 +45,15 @@ export default defineConfig(({ mode }) => {
         ),
         detectFrakEnv: detectFrakEnv.toString(),
         sdkScriptSrc: scriptSrc,
+        sdkIsModule: useLocal,
+        sdkFallbackSrc: useLocal
+            ? ""
+            : `${JSDELIVR_ORIGIN}/npm/@frak-labs/components@beta/cdn/components.js`,
+        // No `crossorigin` on the pointer (classic no-cors fetch); the shim's
+        // `import()` from jsDelivr is CORS-mode, so that one needs it.
+        sdkPreconnect: useLocal
+            ? ""
+            : `<link rel="preconnect" href="${POINTER_ORIGIN}">\n<link rel="preconnect" href="${JSDELIVR_ORIGIN}" crossorigin>`,
         injectReactScan: DEBUG
             ? `<script src="//unpkg.com/react-scan/dist/auto.global.js"></script>`
             : "",
