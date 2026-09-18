@@ -26,7 +26,7 @@ bun run test         # business-unit Vitest project
 - **Production = nginx with pre-compressed gzip**: CI generates `.gz` siblings; vite `preview` does not serve them — expect size/cache differences.
 - **Restricted-route pattern**: `_restricted` layout centralises auth; do NOT add guards per-route.
 - **UI**: uses `@frak-labs/design-system` (Vanilla Extract) + `@frak-labs/ui-preview`.
-- **Type-safe API** via `@frak-labs/client` (Eden Treaty) — do not hand-roll fetches; the client already carries backend types.
+- **Type-safe API** via `authenticatedBackendApi` (`src/api/backendClient.ts`, Eden Treaty) — do not hand-roll fetches; the client already carries backend types.
 - **i18n location**: translations live in `src/i18n/locales/{en,fr}/translation.json`; FR is the fallback (bundled), EN is lazy-loaded. Regen types via `bun run i18n:types` after adding keys. Single `translation` namespace — no `customized` namespace (wallet-only).
 
 ## Anti-Patterns
@@ -35,4 +35,4 @@ Runtime env var reads · whole-store Zustand subscription · CSS Modules or plai
 
 ## See Also
 
-Parent `/AGENTS.md` · `services/backend/AGENTS.md` (API contract) · `packages/client/` (Eden Treaty) · `packages/ui-preview/`.
+Parent `/AGENTS.md` · `services/backend/AGENTS.md` (API contract) · `packages/ui-preview/`.

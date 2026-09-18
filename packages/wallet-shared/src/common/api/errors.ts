@@ -62,6 +62,28 @@ export function getErrorCode(err: unknown): string | undefined {
     return typeof code === "string" ? code : undefined;
 }
 
+/** Transient = worth retrying: network failures (status 0) or 5xx. */
+export function isTransientHttpError(err: unknown): boolean {
+    const status = getErrorStatus(err);
+    return status === 0 || (status !== undefined && status >= 500);
+}
+
+/** Permanent = retrying will never help (4xx). */
+export function isPermanentHttpError(err: unknown): boolean {
+    const status = getErrorStatus(err);
+    return status !== undefined && status >= 400 && status < 500;
+}
+
+/** Drop-in TanStack Query `retry` predicate: transient errors only, capped at 3 attempts. */
+export function transientRetry(failureCount: number, err: unknown): boolean {
+    return failureCount < 3 && isTransientHttpError(err);
+}
+
+/** Exponential backoff (500ms → 1s → 2s → 4s cap) for use with `transientRetry`. */
+export function transientRetryDelay(attempt: number): number {
+    return Math.min(500 * 2 ** attempt, 4000);
+}
+
 /**
  * Mapping of error signatures → i18n message keys. Used by
  * {@link resolveApiErrorKey} to pick the right translated message for

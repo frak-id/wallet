@@ -84,7 +84,11 @@ export {
     type ApiErrorKeyMap,
     asApiError,
     getErrorCode,
+    isPermanentHttpError,
+    isTransientHttpError,
     resolveApiErrorKey,
+    transientRetry,
+    transientRetryDelay,
 } from "./api/errors";
 export {
     notifyWalletAuthExpired,
