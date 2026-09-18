@@ -17,6 +17,7 @@
 
 import type { I18nConfig, Language } from "@frak-labs/core-sdk";
 import type { i18n as I18nType } from "i18next";
+import { ensureI18nBundle } from "@/i18nPreload";
 import { mapI18nConfig } from "@/module/utils/i18nMapper";
 
 type OverrideEntry = { kind: "override"; payload: I18nConfig };
@@ -32,6 +33,9 @@ const pending: Entry[] = [];
 async function applyEntry(i18n: I18nType, entry: Entry): Promise<void> {
     if (entry.kind === "language") {
         if (i18n.language !== entry.payload) {
+            // Before the switch, not after: `languageChanged` repaints the tree,
+            // and react-i18next does not listen for a bundle registered later.
+            await ensureI18nBundle(entry.payload, i18n);
             await i18n.changeLanguage(entry.payload);
         }
         return;
