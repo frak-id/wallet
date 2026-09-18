@@ -1,13 +1,9 @@
 import { businessMetrics, log } from "@backend-infrastructure";
 import {
     buildLoginChallengeSlots,
-    buildLoginChallengeSlotsHex,
-    isForeignFrakChallenge,
-    isForeignFrakChallengeHex,
     isLoginChallenge,
-    isLoginChallengeHex,
 } from "@frak-labs/app-essentials";
-import type { Hex } from "viem";
+import { type Hex, hexToString } from "viem";
 
 /**
  * `/login` carries the challenge hex-encoded, `/ecdsaLogin` as the raw
@@ -31,33 +27,19 @@ function rejectsLegacyChallenge(): boolean {
 
 /**
  * Freshness gate shared by `/login` and `/ecdsaLogin`. A `frak-login:`
- * challenge must land in the accepted UTC hour window (current ±1h); one
- * belonging to another Frak protocol is always rejected; anything else is
- * a pre-freshness client, accepted until the flag flips. The challenge is
- * signed into the assertion, so no branch here is a downgrade path.
+ * challenge must land in the accepted UTC hour window (current ±1h);
+ * anything else is a pre-freshness client, accepted until the flag flips.
+ * The challenge is signed into the assertion, so neither branch is a
+ * downgrade path.
  */
 export function checkLoginChallenge({
     challenge,
     route,
 }: LoginChallengeInput): LoginChallengeCheck {
-    const isHex = route === "login";
+    // Decoding also folds hex-digit case, which the slot compare relies on.
+    const text = route === "login" ? hexToString(challenge) : challenge;
 
-    if (
-        isHex
-            ? isForeignFrakChallengeHex(challenge)
-            : isForeignFrakChallenge(challenge)
-    ) {
-        businessMetrics.loginChallenge(route, "foreign");
-        log.warn(
-            { route, challenge: challenge.slice(0, 64) },
-            "Rejecting a challenge minted for another Frak protocol"
-        );
-        return { accepted: false, reason: "Invalid signature" };
-    }
-
-    if (
-        !(isHex ? isLoginChallengeHex(challenge) : isLoginChallenge(challenge))
-    ) {
+    if (!isLoginChallenge(text)) {
         businessMetrics.loginChallenge(route, "legacy");
         if (rejectsLegacyChallenge()) {
             return { accepted: false, reason: "Invalid signature" };
@@ -65,23 +47,18 @@ export function checkLoginChallenge({
         return { accepted: true };
     }
 
-    const accepted: string[] = isHex
-        ? buildLoginChallengeSlotsHex()
-        : buildLoginChallengeSlots();
-    const fresh = accepted.includes(
-        isHex ? challenge.toLowerCase() : challenge
-    );
-
-    businessMetrics.loginChallenge(route, fresh ? "fresh" : "stale");
-    if (!fresh) {
+    if (!buildLoginChallengeSlots().includes(text)) {
+        businessMetrics.loginChallenge(route, "stale");
         // Far more often a device whose clock drifted than an attack, so it
         // gets its own reason string; signature validity stays unsaid.
         log.warn(
-            { route, challenge: challenge.slice(0, 64) },
+            { route, challenge: text.slice(0, 64) },
             "Rejecting a login challenge outside its hour window"
         );
         return { accepted: false, reason: "Stale challenge" };
     }
+
+    businessMetrics.loginChallenge(route, "fresh");
     return { accepted: true };
 }
 

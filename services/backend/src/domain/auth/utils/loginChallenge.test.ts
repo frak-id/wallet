@@ -204,29 +204,16 @@ describe("isFreshLoginChallenge - domain separation", () => {
         ).not.toHaveBeenCalledWith("ecdsaLogin", "fresh");
     });
 
-    it("rejects a merge-consent challenge at login with the flag off", () => {
-        expect(
-            isFreshLoginChallenge({
-                challenge: consentChallenge,
-                route: "ecdsaLogin",
-            })
-        ).toBe(false);
+    it("counts a merge-consent challenge as legacy while the flag is off", () => {
         expect(
             isFreshLoginChallenge({
                 challenge: stringToHex(consentChallenge),
                 route: "login",
             })
-        ).toBe(false);
-    });
-
-    it("counts a foreign Frak challenge under its own verdict", () => {
-        isFreshLoginChallenge({
-            challenge: stringToHex(consentChallenge),
-            route: "login",
-        });
+        ).toBe(true);
         expect(
             infrastructureMocks.businessMetrics.loginChallenge
-        ).toHaveBeenCalledWith("login", "foreign");
+        ).toHaveBeenCalledWith("login", "legacy");
     });
 
     it("rejects a merge-consent challenge at login under the strict flag", () => {

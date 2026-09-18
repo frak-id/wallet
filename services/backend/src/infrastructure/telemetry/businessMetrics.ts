@@ -65,7 +65,7 @@ const loginChallengeTotal = register(
     new Counter({
         name: "login_challenge_total",
         help: "Login attempts by challenge freshness verdict",
-        // route: login | ecdsaLogin ; verdict: fresh | stale | foreign | legacy
+        // route: login | ecdsaLogin ; verdict: fresh | stale | legacy
         labelNames: ["route", "verdict"] as const,
     })
 );
@@ -105,7 +105,7 @@ export const businessMetrics = {
     },
     loginChallenge(
         route: "login" | "ecdsaLogin",
-        verdict: "fresh" | "stale" | "foreign" | "legacy"
+        verdict: "fresh" | "stale" | "legacy"
     ) {
         loginChallengeTotal.inc({ route, verdict });
     },

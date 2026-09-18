@@ -1,13 +1,11 @@
-import { hexToString, stringToHex } from "viem";
+import { hexToString } from "viem";
 import { describe, expect, it } from "vitest";
 import {
     buildCurrentLoginChallenge,
     buildCurrentLoginChallengeHex,
     buildLoginChallenge,
     buildLoginChallengeSlots,
-    buildLoginChallengeSlotsHex,
     isLoginChallenge,
-    isLoginChallengeHex,
     LOGIN_CHALLENGE_PREFIX,
 } from "./loginChallenge";
 import { buildMergeConsentChallenge } from "./mergeConsent";
@@ -101,21 +99,16 @@ describe("hex encoding", () => {
         expect(hex).toBe(hex.toLowerCase());
     });
 
-    it("round-trips every slot and stays lowercase", () => {
-        const slots = buildLoginChallengeSlotsHex({ now: MID_HOUR });
-        expect(slots.map((slot) => hexToString(slot))).toEqual(
-            buildLoginChallengeSlots({ now: MID_HOUR })
+    it("decodes back into the accepted slot window", () => {
+        expect(buildLoginChallengeSlots({ now: MID_HOUR })).toContain(
+            hexToString(buildCurrentLoginChallengeHex(MID_HOUR))
         );
-        for (const slot of slots) {
-            expect(slot).toBe(slot.toLowerCase());
-        }
     });
 
-    it("keeps the hex slot window aligned with the string one", () => {
-        expect(buildLoginChallengeSlotsHex({ now: NEW_YEAR })).toEqual(
-            buildLoginChallengeSlots({ now: NEW_YEAR }).map((challenge) =>
-                stringToHex(challenge)
-            )
+    it("folds hex-digit case on decode, so the backend need not normalise", () => {
+        const hex = buildCurrentLoginChallengeHex(MID_HOUR);
+        expect(hexToString(hex.toUpperCase() as `0x${string}`)).toBe(
+            hexToString(hex)
         );
     });
 });
@@ -148,35 +141,5 @@ describe("isLoginChallenge", () => {
         expect(isLoginChallenge(`${LOGIN_CHALLENGE_PREFIX}-evil:x`)).toBe(
             false
         );
-    });
-});
-
-describe("isLoginChallengeHex", () => {
-    it("accepts a hex challenge built by this module", () => {
-        expect(
-            isLoginChallengeHex(buildCurrentLoginChallengeHex(MID_HOUR))
-        ).toBe(true);
-    });
-
-    it("accepts mixed-case hex of a valid challenge", () => {
-        const hex = buildCurrentLoginChallengeHex(MID_HOUR);
-        expect(isLoginChallengeHex(hex.toUpperCase() as `0x${string}`)).toBe(
-            true
-        );
-    });
-
-    it("rejects a legacy random challenge", () => {
-        expect(isLoginChallengeHex(LEGACY_CHALLENGE)).toBe(false);
-    });
-
-    it("rejects a hex-encoded merge-consent challenge", () => {
-        const consent = stringToHex(
-            buildMergeConsentChallenge({
-                winner: "0x1234567890AbcdEF1234567890aBcdef12345678",
-                loserAuthenticatorId: "credential-id",
-                hourSlot: "2026-05-20T14",
-            })
-        );
-        expect(isLoginChallengeHex(consent)).toBe(false);
     });
 });

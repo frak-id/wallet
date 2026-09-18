@@ -121,14 +121,7 @@ export {
     buildCurrentLoginChallengeHex,
     buildLoginChallenge,
     buildLoginChallengeSlots,
-    buildLoginChallengeSlotsHex,
-    FRAK_CHALLENGE_HEX_NAMESPACE,
-    FRAK_CHALLENGE_NAMESPACE,
-    isForeignFrakChallenge,
-    isForeignFrakChallengeHex,
     isLoginChallenge,
-    isLoginChallengeHex,
-    LOGIN_CHALLENGE_HEX_PREFIX,
     LOGIN_CHALLENGE_PREFIX,
 } from "./loginChallenge";
 export {
