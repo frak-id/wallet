@@ -17,7 +17,7 @@ bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here
 - `infra/components/KubernetesService.ts` — Deployment + Service + HPA + Ingress + ServiceMonitor
 - `infra/components/KubernetesJob.ts` — one-shot K8s Job (e.g., bootstrap migrations + bucket provisioning)
 - `infra/utils.ts` — stage helpers: `isProd`, `normalizedStageName`
-- `infra/sdk-pointer.ts` — S3 + CloudFront pointer at `sdk[-dev].frak.id/components.js`; its content is generated from `sdk/components/package.json`, so `sst deploy --stage sdk-pointer[-dev]` *is* the flip. `SDK_POINTER_VERSION=x.y.z` pins one by hand
+- `infra/sdk-pointer.ts` — S3 + CloudFront pointer at `sdk[-dev].frak.id/components.js`; its content is generated from `sdk/components/package.json`, so `sst deploy --stage sdk-pointer[-dev]` *is* the flip. `SDK_POINTER_VERSION=x.y.z` pins one by hand. `infra/config.ts` `componentsUrl` (Shopify's `FRAK_COMPONENTS_URL`) points here, with jsDelivr's floating tag kept only as each integration's `onerror` fallback
 - `apps/*/Dockerfile` — self-contained multi-stage (each builds the SDK in its own `sdk-builder` stage) → `nginx:1.29.1` with pre-compressed gzip
 - `services/backend/Dockerfile` — backend runtime image
 - `services/bootstrap/Dockerfile` — one-shot bootstrap image (Drizzle migrations + RustFS bucket provisioning)

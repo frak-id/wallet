@@ -7,14 +7,54 @@ const BASE = {
         wallet: "https://wallet.frak.id",
         backend: "https://backend.frak.id",
     },
-    componentsUrl: "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest",
+    componentsUrl: "https://sdk.frak.id/components.js",
 };
+const DEV_URL = "https://sdk-dev.frak.id/components.js";
 
 describe("buildFrakSnippet", () => {
     it("includes the components script tag", () => {
         const snippet = buildFrakSnippet(BASE);
         expect(snippet).toContain(
-            `<script src="${BASE.componentsUrl}" defer="defer"></script>`
+            `<script src="${BASE.componentsUrl}" defer="defer"`
+        );
+    });
+
+    it("preconnects to the pointer and jsDelivr, crossorigin only on jsDelivr", () => {
+        const snippet = buildFrakSnippet(BASE);
+        expect(snippet).toContain(
+            '<link rel="preconnect" href="https://sdk.frak.id">'
+        );
+        expect(snippet).toContain(
+            '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>'
+        );
+    });
+
+    it("preconnects to the dev pointer when that is the resolved URL", () => {
+        const snippet = buildFrakSnippet({ ...BASE, componentsUrl: DEV_URL });
+        expect(snippet).toContain(
+            '<link rel="preconnect" href="https://sdk-dev.frak.id">'
+        );
+        expect(snippet).not.toContain('href="https://sdk.frak.id"');
+    });
+
+    it("falls back to the jsDelivr latest tag for the prod pointer", () => {
+        const snippet = buildFrakSnippet(BASE);
+        expect(snippet).toContain(
+            "@frak-labs/components@latest/cdn/components.js"
+        );
+    });
+
+    it("falls back to the jsDelivr beta tag for the dev pointer", () => {
+        const snippet = buildFrakSnippet({ ...BASE, componentsUrl: DEV_URL });
+        expect(snippet).toContain(
+            "@frak-labs/components@beta/cdn/components.js"
+        );
+    });
+
+    it("the onerror fallback never double-runs the pointer's own import()", () => {
+        const snippet = buildFrakSnippet(BASE);
+        expect(snippet).toMatch(
+            /onerror="[^"]*document\.head\.appendChild\(s\)"/
         );
     });
 

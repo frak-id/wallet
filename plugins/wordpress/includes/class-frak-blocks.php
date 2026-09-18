@@ -81,11 +81,13 @@ class Frak_Blocks {
 	 * into the iframe's document from inside each block's `useEffect`.
 	 */
 	public static function enqueue_editor_assets() {
+		add_filter( 'script_loader_tag', array( 'Frak_Sdk_Urls', 'add_onerror_attribute' ), 10, 2 );
+
 		wp_register_script(
 			'frak-sdk',
-			'https://cdn.jsdelivr.net/npm/@frak-labs/components',
+			Frak_Sdk_Urls::POINTER_SCRIPT,
 			array(),
-			null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters -- CDN serves latest version; avoid ?ver= query param.
+			null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters -- pointer serves whatever version was released; avoid ?ver= query param.
 			true
 		);
 
@@ -100,6 +102,7 @@ class Frak_Blocks {
 			FRAK_PLUGIN_VERSION,
 			true
 		);
+		wp_add_inline_script( 'frak-editor-sdk-injector', Frak_Sdk_Urls::injector_urls_script(), 'before' );
 		wp_enqueue_script( 'frak-editor-sdk-injector' );
 	}
 

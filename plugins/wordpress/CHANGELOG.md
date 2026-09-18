@@ -21,6 +21,8 @@ version on dispatch.
 
 ### Changed
 
+- **The SDK script now loads from `sdk.frak.id` instead of jsDelivr's floating `@frak-labs/components` tag.** jsDelivr caches that tag for 7 days in the browser, so a release could take up to a week to reach a returning visitor. The pointer refreshes every 5 minutes and falls back to the jsDelivr shim via `onerror` if it is ever unreachable, on the frontend script, the block-editor script, and the Gutenberg iframe injector. Resource hints (`dns-prefetch`/`preconnect`) now warm both hosts.
+
 - **The share button's *Click action* setting has been removed entirely** from every editor (Gutenberg block, classic widget, Elementor, Divi) along with the `click_action` shortcode attribute. The embedded wallet drawer was the last alternative to the hosted sharing page and it has now been retired SDK-side, which left the dropdown with a single choice. Every share CTA opens the sharing page, so there is nothing left to pick.
 
   Nothing breaks for existing content: the `clickAction` block attribute and the `click_action` shortcode attribute are simply no longer read, so saved posts, widgets, Elementor pages and Divi layouts render exactly as before — the same way `use_reward` was retired. `Frak_Component_Renderer::SHARE_BUTTON_ATTRS` no longer maps `clickAction => click-action`, so the attribute stops being emitted on `<frak-button-share>`.

@@ -17,6 +17,29 @@ function js(value: unknown): string {
     return JSON.stringify(value).replace(/</g, "\\u003c");
 }
 
+const JSDELIVR_ORIGIN = "https://cdn.jsdelivr.net";
+
+/**
+ * The pointer's own fetch is no-cors, so its preconnect must not carry
+ * `crossorigin`; the shim's `import()` is CORS-mode, so jsDelivr's must.
+ */
+function preconnectLinks(pointerOrigin: string): string {
+    return `<link rel="dns-prefetch" href="${pointerOrigin}">
+<link rel="preconnect" href="${pointerOrigin}">
+<link rel="dns-prefetch" href="${JSDELIVR_ORIGIN}">
+<link rel="preconnect" href="${JSDELIVR_ORIGIN}" crossorigin>`;
+}
+
+/**
+ * The pointer file is a single `import()` statement, so a failed load ran
+ * nothing — the jsDelivr shim can replace it without double-evaluating.
+ * The dev pointer tracks the beta channel, so its fallback must too.
+ */
+function onErrorFallback(componentsUrl: string): string {
+    const tag = componentsUrl.includes("sdk-dev.frak.id") ? "beta" : "latest";
+    return `var s=document.createElement('script');s.src='${JSDELIVR_ORIGIN}/npm/@frak-labs/components@${tag}/cdn/components.js';s.defer=true;document.head.appendChild(s)`;
+}
+
 export function buildFrakSnippet({
     merchantId,
     env,
@@ -27,7 +50,8 @@ export function buildFrakSnippet({
     componentsUrl: string;
 }): string {
     return `<!-- Frak SDK -->
-<script src="${componentsUrl}" defer="defer"></script>
+${preconnectLinks(new URL(componentsUrl).origin)}
+<script src="${componentsUrl}" defer="defer" onerror="${onErrorFallback(componentsUrl)}"></script>
 <script type="text/javascript">
   window.FrakSetup = {
     config: {

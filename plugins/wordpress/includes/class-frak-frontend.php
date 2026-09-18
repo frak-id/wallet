@@ -31,6 +31,7 @@ class Frak_Frontend {
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ), 20 );
 		add_filter( 'wp_resource_hints', array( __CLASS__, 'add_resource_hints' ), 10, 2 );
+		add_filter( 'script_loader_tag', array( 'Frak_Sdk_Urls', 'add_onerror_attribute' ), 10, 2 );
 
 		// Opt-in: inject <frak-banner> at the top of every page (right after
 		// <body> via wp_body_open) when the merchant enables "Auto-render
@@ -108,9 +109,9 @@ class Frak_Frontend {
 
 		wp_enqueue_script(
 			'frak-sdk',
-			'https://cdn.jsdelivr.net/npm/@frak-labs/components',
+			Frak_Sdk_Urls::POINTER_SCRIPT,
 			array(),
-			null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters -- CDN serves latest version; avoid ?ver= query param.
+			null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters -- pointer serves whatever version was released; avoid ?ver= query param.
 			$script_args
 		);
 
@@ -119,8 +120,10 @@ class Frak_Frontend {
 	}
 
 	/**
-	 * Append DNS-prefetch / preconnect hints for the SDK origin so the
-	 * browser can warm the TLS handshake before the `<script>` tag parses.
+	 * DNS-prefetch / preconnect hints for the pointer and jsDelivr. The pointer
+	 * script is a classic no-cors fetch, so its preconnect must NOT carry
+	 * `crossorigin`; the shim's `import()` is a CORS-mode module fetch, so
+	 * jsDelivr's must — a socket is only reused when the credentials mode matches.
 	 *
 	 * @param array<int, string|array<string, string>> $hints    Existing hints from core.
 	 * @param string                                   $relation Relation type being filtered.
@@ -128,11 +131,13 @@ class Frak_Frontend {
 	 */
 	public static function add_resource_hints( $hints, $relation ) {
 		if ( 'dns-prefetch' === $relation ) {
-			$hints[] = 'https://cdn.jsdelivr.net';
+			$hints[] = Frak_Sdk_Urls::POINTER_HOST;
+			$hints[] = Frak_Sdk_Urls::JSDELIVR_HOST;
 		}
 		if ( 'preconnect' === $relation ) {
+			$hints[] = Frak_Sdk_Urls::POINTER_HOST;
 			$hints[] = array(
-				'href'        => 'https://cdn.jsdelivr.net',
+				'href'        => Frak_Sdk_Urls::JSDELIVR_HOST,
 				'crossorigin' => 'anonymous',
 			);
 		}
