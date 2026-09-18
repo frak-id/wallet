@@ -101,9 +101,11 @@ export async function stepUpAwareFetch(
 }
 
 /**
- * Treaty client with authentication tokens if present
+ * Treaty client with authentication tokens if present, shared by the
+ * `.business` and `.common` scoped exports below so both carry the same
+ * step-up handling and 401 recovery.
  */
-export const authenticatedBackendApi = treaty<App>(
+const authenticatedClient = treaty<App>(
     process.env.BACKEND_URL ?? "https://localhost:3030",
     {
         fetch: { credentials: "include" },
@@ -146,7 +148,15 @@ export const authenticatedBackendApi = treaty<App>(
             useAuthStore.getState().clearAuth();
         },
     }
-).business;
+);
+
+export const authenticatedBackendApi = authenticatedClient.business;
+
+/**
+ * `/common` routes (e.g. `/common/rate`) are public, but sharing this client
+ * keeps them on the same step-up-aware fetch/401 handling as `.business`.
+ */
+export const authenticatedCommonApi = authenticatedClient.common;
 
 /** Base URL for full-page navigations to backend-driven flows (Shopify OAuth). */
 export const backendBaseUrl =

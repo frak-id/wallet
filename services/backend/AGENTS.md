@@ -64,4 +64,4 @@ constructor(repo?: IdentityRepository) { this.repo = repo ?? new IdentityReposit
 `new Service()` in handlers · cross-domain service imports · service → orchestrator · nullable DI params · raw SQL (use Drizzle) · blocking ops in handlers · central `schema.ts`.
 
 ## See Also
-Parent `/AGENTS.md` · `services/bootstrap/` (migrations + bucket bootstrap) · `infra/AGENTS.md` (bootstrap Job, GKE deploy) · `packages/client/` (Eden Treaty) · `packages/app-essentials/` (ABIs, addresses).
+Parent `/AGENTS.md` · `services/bootstrap/` (migrations + bucket bootstrap) · `infra/AGENTS.md` (bootstrap Job, GKE deploy) · `packages/app-essentials/` (ABIs, addresses).

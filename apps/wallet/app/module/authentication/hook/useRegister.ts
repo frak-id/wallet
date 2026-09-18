@@ -1,8 +1,3 @@
-import {
-    isPermanentHttpError,
-    transientRetry,
-    transientRetryDelay,
-} from "@frak-labs/client";
 import type {
     Flow,
     PendingRegistration,
@@ -17,11 +12,14 @@ import {
     getRegisterOptions,
     getTauriCreateFn,
     identifyAuthenticatedUser,
+    isPermanentHttpError,
     isReportableWebauthnError,
     recordError,
     recoveryHintStorage,
     sessionStore,
     startFlow,
+    transientRetry,
+    transientRetryDelay,
     webauthnErrorContext,
 } from "@frak-labs/wallet-shared";
 import type { UseMutationOptions } from "@tanstack/react-query";

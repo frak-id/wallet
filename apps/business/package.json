@@ -24,7 +24,6 @@
         "@elysiajs/eden": "catalog:",
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/backend-elysia": "workspace:*",
-        "@frak-labs/client": "workspace:*",
         "@frak-labs/components": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/design-system": "workspace:*",

@@ -66,13 +66,6 @@ const config: KnipConfig = {
             // are internal barrels and must stay export-checked.
             project: ["src/**/*.ts"],
         },
-        "packages/client": {
-            // The `exports` map (".", "./server", "./server/*") supplies the
-            // public entries; the root index.ts barrel backs the bare
-            // `@frak-labs/client` deep-import used from tooling.
-            entry: ["index.ts"],
-            project: ["*.ts", "src/**/*.ts"],
-        },
         "packages/dev-tooling": {
             // Consumed as `../../packages/dev-tooling` (root barrel) by the vite
             // configs, and as `@frak-labs/dev-tooling` via the "." export.
