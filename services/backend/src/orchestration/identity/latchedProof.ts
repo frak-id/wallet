@@ -85,18 +85,12 @@ export async function enforceLatchedProof(params: {
 }
 
 /**
- * Verify a proof without enforcing it: log when it is invalid, never reject,
- * and never require one in the first place.
+ * Verify a proof without enforcing it: log when it is invalid, never reject
+ * or require one — the caller decides. `ensure`'s wallet arm and
+ * `install-code/generate` both refuse unconditionally on absence/invalidity;
+ * this stays pure so verification and enforcement remain separately testable.
  *
- * The permissive arms that stay open until ROLLOUT-STEP-3 (`/identity/ensure`'s
- * wallet arm, `install-code/generate`) all need exactly this shape: neither may
- * refuse a request over a proof, since both also accept a bare `anonymousId`.
- * Both do latch on a `true` return, which makes later ensure/merge calls for
- * that id require a proof — verification stays side-effect free, the latch is
- * the caller's decision.
- *
- * Returns whether a valid proof was presented. As with `enforceLatchedProof`,
- * callers MUST NOT latch an id on a `false` return.
+ * Returns whether a valid proof was presented; never latch an id on `false`.
  */
 export async function verifyProofUnenforced(params: {
     op: ProofOp;
@@ -130,7 +124,7 @@ export async function verifyProofUnenforced(params: {
         onClass("invalid");
         log.info(
             { op, merchantId, anonymousId, reason: result.reason },
-            "Identity proof present but invalid (verified, not enforced — ROLLOUT-STEP-3)"
+            "Identity proof present but invalid (verification only — caller enforces)"
         );
         return false;
     }

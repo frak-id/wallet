@@ -232,10 +232,13 @@ export default interface Resources {
       "sharingPage": {
         "card": {
           "amount": "{{estimatedReward}}",
+          "amount_noReward": "Earn rewards on every purchase",
           "label": "Credited to your account",
           "tagline1": "Earn {{estimatedReward}},",
+          "tagline1_noReward": "A friend buys through your link,",
           "tagline1_tiered": "Earn up to {{estimatedReward}},",
           "tagline2": "on every purchase!",
+          "tagline2_noReward": "you get rewarded.",
           "tagline2_product": "on selected products!",
           "upTo": "Up to"
         },
@@ -255,11 +258,15 @@ export default interface Resources {
             }
           },
           "cardPopupDescription": "A purchase was made through your link. {{estimatedReward}} has been transferred to your wallet.",
+          "cardPopupDescription_noReward": "A purchase was made through your link. Install the app to track your purchases.",
           "cardPopupTitle": "You just won {{estimatedReward}}! 🎉",
+          "cardPopupTitle_noReward": "A friend just bought! 🎉",
           "cta": "Collect my {{estimatedReward}}",
+          "cta_noReward": "Install the app",
           "shareAgain": "Share again",
           "subtitle": "Install the Frak app, official partner of {{productName}}, and track your earnings in real time.",
-          "title": "Thank you for sharing!\nDon't miss out on your {{estimatedReward}}."
+          "title": "Thank you for sharing!\nDon't miss out on your {{estimatedReward}}.",
+          "title_noReward": "Thank you for sharing!\nTrack what you earn."
         },
         "dismiss": "Later",
         "faq": {
@@ -269,6 +276,7 @@ export default interface Resources {
           "a4": "Yes, everyone can create their own sharing link and become an ambassador too.",
           "a5": "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way.",
           "a6": "The amount shown is the maximum reward you can earn. Depending on the brand, your reward may be a fixed amount, a percentage of the purchase, or vary by tier based on the order amount.",
+          "a6_noReward": "It depends on the brand's reward program: a fixed amount, a percentage of the purchase, or an amount that varies by tier. This brand has no active reward right now, so no amount is shown.",
           "q1": "Who can become an \"ambassador\"?",
           "q2": "How much can I earn?",
           "q3": "When do I get paid?",
@@ -497,6 +505,7 @@ export default interface Resources {
       "codelessTitle": "Don't lose your {{estimatedReward}}!",
       "copyCode": "Copy the code",
       "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
+      "dismiss": "Close",
       "download": "Download the app",
       "infoDescription": "When opening the app, tap <1>\"I have a reward code\"</1>.",
       "infoTitle": "Code valid for 3 days",

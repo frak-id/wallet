@@ -35,7 +35,6 @@ proven** — precisely the pre-install population holding unsettled attribution.
 |---|---|---|
 | 1 | **Prod migration for `checkout_token`** | `local/0039` and `dev/0043` are generated and committed; `drizzle/prod/` is still at `0020`. `InstallCodeRepository` names `checkout_token` in raw SQL, so a prod backend on the old schema raises `42703` on every `install-code/generate` and `install-code/resolve`. Generated on `dev` alongside the other prod migrations coming later — **must land before this reaches `main`** |
 | 2 | **`/merge/execute` proof (T3.1b)** | The deliberate exception. See §3 |
-| 3 | **`anonymousId` off `install-code/resolve`'s 200** | The wallet half shipped: the current wallet no longer reads it. The backend stops sending it in a later backend-only deploy — that order, never the reverse, so the persisted store stays readable by a rolled-back build |
 | 4 | **AID-017 — bind `frak-ensure-v1`** | Its binding is empty, making it a 30-day bearer credential — but one minted only while a wallet is connected, so a replay hits `WALLET_CONFLICT` unless the original link never committed. Bind `SHA-256(walletAddress)` as `frak-ensure-v2` with v1 fallback; only `sdk/core` mints it (no native signer), so the dual-accept is bounded by CDN bundle churn, not store review. Low, when picked up |
 | 5 | **AID-012 — the last mile of `fmt` retry** | The redemption retries a blip, but only while the page lives. A page closed mid-backoff still loses the merge, and the SDK→listener `postMessage` hop has no ack at all, so a send that never arrives is invisible to both sides. Closing either needs a durable queue, and the thing being queued is a token that stays replayable for 60 minutes — putting it at rest on disk makes AID-003 worse. Do these two together or not at all |
 | 6 | **AID-003 / AID-019 — credential reuse windows** | A merge token is a 60-minute unlimited-use group-capture capability if captured; an install ticket is 7-day multi-use and one code yields up to 20. `jwt.ts` records the reasoning for the ticket (a burn-set deadlocks the wallet's retry loop). The merge token has no such defence and no ticket — but do not close it with a burn either, since `createIFrameFrakClient` and AID-012 both rely on the token surviving a repeat. Bind it to its target, or consume with an idempotency window. Medium: a replay only wins a group that never got its wallet |
@@ -122,11 +121,11 @@ were deleted. The counters stayed — they measure, they no longer gate.
   name was reverted before shipping: the SST and SDK pipelines fire concurrently, so renaming the
   one key a live listener reads would have dropped every in-app-browser merge until the CDN caught
   up. `mergeSource` is new and has no such constraint.
-- **`ROLLOUT-STEP-3` markers** remain in six source files. They mark the bare-arm code that is now
-  unreachable-by-policy but not yet deleted, and the one open decision recorded at `ensure.ts`:
-  whether the install proof should keep being accepted directly or be exchanged for a ticket. It is
-  taken — keep accepting it — because a leaked install proof costs one id its attribution, far less
-  than the two-call capture the flips closed.
+- **The `install-v1` proof is accepted directly, never exchanged for a ticket.** A leaked install
+  proof costs one id its attribution, far less than the two-call capture the flips closed. The
+  `ROLLOUT-STEP-3` markers that tracked this decision, plus the now-dead bare-arm code and the
+  `install-code/resolve` `anonymousId` field, are gone — both wallet half and backend-only deploy
+  landed once 1.0.93 was widely available.
 
 ## 7. Audit record
 

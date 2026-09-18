@@ -18,12 +18,11 @@ class FrakInstaller
      * the install / uninstall / upgrade chains stay in lock-step (one place
      * to add or remove a hook).
      *
-     * - `actionFrontControllerSetMedia`: SDK script + JS def injection.
-     *   The SDK goes through PrestaShop's native asset manager (CCC-aware,
-     *   deduped across modules, defer-attribute capable).
-     * - `header`: minimal — emits resource hints (DNS-prefetch / preconnect)
-     *   and the inline FrakSetup config block. Resource hints MUST live in
-     *   `<head>` to be effective.
+     * - `actionFrontControllerSetMedia`: registered but inert, see
+     *   {@see FrakFrontend::setMedia()}.
+     * - `header`: resource hints, the inline FrakSetup config block and the
+     *   SDK `<script>` tag ({@see FrakFrontend::head()}). Resource hints
+     *   MUST live in `<head>` to be effective.
      * - `actionOrderStatusPostUpdate`: post-commit order status webhook
      *   trigger. Pre-commit `actionOrderStatusUpdate` raced under multistore
      *   / high load (PrestaShop docs explicitly recommend post-commit).

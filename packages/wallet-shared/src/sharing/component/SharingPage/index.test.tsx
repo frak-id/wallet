@@ -7,8 +7,11 @@ import { SharingPage, type SharingPageProps } from "./index";
 const t = (key: string, opts?: Record<string, unknown>): string => {
     switch (key) {
         case "sdk.sharingPage.card.tagline1":
-            return "on every purchase!";
+            return opts?.context === "noReward"
+                ? "A friend buys through your link,"
+                : "on every purchase!";
         case "sdk.sharingPage.card.tagline2":
+            if (opts?.context === "noReward") return "you get rewarded.";
             return opts?.context === "product"
                 ? "on selected products!"
                 : "on every purchase!";
@@ -17,7 +20,15 @@ const t = (key: string, opts?: Record<string, unknown>): string => {
                 ? `Step2-${opts.context}-${opts.minAmount ?? ""}`
                 : "Step2-default";
         case "sdk.sharingPage.card.amount":
-            return "10 %";
+            return opts?.context === "noReward"
+                ? "Earn rewards on every purchase"
+                : "10 %";
+        case "sdk.sharingPage.card.label":
+            return "Credited to your account";
+        case "sdk.sharingPage.faq.a6":
+            return opts?.context === "noReward"
+                ? "This brand has no active reward, so no amount is shown."
+                : "The amount shown is the maximum reward you can earn.";
         case "sdk.sharingPage.products.label":
             return "Choose one product to share";
         default:
@@ -256,6 +267,62 @@ describe("SharingPage — tagline2 / step2 copy", () => {
         ).not.toBeInTheDocument();
         expect(
             screen.queryByText("on selected products!")
+        ).not.toBeInTheDocument();
+    });
+});
+
+describe("SharingPage — reward-free hero", () => {
+    const emptyReward: SharingPageProps["reward"] = { status: "empty" };
+
+    it("shows the qualitative headline instead of an amount and drops the 'credited' label", () => {
+        render(<SharingPage {...baseProps} reward={emptyReward} />);
+        expect(
+            screen.getByText("Earn rewards on every purchase")
+        ).toBeInTheDocument();
+        expect(screen.queryByText("10 %")).not.toBeInTheDocument();
+        expect(
+            screen.queryByText("Credited to your account")
+        ).not.toBeInTheDocument();
+    });
+
+    it("keeps the hero markup and strings unchanged for a real reward", () => {
+        render(<SharingPage {...baseProps} />);
+        expect(
+            screen.getByText("Credited to your account")
+        ).toBeInTheDocument();
+        expect(screen.getByText("10 %")).toBeInTheDocument();
+    });
+
+    it("keeps the share and copy CTAs enabled on the same terms as any other state", () => {
+        render(<SharingPage {...baseProps} reward={emptyReward} />);
+        expect(screen.getByTestId("sharing-share")).toBeEnabled();
+        expect(screen.getByTestId("sharing-copy")).toBeEnabled();
+    });
+
+    it("states in the FAQ that no amount is shown because the brand has no active reward", () => {
+        render(<SharingPage {...baseProps} reward={emptyReward} />);
+        fireEvent.click(screen.getByText("sdk.sharingPage.faq.q6"));
+        expect(
+            screen.getByText(
+                "This brand has no active reward, so no amount is shown."
+            )
+        ).toBeInTheDocument();
+    });
+
+    it("leaves the FAQ reward-calculation answer unchanged for a real reward", () => {
+        render(<SharingPage {...baseProps} />);
+        fireEvent.click(screen.getByText("sdk.sharingPage.faq.q6"));
+        expect(
+            screen.getByText(
+                "The amount shown is the maximum reward you can earn."
+            )
+        ).toBeInTheDocument();
+    });
+
+    it("renders the skeleton, not the reward-free copy, while still resolving", () => {
+        render(<SharingPage {...baseProps} reward={{ status: "loading" }} />);
+        expect(
+            screen.queryByText("Earn rewards on every purchase")
         ).not.toBeInTheDocument();
     });
 });

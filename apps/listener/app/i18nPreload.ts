@@ -81,12 +81,17 @@ export function ensureI18nBundle(lang: string, i18n: I18nType): Promise<void> {
     const existing = registrationPromises.get(lang);
     if (existing) return existing;
     const promise = loadBundle(lang).then((bundle) => {
-        if (!i18n.hasResourceBundle(lang, "common")) {
-            i18n.addResourceBundle(lang, "common", bundle.common);
-        }
-        if (!i18n.hasResourceBundle(lang, "customized")) {
-            i18n.addResourceBundle(lang, "customized", bundle.customized);
-        }
+        // Deep-merged without overwrite, never guarded on `hasResourceBundle`:
+        // merchant overrides write into this same namespace and can land first,
+        // and a presence check would then drop every default they don't set.
+        i18n.addResourceBundle(lang, "common", bundle.common, true, false);
+        i18n.addResourceBundle(
+            lang,
+            "customized",
+            bundle.customized,
+            true,
+            false
+        );
     });
     registrationPromises.set(lang, promise);
     return promise;

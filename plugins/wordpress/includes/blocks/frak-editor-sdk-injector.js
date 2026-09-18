@@ -42,7 +42,9 @@
 		return;
 	}
 
-	const SDK_SRC = 'https://cdn.jsdelivr.net/npm/@frak-labs/components';
+	// Localized from `Frak_Sdk_Urls` by `Frak_Blocks::enqueue_editor_assets()`.
+	const SDK_SRC = window.__frakSdkUrls.pointer;
+	const SDK_FALLBACK_SRC = window.__frakSdkUrls.fallback;
 
 	/**
 	 * Ensure the Frak SDK is loaded and `window.FrakSetup` is populated in
@@ -88,6 +90,14 @@
 		const script = iframeDoc.createElement( 'script' );
 		script.src = SDK_SRC;
 		script.defer = true;
+		// The pointer is a single `import()` statement; a failed load ran
+		// nothing, so falling back to the jsDelivr shim double-evaluates none of it.
+		script.onerror = function () {
+			const fallback = iframeDoc.createElement( 'script' );
+			fallback.src = SDK_FALLBACK_SRC;
+			fallback.defer = true;
+			iframeDoc.head.appendChild( fallback );
+		};
 		iframeDoc.head.appendChild( script );
 	};
 } )();

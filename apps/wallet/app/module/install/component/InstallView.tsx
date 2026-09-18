@@ -604,8 +604,18 @@ function InstallCodeView({
             }
         >
             {!chromeless && (
-                <header className={styles.header}>
-                    <Box display="flex" alignItems="center" gap="m">
+                <Box
+                    as="header"
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    paddingX="m"
+                    paddingY="xs"
+                    backgroundColor="background"
+                    position="sticky"
+                    className={styles.header}
+                >
+                    <Inline space="m" alignY="center" wrap={false}>
                         {merchantInfo?.logoUrl && (
                             <img
                                 {...mediaSrcSet(merchantInfo.logoUrl)}
@@ -614,9 +624,12 @@ function InstallCodeView({
                             />
                         )}
                         <LogoFrakWithName className={styles.logo} />
-                    </Box>
-                    <button
-                        type="button"
+                    </Inline>
+                    <Button
+                        variant="ghost"
+                        size="none"
+                        width="auto"
+                        aria-label={t("installCode.dismiss")}
                         className={styles.dismissButton}
                         onClick={() => {
                             trackEvent("install_page_dismissed");
@@ -624,19 +637,19 @@ function InstallCodeView({
                         }}
                     >
                         <CloseIcon width={24} height={24} />
-                    </button>
-                </header>
+                    </Button>
+                </Box>
             )}
 
-            <main className={styles.main}>
-                <section className={styles.heroSection}>
+            <Stack as="main" space="l" padding="m" className={styles.main}>
+                <Stack as="section" space="xs" className={styles.heroSection}>
                     <InstallCodeHero
                         t={t}
                         installed={installed}
                         codeless={codeless}
                         merchantName={merchantInfo?.name}
                     />
-                </section>
+                </Stack>
 
                 {isLoading && (
                     <Stack space="m" align="center">
@@ -648,13 +661,15 @@ function InstallCodeView({
                 )}
 
                 {data?.code && !visibleCode && (
-                    <button
-                        type="button"
+                    <Button
+                        variant="ghost"
+                        size="none"
+                        width="auto"
                         className={styles.installedCodeToggle}
                         onClick={() => setShowCodeAfterInstall(true)}
                     >
                         {t("installCode.installedCodeToggle")}
-                    </button>
+                    </Button>
                 )}
 
                 {visibleCode && (
@@ -674,11 +689,11 @@ function InstallCodeView({
                         </Button>
                     </Stack>
                 )}
-            </main>
+            </Stack>
 
             {visibleCode && <InstallCodeInfoCard t={t} />}
 
-            <footer className={styles.footer}>
+            <Stack as="footer" space="s" className={styles.footer}>
                 <ExternalLink
                     href={downloadUrl}
                     className={styles.downloadButton}
@@ -705,7 +720,7 @@ function InstallCodeView({
                         ? t("installCode.openWallet")
                         : t("installCode.download")}
                 </ExternalLink>
-            </footer>
+            </Stack>
         </div>
     );
 }

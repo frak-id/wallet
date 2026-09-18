@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<%- sdkPreconnect %>
 <script>
     const detectFrakEnv = <%- detectFrakEnv %>;
 
@@ -21,10 +22,17 @@
         };
 
         const sdkScript = document.createElement('script');
-        sdkScript.type = 'module';
+        if (<%= sdkIsModule %>) sdkScript.type = 'module';
         sdkScript.src = '<%- sdkScriptSrc %>';
+        // Deployed builds fall back like a merchant page; locally a 404 must stay loud.
         sdkScript.onerror = () => {
             console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+            const fallbackSrc = '<%- sdkFallbackSrc %>';
+            if (!fallbackSrc) return;
+            const fallback = document.createElement('script');
+            fallback.src = fallbackSrc;
+            fallback.defer = true;
+            document.head.appendChild(fallback);
         };
         document.head.appendChild(sdkScript);
     })();
@@ -208,7 +216,7 @@ details.faq p{margin-top:9px;font-size:14px;color:var(--muted)}
         <a class="share" href="#"><span class="ic" style="background:#0043ef">@</span>E-mail</a>
       </div>
 
-      <p class="reward-line"><b data-frak-reward="{REWARD}">7,20 €</b> pour vous &nbsp;·&nbsp; <b>0,80 €</b> pour votre filleul &nbsp;·&nbsp; à chaque commande</p>
+      <p class="reward-line"><b data-frak-reward="{REWARD}">7,20 €</b> pour vous &nbsp;·&nbsp; <b data-frak-reward-referee="{REWARD}">0,80 €</b> pour votre filleul &nbsp;·&nbsp; à chaque commande</p>
 
     </div>
 

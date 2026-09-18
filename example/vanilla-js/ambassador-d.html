@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<%- sdkPreconnect %>
 <script>
     const detectFrakEnv = <%- detectFrakEnv %>;
 
@@ -21,10 +22,17 @@
         };
 
         const sdkScript = document.createElement('script');
-        sdkScript.type = 'module';
+        if (<%= sdkIsModule %>) sdkScript.type = 'module';
         sdkScript.src = '<%- sdkScriptSrc %>';
+        // Deployed builds fall back like a merchant page; locally a 404 must stay loud.
         sdkScript.onerror = () => {
             console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+            const fallbackSrc = '<%- sdkFallbackSrc %>';
+            if (!fallbackSrc) return;
+            const fallback = document.createElement('script');
+            fallback.src = fallbackSrc;
+            fallback.defer = true;
+            document.head.appendChild(fallback);
         };
         document.head.appendChild(sdkScript);
     })();
@@ -169,7 +177,7 @@ details.faq p{margin-top:10px;font-size:14.5px;color:var(--muted)}
 
   <section class="hero"><div class="wrap">
     <div class="eyebrow">À offrir</div>
-    <div class="gift">0,80<small> €</small></div>
+    <div class="gift" data-frak-reward-referee="{REWARD}">0,80<small> €</small></div>
     <h1>de cash-back pour chaque proche à qui vous en parlez.</h1>
     <p class="sub">Vous ne vendez rien. Vous transmettez une réduction que vos proches n'auraient pas eue autrement — et vous êtes remercié pour ça.</p>
     <button type="button" class="cta" data-frak-share>Offrir à mes proches</button>
@@ -182,7 +190,7 @@ details.faq p{margin-top:10px;font-size:14.5px;color:var(--muted)}
     <div class="sides">
       <div class="side them">
         <div class="who">Pour votre proche</div>
-        <div class="big">0,80 €</div>
+        <div class="big" data-frak-reward-referee="{REWARD}">0,80 €</div>
         <p>Un cash-back sur sa première commande, sans code à saisir et sans inscription préalable.</p>
         <ul>
           <li>Même prix que sur le site, remise en plus</li>
@@ -267,7 +275,7 @@ details.faq p{margin-top:10px;font-size:14.5px;color:var(--muted)}
     <li><strong>Les badges stores</strong> — vraie URL <code>/install</code> du wallet depuis <code>getEnvironment()</code>, sans identifiant ni preuve, comme sur A.</li>
   </ul>
   <h4>Ce qui reste en dur</h4>
-  <p>Le <strong>montant du filleul</strong> (0,80 €), qui est pourtant le chiffre du hero. <code>selectBestReward</code> sait le résoudre — <code>audience: "referee"</code> — mais <code>src/ambassador.ts</code> n'expose qu'un seul montant à la page. Si la direction est retenue, c'est le premier câblage à ajouter, sinon le hero peut contredire ce que le filleul recevra vraiment.</p>
+  <p>Le <strong>montant du filleul</strong> est résolu comme celui de l'ambassadeur&nbsp;: <code>selectBestReward</code> avec <code>audience: "referee"</code>, la valeur écrite restant le repli si aucune campagne ne résout. Le hero ne peut donc plus contredire ce que le filleul recevra vraiment.</p>
   <h4>Le risque</h4>
   <p>Une remise filleul faible (0,80 € contre 7,20 €) affaiblit le hero&nbsp;: mettre en avant le plus petit des deux chiffres n'a de sens que si la répartition est moins déséquilibrée. C'est un argument pour le 80/20 évoqué dans les notes de A — et la décision de répartition devient ici une décision de page, pas seulement de campagne.</p>
 </details></div>

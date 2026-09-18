@@ -22,7 +22,6 @@
         "@frak-labs-sdk/native-ios",
         "@frak-labs/nexus-wallet",
         "@frak-labs/nexus-business",
-        "@frak-labs/nexus-listener",
-        "@frak-labs/client"
+        "@frak-labs/nexus-listener"
     ]
 }

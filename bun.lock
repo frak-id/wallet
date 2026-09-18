@@ -36,7 +36,6 @@
         "@elysiajs/eden": "catalog:",
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/backend-elysia": "workspace:*",
-        "@frak-labs/client": "workspace:*",
         "@frak-labs/components": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/design-system": "workspace:*",
@@ -221,7 +220,6 @@
       "version": "1.0.99",
       "dependencies": {
         "@frak-labs/app-essentials": "workspace:*",
-        "@frak-labs/client": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/design-system": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
@@ -353,19 +351,6 @@
         "@vitest/ui": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:",
-      },
-    },
-    "packages/client": {
-      "name": "@frak-labs/client",
-      "version": "0.0.0",
-      "dependencies": {
-        "@elysiajs/eden": "catalog:",
-      },
-      "devDependencies": {
-        "@frak-labs/backend-elysia": "workspace:*",
-        "@typescript/native": "catalog:",
-        "elysia": "catalog:",
-        "typescript": "catalog:",
       },
     },
     "packages/design-system": {
@@ -1127,8 +1112,6 @@
     "@frak-labs/backend-elysia": ["@frak-labs/backend-elysia@workspace:services/backend"],
 
     "@frak-labs/bootstrap": ["@frak-labs/bootstrap@workspace:services/bootstrap"],
-
-    "@frak-labs/client": ["@frak-labs/client@workspace:packages/client"],
 
     "@frak-labs/components": ["@frak-labs/components@workspace:sdk/components"],
 

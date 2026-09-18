@@ -9,3 +9,7 @@ export {
     type StaticWalletWebauthnTokenDto,
     WalletAuthResponseDto,
 } from "./models/WalletSessionDto";
+export {
+    checkLoginChallenge,
+    isFreshLoginChallenge,
+} from "./utils/loginChallenge";

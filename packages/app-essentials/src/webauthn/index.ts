@@ -115,9 +115,17 @@ export const WebAuthN = {
     iosPasskeyOrigin,
 };
 
+export { formatUtcHourSlot, utcHourSlotWindow } from "./hourSlot";
+export {
+    buildCurrentLoginChallenge,
+    buildCurrentLoginChallengeHex,
+    buildLoginChallenge,
+    buildLoginChallengeSlots,
+    isLoginChallenge,
+    LOGIN_CHALLENGE_PREFIX,
+} from "./loginChallenge";
 export {
     buildMergeConsentChallenge,
     buildMergeConsentChallengeSlots,
-    formatMergeConsentHourSlot,
     MERGE_CONSENT_PREFIX,
 } from "./mergeConsent";

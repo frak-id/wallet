@@ -177,9 +177,11 @@ is absent. Under native the SDK owns the whole install step; the page has no sig
 
 - `ArrivalHandler.ts:151` looks up an unverified raw-hex `referrer.wallet` through
   `findGroupByIdentity`. Read-only: it creates no node and performs no merge.
-- `install-code/generate` stays permissive — the wallet's own sharing page calls it with a
-  `clientId` it cannot sign for. Protection is the opaque ticket at `resolve` plus an atomic attempt
-  cap. **Do not harden `generate`.**
+- `install-code/generate`'s `checkoutToken` (Gate 2) arm carries no proof by design — the
+  credential is derived server-side from the order, and Shopify checkout has no keypair to sign
+  with. The `anonymousId` arm requires a `frak-install-v1` proof; the wallet's own sharing page
+  supplies it from the `#p=` fragment, and a refused credential degrades to the codeless download
+  CTA rather than an error.
 
 ## 4. Golden fixtures
 

@@ -11,6 +11,10 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Changed
+
+- **The front-office SDK `<script>` now loads from `sdk.frak.id` (a first-party, 5-minute-TTL pointer at the exact published SDK version) instead of jsDelivr's floating `@frak-labs/components` tag, with an `onerror` fallback to `cdn.jsdelivr.net/.../components@latest/cdn/components.js`.** `FrakUrls` gains `SDK_POINTER_HOST`/`SDK_POINTER_SCRIPT`/`SDK_FALLBACK_SCRIPT`; `FrakFrontend::head()` preconnects both hosts and now emits the `<script>` tag itself, because `FrontController::registerJavascript()`'s `attribute` param only accepts `async`/`defer` and cannot carry `onerror`. `setMedia()` (the `actionFrontControllerSetMedia` hook) is kept but is now a no-op.
+
 ### Added
 
 - **The post-purchase `products` attribute now carries product-scope fields.** `FrakOrderResolver::extractProducts()` previously emitted only `title`, `imageUrl` and `link`, so a product-scoped campaign had no line-item data to match against and every scoped campaign matched every product — the sharing page could advertise a reward the order could not earn. Each entry now also carries `sku` (from `order_detail.product_reference`), `productId`, `quantity` and `unitPrice` (`unit_price_tax_incl`). Empty values are omitted rather than sent as empty strings, because an empty-string SKU satisfies `exists`, `neq` and `not_in` and would silently join a negated scope's matched set. The backend identifies a line by `(productId, sku)`: two lines of the same product carrying different combination References stay distinct, while two lines sharing both are merged into one with their quantities and line totals summed.

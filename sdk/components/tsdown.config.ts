@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import nodePolyfills from "@rolldown/plugin-node-polyfills";
@@ -225,6 +226,13 @@ const rrwebStub = fileURLToPath(
     new URL("../core/src/stubs/rrweb.ts", import.meta.url)
 );
 
+// The shim (`src/components.ts`) pins the CDN loader to this exact version,
+// so jsDelivr serves it `immutable` instead of the 7-day floating-tag TTL.
+const packageJson = JSON.parse(
+    readFileSync(new URL("./package.json", import.meta.url), "utf8")
+) as { version: string };
+const sdkVersion = packageJson.version;
+
 export default defineConfig([
     {
         entry: {
@@ -271,10 +279,7 @@ export default defineConfig([
         // blanket override would mask a manifest that misses a component
         // entrypoint. `assertComponentRegistrations` guards that.
         define: {
-            "process.env.BUILD_TIMESTAMP": JSON.stringify(Date.now()),
-            "process.env.CDN_TAG": JSON.stringify(
-                process.env.CDN_TAG || "latest"
-            ),
+            "process.env.SDK_VERSION": JSON.stringify(sdkVersion),
         },
         outputOptions(options) {
             return {

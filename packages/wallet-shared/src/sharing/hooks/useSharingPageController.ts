@@ -181,15 +181,25 @@ export function useSharingPageController({
         [items, selectedProductIndex]
     );
 
-    const { data: reward, isLoading: isRewardLoading } =
-        useFormattedEstimatedReward({
-            merchantId,
-            products: rewardProducts,
-            ...rewardQuery,
-        });
+    const {
+        data: reward,
+        isPending: isRewardPending,
+        isError: isRewardError,
+    } = useFormattedEstimatedReward({
+        merchantId,
+        products: rewardProducts,
+        ...rewardQuery,
+    });
 
-    // Paint the host's cached headline until the real one arrives.
-    const estimatedReward = reward?.formatted ?? seedReward;
+    // Never issued and a failed first fetch both count as still resolving; an
+    // error holding cached data does not, or a refetch blanks a loaded hero.
+    const isRewardStillResolving =
+        isRewardPending || (isRewardError && reward === undefined);
+
+    // Paint the host's cached headline only until the real one settles.
+    const estimatedReward = isRewardStillResolving
+        ? seedReward
+        : reward?.formatted;
     const appName = merchant.name ?? "";
 
     // Inject the reward and merchant name into every interpolation.
@@ -412,21 +422,23 @@ export function useSharingPageController({
 
     const rewardView: SharingReward = useMemo(() => {
         // A seeded headline is content, so skip the skeleton.
-        if (isRewardLoading && !seedReward) return { status: "loading" };
+        if (isRewardStillResolving && !seedReward) return { status: "loading" };
+        if (isRewardStillResolving) return { status: "ready" };
+        if (!reward) return { status: "empty" };
         return {
             status: "ready",
-            payoutType: reward?.payoutType,
-            minPurchaseAmount: reward?.minPurchaseAmount,
-            isProductScoped: reward?.isProductScoped,
-            lockupDurationDays: reward?.lockupDurationDays,
+            payoutType: reward.payoutType,
+            minPurchaseAmount: reward.minPurchaseAmount,
+            isProductScoped: reward.isProductScoped,
+            lockupDurationDays: reward.lockupDurationDays,
             breakdown: {
-                referrer: reward?.referrerReward,
-                referee: reward?.refereeReward,
-                minPurchaseValue: reward?.minPurchaseValue,
+                referrer: reward.referrerReward,
+                referee: reward.refereeReward,
+                minPurchaseValue: reward.minPurchaseValue,
             },
-            parts: reward?.parts,
+            parts: reward.parts,
         };
-    }, [isRewardLoading, seedReward, reward]);
+    }, [isRewardStillResolving, seedReward, reward]);
 
     return {
         merchant: { name: appName, logoUrl: merchant.logoUrl },

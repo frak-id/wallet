@@ -375,7 +375,6 @@ describe("Install Code Routes API", () => {
             const data = await response.json();
             expect(data).toEqual({
                 merchantId: MERCHANT_ID,
-                anonymousId: "anon-1",
                 merchant: { name: "Acme", domain: "acme.com" },
                 hasWallet: false,
                 ticket: "minted-ticket",
@@ -469,7 +468,6 @@ describe("Install Code Routes API", () => {
             });
             expect(await response.json()).toEqual({
                 merchantId: MERCHANT_ID,
-                anonymousId: "anon-late",
                 merchant: { name: "Acme", domain: "acme.com" },
                 hasWallet: false,
                 ticket: "minted-ticket",

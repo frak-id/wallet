@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K min — CSS minimal · page ambassadeur</title>
+<%- sdkPreconnect %>
+<script>
+    const detectFrakEnv = <%- detectFrakEnv %>;
+
+    (async () => {
+        const env = await detectFrakEnv(<%= useLocal %>, <%- remoteEnv %>);
+
+        window.FrakSetup = {
+            config: {
+                env,
+                metadata: { name: "Vanilla JS", lang: "fr", currency: "eur" },
+            },
+        };
+
+        const sdkScript = document.createElement('script');
+        if (<%= sdkIsModule %>) sdkScript.type = 'module';
+        sdkScript.src = '<%- sdkScriptSrc %>';
+        // Deployed builds fall back like a merchant page; locally a 404 must stay loud.
+        sdkScript.onerror = () => {
+            console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+            const fallbackSrc = '<%- sdkFallbackSrc %>';
+            if (!fallbackSrc) return;
+            const fallback = document.createElement('script');
+            fallback.src = fallbackSrc;
+            fallback.defer = true;
+            document.head.appendChild(fallback);
+        };
+        document.head.appendChild(sdkScript);
+    })();
+</script>
+
+<style>
+/* ========================================================================
+   SHIPPED WITH THE PAGE — everything below this banner, and nothing else.
+   Layout only: no font, no colour, no palette, no radius, no shadow. Every
+   visual choice is the merchant's. Borders and surfaces derive from the
+   inherited `color`, so they follow a dark theme without knowing about it.
+   ======================================================================== */
+[data-frak-page]{display:grid;gap:clamp(2.5em,6vw,4.5em)}
+[data-frak-page] section{display:grid;gap:.75em;align-content:start}
+.frak-center{text-align:center;justify-items:center}
+.frak-lede{max-width:52ch}
+.frak-center .frak-lede{margin-inline:auto}
+.frak-muted{opacity:.7}
+
+/* Every multi-column block is the same auto-fit grid: one column on a phone,
+   N on a desktop, without a media query or a column count to maintain. */
+.frak-cols{display:grid;gap:1.25em;grid-template-columns:repeat(auto-fit,minmax(15em,1fr))}
+.frak-cols>*{display:grid;gap:.5em;align-content:start}
+
+.frak-amount{font-size:clamp(3em,13vw,6em);line-height:.9;font-weight:700}
+.frak-amount small{font-size:.35em}
+
+.frak-strip{display:grid;gap:1em;grid-template-columns:repeat(auto-fit,minmax(9em,1fr));
+  text-align:center;padding:1.25em 0;border-block:1px solid color-mix(in srgb,currentColor 20%,transparent)}
+.frak-strip b{display:block;font-size:1.75em;line-height:1.2;font-variant-numeric:tabular-nums}
+
+.frak-note{display:flex;gap:.6em;padding:.75em 1em;
+  border:1px solid color-mix(in srgb,currentColor 20%,transparent)}
+
+.frak-hero{display:grid;gap:2em;grid-template-columns:repeat(auto-fit,minmax(18em,1fr));align-items:center}
+.frak-tag{position:absolute;inset:auto 1em 1em;display:flex;flex-wrap:wrap;align-items:center;gap:.75em;
+  text-align:start;padding:.9em 1em}
+.frak-tag b{display:block;font-size:1.4em;line-height:1.1}
+.frak-tag small{display:block;font-size:.8em}
+.frak-pill{margin-inline-start:auto;padding:.45em .8em;font-size:.72em;font-weight:700}
+.frak-art{position:relative;aspect-ratio:4/5;display:grid;place-items:center;text-align:center;padding:1em;
+  border:1px dashed color-mix(in srgb,currentColor 35%,transparent)}
+.frak-faces{display:flex;flex-wrap:wrap;gap:.5em;align-items:center}
+/* A circle is structure, not taste: without this the avatars fall back to bare
+   initials. Shape and size only — the fill is the merchant's to give. */
+.frak-faces span{inline-size:2.2em;block-size:2.2em;border-radius:50%;display:grid;place-items:center;
+  font-size:.75em;border:1px solid color-mix(in srgb,currentColor 35%,transparent)}
+
+/* The one deliberate exception to "no colour": store badges are fixed brand
+   artwork that Apple and Google both require verbatim, so they cannot inherit
+   the merchant's palette. Everything else on this page can. */
+.frak-badges{display:flex;flex-wrap:wrap;gap:.75em;align-items:center}
+.frak-badge{display:inline-flex;align-items:center;gap:.5em;text-decoration:none;
+  background:#000;color:#fff;border:1px solid #a6a6a6;border-radius:8px;padding:.5em .9em;
+  font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.15}
+.frak-badge svg{flex:none}
+.frak-badge small{display:block;font-size:.62em;opacity:.9}
+.frak-badge strong{display:block;font-size:.95em;font-weight:600}
+.frak-store{display:grid;gap:1.5em;grid-template-columns:repeat(auto-fit,minmax(14em,1fr));align-items:center}
+
+/* ========================================================================
+   NOT SHIPPED — below is the demo harness and a stand-in merchant theme.
+   ======================================================================== */
+body{margin:0;padding:20px;background:#3a3f47;display:flex;flex-direction:column;
+  align-items:center;min-height:100vh;font-family:Arial,sans-serif}
+.page-title{color:#fff}
+.demo-bar,.statebar,.component-card,.notes{max-width:960px;width:100%;box-sizing:border-box;border-radius:12px}
+.demo-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 20px;margin-bottom:12px;
+  background:#2d3139;color:#ccc;font-size:14px}
+.demo-bar strong{color:#fff}
+.demo-bar a{color:#2196F3;text-decoration:none}
+.demo-bar a.on{color:#fff;text-decoration:underline}
+.demo-bar .sp{margin-left:auto;color:#aaa;font-family:monospace;font-size:12px}
+.statebar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 20px;margin-bottom:20px;
+  background:#1e2127;color:#aaa;font-size:12.5px}
+.statebar label{display:flex;gap:7px;align-items:center;color:#fff;cursor:pointer}
+/* The merchant baseline: any host page gives the content a surface and a text
+   colour. Without it, unstyled would render on the demo's dark chrome and read
+   as broken rather than as plain. */
+.component-card{padding:40px 28px;overflow:hidden;background:#fff;color:#111}
+
+/* notes */
+.notes{margin:20px 0 0}
+.notes details{background:#2d3139;border:1px solid #3a414e;color:#ccc;padding:16px 18px}
+.notes summary{color:#fff;font-weight:600;cursor:pointer}
+.notes p,.notes li{color:#aaa;font-size:14px;line-height:1.6}
+.notes ul{margin:8px 0 0;padding-left:18px}
+.notes h4{color:#fff;margin:16px 0 4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.notes code{background:#1e2127;padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style>
+
+<style id="merchant-theme">
+/* Stand-in for the merchant's own stylesheet — here B's hero reproduced.
+   Toggle it off to see exactly what we ship. Nothing here is ours, and nothing
+   here is in the bundle. Every line is CSS, since this page has no knobs. */
+.component-card{background:var(--frak-surface-secondary,#f2f6fe);color:var(--frak-text-primary,#000);
+  font-family:Arial,sans-serif;line-height:1.6}
+.component-card h1{font-size:clamp(34px,5.6vw,52px);font-weight:700;letter-spacing:-.02em;margin:0;
+  line-height:1.15;max-width:14ch}
+.component-card h2{font-size:clamp(26px,4vw,36px);font-weight:700;margin:0;line-height:1.15}
+.component-card h3{font-size:1.05rem;font-weight:700;margin:0}
+.component-card p{margin:0}
+.component-card button,.component-card .btn{background:var(--frak-text-primary,#000);color:#fff;border:0;
+  border-radius:999px;padding:15px 32px;font:bold 14px/1 Arial,sans-serif;letter-spacing:.03em;
+  text-transform:uppercase;cursor:pointer}
+.component-card button:hover{background:var(--frak-surface-primary,#0043ef)}
+.component-card summary{cursor:pointer;font-weight:600;padding:.6rem 0}
+.component-card details{border-bottom:1px solid var(--frak-border-default,#e2e2e2)}
+.component-card .frak-amount{color:var(--frak-surface-primary,#0043ef)}
+.component-card .frak-hero>div:first-child>.frak-muted:first-child{color:var(--frak-text-warning,#ec7e00);
+  font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;opacity:1}
+.component-card .frak-art{border:0;border-radius:12px;
+  background:linear-gradient(150deg,#668ef5,#0043ef 55%,#00288f)}
+.component-card .frak-art .frak-muted{color:#fff;opacity:.85;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase}
+.component-card .frak-art .frak-muted small{font-weight:400;letter-spacing:0;text-transform:none}
+.component-card .frak-faces{gap:0}
+.component-card .frak-faces span{inline-size:34px;block-size:34px;font-size:12px;margin-left:-10px;
+  color:#fff;background:var(--frak-surface-primary,#0043ef);font-family:Arial,sans-serif;
+  border:2.5px solid var(--frak-surface-secondary,#f2f6fe)}
+.component-card .frak-faces span:first-child{margin-left:0}
+.component-card .frak-faces span:nth-child(2){background:var(--frak-text-warning,#ec7e00)}
+.component-card .frak-faces span:nth-child(3){background:var(--frak-text-success,#09be67)}
+.component-card .frak-faces span:nth-child(4){background:var(--frak-text-secondary,#525252)}
+.component-card .frak-faces p{margin-left:12px}
+.component-card .frak-tag{background:#fff;border-radius:12px}
+.component-card .frak-tag b{color:var(--frak-surface-primary,#0043ef)}
+.component-card .frak-tag small{color:var(--frak-text-secondary,#525252)}
+.component-card .frak-pill{background:var(--frak-surface-primary,#0043ef);color:#fff;
+  border-radius:99px;letter-spacing:.04em}
+</style>
+</head>
+<body>
+
+<h1 class="page-title">Page ambassadeur — K min · CSS minimal</h1>
+
+<nav class="demo-bar" data-frak-nav></nav>
+
+<div class="statebar">
+  <label><input type="checkbox" id="theme-toggle" checked> Styles marchand simulés</label>
+  <span>Décochez pour voir ce que la page embarque réellement : une grille, rien d'autre.</span>
+  <span>Gains, filleuls, commandes en attente et nombre d'ambassadeurs sont factices — aucune API ne les expose au domaine marchand.</span>
+</div>
+
+<main class="component-card">
+<div data-frak-page>
+
+  <section class="frak-hero">
+    <div style="display:grid;gap:1rem;align-content:start">
+      <p class="frak-muted">Programme ambassadeur</p>
+      <h1>Devenez ambassadeur de Vanilla JS.</h1>
+      <p class="frak-lede">Vous parlez déjà de nous autour de vous. Nous vous en remercions&nbsp;: une récompense sur chaque commande que vous inspirez, et quelques attentions réservées à nos ambassadeurs.</p>
+      <p><button type="button" data-frak-share>Devenir ambassadeur</button></p>
+      <div class="frak-faces">
+        <span>AL</span><span>MC</span><span>JD</span><span>SR</span>
+        <p class="frak-muted"><strong>1 240 ambassadrices et ambassadeurs</strong> nous recommandent déjà</p>
+      </div>
+    </div>
+    <div class="frak-art">
+      <p class="frak-muted">Photo de la marque<br><small>Emplacement fourni par le marchand</small></p>
+      <div class="frak-tag">
+        <div><b data-frak-reward="{REWARD}">7,20 €</b><small>pour vous, par commande</small></div>
+        <span class="frak-pill" data-frak-reward-referee="+ {REWARD} offerts à votre filleul">+ 0,80 € offerts à votre filleul</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="frak-center">
+    <p class="frak-muted">Programme de parrainage</p>
+    <p class="frak-amount" data-frak-reward="{REWARD}">7,20<small> €</small></p>
+    <h2>pour vous, à chaque ami qui commande.</h2>
+    <p class="frak-lede">Pas de plafond, pas de conditions. Vous partagez ce que vous aimez déjà, vous êtes payé quand ça marche.</p>
+    <p><button type="button" data-frak-share>Obtenir mon lien</button></p>
+    <p class="frak-muted"><small>Gratuit · sans engagement · versé sur votre compte bancaire</small></p>
+  </section>
+
+  <section>
+    <h2>Vos gains</h2>
+    <p class="frak-lede frak-muted">Mis à jour à chaque commande passée avec votre lien. Rien à réclamer, rien à calculer.</p>
+    <div class="frak-strip">
+      <p><b>43,20 €</b><span class="frak-muted">Gagnés au total</span></p>
+      <p><b>6</b><span class="frak-muted">Filleuls</span></p>
+      <p class="frak-muted"><b>14,40 €</b><span>En attente de validation</span></p>
+    </div>
+    <p class="frak-note"><span aria-hidden="true">⏳</span> <span>Deux commandes sont en cours de validation. Vos gains seront crédités dès leur expédition.</span></p>
+  </section>
+
+  <section>
+    <h2>Comment vous êtes payé</h2>
+    <p class="frak-lede frak-muted">La question que tout le monde se pose en premier.</p>
+    <div class="frak-cols">
+      <div>
+        <h3>Crédité instantanément</h3>
+        <p>Dès qu'une commande est validée, le montant arrive dans votre porte-monnaie Frak. Pas d'attente, pas de seuil de déblocage.</p>
+      </div>
+      <div>
+        <h3>Vers votre compte bancaire</h3>
+        <p>Vous transférez quand vous voulez, sans commission. C'est votre argent, pas des points ni un bon d'achat.</p>
+      </div>
+      <div>
+        <h3>Sans donnée bancaire</h3>
+        <p>Pas de RIB à donner pour commencer, pas de mot de passe. Votre porte-monnaie s'ouvre avec votre biométrie.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="frak-store">
+    <div style="display:grid;gap:.75rem;align-content:start">
+      <h2>Suivez vos gains en temps réel</h2>
+      <p class="frak-lede">L'app Frak vous prévient dès qu'un ami commande, et centralise vos gains sur toutes les marques partenaires.</p>
+      <div class="frak-badges">
+        <a class="frak-badge" data-frak-install aria-disabled="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.7c0-2 1.6-3 1.7-3.1-1-1.4-2.4-1.6-2.9-1.6-1.3-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.3 2-1.4 2.4-.4 6 1 8 .7 1 1.5 2 2.5 2 1 0 1.4-.6 2.6-.6 1.2 0 1.5.6 2.6.6 1.1 0 1.8-1 2.4-1.9.8-1.1 1.1-2.2 1.1-2.2 0-.1-2.1-.8-2.1-3.2zM14.5 6.3c.5-.7.9-1.6.8-2.6-.8 0-1.8.6-2.4 1.3-.5.6-1 1.6-.8 2.5.9.1 1.8-.5 2.4-1.2z"/></svg>
+          <span><small>Télécharger dans</small><strong>App Store</strong></span>
+        </a>
+        <a class="frak-badge" data-frak-install aria-disabled="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="#34a853" d="M4 21.2 14.3 15l-2.6-2.6z"/><path fill="#ea4335" d="M4 2.8 11.7 11l2.6-2.5z"/><path fill="#fbbc04" d="M18.6 10.2 15 8.2l-2.9 2.8 2.9 2.8 3.6-2c.8-.5.8-1.2 0-1.6z"/><path fill="#4285f4" d="M4 2.8v18.4c0 .5.2.8.6.9l7.5-7.3-7.5-7.3c-.4.2-.6.5-.6 1z"/></svg>
+          <span><small>Disponible sur</small><strong>Google Play</strong></span>
+        </a>
+      </div>
+    </div>
+    <div class="frak-center">
+      <svg width="118" height="118" viewBox="0 0 29 29" shape-rendering="crispEdges" role="img" aria-label="QR code de téléchargement">
+        <rect width="29" height="29" fill="#fff"/>
+        <g fill="#14171c">
+          <path d="M0 0h7v7H0z M2 2h3v3H2z M22 0h7v7h-7z M24 2h3v3h-3z M0 22h7v7H0z M2 24h3v3H2z"/>
+          <path d="M9 0h1v3H9z M11 1h1v2h-1z M13 0h1v4h-1z M16 2h1v2h-1z M18 0h1v3h-1z
+                   M9 5h2v1H9z M12 5h1v1h-1z M15 5h3v1h-3z M19 4h1v3h-1z
+                   M0 9h3v1H0z M4 9h1v2H4z M6 9h2v1H6z M0 12h1v2H0z M2 11h1v3H2z M5 13h2v1H5z
+                   M0 16h2v1H0z M3 16h1v2H3z M5 16h1v1H5z M0 19h1v2H0z M2 19h3v1H2z M6 18h1v3H6z
+                   M22 9h1v2h-1z M24 9h2v1h-2z M27 10h1v2h-1z M22 13h3v1h-3z M26 13h2v1h-2z
+                   M22 16h1v3h-1z M24 17h2v1h-2z M27 16h1v2h-1z M23 20h2v1h-2z M26 19h1v2h-1z
+                   M9 9h2v2H9z M12 10h2v1h-2z M15 9h1v3h-1z M17 10h2v2h-2z
+                   M9 13h1v2H9z M11 13h3v1h-3z M15 14h2v1h-2z M18 13h1v2h-1z
+                   M10 16h2v1h-2z M13 16h1v3h-1z M15 17h3v1h-3z M19 16h1v2h-1z
+                   M9 20h3v1H9z M13 21h2v1h-2z M16 20h1v2h-1z M18 21h2v1h-2z
+                   M9 24h1v2H9z M11 23h2v1h-2z M14 24h2v1h-2z M17 23h1v3h-1z M19 24h2v1h-2z
+                   M9 27h3v1H9z M13 26h1v2h-1z M15 27h2v1h-2z M18 26h2v1h-2z
+                   M22 23h2v1h-2z M25 23h1v2h-1z M27 24h1v2h-1z M22 26h1v2h-1z M24 26h3v1h-3z"/>
+        </g>
+      </svg>
+      <p class="frak-muted"><small>Scannez pour installer</small></p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Questions fréquentes</h2>
+    <details open><summary>C'est vraiment gratuit ?</summary>
+      <p>Oui, totalement. Pas d'abonnement, pas de frais cachés. Vos gains arrivent dans votre porte-monnaie et vous pouvez les transférer vers votre compte bancaire, sans commission.</p></details>
+    <details><summary>Quand est-ce que je reçois mon argent ?</summary>
+      <p>À chaque commande générée par votre lien, vos gains sont crédités automatiquement et instantanément. Vous pouvez les transférer à tout moment.</p></details>
+    <details><summary>Mes amis paient-ils plus cher avec mon lien ?</summary>
+      <p>Non, au contraire. En commandant via votre lien ils reçoivent eux aussi un cash-back sur leur achat.</p></details>
+    <details><summary>Il faut être influenceur ?</summary>
+      <p>Non. Le programme est ouvert à tous nos clients, quelle que soit la taille de votre réseau.</p></details>
+    <details><summary>C'est quoi Frak ?</summary>
+      <p>Le partenaire qui gère le suivi des parrainages et le versement des gains pour Vanilla JS. Aucune donnée personnelle n'est stockée.</p></details>
+    <p class="frak-muted frak-center"><small>Programme propulsé par <strong>Frak</strong></small></p>
+  </section>
+
+</div>
+</main>
+
+<div class="notes"><details>
+  <summary>Notes — K min · variante CSS minimal</summary>
+  <h4>Pourquoi cette variante existe</h4>
+  <p>Même composition que K, poussée à l'extrême inverse : la page n'apporte qu'une grille et hérite de tout le reste. Conservée comme preuve que l'héritage fonctionne — et comme rappel de ce qu'elle coûte, puisqu'un marchand dont le thème ne style que <code>.btn</code> n'obtient ici que des boutons d'usine. K est la version livrable ; celle-ci est la mesure.</p>
+  <h4>La composition</h4>
+  <ul>
+    <li><strong>Hero</strong> — celui de B, sans le mot « Cercle » : le statut d'ambassadeur et la preuve sociale restent, le nom de club disparaît. Ce qui tombe avec lui, ce sont les avantages qui le justifiaient (coffret, accès anticipé, lettre) — la page ne promet plus qu'une rémunération.</li>
+    <li><strong>Le montant</strong> — le hero de A, rétrogradé en second bloc : il ne porte plus l'ouverture, il confirme la promesse du premier.</li>
+    <li><strong>Vos gains</strong> — la bande de C, sortie de son état « ambassadeur qui revient ».</li>
+    <li><strong>Comment vous êtes payé</strong>, <strong>app</strong> et <strong>FAQ</strong> — ceux de A, passés au vouvoiement.</li>
+  </ul>
+  <h4>Le CSS embarqué</h4>
+  <p>La page vit chez le marchand, donc elle n'apporte aucun style : <strong>ni police, ni couleur, ni palette, ni rayon, ni ombre</strong>. Ce qu'elle embarque tient en une vingtaine de règles de mise en page, toutes préfixées <code>frak-</code>. Les seules couleurs employées sont dérivées du <code>color</code> hérité via <code>color-mix</code>, si bien qu'un thème sombre fonctionne sans que la page en sache rien. Les colonnes sont en <code>auto-fit</code> : aucune <em>media query</em>, aucun nombre de colonnes à maintenir.</p>
+  <p><strong>Une seule exception assumée</strong> : les badges stores. Apple et Google imposent leur visuel tel quel, donc ce bloc porte ses propres couleurs — c'est le seul endroit de la page où le marchand n'a pas la main, et c'est dû à leurs règles, pas aux nôtres.</p>
+  <p>Le second bloc <code>&lt;style&gt;</code> simule la feuille du marchand (serif, crème, bouton carré) et n'est pas livré. La case « Styles marchand simulés » le désactive : ce qui reste à l'écran est alors exactement ce que nous expédions, posé sur un fond blanc et un texte noir — le minimum que toute page hôte fournit.</p>
+  <h4>Conséquence pour le SDK</h4>
+  <p>Cette page <strong>n'adopte pas les tokens <code>--frak-*</code></strong>, contrairement aux autres directions. Ces tokens habillent l'interface du wallet ; les appliquer à une page hébergée par le marchand revient à imposer le bleu Frak à sa marque. <code>adoptFrakTokens()</code> dans <code>src/ambassador.ts</code> n'a donc plus d'objet ici — à supprimer du template si cette direction est retenue.</p>
+  <h4>Ce qui est réellement câblé</h4>
+  <ul>
+    <li><strong>Les deux montants</strong> — <code>getMerchantInformation</code> + <code>selectBestReward</code>, côté parrain.</li>
+    <li><strong>Les deux CTA</strong> — <code>displaySharingPage</code> avec le placement <code>ambassador</code>.</li>
+    <li><strong>Les badges stores</strong> — vraie URL <code>/install</code> du wallet depuis <code>getEnvironment()</code>, sans identifiant ni preuve.</li>
+  </ul>
+  <h4>Ce qui reste à trancher</h4>
+  <ul>
+    <li><strong>Les boutons.</strong> Ce sont des <code>&lt;button&gt;</code> nus : ils héritent du marchand qui style l'élément, et restent des boutons d'usine chez celui qui ne style que <code>.btn</code>. Il faut soit documenter une classe à passer, soit accepter ce plancher.</li>
+    <li><strong>Le bloc gains.</strong> Même engagement que sur C : gains cumulés, filleuls et commandes en attente ne sont pas exposés au SDK, et il suppose une identité résolue côté marchand. Il s'adresse en plus à un inscrit, alors que les deux blocs précédents s'adressent à quelqu'un qui ne l'est pas — masquage ou état vide, la décision manque.</li>
+    <li><strong>Le QR.</strong> C'est la seule image restante, et elle est factice.</li>
+    <li><strong>Les badges stores.</strong> Le visuel ci-dessus est une approximation&nbsp;: l'intégration finale doit utiliser les fichiers officiels d'Apple et Google, dont l'usage est contractuellement encadré (taille minimale, marges, pas de recoloration).</li>
+  </ul>
+</details></div>
+
+<script>
+// Not shipped: proves the page holds up without the merchant's stylesheet.
+var themeToggle = document.getElementById("theme-toggle");
+themeToggle.addEventListener("change", function(){
+  document.getElementById("merchant-theme").disabled = !themeToggle.checked;
+});
+</script>
+
+<script type="module" src="/src/ambassador.ts"></script>
+</body>
+</html>

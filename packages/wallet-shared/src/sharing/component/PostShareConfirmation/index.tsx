@@ -15,8 +15,10 @@ import { type ReactNode, useRef } from "react";
 import { MerchantLogo } from "../MerchantLogo";
 import {
     isChromeless,
+    noRewardContext,
     type SharingChrome,
     type SharingMerchant,
+    type SharingReward,
     type SharingT,
 } from "../SharingPage/types";
 import { containerChromeless, overlay, overlayChromeless } from "../shared.css";
@@ -26,6 +28,7 @@ import * as styles from "./postShareConfirmation.css";
 export type PostShareConfirmationProps = {
     installUrl: string | null;
     merchant: SharingMerchant;
+    reward: SharingReward;
     t: SharingT;
     /** Under `mode: "none"` the header goes, but the footer CTAs stay. */
     chrome: SharingChrome;
@@ -43,6 +46,7 @@ const benefits = [
 export function PostShareConfirmation({
     installUrl,
     merchant,
+    reward,
     t,
     chrome,
     onDismiss,
@@ -57,6 +61,9 @@ export function PostShareConfirmation({
         onDismiss,
         containerRef,
     });
+
+    const hasReward = reward.status === "ready";
+    const rewardContext = hasReward ? undefined : noRewardContext;
 
     return (
         // biome-ignore lint/a11y/useKeyWithClickEvents: dismissal has a keyboard equivalent in `useOverlayBehaviour`'s document-level Escape listener, not a per-element handler — the backdrop is never focusable.
@@ -110,12 +117,14 @@ export function PostShareConfirmation({
                                     className={styles.phonePopupTitle}
                                 >
                                     {t(
-                                        "sdk.sharingPage.confirmation.cardPopupTitle"
+                                        "sdk.sharingPage.confirmation.cardPopupTitle",
+                                        rewardContext
                                     )}
                                 </Text>
                                 <Text className={styles.phonePopupDesc}>
                                     {t(
-                                        "sdk.sharingPage.confirmation.cardPopupDescription"
+                                        "sdk.sharingPage.confirmation.cardPopupDescription",
+                                        rewardContext
                                     )}
                                 </Text>
                                 <MerchantLogo
@@ -132,7 +141,10 @@ export function PostShareConfirmation({
                             variant="heading3"
                             className={styles.heroSectionTitle}
                         >
-                            {t("sdk.sharingPage.confirmation.title")}
+                            {t(
+                                "sdk.sharingPage.confirmation.title",
+                                rewardContext
+                            )}
                         </Text>
                         <Text variant="bodySmall">
                             {t("sdk.sharingPage.confirmation.subtitle")}
@@ -164,7 +176,10 @@ export function PostShareConfirmation({
                             className={styles.ctaButton}
                             onClick={onInstall}
                         >
-                            {t("sdk.sharingPage.confirmation.cta")}
+                            {t(
+                                "sdk.sharingPage.confirmation.cta",
+                                rewardContext
+                            )}
                         </Button>
                     ) : (
                         <Button
@@ -174,7 +189,10 @@ export function PostShareConfirmation({
                             className={styles.ctaButton}
                             disabled
                         >
-                            {t("sdk.sharingPage.confirmation.cta")}
+                            {t(
+                                "sdk.sharingPage.confirmation.cta",
+                                rewardContext
+                            )}
                         </Button>
                     )}
                     <button

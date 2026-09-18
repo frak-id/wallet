@@ -13,10 +13,22 @@ How it works under the hood: [Under the hood](https://docs.frak.id/wallet-sdk/un
 
 ## Setup
 
-Add the following script tag to your HTML file:
+Add the following to your HTML file's `<head>`. `sdk.frak.id` is a first-party
+pointer with a 5-minute cache, so a release reaches you within minutes; if it
+is ever unreachable, `onerror` falls back to jsDelivr's `@latest` tag (a
+7-day browser cache, but still your SDK). The pointer's own fetch is
+no-cors, so only jsDelivr's preconnect carries `crossorigin`:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/@frak-labs/components" defer="defer"></script>
+<link rel="dns-prefetch" href="https://sdk.frak.id">
+<link rel="preconnect" href="https://sdk.frak.id">
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<script
+    src="https://sdk.frak.id/components.js"
+    defer="defer"
+    onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/components.js';s.defer=true;document.head.appendChild(s)"
+></script>
 ```
 
 ## Quick start

@@ -846,7 +846,8 @@
         "installedMerchant": "Connecté à {{ merchantName }}",
         "installedCodeToggle": "Ou saisis ce code manuellement",
         "openWallet": "Ouvre Frak et récupère {{ estimatedReward }}",
-        "installedHeadline": "C'est prêt. Ouvre l'app pour récupérer {{ estimatedReward }}."
+        "installedHeadline": "C'est prêt. Ouvre l'app pour récupérer {{ estimatedReward }}.",
+        "dismiss": "Fermer"
     },
     "pendingActions": {
         "walletAlreadyLinked": {

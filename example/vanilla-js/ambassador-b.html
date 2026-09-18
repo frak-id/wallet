@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<%- sdkPreconnect %>
 <script>
     const detectFrakEnv = <%- detectFrakEnv %>;
 
@@ -21,10 +22,17 @@
         };
 
         const sdkScript = document.createElement('script');
-        sdkScript.type = 'module';
+        if (<%= sdkIsModule %>) sdkScript.type = 'module';
         sdkScript.src = '<%- sdkScriptSrc %>';
+        // Deployed builds fall back like a merchant page; locally a 404 must stay loud.
         sdkScript.onerror = () => {
             console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+            const fallbackSrc = '<%- sdkFallbackSrc %>';
+            if (!fallbackSrc) return;
+            const fallback = document.createElement('script');
+            fallback.src = fallbackSrc;
+            fallback.defer = true;
+            document.head.appendChild(fallback);
         };
         document.head.appendChild(sdkScript);
     })();
@@ -235,7 +243,7 @@ details p{margin-top:10px;font-size:14.5px;color:var(--muted)}
       </span>
       <div class="tag">
         <div><b data-frak-reward="{REWARD}">7,20 €</b><small>pour vous, par commande</small></div>
-        <span class="pill">+ 0,80 € offerts à votre filleul</span>
+        <span class="pill" data-frak-reward-referee="+ {REWARD} offerts à votre filleul">+ 0,80 € offerts à votre filleul</span>
       </div>
     </div>
   </div></section>
@@ -267,7 +275,7 @@ details p{margin-top:10px;font-size:14.5px;color:var(--muted)}
       <div class="amp">+</div>
       <div class="side them">
         <div class="who">Votre filleul</div>
-        <div class="amt">0,80 €</div>
+        <div class="amt" data-frak-reward-referee="{REWARD}">0,80 €</div>
         <p>Un cash-back sur sa première commande, au même prix que tout le monde.</p>
       </div>
     </div>
@@ -381,7 +389,7 @@ details p{margin-top:10px;font-size:14.5px;color:var(--muted)}
   </ul>
   <h4>Ce que la maquette invente</h4>
   <ul>
-    <li><strong>Le 0,80 € du filleul</strong> reste en dur : le SDK ne résout que le côté parrain sur cette page. C'est pourtant le pilier de la section win-win.</li>
+    <li><strong>Le 0,80 € du filleul</strong> est résolu côté SDK (<code>audience: "referee"</code>, même <code>selectBestReward</code> que le parrain), la valeur écrite restant le repli. C'est le pilier de la section win-win.</li>
     <li><strong>Les avantages non monétaires</strong> (coffret, accès anticipé, lettre) : aucun champ « perks » n'existe côté marchand aujourd'hui. À créer, ou à retirer de la direction.</li>
     <li><strong>Le compteur d'ambassadeurs</strong> : la donnée existe dans le dashboard business, elle n'est pas exposée publiquement.</li>
     <li><strong>Les témoignages</strong> : fournis par le marchand. Sans eux la section tombe — c'est la direction la plus gourmande en contenu.</li>

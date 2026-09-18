@@ -102,8 +102,8 @@ const { value } = useStore();
 
 File-based TanStack Router over `src/routes/`; `routeTree.gen.ts` is generated, never
 edited by hand. Auth is centralised in the `_restricted` layout — do not add per-route
-guards. Server data comes from `@frak-labs/client` (Eden Treaty), so backend types flow
-through; do not hand-roll fetches.
+guards. Server data comes from `authenticatedBackendApi` (`src/api/backendClient.ts`, Eden
+Treaty), so backend types flow through; do not hand-roll fetches.
 
 ## Code Style
 

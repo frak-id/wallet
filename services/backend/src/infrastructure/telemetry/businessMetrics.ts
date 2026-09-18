@@ -61,6 +61,15 @@ const notificationsSentTotal = register(
     })
 );
 
+const loginChallengeTotal = register(
+    new Counter({
+        name: "login_challenge_total",
+        help: "Login attempts by challenge freshness verdict",
+        // route: login | ecdsaLogin ; verdict: fresh | stale | legacy
+        labelNames: ["route", "verdict"] as const,
+    })
+);
+
 const affiliateWatermarkLag = register(
     new Gauge({
         name: "affiliate_ingestion_watermark_lag_seconds",
@@ -93,6 +102,12 @@ export const businessMetrics = {
         n = 1
     ) {
         if (n > 0) notificationsSentTotal.inc({ channel, outcome }, n);
+    },
+    loginChallenge(
+        route: "login" | "ecdsaLogin",
+        verdict: "fresh" | "stale" | "legacy"
+    ) {
+        loginChallengeTotal.inc({ route, verdict });
     },
     affiliateWatermarkLagSeconds(seconds: number) {
         affiliateWatermarkLag.set(seconds);

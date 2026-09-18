@@ -1,15 +1,9 @@
 <?php
 
 /**
- * Single source of truth for external URLs the module talks to.
- *
- * Keeps the backend host and CDN host pinned in one place so:
- *   - The merchant resolver and the webhook helper agree on the same
- *     `backend.frak.id` host (drift between them would split traffic
- *     across hosts and break the shared HttpClient's TLS reuse).
- *   - The resource hints in `<head>` and the deferred script tag agree on
- *     the same CDN host (otherwise the `dns-prefetch` / `preconnect` warm
- *     a different host than the one that actually serves the SDK).
+ * Single source of truth for external URLs the module talks to: the
+ * resolver and webhook share `backend.frak.id`; {@see FrakFrontend::head()}
+ * warms each SDK host with the same one its script tag or fallback uses.
  */
 class FrakUrls
 {
@@ -34,14 +28,22 @@ class FrakUrls
     public const WEBHOOK_PATH_SUFFIX = '/webhook/custom';
 
     /**
-     * jsDelivr CDN host. Preconnected from `<head>` so the TLS handshake
-     * warms before the deferred SDK script tag fires — saves ~100-300 ms
-     * TTFB on first SDK paint over mobile networks. Used by both
-     * {@see FrakFrontend::head()} (resource hints) and
-     * {@see FrakFrontend::setMedia()} (script registration).
+     * First-party pointer host: serves a 5-minute-TTL file naming the exact
+     * SDK version, so a release reaches shops faster than jsDelivr's
+     * floating-tag cache. Preconnected alongside CDN_BASE.
+     */
+    public const SDK_POINTER_HOST = 'https://sdk.frak.id';
+
+    /** SDK script served from the pointer — the front-office script `src`. */
+    public const SDK_POINTER_SCRIPT = self::SDK_POINTER_HOST . '/components.js';
+
+    /**
+     * jsDelivr CDN host: the pointer's shim `import()`s the versioned loader
+     * from here on every page, and the `onerror` fallback shim lives here too.
+     * Preconnected from {@see FrakFrontend::head()} to warm that handshake.
      */
     public const CDN_BASE = 'https://cdn.jsdelivr.net';
 
-    /** Frak SDK script served from jsDelivr. */
-    public const SDK_SCRIPT = self::CDN_BASE . '/npm/@frak-labs/components';
+    /** `onerror` fallback for {@see FrakUrls::SDK_POINTER_SCRIPT} — pinned to jsDelivr's floating tag. */
+    public const SDK_FALLBACK_SCRIPT = self::CDN_BASE . '/npm/@frak-labs/components@latest/cdn/components.js';
 }

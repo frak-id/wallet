@@ -17,12 +17,13 @@ bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here
 - `infra/components/KubernetesService.ts` — Deployment + Service + HPA + Ingress + ServiceMonitor
 - `infra/components/KubernetesJob.ts` — one-shot K8s Job (e.g., bootstrap migrations + bucket provisioning)
 - `infra/utils.ts` — stage helpers: `isProd`, `normalizedStageName`
+- `infra/sdk-pointer.ts` — S3 + CloudFront pointer at `sdk[-dev].frak.id/components.js`; its content is generated from `sdk/components/package.json`, so `sst deploy --stage sdk-pointer[-dev]` *is* the flip. `SDK_POINTER_VERSION=x.y.z` pins one by hand. `infra/config.ts` `componentsUrl` (Shopify's `FRAK_COMPONENTS_URL`) points here, with jsDelivr's floating tag kept only as each integration's `onerror` fallback
 - `apps/*/Dockerfile` — self-contained multi-stage (each builds the SDK in its own `sdk-builder` stage) → `nginx:1.29.1` with pre-compressed gzip
 - `services/backend/Dockerfile` — backend runtime image
 - `services/bootstrap/Dockerfile` — one-shot bootstrap image (Drizzle migrations + RustFS bucket provisioning)
 
 ## Stages
-`$dev` (local) · `dev` / `prod` (AWS) · `gcp-staging` / `gcp-production` (GCP).
+`$dev` (local) · `dev` / `prod` (AWS) · `gcp-staging` / `gcp-production` (GCP) · `sdk-pointer` / `sdk-pointer-dev` (AWS, release workflows only — deploying them from a branch points merchants at that branch's `package.json` version).
 
 ## Non-Obvious Patterns
 - **Bootstrap Job gate**: `KubernetesJob` (`services/bootstrap`) runs Drizzle migrations (Postgres + libSQL), the back-fills AND RustFS bucket provisioning. MUST finish before backend `KubernetesService` — enforced by Pulumi `dependsOn`. Skipping = broken pods.
@@ -37,8 +38,8 @@ bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here
 
 ## CI/CD (.github/workflows)
 - `deploy.yml` — path-based triggers; `main` → prod, `dev` → staging
-- `release.yml` — Changesets → npm publish + jsDelivr cache purge
-- `beta-release.yml` — SDK changes on `dev` → beta publish tagged with content hash
+- `release.yml` — Changesets → npm publish → wait for jsDelivr → `sst deploy --stage sdk-pointer` → jsDelivr cache purge
+- `beta-release.yml` — SDK changes on `dev` → beta publish tagged with content hash → wait for jsDelivr → `sst deploy --stage sdk-pointer-dev`
 - `tauri-mobile-release.yml` — manual → iOS TestFlight + Android Play Store
 
 ## Anti-Patterns

@@ -872,4 +872,29 @@ describe("InstallView — install-code branch, post-install detection", () => {
         expect(writeText).not.toHaveBeenCalled();
         vi.unstubAllGlobals();
     });
+
+    test("the header dismiss control has an accessible name and closes the page", async ({
+        queryWrapper,
+    }) => {
+        const close = vi.spyOn(window, "close").mockImplementation(() => {});
+
+        render(
+            <InstallView
+                search={{ m: "merchant-1", a: "anon-1" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        fireEvent.click(
+            await screen.findByRole("button", {
+                name: "installCode.dismiss",
+            })
+        );
+
+        expect(mockTrackEvent).toHaveBeenCalledWith("install_page_dismissed");
+        expect(close).toHaveBeenCalled();
+        close.mockRestore();
+    });
 });

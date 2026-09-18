@@ -1,7 +1,7 @@
-import { backendApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { Address } from "viem";
+import { authenticatedCommonApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { currencyStore } from "@/stores/currencyStore";
 import { formatPrice } from "../utils/formatPrice";
@@ -23,7 +23,7 @@ function conversionRateQueryOptions(token?: Address, isDemoMode?: boolean) {
                 };
             }
 
-            const { data, error } = await backendApi.common.rate.get({
+            const { data, error } = await authenticatedCommonApi.rate.get({
                 query: { token },
             });
             if (error) {

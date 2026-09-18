@@ -28,7 +28,7 @@ extensions/
 
 ```
 Theme blocks (listener.liquid)
-  → Loads Frak SDK from CDN (jsdelivr)
+  → Loads the Frak SDK shim from `sdk[-dev].frak.id` (metafield `frak.components_url`), jsDelivr as onerror fallback
   → Sets window.FrakSetup.config (env origins, shop metadata, appearance)
   → Reads metafields: frak.components_url, frak.appearance, frak.modal_i18n,
     frak.merchant_id, frak.wallet_url, frak.backend_url

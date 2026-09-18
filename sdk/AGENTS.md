@@ -20,12 +20,14 @@ Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **str
 
 - **NPM**: `{ format: ["esm", "cjs"], outDir: "dist", dts: true }`
 - **CDN**: `{ format: "iife", globalName: "FrakSDK", outDir: "cdn", deps: { alwaysBundle: [/.*/] } }` — fully self-contained bundle. `sdk/legacy` is the exception: it emits its `NexusSDK` global to `dist/bundle`, so a `sdk/*/cdn` glob misses it. That path stays registered in `check:es-output`.
+- **`sdk/components/cdn/components.js` embeds its own package version** (`process.env.SDK_VERSION`, from `package.json` via `tsdown.config.ts`, same pattern as `sdk/core`) so it always jumps straight to the exact jsDelivr release instead of a floating tag. Merchants load this file from `sdk.frak.id`/`sdk-dev.frak.id` (`infra/sdk-pointer.ts`), a first-party pointer with a 5-minute cache in front of it, not jsDelivr directly — every integration keeps an `onerror` fallback to jsDelivr's floating tag in case the pointer is ever unreachable.
 - **`development` export condition**: apps in this monorepo consume `src/index.ts` directly (no rebuild in dev loop)
 
 ## Non-Obvious Patterns
 
 - **Build order is a hard requirement** — downstream packages typecheck against upstream build outputs.
 - **CDN `deps.alwaysBundle: [/.*/]`** means every dep (viem, TanStack Query, etc.) ships inside the bundle. Size discipline matters, and so does the ES floor: it is one parse unit, so one above-floor construct anywhere breaks the whole file on an old browser.
+- **The listener overlay wins its stacking fight in the top layer, never with `z-index`.** `changeIframeVisibility` promotes `#frak-wallet` with `popover="manual"` while shown. Raising `zIndex` (still 2000001) is not an alternative someone forgot: merchant widgets — Smile.io's launcher, most cookie banners — sit at 2147483647, the int32 ceiling, and are injected on `window.load`, so a tie at the ceiling still loses on DOM order. Re-appending the iframe last would win that tie and reload it, dropping the listener session. The attribute toggling and the inline style resets in that function each guard their own trap; the comments there name them. **`showPopover` is Safari 17+ while the SDK floor is Safari 15.4**, so 15.4-16.6 keeps z-index-only behaviour and the overlap comes back there. That gap is accepted, not outstanding: ~2% of iOS traffic (Statcounter, Aug 2026) against a cosmetic overlap. `<dialog>.showModal()` would cover the floor, but it makes the host page inert and its Esc-fires-`cancel` path closes the overlay without resolving the RPC — a leak on all traffic to fix 2%. Revisit only if analytics disagree or a merchant reports it.
 - **Adding a new action is a 4-step sequence** (do not skip):
   1. Add type in `sdk/core/src/types/rpc/*.ts`, extend `IFrameRpcSchema`
   2. Implement in `sdk/core/src/actions/<name>.ts` (pure function, `client: FrakClient`)

@@ -1,6 +1,6 @@
-import { backendApi } from "@frak-labs/client/server";
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
+import { authenticatedCommonApi } from "@/api/backendClient";
 import {
     createMockAddress,
     describe,
@@ -10,12 +10,10 @@ import {
 } from "@/tests/vitest-fixtures";
 import { useConvertToPreferredCurrency } from "./useConversionRate";
 
-vi.mock("@frak-labs/client/server", () => ({
-    backendApi: {
-        common: {
-            rate: {
-                get: vi.fn(),
-            },
+vi.mock("@/api/backendClient", () => ({
+    authenticatedCommonApi: {
+        rate: {
+            get: vi.fn(),
         },
     },
 }));
@@ -44,7 +42,9 @@ describe("useConvertToPreferredCurrency", () => {
             }: TestContext) => {
                 freshCurrencyStore.getState().setCurrency(currency);
 
-                vi.mocked(backendApi.common.rate.get).mockResolvedValueOnce({
+                vi.mocked(
+                    authenticatedCommonApi.rate.get
+                ).mockResolvedValueOnce({
                     data: RATES,
                     error: null,
                     response: {} as Response,
@@ -89,7 +89,7 @@ describe("useConvertToPreferredCurrency", () => {
         test("should return undefined when conversion rate fails", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(backendApi.common.rate.get).mockResolvedValueOnce({
+            vi.mocked(authenticatedCommonApi.rate.get).mockResolvedValueOnce({
                 data: null,
                 error: { status: 400, value: "Network error" },
                 response: {} as Response,
@@ -114,7 +114,7 @@ describe("useConvertToPreferredCurrency", () => {
         test("should return undefined when neither amount nor balance provided", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(backendApi.common.rate.get).mockResolvedValueOnce({
+            vi.mocked(authenticatedCommonApi.rate.get).mockResolvedValueOnce({
                 data: RATES,
                 error: null,
                 response: {} as Response,
@@ -143,7 +143,7 @@ describe("useConvertToPreferredCurrency", () => {
         }: TestContext) => {
             freshCurrencyStore.getState().setCurrency("eur");
 
-            vi.mocked(backendApi.common.rate.get).mockResolvedValue({
+            vi.mocked(authenticatedCommonApi.rate.get).mockResolvedValue({
                 data: RATES,
                 error: null,
                 response: {} as Response,

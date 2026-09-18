@@ -23,7 +23,7 @@
 
 import "@testing-library/jest-dom/vitest";
 import { cleanup, configure } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterAll, afterEach } from "vitest";
 
 // RTL's `waitFor` keeps its own 1s budget, independent of `testTimeout`. Ten
 // projects sharing `cpus-1` workers put a cold transform inside that window,
@@ -34,4 +34,11 @@ configure({ asyncUtilTimeout: 5000 });
 // This ensures DOM is clean between tests and prevents memory leaks
 afterEach(() => {
     cleanup();
+});
+
+// Radix's focus scope dispatches its unmount event from a `setTimeout(0)`. One
+// left pending when a file ends fires after Vitest tears down jsdom and throws
+// on the realm mismatch, failing the run while every test passes.
+afterAll(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
 });

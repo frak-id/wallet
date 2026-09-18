@@ -1,4 +1,5 @@
 import type { Address } from "viem";
+import { utcHourSlotWindow } from "./hourSlot";
 
 /**
  * Static prefix included in every merge-consent challenge. Prevents a
@@ -6,18 +7,6 @@ import type { Address } from "viem";
  * etc.) from being passed off as merge consent.
  */
 export const MERGE_CONSENT_PREFIX = "frak-merge-consent";
-
-/**
- * Format a `Date` as a UTC hour slot, e.g. `"2026-05-20T14"`. Drives the
- * temporal binding of the merge-consent challenge.
- */
-export function formatMergeConsentHourSlot(date: Date): string {
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-    const day = String(date.getUTCDate()).padStart(2, "0");
-    const hour = String(date.getUTCHours()).padStart(2, "0");
-    return `${year}-${month}-${day}T${hour}`;
-}
 
 /**
  * Build the merge-consent challenge string for a specific UTC hour slot.
@@ -44,9 +33,6 @@ export function buildMergeConsentChallenge(params: {
  * Build the three challenge strings the backend accepts at `/merge/settle`:
  * the current UTC hour, one hour earlier, and one hour later.
  *
- * The ±1h window absorbs clock skew between the user's device and the
- * backend, and lets a flow that straddles an hour boundary still succeed.
- *
  * Both the frontend (when signing) and the backend (when verifying) call
  * this helper so they cannot drift on the format.
  */
@@ -55,14 +41,11 @@ export function buildMergeConsentChallengeSlots(params: {
     loserAuthenticatorId: string;
     now?: Date;
 }): string[] {
-    const now = params.now ?? new Date();
-    const hour = 60 * 60 * 1000;
-    return [-1, 0, 1].map((offsetHours) => {
-        const slotDate = new Date(now.getTime() + offsetHours * hour);
-        return buildMergeConsentChallenge({
+    return utcHourSlotWindow(params.now).map((hourSlot) =>
+        buildMergeConsentChallenge({
             winner: params.winner,
             loserAuthenticatorId: params.loserAuthenticatorId,
-            hourSlot: formatMergeConsentHourSlot(slotDate),
-        });
-    });
+            hourSlot,
+        })
+    );
 }

@@ -18,7 +18,7 @@ Preact-based Web Components (Custom Elements). Hybrid Light DOM / Shadow DOM. CD
 - `src/styles/sharedCss.ts` — `sharedCss` (Shadow DOM), `lightDomBaseCss` (Light DOM), `buildStyleContent()`
 - `src/styles/styleManager.ts` — singleton `<head>` injection with dedup
 - `src/webcomponent/registerWebComponent.ts` — custom-element registration helper
-- CDN entry points: `src/bootstrap/{loader,initFrakSdk,clientReady}.ts`
+- CDN entry points: `src/bootstrap/{loader,initFrakSdk,clientReady}.ts` · shim: `src/components.ts`
 
 ## Non-Obvious Patterns
 - **Specificity ladder (Light DOM)** — order matters:
@@ -31,11 +31,13 @@ Preact-based Web Components (Custom Elements). Hybrid Light DOM / Shadow DOM. CD
 - **Placement CSS pipeline**: pre-scoped on the backend via LightningCSS (sanitization + scoping + minification) before being injected — don't replicate that pipeline client-side.
 - **Custom elements auto-register on import** — `components.ts` import has side effects.
 - **CDN uses hashed chunks** — cache-bust is automatic; don't pin chunk names.
+- **The shim imports its own exact version** (`process.env.SDK_VERSION`, this package's `package.json` version, injected in `tsdown.config.ts`) from jsDelivr, not `@latest`: a browser-cached shim must always resolve a `loader.js` and chunk set that shipped together.
 - **`<frak-post-purchase token>` is load-bearing twice**: it feeds `trackPurchaseStatus` AND rides `displaySharingPage` as `checkoutToken`, which is how a buyer with no `frak-client-id` still gets an install link. Dropping it from a plugin's render path silently costs attribution on exactly the ad-blocked buyer the fallback exists for.
 
 ## Usage
+Merchant defaults still load the jsDelivr `@latest` shim; `https://sdk[-dev].frak.id/components.js` is the first-party pointer they move to next (`docs/plans/sdk-cdn-pointer.md`).
 ```html
-<script type="module" src="https://cdn.frak.id/components/loader.js"></script>
+<script src="https://sdk.frak.id/components.js" defer></script>
 <frak-button-wallet></frak-button-wallet>
 <frak-button-share classname="button"></frak-button-share>
 ```

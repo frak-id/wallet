@@ -18,6 +18,8 @@ export type SharingMerchant = {
 /** The reward headline and everything the copy varies on. */
 export type SharingReward =
     | { status: "loading" }
+    /** Settled: the merchant currently has nothing to advertise for this selection. */
+    | { status: "empty" }
     | {
           status: "ready";
           payoutType?: EstimatedReward["payoutType"];
@@ -123,6 +125,13 @@ export type SharingPageProps = {
     actions: SharingActions;
     t: SharingT;
 };
+
+/**
+ * i18next context selecting the reward-free variant of a sharing-page key.
+ * A typo here falls back to the rewarded base string rather than failing, and
+ * the options bag is untyped, so the compiler cannot catch it.
+ */
+export const noRewardContext = { context: "noReward" } as const;
 
 /** Whether the host, rather than this page, draws the surrounding chrome. */
 export function isChromeless(chrome: SharingChrome): boolean {

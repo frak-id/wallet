@@ -402,3 +402,63 @@ test.describe("Sharing page — locale", () => {
         });
     }
 });
+
+test.describe("Sharing page — no advertisable reward", () => {
+    /** No campaign to select, so the query settles with nothing to show. */
+    async function mockNoReward(page: Page) {
+        await page.route("**/*/user/merchant/estimated-rewards*", (route) =>
+            route.fulfill({
+                status: 200,
+                contentType: "application/json",
+                body: JSON.stringify({ rewards: [] }),
+            })
+        );
+    }
+
+    const HEADLINE = {
+        en: "Earn rewards on every purchase",
+        fr: "Des récompenses à chaque achat",
+    } as const;
+
+    // `tagline1` is `"Earn {{ estimatedReward }},"`, so a variant that fails to
+    // resolve renders the reported defect rather than degrading to something
+    // harmless. Asserting its absence is what pins the fix.
+    const STRANDED_SEPARATOR = /(Earn|Gagnez)\s+,/;
+    const INTERPOLATED_AMOUNT = /(Earn|Gagnez)\s+\d/;
+
+    for (const lng of ["en", "fr"] as const) {
+        test(`names no amount on the hero in ${lng}`, async ({ page }) => {
+            await page.setViewportSize(VIEWPORTS.iphone);
+            await mockNoReward(page);
+            await open(page, sharingUrl({ lng }));
+            await page.getByRole("dialog").waitFor({ state: "visible" });
+            await page
+                .locator("footer button")
+                .last()
+                .waitFor({ state: "visible" });
+            await expect(page.getByText(HEADLINE[lng])).toBeVisible();
+            await page.evaluate(() => document.fonts.ready);
+
+            await expect(page.getByText(STRANDED_SEPARATOR)).toHaveCount(0);
+            await expect(page.getByText(INTERPOLATED_AMOUNT)).toHaveCount(0);
+
+            await shoot(page, `sharing-no-reward-${lng}.png`);
+        });
+    }
+
+    test("keeps the confirmation clear of an amount it does not have", async ({
+        page,
+    }) => {
+        await page.setViewportSize(VIEWPORTS.iphone);
+        await mockNoReward(page);
+        await open(page, sharingUrl({ view: "confirmation", lng: "en" }));
+        await page.getByRole("dialog").waitFor({ state: "visible" });
+        await expect(page.getByText("Track what you earn.")).toBeVisible();
+        await page.evaluate(() => document.fonts.ready);
+
+        await expect(page.getByText(STRANDED_SEPARATOR)).toHaveCount(0);
+        await expect(page.getByText(INTERPOLATED_AMOUNT)).toHaveCount(0);
+
+        await shoot(page, "sharing-no-reward-confirmation.png");
+    });
+});
