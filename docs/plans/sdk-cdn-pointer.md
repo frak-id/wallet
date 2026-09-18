@@ -7,10 +7,19 @@ A stable, first-party URL — `https://sdk.frak.id/components.js` (prod) /
 shim `sdk/components/cdn/components.js` builds, which pins one exact jsDelivr
 version (`@frak-labs/components@<version>/cdn/loader.js`). It is an S3
 object behind a CloudFront `sst.aws.Router`, with `Cache-Control: public,
-max-age=300, stale-while-revalidate=86400, stale-if-error=604800` — a
-release reaches merchants in minutes instead of jsDelivr's 7-day
-floating-tag TTL, while the loader and chunks stay on jsDelivr as immutable
-exact-version URLs, so no bandwidth moves.
+max-age=300, stale-if-error=604800` — a release reaches merchants within
+5 minutes plus one page load instead of jsDelivr's 7-day floating-tag TTL,
+while the loader and chunks stay on jsDelivr as immutable exact-version
+URLs, so no bandwidth moves.
+
+Deliberately no `stale-while-revalidate`: it would let a browser run the
+old version for one more page load after the 5 minutes, in exchange for
+hiding a single `304` round trip that the deferred script mostly hides
+behind HTML parsing anyway (and Safari ignores the directive). Every
+browser therefore converges on the same schedule: next page load after
+`max-age`. `stale-if-error` stays so an outage of the pointer keeps serving
+the last known version for a week; a first visit during an outage takes
+the `onerror` fallback instead.
 
 The pointer is entirely Pulumi-managed. `infra/sdk-pointer.ts` generates the
 object content from `sdk/components/package.json`, so `bun sst deploy --stage
@@ -105,9 +114,9 @@ integration's `onerror` fallback covers the pointer being unreachable at all
   pointer at that branch's `package.json` version. It is published as long
   as the branch is `main` after a release; from anywhere else, run the
   readiness script first or set `SDK_POINTER_VERSION`.
-- Safari does not honour `stale-while-revalidate`, so a Safari client past
-  the 5-minute `max-age` blocks on a synchronous refetch of ~150 bytes
-  instead of refreshing in the background as Chrome/Firefox do.
+- Once per visitor per 5-minute window, the components boot one round trip
+  later (`If-None-Match` → `304` on the preconnected socket, ~30–100 ms);
+  the loader chain behind it is several times that.
 - The `onerror` fallback only fires on a *load* failure (network error,
   DNS, non-2xx on the script fetch); it cannot catch the pointer serving a
   200 with broken content, which is why `release.yml` verifies the exact

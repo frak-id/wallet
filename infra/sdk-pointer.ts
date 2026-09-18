@@ -24,10 +24,10 @@ if (!isSdkPointerStage(stage)) {
     );
 }
 
-// jsDelivr keeps floating tags for 7 days in the browser; this is what
-// shortens it. The loader and chunks behind it stay immutable on jsDelivr.
-const CACHE_CONTROL =
-    "public, max-age=300, stale-while-revalidate=86400, stale-if-error=604800";
+// No stale-while-revalidate on purpose: past 5 min the browser revalidates
+// (one 304 round trip, usually hidden behind parsing since the script is
+// deferred) so every browser is on the new version by the next page load.
+const CACHE_CONTROL = "public, max-age=300, stale-if-error=604800";
 const SHIM_KEY = "components.js";
 
 // `SDK_POINTER_VERSION` pins any published version by hand (rollback, hotfix);
