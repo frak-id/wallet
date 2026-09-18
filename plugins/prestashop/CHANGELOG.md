@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.0.10] - 2026-09-18
+
 ### Changed
 
 - **The front-office SDK `<script>` now loads from `sdk.frak.id` (a first-party, 5-minute-TTL pointer at the exact published SDK version) instead of jsDelivr's floating `@frak-labs/components` tag, with an `onerror` fallback to `cdn.jsdelivr.net/.../components@latest/cdn/components.js`.** `FrakUrls` gains `SDK_POINTER_HOST`/`SDK_POINTER_SCRIPT`/`SDK_FALLBACK_SCRIPT`; `FrakFrontend::head()` preconnects both hosts and now emits the `<script>` tag itself, because `FrontController::registerJavascript()`'s `attribute` param only accepts `async`/`defer` and cannot carry `onerror`. `setMedia()` (the `actionFrontControllerSetMedia` hook) is kept but is now a no-op.
@@ -235,7 +237,9 @@ version on dispatch.
 - New `views/templates/hook/post-purchase.tpl` Smarty partial: theme-overridable wrapper for the post-purchase markup. Override path: `themes/<theme>/modules/frakintegration/views/templates/hook/post-purchase.tpl`.
 - New `FrakOrderResolver` class: single-pass extraction of customer/order/token context plus product line items from a resolved `Order`, fail-soft on missing images / deleted products. Sibling of the WordPress `Frak_WooCommerce::get_post_purchase_data()` helper.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.9...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.10...HEAD
+
+[1.0.10]: https://github.com/frak-id/wallet/compare/prestashop-1.0.9...prestashop-1.0.10
 
 [1.0.9]: https://github.com/frak-id/wallet/compare/prestashop-1.0.8...prestashop-1.0.9
 
