@@ -1,5 +1,27 @@
 # @frak-labs/core-sdk
 
+## 1.4.2
+
+### Patch Changes
+
+- [#312](https://github.com/frak-id/wallet/pull/312) [`ddb7798`](https://github.com/frak-id/wallet/commit/ddb7798108c006bd7d5d655ab519b3f918c0c3b8) Thanks [@KONFeature](https://github.com/KONFeature)! - Render the listener overlay in the top layer so merchant widgets stop covering it.
+
+  The iframe sat at `z-index: 2000001` as a plain child of `<body>`. Merchant pages routinely pin a widget at 2147483647 — Smile.io's launcher and most cookie banners do — and 2147483647 is the ceiling, so no z-index could clear them. Raising ours to the same value does not help either: at equal z-index the later DOM node wins, and those widgets are injected on `window.load`, after the SDK has already appended the iframe.
+
+  `changeIframeVisibility` now promotes the iframe with `popover="manual"` while it is shown and drops the attribute when it is hidden. The top layer sits outside the z-index order, so the overlay covers every widget regardless of what the merchant stacks. The attribute is removed on hide because `[popover]` while closed resolves to `display: none`, and the hidden iframe has to stay live to serve RPC. Promotion does not move the element in the DOM, so the iframe is not reloaded and the listener session survives.
+
+  The UA stylesheet dresses a popover as a box — `background-color: Canvas`, `border: solid`, `padding: .25em` — so the shown branch now pins all three inline. The background is the load-bearing one: the listener page is transparent and the merchant page shows through the full-screen overlay, which an opaque iframe would blank out.
+
+  Browsers without the Popover API (Safari below 17) keep the previous z-index-only behaviour.
+
+- [#312](https://github.com/frak-id/wallet/pull/312) [`db0cca3`](https://github.com/frak-id/wallet/commit/db0cca3545d45518f3721416148f64ebc3f840e8) Thanks [@KONFeature](https://github.com/KONFeature)! - Sign identity proofs on Safari, where a PKCS#8 key carrying no public point cannot be imported.
+
+  `signProof` picked its signer from `@noble/curves`' `isSupported()`, which probes keygen and JWK export and never touches the secret-key import every signature actually goes through. WebKit passes that probe, so WebCrypto was selected, and then every real call failed: noble's `raw` secret-key format wraps the 32-byte scalar in a PKCS#8 that omits the optional `[1] publicKey`, and `CryptoKeyEC::platformImportPkcs8` hands the result to an X9.63 importer wanting `04||X||Y||D`. WebKit cannot derive the point from the scalar, so it reads it out of the blob — walking onto the `[1]` tag without testing that it is there. The import threw, `signProof`'s catch returned `null`, and nothing surfaced. Gecko rejects the same encoding.
+
+  Because `buildSdkIdentity` drops all three proofs together when each one is null, `resolved-config` reached the listener with no `sdkIdentity` at all on every WebKit browser, including all of iOS. Without a `frak-install-v1` proof the sharing confirmation could not build an `/install` link and rendered its "Get my N euros" CTA disabled, which is how this was found. The `merge` and `mergeSource` proofs were lost on the same path, so SSO and in-app-redirect identity merges were silently skipped there too.
+
+  Keys are now encoded as a complete PKCS#8 carrying the public point, which WebKit accepts, so Safari keeps the native signing path rather than falling back to software. Two guards sit under it: the probe signs once with the encoding production uses instead of trusting `isSupported()`, and a signature that fails after the probe passed demotes to the pure-JS signer for the rest of the page instead of dropping the proof.
+
 ## 1.4.1
 
 ### Patch Changes
