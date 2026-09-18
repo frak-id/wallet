@@ -124,6 +124,7 @@ export function changeIframeVisibility({
     isVisible: boolean;
 }) {
     if (!isVisible) {
+        exitTopLayer(iframe);
         iframe.style.width = "0";
         iframe.style.height = "0";
         iframe.style.border = "0";
@@ -138,7 +139,43 @@ export function changeIframeVisibility({
     iframe.style.left = "0";
     iframe.style.width = "100%";
     iframe.style.height = "100%";
+    // Neutralises the UA popover box below. `background-color: Canvas` is the
+    // load-bearing one: the listener page is transparent, so an opaque iframe
+    // blanks the merchant page behind the overlay.
+    iframe.style.backgroundColor = "transparent";
+    iframe.style.border = "0";
+    iframe.style.margin = "0";
+    iframe.style.padding = "0";
     iframe.style.pointerEvents = "auto";
+    enterTopLayer(iframe);
+}
+
+/**
+ * Promote the overlay into the top layer, which no `z-index` can outrank:
+ * merchant widgets pin the 2147483647 ceiling and load after us, so ties go to
+ * them. The attribute is toggled rather than left on — `[popover]` while closed
+ * is `display: none`, and the hidden iframe must stay live to serve RPC.
+ */
+function enterTopLayer(iframe: HTMLIFrameElement): void {
+    if (typeof iframe.showPopover !== "function") return;
+    // `show` arrives raw off the lifecycle channel and can repeat; a second
+    // `showPopover()` throws, and the catch below would drop the promotion.
+    if (iframe.hasAttribute("popover")) return;
+    try {
+        iframe.setAttribute("popover", "manual");
+        iframe.showPopover();
+    } catch {
+        iframe.removeAttribute("popover");
+    }
+}
+
+function exitTopLayer(iframe: HTMLIFrameElement): void {
+    if (typeof iframe.hidePopover !== "function") return;
+    try {
+        // Throws when it was never shown; the attribute still has to go.
+        iframe.hidePopover();
+    } catch {}
+    iframe.removeAttribute("popover");
 }
 
 /**
