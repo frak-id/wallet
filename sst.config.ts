@@ -72,5 +72,14 @@ export default $config({
         // release build reads via `getSstResource()` under `sst shell --stage prod`.
         // Without it the wallet silently falls back to its hardcoded dev backend.
         await import("./infra/config.ts");
+
+        // Only CI's two stages may claim the global bucket names and the
+        // `sdk[-dev].frak.id` aliases; a personal AWS stage must not.
+        const { isPointerStage } = await import(
+            "./infra/sdk-pointer.shared.ts"
+        );
+        if (isPointerStage($app.stage)) {
+            await import("./infra/sdk-pointer.ts");
+        }
     },
 });

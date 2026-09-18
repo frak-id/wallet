@@ -17,6 +17,7 @@ bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here
 - `infra/components/KubernetesService.ts` — Deployment + Service + HPA + Ingress + ServiceMonitor
 - `infra/components/KubernetesJob.ts` — one-shot K8s Job (e.g., bootstrap migrations + bucket provisioning)
 - `infra/utils.ts` — stage helpers: `isProd`, `normalizedStageName`
+- `infra/sdk-pointer.ts` — S3 + CloudFront pointer at `sdk[-dev].frak.id/components.js`, flipped by `scripts/flip-sdk-pointer.ts` on each SDK release
 - `apps/*/Dockerfile` — self-contained multi-stage (each builds the SDK in its own `sdk-builder` stage) → `nginx:1.29.1` with pre-compressed gzip
 - `services/backend/Dockerfile` — backend runtime image
 - `services/bootstrap/Dockerfile` — one-shot bootstrap image (Drizzle migrations + RustFS bucket provisioning)
@@ -37,8 +38,8 @@ bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here
 
 ## CI/CD (.github/workflows)
 - `deploy.yml` — path-based triggers; `main` → prod, `dev` → staging
-- `release.yml` — Changesets → npm publish + jsDelivr cache purge
-- `beta-release.yml` — SDK changes on `dev` → beta publish tagged with content hash
+- `release.yml` — Changesets → npm publish, flips the `sdk.frak.id` pointer, then jsDelivr cache purge
+- `beta-release.yml` — SDK changes on `dev` → beta publish tagged with content hash, then flips the `sdk-dev.frak.id` pointer
 - `tauri-mobile-release.yml` — manual → iOS TestFlight + Android Play Store
 
 ## Anti-Patterns

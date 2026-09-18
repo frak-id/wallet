@@ -9,6 +9,13 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
+# id-token: write for the AWS OIDC role assumption (sdk pointer flip).
+# contents: write + pull-requests: write for changesets/action's Version PR.
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
 jobs:
   release:
     name: "🚀 Release SDK"
@@ -98,6 +105,20 @@ jobs:
             fi
           done
           echo "created_any=${created_any}" >> "$GITHUB_OUTPUT"
+
+      - name: "👥 Configure AWS Credentials"
+        if: steps.mode.outputs.will_publish == 'true'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
+          aws-region: eu-west-1
+          retry-max-attempts: 5
+
+      # jsDelivr now serves the exact version published above — flip the
+      # sdk.frak.id pointer to it so it doesn't wait on the CDN's own TTL.
+      - name: "📌 Flip SDK pointer"
+        if: steps.mode.outputs.will_publish == 'true'
+        run: bun run flip:sdk-pointer -- --stage prod
 
       - uses: gacts/purge-jsdelivr-cache@v1
         if: steps.mode.outputs.will_publish == 'true' && steps.sdk_tags.outputs.created_any == 'true'
