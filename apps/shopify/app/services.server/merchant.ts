@@ -1,19 +1,13 @@
 import type { AuthenticatedContext } from "app/types/context";
 import { LRUCache } from "lru-cache";
 import { backendApi } from "../utils/backendApi";
-import { configuredOrigins } from "./frakEnv";
 import { levelForStatus, log, setRequestContext } from "./logger";
 import {
     buildShareButtonHtml,
     buildShareUrl,
-    getBackendUrlMetafield,
-    getComponentsUrlMetafield,
     getMerchantIdMetafield,
     getShareButtonHtmlMetafield,
     getShareUrlMetafield,
-    getWalletUrlMetafield,
-    writeComponentsUrlMetafield,
-    writeEnvMetafields,
     writeMerchantIdMetafield,
     writeShareButtonHtmlMetafield,
     writeShareUrlMetafield,
@@ -41,16 +35,6 @@ const FALLBACK_CACHE_TTL_MS = 30_000;
 const merchantInfoCache = new LRUCache<string, MerchantResolveResponse>({
     max: 512,
     ttl: 5 * 60_000,
-});
-
-const envSyncedShops = new LRUCache<string, boolean>({
-    max: 512,
-    ttl: 30 * 60_000,
-});
-
-const componentsUrlSyncedShops = new LRUCache<string, boolean>({
-    max: 512,
-    ttl: 30 * 60_000,
 });
 
 const klaviyoShareSyncedShops = new LRUCache<string, boolean>({
@@ -263,75 +247,6 @@ async function fetchMerchantFromBackend(
 }
 
 /**
- * Ensure the wallet + backend URL metafields match the current environment. Read, compared and written together so no shop is left with a cross-stage pair.
- * Uses an in-memory cache to avoid redundant GraphQL calls.
- */
-export async function ensureEnvMetafields(
-    context: AuthenticatedContext
-): Promise<void> {
-    // Un-defaulted origins: an unconfigured deployment must not stamp production onto every shop it touches.
-    const { wallet: expectedWalletUrl, backend: expectedBackendUrl } =
-        configuredOrigins();
-    if (!expectedWalletUrl || !expectedBackendUrl) return;
-
-    const shop = await shopInfo(context);
-    const cacheKey = shop.normalizedDomain;
-
-    if (envSyncedShops.get(cacheKey)) return;
-
-    try {
-        const [currentWallet, currentBackend] = await Promise.all([
-            getWalletUrlMetafield(context),
-            getBackendUrlMetafield(context),
-        ]);
-
-        if (
-            currentWallet !== expectedWalletUrl ||
-            currentBackend !== expectedBackendUrl
-        ) {
-            // Both keys in one mutation: a partial write would leave a cross-stage pair until the next admin visit.
-            await writeEnvMetafields(context, {
-                walletUrl: expectedWalletUrl,
-                backendUrl: expectedBackendUrl,
-            });
-        }
-        // Only on success — a throw above leaves the shop unmarked so the next admin load retries.
-        envSyncedShops.set(cacheKey, true);
-    } catch (error) {
-        log.error({ err: error }, "env metafield sync failed");
-    }
-}
-
-/**
- * Ensure the components CDN URL metafield matches the current environment.
- * Uses an in-memory cache to avoid redundant GraphQL calls.
- */
-export async function ensureComponentsUrlMetafield(
-    context: AuthenticatedContext
-): Promise<void> {
-    const expectedUrl = process.env.FRAK_COMPONENTS_URL ?? "";
-    if (!expectedUrl) return;
-
-    const shop = await shopInfo(context);
-    const cacheKey = shop.normalizedDomain;
-
-    if (componentsUrlSyncedShops.get(cacheKey)) return;
-
-    try {
-        const current = await getComponentsUrlMetafield(context);
-        if (current === expectedUrl) {
-            componentsUrlSyncedShops.set(cacheKey, true);
-            return;
-        }
-
-        await writeComponentsUrlMetafield(context, expectedUrl);
-        componentsUrlSyncedShops.set(cacheKey, true);
-    } catch (error) {
-        log.error({ err: error }, "componentsUrl metafield sync failed");
-    }
-}
-
-/**
  * Ensure the Klaviyo share metafields (`frak.share_url` and
  * `frak.share_button_html`) exist and reflect the current primary
  * storefront domain.
@@ -343,8 +258,7 @@ export async function ensureComponentsUrlMetafield(
  * sharing page (see
  * `sdk/components/src/bootstrap/initFrakSdk.ts#handleActionQueryParam`).
  *
- * Idempotent and cached per shop for 30 min, same pattern as
- * `ensureEnvMetafields` and `ensureComponentsUrlMetafield`.
+ * Idempotent and cached per shop for 30 min.
  */
 export async function ensureKlaviyoShareMetafields(
     context: AuthenticatedContext

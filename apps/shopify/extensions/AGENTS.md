@@ -28,10 +28,10 @@ extensions/
 
 ```
 Theme blocks (listener.liquid)
-  → Loads the Frak SDK shim from `sdk[-dev].frak.id` (metafield `frak.components_url`), jsDelivr as onerror fallback
+  → Loads the Frak SDK shim from `sdk[-dev].frak.id` (generated literal), jsDelivr as onerror fallback
   → Sets window.FrakSetup.config (env origins, shop metadata, appearance)
-  → Reads metafields: frak.components_url, frak.appearance, frak.modal_i18n,
-    frak.merchant_id, frak.wallet_url, frak.backend_url
+  → Reads metafields: frak.appearance, frak.modal_i18n, frak.merchant_id
+  → Origins are generated literals (frak:stage region), not metafields
   → Writes merchantId to sessionStorage for the checkout pixel fallback
 
 referral_button.liquid / banner.liquid
@@ -45,7 +45,8 @@ checkout-web-pixel
 
 checkout-post-purchase
   → Thank You + Order Status targets render PostPurchaseCard
-  → Reads shop metafields (merchant_id, wallet_url, appearance) + frak_i18n metaobject
+  → Reads shop metafields (merchant_id, appearance) + frak_i18n metaobject
+  → Wallet origin comes from the generated src/frakStage.gen.ts, not a metafield
 ```
 
 ## THEME-COMPONENTS
@@ -55,7 +56,8 @@ checkout-post-purchase
 **listener.liquid** is the critical block — without it, no Frak SDK loads. Config comes from:
 
 - Block settings (logo, modal language, custom JS)
-- Shop metafields (`frak.components_url`, `frak.appearance`, `frak.modal_i18n`, `frak.merchant_id`, `frak.wallet_url`, `frak.backend_url`)
+- Shop metafields (`frak.appearance`, `frak.modal_i18n`, `frak.merchant_id`)
+- The generated `frak:stage` region (wallet / backend / SDK origins)
 - Shop object (name, logo, locale)
 
 **Customization flow**: merchant configures via Shopify admin metafields → `listener.liquid` reads at render time → passes to Frak SDK via `window.FrakSetup`.
@@ -89,13 +91,15 @@ Theme detection works by parsing theme JSON templates and matching block type su
 
 ## ANTI-PATTERNS
 
-- **Don't hardcode the origins** — read the `frak.wallet_url` + `frak.backend_url` metafield pair. Default the pair as a whole; defaulting one half alone can cross a dev wallet with the production backend.
+- **Don't hand-write an origin into a block or extension** — add it to the table in `scripts/stageArtifacts.ts` and let the generator place it, or the value silently survives a stage switch.
 - **Don't bypass sessionStorage** — checkout pixel depends on token written by theme blocks.
 - **Don't add analytics/marketing tracking** — privacy settings explicitly disable it.
 
 ## GOTCHAS
 
-- **Origins come from metafields, defaulted as a pair**: `listener.liquid` reads `frak.wallet_url` + `frak.backend_url`, written together by the app (`ensureEnvMetafields`) on admin load. A shop synced before `backend_url` existed has only the wallet half, so the Liquid falls back to the production pair wholesale rather than mixing stages.
+- **Origins are generated into the bundle, never read at runtime**: dev and prod are two separate Shopify apps (`de349…` FrakDev, `87da…` Frak) with two separate `shopify app deploy` runs, so the stage is settled before a file leaves this repo. `scripts/generateStageArtifacts.ts` writes the `frak:stage` region of `listener.liquid` and all of `checkout-post-purchase/src/frakStage.gen.ts`; the deploy scripts run it first. No shop metafield carries an environment, so a cross-stage mix is unrepresentable and nothing merchant-writable reaches a `<script src>`.
+- **The committed artifacts must hold the production table, and `bun run lint` enforces it** (`scripts/check-shopify-stage.ts`): `shopify app deploy` uploads the working tree, so a dev or tunnel generation left behind would ship to every merchant of whichever app is targeted. `shopify:dev` deliberately bakes ambient `FRAK_WALLET_URL`/`PUBLIC_BACKEND_URL` (that is how a tunnel reaches a dev store) and leaves the tree dirty — the gate is the reminder. Only `--local` reads ambient env; both deploy paths read the table and nothing else.
+- **Changing a stage's origins is now an extension deploy, not a pod rollout**: the table in `scripts/stageArtifacts.ts` is the source of truth for storefronts, `infra/config.ts` for the server. They are separate release channels; a stage whose origins move needs both.
 - **Two style surfaces, kept on purpose**: `referral_button.liquid` and `banner.liquid` each ship a `{% style %}` block writing merchant colours onto `.frak-share-button-custom` / `.frak-banner-custom`, while the Frak dashboard serves its own CSS for the same elements with `!important`. The dashboard wins on specificity *and* `!important`, so the Liquid colours are inert whenever dashboard values exist. Retained anyway (FRA-324, decision D): the Liquid rule is server-rendered, so it is the only styling present at first paint if `waitForBackendConfig: false` is ever set for Shopify. That flag is not set today, `useClientReady` makes components wait for the backend config, and the dashboard CSS rides in that same config — so the Liquid surface buys nothing *yet*. Revisit when that flag ships, or when any storefront actually applies a custom preset (zero do). Measure that by reading the rendered `classname` attribute: the `{% style %}` rule is emitted unconditionally, so grepping a page for `frak-banner-custom` matches every store carrying the block and proves nothing.
 - **No SDK version pinning**: Frak SDK loaded from CDN without version lock (`@frak-labs/components` = latest). Could break if SDK changes class names or API.
 - **CSS class fragility**: `customizations.css` hides `.nexus-modal-provided` — will break if Frak SDK renames the class.

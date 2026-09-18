@@ -3,8 +3,10 @@
  *
  * The Frak Shopify app writes these metafields during onboarding:
  *  - frak.merchant_id  → merchant UUID (JSON-encoded string)
- *  - frak.wallet_url   → wallet base URL (JSON-encoded string)
  *  - frak.appearance   → { logoUrl?: string } (JSON object)
+ *
+ * The wallet origin is not among them: it is per-stage, not per-shop, so it is
+ * generated into `frakStage.gen.ts` by the same deploy that builds this bundle.
  *
  * Per-locale text overrides live on the `frak_i18n` metaobject and are
  * fetched separately via `fetchPostPurchaseTextOverrides` in
@@ -17,7 +19,6 @@
 
 type FrakConfig = {
     merchantId?: string;
-    walletUrl?: string;
     logoUrl?: string;
 };
 
@@ -44,9 +45,6 @@ export function extractFrakConfig(
         switch (key) {
             case "merchant_id":
                 config.merchantId = parseJsonValue<string>(value) as string;
-                break;
-            case "wallet_url":
-                config.walletUrl = parseJsonValue<string>(value) as string;
                 break;
             case "appearance": {
                 const parsed = parseJsonValue<{ logoUrl?: string }>(value);

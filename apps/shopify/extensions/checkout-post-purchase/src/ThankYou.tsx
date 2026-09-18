@@ -27,7 +27,7 @@ function ThankYouExtension() {
     const language = useLanguage();
     const { query } = useApi<"purchase.thank-you.block.render">();
 
-    // Read merchantId, walletUrl, logoUrl from shop metafields
+    // Read merchantId, logoUrl from shop metafields
     const frakMetafields = useAppMetafields({ namespace: "frak" });
     const frakConfig = useMemo(
         () => extractFrakConfig(frakMetafields),
@@ -65,7 +65,6 @@ function ThankYouExtension() {
             storefrontUrl={shop.storefrontUrl}
             products={products}
             merchantId={frakConfig.merchantId}
-            walletUrl={frakConfig.walletUrl}
             logoUrl={frakConfig.logoUrl}
             checkoutToken={checkoutToken ?? undefined}
             redirectUrl={shop.storefrontUrl}
