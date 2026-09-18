@@ -11,6 +11,58 @@ import {
 
 const MERCHANT_ID = "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e";
 
+type WebCryptoP256 = typeof import("@noble/curves/webcrypto.js").p256;
+
+/** Report WebCrypto as supported, but swap its `sign` for `makeSign`'s. */
+function mockWebCryptoSign(
+    makeSign: (actual: WebCryptoP256) => WebCryptoP256["sign"]
+) {
+    vi.doMock("@noble/curves/webcrypto.js", async () => {
+        const actual = await vi.importActual<
+            typeof import("@noble/curves/webcrypto.js")
+        >("@noble/curves/webcrypto.js");
+        return {
+            p256: {
+                ...actual.p256,
+                isSupported: async () => true,
+                sign: makeSign(actual.p256),
+            },
+        };
+    });
+}
+
+async function signAndVerifyFreshly(ts: number) {
+    const module = await import("./sign");
+    const { clientId } = await module.ensureIdentityKey();
+    const proof = await module.signProof({
+        op: "frak-ensure-v1",
+        merchantId: MERCHANT_ID,
+        anonymousId: clientId,
+        ts,
+    });
+
+    expect(proof).toBeTruthy();
+    const decoded = proof ? decodeProof(proof) : null;
+    expect(decoded).not.toBeNull();
+    if (!decoded) throw new Error("undecodable proof");
+
+    const message = buildProofMessage({
+        op: "frak-ensure-v1",
+        merchantId: MERCHANT_ID,
+        anonymousId: clientId,
+        binding: new Uint8Array(0),
+        ts,
+    });
+    expect(
+        p256.verify(decoded.sig, message, decoded.pk, {
+            prehash: true,
+            lowS: false,
+        })
+    ).toBe(true);
+
+    return { ...module, clientId };
+}
+
 describe("sign", () => {
     beforeEach(() => {
         localStorage.clear();
@@ -389,6 +441,72 @@ describe("sign", () => {
                         lowS: false,
                     })
                 ).toBe(true);
+            } finally {
+                vi.doUnmock("@noble/curves/webcrypto.js");
+            }
+        });
+
+        it("keeps the WebCrypto path on a host that accepts the PKCS#8 key", async () => {
+            // Guards the encoding itself: a malformed blob would fail the
+            // probe, demote to pure JS, and still yield a valid proof.
+            let calls = 0;
+            mockWebCryptoSign((actual) => (...args) => {
+                calls += 1;
+                return actual.sign(...args);
+            });
+            vi.resetModules();
+
+            try {
+                await signAndVerifyFreshly(1_700_000_004);
+                expect(calls).toBe(2);
+            } finally {
+                vi.doUnmock("@noble/curves/webcrypto.js");
+            }
+        });
+
+        it("still signs when WebCrypto claims support but raw signing always throws", async () => {
+            // WebKit's shape: keygen and JWK export pass, raw PKCS#8 import does not.
+            mockWebCryptoSign(
+                () => () =>
+                    Promise.reject(
+                        new Error(
+                            "Data provided to an operation does not meet requirements"
+                        )
+                    )
+            );
+            vi.resetModules();
+
+            try {
+                await signAndVerifyFreshly(1_700_000_001);
+            } finally {
+                vi.doUnmock("@noble/curves/webcrypto.js");
+            }
+        });
+
+        it("demotes to pure JS when WebCrypto passes the probe then fails a real sign", async () => {
+            let calls = 0;
+            mockWebCryptoSign((actual) => (...args) => {
+                calls += 1;
+                if (calls === 1) return actual.sign(...args);
+                return Promise.reject(new Error("raw import unsupported"));
+            });
+            vi.resetModules();
+
+            try {
+                const { signProof: freshSignProof, clientId } =
+                    await signAndVerifyFreshly(1_700_000_002);
+
+                await expect(
+                    freshSignProof({
+                        op: "frak-ensure-v1",
+                        merchantId: MERCHANT_ID,
+                        anonymousId: clientId,
+                        ts: 1_700_000_003,
+                    })
+                ).resolves.toBeTruthy();
+
+                // Probe, then the one failed real sign: the demotion sticks.
+                expect(calls).toBe(2);
             } finally {
                 vi.doUnmock("@noble/curves/webcrypto.js");
             }

@@ -35,29 +35,88 @@ const CLIENT_KEY_KEY = "frak-client-key";
  */
 const CLIENT_ID_LEGACY_KEY = "frak-client-id-legacy";
 
+const SECRET_BYTES = 32;
+const UNCOMPRESSED_PUBKEY_BYTES = 65;
+
 /**
- * Noble's WebCrypto wrapper defaults to PKCS8/SPKI key serialisation; we
- * hold raw 32-byte secrets and raw 65-byte public keys, so every call has to
- * say so explicitly.
+ * PKCS#8 P-256 frame, split around the scalar. `[0] parameters` is omitted and
+ * `[1] publicKey` always written: WebKit hands the scalar to an X9.63 importer
+ * that needs `04||X||Y||D`, cannot derive the point itself, and walks straight
+ * onto the `[1]` tag without testing for it.
  */
-const RAW_FORMATS = { formatSec: "raw", formatPub: "raw" } as const;
+const PKCS8_PREFIX = /* @__PURE__ */ hexToBytes(
+    "308187020100301306072a8648ce3d020106082a8648ce3d030107046d306b0201010420"
+);
+const PKCS8_INFIX = /* @__PURE__ */ hexToBytes("a144034200");
+
+const PKCS8_FORMATS = { formatSec: "pkcs8", formatPub: "raw" } as const;
+
+export function toPkcs8(
+    privateKey: Uint8Array,
+    publicKey: Uint8Array
+): Uint8Array {
+    const out = new Uint8Array(
+        PKCS8_PREFIX.length +
+            SECRET_BYTES +
+            PKCS8_INFIX.length +
+            UNCOMPRESSED_PUBKEY_BYTES
+    );
+    let offset = 0;
+    for (const part of [PKCS8_PREFIX, privateKey, PKCS8_INFIX, publicKey]) {
+        out.set(part, offset);
+        offset += part.length;
+    }
+    return out;
+}
+
+type Signer = typeof pureJsP256 | typeof webCryptoP256;
+
+/** Throwaway scalar and digest-shaped message, for the probe below only. */
+const PROBE_SECRET_KEY = /* @__PURE__ */ new Uint8Array(SECRET_BYTES).fill(1);
+const PROBE_MESSAGE = /* @__PURE__ */ new Uint8Array(32);
+
+let signerPromise: Promise<Signer> | null = null;
 
 /**
  * Sign with WebCrypto when it works, pure JS otherwise.
  *
- * `isSupported()` performs a real WebCrypto operation rather than checking
- * `typeof crypto.subtle`, which is what makes it safe on embedded browsers
- * that expose the object but throw on use. The probe is cached per page load.
+ * `isSupported()` only probes keygen and JWK export, never the secret-key
+ * import every call here goes through. So the probe signs once for real, with
+ * the key encoding production uses, and any host that still refuses it falls
+ * back rather than losing every proof.
  */
-let signerPromise: Promise<typeof pureJsP256 | typeof webCryptoP256> | null =
-    null;
+async function probeSigner(): Promise<Signer> {
+    try {
+        if (!(await webCryptoP256.isSupported())) return pureJsP256;
+        const probeKey = toPkcs8(
+            PROBE_SECRET_KEY,
+            pureJsP256.getPublicKey(PROBE_SECRET_KEY, false)
+        );
+        await webCryptoP256.sign(PROBE_MESSAGE, probeKey, PKCS8_FORMATS);
+        return webCryptoP256;
+    } catch {
+        return pureJsP256;
+    }
+}
 
-function getSigner() {
-    signerPromise ??= webCryptoP256
-        .isSupported()
-        .then((supported) => (supported ? webCryptoP256 : pureJsP256))
-        .catch(() => pureJsP256);
+function getSigner(): Promise<Signer> {
+    signerPromise ??= probeSigner();
     return signerPromise;
+}
+
+function signWith(
+    signer: Signer,
+    message: Uint8Array,
+    privateKey: Uint8Array,
+    publicKey: Uint8Array
+): Promise<Uint8Array> {
+    if (signer === webCryptoP256) {
+        const key = toPkcs8(privateKey, publicKey);
+        return webCryptoP256.sign(message, key, PKCS8_FORMATS);
+    }
+    return Promise.resolve(
+        pureJsP256.sign(message, privateKey, { prehash: true })
+    );
 }
 
 const hasLocalStorage = (): boolean =>
@@ -253,15 +312,22 @@ export async function signProof(params: {
             ts,
         });
 
+        const publicKey = publicKeyFor(privateKey);
         const signer = await getSigner();
-        const sig =
-            signer === webCryptoP256
-                ? await webCryptoP256.sign(message, privateKey, RAW_FORMATS)
-                : pureJsP256.sign(message, privateKey, { prehash: true });
+        let sig: Uint8Array;
+        try {
+            sig = await signWith(signer, message, privateKey, publicKey);
+        } catch (error) {
+            // A probe can pass and the real call still fail; pure JS is the
+            // one path with no host dependency, so never retry the probe.
+            if (signer === pureJsP256) throw error;
+            signerPromise = Promise.resolve(pureJsP256);
+            sig = await signWith(pureJsP256, message, privateKey, publicKey);
+        }
 
         return encodeProof({
             v: 1,
-            pk: publicKeyFor(privateKey),
+            pk: publicKey,
             ts,
             sig,
         });

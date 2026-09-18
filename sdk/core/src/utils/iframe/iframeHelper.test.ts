@@ -192,7 +192,22 @@ describe("iframeHelper", () => {
     });
 
     describe("changeIframeVisibility", () => {
+        // No `showPopover`, mirroring a browser below the Popover API floor.
         let mockIframe: HTMLIFrameElement;
+
+        const topLayerIframe = () => {
+            const attributes = new Set<string>();
+            return {
+                style: {} as CSSStyleDeclaration,
+                setAttribute: vi.fn((name: string) => attributes.add(name)),
+                removeAttribute: vi.fn((name: string) =>
+                    attributes.delete(name)
+                ),
+                hasAttribute: vi.fn((name: string) => attributes.has(name)),
+                showPopover: vi.fn(),
+                hidePopover: vi.fn(),
+            } as unknown as HTMLIFrameElement;
+        };
 
         beforeEach(() => {
             mockIframe = {
@@ -238,9 +253,86 @@ describe("iframeHelper", () => {
                 expect(mockIframe.style.top).toBe("-1000px");
                 expect(mockIframe.style.left).toBe("-1000px");
             });
+
+            it("should leave the top layer and drop the popover attribute", () => {
+                const iframe = topLayerIframe();
+
+                changeIframeVisibility({ iframe, isVisible: true });
+                changeIframeVisibility({ iframe, isVisible: false });
+
+                expect(iframe.hidePopover).toHaveBeenCalled();
+                expect(iframe.removeAttribute).toHaveBeenCalledWith("popover");
+            });
+
+            it("should drop the popover attribute even when it was never shown", () => {
+                const iframe = topLayerIframe();
+                vi.mocked(iframe.hidePopover).mockImplementation(() => {
+                    throw new Error("not showing");
+                });
+
+                expect(() =>
+                    changeIframeVisibility({ iframe, isVisible: false })
+                ).not.toThrow();
+                expect(iframe.removeAttribute).toHaveBeenCalledWith("popover");
+            });
         });
 
         describe("when showing iframe (isVisible: true)", () => {
+            it("should promote the iframe into the top layer", () => {
+                const iframe = topLayerIframe();
+
+                changeIframeVisibility({ iframe, isVisible: true });
+
+                expect(iframe.setAttribute).toHaveBeenCalledWith(
+                    "popover",
+                    "manual"
+                );
+                expect(iframe.showPopover).toHaveBeenCalled();
+            });
+
+            it("should stay promoted when a second show event arrives", () => {
+                const iframe = topLayerIframe();
+
+                changeIframeVisibility({ iframe, isVisible: true });
+                changeIframeVisibility({ iframe, isVisible: true });
+
+                expect(iframe.showPopover).toHaveBeenCalledTimes(1);
+                expect(iframe.removeAttribute).not.toHaveBeenCalled();
+                expect(iframe.hasAttribute("popover")).toBe(true);
+            });
+
+            it("should drop the popover attribute when promotion fails", () => {
+                const iframe = topLayerIframe();
+                vi.mocked(iframe.showPopover).mockImplementation(() => {
+                    throw new Error("unsupported");
+                });
+
+                expect(() =>
+                    changeIframeVisibility({ iframe, isVisible: true })
+                ).not.toThrow();
+                expect(iframe.removeAttribute).toHaveBeenCalledWith("popover");
+            });
+
+            it("should stay on z-index alone where the top layer is unsupported", () => {
+                changeIframeVisibility({ iframe: mockIframe, isVisible: true });
+
+                expect(mockIframe.style.position).toBe("fixed");
+            });
+
+            it("should neutralise the box the UA popover styles add", () => {
+                changeIframeVisibility({ iframe: mockIframe, isVisible: true });
+
+                expect(mockIframe.style.margin).toBe("0");
+                expect(mockIframe.style.padding).toBe("0");
+                expect(mockIframe.style.border).toBe("0");
+            });
+
+            it("should stay transparent so the host page shows through", () => {
+                changeIframeVisibility({ iframe: mockIframe, isVisible: true });
+
+                expect(mockIframe.style.backgroundColor).toBe("transparent");
+            });
+
             it("should set full screen dimensions", () => {
                 changeIframeVisibility({ iframe: mockIframe, isVisible: true });
 
