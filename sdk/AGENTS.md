@@ -20,6 +20,7 @@ Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **str
 
 - **NPM**: `{ format: ["esm", "cjs"], outDir: "dist", dts: true }`
 - **CDN**: `{ format: "iife", globalName: "FrakSDK", outDir: "cdn", deps: { alwaysBundle: [/.*/] } }` — fully self-contained bundle. `sdk/legacy` is the exception: it emits its `NexusSDK` global to `dist/bundle`, so a `sdk/*/cdn` glob misses it. That path stays registered in `check:es-output`.
+- **`sdk/components/cdn/components.js` embeds its own package version** (`process.env.SDK_VERSION`, from `package.json` via `tsdown.config.ts`, same pattern as `sdk/core`) so it always jumps straight to the exact jsDelivr release instead of a floating tag.
 - **`development` export condition**: apps in this monorepo consume `src/index.ts` directly (no rebuild in dev loop)
 
 ## Non-Obvious Patterns

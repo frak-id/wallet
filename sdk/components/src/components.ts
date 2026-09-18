@@ -1,3 +1,3 @@
 import(
-    `https://cdn.jsdelivr.net/npm/@frak-labs/components@${process.env.CDN_TAG}/cdn/loader.js?v=${process.env.BUILD_TIMESTAMP}`
+    `https://cdn.jsdelivr.net/npm/@frak-labs/components@${process.env.SDK_VERSION}/cdn/loader.js`
 );
