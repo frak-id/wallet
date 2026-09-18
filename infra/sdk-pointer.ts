@@ -1,9 +1,5 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-// SST-internal provider, the same one StaticSite uses; `apps.yaml`'s infra
-// typecheck catches an SST bump that moves it. Fallback if it ever goes:
-// a `@pulumi/command` running `aws cloudfront create-invalidation`.
-import { DistributionInvalidation } from "../.sst/platform/src/components/aws/providers/distribution-invalidation";
 
 /**
  * `sdk[-dev].frak.id/components.js`: a 5-minute-TTL pointer at the exact
@@ -84,14 +80,12 @@ event.response.headers["x-content-type-options"] = { value: "nosniff" };
 router.routeBucket("/", bucket);
 
 // `Router.invalidation` is declared but not implemented in SST 4.14.3, so the
-// edge is purged here: a new version is a new token, hence a new invalidation.
-new DistributionInvalidation(
+// edge is purged with the AWS CLI; a new version re-triggers the command.
+new command.local.Command(
     "SdkPointerInvalidation",
     {
-        distributionId: router.distributionID,
-        paths: [`/${SHIM_KEY}`],
-        version,
-        wait: true,
+        create: $interpolate`id=$(aws cloudfront create-invalidation --distribution-id ${router.distributionID} --paths /${SHIM_KEY} --query Invalidation.Id --output text) && aws cloudfront wait invalidation-completed --distribution-id ${router.distributionID} --id "$id"`,
+        triggers: [version],
     },
     { dependsOn: [shimObject] }
 );

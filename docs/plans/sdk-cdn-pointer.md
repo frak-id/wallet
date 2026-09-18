@@ -15,8 +15,14 @@ exact-version URLs, so no bandwidth moves.
 The pointer is entirely Pulumi-managed. `infra/sdk-pointer.ts` generates the
 object content from `sdk/components/package.json`, so `bun sst deploy --stage
 sdk-pointer` (or `sdk-pointer-dev`) *is* the flip: a version change is a
-diff on the object, and the Router invalidates `/components.js` whenever the
-version token changes. The stages are separate from `prod`/`dev` on purpose:
+diff on the object, and a `command.local.Command` keyed on the version runs
+`aws cloudfront create-invalidation` for `/components.js` and waits for it
+(`sst.aws.Router` declares an `invalidation` arg but does not implement it in
+4.14.3, and SST's internal `DistributionInvalidation` provider cannot be
+imported from user code: the config is bundled before `.sst/platform` is
+extracted, so a fresh checkout fails to build). Deploying these stages
+therefore needs the AWS CLI on the machine; GitHub runners ship it. The
+stages are separate from `prod`/`dev` on purpose:
 the release workflow and `deploy.yml` both run on `main`, and separate stages
 mean separate state locks.
 

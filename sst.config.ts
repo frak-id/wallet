@@ -19,6 +19,7 @@ export default $config({
                 },
             },
             providers: {
+                command: "1.0.1",
                 kubernetes: "4.28.0",
                 "docker-build": "0.0.15",
                 gcp: {
