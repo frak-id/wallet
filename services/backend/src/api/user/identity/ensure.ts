@@ -104,10 +104,10 @@ async function resolveWalletEnsureAnonymousId(params: {
     // installs prove themselves, since both reach ensure directly and never
     // touch `install-code/generate` (see `apps/wallet/app/routes/install.tsx`).
     //
-    // ROLLOUT-STEP-3: once the bare `anonymousId` arm above is deleted,
-    // this proof becomes a SUFFICIENT credential and its leak surface (URL
-    // fragment, Play referrer) starts to matter — revisit whether it should
-    // still be accepted directly or must be exchanged for an install ticket.
+    // Sufficient on its own: the credential-less exit below refuses, so this
+    // is the only door. Accepted directly rather than exchanged for a ticket
+    // — a leaked install proof costs one id its attribution, far cheaper
+    // than the two-call capture proofs closed elsewhere.
     if (proof) {
         const proofVerified = await verifyProofUnenforced({
             op: "frak-install-v1",

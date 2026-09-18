@@ -258,11 +258,6 @@ const installCodeResolveRoute = new Elysia()
 
             // Minted unconditionally from the row's anonymousId, regardless
             // of whether `generate` carried a proof.
-            //
-            // ROLLOUT-STEP-3: the current wallet no longer reads `anonymousId`
-            // from this response, so only old binaries that ignore `ticket`
-            // still need it. Dropping the field is the remaining backend-only
-            // deploy, and it must follow the wallet, never lead it.
             const ticket =
                 await IdentityContext.services.installCode.mintTicket({
                     merchantId,
@@ -271,7 +266,6 @@ const installCodeResolveRoute = new Elysia()
 
             return {
                 merchantId,
-                anonymousId,
                 merchant: merchantInfo,
                 hasWallet,
                 ticket,
@@ -284,13 +278,13 @@ const installCodeResolveRoute = new Elysia()
             response: {
                 200: t.Object({
                     merchantId: t.String(),
-                    anonymousId: t.Optional(t.String()),
                     merchant: t.Object({
                         name: t.String(),
                         domain: t.String(),
                     }),
                     hasWallet: t.Boolean(),
-                    // Minted or omitted as a pair with `anonymousId`.
+                    // The ticket authenticates its own anonymousId; the raw
+                    // id is never returned. Omitted only when unresolved.
                     ticket: t.Optional(t.String()),
                     outcome: t.Optional(t.Literal("UNRESOLVED")),
                 }),

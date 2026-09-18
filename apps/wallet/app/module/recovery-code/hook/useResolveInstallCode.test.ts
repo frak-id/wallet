@@ -51,7 +51,6 @@ describe("useResolveInstallCode", () => {
         mockResolvePost.mockResolvedValue({
             data: {
                 merchantId: "merchant-1",
-                anonymousId: "anon-1",
                 merchant,
                 hasWallet: false,
                 ticket: "signed-ticket-jwt",
@@ -77,45 +76,12 @@ describe("useResolveInstallCode", () => {
         });
     });
 
-    test("ignores the response anonymousId, queueing the ticket alone", async ({
-        queryWrapper,
-    }) => {
-        mockResolvePost.mockResolvedValue({
-            data: {
-                merchantId: "merchant-1",
-                anonymousId: "anon-1",
-                merchant,
-                hasWallet: false,
-                ticket: "signed-ticket-jwt",
-            },
-            error: null,
-        });
-
-        const { useResolveInstallCode } = await import(
-            "./useResolveInstallCode"
-        );
-        const { result } = renderHook(() => useResolveInstallCode(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        result.current.resolve("ABC123");
-
-        await waitFor(() => {
-            const [action] = pendingActionsStore.getState().getValidActions();
-            expect(action).toBeDefined();
-            expect(
-                action?.type === "ensure" ? action.anonymousId : "unset"
-            ).toBeUndefined();
-        });
-    });
-
     test("queues nothing when the response carries no ticket", async ({
         queryWrapper,
     }) => {
         mockResolvePost.mockResolvedValue({
             data: {
                 merchantId: "merchant-2",
-                anonymousId: "anon-2",
                 merchant,
                 hasWallet: false,
             },

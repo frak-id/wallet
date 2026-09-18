@@ -9,11 +9,6 @@ import { installCodeKey } from "@/module/recovery-code/queryKeys/install-code";
 
 type ResolveResult = {
     merchantId: string;
-    /**
-     * Still sent by the backend, deliberately unread: the ticket authenticates
-     * its own id, and the field is dropped in a later backend-only deploy.
-     */
-    anonymousId?: string;
     merchant: { name: string; domain: string };
     /** Optional defensively: an old backend or a rollback never sends one. */
     ticket?: string;

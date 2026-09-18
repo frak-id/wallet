@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Frak User API",
-    "version": "0.0.29",
+    "version": "0.0.31",
     "description": "User-facing Frak API consumed by the native SDKs (iOS and Android). Covers wallet sessions, interactions tracking, merchant information and reward estimation."
   },
   "servers": [
@@ -898,9 +898,6 @@
                   ],
                   "properties": {
                     "merchantId": {
-                      "type": "string"
-                    },
-                    "anonymousId": {
                       "type": "string"
                     },
                     "merchant": {
@@ -1971,63 +1968,22 @@
                                       "type": "string"
                                     },
                                     "operator": {
-                                      "anyOf": [
-                                        {
-                                          "const": "eq",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "neq",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "gt",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "gte",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "lt",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "lte",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "in",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "not_in",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "contains",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "starts_with",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "ends_with",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "exists",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "not_exists",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "between",
-                                          "type": "string"
-                                        }
+                                      "type": "string",
+                                      "enum": [
+                                        "eq",
+                                        "neq",
+                                        "gt",
+                                        "gte",
+                                        "lt",
+                                        "lte",
+                                        "in",
+                                        "not_in",
+                                        "contains",
+                                        "starts_with",
+                                        "ends_with",
+                                        "exists",
+                                        "not_exists",
+                                        "between"
                                       ]
                                     },
                                     "value": {
@@ -2106,19 +2062,11 @@
                                 ],
                                 "properties": {
                                   "logic": {
-                                    "anyOf": [
-                                      {
-                                        "const": "all",
-                                        "type": "string"
-                                      },
-                                      {
-                                        "const": "any",
-                                        "type": "string"
-                                      },
-                                      {
-                                        "const": "none",
-                                        "type": "string"
-                                      }
+                                    "type": "string",
+                                    "enum": [
+                                      "all",
+                                      "any",
+                                      "none"
                                     ]
                                   },
                                   "conditions": {
@@ -2137,63 +2085,22 @@
                                               "type": "string"
                                             },
                                             "operator": {
-                                              "anyOf": [
-                                                {
-                                                  "const": "eq",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "neq",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "gt",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "gte",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "lt",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "lte",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "in",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "not_in",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "contains",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "starts_with",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "ends_with",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "exists",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "not_exists",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "between",
-                                                  "type": "string"
-                                                }
+                                              "type": "string",
+                                              "enum": [
+                                                "eq",
+                                                "neq",
+                                                "gt",
+                                                "gte",
+                                                "lt",
+                                                "lte",
+                                                "in",
+                                                "not_in",
+                                                "contains",
+                                                "starts_with",
+                                                "ends_with",
+                                                "exists",
+                                                "not_exists",
+                                                "between"
                                               ]
                                             },
                                             "value": {
@@ -2288,63 +2195,22 @@
                                       "type": "string"
                                     },
                                     "operator": {
-                                      "anyOf": [
-                                        {
-                                          "const": "eq",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "neq",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "gt",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "gte",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "lt",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "lte",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "in",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "not_in",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "contains",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "starts_with",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "ends_with",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "exists",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "not_exists",
-                                          "type": "string"
-                                        },
-                                        {
-                                          "const": "between",
-                                          "type": "string"
-                                        }
+                                      "type": "string",
+                                      "enum": [
+                                        "eq",
+                                        "neq",
+                                        "gt",
+                                        "gte",
+                                        "lt",
+                                        "lte",
+                                        "in",
+                                        "not_in",
+                                        "contains",
+                                        "starts_with",
+                                        "ends_with",
+                                        "exists",
+                                        "not_exists",
+                                        "between"
                                       ]
                                     },
                                     "value": {
@@ -2423,19 +2289,11 @@
                                 ],
                                 "properties": {
                                   "logic": {
-                                    "anyOf": [
-                                      {
-                                        "const": "all",
-                                        "type": "string"
-                                      },
-                                      {
-                                        "const": "any",
-                                        "type": "string"
-                                      },
-                                      {
-                                        "const": "none",
-                                        "type": "string"
-                                      }
+                                    "type": "string",
+                                    "enum": [
+                                      "all",
+                                      "any",
+                                      "none"
                                     ]
                                   },
                                   "conditions": {
@@ -2454,63 +2312,22 @@
                                               "type": "string"
                                             },
                                             "operator": {
-                                              "anyOf": [
-                                                {
-                                                  "const": "eq",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "neq",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "gt",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "gte",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "lt",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "lte",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "in",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "not_in",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "contains",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "starts_with",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "ends_with",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "exists",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "not_exists",
-                                                  "type": "string"
-                                                },
-                                                {
-                                                  "const": "between",
-                                                  "type": "string"
-                                                }
+                                              "type": "string",
+                                              "enum": [
+                                                "eq",
+                                                "neq",
+                                                "gt",
+                                                "gte",
+                                                "lt",
+                                                "lte",
+                                                "in",
+                                                "not_in",
+                                                "contains",
+                                                "starts_with",
+                                                "ends_with",
+                                                "exists",
+                                                "not_exists",
+                                                "between"
                                               ]
                                             },
                                             "value": {
@@ -2602,13 +2419,9 @@
                             "type": "number"
                           },
                           "expiresAt": {
-                            "anyOf": [
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
+                            "type": [
+                              "string",
+                              "null"
                             ]
                           }
                         }
@@ -3122,39 +2935,35 @@
                             "type": "string"
                           },
                           "explorerConfig": {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "heroImageUrl": {
-                                    "pattern": "^https://",
-                                    "maxLength": 2048,
-                                    "type": "string"
-                                  },
-                                  "heroImageUrls": {
-                                    "maxItems": 4,
-                                    "type": "array",
-                                    "items": {
-                                      "pattern": "^https://",
-                                      "maxLength": 2048,
-                                      "type": "string"
-                                    }
-                                  },
-                                  "logoUrl": {
-                                    "pattern": "^https://",
-                                    "maxLength": 2048,
-                                    "type": "string"
-                                  },
-                                  "description": {
-                                    "maxLength": 1000,
-                                    "type": "string"
-                                  }
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "heroImageUrl": {
+                                "pattern": "^https://",
+                                "maxLength": 2048,
+                                "type": "string"
+                              },
+                              "heroImageUrls": {
+                                "maxItems": 4,
+                                "type": "array",
+                                "items": {
+                                  "pattern": "^https://",
+                                  "maxLength": 2048,
+                                  "type": "string"
                                 }
                               },
-                              {
-                                "type": "null"
+                              "logoUrl": {
+                                "pattern": "^https://",
+                                "maxLength": 2048,
+                                "type": "string"
+                              },
+                              "description": {
+                                "maxLength": 1000,
+                                "type": "string"
                               }
-                            ]
+                            }
                           },
                           "activeCampaignCount": {
                             "type": "number"
@@ -3173,33 +2982,21 @@
                             "type": "number"
                           },
                           "recent": {
-                            "anyOf": [
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
+                            "type": [
+                              "string",
+                              "null"
                             ]
                           },
                           "expiring": {
-                            "anyOf": [
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
+                            "type": [
+                              "string",
+                              "null"
                             ]
                           },
                           "reward": {
-                            "anyOf": [
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "null"
-                              }
+                            "type": [
+                              "number",
+                              "null"
                             ]
                           }
                         }
@@ -3332,31 +3129,27 @@
               "application/json": {
                 "schema": {
                   "nullable": true,
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "required": [
-                        "provider",
-                        "token",
-                        "url"
-                      ],
-                      "properties": {
-                        "provider": {
-                          "const": "takeads",
-                          "type": "string"
-                        },
-                        "token": {
-                          "type": "string"
-                        },
-                        "url": {
-                          "type": "string"
-                        }
-                      }
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "required": [
+                    "provider",
+                    "token",
+                    "url"
+                  ],
+                  "properties": {
+                    "provider": {
+                      "const": "takeads",
+                      "type": "string"
                     },
-                    {
-                      "type": "null"
+                    "token": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -3866,26 +3659,18 @@
                       "type": "string"
                     },
                     "interactionLogId": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
+                      "type": [
+                        "string",
+                        "null"
                       ]
                     },
                     "isDuplicate": {
                       "type": "boolean"
                     },
                     "referralLinkId": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
+                      "type": [
+                        "string",
+                        "null"
                       ]
                     }
                   }
@@ -4390,29 +4175,14 @@
                       ]
                     },
                     "address": {
-                      "anyOf": [
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        },
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        },
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        }
-                      ]
+                      "pattern": "0x[0-9a-fA-F]{40}",
+                      "type": "string"
                     },
                     "authenticatorId": {
                       "anyOf": [
                         {
                           "type": "string",
                           "pattern": "^ecdsa-(.*)$"
-                        },
-                        {
-                          "type": "string"
                         },
                         {
                           "type": "string"
@@ -4424,23 +4194,6 @@
                         {
                           "pattern": "0x[0-9a-fA-F]*",
                           "type": "string"
-                        },
-                        {
-                          "type": "object",
-                          "required": [
-                            "x",
-                            "y"
-                          ],
-                          "properties": {
-                            "x": {
-                              "pattern": "0x[0-9a-fA-F]*",
-                              "type": "string"
-                            },
-                            "y": {
-                              "pattern": "0x[0-9a-fA-F]*",
-                              "type": "string"
-                            }
-                          }
                         },
                         {
                           "type": "object",
@@ -4471,9 +4224,6 @@
                           "items": {
                             "type": "string"
                           }
-                        },
-                        {
-                          "type": "undefined"
                         }
                       ]
                     }
@@ -4630,29 +4380,14 @@
                       ]
                     },
                     "address": {
-                      "anyOf": [
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        },
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        },
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        }
-                      ]
+                      "pattern": "0x[0-9a-fA-F]{40}",
+                      "type": "string"
                     },
                     "authenticatorId": {
                       "anyOf": [
                         {
                           "type": "string",
                           "pattern": "^ecdsa-(.*)$"
-                        },
-                        {
-                          "type": "string"
                         },
                         {
                           "type": "string"
@@ -4664,23 +4399,6 @@
                         {
                           "pattern": "0x[0-9a-fA-F]*",
                           "type": "string"
-                        },
-                        {
-                          "type": "object",
-                          "required": [
-                            "x",
-                            "y"
-                          ],
-                          "properties": {
-                            "x": {
-                              "pattern": "0x[0-9a-fA-F]*",
-                              "type": "string"
-                            },
-                            "y": {
-                              "pattern": "0x[0-9a-fA-F]*",
-                              "type": "string"
-                            }
-                          }
                         },
                         {
                           "type": "object",
@@ -4711,9 +4429,6 @@
                           "items": {
                             "type": "string"
                           }
-                        },
-                        {
-                          "type": "undefined"
                         }
                       ]
                     }
@@ -4972,29 +4687,14 @@
                       ]
                     },
                     "address": {
-                      "anyOf": [
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        },
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        },
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        }
-                      ]
+                      "pattern": "0x[0-9a-fA-F]{40}",
+                      "type": "string"
                     },
                     "authenticatorId": {
                       "anyOf": [
                         {
                           "type": "string",
                           "pattern": "^ecdsa-(.*)$"
-                        },
-                        {
-                          "type": "string"
                         },
                         {
                           "type": "string"
@@ -5006,23 +4706,6 @@
                         {
                           "pattern": "0x[0-9a-fA-F]*",
                           "type": "string"
-                        },
-                        {
-                          "type": "object",
-                          "required": [
-                            "x",
-                            "y"
-                          ],
-                          "properties": {
-                            "x": {
-                              "pattern": "0x[0-9a-fA-F]*",
-                              "type": "string"
-                            },
-                            "y": {
-                              "pattern": "0x[0-9a-fA-F]*",
-                              "type": "string"
-                            }
-                          }
                         },
                         {
                           "type": "object",
@@ -5053,9 +4736,6 @@
                           "items": {
                             "type": "string"
                           }
-                        },
-                        {
-                          "type": "undefined"
                         }
                       ]
                     }
@@ -5281,29 +4961,14 @@
                       ]
                     },
                     "address": {
-                      "anyOf": [
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        },
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        },
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        }
-                      ]
+                      "pattern": "0x[0-9a-fA-F]{40}",
+                      "type": "string"
                     },
                     "authenticatorId": {
                       "anyOf": [
                         {
                           "type": "string",
                           "pattern": "^ecdsa-(.*)$"
-                        },
-                        {
-                          "type": "string"
                         },
                         {
                           "type": "string"
@@ -5315,23 +4980,6 @@
                         {
                           "pattern": "0x[0-9a-fA-F]*",
                           "type": "string"
-                        },
-                        {
-                          "type": "object",
-                          "required": [
-                            "x",
-                            "y"
-                          ],
-                          "properties": {
-                            "x": {
-                              "pattern": "0x[0-9a-fA-F]*",
-                              "type": "string"
-                            },
-                            "y": {
-                              "pattern": "0x[0-9a-fA-F]*",
-                              "type": "string"
-                            }
-                          }
                         },
                         {
                           "type": "object",
@@ -5362,9 +5010,6 @@
                           "items": {
                             "type": "string"
                           }
-                        },
-                        {
-                          "type": "undefined"
                         }
                       ]
                     }
@@ -5545,36 +5190,24 @@
                   ],
                   "properties": {
                     "email": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
+                      "type": [
+                        "string",
+                        "null"
                       ]
                     },
                     "verified": {
                       "type": "boolean"
                     },
                     "verifiedAt": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
+                      "type": [
+                        "string",
+                        "null"
                       ]
                     },
                     "pendingEmail": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
+                      "type": [
+                        "string",
+                        "null"
                       ]
                     }
                   }
@@ -6304,13 +5937,9 @@
                   ],
                   "properties": {
                     "blob": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
+                      "type": [
+                        "string",
+                        "null"
                       ]
                     }
                   }
@@ -6467,29 +6096,14 @@
                       ]
                     },
                     "address": {
-                      "anyOf": [
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        },
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        },
-                        {
-                          "pattern": "0x[0-9a-fA-F]{40}",
-                          "type": "string"
-                        }
-                      ]
+                      "pattern": "0x[0-9a-fA-F]{40}",
+                      "type": "string"
                     },
                     "authenticatorId": {
                       "anyOf": [
                         {
                           "type": "string",
                           "pattern": "^ecdsa-(.*)$"
-                        },
-                        {
-                          "type": "string"
                         },
                         {
                           "type": "string"
@@ -6501,23 +6115,6 @@
                         {
                           "pattern": "0x[0-9a-fA-F]*",
                           "type": "string"
-                        },
-                        {
-                          "type": "object",
-                          "required": [
-                            "x",
-                            "y"
-                          ],
-                          "properties": {
-                            "x": {
-                              "pattern": "0x[0-9a-fA-F]*",
-                              "type": "string"
-                            },
-                            "y": {
-                              "pattern": "0x[0-9a-fA-F]*",
-                              "type": "string"
-                            }
-                          }
                         },
                         {
                           "type": "object",
@@ -6548,9 +6145,6 @@
                           "items": {
                             "type": "string"
                           }
-                        },
-                        {
-                          "type": "undefined"
                         }
                       ]
                     }
@@ -6632,11 +6226,8 @@
                     "createdAt": {
                       "anyOf": [
                         {
-                          "type": "Date"
-                        },
-                        {
-                          "format": "date-time",
-                          "type": "string"
+                          "type": "string",
+                          "format": "date-time"
                         },
                         {
                           "format": "date",
@@ -6742,11 +6333,8 @@
                       "createdAt": {
                         "anyOf": [
                           {
-                            "type": "Date"
-                          },
-                          {
-                            "format": "date-time",
-                            "type": "string"
+                            "type": "string",
+                            "format": "date-time"
                           },
                           {
                             "format": "date",
@@ -6760,11 +6348,8 @@
                       "lastActiveAt": {
                         "anyOf": [
                           {
-                            "type": "Date"
-                          },
-                          {
-                            "format": "date-time",
-                            "type": "string"
+                            "type": "string",
+                            "format": "date-time"
                           },
                           {
                             "format": "date",
@@ -7565,11 +7150,8 @@
                           "createdAt": {
                             "anyOf": [
                               {
-                                "type": "Date"
-                              },
-                              {
-                                "format": "date-time",
-                                "type": "string"
+                                "type": "string",
+                                "format": "date-time"
                               },
                               {
                                 "format": "date",
@@ -7583,11 +7165,8 @@
                           "settledAt": {
                             "anyOf": [
                               {
-                                "type": "Date"
-                              },
-                              {
-                                "format": "date-time",
-                                "type": "string"
+                                "type": "string",
+                                "format": "date-time"
                               },
                               {
                                 "format": "date",
@@ -7601,11 +7180,8 @@
                           "availableAt": {
                             "anyOf": [
                               {
-                                "type": "Date"
-                              },
-                              {
-                                "format": "date-time",
-                                "type": "string"
+                                "type": "string",
+                                "format": "date-time"
                               },
                               {
                                 "format": "date",
@@ -8189,88 +7765,68 @@
                   ],
                   "properties": {
                     "ownedCode": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "required": [
-                            "code",
-                            "createdAt"
-                          ],
-                          "properties": {
-                            "code": {
-                              "type": "string"
-                            },
-                            "createdAt": {
-                              "type": "string"
-                            }
-                          }
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "code",
+                        "createdAt"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
                         },
-                        {
-                          "type": "null"
+                        "createdAt": {
+                          "type": "string"
                         }
-                      ]
+                      }
                     },
                     "crossMerchantReferrer": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "required": [
-                            "code",
-                            "since"
-                          ],
-                          "properties": {
-                            "code": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "since": {
-                              "type": "string"
-                            }
-                          }
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "code",
+                        "since"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
                         },
-                        {
-                          "type": "null"
+                        "since": {
+                          "type": "string"
                         }
-                      ]
+                      }
                     },
                     "merchantReferrer": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "required": [
-                            "code",
-                            "merchantId",
-                            "since"
-                          ],
-                          "properties": {
-                            "code": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "merchantId": {
-                              "type": "string"
-                            },
-                            "since": {
-                              "type": "string"
-                            }
-                          }
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "required": [
+                        "code",
+                        "merchantId",
+                        "since"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
                         },
-                        {
-                          "type": "null"
+                        "merchantId": {
+                          "type": "string"
+                        },
+                        "since": {
+                          "type": "string"
                         }
-                      ]
+                      }
                     }
                   }
                 }
@@ -8746,29 +8302,14 @@
                           ]
                         },
                         "address": {
-                          "anyOf": [
-                            {
-                              "pattern": "0x[0-9a-fA-F]{40}",
-                              "type": "string"
-                            },
-                            {
-                              "pattern": "0x[0-9a-fA-F]{40}",
-                              "type": "string"
-                            },
-                            {
-                              "pattern": "0x[0-9a-fA-F]{40}",
-                              "type": "string"
-                            }
-                          ]
+                          "pattern": "0x[0-9a-fA-F]{40}",
+                          "type": "string"
                         },
                         "authenticatorId": {
                           "anyOf": [
                             {
                               "type": "string",
                               "pattern": "^ecdsa-(.*)$"
-                            },
-                            {
-                              "type": "string"
                             },
                             {
                               "type": "string"
@@ -8780,23 +8321,6 @@
                             {
                               "pattern": "0x[0-9a-fA-F]*",
                               "type": "string"
-                            },
-                            {
-                              "type": "object",
-                              "required": [
-                                "x",
-                                "y"
-                              ],
-                              "properties": {
-                                "x": {
-                                  "pattern": "0x[0-9a-fA-F]*",
-                                  "type": "string"
-                                },
-                                "y": {
-                                  "pattern": "0x[0-9a-fA-F]*",
-                                  "type": "string"
-                                }
-                              }
                             },
                             {
                               "type": "object",
@@ -8827,9 +8351,6 @@
                               "items": {
                                 "type": "string"
                               }
-                            },
-                            {
-                              "type": "undefined"
                             }
                           ]
                         }
@@ -9014,63 +8535,22 @@
                       "type": "string"
                     },
                     "operator": {
-                      "anyOf": [
-                        {
-                          "const": "eq",
-                          "type": "string"
-                        },
-                        {
-                          "const": "neq",
-                          "type": "string"
-                        },
-                        {
-                          "const": "gt",
-                          "type": "string"
-                        },
-                        {
-                          "const": "gte",
-                          "type": "string"
-                        },
-                        {
-                          "const": "lt",
-                          "type": "string"
-                        },
-                        {
-                          "const": "lte",
-                          "type": "string"
-                        },
-                        {
-                          "const": "in",
-                          "type": "string"
-                        },
-                        {
-                          "const": "not_in",
-                          "type": "string"
-                        },
-                        {
-                          "const": "contains",
-                          "type": "string"
-                        },
-                        {
-                          "const": "starts_with",
-                          "type": "string"
-                        },
-                        {
-                          "const": "ends_with",
-                          "type": "string"
-                        },
-                        {
-                          "const": "exists",
-                          "type": "string"
-                        },
-                        {
-                          "const": "not_exists",
-                          "type": "string"
-                        },
-                        {
-                          "const": "between",
-                          "type": "string"
-                        }
+                      "type": "string",
+                      "enum": [
+                        "eq",
+                        "neq",
+                        "gt",
+                        "gte",
+                        "lt",
+                        "lte",
+                        "in",
+                        "not_in",
+                        "contains",
+                        "starts_with",
+                        "ends_with",
+                        "exists",
+                        "not_exists",
+                        "between"
                       ]
                     },
                     "value": {
