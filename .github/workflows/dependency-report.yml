@@ -87,7 +87,7 @@ jobs:
           CLIPROXY_BASE_URL: ${{ secrets.CLIPROXY_BASE_URL }}
         run: |
           for name in CLIPROXY_API_KEY CLIPROXY_BASE_URL; do
-            if [ -z "$(eval echo \"\${$name}\")" ]; then
+            if [ -z "${!name}" ]; then
               echo "::error::${name} is empty. Set it as an Actions secret on this repo, or as an org secret shared with it."
               exit 1
             fi
