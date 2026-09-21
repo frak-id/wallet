@@ -17,12 +17,6 @@ name: "📦 Dependency report"
 # rewrite its body and add a "what moved" comment instead of opening a new one.
 
 on:
-  # TEMPORARY: cut the first real issue from dev, since workflow_dispatch only
-  # registers from the default branch. Remove once this has run.
-  push:
-    branches: [dev]
-    paths:
-      - '.github/workflows/dependency-report.yml'
   schedule:
     # Mondays, 06:00 UTC — before anyone starts touching the apps.
     - cron: '0 6 * * 1'
