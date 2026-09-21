@@ -29,10 +29,10 @@ type ModalState =
     | { id: "welcomeDetail" }
     | { id: "keypass"; onAuthSuccess: () => void; email?: string }
     | {
-          id: "recoveryCodeSuccess";
+          id: "rewardCodeSuccess";
           merchant?: { name: string; domain?: string };
           /** Runs on dismissal, however it arrives — see `closeModal`. Only
-           * for an opener that owes a transition: `/recovery-code` continues
+           * for an opener that owes a transition: `/reward-code` continues
            * to `/register`, the install handoff exits to `/wallet`. An opener
            * whose own page is already the destination MUST omit it — a
            * self-navigation there re-runs `beforeLoad`, which can bounce the
@@ -97,7 +97,7 @@ type ModalStore = {
  * clobbered by the very `set` that is still returning.
  */
 function exitOf(modal: ModalState | null | undefined): (() => void) | null {
-    return (modal?.id === "recoveryCodeSuccess" ? modal.onExit : null) ?? null;
+    return (modal?.id === "rewardCodeSuccess" ? modal.onExit : null) ?? null;
 }
 
 /** Fires after the update commits, never inside the updater. */

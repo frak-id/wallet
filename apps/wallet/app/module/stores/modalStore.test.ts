@@ -15,7 +15,7 @@ describe("modalStore — opener-owned exits", () => {
     test("dismissal runs the exit and clears the modal", async () => {
         reset();
         const onExit = vi.fn();
-        modalStore.getState().openModal({ id: "recoveryCodeSuccess", onExit });
+        modalStore.getState().openModal({ id: "rewardCodeSuccess", onExit });
 
         modalStore.getState().closeModal();
         await settle();
@@ -27,7 +27,7 @@ describe("modalStore — opener-owned exits", () => {
     test("an exit that opens another modal is not clobbered by the update", async () => {
         reset();
         modalStore.getState().openModal({
-            id: "recoveryCodeSuccess",
+            id: "rewardCodeSuccess",
             onExit: () => modalStore.getState().openModal({ id: "transfer" }),
         });
 
@@ -41,11 +41,11 @@ describe("modalStore — opener-owned exits", () => {
         reset();
         const first = vi.fn();
         modalStore.getState().openModal({
-            id: "recoveryCodeSuccess",
+            id: "rewardCodeSuccess",
             onExit: first,
         });
         modalStore.getState().openModal({
-            id: "recoveryCodeSuccess",
+            id: "rewardCodeSuccess",
             onExit: vi.fn(),
         });
         await settle();
@@ -58,7 +58,7 @@ describe("modalStore — opener-owned exits", () => {
         const evicted = vi.fn();
         modalStore
             .getState()
-            .openModal({ id: "recoveryCodeSuccess", onExit: evicted });
+            .openModal({ id: "rewardCodeSuccess", onExit: evicted });
 
         // maxStackDepth is 5; six more pushes force the first one out.
         for (const id of [
@@ -79,7 +79,7 @@ describe("modalStore — opener-owned exits", () => {
     test("popping back to a stacked modal leaves its exit unrun", async () => {
         reset();
         const onExit = vi.fn();
-        modalStore.getState().openModal({ id: "recoveryCodeSuccess", onExit });
+        modalStore.getState().openModal({ id: "rewardCodeSuccess", onExit });
         modalStore.getState().openModal({ id: "transfer" });
 
         // Closing the top reveals the confirmation again — it was never
@@ -88,7 +88,7 @@ describe("modalStore — opener-owned exits", () => {
         await settle();
 
         expect(onExit).not.toHaveBeenCalled();
-        expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess");
+        expect(modalStore.getState().modal?.id).toBe("rewardCodeSuccess");
     });
 
     test("a modal without an exit closes without incident", async () => {

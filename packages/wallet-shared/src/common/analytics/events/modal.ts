@@ -50,7 +50,7 @@ export type ModalEventMap = {
  * without any per-modal instrumentation.
  *
  * `modal` is the discriminator id from the wallet `ModalState` union
- * (e.g. "transfer", "keypass", "recoveryCodeSuccess"). We accept a bare
+ * (e.g. "transfer", "keypass", "rewardCodeSuccess"). We accept a bare
  * string here to keep `wallet-shared` decoupled from the wallet app.
  *
  * `from_stack` distinguishes "user explicitly opened a new modal" from

@@ -48,7 +48,7 @@ export const text = style({
 
 /**
  * Centered icon-led layout for success states (e.g. update downloaded).
- * Mirrors the wallet's success modals (`RecoveryCodeSuccessModal`,
+ * Mirrors the wallet's success modals (`RewardCodeSuccessModal`,
  * `MoneriumTransferSuccessModal`) so the icon reads as a status badge
  * rather than a row decoration.
  */
