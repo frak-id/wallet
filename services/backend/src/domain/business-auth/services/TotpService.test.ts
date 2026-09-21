@@ -1,5 +1,5 @@
 import { sha256Hex } from "@backend-utils";
-import { generateTOTP } from "@oslojs/otp";
+import * as OTPAuth from "otpauth";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminWalletsRepository } from "../../../infrastructure/keys/AdminWalletsRepository";
 import type { BusinessAccountRepository } from "../repositories/BusinessAccountRepository";
@@ -88,8 +88,10 @@ describe("TotpService", () => {
             const secretParam = new URL(otpauthUri).searchParams.get(
                 "secret"
             ) as string;
-            const secret = base32Decode(secretParam);
-            return { encryptedSecret, secret };
+            return {
+                encryptedSecret,
+                secret: OTPAuth.Secret.fromBase32(secretParam),
+            };
         }
 
         it("activates with a valid code and returns 8 recovery codes", async () => {
@@ -101,7 +103,7 @@ describe("TotpService", () => {
                 totpRecoveryCodesHash: null,
             });
 
-            const code = generateTOTP(secret, 30, 6);
+            const code = generateCode(secret);
             const result = await service.activate({
                 accountId: ACCOUNT_ID,
                 code,
@@ -135,7 +137,7 @@ describe("TotpService", () => {
 
             const result = await service.activate({
                 accountId: ACCOUNT_ID,
-                code: generateTOTP(secret, 30, 6),
+                code: generateCode(secret),
             });
             expect(result).toBeNull();
         });
@@ -165,7 +167,7 @@ describe("TotpService", () => {
                 totpRecoveryCodesHash: [],
             });
 
-            const code = generateTOTP(secret, 30, 6);
+            const code = generateCode(secret);
             expect(await service.verify({ accountId: ACCOUNT_ID, code })).toBe(
                 true
             );
@@ -183,7 +185,7 @@ describe("TotpService", () => {
                 totpRecoveryCodesHash: null,
             });
 
-            const code = generateTOTP(secret, 30, 6);
+            const code = generateCode(secret);
             expect(await service.verify({ accountId: ACCOUNT_ID, code })).toBe(
                 false
             );
@@ -325,20 +327,11 @@ describe("TotpService", () => {
     });
 });
 
-const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-
-function base32Decode(encoded: string): Uint8Array {
-    const clean = encoded.replace(/=+$/, "");
-    let bits = 0;
-    let value = 0;
-    const output: number[] = [];
-    for (const char of clean) {
-        value = (value << 5) | BASE32_ALPHABET.indexOf(char);
-        bits += 5;
-        if (bits >= 8) {
-            output.push((value >>> (bits - 8)) & 0xff);
-            bits -= 8;
-        }
-    }
-    return new Uint8Array(output);
+function generateCode(secret: OTPAuth.Secret): string {
+    return new OTPAuth.TOTP({
+        algorithm: "SHA1",
+        digits: 6,
+        period: 30,
+        secret,
+    }).generate();
 }

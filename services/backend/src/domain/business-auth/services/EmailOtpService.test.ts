@@ -1,5 +1,4 @@
-import { sha256 } from "@oslojs/crypto/sha2";
-import { encodeHexLowerCase } from "@oslojs/encoding";
+import { sha256Hex } from "@backend-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
     buildSecurityCodeEmail,
@@ -237,8 +236,7 @@ describe("EmailOtpService", () => {
 
     describe("verifyCode", () => {
         // Same hashing as the service (sha256 of the trimmed code).
-        const hashOf = (code: string) =>
-            encodeHexLowerCase(sha256(new TextEncoder().encode(code.trim())));
+        const hashOf = (code: string) => sha256Hex(code.trim());
 
         it("verifies a matching code and consumes it", async () => {
             repository.find.mockResolvedValue(

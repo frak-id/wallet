@@ -1,23 +1,36 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import type { AdminWalletsRepository } from "@backend-infrastructure/keys/AdminWalletsRepository";
 import { HttpError, sha256Hex } from "@backend-utils";
-import { createTOTPKeyURI, verifyTOTPWithGracePeriod } from "@oslojs/otp";
+import * as OTPAuth from "otpauth";
 import { bytesToHex, type Hex, hexToBytes } from "viem";
 import type { BusinessAccountRepository } from "../repositories/BusinessAccountRepository";
 import { isAttemptAllowed, nextFailureState } from "./attemptGuard";
 
 const TOTP_KEY_DERIVATION_LABEL = "business-totp-encryption";
 
+const TOTP_ISSUER = "Frak Business";
 const TOTP_INTERVAL_SEC = 30;
 const TOTP_DIGITS = 6;
 /** ±1 interval of clock drift tolerance. */
-const TOTP_GRACE_SEC = 30;
+const TOTP_WINDOW = 1;
 const RECOVERY_CODE_COUNT = 8;
 const RECOVERY_CODE_BYTES = 5; // 10 hex chars
 
 type TotpSetup = {
     otpauthUri: string;
 };
+
+/** RFC 6238 SHA-1 TOTP, the algorithm every authenticator app assumes. */
+function buildTotp(secret: Uint8Array, accountLabel?: string): OTPAuth.TOTP {
+    return new OTPAuth.TOTP({
+        issuer: TOTP_ISSUER,
+        label: accountLabel,
+        algorithm: "SHA1",
+        digits: TOTP_DIGITS,
+        period: TOTP_INTERVAL_SEC,
+        secret: OTPAuth.Secret.fromHex(Buffer.from(secret).toString("hex")),
+    });
+}
 
 /**
  * TOTP enrollment + verification. Secrets are AES-256-GCM encrypted at rest
@@ -103,13 +116,7 @@ export class TotpService {
             encryptedSecret: await this.encryptSecret(secret),
         });
 
-        const otpauthUri = createTOTPKeyURI(
-            "Frak Business",
-            params.accountLabel,
-            secret,
-            TOTP_INTERVAL_SEC,
-            TOTP_DIGITS
-        );
+        const otpauthUri = buildTotp(secret, params.accountLabel).toString();
         return { otpauthUri };
     }
 
@@ -203,12 +210,12 @@ export class TotpService {
     ): Promise<boolean> {
         if (!/^\d{6}$/.test(code.trim())) return false;
         const secret = await this.decryptSecret(encryptedSecret);
-        return verifyTOTPWithGracePeriod(
-            secret,
-            TOTP_INTERVAL_SEC,
-            TOTP_DIGITS,
-            code.trim(),
-            TOTP_GRACE_SEC
-        );
+        // `validate` returns the counter delta, and an on-time code is delta
+        // 0 — a truthiness check here would reject every punctual user.
+        const delta = buildTotp(secret).validate({
+            token: code.trim(),
+            window: TOTP_WINDOW,
+        });
+        return delta !== null;
     }
 }
