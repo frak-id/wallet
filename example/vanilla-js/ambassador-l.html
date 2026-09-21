@@ -158,12 +158,14 @@
 .frak-faces span{inline-size:2.2em;block-size:2.2em;border-radius:50%;display:grid;
   place-items:center;font-size:.75em;font-weight:700;background:var(--_accent);color:var(--_ink)}
 
-/* The one deliberate exception to the six knobs: store badges are fixed brand
+/* The one deliberate exception to the nine knobs: store badges are fixed brand
    artwork that Apple and Google require verbatim, so they cannot take the
-   merchant's palette. Everything else on this page can. */
+   merchant's palette. Everything else on this page can. The colours are
+   !important because these anchors carry no href until the SDK binds them,
+   and a reboot stylesheet's a:not([href]) outranks a single class. */
 .frak-badges{display:flex;flex-wrap:wrap;gap:.75em;align-items:center}
 .frak-badge{display:inline-flex;align-items:center;gap:.5em;text-decoration:none;
-  background:#000;color:#fff;border:1px solid #a6a6a6;border-radius:8px;padding:.5em .9em;
+  background:#000!important;color:#fff!important;border:1px solid #a6a6a6;border-radius:8px;padding:.5em .9em;
   font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.15}
 .frak-badge svg{flex:none}
 .frak-badge small{display:block;font-size:.62em;opacity:.9}
