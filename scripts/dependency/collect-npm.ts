@@ -135,26 +135,31 @@ function buildItem(
 }
 
 /**
- * Declared package names, no ranges. A deprecated package is usually also
- * up to date, so it never reaches the `bun outdated` table at all.
+ * Every declared package and where it is declared, ranges ignored. A deprecated
+ * package is usually also up to date, so it never reaches the `bun outdated`
+ * table at all.
  */
-function declaredNames(): Set<string> {
+function declaredSites(): Map<string, Location[]> {
     const fields = [
         "dependencies",
         "devDependencies",
         "peerDependencies",
         "optionalDependencies",
     ];
-    const names = new Set<string>();
+    const sites = new Map<string, Location[]>();
     for (const file of trackedFiles("*package.json")) {
-        const manifest = JSON.parse(readFileSync(file, "utf-8"));
+        const source = readFileSync(file, "utf-8");
+        const lines = source.split("\n");
+        const manifest = JSON.parse(source);
         for (const field of fields) {
             for (const name of Object.keys(manifest[field] ?? {})) {
-                names.add(name);
+                const at = sites.get(name) ?? [];
+                at.push({ file, line: lineOf(lines, `"${name}":`) });
+                sites.set(name, at);
             }
         }
     }
-    return names;
+    return sites;
 }
 
 /**
@@ -164,7 +169,8 @@ function declaredNames(): Set<string> {
 async function deprecatedButCurrent(
     covered: Set<string>
 ): Promise<InventoryItem[]> {
-    const names = [...declaredNames()].filter((name) => !covered.has(name));
+    const sites = declaredSites();
+    const names = [...sites.keys()].filter((name) => !covered.has(name));
     log(`  ${names.length} up-to-date package(s) swept for deprecation`);
     const found = await mapLimit(names, 10, async (name) => {
         const info = await npmLatest(name);
@@ -182,7 +188,7 @@ async function deprecatedButCurrent(
             tier: "research",
             flags: [...trap.flags, "deprecated"],
             source: `https://www.npmjs.com/package/${name}`,
-            locations: [],
+            locations: sites.get(name) ?? [],
             note: info.deprecated,
             meta: { deprecated: info.deprecated },
             ...(info.homepage ? { homepage: info.homepage } : {}),
