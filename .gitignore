@@ -92,3 +92,6 @@ sst-env.d.ts
 .pi-subagents/
 .pi/subagents/
 .worktrees/
+
+# Generated in CI from the CLIPROXY_BASE_URL secret (.github/pi/models.jq)
+.github/pi/models.json

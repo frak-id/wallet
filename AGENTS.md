@@ -14,6 +14,7 @@ bun run build:sdk                    # Sequence: rpc → core → legacy → rea
 bun run test                         # NEVER `bun test` — use `bun run test` (Vitest workspace)
 bun run format && bun run lint && bun run typecheck && bun run test  # Quality gate (all four mandatory pre-commit)
 bun run lint:comments                # Comment budget on Kotlin/Swift/TS — already inside `bun run lint`
+bun run deps:inventory               # Resolve every pinned version upstream (set GITHUB_TOKEN: 60 req/h without it)
 bun run --filter '*/native-*' lint    # ktlint + swift format — NOT covered by the gate above
 bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,prod}  # GCP Pulumi
 ```
@@ -37,6 +38,7 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 | Native SDK | `sdk/android/` (Gradle, `id.frak.sdk:core` + `:ui`) · `sdk/ios/` (SwiftPM, `FrakSDK` + `FrakSDKUI`) |
 | Native SDK harnesses | `example/native-{android,ios}/` (Kotlin/Compose + Swift/SwiftUI) |
 | Infra (AWS/GCP) | `infra/` · `sst.config.ts` · `infra/gcp/*.ts` |
+| Version gates + the weekly dependency report | `scripts/` (`check-*.ts`, `dependency/`) · `.github/pi/` |
 | SDK CDN pointer (`sdk[-dev].frak.id`) | `infra/sdk-pointer.ts` (own SST stages `sdk-pointer[-dev]`, deployed by the release workflows) |
 
 ## Non-Obvious Patterns (Tribal Knowledge)
@@ -83,4 +85,4 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 
 ## See Also
 
-Root children: `apps/{business,listener,shopify,wallet}/AGENTS.md` families · `packages/AGENTS.md` · `sdk/AGENTS.md` · `services/backend/AGENTS.md` · `infra/AGENTS.md` · `plugins/{magento,prestashop,wordpress}/AGENTS.md`.
+Root children: `apps/{business,listener,shopify,wallet}/AGENTS.md` families · `packages/AGENTS.md` · `sdk/AGENTS.md` · `scripts/AGENTS.md` · `services/backend/AGENTS.md` · `infra/AGENTS.md` · `plugins/{magento,prestashop,wordpress}/AGENTS.md`.

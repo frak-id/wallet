@@ -47,6 +47,7 @@
     "deploy:prod": "sst deploy --stage prod",
     "deploy-gcp:prod": "sst deploy --stage gcp-production",
     "deploy-gcp:staging": "sst deploy --stage gcp-staging",
+    "deps:inventory": "bun scripts/dependency-inventory.ts",
     "dev": "bun sst dev",
     "dev:sandbox": "bun run --filter '*' dev:sandbox",
     "env:sandbox": "echo 'Run bun sst dev, then type env:sandbox in the SST dev UI'",

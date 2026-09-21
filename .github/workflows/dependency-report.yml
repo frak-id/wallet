@@ -1,0 +1,158 @@
+name: "📦 Dependency report"
+
+# Weekly sweep of every version pinned in this repo. Two halves, on purpose:
+#
+#   1. `scripts/dependency-inventory.ts` resolves current-vs-latest across four
+#      surfaces: npm packages, Tauri's Rust crates, container images plus the
+#      Pulumi/SST providers, and action pins. Deterministic, no LLM.
+#   2. A single pi agent (lighter config than a dev workstation: no extensions,
+#      no subagents, built-in tools only, sonnet via cliproxy) researches what
+#      changed in each `tier: "research"` item and writes the report.
+#
+# The npm and cargo minor/patch tail never reaches the agent: the collector
+# tiers it as `appendix` and the upsert renders it mechanically afterwards.
+# sdk/android, sdk/ios and the PHP plugins are deliberately out of scope.
+#
+# The report lands in one labelled issue. While that issue is open, later runs
+# rewrite its body and add a "what moved" comment instead of opening a new one.
+
+on:
+  schedule:
+    # Mondays, 06:00 UTC — before anyone starts touching the apps.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build the report but do not touch the issue'
+        type: boolean
+        default: false
+
+env:
+  CI: true
+  # pi phones home for update checks at startup; pointless in a throwaway
+  # container and one more thing that can hang the job.
+  PI_SKIP_VERSION_CHECK: '1'
+  PI_TELEMETRY: '0'
+  # Pinned so a pi release cannot silently change agent behaviour mid-week.
+  PI_VERSION: '0.86.1'
+  REPORT_LABEL: dependencies
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  report:
+    name: "📦 Dependency report"
+    # Not `frak-hetzner-wallet`: that scale set exists for deploys. This job
+    # needs internet and a GitHub token, nothing else.
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency:
+      group: dependency-report
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      # SHA-pinned on purpose, unlike the rest of this repo's workflows: a moved
+      # tag is a supply-chain vector, and this is the workflow that reports on
+      # action pinning. Comments show the tag at pin time.
+      - name: Checkout Repo
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      # pi runs on Node; the scripts run on Bun.
+      - name: Setup Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+
+      # No `bun install`: `bun outdated` reads the committed bun.lock directly,
+      # and `cargo metadata --no-deps` only parses manifests. Installing this
+      # monorepo to run two standalone scripts would be the slowest step here.
+
+      # Fail in seconds with an actionable message rather than 90s later inside
+      # the agent with pi's "No API key found for cliproxy". An org secret that is
+      # not shared with this repo, or one saved with an empty value, arrives as an
+      # empty string — indistinguishable from "not set" at the point of use.
+      - name: "🔑 Preflight the proxy credential"
+        env:
+          CLIPROXY_API_KEY: ${{ secrets.CLIPROXY_API_KEY }}
+          CLIPROXY_BASE_URL: ${{ secrets.CLIPROXY_BASE_URL }}
+        run: |
+          for name in CLIPROXY_API_KEY CLIPROXY_BASE_URL; do
+            if [ -z "$(eval echo \"\${$name}\")" ]; then
+              echo "::error::${name} is empty. Set it as an Actions secret on this repo, or as an org secret shared with it."
+              exit 1
+            fi
+          done
+          # Length only, never the value.
+          echo "CLIPROXY_API_KEY resolved (${#CLIPROXY_API_KEY} chars)"
+
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
+            -H "Authorization: Bearer ${CLIPROXY_API_KEY}" "${CLIPROXY_BASE_URL}/v1/models" || echo 000)
+          if [ "${code}" != "200" ]; then
+            echo "::error::The proxy returned HTTP ${code} — key rejected or unreachable from the runner."
+            exit 1
+          fi
+          echo "cliproxy reachable (HTTP ${code})"
+
+      # Called directly rather than through `bun run deps:inventory` so the
+      # flags need no `--` passthrough.
+      - name: "🔍 Collect dependency inventory"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bun scripts/dependency-inventory.ts --out dependency-inventory.json
+
+      - name: "🤖 Install pi"
+        run: npm install -g "@earendil-works/pi-coding-agent@${PI_VERSION}"
+
+      - name: "📝 Write the report"
+        env:
+          # pi writes caches and sessions into its config dir, so it gets a
+          # scratch one: the repo copy stays read-only, the worktree stays clean.
+          PI_CODING_AGENT_DIR: ${{ runner.temp }}/pi
+          # Both are resolved by the generated models.json below.
+          CLIPROXY_API_KEY: ${{ secrets.CLIPROXY_API_KEY }}
+          CLIPROXY_BASE_URL: ${{ secrets.CLIPROXY_BASE_URL }}
+          # The agent researches changelogs through the GitHub API.
+          GITHUB_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p "${PI_CODING_AGENT_DIR}"
+
+          # The endpoint is a secret, so the catalogue is generated rather than
+          # committed. `$CLIPROXY_API_KEY` stays a literal for pi to expand.
+          jq -n --arg baseUrl "${CLIPROXY_BASE_URL}" -f .github/pi/models.jq \
+            > "${PI_CODING_AGENT_DIR}/models.json"
+
+          # No settings.json: a fresh config dir already defaults to no packages
+          # and no extensions, so the model choice is the only thing left to say.
+          pi \
+            --name "dependency-report" \
+            --no-extensions \
+            --no-skills \
+            --model cliproxy/claude-sonnet-5 \
+            --thinking medium \
+            --tools read,write,bash,grep,find,ls \
+            -p @.github/pi/dependency-report.prompt.md \
+            "Today is $(date -u +%Y-%m-%d). The workflow run url is ${RUN_URL}. Write dependency-report.md now."
+
+      # The upsert refuses to post a body without the report marker, so a failed
+      # or truncated agent run fails the job here rather than defacing the issue.
+      - name: "📮 Create or update the issue"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          bun scripts/upsert-dependency-issue.ts \
+            --body dependency-report.md \
+            --inventory dependency-inventory.json \
+            --label "${REPORT_LABEL}" \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
