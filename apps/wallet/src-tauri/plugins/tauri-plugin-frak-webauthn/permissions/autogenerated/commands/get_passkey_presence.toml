@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-get-passkey-presence"
+description = "Enables the get_passkey_presence command without any pre-configured scope."
+commands.allow = ["get_passkey_presence"]
+
+[[permission]]
+identifier = "deny-get-passkey-presence"
+description = "Denies the get_passkey_presence command without any pre-configured scope."
+commands.deny = ["get_passkey_presence"]

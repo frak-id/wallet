@@ -6,6 +6,7 @@ Default permissions for the frak-webauthn plugin
 
 - `allow-register`
 - `allow-authenticate`
+- `allow-get-passkey-presence`
 
 ## Permission Table
 
@@ -38,6 +39,32 @@ Enables the authenticate command without any pre-configured scope.
 <td>
 
 Denies the authenticate command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-webauthn:allow-get-passkey-presence`
+
+</td>
+<td>
+
+Enables the get_passkey_presence command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-webauthn:deny-get-passkey-presence`
+
+</td>
+<td>
+
+Denies the get_passkey_presence command without any pre-configured scope.
 
 </td>
 </tr>
