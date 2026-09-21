@@ -4,6 +4,7 @@ import { ToastSurface } from "@frak-labs/design-system/components/ToastSurface";
 import {
     authenticationStore,
     authenticatorStorage,
+    getPasskeyPresence,
     recoveryHintStorage,
     trackEvent,
     ua,
@@ -85,6 +86,15 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
         // this Apple/Google account, so send them to login, not register.
         const hint = await recoveryHintStorage.get();
         if (hint.lastAuthenticatorId && hint.lastWallet) {
+            throw redirect({
+                to: "/login",
+                replace: true,
+            });
+        }
+
+        // Every record the app keeps about itself has missed, so ask the OS:
+        // a Google Password Manager passkey outlives all of them.
+        if ((await getPasskeyPresence()) === "present") {
             throw redirect({
                 to: "/login",
                 replace: true,

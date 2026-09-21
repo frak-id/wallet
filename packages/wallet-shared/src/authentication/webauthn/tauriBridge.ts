@@ -323,3 +323,61 @@ export function getTauriGetFn(opts?: {
         }
     };
 }
+
+/** Treating `unknown` as `absent` is what creates a duplicate wallet. */
+export type PasskeyPresence = "present" | "absent" | "unknown";
+
+// A hung IPC round trip must resolve: one caller blocks a route's first paint.
+const PASSKEY_PRESENCE_TIMEOUT_MS = 1_500;
+
+function isPasskeyPresence(value: unknown): value is PasskeyPresence {
+    return value === "present" || value === "absent" || value === "unknown";
+}
+
+async function queryPasskeyPresence(): Promise<PasskeyPresence> {
+    try {
+        // Well-formed request the prefetch needs; nothing ever signs this.
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+
+        const response = await invokeTauriPlugin<{ state?: unknown }>(
+            "get_passkey_presence",
+            {
+                origin: getWebAuthnOrigin(),
+                options: {
+                    challenge: toBase64Url(challenge),
+                    rpId: WebAuthN.rpId,
+                    userVerification: "required",
+                    allowCredentials: [],
+                },
+            }
+        );
+        return isPasskeyPresence(response?.state) ? response.state : "unknown";
+    } catch (e) {
+        console.warn("Tauri passkey presence error", e);
+        return "unknown";
+    }
+}
+
+/**
+ * Silent, no-UI check for an existing passkey; never rejects. The platform
+ * guard doubles as the rollback lever — returning `unknown` here restores
+ * every caller's pre-feature behavior.
+ */
+export async function getPasskeyPresence(): Promise<PasskeyPresence> {
+    if (!IS_TAURI || !IS_ANDROID) return "unknown";
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<PasskeyPresence>((resolve) => {
+        timer = setTimeout(
+            () => resolve("unknown"),
+            PASSKEY_PRESENCE_TIMEOUT_MS
+        );
+    });
+
+    try {
+        return await Promise.race([queryPasskeyPresence(), timeout]);
+    } finally {
+        clearTimeout(timer);
+    }
+}
