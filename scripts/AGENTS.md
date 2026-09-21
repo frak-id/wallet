@@ -7,7 +7,8 @@ Standalone Bun scripts outside every workspace. Non-obvious knowledge only.
 Two kinds live here. **Gates** (`check-*.ts`) run inside `bun run lint` and fail the build on drift
 between hand-maintained sites. **The dependency pipeline** (`dependency-inventory.ts`,
 `dependency/`, `upsert-dependency-issue.ts`) resolves every pinned version against its upstream
-registry weekly and hands the deltas to an agent that writes the report issue.
+registry weekly, and on every `dev` push that touches a file it reads, then hands the deltas to an
+agent that writes the report issue.
 
 ## Traps
 
@@ -47,17 +48,40 @@ registry weekly and hands the deltas to an agent that writes the report issue.
 ## The dependency pipeline
 
 ```
-dependency/types.ts      the contract: InventoryItem, Flag, Floor, semverDelta(), tierFor()
+dependency/types.ts      the contract: InventoryItem, Flag, Floor, projects, semverDelta(), tierFor()
 dependency/registry.ts   upstream lookups only — npm, crates.io, Docker Hub, GitHub
 dependency/traps.ts      repo knowledge: the gated FLOORS and the per-package TRAPS table
 dependency/collect-*.ts  one exported async collector each, resolving to InventoryItem[]
                          four surfaces: infra, ci, cargo, npm
 dependency-inventory.ts  orchestrates, re-derives tiering, emits JSON   (`bun run deps:inventory`)
-upsert-dependency-issue.ts  posts the agent's report + the mechanical appendix to one issue
+upsert-dependency-issue.ts  posts the agent's report + the mechanical appendix to one issue,
+                         stamps the inventory fingerprint into it, and answers `--check-changed`
 .github/pi/              the agent's prompt and its CI-only model catalogue
-.github/workflows/dependency-report.yml   Mondays 06:00 UTC
+.github/workflows/dependency-report.yml   Mondays 06:00 UTC, plus every `dev` push touching a
+                         collected file — gated so a push that moves nothing costs no tokens
 ```
 
+- **Everything collected is a *direct* pin, and the report must never say otherwise.** `bun
+  outdated` reads the workspace manifests, `cargo metadata` is called with `--no-deps`, and
+  `deprecatedButCurrent()` sweeps declared names. A transitive package cannot reach the inventory,
+  so every item has a `locations` entry to edit. #319 is the cautionary tale: the agent wrote
+  "transitive only — no location recorded" for `@oslojs/crypto`, `@oslojs/otp` and `prom-client`
+  while the inventory held `services/backend/package.json:39`, `:41` and `:56` for exactly those
+  three. Nothing in the collectors was wrong; the agent inferred a field it should have read, which
+  is why the prompt now forbids the word and forbids recommending `bun why`.
+- **A `dev` push run is gated on a fingerprint, not on the diff.** `fingerprint()` hashes every
+  item's id, versions, delta, tier, flags, projects and locations — deliberately *not*
+  `generatedAt`, or two runs an hour apart would never match. `composeBody` stamps it into the issue
+  as an HTML comment, and `--check-changed` compares the fresh inventory against what the open issue
+  holds. A push whose inventory is identical skips the agent and the upsert entirely; a weekly or
+  manual run passes `--force` and always rewrites, so a prompt-only change still lands. An issue
+  with no stamp (or no open issue at all) reads as moved, which is the safe direction.
+- **npm items carry `projects`, the workspace *directories* that declare them.** That is the npm
+  section's organising key: one entry means one workspace owns the bump, several means it is a
+  catalog pin and the edit is one root-manifest line. `bun outdated` is the only place the
+  fan-out is written down — its `Workspace` column reads `catalog (@a, @b, …)` for a catalog row,
+  and `consumersOf()` is what keeps that from being thrown away. The other three surfaces have no
+  `projects` and must not be reorganised by it.
 - **Never move version discovery into the report agent.** The agent is forbidden from introducing a
   version that is not in `dependency-inventory.json`, and that guarantee dies the moment it starts
   scanning files for versions itself. A collector that cannot resolve something emits

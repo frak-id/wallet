@@ -3,10 +3,14 @@
  * Creates or updates the one open dependency-report issue. The routine npm bumps
  * are appended here, from the inventory, because the report agent never sees them.
  */
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { appendFileSync, readFileSync } from "node:fs";
 import type { Delta, Inventory, InventoryItem } from "./dependency/types";
 
 export const REPORT_MARKER = "<!-- frak-dependency-report -->";
+
+/** Stamped into the body so a later run can tell whether anything moved. */
+export const FINGERPRINT_PREFIX = "<!-- frak-dependency-fingerprint:";
 
 /** GitHub rejects an issue body longer than this. */
 export const ISSUE_BODY_LIMIT = 65_536;
@@ -41,13 +45,21 @@ function cell(value: string): string {
     return `\`${value.replace(/\|/g, "\\|")}\``;
 }
 
+/** Which workspace owns the edit, or that no single one does. */
+export function projectCell(item: InventoryItem): string {
+    const projects = item.projects ?? [];
+    if (projects.length === 0) return "—";
+    if (projects.length === 1) return cell(projects[0] as string);
+    return `cross-project (${projects.length})`;
+}
+
 function plural(count: number): string {
     return count === 1 ? "" : "s";
 }
 
 function renderRow(item: InventoryItem): string {
     const inRange = item.meta?.inRange === "true" ? "↻" : "";
-    return `| ${cell(item.name)} | ${cell(item.current)} | ${cell(item.latest ?? "?")} | ${item.delta} | ${inRange} |`;
+    return `| ${cell(item.name)} | ${projectCell(item)} | ${cell(item.current)} | ${cell(item.latest ?? "?")} | ${item.delta} | ${inRange} |`;
 }
 
 function head(total: number): string {
@@ -59,8 +71,8 @@ function head(total: number): string {
         "<details>",
         `<summary>${total} routine bump${plural(total)} (minor and patch)</summary>`,
         "",
-        "| Package | Current | Latest | Delta | |",
-        "|---|---|---|---|---|",
+        "| Package | Project | Current | Latest | Delta | |",
+        "|---|---|---|---|---|---|",
     ].join("\n");
 }
 
@@ -126,6 +138,50 @@ export function renderAppendix(inventory: Inventory, budget: number): string {
 
 // ─── Body ──────────────────────────────────────────────────────────────────
 
+/**
+ * Everything the report would read differently if it moved. `generatedAt` is
+ * excluded on purpose: a run resolving the same versions an hour later must
+ * hash the same, or a push-triggered run could never be skipped.
+ */
+export function fingerprint(inventory: Inventory): string {
+    const projection = inventory.items
+        .map((item) =>
+            [
+                item.id,
+                item.current,
+                item.latest ?? "",
+                item.delta,
+                item.tier,
+                [...item.flags].sort().join(","),
+                [...(item.projects ?? [])].sort().join(","),
+                item.locations
+                    .map((l) => `${l.file}:${l.line}`)
+                    .sort()
+                    .join(","),
+            ].join("\u0000")
+        )
+        .sort();
+    return createHash("sha256")
+        .update(projection.join("\n"))
+        .digest("hex")
+        .slice(0, 16);
+}
+
+export function stampOf(inventory: Inventory): string {
+    return `${FINGERPRINT_PREFIX} ${fingerprint(inventory)} -->`;
+}
+
+/** Null when the body predates the stamp, which counts as moved. */
+export function readFingerprint(
+    body: string | null | undefined
+): string | null {
+    const escaped = FINGERPRINT_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = new RegExp(`${escaped}\\s*([0-9a-f]+)\\s*-->`).exec(
+        body ?? ""
+    );
+    return match?.[1] ?? null;
+}
+
 export type Composed =
     | { ok: true; body: string; appendix: string }
     | { ok: false; error: string };
@@ -139,7 +195,8 @@ export function composeBody(agentBody: string, inventory: Inventory): Composed {
             error: `missing the ${REPORT_MARKER} marker — the agent run probably failed or was truncated`,
         };
     }
-    if (body.length > ISSUE_BODY_LIMIT) {
+    const stamp = BODY_SEPARATOR + stampOf(inventory);
+    if (body.length + stamp.length > ISSUE_BODY_LIMIT) {
         return {
             ok: false,
             error: `the report alone is ${body.length} chars, over GitHub's ${ISSUE_BODY_LIMIT}-char issue-body limit`,
@@ -148,9 +205,10 @@ export function composeBody(agentBody: string, inventory: Inventory): Composed {
 
     const appendix = renderAppendix(
         inventory,
-        ISSUE_BODY_LIMIT - body.length - BODY_SEPARATOR.length
+        ISSUE_BODY_LIMIT - body.length - stamp.length - BODY_SEPARATOR.length
     );
-    const composed = appendix ? body + BODY_SEPARATOR + appendix : body;
+    const composed =
+        (appendix ? body + BODY_SEPARATOR + appendix : body) + stamp;
     if (composed.length > ISSUE_BODY_LIMIT) {
         return {
             ok: false,
@@ -175,6 +233,10 @@ export type Args = {
     label: string;
     title: string;
     dryRun: boolean;
+    /** Resolve whether the report needs regenerating, then exit without posting. */
+    checkChanged: boolean;
+    /** Answer the check `true` without asking GitHub. */
+    force: boolean;
 };
 
 export function parseArgs(argv: string[], today: string): Args {
@@ -190,6 +252,8 @@ export function parseArgs(argv: string[], today: string): Args {
         label: flag("label", "dependencies"),
         title: flag("title", `📦 Dependency report — week of ${today}`),
         dryRun: argv.includes("--dry-run"),
+        checkChanged: argv.includes("--check-changed"),
+        force: argv.includes("--force"),
     };
 }
 
@@ -226,44 +290,14 @@ function loadInventory(file: string): Inventory {
 
 type GithubIssue = { number: number; body: string | null; html_url: string };
 
-async function main(): Promise<void> {
-    const today = new Date().toISOString().slice(0, 10);
-    const { bodyFile, inventoryFile, label, title, dryRun } = parseArgs(
-        process.argv.slice(2),
-        today
-    );
+type Github = <T>(
+    path: string,
+    init?: RequestInit
+) => Promise<{ status: number; data: T | null }>;
 
-    const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? "";
-    const repository = process.env.GITHUB_REPOSITORY ?? "";
-    if (!dryRun && (!token || !repository)) {
-        die("GITHUB_TOKEN and GITHUB_REPOSITORY are required.");
-    }
-
-    const inventory = loadInventory(inventoryFile);
-    const composed = composeBody(
-        read(bodyFile, "the report agent wrote nothing."),
-        inventory
-    );
-    if (!composed.ok) {
-        die(`${bodyFile}: ${composed.error}; refusing to post.`);
-    }
-    const { body, appendix } = composed;
-
-    if (dryRun) {
-        console.log(`[dry-run] title: ${title}`);
-        console.log(`[dry-run] label: ${label}`);
-        console.log(
-            `[dry-run] body: ${body.length} chars (${appendix.length} appendix)`
-        );
-        console.log(`[dry-run] ${refreshComment(inventory, today)}`);
-        return;
-    }
-
+function githubClient(token: string, repository: string): Github {
     const api = `https://api.github.com/repos/${repository}`;
-    const github = async <T>(
-        path: string,
-        init: RequestInit = {}
-    ): Promise<{ status: number; data: T | null }> => {
+    return async <T>(path: string, init: RequestInit = {}) => {
         const response = await fetch(`${api}${path}`, {
             ...init,
             headers: {
@@ -286,6 +320,86 @@ async function main(): Promise<void> {
             data: text ? (JSON.parse(text) as T) : null,
         };
     };
+}
+
+/**
+ * The marker, not just the label, so a human-opened issue is never overwritten
+ * — `/issues` also returns pull requests.
+ */
+async function findReportIssue(
+    github: Github,
+    label: string
+): Promise<GithubIssue | undefined> {
+    const { data: open } = await github<GithubIssue[]>(
+        `/issues?state=open&labels=${encodeURIComponent(label)}&per_page=10`
+    );
+    return open?.find((issue) => issue.body?.includes(REPORT_MARKER));
+}
+
+/** A step output when running under Actions, a readable line either way. */
+function emitOutput(name: string, value: string): void {
+    console.log(`${name}=${value}`);
+    const file = process.env.GITHUB_OUTPUT;
+    if (file) appendFileSync(file, `${name}=${value}\n`);
+}
+
+async function main(): Promise<void> {
+    const today = new Date().toISOString().slice(0, 10);
+    const {
+        bodyFile,
+        inventoryFile,
+        label,
+        title,
+        dryRun,
+        checkChanged,
+        force,
+    } = parseArgs(process.argv.slice(2), today);
+
+    const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? "";
+    const repository = process.env.GITHUB_REPOSITORY ?? "";
+    if (!(dryRun || (checkChanged && force)) && (!token || !repository)) {
+        die("GITHUB_TOKEN and GITHUB_REPOSITORY are required.");
+    }
+
+    const inventory = loadInventory(inventoryFile);
+
+    if (checkChanged) {
+        const current = fingerprint(inventory);
+        if (force) {
+            console.log(`fingerprint ${current} (forced)`);
+            emitOutput("changed", "true");
+            return;
+        }
+        const issue = await findReportIssue(
+            githubClient(token, repository),
+            label
+        );
+        const posted = readFingerprint(issue?.body);
+        console.log(`fingerprint ${current}, issue holds ${posted ?? "none"}`);
+        emitOutput("changed", String(posted !== current));
+        return;
+    }
+
+    const composed = composeBody(
+        read(bodyFile, "the report agent wrote nothing."),
+        inventory
+    );
+    if (!composed.ok) {
+        die(`${bodyFile}: ${composed.error}; refusing to post.`);
+    }
+    const { body, appendix } = composed;
+
+    if (dryRun) {
+        console.log(`[dry-run] title: ${title}`);
+        console.log(`[dry-run] label: ${label}`);
+        console.log(
+            `[dry-run] body: ${body.length} chars (${appendix.length} appendix)`
+        );
+        console.log(`[dry-run] ${refreshComment(inventory, today)}`);
+        return;
+    }
+
+    const github = githubClient(token, repository);
 
     const existingLabel = await github(`/labels/${encodeURIComponent(label)}`);
     if (existingLabel.status !== 200) {
@@ -299,12 +413,7 @@ async function main(): Promise<void> {
         });
     }
 
-    const { data: open } = await github<GithubIssue[]>(
-        `/issues?state=open&labels=${encodeURIComponent(label)}&per_page=10`
-    );
-    // The marker, not just the label, so a human-opened issue is never
-    // overwritten — `/issues` also returns pull requests.
-    const existing = open?.find((issue) => issue.body?.includes(REPORT_MARKER));
+    const existing = await findReportIssue(github, label);
 
     if (!existing) {
         const { data } = await github<GithubIssue>("/issues", {

@@ -15,11 +15,38 @@ name: "📦 Dependency report"
 #
 # The report lands in one labelled issue. While that issue is open, later runs
 # rewrite its body and add a "what moved" comment instead of opening a new one.
+#
+# It runs weekly, and on any `dev` push that touches a file the inventory reads.
+# A dev push is the cheap half: the collector always runs, but its fingerprint is
+# compared against the one stamped in the open issue, and the agent and the
+# upsert are skipped outright when nothing moved. So a push that fixes a finding
+# updates the issue within minutes, and the ~3 manifest-touching pushes a day
+# that change nothing upstream cost one collector run and no tokens.
 
 on:
   schedule:
     # Mondays, 06:00 UTC — before anyone starts touching the apps.
     - cron: '0 6 * * 1'
+  push:
+    branches: [dev]
+    # Exactly what the four collectors read — npm manifests and the lockfile,
+    # the Tauri crates, the Dockerfiles and `packageManager`, the SST provider
+    # block, and every `uses:` pin. `infra/**` is deliberately absent: its image
+    # refs are all first-party, so nothing upstream is pinned there.
+    paths:
+      - '**/package.json'
+      - 'bun.lock'
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+      - '**/Dockerfile'
+      - '.github/workflows/**'
+      - '.github/actions/**'
+      - 'sst.config.ts'
+      # The pipeline itself: a collector or prompt change must be provable on dev.
+      - 'scripts/dependency/**'
+      - 'scripts/dependency-inventory.ts'
+      - 'scripts/upsert-dependency-issue.ts'
+      - '.github/pi/**'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -50,7 +77,10 @@ jobs:
     timeout-minutes: 45
     concurrency:
       group: dependency-report
-      cancel-in-progress: false
+      # A burst of dev pushes collapses to the newest one: the run in flight is
+      # resolving versions that the push after it already supersedes. The weekly
+      # and manual runs still queue rather than cancel.
+      cancel-in-progress: ${{ github.event_name == 'push' }}
     permissions:
       contents: read
       issues: write
@@ -67,21 +97,43 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
-      # pi runs on Node; the scripts run on Bun.
-      - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24
-
       # No `bun install`: `bun outdated` reads the committed bun.lock directly,
       # and `cargo metadata --no-deps` only parses manifests. Installing this
       # monorepo to run two standalone scripts would be the slowest step here.
+
+      # Called directly rather than through `bun run deps:inventory` so the
+      # flags need no `--` passthrough.
+      - name: "🔍 Collect dependency inventory"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bun scripts/dependency-inventory.ts --out dependency-inventory.json
+
+      # The gate. Only a push may be skipped — a weekly or manual run always
+      # rewrites the issue, so a prompt change lands without touching a manifest.
+      - name: "🧭 Has anything moved since the open issue?"
+        id: gate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          bun scripts/upsert-dependency-issue.ts \
+            --check-changed \
+            --inventory dependency-inventory.json \
+            --label "${REPORT_LABEL}" \
+            ${{ github.event_name != 'push' && '--force' || '' }}
+
+      - name: "⏭️ Nothing moved"
+        if: steps.gate.outputs.changed != 'true'
+        run: |
+          echo "### ⏭️ Dependency report unchanged" >> "${GITHUB_STEP_SUMMARY}"
+          echo "The inventory fingerprint matches the one stamped in the open issue — the report agent was not run." >> "${GITHUB_STEP_SUMMARY}"
 
       # Fail in seconds with an actionable message rather than 90s later inside
       # the agent with pi's "No API key found for cliproxy". An org secret that is
       # not shared with this repo, or one saved with an empty value, arrives as an
       # empty string — indistinguishable from "not set" at the point of use.
       - name: "🔑 Preflight the proxy credential"
+        if: steps.gate.outputs.changed == 'true'
         env:
           CLIPROXY_API_KEY: ${{ secrets.CLIPROXY_API_KEY }}
           CLIPROXY_BASE_URL: ${{ secrets.CLIPROXY_BASE_URL }}
@@ -103,17 +155,20 @@ jobs:
           fi
           echo "cliproxy reachable (HTTP ${code})"
 
-      # Called directly rather than through `bun run deps:inventory` so the
-      # flags need no `--` passthrough.
-      - name: "🔍 Collect dependency inventory"
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: bun scripts/dependency-inventory.ts --out dependency-inventory.json
+      # pi runs on Node; the scripts run on Bun. Both this and the install below
+      # sit after the gate so a skipped push pays for neither.
+      - name: Setup Node
+        if: steps.gate.outputs.changed == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
 
       - name: "🤖 Install pi"
+        if: steps.gate.outputs.changed == 'true'
         run: npm install -g "@earendil-works/pi-coding-agent@${PI_VERSION}"
 
       - name: "📝 Write the report"
+        if: steps.gate.outputs.changed == 'true'
         env:
           # pi writes caches and sessions into its config dir, so it gets a
           # scratch one: the repo copy stays read-only, the worktree stays clean.
@@ -147,6 +202,7 @@ jobs:
       # The upsert refuses to post a body without the report marker, so a failed
       # or truncated agent run fails the job here rather than defacing the issue.
       - name: "📮 Create or update the issue"
+        if: steps.gate.outputs.changed == 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}

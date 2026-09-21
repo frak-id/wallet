@@ -3,11 +3,15 @@ import type { Inventory, InventoryItem } from "./dependency/types";
 import {
     appendixItems,
     composeBody,
+    fingerprint,
     ISSUE_BODY_LIMIT,
     parseArgs,
+    projectCell,
     REPORT_MARKER,
+    readFingerprint,
     refreshComment,
     renderAppendix,
+    stampOf,
 } from "./upsert-dependency-issue";
 
 const item = (
@@ -97,7 +101,9 @@ describe("renderAppendix", () => {
         expect(out).toContain(
             "<summary>2 routine bumps (minor and patch)</summary>"
         );
-        expect(out).toContain("| Package | Current | Latest | Delta | |");
+        expect(out).toContain(
+            "| Package | Project | Current | Latest | Delta | |"
+        );
         expect(out.startsWith("### ")).toBe(true);
         expect(out.endsWith("</details>")).toBe(true);
         expect(out.split("<details>")).toHaveLength(2);
@@ -119,14 +125,31 @@ describe("renderAppendix", () => {
             10_000
         );
         expect(out).toContain(
-            "| `in-range` | `^1.0.0` | `1.1.0` | minor | ↻ |"
+            "| `in-range` | — | `^1.0.0` | `1.1.0` | minor | ↻ |"
         );
-        expect(out).toContain("| `pinned` | `^1.0.0` | `1.1.0` | minor |  |");
+        expect(out).toContain(
+            "| `pinned` | — | `^1.0.0` | `1.1.0` | minor |  |"
+        );
     });
 
     it("never renders locations", () => {
         const out = renderAppendix(inventory([item({ name: "a" })]), 10_000);
         expect(out).not.toContain("package.json");
+    });
+
+    it("names the owning workspace, or says no single one owns it", () => {
+        const out = renderAppendix(
+            inventory([
+                item({ name: "owned", projects: ["apps/shopify"] }),
+                item({
+                    name: "shared",
+                    projects: ["apps/wallet", "packages/design-system"],
+                }),
+            ]),
+            10_000
+        );
+        expect(out).toContain("| `owned` | `apps/shopify` |");
+        expect(out).toContain("| `shared` | cross-project (2) |");
     });
 
     it("escapes a pipe in an npm range so the table survives", () => {
@@ -222,9 +245,19 @@ describe("composeBody", () => {
     });
 
     it("leaves the body untouched when there is no routine bump", () => {
-        const result = composeBody(report, inventory([]));
-        expect(result.ok && result.body).toBe(report);
+        const empty = inventory([]);
+        const result = composeBody(report, empty);
+        expect(result.ok && result.body).toBe(`${report}\n\n${stampOf(empty)}`);
         expect(result.ok && result.appendix).toBe("");
+    });
+
+    it("stamps a fingerprint a later run can read back", () => {
+        const fixture = inventory([item({ name: "viem" })]);
+        const result = composeBody(report, fixture);
+        expect(result.ok).toBe(true);
+        expect(result.ok && readFingerprint(result.body)).toBe(
+            fingerprint(fixture)
+        );
     });
 
     it("refuses a report already over the issue limit", () => {
@@ -267,6 +300,75 @@ describe("refreshComment", () => {
     });
 });
 
+describe("projectCell", () => {
+    it("falls back to a dash for a surface that has no projects", () => {
+        expect(projectCell(item({ name: "tauri", projects: undefined }))).toBe(
+            "—"
+        );
+        expect(projectCell(item({ name: "tauri", projects: [] }))).toBe("—");
+    });
+});
+
+describe("fingerprint", () => {
+    const base = () => inventory([item({ name: "viem" })]);
+
+    it("ignores when the collector ran", () => {
+        const later = base();
+        later.generatedAt = "2027-01-01T00:00:00.000Z";
+        expect(fingerprint(later)).toBe(fingerprint(base()));
+    });
+
+    it("ignores the order items arrive in", () => {
+        const items = [item({ name: "a" }), item({ name: "b" })];
+        expect(fingerprint(inventory([...items].reverse()))).toBe(
+            fingerprint(inventory(items))
+        );
+    });
+
+    it("moves when a version, tier, flag, project or location moves", () => {
+        const before = fingerprint(base());
+        const mutations: InventoryItem[] = [
+            item({ name: "viem", latest: "1.2.0" }),
+            item({ name: "viem", current: "^1.0.1" }),
+            item({ name: "viem", tier: "research" }),
+            item({ name: "viem", delta: "major" }),
+            item({ name: "viem", flags: ["deprecated"] }),
+            item({ name: "viem", projects: ["apps/wallet"] }),
+            item({
+                name: "viem",
+                locations: [{ file: "apps/wallet/package.json", line: 4 }],
+            }),
+        ];
+        for (const mutated of mutations) {
+            expect(fingerprint(inventory([mutated]))).not.toBe(before);
+        }
+    });
+
+    it("moves when an item is added or dropped", () => {
+        expect(
+            fingerprint(
+                inventory([item({ name: "viem" }), item({ name: "a" })])
+            )
+        ).not.toBe(fingerprint(base()));
+        expect(fingerprint(inventory([]))).not.toBe(fingerprint(base()));
+    });
+});
+
+describe("readFingerprint", () => {
+    it("treats a body with no stamp as moved", () => {
+        expect(readFingerprint("## report")).toBeNull();
+        expect(readFingerprint(null)).toBeNull();
+        expect(readFingerprint(undefined)).toBeNull();
+    });
+
+    it("finds the stamp wherever it sits in the body", () => {
+        const stamp = stampOf(inventory([item({ name: "viem" })]));
+        expect(readFingerprint(`before\n${stamp}\nafter`)).toBe(
+            fingerprint(inventory([item({ name: "viem" })]))
+        );
+    });
+});
+
 describe("parseArgs", () => {
     it("defaults every flag", () => {
         expect(parseArgs([], "2026-09-21")).toEqual({
@@ -275,7 +377,15 @@ describe("parseArgs", () => {
             label: "dependencies",
             title: "📦 Dependency report — week of 2026-09-21",
             dryRun: false,
+            checkChanged: false,
+            force: false,
         });
+    });
+
+    it("reads the gate switches", () => {
+        const args = parseArgs(["--check-changed", "--force"], "2026-09-21");
+        expect(args.checkChanged).toBe(true);
+        expect(args.force).toBe(true);
     });
 
     it("reads explicit values and the dry-run switch", () => {
@@ -300,6 +410,8 @@ describe("parseArgs", () => {
             label: "deps",
             title: "Custom",
             dryRun: true,
+            checkChanged: false,
+            force: false,
         });
     });
 

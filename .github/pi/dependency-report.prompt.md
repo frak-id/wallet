@@ -29,7 +29,26 @@ you reported on.
 The top level carries `generatedAt`, `repo`, `floors`, `counts` and `items`.
 Each item carries: `id`, `kind`, `name`, `surface`, `current`, `latest`,
 `delta`, `needsUpdate`, `tier`, `flags`, `source`, `locations` (file + line),
-and optional `homepage`, `meta`, `note`, `trap`.
+and optional `projects`, `homepage`, `meta`, `note`, `trap`.
+
+### Every item is a direct pin — there are no transitive ones here
+
+This inventory contains **declared dependencies only**. `bun outdated` reads the
+workspace manifests, `cargo metadata` is called with `--no-deps`, and the
+deprecation sweep walks the same manifests. A package that only appears deep in
+the resolution graph can never reach this file.
+
+So:
+
+- **Never write that an item is transitive, indirect, or "not a direct
+dependency".** It is not, and saying so sends the reader looking for a consumer
+that is right there in `locations`.
+- **Never suggest `bun why` or `cargo tree` to find an item's consumer.**
+- `locations` is always the answer to "where do I edit this", and **Apply** must
+  quote it as `file:line`. A deprecated package that is otherwise up to date has
+  `locations` just like any other item — read it.
+- An **empty** `locations` array is a collector failure worth one line in
+  ⚠️ Unresolved, not evidence that the pin is transitive.
 
 ### `tier` — read this before anything else
 
@@ -109,6 +128,17 @@ constraint on the CDN bundles, iOS 16 for the Tauri wallet app, and the Bun pin.
 Each floor names the `gate` command that fails when it is crossed. Treat these as
 fact; do not restate a floor value you did not read from here.
 
+### `projects`
+
+npm items carry `projects`: the workspace directories that declare the pin —
+`apps/shopify`, `services/backend`, `packages/design-system`, or `.` for the
+repo root. It is the report's organising key for the npm section; see the format
+below. One entry means one workspace owns the bump. Several means it is a
+catalog pin and every listed workspace moves together.
+
+`projects` is absent on the `infra`, `ci` and `cargo` surfaces. Do not
+reorganise those sections by it.
+
 ### `meta`
 
 - `meta.inRange: "true"` (npm) means the new version already satisfies the
@@ -137,9 +167,14 @@ If `curl` is missing, use Bun instead:
 
 Hard rules:
 
-- **Never invent a version, CVE id, date, sha, or release note.** If research
-  fails or is inconclusive, write `research: inconclusive` for that item and
-  move on. A short honest entry beats a confident wrong one.
+- **Never invent a version, CVE id, date, sha, release note, or file location.**
+  If research fails or is inconclusive, write `research: inconclusive` for that
+  item and move on. A short honest entry beats a confident wrong one.
+- **Never infer a fact about an item that the inventory does not state.**
+  Whether a pin is direct, where it is declared, which workspaces import it and
+  what it is deprecated in favour of are all recorded fields — read them. This
+  is the one failure mode that reads as confident and is unfalsifiable by the
+  reader.
 - Only versions present in the inventory may appear as "current"/"latest".
 - Attribute security claims: name the advisory (`GHSA-…`, `CVE-…`) or say
   "vendor release notes mention a security fix" — do not upgrade a vague
@@ -241,8 +276,29 @@ it belongs in the table only if its sha is stale.
 
 ### 📦 npm
 
-<same shape — `surface: "npm"`, research tier only. The minor and patch tail is
-appended mechanically after your body; do not reproduce it.>
+<`surface: "npm"`, research tier only. The minor and patch tail is appended
+mechanically after your body; do not reproduce it.
+
+**This section is organised by project, not by package.** A reader of this
+section is about to open one workspace and work in it; a flat alphabetical list
+makes them scan the whole thing to find out what that costs them.
+
+Group the research-tier npm items on `projects`:
+
+- One `#### 📁 \`<project>\`` sub-heading per project that owns at least one item
+  whose `projects` array holds **exactly that one** entry. Render `.` as
+  `\`.\` (repo root)`. Order the projects by item count, descending, and inside
+  a project keep the usual order: security, then breaking, then routine.
+- One final `#### 🔗 Cross-project` sub-heading for every item whose `projects`
+  array holds **more than one** entry. These are the catalog pins: the edit is
+  one line in the root `package.json` catalog, and `locations` already points
+  there — name the consuming workspaces from `projects` in **Apply** so the
+  reader knows the blast radius, and never quote one edit per workspace.
+- An item with no `projects` at all goes under `#### 🔗 Cross-project` with its
+  `locations` quoted as usual.
+
+The per-item block shape is unchanged. Do not repeat the project name inside
+every **Apply** line — the sub-heading already said it.>
 
 ### ⚠️ Unresolved
 

@@ -72,6 +72,11 @@ function merge(items: InventoryItem[]): InventoryItem[] {
                     (l) => !known.has(`${l.file}:${l.line}`)
                 )
             );
+            const projects = new Set([
+                ...(seen.projects ?? []),
+                ...(item.projects ?? []),
+            ]);
+            if (projects.size > 0) seen.projects = [...projects].sort();
             log(`  merged duplicate \`${item.name}\` (${item.id})`);
             continue;
         }

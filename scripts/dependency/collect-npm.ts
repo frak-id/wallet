@@ -5,6 +5,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { lineOf, log, mapLimit, npmLatest, trackedFiles } from "./registry";
 import { trapFor } from "./traps";
 import {
@@ -62,7 +63,7 @@ export function parseOutdated(stdout: string): OutdatedRow[] {
     });
 }
 
-type Manifest = { file: string; lines: string[] };
+export type Manifest = { file: string; lines: string[] };
 
 function manifestsByName(): Map<string, Manifest> {
     const map = new Map<string, Manifest>();
@@ -76,6 +77,37 @@ function manifestsByName(): Map<string, Manifest> {
 
 export function isCatalogRow(workspace: string): boolean {
     return workspace === "catalog" || workspace.startsWith("catalog (");
+}
+
+/**
+ * The workspaces that actually import a pin. A catalog row names its consumers
+ * in parentheses, which is the only place the cross-project fan-out is written
+ * down — the location for such a row is the root catalog, not any consumer.
+ */
+export function consumersOf(row: OutdatedRow): string[] {
+    if (!isCatalogRow(row.workspace)) {
+        return row.workspace ? [row.workspace] : [];
+    }
+    const inner = /^catalog \((.*)\)$/.exec(row.workspace)?.[1] ?? "";
+    return inner
+        .split(",")
+        .map((name) => name.trim())
+        .filter(Boolean);
+}
+
+/** The directory a manifest lives in, `.` for the root one. */
+export function projectOf(file: string): string {
+    return dirname(file);
+}
+
+export function projectsFor(
+    row: OutdatedRow,
+    byName: Map<string, Manifest>
+): string[] {
+    return consumersOf(row).flatMap((name) => {
+        const manifest = byName.get(name);
+        return manifest ? [projectOf(manifest.file)] : [];
+    });
 }
 
 /**
@@ -103,6 +135,7 @@ export function locate(
 function buildItem(
     row: OutdatedRow,
     locations: Location[],
+    projects: string[],
     id: string
 ): InventoryItem {
     const trap = trapFor(row.name);
@@ -124,6 +157,7 @@ function buildItem(
         flags,
         source: `https://www.npmjs.com/package/${row.name}`,
         locations,
+        projects,
         meta: {
             inRange: String(inRange),
             ...(row.depType ? { depType: row.depType } : {}),
@@ -189,6 +223,11 @@ async function deprecatedButCurrent(
             flags: [...trap.flags, "deprecated"],
             source: `https://www.npmjs.com/package/${name}`,
             locations: sites.get(name) ?? [],
+            projects: [
+                ...new Set(
+                    (sites.get(name) ?? []).map((site) => projectOf(site.file))
+                ),
+            ],
             note: info.deprecated,
             meta: { deprecated: info.deprecated },
             ...(info.homepage ? { homepage: info.homepage } : {}),
@@ -232,12 +271,19 @@ export async function collectNpm(): Promise<InventoryItem[]> {
 
     const groups = new Map<
         string,
-        { row: OutdatedRow; locations: Location[] }
+        { row: OutdatedRow; locations: Location[]; projects: Set<string> }
     >();
     for (const row of rows) {
         const key = `${row.name}\u0000${row.current}`;
-        const group = groups.get(key) ?? { row, locations: [] };
+        const group = groups.get(key) ?? {
+            row,
+            locations: [],
+            projects: new Set<string>(),
+        };
         group.locations.push(...locate(row, byName, root));
+        for (const project of projectsFor(row, byName)) {
+            group.projects.add(project);
+        }
         groups.set(key, group);
     }
 
@@ -247,10 +293,11 @@ export async function collectNpm(): Promise<InventoryItem[]> {
     }
 
     log(`  ${rows.length} outdated row(s), ${groups.size} pin(s)`);
-    const items = [...groups.values()].map(({ row, locations }) =>
+    const items = [...groups.values()].map(({ row, locations, projects }) =>
         buildItem(
             row,
             locations,
+            [...projects].sort(),
             perName.get(row.name) === 1
                 ? `npm:${row.name}`
                 : `npm:${row.name}@${row.current}`

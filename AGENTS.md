@@ -38,7 +38,7 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 | Native SDK | `sdk/android/` (Gradle, `id.frak.sdk:core` + `:ui`) · `sdk/ios/` (SwiftPM, `FrakSDK` + `FrakSDKUI`) |
 | Native SDK harnesses | `example/native-{android,ios}/` (Kotlin/Compose + Swift/SwiftUI) |
 | Infra (AWS/GCP) | `infra/` · `sst.config.ts` · `infra/gcp/*.ts` |
-| Version gates + the weekly dependency report | `scripts/` (`check-*.ts`, `dependency/`) · `.github/pi/` |
+| Version gates + the dependency report (weekly + gated on every `dev` push) | `scripts/` (`check-*.ts`, `dependency/`) · `.github/pi/` |
 | SDK CDN pointer (`sdk[-dev].frak.id`) | `infra/sdk-pointer.ts` (own SST stages `sdk-pointer[-dev]`, deployed by the release workflows) |
 
 ## Non-Obvious Patterns (Tribal Knowledge)

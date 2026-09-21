@@ -55,6 +55,12 @@ export type InventoryItem = {
     /** Registry or repository the version was resolved against. */
     source: string;
     locations: Location[];
+    /**
+     * Workspace directories that declare this pin, `.` for the repo root. One
+     * entry means the report writes it under that project; several mean it is a
+     * cross-project pin, which for npm is a catalog entry.
+     */
+    projects?: string[];
     homepage?: string;
     meta?: Record<string, string>;
     /** Why `latest` is null, or why the pin is unresolvable. */
