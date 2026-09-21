@@ -17,12 +17,6 @@ name: "📦 Dependency report"
 # rewrite its body and add a "what moved" comment instead of opening a new one.
 
 on:
-  # TEMPORARY: smoke-test the pipeline on dev before it reaches main.
-  # workflow_dispatch only registers from the default branch. Remove this.
-  push:
-    branches: [dev]
-    paths:
-      - '.github/workflows/dependency-report.yml'
   schedule:
     # Mondays, 06:00 UTC — before anyone starts touching the apps.
     - cron: '0 6 * * 1'
@@ -161,4 +155,4 @@ jobs:
             --body dependency-report.md \
             --inventory dependency-inventory.json \
             --label "${REPORT_LABEL}" \
-            ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--dry-run' || '' }}
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
