@@ -6,7 +6,7 @@ import { CircleCheckIcon } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
 import * as styles from "./index.css";
 
-type RecoveryCodeSuccessModalProps = {
+type RewardCodeSuccessModalProps = {
     onClose: () => void;
     merchant?: { name: string; domain?: string };
     /**
@@ -17,11 +17,11 @@ type RecoveryCodeSuccessModalProps = {
     actionLabel?: string;
 };
 
-export function RecoveryCodeSuccessModal({
+export function RewardCodeSuccessModal({
     onClose,
     merchant,
     actionLabel,
-}: RecoveryCodeSuccessModalProps) {
+}: RewardCodeSuccessModalProps) {
     const { t } = useTranslation();
 
     return (

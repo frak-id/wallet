@@ -227,7 +227,7 @@ describe("useGenerateInstallCode", () => {
 
     test("keys a token-only call apart from an id-only one", async () => {
         const { installCodeKey } = await import(
-            "@/module/recovery-code/queryKeys/install-code"
+            "@/module/reward-code/queryKeys/install-code"
         );
         expect(
             installCodeKey.generate("merchant-1", undefined, "tok-1")

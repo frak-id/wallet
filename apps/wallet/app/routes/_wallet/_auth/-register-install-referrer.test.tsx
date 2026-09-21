@@ -109,10 +109,10 @@ describe("RegisterPage — install-referrer confirmation", () => {
         const first = render(<RegisterPage />);
 
         await waitFor(() =>
-            expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess")
+            expect(modalStore.getState().modal?.id).toBe("rewardCodeSuccess")
         );
         const modal = modalStore.getState().modal;
-        if (modal?.id !== "recoveryCodeSuccess") throw new Error("no modal");
+        if (modal?.id !== "rewardCodeSuccess") throw new Error("no modal");
         expect(modal.merchant?.name).toBe(merchant.name);
         expect(modal.onExit).toBeUndefined();
 

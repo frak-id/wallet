@@ -5,7 +5,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
-import { installCodeKey } from "@/module/recovery-code/queryKeys/install-code";
+import { installCodeKey } from "@/module/reward-code/queryKeys/install-code";
 
 type ResolveResult = {
     merchantId: string;

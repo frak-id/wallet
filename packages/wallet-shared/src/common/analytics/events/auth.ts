@@ -29,6 +29,7 @@ type StandaloneAuthEvents = {
          */
         origin?: "existing" | "another";
     };
+    // Pinned wire name; do not rename without coordinating with downstream dashboards.
     auth_recovery_code_clicked: undefined;
     // Fired when the Android auto-fire self-heals a stale authenticator hint.
     // `os_reported_absent` is backed by a definitive OS answer;

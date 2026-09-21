@@ -6,7 +6,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { modalStore } from "@/module/stores/modalStore";
 import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
-import { RecoveryCodePage } from "./index";
+import { RewardCodePage } from "./index";
 
 const { mockResolvePost, mockNavigate } = vi.hoisted(() => ({
     mockResolvePost: vi.fn(),
@@ -33,7 +33,7 @@ function typeCode(code: string) {
     });
 }
 
-describe("RecoveryCodePage", () => {
+describe("RewardCodePage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         modalStore.getState().closeModal();
@@ -52,7 +52,7 @@ describe("RecoveryCodePage", () => {
         });
         const openModal = vi.spyOn(modalStore.getState(), "openModal");
 
-        render(<RecoveryCodePage />, { wrapper: queryWrapper.wrapper });
+        render(<RewardCodePage />, { wrapper: queryWrapper.wrapper });
         typeCode("ABC123");
         fireEvent.click(screen.getByText("rewardCode.validate"));
 
@@ -74,13 +74,13 @@ describe("RecoveryCodePage", () => {
         });
         const openModal = vi.spyOn(modalStore.getState(), "openModal");
 
-        render(<RecoveryCodePage />, { wrapper: queryWrapper.wrapper });
+        render(<RewardCodePage />, { wrapper: queryWrapper.wrapper });
         typeCode("ABC123");
         fireEvent.click(screen.getByText("rewardCode.validate"));
 
         await waitFor(() =>
             expect(openModal).toHaveBeenCalledWith(
-                expect.objectContaining({ id: "recoveryCodeSuccess" })
+                expect.objectContaining({ id: "rewardCodeSuccess" })
             )
         );
     });

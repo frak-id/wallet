@@ -42,7 +42,7 @@ import {
     fireEnsureActions,
     queuePendingAction,
 } from "@/module/pending-actions/drainEnsures";
-import { useGenerateInstallCode } from "@/module/recovery-code/hook/useGenerateInstallCode";
+import { useGenerateInstallCode } from "@/module/reward-code/hook/useGenerateInstallCode";
 import { sendHostResult } from "@/module/sharing/host/bridge";
 import * as styles from "./install.css";
 
@@ -281,7 +281,7 @@ function InstallProcessing({
             setSettled(true);
             const { modalStore } = store;
             modalStore.getState().openModal({
-                id: "recoveryCodeSuccess",
+                id: "rewardCodeSuccess",
                 merchant: name ? { name } : undefined,
                 onExit: () => navigation.toWallet(),
                 actionLabel: t("installCode.openWalletCta"),
@@ -292,7 +292,7 @@ function InstallProcessing({
             // dismissing early leaves nothing for this to close, and the
             // store fires `onExit` once whichever path wins.
             idleExit = window.setTimeout(() => {
-                if (modalStore.getState().modal?.id === "recoveryCodeSuccess") {
+                if (modalStore.getState().modal?.id === "rewardCodeSuccess") {
                     modalStore.getState().closeModal();
                 }
             }, CONFIRMATION_IDLE_EXIT_MS);

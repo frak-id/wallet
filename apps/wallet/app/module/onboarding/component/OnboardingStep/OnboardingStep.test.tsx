@@ -90,13 +90,13 @@ describe("OnboardingStep", () => {
     });
 
     it("renders the reward code button when handler provided", () => {
-        const onRecoveryCodeClick = vi.fn();
+        const onRewardCodeClick = vi.fn();
         render(
             <OnboardingStep
                 hero={hero}
                 buttonLabel="Continue"
                 onContinue={vi.fn()}
-                onRecoveryCodeClick={onRecoveryCodeClick}
+                onRewardCodeClick={onRewardCodeClick}
             />
         );
 
@@ -104,7 +104,7 @@ describe("OnboardingStep", () => {
             name: "onboarding.rewardCode",
         });
         fireEvent.click(recovery);
-        expect(onRecoveryCodeClick).toHaveBeenCalled();
+        expect(onRewardCodeClick).toHaveBeenCalled();
     });
 
     it("does not render the reward code button when no handler is provided", () => {

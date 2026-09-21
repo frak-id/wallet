@@ -1,5 +1,7 @@
 import type { FlowEvents } from "./flow";
 
+// `recovery_code` is the pinned wire value for the reward-code action;
+// do not rename without coordinating with downstream dashboards.
 export type OnboardingAction =
     | "start"
     | "continue"
