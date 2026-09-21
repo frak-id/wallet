@@ -88,6 +88,7 @@
    the merchant's palette. Everything else on this page can. The colours are
    !important because these anchors carry no href until the SDK binds them,
    and a reboot stylesheet's a:not([href]) outranks a single class. */
+[data-frak-page] :focus-visible{outline:2px solid currentColor!important;outline-offset:2px!important}
 .frak-badges{display:flex;flex-wrap:wrap;gap:.75em;align-items:center}
 .frak-badge{display:inline-flex;align-items:center;gap:.5em;text-decoration:none;
   background:#000!important;color:#fff!important;border:1px solid #a6a6a6;border-radius:8px;padding:.5em .9em;
@@ -191,8 +192,7 @@ body{margin:0;padding:20px;background:#3a3f47;display:flex;flex-direction:column
       <p class="frak-lede">Vous parlez déjà de nous autour de vous. Nous vous en remercions&nbsp;: une récompense sur chaque commande que vous inspirez, et quelques attentions réservées à nos ambassadeurs.</p>
       <p><button type="button" data-frak-share>Devenir ambassadeur</button></p>
       <div class="frak-faces">
-        <span>AL</span><span>MC</span><span>JD</span><span>SR</span>
-        <p class="frak-muted"><strong>1 240 ambassadrices et ambassadeurs</strong> nous recommandent déjà</p>
+        <p class="frak-muted">Rejoignez les ambassadrices et ambassadeurs de la marque</p>
       </div>
     </div>
     <div class="frak-art">
