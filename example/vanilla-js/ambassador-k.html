@@ -93,13 +93,24 @@
 [data-frak-page]{
   --_accent:var(--frak-amb-accent,#111);
   --_ink:var(--frak-amb-accent-ink,#fff);
-  --_surface:var(--frak-amb-surface,color-mix(in srgb,var(--_accent) 4%,transparent));
-  --_border:var(--frak-amb-border,color-mix(in srgb,var(--_accent) 15%,transparent));
+  --_surface:var(--frak-amb-surface,rgba(17,17,17,.04));
+  --_border:var(--frak-amb-border,rgba(17,17,17,.15));
   --_radius:var(--frak-amb-radius,12px);
   --_cta-radius:var(--frak-amb-cta-radius,999px);
   --_cta-bg:var(--frak-amb-cta-bg,var(--_accent));
   --_tag-bg:var(--frak-amb-tag-bg,#fff);
   display:grid;gap:clamp(3em,7vw,5.5em);
+  /* Surface and border derive from the accent, but color-mix() lands in Safari
+     16.2 while the browser floor here is 15.4. A custom property only goes
+     invalid where it is used, so the fallback cannot sit on the property: the
+     static tints above are the default and this block upgrades them. It must
+     follow that block, because @supports carries no specificity of its own. */
+}
+@supports (color: color-mix(in srgb, red 4%, transparent)) {
+  [data-frak-page]{
+    --_surface:var(--frak-amb-surface,color-mix(in srgb,var(--_accent) 4%,transparent));
+    --_border:var(--frak-amb-border,color-mix(in srgb,var(--_accent) 15%,transparent));
+  }
 }
 [data-frak-page] section{display:grid;gap:.85em;align-content:start}
 /* :where() keeps these at element specificity (0,0,1), so any merchant rule —
