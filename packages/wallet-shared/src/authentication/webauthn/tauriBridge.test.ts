@@ -300,4 +300,133 @@ describe("tauriBridge", () => {
             ).not.toHaveProperty("preferImmediatelyAvailable");
         });
     });
+
+    describe("getPasskeyPresence", () => {
+        let originalWindow: typeof globalThis.window;
+
+        const setPlatform = (hostname: string, protocol: string) => {
+            Object.defineProperty(globalThis, "window", {
+                value: { location: { hostname, protocol } },
+                writable: true,
+                configurable: true,
+            });
+        };
+        const setAndroid = () => setPlatform("tauri.localhost", "https:");
+
+        beforeEach(() => {
+            originalWindow = globalThis.window;
+            vi.resetModules();
+        });
+
+        afterEach(() => {
+            globalThis.window = originalWindow;
+            vi.resetAllMocks();
+            vi.useRealTimers();
+            vi.unstubAllGlobals();
+        });
+
+        it("returns unknown without invoking outside Tauri", async () => {
+            setPlatform("localhost", "https:");
+
+            const { getPasskeyPresence } = await import("./tauriBridge");
+
+            expect(await getPasskeyPresence()).toBe("unknown");
+            expect(mockInvoke).not.toHaveBeenCalled();
+        });
+
+        it("returns unknown without invoking on Tauri iOS", async () => {
+            setPlatform("localhost", "tauri:");
+
+            const { getPasskeyPresence } = await import("./tauriBridge");
+
+            expect(await getPasskeyPresence()).toBe("unknown");
+            expect(mockInvoke).not.toHaveBeenCalled();
+        });
+
+        it("returns present when the plugin reports a passkey", async () => {
+            setAndroid();
+            mockInvoke.mockResolvedValue({ state: "present" });
+
+            const { getPasskeyPresence } = await import("./tauriBridge");
+
+            expect(await getPasskeyPresence()).toBe("present");
+        });
+
+        it("returns absent when the plugin reports no passkey", async () => {
+            setAndroid();
+            mockInvoke.mockResolvedValue({ state: "absent" });
+
+            const { getPasskeyPresence } = await import("./tauriBridge");
+
+            expect(await getPasskeyPresence()).toBe("absent");
+        });
+
+        it("returns unknown instead of throwing when the plugin rejects", async () => {
+            setAndroid();
+            mockInvoke.mockRejectedValue(
+                new Error("androidx.credentials provider unavailable")
+            );
+
+            const { getPasskeyPresence } = await import("./tauriBridge");
+
+            await expect(getPasskeyPresence()).resolves.toBe("unknown");
+        });
+
+        it("returns unknown for a malformed payload rather than coercing it", async () => {
+            setAndroid();
+            mockInvoke.mockResolvedValue({ state: "maybe" });
+
+            const { getPasskeyPresence } = await import("./tauriBridge");
+
+            expect(await getPasskeyPresence()).toBe("unknown");
+        });
+
+        it("resolves unknown once the timeout elapses on a hung invoke", async () => {
+            setAndroid();
+            mockInvoke.mockReturnValue(new Promise(() => {}));
+
+            const { getPasskeyPresence } = await import("./tauriBridge");
+            vi.useFakeTimers();
+            const pending = getPasskeyPresence();
+            await vi.advanceTimersByTimeAsync(10_000);
+
+            expect(await pending).toBe("unknown");
+        });
+
+        it("sends the relying-party id and no immediately-available flag", async () => {
+            setAndroid();
+            mockInvoke.mockResolvedValue({ state: "absent" });
+
+            // Resolve the config from the same re-evaluated module graph: a
+            // statically imported `rpId` predates the faked platform.
+            const [{ getPasskeyPresence }, { WebAuthN }] = await Promise.all([
+                import("./tauriBridge"),
+                import("@frak-labs/app-essentials"),
+            ]);
+            await getPasskeyPresence();
+
+            expect(mockInvoke).toHaveBeenCalledTimes(1);
+            const [command, args] = mockInvoke.mock.calls[0];
+            expect(command).toBe("plugin:frak-webauthn|get_passkey_presence");
+            const options = (args as { options: Record<string, unknown> })
+                .options;
+            expect(options.rpId).toBe(WebAuthN.rpId);
+            expect(options.rpId).toBe("frak.id");
+            expect(options).not.toHaveProperty("preferImmediatelyAvailable");
+        });
+
+        it("honors the platform literals the bundler bakes at build time", async () => {
+            // The app build defines these; every other case here exercises the
+            // runtime fallback, which would report "not Tauri" for this window.
+            setPlatform("localhost", "https:");
+            vi.stubGlobal("__IS_TAURI__", true);
+            vi.stubGlobal("__IS_ANDROID__", true);
+            mockInvoke.mockResolvedValue({ state: "present" });
+
+            const { getPasskeyPresence } = await import("./tauriBridge");
+
+            expect(await getPasskeyPresence()).toBe("present");
+            expect(mockInvoke).toHaveBeenCalledTimes(1);
+        });
+    });
 });
