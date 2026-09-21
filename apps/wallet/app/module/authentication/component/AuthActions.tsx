@@ -9,6 +9,7 @@ import {
     authKey,
     classifyWebauthnError,
     clearLastAuthenticator,
+    getPasskeyPresence,
     isWebAuthNSupported,
     trackEvent,
     useLogin,
@@ -55,27 +56,13 @@ export function AuthActions({
         onError: (error: Error) => onError(error),
     });
 
-    // A failed auto-reconnect NEVER toasts: the user didn't initiate it, so any
-    // failure just falls through to the manual buttons. The one action we take
-    // is self-healing a genuinely stale hint — but ONLY on Android, where
-    // `TYPE_NO_CREDENTIAL` reliably means "no passkey here". iOS can't tell that
-    // apart from a cancel / not-immediately-available passkey, so we never wipe
-    // there.
-    //
     // Not async: TanStack Query awaits `onError` before leaving `pending`, so
     // awaiting the cleanup would pin the button spinners on a stalled invoke.
     // `clearLastAuthenticator` nulls zustand synchronously; the cloud + IDB
     // wipes are best-effort background cleanup.
-    const handleSilentError = useCallback(
-        (error: Error) => {
-            if (
-                !IS_ANDROID ||
-                classifyWebauthnError(error).kind !== "no-credential"
-            )
-                return;
-            trackEvent("auth_login_self_heal", {
-                reason: "stale_hint_clear_attempted",
-            });
+    const clearStaleHint = useCallback(
+        (reason: "os_reported_absent" | "stale_hint_clear_attempted") => {
+            trackEvent("auth_login_self_heal", { reason });
             void clearLastAuthenticator(hint?.wallet)
                 .then(() =>
                     queryClient.invalidateQueries({
@@ -90,6 +77,22 @@ export function AuthActions({
                 });
         },
         [queryClient, hint]
+    );
+
+    // A failed auto-reconnect never toasts: the user didn't initiate it, so it
+    // falls through to the manual buttons. The one action taken is self-healing
+    // a stale hint, and only on Android, where `TYPE_NO_CREDENTIAL` reliably
+    // means "no passkey here"; iOS cannot tell that apart from a cancel.
+    const handleSilentError = useCallback(
+        (error: Error) => {
+            if (
+                !IS_ANDROID ||
+                classifyWebauthnError(error).kind !== "no-credential"
+            )
+                return;
+            clearStaleHint("stale_hint_clear_attempted");
+        },
+        [clearStaleHint]
     );
 
     // Track pending from the promise, not `useLogin`'s `isLoading`: under React
@@ -123,31 +126,32 @@ export function AuthActions({
             // schedule time would then block the second mount from ever
             // rescheduling — leaving the toast/spinner stuck and login unfired.
             silentAttempted.current = true;
-            // Android's silent `preferImmediatelyAvailable` path is reliable
-            // (fast, zero-UI when no passkey). On iOS it is not — on prod it
-            // rejects even for a usable passkey — so iOS auto-fires a NON-silent
-            // full-sheet login, which prompts Face ID reliably (the same call as
-            // the manual "Use my account" button). Either way failures route to
-            // `handleSilentError`, which never toasts.
-            //
-            // No `auth_login_method_selected`: that signals an explicit user
-            // choice, not an auto-fire. Swallow the `mutateAsync` rejection to
-            // avoid unhandled rejections.
-            void silentLogin({
-                lastAuthentication: hint,
-                silentLogin: IS_ANDROID,
-                trigger: "auto",
-            })
+            const settle = () => {
+                setIsSilentPending(false);
+                setShowReconnectToast(false);
+            };
+            // `settle` is in the outer `finally` so a throw still clears the UI.
+            void getPasskeyPresence()
+                .then((presence) => {
+                    if (presence === "absent") {
+                        clearStaleHint("os_reported_absent");
+                        return;
+                    }
+                    // `silentLogin` is Android-only: the silent path is
+                    // unreliable on iOS, which auto-fires the full-sheet login.
+                    return silentLogin({
+                        lastAuthentication: hint,
+                        silentLogin: IS_ANDROID,
+                        trigger: "auto",
+                    });
+                })
                 .catch(() => {})
-                .finally(() => {
-                    setIsSilentPending(false);
-                    setShowReconnectToast(false);
-                });
+                .finally(settle);
         }, AUTO_RECONNECT_DELAY_MS);
         // Unmount before firing (e.g. success navigated away): cancel so the
         // login never runs and no state update lands on an unmounted component.
         return () => clearTimeout(timer);
-    }, [hint, silentLogin, onError]);
+    }, [hint, silentLogin, onError, clearStaleHint]);
 
     const loading = isLoading || isLoginLoading || isSilentPending;
 

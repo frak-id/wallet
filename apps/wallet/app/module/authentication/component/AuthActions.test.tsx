@@ -22,6 +22,8 @@ const mocks = vi.hoisted(() => ({
     // Mutable so tests can simulate Android (reliable `no-credential`) vs
     // iOS/web (where a silent `no-credential` is a false negative).
     isAndroid: false,
+    // The OS presence answer; `unknown` keeps the pre-feature behavior.
+    getPasskeyPresence: vi.fn(async () => "unknown" as string),
 }));
 
 vi.mock("@frak-labs/app-essentials/utils/platform", async (importOriginal) => {
@@ -53,6 +55,7 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
             return { login: mocks.login, isLoading: false };
         },
         clearLastAuthenticator: mocks.clearLastAuthenticator,
+        getPasskeyPresence: mocks.getPasskeyPresence,
         // classifyWebauthnError + authKey use the real implementations.
     };
 });
@@ -125,6 +128,7 @@ beforeEach(() => {
     mocks.loginOptions = [];
     mocks.isTauri = true;
     mocks.isAndroid = false;
+    mocks.getPasskeyPresence.mockResolvedValue("unknown");
 });
 
 afterEach(() => {
@@ -302,6 +306,87 @@ describe("AuthActions silent quick-login", () => {
         await waitFor(() =>
             expect(screen.queryByText("wallet.login.autoReconnect")).toBeNull()
         );
+    });
+
+    test("an absent OS answer skips the login and self-heals with evidence-backed provenance", async () => {
+        mocks.hint = HINT;
+        mocks.isAndroid = true;
+        mocks.getPasskeyPresence.mockResolvedValue("absent");
+        render(<AuthActions onSuccess={vi.fn()} onError={vi.fn()} />);
+
+        await waitFor(() =>
+            expect(mocks.clearLastAuthenticator).toHaveBeenCalledWith(
+                HINT.wallet
+            )
+        );
+        expect(mocks.login).not.toHaveBeenCalled();
+        expect(mocks.trackEvent).toHaveBeenCalledWith("auth_login_self_heal", {
+            reason: "os_reported_absent",
+        });
+        expect(mocks.invalidateQueries).toHaveBeenCalledWith({
+            queryKey: authKey.recoveryHint,
+        });
+        // The skipped-login branch must still clear the toast and spinner.
+        await waitFor(() =>
+            expect(screen.queryByText("wallet.login.autoReconnect")).toBeNull()
+        );
+        await waitFor(() =>
+            expect(
+                screen.getByRole("button", { name: "wallet.login.useEmail" })
+            ).not.toBeDisabled()
+        );
+    });
+
+    test("a rejected presence query still clears the toast and spinner", async () => {
+        mocks.hint = HINT;
+        mocks.isAndroid = true;
+        mocks.getPasskeyPresence.mockRejectedValue(new Error("probe blew up"));
+        render(<AuthActions onSuccess={vi.fn()} onError={vi.fn()} />);
+
+        await waitFor(() =>
+            expect(screen.queryByText("wallet.login.autoReconnect")).toBeNull()
+        );
+        expect(
+            screen.getByRole("button", { name: "wallet.login.useEmail" })
+        ).not.toBeDisabled();
+        expect(mocks.login).not.toHaveBeenCalled();
+    });
+
+    test("a present OS answer fires the login exactly as before", async () => {
+        mocks.hint = HINT;
+        mocks.isAndroid = true;
+        mocks.getPasskeyPresence.mockResolvedValue("present");
+        render(<AuthActions onSuccess={vi.fn()} onError={vi.fn()} />);
+
+        await waitFor(() => expect(mocks.login).toHaveBeenCalledTimes(1));
+        expect(mocks.login).toHaveBeenCalledWith({
+            lastAuthentication: HINT,
+            silentLogin: true,
+            trigger: "auto",
+        });
+        expect(mocks.clearLastAuthenticator).not.toHaveBeenCalled();
+    });
+
+    test("no hint means the OS is never queried", async () => {
+        mocks.hint = null;
+        render(<AuthActions onSuccess={vi.fn()} onError={vi.fn()} />);
+
+        await new Promise((r) => setTimeout(r, 0));
+        expect(mocks.getPasskeyPresence).not.toHaveBeenCalled();
+        expect(mocks.login).not.toHaveBeenCalled();
+    });
+
+    test("unmounting before the timer fires queries nothing and logs in nothing", async () => {
+        mocks.hint = HINT;
+        const { unmount } = render(
+            <AuthActions onSuccess={vi.fn()} onError={vi.fn()} />
+        );
+        unmount();
+
+        // Past the auto-fire delay, so a surviving timer would have run.
+        await new Promise((r) => setTimeout(r, 900));
+        expect(mocks.getPasskeyPresence).not.toHaveBeenCalled();
+        expect(mocks.login).not.toHaveBeenCalled();
     });
 
     test("does not re-fire the silent login on re-render", async () => {
