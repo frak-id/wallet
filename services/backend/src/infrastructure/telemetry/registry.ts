@@ -1,4 +1,8 @@
-import { collectDefaultMetrics, type Metric, Registry } from "prom-client";
+import {
+    collectDefaultMetrics,
+    type Metric,
+    Registry,
+} from "@prometheus-io/client";
 
 /**
  * Single shared Prometheus registry for the whole backend.
@@ -16,9 +20,10 @@ collectDefaultMetrics({ register: registry });
 
 /**
  * Helper to register a metric on the shared registry and return it typed.
- * Keeps metric definition files terse while guaranteeing a single registry.
+ * `Metric<string>` is explicit: the bare `Metric` defaults its label-name
+ * parameter to `never`, which no labelled metric satisfies.
  */
-export function register<T extends Metric>(metric: T): T {
+export function register<T extends Metric<string>>(metric: T): T {
     registry.registerMetric(metric);
     return metric;
 }

@@ -1,5 +1,5 @@
+import { Counter, Gauge, Histogram } from "@prometheus-io/client";
 import { Elysia } from "elysia";
-import { Counter, Gauge, Histogram } from "prom-client";
 import { register } from "./registry";
 
 /**
