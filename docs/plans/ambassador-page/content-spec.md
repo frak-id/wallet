@@ -49,6 +49,33 @@ replaced in the DOM, because it alone has a removal path.
 | `{SHOP_URL}` | `` `${location.origin}/` `` | merchant prop, defaulting to origin |
 | `{FRAK_URL}` | `https://frak.id` | same constant |
 
+**The hero art is chosen, never sniffed.** It comes from `DEMO.heroImage` or the
+`image` knob (`__frakAmb.image(url)` → `--frak-amb-image` on `.frak-art`); absent
+both, the `<img>` is removed and the panel falls back to the surface tint.
+
+Resolving it automatically from the page's `og:image` was tried on 2026-09-22 and
+reverted the same day. On a product page — which is where the snippet is pasted
+for a demo — `og:image` is the *product*, so saintlazare rendered a cut-out
+backpack under "Devenez ambassadeur", beside copy inviting people to join the
+brand's ambassadors, with `alt="Ambassadrices et ambassadeurs {BRAND}"` describing
+it. Worse, the brand most in need of art had none to sniff: saintlazare's home
+page carries no `og:image` at all, only its product pages do. An automatic source
+that picks the wrong kind of image where it fires and nothing where it does not is
+not a fallback.
+
+The hero wants people, not products — the `alt` says so, and so does the
+`.frak-faces` line under the CTA. No storefront exposes that reliably, which is
+precisely why R13 makes every image merchant-set.
+
+**The QR encodes the install URL, and a QR that does not decode is a defect, not a
+decoration.** The one that shipped until 2026-09-22 was unscannable: its three
+finder patterns were drawn as `M0 0h7v7H0z M2 2h3v3H2z`, two clockwise subpaths
+that the default nonzero fill rule unions into a solid 7×7 block, so no scanner
+could even locate the symbol — and it carried no quiet zone. Any change to it must
+be verified by decoding a render, not by looking at it. Check: render the `<svg>`
+straight out of the template and decode; it must return
+`https://wallet.frak.id/install`.
+
 **No amount is ever written in the markup.** `DEMO` exists so the demo renders a
 number while the template carries only a token. A literal amount in a template is
 an amount that ships.
@@ -88,6 +115,19 @@ otherwise be read as a back-reference.
    cover the window before it lands. Rendering KTD2's credential-free `?m=`
    fallback immediately and upgrading in place would close that window — worth
    considering at port time, not decided here.
+   **The badge art is Apple's and Google's own, inlined unmodified, and must never
+   be redrawn.** Until 2026-09-22 the page carried a hand-built lockup — a redrawn
+   glyph beside our own "Télécharger dans / App Store" text in a black pill — which
+   both vendors' guidelines forbid, and whose Play triangle rendered with a white
+   seam and a detached yellow wedge. Sources: Apple's Marketing Tools badge API
+   (`toolbox.marketingtools.apple.com`, localized SVG) and Google's own badge PNG,
+   trimmed of its transparent padding so the two share a 40px height. Because the
+   art is now an image, the accessible name lives on the anchor's `aria-label` —
+   the badge text is no longer selectable text, so dropping that label makes the
+   link nameless.
+   The 22-brand sweep's "badge lockup black/white" row below predates this and
+   describes the lockup it replaced; a re-sweep should assert the official art
+   renders at a matching height instead.
 4. The page links out: two badges to the wallet install page, one CTA back to the
    merchant's shop, and two `.frak-link` anchors to `frak.id` — the "Frak" in the
    "C'est quoi Frak ?" answer, and the "propulsé par Frak" attribution. An
