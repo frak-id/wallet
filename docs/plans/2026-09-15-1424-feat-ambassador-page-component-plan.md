@@ -83,6 +83,8 @@ The cost lands on the merchant's own marketing. A newsletter, a nav link, or a p
 
 - R13. Every headline, body text, step label, call-to-action label and image on the page is overridable by the merchant.
 - R14. Any text or image the merchant leaves unset falls back to a built-in default in the page's resolved language.
+- R19. The page renders in the merchant's language, never in a language of its own choosing. Resolution is `useLang()`'s existing precedence — the resolved SDK/backend `lang` (the merchant's `metadata.lang`, or the backend `/resolve` response), then the page's `<html lang>`, then the browser, then `en` — and the rendered root carries that resolved language as its own `lang` attribute, so copy is announced correctly even inside a host document declaring a different one. Measured on the brand sweep 2026-09-22: 3 of 22 merchant pages declare `en`/`en-US` while serving French, so host and copy disagreeing is the normal case, not the edge.
+- R20. Both `en` and `fr` are complete: every string the page renders exists in both, so following the merchant per R19 can never land on a missing default. Stated separately from KTD5 because the type enforcing it, `Record<Language, ComponentCopy>`, only catches a *missing* key and never a *stale* one — "both languages present" and "both languages current" are different claims, and only the first is gated.
 
 **Theming and cascade**
 

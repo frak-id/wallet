@@ -90,7 +90,13 @@ otherwise be read as a back-reference.
 4. The page links out: two badges to the wallet install page, one CTA back to the
    merchant's shop. An ambassador page that links nowhere is a crawl dead end.
 5. `lang` is pinned on the page root. The copy is French; the host document
-   frequently is not.
+   frequently is not — 3 of 22 swept merchant pages declare `en`/`en-US` while
+   serving French. **The pin is snippet-only.** The canon is French because the
+   snippet is pasted by hand on French storefronts; the component follows the
+   *merchant's* language (plan R19) via `useLang()` — SDK/backend `lang`, then
+   `<html lang>`, then the browser, then `en` — and sets the root `lang` to
+   whatever that resolves to. Porting the literal `lang="fr"` would hardcode a
+   French page for every English merchant.
 6. Headings are self-contained sentences. The reward amount is a `span` inside its
    `h2`, not a sibling `p` — a heading that starts mid-sentence has no subject.
 7. `cashback`, one word, matching frak.id and `/brands/[slug]`.
@@ -185,6 +191,23 @@ the explainer has no heading at all; `alt=""` is hardcoded on the hero and step
 images with no prop to set it; both badges take `href={installUrl}` which is
 `undefined` until an async resolve lands, reproducing the hrefless anchor this spec
 just removed.
+
+## English has no canon source
+
+The canon is French only. The component ships `en` and `fr` (plan R20), so the
+English defaults have to come from somewhere, and this file is not it.
+
+They must be **translated from the canon at port time, not authored separately**.
+The branch is the counter-example already: its `en` and `fr` ambassador blocks
+were written as an independent 89-word pair rather than derived from the 542-word
+canon, which is how the two ended up with no FAQ, no payout cards and no merchant
+name in either language.
+
+Nothing enforces this. `Record<Language, ComponentCopy>` fails a *missing* key,
+never a *stale* one, so an English default left behind when the French canon
+moves is silent — the same shape as the branch divergence below and the stale
+"Vanilla JS" literal above. When canon copy changes, the English default is part
+of that change, not a follow-up.
 
 ## Site chrome is never replaced (snippet-only)
 
