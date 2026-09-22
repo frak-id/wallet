@@ -34,6 +34,40 @@
        data. The snippet cannot, so they live here and never in the markup:
        a literal amount baked into a template is an amount that ships. */
     const DEMO = { reward: "7,20 €", rewardReferee: "0,80 €", heroImage: null };
+
+    /* Hand-picked demo art, one frame per live merchant, keyed by the host the
+       snippet is pasted on: the people frame, which is rarely the one the brand
+       page shows. Taken from frak.id/brands where there is one, else from the
+       merchant's own storefront. The three brands still absent answer 403 to
+       any fetch, so they keep the collapsed card. */
+    const DEMO_ART = {
+        "nyxcosmetics.fr":
+            "https://cdn.gcp.frak.id/images-production/31f2167b-e73c-41f1-9965-8e9bad6807d5/hero.webp",
+        "harmo-skincare.fr":
+            "https://harmo-skincare.fr/cdn/shop/files/Harmo_Elodie_fondatrice_1.webp?width=1400",
+        "jecosmetique.fr":
+            "https://cdn.gcp.frak.id/images-production/f6772b39-85e7-4afe-8bba-38652a92aaff/hero.webp",
+        "lollipops.fr":
+            "https://cdn.gcp.frak.id/images-production/26b952e3-8050-42ab-9c73-8a477a36f83e/hero.webp",
+        "oolution.com":
+            "https://playshorts-cdn.com/storage/uploads/app-641b220d7c35a90af4dc/65b9256968870fb2adca/68400e7ae15ee02a22c2.webp",
+        "saintlazare.fr":
+            "https://cdn.gcp.frak.id/images-production/f85b1f5b-0ab0-4e54-9ac1-810aa3f2fe43/hero-cc6cd92b.webp",
+        "carebyclaudette.com":
+            "https://cdn.gcp.frak.id/images-production/dfafc858-1ed2-4c69-a5bd-b29fbfdfee10/hero.webp",
+        "loulenn.fr":
+            "https://www.loulenn.fr/cdn/shop/files/14_01ab5842-098f-439d-ae0b-173fe9fbb356.jpg?width=1400",
+        "nowanowater.com":
+            "https://cdn.gcp.frak.id/images-production/5d85bdd6-76d3-4d8e-8838-8740c1605bf8/hero.webp",
+        "emy.fizimed.com":
+            "https://cdn.gcp.frak.id/images-production/33980ac2-9640-4e79-b31b-9c1b2bd35c21/hero.webp",
+        "accalmie-lab.fr":
+            "https://cdn.gcp.frak.id/images-production/f51c4bec-531d-4929-a96f-4ca746bec9bc/hero.webp",
+        "comblee.com":
+            "https://comblee.com/cdn/shop/files/UITOTO.png?width=1200",
+        "divineharmonie.com":
+            "https://cdn.gcp.frak.id/images-production/3177e32e-2548-4a06-a238-1010aa93652f/hero.webp",
+    };
     const INSTALL_URL = "https://wallet.frak.id/install";
     const FRAK_URL = "https://frak.id";
 
@@ -73,17 +107,22 @@
                 el.remove();
             }
         }
-        /* No source means no <img>: a broken icon reads worse than no art. */
         const hero = page.querySelector("[data-frak-hero]");
         if (!hero) return;
-        if (DEMO.heroImage) {
-            hero.src = DEMO.heroImage;
-            return;
-        }
-        /* Drop the 4:5 frame with it, or the hero reserves a panel of empty
-           tint taller than the copy beside it. */
-        hero.closest(".frak-art")?.classList.add("frak-art-empty");
-        hero.remove();
+        /* Drop the 4:5 frame with the image, or the hero reserves a panel of
+           empty tint taller than the copy beside it. */
+        const frame = hero.closest(".frak-art");
+        const collapse = () => {
+            frame?.classList.add("frak-art-empty");
+            hero.remove();
+        };
+        const art =
+            DEMO.heroImage || DEMO_ART[location.hostname.replace(/^www\./, "")];
+        if (!art) return collapse();
+        /* A curated URL can go stale behind us, and a broken icon reads worse
+           than no art. */
+        hero.addEventListener("error", collapse, { once: true });
+        hero.src = art;
     };
 
     /* Built from the rendered FAQ so the markup stays the one source.

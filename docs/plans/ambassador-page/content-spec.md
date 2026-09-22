@@ -49,8 +49,36 @@ replaced in the DOM, because it alone has a removal path.
 | `{SHOP_URL}` | `` `${location.origin}/` `` | merchant prop, defaulting to origin |
 | `{FRAK_URL}` | `https://frak.id` | same constant |
 
-**The hero art is chosen, never sniffed.** It comes from `DEMO.heroImage` or the
-`image` knob (`__frakAmb.image(url)` → `--frak-amb-image` on `.frak-art`).
+**The hero art is chosen, never sniffed.** It comes from `DEMO.heroImage`, then
+`DEMO_ART[host]`, then the `image` knob (`__frakAmb.image(url)` →
+`--frak-amb-image` on `.frak-art`).
+
+`DEMO_ART` is thirteen hand-picked frames, one per live merchant, keyed by the host
+the snippet is pasted on — demo furniture, not product behaviour, and the port
+carries none of it. Nothing new is licensed or hosted: nine come from that
+merchant's own photos already on `frak.id/brands`, and four were swept off the
+merchant's own storefront. Three of those four are same-origin on the host that
+renders them; oOlution's is not, because every human frame it has lives on
+`playshorts-cdn.com`, the shoppable-video widget its own pages already load — so
+its CSP permits it, but a widget vendor can rotate that asset at will.
+
+**The pick is never simply the brand page's own hero.** SAINT LAZARE's
+`heroImageUrl` is three backpacks, while its fourth curated frame is a woman
+carrying the bag down a Paris street — the one this page wants. Loulenn has five
+curated frames and all five are bedding, so its entry was found by sweeping the
+storefront instead: across the home page, the six brand pages and every product
+page, exactly one image on the whole site contains a person — two hands holding
+raw wool — and it is on-brand and crops cleanly to 4:5.
+
+Three of the sixteen are absent, and not for want of looking: Kérastase, YSL Beauty
+and Armani Beauty answer **403** to any automated fetch, so there is nothing to
+sweep without working around a protection they switched on deliberately. They are
+also the accounts whose campaign imagery carries contracted-model licensing, which
+is a question worth not asking for demo furniture. They keep the collapsed card
+until someone asks L'Oréal for an asset.
+
+A curated URL can rot — and oOlution's very likely will — so the `<img>` carries a
+one-shot `error` listener onto the same collapse path.
 
 **Absent both, the frame goes with the image.** Removing only the `<img>` leaves
 `.frak-art`'s `aspect-ratio:4/5` reserving a panel of empty tint taller than the
