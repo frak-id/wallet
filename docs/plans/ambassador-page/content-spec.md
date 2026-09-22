@@ -37,9 +37,9 @@ so treat it as scale, not a threshold.
 
 ### Tokens
 
-Four tokens; nothing else is substituted. `{BRAND}`, `{INSTALL_URL}` and
-`{SHOP_URL}` are replaced on the HTML string before parse. `{REWARD}` is replaced
-in the DOM, because it alone has a removal path.
+Five tokens; nothing else is substituted. `{BRAND}`, `{INSTALL_URL}`, `{SHOP_URL}`
+and `{FRAK_URL}` are replaced on the HTML string before parse. `{REWARD}` is
+replaced in the DOM, because it alone has a removal path.
 
 | Token | Snippet source | Port source |
 |---|---|---|
@@ -47,6 +47,7 @@ in the DOM, because it alone has a removal path.
 | `{REWARD}` | `DEMO.reward` / `DEMO.rewardReferee` | resolved campaign reward (KTD6) |
 | `{INSTALL_URL}` | `https://wallet.frak.id/install` | `buildWalletInstallUrl()` (KTD2) |
 | `{SHOP_URL}` | `` `${location.origin}/` `` | merchant prop, defaulting to origin |
+| `{FRAK_URL}` | `https://frak.id` | same constant |
 
 **No amount is ever written in the markup.** `DEMO` exists so the demo renders a
 number while the template carries only a token. A literal amount in a template is
@@ -88,7 +89,18 @@ otherwise be read as a back-reference.
    fallback immediately and upgrading in place would close that window — worth
    considering at port time, not decided here.
 4. The page links out: two badges to the wallet install page, one CTA back to the
-   merchant's shop. An ambassador page that links nowhere is a crawl dead end.
+   merchant's shop, and two `.frak-link` anchors to `frak.id` — the "Frak" in the
+   "C'est quoi Frak ?" answer, and the "propulsé par Frak" attribution. An
+   ambassador page that links nowhere is a crawl dead end.
+   Both wrap words that were already there, so neither the Frak mention count nor
+   the FAQPage answer text moves; a diff that moves either has flattened them.
+   **They are markup inside otherwise-plain copy, which is the shape a port drops
+   silently** — `ComponentCopy` entries are plain strings and an anchor cannot
+   survive as one. Give them their own copy keys or render the link around a
+   token; do not flatten them to text. `.frak-link` sets `text-decoration:
+   underline` on purpose: a merchant theme that strips underlines would otherwise
+   leave a link distinguishable by colour alone, against body text it inherits
+   its colour from.
 5. `lang` is pinned on the page root. The copy is French; the host document
    frequently is not — 3 of 22 swept merchant pages declare `en`/`en-US` while
    serving French. **The pin is snippet-only.** The canon is French because the
