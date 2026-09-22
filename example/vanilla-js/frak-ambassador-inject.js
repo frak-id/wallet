@@ -115,6 +115,59 @@
     const TYPO =
         /^(font|letter-spacing|text-transform|text-decoration|color|line-height|white-space)/;
 
+    /* Site chrome is never ours to replace. Two discriminators, both measured
+       across the brand sweep: a <header> inside the main content region is a
+       card's rather than the site's (depth 11), and where a theme ships no
+       <main> the site's own sits shallow (depths 1-4). */
+    const CHROME =
+        "header, footer, [role=banner], [role=contentinfo], .skip-link";
+    const MAIN = "main, [role=main], #main";
+    const CHROME_MAX_DEPTH = 4;
+
+    const depthFromBody = (el) => {
+        let depth = 0;
+        let node = el;
+        while (node && node !== document.body) {
+            depth += 1;
+            node = node.parentElement;
+        }
+        return depth;
+    };
+
+    const siteChrome = () =>
+        [...document.querySelectorAll(CHROME)].filter(
+            (el) => !el.closest(MAIN) && depthFromBody(el) <= CHROME_MAX_DEPTH
+        );
+
+    /* Descend through a wrapper holding both chrome and content rather than
+       hiding it whole: Divi nests its header three levels below <body>. */
+    const collectContent = (parent, chrome, out) => {
+        for (const el of parent.children) {
+            // The SDK mounts IFRAME#frak-wallet as a body child, so the body
+            // fallback would hide the live wallet along with the page.
+            if (el.id.startsWith("frak-")) continue;
+            if (chrome.includes(el)) continue;
+            if (chrome.some((node) => el.contains(node))) {
+                collectContent(el, chrome, out);
+                continue;
+            }
+            out.push({ el, display: el.style.display });
+        }
+    };
+
+    /* Where the content began, so chrome above and below keeps its place. */
+    const anchorFor = (chrome, hidden) => {
+        const banner = chrome.find((el) => el.matches("header, [role=banner]"));
+        const below =
+            banner &&
+            hidden.find(
+                ({ el }) =>
+                    banner.compareDocumentPosition(el) &
+                    Node.DOCUMENT_POSITION_FOLLOWING
+            );
+        return below || hidden[0] || null;
+    };
+
     let saved = null;
 
     const remove = () => {
@@ -450,23 +503,22 @@
         const sample = sampleHost();
         const autoTheme = () => applyTheme(sample);
 
+        let anchor = null;
         if (replace) {
-            // Frak's own nodes are not host content: the SDK mounts
-            // IFRAME#frak-wallet as a body child, so the body fallback
-            // would hide the live wallet along with the page.
-            const hidden = [...host.children]
-                .filter((el) => !el.id.startsWith("frak-"))
-                .map((el) => ({
-                    el,
-                    display: el.style.display,
-                }));
+            const chrome = siteChrome();
+            const hidden = [];
+            collectContent(host, chrome, hidden);
             hidden.forEach(({ el }) => {
                 el.style.display = "none";
                 el.dataset.frakHidden = "1";
             });
             saved = { hidden };
+            anchor = anchorFor(chrome, hidden);
         }
-        host.appendChild(block);
+        (anchor ? anchor.el.parentElement : host).insertBefore(
+            block,
+            anchor ? anchor.el : null
+        );
 
         window.scrollTo({
             top: Math.max(
