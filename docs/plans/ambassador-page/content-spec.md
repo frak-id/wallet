@@ -50,8 +50,15 @@ replaced in the DOM, because it alone has a removal path.
 | `{FRAK_URL}` | `https://frak.id` | same constant |
 
 **The hero art is chosen, never sniffed.** It comes from `DEMO.heroImage` or the
-`image` knob (`__frakAmb.image(url)` → `--frak-amb-image` on `.frak-art`); absent
-both, the `<img>` is removed and the panel falls back to the surface tint.
+`image` knob (`__frakAmb.image(url)` → `--frak-amb-image` on `.frak-art`).
+
+**Absent both, the frame goes with the image.** Removing only the `<img>` leaves
+`.frak-art`'s `aspect-ratio:4/5` reserving a panel of empty tint taller than the
+copy beside it — measured on loulenn and saintlazare, where it read as a broken
+layout and pushed the reward tag out of the first viewport. `.frak-art-empty`
+drops the ratio and un-absolutes `.frak-tag`, collapsing the frame to the reward
+card; the `image` knob removes the class when art arrives later. So the three
+states are art, no art, and never a void.
 
 Resolving it automatically from the page's `og:image` was tried on 2026-09-22 and
 reverted the same day. On a product page — which is where the snippet is pasted
