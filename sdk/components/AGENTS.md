@@ -42,5 +42,7 @@ Merchant defaults still load the jsDelivr `@latest` shim; `https://sdk[-dev].fra
 <frak-button-share classname="button"></frak-button-share>
 ```
 
+Try the local build on a live store: `bun run --cwd sdk/components build`, then `bun run --cwd sdk/components try:merchant <store-page-url> [--image <url>|none] [--shot]`. It opens Chrome with the published SDK routed to `cdn/` and stages a merchant page: the store's content gives way to a centred `<frak-ambassador>`, with the page's `og:image` as the hero photo unless `--image` says otherwise. `--shot` saves screenshots at 1280px and 390px to the temp dir instead. Rewards show only on stores that already use Frak.
+
 ## See Also
 Parent `sdk/AGENTS.md` · `sdk/core/AGENTS.md` · `packages/design-system/AGENTS.md` (Vanilla Extract plugin shared) · `services/backend/` (placement CSS compilation).
