@@ -144,6 +144,7 @@ describe("ButtonWallet", () => {
     it("should display reward when useReward is true and reward is available", () => {
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: "10 eur",
+            hasReward: true,
         });
 
         render(<ButtonWallet useReward />);
@@ -159,6 +160,7 @@ describe("ButtonWallet", () => {
         // So we need to ensure the mock returns undefined reward
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: undefined,
+            hasReward: false,
         });
         render(<ButtonWallet useReward={false} />);
         const button = screen.getByRole("button", {

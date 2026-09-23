@@ -41,6 +41,7 @@ describe("ButtonShare", () => {
         });
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: undefined,
+            hasReward: false,
         });
         vi.mocked(useLangHook.useLang).mockReturnValue("en");
     });
@@ -104,6 +105,7 @@ describe("ButtonShare", () => {
     it("should substitute {REWARD} placeholder when reward is available", () => {
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: "10 eur",
+            hasReward: true,
         });
 
         render(<ButtonShare text="Earn up to {REWARD}!" />);
@@ -114,6 +116,7 @@ describe("ButtonShare", () => {
     it("should use noRewardText when {REWARD} placeholder is present but no reward is available", () => {
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: undefined,
+            hasReward: false,
         });
 
         render(
@@ -129,6 +132,7 @@ describe("ButtonShare", () => {
     it("should strip {REWARD} placeholder when no reward and no noRewardText", () => {
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: undefined,
+            hasReward: false,
         });
 
         render(<ButtonShare text="Earn up to {REWARD}!" />);

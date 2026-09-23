@@ -19,7 +19,8 @@ import { useEffect, useState } from "preact/hooks";
  * @param products - The products currently in view, when known. Purely
  * advisory (see `matchesProductScope`): deprioritizes campaigns matching none
  * of them, and changes nothing when omitted.
- * @returns Object containing the formatted reward string, or undefined if unavailable
+ * @returns The formatted reward (undefined for percentage rewards) and
+ * `hasReward`, true once any matching reward exists, percentage included.
  */
 export function useReward(
     shouldUseReward: boolean,
@@ -28,6 +29,7 @@ export function useReward(
     products?: ProductDetails[]
 ) {
     const [reward, setReward] = useState<string | undefined>(undefined);
+    const [hasReward, setHasReward] = useState(false);
 
     useEffect(() => {
         if (!shouldUseReward) return;
@@ -43,9 +45,8 @@ export function useReward(
                     audience,
                     products,
                 });
-                // Percentage rewards carry no concrete amount to advertise
-                // on this surface, so we treat them as "no reward" — callers
-                // fall back to their no-reward copy.
+                setHasReward(best !== undefined);
+                // Percentage rewards carry no concrete amount to advertise.
                 if (best && best.payoutType !== "percentage") {
                     setReward(best.formatted);
                 }
@@ -55,5 +56,5 @@ export function useReward(
             });
     }, [shouldUseReward, targetInteraction, audience, products]);
 
-    return { reward };
+    return { reward, hasReward };
 }
