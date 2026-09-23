@@ -10,7 +10,7 @@ styleManager.injectBase("shared", sharedBaseCss);
 // Prevent FOUCE: hide undefined custom elements until they're registered
 styleManager.injectBase(
     "fouce",
-    "frak-button-share:not(:defined), frak-button-wallet:not(:defined), frak-open-in-app:not(:defined), frak-post-purchase:not(:defined), frak-banner:not(:defined) { display: none !important; }"
+    "frak-ambassador:not(:defined), frak-button-share:not(:defined), frak-button-wallet:not(:defined), frak-open-in-app:not(:defined), frak-post-purchase:not(:defined), frak-banner:not(:defined) { display: none !important; }"
 );
 
 onDocumentReady(initFrakSdk);
@@ -19,6 +19,8 @@ onDocumentReady(initFrakSdk);
  * Map of component tag names to their chunk paths.
  */
 const COMPONENTS_MAP = {
+    ambassador: () =>
+        import(/* webpackChunkName: "ambassador" */ "../components/Ambassador"),
     "button-share": () =>
         import(
             /* webpackChunkName: "button-share" */ "../components/ButtonShare"

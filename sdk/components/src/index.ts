@@ -1,3 +1,5 @@
+export * from "./components/Ambassador";
+export type { AmbassadorProps } from "./components/Ambassador/types";
 export * from "./components/Banner";
 export type { BannerProps } from "./components/Banner/types";
 export * from "./components/ButtonShare";

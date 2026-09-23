@@ -12,7 +12,7 @@
     }
   ],
   "version": "1.2.4",
-  "description": "Frak web components (share button, banner, post-purchase) for any merchant page; load the shim from https://sdk.frak.id/components.js.",
+  "description": "Frak web components (share button, banner, post-purchase, ambassador page) for any merchant page; load the shim from https://sdk.frak.id/components.js.",
   "repository": {
     "url": "https://github.com/frak-id/wallet",
     "directory": "sdk/components"
@@ -34,6 +34,7 @@
     "**/components/*/index.ts",
     "**/bootstrap/loader.ts",
     "**/components.ts",
+    "./dist/ambassador.js",
     "./dist/buttonShare.js",
     "./dist/buttonWallet.js",
     "./dist/openInApp.js",
@@ -52,6 +53,11 @@
   "main": "./cdn/components.js",
   "browser": "./cdn/components.js",
   "exports": {
+    "./ambassador": {
+      "development": "./src/components/Ambassador/index.ts",
+      "import": "./dist/ambassador.js",
+      "types": "./dist/ambassador.d.ts"
+    },
     "./buttonWallet": {
       "development": "./src/components/ButtonWallet/index.ts",
       "import": "./dist/buttonWallet.js",
@@ -106,7 +112,8 @@
     "@frak-labs/core-sdk": "workspace:*",
     "@frak-labs/frame-connector": "workspace:*",
     "preact": "catalog:",
-    "preact-custom-element": "^4.6.0"
+    "preact-custom-element": "^4.6.0",
+    "qr": "catalog:"
   },
   "devDependencies": {
     "@frak-labs/design-system": "workspace:*",

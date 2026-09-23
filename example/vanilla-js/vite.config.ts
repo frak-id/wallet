@@ -78,6 +78,7 @@ export default defineConfig(({ mode }) => {
             createHtmlPlugin({
                 pages: [
                     "index.html",
+                    "ambassador.html",
                     "ambassador-a.html",
                     "ambassador-b.html",
                     "ambassador-c.html",

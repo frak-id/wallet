@@ -236,6 +236,7 @@ const sdkVersion = packageJson.version;
 export default defineConfig([
     {
         entry: {
+            ambassador: "./src/components/Ambassador/index.ts",
             buttonShare: "./src/components/ButtonShare/index.ts",
             buttonWallet: "./src/components/ButtonWallet/index.ts",
             openInApp: "./src/components/OpenInAppButton/index.ts",
