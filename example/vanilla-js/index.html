@@ -179,6 +179,11 @@
             background: #666;
             cursor: not-allowed;
         }
+        /* Anchors need what a button gets for free: block layout and no underline. */
+        .test-section a.test-section__button {
+            display: inline-block;
+            text-decoration: none;
+        }
         .test-section .test-section__button--variant {
             background: #7B1FA2;
         }
@@ -490,6 +495,24 @@
         <div class="info">[Ready] Merge token demo initialized</div>
     </div>
 </div>
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 8: Ambassador Page                  -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2 class="test-section__title">8. Ambassador Page</h2>
+    <p class="test-section__text">
+        The <code>&lt;frak-ambassador&gt;</code> web component renders a full
+        referral landing page — hero, reward, three-step explainer, a
+        "your friends earn too" region when the campaign rewards the friend, a
+        Share button, store badges (plus a QR code from 768px) and an FAQ. It
+        fills the viewport, so it gets its own route instead of sitting inline
+        here.
+    </p>
+    <div class="component-row">
+        <a class="test-section__button" href="/ambassador.html">Open the ambassador page</a>
+    </div>
+</div>
+
 <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

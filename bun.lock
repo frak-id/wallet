@@ -551,6 +551,7 @@
         "@frak-labs/frame-connector": "workspace:*",
         "preact": "catalog:",
         "preact-custom-element": "^4.6.0",
+        "qr": "catalog:",
       },
       "devDependencies": {
         "@frak-labs/design-system": "workspace:*",

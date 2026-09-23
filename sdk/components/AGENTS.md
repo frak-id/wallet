@@ -10,9 +10,10 @@ Preact-based Web Components (Custom Elements). Hybrid Light DOM / Shadow DOM. CD
 | `<frak-open-in-app>` | Light DOM | MUST inherit merchant theme styles (mobile-only renderer) |
 | `<frak-post-purchase>` | Light DOM | MUST inherit merchant theme styles; see the `token` note below |
 | `<frak-banner>` | Light DOM | MUST inherit merchant theme styles |
+| `<frak-ambassador>` | Light DOM | MUST inherit merchant theme styles; the `--frak-amb-*` knobs are the supported theming surface, the `frak-ambassador__*` classes best-effort |
 
 ## Key Files
-- `src/components/{ButtonWallet,ButtonShare,OpenInAppButton,PostPurchase,Banner}/`
+- `src/components/{ButtonWallet,ButtonShare,OpenInAppButton,PostPurchase,Banner,Ambassador}/`
 - `src/hooks/useLightDomStyles.ts` — injects base + placement CSS into `<head>`
 - `src/styles/sharedBaseCss.css.ts` — the one entry allowed to emit reset/theme CSS
 - `src/styles/sharedCss.ts` — `sharedCss` (Shadow DOM), `lightDomBaseCss` (Light DOM), `buildStyleContent()`
