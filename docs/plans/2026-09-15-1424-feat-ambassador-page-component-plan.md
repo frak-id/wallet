@@ -42,15 +42,15 @@ The cost lands on the merchant's own marketing. A newsletter, a nav link, or a p
 - **Explainer landing, not a live progress tracker.** *(session-settled: user-directed — chosen over a stepper that ticks steps off as the visitor progresses: a web page on the merchant domain cannot observe a native app install, so step 2 could never tick honestly.)* Governs R6, R7.
 - **The explainer and the payout cards both stay.** *(session-settled: user-directed — chosen over letting the payout cards replace the three-step explainer: the three steps explain the mechanism to a cold visitor arriving from a footer link, while the payout cards answer the money objection — when the money arrives, that it reaches a real bank account, and that no bank details are needed to start; they do different jobs.)* Governs R5.
 - **The merchant page is a shell; share and install hand off.** *(session-settled: user-directed — chosen over a self-contained implementation on the merchant domain: the install code and Play Store referrer logic live in `packages/wallet-shared`, which the SDK cannot import, and the CDN bundle inlines every dependency so the weight lands on every merchant page.)* Governs R9, R10.
-- **One element covering three arrival contexts.** *(session-settled: user-directed — chosen over three separate components: the contexts differ in copy, not in structure.)* Governs R11, R12.
+- **One page for every visitor; no arrival context.** *(session-settled 2026-09-23: user-directed — chosen over the three arrival contexts (cold, referred, post-purchase) this plan first carried, and over keeping cold and referred alone: the team wants the page as static content. `frak-post-purchase` already owns the order confirmation page, and the `customer-id`, `order-id` and `token` attributes were never published, so removing them breaks no merchant. Supersedes the earlier decisions to cover three contexts in one element and to take the context from merchant attributes.)* Governs R11, R12.
+- **Rewards come from campaigns of any trigger.** *(session-settled 2026-09-23: user-directed — every live merchant runs purchase-triggered (sales goal) campaigns and none a referral-triggered one, so a `referral` trigger filter hid the amount on every live page.)* Governs R8.
 - **A drop-in element; the merchant builds the page.** *(session-settled: user-directed — chosen over shipping prebuilt pages in the platform plugins: keeps v1 to a single component surface.)* Governs R1.
-- **Arrival context is supplied by the merchant, never inferred from the entry point.** The page is a permanent destination reachable from any surface, so where the visitor came from carries no signal; a merchant linking from a confirmation surface passes order data through the same optional attributes `frak-post-purchase` already accepts. Governs R11, R12.
 - **The composition is K's six regions, not five.** *(session-settled 2026-09-21: user-directed — chosen over the original five-region set after directions A to L were built and reviewed as demo pages. K adds a reward-amount region and an FAQ, and restores the payout cards this plan already required but the code never implemented. K ends on the FAQ, so the component's existing closing-CTA region is removed — a deletion of working code, recorded here deliberately. Supersedes the region list R5 previously carried.)* Governs R5, R12.
 - **The composition is seven regions, not six.** *(session-settled 2026-09-22: user-directed — the canon snippet carries a narrative region between the reward amount and the explainer, "Vous recommandez déjà {BRAND}. Il manque juste le lien.", added in `8374beba7` after the six-region list was recorded. It is the least boilerplate-like copy on the page and the one uniqueness vector that does not repeat across merchants, so it is kept rather than cut. Supersedes the six-region list recorded above.)* Governs R5, R12.
 - **frak.id ranks; the merchant page receives the visit.** *(session-settled 2026-09-22: user-directed — chosen over server-rendering the merchant page so it can rank too. `frak.id/brands/[slug]` is already server-rendered, sitemapped and schema-bearing for "devenir ambassadeur de {brand}", and its primary CTA already routes into the merchant's domain as `{website}?frakAction=share`, so the two were never rivals for the conversion — they are a funnel whose middle is missing: that CTA lands on the merchant homepage with the sharing overlay over it, while the page built to answer exactly that click sits unlinked. frak.id keeps the search intent; the merchant page takes the visit — traffic flows frak.id → merchant, one way, and the merchant page redirects nowhere, links to no frak.id ranking surface, and never mentions `/brands/`. Two consequences: the snippet's FAQPage injection is deleted rather than ported, because the port has nothing to render it into; and nothing in this plan is blocked on plugin templates any more. The page is not `noindex`'d — not optimising is not suppressing — it is simply not engineered for or measured. Reopening needs evidence, a merchant page ranking for their brand + "ambassadeur" unaided, not a preference. Adds no requirement; the content spec's "SEO ownership boundary — settled" section carries the detail. Pointing the frak.id CTA at a configured merchant ambassador page is `static-web` work, out of scope here.)* Governs R1.
 - **The component ships the finished look.** *(session-settled 2026-09-21: user-directed — chosen over shipping layout only and leaving every colour to the merchant, the "K min" thesis: `Ambassador.css.ts` is extended to carry K's composition rather than reduced to structure.)* Governs R16.
 - **Two override surfaces, with the knobs as the supported path.** *(session-settled 2026-09-21: user-directed — chosen over keeping the class hooks alone: CSS custom properties do not participate in specificity, so a merchant cascade cannot outrank them, which is exactly how the store badges broke. The stable `frak-ambassador__*` classes stay for structural tweaks.)* Governs R16, R17.
-- **Auto-theme (tier 3a) ships, and applies silently.** *(session-settled 2026-09-22: user-directed — chosen over shipping it as a suggestion a human confirms, which was the standing recommendation and is explicitly overruled here.)* The theming ladder is: tier 1, the merchant writes the nine knobs; tier 2, shipped defaults; tier 3a, `autoTheme()` samples the host's computed styles and writes the knobs; tier 3b, `cloneClasses()`/`undoClone()`, opt-in. Tier 3a is wired at two sites in the demo (`example/vanilla-js/src/ambassador.ts:703` on startup, `:680` re-running 200 ms after a viewport change) and the component carries that behaviour over: sample and apply on mount, no confirmation step. The accepted cost is recorded under Risks — do not treat the abstention rate as a defect to be silently "fixed" by loosening the sampler. Governs R18.
+- **Auto-theme (tier 3a) ships, and applies silently.** *(session-settled 2026-09-22: user-directed — chosen over shipping it as a suggestion a human confirms, which was the standing recommendation and is explicitly overruled here.)* The theming ladder is: tier 1, the merchant writes the knobs; tier 2, shipped defaults; tier 3a, `autoTheme()` samples the host's computed styles and writes the knobs; tier 3b, `cloneClasses()`/`undoClone()`, opt-in. Tier 3a is wired at two sites in the demo (`example/vanilla-js/src/ambassador.ts:703` on startup, `:680` re-running 200 ms after a viewport change) and the component carries that behaviour over: sample and apply on mount, no confirmation step. The accepted cost is recorded under Risks — do not treat the abstention rate as a defect to be silently "fixed" by loosening the sampler. Governs R18.
 - **Revive the existing branch rather than restart.** *(session-settled 2026-09-21: evidence — `feat/ambassador-page-component` has a tree byte-identical to its pre-squash backup, so the squash lost nothing; every import still resolves against a dev 64 commits ahead; and a read-only trial merge conflicts only in `example/vanilla-js/vite.config.ts`.)*
 
 ### Requirements
@@ -67,7 +67,7 @@ The cost lands on the merchant's own marketing. A newsletter, a nav link, or a p
 - R5. The page presents seven regions in order: hero, reward amount, recommendation premise, three-step explainer, payout reassurance cards, store download block, FAQ.
 - R6. The three explainer steps read as "je partage", "j'installe", "je récupère mon argent" and are static illustration.
 - R7. No region reflects what the visitor has already done.
-- R8. The page displays the merchant's configured referral reward for the visitor's audience, resolved the same way `frak-post-purchase` resolves it.
+- R8. The page displays the merchant's configured ambassador (referrer) reward, from a campaign of any trigger, resolved the same way `frak-post-purchase` resolves it.
 
 **Handoffs**
 
@@ -75,21 +75,21 @@ The cost lands on the merchant's own marketing. A newsletter, a nav link, or a p
 - R10. The store buttons route through the existing wallet install flow, so the install code and install attribution are preserved.
 - R15. Both store buttons lead to the same destination; which one the visitor taps does not change where they land.
 
-**Arrival context**
+**One page for every visitor**
 
-- R11. The page adapts its hero headline and primary call-to-action label to three contexts: cold, referred, post-purchase.
-- R12. Arrival context changes copy only; the seven regions and their order are identical in all three.
+- R11. Every visitor sees the same hero headline and call-to-action label, whatever their referral status or order; only the campaign's rewards change the copy.
+- R12. The page reads no referral status and accepts no order data.
 
 **Merchant configuration**
 
 - R13. Every headline, body text, step label, call-to-action label and image on the page is overridable by the merchant.
-- R14. Any text or image the merchant leaves unset falls back to a built-in default in the page's resolved language.
+- R14. Any text the merchant leaves unset falls back to a built-in default in the page's resolved language. An unset image falls back to L's layout, not an illustration: the hero frame collapses around the reward card and each step shows its number (2026-09-23).
 - R19. The page renders in the merchant's language, never in a language of its own choosing. Resolution is `useLang()`'s existing precedence — the resolved SDK/backend `lang` (the merchant's `metadata.lang`, or the backend `/resolve` response), then the page's `<html lang>`, then the browser, then `en` — and the rendered root carries that resolved language as its own `lang` attribute, so copy is announced correctly even inside a host document declaring a different one. Measured on the brand sweep 2026-09-22: 3 of 22 merchant pages declare `en`/`en-US` while serving French, so host and copy disagreeing is the normal case, not the edge.
 - R20. Both `en` and `fr` are complete: every string the page renders exists in both, so following the merchant per R19 can never land on a missing default. Stated separately from KTD5 because the type enforcing it, `Record<Language, ComponentCopy>`, only catches a *missing* key and never a *stale* one — "both languages present" and "both languages current" are different claims, and only the first is gated.
 
 **Theming and cascade**
 
-- R16. The component exposes the nine `--frak-amb-*` custom properties as its supported theming surface, and retains the stable `frak-ambassador__*` class hooks for structural overrides.
+- R16. The component exposes the twenty-one `--frak-amb-*` custom properties as its supported theming surface, and retains the stable `frak-ambassador__*` class hooks for structural overrides. Twenty-one is the set the canon snippet declares and consumes, not a hand-kept list: nine colour and shape properties plus twelve typography ones (`h1-`/`h2-` size, weight, spacing, colour, and `cta-` size, weight, spacing, transform). An earlier revision of this line said nine while pointing at the demo pages as the proven set; the demo pages prove twenty-one, and a merchant setting a documented `--frak-amb-h1-size` against a nine-knob component gets silence.
 - R17. Declarations the merchant must not be able to break — the store badge lockups above all — survive a hostile host cascade, including reboot stylesheets whose selectors outrank a single class.
 - R18. The component samples the host page's computed styles on mount and writes the `--frak-amb-*` knobs from what it finds, with no confirmation step. Where sampling yields nothing it writes nothing, and the shipped defaults show through.
 
@@ -98,7 +98,7 @@ The cost lands on the merchant's own marketing. A newsletter, a nav link, or a p
 ```mermaid
 flowchart TB
   subgraph page["frak-ambassador (merchant domain, Light DOM)"]
-    hero["Hero: image + headline + reward — copy varies by arrival context (R11)"]
+    hero["Hero: image + headline + reward — same for every visitor (R11)"]
     amount["Reward amount (R8)"]
     premise["Recommendation premise: narrative, static"]
     steps["Explainer: 3 static steps (R6, R7)"]
@@ -119,19 +119,19 @@ flowchart TB
 
 - F2. Referred visitor
   - **Trigger:** Visitor arrives on the merchant site through a friend's share link and later opens the ambassador page.
-  - **Steps:** Hero headline and CTA switch to the referred wording; the rest of the page is unchanged; visitor taps a store button and lands on the wallet install flow.
+  - **Steps:** The page renders exactly as for a cold visitor; visitor taps a store button and lands on the wallet install flow.
   - **Covered by:** R10, R11, R12
 
 - F3. Post-purchase visitor
   - **Trigger:** Merchant links the ambassador page from an order confirmation.
-  - **Steps:** Hero headline and CTA switch to the post-purchase wording; visitor taps the share CTA and the purchased products travel to the wallet sharing page.
+  - **Steps:** The page renders exactly as for a cold visitor, with no order data; visitor taps the share CTA and lands on the wallet sharing page. The confirmation page itself stays `frak-post-purchase`'s job.
   - **Covered by:** R9, R11, R12
 
 ### Acceptance Examples
 
-- AE1. **Covers R8.** Given a merchant with an active referral campaign paying 10 €, when a cold visitor opens the page, then the hero states the 10 € amount.
+- AE1. **Covers R8.** Given a merchant with an active campaign paying the ambassador 10 €, when a visitor opens the page, then the hero states the 10 € amount.
 - AE2. **Covers R8, R3.** Given a merchant with no resolvable referral reward, when a visitor opens the page, then the page still renders all seven regions with reward-free wording instead of hiding itself or showing an empty amount.
-- AE3. **Covers R11, R12.** Given a referred visitor, when the page renders, then the hero headline and CTA use the referred wording and the amount, explainer, payout cards, store block and FAQ are byte-identical to the cold state.
+- AE3. Retired 2026-09-23: with no arrival context there is no second state to compare against, and R12 holds by construction since the component never calls `getUserReferralStatus`.
 - AE6. **Covers R17.** Given a host page whose stylesheet forces `color: inherit` on anchors carrying no `href`, when the store block renders before an install URL resolves, then the badge lockups still paint white on black rather than inheriting the host's text colour.
 - AE4. **Covers R7.** Given a visitor who already shared and already installed the wallet app, when they return to the page, then no step is marked complete and no region claims to know their progress.
 - AE5. **Covers R13, R14.** Given a merchant who overrides only the hero headline, when the page renders, then the hero uses their headline and every other string uses the built-in default for the resolved language.
@@ -182,21 +182,21 @@ flowchart TB
 ### Key Technical Decisions
 
 - KTD1. **Two store buttons, one destination.** Both badges are links to the same wallet `/install` URL. *(session-settled: user-directed — chosen over a single download CTA with non-clickable badges: it matches the sketch the team already agreed on, and the badge pair is the affordance visitors recognise.)* The tradeoff is that `/install` re-derives the platform from the user agent, so the tapped badge does not select the store. Governs R5, R10, R15.
-- KTD2. **Build the install link locally in `sdk/components`, carrying the page's own credential.** The destination mirrors what the listener's sharing page already builds — `${getWalletUrl()}/install?m=<merchantId>&a=<clientId>#p=<frak-install-v1 proof>` — falling back to a bare `?m=` link when no credential can be produced. **The two credentials degrade differently, and only one of them is what R10 depends on.** `a=<clientId>` is load-bearing: `codeless` tests `anonymousId` (`apps/wallet/app/module/install/component/InstallView.tsx:466`) and the Play Store referrer is built only `if (merchantId && anonymousId)` (`:556`), so losing the client id is what makes the destination codeless and drops the referrer — what R10 forbids. `#p=<proof>` is additive authenticity on top: `buildPlayStoreInstallUrl` appends it only when present, and the install-code mint takes it as optional. A proof-less but client-id-bearing link still mints a code and still carries the referrer; it is merely unproven.
+- KTD2. **Build the install link locally in `sdk/components`, carrying the page's own credential.** The destination mirrors what the listener's sharing page already builds — `${getWalletUrl()}/install?m=<merchantId>&a=<clientId>#p=<frak-install-v1 proof>` — falling back to a bare `?m=` link when no credential can be produced. **The two credentials degrade differently, and only one of them is what R10 depends on.** `a=<clientId>` is load-bearing: `codeless` tests `anonymousId` (`apps/wallet/app/module/install/component/InstallView.tsx:466`) and the Play Store referrer is built only `if (merchantId && anonymousId)` (`:556`), so losing the client id is what makes the destination codeless and drops the referrer — what R10 forbids. `#p=<proof>` is additive authenticity on top: `buildPlayStoreInstallUrl` appends it only when present, and the install-code mint takes it as optional. A proof-less but client-id-bearing link still carries the referrer, but it does **not** still mint a code: `install-code/generate`'s `anonymousId` arm refuses a proofless caller outright (`services/backend/src/api/user/identity/installCode.ts:134`, `PROOF_REQUIRED`), and that 403 becomes `codeQueryStatus === "error"`, which `codeless` also trips on. The `checkoutToken` arm returns earlier (`:76`) and is never gated, but the page passes no order token (R12). Proofless is therefore unproven *and* codeless on every visit, with the Play Store referrer the only surviving attribution — which is still reason enough to keep `a=`.
 
   **A cold visitor can carry both.** `getClientIdAsync()` mints a P-256 key and derives the id on first call — `ensureIdentityKey` "generat[es] a fresh key when neither exists" (`sdk/core/src/config/clientId.ts`, `sdk/core/src/identity/sign.ts:179-232`). Deriving the id *is* establishing the identity; there is no prior wallet, referral or purchase precondition. Credentials are genuinely unproducible only where `localStorage` or `crypto.getRandomValues` is unavailable, which is what the bare `?m=` branch exists for. `packages/wallet-shared` is closed to the SDK, so the URL is rebuilt rather than imported. Governs R10.
 - KTD3. **Light DOM, vanilla-extract, mirroring `PostPurchase`.** Register with `{ shadow: false }` and inject styles through `useLightDomStyles(tag, placementId, placementCss, baseCss, sharedBaseCss)`. Light DOM buys theme inheritance and costs cascade exposure in the same move — KTD7 and KTD8 bound what the host may reach. Governs R2, R4.
-- KTD4. **Arrival context is a discriminated value resolved once, not inferred from the URL.** Post-purchase comes from props the merchant supplies, referred from `getUserReferralStatus`, cold is the fallback. Governs R11, R12.
+- KTD4. **No arrival context.** The component calls `useReward(isClientReady, undefined, "referrer")` for the headline amount and nothing else about the visitor: no `getUserReferralStatus`, no order attributes, no trigger filter. Governs R8, R11, R12.
 - KTD5. **Copy defaults extend `ComponentCopy` in `src/i18n/defaults.ts`.** The type forces both `en` and `fr`, so a missing translation is a type error rather than a silent fallback, and no i18n runtime enters the CDN bundle. Governs R13, R14.
 - KTD6. **Reward text comes from the existing `useReward` hook.** It already returns `undefined` for percentage payouts and on fetch failure, which is exactly the no-reward path. Governs R8.
-- KTD7. **The theming surface is custom properties; the class hooks are structural only.** The nine `--frak-amb-*` properties are declared with their defaults on the component root in `Ambassador.css.ts` and consumed through `var()` at each use site. Custom properties do not participate in specificity, so a merchant cascade cannot outrank them, whereas the stable `frak-ambassador__*` classes are a single class (0,1,0) and are outrankable by construction. Document the knobs as the supported path and the classes as best-effort. Governs R16.
+- KTD7. **The theming surface is custom properties; the class hooks are structural only.** The `--frak-amb-*` properties are declared *by being consumed* — `var(name, default)` at each use site in `Ambassador.css.ts` — and never as a declaration block on the component root. A root declaration would win over any value an ancestor sets, since an element's own declaration beats the inherited one, which disables the exact override path the knobs exist to offer; R16's ancestor test fails against a root-declared default. The canon snippet uses the use-site fallback for this reason. Custom properties do not participate in specificity, so a merchant cascade cannot outrank them, whereas the stable `frak-ambassador__*` classes are a single class (0,1,0) and are outrankable by construction. Document the knobs as the supported path and the classes as best-effort. Governs R16.
 - KTD8. **Brand-locked declarations carry `!important`; nothing else does.** The store badge's `background` and `color` are the only declarations a merchant may not override, because Apple and Google require the lockups verbatim. Escalating specificity instead only defers the problem — a hashed vanilla-extract class is also 0,1,0, and the next host stylesheet reaches for an id. Measured on a live PrestaShop storefront 2026-09-21: `a:not([href]):not([tabindex])` at 0,2,1 forced `color: inherit` and rendered the badges at about 1.2:1. Governs R17.
 
 ### Implementation Constraints
 
 A new component is wired at seven edit sites across five files, and the build catches four of them. `assertComponentRegistrations` fails whenever the tag is absent from an emitted bundle, which covers the registration call itself, the `package.json` `sideEffects` entry, the `tsdown` `dist` entry, and the `loader.ts` `COMPONENTS_MAP` entry. Three fail silently: the `src/index.ts` barrel export, the `package.json` `exports` entry, and the `loader.ts` FOUCE selector, which leaves the element visible-but-unstyled until it registers. U5 owns the full list.
 
-The CDN bundle is `deps.alwaysBundle: [/.*/]`, so everything this component imports ships to every merchant page that loads Frak — including pages that never render it. Prefer existing hooks and design-system tokens over anything new.
+The CDN bundle is `deps.alwaysBundle: [/.*/]`, so everything this component imports is bundled rather than left external. It is **not** all eager, though: `loader.ts` reaches each component through a dynamic `import()` in `COMPONENTS_MAP`, so the component lands in its own chunk and only a page that actually places `<frak-ambassador>` downloads it. Measured across U4-U7, `cdn/loader.js` never moved a byte. Prefer existing hooks and design-system tokens anyway, but weigh additions against the chunk, not against every merchant page.
 
 ### Assumptions
 
@@ -219,7 +219,7 @@ U4 and U6 land on a branch that already exists: `feat/ambassador-page-component`
 - **Requirements:** R6, R13, R14
 - **Dependencies:** none
 - **Files:** `sdk/components/src/i18n/defaults.ts`
-- **Approach:** add an `ambassador` key to the `ComponentCopy` type, then fill both language entries. Cover the hero (reward and no-reward variants, per KTD6), the three step labels and descriptions, the three payout card headings and descriptions, the store block heading, an accessible name for each of the two store badges, the reward-amount caption, the FAQ question and answer pairs, and the per-context hero headline and CTA label for cold, referred and post-purchase. Follow `banner`'s existing split between `referralTitleReward` and `referralTitle` for the reward/no-reward pair, and carry the `{REWARD}` token in the reward variants.
+- **Approach:** add an `ambassador` key to the `ComponentCopy` type, then fill both language entries. Cover the hero (reward and no-reward variants, per KTD6), the three step labels and descriptions, the three payout card headings and descriptions, the store block heading, an accessible name for each of the two store badges, the reward-amount caption, the FAQ question and answer pairs, and the hero headline and CTA label. Follow `banner`'s existing split between `referralTitleReward` and `referralTitle` for the reward/no-reward pair, and carry the `{REWARD}` token in the reward variants.
 - **Patterns to follow:** the `banner` and `postPurchase` entries in the same file.
 - **Test scenarios:** Test expectation: none — the `Record<Language, ComponentCopy>` type is the check; a missing key fails `bun run typecheck`.
 - **Verification:** `bun run --cwd sdk/components typecheck` passes with the new key present in both languages.
@@ -248,21 +248,15 @@ U4 and U6 land on a branch that already exists: `feat/ambassador-page-component`
   - Honours a non-default environment by respecting whatever `getWalletUrl()` resolves to after `setEnvironment`.
 - **Verification:** `bun run --cwd sdk/components test` passes, and `bun run build:sdk` succeeds with both new core exports resolving through the outer barrel.
 
-### U3. Arrival context and reward resolution
+### U3. Reward resolution
 
-- **Goal:** one hook returning the arrival context and the reward string the page renders from.
+- **Goal:** the reward string the page renders from.
 - **Requirements:** R8, R11, R12
 - **Dependencies:** none
-- **Files:** `sdk/components/src/hooks/useAmbassadorContext.ts`, `sdk/components/src/hooks/useAmbassadorContext.test.ts`
-- **Approach:** resolve the context once per render pass as `"post-purchase" | "referred" | "cold"` (KTD4) — post-purchase when the merchant supplied order props, referred when `getUserReferralStatus` reports `isReferred`, cold otherwise. Call `useReward` with the `referral` interaction and the audience matching the context. Return the context plus the formatted reward, leaving all copy selection to the component.
-- **Patterns to follow:** `resolvePostPurchaseContext` in `sdk/components/src/components/PostPurchase/PostPurchase.tsx` for the audience/variant split; `sdk/components/src/hooks/useReward.ts` for the fetch-and-swallow posture.
-- **Test scenarios:**
-  - Returns `cold` when no order props are supplied and referral status is `null`.
-  - Returns `referred` when referral status reports `isReferred`.
-  - Returns `post-purchase` when order props are supplied, even while referral status also reports `isReferred`.
-  - Covers AE2. Returns a defined context with no reward when `getMerchantInformation` rejects.
-  - Covers AE2. Returns no reward when the only live campaign has a `percentage` payout.
-- **Verification:** `bun run --cwd sdk/components test` passes with all five scenarios green.
+- **Files:** `sdk/components/src/components/Ambassador/Ambassador.tsx`
+- **Approach:** call `useReward(isClientReady, undefined, "referrer")` directly in the component (KTD4). The `useAmbassadorContext` hook this unit first built was deleted with the arrival context on 2026-09-23.
+- **Test scenarios:** covered by `useReward.test.ts` (no reward on a rejected fetch or a `percentage` payout, AE2) and by `Ambassador.test.tsx`, which asserts the call carries no trigger filter.
+- **Verification:** `bun run --cwd sdk/components test` passes.
 
 ### U4. Ambassador component and styles
 
@@ -276,19 +270,18 @@ U4 and U6 land on a branch that already exists: `feat/ambassador-page-component`
   3. Wire the hero CTA to `openSharingPage` and both store badges to the U2 URL (KTD1). When that URL is unavailable, render both badges with no `href` so the block stays visible and inert rather than disappearing — note this is exactly the state R17 must survive, since an anchor with no `href` is what a reboot stylesheet targets to force `color: inherit`.
   4. Keep literal BEM classes (`frak-ambassador__hero` and siblings) alongside the hashed vanilla-extract classes so merchant selectors keep working. The knob surface and the combinator port belong to U6, not to this unit.
   5. Render all seven regions on mount. `isHidden` is the only condition that suppresses rendering, and `isClientReady` only disables the hero CTA until the client is up; the store badges are already inert without an `href`. Do not gate rendering on `shouldRender` the way `Banner` does: R3 requires the page to render with no session, and a blank inline widget is survivable where a blank page is not.
-  6. Ship built-in default illustrations — one hero image and three step icons — under `assets/`, used whenever the merchant supplies no image URL, mirroring `PostPurchase`'s `propImageUrl ?? <GiftIcon/>` fallback (R14).
+  6. Default visuals follow direction L (2026-09-23, superseding built-in illustrations): with no merchant hero image the frame collapses around the reward card, and each step without an image shows its number.
 - **Patterns to follow:** `sdk/components/src/components/PostPurchase/PostPurchase.tsx` for override resolution and the dual class list; `PostPurchase.css.ts` for `vars`/`alias` token use.
 - **Test scenarios:**
   - Covers AE1. Renders the reward amount in the hero when a fixed-payout campaign resolves.
   - Covers AE2. Renders all seven regions with no-reward copy when no reward resolves.
-  - Covers AE3. Renders identical amount, premise, explainer, payout cards, store block and FAQ markup in the cold and referred contexts, differing only in hero headline and CTA label.
-  - Covers AE4. Marks no step complete and renders no progress affordance in any context.
+  - Covers AE4. Marks no step complete and renders no progress affordance.
   - Covers AE5. Uses a supplied `heroTitle` prop and the default-language string for every other slot.
   - Covers R9. Calls `openSharingPage` when the hero CTA is clicked.
   - Covers R15. Renders both store badges with the same `href`.
-  - Covers R3. Renders fully with no wallet session, no referral status and no order props.
+  - Covers R3. Renders fully with no wallet session.
   - Covers R3. Renders all seven regions before the backend config resolves, with the hero CTA disabled.
-  - Covers R14. Renders the built-in hero illustration and step icons when the merchant supplies no image URLs.
+  - Covers R14. Collapses the hero frame and numbers the steps when the merchant supplies no image URLs.
   - Covers R10. Renders both badges visible and inert, with no `href`, when no install URL can be built.
   - Gives each store badge an accessible name from the U1 copy defaults.
   - Renders the seven regions in a single column at a narrow viewport with no horizontal overflow.
@@ -296,12 +289,12 @@ U4 and U6 land on a branch that already exists: `feat/ambassador-page-component`
 
 ### U6. Theming surface and cascade defence
 
-- **Goal:** the nine knobs exposed as the supported override path, and the badge lockups proof against a hostile host cascade.
+- **Goal:** the twenty-one knobs exposed as the supported override path, and the badge lockups proof against a hostile host cascade.
 - **Requirements:** R16, R17
 - **Dependencies:** U4
 - **Files:** `sdk/components/src/components/Ambassador/Ambassador.css.ts`, `sdk/components/src/components/Ambassador/Ambassador.tsx`, `sdk/components/src/components/Ambassador/types.ts`, `sdk/components/src/components/Ambassador/Ambassador.test.tsx`
 - **Approach:**
-  1. Declare the nine `--frak-amb-*` properties with their defaults on the root style, and consume each through `var()` at its use site (KTD7). The names and defaults are already proven on the demo pages: `accent` (#111), `cta-bg` (defaults to accent), `tag-bg` (#fff), `accent-ink` (#fff), `surface` (4% of accent), `border` (15% of accent), `radius` (12px), `cta-radius` (999px), `image` (none).
+  1. Declare all twenty-one `--frak-amb-*` properties by consuming each through `var(name, default)` at its use site, taking the name list from the canon rather than restating it here. Colour and shape: `accent` (#111), `cta-bg` (defaults to accent), `tag-bg` (#fff), `accent-ink` (#fff), `surface` (4% of accent), `border` (15% of accent), `radius` (12px), `cta-radius` (999px), `image` (none). Typography: `h1-size`, `h1-weight`, `h1-spacing`, `h1-color`, `h2-size`, `h2-weight`, `h2-spacing`, `h2-color`, `cta-size`, `cta-weight`, `cta-spacing`, `cta-transform`. Each property's existing hardcoded value becomes its fallback, so the change is visually inert until a knob is set; a property that was *absent* rather than hardcoded falls back to `inherit`, because `color` and `letter-spacing` inherit and a literal would break the light-DOM inheritance R2 depends on.
   2. Add `!important` to the store badge's `background` and `color` only (KTD8). Do not spread it to any other declaration — every other value stays merchant-overridable by design.
   3. Port K's 20 combinator rules to explicit per-element classes. `globalStyle` is forbidden monorepo-wide and has zero uses in `sdk/components/src`, so a child selector becomes a class on the child.
   4. Document the two surfaces in the component's JSDoc: knobs supported, `frak-ambassador__*` classes best-effort.
@@ -315,7 +308,7 @@ U4 and U6 land on a branch that already exists: `feat/ambassador-page-component`
 
 ### U7. Host theme sampling
 
-- **Goal:** the component samples the host page once on mount and writes the nine knobs from what it finds, or writes nothing and lets the shipped defaults stand.
+- **Goal:** the component samples the host page once on mount and writes the knobs it can derive from what it finds, or writes nothing and lets the shipped defaults stand. It samples a subset, never all twenty-one — step 6 names which.
 - **Requirements:** R18
 - **Dependencies:** U6 — the knobs must be declared with their defaults before anything writes over them.
 - **Files:** `sdk/components/src/hooks/useHostTheme.ts`, `sdk/components/src/hooks/useHostTheme.test.ts`, `sdk/components/src/components/Ambassador/Ambassador.tsx`
@@ -325,8 +318,9 @@ U4 and U6 land on a branch that already exists: `feat/ambassador-page-component`
   3. **Pin the sample to a settled page.** Await `document.fonts.ready` and one animation frame before sampling. Button `offsetWidth`/`offsetHeight` feed the area sort in `findPrimaryButton`, so sampling before webfonts land can rank a different button and pick a different accent. The demo pins nothing — `autoTheme()` is evaluated at `ambassador.ts:703` after three network awaits, making its sample time a function of latency.
   4. **Abstain when two samples disagree.** Sample twice, one animation frame apart, and write nothing unless they agree. A host carousel moves its slides along the horizontal axis `isOnScreen` tests, so the winning button — and the accent with it — changes between frames; reproduced 2026-09-22 against the real snippet, `rgb(192,57,43)` and `rgb(30,132,73)` from one unchanged page. Disagreement is not a colour to choose between, and routing it to the abstention path makes a coin flip land on an outcome the Risks already accept.
   5. Tighten `isOnScreen` during the port: also reject an element clipped out of view by its nearest scrollable or `overflow:hidden` ancestor, so a parked slide fails on its own geometry rather than on timing. Keep the horizontal test — it is deliberate, and an off-canvas drawer still has to fail it.
-  6. Write each knob with `setProperty` on the component root, as `applyTheme` does. Write nothing for a knob that samples empty or transparent, so the U6 default shows through untouched (R18).
-  7. **Report the CDN bundle delta.** The components bundle is `deps.alwaysBundle: [/.*/]` and ships to every merchant page that loads Frak, including pages that never render this element. Record `cdn/components.js` before and after this unit. If the sampler costs more than the rest of the component together, say so rather than absorbing it silently — that is a fact the tier 3a decision was taken without.
+  6. Write each knob with `setProperty` on the component root, as `applyTheme` does. Write nothing for a knob that samples empty or transparent, so the U6 default shows through untouched (R18). Of the nine colour and shape knobs the sampler moves seven, and the distinction matters the moment a default changes: it *writes* four (`radius`, `accent`, `accent-ink`, `cta-radius`) and the other three (`cta-bg`, `surface`, `border`) merely follow because U6 derives them from `accent`. `tag-bg` and `image` are never touched.
+  7. Do **not** port `cta-color`. The canon's `typo()` pushes `${role}-color` whenever a contrast test passes, so a `cta` role emits a `cta-color` that no canon CSS consumes and that is absent from the canon's own `KNOBS` teardown list — it writes into nothing and leaks on teardown. The CTA's colour already reads `--frak-amb-accent-ink`, which `buttonKnobs` writes from the same host button, so the value is redundant as well as orphaned.
+  7. **Report the CDN bundle delta.** Record `cdn/Ambassador.*.js` and `cdn/loader.js` before and after this unit, gzip included — `cdn/components.js` is an 81-byte pointer and never moves. The sampler lands in the lazily imported Ambassador chunk, not in the eager loader. If the sampler costs more than the rest of the component together, say so rather than absorbing it silently — that is a fact the tier 3a decision was taken without.
 - **Patterns to follow:** `example/vanilla-js/src/ambassador.ts` for the sampler itself, which is the proven implementation and the only one field-tested against real storefronts; `sdk/components/src/hooks/useReward.ts` for the fetch-and-swallow posture a hook that must never throw needs; `useLightDomStyles.ts` for a hook that writes to the DOM rather than returning state.
 - **Test scenarios:**
   - Writes the accent from the host's primary button when one is found.
@@ -379,7 +373,7 @@ No automated size gate covers the components CDN bundle; `assertEagerBundleBudge
 - Every R in the Product Contract is satisfied or explicitly deferred in writing.
 - Every AE has at least one test asserting it, linked by its `Covers AE<N>.` prefix.
 - The full quality gate passes, and `bun run --cwd sdk/components build` reports the new registration in both outputs.
-- `<frak-ambassador>` renders on a plain HTML page against the CDN bundle, in all three arrival contexts, with and without a resolvable reward.
+- `<frak-ambassador>` renders on a plain HTML page against the CDN bundle, with and without a resolvable reward.
 - Both store badges navigate to the wallet `/install` page carrying the merchant id, and that page renders its store CTA.
 - The CDN bundle size delta is reported.
 - No abandoned or experimental code remains in the diff.
@@ -388,7 +382,8 @@ No automated size gate covers the components CDN bundle; `assertEagerBundleBudge
 
 ## Risks
 
-- **CDN weight.** A full-page component is the largest thing in a bundle that ships to every merchant page. Mitigation: reuse existing hooks and design-system tokens only; report the delta (Verification Contract). If the delta is material, splitting the ambassador chunk out of the eager bundle is the follow-up, not a v1 requirement.
+- **R10 is not fully met on the proofless path — known gap.** R10 asks that the install code *and* install attribution both survive. With KTD2 corrected, a visitor whose client id derived but whose proof could not be signed reaches a destination that keeps the Play Store referrer and is refused an install code (`PROOF_REQUIRED`). That is strictly better than the bare `?m=` link, which loses both, and it is why `getInstallUrl` keeps `a=` without the fragment — but it is half of what R10 states, so it is recorded here rather than folded into KTD2 as a mechanism detail. Reachable whenever storage serves a read and refuses the key write, since `persistIdentity` deliberately swallows that failure. The page passes no order token, so the proofless `checkoutToken` arm never applies.
+- **CDN weight — smaller than this entry assumed.** A full-page component is the largest thing in the components bundle, but it is already its own lazily imported chunk, so the follow-up this entry proposed ("splitting the ambassador chunk out of the eager bundle") is not needed: it was never in it. Measured end state: `cdn/Ambassador.*.js` 20.1 kB gzipped, of which the U7 sampler is ~2.1 kB; `cdn/loader.js`, the part every Frak page does load, unchanged across the whole feature. Mitigation stands — reuse existing hooks and tokens, report the delta — but the exposure is per-page-that-uses-it, not global.
 - **Silent wiring failure.** Three of the seven wiring sites in U5 fail silently rather than at build time — the `src/index.ts` barrel export, the `package.json` `exports` entry, and the FOUCE selector. Mitigation: U5's verification requires an actual CDN page load and an NPM-entry import, not just a green build.
 - **`/install` contract drift.** The component hardcodes the `?m=` grammar rather than importing the builder, so a change to `buildInstallUrl` would not propagate. Mitigation: KTD2 records the duplication; the U2 tests pin the expected shape so a drift shows up as a failing test rather than a dead link.
 - **The host cascade outranking the component.** Measured 2026-09-21 on a live PrestaShop storefront: the store badges rendered at about 1.2:1, dark grey on their own black fill, because a Bootstrap reboot's `a:not([href]):not([tabindex])` (0,2,1) beat the badge's single class (0,1,0) and forced `color:inherit`. The component is exposed identically and unshipped: `href={installUrl}` is omitted until an async resolve, and a vanilla-extract hashed class is also 0,1,0. Mitigation: R17; the fix already proven on the demo pages — `!important` on the badge's two brand colours — ports verbatim.
