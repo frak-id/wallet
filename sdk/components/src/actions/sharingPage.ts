@@ -40,6 +40,8 @@ export async function openSharingPage(
         return;
     }
 
+    // Every caller fires this from a click and never awaits it: a rejection
+    // here must not surface as an unhandled one on the merchant's page.
     await displaySharingPage(
         window.FrakSetup.client,
         {
@@ -55,5 +57,5 @@ export async function openSharingPage(
             }),
         },
         placement
-    );
+    ).catch((error) => console.error("Frak sharing page failed", error));
 }

@@ -23,7 +23,14 @@ export function registerWebComponent<P>(
 
         // Register the component if not already registered
         if (!customElements.get(tagName)) {
-            register(component, tagName, observedAttributes, options);
+            const names = observedAttributes.map(String);
+            // HTML lowercases attribute names, so a camelCase entry never
+            // matches one: observe the dash-case form too.
+            const dashed = names
+                .map((n) => n.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`))
+                .filter((n) => !names.includes(n));
+            const observed = [...names, ...dashed] as (keyof P)[];
+            register(component, tagName, observed, options);
         }
     }
 }

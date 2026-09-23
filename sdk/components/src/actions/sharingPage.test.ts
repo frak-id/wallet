@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { openSharingPage } from "./sharingPage";
 
 vi.mock("@frak-labs/core-sdk/actions", () => ({
-    displaySharingPage: vi.fn(),
+    displaySharingPage: vi.fn(async () => ({ action: "dismissed" })),
 }));
 
 describe("openSharingPage", () => {
@@ -36,5 +36,16 @@ describe("openSharingPage", () => {
 
         const payload = vi.mocked(displaySharingPage).mock.calls[0]?.[1];
         expect(payload).not.toHaveProperty("checkoutToken");
+    });
+
+    it("reports a failed RPC instead of rejecting to an unawaited caller", async () => {
+        const error = vi.spyOn(console, "error").mockImplementation(() => {});
+        vi.mocked(displaySharingPage).mockRejectedValueOnce(
+            new Error("closed")
+        );
+
+        await expect(openSharingPage()).resolves.toBeUndefined();
+        expect(error).toHaveBeenCalled();
+        error.mockRestore();
     });
 });
