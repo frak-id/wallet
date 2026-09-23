@@ -47,6 +47,11 @@
       "import": "./src/constants/rewards.ts",
       "default": "./src/constants/rewards.ts"
     },
+    "./constants/billing": {
+      "types": "./src/constants/billing.ts",
+      "import": "./src/constants/billing.ts",
+      "default": "./src/constants/billing.ts"
+    },
     "./constants/emailVerification": {
       "types": "./src/constants/emailVerification.ts",
       "import": "./src/constants/emailVerification.ts",

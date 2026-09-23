@@ -1,4 +1,5 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
+import { grossUpBankBalance } from "@frak-labs/app-essentials/constants/billing";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -27,6 +28,7 @@ import {
     statusBadgeVariant,
     type TokenStatus,
 } from "@/module/merchant/utils/budgetTokens";
+import { BalanceBreakdown } from "./BalanceBreakdown";
 import * as styles from "./manage-budget-sheet.css";
 
 function CurrencyLabel({ token }: { token: BudgetToken }) {
@@ -56,12 +58,14 @@ export function FundedTokenCard({
     bankAddress,
     isManager,
     isBankOpen,
+    vatApplicable,
 }: {
     token: BudgetToken;
     merchantId: string;
     bankAddress: Address;
     isManager: boolean;
     isBankOpen: boolean;
+    vatApplicable: boolean;
 }) {
     const { t } = useTranslation();
     const stablecoin = token.symbol as Stablecoin;
@@ -72,6 +76,7 @@ export function FundedTokenCard({
         : "paused";
     const needsAllowanceIncrease =
         token.allowance < token.balance && isBankOpen;
+    const breakdown = grossUpBankBalance(token.balance, vatApplicable);
 
     return (
         <Card radius="m">
@@ -95,16 +100,25 @@ export function FundedTokenCard({
                     <Stack space="none">
                         <span className={styles.amount}>
                             {formatTokenBalance(
-                                token.balance,
+                                breakdown.gross,
                                 stablecoin,
                                 decimals
                             )}
                         </span>
                         <Text variant="bodySmall" color="tertiary" as="span">
-                            {t("funding.budget.available")}
+                            {vatApplicable
+                                ? t("funding.budget.totalInclVat")
+                                : t("funding.budget.totalExclVat")}
                         </Text>
                     </Stack>
                 </Stack>
+
+                <BalanceBreakdown
+                    breakdown={breakdown}
+                    stablecoin={stablecoin}
+                    decimals={decimals}
+                    vatApplicable={vatApplicable}
+                />
 
                 {isManager && (
                     <TokenActions
@@ -398,7 +412,13 @@ function WithdrawEditor({
         <div className={styles.actionsRow}>
             <Input
                 type="number"
-                placeholder={t("funding.budget.actions.amountPlaceholder")}
+                placeholder={t("funding.budget.actions.withdrawPlaceholder", {
+                    amount: formatTokenBalance(
+                        token.balance,
+                        token.symbol as Stablecoin,
+                        decimals
+                    ),
+                })}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 className={styles.inlineInput}

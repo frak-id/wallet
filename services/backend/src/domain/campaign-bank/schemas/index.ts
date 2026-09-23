@@ -20,5 +20,7 @@ export const BankStatusSchema = t.Object({
         t.Literal("missing"),
         t.Literal("no_wallet"),
     ]),
+    // Lets dashboards gross the on-chain (net) balance back up with VAT.
+    vatApplicable: t.Boolean(),
 });
 export type BankStatus = Static<typeof BankStatusSchema>;

@@ -1,3 +1,8 @@
+import {
+    BILLING_RATES,
+    isVatApplicable,
+} from "@frak-labs/app-essentials/constants/billing";
+
 /**
  * Client-side mirror of the backend deposit math
  * (`BillingComputationService.computeDeposit`),
@@ -14,8 +19,9 @@
  * ```
  */
 
-const FR_VAT_RATE = 0.2;
-const FRAK_FEE_RATE = 0.2;
+const FR_VAT_RATE = BILLING_RATES.FR_VAT_BPS / BILLING_RATES.BPS_DENOMINATOR;
+const FRAK_FEE_RATE =
+    BILLING_RATES.FRAK_FEE_BPS / BILLING_RATES.BPS_DENOMINATOR;
 
 export type DepositBreakdown = {
     gross: number;
@@ -47,7 +53,7 @@ export function computeDepositBreakdown(
     const gifted =
         Number.isFinite(giftedParsed) && giftedParsed > 0 ? giftedParsed : 0;
 
-    const vatApplies = country === "FR";
+    const vatApplies = isVatApplicable(country);
     const vatRate = vatApplies ? FR_VAT_RATE : 0;
     const vat = vatRate === 0 ? 0 : (gross * vatRate) / (1 + vatRate);
     const frakFee = (gross - vat) * FRAK_FEE_RATE;

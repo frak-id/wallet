@@ -96,6 +96,10 @@ export function useBillingInfo() {
           }
         : null;
 
+    // An admin may have saved only the country; that must not read as filled in.
+    const isComplete =
+        info !== null && Object.values(info).every((value) => value !== "");
+
     const documents = documentsQuery.data ?? [];
     const invoices = documents
         .filter((doc) => doc.kind === "monthly_bill")
@@ -106,7 +110,7 @@ export function useBillingInfo() {
 
     return {
         info,
-        hasInfo: info !== null,
+        hasInfo: isComplete,
         invoices,
         deposits,
         // `onSuccess` only fires when the PUT succeeded — the sheet uses it

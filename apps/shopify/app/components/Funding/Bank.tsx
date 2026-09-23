@@ -1,4 +1,9 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
+import {
+    BILLING_RATES,
+    bpsToPercent,
+    grossUpBankBalance,
+} from "@frak-labs/app-essentials/constants/billing";
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { SkeletonDisplayText } from "app/components/ui/SkeletonDisplayText";
 import type { BankStatus } from "app/services.server/backendMerchant";
@@ -32,6 +37,7 @@ export function BankingStatus({ bankStatus }: { bankStatus: BankStatus }) {
                     <BankView
                         bankAddress={bankStatus.bankAddress}
                         isManager={bankStatus.ownerHasManagerRole}
+                        vatApplicable={bankStatus.vatApplicable}
                     />
                 ) : (
                     <s-banner tone="info">
@@ -51,9 +57,11 @@ type ActiveAction = {
 function BankView({
     bankAddress,
     isManager,
+    vatApplicable,
 }: {
     bankAddress: Address;
     isManager: boolean;
+    vatApplicable: boolean;
 }) {
     const { data: bankData, isLoading } = useMerchantBank({ bankAddress });
     const { data: walletStatus } = useWalletStatus();
@@ -98,6 +106,7 @@ function BankView({
                 tokens={tokens}
                 isManager={isManager}
                 isBankOpen={isOpen}
+                vatApplicable={vatApplicable}
                 walletAddress={walletAddress}
                 bankAddress={bankAddress}
                 onAction={setActiveAction}
@@ -160,6 +169,7 @@ function TokenTable({
     tokens,
     isManager,
     isBankOpen,
+    vatApplicable,
     walletAddress,
     bankAddress,
     onAction,
@@ -167,6 +177,7 @@ function TokenTable({
     tokens: TokenData[];
     isManager: boolean;
     isBankOpen: boolean;
+    vatApplicable: boolean;
     walletAddress?: Address;
     bankAddress: Address;
     onAction: (action: ActiveAction) => void;
@@ -181,7 +192,11 @@ function TokenTable({
                 <s-table-header listSlot="primary">
                     {t("status.bank.token")}
                 </s-table-header>
-                <s-table-header>{t("status.bank.balance")}</s-table-header>
+                <s-table-header>
+                    {vatApplicable
+                        ? t("status.bank.balanceInclVat")
+                        : t("status.bank.balanceExclVat")}
+                </s-table-header>
                 <s-table-header>{t("status.bank.statusColumn")}</s-table-header>
                 {showActions && (
                     <s-table-header>
@@ -195,6 +210,7 @@ function TokenTable({
                         key={token.address}
                         token={token}
                         isBankOpen={isBankOpen}
+                        vatApplicable={vatApplicable}
                         bankAddress={bankAddress}
                         showActions={showActions}
                         actionsDisabled={actionsDisabled}
@@ -209,6 +225,7 @@ function TokenTable({
 function TokenRow({
     token,
     isBankOpen,
+    vatApplicable,
     bankAddress,
     showActions,
     actionsDisabled,
@@ -216,6 +233,7 @@ function TokenRow({
 }: {
     token: TokenData;
     isBankOpen: boolean;
+    vatApplicable: boolean;
     bankAddress: Address;
     showActions: boolean;
     actionsDisabled: boolean;
@@ -224,18 +242,15 @@ function TokenRow({
     const stablecoin = token.symbol as Stablecoin;
     const meta = currencyMetadata[stablecoin];
     const status = getTokenStatus(token.balance, token.allowance);
-    const formattedBalance = formatTokenBalance(
-        token.balance,
-        stablecoin,
-        token.decimals
-    );
 
     return (
         <s-table-row>
             <s-table-cell>
                 {meta.label} ({meta.provider})
             </s-table-cell>
-            <s-table-cell>{formattedBalance}</s-table-cell>
+            <s-table-cell>
+                <BalanceCell token={token} vatApplicable={vatApplicable} />
+            </s-table-cell>
             <s-table-cell>
                 <TokenStatusBadge status={status} />
             </s-table-cell>
@@ -251,6 +266,47 @@ function TokenRow({
                 </s-table-cell>
             )}
         </s-table-row>
+    );
+}
+
+function BalanceCell({
+    token,
+    vatApplicable,
+}: {
+    token: TokenData;
+    vatApplicable: boolean;
+}) {
+    const { t } = useTranslation();
+    const stablecoin = token.symbol as Stablecoin;
+    const format = (amount: bigint) =>
+        formatTokenBalance(amount, stablecoin, token.decimals);
+    const breakdown = grossUpBankBalance(token.balance, vatApplicable);
+
+    if (token.balance === 0n) {
+        return <s-text>{format(0n)}</s-text>;
+    }
+
+    const fees = t("status.bank.breakdownFees", {
+        amount: format(breakdown.frakFee),
+        rate: bpsToPercent(BILLING_RATES.FRAK_FEE_BPS),
+    });
+    const vat = t("status.bank.breakdownVat", {
+        amount: format(breakdown.vat),
+        rate: bpsToPercent(BILLING_RATES.FR_VAT_BPS),
+    });
+
+    return (
+        <s-stack gap="small-500">
+            <s-text type="strong">{format(breakdown.gross)}</s-text>
+            <s-text>
+                {t("status.bank.breakdownDistributable", {
+                    amount: format(breakdown.distributable),
+                })}
+            </s-text>
+            <s-text color="subdued">
+                {vatApplicable ? `${fees} · ${vat}` : fees}
+            </s-text>
+        </s-stack>
     );
 }
 
@@ -413,6 +469,17 @@ function TokenActionForm({
                         min={0}
                         step={0.01}
                         suffix={meta.currencySymbol}
+                        details={
+                            type === "withdraw"
+                                ? t("status.bank.withdrawMax", {
+                                      amount: formatTokenBalance(
+                                          token.balance,
+                                          stablecoin,
+                                          token.decimals
+                                      ),
+                                  })
+                                : undefined
+                        }
                         disabled={isPending}
                     />
                     <s-button

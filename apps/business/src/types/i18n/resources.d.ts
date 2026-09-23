@@ -1231,11 +1231,16 @@ export default interface Resources {
           "increaseLimit": "Increase limit",
           "withdraw": "Withdraw",
           "withdrawCta": "Withdraw funds",
+          "withdrawPlaceholder": "Max {{amount}}",
           "withdrawTooltip": "Sends your bank's available funds back to your wallet. Available because reward distribution is off."
         },
         "addFunds": "Add funds",
         "allowanceTooltip": "Up to {{amount}} authorized for distribution",
-        "available": "available",
+        "breakdown": {
+          "distributable": "Available for rewards",
+          "frakFee": "Frak fees ({{rate}}%)",
+          "vat": "VAT ({{rate}}%)"
+        },
         "distributing": "Distributing Rewards",
         "distributingTooltip": "When enabled, rewards are automatically distributed to your users through active campaigns. Disabling stops all new distributions.",
         "emptyWarning": "Your bank has no funds. Active campaigns cannot distribute rewards until you add funds.",
@@ -1246,7 +1251,9 @@ export default interface Resources {
           "actionNeeded": "Action needed",
           "active": "Active",
           "paused": "Paused"
-        }
+        },
+        "totalExclVat": "total budget, incl. Frak fees",
+        "totalInclVat": "total budget, incl. VAT and Frak fees"
       },
       "error": "Failed to load reward budget data.",
       "header": {
@@ -1779,6 +1786,12 @@ export default interface Resources {
             "vat": "VAT (20%)",
             "vatExempt": "VAT (exempt outside FR)"
           },
+          "country": {
+            "error": "Could not save the billing country. Try again.",
+            "hint": "Drives VAT on the merchant's budget display and deposit notes. The merchant still has to complete their billing information.",
+            "label": "Billing country",
+            "save": "Save country"
+          },
           "deposit": {
             "description": "Records a deposit and computes VAT and the Frak fee automatically.",
             "submit": "Create deposit",
@@ -1832,7 +1845,7 @@ export default interface Resources {
             }
           },
           "panel": {
-            "description": "Create deposit notes and withdraw bills for this merchant. Visible to platform admins only.",
+            "description": "Set the billing country and create deposit notes and withdraw bills for this merchant. Visible to platform admins only.",
             "title": "Platform admin - billing"
           },
           "table": {

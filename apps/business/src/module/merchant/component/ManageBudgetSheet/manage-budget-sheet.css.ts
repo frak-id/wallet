@@ -51,6 +51,27 @@ export const amount = style({
     color: vars.text.primary,
 });
 
+export const breakdown = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.xxs,
+    margin: 0,
+    borderTop: `1px solid ${vars.border.subtle}`,
+    paddingTop: alias.spacing.s,
+});
+
+export const breakdownRow = style({
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    gap: alias.spacing.m,
+});
+
+export const breakdownValue = style({
+    margin: 0,
+    fontVariantNumeric: "tabular-nums",
+});
+
 export const actionsRow = style({
     display: "flex",
     flexWrap: "wrap",

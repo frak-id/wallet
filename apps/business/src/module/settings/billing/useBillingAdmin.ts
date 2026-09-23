@@ -6,7 +6,8 @@ import {
 } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
-import { documentsQueryKey } from "./queryKeys";
+import { merchantBankQueryKey } from "@/module/merchant/queries/queryKeys";
+import { accountingQueryKey, documentsQueryKey } from "./queryKeys";
 
 /**
  * A deposit/withdraw mutation returns before its side-effects settle (cascading
@@ -104,6 +105,34 @@ export function useCreateWithdraw(merchantId: string) {
         },
         onSuccess: () => {
             invalidateDocumentsAfterSettle(queryClient, merchantId);
+        },
+    });
+}
+
+/**
+ * Sets only the billing country: the PUT merges into the stored info, so the
+ * merchant still has to complete the rest, but the budget display gets its VAT.
+ */
+export function useUpdateBillingCountry(merchantId: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationKey: ["billing", "accounting", "country", merchantId],
+        mutationFn: async (country: string) => {
+            const { error } = await authenticatedBackendApi
+                .merchant({ merchantId })
+                .billing.accounting.put({ country });
+            if (error) throw error;
+        },
+        onSuccess: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: accountingQueryKey(merchantId),
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: merchantBankQueryKey(merchantId),
+                }),
+            ]);
         },
     });
 }

@@ -154,6 +154,27 @@ describe("useBillingInfo", () => {
         expect(result.current.deposits).toEqual([]);
     });
 
+    test("a country-only record prefills info but keeps hasInfo false", async ({
+        queryWrapper,
+    }: TestContext) => {
+        mockMerchant({
+            accounting: {
+                data: { accountingInfo: { country: "FR" } },
+                error: null,
+            },
+            documents: { data: { documents: [] }, error: null },
+        });
+
+        const { result } = renderHook(() => useBillingInfo(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(result.current.info?.country).toBe("FR");
+        expect(result.current.hasInfo).toBe(false);
+    });
+
     test("saveInfo calls PUT accounting with the new info", async ({
         queryWrapper,
     }: TestContext) => {

@@ -17,10 +17,10 @@ import * as styles from "./billing-info-card.css";
  */
 export function BillingInfoCard() {
     const { t } = useTranslation();
-    const { info, saveInfo, isSaving, saveFailed, resetSaveState } =
+    const { info, hasInfo, saveInfo, isSaving, saveFailed, resetSaveState } =
         useBillingInfo();
 
-    if (!info) {
+    if (!info || !hasInfo) {
         return (
             <SettingsCard>
                 <Stack space="m">
@@ -43,6 +43,7 @@ export function BillingInfoCard() {
                     <div>
                         <BillingInfoSheet
                             mode="add"
+                            info={info}
                             onSave={saveInfo}
                             isSaving={isSaving}
                             saveFailed={saveFailed}

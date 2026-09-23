@@ -1,4 +1,5 @@
 import { isRunningInProd, type Stablecoin } from "@frak-labs/app-essentials";
+import { grossUpBankBalance } from "@frak-labs/app-essentials/constants/billing";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
@@ -47,7 +48,11 @@ export function AddFundsView({ merchantId }: { merchantId: string }) {
                 </Text>
                 <Card radius="m" padding="none">
                     {data.tokens.map((token) => (
-                        <BalanceRow key={token.address} token={token} />
+                        <BalanceRow
+                            key={token.address}
+                            token={token}
+                            vatApplicable={data.vatApplicable}
+                        />
                     ))}
                 </Card>
             </Stack>
@@ -73,7 +78,13 @@ export function AddFundsView({ merchantId }: { merchantId: string }) {
     );
 }
 
-function BalanceRow({ token }: { token: BudgetToken }) {
+function BalanceRow({
+    token,
+    vatApplicable,
+}: {
+    token: BudgetToken;
+    vatApplicable: boolean;
+}) {
     const stablecoin = token.symbol as Stablecoin;
     const meta = currencyMetadata[stablecoin];
     const { data: tokenMeta } = useTokenMetadata(token.address);
@@ -90,7 +101,11 @@ function BalanceRow({ token }: { token: BudgetToken }) {
                 {meta.currencySymbol}
             </Text>
             <Text variant="bodySmall" weight="medium" as="span">
-                {formatTokenBalance(token.balance, stablecoin, decimals)}
+                {formatTokenBalance(
+                    grossUpBankBalance(token.balance, vatApplicable).gross,
+                    stablecoin,
+                    decimals
+                )}
             </Text>
         </div>
     );

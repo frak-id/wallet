@@ -1,10 +1,12 @@
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useTranslation } from "react-i18next";
 import { useSettingsMerchantId } from "@/module/common/hook/useSettingsMerchantId";
 import { SettingsCard } from "../../SettingsCard";
 import { AddDepositSheet } from "../AddDepositSheet";
 import { AddWithdrawSheet } from "../AddWithdrawSheet";
 import { useBillingInfo } from "../useBillingInfo";
+import { BillingCountryControl } from "./BillingCountryControl";
 
 /**
  * Platform-admin-only section: create deposit notes / withdraw bills for the
@@ -26,13 +28,19 @@ export function BillingAdminPanel() {
             title={t("settings.billing.admin.panel.title")}
             description={t("settings.billing.admin.panel.description")}
         >
-            <Inline space="s">
-                <AddDepositSheet
+            <Stack space="l">
+                <BillingCountryControl
                     merchantId={merchantId}
-                    defaultCountry={info?.country}
+                    currentCountry={info?.country || undefined}
                 />
-                <AddWithdrawSheet merchantId={merchantId} />
-            </Inline>
+                <Inline space="s">
+                    <AddDepositSheet
+                        merchantId={merchantId}
+                        defaultCountry={info?.country}
+                    />
+                    <AddWithdrawSheet merchantId={merchantId} />
+                </Inline>
+            </Stack>
         </SettingsCard>
     );
 }

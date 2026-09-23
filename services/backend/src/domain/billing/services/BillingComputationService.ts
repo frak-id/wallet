@@ -1,7 +1,9 @@
 import { currentStablecoins, type Stablecoin } from "@frak-labs/app-essentials";
+import { isVatApplicable } from "@frak-labs/app-essentials/constants/billing";
 import Decimal from "decimal.js";
 import type { Address } from "viem";
 import { isAddressEqual } from "viem";
+import { FR_VAT_RATE, FRAK_FEE_RATE } from "../rates";
 
 /**
  * VAT + Frak fee + withdraw-restitution math.
@@ -18,8 +20,6 @@ import { isAddressEqual } from "viem";
  */
 
 const MONEY_SCALE = 18;
-const FR_VAT_RATE = "0.20";
-const FRAK_FEE_RATE = "0.20";
 
 /**
  * Reverse of `getTokenAddressForStablecoin` (only the forward direction
@@ -194,8 +194,7 @@ export class BillingComputationService {
             "giftedAmount"
         );
 
-        const vatRate =
-            country === "FR" ? new Decimal(FR_VAT_RATE) : new Decimal(0);
+        const vatRate = isVatApplicable(country) ? FR_VAT_RATE : new Decimal(0);
         const vatAmount = vatRate.isZero()
             ? new Decimal(0)
             : gross.mul(vatRate).div(new Decimal(1).plus(vatRate));
@@ -397,9 +396,7 @@ export class BillingComputationService {
             "rewardBaseAmount"
         );
         const totalHt = base.mul(new Decimal(1).plus(FRAK_FEE_RATE));
-        const vatRate = vatApplicable
-            ? new Decimal(FR_VAT_RATE)
-            : new Decimal(0);
+        const vatRate = vatApplicable ? FR_VAT_RATE : new Decimal(0);
         const totalTva = totalHt.mul(vatRate);
         const totalTtc = totalHt.plus(totalTva);
         return {

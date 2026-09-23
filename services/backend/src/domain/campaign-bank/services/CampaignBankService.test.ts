@@ -11,12 +11,14 @@ function makeService(
         ownerWallet?: Address | null;
         bankAddress?: Address | null;
         hasRole?: boolean;
+        country?: string;
     } = {}
 ) {
     const merchant = {
         id: MERCHANT_ID,
         ownerWallet: opts.ownerWallet === undefined ? OWNER : opts.ownerWallet,
         bankAddress: opts.bankAddress === undefined ? BANK : opts.bankAddress,
+        accountingInfo: opts.country ? { country: opts.country } : null,
     };
 
     const bankRepo = {
@@ -89,6 +91,7 @@ describe("CampaignBankService — walletless owner tolerance (§4.9/§4.10)", ()
             bankAddress: BANK,
             ownerHasManagerRole: false,
             managerRole: "no_wallet",
+            vatApplicable: false,
         });
         expect(bankRepo.hasManagerRole).not.toHaveBeenCalled();
     });
@@ -123,6 +126,19 @@ describe("CampaignBankService — walletless owner tolerance (§4.9/§4.10)", ()
             bankAddress: null,
             ownerHasManagerRole: false,
             managerRole: "no_wallet",
+            vatApplicable: false,
         });
+    });
+
+    it("getBankStatus flags VAT only for FR merchants", async () => {
+        const fr = await makeService({ country: "FR" }).service.getBankStatus(
+            MERCHANT_ID
+        );
+        const de = await makeService({ country: "DE" }).service.getBankStatus(
+            MERCHANT_ID
+        );
+
+        expect(fr.vatApplicable).toBe(true);
+        expect(de.vatApplicable).toBe(false);
     });
 });
