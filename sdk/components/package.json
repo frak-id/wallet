@@ -105,6 +105,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "try:merchant": "bun scripts/tryOnMerchant.ts",
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing components...'"
   },
@@ -116,6 +117,7 @@
     "qr": "catalog:"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@frak-labs/design-system": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
     "@preact/preset-vite": "catalog:",
