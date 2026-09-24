@@ -139,7 +139,7 @@ function ExplorerCardComponent({ merchant, priority }: ExplorerCardProps) {
                         className={styles.bonusBadge}
                     >
                         <GiftIcon width={12} height={12} />
-                        {t("explorer.frakBonus.badge")}
+                        {t("explorer.frakBonus.label")}
                     </Badge>
                 )}
                 <Spread space="xs" align="top">

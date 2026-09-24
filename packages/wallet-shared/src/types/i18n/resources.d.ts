@@ -469,9 +469,8 @@ export default interface Resources {
       },
       "frakBonus": {
         "amount": "+{{amount}}",
-        "badge": "First-purchase bonus",
         "explanation": "Thanks to your Frak invitation, your first purchase at this brand also earns you the referrer reward.",
-        "row": "First-purchase bonus"
+        "label": "First-purchase bonus"
       },
       "pageTitle": "Explorer",
       "sort": {

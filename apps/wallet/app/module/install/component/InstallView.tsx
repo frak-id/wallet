@@ -25,10 +25,7 @@ import {
     APP_STORE_URL,
     PLAY_STORE_URL,
 } from "@frak-labs/wallet-shared/common/utils/storeUrls";
-import {
-    buildPlayStoreInstallUrl,
-    buildPlayStoreReferralUrl,
-} from "@frak-labs/wallet-shared/sharing";
+import { buildPlayStoreInstallUrl } from "@frak-labs/wallet-shared/sharing";
 import type { Translate } from "@frak-labs/wallet-shared/types";
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Info } from "lucide-react";
@@ -746,7 +743,7 @@ function InstallReferralCodeView({
     const downloadUrl = useMemo(
         () =>
             isAndroid
-                ? buildPlayStoreReferralUrl({ referralCode })
+                ? buildPlayStoreInstallUrl({ referralCode })
                 : APP_STORE_URL,
         [isAndroid, referralCode]
     );

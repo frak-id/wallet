@@ -927,47 +927,32 @@ describe("InstallView — ref-only referral code branch", () => {
         expect(mockGenerateCode).not.toHaveBeenCalled();
     });
 
-    test("copy writes the referral code to the clipboard", async ({
-        queryWrapper,
-    }) => {
-        const writeText = vi.fn().mockResolvedValue(undefined);
-        vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+    test.for(["installCode.copyCode", "installCode.download"])(
+        "%s copies the referral code",
+        async (button, { queryWrapper }) => {
+            const writeText = vi.fn().mockResolvedValue(undefined);
+            vi.stubGlobal("navigator", {
+                ...navigator,
+                clipboard: { writeText },
+            });
 
-        render(
-            <InstallView
-                search={{ ref: "FRAKPA" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
-                processingLayout={Layout}
-            />,
-            { wrapper: queryWrapper.wrapper }
-        );
+            render(
+                <InstallView
+                    search={{ ref: "FRAKPA" }}
+                    navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                    processingLayout={Layout}
+                />,
+                { wrapper: queryWrapper.wrapper }
+            );
 
-        fireEvent.click(await screen.findByText("installCode.copyCode"));
+            fireEvent.click(await screen.findByText(button));
 
-        await waitFor(() => expect(writeText).toHaveBeenCalledWith("FRAKPA"));
-        vi.unstubAllGlobals();
-    });
-
-    test("the store button also copies the referral code", async ({
-        queryWrapper,
-    }) => {
-        const writeText = vi.fn().mockResolvedValue(undefined);
-        vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
-
-        render(
-            <InstallView
-                search={{ ref: "FRAKPA" }}
-                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
-                processingLayout={Layout}
-            />,
-            { wrapper: queryWrapper.wrapper }
-        );
-
-        fireEvent.click(await screen.findByText("installCode.download"));
-
-        await waitFor(() => expect(writeText).toHaveBeenCalledWith("FRAKPA"));
-        vi.unstubAllGlobals();
-    });
+            await waitFor(() =>
+                expect(writeText).toHaveBeenCalledWith("FRAKPA")
+            );
+            vi.unstubAllGlobals();
+        }
+    );
 
     test("the Android store link carries the referral code, no merchant pair", async () => {
         const originalUserAgent = navigator.userAgent;

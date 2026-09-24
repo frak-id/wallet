@@ -1207,8 +1207,7 @@
             "step3Description": "In one click, transfer your earnings to your bank account."
         },
         "frakBonus": {
-            "badge": "First-purchase bonus",
-            "row": "First-purchase bonus",
+            "label": "First-purchase bonus",
             "amount": "+{{amount}}",
             "explanation": "Thanks to your Frak invitation, your first purchase at this brand also earns you the referrer reward."
         }

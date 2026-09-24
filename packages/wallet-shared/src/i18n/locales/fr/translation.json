@@ -1207,8 +1207,7 @@
             "step3Description": "En un clic, transfère tes gains vers ton compte bancaire."
         },
         "frakBonus": {
-            "badge": "Bonus premier achat",
-            "row": "Bonus premier achat",
+            "label": "Bonus premier achat",
             "amount": "+{{amount}}",
             "explanation": "Grâce à ton invitation Frak, ton premier achat chez cette marque te rapporte aussi la récompense de parrain."
         }

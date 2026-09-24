@@ -1,9 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {
-    buildInstallUrl,
-    buildPlayStoreInstallUrl,
-    buildPlayStoreReferralUrl,
-} from "./buildInstallUrl";
+import { buildInstallUrl, buildPlayStoreInstallUrl } from "./buildInstallUrl";
 
 describe("buildInstallUrl", () => {
     const args = {
@@ -197,16 +193,12 @@ describe("buildPlayStoreInstallUrl", () => {
             "merchantId=merchant-1&anonymousId=anon-1&proof=the-proof&referralCode=FRAKPA"
         );
     });
-});
 
-describe("buildPlayStoreReferralUrl", () => {
-    test("carries only the referral code, no merchant pair", () => {
-        const url = buildPlayStoreReferralUrl({ referralCode: "FRAKPA" });
-        const referrer = new URL(url).searchParams.get("referrer");
+    test("carries only the referral code when there is no merchant pair", () => {
+        const referrer = new URL(
+            buildPlayStoreInstallUrl({ referralCode: "FRAKPA" })
+        ).searchParams.get("referrer");
 
         expect(referrer).toBe("referralCode=FRAKPA");
-        expect(new URLSearchParams(referrer ?? "").has("merchantId")).toBe(
-            false
-        );
     });
 });

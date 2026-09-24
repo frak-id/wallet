@@ -51,7 +51,7 @@ describe("ExplorerCard", () => {
 
         const { getByText } = render(<ExplorerCard merchant={merchant()} />);
 
-        expect(getByText("explorer.frakBonus.badge")).toBeInTheDocument();
+        expect(getByText("explorer.frakBonus.label")).toBeInTheDocument();
     });
 
     test("hides the badge when ineligible", () => {
@@ -63,7 +63,7 @@ describe("ExplorerCard", () => {
 
         const { queryByText } = render(<ExplorerCard merchant={merchant()} />);
 
-        expect(queryByText("explorer.frakBonus.badge")).not.toBeInTheDocument();
+        expect(queryByText("explorer.frakBonus.label")).not.toBeInTheDocument();
     });
 
     test("hides the badge when no reward has a purchase-triggered referrer share", () => {
@@ -75,6 +75,6 @@ describe("ExplorerCard", () => {
 
         const { queryByText } = render(<ExplorerCard merchant={merchant()} />);
 
-        expect(queryByText("explorer.frakBonus.badge")).not.toBeInTheDocument();
+        expect(queryByText("explorer.frakBonus.label")).not.toBeInTheDocument();
     });
 });

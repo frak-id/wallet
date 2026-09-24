@@ -1,9 +1,5 @@
 // Utils
-export {
-    buildInstallUrl,
-    buildPlayStoreInstallUrl,
-    buildPlayStoreReferralUrl,
-} from "./buildInstallUrl";
+export { buildInstallUrl, buildPlayStoreInstallUrl } from "./buildInstallUrl";
 export { buildSharingLink } from "./buildSharingLink";
 // Components
 export type { PostShareConfirmationProps } from "./component/PostShareConfirmation";

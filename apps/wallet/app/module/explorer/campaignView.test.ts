@@ -19,86 +19,53 @@ function reward(overrides: Partial<MerchantReward> = {}): MerchantReward {
 }
 
 describe("buildCampaignView", () => {
-    test("hasFrakBonusReward is true when a purchase reward pays a referrer", () => {
-        const view = buildCampaignView([reward()], "en", now);
-        expect(view?.hasFrakBonusReward).toBe(true);
-    });
-
-    test("hasFrakBonusReward is false when no reward has a referrer share", () => {
-        const view = buildCampaignView(
-            [reward({ referrer: undefined })],
-            "en",
-            now
+    test.for([
+        ["a purchase reward pays a referrer", reward(), true],
+        [
+            "no reward has a referrer share",
+            reward({ referrer: undefined }),
+            false,
+        ],
+        [
+            "the referrer reward is not purchase-triggered",
+            reward({ interactionTypeKey: "referral" }),
+            false,
+        ],
+    ] as const)("hasFrakBonusReward when %s", ([, input, expected]) => {
+        expect(buildCampaignView([input], "en", now)?.hasFrakBonusReward).toBe(
+            expected
         );
-        expect(view?.hasFrakBonusReward).toBe(false);
-    });
-
-    test("hasFrakBonusReward is false when the referrer reward is not purchase-triggered", () => {
-        const view = buildCampaignView(
-            [reward({ interactionTypeKey: "referral" })],
-            "en",
-            now
-        );
-        expect(view?.hasFrakBonusReward).toBe(false);
     });
 });
 
 describe("frakBonusAmount", () => {
     const view = buildCampaignView([reward()], "en", now);
+    const signupOnly = buildCampaignView(
+        [reward({ interactionTypeKey: "referral" })],
+        "en",
+        now
+    );
 
     test("returns the formatted referrer estimate when eligible and unshadowed", () => {
-        expect(
-            frakBonusAmount(view, {
-                isEligible: true,
-                hasMerchantReferrer: false,
-            })
-        ).toBe(view?.headlineReferrerReward);
-        expect(
-            frakBonusAmount(view, {
-                isEligible: true,
-                hasMerchantReferrer: false,
-            })
-        ).toBeTruthy();
+        const amount = frakBonusAmount(view, {
+            isEligible: true,
+            hasMerchantReferrer: false,
+        });
+        expect(amount).toBeTruthy();
+        expect(amount).toBe(view?.headlineReferrerReward);
     });
 
-    test("is undefined when not eligible", () => {
-        expect(
-            frakBonusAmount(view, {
-                isEligible: false,
-                hasMerchantReferrer: false,
-            })
-        ).toBeUndefined();
-    });
-
-    test("is undefined when a merchant-scoped referrer shadows Frak", () => {
-        expect(
-            frakBonusAmount(view, {
-                isEligible: true,
-                hasMerchantReferrer: true,
-            })
-        ).toBeUndefined();
-    });
-
-    test("is undefined when no reward pays a referrer on purchase", () => {
-        const signupOnly = buildCampaignView(
-            [reward({ interactionTypeKey: "referral" })],
-            "en",
-            now
-        );
-        expect(
-            frakBonusAmount(signupOnly, {
-                isEligible: true,
-                hasMerchantReferrer: false,
-            })
-        ).toBeUndefined();
-    });
-
-    test("is undefined when there is no campaign view", () => {
-        expect(
-            frakBonusAmount(null, {
-                isEligible: true,
-                hasMerchantReferrer: false,
-            })
-        ).toBeUndefined();
-    });
+    test.for([
+        ["not eligible", view, false, false],
+        ["a merchant-scoped referrer shadows Frak", view, true, true],
+        ["no reward pays a referrer on purchase", signupOnly, true, false],
+        ["there is no campaign view", null, true, false],
+    ] as const)(
+        "is undefined when %s",
+        ([, input, isEligible, hasMerchantReferrer]) => {
+            expect(
+                frakBonusAmount(input, { isEligible, hasMerchantReferrer })
+            ).toBeUndefined();
+        }
+    );
 });

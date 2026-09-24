@@ -168,7 +168,7 @@ function CampaignInfoCard({
                     <InfoRow
                         labelVariant="bodySmall"
                         labelColor="secondary"
-                        label={t("explorer.frakBonus.row")}
+                        label={t("explorer.frakBonus.label")}
                         action={
                             <Text
                                 variant="bodySmall"

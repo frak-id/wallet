@@ -44,10 +44,8 @@ export function buildInstallUrl({
 /**
  * Build the Play Store URL carrying the install attribution as its referrer.
  *
- * `proof` and `referralCode` are additive and appended only when present;
- * `merchantId` and `anonymousId` keep their positions so a binary parsing the
- * referrer with `URLSearchParams` reads exactly what it reads today and
- * silently ignores the extra keys.
+ * Every key is appended only when present, in a fixed order, so a binary
+ * parsing the referrer with `URLSearchParams` silently ignores the extras.
  */
 export function buildPlayStoreInstallUrl({
     merchantId,
@@ -55,26 +53,18 @@ export function buildPlayStoreInstallUrl({
     installProof,
     referralCode,
 }: {
-    merchantId: string;
-    anonymousId: string;
+    merchantId?: string;
+    anonymousId?: string;
     installProof?: string;
     referralCode?: string;
 }): string {
-    const referrer = `merchantId=${merchantId}&anonymousId=${anonymousId}${
-        installProof ? `&proof=${installProof}` : ""
-    }${referralCode ? `&referralCode=${referralCode}` : ""}`;
-    return `${PLAY_STORE_URL}&referrer=${encodeURIComponent(referrer)}`;
-}
-
-/**
- * Build the Play Store URL for the `ref`-only install link: no
- * merchant/anonymous credential to carry, just the code.
- */
-export function buildPlayStoreReferralUrl({
-    referralCode,
-}: {
-    referralCode: string;
-}): string {
-    const referrer = `referralCode=${referralCode}`;
+    const referrer = [
+        merchantId && `merchantId=${merchantId}`,
+        anonymousId && `anonymousId=${anonymousId}`,
+        installProof && `proof=${installProof}`,
+        referralCode && `referralCode=${referralCode}`,
+    ]
+        .filter(Boolean)
+        .join("&");
     return `${PLAY_STORE_URL}&referrer=${encodeURIComponent(referrer)}`;
 }
