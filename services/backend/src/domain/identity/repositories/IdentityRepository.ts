@@ -423,6 +423,14 @@ export class IdentityRepository {
         return result;
     }
 
+    /** Idempotent insert of a group with a caller-chosen id (well-known system identities). */
+    async ensureGroup(id: string): Promise<void> {
+        await db
+            .insert(identityGroupsTable)
+            .values({ id })
+            .onConflictDoNothing();
+    }
+
     /**
      * Rolls back the loser side of a concurrent `resolve()` race: both
      * racers create a group before attaching a node, only one wins.

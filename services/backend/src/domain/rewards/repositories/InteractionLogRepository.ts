@@ -5,6 +5,7 @@ import {
     type InteractionLogSelect,
     interactionLogsTable,
 } from "../db/schema";
+import { interactionTypes } from "../schemas";
 import type { CreateReferralLinkPayload, InteractionType } from "../types";
 import { purchaseExternalEventId } from "../utils";
 
@@ -43,6 +44,20 @@ export class InteractionLogRepository {
             .where(and(...conditions))
             .orderBy(interactionLogsTable.createdAt)
             .limit(limit);
+    }
+
+    async hasPurchaseForGroup(identityGroupId: string): Promise<boolean> {
+        const [row] = await db
+            .select({ id: interactionLogsTable.id })
+            .from(interactionLogsTable)
+            .where(
+                and(
+                    eq(interactionLogsTable.identityGroupId, identityGroupId),
+                    eq(interactionLogsTable.type, interactionTypes.purchase)
+                )
+            )
+            .limit(1);
+        return row !== undefined;
     }
 
     async getTypesByIds(ids: string[]): Promise<Map<string, InteractionType>> {

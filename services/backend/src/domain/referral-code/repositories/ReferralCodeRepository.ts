@@ -1,7 +1,10 @@
 import { db } from "@backend-infrastructure";
 import { generateCandidates } from "@backend-utils";
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { FRAK_REFERRAL_IDENTITY_GROUP_ID } from "../constants";
 import { type ReferralCodeSelect, referralCodesTable } from "../db/schema";
+
+const isUserCode = eq(referralCodesTable.kind, "user");
 
 export class ReferralCodeRepository {
     /**
@@ -42,6 +45,7 @@ export class ReferralCodeRepository {
             id: string;
             code: string;
             owner_identity_group_id: string;
+            kind: ReferralCodeSelect["kind"];
             created_at: string;
             revoked_at: string | null;
         }>(sql`
@@ -66,6 +70,7 @@ export class ReferralCodeRepository {
             id: row.id,
             code: row.code,
             ownerIdentityGroupId: row.owner_identity_group_id,
+            kind: row.kind,
             createdAt: new Date(row.created_at),
             revokedAt: row.revoked_at ? new Date(row.revoked_at) : null,
         };
@@ -109,7 +114,8 @@ export class ReferralCodeRepository {
                     referralCodesTable.ownerIdentityGroupId,
                     ownerIdentityGroupId
                 ),
-                isNull(referralCodesTable.revokedAt)
+                isNull(referralCodesTable.revokedAt),
+                isUserCode
             ),
         });
         return result ?? null;
@@ -131,11 +137,50 @@ export class ReferralCodeRepository {
                         referralCodesTable.ownerIdentityGroupId,
                         ownerIdentityGroupId
                     ),
-                    isNull(referralCodesTable.revokedAt)
+                    isNull(referralCodesTable.revokedAt),
+                    isUserCode
                 )
             )
             .returning();
         return result ?? null;
+    }
+
+    /** Returns `null` when an active row (of any kind) already holds `code`. */
+    async createFrakCode(code: string): Promise<ReferralCodeSelect | null> {
+        const [created] = await db
+            .insert(referralCodesTable)
+            .values({
+                code: code.toUpperCase(),
+                ownerIdentityGroupId: FRAK_REFERRAL_IDENTITY_GROUP_ID,
+                kind: "frak",
+            })
+            .onConflictDoNothing()
+            .returning();
+        return created ?? null;
+    }
+
+    async revokeFrakCode(code: string): Promise<ReferralCodeSelect | null> {
+        const [revoked] = await db
+            .update(referralCodesTable)
+            .set({ revokedAt: new Date() })
+            .where(
+                and(
+                    eq(referralCodesTable.code, code.toUpperCase()),
+                    eq(referralCodesTable.kind, "frak"),
+                    isNull(referralCodesTable.revokedAt)
+                )
+            )
+            .returning();
+        return revoked ?? null;
+    }
+
+    /** Every Frak code, revoked included, newest first. */
+    async listFrakCodes(): Promise<ReferralCodeSelect[]> {
+        return db
+            .select()
+            .from(referralCodesTable)
+            .where(eq(referralCodesTable.kind, "frak"))
+            .orderBy(desc(referralCodesTable.createdAt));
     }
 
     /**

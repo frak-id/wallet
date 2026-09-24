@@ -1,12 +1,24 @@
-import { log } from "@backend-infrastructure";
+import { businessMetrics, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { ReferralLinkRepository } from "../../domain/attribution/repositories/ReferralLinkRepository";
+import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
+import { FRAK_CODE_ONBOARDING_WINDOW_MS } from "../../domain/referral-code/constants";
+import type { ReferralCodeSelect } from "../../domain/referral-code/db/schema";
+import type {
+    RedeemContext,
+    ReferralCodeKind,
+} from "../../domain/referral-code/schemas";
 import type { ReferralCodeService } from "../../domain/referral-code/services/ReferralCodeService";
+import type { InteractionLogRepository } from "../../domain/rewards/repositories/InteractionLogRepository";
+
+type FrakCodeRejection = Parameters<typeof businessMetrics.frakCodeRejected>[0];
 
 export class ReferralCodeRedemptionOrchestrator {
     constructor(
         private readonly referralCodeService: ReferralCodeService,
-        private readonly referralLinkRepository: ReferralLinkRepository
+        private readonly referralLinkRepository: ReferralLinkRepository,
+        private readonly identityRepository: IdentityRepository,
+        private readonly interactionLogRepository: InteractionLogRepository
     ) {}
 
     /**
@@ -15,7 +27,8 @@ export class ReferralCodeRedemptionOrchestrator {
      * last resort.
      *
      * Throws {@link HttpError} on:
-     *  - 404 `NOT_FOUND` — code does not exist or has been revoked.
+     *  - 404 `NOT_FOUND` — code does not exist, has been revoked, or is a
+     *    Frak code redeemed outside onboarding (never disclosed as such).
      *  - 400 `SELF_REFERRAL` — owner of the code is the caller.
      *  - 409 `WOULD_CYCLE` — inserting the edge would close a cycle anywhere
      *    in the referral graph (scope-agnostic check).
@@ -29,12 +42,21 @@ export class ReferralCodeRedemptionOrchestrator {
     async redeem(params: {
         code: string;
         refereeIdentityGroupId: string;
-    }): Promise<{ referrerIdentityGroupId: string }> {
-        const { code, refereeIdentityGroupId } = params;
+        context?: RedeemContext;
+    }): Promise<{ referrerIdentityGroupId: string; kind: ReferralCodeKind }> {
+        const { code, refereeIdentityGroupId, context } = params;
 
         const referralCode = await this.referralCodeService.findByCode(code);
         if (!referralCode) {
-            throw HttpError.notFound("NOT_FOUND", "Referral code not found");
+            throw codeNotFound();
+        }
+
+        if (referralCode.kind === "frak") {
+            await this.assertFrakCodeRedeemable(
+                referralCode,
+                refereeIdentityGroupId,
+                context
+            );
         }
 
         if (referralCode.ownerIdentityGroupId === refereeIdentityGroupId) {
@@ -78,12 +100,63 @@ export class ReferralCodeRedemptionOrchestrator {
                 referralCodeId: referralCode.id,
                 ownerIdentityGroupId: referralCode.ownerIdentityGroupId,
                 refereeIdentityGroupId,
+                kind: referralCode.kind,
             },
             "Referral code redeemed"
         );
 
         return {
             referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
+            kind: referralCode.kind,
         };
     }
+
+    private async assertFrakCodeRedeemable(
+        referralCode: ReferralCodeSelect,
+        refereeIdentityGroupId: string,
+        context: RedeemContext | undefined
+    ): Promise<void> {
+        const reason = await this.findFrakCodeRejection(
+            refereeIdentityGroupId,
+            context
+        );
+        if (!reason) return;
+
+        businessMetrics.frakCodeRejected(reason);
+        log.info(
+            {
+                code: referralCode.code,
+                identityGroupId: refereeIdentityGroupId,
+                reason,
+            },
+            "Frak referral code rejected"
+        );
+        throw codeNotFound();
+    }
+
+    private async findFrakCodeRejection(
+        refereeIdentityGroupId: string,
+        context: RedeemContext | undefined
+    ): Promise<FrakCodeRejection | null> {
+        if (context !== "onboarding") return "no_onboarding_context";
+
+        const [group, hasPurchase] = await Promise.all([
+            this.identityRepository.findGroupById(refereeIdentityGroupId),
+            this.interactionLogRepository.hasPurchaseForGroup(
+                refereeIdentityGroupId
+            ),
+        ]);
+        const ageMs = group?.createdAt
+            ? Date.now() - group.createdAt.getTime()
+            : Number.POSITIVE_INFINITY;
+        if (ageMs > FRAK_CODE_ONBOARDING_WINDOW_MS) {
+            return "outside_onboarding_window";
+        }
+        if (hasPurchase) return "has_purchase";
+        return null;
+    }
+}
+
+function codeNotFound(): HttpError {
+    return HttpError.notFound("NOT_FOUND", "Referral code not found");
 }

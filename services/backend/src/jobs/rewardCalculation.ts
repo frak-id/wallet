@@ -29,6 +29,7 @@ CronRegistry.register(
                 result.deferredCount
             );
             businessMetrics.rewardInteractions("error", result.errors.length);
+            businessMetrics.frakWelcomeBonuses(result.welcomeBonusesCreated);
             logger.info(
                 {
                     processedCount: result.processedCount,

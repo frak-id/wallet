@@ -14,11 +14,11 @@ import {
 import type { Address, Hex } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
 import type {
+    AssetLogRecipientType,
     AssetStatus,
     AssetType,
     CancellationReason,
     InteractionType,
-    RecipientType,
 } from "../schemas";
 import type { InteractionPayload } from "../types";
 
@@ -76,7 +76,9 @@ export const assetLogsTable = pgTable(
         amount: numeric("amount", { precision: 36, scale: 18 }).notNull(),
         tokenAddress: customHex("token_address").$type<Address>(),
 
-        recipientType: text("recipient_type").$type<RecipientType>().notNull(),
+        recipientType: text("recipient_type")
+            .$type<AssetLogRecipientType>()
+            .notNull(),
         recipientWallet: customHex("recipient_wallet").$type<Address>(),
         chainDepth: integer("chain_depth"),
 
@@ -136,6 +138,13 @@ export const assetLogsTable = pgTable(
         index("asset_logs_processing_status_changed_idx")
             .on(table.statusChangedAt)
             .where(sql`"status" = 'processing'`),
+        // One live welcome bonus per (user, merchant, campaign): the claim
+        // guard across concurrent reward workers.
+        uniqueIndex("asset_logs_welcome_bonus_live_idx")
+            .on(table.identityGroupId, table.merchantId, table.campaignRuleId)
+            .where(
+                sql`"recipient_type" = 'welcome_bonus' AND "status" IN ('pending', 'processing', 'settled', 'bank_depleted')`
+            ),
     ]
 );
 

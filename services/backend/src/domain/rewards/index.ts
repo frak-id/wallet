@@ -10,6 +10,8 @@ export {
 export { AssetLogRepository } from "./repositories/AssetLogRepository";
 export { InteractionLogRepository } from "./repositories/InteractionLogRepository";
 export {
+    type AssetLogRecipientType,
+    AssetLogRecipientTypeSchema,
     type AssetStatus,
     AssetStatusSchema,
     type AssetType,
@@ -18,6 +20,7 @@ export {
     CancellationReasonSchema,
     type InteractionType,
     InteractionTypeSchema,
+    LIVE_ASSET_STATUSES,
     type RecipientType,
     RecipientTypeSchema,
     type RewardHistoryItem,

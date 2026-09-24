@@ -32,6 +32,14 @@ export const AssetStatusSchema = t.Union([
 ]);
 export type AssetStatus = Static<typeof AssetStatusSchema>;
 
+/** Statuses of a reward that still counts: caps, and the welcome-bonus claim. */
+export const LIVE_ASSET_STATUSES = [
+    "pending",
+    "processing",
+    "settled",
+    "bank_depleted",
+] as const satisfies readonly AssetStatus[];
+
 /**
  * Status surfaced to wallet clients. Superset of {@link AssetStatusSchema}
  * with the display-only `consumed` state, which the wallet derives from
@@ -69,6 +77,16 @@ export const RecipientTypeSchema = t.Union([
 ]);
 export type RecipientType = Static<typeof RecipientTypeSchema>;
 
+/**
+ * Recipient of a persisted reward. `welcome_bonus` is a Frak referrer share
+ * redirected to the referee; campaign configs keep {@link RecipientTypeSchema}.
+ */
+export const AssetLogRecipientTypeSchema = t.Union([
+    ...RecipientTypeSchema.anyOf,
+    t.Literal("welcome_bonus"),
+]);
+export type AssetLogRecipientType = Static<typeof AssetLogRecipientTypeSchema>;
+
 const MerchantInfoSchema = t.Object({
     id: t.String(),
     name: t.String(),
@@ -94,7 +112,7 @@ export const RewardHistoryItemSchema = t.Object({
     token: TokenInfoSchema,
     amount: t.TokenAmount,
     status: RewardDisplayStatusSchema,
-    role: RecipientTypeSchema,
+    role: AssetLogRecipientTypeSchema,
     trigger: InteractionTypeSchema,
     txHash: t.Optional(t.String()),
     createdAt: t.Date(),
