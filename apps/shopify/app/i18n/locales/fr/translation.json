@@ -67,7 +67,7 @@
     },
     "optionalSetup": {
         "title": "Finalisez votre configuration avec les composants UI pour vos utilisateurs",
-        "description": "Votre boutique est en ligne et peut déjà distribuer des récompenses. Ces deux composants optionnels améliorent le partage organique et la conversion des filleuls. Ajoutez-les quand vous êtes prêt.",
+        "description": "Votre boutique est en ligne et peut déjà distribuer des récompenses. Ces composants optionnels améliorent le partage organique et la conversion des filleuls, et ajoutent une page qui recrute des ambassadeurs. Ajoutez-les quand vous êtes prêt.",
         "shareButton": {
             "title": "Ajoutez le bouton de partage à vos pages produit",
             "description": "Ajoute un bouton de partage en un clic sur chaque page produit. Vos visiteurs partagent la page avec leur réseau, et le lien embarque automatiquement leur identité de parrain pour qu'ils gagnent une récompense lorsqu'un filleul achète.",
@@ -77,6 +77,15 @@
             "title": "Ajoutez la bannière filleul à votre thème",
             "description": "Affichée uniquement aux visiteurs qui arrivent sur votre boutique via un lien de parrainage. La bannière leur confirme qu'ils ont été invités, explique la récompense qu'ils obtiendront en achetant, et transforme une visite froide en conversion qualifiée.",
             "cta": "Ouvrir l'éditeur de thème"
+        },
+        "ambassador": {
+            "title": "Publiez votre page ambassadeur",
+            "description": "Une page complète qui présente votre programme de parrainage et invite vos clients à devenir ambassadeurs. Elle affiche les récompenses de votre campagne et suit la langue de votre boutique.",
+            "step1": "1. Créez une page, avec un titre comme « Devenir ambassadeur ». Gardez le modèle par défaut pour l'instant.",
+            "step1Cta": "Créer une page",
+            "step2": "2. Dans l'éditeur de thème, ouvrez le menu des modèles, choisissez Pages, puis Créer un modèle. Ajoutez le bloc Frak Ambassador au nouveau modèle et enregistrez. Ne l'ajoutez pas au modèle de page par défaut : il s'affiche sur toutes les pages. Retirez la section de contenu de page par défaut du modèle si vous voulez la page ambassadeur seule.",
+            "step2Cta": "Ouvrir l'éditeur de thème",
+            "step3": "3. Revenez sur votre page, sélectionnez le nouveau modèle sous Modèle de thème et enregistrez. Cette carte disparaît dès que le bloc est en place."
         }
     },
     "pixel": {

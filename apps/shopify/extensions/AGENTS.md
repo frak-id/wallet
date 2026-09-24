@@ -10,7 +10,8 @@ extensions/
 │   ├── blocks/
 │   │   ├── listener.liquid     # HEAD block: loads Frak SDK, sets global config
 │   │   ├── referral_button.liquid  # Share button web component
-│   │   └── banner.liquid       # Referral banner web component
+│   │   ├── banner.liquid       # Referral banner web component
+│   │   └── ambassador.liquid   # Ambassador page web component (page templates only)
 │   ├── locales/                # en.default.json, fr.json
 │   ├── assets/customizations.css
 │   └── shopify.extension.toml
@@ -34,8 +35,9 @@ Theme blocks (listener.liquid)
   → Origins are generated literals (frak:stage region), not metafields
   → Writes merchantId to sessionStorage for the checkout pixel fallback
 
-referral_button.liquid / banner.liquid
-  → Renders <frak-button-share> / <frak-banner> web components
+referral_button.liquid / banner.liquid / ambassador.liquid
+  → Renders <frak-button-share> / <frak-banner> / <frak-ambassador> web components
+  → ambassador.liquid has no settings on purpose: its copy and images will come from the business dashboard
 
 checkout-web-pixel
   → Listens for checkout_completed event
@@ -51,7 +53,7 @@ checkout-post-purchase
 
 ## THEME-COMPONENTS
 
-**Block types**: listener (HEAD), referral_button (product section), banner (any section).
+**Block types**: listener (HEAD), referral_button (product section), banner (any section), ambassador (page templates, via `enabled_on`).
 
 **listener.liquid** is the critical block — without it, no Frak SDK loads. Config comes from:
 
@@ -80,7 +82,7 @@ Extensions are validated during the onboarding wizard:
 - **Step 6**: referral button must be in the product template (`theme.ts` → `doesThemeHasFrakButton()`)
 - **Step 7**: banner block must be enabled somewhere (`theme.ts` → `doesThemeHasFrakBanner()`)
 
-Theme detection works by parsing theme JSON templates and matching block type substrings like `/blocks/referral_button/` and `/blocks/banner/`.
+Theme detection works by parsing theme JSON templates and matching block type substrings like `/blocks/referral_button/`, `/blocks/banner/` and `/blocks/ambassador/`. The ambassador block is not an onboarding step: its presence only drives the "finish your setup" card.
 
 ## CONVENTIONS
 
