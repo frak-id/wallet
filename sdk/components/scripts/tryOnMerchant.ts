@@ -5,7 +5,7 @@ import { parseArgs } from "node:util";
 import { chromium, type Route } from "@playwright/test";
 
 const USAGE =
-    "Usage: bun run try:merchant <store-page-url> [--image <url>|none] [--with-content] [--shot]\n" +
+    "Usage: bun run try:merchant <store-page-url> [--image <url>|none] [--with-content] [--shot] [--password <storefront password>]\n" +
     "Opens the store with the local cdn/ build in place of the published SDK and shows <frak-ambassador> in place of the page content.\n" +
     "The hero photo defaults to the page's og:image; `--image none` shows the collapsed frame.\n" +
     "The theme is sampled from the bare page, as on a real dedicated page; `--with-content` samples it with the store's content still there.";
@@ -14,6 +14,7 @@ const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
         image: { type: "string" },
+        password: { type: "string" },
         shot: { type: "boolean" },
         "with-content": { type: "boolean" },
     },
@@ -71,6 +72,32 @@ await context.route(
 
 const page = await context.newPage();
 await page.goto(url, { waitUntil: "load", timeout: 60_000 });
+if (new URL(page.url()).pathname === "/password") {
+    const password = values.password;
+    if (!password) {
+        console.error("The store is password-protected: pass --password.");
+        await browser.close();
+        process.exit(1);
+    }
+    // Themes often keep the field in a closed modal, so submit without clicking.
+    await page.evaluate((value) => {
+        const input = document.querySelector<HTMLInputElement>(
+            'form[action*="/password"] input[type="password"]'
+        );
+        if (!input?.form) throw new Error("No storefront password form.");
+        input.value = value;
+        input.form.submit();
+    }, password);
+    await page
+        .waitForURL((next) => next.pathname !== "/password", {
+            timeout: 15_000,
+        })
+        .catch(() => {
+            console.error("The storefront password was not accepted.");
+            process.exit(1);
+        });
+    await page.goto(url, { waitUntil: "load", timeout: 60_000 });
+}
 const hasFrak = await page.evaluate(() => "FrakSetup" in window);
 if (!hasFrak) {
     // A store without Frak: load the SDK ourselves so the layout and theme still show.
@@ -93,69 +120,77 @@ if (!hasFrak) {
     });
 }
 const withContent = values["with-content"] ?? false;
+// A page already placing the element (the Shopify block) is shown as it is.
+const placed = await page.evaluate(
+    () => document.querySelector("frak-ambassador") !== null
+);
 // Stage a dedicated merchant page with the inject snippet's rules: the content
 // region gives way to a centred column, site header and footer stay.
-await page.evaluate(
-    ([image, keepContent]) => {
-        const chromeSelector =
-            "header, footer, [role=banner], [role=contentinfo], .skip-link";
-        const host =
-            document.querySelector("#main") ??
-            document.querySelector("main, [role=main]") ??
-            document.body;
-        const depth = (el: Element) => {
-            let d = 0;
-            for (let n: Element | null = el; n && n !== document.body; ) {
-                d++;
-                n = n.parentElement;
+if (!placed)
+    await page.evaluate(
+        ([image, keepContent]) => {
+            const chromeSelector =
+                "header, footer, [role=banner], [role=contentinfo], .skip-link";
+            const host =
+                document.querySelector("#main") ??
+                document.querySelector("main, [role=main]") ??
+                document.body;
+            const depth = (el: Element) => {
+                let d = 0;
+                for (let n: Element | null = el; n && n !== document.body; ) {
+                    d++;
+                    n = n.parentElement;
+                }
+                return d;
+            };
+            // A <header> deep in the content is a card's, not the site's.
+            const chrome = Array.from(
+                host.querySelectorAll(chromeSelector)
+            ).filter((el) => depth(el) <= 4);
+            const content: Element[] = [];
+            const collect = (parent: Element) => {
+                for (const el of parent.children) {
+                    if (el.id.startsWith("frak-") || chrome.includes(el))
+                        continue;
+                    if (chrome.some((node) => el.contains(node))) collect(el);
+                    else content.push(el);
+                }
+            };
+            collect(host);
+            for (const el of content) {
+                el.setAttribute("data-frak-try-hidden", "");
+                if (!keepContent) (el as HTMLElement).style.display = "none";
             }
-            return d;
-        };
-        // A <header> deep in the content is a card's, not the site's.
-        const chrome = Array.from(host.querySelectorAll(chromeSelector)).filter(
-            (el) => depth(el) <= 4
-        );
-        const content: Element[] = [];
-        const collect = (parent: Element) => {
-            for (const el of parent.children) {
-                if (el.id.startsWith("frak-") || chrome.includes(el)) continue;
-                if (chrome.some((node) => el.contains(node))) collect(el);
-                else content.push(el);
-            }
-        };
-        collect(host);
-        for (const el of content) {
-            el.setAttribute("data-frak-try-hidden", "");
-            if (!keepContent) (el as HTMLElement).style.display = "none";
-        }
-        const banner = chrome.find((el) => el.matches("header, [role=banner]"));
-        const anchor =
-            (banner &&
-                content.find(
-                    (el) =>
-                        banner.compareDocumentPosition(el) &
-                        Node.DOCUMENT_POSITION_FOLLOWING
-                )) ??
-            content[0];
+            const banner = chrome.find((el) =>
+                el.matches("header, [role=banner]")
+            );
+            const anchor =
+                (banner &&
+                    content.find(
+                        (el) =>
+                            banner.compareDocumentPosition(el) &
+                            Node.DOCUMENT_POSITION_FOLLOWING
+                    )) ??
+                content[0];
 
-        const column = document.createElement("div");
-        column.style.cssText =
-            "max-width:1100px;margin:60px auto;padding:0 20px";
-        const ambassador = document.createElement("frak-ambassador");
-        const heroImage =
-            image ??
-            document
-                .querySelector('meta[property="og:image"]')
-                ?.getAttribute("content");
-        if (heroImage && heroImage !== "none") {
-            ambassador.setAttribute("hero-image-url", heroImage);
-        }
-        column.append(ambassador);
-        if (anchor) anchor.before(column);
-        else host.append(column);
-    },
-    [values.image ?? null, withContent] as const
-);
+            const column = document.createElement("div");
+            column.style.cssText =
+                "max-width:1100px;margin:60px auto;padding:0 20px";
+            const ambassador = document.createElement("frak-ambassador");
+            const heroImage =
+                image ??
+                document
+                    .querySelector('meta[property="og:image"]')
+                    ?.getAttribute("content");
+            if (heroImage && heroImage !== "none") {
+                ambassador.setAttribute("hero-image-url", heroImage);
+            }
+            column.append(ambassador);
+            if (anchor) anchor.before(column);
+            else host.append(column);
+        },
+        [values.image ?? null, withContent] as const
+    );
 const root = page.locator(".frak-ambassador");
 await root.waitFor({ timeout: 20_000 });
 // With --with-content, the content goes only once the theme is sampled, as the inject snippet did.
