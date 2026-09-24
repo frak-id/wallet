@@ -7,6 +7,7 @@ type ThemeFile = {
     filename: string;
     body: {
         content: string;
+        contentBase64?: string;
         sections: {
             id: string;
             section: { type: string; block_order: string[] };
@@ -121,7 +122,7 @@ async function getTemplateFiles(
     const jsonTemplateData = jsonTemplateFiles.map((file: ThemeFile) => {
         return {
             filename: file.filename,
-            body: jsonc_parse(file.body?.content ?? ""),
+            body: jsonc_parse(readThemeFileText(file.body)),
         };
     });
 
@@ -171,7 +172,7 @@ async function getTemplateFilesMatching(
         for (const file of nodes) {
             results.push({
                 filename: file.filename,
-                body: jsonc_parse(file.body?.content ?? ""),
+                body: jsonc_parse(readThemeFileText(file.body)),
             });
         }
 
@@ -180,6 +181,20 @@ async function getTemplateFilesMatching(
     }
 
     return results;
+}
+
+/**
+ * Shopify returns a theme file body as text or as base64, chosen per file.
+ */
+function readThemeFileText(
+    body: { content?: string; contentBase64?: string } | undefined
+): string {
+    return (
+        body?.content ??
+        (body?.contentBase64
+            ? Buffer.from(body.contentBase64, "base64").toString("utf-8")
+            : "")
+    );
 }
 
 /**
@@ -293,16 +308,7 @@ export async function doesThemeSupportAppEmbed(
         const {
             data: { theme },
         } = await response.json();
-        const body = theme?.files?.nodes?.[0]?.body;
-        // The Theme Files API may return the body as text (`content`) OR base64
-        // (`contentBase64`) — Shopify chooses per file, and .liquid layouts can
-        // come back base64. Reading only `content` was silently yielding "" on
-        // themes like Debut, hiding the Listener step.
-        const content: string =
-            body?.content ??
-            (body?.contentBase64
-                ? Buffer.from(body.contentBase64, "base64").toString("utf-8")
-                : "");
+        const content = readThemeFileText(theme?.files?.nodes?.[0]?.body);
         // Couldn't read theme.liquid at all (empty/missing) — don't hide the
         // near-universal app embed step; assume the theme supports it.
         if (!content) return true;
@@ -384,34 +390,37 @@ export function detectFrakButton(
     );
 }
 
+const FRAK_BANNER_BLOCK_PATTERN = "/blocks/banner/";
+const FRAK_AMBASSADOR_BLOCK_PATTERN = "/blocks/ambassador/";
+
 /**
- * Detect if any section in settings_data.json contains a Frak banner block.
- *
- * When a merchant adds the banner app block to a theme-wide section (e.g.
- * header/footer), it appears under `current.sections[sectionId].blocks`
- * in `config/settings_data.json`.
+ * Detect an enabled Frak block of the given type (e.g. `/blocks/banner/`) in
+ * a sections map, from a template, a section group or `settings_data.json`.
+ * A block inside a hidden section never renders, so it counts as absent.
  */
-export function detectFrakBannerInSections(
+export function detectFrakBlockInSections(
     sections:
         | Record<
               string,
               | string
               | {
                     type: string;
+                    disabled?: boolean;
                     block_order?: string[];
                     blocks?: Record<string, ThemeBlockInfo>;
                 }
           >
-        | undefined
+        | undefined,
+    blockPattern: string
 ): boolean {
     if (!sections) return false;
     return Object.values(sections).some(
         (section) =>
             typeof section !== "string" &&
+            !section.disabled &&
             section.blocks &&
             Object.values(section.blocks).some(
-                (block) =>
-                    block.type?.includes("/blocks/banner/") && !block.disabled
+                (block) => block.type?.includes(blockPattern) && !block.disabled
             )
     );
 }
@@ -483,15 +492,13 @@ export async function doesThemeHasFrakButton(context: AuthenticatedContext) {
 }
 
 /**
- * Check if the current shop theme has the Frak banner block enabled anywhere.
- *
- * Enumerates every section group (`sections/*.json`), every template
- * (`templates/*.json`), and `config/settings_data.json` via the Shopify Admin
- * GraphQL API, then scans each file for an enabled Frak banner app block.
- * This catches banners placed in the header, footer, any custom section group,
- * or directly on a page template.
+ * Which in-page Frak blocks are enabled in the published theme, from one scan
+ * of every section group (`sections/*.json`), every template
+ * (`templates/*.json`) and `config/settings_data.json`.
  */
-export async function doesThemeHasFrakBanner(context: AuthenticatedContext) {
+export async function getThemeBlockPresence(
+    context: AuthenticatedContext
+): Promise<{ banner: boolean; ambassador: boolean }> {
     const mainThemeId = await getMainThemeId(context);
 
     const files = await getTemplateFilesMatching(
@@ -500,32 +507,45 @@ export async function doesThemeHasFrakBanner(context: AuthenticatedContext) {
         ["sections/*.json", "templates/*.json", "config/settings_data.json"]
     );
 
-    return files.some((file) => {
-        const body = file.body as
-            | {
-                  sections?: unknown;
-                  current?: { sections?: unknown };
-              }
-            | undefined;
-        // settings_data.json stores sections under body.current.sections,
-        // section groups and templates store them directly under body.sections.
-        const sections =
-            file.filename === "config/settings_data.json"
-                ? body?.current?.sections
-                : body?.sections;
+    const sectionMaps = files.map((file) => ({
+        filename: file.filename,
+        sections: sectionsOf(file),
+    }));
 
-        return detectFrakBannerInSections(
-            sections as
-                | Record<
-                      string,
-                      | string
-                      | {
-                            type: string;
-                            block_order?: string[];
-                            blocks?: Record<string, ThemeBlockInfo>;
-                        }
-                  >
-                | undefined
-        );
-    });
+    return {
+        banner: sectionMaps.some(({ sections }) =>
+            detectFrakBlockInSections(sections, FRAK_BANNER_BLOCK_PATTERN)
+        ),
+        // The default page template renders on every page, so it never counts.
+        ambassador: sectionMaps.some(
+            ({ filename, sections }) =>
+                CUSTOM_PAGE_TEMPLATE.test(filename) &&
+                detectFrakBlockInSections(
+                    sections,
+                    FRAK_AMBASSADOR_BLOCK_PATTERN
+                )
+        ),
+    };
+}
+
+const CUSTOM_PAGE_TEMPLATE = /^templates\/page\.[^/]+\.json$/;
+
+function sectionsOf(file: { filename: string; body: unknown }) {
+    const body = file.body as
+        | {
+              sections?: unknown;
+              current?: { sections?: unknown };
+          }
+        | undefined;
+    // settings_data.json stores sections under body.current.sections,
+    // section groups and templates store them directly under body.sections.
+    const sections =
+        file.filename === "config/settings_data.json"
+            ? body?.current?.sections
+            : body?.sections;
+    return sections as Parameters<typeof detectFrakBlockInSections>[0];
+}
+
+export async function doesThemeHasFrakBanner(context: AuthenticatedContext) {
+    return (await getThemeBlockPresence(context)).banner;
 }

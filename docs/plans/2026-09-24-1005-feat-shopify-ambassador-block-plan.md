@@ -38,7 +38,7 @@ The merchant will later customise the page's texts and images from the business 
 - **The block has no content settings.** (session-settled: user-directed — chosen over exposing images and hero copy, images only, or a curated set of about 20 text fields: the business dashboard will become the single place to customise the page, so a second surface would need a precedence rule or a migration later.) Governs R3.
 - **No hero photo source on Shopify for now.** (session-settled: user-directed — chosen over falling back to the merchant's Shopify brand cover image: brand covers are composed wide, and wide images lose about half their width at the hero's 4:5 crop (commit `f43b3de22`), while the collapsed frame is L's designed no-photo state. The photo arrives with the dashboard work.) Governs R3.
 - **Guidance lives in the "finish your setup" card set.** (session-settled: user-directed — chosen over a new onboarding wizard step, which would hold back "setup complete" for merchants who do not want the page, and over no app UI, where merchants would never find the block.) Governs R4–R7.
-- **The card leads with the template, then the page.** (session-settled: user-approved — chosen over the brainstorm's page-first order: Shopify lets a page select only a template that already exists, so page-first sends the merchant back to the page afterwards.) Governs R5.
+- **Only a custom page template counts, and the card leads with the page.** (session-settled: user-directed — chosen over counting any page template and over keeping the card until dismissed: detection cannot see whether a page uses the template, so the card must be read in full before it hides, and the default page template renders on every page, so a block there is a mistake rather than a finished setup.) Governs R5, R6.
 - **The page URL is not captured.** (session-settled: user-directed — chosen over looking up the page through a new `read_online_store_pages` scope, which forces every installed merchant to re-approve the app, and over asking the merchant to paste the URL, which goes stale when the page handle changes.) No requirement; see Scope Boundaries.
 
 ### Requirements
@@ -52,8 +52,8 @@ The merchant will later customise the page's texts and images from the business 
 **Setup guidance in the Frak app**
 
 - R4. The "finish your setup" area gains an ambassador-page card next to the share-button and banner cards, shown under the same conditions as those cards.
-- R5. The card lists two steps, in order: in the theme editor, create a page template and add the Frak Ambassador block to it; then create a Shopify page that uses that template. It links to the Shopify admin screen for each step.
-- R6. The card is hidden while an enabled Frak Ambassador block exists in any page template of the published theme, and it shows otherwise.
+- R5. The card lists three steps, in order: create a Shopify page; in the theme editor, create a custom page template and add the Frak Ambassador block to it; select that template on the page. It links to the Shopify admin screen for the first two steps and warns against the default page template.
+- R6. The card is hidden while an enabled Frak Ambassador block exists in a custom page template of the published theme, and it shows otherwise. The default page template never counts.
 - R7. The card's state refreshes when the merchant returns to the Frak app tab, as the other setup cards' state does.
 
 **Release**
@@ -64,7 +64,7 @@ The merchant will later customise the page's texts and images from the business 
 
 - F1. Merchant publishes the ambassador page
   - **Trigger:** The merchant opens the Frak app after completing the required onboarding steps, on an Online Store 2.0 theme.
-  - **Steps:** The merchant sees the ambassador-page card. In the theme editor they create a page template, add the Frak Ambassador block to it and save. In the Shopify admin they create a page and select that template. Back in the Frak app, the card is gone.
+  - **Steps:** The merchant sees the ambassador-page card. They create a page in the Shopify admin. In the theme editor they create a custom page template, add the Frak Ambassador block to it and save. Back on the page, they select that template. In the Frak app, the card is gone.
   - **Outcome:** The page is live at a URL the merchant chose. It shows the default ambassador content in the storefront's language.
   - **Covered by:** R1–R7
 
@@ -72,7 +72,7 @@ The merchant will later customise the page's texts and images from the business 
 
 - AE1. **Covers R6, R7.** Given the merchant has added and saved the block in a page template of the published theme, when they return to the Frak app tab, then the ambassador-page card is gone.
 - AE2. **Covers R6.** Given the block is in a page template but disabled, or sits in a section the merchant hid, when the Frak app loads, then the card shows.
-- AE3. **Covers R6.** Given the block exists only in an unpublished theme, when the Frak app loads, then the card shows.
+- AE3. **Covers R6.** Given the block exists only in an unpublished theme, or only in the default page template, when the Frak app loads, then the card shows.
 - AE4. **Covers R4.** Given a vintage theme that cannot host app blocks, when the Frak app loads, then no ambassador-page card shows, as with the share-button and banner cards.
 - AE5. **Covers R3.** Given a French storefront, when a visitor opens the page, then all copy is the French default and the hero frame is collapsed around the reward card.
 
@@ -116,7 +116,7 @@ This plan covers placing the ambassador page on Shopify. The breakdown below ref
 - Shopify limits: app blocks cap interactive settings at 25, which the component's roughly 64 override attributes could not fit anyway ([theme app extension configuration](https://shopify.dev/docs/apps/build/online-store/theme-app-extensions/configuration)). Deep links can add an app block to an existing JSON template only.
 - Hero crop evidence: commit `f43b3de22` (wide brand art at 4:5, with the reward card drawn over it).
 
-**Product Contract preservation:** changed: R5 — the card lists two steps, template first, instead of three steps page first, because a Shopify page can only select a template that already exists (user-approved at the plan's scoping check). F1 follows. The deferred card-copy question is answered by U3.
+**Product Contract preservation:** changed: R5, R6 — three steps page first, and only a custom page template counts, because the card hides before the merchant can see a page use the template and a block on the default template renders everywhere (user-directed after code review). F1 and AE3 follow. The deferred card-copy question is answered by U3.
 
 ---
 
@@ -124,7 +124,7 @@ This plan covers placing the ambassador page on Shopify. The breakdown below ref
 
 ### Key Technical Decisions
 
-- KTD1. **The block is restricted to page templates.** Its schema declares `enabled_on` with the `page` template, so the theme editor refuses to place it on product, collection or home templates. This makes R6's "any page template" equal to "anywhere the block can exist", so detection needs no filename filter. Governs R1, R6.
+- KTD1. **The block is restricted to page templates.** Its schema declares `enabled_on` with the `page` template, so the theme editor refuses to place it on product, collection or home templates. Detection then only needs to tell a custom page template (`templates/page.<suffix>.json`) from the default one. Governs R1, R6.
 - KTD2. **One theme scan answers both banner and ambassador presence.** The banner check already pages through `sections/*.json`, `templates/*.json` and `config/settings_data.json`. It becomes a presence check that reports both block types from that single read. The existing banner-only function stays as a thin wrapper, because the appearance route calls it on its own. Governs R6.
 - KTD3. **A hidden section counts as "block absent", for every block this scan checks.** (session-settled: user-approved — chosen over matching only the block's own `disabled` flag: a block inside a hidden section never renders, and the banner check inherits the fix through the shared detector.) Governs R6.
 - KTD4. **Ambassador presence travels in the onboarding data but is not an onboarding step.** It is an optional field beside `isThemeHasFrakBanner`, filled by the step 7 fetcher, and absent from `stepValidations`. So `MAX_STEP`, `applicableStepCount` and the critical steps do not change (see Stop conditions). Governs R4.
@@ -164,12 +164,14 @@ This plan covers placing the ambassador page on Shopify. The breakdown below ref
 - Covers AE1. A template whose sections hold an enabled `shopify://apps/frak/blocks/ambassador/<uuid>` block is detected as present.
 - Covers AE2. The same block with `disabled: true` is detected as absent.
 - Covers AE2. An enabled ambassador block inside a section with `disabled: true` is detected as absent.
+- Covers AE3. An enabled ambassador block in `templates/page.json` is detected as absent, and one in `templates/page.ambassador.json` as present.
+- A template body Shopify returns as base64 is decoded before detection.
 - A banner block inside a hidden section is detected as absent (the KTD3 change for banner).
 - An ambassador block does not count as a banner, and a banner does not count as an ambassador.
 - Sections that are strings, empty, `undefined`, or sections without blocks detect as absent for both patterns.
 - Every existing banner detector test passes against the parameterised detector.
 - `validateCompleteOnboarding` gives the same result with the ambassador flag true, false or absent, and `MAX_STEP` stays 7.
-**Verification:** Existing `theme.test.ts` and `onboarding.test.ts` cases pass unchanged apart from the renamed detector. AE3 holds by construction, since the scan reads only the main theme.
+**Verification:** Existing `theme.test.ts` and `onboarding.test.ts` cases pass unchanged apart from the renamed detector. AE3's unpublished-theme case holds by construction, since the scan reads only the main theme.
 
 ### U3. Ambassador-page setup card
 
@@ -179,7 +181,7 @@ This plan covers placing the ambassador page on Shopify. The breakdown below ref
 **Files:** `apps/shopify/app/components/OptionalSetup/index.tsx`, `apps/shopify/app/i18n/locales/en/translation.json`, `apps/shopify/app/i18n/locales/fr/translation.json`.
 **Approach:**
 1. Add an ambassador card, shown while U2's flag is falsy, and let `OptionalSetup` return nothing only when all three cards are hidden.
-2. Show R5's two steps, each with a link (KTD5): the theme editor opened on page templates, and the admin's new-page screen on the shop's myshopify domain.
+2. Show R5's three steps, the first two with a link (KTD5): the admin's new-page screen on the shop's myshopify domain, and the theme editor opened on page templates.
 3. Add `optionalSetup.ambassador` copy in en and fr, text only, with no illustration. It tells the merchant to remove the template's default page-content section if they want the ambassador page alone.
 4. Reword `optionalSetup.title` and `optionalSetup.description` in both languages, since they currently say "two" components.
 **Patterns to follow:** `BannerCard` and `useThemeEditorUrl` in the same file. Links use `ExternalButton`, never a bare `<a>` (Shopify session-loss trap). R7 comes from the existing `useVisibilityChange` refresh, with no new code.

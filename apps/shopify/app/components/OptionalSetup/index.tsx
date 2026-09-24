@@ -9,16 +9,9 @@ import { useRefreshData } from "../../hooks/useRefreshData";
 import { ExternalButton } from "../ui/ExternalLink";
 
 /**
- * Surfaces the two non-critical onboarding items (share button + banner)
- * as a "finish your setup" card on the index page.
- *
- * Renders once the critical onboarding (steps 1-5) is done — the
- * merchant can already ship live, but these UI bits unlock storefront
- * discovery (share button) and referee conversion (banner). The card
- * disappears entirely once both are activated.
- *
- * Tab visibility triggers a refresh so detection picks up changes made
- * in the Shopify theme editor without a manual reload.
+ * "Finish your setup" cards for the optional storefront blocks: share button,
+ * banner and ambassador page. Each card hides once its block is detected.
+ * Tab visibility triggers a refresh so theme-editor changes show up.
  */
 export function OptionalSetup({
     onboardingData,
@@ -38,8 +31,9 @@ export function OptionalSetup({
         !onboardingData.isThemeHasFrakButton &&
         Boolean(onboardingData.firstProduct);
     const showBanner = !onboardingData.isThemeHasFrakBanner;
+    const showAmbassador = !onboardingData.isThemeHasFrakAmbassador;
 
-    if (!showShareButton && !showBanner) return null;
+    if (!showShareButton && !showBanner && !showAmbassador) return null;
 
     return (
         <s-section>
@@ -53,15 +47,20 @@ export function OptionalSetup({
                         />
                     )}
                     {showBanner && <BannerCard />}
+                    {showAmbassador && <AmbassadorCard />}
                 </s-stack>
             </s-stack>
         </s-section>
     );
 }
 
-function useThemeEditorUrl(): string {
+function useAdminUrl(): string {
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
-    return `https://${rootData?.shop?.myshopifyDomain}/admin/themes/current/editor`;
+    return `https://${rootData?.shop?.myshopifyDomain}/admin`;
+}
+
+function useThemeEditorUrl(): string {
+    return `${useAdminUrl()}/themes/current/editor`;
 }
 
 function ShareButtonCard({ productHandle }: { productHandle?: string }) {
@@ -106,6 +105,38 @@ function BannerCard() {
                 >
                     {t("optionalSetup.banner.cta")}
                 </ExternalButton>
+            </s-stack>
+        </s-box>
+    );
+}
+
+function AmbassadorCard() {
+    const { t } = useTranslation();
+    const adminUrl = useAdminUrl();
+    const editorUrl = useThemeEditorUrl();
+
+    // No `addAppBlockId` deep link: it could only target the default page
+    // template, which would put the ambassador page on every page.
+    return (
+        <s-box background="subdued" padding="base">
+            <s-stack gap="base">
+                <s-heading>{t("optionalSetup.ambassador.title")}</s-heading>
+                <s-text>{t("optionalSetup.ambassador.description")}</s-text>
+                <s-text>{t("optionalSetup.ambassador.step1")}</s-text>
+                <ExternalButton
+                    variant="primary"
+                    href={`${adminUrl}/pages/new`}
+                >
+                    {t("optionalSetup.ambassador.step1Cta")}
+                </ExternalButton>
+                <s-text>{t("optionalSetup.ambassador.step2")}</s-text>
+                <ExternalButton
+                    variant="secondary"
+                    href={`${editorUrl}?template=page`}
+                >
+                    {t("optionalSetup.ambassador.step2Cta")}
+                </ExternalButton>
+                <s-text>{t("optionalSetup.ambassador.step3")}</s-text>
             </s-stack>
         </s-box>
     );

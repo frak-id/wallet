@@ -3,9 +3,9 @@ import { log } from "app/services.server/logger";
 import { firstProductPublished } from "app/services.server/shop";
 import {
     doesThemeHasFrakActivated,
-    doesThemeHasFrakBanner,
     doesThemeHasFrakButton,
     getMainThemeId,
+    getThemeBlockPresence,
 } from "app/services.server/theme";
 import { getWebhooks } from "app/services.server/webhook";
 import { getWebPixel } from "app/services.server/webPixel";
@@ -100,10 +100,16 @@ const stepDataFetchers = {
 
     7: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
         try {
-            const isThemeHasFrakBanner = await doesThemeHasFrakBanner(context);
-            return { isThemeHasFrakBanner };
+            const presence = await getThemeBlockPresence(context);
+            return {
+                isThemeHasFrakBanner: presence.banner,
+                isThemeHasFrakAmbassador: presence.ambassador,
+            };
         } catch (error) {
-            log.error({ err: error }, "onboarding: error fetching banner data");
+            log.error(
+                { err: error },
+                "onboarding: error fetching theme block data"
+            );
             return {};
         }
     },

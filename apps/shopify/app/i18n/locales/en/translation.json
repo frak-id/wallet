@@ -67,7 +67,7 @@
     },
     "optionalSetup": {
         "title": "Finish your setup with end-user UI components",
-        "description": "Your store is live and can already distribute rewards. These two optional storefront components unlock organic sharing and referee conversion. Add them when you are ready.",
+        "description": "Your store is live and can already distribute rewards. These optional storefront components unlock organic sharing, referee conversion and a page that recruits ambassadors. Add them when you are ready.",
         "shareButton": {
             "title": "Add the share button to your product pages",
             "description": "Adds a one-click share button on every product page. Visitors share the page with their network, and the link automatically carries their referral identity so they earn a reward when someone they invited buys.",
@@ -77,6 +77,15 @@
             "title": "Add the referee banner to your theme",
             "description": "Shown only to visitors who land on your store through a referral link. The banner confirms they were invited, explains the reward they will earn for buying, and turns a cold visit into a primed conversion.",
             "cta": "Open the theme editor"
+        },
+        "ambassador": {
+            "title": "Publish your ambassador page",
+            "description": "A full page that explains your referral programme and invites customers to become ambassadors. It shows your campaign's rewards and follows your store's language.",
+            "step1": "1. Create a page, with a title such as \"Become an ambassador\". Keep the default template for now.",
+            "step1Cta": "Create a page",
+            "step2": "2. In the theme editor, open the template menu, choose Pages, then Create template. Add the Frak Ambassador block to the new template and save. Do not add it to the default page template: that one renders on every page. Remove the template's default page content section if you want the ambassador page on its own.",
+            "step2Cta": "Open the theme editor",
+            "step3": "3. Back on your page, select the new template under Theme template and save. This card disappears once the block is in place."
         }
     },
     "pixel": {
