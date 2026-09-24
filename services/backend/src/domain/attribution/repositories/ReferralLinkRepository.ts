@@ -80,23 +80,6 @@ export class ReferralLinkRepository {
             .where(inArray(referralLinksTable.id, ids));
     }
 
-    /** Redemptions per referral-code id, removed links included. Missing ids have none. */
-    async countByCodeIds(codeIds: string[]): Promise<Map<string, number>> {
-        if (codeIds.length === 0) return new Map();
-        const codeId = sql<string>`${referralLinksTable.sourceData}->>'codeId'`;
-        const rows = await db
-            .select({ codeId, count: sql<number>`count(*)::int` })
-            .from(referralLinksTable)
-            .where(
-                and(
-                    eq(referralLinksTable.source, "code"),
-                    inArray(codeId, codeIds)
-                )
-            )
-            .groupBy(codeId);
-        return new Map(rows.map((row) => [row.codeId, row.count]));
-    }
-
     /**
      * Look up the active referral link for a given scope.
      *

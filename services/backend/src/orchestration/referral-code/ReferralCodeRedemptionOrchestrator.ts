@@ -116,10 +116,23 @@ export class ReferralCodeRedemptionOrchestrator {
         refereeIdentityGroupId: string,
         context: RedeemContext | undefined
     ): Promise<void> {
-        const reason = await this.findFrakCodeRejection(
-            refereeIdentityGroupId,
-            context
-        );
+        let reason: FrakCodeRejection | null = "no_onboarding_context";
+        if (context === "onboarding") {
+            const [group, hasPurchase] = await Promise.all([
+                this.identityRepository.findGroupById(refereeIdentityGroupId),
+                this.interactionLogRepository.hasPurchaseForGroup(
+                    refereeIdentityGroupId
+                ),
+            ]);
+            const ageMs = group?.createdAt
+                ? Date.now() - group.createdAt.getTime()
+                : Number.POSITIVE_INFINITY;
+            if (ageMs > FRAK_CODE_ONBOARDING_WINDOW_MS) {
+                reason = "outside_onboarding_window";
+            } else {
+                reason = hasPurchase ? "has_purchase" : null;
+            }
+        }
         if (!reason) return;
 
         businessMetrics.frakCodeRejected(reason);
@@ -132,28 +145,6 @@ export class ReferralCodeRedemptionOrchestrator {
             "Frak referral code rejected"
         );
         throw codeNotFound();
-    }
-
-    private async findFrakCodeRejection(
-        refereeIdentityGroupId: string,
-        context: RedeemContext | undefined
-    ): Promise<FrakCodeRejection | null> {
-        if (context !== "onboarding") return "no_onboarding_context";
-
-        const [group, hasPurchase] = await Promise.all([
-            this.identityRepository.findGroupById(refereeIdentityGroupId),
-            this.interactionLogRepository.hasPurchaseForGroup(
-                refereeIdentityGroupId
-            ),
-        ]);
-        const ageMs = group?.createdAt
-            ? Date.now() - group.createdAt.getTime()
-            : Number.POSITIVE_INFINITY;
-        if (ageMs > FRAK_CODE_ONBOARDING_WINDOW_MS) {
-            return "outside_onboarding_window";
-        }
-        if (hasPurchase) return "has_purchase";
-        return null;
     }
 }
 

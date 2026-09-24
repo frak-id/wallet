@@ -1,4 +1,3 @@
-import { AttributionContext } from "../src/domain/attribution/context";
 import { IdentityContext } from "../src/domain/identity/context";
 import {
     FRAK_REFERRAL_IDENTITY_GROUP_ID,
@@ -9,7 +8,7 @@ import { CODE_LENGTH, generateCandidates, STEM_ALPHABET } from "../src/utils";
 const USAGE = `Usage: bun scripts/frakReferralCode.ts <command>
   issue [CODE]   issue a Frak code, vanity when CODE is given, random otherwise
   revoke <CODE>  stop new redemptions; existing referees keep Frak as referrer
-  list           every Frak code with its redemption count`;
+  list           every Frak code`;
 
 const referralCodes = ReferralCodeContext.repositories.referralCode;
 
@@ -53,16 +52,11 @@ async function revoke(raw: string | undefined) {
 
 async function list() {
     const codes = await referralCodes.listFrakCodes();
-    const redemptions =
-        await AttributionContext.repositories.referralLink.countByCodeIds(
-            codes.map((code) => code.id)
-        );
     console.table(
         codes.map((code) => ({
             code: code.code,
             createdAt: code.createdAt.toISOString(),
             revokedAt: code.revokedAt?.toISOString() ?? "",
-            redemptions: redemptions.get(code.id) ?? 0,
         }))
     );
 }

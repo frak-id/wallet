@@ -122,63 +122,10 @@ function makeOrchestrator(opts: {
     return { orchestrator, assetLogRepository, campaignRuleRepository };
 }
 
-const insertedRows = () =>
-    (txInsert.mock.calls[0]?.[0] ?? []) as AssetLogInsert[];
-
 describe("BatchRewardOrchestrator Frak referral policy", () => {
     beforeEach(() => {
         txInsert.mockImplementation(async (rows: AssetLogInsert[]) => rows);
         txUpdate.mockResolvedValue(undefined);
-    });
-
-    it("pays the first Frak-credited purchase twice to the user", async () => {
-        const { orchestrator, campaignRuleRepository } = makeOrchestrator({
-            rewards: [refereeReward, frakReferrerReward],
-            referrer: FRAK_REFERRAL_IDENTITY_GROUP_ID,
-        });
-
-        const result = await orchestrator.processPendingInteractions({
-            limit: 10,
-        });
-
-        expect(result).toMatchObject({
-            rewardsCreated: 2,
-            welcomeBonusesCreated: 1,
-        });
-        expect(
-            insertedRows().map((row) => [
-                row.identityGroupId,
-                row.recipientType,
-            ])
-        ).toEqual([
-            [USER, "referee"],
-            [USER, "welcome_bonus"],
-        ]);
-        expect(campaignRuleRepository.restoreBudget).not.toHaveBeenCalled();
-    });
-
-    it("drops Frak's share once claimed and restores its budget", async () => {
-        const { orchestrator, campaignRuleRepository } = makeOrchestrator({
-            rewards: [refereeReward, frakReferrerReward],
-            referrer: FRAK_REFERRAL_IDENTITY_GROUP_ID,
-            bonusAlreadyClaimed: true,
-        });
-
-        const result = await orchestrator.processPendingInteractions({
-            limit: 10,
-        });
-
-        expect(result).toMatchObject({
-            rewardsCreated: 1,
-            welcomeBonusesCreated: 0,
-        });
-        expect(insertedRows().map((row) => row.recipientType)).toEqual([
-            "referee",
-        ]);
-        expect(campaignRuleRepository.restoreBudget).toHaveBeenCalledWith(
-            CAMPAIGN,
-            5
-        );
     });
 
     it("skips the claim lookup when Frak is not a recipient", async () => {

@@ -7,7 +7,6 @@ const FRAK = "frak-group";
 const USER = "user-group";
 const FRIEND = "friend-group";
 const TOKEN = "0x0000000000000000000000000000000000000001" as Address;
-const OTHER_TOKEN = "0x0000000000000000000000000000000000000002" as Address;
 
 const reward = (over: Partial<CalculatedReward> = {}): CalculatedReward => ({
     recipient: "referrer",
@@ -97,28 +96,17 @@ describe("applyFrakReferralPolicy", () => {
         ).toEqual([refereeReward, friendShare]);
     });
 
-    it("keeps one bonus per campaign when several campaigns match", () => {
+    it("pays only the first share when several campaigns match", () => {
         const result = run([
             reward({ campaignRuleId: "campaign-a", amount: 5 }),
             reward({ campaignRuleId: "campaign-b", amount: 3 }),
         ]);
 
-        expect(result.map((r) => [r.campaignRuleId, r.amount])).toEqual([
-            ["campaign-a", 5],
-            ["campaign-b", 3],
-        ]);
-        expect(result.every((r) => r.recipient === "welcome_bonus")).toBe(true);
-    });
-
-    it("merges several shares of one campaign into a single row", () => {
-        const result = run([
-            reward({ amount: 0.1 }),
-            reward({ amount: 0.2 }),
-            reward({ amount: 1, token: OTHER_TOKEN }),
-        ]);
-
         expect(result).toHaveLength(1);
-        expect(result[0]?.amount).toBe(0.3);
-        expect(result[0]?.token).toBe(TOKEN);
+        expect(result[0]).toMatchObject({
+            campaignRuleId: "campaign-a",
+            amount: 5,
+            recipient: "welcome_bonus",
+        });
     });
 });

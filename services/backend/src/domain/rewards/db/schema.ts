@@ -138,10 +138,10 @@ export const assetLogsTable = pgTable(
         index("asset_logs_processing_status_changed_idx")
             .on(table.statusChangedAt)
             .where(sql`"status" = 'processing'`),
-        // One live welcome bonus per (user, merchant, campaign): the claim
-        // guard across concurrent reward workers.
+        // One live welcome bonus per (user, merchant): the claim guard across
+        // concurrent reward workers.
         uniqueIndex("asset_logs_welcome_bonus_live_idx")
-            .on(table.identityGroupId, table.merchantId, table.campaignRuleId)
+            .on(table.identityGroupId, table.merchantId)
             .where(
                 sql`"recipient_type" = 'welcome_bonus' AND "status" IN ('pending', 'processing', 'settled', 'bank_depleted')`
             ),
