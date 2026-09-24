@@ -1,3 +1,4 @@
+import type { ReferralCodeKind } from "@frak-labs/backend-elysia/domain/referral-code/schemas";
 import type { FlowEvents } from "./flow";
 
 // `recovery_code` is the pinned wire value for the reward-code action;
@@ -18,6 +19,15 @@ type ReferralCodeOutcome =
     | "skipped"
     | "auto_skipped_existing"
     | "error";
+
+export type { ReferralCodeKind };
+
+/** How the code in the step's input got there. */
+export type ReferralPrefillSource =
+    | "url"
+    | "install_referrer"
+    | "paste"
+    | "none";
 
 type EmailInputOutcome =
     | "submitted"
@@ -43,6 +53,8 @@ type OnboardingMidFlowEvents = {
     referral_code_resolved: OnboardingBaseProps & {
         outcome: ReferralCodeOutcome;
         error_key?: string;
+        code_kind?: ReferralCodeKind;
+        prefill_source: ReferralPrefillSource;
     };
     // Fires once when the user lands on the `emailInput` onboarding step.
     email_input_viewed: OnboardingBaseProps | undefined;

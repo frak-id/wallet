@@ -25,7 +25,10 @@ import {
     APP_STORE_URL,
     PLAY_STORE_URL,
 } from "@frak-labs/wallet-shared/common/utils/storeUrls";
-import { buildPlayStoreInstallUrl } from "@frak-labs/wallet-shared/sharing";
+import {
+    buildPlayStoreInstallUrl,
+    buildPlayStoreReferralUrl,
+} from "@frak-labs/wallet-shared/sharing";
 import type { Translate } from "@frak-labs/wallet-shared/types";
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Info } from "lucide-react";
@@ -77,7 +80,8 @@ export function InstallView({
     navigation: InstallNavigation;
     processingLayout: React.ComponentType<{ children: React.ReactNode }>;
 }) {
-    const { m, a, checkoutToken, p, embed, returnScheme, sid, clip } = search;
+    const { m, a, ref, checkoutToken, p, embed, returnScheme, sid, clip } =
+        search;
     // Read once, and forwarded to both views whichever shell is running.
     const proof = useMemo(
         () => resolveInstallProof(window.location.hash, p),
@@ -97,10 +101,24 @@ export function InstallView({
     }, [m, a, checkoutToken, proof, shouldShowCodeView]);
 
     if (shouldShowCodeView) {
+        // A bare `/install?ref=` (no merchant/anonymous credential) skips
+        // install-code minting entirely and shows the referral code itself.
+        if (ref && !(m || a)) {
+            return (
+                <InstallReferralCodeView
+                    referralCode={ref}
+                    embed={embed}
+                    returnScheme={returnScheme}
+                    sid={sid}
+                    clip={clip}
+                />
+            );
+        }
         return (
             <InstallCodeView
                 m={m}
                 a={a}
+                referralCode={ref}
                 checkoutToken={checkoutToken}
                 proof={proof}
                 embed={embed}
@@ -419,15 +437,15 @@ function InstallCodeInfoCard({ t }: { t: Translate }) {
 function InstallCodeView({
     m: merchantId,
     a: anonymousId,
+    referralCode,
     checkoutToken,
     proof,
     embed,
     returnScheme,
     sid,
     clip,
-}: InstallSearch & { proof?: string }) {
+}: Omit<InstallSearch, "ref"> & { proof?: string; referralCode?: string }) {
     const { t: rawT } = useTranslation();
-    const [copied, setCopied] = useState(false);
     const [showCodeAfterInstall, setShowCodeAfterInstall] = useState(false);
 
     const { data: merchantInfo } = useQuery(
@@ -525,25 +543,17 @@ function InstallCodeView({
         });
     }, [installed, activation?.dt, activation?.via, merchantId]);
 
-    /**
-     * Hands the code to the native host, which can give the pasteboard entry an
-     * expiry and `localOnly`; this page cannot. Returns whether a host took it.
-     * From a user gesture only: `assign()` to a custom scheme raises the OS
-     * "open in app?" sheet, whose blur/refocus would retrigger an effect.
-     */
-    const handOverCode = useCallback(() => {
-        if (!data?.code) return false;
-        const expiresAt = new Date(data.expiresAt).getTime();
-        return sendHostResult({
-            scheme: returnScheme,
-            action: "code",
-            sid,
-            value: data.code,
-            expiresAt: Number.isFinite(expiresAt)
-                ? Math.floor(expiresAt / 1000)
-                : undefined,
-        });
-    }, [data?.code, data?.expiresAt, returnScheme, sid]);
+    const {
+        copied,
+        copy,
+        handOver: handOverCode,
+    } = useCodeHandoff({
+        value: data?.code,
+        expiresAt: data?.expiresAt,
+        returnScheme,
+        sid,
+        clip,
+    });
 
     // A native host already draws a title, a drag handle and a scrim, and this
     // page's own close button calls `window.close()`, which a web view ignores.
@@ -558,42 +568,18 @@ function InstallCodeView({
             merchantId,
             anonymousId,
             installProof: proof,
+            referralCode,
         });
-    }, [merchantId, anonymousId, proof, isAndroid]);
+    }, [merchantId, anonymousId, proof, referralCode, isAndroid]);
 
     const handleCopy = useCallback(async () => {
-        if (!data?.code) return;
-
-        // The host writes the code itself when it says so, marked sensitive
-        // and — on iOS — expiring. Writing here too would land a plain copy
-        // after its marked one and lose both protections, and no signal comes
-        // back in time to prevent that, so the declaration is on the URL.
-        const hostOwnsClipboard = clip === "host";
-
-        // Isolated: `writeText` rejects on a denied permission, a non-secure
-        // context or an unfocused document, none of which should stop the
-        // handoff below.
-        const copied =
-            hostOwnsClipboard ||
-            (await navigator.clipboard
-                .writeText(data.code)
-                .then(() => true)
-                .catch(() => false));
-
-        const offered = handOverCode();
-
-        // `offered` only means a return scheme was present — a fire-and-forget
-        // scheme navigation cannot be acknowledged — so on its own it is not
-        // proof the clipboard holds anything.
-        if (!(copied || offered)) return;
-
+        const outcome = await copy();
+        if (!outcome) return;
         trackEvent("install_code_copied", {
             merchant_id: merchantId,
-            handed_off: offered,
+            handed_off: outcome.handedOff,
         });
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    }, [data?.code, merchantId, handOverCode, clip]);
+    }, [copy, merchantId]);
 
     return (
         <div
@@ -693,6 +679,15 @@ function InstallCodeView({
 
             {visibleCode && <InstallCodeInfoCard t={t} />}
 
+            {referralCode && (
+                <Stack space="xs" align="center" padding="m">
+                    <Text variant="caption" color="secondary">
+                        {t("installCode.referral.manualEntry")}
+                    </Text>
+                    <CodeInput value={referralCode} mode="alphanumeric" />
+                </Stack>
+            )}
+
             <Stack as="footer" space="s" className={styles.footer}>
                 <ExternalLink
                     href={downloadUrl}
@@ -723,4 +718,177 @@ function InstallCodeView({
             </Stack>
         </div>
     );
+}
+
+/** `/install?ref=` without a merchant credential: nothing to mint, the link carries the code. */
+function InstallReferralCodeView({
+    referralCode,
+    embed,
+    returnScheme,
+    sid,
+    clip,
+}: {
+    referralCode: string;
+    embed?: InstallSearch["embed"];
+    returnScheme?: string;
+    sid?: string;
+    clip?: InstallSearch["clip"];
+}) {
+    const { t } = useTranslation();
+    const { copied, copy } = useCodeHandoff({
+        value: referralCode,
+        returnScheme,
+        sid,
+        clip,
+    });
+    const chromeless = isHostEmbedded(embed);
+    const isAndroid = useMemo(() => /android/i.test(navigator.userAgent), []);
+    const downloadUrl = useMemo(
+        () =>
+            isAndroid
+                ? buildPlayStoreReferralUrl({ referralCode })
+                : APP_STORE_URL,
+        [isAndroid, referralCode]
+    );
+
+    const handleCopy = useCallback(async () => {
+        const outcome = await copy();
+        if (!outcome) return;
+        trackEvent("install_code_copied", { handed_off: outcome.handedOff });
+    }, [copy]);
+
+    return (
+        <div
+            className={
+                chromeless
+                    ? `${styles.container} ${styles.containerChromeless}`
+                    : styles.container
+            }
+        >
+            {!chromeless && (
+                <Box
+                    as="header"
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    paddingX="m"
+                    paddingY="xs"
+                    backgroundColor="background"
+                    position="sticky"
+                    className={styles.header}
+                >
+                    <LogoFrakWithName className={styles.logo} />
+                </Box>
+            )}
+
+            <Stack as="main" space="l" padding="m" className={styles.main}>
+                <Stack as="section" space="xs" className={styles.heroSection}>
+                    <Text as="h1" variant="heading2" className={styles.title}>
+                        {t("installCode.referral.title")}
+                    </Text>
+                    <Text variant="bodySmall" color="secondary">
+                        {t("installCode.referral.description")}
+                    </Text>
+                </Stack>
+
+                <Stack space="m" align="center">
+                    <CodeInput value={referralCode} mode="alphanumeric" />
+                    <Button
+                        size="large"
+                        fontSize="s"
+                        width="full"
+                        className={styles.copyButton}
+                        onClick={handleCopy}
+                    >
+                        {copied
+                            ? t("installCode.referral.codeCopied")
+                            : t("installCode.copyCode")}
+                        <CopyIcon width={16} height={16} />
+                    </Button>
+                </Stack>
+            </Stack>
+
+            <Stack as="footer" space="s" className={styles.footer}>
+                <ExternalLink
+                    href={downloadUrl}
+                    className={styles.downloadButton}
+                    onClick={() => {
+                        // iOS has no install referrer: the pasteboard carries the code to onboarding.
+                        copy();
+                        trackEvent("install_store_clicked", {
+                            store: isAndroid ? "play_store" : "app_store",
+                            has_referrer: false,
+                            has_referrer_proof: false,
+                        });
+                    }}
+                >
+                    {t("installCode.download")}
+                </ExternalLink>
+            </Stack>
+        </div>
+    );
+}
+
+/**
+ * Clipboard write plus native-host handoff behind one user gesture. Resolves
+ * `null` when neither took the code, else whether a host was offered it.
+ */
+function useCodeHandoff({
+    value,
+    expiresAt,
+    returnScheme,
+    sid,
+    clip,
+}: {
+    value?: string;
+    expiresAt?: string;
+    returnScheme?: string;
+    sid?: string;
+    clip?: InstallSearch["clip"];
+}) {
+    const [copied, setCopied] = useState(false);
+
+    // Lets the host give the pasteboard entry an expiry and `localOnly`; this
+    // page cannot. User gesture only: `assign()` to a custom scheme raises the
+    // OS "open in app?" sheet, whose blur/refocus would retrigger an effect.
+    const handOver = useCallback(() => {
+        if (!value) return false;
+        const expiresAtMs = expiresAt
+            ? new Date(expiresAt).getTime()
+            : Number.NaN;
+        return sendHostResult({
+            scheme: returnScheme,
+            action: "code",
+            sid,
+            value,
+            expiresAt: Number.isFinite(expiresAtMs)
+                ? Math.floor(expiresAtMs / 1000)
+                : undefined,
+        });
+    }, [value, expiresAt, returnScheme, sid]);
+
+    const copy = useCallback(async () => {
+        if (!value) return null;
+
+        // A host declaring `clip=host` writes the code itself, marked sensitive;
+        // a second plain write from here would land after it and lose that.
+        const hostOwnsClipboard = clip === "host";
+        // Isolated: `writeText` rejects on a denied permission, a non-secure
+        // context or an unfocused document, none of which should stop the handoff.
+        const wroteClipboard =
+            hostOwnsClipboard ||
+            (await navigator.clipboard
+                .writeText(value)
+                .then(() => true)
+                .catch(() => false));
+        // Only means a return scheme was present: a scheme navigation is never acknowledged.
+        const handedOff = handOver();
+        if (!(wroteClipboard || handedOff)) return null;
+
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return { handedOff };
+    }, [value, clip, handOver]);
+
+    return { copied, copy, handOver };
 }

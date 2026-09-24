@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { CloseButton } from "@/module/common/component/CloseButton";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
 import { modalStore } from "@/module/stores/modalStore";
+import { FrakBonusSlide } from "./component/FrakBonusSlide";
 import { IntroSlide } from "./component/IntroSlide";
 import { InviteSlide } from "./component/InviteSlide";
 import { NotificationSlide } from "./component/NotificationSlide";
@@ -17,6 +18,7 @@ import {
     persistDismissedSlides,
 } from "./utils/dismissedSlides";
 import type {
+    FrakBonusWelcomeSlide,
     InviteWelcomeSlide,
     WelcomeSlide,
     WelcomeSlideId,
@@ -30,6 +32,7 @@ export function WelcomeCard() {
     const { data: referralStatus, isPending: isReferralStatusPending } =
         useReferralStatus();
     const hasOwnedCode = !!referralStatus?.ownedCode;
+    const isFrakReferred = !!referralStatus?.frakReferral;
     const [dismissedSlides, setDismissedSlides] =
         useState<WelcomeSlideId[]>(getDismissedSlides);
 
@@ -53,7 +56,19 @@ export function WelcomeCard() {
         [isReferralStatusPending, hasOwnedCode, navigate, t]
     );
 
+    const frakBonusSlide: FrakBonusWelcomeSlide | null = isFrakReferred
+        ? {
+              id: "frakBonus",
+              kind: "frakBonus",
+              title: t("wallet.welcome.frakBonus.title"),
+              description: t("wallet.welcome.frakBonus.description"),
+              cta: t("wallet.welcome.frakBonus.cta"),
+              onAction: () => navigate({ to: "/explorer" }),
+          }
+        : null;
+
     const slides: WelcomeSlide[] = [
+        ...(frakBonusSlide ? [frakBonusSlide] : []),
         {
             id: "intro",
             kind: "intro",
@@ -156,6 +171,12 @@ export function WelcomeCard() {
                                 <InviteSlide
                                     title={slide.title}
                                     items={slide.items}
+                                />
+                            ) : slide.kind === "frakBonus" ? (
+                                <FrakBonusSlide
+                                    title={slide.title}
+                                    description={slide.description}
+                                    cta={slide.cta}
                                 />
                             ) : (
                                 <NotificationSlide

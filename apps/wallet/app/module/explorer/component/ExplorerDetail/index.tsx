@@ -339,7 +339,11 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     </Card>
                 )}
 
-                <CampaignInfoSection view={view} merchantName={merchant.name} />
+                <CampaignInfoSection
+                    view={view}
+                    merchantName={merchant.name}
+                    merchantId={merchant.id}
+                />
                 <Box paddingX="m">
                     <Text as="p" variant="caption" align="center">
                         <Trans

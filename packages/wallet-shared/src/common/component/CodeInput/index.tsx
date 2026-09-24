@@ -1,4 +1,3 @@
-import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { visuallyHidden } from "@frak-labs/design-system/utils";
 import {
@@ -8,6 +7,7 @@ import {
     useRef,
     useState,
 } from "react";
+import { readClipboardText } from "../../utils/readClipboardText";
 import * as styles from "./index.css";
 
 type CodeInputMode = "numeric" | "alphanumeric";
@@ -136,15 +136,7 @@ export function CodeInput({
 
     const handlePasteFromClipboard = useCallback(async () => {
         try {
-            let text: string;
-            if (IS_TAURI) {
-                const { readText } = await import(
-                    "@tauri-apps/plugin-clipboard-manager"
-                );
-                text = await readText();
-            } else {
-                text = await navigator.clipboard.readText();
-            }
+            const text = await readClipboardText();
             setClipboardFailed(false);
             setCode(sanitize(text));
             inputRef.current?.focus();

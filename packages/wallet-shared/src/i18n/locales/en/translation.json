@@ -724,6 +724,11 @@
                 "step3Description": "Transfer your earnings to your bank account with just one click.",
                 "discoverOffers": "Discover offers",
                 "legal": "FRAK's <termsLink>terms and conditions</termsLink> apply."
+            },
+            "frakBonus": {
+                "title": "Your exclusive cashback is unlocked",
+                "description": "You're one of our first members — enjoy an exclusive cashback bonus on your first purchase at participating brands.",
+                "cta": "Discover brands"
             }
         },
         "stats": {
@@ -847,7 +852,13 @@
         "installedCodeToggle": "Or enter this code manually",
         "openWallet": "Open Frak & claim {{ estimatedReward }}",
         "installedHeadline": "You're all set. Open the app to claim {{ estimatedReward }}.",
-        "dismiss": "Close"
+        "dismiss": "Close",
+        "referral": {
+            "title": "Your referral code",
+            "description": "Download the app and enter this code when you sign up to unlock your exclusive cashback.",
+            "codeCopied": "Referral code copied!",
+            "manualEntry": "Referral code to enter at sign-up"
+        }
     },
     "pendingActions": {
         "walletAlreadyLinked": {
@@ -916,7 +927,9 @@
             "label": "Referral code",
             "placeholder": "Ex: LOLA10",
             "submitCta": "Apply code",
-            "appliedToast": "Referral code applied"
+            "appliedToast": "Referral code applied",
+            "frakAppliedToast": "Exclusive cashback unlocked!",
+            "paste": "Paste"
         },
         "welcome": {
             "title": "Welcome to your wallet",
@@ -970,6 +983,11 @@
             "pendingValidation": "Pending brand validation",
             "estimatedValidation": "Estimated validation",
             "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand."
+        },
+        "frakBonus": {
+            "label": "Welcome bonus",
+            "detailTitle": "Your welcome bonus",
+            "detailDescription": "Because you joined Frak with an invitation, Frak passed its referrer reward to you on your first purchase at {{merchant}}."
         }
     },
     "monerium": {
@@ -1187,6 +1205,12 @@
             "step2Description": "Every order made through your link on {{name}} earns you cash directly in your wallet.",
             "step3Title": "Collect your earnings in your wallet",
             "step3Description": "In one click, transfer your earnings to your bank account."
+        },
+        "frakBonus": {
+            "badge": "First-purchase bonus",
+            "row": "First-purchase bonus",
+            "amount": "+{{amount}}",
+            "explanation": "Thanks to your Frak invitation, your first purchase at this brand also earns you the referrer reward."
         }
     },
     "version": {

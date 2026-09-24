@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { type ChangeEvent, type FormEvent, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ReferralCodeStep } from "./index";
@@ -8,6 +8,8 @@ let capturedOptions:
           onApplied?: () => void;
           onError?: (key: string) => void;
           requireCompleteCode?: boolean;
+          initialCode?: string;
+          context?: string;
       }
     | undefined;
 
@@ -18,6 +20,7 @@ let mockState: {
 
 const mockReset = vi.fn();
 const mockMutate = vi.fn();
+const mockPaste = vi.fn<() => boolean>();
 
 // The hook is the only real wallet-shared dependency the component uses
 // (besides `REDEMPTION_CODE_LENGTH`). We re-implement the bits the
@@ -30,10 +33,12 @@ vi.mock("@frak-labs/wallet-shared", () => ({
             onApplied?: () => void;
             onError?: (key: string) => void;
             requireCompleteCode?: boolean;
+            initialCode?: string;
+            context?: string;
         } = {}
     ) => {
         capturedOptions = opts;
-        const [code, setCode] = useState("");
+        const [code, setCode] = useState(opts.initialCode ?? "");
         const hasValue = code.length > 0;
         const isComplete = code.length === 6;
         const canSubmit =
@@ -50,6 +55,11 @@ vi.mock("@frak-labs/wallet-shared", () => ({
         const handleClear = () => {
             setCode("");
             mockReset();
+        };
+        const handlePaste = async () => {
+            const pasted = mockPaste();
+            if (pasted) setCode("PASTED");
+            return pasted;
         };
         const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
             e.preventDefault();
@@ -71,6 +81,7 @@ vi.mock("@frak-labs/wallet-shared", () => ({
             errorMessageKey,
             handleChange,
             handleClear,
+            handlePaste,
             handleSubmit,
         };
     },
@@ -85,6 +96,8 @@ function renderStep(overrides?: {
     onSkip?: () => void;
     onError?: (key: string) => void;
     onBusyChange?: (isBusy: boolean) => void;
+    initialCode?: string;
+    onPaste?: () => void;
 }) {
     const onApplied = overrides?.onApplied ?? vi.fn();
     const onSkip = overrides?.onSkip ?? vi.fn();
@@ -95,6 +108,8 @@ function renderStep(overrides?: {
             onApplied={onApplied}
             onError={onError}
             onBusyChange={onBusyChange}
+            initialCode={overrides?.initialCode}
+            onPaste={overrides?.onPaste}
             headerEnd={
                 <button type="button" onClick={onSkip}>
                     onboarding.skipStep
@@ -131,8 +146,38 @@ describe("ReferralCodeStep", () => {
     beforeEach(() => {
         mockMutate.mockReset();
         mockReset.mockReset();
+        mockPaste.mockReset();
         mockState = { isPending: false, error: null };
         capturedOptions = undefined;
+    });
+
+    it("always sends context: onboarding", () => {
+        renderStep();
+        expect(capturedOptions?.context).toBe("onboarding");
+    });
+
+    it("pre-fills the input from initialCode without submitting", () => {
+        renderStep({ initialCode: "ABC123" });
+        expect(getInput().value).toBe("ABC123");
+        expect(mockMutate).not.toHaveBeenCalled();
+    });
+
+    it("the paste action fills the code and reports to the parent", async () => {
+        mockPaste.mockReturnValue(true);
+        const onPaste = vi.fn();
+        renderStep({ onPaste });
+        fireEvent.click(screen.getByText("onboarding.referral.paste"));
+        await waitFor(() => expect(onPaste).toHaveBeenCalled());
+        expect(getInput().value).toBe("PASTED");
+    });
+
+    it("a denied clipboard is not reported as a paste", async () => {
+        mockPaste.mockReturnValue(false);
+        const onPaste = vi.fn();
+        renderStep({ onPaste });
+        fireEvent.click(screen.getByText("onboarding.referral.paste"));
+        await waitFor(() => expect(mockPaste).toHaveBeenCalled());
+        expect(onPaste).not.toHaveBeenCalled();
     });
 
     it("passes requireCompleteCode=false to the shared hook", () => {

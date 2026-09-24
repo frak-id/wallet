@@ -5,6 +5,9 @@ import {
     authenticationStore,
     authenticatorStorage,
     getPasskeyPresence,
+    type RedeemResult,
+    type ReferralCodeKind,
+    type ReferralPrefillSource,
     recoveryHintStorage,
     trackEvent,
     ua,
@@ -15,6 +18,7 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
+import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
 import { EmailAlreadyUsedStep } from "@/module/onboarding/component/EmailAlreadyUsedStep";
 import {
     type EmailAlreadyUsedArgs,
@@ -41,7 +45,19 @@ type RegisterSearch = {
     /** Pre-fills the onboarding email (from `/login/email` when the backend
      * can't resolve the typed email); skips ahead to `onboardingThree`. */
     email?: string;
+    /** Referral code carried by an `/install?ref=` deep link or QR. */
+    ref?: string;
 };
+
+/** The page's own `?ref=` wins over the (async, Android-only) Play install referrer. */
+export function resolveReferralPrefill(
+    searchRef: string | undefined,
+    referrerCode: string | undefined
+): { code: string | undefined; source: ReferralPrefillSource } {
+    if (searchRef) return { code: searchRef, source: "url" };
+    if (referrerCode) return { code: referrerCode, source: "install_referrer" };
+    return { code: undefined, source: "none" };
+}
 
 export const Route = createFileRoute("/_wallet/_auth/register")({
     component: RegisterPage,
@@ -55,10 +71,19 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
             typeof search.email === "string" && search.email.length > 0
                 ? search.email
                 : undefined,
+        ref: parseReferralCode(search.ref),
     }),
     beforeLoad: async ({ search }) => {
         // Skip redirect if user explicitly requested new account creation
         if (search.new) return;
+
+        // Forwarded so login can hand the code to the redeem page.
+        const toLogin = () =>
+            redirect({
+                to: "/login",
+                replace: true,
+                ...(search.ref ? { search: { ref: search.ref } } : {}),
+            });
 
         // Synchronous localStorage signal, checked first: always ready at
         // `beforeLoad` (unlike the async IDB read below, which can be empty on
@@ -66,19 +91,13 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
         const lastAuthenticator =
             authenticationStore.getState().lastAuthenticator;
         if (lastAuthenticator?.authenticatorId && lastAuthenticator?.address) {
-            throw redirect({
-                to: "/login",
-                replace: true,
-            });
+            throw toLogin();
         }
 
         // Passkeys stored locally → login.
         const previousAuthenticators = await authenticatorStorage.getAll();
         if (previousAuthenticators.length > 0) {
-            throw redirect({
-                to: "/login",
-                replace: true,
-            });
+            throw toLogin();
         }
 
         // Fresh install: fall back to the uninstall-resilient recovery hint
@@ -86,19 +105,13 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
         // this Apple/Google account, so send them to login, not register.
         const hint = await recoveryHintStorage.get();
         if (hint.lastAuthenticatorId && hint.lastWallet) {
-            throw redirect({
-                to: "/login",
-                replace: true,
-            });
+            throw toLogin();
         }
 
         // Every record the app keeps about itself has missed, so ask the OS:
         // a Google Password Manager passkey outlives all of them.
         if ((await getPasskeyPresence()) === "present") {
-            throw redirect({
-                to: "/login",
-                replace: true,
-            });
+            throw toLogin();
         }
     },
 });
@@ -122,7 +135,7 @@ let hasAnnouncedInstallReferrer = false;
 function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { email: prefilledEmail } = Route.useSearch();
+    const { email: prefilledEmail, ref } = Route.useSearch();
     const [loginError, setLoginError] = useState<Error | null>(null);
     // The skip control lives in each asking step's header slot, so its
     // disabled state has to come from the step rather than from inside it.
@@ -159,6 +172,8 @@ function RegisterPage() {
     });
 
     const [referralToast, setReferralToast] = useState<ToastState>("idle");
+    const [referralToastKind, setReferralToastKind] =
+        useState<ReferralCodeKind>("user");
 
     const { data: referralStatus } = useReferralStatus();
     const hasExistingReferrer = Boolean(referralStatus?.crossMerchantReferrer);
@@ -170,6 +185,15 @@ function RegisterPage() {
 
     // On Tauri+Android: read Play Store referrer, resolve merchant, store ensure action
     const { data: referrerData } = useInstallReferrer();
+
+    const referralPrefill = resolveReferralPrefill(
+        ref,
+        referrerData?.referralCode
+    );
+    const [hasPastedReferralCode, setHasPastedReferralCode] = useState(false);
+    const referralPrefillSource: ReferralPrefillSource = hasPastedReferralCode
+        ? "paste"
+        : referralPrefill.source;
 
     // Announce the resolved referrer once. No `onExit`: this page is already
     // where dismissal should land, and navigating to it re-runs `beforeLoad`
@@ -237,9 +261,10 @@ function RegisterPage() {
         if (step !== "referralCode" || !hasExistingReferrer) return;
         flowRef.current?.track("referral_code_resolved", {
             outcome: "auto_skipped_existing",
+            prefill_source: referralPrefillSource,
         });
         goToStep("notification");
-    }, [step, hasExistingReferrer, goToStep]);
+    }, [step, hasExistingReferrer, goToStep, referralPrefillSource]);
 
     // Drive the referral-success toast lifecycle: shown → leaving → idle.
     useEffect(() => {
@@ -275,21 +300,28 @@ function RegisterPage() {
     // The redemption mutation is not unmount-cancelled, so a slow success can
     // land after the user already skipped the step. Ignore it then — the flow
     // has moved on and re-driving it would yank the user backwards.
-    const handleReferralApplied = useCallback(() => {
-        if (stepRef.current !== "referralCode") return;
-        flowRef.current?.track("referral_code_resolved", {
-            outcome: "applied",
-        });
-        setReferralToast("shown");
-        goToStep("notification");
-    }, [goToStep, stepRef]);
+    const handleReferralApplied = useCallback(
+        (result: RedeemResult) => {
+            if (stepRef.current !== "referralCode") return;
+            flowRef.current?.track("referral_code_resolved", {
+                outcome: "applied",
+                code_kind: result.kind,
+                prefill_source: referralPrefillSource,
+            });
+            setReferralToastKind(result.kind);
+            setReferralToast("shown");
+            goToStep("notification");
+        },
+        [goToStep, stepRef, referralPrefillSource]
+    );
 
     const handleReferralSkip = useCallback(() => {
         flowRef.current?.track("referral_code_resolved", {
             outcome: "skipped",
+            prefill_source: referralPrefillSource,
         });
         goToStep("notification");
-    }, [goToStep]);
+    }, [goToStep, referralPrefillSource]);
 
     // Same stale-step guard as the applied path: a redemption that fails after
     // the user skipped must not emit a second resolution for the step.
@@ -299,9 +331,15 @@ function RegisterPage() {
             flowRef.current?.track("referral_code_resolved", {
                 outcome: "error",
                 error_key: errorKey,
+                prefill_source: referralPrefillSource,
             });
         },
-        [stepRef]
+        [stepRef, referralPrefillSource]
+    );
+
+    const handleReferralPaste = useCallback(
+        () => setHasPastedReferralCode(true),
+        []
     );
 
     const handleEmailSkip = useCallback(() => {
@@ -456,6 +494,8 @@ function RegisterPage() {
                     onError={handleReferralError}
                     headerEnd={renderSkip(handleReferralSkip)}
                     onBusyChange={setIsStepBusy}
+                    initialCode={referralPrefill.code}
+                    onPaste={handleReferralPaste}
                 />
             )}
             {step === "notification" && (
@@ -487,7 +527,11 @@ function RegisterPage() {
                     <ConfirmationTooltip
                         isLeaving={referralToast === "leaving"}
                     >
-                        {t("onboarding.referral.appliedToast")}
+                        {t(
+                            referralToastKind === "frak"
+                                ? "onboarding.referral.frakAppliedToast"
+                                : "onboarding.referral.appliedToast"
+                        )}
                     </ConfirmationTooltip>
                 </ToastSurface>
             ) : null}

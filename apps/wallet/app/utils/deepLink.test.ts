@@ -560,6 +560,75 @@ describe("initDeepLinks", () => {
     });
 });
 
+describe("install deep link — ref", () => {
+    beforeEach(async () => {
+        vi.clearAllMocks();
+        pendingActionsStore.getState().clearAll();
+        openUrlHandler = null;
+        platformMocks.isTauri.mockReturnValue(true);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    test("logged out: routes to /register with the code, not /install", async () => {
+        getSafeSessionMock.mockReturnValue(null);
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+        if (!openUrlHandler)
+            throw new Error("Expected openUrlHandler to be set");
+
+        openUrlHandler(["frakwallet://install?ref=FRAKPA"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/register",
+            search: { ref: "FRAKPA" },
+            replace: true,
+        });
+    });
+
+    test("logged in: routes to the redeem page with the code", async () => {
+        getSafeSessionMock.mockReturnValue({ token: "valid-token" });
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+        if (!openUrlHandler)
+            throw new Error("Expected openUrlHandler to be set");
+
+        openUrlHandler(["frakwallet://install?ref=FRAKPA"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/profile/referral/redeem",
+            search: { code: "FRAKPA" },
+            replace: true,
+        });
+    });
+
+    test("with a merchant pair: keeps /install and forwards the code", async () => {
+        getSafeSessionMock.mockReturnValue(null);
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+        if (!openUrlHandler)
+            throw new Error("Expected openUrlHandler to be set");
+
+        openUrlHandler([
+            "frakwallet://install?m=merchant-1&a=anon-1&ref=FRAKPA",
+        ]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/install",
+            search: { m: "merchant-1", a: "anon-1", ref: "FRAKPA" },
+            replace: true,
+        });
+    });
+});
+
 describe("deep link auth gate", () => {
     beforeEach(async () => {
         vi.clearAllMocks();

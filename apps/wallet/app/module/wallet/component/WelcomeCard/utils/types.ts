@@ -1,5 +1,10 @@
 import type { TranslationKey } from "@frak-labs/wallet-shared/types";
-export const allWelcomeSlideIds = ["intro", "notifications", "invite"] as const;
+export const allWelcomeSlideIds = [
+    "frakBonus",
+    "intro",
+    "notifications",
+    "invite",
+] as const;
 
 export type WelcomeSlideId = (typeof allWelcomeSlideIds)[number];
 
@@ -15,6 +20,15 @@ export type InviteWelcomeSlide = {
     kind: "invite";
     title: string;
     items: string[];
+    onAction: () => void;
+};
+
+export type FrakBonusWelcomeSlide = {
+    id: WelcomeSlideId;
+    kind: "frakBonus";
+    title: string;
+    description: string;
+    cta: string;
     onAction: () => void;
 };
 
@@ -35,4 +49,5 @@ export type NotificationWelcomeSlide = {
 export type WelcomeSlide =
     | IntroWelcomeSlide
     | InviteWelcomeSlide
-    | NotificationWelcomeSlide;
+    | NotificationWelcomeSlide
+    | FrakBonusWelcomeSlide;

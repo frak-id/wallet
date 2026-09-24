@@ -16,10 +16,19 @@ import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { Back } from "@/module/common/component/Back";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
 import { PageLayout } from "@/module/common/component/PageLayout";
+import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
+
+type LoginSearch = {
+    /** Referral code forwarded by `/register`'s passkey guard. */
+    ref?: string;
+};
 
 export const Route = createFileRoute("/_wallet/_auth/login/")({
     component: LoginPage,
+    validateSearch: (search: Record<string, unknown>): LoginSearch => ({
+        ref: parseReferralCode(search.ref),
+    }),
 });
 
 /**
@@ -32,18 +41,27 @@ export const Route = createFileRoute("/_wallet/_auth/login/")({
 function LoginPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { ref } = Route.useSearch();
     const [error, setError] = useState<Error | null>(null);
     const [view, setView] = useState<"choose" | "pairing">("choose");
     const { executePendingActions } = useExecutePendingActions();
 
     useWebauthnErrorToast(error, { operation: "login" });
 
+    // A pending deep link wins; a forwarded `ref` only replaces the default landing.
     const handlePostLoginRedirect = useCallback(async () => {
         const navigated = await executePendingActions();
-        if (!navigated) {
-            navigate({ to: "/wallet", replace: true });
+        if (navigated) return;
+        if (ref) {
+            navigate({
+                to: "/profile/referral/redeem",
+                search: { code: ref },
+                replace: true,
+            });
+            return;
         }
-    }, [executePendingActions, navigate]);
+        navigate({ to: "/wallet", replace: true });
+    }, [executePendingActions, navigate, ref]);
 
     if (view === "pairing") {
         return (

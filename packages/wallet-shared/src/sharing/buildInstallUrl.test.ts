@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { buildInstallUrl, buildPlayStoreInstallUrl } from "./buildInstallUrl";
+import {
+    buildInstallUrl,
+    buildPlayStoreInstallUrl,
+    buildPlayStoreReferralUrl,
+} from "./buildInstallUrl";
 
 describe("buildInstallUrl", () => {
     const args = {
@@ -167,6 +171,42 @@ describe("buildPlayStoreInstallUrl", () => {
 
         expect(referrer).toBe(
             "merchantId=merchant-1&anonymousId=anon-1&proof=the-proof"
+        );
+    });
+
+    test("appends a referral code alongside the merchant pair", () => {
+        const referrer = new URL(
+            buildPlayStoreInstallUrl({ ...args, referralCode: "FRAKPA" })
+        ).searchParams.get("referrer");
+
+        expect(referrer).toBe(
+            "merchantId=merchant-1&anonymousId=anon-1&referralCode=FRAKPA"
+        );
+    });
+
+    test("carries proof and referral code together", () => {
+        const referrer = new URL(
+            buildPlayStoreInstallUrl({
+                ...args,
+                installProof: "the-proof",
+                referralCode: "FRAKPA",
+            })
+        ).searchParams.get("referrer");
+
+        expect(referrer).toBe(
+            "merchantId=merchant-1&anonymousId=anon-1&proof=the-proof&referralCode=FRAKPA"
+        );
+    });
+});
+
+describe("buildPlayStoreReferralUrl", () => {
+    test("carries only the referral code, no merchant pair", () => {
+        const url = buildPlayStoreReferralUrl({ referralCode: "FRAKPA" });
+        const referrer = new URL(url).searchParams.get("referrer");
+
+        expect(referrer).toBe("referralCode=FRAKPA");
+        expect(new URLSearchParams(referrer ?? "").has("merchantId")).toBe(
+            false
         );
     });
 });

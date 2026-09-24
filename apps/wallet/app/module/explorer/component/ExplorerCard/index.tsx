@@ -1,10 +1,11 @@
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { EyeIcon } from "@frak-labs/design-system/icons";
-import { trackEvent } from "@frak-labs/wallet-shared";
+import { EyeIcon, GiftIcon } from "@frak-labs/design-system/icons";
+import { trackEvent, useFrakBonusEligibility } from "@frak-labs/wallet-shared";
 import { mediaSrcSet } from "@frak-labs/wallet-shared/common/utils/mediaSrcSet";
 import { memo, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -68,6 +69,10 @@ function ExplorerCardComponent({ merchant, priority }: ExplorerCardProps) {
 
     const view = useCampaignView(merchant.id, { enabled: isNearViewport });
 
+    const { isEligible } = useFrakBonusEligibility();
+    const showBonusBadge =
+        isEligible(merchant.id) && !!view?.hasFrakBonusReward;
+
     const showViews = merchant.views >= VIEWS_DISPLAY_THRESHOLD;
     // Compact glyph for the pill (e.g. "1.2K"); the full grouped count lives in
     // the accessible label so screen readers announce the exact number. Built
@@ -127,6 +132,16 @@ function ExplorerCardComponent({ merchant, priority }: ExplorerCardProps) {
 
             {/* Text content */}
             <Box className={styles.contentWrapper}>
+                {showBonusBadge && (
+                    <Badge
+                        variant="success"
+                        size="small"
+                        className={styles.bonusBadge}
+                    >
+                        <GiftIcon width={12} height={12} />
+                        {t("explorer.frakBonus.badge")}
+                    </Badge>
+                )}
                 <Spread space="xs" align="top">
                     <Text as="h2" variant="body" weight="semiBold">
                         {name}

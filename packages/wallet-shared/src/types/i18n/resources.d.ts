@@ -467,6 +467,12 @@ export default interface Resources {
         "description": "New offers are coming soon. Check back later!",
         "title": "No offers available"
       },
+      "frakBonus": {
+        "amount": "+{{amount}}",
+        "badge": "First-purchase bonus",
+        "explanation": "Thanks to your Frak invitation, your first purchase at this brand also earns you the referrer reward.",
+        "row": "First-purchase bonus"
+      },
       "pageTitle": "Explorer",
       "sort": {
         "apply": "Apply",
@@ -517,6 +523,12 @@ export default interface Resources {
       "openWalletCta": "Open my wallet",
       "processing": "Setting up your wallet...",
       "processingDone": "Your wallet is ready",
+      "referral": {
+        "codeCopied": "Referral code copied!",
+        "description": "Download the app and enter this code when you sign up to unlock your exclusive cashback.",
+        "manualEntry": "Referral code to enter at sign-up",
+        "title": "Your referral code"
+      },
       "title": "Don't lose your {{estimatedReward}}!\nCopy your reward code"
     },
     "monerium": {
@@ -701,7 +713,9 @@ export default interface Resources {
       "referral": {
         "appliedToast": "Referral code applied",
         "description": "Got a creator code? Enter it here.",
+        "frakAppliedToast": "Exclusive cashback unlocked!",
         "label": "Referral code",
+        "paste": "Paste",
         "placeholder": "Ex: LOLA10",
         "submitCta": "Apply code",
         "title": "Add a referral code"
@@ -752,6 +766,11 @@ export default interface Resources {
         "title": "Reward detail",
         "toCollect": "To collect",
         "updatedAt": "Updated on {{date}} · {{time}}"
+      },
+      "frakBonus": {
+        "detailDescription": "Because you joined Frak with an invitation, Frak passed its referrer reward to you on your first purchase at {{merchant}}.",
+        "detailTitle": "Your welcome bonus",
+        "label": "Welcome bonus"
       },
       "history": {
         "discover": "Discover offers",
@@ -1528,6 +1547,11 @@ export default interface Resources {
           "step2Title": "Share an article with your friends",
           "step3Description": "Transfer your earnings to your bank account with just one click.",
           "step3Title": "Earn money"
+        },
+        "frakBonus": {
+          "cta": "Discover brands",
+          "description": "You're one of our first members — enjoy an exclusive cashback bonus on your first purchase at participating brands.",
+          "title": "Your exclusive cashback is unlocked"
         },
         "invite": {
           "check1": "Create your referral code.",

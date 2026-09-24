@@ -44,6 +44,16 @@ describe("parseInstallProofFragment", () => {
     });
 });
 
+describe("parseInstallSearch — ref", () => {
+    test("carries a valid ref through", () => {
+        expect(parseInstallSearch({ ref: "frakpa" }).ref).toBe("FRAKPA");
+    });
+
+    test("drops an invalid ref rather than passing it through", () => {
+        expect(parseInstallSearch({ ref: "not-a-code" }).ref).toBeUndefined();
+    });
+});
+
 describe("resolveInstallProof", () => {
     test("uses the fragment when there is one", () => {
         expect(resolveInstallProof("#p=from-fragment")).toBe("from-fragment");

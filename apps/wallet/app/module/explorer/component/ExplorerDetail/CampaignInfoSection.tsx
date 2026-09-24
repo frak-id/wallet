@@ -16,11 +16,15 @@ import {
     ClockIcon,
     CoinsIcon,
 } from "@frak-labs/design-system/icons";
+import {
+    useFrakBonusEligibility,
+    useReferralStatus,
+} from "@frak-labs/wallet-shared";
 import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import { useTranslation } from "react-i18next";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { InstructionList } from "@/module/common/component/InstructionList";
-import type { CampaignView } from "../../campaignView";
+import { type CampaignView, frakBonusAmount } from "../../campaignView";
 import * as styles from "./index.css";
 
 type FlatReward = Exclude<EstimatedReward, { payoutType: "tiered" }>;
@@ -30,14 +34,22 @@ type RewardTier = TieredReward["tiers"][number];
 export function CampaignInfoSection({
     view,
     merchantName,
+    merchantId,
 }: {
     view: CampaignView | null;
     merchantName: string;
+    merchantId: string;
 }) {
     const { t } = useTranslation();
+    const { isEligible } = useFrakBonusEligibility();
+    const { data: referralStatus } = useReferralStatus({ merchantId });
+    const bonusAmount = frakBonusAmount(view, {
+        isEligible: isEligible(merchantId),
+        hasMerchantReferrer: referralStatus?.merchantReferrer != null,
+    });
     return (
         <>
-            {view && <CampaignInfoCard view={view} />}
+            {view && <CampaignInfoCard view={view} bonusAmount={bonusAmount} />}
             <InstructionList
                 title={t("explorer.detail.instructions")}
                 steps={[
@@ -63,7 +75,13 @@ export function CampaignInfoSection({
     );
 }
 
-function CampaignInfoCard({ view }: { view: CampaignView }) {
+function CampaignInfoCard({
+    view,
+    bonusAmount,
+}: {
+    view: CampaignView;
+    bonusAmount?: string;
+}) {
     const { t } = useTranslation();
     return (
         <Stack space="s">
@@ -146,7 +164,31 @@ function CampaignInfoCard({ view }: { view: CampaignView }) {
                         label={t("explorer.detail.productScopeNote")}
                     />
                 )}
+                {bonusAmount && (
+                    <InfoRow
+                        labelVariant="bodySmall"
+                        labelColor="secondary"
+                        label={t("explorer.frakBonus.row")}
+                        action={
+                            <Text
+                                variant="bodySmall"
+                                weight="medium"
+                                className={styles.infoValue}
+                            >
+                                <CoinsIcon width={16} height={16} />{" "}
+                                {t("explorer.frakBonus.amount", {
+                                    amount: bonusAmount,
+                                })}
+                            </Text>
+                        }
+                    />
+                )}
             </InfoCard>
+            {bonusAmount && (
+                <Text variant="caption" color="tertiary">
+                    {t("explorer.frakBonus.explanation")}
+                </Text>
+            )}
         </Stack>
     );
 }

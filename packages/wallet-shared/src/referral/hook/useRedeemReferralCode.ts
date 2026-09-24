@@ -1,3 +1,7 @@
+import type {
+    RedeemContext,
+    ReferralCodeKind,
+} from "@frak-labs/backend-elysia/domain/referral-code/schemas";
 import {
     type MutationOptions,
     useMutation,
@@ -9,10 +13,16 @@ import { referralKey } from "../queryKeys";
 type RedeemInput = {
     /** 6-char referral code received from another user. */
     code: string;
+    /** Set only by the onboarding step; gates a `kind='frak'` code. */
+    context?: RedeemContext;
+};
+
+export type RedeemResult = {
+    kind: ReferralCodeKind;
 };
 
 type UseRedeemReferralCodeProps = {
-    mutations?: MutationOptions<void, Error, RedeemInput>;
+    mutations?: MutationOptions<RedeemResult, Error, RedeemInput>;
 };
 
 /**
@@ -30,12 +40,14 @@ export function useRedeemReferralCode({
     return useMutation({
         ...mutations,
         mutationKey: referralKey.redeem,
-        mutationFn: async ({ code }: RedeemInput) => {
-            const { error } =
+        mutationFn: async ({ code, context }: RedeemInput) => {
+            const { data, error } =
                 await authenticatedWalletApi.referral.code.redeem.post({
                     code,
+                    context,
                 });
             if (error) throw error;
+            return data;
         },
         onSuccess: (...args) => {
             queryClient.invalidateQueries({ queryKey: referralKey.status() });

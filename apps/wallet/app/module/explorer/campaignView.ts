@@ -46,9 +46,38 @@ export type CampaignView = {
     /** Whether the campaign is gated to a `productScope`. This is a gate, not
      * the reward's basis: use `isMatchedItemsBasis` for basis-dependent copy. */
     hasProductScope: boolean;
+    /** Any of the merchant's rewards pays a referrer for a `purchase` — the
+     * shape the Frak welcome bonus rides on top of. */
+    hasFrakBonusReward: boolean;
 };
 
-function buildCampaignView(
+function hasPurchaseReferrerReward(rewards: MerchantReward[]): boolean {
+    return rewards.some(
+        (reward) =>
+            reward.interactionTypeKey === "purchase" && reward.referrer != null
+    );
+}
+
+/**
+ * Amount for the explorer bonus row, or `undefined` when it shouldn't render:
+ * ineligible, no purchase referrer reward, or a merchant-scoped referrer
+ * shadows Frak there.
+ */
+export function frakBonusAmount(
+    view: CampaignView | null,
+    {
+        isEligible,
+        hasMerchantReferrer,
+    }: { isEligible: boolean; hasMerchantReferrer: boolean }
+): string | undefined {
+    if (!(isEligible && view?.hasFrakBonusReward) || hasMerchantReferrer) {
+        return undefined;
+    }
+    return view.headlineReferrerReward;
+}
+
+/** Exported for `campaignView.test.ts`; the hook below is the only runtime caller. */
+export function buildCampaignView(
     rewards: MerchantReward[],
     locale: string,
     now: Date = new Date()
@@ -79,6 +108,7 @@ function buildCampaignView(
                 ? formatAmount(minPurchaseAmount)
                 : undefined,
         hasProductScope: campaign.productScope != null,
+        hasFrakBonusReward: hasPurchaseReferrerReward(rewards),
     };
 }
 

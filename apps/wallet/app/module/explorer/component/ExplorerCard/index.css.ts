@@ -85,6 +85,14 @@ export const contentWrapper = style({
     padding: alias.spacing.m,
 });
 
+export const bonusBadge = style({
+    alignSelf: "flex-start",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: alias.spacing.xxs,
+    marginBottom: alias.spacing.xs,
+});
+
 export const imagePlaceholder = style({
     width: "100%",
     // Match the hero's aspect ratio so image-less merchants still get a full

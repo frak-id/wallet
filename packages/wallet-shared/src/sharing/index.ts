@@ -2,6 +2,7 @@
 export {
     buildInstallUrl,
     buildPlayStoreInstallUrl,
+    buildPlayStoreReferralUrl,
 } from "./buildInstallUrl";
 export { buildSharingLink } from "./buildSharingLink";
 // Components

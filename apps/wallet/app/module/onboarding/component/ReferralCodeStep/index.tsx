@@ -6,6 +6,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { CloseIcon } from "@frak-labs/design-system/icons";
 import {
     REDEMPTION_CODE_LENGTH,
+    type RedeemResult,
     useRedeemReferralCodeForm,
 } from "@frak-labs/wallet-shared";
 import { type ReactNode, useEffect } from "react";
@@ -14,7 +15,7 @@ import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import * as styles from "./index.css";
 
 type ReferralCodeStepProps = {
-    onApplied: () => void;
+    onApplied: (result: RedeemResult) => void;
     onError?: (key: string) => void;
     /**
      * Header-end slot, right-aligned on the header row. Required: this screen
@@ -27,6 +28,10 @@ type ReferralCodeStepProps = {
      * disable the header skip while it runs.
      */
     onBusyChange?: (isBusy: boolean) => void;
+    /** Pre-fills the field from `?ref=` or the Play install referrer. */
+    initialCode?: string;
+    /** Fired after a successful paste, for the parent's prefill-source analytics. */
+    onPaste?: () => void;
 };
 
 export function ReferralCodeStep({
@@ -34,6 +39,8 @@ export function ReferralCodeStep({
     onError,
     headerEnd,
     onBusyChange,
+    initialCode,
+    onPaste,
 }: ReferralCodeStepProps) {
     const { t } = useTranslation();
     const {
@@ -44,6 +51,7 @@ export function ReferralCodeStep({
         errorMessageKey,
         handleChange,
         handleClear,
+        handlePaste,
         handleSubmit,
     } = useRedeemReferralCodeForm({
         onApplied,
@@ -51,6 +59,8 @@ export function ReferralCodeStep({
         // Onboarding step allows submitting any non-empty value; the server
         // rejects short/invalid codes with a 422 we surface as an inline error.
         requireCompleteCode: false,
+        initialCode,
+        context: "onboarding",
     });
 
     // Clear on unmount too: leaving mid-redemption would otherwise strand the
@@ -129,6 +139,17 @@ export function ReferralCodeStep({
                             </Text>
                         </Box>
                     ) : null}
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        width="auto"
+                        onClick={async () => {
+                            if (await handlePaste()) onPaste?.();
+                        }}
+                    >
+                        {t("onboarding.referral.paste")}
+                    </Button>
                 </Stack>
             </form>
         </FlowStepScreen>

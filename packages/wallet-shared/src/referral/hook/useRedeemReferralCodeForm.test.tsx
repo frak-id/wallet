@@ -112,6 +112,88 @@ describe("useRedeemReferralCodeForm", () => {
         ).not.toHaveBeenCalled();
     });
 
+    test("context: onboarding is forwarded on submit", async ({
+        queryWrapper,
+    }) => {
+        vi.mocked(
+            authenticatedWalletApi.referral.code.redeem.post
+        ).mockResolvedValue({
+            data: { kind: "frak" },
+            error: null,
+        } as never);
+
+        const onApplied = vi.fn();
+        const { result } = renderHook(
+            () =>
+                useRedeemReferralCodeForm({
+                    onApplied,
+                    context: "onboarding",
+                }),
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        act(() => result.current.handleChange(makeChange("frakpa")));
+        act(() => result.current.handleSubmit(makeSubmit()));
+
+        await waitFor(() =>
+            expect(onApplied).toHaveBeenCalledWith({
+                kind: "frak",
+            })
+        );
+        expect(
+            authenticatedWalletApi.referral.code.redeem.post
+        ).toHaveBeenCalledWith({ code: "FRAKPA", context: "onboarding" });
+    });
+
+    test("no context by default", async ({ queryWrapper }) => {
+        vi.mocked(
+            authenticatedWalletApi.referral.code.redeem.post
+        ).mockResolvedValue({ data: { kind: "user" }, error: null } as never);
+
+        const { result } = renderHook(() => useRedeemReferralCodeForm(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        act(() => result.current.handleChange(makeChange("lola10")));
+        act(() => result.current.handleSubmit(makeSubmit()));
+
+        await waitFor(() =>
+            expect(
+                authenticatedWalletApi.referral.code.redeem.post
+            ).toHaveBeenCalledWith({ code: "LOLA10", context: undefined })
+        );
+    });
+
+    test("initialCode pre-fills without submitting", ({ queryWrapper }) => {
+        const { result } = renderHook(
+            () => useRedeemReferralCodeForm({ initialCode: "frakpa" }),
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        expect(result.current.code).toBe("FRAKPA");
+        expect(
+            authenticatedWalletApi.referral.code.redeem.post
+        ).not.toHaveBeenCalled();
+    });
+
+    test("handlePaste reads the clipboard and fills the sanitised code", async ({
+        queryWrapper,
+    }) => {
+        const readText = vi.fn().mockResolvedValue("fr-ak10");
+        vi.stubGlobal("navigator", { ...navigator, clipboard: { readText } });
+
+        const { result } = renderHook(() => useRedeemReferralCodeForm(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await act(async () => {
+            await result.current.handlePaste();
+        });
+
+        expect(result.current.code).toBe("FRAK10");
+        vi.unstubAllGlobals();
+    });
+
     test("handleClear empties the code", ({ queryWrapper }) => {
         const { result } = renderHook(() => useRedeemReferralCodeForm(), {
             wrapper: queryWrapper.wrapper,

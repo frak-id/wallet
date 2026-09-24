@@ -175,4 +175,27 @@ describe("useInstallReferrer", () => {
             0
         );
     });
+
+    test("a bare referral code (R15, no merchantId/anonymousId) resolves alone, with no ensure action", async ({
+        queryWrapper,
+    }) => {
+        mockGetInstallReferrer.mockResolvedValue({
+            referrer: "referralCode=FRAKPA",
+            clickTimestamp: 0,
+            installTimestamp: 0,
+        });
+
+        const { useInstallReferrer } = await import("./useInstallReferrer");
+        const { result } = renderHook(() => useInstallReferrer(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+        expect(result.current.data).toEqual({ referralCode: "FRAKPA" });
+        expect(pendingActionsStore.getState().getValidActions()).toHaveLength(
+            0
+        );
+        expect(mockSetClientId).not.toHaveBeenCalled();
+    });
 });

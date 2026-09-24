@@ -54,7 +54,12 @@ export type {
     NotificationOptInOutcome,
     NotificationTogglePhase,
 } from "./notification";
-export type { OnboardingAction, OnboardingEventMap } from "./onboarding";
+export type {
+    OnboardingAction,
+    OnboardingEventMap,
+    ReferralCodeKind,
+    ReferralPrefillSource,
+} from "./onboarding";
 export type {
     PairingErrorState,
     PairingEventMap,

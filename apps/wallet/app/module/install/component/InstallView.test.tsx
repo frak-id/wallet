@@ -897,3 +897,101 @@ describe("InstallView — install-code branch, post-install detection", () => {
         close.mockRestore();
     });
 });
+
+describe("InstallView — ref-only referral code branch", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        sessionStore.getState().clearSession();
+    });
+
+    afterEach(() => {
+        sessionStore.getState().clearSession();
+    });
+
+    test("a bare ?ref= renders the referral-code view, mints no install code", async ({
+        queryWrapper,
+    }) => {
+        render(
+            <InstallView
+                search={{ ref: "FRAKPA" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        expect(
+            await screen.findByText("installCode.referral.title")
+        ).toBeInTheDocument();
+        expect(screen.getByText("F R A K P A")).not.toBeNull();
+        expect(mockGenerateCode).not.toHaveBeenCalled();
+    });
+
+    test("copy writes the referral code to the clipboard", async ({
+        queryWrapper,
+    }) => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+
+        render(
+            <InstallView
+                search={{ ref: "FRAKPA" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        fireEvent.click(await screen.findByText("installCode.copyCode"));
+
+        await waitFor(() => expect(writeText).toHaveBeenCalledWith("FRAKPA"));
+        vi.unstubAllGlobals();
+    });
+
+    test("the store button also copies the referral code", async ({
+        queryWrapper,
+    }) => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+
+        render(
+            <InstallView
+                search={{ ref: "FRAKPA" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        fireEvent.click(await screen.findByText("installCode.download"));
+
+        await waitFor(() => expect(writeText).toHaveBeenCalledWith("FRAKPA"));
+        vi.unstubAllGlobals();
+    });
+
+    test("the Android store link carries the referral code, no merchant pair", async () => {
+        const originalUserAgent = navigator.userAgent;
+        Object.defineProperty(navigator, "userAgent", {
+            value: "Mozilla/5.0 (Linux; Android 14)",
+            configurable: true,
+        });
+
+        render(
+            <InstallView
+                search={{ ref: "FRAKPA" }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />
+        );
+
+        const link = await screen.findByText("installCode.download");
+        const href = link.closest("a")?.getAttribute("href") ?? "";
+        const referrer = new URL(href).searchParams.get("referrer");
+        expect(referrer).toBe("referralCode=FRAKPA");
+
+        Object.defineProperty(navigator, "userAgent", {
+            value: originalUserAgent,
+            configurable: true,
+        });
+    });
+});
