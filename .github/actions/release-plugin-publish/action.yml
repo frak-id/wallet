@@ -48,14 +48,16 @@ runs:
 
     - name: "📝 Extract release notes"
       id: notes
-      uses: release-flow/keep-a-changelog-action@v3
+      # Same commit as the bump half of this flow (`release-plugin-bump`): one release
+      # goes through both, so a version skew between them is a skew inside one release.
+      uses: release-flow/keep-a-changelog-action@51fdfb38631a4d2530cf1f3b11c0bba0c0f5f1e2 # main @ PR #86
       with:
         command: query
         version: ${{ steps.version.outputs.version }}
         changelog: ${{ inputs.directory }}/CHANGELOG.md
 
     - name: "🐘 Setup PHP"
-      uses: shivammathur/setup-php@v2
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
       with:
         php-version: "8.4"
         tools: "composer:v2"
@@ -82,7 +84,7 @@ runs:
         git push origin "${PLUGIN_SLUG}-${VERSION}"
 
     - name: "🚀 Create GitHub release"
-      uses: softprops/action-gh-release@v3
+      uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
       with:
         tag_name: "${{ inputs.plugin-slug }}-${{ steps.version.outputs.version }}"
         name: "${{ inputs.plugin-name }} ${{ steps.version.outputs.version }}"

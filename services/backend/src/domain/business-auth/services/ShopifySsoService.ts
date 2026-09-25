@@ -1,7 +1,5 @@
+import { createHmac } from "node:crypto";
 import { constantTimeStringEqual } from "@backend-utils";
-import { hmac } from "@oslojs/crypto/hmac";
-import { SHA256 } from "@oslojs/crypto/sha2";
-import { encodeHexLowerCase } from "@oslojs/encoding";
 
 const SHOP_DOMAIN_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/;
 
@@ -83,12 +81,9 @@ export class ShopifySsoService {
             )
             .join("&");
 
-        const computed = hmac(
-            SHA256,
-            new TextEncoder().encode(secret),
-            new TextEncoder().encode(message)
-        );
-        const computedHex = encodeHexLowerCase(computed);
+        const computedHex = createHmac("sha256", secret)
+            .update(message, "utf8")
+            .digest("hex");
         return constantTimeStringEqual(computedHex, receivedHex);
     }
 

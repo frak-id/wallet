@@ -64,6 +64,7 @@ export function BudgetView({
                 bankAddress={data.bankAddress}
                 isManager={data.isManager && canOnchain}
                 isOpen={data.isOpen ?? false}
+                vatApplicable={data.vatApplicable}
                 tokens={data.tokens}
                 onAddFunds={onAddFunds}
                 hideLegacyMigrationNotice={isWalletless}
@@ -101,6 +102,7 @@ function BudgetContent({
     bankAddress,
     isManager,
     isOpen,
+    vatApplicable,
     tokens,
     onAddFunds,
     hideLegacyMigrationNotice,
@@ -109,6 +111,7 @@ function BudgetContent({
     bankAddress: Address;
     isManager: boolean;
     isOpen: boolean;
+    vatApplicable: boolean;
     tokens: BudgetToken[];
     onAddFunds: () => void;
     hideLegacyMigrationNotice: boolean;
@@ -160,6 +163,7 @@ function BudgetContent({
                             bankAddress={bankAddress}
                             isManager={isManager}
                             isBankOpen={isOpen}
+                            vatApplicable={vatApplicable}
                         />
                     ))}
                 </Stack>

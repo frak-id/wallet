@@ -2,7 +2,7 @@ import { recordError } from "@frak-labs/wallet-shared";
 import { CatchBoundary } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { DetailOverlay } from "@/module/common/component/DetailOverlay";
-import { RecoveryCodeSuccessModal } from "@/module/recovery-code/component/RecoveryCodeSuccessModal";
+import { RewardCodeSuccessModal } from "@/module/reward-code/component/RewardCodeSuccessModal";
 import { modalErrorStore } from "@/module/stores/modalErrorStore";
 import { modalStore, selectModal } from "@/module/stores/modalStore";
 import { EmptyPendingGainsModal } from "@/module/tokens/component/EmptyPendingGainsModal";
@@ -134,9 +134,9 @@ function renderModal(
                     email={modal.email}
                 />
             );
-        case "recoveryCodeSuccess":
+        case "rewardCodeSuccess":
             return (
-                <RecoveryCodeSuccessModal
+                <RewardCodeSuccessModal
                     onClose={closeModal}
                     merchant={modal.merchant}
                     actionLabel={modal.actionLabel}

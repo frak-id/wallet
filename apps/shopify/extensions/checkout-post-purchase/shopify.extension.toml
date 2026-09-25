@@ -24,14 +24,11 @@ target = "customer-account.order-status.block.render"
 module = "./src/OrderStatus.tsx"
 
 # Shop metafields auto-populated by the Frak app during onboarding.
-# These provide merchantId, walletUrl, and logoUrl without manual settings.
+# These provide merchantId and logoUrl without manual settings; the wallet
+# origin is per-stage, so it is generated into src/frakStage.gen.ts instead.
 [[extensions.metafields]]
 namespace = "frak"
 key = "merchant_id"
-
-[[extensions.metafields]]
-namespace = "frak"
-key = "wallet_url"
 
 [[extensions.metafields]]
 namespace = "frak"

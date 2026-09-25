@@ -4,6 +4,7 @@ import {
     getTokenAddressForStablecoin,
     type Stablecoin,
 } from "@frak-labs/app-essentials";
+import { isVatApplicable } from "@frak-labs/app-essentials/constants/billing";
 import Decimal from "decimal.js";
 import { type Address, isAddressEqual } from "viem";
 import type {
@@ -512,7 +513,7 @@ export class MonthlyBillOrchestrator {
             .toFixed(18);
         const { totalHt, totalTtc } = this.computation.computeBillTotals({
             rewardBaseAmount,
-            vatApplicable: merchant?.accountingInfo?.country === "FR",
+            vatApplicable: isVatApplicable(merchant?.accountingInfo?.country),
         });
 
         return {
@@ -928,7 +929,9 @@ export class MonthlyBillOrchestrator {
                 // French VAT only applies to FR-domiciled merchants; a non-FR
                 // merchant's rewards are reverse-charged (0% on the bill), same
                 // rule as the deposit/withdraw VAT lines.
-                vatApplicable: merchant?.accountingInfo?.country === "FR",
+                vatApplicable: isVatApplicable(
+                    merchant?.accountingInfo?.country
+                ),
                 ledgers: details.ledgers,
                 fiatTotals: details.fiatTotals,
                 annexRows,

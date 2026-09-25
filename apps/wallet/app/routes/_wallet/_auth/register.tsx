@@ -4,6 +4,7 @@ import { ToastSurface } from "@frak-labs/design-system/components/ToastSurface";
 import {
     authenticationStore,
     authenticatorStorage,
+    getPasskeyPresence,
     recoveryHintStorage,
     trackEvent,
     ua,
@@ -90,6 +91,15 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
                 replace: true,
             });
         }
+
+        // Every record the app keeps about itself has missed, so ask the OS:
+        // a Google Password Manager passkey outlives all of them.
+        if ((await getPasskeyPresence()) === "present") {
+            throw redirect({
+                to: "/login",
+                replace: true,
+            });
+        }
     },
 });
 
@@ -168,7 +178,7 @@ function RegisterPage() {
         if (!referrerData?.merchant || hasAnnouncedInstallReferrer) return;
         hasAnnouncedInstallReferrer = true;
         openModal({
-            id: "recoveryCodeSuccess",
+            id: "rewardCodeSuccess",
             merchant: referrerData.merchant,
         });
     }, [referrerData, openModal]);
@@ -347,12 +357,12 @@ function RegisterPage() {
                     onLoginClick={handleAlreadyHaveAccount}
                     isLoginLoading={isLoginLoading}
                     loginError={loginError}
-                    onRecoveryCodeClick={() => {
+                    onRewardCodeClick={() => {
                         trackEvent("auth_recovery_code_clicked");
                         flowRef.current?.track("onboarding_action_clicked", {
                             action: "recovery_code",
                         });
-                        navigate({ to: "/recovery-code" });
+                        navigate({ to: "/reward-code" });
                     }}
                 />
             )}

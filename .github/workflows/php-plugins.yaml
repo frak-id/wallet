@@ -16,8 +16,8 @@ jobs:
       run:
         working-directory: plugins/magento
     steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
         with: { php-version: '8.4', tools: 'composer:v2', coverage: none }
       - run: composer install --no-interaction --prefer-dist
       - run: composer run cs
@@ -29,8 +29,8 @@ jobs:
       run:
         working-directory: plugins/magento
     steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
         with: { php-version: '8.4', tools: 'composer:v2', coverage: none }
       - run: composer install --no-interaction --prefer-dist
       - run: composer run analyse
@@ -42,8 +42,8 @@ jobs:
       run:
         working-directory: plugins/magento
     steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
         with: { php-version: '8.4', tools: 'composer:v2' }
       - run: composer install --no-interaction --prefer-dist
       - run: composer run test
@@ -56,8 +56,8 @@ jobs:
       run:
         working-directory: plugins/wordpress
     steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
         with: { php-version: '8.4', tools: 'composer:v2', coverage: none }
       - run: composer install --no-interaction --prefer-dist
       - run: composer run cs
@@ -69,8 +69,8 @@ jobs:
       run:
         working-directory: plugins/wordpress
     steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
         with: { php-version: '8.4', tools: 'composer:v2', coverage: none }
       - run: composer install --no-interaction --prefer-dist
       - run: composer run analyse
@@ -83,8 +83,8 @@ jobs:
       run:
         working-directory: plugins/prestashop
     steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
         with: { php-version: '8.4', tools: 'composer:v2', coverage: none }
       - run: composer install --no-interaction --prefer-dist
       - run: composer run cs
@@ -96,14 +96,14 @@ jobs:
       run:
         working-directory: plugins/prestashop
     steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
         with: { php-version: '8.4', tools: 'composer:v2', coverage: none }
       # Cache the cloned PrestaShop 8.2.6 checkout (sources + vendor) so
       # subsequent runs skip the ~30 s clone + ~60 s `composer install` step.
       # The cache key is pinned to the exact PS tag so a tag bump invalidates
       # the cache automatically.
-      - uses: actions/cache@v5
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: plugins/prestashop/.cache/prestashop-core
           key: prestashop-core-8.2.6
@@ -117,8 +117,8 @@ jobs:
       run:
         working-directory: plugins/prestashop
     steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
         with: { php-version: '8.4', tools: 'composer:v2' }
       - run: composer install --no-interaction --prefer-dist
       - run: composer run test

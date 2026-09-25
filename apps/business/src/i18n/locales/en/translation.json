@@ -1264,7 +1264,13 @@
             "sectionLabel": "Reward Budget",
             "distributing": "Distributing Rewards",
             "distributingTooltip": "When enabled, rewards are automatically distributed to your users through active campaigns. Disabling stops all new distributions.",
-            "available": "available",
+            "totalInclVat": "total budget, incl. VAT and Frak fees",
+            "totalExclVat": "total budget, incl. Frak fees",
+            "breakdown": {
+                "distributable": "Available for rewards",
+                "frakFee": "Frak fees ({{rate}}%)",
+                "vat": "VAT ({{rate}}%)"
+            },
             "noFundsCaption": "No funds - add funds to start distributing rewards.",
             "addFunds": "Add funds",
             "emptyWarning": "Your bank has no funds. Active campaigns cannot distribute rewards until you add funds.",
@@ -1282,7 +1288,8 @@
                 "withdrawTooltip": "Sends your bank's available funds back to your wallet. Available because reward distribution is off.",
                 "confirm": "Confirm",
                 "cancel": "Cancel",
-                "amountPlaceholder": "Amount"
+                "amountPlaceholder": "Amount",
+                "withdrawPlaceholder": "Max {{amount}}"
             }
         },
         "setup": {
@@ -1429,7 +1436,13 @@
             "admin": {
                 "panel": {
                     "title": "Platform admin - billing",
-                    "description": "Create deposit notes and withdraw bills for this merchant. Visible to platform admins only."
+                    "description": "Set the billing country and create deposit notes and withdraw bills for this merchant. Visible to platform admins only."
+                },
+                "country": {
+                    "label": "Billing country",
+                    "save": "Save country",
+                    "hint": "Drives VAT on the merchant's budget display and deposit notes. The merchant still has to complete their billing information.",
+                    "error": "Could not save the billing country. Try again."
                 },
                 "deposit": {
                     "trigger": "Add deposit",

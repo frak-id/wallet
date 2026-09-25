@@ -12,7 +12,8 @@ bun run typecheck        # react-router typegen && tsc --noEmit
 bun run db:generate      # Drizzle migration (requires SST context)
 bun run db:migrate       # Apply migrations
 bun run deploy / deploy:prod          # SST stages: dev / production (NEVER "prod")
-bun run shopify:deploy / :deploy:prod # Shopify app + extensions
+bun run shopify:deploy / :deploy:prod # Shopify app + extensions (regenerates stage artifacts first)
+bun run gen:stage                     # Rewrite the generated stage artifacts to the prod table
 bun run test             # Vitest
 ```
 
@@ -35,6 +36,7 @@ bun run test             # Vitest
 - **Stage literal `"prod"` is FORBIDDEN** — `sst.config.ts` throws; use `"production"`.
 - **Session-loss traps**: no bare `<a>`, no `redirect` from `react-router` in auth routes, no lowercase `<form/>` — embedded app loses Shopify session. Use `Link`/`Form`/`useFetcher()` and `redirect` from `authenticate.admin`.
 - **Webhooks** are per-config in `.toml` — no `afterAuth` registration.
+- **Storefront origins are baked at deploy, not read from metafields**: dev and prod are two different Shopify apps, so `scripts/generateStageArtifacts.ts` writes the wallet/backend/SDK origins into `extensions/theme-components/blocks/listener.liquid` (the `frak:stage` region) and `extensions/checkout-post-purchase/src/frakStage.gen.ts` before each deploy. Both are committed on the **prod** table and gated by `bun run check:shopify-stage` inside root `lint` — `shopify app deploy` uploads the working tree, so a stale dev generation would reach every merchant. See `extensions/AGENTS.md`.
 - **Two backend URLs**: `BACKEND_URL` = server→backend calls (`utils/backendApi.ts`), stays `localhost:3030` in the local stage. `PUBLIC_BACKEND_URL` = callbacks Shopify's servers / the shopper's browser must reach (`services.server/webhook.ts` order webhook, `webPixel.ts` pixel) — same as `BACKEND_URL` except local, where it defaults to the public dev backend (`localhost` is rejected as an internal domain). Override `PUBLIC_BACKEND_URL` with a `cloudflared tunnel --url https://localhost:3030 --no-tls-verify` URL to route webhooks/pixel to a local backend. Both defined per-stage in `infra/config.ts`. Local dev also sets `NODE_OPTIONS=--use-system-ca` (`infra/gcp/shopify.ts`) so Node trusts the mkcert CA when calling the local HTTPS backend — **requires Node ≥ 22.15** (older Node aborts every spawned process with "bad option: --use-system-ca").
 - **Build-time env**: `vite.config.ts` `define` injects SST secrets into `process.env.*` — not runtime.
 - **Services never throw**: return `null` on error. Named exports only.

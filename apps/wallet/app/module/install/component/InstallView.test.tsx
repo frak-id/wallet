@@ -229,7 +229,7 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
 
         await waitFor(() => expect(mockEnsurePost).toHaveBeenCalled());
         await waitFor(() =>
-            expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess")
+            expect(modalStore.getState().modal?.id).toBe("rewardCodeSuccess")
         );
         expect(toWallet).not.toHaveBeenCalled();
     });
@@ -247,11 +247,11 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         );
 
         await waitFor(() =>
-            expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess")
+            expect(modalStore.getState().modal?.id).toBe("rewardCodeSuccess")
         );
 
         const modal = modalStore.getState().modal;
-        if (modal?.id !== "recoveryCodeSuccess") throw new Error("no modal");
+        if (modal?.id !== "rewardCodeSuccess") throw new Error("no modal");
         // `ResponsiveModal` draws no close affordance, so without this the
         // only exits are swipe, backdrop or hardware back.
         expect(modal.actionLabel).toBe("installCode.openWalletCta");
@@ -275,7 +275,7 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
 
             await waitFor(() =>
                 expect(modalStore.getState().modal?.id).toBe(
-                    "recoveryCodeSuccess"
+                    "rewardCodeSuccess"
                 )
             );
 
@@ -329,11 +329,11 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         );
 
         await waitFor(() =>
-            expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess")
+            expect(modalStore.getState().modal?.id).toBe("rewardCodeSuccess")
         );
 
         const modal = modalStore.getState().modal;
-        if (modal?.id !== "recoveryCodeSuccess") throw new Error("no modal");
+        if (modal?.id !== "rewardCodeSuccess") throw new Error("no modal");
         // Optional on the variant — but this page has no other way out, so
         // this opener owes one.
         if (!modal.onExit) throw new Error("no exit");
@@ -359,11 +359,11 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         );
 
         await waitFor(() =>
-            expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess")
+            expect(modalStore.getState().modal?.id).toBe("rewardCodeSuccess")
         );
 
         const modal = modalStore.getState().modal;
-        if (modal?.id !== "recoveryCodeSuccess") throw new Error("no modal");
+        if (modal?.id !== "rewardCodeSuccess") throw new Error("no modal");
         expect(modal.merchant?.name).toBe("Nike");
     });
 
@@ -382,7 +382,7 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         );
 
         await waitFor(() =>
-            expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess")
+            expect(modalStore.getState().modal?.id).toBe("rewardCodeSuccess")
         );
 
         // What `useHardwareBack` does on Android back: pops the store
@@ -419,14 +419,13 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
             await waitFor(
                 () =>
                     expect(modalStore.getState().modal?.id).toBe(
-                        "recoveryCodeSuccess"
+                        "rewardCodeSuccess"
                     ),
                 { timeout: 4000 }
             );
 
             const modal = modalStore.getState().modal;
-            if (modal?.id !== "recoveryCodeSuccess")
-                throw new Error("no modal");
+            if (modal?.id !== "rewardCodeSuccess") throw new Error("no modal");
             expect(modal.merchant).toBeUndefined();
 
             if (!modal.onExit) throw new Error("no exit");
@@ -450,11 +449,11 @@ describe("InstallView — processing branch, Tauri confirmation", () => {
         );
 
         await waitFor(() =>
-            expect(modalStore.getState().modal?.id).toBe("recoveryCodeSuccess")
+            expect(modalStore.getState().modal?.id).toBe("rewardCodeSuccess")
         );
 
         const modal = modalStore.getState().modal;
-        if (modal?.id !== "recoveryCodeSuccess") throw new Error("no modal");
+        if (modal?.id !== "rewardCodeSuccess") throw new Error("no modal");
         expect(modal.merchant).toBeUndefined();
     });
 

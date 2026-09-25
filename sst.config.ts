@@ -19,11 +19,11 @@ export default $config({
                 },
             },
             providers: {
-                command: "1.0.1",
-                kubernetes: "4.28.0",
-                "docker-build": "0.0.15",
+                command: "1.2.1",
+                kubernetes: "4.34.1",
+                "docker-build": "0.0.22",
                 gcp: {
-                    version: "9.18.0",
+                    version: "9.37.0",
                     project: "frak-main-v1",
                     region: "europe-west1",
                 },

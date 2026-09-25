@@ -34,6 +34,10 @@ vi.mock("../AddWithdrawSheet", () => ({
     AddWithdrawSheet: () => <div data-testid="add-withdraw-sheet" />,
 }));
 
+vi.mock("./BillingCountryControl", () => ({
+    BillingCountryControl: () => <div data-testid="billing-country" />,
+}));
+
 const { useMyMerchants } = await import(
     "@/module/dashboard/hooks/useMyMerchants"
 );
@@ -56,6 +60,7 @@ describe("BillingAdminPanel visibility", () => {
         expect(
             screen.queryByTestId("add-withdraw-sheet")
         ).not.toBeInTheDocument();
+        expect(screen.queryByTestId("billing-country")).not.toBeInTheDocument();
     });
 
     it("is shown for platform admins", () => {
@@ -67,5 +72,6 @@ describe("BillingAdminPanel visibility", () => {
 
         expect(screen.getByTestId("add-deposit-sheet")).toBeInTheDocument();
         expect(screen.getByTestId("add-withdraw-sheet")).toBeInTheDocument();
+        expect(screen.getByTestId("billing-country")).toBeInTheDocument();
     });
 });

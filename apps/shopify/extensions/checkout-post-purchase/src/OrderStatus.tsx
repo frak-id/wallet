@@ -29,7 +29,7 @@ function OrderStatusExtension() {
     const api = useApi<"customer-account.order-status.block.render">();
     const checkoutToken = useSubscription(api.checkoutToken);
 
-    // Read merchantId, walletUrl, logoUrl from shop metafields
+    // Read merchantId, logoUrl from shop metafields
     const frakMetafields = useAppMetafields({ namespace: "frak" });
     const frakConfig = useMemo(
         () => extractFrakConfig(frakMetafields),
@@ -70,7 +70,6 @@ function OrderStatusExtension() {
             storefrontUrl={shop.storefrontUrl}
             products={products}
             merchantId={frakConfig.merchantId}
-            walletUrl={frakConfig.walletUrl}
             logoUrl={frakConfig.logoUrl}
             checkoutToken={checkoutToken ?? undefined}
             redirectUrl={shop.storefrontUrl}

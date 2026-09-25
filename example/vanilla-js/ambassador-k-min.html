@@ -58,11 +58,15 @@
 .frak-amount small{font-size:.35em}
 
 .frak-strip{display:grid;gap:1em;grid-template-columns:repeat(auto-fit,minmax(9em,1fr));
-  text-align:center;padding:1.25em 0;border-block:1px solid color-mix(in srgb,currentColor 20%,transparent)}
+  text-align:center;padding:1.25em 0;border-block:1px solid;
+  border-block:1px solid color-mix(in srgb,currentColor 20%,transparent)}
 .frak-strip b{display:block;font-size:1.75em;line-height:1.2;font-variant-numeric:tabular-nums}
 
+/* Bare `solid` resolves to currentColor, so the pre-color-mix fallback still
+   declares no colour of its own: below the Safari 15.4 floor the border is the
+   inherited ink at full strength instead of disappearing. */
 .frak-note{display:flex;gap:.6em;padding:.75em 1em;
-  border:1px solid color-mix(in srgb,currentColor 20%,transparent)}
+  border:1px solid;border:1px solid color-mix(in srgb,currentColor 20%,transparent)}
 
 .frak-hero{display:grid;gap:2em;grid-template-columns:repeat(auto-fit,minmax(18em,1fr));align-items:center}
 .frak-tag{position:absolute;inset:auto 1em 1em;display:flex;flex-wrap:wrap;align-items:center;gap:.75em;
@@ -71,19 +75,23 @@
 .frak-tag small{display:block;font-size:.8em}
 .frak-pill{margin-inline-start:auto;padding:.45em .8em;font-size:.72em;font-weight:700}
 .frak-art{position:relative;aspect-ratio:4/5;display:grid;place-items:center;text-align:center;padding:1em;
-  border:1px dashed color-mix(in srgb,currentColor 35%,transparent)}
+  border:1px dashed;border:1px dashed color-mix(in srgb,currentColor 35%,transparent)}
 .frak-faces{display:flex;flex-wrap:wrap;gap:.5em;align-items:center}
 /* A circle is structure, not taste: without this the avatars fall back to bare
    initials. Shape and size only — the fill is the merchant's to give. */
 .frak-faces span{inline-size:2.2em;block-size:2.2em;border-radius:50%;display:grid;place-items:center;
-  font-size:.75em;border:1px solid color-mix(in srgb,currentColor 35%,transparent)}
+  font-size:.75em;border:1px solid;
+  border:1px solid color-mix(in srgb,currentColor 35%,transparent)}
 
 /* The one deliberate exception to "no colour": store badges are fixed brand
    artwork that Apple and Google both require verbatim, so they cannot inherit
-   the merchant's palette. Everything else on this page can. */
+   the merchant's palette. Everything else on this page can. The colours are
+   !important because these anchors carry no href until the SDK binds them,
+   and a reboot stylesheet's a:not([href]) outranks a single class. */
+[data-frak-page] :focus-visible{outline:2px solid currentColor!important;outline-offset:2px!important}
 .frak-badges{display:flex;flex-wrap:wrap;gap:.75em;align-items:center}
 .frak-badge{display:inline-flex;align-items:center;gap:.5em;text-decoration:none;
-  background:#000;color:#fff;border:1px solid #a6a6a6;border-radius:8px;padding:.5em .9em;
+  background:#000!important;color:#fff!important;border:1px solid #a6a6a6;border-radius:8px;padding:.5em .9em;
   font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.15}
 .frak-badge svg{flex:none}
 .frak-badge small{display:block;font-size:.62em;opacity:.9}
@@ -184,8 +192,7 @@ body{margin:0;padding:20px;background:#3a3f47;display:flex;flex-direction:column
       <p class="frak-lede">Vous parlez déjà de nous autour de vous. Nous vous en remercions&nbsp;: une récompense sur chaque commande que vous inspirez, et quelques attentions réservées à nos ambassadeurs.</p>
       <p><button type="button" data-frak-share>Devenir ambassadeur</button></p>
       <div class="frak-faces">
-        <span>AL</span><span>MC</span><span>JD</span><span>SR</span>
-        <p class="frak-muted"><strong>1 240 ambassadrices et ambassadeurs</strong> nous recommandent déjà</p>
+        <p class="frak-muted">Rejoignez les ambassadrices et ambassadeurs de la marque</p>
       </div>
     </div>
     <div class="frak-art">
@@ -241,11 +248,11 @@ body{margin:0;padding:20px;background:#3a3f47;display:flex;flex-direction:column
       <h2>Suivez vos gains en temps réel</h2>
       <p class="frak-lede">L'app Frak vous prévient dès qu'un ami commande, et centralise vos gains sur toutes les marques partenaires.</p>
       <div class="frak-badges">
-        <a class="frak-badge" data-frak-install aria-disabled="true">
+        <a class="frak-badge" data-frak-install aria-disabled="true" role="link" tabindex="0">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.7c0-2 1.6-3 1.7-3.1-1-1.4-2.4-1.6-2.9-1.6-1.3-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.3 2-1.4 2.4-.4 6 1 8 .7 1 1.5 2 2.5 2 1 0 1.4-.6 2.6-.6 1.2 0 1.5.6 2.6.6 1.1 0 1.8-1 2.4-1.9.8-1.1 1.1-2.2 1.1-2.2 0-.1-2.1-.8-2.1-3.2zM14.5 6.3c.5-.7.9-1.6.8-2.6-.8 0-1.8.6-2.4 1.3-.5.6-1 1.6-.8 2.5.9.1 1.8-.5 2.4-1.2z"/></svg>
           <span><small>Télécharger dans</small><strong>App Store</strong></span>
         </a>
-        <a class="frak-badge" data-frak-install aria-disabled="true">
+        <a class="frak-badge" data-frak-install aria-disabled="true" role="link" tabindex="0">
           <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="#34a853" d="M4 21.2 14.3 15l-2.6-2.6z"/><path fill="#ea4335" d="M4 2.8 11.7 11l2.6-2.5z"/><path fill="#fbbc04" d="M18.6 10.2 15 8.2l-2.9 2.8 2.9 2.8 3.6-2c.8-.5.8-1.2 0-1.6z"/><path fill="#4285f4" d="M4 2.8v18.4c0 .5.2.8.6.9l7.5-7.3-7.5-7.3c-.4.2-.6.5-.6 1z"/></svg>
           <span><small>Disponible sur</small><strong>Google Play</strong></span>
         </a>
@@ -286,7 +293,7 @@ body{margin:0;padding:20px;background:#3a3f47;display:flex;flex-direction:column
     <details><summary>Il faut être influenceur ?</summary>
       <p>Non. Le programme est ouvert à tous nos clients, quelle que soit la taille de votre réseau.</p></details>
     <details><summary>C'est quoi Frak ?</summary>
-      <p>Le partenaire qui gère le suivi des parrainages et le versement des gains pour Vanilla JS. Aucune donnée personnelle n'est stockée.</p></details>
+      <p>Le partenaire qui gère le suivi des parrainages et le versement des gains pour Vanilla JS. Frak ne vend aucune donnée à des tiers.</p></details>
     <p class="frak-muted frak-center"><small>Programme propulsé par <strong>Frak</strong></small></p>
   </section>
 

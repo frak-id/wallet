@@ -231,10 +231,13 @@
         "bank": {
             "title": "Budget de récompenses",
             "description": "Votre budget de récompenses est la source de fonds utilisée pour distribuer des récompenses aux utilisateurs finaux à travers toutes vos campagnes.",
-            "token": "Token",
-            "balance": "Solde",
-            "statusColumn": "Statut",
-            "actionsColumn": "Actions",
+            "totalInclVat": "budget total, TVA et frais Frak inclus",
+            "totalExclVat": "budget total, frais Frak inclus",
+            "breakdown": {
+                "distributable": "Disponible pour les récompenses",
+                "frakFee": "Frais Frak ({{rate}} %)",
+                "vat": "TVA ({{rate}} %)"
+            },
             "address": "Adresse",
             "notDeployed": "Votre budget de récompenses n'est pas encore déployé. Complétez l'assistant de configuration pour commencer.",
             "emptyWarning": "Votre budget n'a aucun fonds. Les campagnes actives ne peuvent pas distribuer de récompenses tant que vous n'ajoutez pas de fonds.",
@@ -255,6 +258,7 @@
             "withdrawFrom": "Retirer {{token}}",
             "allowanceAmount": "Limite de distribution",
             "withdrawAmount": "Montant à retirer",
+            "withdrawMax": "Jusqu'à {{amount}} disponibles pour les récompenses peuvent être retirés.",
             "confirm": "Confirmer",
             "cancel": "Annuler"
         },

@@ -4,12 +4,12 @@ import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
-import { useResolveInstallCode } from "@/module/recovery-code/hook/useResolveInstallCode";
+import { useResolveInstallCode } from "@/module/reward-code/hook/useResolveInstallCode";
 import { modalStore } from "@/module/stores/modalStore";
 
 const CODE_LENGTH = 6;
 
-export function RecoveryCodePage() {
+export function RewardCodePage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [code, setCode] = useState("");
@@ -51,7 +51,7 @@ export function RecoveryCodePage() {
                 return;
             }
             openModal({
-                id: "recoveryCodeSuccess",
+                id: "rewardCodeSuccess",
                 merchant: result.merchant,
                 onExit: () => navigate({ to: "/register", replace: true }),
             });

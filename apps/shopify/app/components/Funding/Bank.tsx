@@ -1,4 +1,10 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
+import {
+    type BankBalanceBreakdown,
+    BILLING_RATES,
+    bpsToPercent,
+    grossUpBankBalance,
+} from "@frak-labs/app-essentials/constants/billing";
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { SkeletonDisplayText } from "app/components/ui/SkeletonDisplayText";
 import type { BankStatus } from "app/services.server/backendMerchant";
@@ -32,6 +38,7 @@ export function BankingStatus({ bankStatus }: { bankStatus: BankStatus }) {
                     <BankView
                         bankAddress={bankStatus.bankAddress}
                         isManager={bankStatus.ownerHasManagerRole}
+                        vatApplicable={bankStatus.vatApplicable}
                     />
                 ) : (
                     <s-banner tone="info">
@@ -43,31 +50,30 @@ export function BankingStatus({ bankStatus }: { bankStatus: BankStatus }) {
     );
 }
 
-type ActiveAction = {
-    token: TokenData;
-    type: "allowance" | "withdraw";
-} | null;
+type TokenAction = "allowance" | "withdraw";
 
 function BankView({
     bankAddress,
     isManager,
+    vatApplicable,
 }: {
     bankAddress: Address;
     isManager: boolean;
+    vatApplicable: boolean;
 }) {
     const { data: bankData, isLoading } = useMerchantBank({ bankAddress });
     const { data: walletStatus } = useWalletStatus();
     const walletAddress = walletStatus?.wallet;
     const isLoggedIn = !!walletAddress;
     const { t } = useTranslation();
-    const [activeAction, setActiveAction] = useState<ActiveAction>(null);
 
     if (isLoading || !bankData) {
         return <SkeletonDisplayText size="small" />;
     }
 
     const { isOpen, tokens } = bankData;
-    const allTokensEmpty = tokens.every((token) => token.balance === 0n);
+    const funded = tokens.filter((token) => token.balance > 0n);
+    const empty = tokens.filter((token) => token.balance === 0n);
 
     return (
         <s-stack gap="base">
@@ -88,29 +94,33 @@ function BankView({
                 </s-banner>
             )}
 
-            {allTokensEmpty && isOpen && (
+            {funded.length === 0 && isOpen && (
                 <s-banner tone="warning">
                     <s-text>{t("status.bank.emptyWarning")}</s-text>
                 </s-banner>
             )}
 
-            <TokenTable
-                tokens={tokens}
-                isManager={isManager}
-                isBankOpen={isOpen}
-                walletAddress={walletAddress}
-                bankAddress={bankAddress}
-                onAction={setActiveAction}
-            />
-
-            {activeAction && (
-                <TokenActionForm
-                    key={`${activeAction.token.address}-${activeAction.type}`}
-                    activeAction={activeAction}
+            {funded.map((token) => (
+                <FundedTokenCard
+                    key={token.address}
+                    token={token}
+                    isBankOpen={isOpen}
+                    vatApplicable={vatApplicable}
                     bankAddress={bankAddress}
                     walletAddress={walletAddress}
-                    onClose={() => setActiveAction(null)}
+                    showActions={isManager}
                 />
+            ))}
+
+            {empty.length > 0 && (
+                <s-grid
+                    gridTemplateColumns="repeat(auto-fit, minmax(10rem, 1fr))"
+                    gap="base"
+                >
+                    {empty.map((token) => (
+                        <EmptyTokenCard key={token.address} token={token} />
+                    ))}
+                </s-grid>
             )}
         </s-stack>
     );
@@ -156,101 +166,185 @@ function DistributionToggle({
     );
 }
 
-function TokenTable({
-    tokens,
-    isManager,
-    isBankOpen,
-    walletAddress,
-    bankAddress,
-    onAction,
-}: {
-    tokens: TokenData[];
-    isManager: boolean;
-    isBankOpen: boolean;
-    walletAddress?: Address;
-    bankAddress: Address;
-    onAction: (action: ActiveAction) => void;
-}) {
-    const { t } = useTranslation();
-    const showActions = isManager;
-    const actionsDisabled = !walletAddress;
+function CurrencyLabel({ token }: { token: TokenData }) {
+    const meta = currencyMetadata[token.symbol as Stablecoin];
+    const tooltipId = `bank-provider-${token.symbol}`;
 
     return (
-        <s-table>
-            <s-table-header-row>
-                <s-table-header listSlot="primary">
-                    {t("status.bank.token")}
-                </s-table-header>
-                <s-table-header>{t("status.bank.balance")}</s-table-header>
-                <s-table-header>{t("status.bank.statusColumn")}</s-table-header>
-                {showActions && (
-                    <s-table-header>
-                        {t("status.bank.actionsColumn")}
-                    </s-table-header>
-                )}
-            </s-table-header-row>
-            <s-table-body>
-                {tokens.map((token) => (
-                    <TokenRow
-                        key={token.address}
-                        token={token}
-                        isBankOpen={isBankOpen}
-                        bankAddress={bankAddress}
-                        showActions={showActions}
-                        actionsDisabled={actionsDisabled}
-                        onAction={onAction}
-                    />
-                ))}
-            </s-table-body>
-        </s-table>
+        <s-stack direction="inline" gap="small-300" alignItems="baseline">
+            <s-text type="strong">{meta.currencySymbol}</s-text>
+            <s-text color="subdued" interestFor={tooltipId}>
+                {meta.provider}
+            </s-text>
+            <s-tooltip id={tooltipId}>{meta.providerDescription}</s-tooltip>
+        </s-stack>
     );
 }
 
-function TokenRow({
+function FundedTokenCard({
     token,
     isBankOpen,
+    vatApplicable,
     bankAddress,
+    walletAddress,
     showActions,
-    actionsDisabled,
-    onAction,
 }: {
     token: TokenData;
     isBankOpen: boolean;
+    vatApplicable: boolean;
     bankAddress: Address;
+    walletAddress?: Address;
     showActions: boolean;
-    actionsDisabled: boolean;
-    onAction: (action: ActiveAction) => void;
 }) {
+    const { t } = useTranslation();
+    const [action, setAction] = useState<TokenAction | null>(null);
     const stablecoin = token.symbol as Stablecoin;
-    const meta = currencyMetadata[stablecoin];
-    const status = getTokenStatus(token.balance, token.allowance);
-    const formattedBalance = formatTokenBalance(
-        token.balance,
-        stablecoin,
-        token.decimals
-    );
+    const breakdown = grossUpBankBalance(token.balance, vatApplicable);
 
     return (
-        <s-table-row>
-            <s-table-cell>
-                {meta.label} ({meta.provider})
-            </s-table-cell>
-            <s-table-cell>{formattedBalance}</s-table-cell>
-            <s-table-cell>
-                <TokenStatusBadge status={status} />
-            </s-table-cell>
-            {showActions && (
-                <s-table-cell>
-                    <TokenRowActions
-                        token={token}
-                        bankAddress={bankAddress}
-                        isBankOpen={isBankOpen}
-                        disabled={actionsDisabled}
-                        onAction={onAction}
+        <s-box border="base" borderRadius="base" padding="base">
+            <s-stack gap="base">
+                <s-stack
+                    direction="inline"
+                    justifyContent="space-between"
+                    alignItems="center"
+                >
+                    <CurrencyLabel token={token} />
+                    <TokenStatusBadge
+                        status={getTokenStatus(token.balance, token.allowance)}
                     />
-                </s-table-cell>
+                </s-stack>
+
+                <s-stack gap="small-500">
+                    <s-heading>
+                        {formatTokenBalance(
+                            breakdown.gross,
+                            stablecoin,
+                            token.decimals
+                        )}
+                    </s-heading>
+                    <s-text color="subdued">
+                        {vatApplicable
+                            ? t("status.bank.totalInclVat")
+                            : t("status.bank.totalExclVat")}
+                    </s-text>
+                </s-stack>
+
+                <s-divider />
+                <BalanceBreakdown
+                    token={token}
+                    breakdown={breakdown}
+                    vatApplicable={vatApplicable}
+                />
+
+                {showActions && <s-divider />}
+                {showActions &&
+                    (action ? (
+                        <TokenActionForm
+                            token={token}
+                            type={action}
+                            bankAddress={bankAddress}
+                            walletAddress={walletAddress}
+                            onClose={() => setAction(null)}
+                        />
+                    ) : (
+                        <TokenActions
+                            token={token}
+                            bankAddress={bankAddress}
+                            isBankOpen={isBankOpen}
+                            disabled={!walletAddress}
+                            onAction={setAction}
+                        />
+                    ))}
+            </s-stack>
+        </s-box>
+    );
+}
+
+function EmptyTokenCard({ token }: { token: TokenData }) {
+    const { t } = useTranslation();
+
+    return (
+        <s-box
+            border="base"
+            borderRadius="base"
+            padding="base"
+            background="subdued"
+        >
+            <s-stack gap="small-300">
+                <CurrencyLabel token={token} />
+                <s-text type="strong">
+                    {formatTokenBalance(
+                        0n,
+                        token.symbol as Stablecoin,
+                        token.decimals
+                    )}
+                </s-text>
+                <s-text color="subdued">{t("status.bank.tokenEmpty")}</s-text>
+            </s-stack>
+        </s-box>
+    );
+}
+
+function BalanceBreakdown({
+    token,
+    breakdown,
+    vatApplicable,
+}: {
+    token: TokenData;
+    breakdown: BankBalanceBreakdown;
+    vatApplicable: boolean;
+}) {
+    const { t } = useTranslation();
+    const format = (amount: bigint) =>
+        formatTokenBalance(amount, token.symbol as Stablecoin, token.decimals);
+
+    return (
+        <s-stack gap="small-300">
+            <BreakdownRow
+                label={t("status.bank.breakdown.distributable")}
+                value={format(breakdown.distributable)}
+                emphasis
+            />
+            <BreakdownRow
+                label={t("status.bank.breakdown.frakFee", {
+                    rate: bpsToPercent(BILLING_RATES.FRAK_FEE_BPS),
+                })}
+                value={format(breakdown.frakFee)}
+            />
+            {vatApplicable && (
+                <BreakdownRow
+                    label={t("status.bank.breakdown.vat", {
+                        rate: bpsToPercent(BILLING_RATES.FR_VAT_BPS),
+                    })}
+                    value={format(breakdown.vat)}
+                />
             )}
-        </s-table-row>
+        </s-stack>
+    );
+}
+
+function BreakdownRow({
+    label,
+    value,
+    emphasis = false,
+}: {
+    label: string;
+    value: string;
+    emphasis?: boolean;
+}) {
+    const type = emphasis ? "strong" : undefined;
+    const color = emphasis ? undefined : "subdued";
+
+    return (
+        <s-stack direction="inline" justifyContent="space-between" gap="base">
+            <s-text type={type} color={color}>
+                {label}
+            </s-text>
+            <s-text type={type} color={color} fontVariantNumeric="tabular-nums">
+                {value}
+            </s-text>
+        </s-stack>
     );
 }
 
@@ -261,9 +355,6 @@ function TokenStatusBadge({
 }) {
     const { t } = useTranslation();
 
-    if (status === "empty") {
-        return <s-text color="subdued">{t("status.bank.tokenEmpty")}</s-text>;
-    }
     if (status === "active") {
         return <s-badge tone="success">{t("status.bank.tokenActive")}</s-badge>;
     }
@@ -275,7 +366,7 @@ function TokenStatusBadge({
     return <s-badge tone="critical">{t("status.bank.tokenPaused")}</s-badge>;
 }
 
-function TokenRowActions({
+function TokenActions({
     token,
     bankAddress,
     isBankOpen,
@@ -286,24 +377,19 @@ function TokenRowActions({
     bankAddress: Address;
     isBankOpen: boolean;
     disabled: boolean;
-    onAction: (action: ActiveAction) => void;
+    onAction: (action: TokenAction) => void;
 }) {
     const { t } = useTranslation();
     const { mutate: revokeAllowance, isPending: isRevoking } =
         useRevokeBankAllowance({ bankAddress });
-    const hasBalance = token.balance > 0n;
     const needsAllowanceIncrease =
-        hasBalance && token.allowance < token.balance && isBankOpen;
-
-    if (!hasBalance) {
-        return null;
-    }
+        token.allowance < token.balance && isBankOpen;
 
     return (
         <s-stack direction="inline" gap="small">
             {needsAllowanceIncrease && (
                 <s-button
-                    onClick={() => onAction({ token, type: "allowance" })}
+                    onClick={() => onAction("allowance")}
                     disabled={disabled}
                 >
                     {t("status.bank.increaseLimit")}
@@ -319,10 +405,10 @@ function TokenRowActions({
                     {t("status.bank.pauseRewards")}
                 </s-button>
             )}
-            {!isBankOpen && hasBalance && (
+            {!isBankOpen && (
                 <s-button
                     variant="secondary"
-                    onClick={() => onAction({ token, type: "withdraw" })}
+                    onClick={() => onAction("withdraw")}
                     disabled={disabled}
                 >
                     {t("status.bank.withdraw")}
@@ -333,18 +419,19 @@ function TokenRowActions({
 }
 
 function TokenActionForm({
-    activeAction,
+    token,
+    type,
     bankAddress,
     walletAddress,
     onClose,
 }: {
-    activeAction: NonNullable<ActiveAction>;
+    token: TokenData;
+    type: TokenAction;
     bankAddress: Address;
     walletAddress?: Address;
     onClose: () => void;
 }) {
     const { t } = useTranslation();
-    const { token, type } = activeAction;
     const stablecoin = token.symbol as Stablecoin;
     const meta = currencyMetadata[stablecoin];
 
@@ -385,53 +472,62 @@ function TokenActionForm({
     };
 
     return (
-        <s-section>
-            <s-stack gap="small">
-                <s-text>
-                    {type === "allowance"
-                        ? t("status.bank.setAllowanceFor", {
-                              token: meta.label,
-                          })
-                        : t("status.bank.withdrawFrom", {
-                              token: meta.label,
-                          })}
-                </s-text>
-                <s-stack direction="inline" gap="small" alignItems="end">
-                    <s-number-field
-                        label={
-                            type === "allowance"
-                                ? t("status.bank.allowanceAmount")
-                                : t("status.bank.withdrawAmount")
-                        }
-                        value={inputValue}
-                        onChange={(e: Event) =>
-                            setInputValue(
-                                (e.currentTarget as HTMLInputElement).value
-                            )
-                        }
-                        autocomplete="off"
-                        min={0}
-                        step={0.01}
-                        suffix={meta.currencySymbol}
-                        disabled={isPending}
-                    />
-                    <s-button
-                        variant="primary"
-                        onClick={handleConfirm}
-                        loading={isPending}
-                        disabled={!inputValue || isPending}
-                    >
-                        {t("status.bank.confirm")}
-                    </s-button>
-                    <s-button
-                        variant="secondary"
-                        onClick={onClose}
-                        disabled={isPending}
-                    >
-                        {t("status.bank.cancel")}
-                    </s-button>
-                </s-stack>
+        <s-stack gap="small">
+            <s-text>
+                {type === "allowance"
+                    ? t("status.bank.setAllowanceFor", {
+                          token: meta.label,
+                      })
+                    : t("status.bank.withdrawFrom", {
+                          token: meta.label,
+                      })}
+            </s-text>
+            <s-stack direction="inline" gap="small" alignItems="end">
+                <s-number-field
+                    label={
+                        type === "allowance"
+                            ? t("status.bank.allowanceAmount")
+                            : t("status.bank.withdrawAmount")
+                    }
+                    value={inputValue}
+                    onChange={(e: Event) =>
+                        setInputValue(
+                            (e.currentTarget as HTMLInputElement).value
+                        )
+                    }
+                    autocomplete="off"
+                    min={0}
+                    step={0.01}
+                    suffix={meta.currencySymbol}
+                    details={
+                        type === "withdraw"
+                            ? t("status.bank.withdrawMax", {
+                                  amount: formatTokenBalance(
+                                      token.balance,
+                                      stablecoin,
+                                      token.decimals
+                                  ),
+                              })
+                            : undefined
+                    }
+                    disabled={isPending}
+                />
+                <s-button
+                    variant="primary"
+                    onClick={handleConfirm}
+                    loading={isPending}
+                    disabled={!inputValue || isPending}
+                >
+                    {t("status.bank.confirm")}
+                </s-button>
+                <s-button
+                    variant="secondary"
+                    onClick={onClose}
+                    disabled={isPending}
+                >
+                    {t("status.bank.cancel")}
+                </s-button>
             </s-stack>
-        </s-section>
+        </s-stack>
     );
 }

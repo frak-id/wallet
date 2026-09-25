@@ -1,7 +1,6 @@
 import { useMemo } from "preact/hooks";
 import type { PostPurchaseTextOverrides } from "./frakI18n";
-
-const DEFAULT_WALLET_URL = "https://wallet.frak.id";
+import { FRAK_WALLET_ORIGIN } from "./frakStage.gen";
 
 const GIFT_SVG_DATA_URI =
     "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMzgiIGN5PSIyOCIgcj0iMjMiIGZpbGw9IiNGRkY1MzMiLz48cGF0aCBkPSJNNTAgMzhDMzAgMTAgMTIgMzAgNTAgMzhaIiBzdHJva2U9IiMyMjIiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHBhdGggZD0iTTUwIDM4QzcwIDEwIDg4IDMwIDUwIDM4WiIgc3Ryb2tlPSIjMjIyIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxyZWN0IHg9IjEwIiB5PSIzOCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjE2IiByeD0iMiIgc3Ryb2tlPSIjMjIyIiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJNMTUgNTRWODlDMTUgOTAuNiAxNi40IDkyIDE4IDkySDgyQzgzLjYgOTIgODUgOTAuNiA4NSA4OVY1NCIgc3Ryb2tlPSIjMjIyIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxsaW5lIHgxPSI1MCIgeTE9IjU0IiB4Mj0iNTAiIHkyPSI5MiIgc3Ryb2tlPSIjMjIyIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==";
@@ -11,7 +10,7 @@ const FRAK_LOGO_DATA_URI =
 
 /**
  * Extension settings configured by merchants in the Checkout Editor.
- * Only text customization — merchantId/walletUrl/logoUrl come from metafields.
+ * Only text customization — merchantId/logoUrl come from metafields.
  */
 type PostPurchaseSettings = {
     sharing_url?: string;
@@ -95,7 +94,7 @@ function constructSharingUrl({
  * Purchase tracking is handled separately by the checkout web pixel.
  *
  * Configuration sources:
- *  - merchantId, walletUrl, logoUrl → auto-read from shop metafields (frak.*)
+ *  - merchantId, logoUrl → auto-read from shop metafields (frak.*)
  *  - sharing_url → extension setting (merchant configures in Checkout Editor)
  *  - text fields → extension settings with sensible defaults
  *
@@ -112,7 +111,6 @@ export function PostPurchaseCard({
     storefrontUrl,
     products,
     merchantId,
-    walletUrl,
     logoUrl,
     checkoutToken,
     redirectUrl,
@@ -134,8 +132,6 @@ export function PostPurchaseCard({
     products?: ProductInfo[];
     /** From frak.merchant_id shop metafield */
     merchantId?: string;
-    /** From frak.wallet_url shop metafield */
-    walletUrl?: string;
     /** From frak.appearance shop metafield */
     logoUrl?: string;
     /** Checkout token (available on ThankYou surface, correlates with web pixel data) */
@@ -146,7 +142,6 @@ export function PostPurchaseCard({
     isEditor?: boolean;
 }) {
     const sharingUrl = settings.sharing_url || storefrontUrl;
-    const resolvedWalletUrl = walletUrl || DEFAULT_WALLET_URL;
     const message =
         settings.message || textOverrides?.message || defaults.message;
     const description =
@@ -163,7 +158,7 @@ export function PostPurchaseCard({
         if (!sharingUrl || !merchantId) return null;
 
         return constructSharingUrl({
-            walletUrl: resolvedWalletUrl,
+            walletUrl: FRAK_WALLET_ORIGIN,
             merchantId,
             sharingUrl,
             clientId,
@@ -174,7 +169,6 @@ export function PostPurchaseCard({
             redirectUrl,
         });
     }, [
-        resolvedWalletUrl,
         merchantId,
         sharingUrl,
         clientId,

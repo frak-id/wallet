@@ -1,9 +1,11 @@
 import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { currentStablecoinsList } from "@frak-labs/app-essentials";
+import { isVatApplicable } from "@frak-labs/app-essentials/constants/billing";
 import type { Address } from "viem";
 import type { MerchantRepository } from "../../merchant/repositories/MerchantRepository";
 import type { CampaignBankRepository } from "../repositories/CampaignBankRepository";
+import type { BankStatus } from "../schemas";
 
 export class CampaignBankService {
     constructor(
@@ -234,23 +236,18 @@ export class CampaignBankService {
         }
     }
 
-    async getBankStatus(merchantId: string): Promise<{
-        deployed: boolean;
-        bankAddress: Address | null;
-        ownerHasManagerRole: boolean;
-        /**
-         * "no_wallet" — walletless owner: no wallet to hold the MANAGER role
-         * (§4.9); the UI shows the wallet-link CTA instead of a role error.
-         */
-        managerRole: "granted" | "missing" | "no_wallet";
-    }> {
+    async getBankStatus(merchantId: string): Promise<BankStatus> {
         const merchant = await this.merchantRepository.findById(merchantId);
+        const vatApplicable = isVatApplicable(
+            merchant?.accountingInfo?.country
+        );
         if (!merchant?.bankAddress) {
             return {
                 deployed: false,
                 bankAddress: null,
                 ownerHasManagerRole: false,
                 managerRole: merchant?.ownerWallet ? "missing" : "no_wallet",
+                vatApplicable,
             };
         }
 
@@ -260,6 +257,7 @@ export class CampaignBankService {
                 bankAddress: merchant.bankAddress,
                 ownerHasManagerRole: false,
                 managerRole: "no_wallet",
+                vatApplicable,
             };
         }
 
@@ -274,6 +272,7 @@ export class CampaignBankService {
             bankAddress: merchant.bankAddress,
             ownerHasManagerRole,
             managerRole: ownerHasManagerRole ? "granted" : "missing",
+            vatApplicable,
         };
     }
 }

@@ -14,6 +14,7 @@ bun run build:sdk                    # Sequence: rpc → core → legacy → rea
 bun run test                         # NEVER `bun test` — use `bun run test` (Vitest workspace)
 bun run format && bun run lint && bun run typecheck && bun run test  # Quality gate (all four mandatory pre-commit)
 bun run lint:comments                # Comment budget on Kotlin/Swift/TS — already inside `bun run lint`
+bun run deps:inventory               # Resolve every pinned version upstream (set GITHUB_TOKEN: 60 req/h without it)
 bun run --filter '*/native-*' lint    # ktlint + swift format — NOT covered by the gate above
 bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,prod}  # GCP Pulumi
 ```
@@ -37,6 +38,7 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 | Native SDK | `sdk/android/` (Gradle, `id.frak.sdk:core` + `:ui`) · `sdk/ios/` (SwiftPM, `FrakSDK` + `FrakSDKUI`) |
 | Native SDK harnesses | `example/native-{android,ios}/` (Kotlin/Compose + Swift/SwiftUI) |
 | Infra (AWS/GCP) | `infra/` · `sst.config.ts` · `infra/gcp/*.ts` |
+| Version gates + the dependency report (weekly + gated on every `dev` push) | `scripts/` (`check-*.ts`, `dependency/`) · `.github/pi/` |
 | SDK CDN pointer (`sdk[-dev].frak.id`) | `infra/sdk-pointer.ts` (own SST stages `sdk-pointer[-dev]`, deployed by the release workflows) |
 
 ## Non-Obvious Patterns (Tribal Knowledge)
@@ -51,7 +53,7 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 - **SDK `development` export condition**: monorepo apps consume SDK source directly at *runtime* — but `tsc` still resolves types through `sdk/*/dist/*.d.ts`, so a stale or bad `dist` breaks `typecheck` while `dev` runs fine. The errors surface in app/test files that reference a real, exported SDK type (`'@frak-labs/core-sdk' has no exported member named X`), so they read as dead code to delete — they are not. Confirm the symbol exists in `sdk/*/src` (it usually does), then `bun run build:sdk`. CI builds the SDK from scratch and never sees this, so it is local-only and does not track `dist` mtime: a `dist` newer than the last `src` commit can still be wrong.
 - **CDN bundles are `deps.alwaysBundle: [/.*/]`**: fully self-contained; bumping a dep bloats CDN size. Also one parse unit, so a single above-floor construct anywhere in the dependency graph makes the whole bundle unparseable — hence `bun run check:es-output`.
 - **Zustand individual selectors mandatory**: `store((s) => s.x)`. Destructuring whole store = re-render storm (business app is most sensitive).
-- **Shopify non-obvious**: no `<a>` / no `react-router` `redirect` in auth routes (loses session); stage literal `"prod"` is FORBIDDEN — use `"production"`; README mentions Prisma/SQLite but project uses Drizzle/Postgres.
+- **Shopify non-obvious**: no `<a>` / no `react-router` `redirect` in auth routes (loses session); stage literal `"prod"` is FORBIDDEN — use `"production"`; README mentions Prisma/SQLite but project uses Drizzle/Postgres. **Storefront origins are generated, not fetched**: dev and prod are two separate Shopify apps with two separate `shopify app deploy` runs, so the stage is known before upload — `apps/shopify/scripts/generateStageArtifacts.ts` bakes the wallet/backend/SDK origins into `listener.liquid` and the post-purchase bundle, and `bun run check:shopify-stage` (inside `lint`) fails if what is committed is not the prod table, because a deploy uploads the working tree.
 - **Of the 3 plugins, only 2 are real**: `plugins/{wordpress,prestashop}` are live; `plugins/magento` is unused scaffolding that no merchant and no one here has ever run against a Magento install. It stays as a starting point — do not port new features into it, and do not read it as a working reference. See `plugins/magento/AGENTS.md`.
 - **Bun bin trap**: `bun test` bypasses Vitest and runs Bun's own runner — always use `bun run test`.
 - **Dual TypeScript (intentional)**: `typescript@6` stays alongside `@typescript/native` (TS 7): tsdown/rolldown-plugin-dts and tsserver (editor) peer on TS ≤6; only `typecheck` scripts use the TS 7 `tsc`. Do NOT "clean up" the TS 6 dep.
@@ -83,4 +85,4 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 
 ## See Also
 
-Root children: `apps/{business,listener,shopify,wallet}/AGENTS.md` families · `packages/AGENTS.md` · `sdk/AGENTS.md` · `services/backend/AGENTS.md` · `infra/AGENTS.md` · `plugins/{magento,prestashop,wordpress}/AGENTS.md`.
+Root children: `apps/{business,listener,shopify,wallet}/AGENTS.md` families · `packages/AGENTS.md` · `sdk/AGENTS.md` · `scripts/AGENTS.md` · `services/backend/AGENTS.md` · `infra/AGENTS.md` · `plugins/{magento,prestashop,wordpress}/AGENTS.md`.

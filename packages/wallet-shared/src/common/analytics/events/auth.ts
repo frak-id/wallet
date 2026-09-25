@@ -29,10 +29,15 @@ type StandaloneAuthEvents = {
          */
         origin?: "existing" | "another";
     };
+    // Pinned wire name; do not rename without coordinating with downstream dashboards.
     auth_recovery_code_clicked: undefined;
-    // Fired when the Android auto-fire self-heals a stale authenticator hint
-    // after a silent `no-credential` outcome.
-    auth_login_self_heal: { reason: "stale_hint_clear_attempted" };
+    // Fired when the Android auto-fire self-heals a stale authenticator hint.
+    // `os_reported_absent` is backed by a definitive OS answer;
+    // `stale_hint_clear_attempted` is inferred from a failed silent attempt and
+    // can be a false positive.
+    auth_login_self_heal: {
+        reason: "os_reported_absent" | "stale_hint_clear_attempted";
+    };
     // Post-auth side-effects
     user_logged_in: undefined;
     logout: undefined;

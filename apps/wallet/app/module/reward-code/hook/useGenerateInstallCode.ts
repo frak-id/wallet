@@ -1,6 +1,6 @@
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
-import { installCodeKey } from "@/module/recovery-code/queryKeys/install-code";
+import { installCodeKey } from "@/module/reward-code/queryKeys/install-code";
 
 /**
  * Hook to generate an install code for a merchant plus one credential.

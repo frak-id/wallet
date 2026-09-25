@@ -6,8 +6,6 @@ import type { loader as rootLoader } from "app/root";
 import { frakEnv } from "app/services.server/frakEnv";
 import { log } from "app/services.server/logger";
 import {
-    ensureComponentsUrlMetafield,
-    ensureEnvMetafields,
     ensureKlaviyoShareMetafields,
     resolveMerchantId,
 } from "app/services.server/merchant";
@@ -53,12 +51,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // (e.g. the pre-try `shopInfo` lookup). Log it rather than swallowing it
     // silently — an empty `.catch(() => {})` is a latent trap that hides a
     // regression exactly when these start failing.
-    ensureEnvMetafields(context).catch((err) =>
-        log.warn({ err }, "ensureEnvMetafields failed")
-    );
-    ensureComponentsUrlMetafield(context).catch((err) =>
-        log.warn({ err }, "ensureComponentsUrlMetafield failed")
-    );
     ensureKlaviyoShareMetafields(context).catch((err) =>
         log.warn({ err }, "ensureKlaviyoShareMetafields failed")
     );

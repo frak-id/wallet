@@ -1,6 +1,9 @@
 package id.frak.webauthn
 
 import android.app.Activity
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.credentials.CreatePublicKeyCredentialRequest
 import androidx.credentials.CreatePublicKeyCredentialResponse
 import androidx.credentials.CredentialManager
@@ -29,6 +32,7 @@ import kotlinx.coroutines.launch
 class FrakWebauthnPlugin(
     activity: Activity,
 ) : Plugin(activity) {
+    private val tag = "FrakWebauthnPlugin"
     private val scope = CoroutineScope(Dispatchers.Main)
     private val credentialManager = CredentialManager.create(activity)
     private val pluginActivity = activity
@@ -117,6 +121,63 @@ class FrakWebauthnPlugin(
                 invoke.reject(webauthnError(null, e.message))
             }
         }
+    }
+
+    /**
+     * Silent, no-UI query for whether a passkey exists for the request's
+     * relying party. Resolves `present`, `absent` or `unknown`; never rejects,
+     * because only a definitive negative may drive caller behavior.
+     */
+    @Command
+    fun getPasskeyPresence(invoke: Invoke) {
+        val options = invoke.getArgs().getJSObject("options")
+        if (options == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            invoke.resolve(presenceResult("unknown"))
+            return
+        }
+        resolvePasskeyPresence(invoke, options.toString())
+    }
+
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private fun resolvePasskeyPresence(
+        invoke: Invoke,
+        requestJson: String,
+    ) {
+        val request =
+            GetCredentialRequest(
+                credentialOptions = listOf(GetPublicKeyCredentialOption(requestJson = requestJson)),
+            )
+
+        scope.launch {
+            try {
+                // The handle is discarded: preparing the request answers the
+                // question, and completing the retrieval would show UI.
+                val handle = credentialManager.prepareGetCredential(request)
+                val hasPasskey =
+                    handle.hasCredentialResults(PublicKeyCredential.TYPE_PUBLIC_KEY_CREDENTIAL)
+                // A locked provider answers through `hasAuthenticationResults`
+                // and may hold a passkey that cannot be enumerated until unlocked.
+                // `hasRemoteResults` is not consulted: it is true on every request
+                // (cross-device sign-in is always offered) and would hide `absent`.
+                val state =
+                    when {
+                        hasPasskey -> "present"
+                        handle.hasAuthenticationResults() -> "unknown"
+                        else -> "absent"
+                    }
+                invoke.resolve(presenceResult(state))
+            } catch (e: Exception) {
+                // An absorbed failure is otherwise indistinguishable from absence.
+                Log.w(tag, "passkey presence query failed", e)
+                invoke.resolve(presenceResult("unknown"))
+            }
+        }
+    }
+
+    private fun presenceResult(state: String): JSObject {
+        val payload = JSObject()
+        payload.put("state", state)
+        return payload
     }
 
     // Unified `{ type, message }` reject envelope the JS bridge classifies on.

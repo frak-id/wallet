@@ -1,5 +1,6 @@
-import Decimal from "decimal.js";
 import { type PDFFont, type PDFPage, type RGB, rgb } from "pdf-lib";
+
+export { FR_VAT_RATE as VAT_RATE, FRAK_FEE_RATE } from "../../rates";
 
 /**
  * Stablecoin → fiat presentation. Documents are merchant-facing legal papers:
@@ -22,10 +23,6 @@ export function fiatFor(currency: string): { code: string; symbol: string } {
         }
     );
 }
-
-/** VAT + Frak-fee rates used for the reward-table display math (§4). */
-export const VAT_RATE = new Decimal("0.20");
-export const FRAK_FEE_RATE = new Decimal("0.20");
 
 export const PAGE_WIDTH = 595.28; // A4 @ 72dpi
 export const PAGE_HEIGHT = 841.89;

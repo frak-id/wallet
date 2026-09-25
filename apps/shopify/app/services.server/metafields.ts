@@ -7,9 +7,6 @@ const FRAK_NAMESPACE = "frak";
 const MODAL_I18N_KEY = "modal_i18n";
 const APPEARANCE_KEY = "appearance";
 const MERCHANT_ID_KEY = "merchant_id";
-const WALLET_URL_KEY = "wallet_url";
-const BACKEND_URL_KEY = "backend_url";
-const COMPONENTS_URL_KEY = "components_url";
 const SHARE_URL_KEY = "share_url";
 const SHARE_BUTTON_HTML_KEY = "share_button_html";
 const LEGACY_INSTALL_DISMISSED_KEY = "legacy_install_dismissed";
@@ -860,60 +857,6 @@ async function syncFrakI18nFrTranslations(
         return [{ key: f.key, value: f.defaults.fr, digest }];
     });
     return registerFrakI18nFrTranslations(context, entryId, missing);
-}
-
-/**
- * Read the wallet URL from shop metafields.
- */
-export async function getWalletUrlMetafield({
-    admin: { graphql },
-}: AuthenticatedContext): Promise<string | null> {
-    return readMetafield<string>(graphql, WALLET_URL_KEY);
-}
-
-/**
- * Read the backend URL from shop metafields.
- */
-export async function getBackendUrlMetafield({
-    admin: { graphql },
-}: AuthenticatedContext): Promise<string | null> {
-    return readMetafield<string>(graphql, BACKEND_URL_KEY);
-}
-
-/** Write both origins of the SDK's `env` in a single `metafieldsSet` mutation, so a shop is never left with a cross-stage pair. The backend origin is stored rather than derived from the wallet one — sandboxes pair hosts nothing can guess. */
-export async function writeEnvMetafields(
-    context: AuthenticatedContext,
-    { walletUrl, backendUrl }: { walletUrl: string; backendUrl: string }
-): Promise<{
-    success: boolean;
-    userErrors: Array<{ field: string; message: string }>;
-}> {
-    return writeMetafields(context, [
-        { key: WALLET_URL_KEY, value: walletUrl },
-        { key: BACKEND_URL_KEY, value: backendUrl },
-    ]);
-}
-
-/**
- * Read the components CDN URL from shop metafields.
- */
-export async function getComponentsUrlMetafield({
-    admin: { graphql },
-}: AuthenticatedContext): Promise<string | null> {
-    return readMetafield<string>(graphql, COMPONENTS_URL_KEY);
-}
-
-/**
- * Write components CDN URL to shop metafields so listener.liquid can read it.
- */
-export async function writeComponentsUrlMetafield(
-    context: AuthenticatedContext,
-    componentsUrl: string
-): Promise<{
-    success: boolean;
-    userErrors: Array<{ field: string; message: string }>;
-}> {
-    return writeMetafield(context, COMPONENTS_URL_KEY, componentsUrl);
 }
 
 /**

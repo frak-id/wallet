@@ -1,20 +1,9 @@
 import { log, rateLimitMiddleware } from "@backend-infrastructure";
-import { t } from "@backend-utils";
-import { constantTimeEqual } from "@oslojs/crypto/subtle";
+import { constantTimeStringEqual, t } from "@backend-utils";
 
 import { Elysia, status } from "elysia";
 import { BusinessAuthContext } from "../../../domain/business-auth";
 import { resolveClientIp } from "./common";
-
-function statesMatch(a: string, b: string): boolean {
-    return (
-        a.length === b.length &&
-        constantTimeEqual(
-            new TextEncoder().encode(a),
-            new TextEncoder().encode(b)
-        )
-    );
-}
 
 const STATE_COOKIE_NAME = "shopify_sso_state";
 const STATE_COOKIE_TTL_SEC = 10 * 60;
@@ -230,7 +219,7 @@ export const shopifyAuthRoutes = new Elysia({ prefix: "/shopify" })
                 !state ||
                 !cookieNonce ||
                 !returnedNonce ||
-                !statesMatch(returnedNonce, cookieNonce) ||
+                !constantTimeStringEqual(returnedNonce, cookieNonce) ||
                 !sso.isValidShopDomain(shop)
             ) {
                 // Pre-HMAC failure: nothing here is trustworthy yet, so only the

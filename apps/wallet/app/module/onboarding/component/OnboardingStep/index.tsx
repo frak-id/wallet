@@ -27,7 +27,7 @@ type OnboardingStepProps = {
     /** Login error surfaced above the actions (login-enabled step only) */
     loginError?: Error | null;
     /** Called when the user clicks the reward code link */
-    onRecoveryCodeClick?: () => void;
+    onRewardCodeClick?: () => void;
 };
 
 export function OnboardingStep({
@@ -39,7 +39,7 @@ export function OnboardingStep({
     onLoginClick,
     isLoginLoading,
     loginError,
-    onRecoveryCodeClick,
+    onRewardCodeClick,
 }: OnboardingStepProps) {
     const { t } = useTranslation();
 
@@ -64,11 +64,11 @@ export function OnboardingStep({
                             {loginLabel}
                         </Button>
                     )}
-                    {onRecoveryCodeClick && (
+                    {onRewardCodeClick && (
                         <Button
                             size="small"
                             variant="ghost"
-                            onClick={() => onRecoveryCodeClick()}
+                            onClick={() => onRewardCodeClick()}
                         >
                             {t("onboarding.rewardCode")}
                         </Button>

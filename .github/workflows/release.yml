@@ -22,17 +22,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
       - name: "🔨 Install dependencies"
         run: bun install --frozen-lockfile
@@ -56,14 +56,17 @@ jobs:
           fi
 
       - name: Create Release Pull Request or Publish to npm
-        uses: changesets/action@v1
+        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         id: changesets
         with:
-          publish: bun changeset:release
-          version: bun changeset:version
-          createGithubReleases: false
+          publish-script: bun changeset:release
+          version-script: bun changeset:version
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # The sdk-{id}-{version} tags below are this repo's release markers;
+          # v2 pushes its own @scope/name@version tags unless both are off.
+          create-github-releases: false
+          push-git-tags: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
           STAGE: production
 
@@ -113,7 +116,7 @@ jobs:
 
       - name: Setup SST Cache
         if: steps.mode.outputs.will_publish == 'true'
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             .sst/platform/
@@ -124,7 +127,7 @@ jobs:
 
       - name: "👥 Configure AWS Credentials"
         if: steps.mode.outputs.will_publish == 'true'
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
           aws-region: eu-west-1
@@ -136,7 +139,7 @@ jobs:
         if: steps.mode.outputs.will_publish == 'true'
         run: bun sst deploy --stage sdk-pointer
 
-      - uses: gacts/purge-jsdelivr-cache@v1
+      - uses: gacts/purge-jsdelivr-cache@8d92aea944f1a3e8ad70505379e1a8ac72d56b73 # v1.1.2
         if: steps.mode.outputs.will_publish == 'true' && steps.sdk_tags.outputs.created_any == 'true'
         with:
           # Only unhashed, version-aliased URLs belong here. Purge maps 1:1 to

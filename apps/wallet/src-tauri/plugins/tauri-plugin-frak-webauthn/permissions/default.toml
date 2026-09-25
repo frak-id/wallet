@@ -1,3 +1,7 @@
 [default]
 description = "Default permissions for the frak-webauthn plugin"
-permissions = ["allow-register", "allow-authenticate"]
+permissions = [
+    "allow-register",
+    "allow-authenticate",
+    "allow-get-passkey-presence",
+]

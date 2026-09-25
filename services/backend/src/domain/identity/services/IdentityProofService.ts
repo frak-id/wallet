@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import {
@@ -7,7 +8,6 @@ import {
     type ProofOp,
     type ProofVerification,
 } from "@frak-labs/core-sdk/identity";
-import { sha256 } from "@oslojs/crypto/sha2";
 import { infraMetrics } from "../../../infrastructure/telemetry";
 
 /**
@@ -190,6 +190,8 @@ export class IdentityProofService {
 
     /** Raw SHA-256 digest of a merge token, for the `frak-merge-v1` binding. */
     hashMergeToken(mergeToken: string): Uint8Array {
-        return sha256(new TextEncoder().encode(mergeToken));
+        return new Uint8Array(
+            createHash("sha256").update(mergeToken, "utf8").digest()
+        );
     }
 }

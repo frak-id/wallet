@@ -4,7 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
  * `jose` is globally mocked (`test/mock/common.ts`); unmock it here, before
  * anything imports `jose` or `jwt.ts`, so this file's real mint/verify
  * round trip is exercised. Don't call `vi.resetModules()`: it would force a
- * second load of the `@backend-utils` barrel, re-registering prom-client
+ * second load of the `@backend-utils` barrel, re-registering Prometheus
  * counters against a registry that survives cache resets and throws on
  * double registration.
  */

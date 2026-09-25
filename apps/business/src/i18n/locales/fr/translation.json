@@ -1264,7 +1264,13 @@
             "sectionLabel": "Budget de récompenses",
             "distributing": "Distribution des récompenses",
             "distributingTooltip": "Lorsque cette option est activée, les récompenses sont automatiquement distribuées à vos utilisateurs via les campagnes actives. La désactiver stoppe toute nouvelle distribution.",
-            "available": "disponible",
+            "totalInclVat": "budget total, TVA et frais Frak inclus",
+            "totalExclVat": "budget total, frais Frak inclus",
+            "breakdown": {
+                "distributable": "Disponible pour les récompenses",
+                "frakFee": "Frais Frak ({{rate}} %)",
+                "vat": "TVA ({{rate}} %)"
+            },
             "noFundsCaption": "Aucun fonds - ajoutez des fonds pour commencer à distribuer des récompenses.",
             "addFunds": "Ajouter des fonds",
             "emptyWarning": "Votre banque n'a aucun fonds. Les campagnes actives ne peuvent pas distribuer de récompenses tant que vous n'ajoutez pas de fonds.",
@@ -1282,7 +1288,8 @@
                 "withdrawTooltip": "Renvoie les fonds disponibles de votre banque vers votre porte-monnaie. Disponible car la distribution est désactivée.",
                 "confirm": "Confirmer",
                 "cancel": "Annuler",
-                "amountPlaceholder": "Montant"
+                "amountPlaceholder": "Montant",
+                "withdrawPlaceholder": "Max {{amount}}"
             }
         },
         "setup": {
@@ -1429,7 +1436,13 @@
             "admin": {
                 "panel": {
                     "title": "Administration - Facturation",
-                    "description": "Créez des notes de dépôt et des factures de retrait pour ce marchand. Visible uniquement par les administrateurs de la plateforme."
+                    "description": "Définissez le pays de facturation et créez des notes de dépôt et des factures de retrait pour ce marchand. Visible uniquement par les administrateurs de la plateforme."
+                },
+                "country": {
+                    "label": "Pays de facturation",
+                    "save": "Enregistrer le pays",
+                    "hint": "Détermine la TVA affichée sur le budget du marchand et sur les notes de dépôt. Le marchand doit toujours compléter ses informations de facturation.",
+                    "error": "Impossible d'enregistrer le pays de facturation. Réessayez."
                 },
                 "deposit": {
                     "trigger": "Ajouter un dépôt",

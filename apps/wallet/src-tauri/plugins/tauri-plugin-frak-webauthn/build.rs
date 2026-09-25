@@ -1,4 +1,4 @@
-const COMMANDS: &[&str] = &["register", "authenticate"];
+const COMMANDS: &[&str] = &["register", "authenticate", "get_passkey_presence"];
 
 fn main() {
     tauri_plugin::Builder::new(COMMANDS)

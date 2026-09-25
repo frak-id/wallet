@@ -30,6 +30,9 @@ permissions:
 
 env:
   CI: true
+  # `dtolnay/rust-toolchain@stable` resolves whatever Rust calls stable that day, so
+  # two runs of the same tag can ship different compiler output. Pinned here instead.
+  RUST_TOOLCHAIN: "1.98.1"
 
 defaults:
   run:
@@ -42,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "📥 Checkout source branch"
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
@@ -72,13 +75,15 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: "🧅 Setup Bun"
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
       - name: "📦 Install dependencies"
         run: bun install --frozen-lockfile
 
       - name: "🦀 Setup Rust"
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
 
       - name: "🔄 Sync version"
         run: bun run --cwd apps/wallet tauri:version "$VERSION"
@@ -89,7 +94,7 @@ jobs:
         run: bun install --lockfile-only
 
       - name: "📌 Create release PR"
-        uses: peter-evans/create-pull-request@v8
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           branch: release/mobile-${{ steps.resolve.outputs.version }}
           base: ${{ github.ref_name }}
@@ -146,13 +151,13 @@ jobs:
       # surfacing only as an always-true availability branch in the plugins.
       # No `bun install` — the script only reads files.
       - name: "📥 Checkout"
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 1
 
       - name: "🧅 Setup Bun"
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
       - name: "📱 Gate the iOS deployment floor"
         run: bun scripts/check-ios-floor.ts
@@ -169,21 +174,21 @@ jobs:
 
     steps:
       - name: "📥 Checkout"
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 1
 
       - name: "🟢 Setup Node"
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
 
       - name: "🧅 Setup Bun"
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
       - name: "💾 Cache Bun modules"
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -196,7 +201,7 @@ jobs:
         run: bun run build:sdk
 
       - name: "📤 Upload SDK artifact"
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: sdk-dist
           # Only needed within this workflow run
@@ -213,16 +218,16 @@ jobs:
 
     steps:
       - name: "📥 Checkout"
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 1
 
       - name: "🧅 Setup Bun"
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
       - name: "💾 Cache Bun modules"
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -237,13 +242,14 @@ jobs:
           echo "$PWD/apps/wallet/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: "📥 Download SDK artifact"
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: sdk-dist
 
       - name: "🦀 Setup Rust"
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
           targets: aarch64-apple-ios
 
       # macos-26 ships rustup via Homebrew, which wraps the cargo/rustc shims with
@@ -256,7 +262,7 @@ jobs:
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: "💾 Cache Rust"
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: apps/wallet/src-tauri
           cache-on-failure: true
@@ -265,7 +271,7 @@ jobs:
 
       - name: "💾 Setup SST Cache"
         id: sst-caching
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             .sst/platform/
@@ -276,7 +282,7 @@ jobs:
           restore-keys: ${{ runner.os }}-sst-v2-
 
       - name: "💾 Cache Xcode DerivedData"
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/Library/Developer/Xcode/DerivedData
           key: ${{ runner.os }}-xcode-derived-${{ hashFiles('apps/wallet/src-tauri/gen/apple/**') }}
@@ -286,7 +292,7 @@ jobs:
       # racing over this single global cache. Caching it across runs gives subsequent runs warm
       # artifacts; the pre-warm step below covers cold (cache-miss) runs.
       - name: "💾 Cache SwiftPM artifacts"
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/Library/Caches/org.swift.swiftpm
@@ -295,7 +301,7 @@ jobs:
           restore-keys: ${{ runner.os }}-spm-
 
       - name: "👥 Configure AWS Credentials"
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
           aws-region: eu-west-1
@@ -464,7 +470,7 @@ jobs:
 
       - name: "📦 Upload iOS artifact"
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ios-ipa
           path: "apps/wallet/src-tauri/gen/apple/build/arm64/Frak Wallet${{ needs.validate.outputs.stage == 'dev' && ' Dev' || '' }}.ipa"
@@ -476,16 +482,16 @@ jobs:
 
     steps:
       - name: "📥 Checkout"
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 1
 
       - name: "🧅 Setup Bun"
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
       - name: "💾 Cache Bun modules"
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -500,44 +506,45 @@ jobs:
           echo "$PWD/apps/wallet/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: "📥 Download SDK artifact"
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: sdk-dist
 
       - name: "☕ Setup Java 17"
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: "17"
 
       - name: "📱 Setup Android SDK"
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
           # The legacy `tools` package is gone from Google's repo; the action's default
           # `tools platform-tools` makes sdkmanager exit 1.
           packages: platform-tools
 
       - name: "💾 Cache Gradle wrapper"
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.gradle/wrapper/dists
           key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('apps/wallet/src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-wrapper-
 
       - name: "🦀 Setup Rust"
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
       - name: "💾 Cache Rust"
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: apps/wallet/src-tauri
           cache-on-failure: true
 
       - name: "💾 Setup SST Cache"
         id: sst-caching
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             .sst/platform/
@@ -548,7 +555,7 @@ jobs:
           restore-keys: ${{ runner.os }}-sst-v2-
 
       - name: "👥 Configure AWS Credentials"
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
           aws-region: eu-west-1
@@ -643,7 +650,7 @@ jobs:
 
       # TODO: Graduate from `internal` track to `production` when ready for public release
       - name: "🚀 Upload to Play Store"
-        uses: r0adkll/upload-google-play@v1.1.5
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: ${{ needs.validate.outputs.stage == 'dev' && 'id.frak.wallet.dev' || 'id.frak.wallet' }}
@@ -653,7 +660,7 @@ jobs:
 
       - name: "📦 Upload Android artifact"
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: android-aab
           path: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab
@@ -666,19 +673,19 @@ jobs:
       contents: write
     steps:
       - name: "📥 Checkout merge commit"
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
 
       - name: "📥 Download iOS artifact"
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: ios-ipa
           path: release-assets/ios
 
       - name: "📥 Download Android artifact"
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: android-aab
           path: release-assets/android
@@ -693,7 +700,7 @@ jobs:
           git push origin "app-${VERSION}"
 
       - name: "🚀 Create GitHub release"
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: "app-${{ needs.validate.outputs.version }}"
           name: "Frak Wallet ${{ needs.validate.outputs.version }}"

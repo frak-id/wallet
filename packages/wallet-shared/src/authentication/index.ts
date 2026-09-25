@@ -29,4 +29,9 @@ export {
     type WebauthnErrorView,
 } from "./webauthn/errorView";
 // WebAuthn Tauri bridge
-export { getTauriCreateFn, getTauriGetFn } from "./webauthn/tauriBridge";
+export type { PasskeyPresence } from "./webauthn/tauriBridge";
+export {
+    getPasskeyPresence,
+    getTauriCreateFn,
+    getTauriGetFn,
+} from "./webauthn/tauriBridge";

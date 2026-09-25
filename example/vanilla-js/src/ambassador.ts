@@ -230,7 +230,11 @@ function bindInstall(merchantId: string | undefined) {
     const url = `${getEnvironment().wallet}/install?m=${encodeURIComponent(merchantId)}`;
     for (const badge of badges) {
         badge.href = url;
+        // The markup ships the inert state, so binding must clear all three:
+        // a real href carries the link role and tab stop natively.
         badge.removeAttribute("aria-disabled");
+        badge.removeAttribute("role");
+        badge.removeAttribute("tabindex");
     }
 }
 

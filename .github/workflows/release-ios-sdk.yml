@@ -51,8 +51,8 @@ jobs:
     outputs:
       version: ${{ steps.resolve.outputs.version }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
       - name: "🔢 Resolve the version"
         id: resolve
@@ -89,11 +89,11 @@ jobs:
     needs: guard
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
       - name: "💾 Cache SwiftPM build"
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: sdk/ios/.build
           key: ${{ runner.os }}-spm-frak-sdk-${{ hashFiles('sdk/ios/Package.swift', 'sdk/ios/Sources/**', 'sdk/ios/Tests/**') }}
@@ -120,8 +120,8 @@ jobs:
     outputs:
       pushed: ${{ steps.push.outputs.pushed }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
       - name: "📦 Stage the mirror payload"
         run: sdk/ios/scripts/run.sh mirror-stage "$RUNNER_TEMP/mirror"
@@ -197,7 +197,7 @@ jobs:
       # the released SHA, so every published version is reachable from this repo too.
       - name: "🏷️ Create the GitHub release"
         if: steps.push.outputs.pushed == 'true'
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: "ios-v${{ needs.guard.outputs.version }}"
           name: "iOS SDK ${{ needs.guard.outputs.version }}"
