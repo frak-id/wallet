@@ -15,15 +15,20 @@ export const merchantExplorerRoutes = new Elysia({
     .put(
         "",
         async ({ params: { merchantId }, body }) => {
-            await MerchantContext.repositories.merchant.updateExplorer(
-                merchantId,
-                {
-                    config: body.config,
-                    enabled: body.enabled,
-                }
-            );
+            const updated =
+                await MerchantContext.repositories.merchant.updateExplorer(
+                    merchantId,
+                    {
+                        config: body.config,
+                        enabled: body.enabled,
+                    }
+                );
 
             OrchestrationContext.orchestrators.explorer.invalidateCache();
+            // The resolved SDK config carries the Explorer image as the ambassador photo default.
+            if (updated) {
+                MerchantContext.services.resolve.invalidateForMerchant(updated);
+            }
 
             return status(204);
         },
