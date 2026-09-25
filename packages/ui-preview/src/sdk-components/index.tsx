@@ -4,6 +4,66 @@ import { replaceVariables } from "../utils/variables";
 import { GiftIcon } from "./GiftIcon";
 import * as styles from "./styles.css";
 
+export type AmbassadorHeroPreviewProps = {
+    eyebrow: string;
+    title: string;
+    lede: string;
+    ctaLabel: string;
+    rewardCaption: string;
+    caption: string;
+    currency: Currency;
+    shopName: string;
+    /** Hero photo; absent collapses the 4:5 frame around the reward card. */
+    imageUrl?: string;
+};
+
+/** Preview of the hero of <frak-ambassador>, with a sample reward amount. */
+export function AmbassadorHeroPreview({
+    eyebrow,
+    title,
+    lede,
+    ctaLabel,
+    rewardCaption,
+    caption,
+    currency,
+    shopName,
+    imageUrl,
+}: AmbassadorHeroPreviewProps) {
+    const fill = (text: string) => replaceVariables(text, currency, shopName);
+    return (
+        <div className={styles.ambassadorHero}>
+            <div className={styles.ambassadorBody}>
+                <p className={styles.ambassadorMuted}>{fill(eyebrow)}</p>
+                <p className={styles.ambassadorTitle}>{fill(title)}</p>
+                <p className={styles.ambassadorLede}>{fill(lede)}</p>
+                <span className={styles.ambassadorCta}>{fill(ctaLabel)}</span>
+                <p className={styles.ambassadorMuted}>{fill(caption)}</p>
+            </div>
+            <div
+                className={
+                    imageUrl
+                        ? `${styles.ambassadorArt} ${styles.ambassadorArtFramed}`
+                        : styles.ambassadorArt
+                }
+            >
+                {imageUrl ? (
+                    <img
+                        src={imageUrl}
+                        alt=""
+                        className={styles.ambassadorImage}
+                    />
+                ) : null}
+                <div className={styles.ambassadorTag}>
+                    <b className={styles.ambassadorAmount}>
+                        {fill("{REWARD}")}
+                    </b>{" "}
+                    <small>{fill(rewardCaption)}</small>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export type BannerPreviewProps = {
     title: string;
     description: string;

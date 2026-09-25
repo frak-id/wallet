@@ -1,9 +1,10 @@
 import { style } from "@vanilla-extract/css";
 
-/** Hidden when the window is too small to fit the phone beside the form. */
-const hideWhenTight = {
-    "(max-width: 1263px), (max-height: 819px)": { display: "none" },
-} as const;
+/** Window size from which the phone fits beside the form. */
+export const phoneVisibleQuery = "(min-width: 1264px) and (min-height: 820px)";
+
+/** The complement: windows too small to fit the phone beside the form. */
+export const phoneHiddenQuery = "(max-width: 1263px), (max-height: 819px)";
 
 /**
  * Fixed, vertically centered against the viewport — always visible while
@@ -12,14 +13,14 @@ const hideWhenTight = {
  */
 export const fixed = style({
     "@media": {
-        "(min-width: 1264px) and (min-height: 820px)": {
+        [phoneVisibleQuery]: {
             position: "fixed",
             right: "40px",
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 11,
         },
-        ...hideWhenTight,
+        [phoneHiddenQuery]: { display: "none" },
     },
 });
 
@@ -34,6 +35,6 @@ export const sticky = style({
     top: "40px",
     zIndex: 1,
     "@media": {
-        "(max-width: 1263px), (max-height: 819px)": { display: "none" },
+        [phoneHiddenQuery]: { display: "none" },
     },
 });

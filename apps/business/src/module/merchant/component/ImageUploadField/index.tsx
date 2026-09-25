@@ -21,6 +21,8 @@ import * as styles from "../edit-fields.css";
 type ImageUploadFieldProps = {
     merchantId: string;
     type: "logo" | "hero" | "icon";
+    /** `hero-extra` stores under a new `hero-{hash}` key instead of overwriting `hero`. */
+    uploadType?: "hero-extra";
     value: string;
     onChange: (value: string) => void;
     onUploadSuccess: (url: string) => void;
@@ -41,6 +43,7 @@ export const imageAccept = {
 export function ImageUploadField({
     merchantId,
     type,
+    uploadType,
     value,
     onChange,
     onUploadSuccess,
@@ -63,11 +66,11 @@ export function ImageUploadField({
 
             resetUpload();
             upload(
-                { merchantId, image: file, type },
+                { merchantId, image: file, type: uploadType ?? type },
                 { onSuccess: (data) => onUploadSuccess(data.url) }
             );
         },
-        [merchantId, type, upload, resetUpload, onUploadSuccess]
+        [merchantId, type, uploadType, upload, resetUpload, onUploadSuccess]
     );
 
     // Clearing only updates the form value — the bucket file is kept so

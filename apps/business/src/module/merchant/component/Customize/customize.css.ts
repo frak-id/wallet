@@ -1,6 +1,10 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
+import {
+    phoneHiddenQuery,
+    phoneVisibleQuery,
+} from "@/module/common/component/FloatingPhonePreview/floating-phone-preview.css";
 import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
 export const switchRow = style({
@@ -207,6 +211,50 @@ export const cssTextarea = style({
 globalStyle(`${cssTextarea}::placeholder`, {
     color: vars.text.disabled,
     opacity: 1,
+});
+
+/** Positions the ambassador card so the phone rail can hang off its right edge. */
+export const ambassadorRow = style({
+    position: "relative",
+});
+
+/**
+ * Rail spanning the ambassador card's height; the sticky phone inside follows
+ * the scroll and stops at the card's bottom. Shown only on large windows.
+ */
+export const phoneRail = style({
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: "100%",
+    paddingLeft: alias.spacing.l,
+    "@media": {
+        [phoneHiddenQuery]: { display: "none" },
+    },
+});
+
+/** The inline hero preview yields to the phone on large windows. */
+export const inlineHeroOnly = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.m,
+    "@media": {
+        [phoneVisibleQuery]: { display: "none" },
+    },
+});
+
+/**
+ * The sheet's phone: centred, scaled down on narrow screens, and the sheet
+ * itself scrolls when the screen is short.
+ */
+export const fullPreviewPhone = style({
+    display: "flex",
+    justifyContent: "center",
+    "@media": {
+        "(max-width: 400px)": {
+            zoom: 0.88,
+        },
+    },
 });
 
 export const dialogBody = style({

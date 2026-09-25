@@ -5,6 +5,7 @@ import { replaceVariables } from "./variables";
 // the same function the subject calls would let a formatting regression pass.
 // Note the non-breaking space (U+00A0) the Intl formatter emits.
 const reward = "42\u00a0€";
+const friendReward = "10\u00a0€";
 
 describe("replaceVariables", () => {
     it("returns an empty string for empty input", () => {
@@ -43,6 +44,30 @@ describe("replaceVariables", () => {
                 "Acme"
             )
         ).toBe(`${reward} then ${reward}`);
+    });
+
+    it("replaces {BRAND} with the shop name", () => {
+        expect(replaceVariables("Join {BRAND} now", "eur", "Acme")).toBe(
+            "Join Acme now"
+        );
+    });
+
+    it("fills {REWARD} with the given amount", () => {
+        expect(replaceVariables("Earn {REWARD}", "eur", "Acme", 10)).toBe(
+            `Earn ${friendReward}`
+        );
+    });
+
+    it("fills {REWARD} with 42 when no amount is given", () => {
+        expect(replaceVariables("Earn {REWARD}", "eur", "Acme")).toBe(
+            `Earn ${reward}`
+        );
+    });
+
+    it("formats the given amount in the passed currency", () => {
+        expect(replaceVariables("Earn {REWARD}", "usd", "Acme", 10)).toBe(
+            "Earn $10"
+        );
     });
 
     it("passes a token-free string through unchanged", () => {

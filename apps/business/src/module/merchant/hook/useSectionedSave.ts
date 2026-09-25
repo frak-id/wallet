@@ -1,4 +1,6 @@
+import { useIsMutating } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { mediaUploadMutationKey } from "./useMediaUpload";
 
 type SectionSubmit = () => Promise<void>;
 
@@ -13,6 +15,9 @@ export function useSectionedSave() {
     );
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState(false);
+    // A Save mid-upload would store the form's old image URL.
+    const isUploading =
+        useIsMutating({ mutationKey: mediaUploadMutationKey }) > 0;
     // Lazy init: useRef(new Map()) would rebuild and discard the Map on
     // every render.
     const submitHandlers = useRef<Map<string, SectionSubmit> | null>(null);
@@ -75,7 +80,7 @@ export function useSectionedSave() {
         saveContext,
         dirtySections,
         hasUnsavedChanges,
-        isSaving,
+        isSaving: isSaving || isUploading,
         saveError,
         saveAll,
     };

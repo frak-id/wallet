@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { ShareButtonPreview } from "./index";
+import { AmbassadorHeroPreview, ShareButtonPreview } from "./index";
 
 function renderButton(style?: React.CSSProperties) {
     render(
@@ -69,5 +69,50 @@ describe("ShareButtonPreview", () => {
     it("still renders the button wording", () => {
         const button = renderButton({ fontSize: "12px" });
         expect(button).toHaveTextContent("Share and earn");
+    });
+});
+
+describe("AmbassadorHeroPreview", () => {
+    const props = {
+        title: "Join {BRAND}",
+        lede: "Earn {REWARD} per sale",
+        ctaLabel: "Become an ambassador",
+        eyebrow: "Ambassador program",
+        rewardCaption: "for you, on every sale",
+        caption: "No form, no waiting.",
+        currency: "eur" as const,
+        shopName: "Nowa",
+    };
+
+    it("draws the photo with the reward card over it", () => {
+        const { container } = render(
+            <AmbassadorHeroPreview
+                {...props}
+                imageUrl="https://cdn.example.com/hero.jpg"
+            />
+        );
+        expect(container.querySelector("img")).toHaveAttribute(
+            "src",
+            "https://cdn.example.com/hero.jpg"
+        );
+        expect(screen.getByText("for you, on every sale")).toBeInTheDocument();
+    });
+
+    it("keeps the reward card without a photo", () => {
+        const { container } = render(<AmbassadorHeroPreview {...props} />);
+        expect(container.querySelector("img")).toBeNull();
+        expect(screen.getByText("for you, on every sale")).toBeInTheDocument();
+    });
+
+    it("fills the brand and the sample amount", () => {
+        render(<AmbassadorHeroPreview {...props} />);
+        expect(screen.getByText("Join Nowa")).toBeInTheDocument();
+        expect(screen.getByText(/^Earn 42.€ per sale$/)).toBeInTheDocument();
+    });
+
+    it("shows the label above the headline and the caption under the button", () => {
+        render(<AmbassadorHeroPreview {...props} />);
+        expect(screen.getByText("Ambassador program")).toBeInTheDocument();
+        expect(screen.getByText("No form, no waiting.")).toBeInTheDocument();
     });
 });

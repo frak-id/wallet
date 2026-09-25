@@ -1976,6 +1976,49 @@
                 }
             }
         },
+        "ambassador": {
+            "title": "Ambassador page",
+            "description": "The hero photo and wording of your ambassador page, on every platform where it is placed. An empty field keeps the default text.",
+            "preview": "Preview of the top of the page",
+            "fullPreview": "See the whole page",
+            "fullPreviewDescription": "Phone preview of the whole ambassador page",
+            "tokenHint": "Tip: {BRAND} shows your store name and {REWARD} the campaign reward.",
+            "photo": {
+                "label": "Hero photo",
+                "default": "Explorer image",
+                "custom": "Other image",
+                "none": "No photo",
+                "defaultHint": "Uses the main image of your Explorer profile.",
+                "noExplorerHint": "Your Explorer profile has no main image yet, so the page shows no photo.",
+                "customHint": "Shown in a 4:5 frame: pick an image where people stay in the middle."
+            },
+            "groups": {
+                "hero": "Headline and intro",
+                "reward": "Reward wording",
+                "buttons": "Button labels",
+                "faq": "Frequently asked questions"
+            },
+            "fields": {
+                "heroTitle": "Headline",
+                "heroLede": "Intro",
+                "heroRewardCaption": "Caption on the reward card",
+                "heroCtaLabel": "Top button",
+                "rewardHeading": "Reward heading",
+                "rewardLede": "Reward intro",
+                "rewardCtaLabel": "Reward button",
+                "referralCtaLabel": "Share button",
+                "faq1Question": "Question 1",
+                "faq1Answer": "Answer 1",
+                "faq2Question": "Question 2",
+                "faq2Answer": "Answer 2",
+                "faq3Question": "Question 3",
+                "faq3Answer": "Answer 3",
+                "faq4Question": "Question 4",
+                "faq4Answer": "Answer 4",
+                "faq5Question": "Question 5",
+                "faq5Answer": "Answer 5"
+            }
+        },
         "components": {
             "title": "Global component defaults",
             "description": "Choose the wording that best matches your brand for each component.",
