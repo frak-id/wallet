@@ -144,3 +144,90 @@ export const shareButton = style({
     cursor: "default",
     fontFamily: "system-ui, -apple-system, sans-serif",
 });
+
+export const ambassadorHero = style({
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    alignItems: "center",
+    gap: 16,
+    padding: 16,
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    border: "1px solid #e0e0e0",
+    fontFamily: "system-ui, -apple-system, sans-serif",
+    color: "#1a1a1a",
+});
+
+export const ambassadorBody = style({
+    display: "grid",
+    gap: 8,
+    justifyItems: "start",
+    minWidth: 0,
+});
+
+export const ambassadorTitle = style({
+    margin: 0,
+    fontSize: 20,
+    fontWeight: 700,
+    lineHeight: 1.15,
+});
+
+export const ambassadorLede = style({
+    margin: 0,
+    fontSize: 12,
+    lineHeight: 1.45,
+    opacity: 0.75,
+});
+
+export const ambassadorMuted = style({
+    margin: 0,
+    fontSize: 10,
+    lineHeight: 1.4,
+    opacity: 0.6,
+});
+
+export const ambassadorCta = style({
+    padding: "8px 16px",
+    borderRadius: 9999,
+    backgroundColor: "#1a1a1a",
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: 700,
+    textTransform: "uppercase",
+});
+
+export const ambassadorArt = style({
+    position: "relative",
+    display: "grid",
+    alignContent: "end",
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: "rgba(17, 17, 17, 0.04)",
+    border: "1px solid rgba(17, 17, 17, 0.15)",
+});
+
+export const ambassadorArtFramed = style({
+    aspectRatio: "4 / 5",
+});
+
+export const ambassadorImage = style({
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    borderRadius: 8,
+});
+
+export const ambassadorTag = style({
+    position: "relative",
+    padding: "8px 10px",
+    borderRadius: 8,
+    backgroundColor: "#ffffff",
+    fontSize: 11,
+});
+
+export const ambassadorAmount = style({
+    display: "block",
+    fontSize: 16,
+});

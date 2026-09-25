@@ -5,6 +5,7 @@
 export const SECTION_KEYS = {
     identity: "identity",
     sharing: "default-sharing",
+    ambassador: "ambassador-page",
     defaultComponents: "default-components",
 } as const;
 
@@ -12,6 +13,7 @@ export const SECTION_KEYS = {
 const ALWAYS_MOUNTED: Record<string, true> = {
     [SECTION_KEYS.identity]: true,
     [SECTION_KEYS.sharing]: true,
+    [SECTION_KEYS.ambassador]: true,
 };
 
 /**

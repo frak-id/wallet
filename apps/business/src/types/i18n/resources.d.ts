@@ -938,6 +938,49 @@ export default interface Resources {
       }
     },
     "customize": {
+      "ambassador": {
+        "description": "The hero photo and wording of your ambassador page, on every platform where it is placed. An empty field keeps the default text.",
+        "fields": {
+          "faq1Answer": "Answer 1",
+          "faq1Question": "Question 1",
+          "faq2Answer": "Answer 2",
+          "faq2Question": "Question 2",
+          "faq3Answer": "Answer 3",
+          "faq3Question": "Question 3",
+          "faq4Answer": "Answer 4",
+          "faq4Question": "Question 4",
+          "faq5Answer": "Answer 5",
+          "faq5Question": "Question 5",
+          "heroCtaLabel": "Top button",
+          "heroLede": "Intro",
+          "heroRewardCaption": "Caption on the reward card",
+          "heroTitle": "Headline",
+          "referralCtaLabel": "Share button",
+          "rewardCtaLabel": "Reward button",
+          "rewardHeading": "Reward heading",
+          "rewardLede": "Reward intro"
+        },
+        "fullPreview": "See the whole page",
+        "fullPreviewDescription": "Phone preview of the whole ambassador page",
+        "groups": {
+          "buttons": "Button labels",
+          "faq": "Frequently asked questions",
+          "hero": "Headline and intro",
+          "reward": "Reward wording"
+        },
+        "photo": {
+          "custom": "Other image",
+          "customHint": "Shown in a 4:5 frame: pick an image where people stay in the middle.",
+          "default": "Explorer image",
+          "defaultHint": "Uses the main image of your Explorer profile.",
+          "label": "Hero photo",
+          "noExplorerHint": "Your Explorer profile has no main image yet, so the page shows no photo.",
+          "none": "No photo"
+        },
+        "preview": "Preview of the top of the page",
+        "title": "Ambassador page",
+        "tokenHint": "Tip: {BRAND} shows your store name and {REWARD} the campaign reward."
+      },
       "components": {
         "advanced": "Advanced settings",
         "banner": "Banner",
