@@ -60,6 +60,59 @@ function resolveLocalizableFields<K extends string>(
     return resolved;
 }
 
+const AMBASSADOR_TEXT_FIELDS = [
+    "heroTitle",
+    "heroLede",
+    "heroRewardCaption",
+    "heroCtaLabel",
+    "rewardHeading",
+    "rewardLede",
+    "rewardCtaLabel",
+    "referralCtaLabel",
+    "faq1Question",
+    "faq1Answer",
+    "faq2Question",
+    "faq2Answer",
+    "faq3Question",
+    "faq3Answer",
+    "faq4Question",
+    "faq4Answer",
+    "faq5Question",
+    "faq5Answer",
+] as const;
+
+type StoredAmbassador = NonNullable<
+    NonNullable<SdkConfig["components"]>["ambassador"]
+>;
+type ResolvedAmbassador = NonNullable<
+    NonNullable<ResolvedSdkConfig["components"]>["ambassador"]
+>;
+
+/**
+ * Unlike the other components, a text missing in the visitor's language never
+ * borrows another language: the page's own default in that language wins.
+ */
+function resolveAmbassador(
+    ambassador: StoredAmbassador | undefined,
+    lang: Language,
+    explorerHeroImageUrl: string | undefined
+): ResolvedAmbassador | undefined {
+    const resolved: ResolvedAmbassador = {};
+    for (const field of AMBASSADOR_TEXT_FIELDS) {
+        const value = ambassador?.[field];
+        const text =
+            typeof value === "string"
+                ? value
+                : (value?.[lang] ?? value?.default);
+        if (text !== undefined) resolved[field] = text;
+    }
+    const stored = ambassador?.heroImageUrl;
+    const heroImageUrl =
+        stored === "none" ? undefined : (stored ?? explorerHeroImageUrl);
+    if (heroImageUrl) resolved.heroImageUrl = heroImageUrl;
+    return Object.keys(resolved).length > 0 ? resolved : undefined;
+}
+
 function processRawScopedCss(
     rawCss: string | undefined,
     scope: string
@@ -178,7 +231,8 @@ export class MerchantResolveService {
         const resolvedLang = this.resolveLanguage(merchant.sdkConfig, safeLang);
         const resolvedSdkConfig = this.buildResolvedSdkConfig(
             merchant.sdkConfig,
-            resolvedLang
+            resolvedLang,
+            merchant.explorerConfig?.heroImageUrl
         );
 
         const response: MerchantResolveResponse = {
@@ -331,9 +385,20 @@ export class MerchantResolveService {
 
     private buildResolvedSdkConfig(
         sdkConfig: SdkConfig | null | undefined,
-        lang: Language
+        lang: Language,
+        explorerHeroImageUrl: string | undefined
     ): ResolvedSdkConfig | undefined {
-        if (!sdkConfig) return undefined;
+        const ambassador = resolveAmbassador(
+            sdkConfig?.components?.ambassador,
+            lang,
+            explorerHeroImageUrl
+        );
+        // Photo-only, with no `lang`: the page keeps resolving its own language.
+        if (!sdkConfig) return ambassador && { components: { ambassador } };
+
+        const components = sdkConfig.components
+            ? this.buildResolvedComponents(sdkConfig.components, lang)
+            : undefined;
 
         const mergedTranslations = this.mergeTranslations(
             sdkConfig.translations?.default,
@@ -354,11 +419,11 @@ export class MerchantResolveService {
             css: sdkConfig.css ?? undefined,
             ...(mergedTranslations && { translations: mergedTranslations }),
             ...(resolvedPlacements && { placements: resolvedPlacements }),
-            ...(sdkConfig.components && {
-                components: this.buildResolvedComponents(
-                    sdkConfig.components,
-                    lang
-                ),
+            ...((components || ambassador) && {
+                components: {
+                    ...components,
+                    ...(ambassador && { ambassador }),
+                },
             }),
             ...(sdkConfig.attribution && {
                 attribution: sdkConfig.attribution,

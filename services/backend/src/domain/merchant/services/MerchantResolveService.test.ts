@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
-import type { SdkConfig } from "../schemas";
+import type { ExplorerConfig, SdkConfig } from "../schemas";
 import {
     MerchantResolveService,
     normalizePackageId,
@@ -29,8 +29,11 @@ function buildMerchant(overrides: Partial<Record<string, unknown>> = {}) {
     };
 }
 
-function createService(sdkConfig: SdkConfig | null) {
-    const merchant = buildMerchant({ sdkConfig });
+function createService(
+    sdkConfig: SdkConfig | null,
+    explorerConfig: ExplorerConfig | null = null
+) {
+    const merchant = buildMerchant({ sdkConfig, explorerConfig });
     const repository = {
         findByDomain: async () => merchant,
         findByAllowedDomain: async () => null,
@@ -150,6 +153,117 @@ describe("MerchantResolveService localizable text", () => {
         expect(
             fr?.sdkConfig?.placements?.hero?.components?.banner?.referralCta
         ).toBe("J'ai compris");
+    });
+});
+
+describe("MerchantResolveService ambassador settings", () => {
+    const EXPLORER_HERO = "https://cdn.example.com/hero.jpg";
+    const STORED_HERO = "https://cdn.example.com/ambassador.jpg";
+    const explorer: ExplorerConfig = { heroImageUrl: EXPLORER_HERO };
+
+    async function resolveAmbassador(
+        sdkConfig: SdkConfig | null,
+        explorerConfig: ExplorerConfig | null,
+        lang: "en" | "fr" = "fr"
+    ) {
+        const response = await createService(sdkConfig, explorerConfig).resolve(
+            { domain: "example.com", lang }
+        );
+        return response?.sdkConfig;
+    }
+
+    it("uses the Explorer main image when no photo is chosen", async () => {
+        const sdkConfig = await resolveAmbassador(
+            { components: { ambassador: { heroTitle: "Hi" } } },
+            explorer
+        );
+        expect(sdkConfig?.components?.ambassador?.heroImageUrl).toBe(
+            EXPLORER_HERO
+        );
+    });
+
+    it("sends no photo when the merchant chose none, even with an Explorer image", async () => {
+        const sdkConfig = await resolveAmbassador(
+            { components: { ambassador: { heroImageUrl: "none" } } },
+            explorer
+        );
+        expect(sdkConfig?.components?.ambassador?.heroImageUrl).toBeUndefined();
+    });
+
+    it("sends no photo without an Explorer image or a choice", async () => {
+        const sdkConfig = await resolveAmbassador(
+            { components: { ambassador: { heroTitle: "Hi" } } },
+            null
+        );
+        expect(sdkConfig?.components?.ambassador).toEqual({
+            heroTitle: "Hi",
+        });
+    });
+
+    it("prefers the chosen photo over the Explorer image", async () => {
+        const sdkConfig = await resolveAmbassador(
+            { components: { ambassador: { heroImageUrl: STORED_HERO } } },
+            explorer
+        );
+        expect(sdkConfig?.components?.ambassador?.heroImageUrl).toBe(
+            STORED_HERO
+        );
+    });
+
+    it("leaves a French-only text out of the English page, so the English default shows", async () => {
+        const sdkConfig = await resolveAmbassador(
+            {
+                components: {
+                    ambassador: { heroTitle: { fr: "Rejoignez-nous" } },
+                },
+            },
+            null,
+            "en"
+        );
+        expect(sdkConfig?.components?.ambassador).toBeUndefined();
+    });
+
+    it("resolves an all-languages text for every language", async () => {
+        const sdkConfig = await resolveAmbassador(
+            {
+                components: {
+                    ambassador: {
+                        heroTitle: { default: "Join us", en: "Join us now" },
+                        faq5Answer: "Frak pays you.",
+                    },
+                },
+            },
+            null
+        );
+        expect(sdkConfig?.components?.ambassador).toEqual({
+            heroTitle: "Join us",
+            faq5Answer: "Frak pays you.",
+        });
+    });
+
+    it("keeps the other components next to the ambassador entry", async () => {
+        const sdkConfig = await resolveAmbassador(
+            { components: { openInApp: { text: "Open" } } },
+            explorer
+        );
+        expect(sdkConfig?.components).toEqual({
+            openInApp: { text: "Open" },
+            ambassador: { heroImageUrl: EXPLORER_HERO },
+        });
+    });
+
+    it("gives a merchant with no saved settings only the Explorer photo, without a language", async () => {
+        const sdkConfig = await resolveAmbassador(null, explorer);
+        expect(sdkConfig).toEqual({
+            components: { ambassador: { heroImageUrl: EXPLORER_HERO } },
+        });
+    });
+
+    it("sends no settings for a merchant with neither saved settings nor an Explorer image", async () => {
+        expect(await resolveAmbassador(null, null)).toBeUndefined();
+        expect(await resolveAmbassador(null, { description: "x" })).toBe(
+            undefined
+        );
     });
 });
 
