@@ -47,6 +47,16 @@ vi.mock("@frak-labs/core-sdk/actions", () => ({
 
 vi.mock("@frak-labs/core-sdk", () => ({ sdkConfigStore: {} }));
 
+const globalComponents = vi.fn<() => { ambassador?: Record<string, string> }>(
+    () => ({})
+);
+vi.mock("@/hooks/useGlobalComponents", () => ({
+    useGlobalComponents: () => globalComponents(),
+}));
+function setDashboard(ambassador: Record<string, string>) {
+    globalComponents.mockReturnValue({ ambassador });
+}
+
 const encodeQR = vi.fn((_text: string, _output: string, _opts?: unknown) => [
     [true],
 ]);
@@ -192,6 +202,7 @@ describe("Ambassador", () => {
         setRefereeReward(undefined, false);
         setWideScreen(false);
         getInstallUrl.mockResolvedValue(INSTALL_URL);
+        globalComponents.mockReturnValue({});
         window.FrakSetup = {
             config: { metadata: { name: BRAND } },
         } as typeof window.FrakSetup;
@@ -201,6 +212,95 @@ describe("Ambassador", () => {
         for (const el of document.querySelectorAll("style[data-u6]")) {
             el.remove();
         }
+    });
+
+    // ─── Dashboard settings ───
+
+    it("prefers an attribute over the dashboard headline", () => {
+        setDashboard({ heroTitle: "From the dashboard" });
+        const { container } = render(<Ambassador heroTitle="From the tag" />);
+        expect(text(container, ".frak-ambassador__hero-title")).toBe(
+            "From the tag"
+        );
+    });
+
+    it("shows the dashboard headline with the brand filled in", () => {
+        setDashboard({ heroTitle: "Join {BRAND}", referralCtaLabel: "Go" });
+        const { container } = render(<Ambassador />);
+        expect(text(container, ".frak-ambassador__hero-title")).toBe(
+            `Join ${BRAND}`
+        );
+        expect(text(container, ".frak-ambassador__referral-cta")).toBe("Go");
+    });
+
+    it("keeps the default headline when a dashboard {REWARD} headline has no figure", () => {
+        setDashboard({ heroTitle: "Earn {REWARD}" });
+        const { container, rerender } = render(<Ambassador />);
+        expect(text(container, ".frak-ambassador__hero-title")).toBe(
+            `Become an ambassador for ${BRAND}`
+        );
+
+        setReferrerReward("10 €");
+        rerender(<Ambassador />);
+        expect(text(container, ".frak-ambassador__hero-title")).toBe(
+            "Earn 10 €"
+        );
+    });
+
+    it("fills the amount slot of a dashboard reward heading", () => {
+        setReferrerReward("10 €");
+        setDashboard({ rewardHeading: "{REWARD} per sale" });
+        const { container } = render(<Ambassador />);
+        expect(text(container, ".frak-ambassador__reward-heading")).toBe(
+            "10 € per sale"
+        );
+    });
+
+    it("shows the dashboard hero photo, and collapses the frame when it fails", () => {
+        setDashboard({ heroImageUrl: "https://merchant.example/hero.jpg" });
+        const { container } = render(<Ambassador />);
+        const image = container.querySelector(".frak-ambassador__hero-image");
+        expect(image).toHaveAttribute(
+            "src",
+            "https://merchant.example/hero.jpg"
+        );
+
+        if (image) fireEvent.error(image);
+        expect(
+            container.querySelector(".frak-ambassador__hero-image")
+        ).toBeNull();
+    });
+
+    it("replaces the whole FAQ 5 answer with the dashboard text and keeps the attribution link", () => {
+        setDashboard({ faq5Answer: "{BRAND} works with Frak." });
+        const { container } = render(<Ambassador />);
+        const answers = container.querySelectorAll(
+            ".frak-ambassador__faq-answer"
+        );
+        const last = answers[answers.length - 1];
+        expect(last?.textContent).toBe(`${BRAND} works with Frak.`);
+        expect(last?.querySelector("a")).toBeNull();
+        expect(
+            container.querySelector(".frak-ambassador__faq-attribution a")
+        ).toHaveAttribute("href", FRAK_URL);
+    });
+
+    it("keeps the split FAQ 5 answer when a dashboard {REWARD} answer has no figure", () => {
+        setDashboard({ faq5Answer: "You earn {REWARD}." });
+        const { container } = render(<Ambassador />);
+        expect(container.textContent).not.toContain("{REWARD}");
+        expect(
+            container.querySelector(".frak-ambassador__faq-answer-link")
+        ).toHaveAttribute("href", FRAK_URL);
+    });
+
+    it("keeps the split FAQ 5 attributes over a dashboard answer", () => {
+        setDashboard({ faq5Answer: "Dashboard answer." });
+        const { container } = render(
+            <Ambassador faq5AnswerBeforeLink="Run by " />
+        );
+        expect(container.textContent).not.toContain("Dashboard answer.");
+        expect(container.textContent).toContain("Run by Frak");
     });
 
     // ─── Covers AE1–AE5: the referee gate ───
@@ -232,7 +332,7 @@ describe("Ambassador", () => {
             container.querySelectorAll(".frak-ambassador__step-description")
         ).map((el) => el.textContent);
         expect(descriptions[1]).toBe(
-            "Your friend installs the Frak app in seconds, then places their order."
+            "Credited automatically to my wallet for every sale made through my referral link."
         );
         const answers = Array.from(
             container.querySelectorAll(".frak-ambassador__faq-answer")
@@ -320,7 +420,6 @@ describe("Ambassador", () => {
     it("ignores merchant overrides of friend-perk slots without a referee reward", () => {
         const props = {
             heroRewardRefereePill: "+ a gift for your friend",
-            step2Description: "Your friend gets a gift.",
             faq3Answer: "They get a gift.",
         };
         const closed = render(<Ambassador {...props} />).container;
@@ -335,7 +434,6 @@ describe("Ambassador", () => {
         expect(text(open, ".frak-ambassador__hero-pill")).toBe(
             "+ a gift for your friend"
         );
-        expect(open.textContent).toContain("Your friend gets a gift.");
         expect(open.textContent).toContain("They get a gift.");
     });
 
@@ -366,24 +464,24 @@ describe("Ambassador", () => {
         );
     });
 
-    it("fills {REWARD} in friend-slot overrides with the referee amount", () => {
+    it("fills {REWARD} with the referee amount in friend slots and the referrer amount in step 2", () => {
         setReferrerReward("10 €");
         setRefereeReward("0,80 €");
 
         const { container } = render(
             <Ambassador
-                step2Description="Your friend gets {REWARD}."
+                step2Description="You get {REWARD}."
                 faq3Answer="They get {REWARD}."
                 winWinCard2Description="{REWARD} off their order."
             />
         );
 
-        expect(container.textContent).toContain("Your friend gets 0,80 €.");
+        expect(container.textContent).toContain("You get 10 €.");
         expect(container.textContent).toContain("They get 0,80 €.");
         expect(container.textContent).toContain("0,80 € off their order.");
     });
 
-    it("falls back to the default friend copy when a {REWARD} override meets a percentage reward", () => {
+    it("falls back to the default step 2 copy when a {REWARD} override has no figure", () => {
         setRefereeReward(undefined);
 
         const { container } = render(
@@ -392,7 +490,7 @@ describe("Ambassador", () => {
 
         expect(container.textContent).not.toContain("Your friend gets .");
         expect(container.textContent).toContain(
-            "Your friend installs the Frak app in a few seconds, and also gets a perk on their order."
+            "Credited automatically to my wallet for every sale made through my referral link."
         );
     });
 
@@ -406,7 +504,7 @@ describe("Ambassador", () => {
         expect(block?.querySelector("input, a")).toBeNull();
         expect(block?.textContent).not.toMatch(/copy|https?:\/\//i);
         expect(text(container, ".frak-ambassador__referral-lede")).toBe(
-            "Share it with anyone you like: you get paid on every order placed with it."
+            "Finally, a referral program that really pays!"
         );
 
         const cta = container.querySelector(".frak-ambassador__referral-cta");
@@ -488,16 +586,14 @@ describe("Ambassador", () => {
         const rewardHeading = container.querySelector(
             ".frak-ambassador__reward-heading"
         );
-        expect(rewardHeading?.textContent).toBe(
-            "10 € for you, for every friend who orders."
-        );
+        expect(rewardHeading?.textContent).toBe("10 € for you on every sale");
         expect(
             rewardHeading?.querySelector(".frak-ambassador__reward-amount")
                 ?.textContent
         ).toBe("10 €");
         expect(
             container.querySelector(".frak-ambassador__hero-title")?.textContent
-        ).toBe("Become an ambassador for Acme Store and earn 10 €.");
+        ).toBe("Become an ambassador for Acme Store");
     });
 
     // ─── 2026-09-15 AE2: no-reward copy, no invented amount ───
@@ -510,7 +606,7 @@ describe("Ambassador", () => {
             ".frak-ambassador__reward-heading"
         );
         expect(rewardHeading?.textContent).toBe(
-            "A reward for you, for every friend who orders."
+            "A reward for you on every sale"
         );
         expect(rewardHeading?.textContent).not.toMatch(/\d/);
         expect(
@@ -519,9 +615,25 @@ describe("Ambassador", () => {
         ).toBe("A reward");
         expect(
             container.querySelector(".frak-ambassador__hero-title")?.textContent
-        ).toBe("Become an ambassador for Acme Store.");
+        ).toBe("Become an ambassador for Acme Store");
         expect(container.textContent).not.toContain("{REWARD}");
         expect(container.textContent).not.toContain("{BRAND}");
+    });
+
+    it("puts the amount in the hero intro, and says a reward when no amount resolves", () => {
+        const { container, rerender } = render(<Ambassador />);
+        expect(text(container, ".frak-ambassador__hero-lede")).toBe(
+            "Love our products? Tell the people around you! Earn a reward as soon as someone buys thanks to you."
+        );
+
+        setReferrerReward("10 €");
+        rerender(<Ambassador />);
+        expect(text(container, ".frak-ambassador__hero-lede")).toBe(
+            "Love our products? Tell the people around you! Earn 10 € as soon as someone buys thanks to you."
+        );
+        expect(text(container, ".frak-ambassador__hero-title")).toBe(
+            "Become an ambassador for Acme Store"
+        );
     });
 
     it("renders the referee pill only when a referee reward resolves", () => {
@@ -552,9 +664,9 @@ describe("Ambassador", () => {
             container.querySelectorAll(".frak-ambassador__step-title")
         ).map((el) => el.textContent);
         expect(stepTitles).toEqual([
-            "I share",
-            "They install",
-            "I get my money",
+            "I share with the people close to me",
+            "I get paid",
+            "I collect my money",
         ]);
     });
 
@@ -567,10 +679,10 @@ describe("Ambassador", () => {
         const { container, rerender } = render(<Ambassador {...props} />);
 
         expect(text(container, ".frak-ambassador__hero-title")).toBe(
-            `Become an ambassador for ${BRAND}.`
+            `Become an ambassador for ${BRAND}`
         );
         expect(text(container, ".frak-ambassador__reward-heading")).toBe(
-            "A reward for you, for every friend who orders."
+            "A reward for you on every sale"
         );
         expect(
             container.querySelector(".frak-ambassador__faq-answer")?.textContent
@@ -600,9 +712,9 @@ describe("Ambassador", () => {
         expect(
             container.querySelector(".frak-ambassador__reward-heading")
                 ?.textContent
-        ).toBe("A reward for you, for every friend who orders.");
+        ).toBe("A reward for you on every sale");
         expect(text(container, ".frak-ambassador__referral-title")).toBe(
-            "Your referral link"
+            "Your ambassador link"
         );
         expect(
             container.querySelector(".frak-ambassador__faq-title")?.textContent
@@ -935,13 +1047,13 @@ describe("Ambassador", () => {
         const { container } = render(<Ambassador />);
 
         expect(headingTexts(container)).toEqual([
-            "Become an ambassador for Acme Store.",
-            "A reward for you, for every friend who orders.",
+            "Become an ambassador for Acme Store",
+            "A reward for you on every sale",
             "How it works",
-            "I share",
-            "They install",
-            "I get my money",
-            "Your referral link",
+            "I share with the people close to me",
+            "I get paid",
+            "I collect my money",
+            "Your ambassador link",
             "Track your earnings in real time",
             "Frequently asked questions",
         ]);
@@ -955,14 +1067,14 @@ describe("Ambassador", () => {
         const { container } = render(<Ambassador />);
 
         expect(headingTexts(container)).toEqual([
-            "Become an ambassador for Acme Store and earn 10 €.",
-            "10 € for you, for every friend who orders.",
+            "Become an ambassador for Acme Store",
+            "10 € for you on every sale",
             "How it works",
-            "I share",
-            "They install",
-            "I get my money",
-            "Your friends earn too",
-            "Your referral link",
+            "I share with the people close to me",
+            "I get paid",
+            "I collect my money",
+            "Your friends win too",
+            "Your ambassador link",
             "Track your earnings in real time",
             "Frequently asked questions",
         ]);
@@ -1058,7 +1170,7 @@ describe("Ambassador", () => {
         const hostname = window.location.hostname;
         expect(
             container.querySelector(".frak-ambassador__hero-title")?.textContent
-        ).toBe(`Become an ambassador for ${hostname}.`);
+        ).toBe(`Become an ambassador for ${hostname}`);
     });
 
     it("escapes nothing and renders a merchant name containing replacement metacharacters literally", () => {
@@ -1070,7 +1182,7 @@ describe("Ambassador", () => {
 
         expect(
             container.querySelector(".frak-ambassador__hero-title")?.textContent
-        ).toBe("Become an ambassador for A&B $& $$ <shop>.");
+        ).toBe("Become an ambassador for A&B $& $$ <shop>");
     });
 
     // ─── R19: renders in the merchant's language ───
@@ -1085,13 +1197,13 @@ describe("Ambassador", () => {
             "fr"
         );
         expect(headingTexts(container)).toEqual([
-            "Devenez ambassadeur Acme Store.",
-            "Une récompense pour vous, à chaque ami qui commande.",
+            "Devenez ambassadeur Acme Store",
+            "Une récompense pour vous à chaque vente",
             "Comment ça marche",
-            "Je partage",
-            "Mon ami installe",
+            "Je partage à mes proches",
+            "Je reçois de l’argent",
             "Je récupère mon argent",
-            "Votre lien de parrainage",
+            "Votre lien d’ambassadeur",
             "Suivez vos gains en temps réel",
             "Questions fréquentes",
         ]);

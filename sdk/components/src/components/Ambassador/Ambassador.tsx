@@ -9,6 +9,7 @@ import {
 } from "preact/hooks";
 import { openSharingPage } from "@/actions/sharingPage";
 import { useClientReady } from "@/hooks/useClientReady";
+import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useHostTheme } from "@/hooks/useHostTheme";
 import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
@@ -218,6 +219,20 @@ function resolveRewardHeading(
     };
 }
 
+/** A dashboard answer replaces the split one only while no split attribute is set. */
+function resolveFaq5Answer(
+    dashboardAnswer: string | undefined,
+    splitAttributes: (string | undefined)[],
+    reward: string | undefined,
+    brandize: (text: string) => string
+): string | undefined {
+    if (splitAttributes.some((value) => value !== undefined)) return undefined;
+    const answer = usableOverride(dashboardAnswer, reward);
+    return answer === undefined
+        ? undefined
+        : brandize(applyRewardPlaceholder(answer, reward));
+}
+
 /** Closed gate means no pill; a `{REWARD}` override without a figure falls back to the words. */
 function resolveHeroPill(
     defaults: AmbassadorCopy,
@@ -237,6 +252,29 @@ function resolveHeroPill(
         : defaults.heroRewardRefereePillNoReward;
 }
 
+const DASHBOARD_FIELDS = [
+    "heroTitle",
+    "heroLede",
+    "heroRewardCaption",
+    "heroCtaLabel",
+    "heroImageUrl",
+    "rewardHeading",
+    "rewardLede",
+    "rewardCtaLabel",
+    "referralCtaLabel",
+    "faq1Question",
+    "faq1Answer",
+    "faq2Question",
+    "faq2Answer",
+    "faq3Question",
+    "faq3Answer",
+    "faq4Question",
+    "faq4Answer",
+    "faq5Question",
+] as const;
+
+type AmbassadorPageProps = AmbassadorProps & { faq5Answer?: string };
+
 /**
  * Full-page ambassador: hero, reward, explainer, win-win, referral, store, FAQ;
  * `isHidden` alone suppresses it. Theme it with the twenty-two `--frak-amb-*`
@@ -245,7 +283,20 @@ function resolveHeroPill(
  * @group components
  * @example `<frak-ambassador></frak-ambassador>`
  */
-export function Ambassador({
+export function Ambassador(props: AmbassadorProps) {
+    const dashboard = useGlobalComponents()?.ambassador;
+    const merged: AmbassadorPageProps = {
+        ...props,
+        faq5Answer: dashboard?.faq5Answer,
+    };
+    // Attribute first, then the merchant's dashboard setting; defaults apply below.
+    for (const field of DASHBOARD_FIELDS) {
+        merged[field] = props[field] ?? dashboard?.[field];
+    }
+    return <AmbassadorPage {...merged} />;
+}
+
+function AmbassadorPage({
     merchantId: propMerchantId,
     classname = "",
     heroTitle: propHeroTitle,
@@ -309,7 +360,8 @@ export function Ambassador({
     faq5AnswerAfterLink: propFaq5AnswerAfterLink,
     attributionBeforeLink: propAttributionBeforeLink,
     attributionLinkText: propAttributionLinkText,
-}: AmbassadorProps) {
+    faq5Answer: dashboardFaq5Answer,
+}: AmbassadorPageProps) {
     const { isHidden, isClientReady } = useClientReady();
     const lang = useLang();
     const rootRef = useRef<HTMLDivElement>(null);
@@ -421,10 +473,9 @@ export function Ambassador({
             },
             {
                 title: resolve(propStep2Title, defaults.explainerStep2Title),
-                description: gated(
+                description: resolve(
                     propStep2Description,
-                    defaults.explainerStep2Description,
-                    defaults.explainerStep2DescriptionNoReward
+                    defaults.explainerStep2Description
                 ),
                 imageUrl: step2ImageUrl,
                 imageAlt: propStep2ImageAlt,
@@ -484,11 +535,11 @@ export function Ambassador({
 
         return {
             heroEyebrow: resolve(propHeroEyebrow, defaults.heroEyebrow),
-            heroTitle: resolve(
-                propHeroTitle,
-                reward ? defaults.heroHeadlineReward : defaults.heroHeadline
+            heroTitle: resolve(propHeroTitle, defaults.heroHeadline),
+            heroLede: resolve(
+                propHeroLede,
+                reward ? defaults.heroLedeReward : defaults.heroLede
             ),
-            heroLede: resolve(propHeroLede, defaults.heroLede),
             heroCtaLabel: resolve(propHeroCtaLabel, defaults.heroCtaLabel),
             heroFacesCaption: resolve(
                 propHeroFacesCaption,
@@ -555,6 +606,16 @@ export function Ambassador({
             faqHeading: resolve(propFaqHeading, defaults.faqHeading),
             faqs,
             faq5Question: resolve(propFaq5Question, defaults.faq5Question),
+            faq5Answer: resolveFaq5Answer(
+                dashboardFaq5Answer,
+                [
+                    propFaq5AnswerBeforeLink,
+                    propFaq5AnswerLinkText,
+                    propFaq5AnswerAfterLink,
+                ],
+                reward,
+                brandize
+            ),
             faq5AnswerBeforeLink: resolve(
                 propFaq5AnswerBeforeLink,
                 defaults.faq5AnswerBeforeLink
@@ -642,6 +703,7 @@ export function Ambassador({
         propFaq5AnswerAfterLink,
         propAttributionBeforeLink,
         propAttributionLinkText,
+        dashboardFaq5Answer,
     ]);
 
     if (isHidden) return null;
@@ -930,16 +992,20 @@ export function Ambassador({
                         {texts.faq5Question}
                     </summary>
                     <p class={`${faqAnswer} frak-ambassador__faq-answer`}>
-                        {texts.faq5AnswerBeforeLink}
-                        <a
-                            class={`${frakLink} frak-ambassador__faq-answer-link frak-link`}
-                            href={FRAK_URL}
-                            target="_blank"
-                            rel="noopener"
-                        >
-                            {texts.faq5AnswerLinkText}
-                        </a>
-                        {texts.faq5AnswerAfterLink}
+                        {texts.faq5Answer ?? (
+                            <>
+                                {texts.faq5AnswerBeforeLink}
+                                <a
+                                    class={`${frakLink} frak-ambassador__faq-answer-link frak-link`}
+                                    href={FRAK_URL}
+                                    target="_blank"
+                                    rel="noopener"
+                                >
+                                    {texts.faq5AnswerLinkText}
+                                </a>
+                                {texts.faq5AnswerAfterLink}
+                            </>
+                        )}
                     </p>
                 </details>
                 <p class={`${faqAttribution} frak-ambassador__faq-attribution`}>

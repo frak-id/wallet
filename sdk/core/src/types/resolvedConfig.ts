@@ -67,6 +67,30 @@ export type ResolvedPlacement = {
             imageUrl?: string;
             css?: string;
         };
+        /** Store-wide only: `<frak-ambassador>` never reads a placement's entry. */
+        ambassador?: {
+            heroTitle?: string;
+            heroLede?: string;
+            heroRewardCaption?: string;
+            heroCtaLabel?: string;
+            rewardHeading?: string;
+            rewardLede?: string;
+            rewardCtaLabel?: string;
+            referralCtaLabel?: string;
+            faq1Question?: string;
+            faq1Answer?: string;
+            faq2Question?: string;
+            faq2Answer?: string;
+            faq3Question?: string;
+            faq3Answer?: string;
+            faq4Question?: string;
+            faq4Answer?: string;
+            faq5Question?: string;
+            /** Plain text replacing the whole answer, inline Frak link included. */
+            faq5Answer?: string;
+            /** Explorer main image when the merchant chose none; absent means no photo. */
+            heroImageUrl?: string;
+        };
     };
     targetInteraction?: string;
     /** Already flattened: default + lang-specific merged into one record */
