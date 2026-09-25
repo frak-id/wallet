@@ -40,10 +40,10 @@ type ComponentCopy = {
         // Every brand mention is a `{BRAND}` token: a literal name ships the
         // demo fixture's name onto real storefronts, and no type check sees it.
         heroEyebrow: string;
-        /** `heroHeadline` never carries a `{REWARD}` token; `heroHeadlineReward` does. */
         heroHeadline: string;
-        heroHeadlineReward: string;
+        /** `heroLede` never carries a `{REWARD}` token; `heroLedeReward` does. */
         heroLede: string;
+        heroLedeReward: string;
         heroCtaLabel: string;
         heroFacesCaption: string;
         heroImageAlt: string;
@@ -67,8 +67,6 @@ type ComponentCopy = {
         explainerStep1Description: string;
         explainerStep2Title: string;
         explainerStep2Description: string;
-        /** Perk-free swap-in when the campaign has no referee reward. */
-        explainerStep2DescriptionNoReward: string;
         explainerStep3Title: string;
         explainerStep3Description: string;
         winWinHeading: string;
@@ -153,26 +151,25 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
         },
         ambassador: {
             heroEyebrow: "Ambassador program",
-            heroHeadline: "Become an ambassador for {BRAND}.",
-            heroHeadlineReward:
-                "Become an ambassador for {BRAND} and earn {REWARD}.",
+            heroHeadline: "Become an ambassador for {BRAND}",
             heroLede:
-                "You already talk about us to the people around you. We want to thank you for it: a reward on every order you inspire, plus a few perks reserved for our ambassadors.",
+                "Love our products? Tell the people around you! Earn a reward as soon as someone buys thanks to you.",
+            heroLedeReward:
+                "Love our products? Tell the people around you! Earn {REWARD} as soon as someone buys thanks to you.",
             heroCtaLabel: "Become an ambassador",
-            heroFacesCaption: "Join the brand's ambassadors",
+            heroFacesCaption:
+                "No form, no waiting: anyone can become an ambassador right away.",
             heroImageAlt: "{BRAND} ambassadors",
-            heroRewardCaption: "for you, per order",
+            heroRewardCaption: "for you, on every sale",
             heroRewardRefereePill: "+ {REWARD} for your friend",
             heroRewardRefereePillNoReward: "+ a perk for your friend",
             rewardEyebrow: "Referral program",
-            rewardHeadingReward:
-                "{REWARD} for you, for every friend who orders.",
-            rewardHeadingNoReward:
-                "A reward for you, for every friend who orders.",
+            rewardHeadingReward: "{REWARD} for you on every sale",
+            rewardHeadingNoReward: "A reward for you on every sale",
             rewardEstimateCaption:
                 "Estimate: the amount depends on the campaign and your friend's order.",
             rewardLede:
-                "No cap, no minimum amount. You share what you already love, and get paid when it works.",
+                "No cap: the more you share, the more sales your link brings in, and the more you earn!",
             rewardCtaLabel: "Get my link",
             rewardFooterCaption:
                 "Free · no commitment · paid to your bank account",
@@ -180,29 +177,25 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
             rewardFallbackLabel: "A reward",
             explainerTitle: "How it works",
             explainerLede: "Three steps, nothing more.",
-            explainerStep1Title: "I share",
+            explainerStep1Title: "I share with the people close to me",
             explainerStep1Description:
-                "You send your link to whoever you want: word of mouth, a story or a message.",
-            explainerStep2Title: "They install",
+                "On WhatsApp, in an Instagram story, on TikTok… my unique link, generated automatically.",
+            explainerStep2Title: "I get paid",
             explainerStep2Description:
-                "Your friend installs the Frak app in a few seconds, and also gets a perk on their order.",
-            explainerStep2DescriptionNoReward:
-                "Your friend installs the Frak app in seconds, then places their order.",
-            explainerStep3Title: "I get my money",
+                "Credited automatically to my wallet for every sale made through my referral link.",
+            explainerStep3Title: "I collect my money",
             explainerStep3Description:
-                "As soon as they order, your earnings land in your Frak wallet, ready to be transferred whenever you want.",
-            winWinHeading: "Your friends earn too",
+                "With the Frak app, I transfer my earnings to my bank account.",
+            winWinHeading: "Your friends win too",
             winWinLede:
-                "Recommending {BRAND} doesn't cost anyone anything. Your friend gets cashback on their first order: you never have to apologize for sending your link.",
+                "Recommend {BRAND} to the people close to you: they discover great products, and thanks to your link they get cashback on their first order. They can thank you for it!",
             winWinCard1Title: "You",
-            winWinCard1Description:
-                "Credited to your wallet as soon as the order is confirmed.",
+            winWinCard1Description: "to your secure wallet, on every sale",
             winWinCard2Title: "Your friend",
             winWinCard2Description:
-                "Cashback on their first order, at the same price as everyone else.",
-            referralHeading: "Your referral link",
-            referralLede:
-                "Share it with anyone you like: you get paid on every order placed with it.",
+                "in cashback to their secure wallet, on their first order",
+            referralHeading: "Your ambassador link",
+            referralLede: "Finally, a referral program that really pays!",
             referralCtaLabel: "Share my link",
             storeHeading: "Track your earnings in real time",
             storeLede:
@@ -271,27 +264,25 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
         },
         ambassador: {
             heroEyebrow: "Programme ambassadeur",
-            heroHeadline: "Devenez ambassadeur {BRAND}.",
-            heroHeadlineReward:
-                "Devenez ambassadeur {BRAND} et gagnez {REWARD}.",
+            heroHeadline: "Devenez ambassadeur {BRAND}",
             heroLede:
-                "Vous parlez déjà de nous autour de vous. Nous vous en remercions\u00A0: une récompense sur chaque commande que vous inspirez, et quelques attentions réservées à nos ambassadeurs.",
+                "Vous aimez nos produits\u00A0? Parlez-en autour de vous\u00A0! Gagnez une récompense dès qu’un achat est réalisé grâce à vous.",
+            heroLedeReward:
+                "Vous aimez nos produits\u00A0? Parlez-en autour de vous\u00A0! Gagnez {REWARD} dès qu’un achat est réalisé grâce à vous.",
             heroCtaLabel: "Devenir ambassadeur",
             heroFacesCaption:
-                "Rejoignez les ambassadrices et ambassadeurs de la marque",
+                "Pas de formulaire, pas d’attente\u00A0: tout le monde peut devenir ambassadeur immédiatement.",
             heroImageAlt: "Ambassadrices et ambassadeurs {BRAND}",
-            heroRewardCaption: "pour vous, par commande",
+            heroRewardCaption: "pour vous, à chaque vente",
             heroRewardRefereePill: "+ {REWARD} offerts à votre filleul",
             heroRewardRefereePillNoReward: "+ un avantage pour votre filleul",
             rewardEyebrow: "Programme de parrainage",
-            rewardHeadingReward:
-                "{REWARD} pour vous, à chaque ami qui commande.",
-            rewardHeadingNoReward:
-                "Une récompense pour vous, à chaque ami qui commande.",
+            rewardHeadingReward: "{REWARD} pour vous à chaque vente",
+            rewardHeadingNoReward: "Une récompense pour vous à chaque vente",
             rewardEstimateCaption:
                 "Estimation\u00A0: le montant dépend de la campagne et du panier de votre proche.",
             rewardLede:
-                "Pas de plafond, pas de montant minimum. Vous partagez ce que vous aimez déjà, vous êtes payé quand ça marche.",
+                "Pas de plafond\u00A0: plus vous partagez, plus de ventes sont générées grâce à votre lien, plus vous gagnez\u00A0!",
             rewardCtaLabel: "Obtenir mon lien",
             rewardFooterCaption:
                 "Gratuit · sans engagement · versé sur votre compte bancaire",
@@ -299,29 +290,27 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
             rewardFallbackLabel: "Une récompense",
             explainerTitle: "Comment ça marche",
             explainerLede: "Trois gestes, rien de plus.",
-            explainerStep1Title: "Je partage",
+            explainerStep1Title: "Je partage à mes proches",
             explainerStep1Description:
-                "Vous transmettez votre lien à qui vous voulez\u00A0: de bouche à oreille, en story ou par message.",
-            explainerStep2Title: "Mon ami installe",
+                "Via WhatsApp, en story Instagram, sur TikTok… mon lien unique, généré automatiquement.",
+            explainerStep2Title: "Je reçois de l’argent",
             explainerStep2Description:
-                "Votre ami installe l’app Frak en quelques secondes, et bénéficie lui aussi d’un avantage sur sa commande.",
-            explainerStep2DescriptionNoReward:
-                "Votre ami installe l’app Frak en quelques secondes, puis passe commande.",
+                "Crédité automatiquement dans mon porte-monnaie à chaque vente générée grâce à mon lien de recommandation.",
             explainerStep3Title: "Je récupère mon argent",
             explainerStep3Description:
-                "Dès qu’il commande, vos gains arrivent dans votre porte-monnaie Frak, prêts à être transférés quand vous le souhaitez.",
+                "En téléchargeant l’app Frak, je transfère mes gains sur mon compte bancaire.",
             winWinHeading: "Vos proches y gagnent aussi",
             winWinLede:
-                "Recommander {BRAND} ne coûte rien à personne. Votre filleul reçoit un cashback sur sa première commande\u00A0: vous n’avez pas à vous excuser d’envoyer votre lien.",
+                "En conseillant {BRAND} à vos proches, non seulement vous leur faites découvrir de super produits, mais en plus, grâce à votre lien, ils bénéficient d’un cashback sur leur première commande\u00A0: ils peuvent vous dire merci\u00A0!",
             winWinCard1Title: "Vous",
             winWinCard1Description:
-                "Crédités sur votre porte-monnaie dès que la commande est validée.",
+                "sur votre porte-monnaie sécurisé, à chaque vente",
             winWinCard2Title: "Votre filleul",
             winWinCard2Description:
-                "Un cashback sur sa première commande, au même prix que tout le monde.",
-            referralHeading: "Votre lien de parrainage",
+                "en cashback sur son porte-monnaie sécurisé, à sa première commande",
+            referralHeading: "Votre lien d’ambassadeur",
             referralLede:
-                "Partagez-le à qui vous voulez\u00A0: vous êtes payé à chaque commande passée avec.",
+                "Enfin un vrai programme de parrainage rémunérateur\u00A0!",
             referralCtaLabel: "Partager mon lien",
             storeHeading: "Suivez vos gains en temps réel",
             storeLede:
