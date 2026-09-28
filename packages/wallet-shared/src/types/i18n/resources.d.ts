@@ -467,10 +467,13 @@ export default interface Resources {
         "description": "New offers are coming soon. Check back later!",
         "title": "No offers available"
       },
-      "frakBonus": {
-        "amount": "+{{amount}}",
-        "explanation": "Thanks to your Frak invitation, your first purchase at this brand also earns you the referrer reward.",
-        "label": "First-purchase bonus"
+      "offer": {
+        "cashback": "Your cashback",
+        "purchase": "{{amount}} cashback on your purchases",
+        "purchaseFirst": "{{amount}} on your first purchase",
+        "purchaseTitle": "When you shop",
+        "welcomeBonus": "First-purchase bonus",
+        "welcomeBonusNote": "Your cashback plus a one-time bonus from your Frak invitation, on your first purchase at {{name}}."
       },
       "pageTitle": "Explorer",
       "sort": {

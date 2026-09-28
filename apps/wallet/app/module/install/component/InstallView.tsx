@@ -1,5 +1,4 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
-import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
@@ -7,16 +6,10 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import {
-    CircleCheckIcon,
-    CloseIcon,
-    CopyIcon,
-    LogoFrakWithName,
-} from "@frak-labs/design-system/icons";
+import { CircleCheckIcon, CopyIcon } from "@frak-labs/design-system/icons";
 import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { CodeInput } from "@frak-labs/wallet-shared/common/component/CodeInput";
-import { ExternalLink } from "@frak-labs/wallet-shared/common/component/ExternalLink";
 import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared/common/hook/useFormattedEstimatedReward";
 import { merchantKey } from "@frak-labs/wallet-shared/common/queryKeys/merchant";
 import { mediaSrcSet } from "@frak-labs/wallet-shared/common/utils/mediaSrcSet";
@@ -44,6 +37,7 @@ import {
 } from "@/module/pending-actions/drainEnsures";
 import { useGenerateInstallCode } from "@/module/reward-code/hook/useGenerateInstallCode";
 import { sendHostResult } from "@/module/sharing/host/bridge";
+import { InstallPageLayout } from "./InstallPageLayout";
 import * as styles from "./install.css";
 
 /**
@@ -579,141 +573,106 @@ function InstallCodeView({
     }, [copy, merchantId]);
 
     return (
-        <div
-            className={
-                chromeless
-                    ? `${styles.container} ${styles.containerChromeless}`
-                    : styles.container
-            }
-        >
-            {!chromeless && (
-                <Box
-                    as="header"
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    paddingX="m"
-                    paddingY="xs"
-                    backgroundColor="background"
-                    position="sticky"
-                    className={styles.header}
-                >
-                    <Inline space="m" alignY="center" wrap={false}>
-                        {merchantInfo?.logoUrl && (
-                            <img
-                                {...mediaSrcSet(merchantInfo.logoUrl)}
-                                alt={merchantInfo.name}
-                                className={styles.merchantLogo}
-                            />
-                        )}
-                        <LogoFrakWithName className={styles.logo} />
-                    </Inline>
-                    <Button
-                        variant="ghost"
-                        size="none"
-                        width="auto"
-                        aria-label={t("installCode.dismiss")}
-                        className={styles.dismissButton}
-                        onClick={() => {
-                            trackEvent("install_page_dismissed");
-                            window.close();
-                        }}
-                    >
-                        <CloseIcon width={24} height={24} />
-                    </Button>
-                </Box>
-            )}
-
-            <Stack as="main" space="l" padding="m" className={styles.main}>
-                <Stack as="section" space="xs" className={styles.heroSection}>
-                    <InstallCodeHero
-                        t={t}
-                        installed={installed}
-                        codeless={codeless}
-                        merchantName={merchantInfo?.name}
+        <InstallPageLayout
+            chromeless={chromeless}
+            headerLogo={
+                merchantInfo?.logoUrl && (
+                    <img
+                        {...mediaSrcSet(merchantInfo.logoUrl)}
+                        alt={merchantInfo.name}
+                        className={styles.merchantLogo}
                     />
-                </Stack>
-
-                {isLoading && (
-                    <Stack space="m" align="center">
-                        <Spinner />
-                        <Text variant="bodySmall" color="secondary">
-                            {t("installCode.loading")}
-                        </Text>
-                    </Stack>
-                )}
-
-                {data?.code && !visibleCode && (
-                    <Button
-                        variant="ghost"
-                        size="none"
-                        width="auto"
-                        className={styles.installedCodeToggle}
-                        onClick={() => setShowCodeAfterInstall(true)}
-                    >
-                        {t("installCode.installedCodeToggle")}
-                    </Button>
-                )}
-
-                {visibleCode && (
-                    <Stack space="m" align="center">
-                        <CodeInput value={visibleCode} mode="alphanumeric" />
-                        <Button
-                            size="large"
-                            fontSize="s"
-                            width="full"
-                            className={styles.copyButton}
-                            onClick={handleCopy}
-                        >
-                            {copied
-                                ? t("installCode.codeCopied")
-                                : t("installCode.copyCode")}
-                            <CopyIcon width={16} height={16} />
-                        </Button>
-                    </Stack>
-                )}
-            </Stack>
-
-            {visibleCode && <InstallCodeInfoCard t={t} />}
-
-            {referralCode && (
-                <Stack space="xs" align="center" padding="m">
-                    <Text variant="caption" color="secondary">
-                        {t("installCode.referral.manualEntry")}
-                    </Text>
-                    <CodeInput value={referralCode} mode="alphanumeric" />
-                </Stack>
-            )}
-
-            <Stack as="footer" space="s" className={styles.footer}>
-                <ExternalLink
-                    href={downloadUrl}
-                    className={styles.downloadButton}
-                    onClick={() => {
-                        if (installed) {
-                            trackEvent("install_open_wallet_clicked", {
-                                merchant_id: merchantId,
-                            });
-                            return;
-                        }
-                        // Last gesture before leaving for the store, so the code is
-                        // on the pasteboard even if they never tapped copy.
-                        handOverCode();
-                        trackEvent("install_store_clicked", {
-                            store: isAndroid ? "play_store" : "app_store",
-                            has_referrer:
-                                isAndroid && Boolean(merchantId && anonymousId),
-                            has_referrer_proof: isAndroid && Boolean(proof),
+                )
+            }
+            dismiss={{
+                label: t("installCode.dismiss"),
+                onDismiss: () => {
+                    trackEvent("install_page_dismissed");
+                    window.close();
+                },
+            }}
+            hero={
+                <InstallCodeHero
+                    t={t}
+                    installed={installed}
+                    codeless={codeless}
+                    merchantName={merchantInfo?.name}
+                />
+            }
+            aside={
+                <>
+                    {visibleCode && <InstallCodeInfoCard t={t} />}
+                    {referralCode && (
+                        <Stack space="xs" align="center" padding="m">
+                            <Text variant="caption" color="secondary">
+                                {t("installCode.referral.manualEntry")}
+                            </Text>
+                            <CodeInput
+                                value={referralCode}
+                                mode="alphanumeric"
+                            />
+                        </Stack>
+                    )}
+                </>
+            }
+            storeLink={{
+                href: downloadUrl,
+                label: installed
+                    ? t("installCode.openWallet")
+                    : t("installCode.download"),
+                onClick: () => {
+                    if (installed) {
+                        trackEvent("install_open_wallet_clicked", {
                             merchant_id: merchantId,
                         });
-                    }}
+                        return;
+                    }
+                    // Last gesture before leaving for the store, so the code is
+                    // on the pasteboard even if they never tapped copy.
+                    handOverCode();
+                    trackEvent("install_store_clicked", {
+                        store: isAndroid ? "play_store" : "app_store",
+                        has_referrer:
+                            isAndroid && Boolean(merchantId && anonymousId),
+                        has_referrer_proof: isAndroid && Boolean(proof),
+                        merchant_id: merchantId,
+                    });
+                },
+            }}
+        >
+            {isLoading && (
+                <Stack space="m" align="center">
+                    <Spinner />
+                    <Text variant="bodySmall" color="secondary">
+                        {t("installCode.loading")}
+                    </Text>
+                </Stack>
+            )}
+
+            {data?.code && !visibleCode && (
+                <Button
+                    variant="ghost"
+                    size="none"
+                    width="auto"
+                    className={styles.installedCodeToggle}
+                    onClick={() => setShowCodeAfterInstall(true)}
                 >
-                    {installed
-                        ? t("installCode.openWallet")
-                        : t("installCode.download")}
-                </ExternalLink>
-            </Stack>
-        </div>
+                    {t("installCode.installedCodeToggle")}
+                </Button>
+            )}
+
+            {visibleCode && (
+                <CopyableCode
+                    code={visibleCode}
+                    label={
+                        copied
+                            ? t("installCode.codeCopied")
+                            : t("installCode.copyCode")
+                    }
+                    onCopy={handleCopy}
+                />
+            )}
+        </InstallPageLayout>
     );
 }
 
@@ -755,74 +714,68 @@ function InstallReferralCodeView({
     }, [copy]);
 
     return (
-        <div
-            className={
-                chromeless
-                    ? `${styles.container} ${styles.containerChromeless}`
-                    : styles.container
-            }
-        >
-            {!chromeless && (
-                <Box
-                    as="header"
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    paddingX="m"
-                    paddingY="xs"
-                    backgroundColor="background"
-                    position="sticky"
-                    className={styles.header}
-                >
-                    <LogoFrakWithName className={styles.logo} />
-                </Box>
-            )}
-
-            <Stack as="main" space="l" padding="m" className={styles.main}>
-                <Stack as="section" space="xs" className={styles.heroSection}>
+        <InstallPageLayout
+            chromeless={chromeless}
+            hero={
+                <>
                     <Text as="h1" variant="heading2" className={styles.title}>
                         {t("installCode.referral.title")}
                     </Text>
                     <Text variant="bodySmall" color="secondary">
                         {t("installCode.referral.description")}
                     </Text>
-                </Stack>
+                </>
+            }
+            storeLink={{
+                href: downloadUrl,
+                label: t("installCode.download"),
+                onClick: () => {
+                    // iOS has no install referrer: the pasteboard carries the code to onboarding.
+                    copy();
+                    trackEvent("install_store_clicked", {
+                        store: isAndroid ? "play_store" : "app_store",
+                        has_referrer: false,
+                        has_referrer_proof: false,
+                    });
+                },
+            }}
+        >
+            <CopyableCode
+                code={referralCode}
+                label={
+                    copied
+                        ? t("installCode.referral.codeCopied")
+                        : t("installCode.copyCode")
+                }
+                onCopy={handleCopy}
+            />
+        </InstallPageLayout>
+    );
+}
 
-                <Stack space="m" align="center">
-                    <CodeInput value={referralCode} mode="alphanumeric" />
-                    <Button
-                        size="large"
-                        fontSize="s"
-                        width="full"
-                        className={styles.copyButton}
-                        onClick={handleCopy}
-                    >
-                        {copied
-                            ? t("installCode.referral.codeCopied")
-                            : t("installCode.copyCode")}
-                        <CopyIcon width={16} height={16} />
-                    </Button>
-                </Stack>
-            </Stack>
-
-            <Stack as="footer" space="s" className={styles.footer}>
-                <ExternalLink
-                    href={downloadUrl}
-                    className={styles.downloadButton}
-                    onClick={() => {
-                        // iOS has no install referrer: the pasteboard carries the code to onboarding.
-                        copy();
-                        trackEvent("install_store_clicked", {
-                            store: isAndroid ? "play_store" : "app_store",
-                            has_referrer: false,
-                            has_referrer_proof: false,
-                        });
-                    }}
-                >
-                    {t("installCode.download")}
-                </ExternalLink>
-            </Stack>
-        </div>
+function CopyableCode({
+    code,
+    label,
+    onCopy,
+}: {
+    code: string;
+    label: string;
+    onCopy: () => void;
+}) {
+    return (
+        <Stack space="m" align="center">
+            <CodeInput value={code} mode="alphanumeric" />
+            <Button
+                size="large"
+                fontSize="s"
+                width="full"
+                className={styles.copyButton}
+                onClick={onCopy}
+            >
+                {label}
+                <CopyIcon width={16} height={16} />
+            </Button>
+        </Stack>
     );
 }
 

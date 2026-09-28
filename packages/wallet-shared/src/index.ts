@@ -201,7 +201,6 @@ export {
     REDEMPTION_CODE_LENGTH,
     type RedeemResult,
     referralKey,
-    useFrakBonusEligibility,
     useIssueReferralCode,
     useRedeemReferralCode,
     useRedeemReferralCodeForm,

@@ -1206,10 +1206,13 @@
             "step3Title": "Récupère tes gains dans ton porte-monnaie",
             "step3Description": "En un clic, transfère tes gains vers ton compte bancaire."
         },
-        "frakBonus": {
-            "label": "Bonus premier achat",
-            "amount": "+{{amount}}",
-            "explanation": "Grâce à ton invitation Frak, ton premier achat chez cette marque te rapporte aussi la récompense de parrain."
+        "offer": {
+            "purchaseTitle": "Quand tu achètes",
+            "purchase": "{{amount}} de cashback sur tes achats",
+            "purchaseFirst": "{{amount}} sur ton premier achat",
+            "cashback": "Ton cashback",
+            "welcomeBonus": "Bonus premier achat",
+            "welcomeBonusNote": "Ton cashback et un bonus unique offert par ton invitation Frak, sur ton premier achat chez {{name}}."
         }
     },
     "version": {

@@ -16,15 +16,13 @@ import {
     ClockIcon,
     CoinsIcon,
 } from "@frak-labs/design-system/icons";
-import {
-    useFrakBonusEligibility,
-    useReferralStatus,
-} from "@frak-labs/wallet-shared";
 import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { InstructionList } from "@/module/common/component/InstructionList";
-import { type CampaignView, frakBonusAmount } from "../../campaignView";
+import type { CampaignView } from "../../campaignView";
+import type { RewardOffer } from "../../rewardOffer";
 import * as styles from "./index.css";
 
 type FlatReward = Exclude<EstimatedReward, { payoutType: "tiered" }>;
@@ -33,23 +31,23 @@ type RewardTier = TieredReward["tiers"][number];
 
 export function CampaignInfoSection({
     view,
+    offer,
     merchantName,
-    merchantId,
 }: {
     view: CampaignView | null;
+    offer: RewardOffer;
     merchantName: string;
-    merchantId: string;
 }) {
     const { t } = useTranslation();
-    const { isEligible } = useFrakBonusEligibility();
-    const { data: referralStatus } = useReferralStatus({ merchantId });
-    const bonusAmount = frakBonusAmount(view, {
-        isEligible: isEligible(merchantId),
-        hasMerchantReferrer: referralStatus?.merchantReferrer != null,
-    });
     return (
         <>
-            {view && <CampaignInfoCard view={view} bonusAmount={bonusAmount} />}
+            {view && (
+                <CampaignInfoCards
+                    view={view}
+                    offer={offer}
+                    merchantName={merchantName}
+                />
+            )}
             <InstructionList
                 title={t("explorer.detail.instructions")}
                 steps={[
@@ -75,16 +73,19 @@ export function CampaignInfoSection({
     );
 }
 
-function CampaignInfoCard({
+function CampaignInfoCards({
     view,
-    bonusAmount,
+    offer,
+    merchantName,
 }: {
     view: CampaignView;
-    bonusAmount?: string;
+    offer: RewardOffer;
+    merchantName: string;
 }) {
     const { t } = useTranslation();
+    const { purchase } = offer;
     return (
-        <Stack space="s">
+        <>
             {view.status === "upcoming" && view.formattedStartDate && (
                 <Badge
                     variant="info"
@@ -96,6 +97,45 @@ function CampaignInfoCard({
                         date: view.formattedStartDate,
                     })}
                 </Badge>
+            )}
+            {purchase && (
+                <OfferSection
+                    title={t("explorer.offer.purchaseTitle")}
+                    note={
+                        purchase.welcomeBonus &&
+                        t("explorer.offer.welcomeBonusNote", {
+                            name: merchantName,
+                        })
+                    }
+                >
+                    {purchase.total ? (
+                        <RewardRow
+                            labelKey={
+                                purchase.welcomeBonus
+                                    ? "explorer.offer.welcomeBonus"
+                                    : "explorer.offer.cashback"
+                            }
+                            reward={purchase.total}
+                            minPurchase={view.minPurchaseAmount}
+                        />
+                    ) : (
+                        <InfoRow
+                            labelVariant="bodySmall"
+                            labelColor="secondary"
+                            label={t("explorer.offer.welcomeBonus")}
+                            action={
+                                <Text
+                                    variant="bodySmall"
+                                    weight="medium"
+                                    className={styles.infoValue}
+                                >
+                                    <CoinsIcon width={16} height={16} />{" "}
+                                    {purchase.amount}
+                                </Text>
+                            }
+                        />
+                    )}
+                </OfferSection>
             )}
             <InfoCard>
                 {view.daysRemaining != null && view.formattedEndDate && (
@@ -164,32 +204,34 @@ function CampaignInfoCard({
                         label={t("explorer.detail.productScopeNote")}
                     />
                 )}
-                {bonusAmount && (
-                    <InfoRow
-                        labelVariant="bodySmall"
-                        labelColor="secondary"
-                        label={t("explorer.frakBonus.label")}
-                        action={
-                            <Text
-                                variant="bodySmall"
-                                weight="medium"
-                                className={styles.infoValue}
-                            >
-                                <CoinsIcon width={16} height={16} />{" "}
-                                {t("explorer.frakBonus.amount", {
-                                    amount: bonusAmount,
-                                })}
-                            </Text>
-                        }
-                    />
-                )}
             </InfoCard>
-            {bonusAmount && (
-                <Text variant="caption" color="tertiary">
-                    {t("explorer.frakBonus.explanation")}
-                </Text>
-            )}
-        </Stack>
+        </>
+    );
+}
+
+function OfferSection({
+    title,
+    note,
+    children,
+}: {
+    title: string;
+    note?: string;
+    children: ReactNode;
+}) {
+    return (
+        <>
+            <Text variant="bodySmall" color="secondary">
+                {title}
+            </Text>
+            <Stack space="s">
+                <InfoCard>{children}</InfoCard>
+                {note && (
+                    <Text variant="caption" color="tertiary">
+                        {note}
+                    </Text>
+                )}
+            </Stack>
+        </>
     );
 }
 

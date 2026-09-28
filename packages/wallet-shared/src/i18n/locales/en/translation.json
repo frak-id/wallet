@@ -1206,10 +1206,13 @@
             "step3Title": "Collect your earnings in your wallet",
             "step3Description": "In one click, transfer your earnings to your bank account."
         },
-        "frakBonus": {
-            "label": "First-purchase bonus",
-            "amount": "+{{amount}}",
-            "explanation": "Thanks to your Frak invitation, your first purchase at this brand also earns you the referrer reward."
+        "offer": {
+            "purchaseTitle": "When you shop",
+            "purchase": "{{amount}} cashback on your purchases",
+            "purchaseFirst": "{{amount}} on your first purchase",
+            "cashback": "Your cashback",
+            "welcomeBonus": "First-purchase bonus",
+            "welcomeBonusNote": "Your cashback plus a one-time bonus from your Frak invitation, on your first purchase at {{name}}."
         }
     },
     "version": {

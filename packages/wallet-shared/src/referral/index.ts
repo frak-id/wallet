@@ -1,5 +1,4 @@
 // Hooks
-export { useFrakBonusEligibility } from "./hook/useFrakBonusEligibility";
 export { useIssueReferralCode } from "./hook/useIssueReferralCode";
 export {
     type RedeemResult,

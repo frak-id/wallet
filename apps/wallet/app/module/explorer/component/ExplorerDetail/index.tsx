@@ -42,6 +42,8 @@ import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
 import { useCampaignView } from "../../campaignView";
 import { useAffiliateShareLink } from "../../hook/useAffiliateShareLink";
 import { useToolbarTitleReveal } from "../../hook/useToolbarTitleReveal";
+import { useRewardOffer } from "../../rewardOffer";
+import { RewardOfferLines } from "../RewardOfferLines";
 import { AffiliateLinkCreateError } from "./AffiliateLinkCreateError";
 import { CampaignInfoSection } from "./CampaignInfoSection";
 import * as styles from "./index.css";
@@ -75,6 +77,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     } = useToolbarTitleReveal();
 
     const view = useCampaignView(merchant.id);
+    const offer = useRewardOffer(view, merchant.id, { merchantScoped: true });
 
     const images = useMemo(() => {
         const main = merchant.explorerConfig?.heroImageUrl;
@@ -293,13 +296,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                                 </span>
                             </ExternalLink>
                         </Text>
-                        {view?.headlineReferrerReward && (
-                            <Text variant="body" weight="medium">
-                                {t("explorer.detail.rewardPerReferral", {
-                                    amount: view.headlineReferrerReward,
-                                })}
-                            </Text>
-                        )}
+                        <RewardOfferLines offer={offer} size="body" />
                     </div>
                     {logoUrl && (
                         <img
@@ -341,8 +338,8 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
 
                 <CampaignInfoSection
                     view={view}
+                    offer={offer}
                     merchantName={merchant.name}
-                    merchantId={merchant.id}
                 />
                 <Box paddingX="m">
                     <Text as="p" variant="caption" align="center">

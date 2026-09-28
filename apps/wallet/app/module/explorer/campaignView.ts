@@ -1,4 +1,8 @@
-import type { EstimatedReward, MerchantReward } from "@frak-labs/core-sdk";
+import type {
+    EstimatedReward,
+    MerchantReward,
+    RuleConditions,
+} from "@frak-labs/core-sdk";
 import { formatAmount } from "@frak-labs/core-sdk";
 import {
     extractMinPurchaseAmount,
@@ -46,34 +50,37 @@ export type CampaignView = {
     /** Whether the campaign is gated to a `productScope`. This is a gate, not
      * the reward's basis: use `isMatchedItemsBasis` for basis-dependent copy. */
     hasProductScope: boolean;
-    /** Any of the merchant's rewards pays a referrer for a `purchase` — the
-     * shape the Frak welcome bonus rides on top of. */
-    hasFrakBonusReward: boolean;
+    /** The referee reward is only paid when the buyer has a referrer. */
+    isReferralOnly: boolean;
+    /** Referrer share of the purchase campaign: what the Frak welcome bonus pays. */
+    welcomeBonus?: EstimatedReward;
 };
 
-function hasPurchaseReferrerReward(rewards: MerchantReward[]): boolean {
-    return rewards.some(
-        (reward) =>
-            reward.interactionTypeKey === "purchase" && reward.referrer != null
+const REFERRAL_FIELD = "attribution.referrerIdentityGroupId";
+
+function isReferralOnly(conditions: RuleConditions): boolean {
+    if (!Array.isArray(conditions) && conditions.logic !== "all") return false;
+    const nodes = Array.isArray(conditions)
+        ? conditions
+        : conditions.conditions;
+    return nodes.some(
+        (node) =>
+            !("logic" in node) &&
+            node.field === REFERRAL_FIELD &&
+            node.operator === "exists"
     );
 }
 
-/**
- * Amount for the explorer bonus row, or `undefined` when it shouldn't render:
- * ineligible, no purchase referrer reward, or a merchant-scoped referrer
- * shadows Frak there.
- */
-export function frakBonusAmount(
-    view: CampaignView | null,
-    {
-        isEligible,
-        hasMerchantReferrer,
-    }: { isEligible: boolean; hasMerchantReferrer: boolean }
-): string | undefined {
-    if (!(isEligible && view?.hasFrakBonusReward) || hasMerchantReferrer) {
-        return undefined;
-    }
-    return view.headlineReferrerReward;
+function purchaseCampaign(
+    selected: MerchantReward,
+    rewards: MerchantReward[],
+    now: Date
+): MerchantReward | undefined {
+    if (selected.interactionTypeKey === "purchase") return selected;
+    return selectDisplayCampaign(rewards, {
+        now,
+        targetInteraction: "purchase",
+    })?.campaign;
 }
 
 /** Exported for `campaignView.test.ts`; the hook below is the only runtime caller. */
@@ -108,7 +115,8 @@ export function buildCampaignView(
                 ? formatAmount(minPurchaseAmount)
                 : undefined,
         hasProductScope: campaign.productScope != null,
-        hasFrakBonusReward: hasPurchaseReferrerReward(rewards),
+        isReferralOnly: isReferralOnly(campaign.conditions),
+        welcomeBonus: purchaseCampaign(campaign, rewards, now)?.referrer,
     };
 }
 

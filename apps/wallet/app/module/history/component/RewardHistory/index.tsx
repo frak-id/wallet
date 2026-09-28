@@ -1,3 +1,4 @@
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Inline } from "@frak-labs/design-system/components/Inline";
@@ -109,18 +110,16 @@ export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
                 />
                 <Inline space="m" align="space-between" fill>
                     <Stack space="xxs" className={styles.itemInfo}>
-                        <Text variant="body" weight="medium">
-                            {item.merchant.name}
-                        </Text>
-                        {item.role === "welcome_bonus" && (
-                            <Text
-                                variant="tiny"
-                                color="success"
-                                weight="medium"
-                            >
-                                {t("reward.frakBonus.label")}
+                        <Inline space="xs" alignY="center">
+                            <Text variant="body" weight="medium">
+                                {item.merchant.name}
                             </Text>
-                        )}
+                            {item.role === "welcome_bonus" && (
+                                <Badge variant="success" size="small">
+                                    {t("reward.frakBonus.label")}
+                                </Badge>
+                            )}
+                        </Inline>
                         <Stack space="none">
                             <Text variant="bodySmall" color="secondary">
                                 {formatRewardDate(item.createdAt, locale, t)}
@@ -171,7 +170,7 @@ function MerchantLogoWithBadge({
     return (
         <div className={styles.merchantLogoWrapper}>
             <MerchantLogo merchant={merchant} />
-            <Badge status={status} role={role} />
+            <StatusBadge status={status} role={role} />
         </div>
     );
 }
@@ -243,7 +242,7 @@ const badgeIcons: Record<
     pending: LockIcon,
 };
 
-function Badge({
+function StatusBadge({
     status,
     role,
 }: {

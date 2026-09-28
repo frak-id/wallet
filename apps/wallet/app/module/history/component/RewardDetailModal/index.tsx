@@ -6,6 +6,7 @@ import {
     DetailSheetHero,
 } from "@frak-labs/design-system/components/DetailSheet";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
@@ -170,25 +171,19 @@ function DetailCard({
                 </Card>
             )}
             {item.role === "welcome_bonus" && (
-                <InfoCard>
-                    <Box paddingX="m" paddingY="s">
-                        <Inline space="xs" alignY="center" wrap={false}>
-                            <GiftIcon
-                                color={vars.icon.success}
-                                width={20}
-                                height={20}
-                            />
-                            <Text variant="bodySmall" weight="semiBold">
-                                {t("reward.frakBonus.detailTitle")}
-                            </Text>
-                        </Inline>
-                        <Text variant="bodySmall" color="secondary">
-                            {t("reward.frakBonus.detailDescription", {
-                                merchant: item.merchant.name,
-                            })}
-                        </Text>
-                    </Box>
-                </InfoCard>
+                <Notice
+                    tone="success"
+                    icon={<GiftIcon width={20} height={20} />}
+                >
+                    <Text variant="bodySmall" weight="semiBold">
+                        {t("reward.frakBonus.detailTitle")}
+                    </Text>
+                    <Text variant="bodySmall" color="secondary">
+                        {t("reward.frakBonus.detailDescription", {
+                            merchant: item.merchant.name,
+                        })}
+                    </Text>
+                </Notice>
             )}
         </Stack>
     );

@@ -1,8 +1,30 @@
-import type { MerchantReward } from "@frak-labs/core-sdk";
+import type {
+    MerchantReward,
+    RuleCondition,
+    RuleConditions,
+} from "@frak-labs/core-sdk";
 import { describe, expect, test } from "@/tests/vitest-fixtures";
-import { buildCampaignView, frakBonusAmount } from "./campaignView";
+import { buildCampaignView } from "./campaignView";
 
 const now = new Date("2026-01-01T00:00:00.000Z");
+
+const referralCondition: RuleCondition = {
+    field: "attribution.referrerIdentityGroupId",
+    operator: "exists",
+    value: true,
+};
+
+function fixed(amount: number) {
+    return {
+        payoutType: "fixed" as const,
+        amount: {
+            amount,
+            eurAmount: amount,
+            usdAmount: amount,
+            gbpAmount: amount,
+        },
+    };
+}
 
 function reward(overrides: Partial<MerchantReward> = {}): MerchantReward {
     return {
@@ -10,62 +32,58 @@ function reward(overrides: Partial<MerchantReward> = {}): MerchantReward {
         name: "Campaign",
         interactionTypeKey: "purchase",
         conditions: [],
-        referrer: {
-            payoutType: "fixed",
-            amount: { amount: 5, eurAmount: 5, usdAmount: 5, gbpAmount: 5 },
-        },
+        referrer: fixed(5),
         ...overrides,
     };
 }
 
 describe("buildCampaignView", () => {
-    test.for([
-        ["a purchase reward pays a referrer", reward(), true],
+    test.for<[string, RuleConditions, boolean]>([
+        ["a flat list requires a referrer", [referralCondition], true],
         [
-            "no reward has a referrer share",
-            reward({ referrer: undefined }),
-            false,
+            "an `all` group requires a referrer",
+            { logic: "all", conditions: [referralCondition] },
+            true,
         ],
         [
-            "the referrer reward is not purchase-triggered",
-            reward({ interactionTypeKey: "referral" }),
+            "an `any` group only offers the referrer as one option",
+            { logic: "any", conditions: [referralCondition] },
             false,
         ],
-    ] as const)("hasFrakBonusReward when %s", ([, input, expected]) => {
-        expect(buildCampaignView([input], "en", now)?.hasFrakBonusReward).toBe(
-            expected
+        ["there are no conditions", [], false],
+    ])("isReferralOnly when %s", ([, conditions, expected]) => {
+        const view = buildCampaignView([reward({ conditions })], "en", now);
+        expect(view?.isReferralOnly).toBe(expected);
+    });
+
+    test("welcomeBonus is the displayed purchase campaign's referrer share", () => {
+        const view = buildCampaignView([reward()], "en", now);
+        expect(view?.welcomeBonus).toEqual(fixed(5));
+    });
+
+    test("welcomeBonus falls back to a purchase campaign when a signup one is displayed", () => {
+        const view = buildCampaignView(
+            [
+                reward({
+                    campaignId: "signup",
+                    interactionTypeKey: "referral",
+                    referrer: fixed(20),
+                }),
+                reward({ campaignId: "purchase", referrer: fixed(3) }),
+            ],
+            "en",
+            now
         );
-    });
-});
-
-describe("frakBonusAmount", () => {
-    const view = buildCampaignView([reward()], "en", now);
-    const signupOnly = buildCampaignView(
-        [reward({ interactionTypeKey: "referral" })],
-        "en",
-        now
-    );
-
-    test("returns the formatted referrer estimate when eligible and unshadowed", () => {
-        const amount = frakBonusAmount(view, {
-            isEligible: true,
-            hasMerchantReferrer: false,
-        });
-        expect(amount).toBeTruthy();
-        expect(amount).toBe(view?.headlineReferrerReward);
+        expect(view?.referrer).toEqual(fixed(20));
+        expect(view?.welcomeBonus).toEqual(fixed(3));
     });
 
-    test.for([
-        ["not eligible", view, false, false],
-        ["a merchant-scoped referrer shadows Frak", view, true, true],
-        ["no reward pays a referrer on purchase", signupOnly, true, false],
-        ["there is no campaign view", null, true, false],
-    ] as const)(
-        "is undefined when %s",
-        ([, input, isEligible, hasMerchantReferrer]) => {
-            expect(
-                frakBonusAmount(input, { isEligible, hasMerchantReferrer })
-            ).toBeUndefined();
-        }
-    );
+    test("welcomeBonus is undefined without a purchase campaign", () => {
+        const view = buildCampaignView(
+            [reward({ interactionTypeKey: "referral" })],
+            "en",
+            now
+        );
+        expect(view?.welcomeBonus).toBeUndefined();
+    });
 });
