@@ -1976,6 +1976,49 @@
                 }
             }
         },
+        "ambassador": {
+            "title": "Page ambassadeur",
+            "description": "La photo et les textes de votre page ambassadeur, sur toutes les plateformes où elle est placée. Un champ vide garde le texte par défaut.",
+            "preview": "Aperçu du haut de la page",
+            "fullPreview": "Voir la page entière",
+            "fullPreviewDescription": "Aperçu téléphone de la page ambassadeur entière",
+            "tokenHint": "Astuce : {BRAND} affiche le nom de votre boutique et {REWARD} la récompense de la campagne.",
+            "photo": {
+                "label": "Photo principale",
+                "default": "Image Explorer",
+                "custom": "Autre image",
+                "none": "Pas de photo",
+                "defaultHint": "Utilise l’image principale de votre profil Explorer.",
+                "noExplorerHint": "Votre profil Explorer n’a pas encore d’image principale : la page n’affiche pas de photo.",
+                "customHint": "Affichée dans un cadre 4:5 : choisissez une image où les personnes restent au centre."
+            },
+            "groups": {
+                "hero": "Titre et introduction",
+                "reward": "Textes de la récompense",
+                "buttons": "Libellés des boutons",
+                "faq": "Questions fréquentes"
+            },
+            "fields": {
+                "heroTitle": "Titre",
+                "heroLede": "Introduction",
+                "heroRewardCaption": "Légende de la carte récompense",
+                "heroCtaLabel": "Bouton du haut",
+                "rewardHeading": "Titre de la récompense",
+                "rewardLede": "Introduction de la récompense",
+                "rewardCtaLabel": "Bouton de la récompense",
+                "referralCtaLabel": "Bouton de partage",
+                "faq1Question": "Question 1",
+                "faq1Answer": "Réponse 1",
+                "faq2Question": "Question 2",
+                "faq2Answer": "Réponse 2",
+                "faq3Question": "Question 3",
+                "faq3Answer": "Réponse 3",
+                "faq4Question": "Question 4",
+                "faq4Answer": "Réponse 4",
+                "faq5Question": "Question 5",
+                "faq5Answer": "Réponse 5"
+            }
+        },
         "components": {
             "title": "Réglages par défaut des composants",
             "description": "Choisissez la formulation qui correspond le mieux à votre marque pour chaque composant.",

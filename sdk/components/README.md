@@ -122,3 +122,31 @@ Banner with custom copy:
 ```html
 <frak-banner referral-title="You were referred!" referral-cta="Claim"></frak-banner>
 ```
+
+## Sample usage for Ambassador page
+
+A full-page referral landing, for a page the merchant dedicates to its ambassador program:
+
+```html
+<frak-ambassador></frak-ambassador>
+```
+
+With a hero photo and a custom headline (`{REWARD}` is replaced by the reward amount):
+
+```html
+<frak-ambassador
+    hero-image-url="https://example.com/ambassadors.jpg"
+    hero-title="Join our ambassadors and earn {REWARD} per friend."
+></frak-ambassador>
+```
+
+The page always inherits the surrounding page's fonts. It picks up a brand colour only when the page shows a clear brand button, which a page dedicated to the program usually does not, so set it yourself:
+
+```css
+frak-ambassador {
+    --frak-amb-accent: #7a3e2b; /* buttons, step numbers and the reward figures */
+    --frak-amb-accent-ink: #fff; /* text on the accent */
+}
+```
+
+The accent is also the text colour of the big reward figures. If your brand colour is light (yellow, pastel), keep it for the buttons and give the figures a readable colour with `--frak-amb-accent-text` (for example `currentColor`, your text colour). The defaults assume a light page: on a dark background, set a light accent with dark ink and a dark card behind the hero reward, for example `--frak-amb-accent: #d4a017; --frak-amb-accent-ink: #111; --frak-amb-tag-bg: #222;`. No Frak change is needed to set it: use the custom CSS field of your Shopify theme editor, or Additional CSS in WordPress.

@@ -13,6 +13,7 @@ import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { useSdkConfig } from "@/module/merchant/hook/useSdkConfig";
 import { useSectionedSave } from "@/module/merchant/hook/useSectionedSave";
 import { CustomizeSaveProvider } from "../saveRegistry";
+import { AmbassadorPagePanel } from "./AmbassadorPagePanel";
 import { DefaultCustomization } from "./DefaultCustomization";
 import { PlacementCustomization } from "./PlacementCustomization";
 import { PlacementSelector } from "./PlacementSelector";
@@ -125,6 +126,17 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
                         merchantId={merchantId}
                         sdkConfig={sdkConfig}
                         shopName={sdkConfig.name ?? "My Store"}
+                    />
+
+                    <AmbassadorPagePanel
+                        merchantId={merchantId}
+                        sdkConfig={sdkConfig}
+                        shopName={
+                            sdkConfig.name ?? merchant?.name ?? "My Store"
+                        }
+                        explorerHeroImageUrl={
+                            merchant?.explorerConfig?.heroImageUrl
+                        }
                     />
 
                     <PlacementSelector

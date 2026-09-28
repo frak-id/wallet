@@ -551,10 +551,12 @@
         "@frak-labs/frame-connector": "workspace:*",
         "preact": "catalog:",
         "preact-custom-element": "^4.6.0",
+        "qr": "catalog:",
       },
       "devDependencies": {
         "@frak-labs/design-system": "workspace:*",
         "@frak-labs/test-foundation": "workspace:*",
+        "@playwright/test": "^1.63.0",
         "@preact/preset-vite": "catalog:",
         "@rolldown/plugin-node-polyfills": "catalog:",
         "@testing-library/jest-dom": "catalog:",

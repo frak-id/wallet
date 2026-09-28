@@ -63,6 +63,7 @@ describe("Banner", () => {
         vi.mocked(usePlacementHook.usePlacement).mockReturnValue(undefined);
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: undefined,
+            hasReward: false,
         });
     });
 
@@ -213,6 +214,7 @@ describe("Banner", () => {
     it("should show reward text when useReward returns a reward", async () => {
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: "10 \u20ac",
+            hasReward: true,
         });
         const { container } = render(<Banner />);
 
@@ -284,6 +286,7 @@ describe("Banner", () => {
     it("should interpolate {REWARD} in configured referral text", async () => {
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: "10 €",
+            hasReward: true,
         });
         vi.mocked(usePlacementHook.usePlacement).mockReturnValue({
             components: {

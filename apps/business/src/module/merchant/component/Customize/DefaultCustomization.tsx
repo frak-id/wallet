@@ -33,6 +33,7 @@ import type {
     CssFormValues,
     WordingLang,
 } from "./types";
+import { useSaveComponents } from "./useSaveComponents";
 import { valueOrNull } from "./utils";
 import { WordingPresets } from "./WordingPresets";
 
@@ -71,10 +72,7 @@ function GlobalComponentsPanel({
     sdkConfig: SdkConfig;
 }) {
     const { t } = useTranslation();
-    const { mutateAsync: editSdkConfig, isSuccess } = useMerchantUpdate({
-        merchantId,
-        target: "sdk-config",
-    });
+    const { saveComponents, isSuccess } = useSaveComponents(merchantId);
 
     const [selectedComponent, setSelectedComponent] =
         useState<ComponentType>("buttonShare");
@@ -97,10 +95,8 @@ function GlobalComponentsPanel({
 
     const onSubmit = useCallback(
         (v: ComponentSettingsFormValues) =>
-            editSdkConfig({
-                components: formValuesToComponents(v, DEFAULT_TIER),
-            }),
-        [editSdkConfig]
+            saveComponents(formValuesToComponents(v, DEFAULT_TIER)),
+        [saveComponents]
     );
 
     useCustomizeSection(SECTION_KEYS.defaultComponents, form, onSubmit);

@@ -11,5 +11,9 @@ export default {
         v8_middleware: true,
         v8_passThroughRequests: true,
     },
-    allowedActionOrigins: ["*.frak.id"],
+    // APP_URL is the dev tunnel, set only by `shopify app dev`.
+    allowedActionOrigins: [
+        "*.frak.id",
+        ...(process.env.APP_URL ? [new URL(process.env.APP_URL).host] : []),
+    ],
 } satisfies Config;

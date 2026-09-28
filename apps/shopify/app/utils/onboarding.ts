@@ -14,6 +14,8 @@ export type OnboardingStepData = {
     isThemeHasFrakActivated?: boolean;
     isThemeHasFrakButton?: boolean;
     isThemeHasFrakBanner?: boolean;
+    // Drives the optional setup card only: never add it to `stepValidations`.
+    isThemeHasFrakAmbassador?: boolean;
     theme?: GetMainThemeIdReturnType;
     firstProduct?: FirstProductPublishedReturnType;
     frakWebhook?: {

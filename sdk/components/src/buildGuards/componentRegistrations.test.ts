@@ -58,6 +58,20 @@ describe("hasRegistration", () => {
         expect(hasRegistration(chunk, "frak-button-share")).toBe(true);
     });
 
+    // A long attribute list is emitted as `"a.b".split(".")`, not an array.
+    it("detects a registration whose attributes were collapsed into split()", () => {
+        const chunk =
+            "l(x,`frak-ambassador`,`customerId.orderId.token.merchantId`" +
+            ".split(`.`),{shadow:!1});export{x as Ambassador};";
+        expect(hasRegistration(chunk, "frak-ambassador")).toBe(true);
+    });
+
+    it("ignores a split() call that is not the attributes argument", () => {
+        const chunk =
+            "u(`frak-ambassador`,void 0,void 0,`.root{}`.split(`.`));";
+        expect(hasRegistration(chunk, "frak-ambassador")).toBe(false);
+    });
+
     it("rejects the tree-shaken chunk that shipped the outage", () => {
         expect(hasRegistration(BROKEN_CHUNK, "frak-button-share")).toBe(false);
     });

@@ -15,6 +15,32 @@ describe("useReward", () => {
         const { result } = renderHook(() => useReward(false, undefined));
 
         expect(result.current.reward).toBeUndefined();
+        expect(result.current.hasReward).toBe(false);
+    });
+
+    it("should report no reward without a client, and never fetch", () => {
+        window.FrakSetup.client = undefined;
+
+        const { result } = renderHook(() => useReward(true, undefined));
+
+        expect(getMerchantInformation).not.toHaveBeenCalled();
+        expect(result.current.hasReward).toBe(false);
+    });
+
+    it("should report no reward when the fetch rejects", async () => {
+        vi.mocked(getMerchantInformation).mockRejectedValue(
+            new Error("network")
+        );
+
+        const { result } = renderHook(() => useReward(true, undefined));
+
+        await waitFor(() => {
+            expect(getMerchantInformation).toHaveBeenCalled();
+        });
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(result.current.reward).toBeUndefined();
+        expect(result.current.hasReward).toBe(false);
     });
 
     it("should not fetch reward when shouldUseReward is false", () => {
@@ -51,6 +77,7 @@ describe("useReward", () => {
         await waitFor(() => {
             expect(result.current.reward).toContain("10");
         });
+        expect(result.current.hasReward).toBe(true);
     });
 
     it("should filter rewards by targetInteraction", async () => {
@@ -110,8 +137,10 @@ describe("useReward", () => {
         await waitFor(() => {
             expect(getMerchantInformation).toHaveBeenCalled();
         });
+        await new Promise((resolve) => setTimeout(resolve, 0));
 
         expect(result.current.reward).toBeUndefined();
+        expect(result.current.hasReward).toBe(false);
     });
 
     it("should handle undefined reward response gracefully", async () => {
@@ -148,7 +177,7 @@ describe("useReward", () => {
         expect(result.current.reward).toBeUndefined();
     });
 
-    it("should treat a percentage reward as no reward", async () => {
+    it("should report a percentage reward as available without a figure", async () => {
         vi.mocked(getMerchantInformation).mockResolvedValue({
             id: "merchant-1",
             onChainMetadata: { name: "Test", domain: "test.com" },
@@ -173,7 +202,9 @@ describe("useReward", () => {
             expect(getMerchantInformation).toHaveBeenCalled();
         });
 
-        // Percentage rewards carry no concrete amount → reward stays undefined
+        await waitFor(() => {
+            expect(result.current.hasReward).toBe(true);
+        });
         expect(result.current.reward).toBeUndefined();
     });
 
@@ -216,6 +247,7 @@ describe("useReward", () => {
         await waitFor(() => {
             expect(result.current.reward).toContain("7");
         });
+        expect(result.current.hasReward).toBe(true);
     });
 
     it("should refetch when targetInteraction changes", async () => {

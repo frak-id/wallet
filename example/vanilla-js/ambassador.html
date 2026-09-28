@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ambassador Page — Example Vanilla JS</title>
+    <link rel="icon" href="/favicon.ico" sizes="32x32"/>
+    <script>
+        const detectFrakEnv = <%- detectFrakEnv %>;
+
+        (async () => {
+            const env = await detectFrakEnv(<%= useLocal %>, <%- remoteEnv %>);
+
+            window.FrakSetup = {
+                config: {
+                    env,
+                    metadata: {
+                        name: "Vanilla JS",
+                        lang: "fr",
+                        currency: "eur",
+                    },
+                },
+            };
+
+            // Load SDK components script
+            const sdkScript = document.createElement('script');
+            sdkScript.type = 'module';
+            sdkScript.src = '<%- sdkScriptSrc %>';
+            // Without this a 404 is silent: no client ever lands and every action hangs.
+            sdkScript.onerror = () => {
+                console.error(`Frak SDK failed to load: ${sdkScript.src}`);
+            };
+            document.head.appendChild(sdkScript);
+        })();
+    </script>
+    <%- injectReactScan %>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            background-color: #3a3f47;
+        }
+
+        /* Not a heading: the theme sampler would read this demo chrome as
+           the host page's h1. */
+        .page-title {
+            color: #fff;
+            font-size: 2em;
+            font-weight: 700;
+            margin: 0.67em 0;
+        }
+
+        .demo-bar,
+        .component-card {
+            max-width: 960px;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 12px;
+        }
+
+        .demo-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            background: #2d3139;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .demo-bar a {
+            color: #2196F3;
+        }
+
+        /* The component paints no background of its own — it inherits the
+           merchant surface, so the card supplies the light one its text needs. */
+        .component-card {
+            background: #fff;
+            color: #111;
+            padding: 44px 30px;
+        }
+    </style>
+</head>
+<body>
+
+<p class="page-title">Ambassador Page</p>
+
+<nav class="demo-bar">
+    <strong>Demo:</strong>
+    <a href="/index.html">← Back to component index</a>
+</nav>
+
+<!--
+    Full-page component (direction L): hero, reward, 3-step explainer,
+    win-win (only when the campaign rewards the friend), referral Share
+    button, store badges plus a QR code from 768px, FAQ.
+    `lang: "fr"` above selects the French copy.
+-->
+<main class="component-card">
+    <frak-ambassador></frak-ambassador>
+</main>
+
+</body>
+</html>
