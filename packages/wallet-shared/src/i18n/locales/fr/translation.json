@@ -727,8 +727,7 @@
             },
             "frakBonus": {
                 "title": "Ton cashback exclusif",
-                "description": "Tu fais partie de nos premiers membres : profite d'un bonus de cashback exclusif sur ton premier achat chez les marques participantes.",
-                "cta": "Découvrir les marques"
+                "description": "Tu fais partie de nos premiers membres : profite d'un bonus de cashback exclusif sur ton premier achat chez les marques participantes."
             }
         },
         "stats": {

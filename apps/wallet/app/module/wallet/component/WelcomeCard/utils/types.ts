@@ -28,7 +28,6 @@ export type FrakBonusWelcomeSlide = {
     kind: "frakBonus";
     title: string;
     description: string;
-    cta: string;
     onAction: () => void;
 };
 

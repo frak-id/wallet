@@ -6,14 +6,9 @@ import welcomeLogos from "../welcome_logos.webp";
 type FrakBonusSlideProps = {
     title: string;
     description: string;
-    cta: string;
 };
 
-export function FrakBonusSlide({
-    title,
-    description,
-    cta,
-}: FrakBonusSlideProps) {
+export function FrakBonusSlide({ title, description }: FrakBonusSlideProps) {
     return (
         <Box className={styles.layoutRow}>
             <Box className={styles.contentArea}>
@@ -27,9 +22,6 @@ export function FrakBonusSlide({
                         className={styles.slideDescription}
                     >
                         {description}
-                    </Text>
-                    <Text variant="caption" color="action" weight="medium">
-                        {cta}
                     </Text>
                 </Box>
             </Box>

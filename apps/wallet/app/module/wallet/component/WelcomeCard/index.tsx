@@ -62,7 +62,6 @@ export function WelcomeCard() {
               kind: "frakBonus",
               title: t("wallet.welcome.frakBonus.title"),
               description: t("wallet.welcome.frakBonus.description"),
-              cta: t("wallet.welcome.frakBonus.cta"),
               onAction: () => navigate({ to: "/explorer" }),
           }
         : null;
@@ -176,7 +175,6 @@ export function WelcomeCard() {
                                 <FrakBonusSlide
                                     title={slide.title}
                                     description={slide.description}
-                                    cta={slide.cta}
                                 />
                             ) : (
                                 <NotificationSlide

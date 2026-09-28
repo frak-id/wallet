@@ -1551,7 +1551,6 @@ export default interface Resources {
           "step3Title": "Earn money"
         },
         "frakBonus": {
-          "cta": "Discover brands",
           "description": "You're one of our first members — enjoy an exclusive cashback bonus on your first purchase at participating brands.",
           "title": "Your exclusive cashback"
         },
