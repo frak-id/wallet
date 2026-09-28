@@ -288,6 +288,13 @@
             "when": 1788474856253,
             "tag": "0040_chubby_calypso",
             "breakpoints": true
+        },
+        {
+            "idx": 41,
+            "version": "7",
+            "when": 1790591719744,
+            "tag": "0041_little_proteus",
+            "breakpoints": true
         }
     ]
 }
