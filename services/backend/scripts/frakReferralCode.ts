@@ -12,6 +12,12 @@ const USAGE = `Usage: bun scripts/frakReferralCode.ts <command>
 
 const referralCodes = ReferralCodeContext.repositories.referralCode;
 
+// All uppercase so the QR encoder can use its denser alphanumeric mode.
+function qrUrl(code: string): string {
+    const walletUrl = process.env.FRAK_WALLET_URL ?? "https://wallet.frak.id";
+    return `${walletUrl}/r/${code}`.toUpperCase();
+}
+
 function fail(message: string): never {
     console.error(message);
     process.exit(1);
@@ -37,6 +43,7 @@ async function issue(raw: string | undefined) {
         const created = await referralCodes.createFrakCode(candidate);
         if (created) {
             console.log(`Issued Frak referral code ${created.code}`);
+            console.log(`QR link: ${qrUrl(created.code)}`);
             return;
         }
     }
@@ -55,6 +62,7 @@ async function list() {
     console.table(
         codes.map((code) => ({
             code: code.code,
+            qrUrl: qrUrl(code.code),
             createdAt: code.createdAt.toISOString(),
             revokedAt: code.revokedAt?.toISOString() ?? "",
         }))
