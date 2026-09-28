@@ -1,3 +1,4 @@
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Inline } from "@frak-labs/design-system/components/Inline";
@@ -6,6 +7,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import {
     ClockHandsIcon,
     EarningsIcon,
+    GiftIcon,
     HourglassIcon,
     LockIcon,
 } from "@frak-labs/design-system/icons";
@@ -104,12 +106,20 @@ export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
                 <MerchantLogoWithBadge
                     merchant={item.merchant}
                     status={item.status}
+                    role={item.role}
                 />
                 <Inline space="m" align="space-between" fill>
                     <Stack space="xxs" className={styles.itemInfo}>
-                        <Text variant="body" weight="medium">
-                            {item.merchant.name}
-                        </Text>
+                        <Inline space="xs" alignY="center">
+                            <Text variant="body" weight="medium">
+                                {item.merchant.name}
+                            </Text>
+                            {item.role === "welcome_bonus" && (
+                                <Badge variant="success" size="small">
+                                    {t("reward.frakBonus.label")}
+                                </Badge>
+                            )}
+                        </Inline>
                         <Stack space="none">
                             <Text variant="bodySmall" color="secondary">
                                 {formatRewardDate(item.createdAt, locale, t)}
@@ -151,14 +161,16 @@ export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
 function MerchantLogoWithBadge({
     merchant,
     status,
+    role,
 }: {
     merchant: RewardHistoryItemType["merchant"];
     status: RewardHistoryItemType["status"];
+    role: RewardHistoryItemType["role"];
 }) {
     return (
         <div className={styles.merchantLogoWrapper}>
             <MerchantLogo merchant={merchant} />
-            <Badge status={status} />
+            <StatusBadge status={status} role={role} />
         </div>
     );
 }
@@ -230,7 +242,28 @@ const badgeIcons: Record<
     pending: LockIcon,
 };
 
-function Badge({ status }: { status: RewardHistoryItemType["status"] }) {
+function StatusBadge({
+    status,
+    role,
+}: {
+    status: RewardHistoryItemType["status"];
+    role: RewardHistoryItemType["role"];
+}) {
+    // Welcome-bonus rows always carry the gift accent, regardless of status.
+    if (role === "welcome_bonus") {
+        return (
+            <div className={styles.badge}>
+                <div className={styles.badgeInner({ status: "bonus" })}>
+                    <GiftIcon
+                        color={vars.surface.background}
+                        width={12}
+                        height={12}
+                    />
+                </div>
+            </div>
+        );
+    }
+
     if (status !== "settled" && status !== "pending") {
         return null;
     }

@@ -112,6 +112,8 @@ export {
     prefixModalCss,
     type RecordErrorOptions,
     type RecoveryHint,
+    type ReferralCodeKind,
+    type ReferralPrefillSource,
     recordError,
     recoveryHintStorage,
     resolveApiErrorKey,
@@ -197,6 +199,7 @@ export { WagmiProviderWithDynamicConfig } from "./providers";
 export {
     REDEEM_ERROR_KEY_MAP,
     REDEMPTION_CODE_LENGTH,
+    type RedeemResult,
     referralKey,
     useIssueReferralCode,
     useRedeemReferralCode,

@@ -53,6 +53,7 @@ export const badgeInner = recipe({
         status: {
             pending: { background: vars.icon.warning },
             settled: { background: vars.icon.secondary },
+            bonus: { background: vars.icon.success },
         },
     },
 });

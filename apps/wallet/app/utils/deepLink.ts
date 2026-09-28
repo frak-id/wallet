@@ -5,6 +5,7 @@ import {
     recordError,
     trackEvent,
 } from "@frak-labs/wallet-shared";
+import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 
 type DeepLinkParams = {
@@ -19,6 +20,8 @@ type DeepLinkParams = {
     a?: string;
     /** `frak-install-v1` proof. Search param, not a fragment: see `routeResolvers.install`. */
     p?: string;
+    /** Referral code carried by an `/install?ref=` deep link. */
+    ref?: string;
 };
 
 function extractSearchParams(
@@ -34,6 +37,7 @@ function extractSearchParams(
         m: searchParams.get("m") ?? undefined,
         a: searchParams.get("a") ?? undefined,
         p: searchParams.get("p") ?? undefined,
+        ref: searchParams.get("ref") ?? undefined,
     };
 }
 
@@ -81,6 +85,7 @@ function parseDeepLink(url: string): DeepLinkParams | null {
 
         // https://wallet.frak.id/pair?id=... (Android App Links)
         // https://wallet.frak.id/p/<UPPER_HEX> (compact QR alias)
+        // https://wallet.frak.id/r/<CODE> (compact referral QR alias)
         if (
             parsed.protocol === "https:" &&
             knownWalletHosts.has(parsed.hostname)
@@ -108,10 +113,10 @@ function parseDeepLink(url: string): DeepLinkParams | null {
 
 /**
  * Actions that carry their id as a path segment (`/<action>/<id>`) rather than
- * a `?id=` query param: the compact `/p/<id>` pairing alias and the
- * `/explorer/<merchantId>` deep link.
+ * a `?id=` query param: the compact `/p/<id>` pairing alias, the compact
+ * `/r/<code>` referral alias and the `/explorer/<merchantId>` deep link.
  */
-const pathIdActions = new Set(["p", "explorer"]);
+const pathIdActions = new Set(["p", "r", "explorer"]);
 
 /**
  * Read the `frak-install-v1` proof out of a `#p=` fragment.
@@ -179,7 +184,13 @@ type NavigateFn = (options: {
  * These actions always reach `routeDeepLink` regardless of session state,
  * so the destination page handles its own auth logic.
  */
-const publicActions = new Set(["register", "login", "recovery", "install"]);
+const publicActions = new Set([
+    "register",
+    "login",
+    "recovery",
+    "install",
+    "r",
+]);
 
 function handleDeepLinkAction(
     navigate: NavigateFn,
@@ -251,6 +262,13 @@ const resolvePairRoute = (params: DeepLinkParams): Route =>
           }
         : { to: "/wallet" };
 
+// `install` and `r` are public actions, so the session arrives as `null`: read it here.
+function resolveReferralCodeRoute(code: string): Route {
+    return getSafeSession()?.token
+        ? { to: "/profile/referral/redeem", search: { code } }
+        : { to: "/register", search: { ref: code } };
+}
+
 /**
  * Action → route resolver map.
  *
@@ -262,16 +280,22 @@ const routeResolvers: Record<string, (params: DeepLinkParams) => Route> = {
     p: resolvePairRoute,
     pair: resolvePairRoute,
     pairing: resolvePairRoute,
-    // `p` is forwarded as a search param, not a fragment. `/install` prefers the fragment
-    // when it has one, but a fragment cannot survive this hop: the router navigates
-    // in-app, so `window.location.hash` is empty by the time the route renders. Without
-    // this the proof is silently dropped on every app-installed deep link.
+    // `p` is forwarded as a search param, not a fragment: a fragment cannot survive this
+    // in-app hop, so `window.location.hash` is empty by the time `/install` renders.
     install: (params) => {
+        if (params.ref && !params.m && !params.a) {
+            return resolveReferralCodeRoute(params.ref);
+        }
         const search: Record<string, string> = {};
         if (params.m) search.m = params.m;
         if (params.a) search.a = params.a;
         if (params.p) search.p = params.p;
+        if (params.ref) search.ref = params.ref;
         return { to: "/install", search };
+    },
+    r: (params) => {
+        const code = parseReferralCode(params.id);
+        return code ? resolveReferralCodeRoute(code) : { to: "/wallet" };
     },
     send: (params) => ({
         to: "/tokens/send",

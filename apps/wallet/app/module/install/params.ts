@@ -2,11 +2,14 @@ import {
     decodeHostEmbed,
     type HostEmbed,
 } from "@/module/common/utils/hostEmbed";
+import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
 import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme";
 
 export type InstallSearch = {
     m?: string;
     a?: string;
+    /** Referral code carried by an `/install?ref=` link or QR. */
+    ref?: string;
     /** Shopify credential forwarded from `/sharing`, when there is no `a`. */
     checkoutToken?: string;
     /** `frak-install-v1` proof, when a fragment could not carry it. See `resolveInstallProof`. */
@@ -37,6 +40,7 @@ export function parseInstallSearch(
     return {
         m: typeof search.m === "string" ? search.m : undefined,
         a: typeof search.a === "string" ? search.a : undefined,
+        ref: parseReferralCode(search.ref),
         checkoutToken:
             typeof search.checkoutToken === "string"
                 ? search.checkoutToken

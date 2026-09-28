@@ -1,4 +1,8 @@
-import type { EstimatedReward, MerchantReward } from "@frak-labs/core-sdk";
+import type {
+    EstimatedReward,
+    MerchantReward,
+    RuleConditions,
+} from "@frak-labs/core-sdk";
 import { formatAmount } from "@frak-labs/core-sdk";
 import {
     extractMinPurchaseAmount,
@@ -46,9 +50,41 @@ export type CampaignView = {
     /** Whether the campaign is gated to a `productScope`. This is a gate, not
      * the reward's basis: use `isMatchedItemsBasis` for basis-dependent copy. */
     hasProductScope: boolean;
+    /** The referee reward is only paid when the buyer has a referrer. */
+    isReferralOnly: boolean;
+    /** Referrer share of the purchase campaign: what the Frak welcome bonus pays. */
+    welcomeBonus?: EstimatedReward;
 };
 
-function buildCampaignView(
+const REFERRAL_FIELD = "attribution.referrerIdentityGroupId";
+
+function isReferralOnly(conditions: RuleConditions): boolean {
+    if (!Array.isArray(conditions) && conditions.logic !== "all") return false;
+    const nodes = Array.isArray(conditions)
+        ? conditions
+        : conditions.conditions;
+    return nodes.some(
+        (node) =>
+            !("logic" in node) &&
+            node.field === REFERRAL_FIELD &&
+            node.operator === "exists"
+    );
+}
+
+function purchaseCampaign(
+    selected: MerchantReward,
+    rewards: MerchantReward[],
+    now: Date
+): MerchantReward | undefined {
+    if (selected.interactionTypeKey === "purchase") return selected;
+    return selectDisplayCampaign(rewards, {
+        now,
+        targetInteraction: "purchase",
+    })?.campaign;
+}
+
+/** Exported for `campaignView.test.ts`; the hook below is the only runtime caller. */
+export function buildCampaignView(
     rewards: MerchantReward[],
     locale: string,
     now: Date = new Date()
@@ -79,6 +115,8 @@ function buildCampaignView(
                 ? formatAmount(minPurchaseAmount)
                 : undefined,
         hasProductScope: campaign.productScope != null,
+        isReferralOnly: isReferralOnly(campaign.conditions),
+        welcomeBonus: purchaseCampaign(campaign, rewards, now)?.referrer,
     };
 }
 

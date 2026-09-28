@@ -45,6 +45,22 @@ const rewardInteractionsTotal = register(
     })
 );
 
+const frakWelcomeBonusesTotal = register(
+    new Counter({
+        name: "frak_welcome_bonuses_total",
+        help: "Welcome-bonus rewards created from a redirected Frak referrer share",
+    })
+);
+
+const frakCodeRejectedTotal = register(
+    new Counter({
+        name: "frak_referral_code_rejected_total",
+        help: "Frak referral-code redemptions refused by the onboarding gate",
+        // reason: no_onboarding_context | outside_onboarding_window | has_purchase
+        labelNames: ["reason"] as const,
+    })
+);
+
 const webhookErrorsTotal = register(
     new Counter({
         name: "webhook_errors_total",
@@ -92,6 +108,17 @@ export const businessMetrics = {
     },
     rewardInteractions(outcome: "success" | "deferred" | "error", n: number) {
         if (n > 0) rewardInteractionsTotal.inc({ outcome }, n);
+    },
+    frakWelcomeBonuses(n: number) {
+        if (n > 0) frakWelcomeBonusesTotal.inc(n);
+    },
+    frakCodeRejected(
+        reason:
+            | "no_onboarding_context"
+            | "outside_onboarding_window"
+            | "has_purchase"
+    ) {
+        frakCodeRejectedTotal.inc({ reason });
     },
     webhookError() {
         webhookErrorsTotal.inc();

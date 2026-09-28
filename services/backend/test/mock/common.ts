@@ -517,6 +517,8 @@ vi.mock("@backend-infrastructure", () => ({
         settlementErrors: vi.fn(),
         settlementRequeued: vi.fn(),
         rewardInteractions: vi.fn(),
+        frakWelcomeBonuses: vi.fn(),
+        frakCodeRejected: vi.fn(),
         webhookError: vi.fn(),
         notificationsSent: vi.fn(),
         loginChallenge: vi.fn(),

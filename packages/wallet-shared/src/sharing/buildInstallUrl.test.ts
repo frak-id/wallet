@@ -169,4 +169,36 @@ describe("buildPlayStoreInstallUrl", () => {
             "merchantId=merchant-1&anonymousId=anon-1&proof=the-proof"
         );
     });
+
+    test("appends a referral code alongside the merchant pair", () => {
+        const referrer = new URL(
+            buildPlayStoreInstallUrl({ ...args, referralCode: "FRAKPA" })
+        ).searchParams.get("referrer");
+
+        expect(referrer).toBe(
+            "merchantId=merchant-1&anonymousId=anon-1&referralCode=FRAKPA"
+        );
+    });
+
+    test("carries proof and referral code together", () => {
+        const referrer = new URL(
+            buildPlayStoreInstallUrl({
+                ...args,
+                installProof: "the-proof",
+                referralCode: "FRAKPA",
+            })
+        ).searchParams.get("referrer");
+
+        expect(referrer).toBe(
+            "merchantId=merchant-1&anonymousId=anon-1&proof=the-proof&referralCode=FRAKPA"
+        );
+    });
+
+    test("carries only the referral code when there is no merchant pair", () => {
+        const referrer = new URL(
+            buildPlayStoreInstallUrl({ referralCode: "FRAKPA" })
+        ).searchParams.get("referrer");
+
+        expect(referrer).toBe("referralCode=FRAKPA");
+    });
 });

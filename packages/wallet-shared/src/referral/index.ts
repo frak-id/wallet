@@ -1,6 +1,9 @@
 // Hooks
 export { useIssueReferralCode } from "./hook/useIssueReferralCode";
-export { useRedeemReferralCode } from "./hook/useRedeemReferralCode";
+export {
+    type RedeemResult,
+    useRedeemReferralCode,
+} from "./hook/useRedeemReferralCode";
 export {
     REDEEM_ERROR_KEY_MAP,
     REDEMPTION_CODE_LENGTH,

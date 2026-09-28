@@ -376,7 +376,8 @@ export class CampaignStatsOrchestrator {
                 .select({
                     spend: sql<string>`COALESCE(SUM(${fiatRewardsExpr}), 0)`,
                     ambassadorAmount: sql<string>`COALESCE(SUM(${fiatRewardsExpr}) FILTER (WHERE ${assetLogsTable.recipientType} = 'referrer'), 0)`,
-                    refereeAmount: sql<string>`COALESCE(SUM(${fiatRewardsExpr}) FILTER (WHERE ${assetLogsTable.recipientType} = 'referee'), 0)`,
+                    // Welcome bonuses are paid to the referee: keeps ambassador + referee = spend.
+                    refereeAmount: sql<string>`COALESCE(SUM(${fiatRewardsExpr}) FILTER (WHERE ${assetLogsTable.recipientType} IN ('referee', 'welcome_bonus')), 0)`,
                     conversions: sql<string>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${interactionLogsTable.type} = 'purchase')`,
                     ambassadorsTotal: sql<string>`COUNT(DISTINCT ${assetLogsTable.identityGroupId}) FILTER (WHERE ${assetLogsTable.recipientType} = 'referrer')`,
                 })

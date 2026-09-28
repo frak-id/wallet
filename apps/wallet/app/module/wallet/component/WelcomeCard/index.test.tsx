@@ -292,6 +292,64 @@ describe("WelcomeCard", () => {
         expect(container).toBeEmptyDOMElement();
     });
 
+    it("should show the frakBonus slide first when the user is Frak-referred", () => {
+        mockUseReferralStatus.mockReturnValue({
+            data: {
+                ownedCode: null,
+                frakReferral: { claimedMerchantIds: [] },
+            },
+        } as unknown as ReferralStatusReturn);
+
+        const { container } = render(<WelcomeCard />);
+
+        expect(container.querySelectorAll("[data-index]")).toHaveLength(4);
+        expect(
+            screen.getByText("wallet.welcome.frakBonus.title")
+        ).toBeInTheDocument();
+        const firstSlide = container.querySelector("[data-index='0']");
+        expect(
+            firstSlide?.textContent?.includes("wallet.welcome.frakBonus.title")
+        ).toBe(true);
+    });
+
+    it("should navigate to /explorer when the frakBonus slide is clicked", () => {
+        mockUseReferralStatus.mockReturnValue({
+            data: {
+                ownedCode: null,
+                frakReferral: { claimedMerchantIds: [] },
+            },
+        } as unknown as ReferralStatusReturn);
+
+        render(<WelcomeCard />);
+
+        const bonusCard = screen
+            .getByText("wallet.welcome.frakBonus.title")
+            .closest("[role='button']") as HTMLElement;
+        fireEvent.click(bonusCard);
+
+        expect(mockNavigate).toHaveBeenCalledWith({ to: "/explorer" });
+    });
+
+    it("should dismiss the frakBonus slide via the existing dismissedSlides mechanism", () => {
+        mockUseReferralStatus.mockReturnValue({
+            data: {
+                ownedCode: null,
+                frakReferral: { claimedMerchantIds: [] },
+            },
+        } as unknown as ReferralStatusReturn);
+
+        render(<WelcomeCard />);
+
+        fireEvent.click(screen.getByRole("button", { name: "common.close" }));
+
+        expect(localStorage.getItem("frak_welcome_dismissed")).toBe(
+            JSON.stringify(["frakBonus"])
+        );
+        expect(
+            screen.queryByText("wallet.welcome.frakBonus.title")
+        ).not.toBeInTheDocument();
+    });
+
     it("should navigate to /profile when the notification slide is clicked", () => {
         render(<WelcomeCard />);
 
