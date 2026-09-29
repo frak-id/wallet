@@ -37,6 +37,10 @@ import { merchantSdkConfigQueryKey } from "@/module/merchant/queries/queryKeys";
 import { CustomizeSaveProvider } from "../saveRegistry";
 import { AmbassadorPagePanel } from "./AmbassadorPagePanel";
 import { AMBASSADOR_FIELD_GROUPS } from "./ambassadorForm";
+import {
+    AMBASSADOR_FAQ_PRESET_FIELDS,
+    AMBASSADOR_FAQ_PRESETS,
+} from "./presets";
 import { SECTION_KEYS } from "./sections";
 
 const EXPLORER_HERO = "https://cdn.example.com/explorer.jpg";
@@ -80,6 +84,25 @@ function renderPanel(sdkConfig: SdkConfig, shopName = "My Store") {
     return { ...view, save };
 }
 
+function openAdvanced() {
+    fireEvent.click(
+        screen.getByRole("button", { name: "customize.components.advanced" })
+    );
+}
+
+function pickFaqPreset(key: string) {
+    fireEvent.click(
+        screen.getByRole("radio", {
+            name: new RegExp(`customize\\.ambassador\\.faqPresets\\.${key}`),
+        })
+    );
+}
+
+function selectEnglishTab() {
+    fireEvent.mouseDown(screen.getByText("English"));
+    fireEvent.click(screen.getByText("English"));
+}
+
 describe("AmbassadorPagePanel", () => {
     beforeEach(() => vi.clearAllMocks());
 
@@ -121,6 +144,7 @@ describe("AmbassadorPagePanel", () => {
 
     it("shows the typed FAQ answer in the phone before saving", () => {
         const view = renderPanel({});
+        openAdvanced();
         const answer = screen.getByLabelText(
             "customize.ambassador.fields.faq2Answer"
         );
@@ -145,8 +169,7 @@ describe("AmbassadorPagePanel", () => {
         const enLede = fill(componentDefaults.en.ambassador.heroLedeReward);
         expect(phone.getByText(frLede)).toBeInTheDocument();
 
-        fireEvent.mouseDown(screen.getByText("English"));
-        fireEvent.click(screen.getByText("English"));
+        selectEnglishTab();
         expect(phone.getByText("Join My Store")).toBeInTheDocument();
         expect(phone.getByText(enLede)).toBeInTheDocument();
         expect(phone.queryByText(frLede)).not.toBeInTheDocument();
@@ -154,6 +177,7 @@ describe("AmbassadorPagePanel", () => {
 
     it("opens question 4 and highlights its answer when the answer field is focused", () => {
         const view = renderPanel({});
+        openAdvanced();
         fireEvent.focus(
             screen.getByLabelText("customize.ambassador.fields.faq4Answer")
         );
@@ -169,6 +193,7 @@ describe("AmbassadorPagePanel", () => {
 
     it("highlights the matching text in the phone for every editable field", () => {
         const view = renderPanel({});
+        openAdvanced();
         const phone = view.getByTestId("ambassador-phone-preview");
         const fields = Object.values(AMBASSADOR_FIELD_GROUPS).flat();
 
@@ -248,6 +273,7 @@ describe("AmbassadorPagePanel", () => {
 
     it("edits the long texts in a multi-line field", () => {
         renderPanel({});
+        openAdvanced();
         expect(
             screen.getByLabelText("customize.ambassador.fields.faq1Answer")
                 .tagName
@@ -273,6 +299,7 @@ describe("AmbassadorPagePanel", () => {
 
     it("opens the sheet with faq 4 open and highlighted after focusing its answer", async () => {
         const view = renderPanel({});
+        openAdvanced();
         const answer = screen.getByLabelText(
             "customize.ambassador.fields.faq4Answer"
         );
@@ -291,5 +318,143 @@ describe("AmbassadorPagePanel", () => {
             "data-highlighted",
             "true"
         );
+    });
+
+    it("keeps the FAQ fields hidden until the advanced settings are opened", () => {
+        renderPanel({});
+        expect(
+            screen.queryByLabelText("customize.ambassador.fields.faq1Question")
+        ).not.toBeInTheDocument();
+
+        openAdvanced();
+
+        for (const field of AMBASSADOR_FAQ_PRESET_FIELDS) {
+            expect(
+                screen.getByLabelText(`customize.ambassador.fields.${field}`)
+            ).toBeInTheDocument();
+        }
+        expect(
+            screen.getByLabelText("customize.ambassador.fields.faq5Answer")
+        ).toBeInTheDocument();
+    });
+
+    it("offers one FAQ tile per preset, with its first question in the brand's name", () => {
+        renderPanel({}, "Nowa");
+        expect(screen.getAllByRole("radio")).toHaveLength(
+            AMBASSADOR_FAQ_PRESETS.length
+        );
+        expect(
+            screen.getByText("How does Nowa know the sale came from me?")
+        ).toBeInTheDocument();
+    });
+
+    it("fills the FAQ fields and the phone when a preset is picked", () => {
+        const view = renderPanel({});
+        selectEnglishTab();
+        pickFaqPreset("earnings");
+        openAdvanced();
+
+        const earnings = AMBASSADOR_FAQ_PRESETS[1];
+        for (const field of AMBASSADOR_FAQ_PRESET_FIELDS) {
+            expect(
+                screen.getByLabelText(`customize.ambassador.fields.${field}`)
+            ).toHaveValue(earnings.en[field]);
+        }
+        const phone = within(view.getByTestId("ambassador-phone-preview"));
+        expect(phone.getByText(earnings.en.faq1Question)).toBeInTheDocument();
+    });
+
+    it("shows a picked preset in the store's language on the all-languages tab", () => {
+        const view = renderPanel({ lang: "fr" });
+        pickFaqPreset("earnings");
+
+        const phone = within(view.getByTestId("ambassador-phone-preview"));
+        expect(
+            phone.getByText(AMBASSADOR_FAQ_PRESETS[1].fr.faq1Answer)
+        ).toBeInTheDocument();
+    });
+
+    it("stores a picked preset in both languages and leaves FAQ 5 alone", async () => {
+        const faq5 = {
+            faq5Question: "Who runs it?",
+            faq5Answer: { en: "We do.", fr: "Nous." },
+        };
+        const { save } = renderPanel({ components: { ambassador: faq5 } });
+        pickFaqPreset("earnings");
+
+        const earnings = AMBASSADOR_FAQ_PRESETS[1];
+        const components = await save();
+
+        expect(components).toEqual({
+            ambassador: {
+                ...Object.fromEntries(
+                    AMBASSADOR_FAQ_PRESET_FIELDS.map((field) => [
+                        field,
+                        { en: earnings.en[field], fr: earnings.fr[field] },
+                    ])
+                ),
+                ...faq5,
+            },
+        });
+    });
+
+    it("stores an all-languages edit in place of the field's English and French text", async () => {
+        const { save } = renderPanel({
+            components: {
+                ambassador: { heroTitle: { en: "Hello", fr: "Bonjour" } },
+            },
+        });
+        pickFaqPreset("earnings");
+        openAdvanced();
+
+        fireEvent.change(
+            screen.getByLabelText("customize.ambassador.fields.heroTitle"),
+            { target: { value: "Hi all" } }
+        );
+        fireEvent.change(
+            screen.getByLabelText("customize.ambassador.fields.faq2Answer"),
+            { target: { value: "Paid monthly." } }
+        );
+        const components = await save();
+
+        expect(components.ambassador.heroTitle).toBe("Hi all");
+        expect(components.ambassador.faq2Answer).toBe("Paid monthly.");
+        expect(components.ambassador.faq1Answer).toEqual({
+            en: AMBASSADOR_FAQ_PRESETS[1].en.faq1Answer,
+            fr: AMBASSADOR_FAQ_PRESETS[1].fr.faq1Answer,
+        });
+    });
+
+    it("replaces a stored all-languages FAQ text when a preset is picked", async () => {
+        const { save } = renderPanel({
+            components: { ambassador: { faq1Question: "Old question" } },
+        });
+        pickFaqPreset("earnings");
+
+        const components = await save();
+
+        expect(components.ambassador.faq1Question).toEqual({
+            en: AMBASSADOR_FAQ_PRESETS[1].en.faq1Question,
+            fr: AMBASSADOR_FAQ_PRESETS[1].fr.faq1Question,
+        });
+    });
+
+    it("selects no tile once a picked preset's text is edited", () => {
+        renderPanel({});
+        selectEnglishTab();
+        pickFaqPreset("earnings");
+        expect(
+            screen.getByRole("radio", { checked: true })
+        ).toBeInTheDocument();
+
+        openAdvanced();
+        fireEvent.change(
+            screen.getByLabelText("customize.ambassador.fields.faq2Answer"),
+            { target: { value: "Something else entirely" } }
+        );
+
+        expect(
+            screen.queryByRole("radio", { checked: true })
+        ).not.toBeInTheDocument();
     });
 });
