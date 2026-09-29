@@ -219,13 +219,21 @@ export const heroArtFramed = style({
     alignContent: "end",
 });
 
+/** Box properties a host's rich-text `img` rule would override, e.g. Dawn's `.rte img` in a page body. */
+const lockedImageBox = (width: string, height: string, radius: string) => ({
+    width: `${width} !important`,
+    height: `${height} !important`,
+    maxWidth: "none !important",
+    margin: "0 !important",
+    border: "0 !important",
+    borderRadius: `${radius} !important`,
+});
+
 export const heroImage = style({
     position: "absolute",
     inset: 0,
-    width: "100%",
-    height: "100%",
     objectFit: "cover",
-    borderRadius: RADIUS,
+    ...lockedImageBox("100%", "100%", RADIUS),
 });
 
 export const heroTag = style({
@@ -452,8 +460,7 @@ export const storeBadge = style([
 
 export const storeBadgeArt = style({
     display: "block",
-    height: "40px",
-    width: "auto",
+    ...lockedImageBox("auto", "40px", "0"),
 });
 
 // ─── FAQ + closing link ───────────────────────────────────

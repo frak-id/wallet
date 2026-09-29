@@ -1239,6 +1239,28 @@ describe("Ambassador", () => {
         expect(computed(badge, "background-color")).toBe("rgb(0, 0, 0)");
     });
 
+    it("keeps the hero photo and badge sizes under a rich-text rule on images, as when placed in a Shopify page body", async () => {
+        injectCss(await compileAmbassadorCss());
+        injectCss(
+            ".rte img { height: auto; width: 320px; max-width: 100%; margin: 1rem 0; }"
+        );
+        const { container } = render(
+            <div class="rte">
+                <Ambassador heroImageUrl="https://merchant.example/hero.png" />
+            </div>
+        );
+
+        const hero = container.querySelector(".frak-ambassador__hero-image");
+        expect(computed(hero, "height")).toBe("100%");
+        expect(computed(hero, "width")).toBe("100%");
+        expect(computed(hero, "margin-top")).toBe("0px");
+        const badge = container.querySelector(
+            ".frak-ambassador__store-badge--play .frak-ambassador__store-badge-art"
+        );
+        expect(computed(badge, "height")).toBe("40px");
+        expect(computed(badge, "width")).toBe("auto");
+    });
+
     it("2026-09-15 R16. surface and border tints follow the accent where color-mix is supported, and stay neutral elsewhere", async () => {
         const css = (await compileAmbassadorCss()).replace(/\s+/g, " ");
 
