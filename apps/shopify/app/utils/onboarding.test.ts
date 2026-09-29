@@ -137,10 +137,15 @@ describe("validateCompleteOnboarding", () => {
     });
 
     it("ignores the ambassador block: it is a setup card, not a step", () => {
-        for (const isThemeHasFrakAmbassador of [true, false, undefined]) {
+        for (const ambassadorPage of [
+            { state: "linked", url: "https://shop.com/pages/a" },
+            { state: "blockUnlinked" },
+            { state: "none" },
+            undefined,
+        ] as const) {
             const result = validateCompleteOnboarding({
                 ...completeData,
-                isThemeHasFrakAmbassador,
+                ambassadorPage,
             });
             expect(result.isComplete).toBe(true);
             expect(result.completedSteps).toEqual([1, 2, 3, 4, 5, 6, 7]);

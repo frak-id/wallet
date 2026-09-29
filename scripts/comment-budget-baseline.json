@@ -115,7 +115,7 @@
     "apps/shopify/app/utils/imageValidation.ts": 2,
     "apps/shopify/app/utils/mediaUrl.ts": 2,
     "apps/shopify/app/utils/onboarding.server.ts": 1,
-    "apps/shopify/app/utils/onboarding.ts": 3,
+    "apps/shopify/app/utils/onboarding.ts": 2,
     "apps/shopify/app/utils/url.ts": 1,
     "apps/wallet/app/entry/shared/bootstrap.tsx": 1,
     "apps/wallet/app/entry/shared/search.test.ts": 2,

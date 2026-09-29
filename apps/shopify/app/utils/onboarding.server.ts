@@ -108,7 +108,6 @@ const stepDataFetchers = {
             );
             return {
                 isThemeHasFrakBanner: presence.banner,
-                isThemeHasFrakAmbassador: presence.ambassador.length > 0,
                 ambassadorPage,
             };
         } catch (error) {

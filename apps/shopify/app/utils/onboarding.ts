@@ -16,7 +16,6 @@ export type OnboardingStepData = {
     isThemeHasFrakButton?: boolean;
     isThemeHasFrakBanner?: boolean;
     // Drives the optional setup card only: never add it to `stepValidations`.
-    isThemeHasFrakAmbassador?: boolean;
     ambassadorPage?: AmbassadorCardState;
     theme?: GetMainThemeIdReturnType;
     firstProduct?: FirstProductPublishedReturnType;

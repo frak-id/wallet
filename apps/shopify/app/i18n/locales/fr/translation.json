@@ -85,7 +85,19 @@
             "step1Cta": "Créer une page",
             "step2": "2. Dans l'éditeur de thème, ouvrez le menu des modèles, choisissez Pages, puis Créer un modèle. Ajoutez le bloc Frak Ambassador au nouveau modèle et enregistrez. Ne l'ajoutez pas au modèle de page par défaut : il s'affiche sur toutes les pages. Retirez la section de contenu de page par défaut du modèle si vous voulez la page ambassadeur seule.",
             "step2Cta": "Ouvrir l'éditeur de thème",
-            "step3": "3. Revenez sur votre page, sélectionnez le nouveau modèle sous Modèle de thème et enregistrez. Cette carte disparaît dès que le bloc est en place."
+            "step3": "3. Revenez sur votre page, sélectionnez le nouveau modèle sous Modèle de thème et enregistrez. Cette carte vous proposera ensuite de lier la page.",
+            "createCta": "Créer ma page ambassadeur",
+            "createDescription": "Publie une page dans votre boutique avec la mise en page standard de votre thème. Vous pourrez la renommer ensuite.",
+            "manualIntro": "Vous préférez une page pleine largeur ? Configurez-la vous-même :",
+            "linkCta": "Lier ma page ambassadeur",
+            "createInstead": "Aucune page n'utilise encore ce modèle ? Créez-en une en un clic, avec la mise en page standard de votre thème.",
+            "linkDescription": "Le bloc Frak Ambassador est déjà dans un modèle de page de votre thème. Nous retrouvons la page publiée qui utilise ce modèle et la relions à Frak.",
+            "noPublishedPage": "Aucune page publiée n'utilise encore le modèle Frak Ambassador. Sélectionnez ce modèle sous Modèle de thème sur une page publiée, enregistrez, puis réessayez.",
+            "created": "Votre page ambassadeur est en ligne.",
+            "viewPage": "Voir la page",
+            "declined": "L'accès aux pages n'a pas été accordé : rien n'a été modifié.",
+            "createFailed": "Nous n'avons pas pu créer votre page ambassadeur. Veuillez réessayer.",
+            "linkFailed": "Nous n'avons pas pu lier votre page ambassadeur. Veuillez réessayer."
         }
     },
     "pixel": {

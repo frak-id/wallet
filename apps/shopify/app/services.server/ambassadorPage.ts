@@ -6,8 +6,19 @@ import {
 } from "./metafields";
 import { arePageScopesGranted } from "./pageScopes";
 import { shopInfo } from "./shop";
+import { getThemeBlockPresence } from "./theme";
 
 export type AmbassadorPageLanguage = "en" | "fr";
+
+/** `fr` for any French locale tag, `en` otherwise. */
+export function normalizeAmbassadorPageLanguage(
+    language: FormDataEntryValue | null
+): AmbassadorPageLanguage {
+    return typeof language === "string" &&
+        language.toLowerCase().startsWith("fr")
+        ? "fr"
+        : "en";
+}
 
 export type AmbassadorPageRef = {
     id: string;
@@ -258,5 +269,101 @@ export async function reconcileAmbassadorPage(
     } catch (error) {
         log.error({ err: error }, "ambassador page reconcile error");
         return unlinked;
+    }
+}
+
+export type AmbassadorPageActionResult =
+    | { ok: true; url: string }
+    | { ok: false; reason: "createFailed" | "linkFailed" | "noPublishedPage" };
+
+/**
+ * Write the page and its storefront URL to the shop record. A failed write is
+ * logged, not thrown: the page exists and the URL is still returned.
+ */
+async function recordPage(
+    context: AuthenticatedContext,
+    page: AmbassadorPageRef
+): Promise<string> {
+    const url = await buildAmbassadorPageUrl(context, page.handle);
+    try {
+        const result = await writeAmbassadorPageMetafield(context, {
+            pageId: page.id,
+            url,
+        });
+        if (!result.success) {
+            log.error(
+                { userErrors: result.userErrors, pageId: page.id },
+                "ambassador page record rejected"
+            );
+        }
+    } catch (error) {
+        log.error(
+            { err: error, pageId: page.id },
+            "ambassador page record write error"
+        );
+    }
+    return url;
+}
+
+/**
+ * Create the ambassador page unless the record already names a live one. A
+ * published page whose body is exactly the component tag is adopted instead,
+ * so a lost record write never leads to a duplicate page.
+ */
+export async function createAndRecordAmbassadorPage(
+    context: AuthenticatedContext,
+    language: AmbassadorPageLanguage
+): Promise<AmbassadorPageActionResult> {
+    try {
+        const record = await getAmbassadorPageMetafield(context);
+        if (record) {
+            const resolved = await resolveAmbassadorPageUrl(
+                context,
+                record.pageId
+            );
+            if (!resolved.ok) {
+                return { ok: false, reason: "createFailed" };
+            }
+            if (resolved.url) {
+                return { ok: true, url: resolved.url };
+            }
+        }
+
+        const existing = await findPublishedPage(
+            context,
+            (listed) => listed.body.trim() === AMBASSADOR_PAGE_BODY
+        );
+        if (existing) {
+            return { ok: true, url: await recordPage(context, existing) };
+        }
+
+        const page = await createAmbassadorPage(context, language);
+        if (!page) {
+            return { ok: false, reason: "createFailed" };
+        }
+        return { ok: true, url: await recordPage(context, page) };
+    } catch (error) {
+        log.error({ err: error }, "ambassador page create action error");
+        return { ok: false, reason: "createFailed" };
+    }
+}
+
+/** Adopt the published page that uses a block template. */
+export async function linkAmbassadorPage(
+    context: AuthenticatedContext
+): Promise<AmbassadorPageActionResult> {
+    try {
+        const { ambassador } = await getThemeBlockPresence(context);
+        const page = await findPublishedPageByTemplateSuffixes(
+            context,
+            ambassador
+        );
+        if (!page) {
+            return { ok: false, reason: "noPublishedPage" };
+        }
+        return { ok: true, url: await recordPage(context, page) };
+    } catch (error) {
+        log.error({ err: error }, "ambassador page link action error");
+        return { ok: false, reason: "linkFailed" };
     }
 }

@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthenticatedContext } from "../types/context";
 import {
     createAmbassadorPage,
+    createAndRecordAmbassadorPage,
     findPublishedPageByTemplateSuffixes,
+    linkAmbassadorPage,
+    normalizeAmbassadorPageLanguage,
     reconcileAmbassadorPage,
     resolveAmbassadorPageUrl,
 } from "./ambassadorPage";
@@ -11,7 +14,9 @@ import {
     writeAmbassadorPageMetafield,
 } from "./metafields";
 import { arePageScopesGranted } from "./pageScopes";
+import { getThemeBlockPresence } from "./theme";
 
+vi.mock("./theme", () => ({ getThemeBlockPresence: vi.fn() }));
 vi.mock("./pageScopes", () => ({ arePageScopesGranted: vi.fn() }));
 vi.mock("./metafields", () => ({
     getAmbassadorPageMetafield: vi.fn(),
@@ -470,5 +475,269 @@ describe("reconcileAmbassadorPage", () => {
         const state = await reconcileAmbassadorPage(mockContext, []);
 
         expect(state).toEqual({ state: "none" });
+    });
+});
+
+describe("createAndRecordAmbassadorPage", () => {
+    const pageId = "gid://shopify/Page/9";
+    const pageUrl = "https://www.shop.com/pages/become-an-ambassador";
+    const tag = "<frak-ambassador></frak-ambassador>";
+
+    function listed(id: string, handle: string, body: string) {
+        return { id, handle, isPublished: true, templateSuffix: null, body };
+    }
+
+    function givenListedPages(nodes: ReturnType<typeof listed>[]) {
+        respond({ pages: { nodes } });
+    }
+
+    beforeEach(() => {
+        vi.mocked(getAmbassadorPageMetafield).mockReset();
+        vi.mocked(writeAmbassadorPageMetafield).mockReset();
+        vi.mocked(getAmbassadorPageMetafield).mockResolvedValue(null);
+        vi.mocked(writeAmbassadorPageMetafield).mockResolvedValue({
+            success: true,
+            userErrors: [],
+        });
+    });
+
+    it("creates the page and writes the record once with its URL", async () => {
+        givenListedPages([]);
+        created(pageId, "become-an-ambassador");
+
+        const result = await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(result).toEqual({ ok: true, url: pageUrl });
+        expect(mockGraphql.mock.calls[1][1].variables.page.title).toBe(
+            "Become an ambassador"
+        );
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: pageUrl,
+        });
+    });
+
+    it("titles the page in French when the language is fr", async () => {
+        givenListedPages([]);
+        created(pageId, "devenir-ambassadeur");
+
+        await createAndRecordAmbassadorPage(mockContext, "fr");
+
+        expect(mockGraphql.mock.calls[1][1].variables.page.title).toBe(
+            "Devenir ambassadeur"
+        );
+    });
+
+    it("returns the recorded live page without creating another", async () => {
+        vi.mocked(getAmbassadorPageMetafield).mockResolvedValue({
+            pageId,
+            url: pageUrl,
+        });
+        respond({
+            page: { handle: "become-an-ambassador", isPublished: true },
+        });
+
+        const result = await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(result).toEqual({ ok: true, url: pageUrl });
+        expect(mockGraphql).toHaveBeenCalledOnce();
+        expect(mockGraphql.mock.calls[0][1]).toEqual({
+            variables: { id: pageId },
+        });
+        expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+    });
+
+    it("creates a new page when the recorded page was deleted", async () => {
+        vi.mocked(getAmbassadorPageMetafield).mockResolvedValue({
+            pageId: "gid://shopify/Page/1",
+            url: pageUrl,
+        });
+        respond({ page: null });
+        givenListedPages([]);
+        created(pageId, "become-an-ambassador");
+
+        const result = await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(result).toEqual({ ok: true, url: pageUrl });
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: pageUrl,
+        });
+    });
+
+    it("fails without creating when the recorded page cannot be read", async () => {
+        vi.mocked(getAmbassadorPageMetafield).mockResolvedValue({
+            pageId,
+            url: pageUrl,
+        });
+        mockGraphql.mockRejectedValueOnce(new Error("network"));
+
+        const result = await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(result).toEqual({ ok: false, reason: "createFailed" });
+        expect(mockGraphql).toHaveBeenCalledOnce();
+    });
+
+    it("fails with nothing recorded when the page cannot be created", async () => {
+        givenListedPages([]);
+        respond({
+            pageCreate: {
+                page: null,
+                userErrors: [{ code: "BLANK", message: "no" }],
+            },
+        });
+
+        const result = await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(result).toEqual({ ok: false, reason: "createFailed" });
+        expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+    });
+
+    it("adopts a published page whose body is exactly the tag instead of creating one", async () => {
+        givenListedPages([
+            listed("gid://shopify/Page/4", "other", "<p>About us</p>"),
+            listed(pageId, "become-an-ambassador", `  ${tag}\n`),
+        ]);
+
+        const result = await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(result).toEqual({ ok: true, url: pageUrl });
+        expect(mockGraphql).toHaveBeenCalledOnce();
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: pageUrl,
+        });
+    });
+
+    it("creates a new page when the only tagged page has other content", async () => {
+        givenListedPages([
+            listed("gid://shopify/Page/4", "custom", `<p>Hi</p>${tag}`),
+        ]);
+        created(pageId, "become-an-ambassador");
+
+        const result = await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(result).toEqual({ ok: true, url: pageUrl });
+        expect(mockGraphql).toHaveBeenCalledTimes(2);
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: pageUrl,
+        });
+    });
+
+    it("still returns the new page URL when the record write rejects", async () => {
+        givenListedPages([]);
+        created(pageId, "become-an-ambassador");
+        vi.mocked(writeAmbassadorPageMetafield).mockRejectedValue(
+            new Error("network")
+        );
+
+        const result = await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(result).toEqual({ ok: true, url: pageUrl });
+    });
+
+    it("still returns the new page URL when the record write is rejected", async () => {
+        givenListedPages([]);
+        created(pageId, "become-an-ambassador");
+        vi.mocked(writeAmbassadorPageMetafield).mockResolvedValue({
+            success: false,
+            userErrors: [{ field: "value", message: "invalid" }],
+        });
+
+        const result = await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(result).toEqual({ ok: true, url: pageUrl });
+    });
+
+    it("fails instead of throwing when the record read throws", async () => {
+        vi.mocked(getAmbassadorPageMetafield).mockRejectedValue(
+            new Error("boom")
+        );
+
+        await expect(
+            createAndRecordAmbassadorPage(mockContext, "en")
+        ).resolves.toEqual({ ok: false, reason: "createFailed" });
+    });
+});
+
+describe("linkAmbassadorPage", () => {
+    const pageId = "gid://shopify/Page/5";
+    const pageUrl = "https://www.shop.com/pages/join-us";
+
+    function givenPublishedPage() {
+        respond({
+            pages: {
+                nodes: [
+                    {
+                        id: pageId,
+                        handle: "join-us",
+                        isPublished: true,
+                        templateSuffix: "ambassador",
+                    },
+                ],
+            },
+        });
+    }
+
+    beforeEach(() => {
+        vi.mocked(getThemeBlockPresence).mockReset();
+        vi.mocked(writeAmbassadorPageMetafield).mockReset();
+        vi.mocked(getThemeBlockPresence).mockResolvedValue({
+            banner: false,
+            ambassador: ["ambassador"],
+        });
+        vi.mocked(writeAmbassadorPageMetafield).mockResolvedValue({
+            success: true,
+            userErrors: [],
+        });
+    });
+
+    it("adopts the published page using the block template and writes the record once", async () => {
+        givenPublishedPage();
+
+        const result = await linkAmbassadorPage(mockContext);
+
+        expect(result).toEqual({ ok: true, url: pageUrl });
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: pageUrl,
+        });
+    });
+
+    it("reports noPublishedPage and writes nothing when no published page uses the template", async () => {
+        respond({ pages: { nodes: [] } });
+
+        const result = await linkAmbassadorPage(mockContext);
+
+        expect(result).toEqual({ ok: false, reason: "noPublishedPage" });
+        expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+    });
+
+    it("fails instead of throwing when the theme read throws", async () => {
+        vi.mocked(getThemeBlockPresence).mockRejectedValue(new Error("boom"));
+
+        await expect(linkAmbassadorPage(mockContext)).resolves.toEqual({
+            ok: false,
+            reason: "linkFailed",
+        });
+    });
+});
+
+describe("normalizeAmbassadorPageLanguage", () => {
+    it.each([
+        ["fr", "fr"],
+        ["fr-FR", "fr"],
+        ["fr_CA", "fr"],
+        ["en", "en"],
+        ["de", "en"],
+        ["", "en"],
+        [null, "en"],
+    ])("maps %s to %s", (input, expected) => {
+        expect(normalizeAmbassadorPageLanguage(input)).toBe(expected);
     });
 });
