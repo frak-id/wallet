@@ -940,6 +940,12 @@ export default interface Resources {
     "customize": {
       "ambassador": {
         "description": "The hero photo and wording of your ambassador page, on every platform where it is placed. An empty field keeps the default text.",
+        "faqPresets": {
+          "casual": "Casual",
+          "classic": "Classic",
+          "earnings": "Earnings",
+          "trust": "Trust"
+        },
         "fields": {
           "faq1Answer": "Answer 1",
           "faq1Question": "Question 1",

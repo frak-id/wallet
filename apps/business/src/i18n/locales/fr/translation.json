@@ -2017,6 +2017,12 @@
                 "faq4Answer": "Réponse 4",
                 "faq5Question": "Question 5",
                 "faq5Answer": "Réponse 5"
+            },
+            "faqPresets": {
+                "classic": "Classique",
+                "earnings": "Gains",
+                "trust": "Confiance",
+                "casual": "Décontracté"
             }
         },
         "components": {
