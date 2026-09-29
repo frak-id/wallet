@@ -494,11 +494,12 @@ export async function doesThemeHasFrakButton(context: AuthenticatedContext) {
 /**
  * Which in-page Frak blocks are enabled in the published theme, from one scan
  * of every section group (`sections/*.json`), every template
- * (`templates/*.json`) and `config/settings_data.json`.
+ * (`templates/*.json`) and `config/settings_data.json`. `ambassador` lists the
+ * suffixes of the custom page templates that hold the block.
  */
 export async function getThemeBlockPresence(
     context: AuthenticatedContext
-): Promise<{ banner: boolean; ambassador: boolean }> {
+): Promise<{ banner: boolean; ambassador: string[] }> {
     const mainThemeId = await getMainThemeId(context);
 
     const files = await getTemplateFilesMatching(
@@ -517,18 +518,20 @@ export async function getThemeBlockPresence(
             detectFrakBlockInSections(sections, FRAK_BANNER_BLOCK_PATTERN)
         ),
         // The default page template renders on every page, so it never counts.
-        ambassador: sectionMaps.some(
-            ({ filename, sections }) =>
-                CUSTOM_PAGE_TEMPLATE.test(filename) &&
+        ambassador: sectionMaps.flatMap(({ filename, sections }) => {
+            const suffix = CUSTOM_PAGE_TEMPLATE.exec(filename)?.[1];
+            return suffix &&
                 detectFrakBlockInSections(
                     sections,
                     FRAK_AMBASSADOR_BLOCK_PATTERN
                 )
-        ),
+                ? [suffix]
+                : [];
+        }),
     };
 }
 
-const CUSTOM_PAGE_TEMPLATE = /^templates\/page\.[^/]+\.json$/;
+const CUSTOM_PAGE_TEMPLATE = /^templates\/page\.([^/]+)\.json$/;
 
 function sectionsOf(file: { filename: string; body: unknown }) {
     const body = file.body as

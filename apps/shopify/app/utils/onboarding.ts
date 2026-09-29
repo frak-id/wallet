@@ -3,6 +3,7 @@
 // logger + Admin GraphQL clients) live in `./onboarding.server`. Keep it that
 // way: importing a `.server` runtime binding here would ship `node:async_hooks`
 // to the browser and crash hydration (blank embedded app).
+import type { AmbassadorCardState } from "app/services.server/ambassadorPage";
 import type { FirstProductPublishedReturnType } from "app/services.server/shop";
 import type { GetMainThemeIdReturnType } from "app/services.server/theme";
 import type { GetWebhooksSubscriptionsReturnType } from "app/services.server/webhook";
@@ -15,7 +16,7 @@ export type OnboardingStepData = {
     isThemeHasFrakButton?: boolean;
     isThemeHasFrakBanner?: boolean;
     // Drives the optional setup card only: never add it to `stepValidations`.
-    isThemeHasFrakAmbassador?: boolean;
+    ambassadorPage?: AmbassadorCardState;
     theme?: GetMainThemeIdReturnType;
     firstProduct?: FirstProductPublishedReturnType;
     frakWebhook?: {
