@@ -103,7 +103,7 @@ const stepDataFetchers = {
             const presence = await getThemeBlockPresence(context);
             return {
                 isThemeHasFrakBanner: presence.banner,
-                isThemeHasFrakAmbassador: presence.ambassador,
+                isThemeHasFrakAmbassador: presence.ambassador.length > 0,
             };
         } catch (error) {
             log.error(

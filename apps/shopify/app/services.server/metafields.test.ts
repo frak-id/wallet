@@ -3,11 +3,17 @@ import type { AuthenticatedContext } from "../types/context";
 import type { I18nCustomizations } from "./metafields";
 import {
     buildMetafieldValue,
+    getAmbassadorPageMetafield,
     parseI18nMetafield,
     polishAppearance,
     registerFrakI18nFrTranslations,
     stripEmptyEntries,
+    writeAmbassadorPageMetafield,
 } from "./metafields";
+
+vi.mock("./shop", () => ({
+    shopInfo: vi.fn().mockResolvedValue({ id: "gid://shopify/Shop/1" }),
+}));
 
 describe("parseI18nMetafield", () => {
     it("returns defaults when value is null", () => {
@@ -234,5 +240,59 @@ describe("registerFrakI18nFrTranslations", () => {
             await registerFrakI18nFrTranslations(ctx, "gid://entry", [])
         ).toBe(true);
         expect(graphql).not.toHaveBeenCalled();
+    });
+});
+
+describe("ambassador page metafield", () => {
+    it("writes the page GID and a null url as JSON under frak.ambassador_page", async () => {
+        const graphql = vi.fn().mockResolvedValue({
+            json: async () => ({
+                data: { metafieldsSet: { userErrors: [] } },
+            }),
+        });
+        const ctx = { admin: { graphql } } as unknown as AuthenticatedContext;
+
+        const result = await writeAmbassadorPageMetafield(ctx, {
+            pageId: "gid://shopify/Page/1",
+            url: null,
+        });
+
+        expect(result.success).toBe(true);
+        expect(graphql.mock.calls[0][1]).toEqual({
+            variables: {
+                metafields: [
+                    {
+                        namespace: "frak",
+                        key: "ambassador_page",
+                        type: "json",
+                        value: '{"pageId":"gid://shopify/Page/1","url":null}',
+                        ownerId: "gid://shopify/Shop/1",
+                    },
+                ],
+            },
+        });
+    });
+
+    it("reads the stored record back", async () => {
+        const graphql = vi.fn().mockResolvedValue({
+            json: async () => ({
+                data: {
+                    shop: {
+                        metafield: {
+                            value: '{"pageId":"gid://shopify/Page/1","url":"https://shop.com/pages/x"}',
+                        },
+                    },
+                },
+            }),
+        });
+        const ctx = { admin: { graphql } } as unknown as AuthenticatedContext;
+
+        await expect(getAmbassadorPageMetafield(ctx)).resolves.toEqual({
+            pageId: "gid://shopify/Page/1",
+            url: "https://shop.com/pages/x",
+        });
+        expect(graphql.mock.calls[0][1]).toEqual({
+            variables: { namespace: "frak", key: "ambassador_page" },
+        });
     });
 });

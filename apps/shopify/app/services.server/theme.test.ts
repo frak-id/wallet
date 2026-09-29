@@ -635,8 +635,36 @@ describe("getThemeBlockPresence", () => {
         );
         await expect(getThemeBlockPresence(context)).resolves.toEqual({
             banner: false,
-            ambassador: true,
+            ambassador: ["ambassador"],
         });
+    });
+
+    it("lists every custom page template holding the block, not the plain one", async () => {
+        const context = mockContext(
+            filesResponse([
+                {
+                    filename: "templates/page.ambassador.json",
+                    body: { content: ambassadorTemplate },
+                },
+                {
+                    filename: "templates/page.referral.json",
+                    body: { content: ambassadorTemplate },
+                },
+                {
+                    filename: "templates/page.contact.json",
+                    body: { content: JSON.stringify({ sections: {} }) },
+                },
+                {
+                    filename: "templates/page.json",
+                    body: { content: ambassadorTemplate },
+                },
+            ])
+        );
+        const presence = await getThemeBlockPresence(context);
+        expect([...presence.ambassador].sort()).toEqual([
+            "ambassador",
+            "referral",
+        ]);
     });
 
     it("ignores the ambassador block in the default page template", async () => {
@@ -650,7 +678,7 @@ describe("getThemeBlockPresence", () => {
         );
         await expect(getThemeBlockPresence(context)).resolves.toEqual({
             banner: false,
-            ambassador: false,
+            ambassador: [],
         });
     });
 
@@ -665,7 +693,7 @@ describe("getThemeBlockPresence", () => {
         );
         await expect(getThemeBlockPresence(context)).resolves.toEqual({
             banner: true,
-            ambassador: false,
+            ambassador: [],
         });
     });
 
@@ -683,7 +711,7 @@ describe("getThemeBlockPresence", () => {
         );
         await expect(getThemeBlockPresence(context)).resolves.toEqual({
             banner: false,
-            ambassador: true,
+            ambassador: ["ambassador"],
         });
     });
 });
