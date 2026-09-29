@@ -1,5 +1,10 @@
 import type { AuthenticatedContext } from "../types/context";
 import { log } from "./logger";
+import {
+    getAmbassadorPageMetafield,
+    writeAmbassadorPageMetafield,
+} from "./metafields";
+import { arePageScopesGranted } from "./pageScopes";
 import { shopInfo } from "./shop";
 
 export type AmbassadorPageLanguage = "en" | "fr";
@@ -205,4 +210,53 @@ export async function findPublishedPageByTemplateSuffixes(
             page.templateSuffix !== null &&
             suffixes.includes(page.templateSuffix)
     );
+}
+
+export type AmbassadorCardState =
+    | { state: "linked"; url: string }
+    | { state: "blockUnlinked" }
+    | { state: "none" };
+
+/**
+ * Card state for the shop's ambassador page. With the page scopes granted, a
+ * changed storefront URL is written back to the record.
+ */
+export async function reconcileAmbassadorPage(
+    context: AuthenticatedContext,
+    templateSuffixes: string[]
+): Promise<AmbassadorCardState> {
+    const unlinked: AmbassadorCardState =
+        templateSuffixes.length > 0
+            ? { state: "blockUnlinked" }
+            : { state: "none" };
+
+    try {
+        const record = await getAmbassadorPageMetafield(context);
+        if (!record) {
+            return unlinked;
+        }
+
+        const recordedState: AmbassadorCardState = record.url
+            ? { state: "linked", url: record.url }
+            : unlinked;
+        if (!(await arePageScopesGranted(context))) {
+            return recordedState;
+        }
+
+        const resolved = await resolveAmbassadorPageUrl(context, record.pageId);
+        if (!resolved.ok) {
+            return recordedState;
+        }
+
+        if (resolved.url !== record.url) {
+            await writeAmbassadorPageMetafield(context, {
+                pageId: record.pageId,
+                url: resolved.url,
+            });
+        }
+        return resolved.url ? { state: "linked", url: resolved.url } : unlinked;
+    } catch (error) {
+        log.error({ err: error }, "ambassador page reconcile error");
+        return unlinked;
+    }
 }

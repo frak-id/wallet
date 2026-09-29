@@ -1,3 +1,4 @@
+import { reconcileAmbassadorPage } from "app/services.server/ambassadorPage";
 import { getFrakWebhookStatus } from "app/services.server/backendMerchant";
 import { log } from "app/services.server/logger";
 import { firstProductPublished } from "app/services.server/shop";
@@ -101,9 +102,14 @@ const stepDataFetchers = {
     7: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
         try {
             const presence = await getThemeBlockPresence(context);
+            const ambassadorPage = await reconcileAmbassadorPage(
+                context,
+                presence.ambassador
+            );
             return {
                 isThemeHasFrakBanner: presence.banner,
                 isThemeHasFrakAmbassador: presence.ambassador.length > 0,
+                ambassadorPage,
             };
         } catch (error) {
             log.error(

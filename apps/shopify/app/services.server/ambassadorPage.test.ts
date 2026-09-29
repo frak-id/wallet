@@ -3,9 +3,20 @@ import type { AuthenticatedContext } from "../types/context";
 import {
     createAmbassadorPage,
     findPublishedPageByTemplateSuffixes,
+    reconcileAmbassadorPage,
     resolveAmbassadorPageUrl,
 } from "./ambassadorPage";
+import {
+    getAmbassadorPageMetafield,
+    writeAmbassadorPageMetafield,
+} from "./metafields";
+import { arePageScopesGranted } from "./pageScopes";
 
+vi.mock("./pageScopes", () => ({ arePageScopesGranted: vi.fn() }));
+vi.mock("./metafields", () => ({
+    getAmbassadorPageMetafield: vi.fn(),
+    writeAmbassadorPageMetafield: vi.fn(),
+}));
 vi.mock("./shop", () => ({
     shopInfo: vi.fn().mockResolvedValue({
         primaryDomain: { url: "https://www.shop.com" },
@@ -243,5 +254,221 @@ describe("findPublishedPageByTemplateSuffixes", () => {
         await expect(
             findPublishedPageByTemplateSuffixes(mockContext, ["ambassador"])
         ).resolves.toBeNull();
+    });
+});
+
+describe("reconcileAmbassadorPage", () => {
+    const pageId = "gid://shopify/Page/1";
+    const oldUrl = "https://www.shop.com/pages/old-handle";
+    const newUrl = "https://www.shop.com/pages/renamed-page";
+
+    function givenScopes(granted: boolean) {
+        vi.mocked(arePageScopesGranted).mockResolvedValue(granted);
+    }
+
+    function givenRecord(url: string | null) {
+        vi.mocked(getAmbassadorPageMetafield).mockResolvedValue({
+            pageId,
+            url,
+        });
+    }
+
+    beforeEach(() => {
+        vi.mocked(arePageScopesGranted).mockReset();
+        vi.mocked(getAmbassadorPageMetafield).mockReset();
+        vi.mocked(writeAmbassadorPageMetafield).mockReset();
+        vi.mocked(getAmbassadorPageMetafield).mockResolvedValue(null);
+        vi.mocked(writeAmbassadorPageMetafield).mockResolvedValue({
+            success: true,
+            userErrors: [],
+        });
+    });
+
+    it("reports block-unlinked without any page call when scopes are missing", async () => {
+        givenScopes(false);
+
+        const state = await reconcileAmbassadorPage(mockContext, [
+            "ambassador",
+        ]);
+
+        expect(state).toEqual({ state: "blockUnlinked" });
+        expect(mockGraphql).not.toHaveBeenCalled();
+        expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+    });
+
+    it("reports no page when scopes are missing and no block template exists", async () => {
+        givenScopes(false);
+
+        await expect(reconcileAmbassadorPage(mockContext, [])).resolves.toEqual(
+            { state: "none" }
+        );
+    });
+
+    it("reports the recorded URL as linked when scopes are missing", async () => {
+        givenScopes(false);
+        givenRecord(oldUrl);
+
+        const state = await reconcileAmbassadorPage(mockContext, []);
+
+        expect(state).toEqual({ state: "linked", url: oldUrl });
+        expect(mockGraphql).not.toHaveBeenCalled();
+        expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+    });
+
+    it("does not adopt a block page when scopes are granted and nothing is recorded", async () => {
+        givenScopes(true);
+
+        const state = await reconcileAmbassadorPage(mockContext, [
+            "ambassador",
+        ]);
+
+        expect(state).toEqual({ state: "blockUnlinked" });
+        expect(mockGraphql).not.toHaveBeenCalled();
+        expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+    });
+
+    it("reports no page when scopes are granted, nothing is recorded and no block template exists", async () => {
+        givenScopes(true);
+
+        await expect(reconcileAmbassadorPage(mockContext, [])).resolves.toEqual(
+            { state: "none" }
+        );
+    });
+
+    it("writes the record once with the new URL when the page was renamed", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        respond({ page: { handle: "renamed-page", isPublished: true } });
+
+        const state = await reconcileAmbassadorPage(mockContext, []);
+
+        expect(state).toEqual({ state: "linked", url: newUrl });
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: newUrl,
+        });
+    });
+
+    it("writes the URL of a page recorded without one", async () => {
+        givenScopes(true);
+        givenRecord(null);
+        respond({ page: { handle: "renamed-page", isPublished: true } });
+
+        const state = await reconcileAmbassadorPage(mockContext, []);
+
+        expect(state).toEqual({ state: "linked", url: newUrl });
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: newUrl,
+        });
+    });
+
+    it("writes a null URL and reports no page when the page was deleted and no block template exists", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        respond({ page: null });
+
+        const state = await reconcileAmbassadorPage(mockContext, []);
+
+        expect(state).toEqual({ state: "none" });
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: null,
+        });
+    });
+
+    it("writes a null URL and reports block-unlinked when the page was unpublished and a block template exists", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        respond({ page: { handle: "old-handle", isPublished: false } });
+
+        const state = await reconcileAmbassadorPage(mockContext, [
+            "ambassador",
+        ]);
+
+        expect(state).toEqual({ state: "blockUnlinked" });
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: null,
+        });
+    });
+
+    it("writes nothing when the derived URL matches the record", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        respond({ page: { handle: "old-handle", isPublished: true } });
+
+        const state = await reconcileAmbassadorPage(mockContext, []);
+
+        expect(state).toEqual({ state: "linked", url: oldUrl });
+        expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+    });
+
+    it("keeps the recorded URL as linked and writes nothing when the page read fails", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        mockGraphql.mockRejectedValueOnce(new Error("network"));
+
+        const state = await reconcileAmbassadorPage(mockContext, [
+            "ambassador",
+        ]);
+
+        expect(state).toEqual({ state: "linked", url: oldUrl });
+        expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+    });
+
+    it("keeps the recorded URL as linked and writes nothing when the page response has no data", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        mockGraphql.mockResolvedValueOnce({ json: async () => ({}) });
+
+        const state = await reconcileAmbassadorPage(mockContext, []);
+
+        expect(state).toEqual({ state: "linked", url: oldUrl });
+        expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+    });
+
+    it("falls back to the block suffixes when the page read fails and no URL was recorded", async () => {
+        givenScopes(true);
+        givenRecord(null);
+        mockGraphql.mockRejectedValueOnce(new Error("network"));
+
+        const state = await reconcileAmbassadorPage(mockContext, [
+            "ambassador",
+        ]);
+
+        expect(state).toEqual({ state: "blockUnlinked" });
+        expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+    });
+
+    it("falls back to the unlinked state when the record read throws", async () => {
+        givenScopes(true);
+        vi.mocked(getAmbassadorPageMetafield).mockRejectedValue(
+            new Error("network")
+        );
+
+        const state = await reconcileAmbassadorPage(mockContext, [
+            "ambassador",
+        ]);
+
+        expect(state).toEqual({ state: "blockUnlinked" });
+        expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+    });
+
+    it("returns the unlinked state instead of throwing when the record write throws", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        respond({ page: { handle: "renamed-page", isPublished: true } });
+        vi.mocked(writeAmbassadorPageMetafield).mockRejectedValue(
+            new Error("network")
+        );
+
+        const state = await reconcileAmbassadorPage(mockContext, []);
+
+        expect(state).toEqual({ state: "none" });
     });
 });
