@@ -1,9 +1,13 @@
+import { componentDefaults } from "@frak-labs/components/i18n/defaults";
 import { describe, expect, it } from "vitest";
 import {
+    AMBASSADOR_FAQ_PRESET_FIELDS,
+    AMBASSADOR_FAQ_PRESETS,
     applyBrand,
     BANNER_PRESETS,
     BUTTON_SHARE_PRESETS,
     formatPresetLabel,
+    matchAmbassadorFaqPreset,
     matchBannerPreset,
     matchButtonSharePreset,
     matchPostPurchasePreset,
@@ -129,5 +133,69 @@ describe("formatPresetLabel", () => {
         const label = formatPresetLabel("Earn {REWARD} and {REWARD}", "eur");
         expect(label).not.toContain("{REWARD}");
         expect(label).toContain("42");
+    });
+});
+
+describe("AMBASSADOR_FAQ_PRESETS", () => {
+    it("ships non-empty en + fr text for all 8 fields of every preset", () => {
+        for (const preset of AMBASSADOR_FAQ_PRESETS) {
+            for (const field of AMBASSADOR_FAQ_PRESET_FIELDS) {
+                expect(preset.en[field].trim().length).toBeGreaterThan(0);
+                expect(preset.fr[field].trim().length).toBeGreaterThan(0);
+            }
+        }
+    });
+
+    it("index 0 equals the SDK default ambassador copy in en and fr", () => {
+        for (const field of AMBASSADOR_FAQ_PRESET_FIELDS) {
+            expect(AMBASSADOR_FAQ_PRESETS[0].en[field]).toBe(
+                componentDefaults.en.ambassador[field]
+            );
+            expect(AMBASSADOR_FAQ_PRESETS[0].fr[field]).toBe(
+                componentDefaults.fr.ambassador[field]
+            );
+        }
+    });
+});
+
+describe("matchAmbassadorFaqPreset", () => {
+    it("returns each preset index for its en fields", () => {
+        for (const [index, preset] of AMBASSADOR_FAQ_PRESETS.entries()) {
+            expect(matchAmbassadorFaqPreset(preset.en)).toBe(index);
+        }
+    });
+
+    it("matches with surrounding whitespace", () => {
+        const padded = Object.fromEntries(
+            AMBASSADOR_FAQ_PRESET_FIELDS.map((field) => [
+                field,
+                `  ${AMBASSADOR_FAQ_PRESETS[1].en[field]}\n`,
+            ])
+        ) as (typeof AMBASSADOR_FAQ_PRESETS)[number]["en"];
+        expect(matchAmbassadorFaqPreset(padded)).toBe(1);
+    });
+
+    it("returns null when any single field differs", () => {
+        for (const [index, preset] of AMBASSADOR_FAQ_PRESETS.entries()) {
+            for (const field of AMBASSADOR_FAQ_PRESET_FIELDS) {
+                expect(
+                    matchAmbassadorFaqPreset({
+                        ...preset.en,
+                        [field]: `Custom wording ${index}`,
+                    })
+                ).toBeNull();
+            }
+        }
+    });
+
+    it("returns null when any field is empty", () => {
+        for (const field of AMBASSADOR_FAQ_PRESET_FIELDS) {
+            expect(
+                matchAmbassadorFaqPreset({
+                    ...AMBASSADOR_FAQ_PRESETS[0].en,
+                    [field]: "   ",
+                })
+            ).toBeNull();
+        }
     });
 });

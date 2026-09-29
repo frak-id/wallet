@@ -1,19 +1,28 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import { componentDefaults } from "@frak-labs/components/i18n/defaults";
+import type { Language } from "@frak-labs/core-sdk";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Input } from "@frak-labs/design-system/components/Input";
+import { RadioGroup } from "@frak-labs/design-system/components/RadioGroup";
 import { ResponsiveModal } from "@frak-labs/design-system/components/ResponsiveModal";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { TextArea } from "@frak-labs/design-system/components/TextArea";
+import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import {
     AmbassadorHeroPreview,
     type AmbassadorPhoneFocus,
     AmbassadorPhonePreview,
     type AmbassadorPhoneTexts,
 } from "@frak-labs/ui-preview";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+    type ChangeEvent,
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { FloatingPhonePreview } from "@/module/common/component/FloatingPhonePreview";
@@ -33,16 +42,28 @@ import {
 } from "./ambassadorForm";
 import { WordingLangTabs } from "./ComponentEditor";
 import * as customizeStyles from "./customize.css";
+import { AdvancedDisclosure } from "./Disclosure";
 import { FieldGroup } from "./fields/shared";
 import { resolveBuiltInLang } from "./localizable";
+import {
+    AMBASSADOR_FAQ_PRESET_FIELDS,
+    AMBASSADOR_FAQ_PRESETS,
+    matchAmbassadorFaqPreset,
+} from "./presets";
 import { SegmentedTabs } from "./SegmentedTabs";
 import { SECTION_KEYS } from "./sections";
 import type { LocalizedText, WordingLang } from "./types";
 import { useSaveComponents } from "./useSaveComponents";
+import { PresetRow } from "./WordingPresets";
 
 type AmbassadorCopy = (typeof componentDefaults)["en"]["ambassador"];
 
 const PHOTO_MODES = ["default", "custom", "none"] as const;
+
+// Module-level so the watch subscription stays stable across renders.
+const FAQ_PRESET_EN_PATHS = AMBASSADOR_FAQ_PRESET_FIELDS.map(
+    (field) => `texts.${field}.en` as const
+);
 
 const LONG_FIELDS: ReadonlySet<AmbassadorTextField> = new Set([
     "heroLede",
@@ -88,10 +109,11 @@ function heroImageUrlFor(
 function resolvePhoneTexts(
     copy: AmbassadorCopy,
     texts: AmbassadorFormValues["texts"],
-    lang: WordingLang
+    lang: WordingLang,
+    builtInLang: Language
 ): AmbassadorPhoneTexts {
     const wording = (field: AmbassadorTextField) =>
-        tabWording(texts[field], lang, builtInText(copy, field));
+        tabWording(texts[field], lang, builtInLang, builtInText(copy, field));
     return {
         ...copy,
         heroTitle: wording("heroTitle"),
@@ -116,9 +138,17 @@ function resolvePhoneTexts(
     };
 }
 
-/** Mirrors the backend: a tab's own tier, then "all languages", never another language. */
-function tabWording(value: LocalizedText, lang: WordingLang, fallback: string) {
-    return value[lang] || value.default || fallback;
+/**
+ * A tab's own tier, then "all languages", then built-in copy; never another
+ * language. The "all languages" tab shows what the store's own language renders.
+ */
+function tabWording(
+    value: LocalizedText,
+    lang: WordingLang,
+    builtInLang: Language,
+    fallback: string
+) {
+    return value[lang] || value.default || value[builtInLang] || fallback;
 }
 
 /**
@@ -169,9 +199,8 @@ export function AmbassadorPagePanel({
 
     useCustomizeSection(SECTION_KEYS.ambassador, form, onSubmit);
 
-    const copy =
-        componentDefaults[resolveBuiltInLang(activeLang, sdkConfig.lang)]
-            .ambassador;
+    const builtInLang = resolveBuiltInLang(activeLang, sdkConfig.lang);
+    const copy = componentDefaults[builtInLang].ambassador;
 
     return (
         <Form {...form}>
@@ -203,6 +232,7 @@ export function AmbassadorPagePanel({
                                 <HeroPreview
                                     form={form}
                                     lang={activeLang}
+                                    builtInLang={builtInLang}
                                     copy={copy}
                                     currency={sdkConfig.currency ?? "eur"}
                                     shopName={shopName}
@@ -242,59 +272,29 @@ export function AmbassadorPagePanel({
                                     `customize.ambassador.groups.${group}`
                                 )}
                             >
-                                {AMBASSADOR_FIELD_GROUPS[group].map((field) => (
-                                    <FormField
-                                        key={field}
-                                        control={form.control}
-                                        name={`texts.${field}.${activeLang}`}
-                                        render={({ field: input }) => {
-                                            const props = {
-                                                maxLength: 500,
-                                                label: t(
-                                                    `customize.ambassador.fields.${field}`
-                                                ),
-                                                placeholder: builtInText(
-                                                    copy,
-                                                    field
-                                                ),
-                                                onFocus: () =>
-                                                    reportFocus(field),
-                                                ...input,
-                                            };
-                                            return (
-                                                <EditField>
-                                                    <FormControl>
-                                                        {LONG_FIELDS.has(
-                                                            field
-                                                        ) ? (
-                                                            <TextArea
-                                                                length="big"
-                                                                resize="none"
-                                                                rows={
-                                                                    field.startsWith(
-                                                                        "faq"
-                                                                    )
-                                                                        ? 6
-                                                                        : undefined
-                                                                }
-                                                                className={
-                                                                    textareaMuted
-                                                                }
-                                                                {...props}
-                                                            />
-                                                        ) : (
-                                                            <Input
-                                                                variant="bare"
-                                                                tone="muted"
-                                                                {...props}
-                                                            />
-                                                        )}
-                                                    </FormControl>
-                                                </EditField>
-                                            );
-                                        }}
+                                {group === "faq" ? (
+                                    <FaqGroupBody
+                                        form={form}
+                                        lang={activeLang}
+                                        builtInLang={builtInLang}
+                                        copy={copy}
+                                        shopName={shopName}
+                                        reportFocus={reportFocus}
                                     />
-                                ))}
+                                ) : (
+                                    AMBASSADOR_FIELD_GROUPS[group].map(
+                                        (field) => (
+                                            <AmbassadorFieldInput
+                                                key={field}
+                                                form={form}
+                                                field={field}
+                                                lang={activeLang}
+                                                copy={copy}
+                                                reportFocus={reportFocus}
+                                            />
+                                        )
+                                    )
+                                )}
                             </FieldGroup>
                         ))}
                     </Stack>
@@ -304,6 +304,7 @@ export function AmbassadorPagePanel({
                         <PhonePreview
                             form={form}
                             lang={activeLang}
+                            builtInLang={builtInLang}
                             copy={copy}
                             currency={sdkConfig.currency ?? "eur"}
                             shopName={shopName}
@@ -324,6 +325,7 @@ export function AmbassadorPagePanel({
                     <PhonePreview
                         form={form}
                         lang={activeLang}
+                        builtInLang={builtInLang}
                         copy={copy}
                         currency={sdkConfig.currency ?? "eur"}
                         shopName={shopName}
@@ -333,6 +335,162 @@ export function AmbassadorPagePanel({
                 </div>
             </ResponsiveModal>
         </Form>
+    );
+}
+
+function AmbassadorFieldInput({
+    form,
+    field,
+    lang,
+    copy,
+    reportFocus,
+}: {
+    form: UseFormReturn<AmbassadorFormValues>;
+    field: AmbassadorTextField;
+    lang: WordingLang;
+    copy: AmbassadorCopy;
+    reportFocus: (slot: string) => void;
+}) {
+    const { t } = useTranslation();
+    return (
+        <FormField
+            control={form.control}
+            name={`texts.${field}.${lang}`}
+            render={({ field: input }) => {
+                const props = {
+                    maxLength: 500,
+                    label: t(`customize.ambassador.fields.${field}`),
+                    placeholder: builtInText(copy, field),
+                    onFocus: () => reportFocus(field),
+                    ...input,
+                    // Visitors resolve their language before "all languages",
+                    // so an all-languages edit replaces both translations.
+                    onChange: (
+                        event: ChangeEvent<
+                            HTMLInputElement | HTMLTextAreaElement
+                        >
+                    ) => {
+                        input.onChange(event);
+                        if (lang !== "default") return;
+                        form.setValue(`texts.${field}.en`, "", {
+                            shouldDirty: true,
+                        });
+                        form.setValue(`texts.${field}.fr`, "", {
+                            shouldDirty: true,
+                        });
+                    },
+                };
+                return (
+                    <EditField>
+                        <FormControl>
+                            {LONG_FIELDS.has(field) ? (
+                                <TextArea
+                                    length="big"
+                                    resize="none"
+                                    rows={
+                                        field.startsWith("faq") ? 6 : undefined
+                                    }
+                                    className={textareaMuted}
+                                    {...props}
+                                />
+                            ) : (
+                                <Input variant="bare" tone="muted" {...props} />
+                            )}
+                        </FormControl>
+                    </EditField>
+                );
+            }}
+        />
+    );
+}
+
+function FaqGroupBody({
+    form,
+    lang,
+    builtInLang,
+    copy,
+    shopName,
+    reportFocus,
+}: {
+    form: UseFormReturn<AmbassadorFormValues>;
+    lang: WordingLang;
+    builtInLang: Language;
+    copy: AmbassadorCopy;
+    shopName: string;
+    reportFocus: (slot: string) => void;
+}) {
+    const { t } = useTranslation();
+    const [advancedOpen, setAdvancedOpen] = useState(false);
+    const faqEn = form.watch(FAQ_PRESET_EN_PATHS);
+    const selected = matchAmbassadorFaqPreset(
+        Object.fromEntries(
+            AMBASSADOR_FAQ_PRESET_FIELDS.map((field, i) => [field, faqEn[i]])
+        ) as (typeof AMBASSADOR_FAQ_PRESETS)[number]["en"]
+    );
+
+    const pick = (value: string) => {
+        const preset = AMBASSADOR_FAQ_PRESETS[Number(value)];
+        for (const field of AMBASSADOR_FAQ_PRESET_FIELDS) {
+            form.setValue(`texts.${field}.default`, "", { shouldDirty: true });
+            form.setValue(`texts.${field}.en`, preset.en[field], {
+                shouldDirty: true,
+            });
+            form.setValue(`texts.${field}.fr`, preset.fr[field], {
+                shouldDirty: true,
+            });
+        }
+        reportFocus("faq1Question");
+    };
+
+    return (
+        <Stack space="m">
+            <RadioGroup
+                value={selected !== null ? String(selected) : ""}
+                onValueChange={pick}
+            >
+                <Tiles columns={{ mobile: 1, tablet: 2 }} space="m">
+                    {AMBASSADOR_FAQ_PRESETS.map((preset, index) => (
+                        <PresetRow key={preset.key} value={String(index)}>
+                            <Stack space="none" as="span">
+                                <Text variant="body" weight="medium" as="span">
+                                    {t(
+                                        `customize.ambassador.faqPresets.${preset.key}`
+                                    )}
+                                </Text>
+                                <Text
+                                    variant="bodySmall"
+                                    color="tertiary"
+                                    as="span"
+                                >
+                                    {preset[builtInLang].faq1Question.replace(
+                                        /\{BRAND\}/g,
+                                        () => shopName
+                                    )}
+                                </Text>
+                            </Stack>
+                        </PresetRow>
+                    ))}
+                </Tiles>
+            </RadioGroup>
+            <AdvancedDisclosure
+                label={t("customize.components.advanced")}
+                isOpen={advancedOpen}
+                onToggle={() => setAdvancedOpen(!advancedOpen)}
+            >
+                <div className={customizeStyles.settingsGrid}>
+                    {AMBASSADOR_FIELD_GROUPS.faq.map((field) => (
+                        <AmbassadorFieldInput
+                            key={field}
+                            form={form}
+                            field={field}
+                            lang={lang}
+                            copy={copy}
+                            reportFocus={reportFocus}
+                        />
+                    ))}
+                </div>
+            </AdvancedDisclosure>
+        </Stack>
     );
 }
 
@@ -396,6 +554,7 @@ function HeroPhotoField({
 function HeroPreview({
     form,
     lang,
+    builtInLang,
     copy,
     currency,
     shopName,
@@ -403,6 +562,7 @@ function HeroPreview({
 }: {
     form: UseFormReturn<AmbassadorFormValues>;
     lang: WordingLang;
+    builtInLang: Language;
     copy: AmbassadorCopy;
     currency: NonNullable<SdkConfig["currency"]>;
     shopName: string;
@@ -410,7 +570,7 @@ function HeroPreview({
 }) {
     const { texts, photo, heroImageUrl } = form.watch();
     const wording = (field: AmbassadorTextField) =>
-        tabWording(texts[field], lang, builtInText(copy, field));
+        tabWording(texts[field], lang, builtInLang, builtInText(copy, field));
 
     return (
         <AmbassadorHeroPreview
@@ -434,6 +594,7 @@ function HeroPreview({
 function PhonePreview({
     form,
     lang,
+    builtInLang,
     copy,
     currency,
     shopName,
@@ -442,6 +603,7 @@ function PhonePreview({
 }: {
     form: UseFormReturn<AmbassadorFormValues>;
     lang: WordingLang;
+    builtInLang: Language;
     copy: AmbassadorCopy;
     currency: NonNullable<SdkConfig["currency"]>;
     shopName: string;
@@ -452,7 +614,7 @@ function PhonePreview({
 
     return (
         <AmbassadorPhonePreview
-            texts={resolvePhoneTexts(copy, texts, lang)}
+            texts={resolvePhoneTexts(copy, texts, lang, builtInLang)}
             currency={currency}
             shopName={shopName}
             imageUrl={heroImageUrlFor(

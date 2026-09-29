@@ -1,5 +1,6 @@
 import { componentDefaults } from "@frak-labs/components/i18n/defaults";
 import { type Currency, formatAmount } from "@frak-labs/core-sdk";
+import type { AmbassadorTextField } from "./ambassadorForm";
 import type { PresetLang } from "./types";
 
 /**
@@ -139,6 +140,150 @@ export const BANNER_PRESETS: readonly LocalizedBannerPreset[] = [
     },
 ];
 
+export const AMBASSADOR_FAQ_PRESET_FIELDS = [
+    "faq1Question",
+    "faq1Answer",
+    "faq2Question",
+    "faq2Answer",
+    "faq3Question",
+    "faq3Answer",
+    "faq4Question",
+    "faq4Answer",
+] as const satisfies readonly AmbassadorTextField[];
+
+type AmbassadorFaqPresetField = (typeof AMBASSADOR_FAQ_PRESET_FIELDS)[number];
+type AmbassadorFaqCopy = Record<AmbassadorFaqPresetField, string>;
+
+export type AmbassadorFaqPreset = {
+    key: "classic" | "earnings" | "trust" | "casual";
+    en: AmbassadorFaqCopy;
+    fr: AmbassadorFaqCopy;
+};
+
+const ambassadorDefaultsEn = componentDefaults.en.ambassador;
+const ambassadorDefaultsFr = componentDefaults.fr.ambassador;
+
+// `{BRAND}` stays a literal token for the SDK to substitute. `{REWARD}` is
+// never used: the SDK drops an override containing it when no reward is known,
+// which would pair the preset question with the default answer.
+export const AMBASSADOR_FAQ_PRESETS: readonly AmbassadorFaqPreset[] = [
+    // Index 0 mirrors the SDK's built-in default copy (see BUTTON_SHARE_PRESETS).
+    {
+        key: "classic",
+        en: {
+            faq1Question: ambassadorDefaultsEn.faq1Question,
+            faq1Answer: ambassadorDefaultsEn.faq1Answer,
+            faq2Question: ambassadorDefaultsEn.faq2Question,
+            faq2Answer: ambassadorDefaultsEn.faq2Answer,
+            faq3Question: ambassadorDefaultsEn.faq3Question,
+            faq3Answer: ambassadorDefaultsEn.faq3Answer,
+            faq4Question: ambassadorDefaultsEn.faq4Question,
+            faq4Answer: ambassadorDefaultsEn.faq4Answer,
+        },
+        fr: {
+            faq1Question: ambassadorDefaultsFr.faq1Question,
+            faq1Answer: ambassadorDefaultsFr.faq1Answer,
+            faq2Question: ambassadorDefaultsFr.faq2Question,
+            faq2Answer: ambassadorDefaultsFr.faq2Answer,
+            faq3Question: ambassadorDefaultsFr.faq3Question,
+            faq3Answer: ambassadorDefaultsFr.faq3Answer,
+            faq4Question: ambassadorDefaultsFr.faq4Question,
+            faq4Answer: ambassadorDefaultsFr.faq4Answer,
+        },
+    },
+    {
+        key: "earnings",
+        en: {
+            faq1Question: "How much can I earn?",
+            faq1Answer:
+                "You earn a reward for every order placed through your link. The amount is shown at the top of this page, and the more friends order, the more you earn.",
+            faq2Question: "When is my money available?",
+            faq2Answer:
+                "Your earnings are credited to your Frak wallet as soon as a friend orders, and become transferable once {BRAND} confirms the purchase.",
+            faq3Question: "Do my friends pay more with my link?",
+            faq3Answer:
+                "No. They pay the usual price and also get a reward on their order.",
+            faq4Question: "How do I get my money?",
+            faq4Answer:
+                "From the Frak app, transfer your earnings to your bank account whenever you like, with no fees and no minimum amount.",
+        },
+        fr: {
+            faq1Question: "Combien je peux gagner\u00A0?",
+            faq1Answer:
+                "Vous gagnez une récompense pour chaque commande passée via votre lien. Le montant est indiqué en haut de cette page, et plus vos amis commandent, plus vous gagnez.",
+            faq2Question: "Quand mon argent est-il disponible\u00A0?",
+            faq2Answer:
+                "Vos gains sont crédités dans votre porte-monnaie Frak dès qu’un ami commande, et deviennent transférables une fois l’achat confirmé par {BRAND}.",
+            faq3Question: "Mes amis paient-ils plus cher avec mon lien\u00A0?",
+            faq3Answer:
+                "Non. Ils paient le prix habituel et reçoivent eux aussi une récompense sur leur commande.",
+            faq4Question: "Comment je récupère mon argent\u00A0?",
+            faq4Answer:
+                "Depuis l’app Frak, transférez vos gains vers votre compte bancaire quand vous le souhaitez, sans frais et sans montant minimum.",
+        },
+    },
+    {
+        key: "trust",
+        en: {
+            faq1Question: "How does {BRAND} know the sale came from me?",
+            faq1Answer:
+                "Your link is unique to you. Every order placed through it is recorded automatically, and you can follow your earnings in real time in the Frak app.",
+            faq2Question: "Is my data safe?",
+            faq2Answer:
+                "Yes. You sign in with your phone’s biometrics, with no password to remember, and Frak never sells any data to third parties.",
+            faq3Question: "Do my friends pay more with my link?",
+            faq3Answer:
+                "No. The price stays the same, and your friends get a reward on their order too.",
+            faq4Question: "Why is it free?",
+            faq4Answer:
+                "{BRAND} funds the rewards: it would rather reward its customers’ recommendations than spend on advertising. You never pay anything.",
+        },
+        fr: {
+            faq1Question:
+                "Comment {BRAND} sait que la vente vient de moi\u00A0?",
+            faq1Answer:
+                "Votre lien vous est propre. Chaque commande passée avec est enregistrée automatiquement, et vous suivez vos gains en temps réel dans l’app Frak.",
+            faq2Question: "Mes données sont-elles protégées\u00A0?",
+            faq2Answer:
+                "Oui. Vous vous connectez avec la biométrie de votre téléphone, sans mot de passe à retenir, et Frak ne vend aucune donnée à des tiers.",
+            faq3Question: "Mes amis paient-ils plus cher avec mon lien\u00A0?",
+            faq3Answer:
+                "Non. Le prix reste le même, et vos proches reçoivent eux aussi une récompense sur leur commande.",
+            faq4Question: "Pourquoi c’est gratuit\u00A0?",
+            faq4Answer:
+                "C’est {BRAND} qui finance les récompenses\u00A0: la marque préfère récompenser les recommandations de ses clients plutôt que la publicité. Vous ne payez jamais rien.",
+        },
+    },
+    {
+        key: "casual",
+        en: {
+            faq1Question: "Is it free?",
+            faq1Answer: "Yep, 100% free. No subscription, no fees.",
+            faq2Question: "When do I get paid?",
+            faq2Answer:
+                "As soon as a friend orders, your earnings land in your Frak wallet. Transfer them to your bank once {BRAND} confirms the order.",
+            faq3Question: "Do my friends pay more?",
+            faq3Answer: "Nope. They even get a reward too.",
+            faq4Question: "Do I need lots of followers?",
+            faq4Answer:
+                "Not at all. Share with whoever you like: friends, family, colleagues.",
+        },
+        fr: {
+            faq1Question: "C’est gratuit\u00A0?",
+            faq1Answer:
+                "Oui, 100\u00A0% gratuit. Pas d’abonnement, pas de frais.",
+            faq2Question: "Quand est-ce que je touche mes gains\u00A0?",
+            faq2Answer:
+                "Dès qu’un ami commande, tes gains arrivent dans ton porte-monnaie Frak. Tu les transfères vers ta banque une fois la commande confirmée par {BRAND}.",
+            faq3Question: "Mes amis paient plus cher\u00A0?",
+            faq3Answer: "Non. Ils sont même récompensés eux aussi.",
+            faq4Question: "Il faut beaucoup de followers\u00A0?",
+            faq4Answer:
+                "Pas du tout. Partage avec qui tu veux\u00A0: amis, famille, collègues.",
+        },
+    },
+];
+
 /**
  * Copy for the OS share sheet (`sharing.title` / `sharing.text`), written to
  * `sdkConfig.translations` rather than `components`. `{{productName}}` is the
@@ -266,6 +411,21 @@ export function matchSharingPreset(
         (preset) =>
             applyBrand(preset.en.title, shopName).trim() === trimmedTitle &&
             applyBrand(preset.en.text, shopName).trim() === trimmedText
+    );
+    return index === -1 ? null : index;
+}
+
+// A preset writes all 8 fields together, so every field must match: editing
+// any one of them deselects it.
+export function matchAmbassadorFaqPreset(en: AmbassadorFaqCopy): number | null {
+    const trimmed = AMBASSADOR_FAQ_PRESET_FIELDS.map((field) =>
+        en[field].trim()
+    );
+    if (trimmed.some((value) => !value)) return null;
+    const index = AMBASSADOR_FAQ_PRESETS.findIndex((preset) =>
+        AMBASSADOR_FAQ_PRESET_FIELDS.every(
+            (field, i) => preset.en[field] === trimmed[i]
+        )
     );
     return index === -1 ? null : index;
 }
