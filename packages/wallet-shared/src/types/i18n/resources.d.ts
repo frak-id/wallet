@@ -470,10 +470,11 @@ export default interface Resources {
       "offer": {
         "cashback": "Your cashback",
         "purchase": "{{amount}} cashback on your purchases",
-        "purchaseFirst": "{{amount}} on your first purchase",
+        "purchaseFirst": "{{amount}} cashback on your first purchase",
         "purchaseTitle": "When you shop",
-        "welcomeBonus": "First-purchase bonus",
-        "welcomeBonusNote": "Your cashback plus a one-time bonus from your Frak invitation, on your first purchase at {{name}}."
+        "welcomeBonus": "First-purchase cashback",
+        "welcomeBonusNote": "Your cashback plus a one-time bonus from your Frak invitation, paid into your wallet after your first purchase at {{name}}.",
+        "welcomeBonusOnlyNote": "A one-time bonus from your Frak invitation, paid into your wallet after your first purchase at {{name}}."
       },
       "pageTitle": "Explorer",
       "sort": {

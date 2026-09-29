@@ -103,9 +103,12 @@ function CampaignInfoCards({
                     title={t("explorer.offer.purchaseTitle")}
                     note={
                         purchase.welcomeBonus &&
-                        t("explorer.offer.welcomeBonusNote", {
-                            name: merchantName,
-                        })
+                        t(
+                            purchase.cashback
+                                ? "explorer.offer.welcomeBonusNote"
+                                : "explorer.offer.welcomeBonusOnlyNote",
+                            { name: merchantName }
+                        )
                     }
                 >
                     {purchase.total ? (

@@ -2,7 +2,7 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CartIcon, GiftIcon } from "@frak-labs/design-system/icons";
+import { CartIcon, CoinsIcon } from "@frak-labs/design-system/icons";
 import type { ComponentType, SVGProps } from "react";
 import { useTranslation } from "react-i18next";
 import type { RewardOffer } from "../../rewardOffer";
@@ -32,7 +32,7 @@ export function RewardOfferLines({
         <Stack space="xxs">
             {purchase && (
                 <OfferLine
-                    icon={purchase.welcomeBonus ? GiftIcon : CartIcon}
+                    icon={purchase.welcomeBonus ? CoinsIcon : CartIcon}
                     iconSize={iconSize}
                     size={size}
                     highlight={!!purchase.welcomeBonus}
