@@ -1,6 +1,6 @@
-import type { JSX } from "preact";
+import type { SVGAttributes } from "preact";
 
-export function WalletGiftIcon(props: JSX.SVGAttributes<SVGSVGElement>) {
+export function WalletGiftIcon(props: SVGAttributes<SVGSVGElement>) {
     return (
         <svg
             fill="none"

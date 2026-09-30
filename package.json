@@ -122,7 +122,7 @@
     "lucide-react": "^1.43.0",
     "clsx": "^2.1.1",
     "sonner": "^2.0.8",
-    "preact": "^10.29.8",
+    "preact": "^11.0.0",
     "@preact/preset-vite": "^2.10.6",
     "@tanstack/react-router": "1.170.35",
     "@tanstack/router-generator": "1.167.35",

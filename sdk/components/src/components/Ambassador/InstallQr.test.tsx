@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/preact";
+import { act, render, screen, waitFor } from "@testing-library/preact";
 import type { QrOpts } from "qr";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { InstallQr } from "./InstallQr";
@@ -208,7 +208,9 @@ describe("InstallQr", () => {
                 caption={CAPTION}
             />
         );
-        unmount();
+        act(() => {
+            unmount();
+        });
 
         await new Promise((resolve) => setTimeout(resolve, 0));
         expect(qrMock.calls).toHaveLength(0);

@@ -14,7 +14,7 @@ const preactJsxRuntime = path.resolve(preactRoot, "jsx-runtime");
 const preactHooks = path.resolve(preactRoot, "hooks");
 const preactTestingLibrary = path.resolve(
     __dirname,
-    "node_modules/@testing-library/preact"
+    "node_modules/@testing-library/preact/dist/esm/index.mjs"
 );
 
 export default mergeConfig(

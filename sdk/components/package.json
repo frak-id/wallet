@@ -127,7 +127,6 @@
     "@testing-library/user-event": "catalog:",
     "@types/jsdom": "catalog:",
     "@types/node": "catalog:",
-    "@types/preact-custom-element": "^4.0.4",
     "@typescript/native": "catalog:",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/integration": "catalog:",
