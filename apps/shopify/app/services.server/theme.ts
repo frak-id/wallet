@@ -494,12 +494,13 @@ export async function doesThemeHasFrakButton(context: AuthenticatedContext) {
 /**
  * Which in-page Frak blocks are enabled in the published theme, from one scan
  * of every section group (`sections/*.json`), every template
- * (`templates/*.json`) and `config/settings_data.json`. `ambassador` lists the
- * suffixes of the custom page templates that hold the block.
+ * (`templates/*.json`) and `config/settings_data.json`. `pageTemplates` lists
+ * the suffix of every custom page template, `ambassador` those that hold the
+ * ambassador block.
  */
 export async function getThemeBlockPresence(
     context: AuthenticatedContext
-): Promise<{ banner: boolean; ambassador: string[] }> {
+): Promise<{ banner: boolean; ambassador: string[]; pageTemplates: string[] }> {
     const mainThemeId = await getMainThemeId(context);
 
     const files = await getTemplateFilesMatching(
@@ -513,22 +514,44 @@ export async function getThemeBlockPresence(
         sections: sectionsOf(file),
     }));
 
+    // The default page template renders on every page, so it never counts.
+    const pageTemplates = sectionMaps.flatMap(({ filename, sections }) => {
+        const suffix = CUSTOM_PAGE_TEMPLATE.exec(filename)?.[1];
+        return suffix
+            ? [
+                  {
+                      suffix,
+                      hasAmbassador: detectFrakBlockInSections(
+                          sections,
+                          FRAK_AMBASSADOR_BLOCK_PATTERN
+                      ),
+                  },
+              ]
+            : [];
+    });
+
     return {
         banner: sectionMaps.some(({ sections }) =>
             detectFrakBlockInSections(sections, FRAK_BANNER_BLOCK_PATTERN)
         ),
-        // The default page template renders on every page, so it never counts.
-        ambassador: sectionMaps.flatMap(({ filename, sections }) => {
-            const suffix = CUSTOM_PAGE_TEMPLATE.exec(filename)?.[1];
-            return suffix &&
-                detectFrakBlockInSections(
-                    sections,
-                    FRAK_AMBASSADOR_BLOCK_PATTERN
-                )
-                ? [suffix]
-                : [];
-        }),
+        ambassador: pageTemplates
+            .filter((template) => template.hasAmbassador)
+            .map((template) => template.suffix),
+        pageTemplates: pageTemplates.map((template) => template.suffix),
     };
+}
+
+const PREFERRED_AMBASSADOR_TEMPLATE = "ambassador";
+
+/**
+ * The ambassador template to name and apply: `ambassador` when present,
+ * otherwise the first by name, so the same one wins on every scan.
+ */
+export function pickAmbassadorTemplate(suffixes: string[]): string | null {
+    if (suffixes.includes(PREFERRED_AMBASSADOR_TEMPLATE)) {
+        return PREFERRED_AMBASSADOR_TEMPLATE;
+    }
+    return [...suffixes].sort()[0] ?? null;
 }
 
 const CUSTOM_PAGE_TEMPLATE = /^templates\/page\.([^/]+)\.json$/;

@@ -689,6 +689,7 @@ describe("linkAmbassadorPage", () => {
         vi.mocked(getThemeBlockPresence).mockResolvedValue({
             banner: false,
             ambassador: ["ambassador"],
+            pageTemplates: ["ambassador"],
         });
         vi.mocked(writeAmbassadorPageMetafield).mockResolvedValue({
             success: true,
