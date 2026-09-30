@@ -56,6 +56,12 @@ describe("one page-level Save with both components sections dirty", () => {
             </QueryClientProvider>
         );
 
+        // The ambassador panel renders first, so its toggle comes first.
+        fireEvent.click(
+            screen.getAllByRole("button", {
+                name: "customize.components.advanced",
+            })[0]
+        );
         fireEvent.change(
             screen.getByLabelText("customize.ambassador.fields.faq1Question"),
             { target: { value: "New" } }

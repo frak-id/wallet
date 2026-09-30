@@ -48,7 +48,6 @@ import { AdvancedDisclosure } from "./Disclosure";
 import { FieldGroup } from "./fields/shared";
 import { resolveBuiltInLang } from "./localizable";
 import {
-    AMBASSADOR_TONE_GROUPS,
     AMBASSADOR_TONE_PRESET_FIELDS,
     AMBASSADOR_TONE_PRESETS,
     matchAmbassadorTonePreset,
@@ -65,6 +64,10 @@ const PHOTO_MODES = ["default", "custom", "none"] as const;
 const TONE_PRESET_PATHS = AMBASSADOR_TONE_PRESET_FIELDS.map(
     (field) => `texts.${field}` as const
 );
+
+const AMBASSADOR_GROUPS = Object.keys(AMBASSADOR_FIELD_GROUPS) as Array<
+    keyof typeof AMBASSADOR_FIELD_GROUPS
+>;
 
 const LONG_FIELDS: ReadonlySet<AmbassadorTextField> = new Set([
     "heroLede",
@@ -242,10 +245,6 @@ export function AmbassadorPagePanel({
                             onHeroFocus={() => reportFocus("hero")}
                         />
 
-                        <Text variant="caption" color="tertiary">
-                            {t("customize.ambassador.tokenHint")}
-                        </Text>
-
                         <ToneSection
                             form={form}
                             lang={activeLang}
@@ -254,21 +253,6 @@ export function AmbassadorPagePanel({
                             shopName={shopName}
                             reportFocus={reportFocus}
                         />
-
-                        <FieldGroup
-                            title={t("customize.ambassador.groups.faq")}
-                        >
-                            {AMBASSADOR_FIELD_GROUPS.faq.map((field) => (
-                                <AmbassadorFieldInput
-                                    key={field}
-                                    form={form}
-                                    field={field}
-                                    lang={activeLang}
-                                    copy={copy}
-                                    reportFocus={reportFocus}
-                                />
-                            ))}
-                        </FieldGroup>
                     </Stack>
                 </Card>
                 <div className={customizeStyles.phoneRail} aria-hidden="true">
@@ -376,7 +360,7 @@ function AmbassadorFieldInput({
     );
 }
 
-/** Tone tiles for the 8 texts above the FAQ, with those fields under a disclosure. */
+/** Tone tiles for the 8 texts above the FAQ, then every text field under a disclosure. */
 function ToneSection({
     form,
     lang,
@@ -453,7 +437,10 @@ function ToneSection({
                 onToggle={() => setAdvancedOpen(!advancedOpen)}
             >
                 <Stack space="m">
-                    {AMBASSADOR_TONE_GROUPS.map((group) => (
+                    <Text variant="caption" color="tertiary">
+                        {t("customize.ambassador.tokenHint")}
+                    </Text>
+                    {AMBASSADOR_GROUPS.map((group) => (
                         <FieldGroup
                             key={group}
                             title={t(`customize.ambassador.groups.${group}`)}

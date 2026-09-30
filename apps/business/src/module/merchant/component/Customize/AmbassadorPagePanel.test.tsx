@@ -145,6 +145,7 @@ describe("AmbassadorPagePanel", () => {
 
     it("shows the typed FAQ answer in the phone before saving", () => {
         const view = renderPanel({});
+        openAdvanced();
         const answer = screen.getByLabelText(
             "customize.ambassador.fields.faq2Answer"
         );
@@ -178,6 +179,7 @@ describe("AmbassadorPagePanel", () => {
 
     it("opens question 4 and highlights its answer when the answer field is focused", () => {
         const view = renderPanel({});
+        openAdvanced();
         fireEvent.focus(
             screen.getByLabelText("customize.ambassador.fields.faq4Answer")
         );
@@ -274,6 +276,7 @@ describe("AmbassadorPagePanel", () => {
 
     it("edits the long texts in a multi-line field", () => {
         renderPanel({});
+        openAdvanced();
         expect(
             screen.getByLabelText("customize.ambassador.fields.faq1Answer")
                 .tagName
@@ -300,6 +303,7 @@ describe("AmbassadorPagePanel", () => {
 
     it("opens the sheet with faq 4 open and highlighted after focusing its answer", async () => {
         const view = renderPanel({});
+        openAdvanced();
         const answer = screen.getByLabelText(
             "customize.ambassador.fields.faq4Answer"
         );
@@ -320,20 +324,18 @@ describe("AmbassadorPagePanel", () => {
         );
     });
 
-    it("keeps the hero, reward and button fields under the advanced settings and the FAQ in view", () => {
+    it("keeps every text field, the FAQ included, under the advanced settings", () => {
         renderPanel({});
-        for (const field of AMBASSADOR_FIELD_GROUPS.faq) {
+        const fields = Object.values(AMBASSADOR_FIELD_GROUPS).flat();
+        for (const field of fields) {
             expect(
-                screen.getByLabelText(`customize.ambassador.fields.${field}`)
-            ).toBeInTheDocument();
+                screen.queryByLabelText(`customize.ambassador.fields.${field}`)
+            ).not.toBeInTheDocument();
         }
-        expect(
-            screen.queryByLabelText("customize.ambassador.fields.heroTitle")
-        ).not.toBeInTheDocument();
 
         openAdvanced();
 
-        for (const field of AMBASSADOR_TONE_PRESET_FIELDS) {
+        for (const field of fields) {
             expect(
                 screen.getByLabelText(`customize.ambassador.fields.${field}`)
             ).toBeInTheDocument();
@@ -474,6 +476,7 @@ describe("AmbassadorPagePanel", () => {
     it("keeps stored FAQ text as ordinary values", async () => {
         const faq = { faq1Answer: "Old preset answer" };
         const view = renderPanel({ components: { ambassador: faq } });
+        openAdvanced();
 
         expect(
             screen.getByLabelText("customize.ambassador.fields.faq1Answer")
