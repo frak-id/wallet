@@ -1,10 +1,10 @@
-import type { JSX } from "preact";
+import type { SVGAttributes } from "preact";
 
 /**
  * Gift icon with yellow accent circle and present box.
  * Used by the referral banner and the post-purchase card.
  */
-export function GiftIcon(props: JSX.SVGAttributes<SVGSVGElement>) {
+export function GiftIcon(props: SVGAttributes<SVGSVGElement>) {
     return (
         <svg viewBox="0 0 100 100" fill="none" aria-hidden="true" {...props}>
             <circle cx="38" cy="28" r="23" fill="#FFF533" />
