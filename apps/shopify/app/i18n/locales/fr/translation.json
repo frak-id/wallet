@@ -82,20 +82,24 @@
             "title": "Publiez votre page ambassadeur",
             "description": "Une page complète qui présente votre programme de parrainage et invite vos clients à devenir ambassadeurs. Elle affiche les récompenses de votre campagne et suit la langue de votre boutique.",
             "createCta": "Créer ma page ambassadeur",
-            "createDescription": "Publie une page dans votre boutique avec la mise en page standard de votre thème. Vous pourrez la renommer ensuite.",
+            "createDescription": "Nous publions une page dans votre boutique, avec la mise en page standard de votre thème. Vous pourrez la renommer ensuite.",
             "guideIntro": "Vous préférez une page pleine largeur ? Suivez notre guide.",
             "guideCta": "Ouvrir le guide",
             "upgradeDescription": "Votre page ambassadeur utilise la mise en page standard de votre thème.",
+            "duplicateDescription": "Votre page ambassadeur affiche l'ambassadeur Frak deux fois : une par son modèle et une par son contenu. Appliquer retire celui du contenu.",
             "fullWidthCta": "Passer en pleine largeur",
             "applyCta": "Appliquer « {{template}} » à ma page",
             "keepStandardCta": "Garder la mise en page standard",
             "blankDescription": "Votre page ambassadeur n'affiche plus l'ambassadeur Frak.",
+            "restoreDescription": "Le rétablissement remet l'ambassadeur sur la page et la repasse sur le modèle Page par défaut de votre thème.",
             "restoreCta": "Rétablir l'ambassadeur sur cette page",
             "linkCta": "Lier ma page ambassadeur",
             "createInstead": "Aucune page n'utilise encore ce modèle ? Créez-en une en un clic, basée sur ce modèle.",
             "linkDescription": "Le bloc Frak Ambassador est déjà dans un modèle de page de votre thème. Nous retrouvons la page publiée qui utilise ce modèle et la relions à Frak.",
             "noPublishedPage": "Aucune page publiée n'utilise encore le modèle Frak Ambassador. Sélectionnez ce modèle sous Modèle de thème sur une page publiée, enregistrez, puis réessayez.",
             "created": "Votre page ambassadeur est en ligne.",
+            "applied": "Votre page ambassadeur est maintenant en pleine largeur.",
+            "restored": "Votre page ambassadeur affiche de nouveau l'ambassadeur Frak.",
             "viewPage": "Voir la page",
             "declined": "L'accès aux pages n'a pas été accordé : rien n'a été modifié.",
             "createFailed": "Nous n'avons pas pu créer votre page ambassadeur. Veuillez réessayer.",
@@ -104,6 +108,49 @@
             "templateMissing": "Ce modèle n'est plus dans votre thème. Actualisez puis réessayez.",
             "restoreFailed": "Nous n'avons pas pu rétablir votre page ambassadeur. Veuillez réessayer.",
             "keepFailed": "Nous n'avons pas pu enregistrer votre choix. Veuillez réessayer."
+        }
+    },
+    "ambassadorGuide": {
+        "title": "Passez votre page ambassadeur en pleine largeur",
+        "intro": "La mise en page standard de votre thème ajoute un titre de page et une colonne étroite. Un modèle de page dédié supprime les deux. Suivez ces étapes dans l'éditeur de thème, puis revenez ici. Selon votre thème, l'éditeur peut différer légèrement des captures.",
+        "settingsHeading": "Page ambassadeur",
+        "settingsDescription": "Passez votre page ambassadeur en pleine largeur avec un modèle de page dédié. Le guide vous accompagne pas à pas dans l'éditeur de thème.",
+        "steps": {
+            "open": {
+                "title": "Ouvrez l'éditeur de thème sur une page",
+                "description": "Ouvrez l'éditeur de thème sur vos pages.",
+                "cta": "Ouvrir l'éditeur de thème",
+                "alt": "L'éditeur de thème avec le menu des modèles ouvert sur Pages et l'option Create template."
+            },
+            "create": {
+                "title": "Créez un modèle nommé ambassador",
+                "description": "Ouvrez le menu des modèles en haut (il affiche Page par défaut), choisissez Pages, puis Create template. Nommez-le ambassador, gardez Page par défaut dans Based on, puis cliquez sur Create template.",
+                "alt": "La fenêtre Create a template, avec le nom ambassador et Page par défaut comme base."
+            },
+            "addBlock": {
+                "title": "Ajoutez le bloc Frak Ambassador",
+                "ready": "Ouvrez le modèle ambassador : le bloc Frak Ambassador y est ajouté pour vous. Vérifiez qu'il apparaît dans le modèle.",
+                "cta": "Ajouter le bloc",
+                "done": "Le bloc Frak Ambassador est dans votre modèle ambassador. Passez à l'étape suivante.",
+                "manual": "Dans le modèle ambassador, cliquez sur Add section et choisissez Frak Ambassador parmi les applications. Une fois le modèle enregistré et votre retour sur cette page, un bouton ici ajoute le bloc pour vous.",
+                "alt": "Le modèle ambassador avec le bloc Frak Ambassador en pleine largeur, dans une section Applications sous la section Page."
+            },
+            "hideSection": {
+                "title": "Masquez la section Page",
+                "description": "Dans ce même modèle ambassador, survolez la section Page dans la liste de gauche et cliquez sur l'icône en forme d'œil pour la masquer. Selon le thème, Hide ou Remove section se trouve aussi dans le menu ⋯ de la section. Cela retire le titre de la page et la colonne étroite. N'ajoutez jamais le bloc au modèle Page par défaut.",
+                "alt": "La section Page survolée dans le modèle ambassador, avec l'icône en forme d'œil qui la masque."
+            },
+            "save": {
+                "title": "Enregistrez et revenez ici",
+                "description": "Cliquez sur Enregistrer dans l'éditeur de thème, puis revenez sur cet onglet. Cette page se met à jour toute seule."
+            }
+        },
+        "final": {
+            "title": "Appliquez-le à votre page",
+            "upgrade": "Votre page ambassadeur utilise la mise en page standard de votre thème. Appliquez le modèle pour la passer en pleine largeur.",
+            "linked": "Votre page ambassadeur est déjà en pleine largeur.",
+            "noPage": "Créez ou liez votre page ambassadeur depuis la carte de configuration de l'accueil, puis revenez ici pour appliquer le modèle.",
+            "waiting": "Une fois votre modèle enregistré avec le bloc Frak Ambassador, vous pourrez l'appliquer à votre page ici."
         }
     },
     "pixel": {

@@ -82,20 +82,24 @@
             "title": "Publish your ambassador page",
             "description": "A full page that explains your referral programme and invites customers to become ambassadors. It shows your campaign's rewards and follows your store's language.",
             "createCta": "Create my ambassador page",
-            "createDescription": "Publishes a page in your shop with your theme's standard page layout. You can rename it afterwards.",
+            "createDescription": "We publish a page in your shop, with your theme's standard page layout. You can rename it afterwards.",
             "guideIntro": "Prefer a full-width page? Follow our guide.",
             "guideCta": "Open the guide",
             "upgradeDescription": "Your ambassador page uses your theme's standard page layout.",
+            "duplicateDescription": "Your ambassador page shows the Frak Ambassador twice: once from its template and once from its content. Apply removes the copy in the content.",
             "fullWidthCta": "Make it full-width",
             "applyCta": "Apply \"{{template}}\" to my page",
             "keepStandardCta": "Keep the standard layout",
             "blankDescription": "Your ambassador page no longer shows the Frak Ambassador.",
+            "restoreDescription": "Restoring puts the ambassador back on the page and switches it to your theme's Default page template.",
             "restoreCta": "Restore the ambassador on this page",
             "linkCta": "Link my ambassador page",
             "createInstead": "No page uses that template yet? Create one in a click, built on that template.",
             "linkDescription": "The Frak Ambassador block is already in a page template of your theme. We find the published page that uses this template and connect it to Frak.",
             "noPublishedPage": "No published page uses the Frak Ambassador template yet. Select the template under Theme template on a published page, save, then try again.",
             "created": "Your ambassador page is live.",
+            "applied": "Your ambassador page is now full-width.",
+            "restored": "Your ambassador page shows the Frak Ambassador again.",
             "viewPage": "View page",
             "declined": "Page access was not granted, so nothing was changed.",
             "createFailed": "We could not create your ambassador page. Please try again.",
@@ -104,6 +108,49 @@
             "templateMissing": "That template is no longer in your theme. Refresh and try again.",
             "restoreFailed": "We could not restore your ambassador page. Please try again.",
             "keepFailed": "We could not save your choice. Please try again."
+        }
+    },
+    "ambassadorGuide": {
+        "title": "Make your ambassador page full-width",
+        "intro": "Your theme's standard page layout adds a page title and a narrow column. A page template of its own removes both. Follow these steps in the theme editor, then come back here. Depending on your theme, the editor may look a little different from the screenshots.",
+        "settingsHeading": "Ambassador page",
+        "settingsDescription": "Make your ambassador page full-width with a dedicated page template. The guide walks you through the theme editor step by step.",
+        "steps": {
+            "open": {
+                "title": "Open the theme editor on a page",
+                "description": "Open the theme editor on your pages.",
+                "cta": "Open the theme editor",
+                "alt": "The theme editor with the template menu open on Pages and the Create template option."
+            },
+            "create": {
+                "title": "Create a template named ambassador",
+                "description": "Open the template menu at the top (it shows Default page), choose Pages, then Create template. Name it ambassador, keep Default page under Based on, then click Create template.",
+                "alt": "The Create a template dialog, with the name ambassador and Default page as the base."
+            },
+            "addBlock": {
+                "title": "Add the Frak Ambassador block",
+                "ready": "Open the ambassador template: the Frak Ambassador block is added for you. Check that it appears in the template.",
+                "cta": "Add the block",
+                "done": "The Frak Ambassador block is in your ambassador template. Go to the next step.",
+                "manual": "In the ambassador template, click Add section and choose Frak Ambassador from the apps. Once the template is saved and you are back on this page, a button here adds the block for you.",
+                "alt": "The ambassador template with the Frak Ambassador block full-width, in an Apps section below the Page section."
+            },
+            "hideSection": {
+                "title": "Hide the Page section",
+                "description": "In the same ambassador template, hover the Page section in the left list and click the eye icon to hide it. Depending on the theme, Hide or Remove section is also in the section's ⋯ menu. This drops the page title and the narrow column. Never add the block to the default page template.",
+                "alt": "The Page section hovered in the ambassador template, with the eye icon that hides it."
+            },
+            "save": {
+                "title": "Save and come back here",
+                "description": "Click Save in the theme editor, then return to this tab. This page updates by itself."
+            }
+        },
+        "final": {
+            "title": "Apply it to your page",
+            "upgrade": "Your ambassador page uses your theme's standard page layout. Apply the template to make it full-width.",
+            "linked": "Your ambassador page is already full-width.",
+            "noPage": "Create or link your ambassador page from the setup card on the home screen, then come back here to apply the template.",
+            "waiting": "Once your template is saved with the Frak Ambassador block, you can apply it to your page here."
         }
     },
     "pixel": {
