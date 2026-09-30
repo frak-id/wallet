@@ -75,7 +75,7 @@
     "@shopify/api-codegen-preset": "^1.2.2",
     "@shopify/app-bridge-types": "^0.7.2",
     "@shopify/polaris-types": "^1.0.7",
-    "@shopify/ui-extensions": "~2025.11.0",
+    "@shopify/ui-extensions": "~2026.4.4",
     "@shopify/web-pixels-extension": "^2.18.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",

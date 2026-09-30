@@ -198,7 +198,7 @@
         "@shopify/api-codegen-preset": "^1.2.2",
         "@shopify/app-bridge-types": "^0.7.2",
         "@shopify/polaris-types": "^1.0.7",
-        "@shopify/ui-extensions": "~2025.11.0",
+        "@shopify/ui-extensions": "~2026.4.4",
         "@shopify/web-pixels-extension": "^2.18.0",
         "@types/node": "catalog:",
         "@types/react": "catalog:",
@@ -1798,7 +1798,7 @@
 
     "@shopify/storefront-api-client": ["@shopify/storefront-api-client@1.0.10", "", { "dependencies": { "@shopify/graphql-client": "^1.4.2" } }, "sha512-A0ItFW58L5+y/jnnJDEsmt2YcQSt2BG+pNoQOYRpPBJaOLpTj7A13q1QVrE5XYVGZCA6ZQ6FqAtgosHHrkut0Q=="],
 
-    "@shopify/ui-extensions": ["@shopify/ui-extensions@2025.11.0", "", { "dependencies": { "ts-morph": "^25.0.1" }, "peerDependencies": { "@preact/signals": "*", "preact": "*" }, "optionalPeers": ["@preact/signals", "preact"] }, "sha512-hP4L3OYenfeoQX4nuVy8QoAQH/uGnSZzXd3VoMxlvaY1AGWTxCtSl0S96lmT33h9PZr6x7jJjJEvf6vt+cqL7g=="],
+    "@shopify/ui-extensions": ["@shopify/ui-extensions@2026.4.4", "", { "dependencies": { "ts-morph": "^25.0.1" }, "peerDependencies": { "@preact/signals": "*", "preact": "*" }, "optionalPeers": ["@preact/signals", "preact"] }, "sha512-cwyvjHx2Y1jhHR2Q5GgDXMsAb/BQcnFVGmev0viCOwL+cgithkilb+xdirLXaeqUAfSvPjOsM9fVlGMstVMlsA=="],
 
     "@shopify/web-pixels-extension": ["@shopify/web-pixels-extension@2.18.0", "", {}, "sha512-qHp93QKdxJ8UREzkYOje6343An2wvXLUF71uduahiTjBfYXQ7VqIAXoHCwzCnP3Kss1AXLpz7XPaKCRC0ONOTw=="],
 
