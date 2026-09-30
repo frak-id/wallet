@@ -1,6 +1,7 @@
 import type { AuthenticatedContext } from "../types/context";
 import { log } from "./logger";
 import {
+    type AmbassadorPageRecord,
     getAmbassadorPageMetafield,
     writeAmbassadorPageMetafield,
 } from "./metafields";
@@ -29,6 +30,9 @@ const AMBASSADOR_PAGE_BODY = "<frak-ambassador></frak-ambassador>";
 const AMBASSADOR_TAG_OPENING = "<frak-ambassador";
 const MAX_HANDLE_ATTEMPTS = 5;
 const PAGES_LISTING_SIZE = 250;
+/** Paired, self-closing, unclosed or stray closing: every form the `<frak-ambassador` test counts. */
+const AMBASSADOR_TAG =
+    /<frak-ambassador\b[^>]*>(?:\s*<\/frak-ambassador\s*>)?|<\/frak-ambassador\s*>/g;
 
 const PAGE_COPY: Record<
     AmbassadorPageLanguage,
@@ -37,6 +41,17 @@ const PAGE_COPY: Record<
     en: { title: "Become an ambassador", handle: "become-an-ambassador" },
     fr: { title: "Devenir ambassadeur", handle: "devenir-ambassadeur" },
 };
+
+/** Every handle `createAmbassadorPage` can produce, in any language and retry. */
+const CREATED_HANDLES = new Set(
+    Object.values(PAGE_COPY).flatMap(({ handle }) => [
+        handle,
+        ...Array.from(
+            { length: MAX_HANDLE_ATTEMPTS - 1 },
+            (_, index) => `${handle}-${index + 2}`
+        ),
+    ])
+);
 
 type PageCreateUserError = { code?: string; message: string };
 
@@ -48,12 +63,14 @@ type PageCreateData = {
 };
 
 /**
- * Create the published ambassador page on the default template. A handle that
+ * Create the published ambassador page, on `template` with an empty body or,
+ * without one, on the default template holding the component. A handle that
  * is `TAKEN` is retried with `-2` to `-5`; `null` on any other failure.
  */
 export async function createAmbassadorPage(
     context: AuthenticatedContext,
-    language: AmbassadorPageLanguage
+    language: AmbassadorPageLanguage,
+    template: string | null = null
 ): Promise<AmbassadorPageRef | null> {
     const { title, handle } = PAGE_COPY[language];
 
@@ -80,7 +97,9 @@ mutation pageCreate($page: PageCreateInput!) {
                             title,
                             handle:
                                 attempt === 1 ? handle : `${handle}-${attempt}`,
-                            body: AMBASSADOR_PAGE_BODY,
+                            ...(template
+                                ? { body: "", templateSuffix: template }
+                                : { body: AMBASSADOR_PAGE_BODY }),
                             isPublished: true,
                         },
                     },
@@ -249,6 +268,8 @@ export type AmbassadorCardState =
           url: string;
           template: string | null;
           standardLayoutKept: boolean;
+          /** On its own ambassador template, so the tag renders it twice. */
+          onTemplate: boolean;
       }
     | { state: "blank"; url: string; template: string | null };
 
@@ -310,7 +331,10 @@ export async function reconcileAmbassadorPage(
                   state: "upgrade",
                   url: resolved.url,
                   template,
-                  standardLayoutKept: record.standardLayoutKept === true,
+                  // A dismissal never hides a double render.
+                  standardLayoutKept:
+                      !ownTemplate && record.standardLayoutKept === true,
+                  onTemplate: ownTemplate !== null,
               }
             : { state: "blank", url: resolved.url, template };
     } catch (error) {
@@ -321,19 +345,32 @@ export async function reconcileAmbassadorPage(
 
 export type AmbassadorPageActionResult =
     | { ok: true; url: string }
-    | { ok: false; reason: "createFailed" | "linkFailed" | "noPublishedPage" };
+    | {
+          ok: false;
+          reason:
+              | "createFailed"
+              | "linkFailed"
+              | "noPublishedPage"
+              | "applyFailed"
+              | "templateMissing"
+              | "restoreFailed"
+              | "keepFailed";
+      };
 
 /**
- * Write the page and its storefront URL to the shop record. A failed write is
- * logged, not thrown: the page exists and the URL is still returned.
+ * Write the page and its storefront URL, keeping `previous` (the record the
+ * caller read) only for the same page: a dismissal belongs to one page. A
+ * failed write is logged, not thrown: the URL is still returned.
  */
 async function recordPage(
     context: AuthenticatedContext,
-    page: AmbassadorPageRef
+    page: AmbassadorPageRef,
+    previous: AmbassadorPageRecord | null
 ): Promise<string> {
     const url = await buildAmbassadorPageUrl(context, page.handle);
     try {
         const result = await writeAmbassadorPageMetafield(context, {
+            ...(previous?.pageId === page.id ? previous : {}),
             pageId: page.id,
             url,
         });
@@ -354,8 +391,9 @@ async function recordPage(
 
 /**
  * Create the ambassador page unless the record already names a live one. A
- * published page whose body is exactly the component tag is adopted instead,
- * so a lost record write never leads to a duplicate page.
+ * published page whose body is exactly the component tag, or with one of the
+ * app's handles on an ambassador template, is adopted instead, so a lost
+ * record write never leads to a duplicate page.
  */
 export async function createAndRecordAmbassadorPage(
     context: AuthenticatedContext,
@@ -376,19 +414,31 @@ export async function createAndRecordAmbassadorPage(
             }
         }
 
+        const { ambassador } = await getThemeBlockPresence(context);
         const existing = await findPublishedPage(
             context,
-            (listed) => listed.body.trim() === AMBASSADOR_PAGE_BODY
+            (listed) =>
+                listed.body.trim() === AMBASSADOR_PAGE_BODY ||
+                (CREATED_HANDLES.has(listed.handle) &&
+                    listed.templateSuffix !== null &&
+                    ambassador.includes(listed.templateSuffix))
         );
         if (existing) {
-            return { ok: true, url: await recordPage(context, existing) };
+            return {
+                ok: true,
+                url: await recordPage(context, existing, record),
+            };
         }
 
-        const page = await createAmbassadorPage(context, language);
+        const page = await createAmbassadorPage(
+            context,
+            language,
+            pickAmbassadorTemplate(ambassador)
+        );
         if (!page) {
             return { ok: false, reason: "createFailed" };
         }
-        return { ok: true, url: await recordPage(context, page) };
+        return { ok: true, url: await recordPage(context, page, record) };
     } catch (error) {
         log.error({ err: error }, "ambassador page create action error");
         return { ok: false, reason: "createFailed" };
@@ -400,7 +450,10 @@ export async function linkAmbassadorPage(
     context: AuthenticatedContext
 ): Promise<AmbassadorPageActionResult> {
     try {
-        const { ambassador } = await getThemeBlockPresence(context);
+        const [record, { ambassador }] = await Promise.all([
+            getAmbassadorPageMetafield(context),
+            getThemeBlockPresence(context),
+        ]);
         const page = await findPublishedPageByTemplateSuffixes(
             context,
             ambassador
@@ -408,9 +461,133 @@ export async function linkAmbassadorPage(
         if (!page) {
             return { ok: false, reason: "noPublishedPage" };
         }
-        return { ok: true, url: await recordPage(context, page) };
+        return { ok: true, url: await recordPage(context, page, record) };
     } catch (error) {
         log.error({ err: error }, "ambassador page link action error");
         return { ok: false, reason: "linkFailed" };
+    }
+}
+
+type PageUpdateData = {
+    pageUpdate?: {
+        page?: { id: string } | null;
+        userErrors?: PageCreateUserError[];
+    } | null;
+};
+
+/**
+ * Send one `pageUpdate` on the recorded page with the fields `edit` derives
+ * from its current body, and return the page URL. `null` when nothing is
+ * recorded, the page is gone or unpublished, or the update is rejected.
+ */
+async function updateRecordedPage(
+    context: AuthenticatedContext,
+    edit: (body: string) => { templateSuffix: string; body: string }
+): Promise<string | null> {
+    const record = await getAmbassadorPageMetafield(context);
+    if (!record) {
+        return null;
+    }
+    const resolved = await resolveAmbassadorPageUrl(context, record.pageId);
+    if (!(resolved.ok && resolved.url)) {
+        return null;
+    }
+
+    const response = await context.admin.graphql(
+        `#graphql
+mutation pageUpdate($id: ID!, $page: PageUpdateInput!) {
+  pageUpdate(id: $id, page: $page) {
+    page {
+      id
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}`,
+        { variables: { id: record.pageId, page: edit(resolved.body) } }
+    );
+    const { data } = (await response.json()) as { data?: PageUpdateData };
+    if (!data?.pageUpdate?.page) {
+        log.error(
+            { userErrors: data?.pageUpdate?.userErrors, pageId: record.pageId },
+            "ambassador page update rejected"
+        );
+        return null;
+    }
+    return resolved.url;
+}
+
+/**
+ * Move the recorded page onto `template` and remove the component from its
+ * body, in one update. Refused unless `template` still holds the block.
+ */
+export async function applyAmbassadorTemplate(
+    context: AuthenticatedContext,
+    template: string
+): Promise<AmbassadorPageActionResult> {
+    try {
+        const { ambassador } = await getThemeBlockPresence(context);
+        if (!ambassador.includes(template)) {
+            return { ok: false, reason: "templateMissing" };
+        }
+        const url = await updateRecordedPage(context, (body) => ({
+            templateSuffix: template,
+            body: body.replace(AMBASSADOR_TAG, ""),
+        }));
+        return url ? { ok: true, url } : { ok: false, reason: "applyFailed" };
+    } catch (error) {
+        log.error({ err: error }, "ambassador template apply error");
+        return { ok: false, reason: "applyFailed" };
+    }
+}
+
+/**
+ * Put the component back in the recorded page's body, after any text, and
+ * reset it to the default template.
+ */
+export async function restoreAmbassadorComponent(
+    context: AuthenticatedContext
+): Promise<AmbassadorPageActionResult> {
+    try {
+        const url = await updateRecordedPage(context, (body) => ({
+            templateSuffix: "",
+            body: body.includes(AMBASSADOR_TAG_OPENING)
+                ? body
+                : `${body}${AMBASSADOR_PAGE_BODY}`,
+        }));
+        return url ? { ok: true, url } : { ok: false, reason: "restoreFailed" };
+    } catch (error) {
+        log.error({ err: error }, "ambassador component restore error");
+        return { ok: false, reason: "restoreFailed" };
+    }
+}
+
+/** Store the merchant's choice to keep the standard layout, leaving the rest of the record. */
+export async function keepStandardLayout(
+    context: AuthenticatedContext
+): Promise<AmbassadorPageActionResult> {
+    try {
+        const record = await getAmbassadorPageMetafield(context);
+        if (!record?.url) {
+            return { ok: false, reason: "keepFailed" };
+        }
+        const result = await writeAmbassadorPageMetafield(context, {
+            ...record,
+            standardLayoutKept: true,
+        });
+        if (!result.success) {
+            log.error(
+                { userErrors: result.userErrors, pageId: record.pageId },
+                "ambassador standard layout choice rejected"
+            );
+            return { ok: false, reason: "keepFailed" };
+        }
+        return { ok: true, url: record.url };
+    } catch (error) {
+        log.error({ err: error }, "ambassador standard layout keep error");
+        return { ok: false, reason: "keepFailed" };
     }
 }

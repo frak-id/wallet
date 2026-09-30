@@ -1,13 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthenticatedContext } from "../types/context";
 import {
+    applyAmbassadorTemplate,
     createAmbassadorPage,
     createAndRecordAmbassadorPage,
     findPublishedPageByTemplateSuffixes,
+    keepStandardLayout,
     linkAmbassadorPage,
     normalizeAmbassadorPageLanguage,
     reconcileAmbassadorPage,
     resolveAmbassadorPageUrl,
+    restoreAmbassadorComponent,
 } from "./ambassadorPage";
 import {
     getAmbassadorPageMetafield,
@@ -387,6 +390,7 @@ describe("reconcileAmbassadorPage", () => {
             url: newUrl,
             template: null,
             standardLayoutKept: false,
+            onTemplate: false,
         });
         expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
         expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
@@ -409,6 +413,7 @@ describe("reconcileAmbassadorPage", () => {
             url: newUrl,
             template: "ambassador",
             standardLayoutKept: false,
+            onTemplate: true,
         });
         expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
         expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
@@ -540,6 +545,7 @@ describe("reconcileAmbassadorPage", () => {
             url: oldUrl,
             template: "ambassador",
             standardLayoutKept: false,
+            onTemplate: false,
         });
     });
 
@@ -557,12 +563,13 @@ describe("reconcileAmbassadorPage", () => {
             url: oldUrl,
             template: "ambassador",
             standardLayoutKept: true,
+            onTemplate: false,
         });
     });
 
-    it("names the page's own template when it already holds the block and the tag", async () => {
+    it("flags a page on its own template that still holds the tag, ignoring a dismissal", async () => {
         givenScopes(true);
-        givenRecord(oldUrl);
+        givenRecord(oldUrl, true);
         givenPage({ templateSuffix: "zeta" });
 
         const state = await reconcileAmbassadorPage(mockContext, [
@@ -575,6 +582,7 @@ describe("reconcileAmbassadorPage", () => {
             url: oldUrl,
             template: "zeta",
             standardLayoutKept: false,
+            onTemplate: true,
         });
     });
 
@@ -700,8 +708,21 @@ describe("createAndRecordAmbassadorPage", () => {
     const pageUrl = "https://www.shop.com/pages/become-an-ambassador";
     const tag = "<frak-ambassador></frak-ambassador>";
 
-    function listed(id: string, handle: string, body: string) {
-        return { id, handle, isPublished: true, templateSuffix: null, body };
+    function listed(
+        id: string,
+        handle: string,
+        body: string,
+        templateSuffix: string | null = null
+    ) {
+        return { id, handle, isPublished: true, templateSuffix, body };
+    }
+
+    function givenAmbassadorTemplates(ambassador: string[]) {
+        vi.mocked(getThemeBlockPresence).mockResolvedValue({
+            banner: false,
+            ambassador,
+            pageTemplates: ambassador,
+        });
     }
 
     function givenListedPages(nodes: ReturnType<typeof listed>[]) {
@@ -711,6 +732,8 @@ describe("createAndRecordAmbassadorPage", () => {
     beforeEach(() => {
         vi.mocked(getAmbassadorPageMetafield).mockReset();
         vi.mocked(writeAmbassadorPageMetafield).mockReset();
+        vi.mocked(getThemeBlockPresence).mockReset();
+        givenAmbassadorTemplates([]);
         vi.mocked(getAmbassadorPageMetafield).mockResolvedValue(null);
         vi.mocked(writeAmbassadorPageMetafield).mockResolvedValue({
             success: true,
@@ -782,6 +805,55 @@ describe("createAndRecordAmbassadorPage", () => {
             pageId,
             url: pageUrl,
         });
+    });
+
+    it("drops the standard layout choice when it recreates a deleted page", async () => {
+        vi.mocked(getAmbassadorPageMetafield).mockResolvedValue({
+            pageId: "gid://shopify/Page/1",
+            url: pageUrl,
+            standardLayoutKept: true,
+        });
+        respond({ page: null });
+        givenListedPages([]);
+        created(pageId, "become-an-ambassador");
+
+        await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: pageUrl,
+        });
+    });
+
+    it("keeps the standard layout choice when it re-adopts the recorded page", async () => {
+        vi.mocked(getAmbassadorPageMetafield).mockResolvedValue({
+            pageId,
+            url: null,
+            standardLayoutKept: true,
+        });
+        respond({
+            page: { handle: "become-an-ambassador", isPublished: false },
+        });
+        givenListedPages([listed(pageId, "become-an-ambassador", tag)]);
+
+        await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: pageUrl,
+            standardLayoutKept: true,
+        });
+    });
+
+    it("fails and writes nothing when the record cannot be read", async () => {
+        vi.mocked(getAmbassadorPageMetafield).mockRejectedValue(
+            new Error("boom")
+        );
+
+        const result = await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(result).toEqual({ ok: false, reason: "createFailed" });
+        expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
     });
 
     it("fails without creating when the recorded page cannot be read", async () => {
@@ -879,6 +951,118 @@ describe("createAndRecordAmbassadorPage", () => {
             createAndRecordAmbassadorPage(mockContext, "en")
         ).resolves.toEqual({ ok: false, reason: "createFailed" });
     });
+
+    it("creates on the ambassador template with an empty body when one exists", async () => {
+        givenAmbassadorTemplates(["ambassador"]);
+        givenListedPages([]);
+        created(pageId, "become-an-ambassador");
+
+        const result = await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(result).toEqual({ ok: true, url: pageUrl });
+        expect(mockGraphql.mock.calls[1][1].variables.page).toEqual({
+            title: "Become an ambassador",
+            handle: "become-an-ambassador",
+            body: "",
+            templateSuffix: "ambassador",
+            isPublished: true,
+        });
+    });
+
+    it("creates on the picked template when several exist", async () => {
+        givenAmbassadorTemplates(["referral", "ambassador"]);
+        givenListedPages([]);
+        created(pageId, "become-an-ambassador");
+
+        await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(mockGraphql.mock.calls[1][1].variables.page.templateSuffix).toBe(
+            "ambassador"
+        );
+    });
+
+    it("sends the tag body and no suffix when no ambassador template exists", async () => {
+        givenListedPages([]);
+        created(pageId, "become-an-ambassador");
+
+        await createAndRecordAmbassadorPage(mockContext, "en");
+
+        const page = mockGraphql.mock.calls[1][1].variables.page;
+        expect(page.body).toBe(tag);
+        expect(page).not.toHaveProperty("templateSuffix");
+    });
+
+    it("adopts a published page on an ambassador template instead of creating one", async () => {
+        givenAmbassadorTemplates(["ambassador"]);
+        givenListedPages([
+            listed(pageId, "become-an-ambassador", "", "ambassador"),
+        ]);
+
+        const result = await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(result).toEqual({ ok: true, url: pageUrl });
+        expect(mockGraphql).toHaveBeenCalledOnce();
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: pageUrl,
+        });
+    });
+
+    it("adopts a page with a retried handle on an ambassador template", async () => {
+        givenAmbassadorTemplates(["ambassador"]);
+        givenListedPages([
+            listed(pageId, "devenir-ambassadeur-3", "", "ambassador"),
+        ]);
+
+        await createAndRecordAmbassadorPage(mockContext, "fr");
+
+        expect(mockGraphql).toHaveBeenCalledOnce();
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: "https://www.shop.com/pages/devenir-ambassadeur-3",
+        });
+    });
+
+    it("creates instead of adopting a merchant's own page on an ambassador template", async () => {
+        givenAmbassadorTemplates(["ambassador"]);
+        givenListedPages([
+            listed("gid://shopify/Page/4", "about", "<p>Hi</p>", "ambassador"),
+        ]);
+        created(pageId, "become-an-ambassador");
+
+        await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(mockGraphql).toHaveBeenCalledTimes(2);
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: pageUrl,
+        });
+    });
+
+    it("adopts the most recently updated of the matching pages", async () => {
+        givenAmbassadorTemplates(["ambassador"]);
+        givenListedPages([
+            listed("gid://shopify/Page/4", "other", "<p>Hi</p>"),
+            listed(pageId, "become-an-ambassador", tag),
+            listed("gid://shopify/Page/3", "old", "", "ambassador"),
+        ]);
+
+        await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: pageUrl,
+        });
+    });
+
+    it("fails without creating when the theme cannot be read", async () => {
+        vi.mocked(getThemeBlockPresence).mockRejectedValue(new Error("boom"));
+
+        const result = await createAndRecordAmbassadorPage(mockContext, "en");
+
+        expect(result).toEqual({ ok: false, reason: "createFailed" });
+        expect(mockGraphql).not.toHaveBeenCalled();
+    });
 });
 
 describe("linkAmbassadorPage", () => {
@@ -903,6 +1087,8 @@ describe("linkAmbassadorPage", () => {
     beforeEach(() => {
         vi.mocked(getThemeBlockPresence).mockReset();
         vi.mocked(writeAmbassadorPageMetafield).mockReset();
+        vi.mocked(getAmbassadorPageMetafield).mockReset();
+        vi.mocked(getAmbassadorPageMetafield).mockResolvedValue(null);
         vi.mocked(getThemeBlockPresence).mockResolvedValue({
             banner: false,
             ambassador: ["ambassador"],
@@ -927,6 +1113,51 @@ describe("linkAmbassadorPage", () => {
         });
     });
 
+    it("keeps the standard layout choice when it relinks the same page", async () => {
+        vi.mocked(getAmbassadorPageMetafield).mockResolvedValue({
+            pageId,
+            url: null,
+            standardLayoutKept: true,
+        });
+        givenPublishedPage();
+
+        await linkAmbassadorPage(mockContext);
+
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: pageUrl,
+            standardLayoutKept: true,
+        });
+    });
+
+    it("drops the standard layout choice when it links a different page", async () => {
+        vi.mocked(getAmbassadorPageMetafield).mockResolvedValue({
+            pageId: "gid://shopify/Page/1",
+            url: null,
+            standardLayoutKept: true,
+        });
+        givenPublishedPage();
+
+        await linkAmbassadorPage(mockContext);
+
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: pageUrl,
+        });
+    });
+
+    it("fails and writes nothing when the record cannot be read", async () => {
+        vi.mocked(getAmbassadorPageMetafield).mockRejectedValue(
+            new Error("boom")
+        );
+        givenPublishedPage();
+
+        const result = await linkAmbassadorPage(mockContext);
+
+        expect(result).toEqual({ ok: false, reason: "linkFailed" });
+        expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+    });
+
     it("reports noPublishedPage and writes nothing when no published page uses the template", async () => {
         respond({ pages: { nodes: [] } });
 
@@ -942,6 +1173,298 @@ describe("linkAmbassadorPage", () => {
         await expect(linkAmbassadorPage(mockContext)).resolves.toEqual({
             ok: false,
             reason: "linkFailed",
+        });
+    });
+});
+
+describe("page template actions", () => {
+    const pageId = "gid://shopify/Page/9";
+    const pageUrl = "https://www.shop.com/pages/become-an-ambassador";
+    const tag = "<frak-ambassador></frak-ambassador>";
+
+    function givenPage(templateSuffix: string | null, body: string) {
+        respond({
+            page: {
+                handle: "become-an-ambassador",
+                isPublished: true,
+                templateSuffix,
+                body,
+            },
+        });
+    }
+
+    function updated() {
+        respond({
+            pageUpdate: { page: { id: pageId }, userErrors: [] },
+        });
+    }
+
+    function sentUpdate() {
+        const call = mockGraphql.mock.calls.find(([query]) =>
+            String(query).includes("pageUpdate")
+        );
+        return call?.[1];
+    }
+
+    beforeEach(() => {
+        vi.mocked(getAmbassadorPageMetafield).mockReset();
+        vi.mocked(writeAmbassadorPageMetafield).mockReset();
+        vi.mocked(getThemeBlockPresence).mockReset();
+        vi.mocked(getAmbassadorPageMetafield).mockResolvedValue({
+            pageId,
+            url: pageUrl,
+        });
+        vi.mocked(writeAmbassadorPageMetafield).mockResolvedValue({
+            success: true,
+            userErrors: [],
+        });
+        vi.mocked(getThemeBlockPresence).mockResolvedValue({
+            banner: false,
+            ambassador: ["ambassador"],
+            pageTemplates: ["ambassador"],
+        });
+    });
+
+    describe("applyAmbassadorTemplate", () => {
+        it("sends the template and an empty body in one pageUpdate", async () => {
+            givenPage(null, tag);
+            updated();
+
+            const result = await applyAmbassadorTemplate(
+                mockContext,
+                "ambassador"
+            );
+
+            expect(result).toEqual({ ok: true, url: pageUrl });
+            expect(sentUpdate()).toEqual({
+                variables: {
+                    id: pageId,
+                    page: { templateSuffix: "ambassador", body: "" },
+                },
+            });
+            expect(
+                mockGraphql.mock.calls.filter(([query]) =>
+                    String(query).includes("pageUpdate")
+                )
+            ).toHaveLength(1);
+        });
+
+        it("keeps merchant text and removes only the tag", async () => {
+            givenPage(null, `<p>Join us</p>${tag}<p>Bye</p>`);
+            updated();
+
+            await applyAmbassadorTemplate(mockContext, "ambassador");
+
+            expect(sentUpdate()?.variables.page.body).toBe(
+                "<p>Join us</p><p>Bye</p>"
+            );
+        });
+
+        it.each([
+            "<frak-ambassador />",
+            "<frak-ambassador>",
+            '<frak-ambassador data-x="1"></frak-ambassador >',
+        ])("removes the tag written as %s", async (written) => {
+            givenPage(null, `<p>a</p>${written}`);
+            updated();
+
+            await applyAmbassadorTemplate(mockContext, "ambassador");
+
+            expect(sentUpdate()?.variables.page.body).toBe("<p>a</p>");
+        });
+
+        it("applies any ambassador template it is asked for", async () => {
+            vi.mocked(getThemeBlockPresence).mockResolvedValue({
+                banner: false,
+                ambassador: ["referral"],
+                pageTemplates: ["referral"],
+            });
+            givenPage(null, tag);
+            updated();
+
+            await applyAmbassadorTemplate(mockContext, "referral");
+
+            expect(sentUpdate()?.variables.page.templateSuffix).toBe(
+                "referral"
+            );
+        });
+
+        it("returns templateMissing and sends nothing when the template no longer holds the block", async () => {
+            vi.mocked(getThemeBlockPresence).mockResolvedValue({
+                banner: false,
+                ambassador: [],
+                pageTemplates: ["ambassador"],
+            });
+
+            const result = await applyAmbassadorTemplate(
+                mockContext,
+                "ambassador"
+            );
+
+            expect(result).toEqual({ ok: false, reason: "templateMissing" });
+            expect(mockGraphql).not.toHaveBeenCalled();
+        });
+
+        it("fails and sends no mutation when no page is recorded", async () => {
+            vi.mocked(getAmbassadorPageMetafield).mockResolvedValue(null);
+
+            const result = await applyAmbassadorTemplate(
+                mockContext,
+                "ambassador"
+            );
+
+            expect(result).toEqual({ ok: false, reason: "applyFailed" });
+            expect(mockGraphql).not.toHaveBeenCalled();
+        });
+
+        it("fails and sends no mutation when the page is unpublished", async () => {
+            respond({
+                page: {
+                    handle: "x",
+                    isPublished: false,
+                    templateSuffix: null,
+                    body: tag,
+                },
+            });
+
+            const result = await applyAmbassadorTemplate(
+                mockContext,
+                "ambassador"
+            );
+
+            expect(result).toEqual({ ok: false, reason: "applyFailed" });
+            expect(sentUpdate()).toBeUndefined();
+        });
+
+        it("returns applyFailed on userErrors", async () => {
+            givenPage(null, tag);
+            respond({
+                pageUpdate: {
+                    page: null,
+                    userErrors: [{ field: ["page"], message: "no" }],
+                },
+            });
+
+            const result = await applyAmbassadorTemplate(
+                mockContext,
+                "ambassador"
+            );
+
+            expect(result).toEqual({ ok: false, reason: "applyFailed" });
+        });
+
+        it("returns applyFailed instead of throwing when the request throws", async () => {
+            givenPage(null, tag);
+            mockGraphql.mockRejectedValueOnce(new Error("network"));
+
+            await expect(
+                applyAmbassadorTemplate(mockContext, "ambassador")
+            ).resolves.toEqual({ ok: false, reason: "applyFailed" });
+        });
+    });
+
+    describe("restoreAmbassadorComponent", () => {
+        it("sends the tag alone and an empty template suffix for an empty body", async () => {
+            givenPage("ambassador", "");
+            updated();
+
+            const result = await restoreAmbassadorComponent(mockContext);
+
+            expect(result).toEqual({ ok: true, url: pageUrl });
+            expect(sentUpdate()).toEqual({
+                variables: {
+                    id: pageId,
+                    page: { templateSuffix: "", body: tag },
+                },
+            });
+        });
+
+        it("appends the tag after merchant text", async () => {
+            givenPage(null, "<p>Join us</p>");
+            updated();
+
+            await restoreAmbassadorComponent(mockContext);
+
+            expect(sentUpdate()?.variables.page.body).toBe(
+                `<p>Join us</p>${tag}`
+            );
+        });
+
+        it("does not add a second tag when the body already holds one", async () => {
+            givenPage("ambassador", tag);
+            updated();
+
+            await restoreAmbassadorComponent(mockContext);
+
+            expect(sentUpdate()?.variables.page.body).toBe(tag);
+        });
+
+        it("fails and sends no mutation when no page is recorded", async () => {
+            vi.mocked(getAmbassadorPageMetafield).mockResolvedValue(null);
+
+            const result = await restoreAmbassadorComponent(mockContext);
+
+            expect(result).toEqual({ ok: false, reason: "restoreFailed" });
+            expect(mockGraphql).not.toHaveBeenCalled();
+        });
+
+        it("returns restoreFailed on userErrors", async () => {
+            givenPage(null, "");
+            respond({
+                pageUpdate: {
+                    page: null,
+                    userErrors: [{ field: ["page"], message: "no" }],
+                },
+            });
+
+            const result = await restoreAmbassadorComponent(mockContext);
+
+            expect(result).toEqual({ ok: false, reason: "restoreFailed" });
+        });
+    });
+
+    describe("keepStandardLayout", () => {
+        it("writes the choice and keeps the page id and URL", async () => {
+            const result = await keepStandardLayout(mockContext);
+
+            expect(result).toEqual({ ok: true, url: pageUrl });
+            expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
+            expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(
+                mockContext,
+                { pageId, url: pageUrl, standardLayoutKept: true }
+            );
+            expect(mockGraphql).not.toHaveBeenCalled();
+        });
+
+        it("fails and writes nothing when no page is recorded", async () => {
+            vi.mocked(getAmbassadorPageMetafield).mockResolvedValue(null);
+
+            const result = await keepStandardLayout(mockContext);
+
+            expect(result).toEqual({ ok: false, reason: "keepFailed" });
+            expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+        });
+
+        it("fails when the write is rejected", async () => {
+            vi.mocked(writeAmbassadorPageMetafield).mockResolvedValue({
+                success: false,
+                userErrors: [{ field: "value", message: "invalid" }],
+            });
+
+            const result = await keepStandardLayout(mockContext);
+
+            expect(result).toEqual({ ok: false, reason: "keepFailed" });
+        });
+
+        it("fails instead of throwing when the write throws", async () => {
+            vi.mocked(writeAmbassadorPageMetafield).mockRejectedValue(
+                new Error("network")
+            );
+
+            await expect(keepStandardLayout(mockContext)).resolves.toEqual({
+                ok: false,
+                reason: "keepFailed",
+            });
         });
     });
 });
