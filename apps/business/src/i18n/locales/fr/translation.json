@@ -2018,7 +2018,7 @@
                 "faq5Question": "Question 5",
                 "faq5Answer": "Réponse 5"
             },
-            "faqPresets": {
+            "tonePresets": {
                 "classic": "Classique",
                 "earnings": "Gains",
                 "trust": "Confiance",
