@@ -6,7 +6,7 @@ import {
 } from "./metafields";
 import { arePageScopesGranted } from "./pageScopes";
 import { shopInfo } from "./shop";
-import { getThemeBlockPresence } from "./theme";
+import { getThemeBlockPresence, pickAmbassadorTemplate } from "./theme";
 
 export type AmbassadorPageLanguage = "en" | "fr";
 
@@ -26,6 +26,7 @@ export type AmbassadorPageRef = {
 };
 
 const AMBASSADOR_PAGE_BODY = "<frak-ambassador></frak-ambassador>";
+const AMBASSADOR_TAG_OPENING = "<frak-ambassador";
 const MAX_HANDLE_ATTEMPTS = 5;
 const PAGES_LISTING_SIZE = 250;
 
@@ -121,12 +122,19 @@ export async function buildAmbassadorPageUrl(
 
 /** `url` is null when the page is missing or unpublished; `ok: false` means it could not be read. */
 export type AmbassadorPageUrlResult =
-    | { ok: true; url: string | null }
+    | {
+          ok: true;
+          url: string;
+          templateSuffix: string | null;
+          body: string;
+      }
+    | { ok: true; url: null }
     | { ok: false };
 
 /**
- * Current storefront URL of a recorded page. A read failure is reported
- * apart from a missing page, so callers never clear a live URL on a blip.
+ * Current storefront URL, template suffix and body of a recorded page. A read
+ * failure is reported apart from a missing page, so callers never clear a
+ * live URL on a blip.
  */
 export async function resolveAmbassadorPageUrl(
     context: AuthenticatedContext,
@@ -139,13 +147,20 @@ query getAmbassadorPage($id: ID!) {
   page(id: $id) {
     handle
     isPublished
+    templateSuffix
+    body
   }
 }`,
             { variables: { id: pageId } }
         );
         const { data } = (await response.json()) as {
             data?: {
-                page?: { handle: string; isPublished: boolean } | null;
+                page?: {
+                    handle: string;
+                    isPublished: boolean;
+                    templateSuffix: string | null;
+                    body: string;
+                } | null;
             };
         };
         if (data === undefined) {
@@ -158,6 +173,8 @@ query getAmbassadorPage($id: ID!) {
         return {
             ok: true,
             url: await buildAmbassadorPageUrl(context, page.handle),
+            templateSuffix: page.templateSuffix,
+            body: page.body,
         };
     } catch (error) {
         log.error({ err: error, pageId }, "ambassador page read error");
@@ -226,11 +243,19 @@ export async function findPublishedPageByTemplateSuffixes(
 export type AmbassadorCardState =
     | { state: "linked"; url: string }
     | { state: "blockUnlinked" }
-    | { state: "none" };
+    | { state: "none" }
+    | {
+          state: "upgrade";
+          url: string;
+          template: string | null;
+          standardLayoutKept: boolean;
+      }
+    | { state: "blank"; url: string; template: string | null };
 
 /**
  * Card state for the shop's ambassador page. With the page scopes granted, a
- * changed storefront URL is written back to the record.
+ * changed storefront URL is written back to the record, and the page's
+ * template and body decide whether it is done, upgradable or blank.
  */
 export async function reconcileAmbassadorPage(
     context: AuthenticatedContext,
@@ -261,11 +286,33 @@ export async function reconcileAmbassadorPage(
 
         if (resolved.url !== record.url) {
             await writeAmbassadorPageMetafield(context, {
-                pageId: record.pageId,
+                ...record,
                 url: resolved.url,
             });
         }
-        return resolved.url ? { state: "linked", url: resolved.url } : unlinked;
+        if (!resolved.url) {
+            return unlinked;
+        }
+
+        const hasComponent = resolved.body.includes(AMBASSADOR_TAG_OPENING);
+        const ownTemplate =
+            resolved.templateSuffix !== null &&
+            templateSuffixes.includes(resolved.templateSuffix)
+                ? resolved.templateSuffix
+                : null;
+        if (ownTemplate && !hasComponent) {
+            return { state: "linked", url: resolved.url };
+        }
+        const template =
+            ownTemplate ?? pickAmbassadorTemplate(templateSuffixes);
+        return hasComponent
+            ? {
+                  state: "upgrade",
+                  url: resolved.url,
+                  template,
+                  standardLayoutKept: record.standardLayoutKept === true,
+              }
+            : { state: "blank", url: resolved.url, template };
     } catch (error) {
         log.error({ err: error }, "ambassador page reconcile error");
         return unlinked;

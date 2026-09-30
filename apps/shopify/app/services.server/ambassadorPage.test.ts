@@ -16,7 +16,10 @@ import {
 import { arePageScopesGranted } from "./pageScopes";
 import { getThemeBlockPresence } from "./theme";
 
-vi.mock("./theme", () => ({ getThemeBlockPresence: vi.fn() }));
+vi.mock("./theme", async (importActual) => ({
+    ...(await importActual<typeof import("./theme")>()),
+    getThemeBlockPresence: vi.fn(),
+}));
 vi.mock("./pageScopes", () => ({ arePageScopesGranted: vi.fn() }));
 vi.mock("./metafields", () => ({
     getAmbassadorPageMetafield: vi.fn(),
@@ -135,7 +138,14 @@ describe("createAmbassadorPage", () => {
 
 describe("resolveAmbassadorPageUrl", () => {
     it("returns the primary domain plus the page's current handle when published", async () => {
-        respond({ page: { handle: "renamed-page", isPublished: true } });
+        respond({
+            page: {
+                handle: "renamed-page",
+                isPublished: true,
+                templateSuffix: "ambassador",
+                body: "<p>hello</p>",
+            },
+        });
 
         const url = await resolveAmbassadorPageUrl(
             mockContext,
@@ -145,10 +155,14 @@ describe("resolveAmbassadorPageUrl", () => {
         expect(url).toEqual({
             ok: true,
             url: "https://www.shop.com/pages/renamed-page",
+            templateSuffix: "ambassador",
+            body: "<p>hello</p>",
         });
         expect(mockGraphql.mock.calls[0][1]).toEqual({
             variables: { id: "gid://shopify/Page/1" },
         });
+        expect(mockGraphql.mock.calls[0][0]).toContain("templateSuffix");
+        expect(mockGraphql.mock.calls[0][0]).toContain("body");
     });
 
     it("returns null when the page is unpublished", async () => {
@@ -271,10 +285,31 @@ describe("reconcileAmbassadorPage", () => {
         vi.mocked(arePageScopesGranted).mockResolvedValue(granted);
     }
 
-    function givenRecord(url: string | null) {
+    function givenRecord(url: string | null, standardLayoutKept?: boolean) {
         vi.mocked(getAmbassadorPageMetafield).mockResolvedValue({
             pageId,
             url,
+            ...(standardLayoutKept === undefined ? {} : { standardLayoutKept }),
+        });
+    }
+
+    const tag = "<frak-ambassador></frak-ambassador>";
+
+    function givenPage(
+        page: Partial<{
+            handle: string;
+            templateSuffix: string | null;
+            body: string;
+        }> = {}
+    ) {
+        respond({
+            page: {
+                handle: "old-handle",
+                isPublished: true,
+                templateSuffix: null,
+                body: tag,
+                ...page,
+            },
         });
     }
 
@@ -343,11 +378,16 @@ describe("reconcileAmbassadorPage", () => {
     it("writes the record once with the new URL when the page was renamed", async () => {
         givenScopes(true);
         givenRecord(oldUrl);
-        respond({ page: { handle: "renamed-page", isPublished: true } });
+        givenPage({ handle: "renamed-page" });
 
         const state = await reconcileAmbassadorPage(mockContext, []);
 
-        expect(state).toEqual({ state: "linked", url: newUrl });
+        expect(state).toEqual({
+            state: "upgrade",
+            url: newUrl,
+            template: null,
+            standardLayoutKept: false,
+        });
         expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
         expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
             pageId,
@@ -358,11 +398,18 @@ describe("reconcileAmbassadorPage", () => {
     it("writes the URL of a page recorded without one", async () => {
         givenScopes(true);
         givenRecord(null);
-        respond({ page: { handle: "renamed-page", isPublished: true } });
+        givenPage({ handle: "renamed-page", templateSuffix: "ambassador" });
 
-        const state = await reconcileAmbassadorPage(mockContext, []);
+        const state = await reconcileAmbassadorPage(mockContext, [
+            "ambassador",
+        ]);
 
-        expect(state).toEqual({ state: "linked", url: newUrl });
+        expect(state).toEqual({
+            state: "upgrade",
+            url: newUrl,
+            template: "ambassador",
+            standardLayoutKept: false,
+        });
         expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
         expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
             pageId,
@@ -405,9 +452,11 @@ describe("reconcileAmbassadorPage", () => {
     it("writes nothing when the derived URL matches the record", async () => {
         givenScopes(true);
         givenRecord(oldUrl);
-        respond({ page: { handle: "old-handle", isPublished: true } });
+        givenPage({ templateSuffix: "ambassador", body: "" });
 
-        const state = await reconcileAmbassadorPage(mockContext, []);
+        const state = await reconcileAmbassadorPage(mockContext, [
+            "ambassador",
+        ]);
 
         expect(state).toEqual({ state: "linked", url: oldUrl });
         expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
@@ -467,7 +516,7 @@ describe("reconcileAmbassadorPage", () => {
     it("returns the unlinked state instead of throwing when the record write throws", async () => {
         givenScopes(true);
         givenRecord(oldUrl);
-        respond({ page: { handle: "renamed-page", isPublished: true } });
+        givenPage({ handle: "renamed-page" });
         vi.mocked(writeAmbassadorPageMetafield).mockRejectedValue(
             new Error("network")
         );
@@ -475,6 +524,174 @@ describe("reconcileAmbassadorPage", () => {
         const state = await reconcileAmbassadorPage(mockContext, []);
 
         expect(state).toEqual({ state: "none" });
+    });
+
+    it("offers the ambassador template for a page on the default template still holding the tag", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        givenPage();
+
+        const state = await reconcileAmbassadorPage(mockContext, [
+            "ambassador",
+        ]);
+
+        expect(state).toEqual({
+            state: "upgrade",
+            url: oldUrl,
+            template: "ambassador",
+            standardLayoutKept: false,
+        });
+    });
+
+    it("reports upgrade with the stored choice when the standard layout was kept", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl, true);
+        givenPage();
+
+        const state = await reconcileAmbassadorPage(mockContext, [
+            "ambassador",
+        ]);
+
+        expect(state).toEqual({
+            state: "upgrade",
+            url: oldUrl,
+            template: "ambassador",
+            standardLayoutKept: true,
+        });
+    });
+
+    it("names the page's own template when it already holds the block and the tag", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        givenPage({ templateSuffix: "zeta" });
+
+        const state = await reconcileAmbassadorPage(mockContext, [
+            "ambassador",
+            "zeta",
+        ]);
+
+        expect(state).toEqual({
+            state: "upgrade",
+            url: oldUrl,
+            template: "zeta",
+            standardLayoutKept: false,
+        });
+    });
+
+    it("reports blank for an empty body on the default template, even when the standard layout was kept", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl, true);
+        givenPage({ body: "" });
+
+        const state = await reconcileAmbassadorPage(mockContext, []);
+
+        expect(state).toEqual({ state: "blank", url: oldUrl, template: null });
+    });
+
+    it("reports blank with the picked template when a template is available", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        givenPage({ body: "" });
+
+        const state = await reconcileAmbassadorPage(mockContext, [
+            "ambassador",
+        ]);
+
+        expect(state).toEqual({
+            state: "blank",
+            url: oldUrl,
+            template: "ambassador",
+        });
+    });
+
+    it("reports blank for merchant text without the tag on the default template", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        givenPage({ body: "<p>Join us</p>" });
+
+        const state = await reconcileAmbassadorPage(mockContext, []);
+
+        expect(state).toEqual({ state: "blank", url: oldUrl, template: null });
+    });
+
+    it("reports blank when the page's template is no longer an ambassador template", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        givenPage({ templateSuffix: "deleted", body: "" });
+
+        const state = await reconcileAmbassadorPage(mockContext, []);
+
+        expect(state).toEqual({ state: "blank", url: oldUrl, template: null });
+    });
+
+    it("names a template that holds the block whatever its name", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        givenPage();
+
+        const state = await reconcileAmbassadorPage(mockContext, ["referral"]);
+
+        expect(state).toMatchObject({ state: "upgrade", template: "referral" });
+    });
+
+    it("names the same single template whatever the order of several", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl);
+        givenPage();
+        givenPage();
+
+        const first = await reconcileAmbassadorPage(mockContext, [
+            "zeta",
+            "referral",
+        ]);
+        const second = await reconcileAmbassadorPage(mockContext, [
+            "referral",
+            "zeta",
+        ]);
+
+        expect(first).toMatchObject({ template: "referral" });
+        expect(second).toEqual(first);
+    });
+
+    it("keeps the stored choice when a renamed page is rewritten", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl, true);
+        givenPage({ handle: "renamed-page" });
+
+        await reconcileAmbassadorPage(mockContext, []);
+
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: newUrl,
+            standardLayoutKept: true,
+        });
+    });
+
+    it("keeps the stored choice when the page was unpublished", async () => {
+        givenScopes(true);
+        givenRecord(oldUrl, true);
+        respond({ page: { handle: "old-handle", isPublished: false } });
+
+        await reconcileAmbassadorPage(mockContext, []);
+
+        expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
+            pageId,
+            url: null,
+            standardLayoutKept: true,
+        });
+    });
+
+    it("makes no page call and reports linked from the record when scopes are missing, whatever the templates", async () => {
+        givenScopes(false);
+        givenRecord(oldUrl, true);
+
+        const state = await reconcileAmbassadorPage(mockContext, [
+            "ambassador",
+        ]);
+
+        expect(state).toEqual({ state: "linked", url: oldUrl });
+        expect(mockGraphql).not.toHaveBeenCalled();
     });
 });
 
