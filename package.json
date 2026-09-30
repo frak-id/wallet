@@ -127,7 +127,7 @@
     "sonner": "^2.0.8",
     "canvas-confetti": "^1.9.4",
     "@types/canvas-confetti": "^1.9.0",
-    "preact": "^10.29.8",
+    "preact": "^11.0.0",
     "@preact/preset-vite": "^2.10.6",
     "@tanstack/react-router": "1.170.41",
     "@tanstack/router-generator": "1.167.40",
