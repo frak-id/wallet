@@ -940,12 +940,6 @@ export default interface Resources {
     "customize": {
       "ambassador": {
         "description": "The hero photo and wording of your ambassador page, on every platform where it is placed. An empty field keeps the default text.",
-        "faqPresets": {
-          "casual": "Casual",
-          "classic": "Classic",
-          "earnings": "Earnings",
-          "trust": "Trust"
-        },
         "fields": {
           "faq1Answer": "Answer 1",
           "faq1Question": "Question 1",
@@ -985,7 +979,13 @@ export default interface Resources {
         },
         "preview": "Preview of the top of the page",
         "title": "Ambassador page",
-        "tokenHint": "Tip: {BRAND} shows your store name and {REWARD} the campaign reward."
+        "tokenHint": "Tip: {BRAND} shows your store name and {REWARD} the campaign reward.",
+        "tonePresets": {
+          "casual": "Casual",
+          "classic": "Classic",
+          "earnings": "Earnings",
+          "trust": "Trust"
+        }
       },
       "components": {
         "advanced": "Advanced settings",

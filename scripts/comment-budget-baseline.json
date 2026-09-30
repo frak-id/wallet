@@ -166,7 +166,7 @@
     "apps/wallet/app/module/explorer/stores/explorerSortStore.ts": 1,
     "apps/wallet/app/module/favorites/component/FavoritesPage/index.tsx": 1,
     "apps/wallet/app/module/history/utils/historyEntry.ts": 1,
-    "apps/wallet/app/module/install/component/InstallView.tsx": 2,
+    "apps/wallet/app/module/install/component/InstallView.tsx": 1,
     "apps/wallet/app/module/install/params.ts": 1,
     "apps/wallet/app/module/monerium/hooks/useMoneriumOrders.ts": 1,
     "apps/wallet/app/module/monerium/store/ibanStore.ts": 1,

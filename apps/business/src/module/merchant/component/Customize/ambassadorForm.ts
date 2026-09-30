@@ -1,4 +1,5 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
+import type { componentDefaults } from "@frak-labs/components/i18n/defaults";
 import { fromLocalizedText, toLocalizedText } from "./localizable";
 import type { LocalizedText } from "./types";
 
@@ -30,6 +31,24 @@ export type AmbassadorTextField =
 const TEXT_FIELDS = Object.values(
     AMBASSADOR_FIELD_GROUPS
 ).flat() as AmbassadorTextField[];
+
+export type AmbassadorCopy = (typeof componentDefaults)["en"]["ambassador"];
+
+/** The built-in copy a field falls back to, as the page renders it with an amount. */
+export function builtInText(copy: AmbassadorCopy, field: AmbassadorTextField) {
+    switch (field) {
+        case "heroTitle":
+            return copy.heroHeadline;
+        case "heroLede":
+            return copy.heroLedeReward;
+        case "rewardHeading":
+            return copy.rewardHeadingReward;
+        case "faq5Answer":
+            return `${copy.faq5AnswerBeforeLink}${copy.faq5AnswerLinkText}${copy.faq5AnswerAfterLink}`;
+        default:
+            return copy[field];
+    }
+}
 
 export type AmbassadorPhotoMode = "default" | "custom" | "none";
 

@@ -21,7 +21,7 @@ import { SECTION_KEYS } from "./sections";
 describe("one page-level Save with both components sections dirty", () => {
     it("keeps the ambassador edit when the components editor saves after it", async () => {
         const sdkConfig: SdkConfig = {
-            components: { ambassador: { heroTitle: "Old" } },
+            components: { ambassador: { faq1Question: "Old" } },
         };
         const queryClient = new QueryClient();
         queryClient.setQueryData(
@@ -57,7 +57,7 @@ describe("one page-level Save with both components sections dirty", () => {
         );
 
         fireEvent.change(
-            screen.getByLabelText("customize.ambassador.fields.heroTitle"),
+            screen.getByLabelText("customize.ambassador.fields.faq1Question"),
             { target: { value: "New" } }
         );
         await act(async () => {
@@ -66,6 +66,6 @@ describe("one page-level Save with both components sections dirty", () => {
         });
 
         const lastPut = editSdkConfig.mock.calls.at(-1)?.[0];
-        expect(lastPut.components.ambassador).toEqual({ heroTitle: "New" });
+        expect(lastPut.components.ambassador).toEqual({ faq1Question: "New" });
     });
 });

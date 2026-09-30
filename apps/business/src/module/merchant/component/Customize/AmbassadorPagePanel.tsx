@@ -34,10 +34,12 @@ import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
 import { useCustomizeSection } from "../saveRegistry";
 import {
     AMBASSADOR_FIELD_GROUPS,
+    type AmbassadorCopy,
     type AmbassadorFormValues,
     type AmbassadorPhotoMode,
     type AmbassadorTextField,
     ambassadorToFormValues,
+    builtInText,
     formValuesToAmbassador,
 } from "./ambassadorForm";
 import { WordingLangTabs } from "./ComponentEditor";
@@ -46,9 +48,10 @@ import { AdvancedDisclosure } from "./Disclosure";
 import { FieldGroup } from "./fields/shared";
 import { resolveBuiltInLang } from "./localizable";
 import {
-    AMBASSADOR_FAQ_PRESET_FIELDS,
-    AMBASSADOR_FAQ_PRESETS,
-    matchAmbassadorFaqPreset,
+    AMBASSADOR_TONE_GROUPS,
+    AMBASSADOR_TONE_PRESET_FIELDS,
+    AMBASSADOR_TONE_PRESETS,
+    matchAmbassadorTonePreset,
 } from "./presets";
 import { SegmentedTabs } from "./SegmentedTabs";
 import { SECTION_KEYS } from "./sections";
@@ -56,13 +59,11 @@ import type { LocalizedText, WordingLang } from "./types";
 import { useSaveComponents } from "./useSaveComponents";
 import { PresetRow } from "./WordingPresets";
 
-type AmbassadorCopy = (typeof componentDefaults)["en"]["ambassador"];
-
 const PHOTO_MODES = ["default", "custom", "none"] as const;
 
 // Module-level so the watch subscription stays stable across renders.
-const FAQ_PRESET_EN_PATHS = AMBASSADOR_FAQ_PRESET_FIELDS.map(
-    (field) => `texts.${field}.en` as const
+const TONE_PRESET_PATHS = AMBASSADOR_TONE_PRESET_FIELDS.map(
+    (field) => `texts.${field}` as const
 );
 
 const LONG_FIELDS: ReadonlySet<AmbassadorTextField> = new Set([
@@ -74,22 +75,6 @@ const LONG_FIELDS: ReadonlySet<AmbassadorTextField> = new Set([
     "faq4Answer",
     "faq5Answer",
 ]);
-
-/** The built-in copy a field falls back to, as the page renders it with an amount. */
-function builtInText(copy: AmbassadorCopy, field: AmbassadorTextField) {
-    switch (field) {
-        case "heroTitle":
-            return copy.heroHeadline;
-        case "heroLede":
-            return copy.heroLedeReward;
-        case "rewardHeading":
-            return copy.rewardHeadingReward;
-        case "faq5Answer":
-            return `${copy.faq5AnswerBeforeLink}${copy.faq5AnswerLinkText}${copy.faq5AnswerAfterLink}`;
-        default:
-            return copy[field];
-    }
-}
 
 /** Same default/custom/none photo logic for both previews. */
 function heroImageUrlFor(
@@ -261,42 +246,29 @@ export function AmbassadorPagePanel({
                             {t("customize.ambassador.tokenHint")}
                         </Text>
 
-                        {(
-                            Object.keys(AMBASSADOR_FIELD_GROUPS) as Array<
-                                keyof typeof AMBASSADOR_FIELD_GROUPS
-                            >
-                        ).map((group) => (
-                            <FieldGroup
-                                key={group}
-                                title={t(
-                                    `customize.ambassador.groups.${group}`
-                                )}
-                            >
-                                {group === "faq" ? (
-                                    <FaqGroupBody
-                                        form={form}
-                                        lang={activeLang}
-                                        builtInLang={builtInLang}
-                                        copy={copy}
-                                        shopName={shopName}
-                                        reportFocus={reportFocus}
-                                    />
-                                ) : (
-                                    AMBASSADOR_FIELD_GROUPS[group].map(
-                                        (field) => (
-                                            <AmbassadorFieldInput
-                                                key={field}
-                                                form={form}
-                                                field={field}
-                                                lang={activeLang}
-                                                copy={copy}
-                                                reportFocus={reportFocus}
-                                            />
-                                        )
-                                    )
-                                )}
-                            </FieldGroup>
-                        ))}
+                        <ToneSection
+                            form={form}
+                            lang={activeLang}
+                            builtInLang={builtInLang}
+                            copy={copy}
+                            shopName={shopName}
+                            reportFocus={reportFocus}
+                        />
+
+                        <FieldGroup
+                            title={t("customize.ambassador.groups.faq")}
+                        >
+                            {AMBASSADOR_FIELD_GROUPS.faq.map((field) => (
+                                <AmbassadorFieldInput
+                                    key={field}
+                                    form={form}
+                                    field={field}
+                                    lang={activeLang}
+                                    copy={copy}
+                                    reportFocus={reportFocus}
+                                />
+                            ))}
+                        </FieldGroup>
                     </Stack>
                 </Card>
                 <div className={customizeStyles.phoneRail} aria-hidden="true">
@@ -404,7 +376,8 @@ function AmbassadorFieldInput({
     );
 }
 
-function FaqGroupBody({
+/** Tone tiles for the 8 texts above the FAQ, with those fields under a disclosure. */
+function ToneSection({
     form,
     lang,
     builtInLang,
@@ -421,25 +394,27 @@ function FaqGroupBody({
 }) {
     const { t } = useTranslation();
     const [advancedOpen, setAdvancedOpen] = useState(false);
-    const faqEn = form.watch(FAQ_PRESET_EN_PATHS);
-    const selected = matchAmbassadorFaqPreset(
-        Object.fromEntries(
-            AMBASSADOR_FAQ_PRESET_FIELDS.map((field, i) => [field, faqEn[i]])
-        ) as (typeof AMBASSADOR_FAQ_PRESETS)[number]["en"]
-    );
+    const watched = form.watch(TONE_PRESET_PATHS);
+    const selected = matchAmbassadorTonePreset(watched);
 
     const pick = (value: string) => {
-        const preset = AMBASSADOR_FAQ_PRESETS[Number(value)];
-        for (const field of AMBASSADOR_FAQ_PRESET_FIELDS) {
+        const index = Number(value);
+        const preset = AMBASSADOR_TONE_PRESETS[index];
+        const isClassic = index === 0;
+        for (const field of AMBASSADOR_TONE_PRESET_FIELDS) {
             form.setValue(`texts.${field}.default`, "", { shouldDirty: true });
-            form.setValue(`texts.${field}.en`, preset.en[field], {
-                shouldDirty: true,
-            });
-            form.setValue(`texts.${field}.fr`, preset.fr[field], {
-                shouldDirty: true,
-            });
+            form.setValue(
+                `texts.${field}.en`,
+                isClassic ? "" : preset.en[field],
+                { shouldDirty: true }
+            );
+            form.setValue(
+                `texts.${field}.fr`,
+                isClassic ? "" : preset.fr[field],
+                { shouldDirty: true }
+            );
         }
-        reportFocus("faq1Question");
+        reportFocus("heroTitle");
     };
 
     return (
@@ -449,12 +424,12 @@ function FaqGroupBody({
                 onValueChange={pick}
             >
                 <Tiles columns={{ mobile: 1, tablet: 2 }} space="m">
-                    {AMBASSADOR_FAQ_PRESETS.map((preset, index) => (
+                    {AMBASSADOR_TONE_PRESETS.map((preset, index) => (
                         <PresetRow key={preset.key} value={String(index)}>
                             <Stack space="none" as="span">
                                 <Text variant="body" weight="medium" as="span">
                                     {t(
-                                        `customize.ambassador.faqPresets.${preset.key}`
+                                        `customize.ambassador.tonePresets.${preset.key}`
                                     )}
                                 </Text>
                                 <Text
@@ -462,7 +437,7 @@ function FaqGroupBody({
                                     color="tertiary"
                                     as="span"
                                 >
-                                    {preset[builtInLang].faq1Question.replace(
+                                    {preset[builtInLang].heroTitle.replace(
                                         /\{BRAND\}/g,
                                         () => shopName
                                     )}
@@ -477,18 +452,25 @@ function FaqGroupBody({
                 isOpen={advancedOpen}
                 onToggle={() => setAdvancedOpen(!advancedOpen)}
             >
-                <div className={customizeStyles.settingsGrid}>
-                    {AMBASSADOR_FIELD_GROUPS.faq.map((field) => (
-                        <AmbassadorFieldInput
-                            key={field}
-                            form={form}
-                            field={field}
-                            lang={lang}
-                            copy={copy}
-                            reportFocus={reportFocus}
-                        />
+                <Stack space="m">
+                    {AMBASSADOR_TONE_GROUPS.map((group) => (
+                        <FieldGroup
+                            key={group}
+                            title={t(`customize.ambassador.groups.${group}`)}
+                        >
+                            {AMBASSADOR_FIELD_GROUPS[group].map((field) => (
+                                <AmbassadorFieldInput
+                                    key={field}
+                                    form={form}
+                                    field={field}
+                                    lang={lang}
+                                    copy={copy}
+                                    reportFocus={reportFocus}
+                                />
+                            ))}
+                        </FieldGroup>
                     ))}
-                </div>
+                </Stack>
             </AdvancedDisclosure>
         </Stack>
     );
