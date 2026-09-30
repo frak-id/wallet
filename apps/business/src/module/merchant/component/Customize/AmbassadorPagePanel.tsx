@@ -23,7 +23,7 @@ import {
     useMemo,
     useState,
 } from "react";
-import { type UseFormReturn, useForm } from "react-hook-form";
+import { type UseFormReturn, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { FloatingPhonePreview } from "@/module/common/component/FloatingPhonePreview";
 import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
@@ -59,6 +59,8 @@ import { useSaveComponents } from "./useSaveComponents";
 import { PresetRow } from "./WordingPresets";
 
 const PHOTO_MODES = ["default", "custom", "none"] as const;
+
+type Translations = { en: string; fr: string };
 
 // Module-level so the watch subscription stays stable across renders.
 const TONE_PRESET_PATHS = AMBASSADOR_TONE_PRESET_FIELDS.map(
@@ -298,16 +300,25 @@ function AmbassadorFieldInput({
     form,
     field,
     lang,
+    builtInLang,
     copy,
+    replacedTranslations,
     reportFocus,
 }: {
     form: UseFormReturn<AmbassadorFormValues>;
     field: AmbassadorTextField;
     lang: WordingLang;
+    builtInLang: Language;
     copy: AmbassadorCopy;
+    replacedTranslations: Map<AmbassadorTextField, Translations>;
     reportFocus: (slot: string) => void;
 }) {
     const { t } = useTranslation();
+    // On the all-languages tab, an empty field renders the store language's text.
+    const storeText = useWatch({
+        control: form.control,
+        name: `texts.${field}.${builtInLang}`,
+    });
     return (
         <FormField
             control={form.control}
@@ -316,22 +327,34 @@ function AmbassadorFieldInput({
                 const props = {
                     maxLength: 500,
                     label: t(`customize.ambassador.fields.${field}`),
-                    placeholder: builtInText(copy, field),
+                    placeholder: storeText || builtInText(copy, field),
                     onFocus: () => reportFocus(field),
                     ...input,
                     // Visitors resolve their language before "all languages",
-                    // so an all-languages edit replaces both translations.
+                    // so an all-languages text replaces both translations until
+                    // it is cleared again.
                     onChange: (
                         event: ChangeEvent<
                             HTMLInputElement | HTMLTextAreaElement
                         >
                     ) => {
+                        const previous = input.value;
+                        const next = event.target.value;
                         input.onChange(event);
                         if (lang !== "default") return;
-                        form.setValue(`texts.${field}.en`, "", {
+                        if (!previous && next) {
+                            replacedTranslations.set(field, {
+                                en: form.getValues(`texts.${field}.en`),
+                                fr: form.getValues(`texts.${field}.fr`),
+                            });
+                        }
+                        const restored = next
+                            ? undefined
+                            : replacedTranslations.get(field);
+                        form.setValue(`texts.${field}.en`, restored?.en ?? "", {
                             shouldDirty: true,
                         });
-                        form.setValue(`texts.${field}.fr`, "", {
+                        form.setValue(`texts.${field}.fr`, restored?.fr ?? "", {
                             shouldDirty: true,
                         });
                     },
@@ -378,6 +401,10 @@ function ToneSection({
 }) {
     const { t } = useTranslation();
     const [advancedOpen, setAdvancedOpen] = useState(false);
+    // Held here, not per field, so it outlives the disclosure unmounting them.
+    const [replacedTranslations] = useState(
+        () => new Map<AmbassadorTextField, Translations>()
+    );
     const watched = form.watch(TONE_PRESET_PATHS);
     const selected = matchAmbassadorTonePreset(watched);
 
@@ -451,7 +478,9 @@ function ToneSection({
                                     form={form}
                                     field={field}
                                     lang={lang}
+                                    builtInLang={builtInLang}
                                     copy={copy}
+                                    replacedTranslations={replacedTranslations}
                                     reportFocus={reportFocus}
                                 />
                             ))}

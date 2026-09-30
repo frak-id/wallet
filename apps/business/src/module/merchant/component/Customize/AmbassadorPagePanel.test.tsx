@@ -484,6 +484,43 @@ describe("AmbassadorPagePanel", () => {
         expect(await view.save()).toEqual({ ambassador: faq });
     });
 
+    it("shows a picked tone as the all-languages placeholder, in the store's language", () => {
+        renderPanel({ lang: "fr" });
+        pickTone("trust");
+        openAdvanced();
+
+        const heroTitle = screen.getByLabelText(
+            "customize.ambassador.fields.heroTitle"
+        );
+        expect(heroTitle).toHaveValue("");
+        expect(heroTitle).toHaveAttribute(
+            "placeholder",
+            AMBASSADOR_TONE_PRESETS[2].fr.heroTitle
+        );
+    });
+
+    it("brings a field's translations back once its all-languages text is cleared", async () => {
+        const view = renderPanel({});
+        pickTone("earnings");
+        openAdvanced();
+        const heroTitle = () =>
+            screen.getByLabelText("customize.ambassador.fields.heroTitle");
+        fireEvent.change(heroTitle(), { target: { value: "ssd" } });
+        openAdvanced();
+        openAdvanced();
+        fireEvent.change(heroTitle(), { target: { value: "" } });
+
+        expect(
+            screen.getByRole("radio", { checked: true })
+        ).toHaveAccessibleName(/customize\.ambassador\.tonePresets\.earnings/);
+        const earnings = AMBASSADOR_TONE_PRESETS[1];
+        const components = await view.save();
+        expect(components.ambassador.heroTitle).toEqual({
+            en: earnings.en.heroTitle,
+            fr: earnings.fr.heroTitle,
+        });
+    });
+
     it("stores an all-languages edit in place of the field's English and French text", async () => {
         const view = renderPanel({
             components: {
