@@ -22,6 +22,10 @@ import { ExternalButton } from "../ui/ExternalLink";
 
 const SUGGESTED_TEMPLATE = "ambassador";
 const AMBASSADOR_TAG = "<frak-ambassador></frak-ambassador>";
+// Inline styles: vintage themes name their page container differently.
+const VINTAGE_TEMPLATE = `<div style="max-width: 1200px; margin: 0 auto; padding: clamp(36px, 5vw, 64px) 20px;">
+  ${AMBASSADOR_TAG}
+</div>`;
 
 /**
  * Illustrated steps from the theme editor to a saved ambassador template,
@@ -126,7 +130,7 @@ export function AmbassadorGuide({
 export function VintageAmbassadorGuide() {
     const { t } = useTranslation();
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
-    const newPageUrl = `https://${rootData?.shop?.myshopifyDomain}/admin/pages/new`;
+    const admin = `https://${rootData?.shop?.myshopifyDomain}/admin`;
 
     return (
         <s-stack gap="large">
@@ -135,7 +139,7 @@ export function VintageAmbassadorGuide() {
                 <s-text>
                     {t("ambassadorGuide.vintage.create.description")}
                 </s-text>
-                <ExternalButton variant="secondary" href={newPageUrl}>
+                <ExternalButton variant="secondary" href={`${admin}/pages/new`}>
                     {t("ambassadorGuide.vintage.create.cta")}
                 </ExternalButton>
             </Step>
@@ -148,6 +152,61 @@ export function VintageAmbassadorGuide() {
             <Step index={3} title={t("ambassadorGuide.vintage.save.title")}>
                 <s-text>{t("ambassadorGuide.vintage.save.description")}</s-text>
             </Step>
+            <s-section heading={t("ambassadorGuide.vintage.fullWidth.title")}>
+                <s-stack gap="large">
+                    <s-text>
+                        {t("ambassadorGuide.vintage.fullWidth.intro")}
+                    </s-text>
+                    <Step
+                        index={1}
+                        title={t(
+                            "ambassadorGuide.vintage.fullWidth.open.title"
+                        )}
+                    >
+                        <s-text>
+                            {t(
+                                "ambassadorGuide.vintage.fullWidth.open.description"
+                            )}
+                        </s-text>
+                        <ExternalButton
+                            variant="secondary"
+                            href={`${admin}/themes/current/code`}
+                        >
+                            {t("ambassadorGuide.vintage.fullWidth.open.cta")}
+                        </ExternalButton>
+                    </Step>
+                    <Step
+                        index={2}
+                        title={t(
+                            "ambassadorGuide.vintage.fullWidth.file.title"
+                        )}
+                    >
+                        <s-text>
+                            {t(
+                                "ambassadorGuide.vintage.fullWidth.file.description"
+                            )}
+                        </s-text>
+                        <CopyableSnippet
+                            snippet={VINTAGE_TEMPLATE}
+                            copyLabelKey="theme.legacy.copySnippet"
+                            copiedLabelKey="theme.legacy.copied"
+                            errorLabelKey="theme.legacy.copyError"
+                        />
+                    </Step>
+                    <Step
+                        index={3}
+                        title={t(
+                            "ambassadorGuide.vintage.fullWidth.assign.title"
+                        )}
+                    >
+                        <s-text>
+                            {t(
+                                "ambassadorGuide.vintage.fullWidth.assign.description"
+                            )}
+                        </s-text>
+                    </Step>
+                </s-stack>
+            </s-section>
         </s-stack>
     );
 }

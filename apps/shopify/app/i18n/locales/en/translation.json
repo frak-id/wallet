@@ -155,7 +155,7 @@
         "vintage": {
             "title": "Set up your ambassador page",
             "settingsDescription": "Add the Frak Ambassador to a page of your shop. The guide walks you through it in three steps.",
-            "intro": "Your theme does not support page templates, so the ambassador page uses its standard page layout. Set it up in three steps in your Shopify admin.",
+            "intro": "Your theme is a vintage theme: its theme editor cannot create page templates. Set up your ambassador page in three steps in your Shopify admin. It uses your theme's standard page layout.",
             "create": {
                 "title": "Create a page",
                 "description": "Give it a title, for example \"Become an ambassador\".",
@@ -168,6 +168,23 @@
             "save": {
                 "title": "Save and share it",
                 "description": "Check that the page is Visible, then click Save. Add the page to one of your menus so your customers find it."
+            },
+            "fullWidth": {
+                "title": "Optional: make the page full-width",
+                "intro": "The standard page layout adds a page title and a narrow column. A page template of its own removes both, but it means adding a file to your theme's code. Only create this new file: do not change the others.",
+                "open": {
+                    "title": "Open your theme code",
+                    "description": "In the code editor, select the templates folder, then click the New File icon at the top of the file list.",
+                    "cta": "Open the code editor"
+                },
+                "file": {
+                    "title": "Create the ambassador template",
+                    "description": "Name the file page.ambassador.liquid, paste this code into it, then click Save."
+                },
+                "assign": {
+                    "title": "Assign it to your page",
+                    "description": "Open your ambassador page, choose ambassador under Template, then click Save."
+                }
             }
         }
     },

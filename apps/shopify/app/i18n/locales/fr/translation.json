@@ -155,7 +155,7 @@
         "vintage": {
             "title": "Créez votre page ambassadeur",
             "settingsDescription": "Ajoutez l'ambassadeur Frak à une page de votre boutique. Le guide vous accompagne en trois étapes.",
-            "intro": "Votre thème ne prend pas en charge les modèles de page : votre page ambassadeur utilise donc sa mise en page standard. Créez-la en trois étapes dans votre admin Shopify.",
+            "intro": "Votre thème est un thème vintage : son éditeur de thème ne peut pas créer de modèle de page. Créez votre page ambassadeur en trois étapes dans votre admin Shopify. Elle utilise la mise en page standard de votre thème.",
             "create": {
                 "title": "Créez une page",
                 "description": "Donnez-lui un titre, par exemple « Devenir ambassadeur ».",
@@ -168,6 +168,23 @@
             "save": {
                 "title": "Enregistrez et partagez-la",
                 "description": "Vérifiez que la page est Visible, puis cliquez sur Enregistrer. Ajoutez la page à l'un de vos menus pour que vos clients la trouvent."
+            },
+            "fullWidth": {
+                "title": "Optionnel : passez la page en pleine largeur",
+                "intro": "La mise en page standard ajoute un titre de page et une colonne étroite. Un modèle de page dédié supprime les deux, mais il faut ajouter un fichier au code de votre thème. Créez seulement ce nouveau fichier : ne modifiez pas les autres.",
+                "open": {
+                    "title": "Ouvrez le code de votre thème",
+                    "description": "Dans l'éditeur de code, sélectionnez le dossier templates, puis cliquez sur l'icône New File en haut de la liste des fichiers.",
+                    "cta": "Ouvrir l'éditeur de code"
+                },
+                "file": {
+                    "title": "Créez le modèle ambassadeur",
+                    "description": "Nommez le fichier page.ambassador.liquid, collez-y ce code, puis cliquez sur Save."
+                },
+                "assign": {
+                    "title": "Appliquez-le à votre page",
+                    "description": "Ouvrez votre page ambassadeur, choisissez ambassador sous Modèle, puis cliquez sur Enregistrer."
+                }
             }
         }
     },
