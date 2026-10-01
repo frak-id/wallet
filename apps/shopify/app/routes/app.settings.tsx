@@ -4,7 +4,6 @@ import { ConnectedShopInfo } from "app/components/ConnectedShopInfo";
 import { Instructions } from "app/components/Instructions";
 import { IntermediateInstall } from "app/components/IntermediateInstall";
 import { LegacyInstall } from "app/components/LegacyInstall";
-import { AMBASSADOR_GUIDE_HREF } from "app/components/OptionalSetup";
 import { Pixel } from "app/components/Pixel";
 import { Skeleton } from "app/components/Skeleton";
 import { Stepper } from "app/components/Stepper";
@@ -35,13 +34,7 @@ import { authenticate } from "app/shopify.server";
 import { Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs } from "react-router";
-import {
-    Await,
-    data,
-    useLoaderData,
-    useNavigate,
-    useRouteLoaderData,
-} from "react-router";
+import { Await, data, useLoaderData, useRouteLoaderData } from "react-router";
 import type { loader as appLoader } from "./app";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -106,7 +99,6 @@ export default function SettingsIndex() {
     const { t } = useTranslation();
     const { merchantInfo, webPixel, merchantId, frakWebhook, webhooks, theme } =
         useLoaderData<typeof loader>();
-    const navigate = useNavigate();
 
     return (
         <s-page heading={t("settings.title")}>
@@ -159,22 +151,6 @@ export default function SettingsIndex() {
                     <s-heading>{t("navigation.settings.theme")}</s-heading>
                     <ThemeSection theme={theme} />
                 </s-stack>
-
-                <s-section heading={t("ambassadorGuide.settingsHeading")}>
-                    <s-stack gap="base">
-                        <s-text>
-                            {t("ambassadorGuide.settingsDescription")}
-                        </s-text>
-                        <s-stack direction="inline">
-                            <s-button
-                                variant="secondary"
-                                onClick={() => navigate(AMBASSADOR_GUIDE_HREF)}
-                            >
-                                {t("optionalSetup.ambassador.guideCta")}
-                            </s-button>
-                        </s-stack>
-                    </s-stack>
-                </s-section>
             </s-stack>
         </s-page>
     );
