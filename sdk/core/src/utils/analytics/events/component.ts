@@ -71,4 +71,8 @@ export type SdkComponentEventMap = {
         placement?: string;
         variant: PostPurchaseVariant;
     };
+
+    // Ambassador page — its share CTAs report as `entry_point: "ambassador"`
+    // on the listener's `sharing_page_opened`.
+    ambassador_impression: undefined;
 };

@@ -366,7 +366,7 @@ export function PostPurchase({
             placement: placementId,
             variant: resolvedVariant,
         });
-        openSharingPage(undefined, placementId, {
+        openSharingPage("post_purchase", undefined, placementId, {
             link: resolvedSharingUrl,
             products: parsedProducts,
             checkoutToken: token,

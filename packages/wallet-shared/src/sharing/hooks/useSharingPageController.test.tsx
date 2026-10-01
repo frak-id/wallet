@@ -109,6 +109,20 @@ function lastEstimatedReward(rawT: ReturnType<typeof vi.fn>) {
     return rawT.mock.calls.at(-1)?.[1]?.estimatedReward;
 }
 
+describe("view tracking", () => {
+    it("reports the SDK entry point on sharing_page_viewed", () => {
+        setup({}, { entryPoint: "ambassador" });
+
+        expect(trackEvent).toHaveBeenCalledWith(
+            "sharing_page_viewed",
+            expect.objectContaining({
+                merchant_id: merchantId,
+                entry_point: "ambassador",
+            })
+        );
+    });
+});
+
 describe("outcome hand-off", () => {
     it("does not share locally when the host takes the share", () => {
         const share = vi.fn(() => true);

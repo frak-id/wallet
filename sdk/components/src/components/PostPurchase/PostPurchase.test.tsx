@@ -100,6 +100,7 @@ describe("PostPurchase sharing hand-off", () => {
 
         await waitFor(() => {
             expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                "post_purchase",
                 undefined,
                 undefined,
                 expect.objectContaining({ checkoutToken: "checkout-token-1" })
@@ -117,6 +118,7 @@ describe("PostPurchase sharing hand-off", () => {
 
         await waitFor(() => {
             expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                "post_purchase",
                 undefined,
                 undefined,
                 expect.objectContaining({ link: "https://acme.example/" })
@@ -134,6 +136,7 @@ describe("PostPurchase sharing hand-off", () => {
 
         await waitFor(() => {
             expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                "post_purchase",
                 undefined,
                 undefined,
                 expect.objectContaining({ link: undefined })
@@ -149,6 +152,7 @@ describe("PostPurchase sharing hand-off", () => {
 
         await waitFor(() => {
             expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                "post_purchase",
                 undefined,
                 undefined,
                 {

@@ -36,11 +36,15 @@ export type SharingEventMap = {
     /** Completion. Only ever fires for a share this page ran itself. */
     sharing_link_shared: SharingLinkProps;
     sharing_link_copied: SharingLinkProps & HandedOff;
-    /** `sdk_version` and `native` are only set when a native host opened the page. */
+    /**
+     * `sdk_version` and `native` are only set when a native host opened the page;
+     * `entry_point` only when a web SDK component did.
+     */
     sharing_page_viewed: {
         merchant_id?: string;
         sdk_version?: string;
         native?: boolean;
+        entry_point?: string;
     };
     /**
      * A native host warmed this page, possibly without any user opening a sheet.
@@ -51,5 +55,10 @@ export type SharingEventMap = {
         sdk_version?: string;
         native?: boolean;
     };
-    sharing_page_opened: { merchant_id?: string } | undefined;
+    sharing_page_opened: {
+        merchant_id?: string;
+        /** The SDK surface behind the RPC; absent on a direct `displaySharingPage` call. */
+        entry_point?: string;
+        placement?: string;
+    };
 };

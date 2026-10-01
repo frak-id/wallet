@@ -1,5 +1,6 @@
 import type {
     InteractionTypeKey,
+    SharingPageEntryPoint,
     SharingPageProduct,
 } from "@frak-labs/core-sdk";
 import { displaySharingPage } from "@frak-labs/core-sdk/actions";
@@ -31,6 +32,7 @@ export type OpenSharingPageOptions = {
 };
 
 export async function openSharingPage(
+    entryPoint: SharingPageEntryPoint,
     targetInteraction?: InteractionTypeKey,
     placement?: string,
     options?: OpenSharingPageOptions
@@ -52,9 +54,10 @@ export async function openSharingPage(
             ...(options?.checkoutToken && {
                 checkoutToken: options.checkoutToken,
             }),
-            ...(targetInteraction && {
-                metadata: { targetInteraction },
-            }),
+            metadata: {
+                entryPoint,
+                ...(targetInteraction && { targetInteraction }),
+            },
         },
         placement
     ).catch((error) => console.error("Frak sharing page failed", error));

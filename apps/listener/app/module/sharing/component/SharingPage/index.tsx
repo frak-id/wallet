@@ -110,6 +110,7 @@ export function ListenerSharingPage() {
             context: currentRequest.i18n?.context,
         },
         source: "sharing_page_listener",
+        entryPoint: currentRequest.entryPoint,
         installUrl,
         // The listener's own iframe overlay is this page's chrome, not a host's.
         chrome: { mode: "full" },

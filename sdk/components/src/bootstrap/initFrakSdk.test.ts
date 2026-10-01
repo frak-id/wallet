@@ -252,6 +252,7 @@ describe("initFrakSdk", () => {
         await initFrakSdk();
 
         expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            "auto_open",
             undefined,
             undefined,
             { link: undefined, products: undefined }
@@ -325,6 +326,7 @@ describe("initFrakSdk", () => {
         await initFrakSdk();
 
         expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            "auto_open",
             undefined,
             "klaviyo-post-purchase",
             {
@@ -363,6 +365,7 @@ describe("initFrakSdk", () => {
         await initFrakSdk();
 
         expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            "auto_open",
             undefined,
             undefined,
             { link: undefined, products: undefined }
@@ -396,6 +399,7 @@ describe("initFrakSdk", () => {
         await initFrakSdk();
 
         expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            "auto_open",
             undefined,
             undefined,
             { link: undefined, products: undefined }
@@ -429,6 +433,7 @@ describe("initFrakSdk", () => {
         await initFrakSdk();
 
         expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            "auto_open",
             undefined,
             undefined,
             { link: undefined, products: undefined }
@@ -457,6 +462,7 @@ describe("initFrakSdk", () => {
         await initFrakSdk();
 
         expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            "auto_open",
             undefined,
             "hero",
             { link: "https://example.com/order/1", products: undefined }

@@ -92,6 +92,8 @@ export type SharingPageControllerInput = {
     warm?: boolean;
     /** Telemetry only: which SDK build opened this page. */
     sdkVersion?: string;
+    /** Telemetry only: which web SDK surface opened this page. */
+    entryPoint?: string;
     /**
      * Whether a native host is listening for the hand-off. It services BOTH share
      * and copy with its own link, so this page having none does not disable them.
@@ -161,6 +163,7 @@ export function useSharingPageController({
     confirmed = false,
     warm = false,
     sdkVersion,
+    entryPoint,
     canHandOff = false,
     t: rawT,
     outcomes,
@@ -224,8 +227,9 @@ export function useSharingPageController({
             merchant_id: merchantId,
             sdk_version: sdkVersion,
             native,
+            entry_point: entryPoint,
         });
-    }, [merchantId, sdkVersion, warm, native]);
+    }, [merchantId, sdkVersion, warm, native, entryPoint]);
 
     const confirmationScope = useMemo(
         () =>

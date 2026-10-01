@@ -79,6 +79,8 @@ export type ModalUiType = {
 type SharingPageUiType = {
     type: "sharing";
     params: DisplaySharingPageParamsType;
+    /** `params.metadata.entryPoint`, type-checked once by the RPC handler. */
+    entryPoint?: string;
     emitter: (
         response: RpcResponse<
             ExtractReturnType<IFrameRpcSchema, "frak_displaySharingPage">

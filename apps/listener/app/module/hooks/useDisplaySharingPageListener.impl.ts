@@ -52,6 +52,10 @@ export const handleDisplaySharingPage = async (
     const placement = placementId
         ? backendConfig?.placements?.[placementId]
         : undefined;
+    // Unvalidated RPC payload, and a merchant calling the action directly sets none.
+    const rawEntryPoint = request.metadata?.entryPoint;
+    const entryPoint =
+        typeof rawEntryPoint === "string" ? rawEntryPoint : undefined;
 
     // Clean up any existing deferred
     if (pendingDeferred) {
@@ -105,9 +109,13 @@ export const handleDisplaySharingPage = async (
         },
         configMetadata,
         placement: placementId,
+        entryPoint,
     });
 
-    trackEvent("sharing_page_opened");
+    trackEvent("sharing_page_opened", {
+        entry_point: entryPoint,
+        placement: placementId,
+    });
 
     try {
         // Wait for user action via deferred promise

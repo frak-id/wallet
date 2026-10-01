@@ -35,6 +35,16 @@ export type SharingPageProduct = ProductDetails & {
 };
 
 /**
+ * SDK surface that opened the sharing page, reported on its analytics events.
+ * @group Sharing Page
+ */
+export type SharingPageEntryPoint =
+    | "share_button"
+    | "post_purchase"
+    | "ambassador"
+    | "auto_open";
+
+/**
  * Parameters to display the sharing page
  * @group Sharing Page
  * @group RPC Schema
@@ -84,6 +94,10 @@ export type DisplaySharingPageParamsType = {
          * The target interaction behind this sharing page
          */
         targetInteraction?: InteractionTypeKey;
+        /**
+         * The SDK surface that opened this sharing page, for analytics only
+         */
+        entryPoint?: SharingPageEntryPoint;
         /**
          * i18n overrides for the sharing page
          */

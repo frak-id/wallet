@@ -89,6 +89,7 @@ export type {
     SendTransactionModalStepType,
     SendTransactionReturnType,
     SendTransactionTxType,
+    SharingPageEntryPoint,
     SharingPageProduct,
     SiweAuthenticateModalStepType,
     SiweAuthenticateReturnType,
