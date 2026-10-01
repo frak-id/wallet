@@ -160,6 +160,7 @@ describe("ButtonShare", () => {
 
         await waitFor(() => {
             expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                "share_button",
                 undefined,
                 undefined,
                 { products: undefined }
@@ -177,6 +178,7 @@ describe("ButtonShare", () => {
 
             await waitFor(() => {
                 expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                    "share_button",
                     undefined,
                     undefined,
                     { products: undefined }
@@ -255,6 +257,7 @@ describe("ButtonShare", () => {
 
         await waitFor(() => {
             expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                "share_button",
                 "custom.customerMeeting",
                 undefined,
                 { products: undefined }
@@ -279,6 +282,7 @@ describe("ButtonShare", () => {
 
         await waitFor(() => {
             expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                "share_button",
                 undefined,
                 undefined,
                 { products: [{ title: "Boots", sku: "SHOE-42" }] }

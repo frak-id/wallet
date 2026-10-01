@@ -1,3 +1,4 @@
+import { trackEvent } from "@frak-labs/core-sdk";
 import { getInstallUrl } from "@frak-labs/core-sdk/actions";
 import { applyRewardPlaceholder } from "@frak-labs/core-sdk/rewards";
 import {
@@ -362,7 +363,7 @@ function AmbassadorPage({
     attributionLinkText: propAttributionLinkText,
     faq5Answer: dashboardFaq5Answer,
 }: AmbassadorPageProps) {
-    const { isHidden, isClientReady } = useClientReady();
+    const { shouldRender, isHidden, isClientReady } = useClientReady();
     const lang = useLang();
     const rootRef = useRef<HTMLDivElement>(null);
 
@@ -401,9 +402,20 @@ function AmbassadorPage({
         };
     }, [propMerchantId, isClientReady]);
 
+    const trackedImpressionRef = useRef(false);
+
+    // The page paints before config resolves; wait for it, or a merchant
+    // that turns out `hidden` is billed an impression nobody saw.
+    useEffect(() => {
+        if (trackedImpressionRef.current) return;
+        if (!isClientReady || !shouldRender || isHidden) return;
+        trackEvent(window.FrakSetup?.client, "ambassador_impression");
+        trackedImpressionRef.current = true;
+    }, [isClientReady, shouldRender, isHidden]);
+
     const handleShare = useCallback(() => {
         if (!isClientReady) return;
-        openSharingPage();
+        openSharingPage("ambassador");
     }, [isClientReady]);
 
     const brand = resolveBrandName();

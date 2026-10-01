@@ -123,5 +123,5 @@ function handleActionQueryParam() {
         has_products: Boolean(products?.length),
     });
 
-    openSharingPage(undefined, placement, { link, products });
+    openSharingPage("auto_open", undefined, placement, { link, products });
 }

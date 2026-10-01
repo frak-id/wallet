@@ -13,7 +13,7 @@ describe("openSharingPage", () => {
     });
 
     it("forwards the checkout token to the RPC payload", async () => {
-        await openSharingPage(undefined, undefined, {
+        await openSharingPage("post_purchase", undefined, undefined, {
             link: "https://acme.example/shoes",
             checkoutToken: "tok-1",
         });
@@ -23,13 +23,29 @@ describe("openSharingPage", () => {
             {
                 link: "https://acme.example/shoes",
                 checkoutToken: "tok-1",
+                metadata: { entryPoint: "post_purchase" },
             },
             undefined
         );
     });
 
+    it("sends the entry point alongside the target interaction", async () => {
+        await openSharingPage("share_button", "custom.customerMeeting", "hero");
+
+        expect(displaySharingPage).toHaveBeenCalledWith(
+            window.FrakSetup?.client,
+            {
+                metadata: {
+                    entryPoint: "share_button",
+                    targetInteraction: "custom.customerMeeting",
+                },
+            },
+            "hero"
+        );
+    });
+
     it("omits the key entirely rather than sending an undefined token", async () => {
-        await openSharingPage(undefined, undefined, {
+        await openSharingPage("post_purchase", undefined, undefined, {
             link: "https://acme.example/shoes",
             checkoutToken: undefined,
         });
@@ -44,7 +60,7 @@ describe("openSharingPage", () => {
             new Error("closed")
         );
 
-        await expect(openSharingPage()).resolves.toBeUndefined();
+        await expect(openSharingPage("ambassador")).resolves.toBeUndefined();
         expect(error).toHaveBeenCalled();
         error.mockRestore();
     });

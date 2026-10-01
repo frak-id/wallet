@@ -88,6 +88,11 @@ describe("ButtonWallet", () => {
         fireEvent.click(button);
 
         expect(sharingPageUtils.openSharingPage).toHaveBeenCalledTimes(1);
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            "share_button",
+            undefined,
+            undefined
+        );
     });
 
     it("should report share_button_clicked on click", () => {

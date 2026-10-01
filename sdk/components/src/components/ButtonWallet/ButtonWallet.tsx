@@ -155,7 +155,7 @@ export function ButtonWallet({
             click_action: "sharing-page",
         });
         safeVibrate();
-        openSharingPage(resolvedTargetInteraction, placementId);
+        openSharingPage("share_button", resolvedTargetInteraction, placementId);
     }, [placementId, resolvedTargetInteraction, reward]);
 
     if (!shouldRender || isHidden) {

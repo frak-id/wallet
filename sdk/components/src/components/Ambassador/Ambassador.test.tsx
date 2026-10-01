@@ -45,7 +45,11 @@ vi.mock("@frak-labs/core-sdk/actions", () => ({
     getInstallUrl: (...args: unknown[]) => getInstallUrl(...args),
 }));
 
-vi.mock("@frak-labs/core-sdk", () => ({ sdkConfigStore: {} }));
+const trackEvent = vi.fn();
+vi.mock("@frak-labs/core-sdk", () => ({
+    sdkConfigStore: {},
+    trackEvent: (...args: unknown[]) => trackEvent(...args),
+}));
 
 const globalComponents = vi.fn<() => { ambassador?: Record<string, string> }>(
     () => ({})
@@ -561,6 +565,31 @@ describe("Ambassador", () => {
         ).not.toHaveAttribute("href");
     });
 
+    // ─── Analytics ───
+
+    it("reports ambassador_impression once per mount", () => {
+        const { rerender } = render(<Ambassador />);
+        rerender(<Ambassador heroTitle="Changed" />);
+
+        expect(trackEvent).toHaveBeenCalledTimes(1);
+        expect(trackEvent).toHaveBeenCalledWith(
+            window.FrakSetup?.client,
+            "ambassador_impression"
+        );
+    });
+
+    it.each([
+        { shouldRender: false, isHidden: false, isClientReady: true },
+        { shouldRender: true, isHidden: true, isClientReady: true },
+        { shouldRender: true, isHidden: false, isClientReady: false },
+    ])("does not report ambassador_impression for %o", (state) => {
+        vi.mocked(useClientReadyHook.useClientReady).mockReturnValue(state);
+
+        render(<Ambassador />);
+
+        expect(trackEvent).not.toHaveBeenCalled();
+    });
+
     it("does not render when isHidden is true", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
             shouldRender: true,
@@ -733,6 +762,9 @@ describe("Ambassador", () => {
         if (cta) fireEvent.click(cta);
 
         expect(sharingPageUtils.openSharingPage).toHaveBeenCalledTimes(1);
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            "ambassador"
+        );
     });
 
     it("calls openSharingPage when the reward region CTA is clicked", () => {

@@ -43,6 +43,7 @@ export type {
 export type {
     DisplaySharingPageParamsType,
     DisplaySharingPageResultType,
+    SharingPageEntryPoint,
     SharingPageProduct,
 } from "./rpc/displaySharingPage";
 export type { SendInteractionParamsType } from "./rpc/interaction";

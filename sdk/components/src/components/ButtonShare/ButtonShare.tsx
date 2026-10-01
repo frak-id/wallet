@@ -156,9 +156,14 @@ export function ButtonShare({
         });
         // Every click routes to the full-page sharing UI, including the
         // `share-modal` and `embedded-wallet` configs.
-        openSharingPage(resolvedTargetInteraction, placementId, {
-            products: parsedProducts,
-        });
+        openSharingPage(
+            "share_button",
+            resolvedTargetInteraction,
+            placementId,
+            {
+                products: parsedProducts,
+            }
+        );
     }, [
         isPreview,
         resolvedClickAction,
