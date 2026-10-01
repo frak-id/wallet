@@ -17,9 +17,11 @@ import screenCreateTemplate from "../../assets/ambassador-guide/step-2-create-te
 import screenAddBlock from "../../assets/ambassador-guide/step-3-add-block.webp";
 import screenHideSection from "../../assets/ambassador-guide/step-4-hide-page-section.webp";
 import { useRefreshData } from "../../hooks/useRefreshData";
+import { CopyableSnippet } from "../ui/CopyableSnippet";
 import { ExternalButton } from "../ui/ExternalLink";
 
 const SUGGESTED_TEMPLATE = "ambassador";
+const AMBASSADOR_TAG = "<frak-ambassador></frak-ambassador>";
 
 /**
  * Illustrated steps from the theme editor to a saved ambassador template,
@@ -116,6 +118,36 @@ export function AmbassadorGuide({
                     <FinalBlock state={state} action={action} />
                 </s-stack>
             </s-section>
+        </s-stack>
+    );
+}
+
+/** Manual steps for vintage themes: a page whose body holds the component. */
+export function VintageAmbassadorGuide() {
+    const { t } = useTranslation();
+    const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
+    const newPageUrl = `https://${rootData?.shop?.myshopifyDomain}/admin/pages/new`;
+
+    return (
+        <s-stack gap="large">
+            <s-text>{t("ambassadorGuide.vintage.intro")}</s-text>
+            <Step index={1} title={t("ambassadorGuide.vintage.create.title")}>
+                <s-text>
+                    {t("ambassadorGuide.vintage.create.description")}
+                </s-text>
+                <ExternalButton variant="secondary" href={newPageUrl}>
+                    {t("ambassadorGuide.vintage.create.cta")}
+                </ExternalButton>
+            </Step>
+            <Step index={2} title={t("ambassadorGuide.vintage.paste.title")}>
+                <s-text>
+                    {t("ambassadorGuide.vintage.paste.description")}
+                </s-text>
+                <CopyableSnippet snippet={AMBASSADOR_TAG} />
+            </Step>
+            <Step index={3} title={t("ambassadorGuide.vintage.save.title")}>
+                <s-text>{t("ambassadorGuide.vintage.save.description")}</s-text>
+            </Step>
         </s-stack>
     );
 }

@@ -151,6 +151,24 @@
             "linked": "Votre page ambassadeur est déjà en pleine largeur.",
             "noPage": "Votre boutique n'a pas encore de page ambassadeur. Créez-la ici : si votre modèle contient déjà le bloc Frak Ambassador, la page l'utilise directement.",
             "waiting": "Une fois votre modèle enregistré avec le bloc Frak Ambassador, vous pourrez l'appliquer à votre page ici."
+        },
+        "vintage": {
+            "title": "Créez votre page ambassadeur",
+            "settingsDescription": "Ajoutez l'ambassadeur Frak à une page de votre boutique. Le guide vous accompagne en trois étapes.",
+            "intro": "Votre thème ne prend pas en charge les modèles de page : votre page ambassadeur utilise donc sa mise en page standard. Créez-la en trois étapes dans votre admin Shopify.",
+            "create": {
+                "title": "Créez une page",
+                "description": "Donnez-lui un titre, par exemple « Devenir ambassadeur ».",
+                "cta": "Ajouter une page"
+            },
+            "paste": {
+                "title": "Collez l'ambassadeur Frak",
+                "description": "Dans l'éditeur de contenu, cliquez sur Afficher le code HTML (le bouton <>), puis collez cette balise :"
+            },
+            "save": {
+                "title": "Enregistrez et partagez-la",
+                "description": "Vérifiez que la page est Visible, puis cliquez sur Enregistrer. Ajoutez la page à l'un de vos menus pour que vos clients la trouvent."
+            }
         }
     },
     "pixel": {

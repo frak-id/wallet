@@ -151,6 +151,24 @@
             "linked": "Your ambassador page is already full-width.",
             "noPage": "Your shop has no ambassador page yet. Create it here: if your template already holds the Frak Ambassador block, the page uses it right away.",
             "waiting": "Once your template is saved with the Frak Ambassador block, you can apply it to your page here."
+        },
+        "vintage": {
+            "title": "Set up your ambassador page",
+            "settingsDescription": "Add the Frak Ambassador to a page of your shop. The guide walks you through it in three steps.",
+            "intro": "Your theme does not support page templates, so the ambassador page uses its standard page layout. Set it up in three steps in your Shopify admin.",
+            "create": {
+                "title": "Create a page",
+                "description": "Give it a title, for example \"Become an ambassador\".",
+                "cta": "Add a page"
+            },
+            "paste": {
+                "title": "Paste the Frak Ambassador",
+                "description": "In the content editor, click Show HTML (the <> button), then paste this tag:"
+            },
+            "save": {
+                "title": "Save and share it",
+                "description": "Check that the page is Visible, then click Save. Add the page to one of your menus so your customers find it."
+            }
         }
     },
     "pixel": {

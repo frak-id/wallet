@@ -498,7 +498,13 @@ export default function AppearancePage() {
 
             <s-section heading={t("ambassadorGuide.settingsHeading")}>
                 <s-stack gap="base">
-                    <s-text>{t("ambassadorGuide.settingsDescription")}</s-text>
+                    <s-text>
+                        {t(
+                            isThemeSupported
+                                ? "ambassadorGuide.settingsDescription"
+                                : "ambassadorGuide.vintage.settingsDescription"
+                        )}
+                    </s-text>
                     <s-stack direction="inline">
                         <s-button
                             variant="secondary"
