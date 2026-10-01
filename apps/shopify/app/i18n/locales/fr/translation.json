@@ -131,8 +131,8 @@
                 "title": "Ajoutez le bloc Frak Ambassador",
                 "ready": "Ouvrez le modèle ambassador : le bloc Frak Ambassador y est ajouté pour vous. Vérifiez qu'il apparaît dans le modèle.",
                 "cta": "Ajouter le bloc",
-                "done": "Le bloc Frak Ambassador est dans votre modèle ambassador. Passez à l'étape suivante.",
-                "manual": "Dans le modèle ambassador, cliquez sur Add section et choisissez Frak Ambassador parmi les applications. Une fois le modèle enregistré et votre retour sur cette page, un bouton ici ajoute le bloc pour vous.",
+                "done": "Le bloc Frak Ambassador est dans votre modèle de page. Passez à l'étape suivante.",
+                "manual": "Dans votre nouveau modèle, cliquez sur Add section et choisissez Frak Ambassador parmi les applications. Si vous l'avez nommé ambassador, un bouton ici ajoute le bloc pour vous à votre retour sur cette page.",
                 "alt": "Le modèle ambassador avec le bloc Frak Ambassador en pleine largeur, dans une section Applications sous la section Page."
             },
             "hideSection": {

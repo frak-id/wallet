@@ -131,8 +131,8 @@
                 "title": "Add the Frak Ambassador block",
                 "ready": "Open the ambassador template: the Frak Ambassador block is added for you. Check that it appears in the template.",
                 "cta": "Add the block",
-                "done": "The Frak Ambassador block is in your ambassador template. Go to the next step.",
-                "manual": "In the ambassador template, click Add section and choose Frak Ambassador from the apps. Once the template is saved and you are back on this page, a button here adds the block for you.",
+                "done": "The Frak Ambassador block is in your page template. Go to the next step.",
+                "manual": "In your new template, click Add section and choose Frak Ambassador from the apps. If you named it ambassador, a button here adds the block for you once you are back on this page.",
                 "alt": "The ambassador template with the Frak Ambassador block full-width, in an Apps section below the Page section."
             },
             "hideSection": {

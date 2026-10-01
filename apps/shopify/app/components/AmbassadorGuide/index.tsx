@@ -80,7 +80,7 @@ export function AmbassadorGuide({
                 image={screenAddBlock}
                 alt={t("ambassadorGuide.steps.addBlock.alt")}
             >
-                {ambassadorTemplates.includes(SUGGESTED_TEMPLATE) ? (
+                {ambassadorTemplates.length > 0 ? (
                     <s-text>{t("ambassadorGuide.steps.addBlock.done")}</s-text>
                 ) : pageTemplates.includes(SUGGESTED_TEMPLATE) ? (
                     <>
