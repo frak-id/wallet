@@ -44,6 +44,7 @@ foreach ( $frak_options as $frak_option ) {
 // Short-lived transients used as negative cache / concurrency lock. Safe
 // to delete even when the underlying key is already absent.
 delete_transient( 'frak_merchant_unresolved' );
+delete_transient( 'frak_merchant_unresolved_dev' );
 delete_transient( 'frak_wc_webhook_ensure_lock' );
 
 // If WooCommerce is still active, drop the Frak-owned webhook row as well

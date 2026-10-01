@@ -85,7 +85,7 @@ class Frak_Blocks {
 
 		wp_register_script(
 			'frak-sdk',
-			Frak_Sdk_Urls::POINTER_SCRIPT,
+			Frak_Sdk_Urls::pointer_script(),
 			array(),
 			null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters -- pointer serves whatever version was released; avoid ?ver= query param.
 			true
@@ -136,7 +136,8 @@ class Frak_Blocks {
 			'metadata'             => $metadata,
 		);
 
-		$config_json = wp_json_encode( $config, JSON_UNESCAPED_SLASHES );
+		$config      = array_merge( $config, Frak_Env::config_overrides() );
+		$config_json = wp_json_encode( $config, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG );
 
 		return sprintf(
 			'window.FrakSetup=Object.assign(window.FrakSetup||{},{config:%s});',

@@ -35,13 +35,74 @@ $cartflows_active = $wc_active && Frak_Funnel_Compat::is_cartflows_active();
 // Frak_WooCommerce::render_post_purchase_card()).
 $auto_render_banner = (bool) Frak_Settings::get( 'auto_render_banner' );
 $auto_render_pp     = (bool) Frak_Settings::get( 'auto_render_post_purchase' );
+// Environment switch (see Frak_Env): drives the dev-mode notice, the Domain
+// rows and every dashboard link below.
+$frak_dev         = Frak_Env::is_dev();
+$frak_ignored_env = Frak_Env::ignored_value();
+$frak_domain      = Frak_Env::merchant_domain();
+$current_host     = Frak_Utils::current_host();
+$site_host        = Frak_Utils::site_host();
+$dashboard_origin = Frak_Env::dashboard_origin();
 ?>
 <div class="wrap">
 	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 
+	<?php if ( $frak_dev || '' !== $frak_domain || null !== $frak_ignored_env ) : ?>
+		<div class="notice notice-warning inline">
+			<?php if ( $frak_dev ) : ?>
+				<p>
+					<strong><?php esc_html_e( 'Frak dev mode is on (FRAK_ENV).', 'frak' ); ?></strong>
+					<?php esc_html_e( 'The plugin uses the Frak dev stack, and WooCommerce orders go to the dev backend.', 'frak' ); ?>
+				</p>
+			<?php endif; ?>
+			<?php if ( '' !== $frak_domain ) : ?>
+				<p>
+					<?php
+					printf(
+						wp_kses(
+							/* translators: 1: merchant domain override, 2: the site's real host. */
+							__( 'Acting as merchant domain <code>%1$s</code> (FRAK_MERCHANT_DOMAIN): rewards and WooCommerce orders are attributed to that merchant. This site\'s real host is <code>%2$s</code>.', 'frak' ),
+							array( 'code' => array() )
+						),
+						esc_html( $frak_domain ),
+						esc_html( $site_host )
+					);
+					?>
+				</p>
+			<?php elseif ( $frak_dev ) : ?>
+				<p>
+					<?php
+					printf(
+						wp_kses(
+							/* translators: %s: this site's host. */
+							__( 'Acting as this site\'s own domain <code>%s</code>.', 'frak' ),
+							array( 'code' => array() )
+						),
+						esc_html( $current_host )
+					);
+					?>
+				</p>
+			<?php endif; ?>
+			<?php if ( null !== $frak_ignored_env ) : ?>
+				<p>
+					<?php
+					printf(
+						wp_kses(
+							/* translators: %s: the FRAK_ENV value. */
+							__( 'FRAK_ENV is set to <code>%s</code>, which is ignored: only <code>dev</code> switches the environment, so the plugin uses production.', 'frak' ),
+							array( 'code' => array() )
+						),
+						esc_html( $frak_ignored_env )
+					);
+					?>
+				</p>
+			<?php endif; ?>
+		</div>
+	<?php endif; ?>
+
 	<div class="frak-links">
 		<a href="https://docs.frak.id/components/frak-setup" target="_blank" rel="noopener">📚 Documentation</a>
-		<a href="https://business.frak.id/" target="_blank" rel="noopener">🎯 Dashboard</a>
+		<a href="<?php echo esc_url( $dashboard_origin . '/' ); ?>" target="_blank" rel="noopener">🎯 Dashboard</a>
 	</div>
 
 	<!-- Connection status (read-only + Refresh action; deliberately outside the
@@ -78,8 +139,8 @@ $auto_render_pp     = (bool) Frak_Settings::get( 'auto_render_post_purchase' );
 										'code' => array(),
 									)
 								),
-								esc_html( wp_parse_url( home_url(), PHP_URL_HOST ) ),
-								esc_url( 'https://business.frak.id/' )
+								esc_html( $current_host ),
+								esc_url( $dashboard_origin . '/' )
 							);
 							?>
 						</p>
@@ -89,7 +150,7 @@ $auto_render_pp     = (bool) Frak_Settings::get( 'auto_render_post_purchase' );
 							<?php esc_html_e( 'Refresh Merchant', 'frak' ); ?>
 						</button>
 						<?php if ( $merchant_record ) : ?>
-							<a href="<?php echo esc_url( 'https://business.frak.id/merchant/' . $merchant_record['id'] ); ?>"
+							<a href="<?php echo esc_url( $dashboard_origin . '/merchant/' . $merchant_record['id'] ); ?>"
 								target="_blank" rel="noopener" class="button">
 								<?php esc_html_e( 'Manage on Frak', 'frak' ); ?>
 							</a>
@@ -99,7 +160,23 @@ $auto_render_pp     = (bool) Frak_Settings::get( 'auto_render_post_purchase' );
 			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Domain', 'frak' ); ?></th>
-				<td><code><?php echo esc_html( wp_parse_url( home_url(), PHP_URL_HOST ) ); ?></code></td>
+				<td>
+					<code><?php echo esc_html( $current_host ); ?></code>
+					<?php if ( '' !== $frak_domain ) : ?>
+						<span class="description">
+							<?php
+							printf(
+								wp_kses(
+									/* translators: %s: the site's real host. */
+									__( '(override; this site\'s real host is <code>%s</code>)', 'frak' ),
+									array( 'code' => array() )
+								),
+								esc_html( $site_host )
+							);
+							?>
+						</span>
+					<?php endif; ?>
+				</td>
 			</tr>
 			<?php if ( $merchant_record ) : ?>
 				<tr>
@@ -299,7 +376,7 @@ $auto_render_pp     = (bool) Frak_Settings::get( 'auto_render_post_purchase' );
 											),
 										)
 									),
-									esc_url( 'https://business.frak.id/' )
+									esc_url( $dashboard_origin . '/' )
 								);
 								?>
 							</p>
@@ -338,7 +415,11 @@ $auto_render_pp     = (bool) Frak_Settings::get( 'auto_render_post_purchase' );
 								<strong><?php esc_html_e( 'WooCommerce webhook is not ready.', 'frak' ); ?></strong>
 								<?php
 								if ( ! $wc_status['merchant_resolved'] ) {
-									esc_html_e( 'Register this domain on business.frak.id, then click "Refresh Merchant" above.', 'frak' );
+									printf(
+										/* translators: %s: Frak business dashboard host. */
+										esc_html__( 'Register this domain on %s, then click "Refresh Merchant" above.', 'frak' ),
+										esc_html( (string) wp_parse_url( Frak_Env::dashboard_origin(), PHP_URL_HOST ) )
+									);
 								} elseif ( ! $wc_status['domain_matches'] ) {
 									esc_html_e( 'This site\'s domain has changed since the merchant was resolved. Click "Refresh Merchant" above — if the merchant fails to resolve, add the new domain under Merchant → Allowed Domains in the Frak dashboard.', 'frak' );
 								} elseif ( ! $wc_status['secret_configured'] ) {

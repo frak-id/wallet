@@ -34,11 +34,24 @@ class Frak_Admin {
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'add_admin_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
+		add_action( 'admin_init', array( __CLASS__, 'reresolve_merchant_on_env_change' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( FRAK_PLUGIN_FILE ), array( __CLASS__, 'add_plugin_action_links' ) );
 
 		// AJAX handlers for webhook operations.
 		add_action( 'wp_ajax_frak_refresh_merchant', array( __CLASS__, 'ajax_refresh_merchant' ) );
 		add_action( 'wp_ajax_frak_setup_wc_webhook', array( __CLASS__, 'ajax_setup_wc_webhook' ) );
+	}
+
+	/**
+	 * Re-resolve the merchant when the stored record comes from another
+	 * environment (the `FRAK_ENV` constant was added or removed), so the
+	 * merchant and the WooCommerce webhook follow on any admin request rather
+	 * than only on Settings → Frak. No HTTP call when the environment matches.
+	 */
+	public static function reresolve_merchant_on_env_change() {
+		if ( Frak_Merchant::has_foreign_record() ) {
+			Frak_Merchant::get_record();
+		}
 	}
 
 	/**
@@ -307,7 +320,11 @@ class Frak_Admin {
 		if ( null === $record ) {
 			wp_send_json_error(
 				array(
-					'message' => __( 'Merchant not found for this domain. Register it on business.frak.id first.', 'frak' ),
+					'message' => sprintf(
+						/* translators: %s: Frak business dashboard host. */
+						__( 'Merchant not found for this domain. Register it on %s first.', 'frak' ),
+						wp_parse_url( Frak_Env::dashboard_origin(), PHP_URL_HOST )
+					),
 				)
 			);
 		}

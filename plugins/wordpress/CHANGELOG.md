@@ -11,6 +11,10 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Added
+
+- **Dev switch for local testing.** Two optional `wp-config.php` constants: `FRAK_ENV` set to `dev` points the SDK, the merchant lookup, the WooCommerce webhook, the wallet and the dashboard links at the Frak dev stack, and `FRAK_MERCHANT_DOMAIN` makes the site act as a registered merchant domain. Settings → Frak shows a notice while either is set. The cached merchant remembers which stack it came from, so removing `FRAK_ENV` re-resolves the production merchant on the next admin page.
+
 ## [1.1.11] - 2026-09-18
 
 ### Added
