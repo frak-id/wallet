@@ -204,17 +204,33 @@
 	 *
 	 * @param {Event} event
 	 */
-	async function handleRefreshMerchant( event ) {
+	function handleRefreshMerchant( event ) {
+		return runButtonAction( event, 'frak_refresh_merchant', 'Refreshing...', 'Merchant refreshed', 'Failed to refresh merchant' );
+	}
+
+	/**
+	 * Shared click flow of the maintenance buttons: confirm unsaved edits,
+	 * disable the button while the AJAX action runs, then reload on success or
+	 * restore the button on failure.
+	 *
+	 * @param {Event}  event
+	 * @param {string} action      AJAX action name.
+	 * @param {string} busyLabel   Button label while the request runs.
+	 * @param {string} okFallback  Notice when a success carries no message.
+	 * @param {string} errFallback Notice when a failure carries no message.
+	 */
+	async function runButtonAction( event, action, busyLabel, okFallback, errFallback ) {
 		event.preventDefault();
 		if ( ! confirmDiscardIfDirty() ) {
 			return;
 		}
 		const button = event.currentTarget;
+		const originalLabel = button.textContent;
 		button.disabled = true;
-		button.textContent = 'Refreshing...';
+		button.textContent = busyLabel;
 
-		const response = await postAjax( 'frak_refresh_merchant' );
-		const message = response.data?.message || ( response.success ? 'Merchant refreshed' : 'Failed to refresh merchant' );
+		const response = await postAjax( action );
+		const message = response.data?.message || ( response.success ? okFallback : errFallback );
 		if ( response.success ) {
 			showNotice( message, 'success' );
 			isDirty = false;
@@ -222,7 +238,7 @@
 		} else {
 			showNotice( message, 'error' );
 			button.disabled = false;
-			button.textContent = 'Refresh Merchant';
+			button.textContent = originalLabel;
 		}
 	}
 
@@ -235,27 +251,18 @@
 	 *
 	 * @param {Event} event
 	 */
-	async function handleSetupWcWebhook( event ) {
-		event.preventDefault();
-		if ( ! confirmDiscardIfDirty() ) {
-			return;
-		}
-		const button = event.currentTarget;
-		const originalLabel = button.textContent;
-		button.disabled = true;
-		button.textContent = 'Working...';
+	function handleSetupWcWebhook( event ) {
+		return runButtonAction( event, 'frak_setup_wc_webhook', 'Working...', 'Webhook synced', 'Failed to sync webhook' );
+	}
 
-		const response = await postAjax( 'frak_setup_wc_webhook' );
-		const message = response.data?.message || ( response.success ? 'Webhook synced' : 'Failed to sync webhook' );
-		if ( response.success ) {
-			showNotice( message, 'success' );
-			isDirty = false;
-			setTimeout( () => window.location.reload(), 800 );
-		} else {
-			showNotice( message, 'error' );
-			button.disabled = false;
-			button.textContent = originalLabel;
-		}
+	/**
+	 * Create (or restore) the ambassador page, then reload so the row shows it
+	 * live.
+	 *
+	 * @param {Event} event
+	 */
+	function handleEnsureAmbassadorPage( event ) {
+		return runButtonAction( event, 'frak_ambassador_page_ensure', 'Working...', 'Ambassador page ready', 'Failed to create the ambassador page' );
 	}
 
 	/**
@@ -329,6 +336,11 @@
 		const setupWcBtn = document.getElementById( 'setup-wc-webhook' );
 		if ( setupWcBtn ) {
 			setupWcBtn.addEventListener( 'click', handleSetupWcWebhook );
+		}
+
+		const ensureAmbassadorBtn = document.getElementById( 'ensure-ambassador-page' );
+		if ( ensureAmbassadorBtn ) {
+			ensureAmbassadorBtn.addEventListener( 'click', handleEnsureAmbassadorPage );
 		}
 	}
 

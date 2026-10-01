@@ -6,6 +6,7 @@
  *
  * @var string $app_name App name.
  * @var string $logo_url Logo URL.
+ * @var array<string, mixed> $ambassador_state Result of Frak_Ambassador_Page::state().
  */
 
 // Prevent direct access.
@@ -42,6 +43,7 @@ $frak_ignored_env = Frak_Env::ignored_value();
 $frak_domain      = Frak_Env::merchant_domain();
 $current_host     = Frak_Utils::current_host();
 $site_host        = Frak_Utils::site_host();
+$amb_restorable   = 'restorable' === $ambassador_state['type'];
 $dashboard_origin = Frak_Env::dashboard_origin();
 ?>
 <div class="wrap">
@@ -184,6 +186,74 @@ $dashboard_origin = Frak_Env::dashboard_origin();
 					<td><code><?php echo esc_html( $merchant_record['id'] ); ?></code></td>
 				</tr>
 			<?php endif; ?>
+		</table>
+	</div>
+
+	<!-- Ambassador page (outside the settings form, like Connection: its action reloads the page). -->
+	<div class="frak-section">
+		<h2><?php esc_html_e( 'Ambassador page', 'frak' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'A full page that explains your referral programme and lets visitors share it. Its text and images come from your Frak dashboard.', 'frak' ); ?>
+		</p>
+		<table class="form-table">
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Page', 'frak' ); ?></th>
+				<td>
+					<?php if ( 'live' === $ambassador_state['type'] ) : ?>
+						<span class="frak-webhook-status status-active">
+							<?php esc_html_e( '✓ Live:', 'frak' ); ?> <strong><?php echo esc_html( get_the_title( $ambassador_state['page'] ) ); ?></strong>
+						</span>
+						<p style="margin-top: 10px;">
+							<a href="<?php echo esc_url( (string) get_permalink( $ambassador_state['page'] ) ); ?>" target="_blank" rel="noopener" class="button">
+								<?php esc_html_e( 'View page', 'frak' ); ?>
+							</a>
+							<?php $ambassador_edit_url = get_edit_post_link( $ambassador_state['page']->ID, 'raw' ); ?>
+							<?php if ( $ambassador_edit_url ) : ?>
+								<a href="<?php echo esc_url( $ambassador_edit_url ); ?>" class="button">
+									<?php esc_html_e( 'Edit page', 'frak' ); ?>
+								</a>
+							<?php endif; ?>
+						</p>
+						<?php if ( $ambassador_state['template_hint'] ) : ?>
+							<p class="description">
+								<?php esc_html_e( 'This page uses your theme\'s default template. To make it full width, choose another template in the page editor (Page → Template).', 'frak' ); ?>
+							</p>
+						<?php endif; ?>
+					<?php else : ?>
+						<?php if ( $amb_restorable ) : ?>
+							<?php $ambassador_status = get_post_status_object( $ambassador_state['status'] ); ?>
+							<span class="frak-webhook-status status-inactive">
+								<?php
+								printf(
+									wp_kses(
+										/* translators: 1: page title, 2: its current status (Draft, Trash...). */
+										__( '✗ Not live: <strong>%1$s</strong> is currently %2$s.', 'frak' ),
+										array( 'strong' => array() )
+									),
+									esc_html( get_the_title( $ambassador_state['page'] ) ),
+									esc_html( $ambassador_status ? $ambassador_status->label : $ambassador_state['status'] )
+								);
+								?>
+							</span>
+						<?php else : ?>
+							<span class="frak-webhook-status status-inactive">
+								<?php esc_html_e( '✗ No ambassador page yet', 'frak' ); ?>
+							</span>
+						<?php endif; ?>
+						<p style="margin-top: 10px;">
+							<button type="button" id="ensure-ambassador-page" class="button button-primary">
+								<?php
+								if ( $amb_restorable ) {
+									esc_html_e( 'Restore my ambassador page', 'frak' );
+								} else {
+									esc_html_e( 'Create my ambassador page', 'frak' );
+								}
+								?>
+							</button>
+						</p>
+					<?php endif; ?>
+				</td>
+			</tr>
 		</table>
 	</div>
 

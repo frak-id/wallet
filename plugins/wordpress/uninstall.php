@@ -32,6 +32,7 @@ $frak_options = array(
 	'frak_webhook_secret',
 	'frak_merchant',
 	'frak_wc_webhook_id',
+	'frak_ambassador_page_id',
 	'widget_frak_banner_widget',
 	'widget_frak_share_button_widget',
 	'widget_frak_post_purchase_widget',

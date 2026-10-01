@@ -2,7 +2,8 @@
 /**
  * Shortcode surface for Frak web components.
  *
- * Provides `[frak_banner]`, `[frak_share_button]` and `[frak_post_purchase]`
+ * Provides `[frak_banner]`, `[frak_share_button]`, `[frak_post_purchase]`
+ * and `[frak_ambassador]`
  * so Classic Editor (TinyMCE) users, page builders (Elementor, Beaver, WPBakery),
  * and theme/plugin authors calling `do_shortcode()` from PHP templates can
  * drop Frak components anywhere, without depending on the block editor.
@@ -80,13 +81,14 @@ class Frak_Shortcodes {
 	);
 
 	/**
-	 * Register the three shortcode handlers. Called once from
+	 * Register the shortcode handlers. Called once from
 	 * {@see Frak_Plugin::init()}.
 	 */
 	public static function init() {
 		add_shortcode( 'frak_banner', array( __CLASS__, 'render_banner' ) );
 		add_shortcode( 'frak_share_button', array( __CLASS__, 'render_share_button' ) );
 		add_shortcode( 'frak_post_purchase', array( __CLASS__, 'render_post_purchase' ) );
+		add_shortcode( 'frak_ambassador', array( __CLASS__, 'render_ambassador' ) );
 	}
 
 	/**
@@ -134,6 +136,19 @@ class Frak_Shortcodes {
 		}
 		$atts = shortcode_atts( self::POST_PURCHASE_DEFAULTS, (array) $atts, 'frak_post_purchase' );
 		return Frak_Component_Renderer::post_purchase( self::normalize( $atts ) );
+	}
+
+	/**
+	 * `[frak_ambassador]` — the whole ambassador page. Takes no attributes:
+	 * its content comes from the merchant dashboard.
+	 *
+	 * @return string
+	 */
+	public static function render_ambassador(): string {
+		if ( ! self::is_renderable_context() ) {
+			return '';
+		}
+		return Frak_Component_Renderer::ambassador( array() );
 	}
 
 	/**
