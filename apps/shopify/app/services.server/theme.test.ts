@@ -9,6 +9,7 @@ import {
     doesThemeSupportBlock,
     extractThemeId,
     getThemeBlockPresence,
+    pickAmbassadorTemplate,
     type ThemeBlockInfo,
 } from "./theme";
 
@@ -636,6 +637,7 @@ describe("getThemeBlockPresence", () => {
         await expect(getThemeBlockPresence(context)).resolves.toEqual({
             banner: false,
             ambassador: ["ambassador"],
+            pageTemplates: ["ambassador"],
         });
     });
 
@@ -679,6 +681,7 @@ describe("getThemeBlockPresence", () => {
         await expect(getThemeBlockPresence(context)).resolves.toEqual({
             banner: false,
             ambassador: [],
+            pageTemplates: [],
         });
     });
 
@@ -694,6 +697,7 @@ describe("getThemeBlockPresence", () => {
         await expect(getThemeBlockPresence(context)).resolves.toEqual({
             banner: true,
             ambassador: [],
+            pageTemplates: [],
         });
     });
 
@@ -712,6 +716,68 @@ describe("getThemeBlockPresence", () => {
         await expect(getThemeBlockPresence(context)).resolves.toEqual({
             banner: false,
             ambassador: ["ambassador"],
+            pageTemplates: ["ambassador"],
         });
+    });
+
+    it("lists a custom page template without the block in pageTemplates only", async () => {
+        const context = mockContext(
+            filesResponse([
+                {
+                    filename: "templates/page.ambassador.json",
+                    body: { content: JSON.stringify({ sections: {} }) },
+                },
+            ])
+        );
+        await expect(getThemeBlockPresence(context)).resolves.toEqual({
+            banner: false,
+            ambassador: [],
+            pageTemplates: ["ambassador"],
+        });
+    });
+
+    it("lists every custom page template in pageTemplates, and not page.json", async () => {
+        const context = mockContext(
+            filesResponse([
+                {
+                    filename: "templates/page.json",
+                    body: { content: ambassadorTemplate },
+                },
+                {
+                    filename: "templates/page.contact.json",
+                    body: { content: JSON.stringify({ sections: {} }) },
+                },
+                {
+                    filename: "templates/page.referral.json",
+                    body: { content: ambassadorTemplate },
+                },
+                {
+                    filename: "templates/product.json",
+                    body: { content: ambassadorTemplate },
+                },
+            ])
+        );
+        const presence = await getThemeBlockPresence(context);
+        expect([...presence.pageTemplates].sort()).toEqual([
+            "contact",
+            "referral",
+        ]);
+    });
+});
+
+describe("pickAmbassadorTemplate", () => {
+    it("prefers ambassador", () => {
+        expect(pickAmbassadorTemplate(["referral", "ambassador"])).toBe(
+            "ambassador"
+        );
+    });
+
+    it("falls back to the first name alphabetically, whatever the input order", () => {
+        expect(pickAmbassadorTemplate(["zeta", "referral"])).toBe("referral");
+        expect(pickAmbassadorTemplate(["referral", "zeta"])).toBe("referral");
+    });
+
+    it("returns null when there is no ambassador template", () => {
+        expect(pickAmbassadorTemplate([])).toBeNull();
     });
 });

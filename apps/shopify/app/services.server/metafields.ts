@@ -15,6 +15,8 @@ const AMBASSADOR_PAGE_KEY = "ambassador_page";
 export type AmbassadorPageRecord = {
     pageId: string;
     url: string | null;
+    /** The merchant chose to keep the standard page layout. */
+    standardLayoutKept?: boolean;
 };
 
 /**
@@ -523,7 +525,7 @@ export async function getAmbassadorPageMetafield({
     return readMetafield<AmbassadorPageRecord>(graphql, AMBASSADOR_PAGE_KEY);
 }
 
-/** Record the ambassador page GID and its storefront URL. */
+/** Replace the whole ambassador page record: spread the existing one to keep fields you do not change. */
 export async function writeAmbassadorPageMetafield(
     context: AuthenticatedContext,
     record: AmbassadorPageRecord

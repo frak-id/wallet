@@ -109,6 +109,8 @@ const stepDataFetchers = {
             return {
                 isThemeHasFrakBanner: presence.banner,
                 ambassadorPage,
+                pageTemplates: presence.pageTemplates,
+                ambassadorTemplates: presence.ambassador,
             };
         } catch (error) {
             log.error(

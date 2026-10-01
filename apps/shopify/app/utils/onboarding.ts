@@ -17,6 +17,9 @@ export type OnboardingStepData = {
     isThemeHasFrakBanner?: boolean;
     // Drives the optional setup card only: never add it to `stepValidations`.
     ambassadorPage?: AmbassadorCardState;
+    // Custom page template suffixes, and those holding the block: ambassador guide only.
+    pageTemplates?: string[];
+    ambassadorTemplates?: string[];
     theme?: GetMainThemeIdReturnType;
     firstProduct?: FirstProductPublishedReturnType;
     frakWebhook?: {
