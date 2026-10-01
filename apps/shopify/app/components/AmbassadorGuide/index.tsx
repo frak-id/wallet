@@ -197,6 +197,18 @@ function FinalBlock({
         }
         case "none":
         case "blockUnlinked":
-            return <s-text>{t("ambassadorGuide.final.noPage")}</s-text>;
+            return (
+                <>
+                    <s-text>{t("ambassadorGuide.final.noPage")}</s-text>
+                    <s-button
+                        variant="primary"
+                        loading={action.isBusy}
+                        disabled={action.isBusy}
+                        onClick={() => action.run("create")}
+                    >
+                        {t("optionalSetup.ambassador.createCta")}
+                    </s-button>
+                </>
+            );
     }
 }

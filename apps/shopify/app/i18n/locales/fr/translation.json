@@ -149,7 +149,7 @@
             "title": "Appliquez-le à votre page",
             "upgrade": "Votre page ambassadeur utilise la mise en page standard de votre thème. Appliquez le modèle pour la passer en pleine largeur.",
             "linked": "Votre page ambassadeur est déjà en pleine largeur.",
-            "noPage": "Créez ou liez votre page ambassadeur depuis la carte de configuration de l'accueil, puis revenez ici pour appliquer le modèle.",
+            "noPage": "Votre boutique n'a pas encore de page ambassadeur. Créez-la ici : si votre modèle contient déjà le bloc Frak Ambassador, la page l'utilise directement.",
             "waiting": "Une fois votre modèle enregistré avec le bloc Frak Ambassador, vous pourrez l'appliquer à votre page ici."
         }
     },

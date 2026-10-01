@@ -149,7 +149,7 @@
             "title": "Apply it to your page",
             "upgrade": "Your ambassador page uses your theme's standard page layout. Apply the template to make it full-width.",
             "linked": "Your ambassador page is already full-width.",
-            "noPage": "Create or link your ambassador page from the setup card on the home screen, then come back here to apply the template.",
+            "noPage": "Your shop has no ambassador page yet. Create it here: if your template already holds the Frak Ambassador block, the page uses it right away.",
             "waiting": "Once your template is saved with the Frak Ambassador block, you can apply it to your page here."
         }
     },
