@@ -1714,10 +1714,10 @@
             "confirm": "Discard changes"
         },
         "details": {
-            "title": "Details of the merchant",
-            "name": "Name",
+            "title": "Your Frak account",
+            "name": "Account name",
             "domain": "Domain",
-            "currency": "Default reward currency",
+            "currency": "Rewards paid in",
             "edit": "Edit"
         },
         "domains": {
@@ -1898,10 +1898,11 @@
     "customize": {
         "save": "Save",
         "identity": {
+            "title": "Your brand for visitors",
+            "description": "What your customers see in Frak components.",
             "name": {
-                "label": "Name",
-                "placeholder": "Merchant Name",
-                "hint": "Your brand name as shown to visitors in the SDK components"
+                "label": "Display name",
+                "hint": "Left empty, your store's name is used."
             },
             "logo": {
                 "label": "Logo",
@@ -1913,8 +1914,8 @@
                 "invalid": "Enter a valid URL (https://…)"
             },
             "currency": {
-                "label": "Currency",
-                "hint": "Currency used to display reward amounts",
+                "label": "Display currency",
+                "hint": "Currency of the amounts shown to visitors. Rewards are still paid in {{token}}.",
                 "auto": "Auto"
             },
             "lang": {

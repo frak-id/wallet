@@ -1101,9 +1101,10 @@ export default interface Resources {
       "identity": {
         "currency": {
           "auto": "Auto",
-          "hint": "Currency used to display reward amounts",
-          "label": "Currency"
+          "hint": "Currency of the amounts shown to visitors. Rewards are still paid in {{token}}.",
+          "label": "Display currency"
         },
+        "description": "What your customers see in Frak components.",
         "displayed": {
           "description": "When off, the SDK is completely hidden from visitors",
           "title": "Frak SDK displayed"
@@ -1125,10 +1126,10 @@ export default interface Resources {
           "label": "Logo"
         },
         "name": {
-          "hint": "Your brand name as shown to visitors in the SDK components",
-          "label": "Name",
-          "placeholder": "Merchant Name"
-        }
+          "hint": "Left empty, your store's name is used.",
+          "label": "Display name"
+        },
+        "title": "Your brand for visitors"
       },
       "placements": {
         "add": "Add another placement",
@@ -1492,11 +1493,11 @@ export default interface Resources {
     "merchantEdit": {
       "close": "Close",
       "details": {
-        "currency": "Default reward currency",
+        "currency": "Rewards paid in",
         "domain": "Domain",
         "edit": "Edit",
-        "name": "Name",
-        "title": "Details of the merchant"
+        "name": "Account name",
+        "title": "Your Frak account"
       },
       "discard": {
         "confirm": "Discard changes",

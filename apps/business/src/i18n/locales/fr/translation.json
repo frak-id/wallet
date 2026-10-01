@@ -1714,10 +1714,10 @@
             "confirm": "Abandonner"
         },
         "details": {
-            "title": "Détails du marchand",
-            "name": "Nom",
+            "title": "Votre compte Frak",
+            "name": "Nom du compte",
             "domain": "Domaine",
-            "currency": "Devise de récompense par défaut",
+            "currency": "Récompenses versées en",
             "edit": "Modifier"
         },
         "domains": {
@@ -1898,10 +1898,11 @@
     "customize": {
         "save": "Enregistrer",
         "identity": {
+            "title": "Votre marque auprès des visiteurs",
+            "description": "Ce que vos clients voient dans les composants Frak.",
             "name": {
-                "label": "Nom",
-                "placeholder": "Nom du marchand",
-                "hint": "Le nom de votre marque affiché aux visiteurs dans les composants SDK"
+                "label": "Nom affiché",
+                "hint": "Laissé vide, le nom de votre boutique est utilisé."
             },
             "logo": {
                 "label": "Logo",
@@ -1913,8 +1914,8 @@
                 "invalid": "Entrez une URL valide (https://…)"
             },
             "currency": {
-                "label": "Devise",
-                "hint": "Devise utilisée pour afficher les montants de récompense",
+                "label": "Devise d'affichage",
+                "hint": "Devise des montants affichés aux visiteurs. Les récompenses restent versées en {{token}}.",
                 "auto": "Auto"
             },
             "lang": {
