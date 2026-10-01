@@ -25,7 +25,9 @@ import { getSdkConfig } from "./utils";
 
 export function CustomizePage({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
-    const { data: merchant } = useMerchant({ merchantId });
+    const { data: merchant, isPending: isMerchantPending } = useMerchant({
+        merchantId,
+    });
     const { data: sdkConfigData } = useSdkConfig({ merchantId });
     const sdkConfig = useMemo(
         () => getSdkConfig(sdkConfigData?.sdkConfig),
@@ -96,13 +98,15 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
         );
     }
 
-    if (!sdkConfigData) {
+    if (!sdkConfigData || isMerchantPending) {
         return (
             <EditPageLayout merchantId={merchantId} page="customize">
                 <Spinner />
             </EditPageLayout>
         );
     }
+
+    const shopName = sdkConfig.name || merchant?.name || "My Store";
 
     return (
         <CustomizeSaveProvider value={saveContext}>
@@ -119,21 +123,16 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
                         sdkConfig={sdkConfig}
                     />
 
-                    {/* Branded from the render-gated sdkConfig like the sibling
-                        panels: `merchant` is a separate in-flight query, and a
-                        preset clicked before it resolved persisted brandless copy. */}
                     <SharingWordingPanel
                         merchantId={merchantId}
                         sdkConfig={sdkConfig}
-                        shopName={sdkConfig.name ?? "My Store"}
+                        shopName={shopName}
                     />
 
                     <AmbassadorPagePanel
                         merchantId={merchantId}
                         sdkConfig={sdkConfig}
-                        shopName={
-                            sdkConfig.name ?? merchant?.name ?? "My Store"
-                        }
+                        shopName={shopName}
                         explorerHeroImageUrl={
                             merchant?.explorerConfig?.heroImageUrl
                         }
@@ -152,12 +151,14 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
                         <DefaultCustomization
                             merchantId={merchantId}
                             sdkConfig={sdkConfig}
+                            shopName={shopName}
                         />
                     ) : (
                         <PlacementCustomization
                             merchantId={merchantId}
                             placementId={activeTab}
                             sdkConfig={sdkConfig}
+                            shopName={shopName}
                             onSelectDefaultTab={() =>
                                 handleTabChange("default")
                             }

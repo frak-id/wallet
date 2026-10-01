@@ -325,7 +325,7 @@ export const SHARING_PRESETS: readonly LocalizedSharingPreset[] = [
 export const BUNDLED_SHARING_DEFAULT = SHARING_PRESETS[0];
 
 export function applyBrand(text: string, shopName: string): string {
-    return text.replace(/\{Brand\}/g, shopName);
+    return text.replace(/\{Brand\}/g, () => shopName);
 }
 
 // Presets are matched on their canonical `en` copy: selecting a preset writes

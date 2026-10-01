@@ -40,15 +40,18 @@ import { WordingPresets } from "./WordingPresets";
 export function DefaultCustomization({
     merchantId,
     sdkConfig,
+    shopName,
 }: {
     merchantId: string;
     sdkConfig: SdkConfig;
+    shopName: string;
 }) {
     return (
         <>
             <GlobalComponentsPanel
                 merchantId={merchantId}
                 sdkConfig={sdkConfig}
+                shopName={shopName}
             />
             {CUSTOM_CSS_ENABLED && (
                 <GlobalCssPanel merchantId={merchantId} sdkConfig={sdkConfig} />
@@ -67,9 +70,11 @@ const getGlobalComponentsValues = ({
 function GlobalComponentsPanel({
     merchantId,
     sdkConfig,
+    shopName,
 }: {
     merchantId: string;
     sdkConfig: SdkConfig;
+    shopName: string;
 }) {
     const { t } = useTranslation();
     const { saveComponents, isSuccess } = useSaveComponents(merchantId);
@@ -133,7 +138,7 @@ function GlobalComponentsPanel({
                             selectedComponent={selectedComponent}
                             form={form}
                             currency={(sdkConfig.currency ?? "eur") as Currency}
-                            shopName={sdkConfig.name ?? "My Store"}
+                            shopName={shopName}
                             lang={activeLang}
                             configLang={sdkConfig.lang}
                         />
@@ -143,7 +148,7 @@ function GlobalComponentsPanel({
                         componentType={selectedComponent}
                         form={form}
                         currency={(sdkConfig.currency ?? "eur") as Currency}
-                        shopName={sdkConfig.name ?? "My Store"}
+                        shopName={shopName}
                     />
 
                     <ComponentImagePicker

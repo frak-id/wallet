@@ -51,6 +51,7 @@ describe("one page-level Save with both components sections dirty", () => {
                     <DefaultCustomization
                         merchantId="merchant-1"
                         sdkConfig={sdkConfig}
+                        shopName="My Store"
                     />
                 </CustomizeSaveProvider>
             </QueryClientProvider>

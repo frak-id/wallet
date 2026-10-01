@@ -39,11 +39,13 @@ export function PlacementCustomization({
     merchantId,
     placementId,
     sdkConfig,
+    shopName,
     onSelectDefaultTab,
 }: {
     merchantId: string;
     placementId: string;
     sdkConfig: SdkConfig;
+    shopName: string;
     onSelectDefaultTab: () => void;
 }) {
     const placement = sdkConfig.placements?.[placementId];
@@ -56,6 +58,7 @@ export function PlacementCustomization({
                 merchantId={merchantId}
                 placementId={placementId}
                 sdkConfig={sdkConfig}
+                shopName={shopName}
             />
             {CUSTOM_CSS_ENABLED && (
                 <PlacementCssPanel
@@ -89,10 +92,12 @@ function PlacementSettingsPanel({
     merchantId,
     placementId,
     sdkConfig,
+    shopName,
 }: {
     merchantId: string;
     placementId: string;
     sdkConfig: SdkConfig;
+    shopName: string;
 }) {
     const { t } = useTranslation();
     const { mutateAsync: editSdkConfig, isSuccess } = useMerchantUpdate({
@@ -211,7 +216,7 @@ function PlacementSettingsPanel({
                             selectedComponent={selectedComponent}
                             form={form}
                             currency={(sdkConfig.currency ?? "eur") as Currency}
-                            shopName={sdkConfig.name ?? "My Store"}
+                            shopName={shopName}
                             lang={activeLang}
                             configLang={sdkConfig.lang}
                         />
@@ -221,7 +226,7 @@ function PlacementSettingsPanel({
                         componentType={selectedComponent}
                         form={form}
                         currency={(sdkConfig.currency ?? "eur") as Currency}
-                        shopName={sdkConfig.name ?? "My Store"}
+                        shopName={shopName}
                     />
 
                     <ComponentImagePicker

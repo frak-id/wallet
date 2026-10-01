@@ -1,6 +1,6 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("react-i18next", () => ({
@@ -25,7 +25,7 @@ function queryClientWith(sdkConfig: SdkConfig) {
     return client;
 }
 
-async function saveComponents(sdkConfig: SdkConfig) {
+function renderPanel(sdkConfig: SdkConfig, shopName = "My Store") {
     const sections = new Map<string, () => Promise<void>>();
     render(
         <QueryClientProvider client={queryClientWith(sdkConfig)}>
@@ -41,12 +41,22 @@ async function saveComponents(sdkConfig: SdkConfig) {
                 <DefaultCustomization
                     merchantId="merchant-1"
                     sdkConfig={sdkConfig}
+                    shopName={shopName}
                 />
             </CustomizeSaveProvider>
         </QueryClientProvider>
     );
     const submit = sections.get(SECTION_KEYS.defaultComponents);
     if (!submit) throw new Error("components section never registered");
+    return submit;
+}
+
+function openBannerTab() {
+    fireEvent.mouseDown(screen.getByText("customize.components.banner"));
+}
+
+async function saveComponents(sdkConfig: SdkConfig) {
+    const submit = renderPanel(sdkConfig);
     await act(() => submit());
     return editSdkConfig.mock.calls[0]?.[0].components;
 }
@@ -79,5 +89,34 @@ describe("DefaultCustomization save", () => {
             "buttonShare",
             "postPurchase",
         ]);
+    });
+
+    it("brands a banner tone with the passed shop name, not the display name", async () => {
+        const submit = renderPanel({ name: "Display" }, "frak-dev-08");
+        openBannerTab();
+        fireEvent.click(screen.getByText(/Shop with frak-dev-08 and collect/));
+        await act(() => submit());
+
+        const saved = editSdkConfig.mock.calls[0]?.[0].components.banner;
+        expect(saved.referralDescription.en).toBe(
+            "Shop with frak-dev-08 and collect your reward after purchase."
+        );
+    });
+
+    it("previews the passed shop name rather than the display name", () => {
+        renderPanel(
+            {
+                name: "Display",
+                components: {
+                    banner: {
+                        referralDescription: "Welcome to {{productName}}",
+                    },
+                },
+            },
+            "frak-dev-08"
+        );
+        openBannerTab();
+
+        expect(screen.getByText("Welcome to frak-dev-08")).toBeTruthy();
     });
 });
