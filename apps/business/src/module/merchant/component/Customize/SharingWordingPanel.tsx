@@ -16,6 +16,7 @@ import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { useCustomizeSection } from "../saveRegistry";
 import { WordingLangTabs } from "./ComponentEditor";
 import * as styles from "./customize.css";
+import { AdvancedDisclosure } from "./Disclosure";
 import { resolveBuiltInLang, resolvePreviewWording } from "./localizable";
 import {
     applyBrand,
@@ -54,6 +55,7 @@ export function SharingWordingPanel({
     });
 
     const [activeLang, setActiveLang] = useState<WordingLang>("default");
+    const [advancedOpen, setAdvancedOpen] = useState(false);
 
     const values = useMemo(
         () => translationsToSharingValues(sdkConfig.translations),
@@ -113,52 +115,58 @@ export function SharingWordingPanel({
 
                     <SharingPresets form={form} shopName={shopName} />
 
-                    <div className={styles.settingsGrid}>
-                        <FormField
-                            control={form.control}
-                            name={`title.${activeLang}`}
-                            render={({ field }) => (
-                                <EditField>
-                                    <FormControl>
-                                        <Input
-                                            variant="bare"
-                                            tone="muted"
-                                            maxLength={500}
-                                            label={t(
-                                                "customize.sharing.fields.title.label"
-                                            )}
-                                            hint={t(
-                                                "customize.sharing.fields.title.hint"
-                                            )}
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                </EditField>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name={`text.${activeLang}`}
-                            render={({ field }) => (
-                                <EditField>
-                                    <FormControl>
-                                        <Input
-                                            variant="bare"
-                                            tone="muted"
-                                            maxLength={500}
-                                            label={t(
-                                                "customize.sharing.fields.text.label"
-                                            )}
-                                            hint={t(
-                                                "customize.sharing.fields.text.hint"
-                                            )}
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                </EditField>
-                            )}
-                        />
-                    </div>
+                    <AdvancedDisclosure
+                        label={t("customize.components.advanced")}
+                        isOpen={advancedOpen}
+                        onToggle={() => setAdvancedOpen(!advancedOpen)}
+                    >
+                        <div className={styles.settingsGrid}>
+                            <FormField
+                                control={form.control}
+                                name={`title.${activeLang}`}
+                                render={({ field }) => (
+                                    <EditField>
+                                        <FormControl>
+                                            <Input
+                                                variant="bare"
+                                                tone="muted"
+                                                maxLength={500}
+                                                label={t(
+                                                    "customize.sharing.fields.title.label"
+                                                )}
+                                                hint={t(
+                                                    "customize.sharing.fields.title.hint"
+                                                )}
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                    </EditField>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name={`text.${activeLang}`}
+                                render={({ field }) => (
+                                    <EditField>
+                                        <FormControl>
+                                            <Input
+                                                variant="bare"
+                                                tone="muted"
+                                                maxLength={500}
+                                                label={t(
+                                                    "customize.sharing.fields.text.label"
+                                                )}
+                                                hint={t(
+                                                    "customize.sharing.fields.text.hint"
+                                                )}
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                    </EditField>
+                                )}
+                            />
+                        </div>
+                    </AdvancedDisclosure>
                 </Stack>
             </Card>
         </Form>

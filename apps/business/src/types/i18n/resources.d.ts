@@ -938,6 +938,55 @@ export default interface Resources {
       }
     },
     "customize": {
+      "ambassador": {
+        "description": "The hero photo and wording of your ambassador page, on every platform where it is placed. An empty field keeps the default text.",
+        "fields": {
+          "faq1Answer": "Answer 1",
+          "faq1Question": "Question 1",
+          "faq2Answer": "Answer 2",
+          "faq2Question": "Question 2",
+          "faq3Answer": "Answer 3",
+          "faq3Question": "Question 3",
+          "faq4Answer": "Answer 4",
+          "faq4Question": "Question 4",
+          "faq5Answer": "Answer 5",
+          "faq5Question": "Question 5",
+          "heroCtaLabel": "Top button",
+          "heroLede": "Intro",
+          "heroRewardCaption": "Caption on the reward card",
+          "heroTitle": "Headline",
+          "referralCtaLabel": "Share button",
+          "rewardCtaLabel": "Reward button",
+          "rewardHeading": "Reward heading",
+          "rewardLede": "Reward intro"
+        },
+        "fullPreview": "See the whole page",
+        "fullPreviewDescription": "Phone preview of the whole ambassador page",
+        "groups": {
+          "buttons": "Button labels",
+          "faq": "Frequently asked questions",
+          "hero": "Headline and intro",
+          "reward": "Reward wording"
+        },
+        "photo": {
+          "custom": "Other image",
+          "customHint": "Shown in a 4:5 frame: pick an image where people stay in the middle.",
+          "default": "Explorer image",
+          "defaultHint": "Uses the main image of your Explorer profile.",
+          "label": "Hero photo",
+          "noExplorerHint": "Your Explorer profile has no main image yet, so the page shows no photo.",
+          "none": "No photo"
+        },
+        "preview": "Preview of the top of the page",
+        "title": "Ambassador page",
+        "tokenHint": "Tip: {BRAND} shows your store name and {REWARD} the campaign reward.",
+        "tonePresets": {
+          "casual": "Casual",
+          "classic": "Classic",
+          "earnings": "Earnings",
+          "trust": "Trust"
+        }
+      },
       "components": {
         "advanced": "Advanced settings",
         "banner": "Banner",
@@ -946,7 +995,7 @@ export default interface Resources {
           "referral": "Referral"
         },
         "buttonShare": "Share button",
-        "description": "Choose the wording that best matches your brand for each component.",
+        "description": "Placements are component variants for a specific spot on your site.",
         "fields": {
           "badgeText": "Badge text",
           "css": "Component CSS",
@@ -1042,7 +1091,7 @@ export default interface Resources {
           "hint": "Event name that triggers reward calculation for this placement (e.g. purchase_completed, signup)",
           "label": "Target interaction"
         },
-        "title": "Global component defaults"
+        "title": "SDK components"
       },
       "globalCss": {
         "description": "CSS styles applied to all SDK components across every placement. Placement-level CSS can override these defaults.",
@@ -1052,9 +1101,10 @@ export default interface Resources {
       "identity": {
         "currency": {
           "auto": "Auto",
-          "hint": "Currency used to display reward amounts",
-          "label": "Currency"
+          "hint": "Currency of the amounts shown to visitors. Rewards are still paid in {{token}}.",
+          "label": "Display currency"
         },
+        "description": "What your customers see in Frak components.",
         "displayed": {
           "description": "When off, the SDK is completely hidden from visitors",
           "title": "Frak SDK displayed"
@@ -1076,13 +1126,13 @@ export default interface Resources {
           "label": "Logo"
         },
         "name": {
-          "hint": "Your brand name as shown to visitors in the SDK components",
-          "label": "Name",
-          "placeholder": "Merchant Name"
-        }
+          "hint": "Left empty, your store's name is used.",
+          "label": "Display name"
+        },
+        "title": "Your brand for visitors"
       },
       "placements": {
-        "add": "Add another placement",
+        "add": "+ Add a placement",
         "css": {
           "description": "Global CSS overrides for this placement. Styles defined here apply to all SDK components within this placement.",
           "title": "Placement CSS · {{placementId}}"
@@ -1096,7 +1146,6 @@ export default interface Resources {
           "hint": "This removes all overrides for this placement.",
           "title": "Delete placement · {{placementId}}"
         },
-        "description": "Global defaults apply to every SDK component. Placements are variants you can use on the same website to display your products in different ways - each with its own text, styles, and behavior.",
         "dialog": {
           "cancel": "Cancel",
           "create": "Create placement",
@@ -1107,11 +1156,7 @@ export default interface Resources {
           "title": "Create placement"
         },
         "globalDefault": "Global default",
-        "settings": {
-          "description": "Text, styles and behavior overrides for this placement.",
-          "title": "Placement settings · {{placementId}}"
-        },
-        "title": "SDK Customization"
+        "label": "Placement"
       },
       "propagationHint": "A saved change can take up to 10 minutes to appear on your storefront.",
       "save": "Save",
@@ -1443,11 +1488,11 @@ export default interface Resources {
     "merchantEdit": {
       "close": "Close",
       "details": {
-        "currency": "Default reward currency",
+        "currency": "Rewards paid in",
         "domain": "Domain",
         "edit": "Edit",
-        "name": "Name",
-        "title": "Details of the merchant"
+        "name": "Account name",
+        "title": "Your Frak account"
       },
       "discard": {
         "confirm": "Discard changes",

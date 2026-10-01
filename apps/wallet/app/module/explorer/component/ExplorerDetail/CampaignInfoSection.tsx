@@ -17,10 +17,12 @@ import {
     CoinsIcon,
 } from "@frak-labs/design-system/icons";
 import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { InstructionList } from "@/module/common/component/InstructionList";
 import type { CampaignView } from "../../campaignView";
+import type { RewardOffer } from "../../rewardOffer";
 import * as styles from "./index.css";
 
 type FlatReward = Exclude<EstimatedReward, { payoutType: "tiered" }>;
@@ -29,15 +31,23 @@ type RewardTier = TieredReward["tiers"][number];
 
 export function CampaignInfoSection({
     view,
+    offer,
     merchantName,
 }: {
     view: CampaignView | null;
+    offer: RewardOffer;
     merchantName: string;
 }) {
     const { t } = useTranslation();
     return (
         <>
-            {view && <CampaignInfoCard view={view} />}
+            {view && (
+                <CampaignInfoCards
+                    view={view}
+                    offer={offer}
+                    merchantName={merchantName}
+                />
+            )}
             <InstructionList
                 title={t("explorer.detail.instructions")}
                 steps={[
@@ -63,10 +73,19 @@ export function CampaignInfoSection({
     );
 }
 
-function CampaignInfoCard({ view }: { view: CampaignView }) {
+function CampaignInfoCards({
+    view,
+    offer,
+    merchantName,
+}: {
+    view: CampaignView;
+    offer: RewardOffer;
+    merchantName: string;
+}) {
     const { t } = useTranslation();
+    const { purchase } = offer;
     return (
-        <Stack space="s">
+        <>
             {view.status === "upcoming" && view.formattedStartDate && (
                 <Badge
                     variant="info"
@@ -78,6 +97,48 @@ function CampaignInfoCard({ view }: { view: CampaignView }) {
                         date: view.formattedStartDate,
                     })}
                 </Badge>
+            )}
+            {purchase && (
+                <OfferSection
+                    title={t("explorer.offer.purchaseTitle")}
+                    note={
+                        purchase.welcomeBonus &&
+                        t(
+                            purchase.cashback
+                                ? "explorer.offer.welcomeBonusNote"
+                                : "explorer.offer.welcomeBonusOnlyNote",
+                            { name: merchantName }
+                        )
+                    }
+                >
+                    {purchase.total ? (
+                        <RewardRow
+                            labelKey={
+                                purchase.welcomeBonus
+                                    ? "explorer.offer.welcomeBonus"
+                                    : "explorer.offer.cashback"
+                            }
+                            reward={purchase.total}
+                            minPurchase={view.minPurchaseAmount}
+                        />
+                    ) : (
+                        <InfoRow
+                            labelVariant="bodySmall"
+                            labelColor="secondary"
+                            label={t("explorer.offer.welcomeBonus")}
+                            action={
+                                <Text
+                                    variant="bodySmall"
+                                    weight="medium"
+                                    className={styles.infoValue}
+                                >
+                                    <CoinsIcon width={16} height={16} />{" "}
+                                    {purchase.amount}
+                                </Text>
+                            }
+                        />
+                    )}
+                </OfferSection>
             )}
             <InfoCard>
                 {view.daysRemaining != null && view.formattedEndDate && (
@@ -147,7 +208,33 @@ function CampaignInfoCard({ view }: { view: CampaignView }) {
                     />
                 )}
             </InfoCard>
-        </Stack>
+        </>
+    );
+}
+
+function OfferSection({
+    title,
+    note,
+    children,
+}: {
+    title: string;
+    note?: string;
+    children: ReactNode;
+}) {
+    return (
+        <>
+            <Text variant="bodySmall" color="secondary">
+                {title}
+            </Text>
+            <Stack space="s">
+                <InfoCard>{children}</InfoCard>
+                {note && (
+                    <Text variant="caption" color="tertiary">
+                        {note}
+                    </Text>
+                )}
+            </Stack>
+        </>
     );
 }
 

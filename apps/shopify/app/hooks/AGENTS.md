@@ -11,6 +11,8 @@ Three patterns: React Query data fetching, `useMemo` URL builders, utility liste
 | `useWaitForTxAndInvalidateQueries` | useCallback        | viemClient | Waits for tx receipt then invalidates React Query cache                      |
 | `useRefreshData`                   | useCallback        | none       | Dual refresh: React Query `refetchQueries` + React Router `revalidate`       |
 | `useVisibilityChange`              | useEffect          | none       | Fires callback when tab becomes visible                                      |
+| `useAmbassadorPageAction`          | keyed useFetcher   | none       | Ambassador page create/apply/restore/keep; mount once per screen (toasts)    |
+| `useThemeEditorUrl`                | URL builder        | none       | Theme editor URL for the shop's live theme                                   |
 
 ## REACT QUERY PATTERN
 

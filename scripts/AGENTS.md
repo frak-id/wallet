@@ -42,6 +42,7 @@ agent that writes the report issue.
 | `check-bun-version.ts` | `packageManager` in the root `package.json` | Seven Dockerfile `ARG BUN_VERSION` sites plus what `setup-bun` resolves in CI. A partial bump is silent — CI and the images just run different Bun versions |
 | `native-version.ts` | `frak.sdk.version` / `FrakSDKVersion.swift` | 5 Android + 3 iOS sites move as one hand-written commit. A published version is immutable on Maven Central and the SwiftPM mirror, so drift caught after tagging ships uncorrectable |
 | `check-ios-floor.ts` | `gen/apple/project.yml` | Twelve sites. A partial bump is not a warning: `.vN` needs the PackageDescription that shipped it, so an older `swift-tools-version` is a hard parse error while an older `.vN` links fine |
+| `check-shopify-api-version.ts` | `api_version` in each extension's `shopify.extension.toml` | `@shopify/ui-extensions` ships one release line per API version, pinned in `apps/shopify/package.json` (the installed one; bun ignores the nested `extensions/*` workspaces) and in the extension's own `package.json`. A toml bump alone typechecks and deploys fine against the old line's types |
 | `check-es-version.ts` | `BROWSER_TARGET_ECMA` | The only layer that sees what actually ships — `lib` cannot reject an ambient augmentation and `skipLibCheck` hides dependency `.d.ts` |
 | `check-comments.ts` | `comment-budget-baseline.json` | A file may only ever get better. Pay some down, then `bun run lint:comments -- --update-baseline` |
 

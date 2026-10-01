@@ -12,6 +12,8 @@ import { useOneShotInView } from "@/module/common/hook/useOneShotInView";
 import { FavoriteButton } from "@/module/favorites/component/FavoriteButton";
 import { modalStore } from "@/module/stores/modalStore";
 import { useCampaignView } from "../../campaignView";
+import { useRewardOffer } from "../../rewardOffer";
+import { hasRewardOfferLines, RewardOfferLines } from "../RewardOfferLines";
 import * as styles from "./index.css";
 import { LogoCutout } from "./LogoCutout";
 
@@ -67,6 +69,8 @@ function ExplorerCardComponent({ merchant, priority }: ExplorerCardProps) {
     });
 
     const view = useCampaignView(merchant.id, { enabled: isNearViewport });
+
+    const offer = useRewardOffer(view, merchant.id);
 
     const showViews = merchant.views >= VIEWS_DISPLAY_THRESHOLD;
     // Compact glyph for the pill (e.g. "1.2K"); the full grouped count lives in
@@ -148,27 +152,26 @@ function ExplorerCardComponent({ merchant, priority }: ExplorerCardProps) {
                         </Inline>
                     )}
                 </Spread>
-                <Text
-                    variant="bodySmall"
-                    weight="medium"
-                    className={
-                        view?.headlineReferrerReward
-                            ? undefined
-                            : styles.descriptionFallback
-                    }
-                >
-                    {view?.headlineReferrerReward ? (
-                        <>
-                            {t("explorer.detail.rewardPerReferral", {
-                                amount: view.headlineReferrerReward,
-                            })}
-                            {view.formattedEndDate &&
-                                ` - ${t("explorer.card.until", { date: view.formattedEndDate })}`}
-                        </>
-                    ) : (
-                        (description ?? domain)
-                    )}
-                </Text>
+                {hasRewardOfferLines(offer) ? (
+                    <RewardOfferLines
+                        offer={offer}
+                        size="bodySmall"
+                        suffix={
+                            view?.formattedEndDate &&
+                            t("explorer.card.until", {
+                                date: view.formattedEndDate,
+                            })
+                        }
+                    />
+                ) : (
+                    <Text
+                        variant="bodySmall"
+                        weight="medium"
+                        className={styles.descriptionFallback}
+                    >
+                        {description ?? domain}
+                    </Text>
+                )}
             </Box>
         </Box>
     );

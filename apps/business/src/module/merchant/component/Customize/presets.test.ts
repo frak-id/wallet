@@ -1,14 +1,21 @@
+import { componentDefaults } from "@frak-labs/components/i18n/defaults";
 import { describe, expect, it } from "vitest";
+import { AMBASSADOR_FIELD_GROUPS } from "./ambassadorForm";
 import {
+    AMBASSADOR_TONE_PRESET_FIELDS,
+    AMBASSADOR_TONE_PRESETS,
+    type AmbassadorTonePresetField,
     applyBrand,
     BANNER_PRESETS,
     BUTTON_SHARE_PRESETS,
     formatPresetLabel,
+    matchAmbassadorTonePreset,
     matchBannerPreset,
     matchButtonSharePreset,
     matchPostPurchasePreset,
     POST_PURCHASE_PRESETS,
 } from "./presets";
+import type { LocalizedText } from "./types";
 
 describe("applyBrand", () => {
     it("substitutes the brand token", () => {
@@ -19,6 +26,12 @@ describe("applyBrand", () => {
 
     it("returns text without token unchanged", () => {
         expect(applyBrand("No token here", "Nowa")).toBe("No token here");
+    });
+
+    it("keeps replacement patterns in the brand name literal", () => {
+        expect(applyBrand("A gift from {Brand}", "Bob$&Jane$$")).toBe(
+            "A gift from Bob$&Jane$$"
+        );
     });
 });
 
@@ -129,5 +142,116 @@ describe("formatPresetLabel", () => {
         const label = formatPresetLabel("Earn {REWARD} and {REWARD}", "eur");
         expect(label).not.toContain("{REWARD}");
         expect(label).toContain("42");
+    });
+});
+
+describe("AMBASSADOR_TONE_PRESETS", () => {
+    it("covers every ambassador text field except the FAQ", () => {
+        const { faq: _faq, ...toneGroups } = AMBASSADOR_FIELD_GROUPS;
+        expect(new Set(AMBASSADOR_TONE_PRESET_FIELDS)).toEqual(
+            new Set(Object.values(toneGroups).flat())
+        );
+    });
+
+    it("ships non-empty en + fr text for all 8 fields of every preset", () => {
+        for (const preset of AMBASSADOR_TONE_PRESETS) {
+            for (const field of AMBASSADOR_TONE_PRESET_FIELDS) {
+                expect(preset.en[field].trim().length).toBeGreaterThan(0);
+                expect(preset.fr[field].trim().length).toBeGreaterThan(0);
+            }
+        }
+    });
+
+    it("keeps {BRAND} as a literal token and never uses the shop-name form", () => {
+        for (const preset of AMBASSADOR_TONE_PRESETS) {
+            for (const text of [
+                ...Object.values(preset.en),
+                ...Object.values(preset.fr),
+            ]) {
+                expect(text).not.toContain("{Brand}");
+            }
+        }
+        expect(AMBASSADOR_TONE_PRESETS[2].en.heroTitle).toContain("{BRAND}");
+    });
+
+    it("index 0 is the SDK's built-in page copy in en and fr", () => {
+        for (const lang of ["en", "fr"] as const) {
+            const copy = componentDefaults[lang].ambassador;
+            expect(AMBASSADOR_TONE_PRESETS[0][lang]).toEqual({
+                heroTitle: copy.heroHeadline,
+                heroLede: copy.heroLedeReward,
+                heroRewardCaption: copy.heroRewardCaption,
+                rewardHeading: copy.rewardHeadingReward,
+                rewardLede: copy.rewardLede,
+                heroCtaLabel: copy.heroCtaLabel,
+                rewardCtaLabel: copy.rewardCtaLabel,
+                referralCtaLabel: copy.referralCtaLabel,
+            });
+        }
+    });
+
+    it("keeps the reward amount out of every tone but Classic", () => {
+        for (const preset of AMBASSADOR_TONE_PRESETS.slice(1)) {
+            for (const text of [
+                ...Object.values(preset.en),
+                ...Object.values(preset.fr),
+            ]) {
+                expect(text).not.toContain("{REWARD}");
+            }
+        }
+    });
+});
+
+describe("matchAmbassadorTonePreset", () => {
+    const empty = () => ({ default: "", en: "", fr: "" });
+    const textsOf = (
+        fill: (field: AmbassadorTonePresetField) => LocalizedText
+    ) =>
+        Object.fromEntries(
+            AMBASSADOR_TONE_PRESET_FIELDS.map((field) => [field, fill(field)])
+        ) as Record<AmbassadorTonePresetField, LocalizedText>;
+    const match = (texts: Record<AmbassadorTonePresetField, LocalizedText>) =>
+        matchAmbassadorTonePreset(
+            AMBASSADOR_TONE_PRESET_FIELDS.map((field) => texts[field])
+        );
+    const picked = (index: number) =>
+        textsOf((field) => ({
+            default: "",
+            en: AMBASSADOR_TONE_PRESETS[index].en[field],
+            fr: AMBASSADOR_TONE_PRESETS[index].fr[field],
+        }));
+
+    it("returns Classic when every tier of every field is empty", () => {
+        expect(match(textsOf(empty))).toBe(0);
+    });
+
+    it("returns null when a single field has an all-languages value", () => {
+        const texts = textsOf(empty);
+        texts.heroTitle.default = "Join us";
+        expect(match(texts)).toBeNull();
+    });
+
+    it("returns each other tone for its en + fr copy, whitespace ignored", () => {
+        for (const index of [1, 2, 3]) {
+            const texts = picked(index);
+            texts.heroTitle.en = `  ${texts.heroTitle.en}\n`;
+            expect(match(texts)).toBe(index);
+        }
+    });
+
+    it("returns null when any single en or fr value differs", () => {
+        for (const field of AMBASSADOR_TONE_PRESET_FIELDS) {
+            for (const lang of ["en", "fr"] as const) {
+                const texts = picked(2);
+                texts[field][lang] = "Custom wording";
+                expect(match(texts)).toBeNull();
+            }
+        }
+    });
+
+    it("returns null when a picked tone also carries an all-languages value", () => {
+        const texts = picked(1);
+        texts.rewardLede.default = "Custom wording";
+        expect(match(texts)).toBeNull();
     });
 });

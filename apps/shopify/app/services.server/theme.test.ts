@@ -3,11 +3,13 @@ import type { AuthenticatedContext } from "../types/context";
 import {
     detectAppBlockSupport,
     detectFrakActivated,
-    detectFrakBannerInSections,
+    detectFrakBlockInSections,
     detectFrakButton,
     doesThemeSupportAppEmbed,
     doesThemeSupportBlock,
     extractThemeId,
+    getThemeBlockPresence,
+    pickAmbassadorTemplate,
     type ThemeBlockInfo,
 } from "./theme";
 
@@ -185,7 +187,90 @@ describe("detectFrakButton", () => {
     });
 });
 
-describe("detectFrakBannerInSections", () => {
+const BANNER = "/blocks/banner/";
+const AMBASSADOR = "/blocks/ambassador/";
+
+describe("detectFrakBlockInSections", () => {
+    it("returns true when a page template holds an enabled ambassador block", () => {
+        const sections = {
+            apps: {
+                type: "_blocks",
+                blocks: {
+                    amb: {
+                        type: "shopify://apps/frak/blocks/ambassador/abcdef",
+                    },
+                } as Record<string, ThemeBlockInfo>,
+            },
+        };
+        expect(detectFrakBlockInSections(sections, AMBASSADOR)).toBe(true);
+    });
+
+    it("returns false when the ambassador block is disabled", () => {
+        const sections = {
+            apps: {
+                type: "_blocks",
+                blocks: {
+                    amb: {
+                        type: "shopify://apps/frak/blocks/ambassador/abcdef",
+                        disabled: true,
+                    },
+                } as Record<string, ThemeBlockInfo>,
+            },
+        };
+        expect(detectFrakBlockInSections(sections, AMBASSADOR)).toBe(false);
+    });
+
+    it("returns false when the ambassador block sits in a hidden section", () => {
+        const sections = {
+            apps: {
+                type: "_blocks",
+                disabled: true,
+                blocks: {
+                    amb: {
+                        type: "shopify://apps/frak/blocks/ambassador/abcdef",
+                    },
+                } as Record<string, ThemeBlockInfo>,
+            },
+        };
+        expect(detectFrakBlockInSections(sections, AMBASSADOR)).toBe(false);
+    });
+
+    it("returns false when the banner block sits in a hidden section", () => {
+        const sections = {
+            header: {
+                type: "header",
+                disabled: true,
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/banner/abcdef",
+                    },
+                } as Record<string, ThemeBlockInfo>,
+            },
+        };
+        expect(detectFrakBlockInSections(sections, BANNER)).toBe(false);
+    });
+
+    it("does not mistake a banner for an ambassador block, or the reverse", () => {
+        const withBanner = {
+            header: {
+                type: "header",
+                blocks: {
+                    b: { type: "shopify://apps/frak/blocks/banner/1" },
+                } as Record<string, ThemeBlockInfo>,
+            },
+        };
+        const withAmbassador = {
+            apps: {
+                type: "_blocks",
+                blocks: {
+                    a: { type: "shopify://apps/frak/blocks/ambassador/1" },
+                } as Record<string, ThemeBlockInfo>,
+            },
+        };
+        expect(detectFrakBlockInSections(withBanner, AMBASSADOR)).toBe(false);
+        expect(detectFrakBlockInSections(withAmbassador, BANNER)).toBe(false);
+    });
+
     it("returns true when a section has a banner block enabled", () => {
         const sections = {
             header: {
@@ -198,7 +283,7 @@ describe("detectFrakBannerInSections", () => {
                 } as Record<string, ThemeBlockInfo>,
             },
         };
-        expect(detectFrakBannerInSections(sections)).toBe(true);
+        expect(detectFrakBlockInSections(sections, BANNER)).toBe(true);
     });
 
     it("returns false when banner block is disabled", () => {
@@ -213,7 +298,7 @@ describe("detectFrakBannerInSections", () => {
                 } as Record<string, ThemeBlockInfo>,
             },
         };
-        expect(detectFrakBannerInSections(sections)).toBe(false);
+        expect(detectFrakBlockInSections(sections, BANNER)).toBe(false);
     });
 
     it("returns false when no banner block exists in any section", () => {
@@ -227,15 +312,15 @@ describe("detectFrakBannerInSections", () => {
                 } as Record<string, ThemeBlockInfo>,
             },
         };
-        expect(detectFrakBannerInSections(sections)).toBe(false);
+        expect(detectFrakBlockInSections(sections, BANNER)).toBe(false);
     });
 
     it("returns false when sections is undefined", () => {
-        expect(detectFrakBannerInSections(undefined)).toBe(false);
+        expect(detectFrakBlockInSections(undefined, BANNER)).toBe(false);
     });
 
     it("returns false when sections is empty", () => {
-        expect(detectFrakBannerInSections({})).toBe(false);
+        expect(detectFrakBlockInSections({}, BANNER)).toBe(false);
     });
 
     it("finds banner among multiple sections and blocks", () => {
@@ -261,7 +346,7 @@ describe("detectFrakBannerInSections", () => {
                 } as Record<string, ThemeBlockInfo>,
             },
         };
-        expect(detectFrakBannerInSections(sections)).toBe(true);
+        expect(detectFrakBlockInSections(sections, BANNER)).toBe(true);
     });
 
     it("ignores string sections", () => {
@@ -271,7 +356,7 @@ describe("detectFrakBannerInSections", () => {
                 blocks?: Record<string, ThemeBlockInfo>;
             },
         };
-        expect(detectFrakBannerInSections(sections)).toBe(false);
+        expect(detectFrakBlockInSections(sections, BANNER)).toBe(false);
     });
 
     it("returns false when sections have no blocks property", () => {
@@ -280,7 +365,7 @@ describe("detectFrakBannerInSections", () => {
                 type: "header",
             },
         };
-        expect(detectFrakBannerInSections(sections)).toBe(false);
+        expect(detectFrakBlockInSections(sections, BANNER)).toBe(false);
     });
 });
 
@@ -496,5 +581,203 @@ describe("doesThemeSupportAppEmbed", () => {
             },
         } as unknown as AuthenticatedContext;
         await expect(doesThemeSupportAppEmbed(context)).resolves.toBe(true);
+    });
+});
+
+describe("getThemeBlockPresence", () => {
+    function filesResponse(
+        nodes: Array<{
+            filename: string;
+            body: { content?: string; contentBase64?: string };
+        }>
+    ) {
+        return {
+            data: {
+                theme: {
+                    files: {
+                        nodes,
+                        pageInfo: { hasNextPage: false, endCursor: null },
+                    },
+                },
+            },
+        };
+    }
+    const ambassadorTemplate = JSON.stringify({
+        sections: {
+            apps: {
+                type: "_blocks",
+                blocks: {
+                    amb: { type: "shopify://apps/frak/blocks/ambassador/1" },
+                },
+            },
+        },
+    });
+    const bannerSettings = JSON.stringify({
+        current: {
+            sections: {
+                header: {
+                    type: "header",
+                    blocks: {
+                        b: { type: "shopify://apps/frak/blocks/banner/1" },
+                    },
+                },
+            },
+        },
+    });
+
+    it("finds the ambassador block in a custom page template", async () => {
+        const context = mockContext(
+            filesResponse([
+                {
+                    filename: "templates/page.ambassador.json",
+                    body: { content: ambassadorTemplate },
+                },
+            ])
+        );
+        await expect(getThemeBlockPresence(context)).resolves.toEqual({
+            banner: false,
+            ambassador: ["ambassador"],
+            pageTemplates: ["ambassador"],
+        });
+    });
+
+    it("lists every custom page template holding the block, not the plain one", async () => {
+        const context = mockContext(
+            filesResponse([
+                {
+                    filename: "templates/page.ambassador.json",
+                    body: { content: ambassadorTemplate },
+                },
+                {
+                    filename: "templates/page.referral.json",
+                    body: { content: ambassadorTemplate },
+                },
+                {
+                    filename: "templates/page.contact.json",
+                    body: { content: JSON.stringify({ sections: {} }) },
+                },
+                {
+                    filename: "templates/page.json",
+                    body: { content: ambassadorTemplate },
+                },
+            ])
+        );
+        const presence = await getThemeBlockPresence(context);
+        expect([...presence.ambassador].sort()).toEqual([
+            "ambassador",
+            "referral",
+        ]);
+    });
+
+    it("ignores the ambassador block in the default page template", async () => {
+        const context = mockContext(
+            filesResponse([
+                {
+                    filename: "templates/page.json",
+                    body: { content: ambassadorTemplate },
+                },
+            ])
+        );
+        await expect(getThemeBlockPresence(context)).resolves.toEqual({
+            banner: false,
+            ambassador: [],
+            pageTemplates: [],
+        });
+    });
+
+    it("reads settings_data.json sections under current", async () => {
+        const context = mockContext(
+            filesResponse([
+                {
+                    filename: "config/settings_data.json",
+                    body: { content: bannerSettings },
+                },
+            ])
+        );
+        await expect(getThemeBlockPresence(context)).resolves.toEqual({
+            banner: true,
+            ambassador: [],
+            pageTemplates: [],
+        });
+    });
+
+    it("decodes a base64 template body", async () => {
+        const context = mockContext(
+            filesResponse([
+                {
+                    filename: "templates/page.ambassador.json",
+                    body: {
+                        contentBase64:
+                            Buffer.from(ambassadorTemplate).toString("base64"),
+                    },
+                },
+            ])
+        );
+        await expect(getThemeBlockPresence(context)).resolves.toEqual({
+            banner: false,
+            ambassador: ["ambassador"],
+            pageTemplates: ["ambassador"],
+        });
+    });
+
+    it("lists a custom page template without the block in pageTemplates only", async () => {
+        const context = mockContext(
+            filesResponse([
+                {
+                    filename: "templates/page.ambassador.json",
+                    body: { content: JSON.stringify({ sections: {} }) },
+                },
+            ])
+        );
+        await expect(getThemeBlockPresence(context)).resolves.toEqual({
+            banner: false,
+            ambassador: [],
+            pageTemplates: ["ambassador"],
+        });
+    });
+
+    it("lists every custom page template in pageTemplates, and not page.json", async () => {
+        const context = mockContext(
+            filesResponse([
+                {
+                    filename: "templates/page.json",
+                    body: { content: ambassadorTemplate },
+                },
+                {
+                    filename: "templates/page.contact.json",
+                    body: { content: JSON.stringify({ sections: {} }) },
+                },
+                {
+                    filename: "templates/page.referral.json",
+                    body: { content: ambassadorTemplate },
+                },
+                {
+                    filename: "templates/product.json",
+                    body: { content: ambassadorTemplate },
+                },
+            ])
+        );
+        const presence = await getThemeBlockPresence(context);
+        expect([...presence.pageTemplates].sort()).toEqual([
+            "contact",
+            "referral",
+        ]);
+    });
+});
+
+describe("pickAmbassadorTemplate", () => {
+    it("prefers ambassador", () => {
+        expect(pickAmbassadorTemplate(["referral", "ambassador"])).toBe(
+            "ambassador"
+        );
+    });
+
+    it("falls back to the first name alphabetically, whatever the input order", () => {
+        expect(pickAmbassadorTemplate(["zeta", "referral"])).toBe("referral");
+        expect(pickAmbassadorTemplate(["referral", "zeta"])).toBe("referral");
+    });
+
+    it("returns null when there is no ambassador template", () => {
+        expect(pickAmbassadorTemplate([])).toBeNull();
     });
 });

@@ -31,7 +31,11 @@ const UNREDEEM_ERROR_KEY_MAP = {
     fallback: "wallet.referral.redeem.errorGeneric",
 } as const;
 
-export function RedeemReferralCodePage() {
+export function RedeemReferralCodePage({
+    initialCode,
+}: {
+    initialCode?: string;
+} = {}) {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
 
@@ -53,13 +57,22 @@ export function RedeemReferralCodePage() {
                     onUnredeemed={invalidateStatus}
                 />
             ) : (
-                <RedeemForm onRedeemed={invalidateStatus} />
+                <RedeemForm
+                    onRedeemed={invalidateStatus}
+                    initialCode={initialCode}
+                />
             )}
         </ReferralPageShell>
     );
 }
 
-function RedeemForm({ onRedeemed }: { onRedeemed: () => void }) {
+function RedeemForm({
+    onRedeemed,
+    initialCode,
+}: {
+    onRedeemed: () => void;
+    initialCode?: string;
+}) {
     const { t } = useTranslation();
     const {
         code,
@@ -70,7 +83,7 @@ function RedeemForm({ onRedeemed }: { onRedeemed: () => void }) {
         handleChange,
         handleClear,
         handleSubmit,
-    } = useRedeemReferralCodeForm({ onApplied: onRedeemed });
+    } = useRedeemReferralCodeForm({ onApplied: onRedeemed, initialCode });
 
     return (
         <form onSubmit={handleSubmit}>

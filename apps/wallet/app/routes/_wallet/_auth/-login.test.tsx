@@ -3,13 +3,13 @@ import type { ReactNode } from "react";
 import { vi } from "vitest";
 import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
-const { mockNavigate, mockExecutePendingActions, mockOnSuccess } = vi.hoisted(
-    () => ({
+const { mockNavigate, mockExecutePendingActions, mockOnSuccess, mockSearch } =
+    vi.hoisted(() => ({
         mockNavigate: vi.fn(),
         mockExecutePendingActions: vi.fn(),
         mockOnSuccess: vi.fn<() => void>(),
-    })
-);
+        mockSearch: { current: {} as { ref?: string } },
+    }));
 
 vi.mock("@tanstack/react-router", async () => {
     const actual = await vi.importActual<
@@ -21,6 +21,10 @@ vi.mock("@tanstack/react-router", async () => {
             <a href={to}>{children}</a>
         ),
         useNavigate: () => mockNavigate,
+        createFileRoute: () => (options: Record<string, unknown>) => ({
+            options,
+            useSearch: () => mockSearch.current,
+        }),
     };
 });
 
@@ -91,6 +95,7 @@ describe("LoginPage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockExecutePendingActions.mockResolvedValue(false);
+        mockSearch.current = {};
     });
 
     test("should render without auto-redirecting", () => {
@@ -129,6 +134,36 @@ describe("LoginPage", () => {
         // Should NOT fallback to /wallet since pending actions handled navigation
         expect(mockNavigate).not.toHaveBeenCalledWith(
             expect.objectContaining({ to: "/wallet" })
+        );
+    });
+
+    test("should redirect to the redeem page with a forwarded ref when there are no pending actions", async () => {
+        mockSearch.current = { ref: "FRAKPA" };
+
+        render(<LoginPage />);
+        mockOnSuccess();
+
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith({
+                to: "/profile/referral/redeem",
+                search: { code: "FRAKPA" },
+                replace: true,
+            });
+        });
+    });
+
+    test("pending-action navigation wins over a forwarded ref", async () => {
+        mockSearch.current = { ref: "FRAKPA" };
+        mockExecutePendingActions.mockResolvedValue(true);
+
+        render(<LoginPage />);
+        mockOnSuccess();
+
+        await waitFor(() => {
+            expect(mockExecutePendingActions).toHaveBeenCalled();
+        });
+        expect(mockNavigate).not.toHaveBeenCalledWith(
+            expect.objectContaining({ to: "/profile/referral/redeem" })
         );
     });
 });

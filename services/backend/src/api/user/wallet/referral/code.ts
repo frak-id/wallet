@@ -1,7 +1,11 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { ReferralCodeContext } from "../../../../domain/referral-code";
+import {
+    RedeemContextSchema,
+    ReferralCodeContext,
+    ReferralCodeKindSchema,
+} from "../../../../domain/referral-code";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import {
     identityContext,
@@ -93,21 +97,24 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
         "/redeem",
         async ({ identityGroupId, body }) => {
             if (!identityGroupId) return status(401, "Unauthorized");
-            await OrchestrationContext.orchestrators.referralCodeRedemption.redeem(
-                {
-                    code: body.code,
-                    refereeIdentityGroupId: identityGroupId,
-                }
-            );
-            return status(204);
+            const { kind } =
+                await OrchestrationContext.orchestrators.referralCodeRedemption.redeem(
+                    {
+                        code: body.code,
+                        refereeIdentityGroupId: identityGroupId,
+                        context: body.context,
+                    }
+                );
+            return { kind };
         },
         {
             withAuthedIdentity: true,
             body: t.Object({
                 code: t.String({ minLength: 6, maxLength: 6 }),
+                context: t.Optional(RedeemContextSchema),
             }),
             response: {
-                204: t.Void(),
+                200: t.Object({ kind: ReferralCodeKindSchema }),
                 401: t.String(),
                 429: t.String(),
                 400: t.ErrorResponse,

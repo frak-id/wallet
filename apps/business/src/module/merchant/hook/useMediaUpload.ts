@@ -12,10 +12,12 @@ type MediaUploadInput = {
     type: "logo" | "hero" | "hero-extra" | "icon";
 };
 
+export const mediaUploadMutationKey = ["media", "upload"];
+
 export function useMediaUpload() {
     const isDemoMode = useIsDemoMode();
     return useMutation({
-        mutationKey: ["media", "upload"],
+        mutationKey: mediaUploadMutationKey,
         mutationFn: async ({ merchantId, image, type }: MediaUploadInput) => {
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 300));

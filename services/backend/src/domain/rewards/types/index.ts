@@ -1,6 +1,7 @@
 import type { ExplorerConfig } from "@backend-domain/merchant/schemas";
 import type { Address, Hex } from "viem";
 import type {
+    AssetLogRecipientType,
     AssetStatus,
     AssetType,
     CancellationReason,
@@ -10,6 +11,7 @@ import type {
 
 export { InteractionTypeSchema } from "../schemas";
 export type {
+    AssetLogRecipientType,
     AssetStatus,
     AssetType,
     CancellationReason,
@@ -23,7 +25,7 @@ export type DetailedAssetLog = {
     amount: string;
     tokenAddress: Address | null;
     status: AssetStatus;
-    recipientType: RecipientType;
+    recipientType: AssetLogRecipientType;
     createdAt: Date;
     settledAt: Date | null;
     availableAt: Date | null;
@@ -128,7 +130,7 @@ export type CreateAssetLogParams = {
     assetType: AssetType;
     amount: number;
     tokenAddress?: Address;
-    recipientType: RecipientType;
+    recipientType: AssetLogRecipientType;
     recipientWallet?: Address;
     referralLinkId?: string;
     interactionLogId: string;

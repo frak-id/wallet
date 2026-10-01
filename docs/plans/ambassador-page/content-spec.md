@@ -10,9 +10,19 @@ status: active
 
 ## What this pins
 
-`example/vanilla-js/frak-ambassador-inject.js` is the **canonical content** of the
-ambassador page. Copy, heading structure, region order, token names and FAQ wording
-are settled there first; the SDK component is a port of it, not a parallel draft.
+**Since 2026-09-24 the canonical wording is the component's built-in copy**,
+`sdk/components/src/i18n/defaults.ts` (`ambassador`), set from the Appendix of
+`docs/plans/2026-09-24-1746-feat-ambassador-page-customization-plan.md`. That copy
+replaced the hero, reward, three steps, win-win and referral wording: the headline
+no longer carries the amount (the hero intro does), step 2 is "Je reçois de
+l’argent", credited automatically and transferable after confirmation, and the
+referral section keeps its single Share button. A merchant can override the hero,
+reward wording, button labels and FAQ from the dashboard.
+
+`example/vanilla-js/frak-ambassador-inject.js` is direction K, superseded by L, and
+keeps its old copy as a historical sketch. Everything below this section describes
+the snippet era: read its wording tables as history, and its rules on tokens, brand
+mentions and the reward fallback as still binding on the component.
 
 This note owns **content**. It does not own product behaviour or implementation
 mechanism — those belong to
@@ -20,13 +30,12 @@ mechanism — those belong to
 KTD1–KTD8). Where this note and that plan disagree, the plan wins on behaviour and
 this note wins on wording. One discrepancy is open, recorded below.
 
-## Why the snippet and not the component
+## Why the snippet was the source
 
-The snippet is iterated against real merchant storefronts by pasting it into a
-console, so a copy change costs one paste instead of a build, a publish and a CDN
-cache. That loop is the reason the content is good. It stops being the source the
-day `<frak-ambassador>` ships — at which point this file gets a closing entry and
-`sdk/components` takes over.
+The snippet was iterated against real merchant storefronts by pasting it into a
+console, so a copy change cost one paste instead of a build, a publish and a CDN
+cache. It stopped being the source when the component's copy was rewritten on
+2026-09-24; `sdk/components` owns the wording now.
 
 ## Content contract
 
@@ -187,6 +196,11 @@ otherwise be read as a back-reference.
 6. Headings are self-contained sentences. The reward amount is a `span` inside its
    `h2`, not a sibling `p` — a heading that starts mid-sentence has no subject.
 7. `cashback`, one word, matching frak.id and `/brands/[slug]`.
+8. No article or preposition directly before `{BRAND}` (`de`, `le`, `la`, English
+   `a`): the page cannot tell whether a brand needs elision ("d'Oolution",
+   "d'Hermès"). Hence "Devenez ambassadeur {BRAND}", not "… de {BRAND}".
+   `sdk/components/src/i18n/defaults.test.ts` enforces it; a merchant who wants
+   "de" types it in the dashboard headline, where the brand is known.
 
 ## SEO ownership boundary — settled
 

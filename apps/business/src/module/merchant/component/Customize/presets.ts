@@ -1,6 +1,7 @@
 import { componentDefaults } from "@frak-labs/components/i18n/defaults";
 import { type Currency, formatAmount } from "@frak-labs/core-sdk";
-import type { PresetLang } from "./types";
+import { AMBASSADOR_FIELD_GROUPS, builtInText } from "./ambassadorForm";
+import type { LocalizedText, PresetLang } from "./types";
 
 /**
  * Curated wording presets written into the SDK config. Each preset ships both
@@ -139,6 +140,127 @@ export const BANNER_PRESETS: readonly LocalizedBannerPreset[] = [
     },
 ];
 
+export const AMBASSADOR_TONE_GROUPS = [
+    "hero",
+    "reward",
+    "buttons",
+] as const satisfies readonly Exclude<
+    keyof typeof AMBASSADOR_FIELD_GROUPS,
+    "faq"
+>[];
+
+export type AmbassadorTonePresetField =
+    (typeof AMBASSADOR_FIELD_GROUPS)[(typeof AMBASSADOR_TONE_GROUPS)[number]][number];
+
+export const AMBASSADOR_TONE_PRESET_FIELDS: readonly AmbassadorTonePresetField[] =
+    AMBASSADOR_TONE_GROUPS.flatMap((group) => AMBASSADOR_FIELD_GROUPS[group]);
+
+type AmbassadorToneCopy = Record<AmbassadorTonePresetField, string>;
+
+export type AmbassadorTonePreset = {
+    key: "classic" | "earnings" | "trust" | "casual";
+    en: AmbassadorToneCopy;
+    fr: AmbassadorToneCopy;
+};
+
+function builtInToneCopy(lang: PresetLang): AmbassadorToneCopy {
+    const copy = componentDefaults[lang].ambassador;
+    return Object.fromEntries(
+        AMBASSADOR_TONE_PRESET_FIELDS.map((field) => [
+            field,
+            builtInText(copy, field),
+        ])
+    ) as AmbassadorToneCopy;
+}
+
+// Classic is never stored: picking it clears the fields so the SDK renders its
+// own copy, styled amount and no-reward variants included. The other tones keep
+// `{BRAND}` literal (the matcher compares stored text) and never use `{REWARD}`,
+// which the SDK drops field by field when no amount is known.
+export const AMBASSADOR_TONE_PRESETS: readonly AmbassadorTonePreset[] = [
+    { key: "classic", en: builtInToneCopy("en"), fr: builtInToneCopy("fr") },
+    {
+        key: "earnings",
+        en: {
+            heroTitle: "Get paid to recommend {BRAND}",
+            heroLede:
+                "Share your link with friends and earn a reward on every order they place. No cap, no fees.",
+            heroRewardCaption: "to earn on every sale",
+            rewardHeading: "Earn on every sale you bring in",
+            rewardLede:
+                "Every order placed through your link pays you. The more friends order, the more you earn.",
+            heroCtaLabel: "Start earning",
+            rewardCtaLabel: "Get my earning link",
+            referralCtaLabel: "Share and earn",
+        },
+        fr: {
+            heroTitle: "Faites-vous payer pour recommander {BRAND}",
+            heroLede:
+                "Partagez votre lien avec vos proches et gagnez une récompense sur chacune de leurs commandes. Sans plafond, sans frais.",
+            heroRewardCaption: "à gagner sur chaque vente",
+            rewardHeading: "Gagnez sur chaque vente que vous apportez",
+            rewardLede:
+                "Chaque commande passée avec votre lien vous rapporte. Plus vos proches commandent, plus vous gagnez.",
+            heroCtaLabel: "Commencer à gagner",
+            rewardCtaLabel: "Récupérer mon lien",
+            referralCtaLabel: "Partager et gagner",
+        },
+    },
+    {
+        key: "trust",
+        en: {
+            heroTitle: "Recommend {BRAND}, simply and safely",
+            heroLede:
+                "Your link is yours alone: every order it brings is tracked automatically, and {BRAND} funds your reward.",
+            heroRewardCaption: "for you, on every confirmed sale",
+            rewardHeading: "A reward for you on every confirmed sale",
+            rewardLede:
+                "No password and no bank details to start: you sign in with your phone and follow your earnings in real time.",
+            heroCtaLabel: "Join the program",
+            rewardCtaLabel: "Get my personal link",
+            referralCtaLabel: "Share my personal link",
+        },
+        fr: {
+            heroTitle: "Recommandez {BRAND}, simplement et en toute sécurité",
+            heroLede:
+                "Votre lien vous est propre\u00A0: chaque commande passée avec est enregistrée automatiquement, et c’est {BRAND} qui finance votre récompense.",
+            heroRewardCaption: "pour vous, à chaque vente confirmée",
+            rewardHeading: "Une récompense pour vous à chaque vente confirmée",
+            rewardLede:
+                "Ni mot de passe ni coordonnées bancaires pour commencer\u00A0: vous vous connectez avec votre téléphone et suivez vos gains en temps réel.",
+            heroCtaLabel: "Rejoindre le programme",
+            rewardCtaLabel: "Obtenir mon lien personnel",
+            referralCtaLabel: "Partager mon lien personnel",
+        },
+    },
+    {
+        key: "casual",
+        en: {
+            heroTitle: "Love {BRAND}? Spread the word",
+            heroLede:
+                "Share your link with friends. They order, you get rewarded. That’s it.",
+            heroRewardCaption: "for you, every time",
+            rewardHeading: "A reward every time a friend orders",
+            rewardLede: "No limits, no catch. Share as much as you like.",
+            heroCtaLabel: "I’m in",
+            rewardCtaLabel: "Grab my link",
+            referralCtaLabel: "Send my link",
+        },
+        fr: {
+            heroTitle: "Fan de {BRAND}\u00A0? Fais-le savoir",
+            heroLede:
+                "Partage ton lien avec tes potes. Ils commandent, tu gagnes. C’est tout.",
+            heroRewardCaption: "pour toi, à chaque fois",
+            rewardHeading: "Une récompense à chaque commande d’un pote",
+            rewardLede:
+                "Pas de limite, pas de piège. Partage autant que tu veux.",
+            heroCtaLabel: "Je me lance",
+            rewardCtaLabel: "Je prends mon lien",
+            referralCtaLabel: "Envoyer mon lien",
+        },
+    },
+];
+
 /**
  * Copy for the OS share sheet (`sharing.title` / `sharing.text`), written to
  * `sdkConfig.translations` rather than `components`. `{{productName}}` is the
@@ -203,7 +325,7 @@ export const SHARING_PRESETS: readonly LocalizedSharingPreset[] = [
 export const BUNDLED_SHARING_DEFAULT = SHARING_PRESETS[0];
 
 export function applyBrand(text: string, shopName: string): string {
-    return text.replace(/\{Brand\}/g, shopName);
+    return text.replace(/\{Brand\}/g, () => shopName);
 }
 
 // Presets are matched on their canonical `en` copy: selecting a preset writes
@@ -266,6 +388,27 @@ export function matchSharingPreset(
         (preset) =>
             applyBrand(preset.en.title, shopName).trim() === trimmedTitle &&
             applyBrand(preset.en.text, shopName).trim() === trimmedText
+    );
+    return index === -1 ? null : index;
+}
+
+// `values` follows AMBASSADOR_TONE_PRESET_FIELDS order. Classic is every tier
+// empty; another tone is exactly what its pick writes, so an edit on any tab,
+// "all languages" included, deselects it.
+export function matchAmbassadorTonePreset(
+    values: readonly LocalizedText[]
+): number | null {
+    if (values.some((text) => text.default.trim())) return null;
+    const en = values.map((text) => text.en.trim());
+    const fr = values.map((text) => text.fr.trim());
+    if (en.every((text) => !text) && fr.every((text) => !text)) return 0;
+    const index = AMBASSADOR_TONE_PRESETS.findIndex(
+        (preset, i) =>
+            i > 0 &&
+            AMBASSADOR_TONE_PRESET_FIELDS.every(
+                (field, j) =>
+                    preset.en[field] === en[j] && preset.fr[field] === fr[j]
+            )
     );
     return index === -1 ? null : index;
 }

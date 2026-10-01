@@ -5,6 +5,7 @@ import { CustomizationsTab } from "app/components/Appearance/CustomizationsTab";
 import { ExplorerTab } from "app/components/Appearance/ExplorerTab";
 import { ManualBannerInstall } from "app/components/Appearance/ManualBannerInstall";
 import { ManualButtonInstall } from "app/components/Appearance/ManualButtonInstall";
+import { AMBASSADOR_GUIDE_HREF } from "app/components/OptionalSetup";
 import { Skeleton } from "app/components/Skeleton";
 import { ExternalButton } from "app/components/ui/ExternalLink";
 import { PageHeading } from "app/components/ui/PageHeading";
@@ -39,7 +40,13 @@ import { buildBusinessDashboardUrl } from "app/utils/url";
 import { Suspense, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { Await, data, useLoaderData, useRouteLoaderData } from "react-router";
+import {
+    Await,
+    data,
+    useLoaderData,
+    useNavigate,
+    useRouteLoaderData,
+} from "react-router";
 import type { loader as appLoader } from "./app";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -393,6 +400,7 @@ export default function AppearancePage() {
     const themeLiquidUrl = `${themeBase}?key=layout/theme.liquid`;
     const isThemeSupportedPromise = rootData?.isThemeSupportedPromise;
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [selectedTab, setSelectedTab] = useState(0);
 
     // Both forms defer save via the native Save Bar, but they sit behind this
@@ -486,6 +494,26 @@ export default function AppearancePage() {
 
             <s-section heading={t("appearance.tabs.checkoutExtension")}>
                 <CheckoutExtensionTab />
+            </s-section>
+
+            <s-section heading={t("ambassadorGuide.settingsHeading")}>
+                <s-stack gap="base">
+                    <s-text>
+                        {t(
+                            isThemeSupported
+                                ? "ambassadorGuide.settingsDescription"
+                                : "ambassadorGuide.vintage.settingsDescription"
+                        )}
+                    </s-text>
+                    <s-stack direction="inline">
+                        <s-button
+                            variant="secondary"
+                            onClick={() => navigate(AMBASSADOR_GUIDE_HREF)}
+                        >
+                            {t("optionalSetup.ambassador.guideCta")}
+                        </s-button>
+                    </s-stack>
+                </s-stack>
             </s-section>
         </s-stack>
     );

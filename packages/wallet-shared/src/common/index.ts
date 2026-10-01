@@ -49,6 +49,8 @@ export type {
     PairingEventMap,
     PairingMode,
     RecordErrorOptions,
+    ReferralCodeKind,
+    ReferralPrefillSource,
     SharingEventMap,
     SharingSource,
     TokensEventMap,

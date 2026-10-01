@@ -1714,10 +1714,10 @@
             "confirm": "Discard changes"
         },
         "details": {
-            "title": "Details of the merchant",
-            "name": "Name",
+            "title": "Your Frak account",
+            "name": "Account name",
             "domain": "Domain",
-            "currency": "Default reward currency",
+            "currency": "Rewards paid in",
             "edit": "Edit"
         },
         "domains": {
@@ -1898,10 +1898,11 @@
     "customize": {
         "save": "Save",
         "identity": {
+            "title": "Your brand for visitors",
+            "description": "What your customers see in Frak components.",
             "name": {
-                "label": "Name",
-                "placeholder": "Merchant Name",
-                "hint": "Your brand name as shown to visitors in the SDK components"
+                "label": "Display name",
+                "hint": "Left empty, your store's name is used."
             },
             "logo": {
                 "label": "Logo",
@@ -1913,8 +1914,8 @@
                 "invalid": "Enter a valid URL (https://…)"
             },
             "currency": {
-                "label": "Currency",
-                "hint": "Currency used to display reward amounts",
+                "label": "Display currency",
+                "hint": "Currency of the amounts shown to visitors. Rewards are still paid in {{token}}.",
                 "auto": "Auto"
             },
             "lang": {
@@ -1930,10 +1931,9 @@
             }
         },
         "placements": {
-            "title": "SDK Customization",
-            "description": "Global defaults apply to every SDK component. Placements are variants you can use on the same website to display your products in different ways - each with its own text, styles, and behavior.",
+            "label": "Placement",
             "globalDefault": "Global default",
-            "add": "Add another placement",
+            "add": "+ Add a placement",
             "dialog": {
                 "title": "Create placement",
                 "hint": "Placement id must be unique and use 3 to 16 characters.",
@@ -1942,10 +1942,6 @@
                 "errorMax": "Maximum 10 placements allowed.",
                 "errorFormat": "Use 3-16 chars (letters, numbers, _ or -).",
                 "errorExists": "This placement already exists."
-            },
-            "settings": {
-                "title": "Placement settings · {{placementId}}",
-                "description": "Text, styles and behavior overrides for this placement."
             },
             "css": {
                 "title": "Placement CSS · {{placementId}}",
@@ -1976,9 +1972,58 @@
                 }
             }
         },
+        "ambassador": {
+            "title": "Ambassador page",
+            "description": "The hero photo and wording of your ambassador page, on every platform where it is placed. An empty field keeps the default text.",
+            "preview": "Preview of the top of the page",
+            "fullPreview": "See the whole page",
+            "fullPreviewDescription": "Phone preview of the whole ambassador page",
+            "tokenHint": "Tip: {BRAND} shows your store name and {REWARD} the campaign reward.",
+            "photo": {
+                "label": "Hero photo",
+                "default": "Explorer image",
+                "custom": "Other image",
+                "none": "No photo",
+                "defaultHint": "Uses the main image of your Explorer profile.",
+                "noExplorerHint": "Your Explorer profile has no main image yet, so the page shows no photo.",
+                "customHint": "Shown in a 4:5 frame: pick an image where people stay in the middle."
+            },
+            "groups": {
+                "hero": "Headline and intro",
+                "reward": "Reward wording",
+                "buttons": "Button labels",
+                "faq": "Frequently asked questions"
+            },
+            "fields": {
+                "heroTitle": "Headline",
+                "heroLede": "Intro",
+                "heroRewardCaption": "Caption on the reward card",
+                "heroCtaLabel": "Top button",
+                "rewardHeading": "Reward heading",
+                "rewardLede": "Reward intro",
+                "rewardCtaLabel": "Reward button",
+                "referralCtaLabel": "Share button",
+                "faq1Question": "Question 1",
+                "faq1Answer": "Answer 1",
+                "faq2Question": "Question 2",
+                "faq2Answer": "Answer 2",
+                "faq3Question": "Question 3",
+                "faq3Answer": "Answer 3",
+                "faq4Question": "Question 4",
+                "faq4Answer": "Answer 4",
+                "faq5Question": "Question 5",
+                "faq5Answer": "Answer 5"
+            },
+            "tonePresets": {
+                "classic": "Classic",
+                "earnings": "Earnings",
+                "trust": "Trust",
+                "casual": "Casual"
+            }
+        },
         "components": {
-            "title": "Global component defaults",
-            "description": "Choose the wording that best matches your brand for each component.",
+            "title": "SDK components",
+            "description": "Placements are component variants for a specific spot on your site.",
             "buttonShare": "Share button",
             "postPurchase": "Post Purchase",
             "banner": "Banner",

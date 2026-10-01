@@ -1,6 +1,7 @@
 export { displayModal } from "./displayModal";
 export { displaySharingPage } from "./displaySharingPage";
 export { ensureIdentity } from "./ensureIdentity";
+export { getInstallUrl } from "./getInstallUrl";
 export { getMerchantInformation } from "./getMerchantInformation";
 export { getMergeToken } from "./getMergeToken";
 export { getUserReferralStatus } from "./getUserReferralStatus";

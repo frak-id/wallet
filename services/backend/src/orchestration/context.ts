@@ -202,7 +202,9 @@ const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
 const referralCodeRedemptionOrchestrator =
     new ReferralCodeRedemptionOrchestrator(
         ReferralCodeContext.services.referralCode,
-        AttributionContext.repositories.referralLink
+        AttributionContext.repositories.referralLink,
+        IdentityContext.repositories.identity,
+        RewardsContext.repositories.interactionLog
     );
 
 const walletSessionOrchestrator = new WalletSessionOrchestrator(

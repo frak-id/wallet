@@ -1,8 +1,10 @@
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { useQueryClient } from "@tanstack/react-query";
 import { Navigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
 import { pageBottomSpacer } from "@/module/common/component/FloatingFooter/floating-footer.css";
 import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
@@ -12,7 +14,9 @@ import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { useSdkConfig } from "@/module/merchant/hook/useSdkConfig";
 import { useSectionedSave } from "@/module/merchant/hook/useSectionedSave";
+import { merchantSdkConfigQueryKey } from "@/module/merchant/queries/queryKeys";
 import { CustomizeSaveProvider } from "../saveRegistry";
+import { AmbassadorPagePanel } from "./AmbassadorPagePanel";
 import { DefaultCustomization } from "./DefaultCustomization";
 import { PlacementCustomization } from "./PlacementCustomization";
 import { PlacementSelector } from "./PlacementSelector";
@@ -24,7 +28,11 @@ import { getSdkConfig } from "./utils";
 
 export function CustomizePage({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
-    const { data: merchant } = useMerchant({ merchantId });
+    const queryClient = useQueryClient();
+    const isDemoMode = useIsDemoMode();
+    const { data: merchant, isPending: isMerchantPending } = useMerchant({
+        merchantId,
+    });
     const { data: sdkConfigData } = useSdkConfig({ merchantId });
     const sdkConfig = useMemo(
         () => getSdkConfig(sdkConfigData?.sdkConfig),
@@ -45,11 +53,8 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
         saveAll,
     } = useSectionedSave();
 
-    const {
-        mutateAsync: createPlacement,
-        isPending: isCreatingPlacement,
-        isSuccess: isCreatePlacementSuccess,
-    } = useMerchantUpdate({ merchantId, target: "sdk-config" });
+    const { mutateAsync: createPlacement, isPending: isCreatingPlacement } =
+        useMerchantUpdate({ merchantId, target: "sdk-config" });
 
     const hasUnsavedSectionChanges = useMemo(
         () => hasDiscardableSectionChanges(dirtySections),
@@ -71,16 +76,30 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
 
     const handleCreatePlacement = useCallback(
         async (placementId: string) => {
-            const currentPlacements = sdkConfig.placements ?? {};
-            await createPlacement({
-                placements: {
-                    ...currentPlacements,
-                    [placementId]: {},
-                },
-            });
-            setActiveTab(placementId);
+            const placements = {
+                ...(sdkConfig.placements ?? {}),
+                [placementId]: {},
+            };
+            await createPlacement({ placements });
+            // The invalidation refetch lands later; until then the new placement is not selectable.
+            queryClient.setQueryData<typeof sdkConfigData>(
+                merchantSdkConfigQueryKey(merchantId, isDemoMode),
+                (current) =>
+                    current && {
+                        ...current,
+                        sdkConfig: { ...current.sdkConfig, placements },
+                    }
+            );
+            handleTabChange(placementId);
         },
-        [createPlacement, sdkConfig.placements]
+        [
+            createPlacement,
+            sdkConfig.placements,
+            handleTabChange,
+            queryClient,
+            merchantId,
+            isDemoMode,
+        ]
     );
 
     // Affiliate (e.g. TakeAds) merchants have no SDK to customize — send them
@@ -95,13 +114,28 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
         );
     }
 
-    if (!sdkConfigData) {
+    if (!sdkConfigData || isMerchantPending) {
         return (
             <EditPageLayout merchantId={merchantId} page="customize">
                 <Spinner />
             </EditPageLayout>
         );
     }
+
+    const shopName = sdkConfig.name || merchant?.name || "My Store";
+    // The selector lives in the placement's card: never select a placement the config does not hold yet.
+    const selectedTab = placementIds.includes(activeTab)
+        ? activeTab
+        : "default";
+    const placementSelector = (
+        <PlacementSelector
+            activeTab={selectedTab}
+            placementIds={placementIds}
+            onTabChange={handleTabChange}
+            onCreatePlacement={handleCreatePlacement}
+            isCreatingPlacement={isCreatingPlacement}
+        />
+    );
 
     return (
         <CustomizeSaveProvider value={saveContext}>
@@ -118,37 +152,36 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
                         sdkConfig={sdkConfig}
                     />
 
-                    {/* Branded from the render-gated sdkConfig like the sibling
-                        panels: `merchant` is a separate in-flight query, and a
-                        preset clicked before it resolved persisted brandless copy. */}
                     <SharingWordingPanel
                         merchantId={merchantId}
                         sdkConfig={sdkConfig}
-                        shopName={sdkConfig.name ?? "My Store"}
+                        shopName={shopName}
                     />
 
-                    <PlacementSelector
-                        activeTab={activeTab}
-                        placementIds={placementIds}
-                        onTabChange={handleTabChange}
-                        onCreatePlacement={handleCreatePlacement}
-                        isCreatingPlacement={isCreatingPlacement}
-                        isCreatePlacementSuccess={isCreatePlacementSuccess}
+                    <AmbassadorPagePanel
+                        merchantId={merchantId}
+                        sdkConfig={sdkConfig}
+                        shopName={shopName}
+                        explorerHeroImageUrl={
+                            merchant?.explorerConfig?.heroImageUrl
+                        }
                     />
 
-                    {activeTab === "default" ? (
+                    {selectedTab === "default" ? (
                         <DefaultCustomization
                             merchantId={merchantId}
                             sdkConfig={sdkConfig}
+                            shopName={shopName}
+                            placementSelector={placementSelector}
                         />
                     ) : (
                         <PlacementCustomization
                             merchantId={merchantId}
-                            placementId={activeTab}
+                            placementId={selectedTab}
                             sdkConfig={sdkConfig}
-                            onSelectDefaultTab={() =>
-                                handleTabChange("default")
-                            }
+                            shopName={shopName}
+                            placementSelector={placementSelector}
+                            onDelete={() => setActiveTab("default")}
                         />
                     )}
                     {saveError && (

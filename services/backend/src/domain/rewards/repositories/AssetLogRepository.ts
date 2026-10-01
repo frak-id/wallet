@@ -26,6 +26,7 @@ import {
     assetLogsTable,
     interactionLogsTable,
 } from "../db/schema";
+import { LIVE_ASSET_STATUSES } from "../schemas";
 import type {
     AssetStatus,
     CancellationReason,
@@ -564,12 +565,7 @@ export class AssetLogRepository {
                 and(
                     inArray(assetLogsTable.campaignRuleId, campaignRuleIds),
                     eq(assetLogsTable.identityGroupId, identityGroupId),
-                    inArray(assetLogsTable.status, [
-                        "pending",
-                        "processing",
-                        "settled",
-                        "bank_depleted",
-                    ]),
+                    inArray(assetLogsTable.status, LIVE_ASSET_STATUSES),
                     eq(assetLogsTable.recipientType, "referee")
                 )
             )
@@ -603,16 +599,46 @@ export class AssetLogRepository {
                 and(
                     scopeCondition,
                     eq(assetLogsTable.identityGroupId, identityGroupId),
-                    inArray(assetLogsTable.status, [
-                        "pending",
-                        "processing",
-                        "settled",
-                        "bank_depleted",
-                    ]),
+                    inArray(assetLogsTable.status, LIVE_ASSET_STATUSES),
                     eq(assetLogsTable.recipientType, "referee")
                 )
             );
         return result?.count ?? 0;
+    }
+
+    async hasLiveWelcomeBonus(
+        identityGroupId: string,
+        merchantId: string
+    ): Promise<boolean> {
+        const [row] = await db
+            .select({ id: assetLogsTable.id })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    this.liveWelcomeBonusOf(identityGroupId),
+                    eq(assetLogsTable.merchantId, merchantId)
+                )
+            )
+            .limit(1);
+        return row !== undefined;
+    }
+
+    async findLiveWelcomeBonusMerchantIds(
+        identityGroupId: string
+    ): Promise<string[]> {
+        const rows = await db
+            .selectDistinct({ merchantId: assetLogsTable.merchantId })
+            .from(assetLogsTable)
+            .where(this.liveWelcomeBonusOf(identityGroupId));
+        return rows.map((row) => row.merchantId);
+    }
+
+    private liveWelcomeBonusOf(identityGroupId: string): SQL | undefined {
+        return and(
+            eq(assetLogsTable.identityGroupId, identityGroupId),
+            eq(assetLogsTable.recipientType, "welcome_bonus"),
+            inArray(assetLogsTable.status, LIVE_ASSET_STATUSES)
+        );
     }
 
     /**

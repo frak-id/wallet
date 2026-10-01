@@ -20,16 +20,18 @@ export function extractExpectedTags(source: string): string[] {
 /**
  * Whether `tag` is registered anywhere in a bundled chunk.
  *
- * Not a bare search for the tag literal: `useLightDomStyles(tag, ...)` also
- * carries the string, so it'd survive even after tree-shaking removes the
- * registration. Instead matches the registration call's third argument (the
- * observed attributes array): minified `registerWebComponent(C, "frak-x",
- * ["text", ...])` becomes ``r(h,`frak-x`,[`text`,...])``, so a tag literal
- * followed by `,` then `[` is the call.
+ * Matches the observed-attributes argument, not the tag literal, which
+ * `useLightDomStyles(tag, ...)` also carries and so outlives a tree-shaken
+ * registration. The minifier emits that argument as a literal array or as
+ * ``\`a.b\`.split(\`.\`)``.
  */
 export function hasRegistration(chunk: string, tag: string): boolean {
     const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    return new RegExp(`["'\`]${escaped}["'\`]\\s*,\\s*\\[`).test(chunk);
+    const attributes = `\\[|["'\`][^"'\`]*["'\`]\\s*\\.\\s*split\\s*\\(`;
+
+    return new RegExp(`["'\`]${escaped}["'\`]\\s*,\\s*(?:${attributes})`).test(
+        chunk
+    );
 }
 
 /**

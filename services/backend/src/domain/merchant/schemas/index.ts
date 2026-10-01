@@ -150,6 +150,35 @@ const PlacementComponentsSchema = t.Object({
     banner: t.Optional(BannerComponentSchema),
 });
 
+// `"none"` is an explicit no-photo choice, distinct from unset (Explorer default).
+const AmbassadorComponentSchema = t.Object({
+    heroTitle: t.Optional(LocalizableStringSchema),
+    heroLede: t.Optional(LocalizableStringSchema),
+    heroRewardCaption: t.Optional(LocalizableStringSchema),
+    heroCtaLabel: t.Optional(LocalizableStringSchema),
+    rewardHeading: t.Optional(LocalizableStringSchema),
+    rewardLede: t.Optional(LocalizableStringSchema),
+    rewardCtaLabel: t.Optional(LocalizableStringSchema),
+    referralCtaLabel: t.Optional(LocalizableStringSchema),
+    faq1Question: t.Optional(LocalizableStringSchema),
+    faq1Answer: t.Optional(LocalizableStringSchema),
+    faq2Question: t.Optional(LocalizableStringSchema),
+    faq2Answer: t.Optional(LocalizableStringSchema),
+    faq3Question: t.Optional(LocalizableStringSchema),
+    faq3Answer: t.Optional(LocalizableStringSchema),
+    faq4Question: t.Optional(LocalizableStringSchema),
+    faq4Answer: t.Optional(LocalizableStringSchema),
+    faq5Question: t.Optional(LocalizableStringSchema),
+    faq5Answer: t.Optional(LocalizableStringSchema),
+    heroImageUrl: t.Optional(t.Union([HttpsUrlSchema(), t.Literal("none")])),
+});
+
+// Store-wide components: the ambassador page exists once per store, never per placement.
+const SdkComponentsSchema = t.Object({
+    ...PlacementComponentsSchema.properties,
+    ambassador: t.Optional(AmbassadorComponentSchema),
+});
+
 export const PlacementSchema = t.Object({
     components: t.Optional(PlacementComponentsSchema),
     targetInteraction: t.Optional(t.String({ maxLength: 200 })),
@@ -226,6 +255,29 @@ const ResolvedComponentsSchema = t.Object({
             css: t.Optional(t.String()),
         })
     ),
+    ambassador: t.Optional(
+        t.Object({
+            heroTitle: t.Optional(t.String()),
+            heroLede: t.Optional(t.String()),
+            heroRewardCaption: t.Optional(t.String()),
+            heroCtaLabel: t.Optional(t.String()),
+            rewardHeading: t.Optional(t.String()),
+            rewardLede: t.Optional(t.String()),
+            rewardCtaLabel: t.Optional(t.String()),
+            referralCtaLabel: t.Optional(t.String()),
+            faq1Question: t.Optional(t.String()),
+            faq1Answer: t.Optional(t.String()),
+            faq2Question: t.Optional(t.String()),
+            faq2Answer: t.Optional(t.String()),
+            faq3Question: t.Optional(t.String()),
+            faq3Answer: t.Optional(t.String()),
+            faq4Question: t.Optional(t.String()),
+            faq4Answer: t.Optional(t.String()),
+            faq5Question: t.Optional(t.String()),
+            faq5Answer: t.Optional(t.String()),
+            heroImageUrl: t.Optional(t.String()),
+        })
+    ),
 });
 
 export const ResolvedPlacementSchema = t.Object({
@@ -282,7 +334,7 @@ export const SdkConfigSchema = t.Object({
     rawCss: t.Optional(t.Union([t.String({ maxLength: 50000 }), t.Null()])),
     css: t.Optional(t.Union([t.String({ maxLength: 50000 }), t.Null()])),
     translations: t.Optional(t.Union([TranslationTieredSchema, t.Null()])),
-    components: t.Optional(t.Union([PlacementComponentsSchema, t.Null()])),
+    components: t.Optional(t.Union([SdkComponentsSchema, t.Null()])),
     placements: t.Optional(
         t.Union([
             t.Record(PlacementIdSchema, PlacementSchema, { maxProperties: 10 }),

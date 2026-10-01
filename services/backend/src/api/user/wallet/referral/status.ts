@@ -1,7 +1,11 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AttributionContext } from "../../../../domain/attribution/context";
-import { ReferralCodeContext } from "../../../../domain/referral-code/context";
+import {
+    FRAK_REFERRAL_IDENTITY_GROUP_ID,
+    ReferralCodeContext,
+} from "../../../../domain/referral-code";
+import { RewardsContext } from "../../../../domain/rewards/context";
 import { identityContext } from "../../../middleware/identity";
 
 /**
@@ -11,7 +15,8 @@ import { identityContext } from "../../../middleware/identity";
  *
  * `merchantId` is optional: when provided, merchant-scoped referrer info is
  * included; without it, only the cross-merchant referrer (and the owned
- * code) are returned.
+ * code) are returned. `frakReferral` is set while Frak is the cross-merchant
+ * referrer, listing the merchants where the welcome bonus is already claimed.
  */
 export const referralStatusRoute = new Elysia().use(identityContext).get(
     "/status",
@@ -35,22 +40,32 @@ export const referralStatusRoute = new Elysia().use(identityContext).get(
                 : Promise.resolve(null),
         ]);
 
+        const isFrakReferred =
+            crossMerchantLink?.referrerIdentityGroupId ===
+            FRAK_REFERRAL_IDENTITY_GROUP_ID;
+
         // Resolve the 6-char code string for code-redemption referrers.
         // `source='link'` referrers (shared-link clicks) carry no code.
         // `findById` skips the `revoked_at` filter so a referrer who has
         // since rotated their code still renders the original string.
-        const [crossMerchantCode, merchantCode] = await Promise.all([
-            crossMerchantLink?.sourceData?.type === "code"
-                ? ReferralCodeContext.repositories.referralCode.findById(
-                      crossMerchantLink.sourceData.codeId
-                  )
-                : Promise.resolve(null),
-            merchantLink?.sourceData?.type === "code"
-                ? ReferralCodeContext.repositories.referralCode.findById(
-                      merchantLink.sourceData.codeId
-                  )
-                : Promise.resolve(null),
-        ]);
+        const [crossMerchantCode, merchantCode, claimedMerchantIds] =
+            await Promise.all([
+                crossMerchantLink?.sourceData?.type === "code"
+                    ? ReferralCodeContext.repositories.referralCode.findById(
+                          crossMerchantLink.sourceData.codeId
+                      )
+                    : Promise.resolve(null),
+                merchantLink?.sourceData?.type === "code"
+                    ? ReferralCodeContext.repositories.referralCode.findById(
+                          merchantLink.sourceData.codeId
+                      )
+                    : Promise.resolve(null),
+                isFrakReferred
+                    ? RewardsContext.repositories.assetLog.findLiveWelcomeBonusMerchantIds(
+                          identityGroupId
+                      )
+                    : Promise.resolve([]),
+            ]);
 
         return {
             ownedCode: ownedCode
@@ -63,8 +78,10 @@ export const referralStatusRoute = new Elysia().use(identityContext).get(
                 ? {
                       code: crossMerchantCode?.code ?? null,
                       since: crossMerchantLink.createdAt.toISOString(),
+                      isFrak: isFrakReferred,
                   }
                 : null,
+            frakReferral: isFrakReferred ? { claimedMerchantIds } : null,
             merchantReferrer: merchantLink?.merchantId
                 ? {
                       code: merchantCode?.code ?? null,
@@ -93,6 +110,13 @@ export const referralStatusRoute = new Elysia().use(identityContext).get(
                     t.Object({
                         code: t.Union([t.String(), t.Null()]),
                         since: t.String(),
+                        isFrak: t.Boolean(),
+                    }),
+                    t.Null(),
+                ]),
+                frakReferral: t.Union([
+                    t.Object({
+                        claimedMerchantIds: t.Array(t.String()),
                     }),
                     t.Null(),
                 ]),

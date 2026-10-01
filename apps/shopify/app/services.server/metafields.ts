@@ -10,6 +10,14 @@ const MERCHANT_ID_KEY = "merchant_id";
 const SHARE_URL_KEY = "share_url";
 const SHARE_BUTTON_HTML_KEY = "share_button_html";
 const LEGACY_INSTALL_DISMISSED_KEY = "legacy_install_dismissed";
+const AMBASSADOR_PAGE_KEY = "ambassador_page";
+
+export type AmbassadorPageRecord = {
+    pageId: string;
+    url: string | null;
+    /** The merchant chose to keep the standard page layout. */
+    standardLayoutKept?: boolean;
+};
 
 /**
  * Per-locale merchant-customisable strings for the banner block, the
@@ -505,6 +513,27 @@ export async function writeMerchantIdMetafield(
     userErrors: Array<{ field: string; message: string }>;
 }> {
     return writeMetafield(context, MERCHANT_ID_KEY, merchantId);
+}
+
+/**
+ * Read the ambassador page the app created or adopted, with its last known
+ * storefront URL (`null` once the page is gone).
+ */
+export async function getAmbassadorPageMetafield({
+    admin: { graphql },
+}: AuthenticatedContext): Promise<AmbassadorPageRecord | null> {
+    return readMetafield<AmbassadorPageRecord>(graphql, AMBASSADOR_PAGE_KEY);
+}
+
+/** Replace the whole ambassador page record: spread the existing one to keep fields you do not change. */
+export async function writeAmbassadorPageMetafield(
+    context: AuthenticatedContext,
+    record: AmbassadorPageRecord
+): Promise<{
+    success: boolean;
+    userErrors: Array<{ field: string; message: string }>;
+}> {
+    return writeMetafield(context, AMBASSADOR_PAGE_KEY, record);
 }
 
 /**

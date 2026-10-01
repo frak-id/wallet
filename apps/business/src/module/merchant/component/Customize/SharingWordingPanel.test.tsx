@@ -25,7 +25,8 @@ const dirty: Record<string, boolean> = {};
 
 function renderPanel(
     translations?: SdkConfig["translations"],
-    config?: Partial<SdkConfig>
+    config?: Partial<SdkConfig>,
+    shopName = "Nowa"
 ) {
     sections.clear();
     for (const key of Object.keys(dirty)) delete dirty[key];
@@ -44,7 +45,7 @@ function renderPanel(
             <SharingWordingPanel
                 merchantId="merchant-1"
                 sdkConfig={{ translations, ...config } as SdkConfig}
-                shopName="Nowa"
+                shopName={shopName}
             />
         </CustomizeSaveProvider>
     );
@@ -57,11 +58,33 @@ async function save() {
     await act(() => submit());
 }
 
+function openAdvanced() {
+    fireEvent.click(
+        screen.getByRole("button", { name: "customize.components.advanced" })
+    );
+}
+
 describe("SharingWordingPanel", () => {
     beforeEach(() => vi.clearAllMocks());
 
-    it("renders the card heading and both wording fields", () => {
+    it("keeps the wording fields out of view until the advanced toggle opens", () => {
         renderPanel();
+        expect(
+            screen.getByRole("button", {
+                name: "customize.components.advanced",
+            })
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByLabelText("customize.sharing.fields.title.label")
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByLabelText("customize.sharing.fields.text.label")
+        ).not.toBeInTheDocument();
+    });
+
+    it("renders the card heading and both wording fields once opened", () => {
+        renderPanel();
+        openAdvanced();
         expect(screen.getByText("customize.sharing.title")).toBeInTheDocument();
         expect(
             screen.getByLabelText("customize.sharing.fields.title.label")
@@ -91,6 +114,7 @@ describe("SharingWordingPanel", () => {
 
     it("shows the stored override for the active language tier", () => {
         renderPanel({ default: { "sharing.title": "Stored title" } });
+        openAdvanced();
         expect(
             screen.getByLabelText("customize.sharing.fields.title.label")
         ).toHaveValue("Stored title");
@@ -101,9 +125,65 @@ describe("SharingWordingPanel", () => {
     it("clears the default tier when a preset is picked", () => {
         renderPanel({ default: { "sharing.title": "Stored title" } });
         fireEvent.click(screen.getAllByRole("radio")[1]);
+        openAdvanced();
         expect(
             screen.getByLabelText("customize.sharing.fields.title.label")
         ).toHaveValue("");
+    });
+
+    it("selects no tone and shows the stored text when it matches none", () => {
+        renderPanel({
+            default: { "sharing.title": "Our own title" },
+            en: { "sharing.title": "Our own title" },
+        });
+        for (const radio of screen.getAllByRole("radio")) {
+            expect(radio).not.toBeChecked();
+        }
+        openAdvanced();
+        expect(
+            screen.getByLabelText("customize.sharing.fields.title.label")
+        ).toHaveValue("Our own title");
+    });
+
+    it("keeps typed text and the dirty flag across closing and reopening", () => {
+        renderPanel();
+        openAdvanced();
+        fireEvent.change(
+            screen.getByLabelText("customize.sharing.fields.text.label"),
+            { target: { value: "Typed once" } }
+        );
+        openAdvanced();
+        expect(
+            screen.queryByLabelText("customize.sharing.fields.text.label")
+        ).not.toBeInTheDocument();
+        openAdvanced();
+        expect(
+            screen.getByLabelText("customize.sharing.fields.text.label")
+        ).toHaveValue("Typed once");
+        expect(dirty[SECTION_KEYS.sharing]).toBe(true);
+    });
+
+    it("saves the branded English title for the gift tone and keeps the first tone's token", async () => {
+        renderPanel(undefined, undefined, "frak-dev-08");
+        fireEvent.click(screen.getAllByRole("radio")[1]);
+        await save();
+        expect(editSdkConfig).toHaveBeenLastCalledWith({
+            translations: expect.objectContaining({
+                en: expect.objectContaining({
+                    "sharing.title": "A gift from frak-dev-08",
+                }),
+            }),
+        });
+
+        fireEvent.click(screen.getAllByRole("radio")[0]);
+        await save();
+        expect(editSdkConfig).toHaveBeenLastCalledWith({
+            translations: expect.objectContaining({
+                en: expect.objectContaining({
+                    "sharing.title": "{{productName}} invite link",
+                }),
+            }),
+        });
     });
 
     it("registers itself with the page-level save under its own key", () => {
@@ -113,6 +193,7 @@ describe("SharingWordingPanel", () => {
 
     it("reports itself dirty once a field is edited", () => {
         renderPanel();
+        openAdvanced();
         expect(dirty[SECTION_KEYS.sharing]).toBe(false);
         fireEvent.change(
             screen.getByLabelText("customize.sharing.fields.text.label"),
@@ -125,6 +206,7 @@ describe("SharingWordingPanel", () => {
     // what the merchant edits is what reaches the mutation body.
     it("saves what was typed, as a translation key", async () => {
         renderPanel();
+        openAdvanced();
         fireEvent.change(
             screen.getByLabelText("customize.sharing.fields.title.label"),
             { target: { value: "My share title" } }
@@ -170,6 +252,7 @@ describe("SharingWordingPanel", () => {
     // route's stored dictionary untouched, so the clear must serialise.
     it("sends null when every field is cleared", async () => {
         renderPanel({ default: { "sharing.title": "Stored title" } });
+        openAdvanced();
         fireEvent.change(
             screen.getByLabelText("customize.sharing.fields.title.label"),
             { target: { value: "" } }
@@ -227,6 +310,7 @@ describe("SharingWordingPanel preview", () => {
 
     it("tracks the field as it is typed", () => {
         const { container } = renderPanel();
+        openAdvanced();
         fireEvent.change(
             screen.getByLabelText("customize.sharing.fields.text.label"),
             { target: { value: "Live edit" } }

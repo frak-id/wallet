@@ -560,6 +560,139 @@ describe("initDeepLinks", () => {
     });
 });
 
+describe("install deep link — ref", () => {
+    beforeEach(async () => {
+        vi.clearAllMocks();
+        pendingActionsStore.getState().clearAll();
+        openUrlHandler = null;
+        platformMocks.isTauri.mockReturnValue(true);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    test("logged out: routes to /register with the code, not /install", async () => {
+        getSafeSessionMock.mockReturnValue(null);
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+        if (!openUrlHandler)
+            throw new Error("Expected openUrlHandler to be set");
+
+        openUrlHandler(["frakwallet://install?ref=FRAKPA"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/register",
+            search: { ref: "FRAKPA" },
+            replace: true,
+        });
+    });
+
+    test("logged in: routes to the redeem page with the code", async () => {
+        getSafeSessionMock.mockReturnValue({ token: "valid-token" });
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+        if (!openUrlHandler)
+            throw new Error("Expected openUrlHandler to be set");
+
+        openUrlHandler(["frakwallet://install?ref=FRAKPA"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/profile/referral/redeem",
+            search: { code: "FRAKPA" },
+            replace: true,
+        });
+    });
+
+    test("with a merchant pair: keeps /install and forwards the code", async () => {
+        getSafeSessionMock.mockReturnValue(null);
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+        if (!openUrlHandler)
+            throw new Error("Expected openUrlHandler to be set");
+
+        openUrlHandler([
+            "frakwallet://install?m=merchant-1&a=anon-1&ref=FRAKPA",
+        ]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/install",
+            search: { m: "merchant-1", a: "anon-1", ref: "FRAKPA" },
+            replace: true,
+        });
+    });
+});
+
+describe("short referral deep link — /r/<code>", () => {
+    beforeEach(async () => {
+        vi.clearAllMocks();
+        pendingActionsStore.getState().clearAll();
+        openUrlHandler = null;
+        platformMocks.isTauri.mockReturnValue(true);
+    });
+
+    async function open(url: string) {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+        await initDeepLinks(navigate);
+        if (!openUrlHandler)
+            throw new Error("Expected openUrlHandler to be set");
+        openUrlHandler([url]);
+        return navigate;
+    }
+
+    test.each([
+        "https://wallet.frak.id/r/FRAKPA",
+        "HTTPS://WALLET.FRAK.ID/R/FRAKPA",
+        "https://wallet.frak.id/r/frakpa/",
+        "frakwallet://r/FRAKPA",
+    ])("logged out: %s routes to /register with the code", async (url) => {
+        getSafeSessionMock.mockReturnValue(null);
+
+        const navigate = await open(url);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/register",
+            search: { ref: "FRAKPA" },
+            replace: true,
+        });
+        expect(pendingActionsStore.getState().actions).toHaveLength(0);
+    });
+
+    test("logged in: routes to the redeem page with the code", async () => {
+        getSafeSessionMock.mockReturnValue({ token: "valid-token" });
+
+        const navigate = await open("https://wallet.frak.id/r/FRAKPA");
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/profile/referral/redeem",
+            search: { code: "FRAKPA" },
+            replace: true,
+        });
+    });
+
+    test.each([
+        "https://wallet.frak.id/r/TOOLONGCODE",
+        "https://wallet.frak.id/r/FRAK-A",
+        "https://wallet.frak.id/r",
+    ])("malformed %s falls back to the wallet", async (url) => {
+        getSafeSessionMock.mockReturnValue(null);
+
+        const navigate = await open(url);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/wallet",
+            replace: true,
+        });
+    });
+});
+
 describe("deep link auth gate", () => {
     beforeEach(async () => {
         vi.clearAllMocks();

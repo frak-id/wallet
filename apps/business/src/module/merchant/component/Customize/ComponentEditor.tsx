@@ -7,7 +7,7 @@ import {
     PostPurchasePreview,
     ShareButtonPreview,
 } from "@frak-labs/ui-preview";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import type { FieldPath, UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
@@ -71,6 +71,25 @@ export function ComponentTypeTabs({
 }
 
 export { AdvancedDisclosure };
+
+export function ComponentsCardHeader({
+    placementSelector,
+}: {
+    placementSelector: ReactNode;
+}) {
+    const { t } = useTranslation();
+    return (
+        <Stack space="xs">
+            <Text variant="bodySmall" weight="medium" color="secondary">
+                {t("customize.components.title")}
+            </Text>
+            {placementSelector}
+            <Text variant="caption" color="tertiary">
+                {t("customize.components.description")}
+            </Text>
+        </Stack>
+    );
+}
 
 export function ComponentFields({
     selectedComponent,

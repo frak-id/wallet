@@ -10,9 +10,10 @@ Preact-based Web Components (Custom Elements). Hybrid Light DOM / Shadow DOM. CD
 | `<frak-open-in-app>` | Light DOM | MUST inherit merchant theme styles (mobile-only renderer) |
 | `<frak-post-purchase>` | Light DOM | MUST inherit merchant theme styles; see the `token` note below |
 | `<frak-banner>` | Light DOM | MUST inherit merchant theme styles |
+| `<frak-ambassador>` | Light DOM | MUST inherit merchant theme styles; the `--frak-amb-*` knobs are the supported theming surface, the `frak-ambassador__*` classes best-effort |
 
 ## Key Files
-- `src/components/{ButtonWallet,ButtonShare,OpenInAppButton,PostPurchase,Banner}/`
+- `src/components/{ButtonWallet,ButtonShare,OpenInAppButton,PostPurchase,Banner,Ambassador}/`
 - `src/hooks/useLightDomStyles.ts` — injects base + placement CSS into `<head>`
 - `src/styles/sharedBaseCss.css.ts` — the one entry allowed to emit reset/theme CSS
 - `src/styles/sharedCss.ts` — `sharedCss` (Shadow DOM), `lightDomBaseCss` (Light DOM), `buildStyleContent()`
@@ -41,6 +42,8 @@ Merchant defaults still load the jsDelivr `@latest` shim; `https://sdk[-dev].fra
 <frak-button-wallet></frak-button-wallet>
 <frak-button-share classname="button"></frak-button-share>
 ```
+
+Try the local build on a live store: `bun run --cwd sdk/components build`, then `bun run --cwd sdk/components try:merchant <store-page-url> [--image <url>|none] [--shot]`. It opens Chrome with the published SDK routed to `cdn/` and stages a merchant page: the store's content gives way to a centred `<frak-ambassador>`, with the page's `og:image` as the hero photo unless `--image` says otherwise. `--shot` saves screenshots at 1280px and 390px to the temp dir instead. Rewards show only on stores that already use Frak.
 
 ## See Also
 Parent `sdk/AGENTS.md` · `sdk/core/AGENTS.md` · `packages/design-system/AGENTS.md` (Vanilla Extract plugin shared) · `services/backend/` (placement CSS compilation).

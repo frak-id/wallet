@@ -724,6 +724,10 @@
                 "step3Description": "Transfère tes gains en un clic vers ton compte bancaire.",
                 "discoverOffers": "Découvrir les offres",
                 "legal": "Les <termsLink>conditions générales</termsLink> de FRAK s'appliquent."
+            },
+            "frakBonus": {
+                "title": "Ton cashback exclusif",
+                "description": "Tu fais partie de nos premiers membres : profite d'un bonus de cashback exclusif sur ton premier achat chez les marques participantes."
             }
         },
         "stats": {
@@ -847,7 +851,13 @@
         "installedCodeToggle": "Ou saisis ce code manuellement",
         "openWallet": "Ouvre Frak et récupère {{ estimatedReward }}",
         "installedHeadline": "C'est prêt. Ouvre l'app pour récupérer {{ estimatedReward }}.",
-        "dismiss": "Fermer"
+        "dismiss": "Fermer",
+        "referral": {
+            "title": "Ton code de parrainage",
+            "description": "Télécharge l'app et saisis ce code à l'inscription pour débloquer ton cashback exclusif.",
+            "codeCopied": "Code de parrainage copié !",
+            "manualEntry": "Code de parrainage à saisir à l'inscription"
+        }
     },
     "pendingActions": {
         "walletAlreadyLinked": {
@@ -916,7 +926,9 @@
             "label": "Code de parrainage",
             "placeholder": "Ex : LOLA10",
             "submitCta": "Appliquer le code",
-            "appliedToast": "Code de parrainage appliqué"
+            "appliedToast": "Code de parrainage appliqué",
+            "frakAppliedToast": "Cashback exclusif débloqué !",
+            "paste": "Coller"
         },
         "welcome": {
             "title": "Bienvenue dans ton porte-monnaie",
@@ -970,6 +982,11 @@
             "pendingValidation": "En attente de validation par la marque",
             "estimatedValidation": "Validation estimée le",
             "pendingDisclaimer": "Ce gain sera disponible une fois l'achat confirmé par la marque."
+        },
+        "frakBonus": {
+            "label": "Bonus de bienvenue",
+            "detailTitle": "Ton bonus de bienvenue",
+            "detailDescription": "Comme tu as rejoint Frak avec une invitation, Frak t'a reversé sa récompense de parrain sur ton premier achat chez {{merchant}}."
         }
     },
     "monerium": {
@@ -1187,6 +1204,15 @@
             "step2Description": "Chaque commande réalisée grâce à toi sur {{name}} te rapporte du cash directement dans ton porte-monnaie.",
             "step3Title": "Récupère tes gains dans ton porte-monnaie",
             "step3Description": "En un clic, transfère tes gains vers ton compte bancaire."
+        },
+        "offer": {
+            "purchaseTitle": "Quand tu achètes",
+            "purchase": "{{amount}} de cashback sur tes achats",
+            "purchaseFirst": "{{amount}} de cashback sur ton premier achat",
+            "cashback": "Ton cashback",
+            "welcomeBonus": "Cashback premier achat",
+            "welcomeBonusNote": "Ton cashback et un bonus unique offert par ton invitation Frak, versés dans ton porte-monnaie après ton premier achat chez {{name}}.",
+            "welcomeBonusOnlyNote": "Un bonus unique offert par ton invitation Frak, versé dans ton porte-monnaie après ton premier achat chez {{name}}."
         }
     },
     "version": {

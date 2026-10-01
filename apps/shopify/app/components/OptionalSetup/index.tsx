@@ -1,24 +1,20 @@
+import { useAmbassadorPageAction } from "app/hooks/useAmbassadorPageAction";
+import { useThemeEditorUrl } from "app/hooks/useThemeEditorUrl";
 import { useVisibilityChange } from "app/hooks/useVisibilityChange";
-import type { loader as appLoader } from "app/routes/app";
+import type { AmbassadorCardState } from "app/services.server/ambassadorPage";
 import type { OnboardingStepData } from "app/utils/onboarding";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useRouteLoaderData } from "react-router";
+import { useNavigate } from "react-router";
 import screenShareButton from "../../assets/share-button.png";
 import { useRefreshData } from "../../hooks/useRefreshData";
 import { ExternalButton } from "../ui/ExternalLink";
 
 /**
- * Surfaces the two non-critical onboarding items (share button + banner)
- * as a "finish your setup" card on the index page.
- *
- * Renders once the critical onboarding (steps 1-5) is done — the
- * merchant can already ship live, but these UI bits unlock storefront
- * discovery (share button) and referee conversion (banner). The card
- * disappears entirely once both are activated.
- *
- * Tab visibility triggers a refresh so detection picks up changes made
- * in the Shopify theme editor without a manual reload.
+ * "Finish your setup" cards for the optional storefront blocks: share button,
+ * banner and ambassador page. Each card hides once its block is detected; the
+ * ambassador card stays while it shows the confirmation of an action just run.
+ * Tab visibility triggers a refresh so theme-editor changes show up.
  */
 export function OptionalSetup({
     onboardingData,
@@ -27,19 +23,33 @@ export function OptionalSetup({
 }) {
     const { t } = useTranslation();
     const refresh = useRefreshData();
+    const ambassador = useAmbassadorPageAction();
+    const { clearLive } = ambassador;
 
     useVisibilityChange(
         useCallback(() => {
+            clearLive();
             refresh();
-        }, [refresh])
+        }, [clearLive, refresh])
     );
 
     const showShareButton =
         !onboardingData.isThemeHasFrakButton &&
         Boolean(onboardingData.firstProduct);
     const showBanner = !onboardingData.isThemeHasFrakBanner;
+    const ambassadorState: AmbassadorCardState =
+        onboardingData.ambassadorPage ?? {
+            state: "none",
+        };
+    const showAmbassador =
+        ambassador.liveUrl !== null ||
+        !(
+            ambassadorState.state === "linked" ||
+            (ambassadorState.state === "upgrade" &&
+                ambassadorState.standardLayoutKept)
+        );
 
-    if (!showShareButton && !showBanner) return null;
+    if (!showShareButton && !showBanner && !showAmbassador) return null;
 
     return (
         <s-section>
@@ -53,15 +63,16 @@ export function OptionalSetup({
                         />
                     )}
                     {showBanner && <BannerCard />}
+                    {showAmbassador && (
+                        <AmbassadorCard
+                            state={ambassadorState}
+                            action={ambassador}
+                        />
+                    )}
                 </s-stack>
             </s-stack>
         </s-section>
     );
-}
-
-function useThemeEditorUrl(): string {
-    const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
-    return `https://${rootData?.shop?.myshopifyDomain}/admin/themes/current/editor`;
 }
 
 function ShareButtonCard({ productHandle }: { productHandle?: string }) {
@@ -108,5 +119,210 @@ function BannerCard() {
                 </ExternalButton>
             </s-stack>
         </s-box>
+    );
+}
+
+export const AMBASSADOR_GUIDE_HREF = "/app/ambassador-guide";
+
+export type AmbassadorAction = ReturnType<typeof useAmbassadorPageAction>;
+
+function AmbassadorCard({
+    state,
+    action,
+}: {
+    state: AmbassadorCardState;
+    action: AmbassadorAction;
+}) {
+    const { t } = useTranslation();
+
+    return (
+        <s-box background="subdued" padding="base">
+            <s-stack gap="base">
+                <s-heading>{t("optionalSetup.ambassador.title")}</s-heading>
+                {action.liveUrl && (
+                    <AmbassadorLive
+                        url={action.liveUrl}
+                        message={action.liveMessage}
+                    />
+                )}
+                <AmbassadorOffer state={state} action={action} />
+            </s-stack>
+        </s-box>
+    );
+}
+
+function AmbassadorOffer({
+    state,
+    action,
+}: {
+    state: AmbassadorCardState;
+    action: AmbassadorAction;
+}) {
+    const { t } = useTranslation();
+    const navigate = useNavigate();
+    const openGuide = () => navigate(AMBASSADOR_GUIDE_HREF);
+    const { run, isBusy } = action;
+    const busy = { loading: isBusy, disabled: isBusy };
+
+    switch (state.state) {
+        case "linked":
+            return null;
+        case "blockUnlinked":
+            return <LinkOrCreate action={action} />;
+        case "none":
+            return (
+                <>
+                    <s-text>{t("optionalSetup.ambassador.description")}</s-text>
+                    <s-text>
+                        {t("optionalSetup.ambassador.createDescription")}
+                    </s-text>
+                    <s-button
+                        variant="primary"
+                        {...busy}
+                        onClick={() => run("create")}
+                    >
+                        {t("optionalSetup.ambassador.createCta")}
+                    </s-button>
+                    <s-text>{t("optionalSetup.ambassador.guideIntro")}</s-text>
+                    <s-button variant="secondary" onClick={openGuide}>
+                        {t("optionalSetup.ambassador.guideCta")}
+                    </s-button>
+                </>
+            );
+        case "upgrade":
+            if (state.standardLayoutKept) return null;
+            return (
+                <>
+                    <s-text>
+                        {t(
+                            state.onTemplate
+                                ? "optionalSetup.ambassador.duplicateDescription"
+                                : "optionalSetup.ambassador.upgradeDescription"
+                        )}
+                    </s-text>
+                    {state.template ? (
+                        <ApplyButton
+                            template={state.template}
+                            action={action}
+                        />
+                    ) : (
+                        <s-button variant="primary" onClick={openGuide}>
+                            {t("optionalSetup.ambassador.fullWidthCta")}
+                        </s-button>
+                    )}
+                    {!state.onTemplate && (
+                        <s-button
+                            variant="secondary"
+                            {...busy}
+                            onClick={() => run("keepStandard")}
+                        >
+                            {t("optionalSetup.ambassador.keepStandardCta")}
+                        </s-button>
+                    )}
+                </>
+            );
+        case "blank":
+            return (
+                <>
+                    <s-text>
+                        {t("optionalSetup.ambassador.blankDescription")}
+                    </s-text>
+                    {state.template && (
+                        <ApplyButton
+                            template={state.template}
+                            action={action}
+                        />
+                    )}
+                    <s-text>
+                        {t("optionalSetup.ambassador.restoreDescription")}
+                    </s-text>
+                    <s-button
+                        variant={state.template ? "secondary" : "primary"}
+                        {...busy}
+                        onClick={() => run("restore")}
+                    >
+                        {t("optionalSetup.ambassador.restoreCta")}
+                    </s-button>
+                </>
+            );
+    }
+}
+
+/** Link the page using the block template; once none is found, only create. */
+export function LinkOrCreate({ action }: { action: AmbassadorAction }) {
+    const { t } = useTranslation();
+    const { run, isBusy, failure } = action;
+    const busy = { loading: isBusy, disabled: isBusy };
+    const noPage = failure === "noPublishedPage";
+
+    return (
+        <>
+            {noPage ? (
+                <s-text>{t("optionalSetup.ambassador.noPublishedPage")}</s-text>
+            ) : (
+                <>
+                    <s-text>
+                        {t("optionalSetup.ambassador.linkDescription")}
+                    </s-text>
+                    <s-button
+                        variant="primary"
+                        {...busy}
+                        onClick={() => run("link")}
+                    >
+                        {t("optionalSetup.ambassador.linkCta")}
+                    </s-button>
+                    <s-text>
+                        {t("optionalSetup.ambassador.createInstead")}
+                    </s-text>
+                </>
+            )}
+            <s-button
+                variant={noPage ? "primary" : "secondary"}
+                {...busy}
+                onClick={() => run("create")}
+            >
+                {t("optionalSetup.ambassador.createCta")}
+            </s-button>
+        </>
+    );
+}
+
+export function AmbassadorLive({
+    url,
+    message,
+}: {
+    url: string;
+    message: string;
+}) {
+    const { t } = useTranslation();
+
+    return (
+        <>
+            <s-text>{message}</s-text>
+            <ExternalButton variant="primary" href={url}>
+                {t("optionalSetup.ambassador.viewPage")}
+            </ExternalButton>
+        </>
+    );
+}
+
+export function ApplyButton({
+    template,
+    action,
+}: {
+    template: string;
+    action: AmbassadorAction;
+}) {
+    const { t } = useTranslation();
+
+    return (
+        <s-button
+            variant="primary"
+            loading={action.isBusy}
+            disabled={action.isBusy}
+            onClick={() => action.run("apply", template)}
+        >
+            {t("optionalSetup.ambassador.applyCta", { template })}
+        </s-button>
     );
 }

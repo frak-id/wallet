@@ -2,10 +2,15 @@ import { eventEmitter, log } from "@backend-infrastructure";
 import { and, eq, isNull } from "drizzle-orm";
 import type { Address } from "viem";
 import type { ReferralService } from "../domain/attribution";
-import { buildTimeContext, type CalculatedReward } from "../domain/campaign";
+import {
+    buildTimeContext,
+    type CalculatedReward,
+    type CampaignTrigger,
+} from "../domain/campaign";
 import type { CampaignRuleRepository } from "../domain/campaign/repositories/CampaignRuleRepository";
 import type { RuleEngineService } from "../domain/campaign/services/RuleEngineService";
 import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
+import { FRAK_REFERRAL_IDENTITY_GROUP_ID } from "../domain/referral-code/constants";
 import {
     type AssetLogSelect,
     assetLogsTable,
@@ -14,17 +19,20 @@ import {
 } from "../domain/rewards/db/schema";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
-import type {
-    CreateAssetLogParams,
-    RecipientType,
-} from "../domain/rewards/types";
+import type { CreateAssetLogParams } from "../domain/rewards/types";
 import { db } from "../infrastructure/persistence/postgres";
 import type { IdentityOrchestrator } from "./identity";
-import type { InteractionContextBuilder } from "./reward";
+import {
+    applyFrakReferralPolicy,
+    type InteractionContextBuilder,
+    type PolicyReward,
+} from "./reward";
 
 type BatchProcessResult = {
     processedCount: number;
     rewardsCreated: number;
+    /** Subset of `rewardsCreated` that are Frak welcome bonuses. */
+    welcomeBonusesCreated: number;
     /** Interactions left unprocessed because a reward couldn't be priced. */
     deferredCount: number;
     errors: {
@@ -36,6 +44,7 @@ type BatchProcessResult = {
 type ProcessSingleResult = {
     success: boolean;
     rewardsCreated: number;
+    welcomeBonusesCreated?: number;
     /** True when the interaction was already cancelled by a concurrent refund. */
     cancelled?: boolean;
     /** True when left unprocessed for a later retry (unpriceable reward). */
@@ -45,7 +54,11 @@ type ProcessSingleResult = {
 
 type MerchantGroupResult = Pick<
     BatchProcessResult,
-    "processedCount" | "rewardsCreated" | "deferredCount" | "errors"
+    | "processedCount"
+    | "rewardsCreated"
+    | "welcomeBonusesCreated"
+    | "deferredCount"
+    | "errors"
 >;
 
 // Interactions within a merchant stay sequential because per-user reward
@@ -77,6 +90,7 @@ export class BatchRewardOrchestrator {
             return {
                 processedCount: 0,
                 rewardsCreated: 0,
+                welcomeBonusesCreated: 0,
                 deferredCount: 0,
                 errors: [],
             };
@@ -90,6 +104,7 @@ export class BatchRewardOrchestrator {
         const result: BatchProcessResult = {
             processedCount: 0,
             rewardsCreated: 0,
+            welcomeBonusesCreated: 0,
             deferredCount: 0,
             errors: [],
         };
@@ -107,6 +122,8 @@ export class BatchRewardOrchestrator {
             for (const groupResult of batchResults) {
                 result.processedCount += groupResult.processedCount;
                 result.rewardsCreated += groupResult.rewardsCreated;
+                result.welcomeBonusesCreated +=
+                    groupResult.welcomeBonusesCreated;
                 result.deferredCount += groupResult.deferredCount;
                 result.errors.push(...groupResult.errors);
             }
@@ -116,6 +133,7 @@ export class BatchRewardOrchestrator {
             {
                 processedCount: result.processedCount,
                 rewardsCreated: result.rewardsCreated,
+                welcomeBonusesCreated: result.welcomeBonusesCreated,
                 deferredCount: result.deferredCount,
                 errorCount: result.errors.length,
             },
@@ -132,6 +150,7 @@ export class BatchRewardOrchestrator {
         const groupResult: MerchantGroupResult = {
             processedCount: 0,
             rewardsCreated: 0,
+            welcomeBonusesCreated: 0,
             deferredCount: 0,
             errors: [],
         };
@@ -147,6 +166,8 @@ export class BatchRewardOrchestrator {
             } else if (processResult.success) {
                 groupResult.processedCount++;
                 groupResult.rewardsCreated += processResult.rewardsCreated;
+                groupResult.welcomeBonusesCreated +=
+                    processResult.welcomeBonusesCreated ?? 0;
             } else if (processResult.error) {
                 groupResult.errors.push({
                     interactionLogId: interaction.id,
@@ -225,6 +246,8 @@ export class BatchRewardOrchestrator {
                 (args) => this.referralService.getReferralChain(args)
             );
 
+            // Pre-policy on purpose: dropped Frak shares are then restored
+            // by `restoreUnpersistedBudget`.
             consumedByCampaign = this.sumRewardAmountsByCampaign(
                 evaluationResult.rewards
             );
@@ -238,10 +261,19 @@ export class BatchRewardOrchestrator {
                 );
             }
 
+            const rewards = await this.resolveFrakReferralRewards({
+                rewards: evaluationResult.rewards,
+                userIdentityGroupId: interaction.identityGroupId,
+                merchantId,
+                trigger,
+                directReferrerId:
+                    context.attribution?.referrerIdentityGroupId ?? null,
+            });
+
             const assetParams =
-                evaluationResult.rewards.length > 0
+                rewards.length > 0
                     ? this.buildAssetLogParams(
-                          evaluationResult.rewards,
+                          rewards,
                           merchantId,
                           interaction.id,
                           merchantDefaultToken,
@@ -350,6 +382,9 @@ export class BatchRewardOrchestrator {
             return {
                 success: true,
                 rewardsCreated: txOutcome.createdAssets.length,
+                welcomeBonusesCreated: txOutcome.createdAssets.filter(
+                    (asset) => asset.recipientType === "welcome_bonus"
+                ).length,
                 cancelled: txOutcome.cancelled,
             };
         } catch (error) {
@@ -376,6 +411,38 @@ export class BatchRewardOrchestrator {
                 error: errorMessage,
             };
         }
+    }
+
+    /** Skips the claim lookup unless Frak is among the recipients (hot path). */
+    private async resolveFrakReferralRewards(params: {
+        rewards: CalculatedReward[];
+        userIdentityGroupId: string;
+        merchantId: string;
+        trigger: CampaignTrigger;
+        directReferrerId: string | null;
+    }): Promise<PolicyReward[]> {
+        const { rewards, userIdentityGroupId, merchantId } = params;
+        const hasFrakRecipient = rewards.some(
+            (reward) =>
+                reward.recipientIdentityGroupId ===
+                FRAK_REFERRAL_IDENTITY_GROUP_ID
+        );
+        if (!hasFrakRecipient) return rewards;
+
+        const bonusAlreadyClaimed =
+            await this.assetLogRepository.hasLiveWelcomeBonus(
+                userIdentityGroupId,
+                merchantId
+            );
+        return applyFrakReferralPolicy({
+            rewards,
+            frakIdentityGroupId: FRAK_REFERRAL_IDENTITY_GROUP_ID,
+            userIdentityGroupId,
+            trigger: params.trigger,
+            directReferrerIsFrak:
+                params.directReferrerId === FRAK_REFERRAL_IDENTITY_GROUP_ID,
+            bonusAlreadyClaimed,
+        });
     }
 
     private sumRewardAmountsByCampaign(
@@ -454,7 +521,7 @@ export class BatchRewardOrchestrator {
     }
 
     private buildAssetLogParams(
-        rewards: CalculatedReward[],
+        rewards: PolicyReward[],
         merchantId: string,
         interactionLogId: string,
         merchantDefaultToken: Address | undefined,
@@ -486,7 +553,7 @@ export class BatchRewardOrchestrator {
                 assetType: reward.type,
                 amount: reward.amount,
                 tokenAddress: resolvedToken,
-                recipientType: reward.recipient as RecipientType,
+                recipientType: reward.recipient,
                 referralLinkId,
                 interactionLogId,
                 chainDepth: reward.chainDepth,

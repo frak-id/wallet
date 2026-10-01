@@ -1,0 +1,23 @@
+{% comment %}
+  App sections add no vertical padding, so the page would touch the theme header.
+{% endcomment %}
+<div class="frak-ambassador-block">
+  <frak-ambassador></frak-ambassador>
+</div>
+
+{% style %}
+  .frak-ambassador-block {
+    padding-block: clamp(36px, 5vw, 64px);
+  }
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Frak Ambassador",
+  "target": "section",
+  "enabled_on": {
+    "templates": ["page"]
+  },
+  "settings": []
+}
+{% endschema %}
