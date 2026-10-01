@@ -1,5 +1,12 @@
 # @frak-labs/react-sdk
 
+## 1.5.0
+
+### Patch Changes
+
+- Updated dependencies [[`2020de0`](https://github.com/frak-id/wallet/commit/2020de05c5e4b5548f17c41df121b1febb45cfe4), [`3577d7f`](https://github.com/frak-id/wallet/commit/3577d7f5ca6218cfcfcd67a3195556cc40c4d608)]:
+  - @frak-labs/core-sdk@1.5.0
+
 ## 1.4.2
 
 ### Patch Changes

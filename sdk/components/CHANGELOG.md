@@ -1,5 +1,33 @@
 # @frak-labs/components
 
+## 1.3.0
+
+### Minor Changes
+
+- [#321](https://github.com/frak-id/wallet/pull/321) [`2020de0`](https://github.com/frak-id/wallet/commit/2020de05c5e4b5548f17c41df121b1febb45cfe4) Thanks [@srod](https://github.com/srod)! - Add `<frak-ambassador>`, a full-page referral landing a merchant places on a page they own, and `getInstallUrl`, the attributed wallet install link it hands off to.
+  
+  `<frak-ambassador>` renders in Light DOM, full width, with no wallet session required: a hero, the referral reward, a three-step explainer, a two-sided "your friends win too" region, a referral block with one Share button, the official App Store and Google Play badges in the page's language (with a QR code of the same install link on screens from 768px), and an FAQ. Everything that promises the friend a benefit (the two-sided region, the hero pill, and one FAQ answer) renders only when the campaign rewards the friend; otherwise that answer switches to perk-free wording. Copy ships in English and French and follows the merchant's language. Every string and image can be overridden by attribute, except the perk-free version of that FAQ answer. The hero photo, headline and intro, reward wording, button labels and FAQ also read the merchant's settings from the Frak business dashboard, below attributes and above the built-in copy; without a chosen photo the hero uses the merchant's Explorer main image. Either kind of override that uses `{REWARD}` gives way to the default wording while no fixed amount resolves. Every visitor sees the same page; only the campaign's rewards change what it says. When no fixed reward resolves, the page falls back to reward-free wording instead of hiding. The share buttons open the wallet sharing page, and both store badges link to the wallet `/install` page. The CDN loader fetches the component as its own chunk (about 28 kB gzipped) only on pages that place it, and the QR encoder as a further chunk (about 6 kB) only on wide screens; on npm it is `@frak-labs/components/ambassador`.
+  
+  Theming: the twenty-two `--frak-amb-*` custom properties are the supported surface, and the `frak-ambassador__*` classes are best-effort. On mount the component reads the host page's primary button, headings and card radius, and fills only the properties the merchant did not set. When the page offers no reliable signal it writes nothing and the shipped defaults show; a page dedicated to the program rarely has a brand button to read, so merchants should set `--frak-amb-accent` themselves. A sampled button colour too light to read as text still fills the buttons, while the reward figures take the page's text colour. The store badges keep their official colours against host stylesheet resets.
+  
+  `getInstallUrl({ merchantId?, checkoutToken? })`, in `@frak-labs/core-sdk/actions`, returns `<wallet>/install?m=<merchantId>&a=<anonymous id>#p=<frak-install-v1 proof>`. The proof rides in the fragment, so it never reaches a server log. `a=` is kept when no proof can be signed, because the Play Store referrer is built from it alone. A `checkoutToken` rides in the query for post-purchase pages, where the install-code mint accepts it without a proof. Without a `merchantId` it uses the one the SDK config resolves, as `trackPurchaseStatus` does, and returns `undefined` when none resolves.
+
+### Patch Changes
+
+- [#321](https://github.com/frak-id/wallet/pull/321) [`e3b0155`](https://github.com/frak-id/wallet/commit/e3b015565fe1fc09e11c64697b165b33234274b6) Thanks [@srod](https://github.com/srod)! - Dash-case attributes now reach every component, and a failed sharing page no longer rejects on the merchant's page.
+  
+  HTML lowercases attribute names, but components observed their camelCase prop names, so `setAttribute("customer-id", ...)` on an element that had already upgraded was silently dropped, although the README documents that form. Components now observe the dash-case form as well. An attribute that sat inert on a page before this release now takes effect.
+  
+  The components that open the wallet sharing page do so from a click without awaiting it, so a failed `frak_displaySharingPage` surfaced as an unhandled rejection on the merchant's page. It is now logged to the console instead.
+
+- [#323](https://github.com/frak-id/wallet/pull/323) [`3577d7f`](https://github.com/frak-id/wallet/commit/3577d7f5ca6218cfcfcd67a3195556cc40c4d608) Thanks [@KONFeature](https://github.com/KONFeature)! - The sharing page now reports which component opened it, and `<frak-ambassador>` reports an impression.
+  
+  `displaySharingPage` accepts an optional `metadata.entryPoint` (`"share_button" | "post_purchase" | "ambassador" | "auto_open"`), exported as `SharingPageEntryPoint`. It is analytics only: the listener reports it as `entry_point` on `sharing_page_opened` and `sharing_page_viewed`. The share and wallet buttons, the post-purchase card, the ambassador page and the `?frakAction=share` auto-open each set their own value. A direct `displaySharingPage` call that omits it reports none.
+  
+  `<frak-ambassador>` emits `ambassador_impression` once per mount, after the client is ready and the backend config has resolved. A merchant that turns out to be `hidden` is never counted.
+- Updated dependencies [[`2020de0`](https://github.com/frak-id/wallet/commit/2020de05c5e4b5548f17c41df121b1febb45cfe4), [`3577d7f`](https://github.com/frak-id/wallet/commit/3577d7f5ca6218cfcfcd67a3195556cc40c4d608)]:
+  - @frak-labs/core-sdk@1.5.0
+
 ## 1.2.4
 
 ### Patch Changes
