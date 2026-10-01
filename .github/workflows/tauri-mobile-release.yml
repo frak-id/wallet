@@ -171,6 +171,8 @@ jobs:
     name: "📦 Build SDK"
     needs: validate
     runs-on: ubuntu-latest
+    # A merged PR into main defaults to read-only cache; safe to override, these jobs only build the merge commit.
+    cache-mode: write
 
     steps:
       - name: "📥 Checkout"
@@ -215,6 +217,8 @@ jobs:
     name: "🍎 iOS"
     needs: [validate, prepare]
     runs-on: macos-26
+    # See `prepare`.
+    cache-mode: write
 
     steps:
       - name: "📥 Checkout"
@@ -479,6 +483,8 @@ jobs:
     name: "🤖 Android"
     needs: [validate, prepare]
     runs-on: ubuntu-latest
+    # See `prepare`.
+    cache-mode: write
 
     steps:
       - name: "📥 Checkout"
