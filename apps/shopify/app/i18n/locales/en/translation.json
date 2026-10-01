@@ -96,7 +96,7 @@
             "linkCta": "Link my ambassador page",
             "createInstead": "No page uses that template yet? Create one in a click, built on that template.",
             "linkDescription": "The Frak Ambassador block is already in a page template of your theme. We find the published page that uses this template and connect it to Frak.",
-            "noPublishedPage": "No published page uses the Frak Ambassador template yet. Select the template under Theme template on a published page, save, then try again.",
+            "noPublishedPage": "No published page uses the Frak Ambassador template yet. Create your ambassador page: it uses the template right away.",
             "created": "Your ambassador page is live.",
             "applied": "Your ambassador page is now full-width.",
             "restored": "Your ambassador page shows the Frak Ambassador again.",

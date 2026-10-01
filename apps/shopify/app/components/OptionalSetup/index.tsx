@@ -161,42 +161,14 @@ function AmbassadorOffer({
     const { t } = useTranslation();
     const navigate = useNavigate();
     const openGuide = () => navigate(AMBASSADOR_GUIDE_HREF);
-    const { run, isBusy, failure } = action;
+    const { run, isBusy } = action;
     const busy = { loading: isBusy, disabled: isBusy };
 
     switch (state.state) {
         case "linked":
             return null;
         case "blockUnlinked":
-            return (
-                <>
-                    <s-text>
-                        {t("optionalSetup.ambassador.linkDescription")}
-                    </s-text>
-                    {failure === "noPublishedPage" && (
-                        <s-text>
-                            {t("optionalSetup.ambassador.noPublishedPage")}
-                        </s-text>
-                    )}
-                    <s-button
-                        variant="primary"
-                        {...busy}
-                        onClick={() => run("link")}
-                    >
-                        {t("optionalSetup.ambassador.linkCta")}
-                    </s-button>
-                    <s-text>
-                        {t("optionalSetup.ambassador.createInstead")}
-                    </s-text>
-                    <s-button
-                        variant="secondary"
-                        {...busy}
-                        onClick={() => run("create")}
-                    >
-                        {t("optionalSetup.ambassador.createCta")}
-                    </s-button>
-                </>
-            );
+            return <LinkOrCreate action={action} />;
         case "none":
             return (
                 <>
@@ -274,6 +246,45 @@ function AmbassadorOffer({
                 </>
             );
     }
+}
+
+/** Link the page using the block template; once none is found, only create. */
+export function LinkOrCreate({ action }: { action: AmbassadorAction }) {
+    const { t } = useTranslation();
+    const { run, isBusy, failure } = action;
+    const busy = { loading: isBusy, disabled: isBusy };
+    const noPage = failure === "noPublishedPage";
+
+    return (
+        <>
+            {noPage ? (
+                <s-text>{t("optionalSetup.ambassador.noPublishedPage")}</s-text>
+            ) : (
+                <>
+                    <s-text>
+                        {t("optionalSetup.ambassador.linkDescription")}
+                    </s-text>
+                    <s-button
+                        variant="primary"
+                        {...busy}
+                        onClick={() => run("link")}
+                    >
+                        {t("optionalSetup.ambassador.linkCta")}
+                    </s-button>
+                    <s-text>
+                        {t("optionalSetup.ambassador.createInstead")}
+                    </s-text>
+                </>
+            )}
+            <s-button
+                variant={noPage ? "primary" : "secondary"}
+                {...busy}
+                onClick={() => run("create")}
+            >
+                {t("optionalSetup.ambassador.createCta")}
+            </s-button>
+        </>
+    );
 }
 
 export function AmbassadorLive({

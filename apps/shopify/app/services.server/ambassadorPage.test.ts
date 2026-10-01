@@ -358,16 +358,37 @@ describe("reconcileAmbassadorPage", () => {
         expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
     });
 
-    it("does not adopt a block page when scopes are granted and nothing is recorded", async () => {
+    it("offers to link, without adopting, a published page on a block template", async () => {
         givenScopes(true);
+        respond({
+            pages: {
+                nodes: [
+                    {
+                        id: pageId,
+                        handle: "referral",
+                        isPublished: true,
+                        templateSuffix: "ambassador",
+                        body: "",
+                    },
+                ],
+            },
+        });
 
         const state = await reconcileAmbassadorPage(mockContext, [
             "ambassador",
         ]);
 
         expect(state).toEqual({ state: "blockUnlinked" });
-        expect(mockGraphql).not.toHaveBeenCalled();
         expect(writeAmbassadorPageMetafield).not.toHaveBeenCalled();
+    });
+
+    it("offers only creation when no published page uses the block template", async () => {
+        givenScopes(true);
+        respond({ pages: { nodes: [] } });
+
+        await expect(
+            reconcileAmbassadorPage(mockContext, ["ambassador"])
+        ).resolves.toEqual({ state: "none" });
     });
 
     it("reports no page when scopes are granted, nothing is recorded and no block template exists", async () => {
@@ -437,16 +458,17 @@ describe("reconcileAmbassadorPage", () => {
         });
     });
 
-    it("writes a null URL and reports block-unlinked when the page was unpublished and a block template exists", async () => {
+    it("writes a null URL and offers only creation when the page was unpublished and no published page uses the block template", async () => {
         givenScopes(true);
         givenRecord(oldUrl);
         respond({ page: { handle: "old-handle", isPublished: false } });
+        respond({ pages: { nodes: [] } });
 
         const state = await reconcileAmbassadorPage(mockContext, [
             "ambassador",
         ]);
 
-        expect(state).toEqual({ state: "blockUnlinked" });
+        expect(state).toEqual({ state: "none" });
         expect(writeAmbassadorPageMetafield).toHaveBeenCalledOnce();
         expect(writeAmbassadorPageMetafield).toHaveBeenCalledWith(mockContext, {
             pageId,

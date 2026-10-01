@@ -2,6 +2,7 @@ import {
     type AmbassadorAction,
     AmbassadorLive,
     ApplyButton,
+    LinkOrCreate,
 } from "app/components/OptionalSetup";
 import { useAmbassadorPageAction } from "app/hooks/useAmbassadorPageAction";
 import { useThemeEditorUrl } from "app/hooks/useThemeEditorUrl";
@@ -195,8 +196,9 @@ function FinalBlock({
                 <s-text>{t("ambassadorGuide.final.waiting")}</s-text>
             );
         }
-        case "none":
         case "blockUnlinked":
+            return <LinkOrCreate action={action} />;
+        case "none":
             return (
                 <>
                     <s-text>{t("ambassadorGuide.final.noPage")}</s-text>

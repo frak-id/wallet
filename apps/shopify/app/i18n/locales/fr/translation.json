@@ -96,7 +96,7 @@
             "linkCta": "Lier ma page ambassadeur",
             "createInstead": "Aucune page n'utilise encore ce modèle ? Créez-en une en un clic, basée sur ce modèle.",
             "linkDescription": "Le bloc Frak Ambassador est déjà dans un modèle de page de votre thème. Nous retrouvons la page publiée qui utilise ce modèle et la relions à Frak.",
-            "noPublishedPage": "Aucune page publiée n'utilise encore le modèle Frak Ambassador. Sélectionnez ce modèle sous Modèle de thème sur une page publiée, enregistrez, puis réessayez.",
+            "noPublishedPage": "Aucune page publiée n'utilise encore le modèle Frak Ambassador. Créez votre page ambassadeur : elle utilise directement ce modèle.",
             "created": "Votre page ambassadeur est en ligne.",
             "applied": "Votre page ambassadeur est maintenant en pleine largeur.",
             "restored": "Votre page ambassadeur affiche de nouveau l'ambassadeur Frak.",

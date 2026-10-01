@@ -274,6 +274,28 @@ export type AmbassadorCardState =
     | { state: "blank"; url: string; template: string | null };
 
 /**
+ * Offer to link only when a published page uses a block template. Without
+ * the page scopes the pages cannot be listed, so the offer stays.
+ */
+async function unlinkedState(
+    context: AuthenticatedContext,
+    templateSuffixes: string[],
+    granted: boolean
+): Promise<AmbassadorCardState> {
+    if (templateSuffixes.length === 0) {
+        return { state: "none" };
+    }
+    if (!granted) {
+        return { state: "blockUnlinked" };
+    }
+    const page = await findPublishedPageByTemplateSuffixes(
+        context,
+        templateSuffixes
+    );
+    return page ? { state: "blockUnlinked" } : { state: "none" };
+}
+
+/**
  * Card state for the shop's ambassador page. With the page scopes granted, a
  * changed storefront URL is written back to the record, and the page's
  * template and body decide whether it is done, upgradable or blank.
@@ -288,15 +310,18 @@ export async function reconcileAmbassadorPage(
             : { state: "none" };
 
     try {
-        const record = await getAmbassadorPageMetafield(context);
+        const [record, granted] = await Promise.all([
+            getAmbassadorPageMetafield(context),
+            arePageScopesGranted(context),
+        ]);
         if (!record) {
-            return unlinked;
+            return unlinkedState(context, templateSuffixes, granted);
         }
 
         const recordedState: AmbassadorCardState = record.url
             ? { state: "linked", url: record.url }
             : unlinked;
-        if (!(await arePageScopesGranted(context))) {
+        if (!granted) {
             return recordedState;
         }
 
@@ -312,7 +337,7 @@ export async function reconcileAmbassadorPage(
             });
         }
         if (!resolved.url) {
-            return unlinked;
+            return unlinkedState(context, templateSuffixes, true);
         }
 
         const hasComponent = resolved.body.includes(AMBASSADOR_TAG_OPENING);
