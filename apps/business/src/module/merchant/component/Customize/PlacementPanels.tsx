@@ -108,60 +108,58 @@ export function DeletePlacementPanel({
     const [open, setOpen] = useState(false);
 
     return (
-        <Card radius="m">
-            <Stack space="m">
-                <Stack space="xxs">
-                    <Text variant="bodySmall" weight="medium" color="secondary">
-                        {t("customize.placements.delete.title", {
-                            placementId,
-                        })}
-                    </Text>
-                    <Text variant="caption" color="tertiary">
-                        {t("customize.placements.delete.hint")}
-                    </Text>
-                </Stack>
-                <AlertDialog
-                    open={open}
-                    onOpenChange={setOpen}
-                    title={t("customize.placements.delete.dialogTitle")}
-                    buttonElement={
-                        <button type="button" className={styles.deleteButton}>
-                            <Trash2 size={16} />
-                            {t("customize.placements.delete.action", {
-                                placementId,
-                            })}
-                        </button>
-                    }
-                    description={t("customize.placements.delete.description", {
+        <Stack space="m">
+            <Stack space="xxs">
+                <Text variant="bodySmall" weight="medium" color="secondary">
+                    {t("customize.placements.delete.title", {
                         placementId,
                     })}
-                    cancel={
-                        <Button variant={"secondary"}>
-                            {t("customize.placements.delete.cancel")}
-                        </Button>
-                    }
-                    action={
-                        <Button
-                            variant={"destructive"}
-                            loading={isPending}
-                            disabled={isPending}
-                            onClick={async () => {
-                                const currentPlacements = {
-                                    ...(sdkConfig.placements ?? {}),
-                                };
-                                delete currentPlacements[placementId];
-                                await editSdkConfig({
-                                    placements: currentPlacements,
-                                });
-                                onDelete();
-                                setOpen(false);
-                            }}
-                        >
-                            {t("customize.placements.delete.confirm")}
-                        </Button>
-                    }
-                />
+                </Text>
+                <Text variant="caption" color="tertiary">
+                    {t("customize.placements.delete.hint")}
+                </Text>
             </Stack>
-        </Card>
+            <AlertDialog
+                open={open}
+                onOpenChange={setOpen}
+                title={t("customize.placements.delete.dialogTitle")}
+                buttonElement={
+                    <button type="button" className={styles.deleteButton}>
+                        <Trash2 size={16} />
+                        {t("customize.placements.delete.action", {
+                            placementId,
+                        })}
+                    </button>
+                }
+                description={t("customize.placements.delete.description", {
+                    placementId,
+                })}
+                cancel={
+                    <Button variant={"secondary"}>
+                        {t("customize.placements.delete.cancel")}
+                    </Button>
+                }
+                action={
+                    <Button
+                        variant={"destructive"}
+                        loading={isPending}
+                        disabled={isPending}
+                        onClick={async () => {
+                            const currentPlacements = {
+                                ...(sdkConfig.placements ?? {}),
+                            };
+                            delete currentPlacements[placementId];
+                            await editSdkConfig({
+                                placements: currentPlacements,
+                            });
+                            onDelete();
+                            setOpen(false);
+                        }}
+                    >
+                        {t("customize.placements.delete.confirm")}
+                    </Button>
+                }
+            />
+        </Stack>
     );
 }

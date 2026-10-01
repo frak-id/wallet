@@ -27,6 +27,12 @@ describe("applyBrand", () => {
     it("returns text without token unchanged", () => {
         expect(applyBrand("No token here", "Nowa")).toBe("No token here");
     });
+
+    it("keeps replacement patterns in the brand name literal", () => {
+        expect(applyBrand("A gift from {Brand}", "Bob$&Jane$$")).toBe(
+            "A gift from Bob$&Jane$$"
+        );
+    });
 });
 
 describe("preset catalogue", () => {

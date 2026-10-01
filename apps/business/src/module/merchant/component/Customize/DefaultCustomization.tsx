@@ -3,7 +3,13 @@ import type { Currency } from "@frak-labs/core-sdk";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
@@ -16,6 +22,7 @@ import {
     ComponentImagePicker,
     ComponentPreview,
     ComponentStyleFields,
+    ComponentsCardHeader,
     ComponentTypeTabs,
     WordingLangTabs,
 } from "./ComponentEditor";
@@ -40,15 +47,21 @@ import { WordingPresets } from "./WordingPresets";
 export function DefaultCustomization({
     merchantId,
     sdkConfig,
+    shopName,
+    placementSelector,
 }: {
     merchantId: string;
     sdkConfig: SdkConfig;
+    shopName: string;
+    placementSelector: ReactNode;
 }) {
     return (
         <>
             <GlobalComponentsPanel
                 merchantId={merchantId}
                 sdkConfig={sdkConfig}
+                shopName={shopName}
+                placementSelector={placementSelector}
             />
             {CUSTOM_CSS_ENABLED && (
                 <GlobalCssPanel merchantId={merchantId} sdkConfig={sdkConfig} />
@@ -67,9 +80,13 @@ const getGlobalComponentsValues = ({
 function GlobalComponentsPanel({
     merchantId,
     sdkConfig,
+    shopName,
+    placementSelector,
 }: {
     merchantId: string;
     sdkConfig: SdkConfig;
+    shopName: string;
+    placementSelector: ReactNode;
 }) {
     const { t } = useTranslation();
     const { saveComponents, isSuccess } = useSaveComponents(merchantId);
@@ -105,18 +122,9 @@ function GlobalComponentsPanel({
         <Form {...form}>
             <Card radius="m">
                 <Stack space="m">
-                    <Stack space="xxs">
-                        <Text
-                            variant="bodySmall"
-                            weight="medium"
-                            color="secondary"
-                        >
-                            {t("customize.components.title")}
-                        </Text>
-                        <Text variant="caption" color="tertiary">
-                            {t("customize.components.description")}
-                        </Text>
-                    </Stack>
+                    <ComponentsCardHeader
+                        placementSelector={placementSelector}
+                    />
 
                     <ComponentTypeTabs
                         selected={selectedComponent}
@@ -133,7 +141,7 @@ function GlobalComponentsPanel({
                             selectedComponent={selectedComponent}
                             form={form}
                             currency={(sdkConfig.currency ?? "eur") as Currency}
-                            shopName={sdkConfig.name ?? "My Store"}
+                            shopName={shopName}
                             lang={activeLang}
                             configLang={sdkConfig.lang}
                         />
@@ -143,7 +151,7 @@ function GlobalComponentsPanel({
                         componentType={selectedComponent}
                         form={form}
                         currency={(sdkConfig.currency ?? "eur") as Currency}
-                        shopName={sdkConfig.name ?? "My Store"}
+                        shopName={shopName}
                     />
 
                     <ComponentImagePicker

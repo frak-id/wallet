@@ -9,7 +9,7 @@ export const SECTION_KEYS = {
     defaultComponents: "default-components",
 } as const;
 
-/** Sections rendered above the placement selector, so they survive a tab change. */
+/** Sections outside the components card, so they survive a placement change. */
 const ALWAYS_MOUNTED: Record<string, true> = {
     [SECTION_KEYS.identity]: true,
     [SECTION_KEYS.sharing]: true,
@@ -17,9 +17,9 @@ const ALWAYS_MOUNTED: Record<string, true> = {
 };
 
 /**
- * Whether switching placement tab would discard edits. Only sections below the
- * selector unmount, so the always-mounted ones keep theirs and must not arm the
- * prompt.
+ * Whether switching placement tab would discard edits. Every section outside
+ * this list unmounts on a placement change; the always-mounted ones keep their
+ * edits and must not arm the prompt.
  */
 export function hasDiscardableSectionChanges(
     dirtySections: Record<string, boolean>

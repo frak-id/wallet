@@ -15,9 +15,12 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { currencyMetadata } from "@/module/common/utils/currencyOptions";
+import { detectStablecoinFromAddress } from "@/module/common/utils/stablecoin";
 import { EditField } from "@/module/forms/EditField";
 import { Form, FormControl, FormField, FormItem } from "@/module/forms/Form";
 import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
+import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { useCustomizeSection } from "../saveRegistry";
 import * as styles from "./customize.css";
@@ -36,6 +39,12 @@ export function SdkIdentityPanel({
     sdkConfig: SdkConfig;
 }) {
     const { t } = useTranslation();
+    const { data: merchant } = useMerchant({ merchantId });
+    const rewardToken = merchant
+        ? currencyMetadata[
+              detectStablecoinFromAddress(merchant.defaultRewardToken) ?? "eure"
+          ]?.label
+        : undefined;
     const { mutateAsync: editSdkConfig, isSuccess: isSuccessUpdate } =
         useMerchantUpdate({ merchantId, target: "sdk-config" });
 
@@ -98,6 +107,18 @@ export function SdkIdentityPanel({
         <Form {...form}>
             <Card radius="m">
                 <Stack space="m">
+                    <Stack space="xxs">
+                        <Text
+                            variant="bodySmall"
+                            weight="medium"
+                            color="secondary"
+                        >
+                            {t("customize.identity.title")}
+                        </Text>
+                        <Text variant="caption" color="tertiary">
+                            {t("customize.identity.description")}
+                        </Text>
+                    </Stack>
                     <FormField
                         control={form.control}
                         name="name"
@@ -108,9 +129,7 @@ export function SdkIdentityPanel({
                                         variant="bare"
                                         tone="muted"
                                         maxLength={200}
-                                        placeholder={t(
-                                            "customize.identity.name.placeholder"
-                                        )}
+                                        placeholder={merchant?.name ?? ""}
                                         label={t(
                                             "customize.identity.name.label"
                                         )}
@@ -176,7 +195,9 @@ export function SdkIdentityPanel({
                         render={({ field }) => (
                             <EditField
                                 label={t("customize.identity.currency.label")}
-                                hint={t("customize.identity.currency.hint")}
+                                hint={t("customize.identity.currency.hint", {
+                                    token: rewardToken ?? "",
+                                })}
                             >
                                 <Select
                                     value={field.value || AUTO}
