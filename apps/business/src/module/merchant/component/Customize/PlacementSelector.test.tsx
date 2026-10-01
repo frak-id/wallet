@@ -17,14 +17,14 @@ import { PlacementSelector } from "./PlacementSelector";
 const GLOBAL = "customize.placements.globalDefault";
 const ADD = "customize.placements.add";
 
-function renderSelector(placementIds: string[]) {
+function renderSelector(placementIds: string[], onCreatePlacement = vi.fn()) {
     const onTabChange = vi.fn();
     render(
         <PlacementSelector
             activeTab="default"
             placementIds={placementIds}
             onTabChange={onTabChange}
-            onCreatePlacement={vi.fn()}
+            onCreatePlacement={onCreatePlacement}
             isCreatingPlacement={false}
         />
     );
@@ -66,6 +66,23 @@ describe("PlacementSelector", () => {
             screen.getByText("customize.placements.dialog.title")
         ).toBeTruthy();
         expect(onTabChange).not.toHaveBeenCalled();
+    });
+
+    it("refuses a placement id that collides with the global entry", () => {
+        const onCreatePlacement = vi.fn();
+        renderSelector([], onCreatePlacement);
+        openDropdown();
+        fireEvent.click(screen.getByRole("option", { name: ADD }));
+
+        fireEvent.change(screen.getByPlaceholderText("homepage_banner"), {
+            target: { value: "default" },
+        });
+        fireEvent.click(screen.getByText("customize.placements.dialog.create"));
+
+        expect(
+            screen.getByText("customize.placements.dialog.errorExists")
+        ).toBeTruthy();
+        expect(onCreatePlacement).not.toHaveBeenCalled();
     });
 
     it("reports the picked placement id", () => {

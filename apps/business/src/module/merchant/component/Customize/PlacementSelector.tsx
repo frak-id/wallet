@@ -107,7 +107,8 @@ function CreatePlacementDialog({
             return t("customize.placements.dialog.errorFormat");
         }
 
-        if (placementIds.includes(placementId)) {
+        // "default" is the global entry's value in the dropdown.
+        if (placementId === "default" || placementIds.includes(placementId)) {
             return t("customize.placements.dialog.errorExists");
         }
 
