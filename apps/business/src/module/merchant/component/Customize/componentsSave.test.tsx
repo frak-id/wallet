@@ -52,6 +52,7 @@ describe("one page-level Save with both components sections dirty", () => {
                         merchantId="merchant-1"
                         sdkConfig={sdkConfig}
                         shopName="My Store"
+                        placementSelector={null}
                     />
                 </CustomizeSaveProvider>
             </QueryClientProvider>

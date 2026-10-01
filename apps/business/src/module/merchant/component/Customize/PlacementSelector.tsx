@@ -1,11 +1,12 @@
-import { Card } from "@frak-labs/design-system/components/Card";
 import {
-    RadioGroup,
-    RadioGroupItem,
-} from "@frak-labs/design-system/components/RadioGroup";
-import { Stack } from "@frak-labs/design-system/components/Stack";
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@frak-labs/design-system/components/Select";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useEffect, useId, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Button } from "@/module/common/component/Button";
@@ -21,93 +22,60 @@ export function PlacementSelector({
     onTabChange,
     onCreatePlacement,
     isCreatingPlacement,
-    isCreatePlacementSuccess,
 }: {
     activeTab: "default" | string;
     placementIds: string[];
     onTabChange: (tab: "default" | string) => void;
     onCreatePlacement: (placementId: string) => Promise<void>;
     isCreatingPlacement: boolean;
-    isCreatePlacementSuccess: boolean;
 }) {
     const { t } = useTranslation();
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
     return (
-        <Card radius="m">
-            <Stack space="xs">
-                <Stack space="xxs">
-                    <Text variant="bodySmall" weight="medium" color="secondary">
-                        {t("customize.placements.title")}
-                    </Text>
-                    <Text variant="caption" color="tertiary">
-                        {t("customize.placements.description")}
-                    </Text>
-                </Stack>
-                <RadioGroup
-                    value={activeTab}
-                    onValueChange={(value) => {
-                        if (value === ADD_PLACEMENT) {
-                            setIsCreateOpen(true);
-                            return;
-                        }
-                        onTabChange(value);
-                    }}
+        <>
+            <Select
+                value={activeTab}
+                onValueChange={(value) => {
+                    if (value === ADD_PLACEMENT) {
+                        setIsCreateOpen(true);
+                        return;
+                    }
+                    onTabChange(value);
+                }}
+            >
+                <SelectTrigger
+                    variant="bare"
+                    tone="muted"
+                    aria-label={t("customize.placements.label")}
                 >
-                    <PlacementRow
-                        value="default"
-                        label={t("customize.placements.globalDefault")}
-                    />
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="default">
+                        {t("customize.placements.globalDefault")}
+                    </SelectItem>
                     {placementIds.map((placementId) => (
-                        <PlacementRow
-                            key={placementId}
-                            value={placementId}
-                            label={placementId}
-                        />
+                        <SelectItem key={placementId} value={placementId}>
+                            {placementId}
+                        </SelectItem>
                     ))}
-                    <PlacementRow
+                    <SelectItem
                         value={ADD_PLACEMENT}
-                        label={t("customize.placements.add")}
                         disabled={placementIds.length >= MAX_PLACEMENTS}
-                    />
-                </RadioGroup>
-            </Stack>
+                    >
+                        {t("customize.placements.add")}
+                    </SelectItem>
+                </SelectContent>
+            </Select>
             <CreatePlacementDialog
                 open={isCreateOpen}
                 onOpenChange={setIsCreateOpen}
                 placementIds={placementIds}
                 onCreatePlacement={onCreatePlacement}
                 isCreatingPlacement={isCreatingPlacement}
-                isCreatePlacementSuccess={isCreatePlacementSuccess}
             />
-        </Card>
-    );
-}
-
-function PlacementRow({
-    value,
-    label,
-    disabled,
-}: {
-    value: string;
-    label: string;
-    disabled?: boolean;
-}) {
-    const id = useId();
-    return (
-        <div className={styles.radioRow}>
-            <RadioGroupItem
-                id={id}
-                value={value}
-                size="l"
-                disabled={disabled}
-            />
-            <label htmlFor={id} className={styles.radioRowLabel}>
-                <Text variant="body" weight="medium" as="span">
-                    {label}
-                </Text>
-            </label>
-        </div>
+        </>
     );
 }
 
@@ -117,23 +85,16 @@ function CreatePlacementDialog({
     placementIds,
     onCreatePlacement,
     isCreatingPlacement,
-    isCreatePlacementSuccess,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     placementIds: string[];
     onCreatePlacement: (placementId: string) => Promise<void>;
     isCreatingPlacement: boolean;
-    isCreatePlacementSuccess: boolean;
 }) {
     const { t } = useTranslation();
     const [newPlacementId, setNewPlacementId] = useState("");
     const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (!isCreatePlacementSuccess || !open) return;
-        onOpenChange(false);
-    }, [isCreatePlacementSuccess, open, onOpenChange]);
 
     function validatePlacementId(value: string) {
         const placementId = value.trim();
@@ -163,6 +124,7 @@ function CreatePlacementDialog({
         setError(null);
         await onCreatePlacement(newPlacementId.trim());
         setNewPlacementId("");
+        onOpenChange(false);
     }
 
     return (

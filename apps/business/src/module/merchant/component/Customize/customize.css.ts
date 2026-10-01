@@ -15,14 +15,6 @@ export const switchRow = style({
     paddingBlock: alias.spacing.m,
 });
 
-export const radioRow = style({
-    display: "flex",
-    alignItems: "center",
-    gap: alias.spacing.m,
-    minHeight: "84px",
-    padding: alias.spacing.m,
-});
-
 export const radioRowLabel = style({
     flex: 1,
     cursor: "pointer",

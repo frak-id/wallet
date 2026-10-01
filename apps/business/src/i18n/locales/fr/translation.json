@@ -1931,10 +1931,9 @@
             }
         },
         "placements": {
-            "title": "Personnalisation du SDK",
-            "description": "Les réglages globaux s'appliquent à tous les composants SDK. Les emplacements sont des variantes utilisables sur un même site pour présenter vos produits différemment - chacune avec ses textes, styles et comportements.",
+            "label": "Emplacement",
             "globalDefault": "Réglages globaux",
-            "add": "Ajouter un emplacement",
+            "add": "+ Ajouter un emplacement",
             "dialog": {
                 "title": "Créer un emplacement",
                 "hint": "L'identifiant doit être unique et contenir 3 à 16 caractères.",
@@ -1943,10 +1942,6 @@
                 "errorMax": "Maximum 10 emplacements.",
                 "errorFormat": "3 à 16 caractères (lettres, chiffres, _ ou -).",
                 "errorExists": "Cet emplacement existe déjà."
-            },
-            "settings": {
-                "title": "Réglages de l'emplacement · {{placementId}}",
-                "description": "Textes, styles et comportements propres à cet emplacement."
             },
             "css": {
                 "title": "CSS de l'emplacement · {{placementId}}",
@@ -2027,8 +2022,8 @@
             }
         },
         "components": {
-            "title": "Réglages par défaut des composants",
-            "description": "Choisissez la formulation qui correspond le mieux à votre marque pour chaque composant.",
+            "title": "Composants SDK",
+            "description": "Les emplacements sont des variantes des composants pour un endroit précis de votre site.",
             "buttonShare": "Bouton de partage",
             "postPurchase": "Post-achat",
             "banner": "Bannière",

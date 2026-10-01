@@ -3,8 +3,13 @@ import type { Currency } from "@frak-labs/core-sdk";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Input } from "@frak-labs/design-system/components/Input";
 import { Stack } from "@frak-labs/design-system/components/Stack";
-import { Text } from "@frak-labs/design-system/components/Text";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
@@ -18,6 +23,7 @@ import {
     ComponentImagePicker,
     ComponentPreview,
     ComponentStyleFields,
+    ComponentsCardHeader,
     ComponentTypeTabs,
     WordingLangTabs,
 } from "./ComponentEditor";
@@ -40,13 +46,15 @@ export function PlacementCustomization({
     placementId,
     sdkConfig,
     shopName,
-    onSelectDefaultTab,
+    placementSelector,
+    onDelete,
 }: {
     merchantId: string;
     placementId: string;
     sdkConfig: SdkConfig;
     shopName: string;
-    onSelectDefaultTab: () => void;
+    placementSelector: ReactNode;
+    onDelete: () => void;
 }) {
     const placement = sdkConfig.placements?.[placementId];
 
@@ -59,6 +67,8 @@ export function PlacementCustomization({
                 placementId={placementId}
                 sdkConfig={sdkConfig}
                 shopName={shopName}
+                placementSelector={placementSelector}
+                onDelete={onDelete}
             />
             {CUSTOM_CSS_ENABLED && (
                 <PlacementCssPanel
@@ -67,12 +77,6 @@ export function PlacementCustomization({
                     sdkConfig={sdkConfig}
                 />
             )}
-            <DeletePlacementPanel
-                merchantId={merchantId}
-                placementId={placementId}
-                sdkConfig={sdkConfig}
-                onDelete={onSelectDefaultTab}
-            />
         </>
     );
 }
@@ -93,11 +97,15 @@ function PlacementSettingsPanel({
     placementId,
     sdkConfig,
     shopName,
+    placementSelector,
+    onDelete,
 }: {
     merchantId: string;
     placementId: string;
     sdkConfig: SdkConfig;
     shopName: string;
+    placementSelector: ReactNode;
+    onDelete: () => void;
 }) {
     const { t } = useTranslation();
     const { mutateAsync: editSdkConfig, isSuccess } = useMerchantUpdate({
@@ -154,20 +162,9 @@ function PlacementSettingsPanel({
         <Form {...form}>
             <Card radius="m">
                 <Stack space="m">
-                    <Stack space="xxs">
-                        <Text
-                            variant="bodySmall"
-                            weight="medium"
-                            color="secondary"
-                        >
-                            {t("customize.placements.settings.title", {
-                                placementId,
-                            })}
-                        </Text>
-                        <Text variant="caption" color="tertiary">
-                            {t("customize.placements.settings.description")}
-                        </Text>
-                    </Stack>
+                    <ComponentsCardHeader
+                        placementSelector={placementSelector}
+                    />
 
                     <FormField
                         control={form.control}
@@ -253,6 +250,13 @@ function PlacementSettingsPanel({
                         lang={activeLang}
                         configLang={sdkConfig.lang}
                         tier={placementId}
+                    />
+
+                    <DeletePlacementPanel
+                        merchantId={merchantId}
+                        placementId={placementId}
+                        sdkConfig={sdkConfig}
+                        onDelete={onDelete}
                     />
                 </Stack>
             </Card>

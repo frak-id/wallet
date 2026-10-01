@@ -42,6 +42,7 @@ function renderPanel(sdkConfig: SdkConfig, shopName = "My Store") {
                     merchantId="merchant-1"
                     sdkConfig={sdkConfig}
                     shopName={shopName}
+                    placementSelector={null}
                 />
             </CustomizeSaveProvider>
         </QueryClientProvider>

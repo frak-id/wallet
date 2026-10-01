@@ -995,7 +995,7 @@ export default interface Resources {
           "referral": "Referral"
         },
         "buttonShare": "Share button",
-        "description": "Choose the wording that best matches your brand for each component.",
+        "description": "Placements are component variants for a specific spot on your site.",
         "fields": {
           "badgeText": "Badge text",
           "css": "Component CSS",
@@ -1091,7 +1091,7 @@ export default interface Resources {
           "hint": "Event name that triggers reward calculation for this placement (e.g. purchase_completed, signup)",
           "label": "Target interaction"
         },
-        "title": "Global component defaults"
+        "title": "SDK components"
       },
       "globalCss": {
         "description": "CSS styles applied to all SDK components across every placement. Placement-level CSS can override these defaults.",
@@ -1132,7 +1132,7 @@ export default interface Resources {
         "title": "Your brand for visitors"
       },
       "placements": {
-        "add": "Add another placement",
+        "add": "+ Add a placement",
         "css": {
           "description": "Global CSS overrides for this placement. Styles defined here apply to all SDK components within this placement.",
           "title": "Placement CSS · {{placementId}}"
@@ -1146,7 +1146,6 @@ export default interface Resources {
           "hint": "This removes all overrides for this placement.",
           "title": "Delete placement · {{placementId}}"
         },
-        "description": "Global defaults apply to every SDK component. Placements are variants you can use on the same website to display your products in different ways - each with its own text, styles, and behavior.",
         "dialog": {
           "cancel": "Cancel",
           "create": "Create placement",
@@ -1157,11 +1156,7 @@ export default interface Resources {
           "title": "Create placement"
         },
         "globalDefault": "Global default",
-        "settings": {
-          "description": "Text, styles and behavior overrides for this placement.",
-          "title": "Placement settings · {{placementId}}"
-        },
-        "title": "SDK Customization"
+        "label": "Placement"
       },
       "propagationHint": "A saved change can take up to 10 minutes to appear on your storefront.",
       "save": "Save",
