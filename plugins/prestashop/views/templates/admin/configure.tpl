@@ -163,7 +163,7 @@
             <p class="help-block">
                 {l s='Pick which Frak components render automatically on which storefront surfaces. The legacy product / order placements are on by default; the auxiliary surfaces (cart, top banner, homepage banner, footer banner) are off by default to keep upgrades visually unchanged.' mod='frakintegration'}
                 <br>
-                {l s='Need a custom placement? Drop one of the Smarty function plugins anywhere in your theme: {frak_banner placement="hero"}, {frak_share_button text="Share & earn"}, {frak_post_purchase variant="referrer"}.' mod='frakintegration'}
+                {l s='Need a custom placement? Type one of these tags in a theme template or in a CMS page (Design → Pages): {frak_ambassador}, {frak_banner placement="hero"}, {frak_share_button text="Share & earn"}, {frak_post_purchase variant="referrer"}.' mod='frakintegration'}
             </p>
 
             {foreach from=$placement_groups key=component item=group}
@@ -230,6 +230,62 @@
         </button>
     </div>
 </form>
+
+{*
+   Ambassador page state + create/restore action. Its own <form>, outside the
+   settings form above, like the Maintenance actions.
+*}
+<div class="panel" id="frak_ambassador_panel">
+    <h3><i class="icon icon-file-text"></i> {l s='Ambassador page' mod='frakintegration'}</h3>
+    {if $ambassador_page.type == 'live'}
+        <p class="frak-amb-status">
+            <span class="label label-success">{l s='✓ Live' mod='frakintegration'}</span>
+            <strong>{$ambassador_page.title|escape:'html':'UTF-8'}</strong>
+        </p>
+        {if !$ambassador_page.created}
+            <p class="help-block">
+                {l s='This page holds the {frak_ambassador} marker, which is why no Create button is offered. The page heading from your theme stays above the heading of the component.' mod='frakintegration'}
+            </p>
+        {/if}
+        <div class="frak-amb-actions">
+            <a href="{$ambassador_page.url|escape:'html':'UTF-8'}" target="_blank" rel="noopener" class="btn btn-default">
+                <i class="icon-external-link"></i> {l s='View page' mod='frakintegration'}
+            </a>
+            {if $ambassador_page.editUrl !== ''}
+                <a href="{$ambassador_page.editUrl|escape:'html':'UTF-8'}" target="_blank" rel="noopener" class="btn btn-default">
+                    <i class="icon-pencil"></i> {l s='Edit page' mod='frakintegration'}
+                </a>
+            {/if}
+        </div>
+    {else}
+        <form action="{$form_action}" method="post">
+            {if $ambassador_page.type == 'restorable'}
+                <p class="help-block">
+                    {l s='Your ambassador page exists but is inactive in Design → Pages. Restore it to publish it again at the same address.' mod='frakintegration'}
+                </p>
+                <div class="frak-amb-actions">
+                    <button type="submit" name="submitFrakAmbassadorPage" class="btn btn-primary">
+                        <i class="icon-refresh"></i> {l s='Restore my ambassador page' mod='frakintegration'}
+                    </button>
+                </div>
+            {else}
+                <p class="help-block">
+                    {l s='Publish a page that lists your campaign rewards and lets customers share and earn. It is a regular page you can edit in Design → Pages.' mod='frakintegration'}
+                </p>
+                <div class="frak-amb-actions">
+                    <button type="submit" name="submitFrakAmbassadorPage" class="btn btn-primary">
+                        <i class="icon-plus"></i> {l s='Create my ambassador page' mod='frakintegration'}
+                    </button>
+                </div>
+            {/if}
+        </form>
+    {/if}
+    {if !$merchant_resolved}
+        <p class="help-block frak-amb-hint">
+            {l s='The page shows your campaign once this domain is connected to your Frak merchant account.' mod='frakintegration'}
+        </p>
+    {/if}
+</div>
 
 {*
    Auxiliary action buttons. Each lives in its own small <form> because they

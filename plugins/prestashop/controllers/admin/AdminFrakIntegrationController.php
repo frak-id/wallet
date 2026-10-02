@@ -29,6 +29,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
     {
         parent::setMedia($isNewTheme);
         $this->addJS($this->module->getPathUri() . 'views/js/admin.js');
+        $this->addCSS($this->module->getPathUri() . 'views/css/admin.css');
     }
 
     public function renderView()
@@ -66,6 +67,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
                 ? FrakUrls::dashboardOrigin() . '/merchant/' . $merchant['id']
                 : FrakUrls::dashboardOrigin() . '/',
             'placement_groups' => $this->buildPlacementGroups(),
+            'ambassador_page' => FrakAmbassadorPage::state(),
             'queue_stats' => FrakWebhookQueue::stats(),
         ]);
 
@@ -237,6 +239,10 @@ class AdminFrakIntegrationController extends ModuleAdminController
             $this->processPlacements();
         }
 
+        if (Tools::isSubmit('submitFrakAmbassadorPage')) {
+            $this->processAmbassadorPage();
+        }
+
         if (Tools::isSubmit('refreshFrakMerchant')) {
             $this->processMerchantRefresh();
         }
@@ -405,6 +411,30 @@ class AdminFrakIntegrationController extends ModuleAdminController
         }
         if (FrakPlacementRegistry::setState($updates)) {
             $this->confirmations[] = $this->l('Placement settings updated');
+        }
+    }
+
+    /**
+     * Create or restore the ambassador CMS page. The failure reason comes from
+     * {@see FrakAmbassadorPage::ensure()} in English and `$this->errors` is
+     * printed unescaped by the admin layout, hence the escape.
+     */
+    private function processAmbassadorPage(): void
+    {
+        $result = FrakAmbassadorPage::ensure();
+        switch ($result['status']) {
+            case 'created':
+                $this->confirmations[] = $this->l('Your ambassador page is live.');
+                break;
+            case 'restored':
+                $this->confirmations[] = $this->l('Your ambassador page is live again.');
+                break;
+            case 'exists':
+                $this->confirmations[] = $this->l('An ambassador page already exists.');
+                break;
+            default:
+                $this->errors[] = $this->l('The ambassador page could not be published.')
+                    . ' ' . htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8');
         }
     }
 

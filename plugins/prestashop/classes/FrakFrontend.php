@@ -5,7 +5,7 @@
  *
  * `header` renders resource hints, `window.FrakSetup` config, and the SDK
  * `<script>` itself (see {@see self::sdkScriptTag()} for why it lives here).
- * `actionFrontControllerSetMedia` is currently a no-op, see {@see self::setMedia()}.
+ * `actionFrontControllerSetMedia` only loads the ambassador-page stylesheet, see {@see self::setMedia()}.
  */
 class FrakFrontend
 {
@@ -84,17 +84,21 @@ class FrakFrontend
     }
 
     /**
-     * Intentionally inert: the SDK script is raw markup in {@see self::head()}
-     * (see {@see self::sdkScriptTag()}). Kept as the registered
-     * `actionFrontControllerSetMedia` target so no hook migration is needed.
+     * Loads the stylesheet that hides the theme's page title, only on the CMS
+     * page the module created. The SDK script is raw markup in {@see self::head()}.
      *
      * @param Context $context Forwarded from the Module instance so the helper
      *                         stays a stateless static call.
      */
     public static function setMedia($context): void
     {
-        if (!isset($context->controller)) {
-            return;
+        $controller = $context->controller ?? null;
+        $pageId = FrakConfig::getAmbassadorPageId();
+        if ($pageId > 0 && $controller instanceof CmsController && (int) ($controller->cms->id ?? 0) === $pageId) {
+            $controller->registerStylesheet(
+                'module-frakintegration-ambassador',
+                'modules/frakintegration/views/css/ambassador-page.css'
+            );
         }
     }
 }

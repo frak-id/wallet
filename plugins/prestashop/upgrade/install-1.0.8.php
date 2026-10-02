@@ -72,9 +72,16 @@ function upgrade_module_1_0_8($module)
     // idempotent on `(module, hook)`, so this is a no-op on installs that
     // still hold their subscriptions and a full repair on shops the 1.0.4
     // wipe left hookless.
+    // Per-hook try/catch: re-registering `header` throws a duplicate-key error
+    // on PS 8.2 (core checks it through its `displayHeader` alias), which
+    // would abort the whole upgrade chain for shops whose hooks are intact.
     foreach (FrakInstaller::allHooks() as $hook) {
-        if (!$module->registerHook($hook)) {
-            PrestaShopLogger::addLog('[FrakSDK] upgrade 1.0.8 registerHook(' . $hook . ') returned false', 3);
+        try {
+            if (!$module->registerHook($hook)) {
+                PrestaShopLogger::addLog('[FrakSDK] upgrade 1.0.8 registerHook(' . $hook . ') returned false', 3);
+            }
+        } catch (\Throwable $e) {
+            PrestaShopLogger::addLog('[FrakSDK] upgrade 1.0.8 registerHook(' . $hook . ') failed: ' . $e->getMessage(), 3);
         }
     }
 

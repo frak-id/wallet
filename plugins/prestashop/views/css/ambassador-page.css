@@ -1,0 +1,5 @@
+/* The ambassador component opens with its own heading: hide the theme's (Classic, Hummingbird). */
+.page-header,
+.page-title-section {
+    display: none;
+}

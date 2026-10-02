@@ -18,8 +18,13 @@ declare(strict_types=1);
 
 namespace FrakLabs\PrestaShop\Test\Unit;
 
+use CMS;
+use Configuration;
+use FrakAmbassadorPage;
+use FrakConfig;
 use FrakInstaller;
 use FrakTestDbRecorder;
+use Language;
 use Module;
 use PHPUnit\Framework\TestCase;
 
@@ -27,6 +32,7 @@ require_once __DIR__ . '/doubles.php';
 require_once __DIR__ . '/../../classes/FrakPlacementRegistry.php';
 require_once __DIR__ . '/../../classes/FrakConfig.php';
 require_once __DIR__ . '/../../classes/FrakInstaller.php';
+require_once __DIR__ . '/../../classes/FrakAmbassadorPage.php';
 
 final class FrakInstallerTest extends TestCase
 {
@@ -77,6 +83,48 @@ final class FrakInstallerTest extends TestCase
         );
     }
 
+    public function testUninstallDeactivatesTheCreatedPageKeepsItsIdAndDropsTheFlag(): void
+    {
+        $id = $this->createdPage();
+        FrakConfig::setAmbassadorHiddenByDisable();
+
+        $this->assertTrue(FrakInstaller::uninstall(new Module()));
+
+        $this->assertFalse(CMS::$rows[$id]['active']);
+        $this->assertSame($id, FrakConfig::getAmbassadorPageId());
+        $this->assertFalse(Configuration::hasKey(FrakConfig::AMBASSADOR_HIDDEN_BY_DISABLE));
+    }
+
+    public function testFullCleanupKeepsThePageIdAndDropsTheFlag(): void
+    {
+        $id = $this->createdPage();
+        FrakConfig::setAmbassadorHiddenByDisable();
+
+        FrakInstaller::cleanLeftovers(new Module());
+
+        $this->assertSame($id, FrakConfig::getAmbassadorPageId());
+        $this->assertFalse(Configuration::hasKey(FrakConfig::AMBASSADOR_HIDDEN_BY_DISABLE));
+    }
+
+    public function testUpgradeCleanupKeepsThePageIdAndTheFlag(): void
+    {
+        $id = $this->createdPage();
+        FrakConfig::setAmbassadorHiddenByDisable();
+
+        FrakInstaller::cleanLeftovers(new Module(), ['keep_module_row' => true]);
+
+        $this->assertSame($id, FrakConfig::getAmbassadorPageId());
+        $this->assertTrue(FrakConfig::isAmbassadorHiddenByDisable());
+    }
+
+    private function createdPage(): int
+    {
+        Language::$languages = [['id_lang' => 1, 'iso_code' => 'en']];
+        FrakAmbassadorPage::ensure();
+
+        return FrakConfig::getAmbassadorPageId();
+    }
+
     public function testAllHooksCoversEveryFrontOfficeAndPlumbingHook(): void
     {
         // `allHooks()` is the single source of truth the fresh-install path
@@ -92,6 +140,7 @@ final class FrakInstallerTest extends TestCase
             'actionOrderStatusPostUpdate',
             'actionOrderSlipAdd',
             'actionCronJob',
+            'filterCmsContent',
             // Placement-driven display surfaces.
             'displayProductAdditionalInfo',
             'displayNavFullWidth',

@@ -46,6 +46,7 @@ class FrakInstaller
         'actionOrderStatusPostUpdate',
         'actionOrderSlipAdd',
         'actionCronJob',
+        'filterCmsContent',
     ];
 
     /**
@@ -218,6 +219,12 @@ class FrakInstaller
                     }
                 }
                 return $hookOk;
+            },
+            // `FRAK_AMBASSADOR_PAGE_ID` is deliberately not deleted below: a
+            // reinstall offers Restore instead of a second page.
+            'ambassador page' => static function (): bool {
+                FrakAmbassadorPage::onUninstall();
+                return true;
             },
             'delete configuration rows' => static function (): bool {
                 Configuration::deleteByName(FrakConfig::SHOP_NAME);
@@ -438,6 +445,7 @@ class FrakInstaller
                 Configuration::deleteByName(FrakConfig::LOGO_URL);
                 Configuration::deleteByName(FrakConfig::WEBHOOK_SECRET);
                 Configuration::deleteByName(FrakConfig::CRON_TOKEN);
+                Configuration::deleteByName(FrakConfig::AMBASSADOR_HIDDEN_BY_DISABLE);
                 Configuration::deleteByName('FRAK_SETTINGS_VERSION');
                 FrakPlacementRegistry::clearAll();
                 return true;
