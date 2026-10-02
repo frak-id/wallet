@@ -131,7 +131,7 @@ composer run test                            # Unit tests (phpunit)
 
 PHPStan runs against a real PrestaShop checkout. The `composer analyse` script clones `PrestaShop/PrestaShop@8.2.6` into `.cache/prestashop-core/` on first invocation (and runs `composer install --no-dev` inside that clone) so the analyser sees the actual `Module` / `Configuration` / `Tools` / `Db` / `Order` / … API surface via `prestashop/php-dev-tools`. Subsequent runs are fast — the cache is reused. To roll forward, bump the tag in `composer.json#ps-core:fetch` and run `composer ps-core:update`.
 
-The `test/docker-compose.yaml` file spins a local PrestaShop instance (PrestaShop + MySQL on `localhost:8080`) for manual smoke testing — see the demo credentials in the file.
+The `test/docker-compose.yaml` file runs a local PrestaShop 8.2 shop on `localhost:8080` with this directory mounted as the module. `AGENTS.md` ("Local Test Site") has the procedure, the `FRAK_ENV` / `FRAK_MERCHANT_DOMAIN` dev switch that points the module at the Frak dev stack, and the smoke checklist.
 
 ## Release
 

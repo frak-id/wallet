@@ -37,3 +37,7 @@ Thumbs.db
 # controller calls mkdir() lazily on first logo upload).
 uploads/*
 !uploads/.htaccess
+
+# Written by PrestaShop into the module folder when the Docker test site
+# (test/docker-compose.yaml) lists modules in the back office.
+config_*.xml
