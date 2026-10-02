@@ -1271,6 +1271,19 @@ describe("Ambassador", () => {
         expect(computed(badge, "background-color")).toBe("rgb(0, 0, 0)");
     });
 
+    it("aligns its text to the start under a justified CMS page body, as on PrestaShop Classic", async () => {
+        injectCss(await compileAmbassadorCss());
+        injectCss(".page-cms { text-align: justify; }");
+        const { container } = render(
+            <div class="page-cms">
+                <Ambassador />
+            </div>
+        );
+
+        const root = container.querySelector(".frak-ambassador");
+        expect(computed(root, "text-align")).toBe("start");
+    });
+
     it("keeps the hero photo and badge sizes under a rich-text rule on images, as when placed in a Shopify page body", async () => {
         injectCss(await compileAmbassadorCss());
         injectCss(
