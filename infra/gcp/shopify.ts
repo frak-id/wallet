@@ -15,6 +15,7 @@ import {
     walletUrl,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
+import { gatewayRoute } from "./gateway";
 import { shopifyPostgresEnv } from "./secrets";
 import {
     baseDomainName,
@@ -236,6 +237,12 @@ export const shopifyService = new KubernetesService(
             host: `${subDomain}.${baseDomainName}`,
             tlsSecretName: "shopify-tls",
             additionalHosts: [`${subDomain}.frak.id`],
+        },
+
+        httpRoute: {
+            ...gatewayRoute("shopify", subDomain),
+            // node:http behind server.js drops idle keep-alive after 5s
+            traffic: { connectionIdleTimeout: "4s" },
         },
     },
     {

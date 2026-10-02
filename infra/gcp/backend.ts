@@ -1,6 +1,7 @@
 import { KubernetesJob } from "../components/KubernetesJob";
 import { KubernetesService } from "../components/KubernetesService";
 import { isProd, normalizedStageName } from "../utils";
+import { backendUpstreamTraffic, gatewayRoute } from "./gateway";
 import { bootstrapImage, elysiaImage } from "./images";
 import { bootstrapEnv, elysiaEnv } from "./secrets";
 import { domainName, walletNamespace } from "./utils";
@@ -154,6 +155,20 @@ export const backendInstance = new KubernetesService(
                 "nginx.ingress.kubernetes.io/proxy-buffers-number": "4",
                 "nginx.ingress.kubernetes.io/proxy-buffer-size": "8k",
             },
+        },
+
+        httpRoute: {
+            ...gatewayRoute("backend", "backend"),
+            rules: [
+                {
+                    name: "pairing-ws",
+                    path: "/user/wallet/pairings/ws",
+                    pathType: "Exact",
+                    // Bun's `websocket.idleTimeout`: a pairing can wait minutes
+                    traffic: { streamIdleTimeout: "300s" },
+                },
+            ],
+            traffic: { ...backendUpstreamTraffic, compression: true },
         },
 
         // ServiceMonitor config — scrapes the dedicated, cluster-internal

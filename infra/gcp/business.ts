@@ -12,6 +12,7 @@ import {
     walletUrl,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
+import { gatewayRoute } from "./gateway";
 import {
     baseDomainName,
     cachedImage,
@@ -120,6 +121,8 @@ export const businessService = new KubernetesService(
             tlsSecretName: "business-tls",
             additionalHosts: [`business.${baseDomainName}`],
         },
+
+        httpRoute: gatewayRoute("business", "business"),
     },
     {
         dependsOn: dependency,

@@ -19,7 +19,7 @@ import {
     walletUrl,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
-
+import { backendUpstreamTraffic, gatewayRoute } from "./gateway";
 import {
     baseDomainName,
     cachedImage,
@@ -329,6 +329,26 @@ export const walletService = new KubernetesService(
                 "nginx.ingress.kubernetes.io/proxy-send-timeout": "60",
                 "nginx.ingress.kubernetes.io/proxy-read-timeout": "60",
             },
+        },
+
+        httpRoute: {
+            ...gatewayRoute("wallet", "wallet"),
+            rules: [
+                {
+                    name: "well-known",
+                    path: "/.well-known",
+                    backend: { name: backendServiceName, port: 80 },
+                    traffic: backendUpstreamTraffic,
+                },
+                {
+                    name: "listener",
+                    path: "/listener",
+                    backend: {
+                        name: listenerService.service?.metadata?.name ?? "",
+                        port: 80,
+                    },
+                },
+            ],
         },
     },
     {

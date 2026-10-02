@@ -14,7 +14,8 @@ bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here
 ## Key Files
 - `sst.config.ts` (root) — SST v3 app config (AWS)
 - `infra/gcp/*.ts` — Pulumi resources per app (backend, wallet, business, listener)
-- `infra/components/KubernetesService.ts` — Deployment + Service + HPA + Ingress + ServiceMonitor
+- `infra/components/KubernetesService.ts` — Deployment + Service + HPA + Ingress + HTTPRoute (+ its BackendTrafficPolicies) + ServiceMonitor
+- `infra/gcp/gateway.ts` — Envoy Gateway wiring: hostnames per app, the backend's upstream contract, and the (gated) vanity-host ListenerSet + certificates
 - `infra/components/KubernetesJob.ts` — one-shot K8s Job (e.g., bootstrap migrations + bucket provisioning)
 - `infra/utils.ts` — stage helpers: `isProd`, `normalizedStageName`
 - `infra/sdk-pointer.ts` — S3 + CloudFront pointer at `sdk[-dev].frak.id/components.js`; its content is generated from `sdk/components/package.json`, so `sst deploy --stage sdk-pointer[-dev]` *is* the flip. `SDK_POINTER_VERSION=x.y.z` pins one by hand. `infra/config.ts` `componentsUrl` (Shopify's `FRAK_COMPONENTS_URL`) points here, with jsDelivr's floating tag kept only as each integration's `onerror` fallback
@@ -28,6 +29,12 @@ bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here
 ## Non-Obvious Patterns
 - **Bootstrap Job gate**: `KubernetesJob` (`services/bootstrap`) runs Drizzle migrations (Postgres + libSQL), the back-fills AND RustFS bucket provisioning. MUST finish before backend `KubernetesService` — enforced by Pulumi `dependsOn`. Skipping = broken pods.
 - **Listener is path-routed** at `/listener` on the wallet ingress — no standalone service.
+- **Gateway API dual-run (nginx → Envoy Gateway)**: every app publishes an `HTTPRoute` next to its `Ingress`, attached to infra-core's shared `networking/frak-gateway`. Real traffic still reaches nginx; the Gateway only answers on the shadow host `<app>.gw.gcp[-dev].frak.id` until the top-level DNS flips. Envoy traps that look like cleanup but are not:
+  - A route-level `BackendTrafficPolicy` **replaces** the Gateway-level one unless it sets `mergeType`; Envoy's fallback is a 15s total timeout. A rule-level policy also replaces the route-level one, so `KubernetesService` renders each rule policy as route ⊕ rule.
+  - `compressor` entries need their empty settings object (`brotli: {}`), or EG v1.9 drops them silently and still reports `Accepted`.
+  - `connectionIdleTimeout` must stay **below** each app's keep-alive (Bun 30s, node:http 5s, nginx 75s), or a reused pooled connection 503s mid-request.
+  - Vanity certs (`gateway.ts`) must carry the vanity name only. Any SAN overlapping the Gateway's `*.gcp[-dev].frak.id` wildcards (e.g. reusing nginx's `wallet-tls`) drops **every** :443 listener on the Gateway to HTTP/1.1.
+  - Envoy forwards request bodies uncapped (nginx enforced 10m), so the backend caps them itself (`serve.maxRequestBodySize`).
 - **Frontend secrets are BUILD-TIME only** (BuildKit `--mount=type=secret`); runtime pod specs must never expose them.
 - **Backend secrets**: GCP Secret Manager → K8s env vars. AWS dev: `sst secret set Key "value"`.
 - **HPA defaults**: backend min=1, max=2, CPU target 120%. Health probes on `/health`.
