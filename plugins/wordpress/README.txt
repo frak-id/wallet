@@ -2,7 +2,7 @@
 Contributors: frak-labs
 Tags: rewards, engagement, web3, ecommerce, woocommerce
 Requires at least: 6.4
-Tested up to: 6.8
+Tested up to: 7.1
 Stable tag: 1.1.2
 Requires PHP: 8.0
 License: GPL-3.0-only
