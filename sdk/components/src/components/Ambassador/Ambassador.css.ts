@@ -46,6 +46,8 @@ const panel = style({
 });
 
 export const root = style({
+    // CMS bodies often justify (PrestaShop Classic); centred sections set their own.
+    textAlign: "start",
     display: "flex",
     flexDirection: "column",
     gap: "clamp(3em, 7vw, 5.5em)",
