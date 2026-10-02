@@ -109,7 +109,7 @@ class Frak_Frontend {
 
 		wp_enqueue_script(
 			'frak-sdk',
-			Frak_Sdk_Urls::POINTER_SCRIPT,
+			Frak_Sdk_Urls::pointer_script(),
 			array(),
 			null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters -- pointer serves whatever version was released; avoid ?ver= query param.
 			$script_args
@@ -131,11 +131,11 @@ class Frak_Frontend {
 	 */
 	public static function add_resource_hints( $hints, $relation ) {
 		if ( 'dns-prefetch' === $relation ) {
-			$hints[] = Frak_Sdk_Urls::POINTER_HOST;
+			$hints[] = Frak_Sdk_Urls::pointer_host();
 			$hints[] = Frak_Sdk_Urls::JSDELIVR_HOST;
 		}
 		if ( 'preconnect' === $relation ) {
-			$hints[] = Frak_Sdk_Urls::POINTER_HOST;
+			$hints[] = Frak_Sdk_Urls::pointer_host();
 			$hints[] = array(
 				'href'        => Frak_Sdk_Urls::JSDELIVR_HOST,
 				'crossorigin' => 'anonymous',
@@ -184,7 +184,8 @@ class Frak_Frontend {
 			$config['waitForBackendConfig'] = false;
 		}
 
-		$config_json = wp_json_encode( $config, JSON_UNESCAPED_SLASHES );
+		$config      = array_merge( $config, Frak_Env::config_overrides() );
+		$config_json = wp_json_encode( $config, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG );
 
 		return sprintf(
 			'window.FrakSetup=Object.assign(window.FrakSetup||{},{config:%s});',

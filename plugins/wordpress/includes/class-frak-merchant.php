@@ -9,10 +9,14 @@
  *     domain renames, CDN origin swaps — no extra hooks needed).
  *   - Short negative cache (5 min transient) on 4xx/5xx so unresolved or
  *     staging domains do not hammer the backend between webhook retries.
+ *   - Remembers the {@see Frak_Env} the record was resolved in: a record from
+ *     another environment is dropped and re-resolved, so flipping `FRAK_ENV`
+ *     never leaves a foreign merchant id behind.
  *
  * Storage:
- *   - `frak_merchant` option (autoload=no) — touched only by webhook workers
- *     and the admin settings page, never on frontend requests.
+ *   - `frak_merchant` option (autoload=no) — touched by webhook workers, the
+ *     admin settings page and, after a `FRAK_ENV` flip, the first admin
+ *     request (`admin_init`); never on frontend requests.
  *
  * @package Frak_Integration
  */
@@ -29,8 +33,9 @@ class Frak_Merchant {
 	public const OPTION_KEY = 'frak_merchant';
 
 	/**
-	 * Transient key used to short-circuit repeat resolve attempts after a
-	 * failed lookup (network error, 404, malformed body).
+	 * Production transient key used to short-circuit repeat resolve attempts
+	 * after a failed lookup (network error, 404, malformed body). The dev
+	 * stack appends `_dev`, see {@see negative_cache_key()}.
 	 */
 	public const NEGATIVE_CACHE_KEY = 'frak_merchant_unresolved';
 
@@ -40,12 +45,6 @@ class Frak_Merchant {
 	 * absorb a burst of queued webhooks without N calls to `/resolve`.
 	 */
 	public const NEGATIVE_CACHE_TTL = 5 * MINUTE_IN_SECONDS;
-
-	/**
-	 * Base URL for the resolve endpoint. Kept as a constant rather than a
-	 * setting because the plugin has always hard-coded `backend.frak.id`.
-	 */
-	public const RESOLVE_URL = 'https://backend.frak.id/user/merchant/resolve';
 
 	/**
 	 * Return the merchantId for the current site, resolving lazily on miss.
@@ -66,7 +65,7 @@ class Frak_Merchant {
 	 * Return the full cached merchant record for the current host, or null
 	 * when the domain is unresolved. Preferred entry point for the admin UI.
 	 *
-	 * @return array{id:string,name:string,domain:string,resolved_at:int}|null
+	 * @return array{id:string,name:string,domain:string,resolved_at:int,env:string}|null
 	 */
 	public static function get_record() {
 		$host = Frak_Utils::current_host();
@@ -75,15 +74,43 @@ class Frak_Merchant {
 		}
 
 		$cached = get_option( self::OPTION_KEY, null );
+		if ( self::is_foreign( $cached ) ) {
+			delete_option( self::OPTION_KEY );
+			$record = get_transient( self::negative_cache_key() ) ? null : self::resolve( $host );
+			// The WooCommerce webhook still targets the other environment's backend; ensure() recreates it on the next resolve.
+			if ( null === $record ) {
+				Frak_WC_Webhook_Registrar::remove();
+			}
+			return $record;
+		}
+
 		if ( is_array( $cached ) && ! empty( $cached['id'] ) && ( $cached['domain'] ?? '' ) === $host ) {
 			return $cached;
 		}
 
-		if ( get_transient( self::NEGATIVE_CACHE_KEY ) ) {
+		if ( get_transient( self::negative_cache_key() ) ) {
 			return null;
 		}
 
 		return self::resolve( $host );
+	}
+
+	/**
+	 * Whether a stored record was resolved in another environment than the
+	 * current one. Records written before the `env` field existed are
+	 * production.
+	 */
+	public static function has_foreign_record(): bool {
+		return self::is_foreign( get_option( self::OPTION_KEY, null ) );
+	}
+
+	/**
+	 * Whether a stored option value is a record from another environment.
+	 *
+	 * @param mixed $cached Raw `frak_merchant` option value.
+	 */
+	private static function is_foreign( $cached ): bool {
+		return is_array( $cached ) && ( $cached['env'] ?? 'prod' ) !== Frak_Env::name();
 	}
 
 	/**
@@ -96,6 +123,15 @@ class Frak_Merchant {
 	public static function invalidate(): void {
 		delete_option( self::OPTION_KEY );
 		delete_transient( self::NEGATIVE_CACHE_KEY );
+		delete_transient( self::NEGATIVE_CACHE_KEY . '_dev' );
+	}
+
+	/**
+	 * Negative-cache transient key for the current environment, so a failed
+	 * dev lookup never blocks the production one (nor the reverse).
+	 */
+	private static function negative_cache_key(): string {
+		return Frak_Env::is_dev() ? self::NEGATIVE_CACHE_KEY . '_dev' : self::NEGATIVE_CACHE_KEY;
 	}
 
 	/**
@@ -106,11 +142,11 @@ class Frak_Merchant {
 	 * domain does not blow up the webhook retry budget.
 	 *
 	 * @param string $host Normalized domain.
-	 * @return array{id:string,name:string,domain:string,resolved_at:int}|null
+	 * @return array{id:string,name:string,domain:string,resolved_at:int,env:string}|null
 	 */
 	private static function resolve( $host ) {
 		$response = wp_remote_get(
-			add_query_arg( 'domain', $host, self::RESOLVE_URL ),
+			add_query_arg( 'domain', $host, Frak_Env::backend_base() . '/user/merchant/resolve' ),
 			array(
 				'timeout' => 5,
 				'headers' => array( 'Accept' => 'application/json' ),
@@ -118,13 +154,13 @@ class Frak_Merchant {
 		);
 
 		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
-			set_transient( self::NEGATIVE_CACHE_KEY, 1, self::NEGATIVE_CACHE_TTL );
+			set_transient( self::negative_cache_key(), 1, self::NEGATIVE_CACHE_TTL );
 			return null;
 		}
 
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 		if ( ! is_array( $data ) || empty( $data['merchantId'] ) ) {
-			set_transient( self::NEGATIVE_CACHE_KEY, 1, self::NEGATIVE_CACHE_TTL );
+			set_transient( self::negative_cache_key(), 1, self::NEGATIVE_CACHE_TTL );
 			return null;
 		}
 
@@ -133,10 +169,11 @@ class Frak_Merchant {
 			'name'        => isset( $data['name'] ) ? (string) $data['name'] : '',
 			'domain'      => $host,
 			'resolved_at' => time(),
+			'env'         => Frak_Env::name(),
 		);
 
 		update_option( self::OPTION_KEY, $record, false );
-		delete_transient( self::NEGATIVE_CACHE_KEY );
+		delete_transient( self::negative_cache_key() );
 		return $record;
 	}
 }

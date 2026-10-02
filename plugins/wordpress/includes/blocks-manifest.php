@@ -6,7 +6,7 @@
  * under `includes/blocks/`. Registered with WP via
  * {@see wp_register_block_metadata_collection()} (WP 6.7+) so that
  * {@see register_block_type()} resolves metadata from this in-memory array
- * instead of re-reading + JSON-decoding the three `block.json` files on every
+ * instead of re-reading + JSON-decoding every `block.json` file on every
  * frontend request. Falls back to the legacy disk path on WP 6.4-6.6.
  *
  * IMPORTANT: regenerate this file whenever a block's `block.json` changes.
@@ -17,6 +17,23 @@
  */
 
 return array(
+	'ambassador'    => array(
+		'$schema'      => 'https://schemas.wp.org/trunk/block.json',
+		'apiVersion'   => 3,
+		'name'         => 'frak/ambassador',
+		'title'        => 'Frak Ambassador',
+		'description'  => 'The full ambassador page: how it works, rewards and sharing. Its text and images come from your Frak dashboard.',
+		'category'     => 'widgets',
+		'icon'         => 'groups',
+		'keywords'     => array( 'frak', 'ambassador', 'reward', 'referral' ),
+		'supports'     => array(
+			'html'  => false,
+			'align' => array( 'wide', 'full' ),
+		),
+		'textdomain'   => 'frak',
+		'editorScript' => 'file:./editor.js',
+		'render'       => 'file:./render.php',
+	),
 	'banner'        => array(
 		'$schema'      => 'https://schemas.wp.org/trunk/block.json',
 		'apiVersion'   => 3,

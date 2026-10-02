@@ -32,6 +32,7 @@ $frak_options = array(
 	'frak_webhook_secret',
 	'frak_merchant',
 	'frak_wc_webhook_id',
+	'frak_ambassador_page_id',
 	'widget_frak_banner_widget',
 	'widget_frak_share_button_widget',
 	'widget_frak_post_purchase_widget',
@@ -44,6 +45,7 @@ foreach ( $frak_options as $frak_option ) {
 // Short-lived transients used as negative cache / concurrency lock. Safe
 // to delete even when the underlying key is already absent.
 delete_transient( 'frak_merchant_unresolved' );
+delete_transient( 'frak_merchant_unresolved_dev' );
 delete_transient( 'frak_wc_webhook_ensure_lock' );
 
 // If WooCommerce is still active, drop the Frak-owned webhook row as well

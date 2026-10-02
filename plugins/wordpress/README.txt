@@ -12,11 +12,12 @@ Frak integration plugin — adds reward, referral, and engagement features to yo
 
 == Description ==
 
-The Frak plugin integrates the Frak SDK into your WordPress site and ships three components, each exposed as a Gutenberg block, a shortcode, and a sidebar widget — so they drop into any post, page, template part, widget area, or page-builder layout:
+The Frak plugin integrates the Frak SDK into your WordPress site and ships three components, each exposed as a Gutenberg block, a shortcode, and a sidebar widget — so they drop into any post, page, template part, widget area, or page-builder layout — plus the ambassador page, available as a block and a shortcode:
 
 * **Frak Share Button** (`frak/share-button`, `[frak_share_button]`) — a share-and-earn CTA placed wherever you want.
 * **Frak Banner** (`frak/banner`, `[frak_banner]`) — a notification banner that handles referral success and in-app browser prompts. Auto-hides when not needed.
 * **Frak Post-Purchase** (`frak/post-purchase`, `[frak_post_purchase]`) — a thank-you card with referrer / referee variants. Auto-populates WooCommerce order context on the thank-you page.
+* **Frak Ambassador** (`frak/ambassador`, `[frak_ambassador]`) — the full ambassador page: how it works, rewards and sharing. Block and shortcode only; its text and images come from your Frak dashboard.
 
 When WooCommerce is active, the plugin also wires a native WooCommerce webhook (`order.updated`) that ships order events to the Frak backend for reward attribution. Delivery, retries, and logs are handled by WooCommerce's own webhook pipeline (visible under **WooCommerce → Status → Logs**).
 
@@ -47,7 +48,7 @@ No. The plugin works without WooCommerce — you can still use the Frak blocks f
 
 = Does this plugin require a block theme? =
 
-No. The plugin works on both classic and block themes. The SDK is enqueued via the standard `wp_enqueue_scripts` pipeline, and every Frak component is available as a Gutenberg block, a shortcode, and a sidebar widget — use whichever surface fits your theme.
+No. The plugin works on both classic and block themes. The SDK is enqueued via the standard `wp_enqueue_scripts` pipeline, and every Frak component is available as a Gutenberg block and a shortcode (the banner, share button and post-purchase card also as a sidebar widget) — use whichever surface fits your theme.
 
 = How do I insert a Frak component in the Classic Editor / TinyMCE? =
 
@@ -56,6 +57,7 @@ Use the matching shortcode. Attribute names are snake_case and mirror the block 
 * `[frak_banner placement="top" referral_title="Welcome back!" referral_cta="Claim"]`
 * `[frak_share_button text="Share & earn up to {REWARD}" no_reward_text="Share & earn" button_style="primary"]`
 * `[frak_post_purchase variant="referrer" cta_text="Share now"]`
+* `[frak_ambassador]` (no attributes)
 
 = How do I add a Frak component to a classic-theme sidebar or footer? =
 

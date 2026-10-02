@@ -290,7 +290,7 @@ class Frak_WC_Webhook_Registrar {
 	 * @param string $merchant_id UUID of the Frak merchant.
 	 */
 	private static function build_delivery_url( string $merchant_id ): string {
-		return 'https://backend.frak.id/ext/merchant/' . rawurlencode( $merchant_id ) . '/webhook/woocommerce';
+		return Frak_Env::backend_base() . '/ext/merchant/' . rawurlencode( $merchant_id ) . '/webhook/woocommerce';
 	}
 
 	/**
