@@ -34,7 +34,7 @@ bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here
   - `compressor` entries need their empty settings object (`brotli: {}`), or EG v1.9 drops them silently and still reports `Accepted`.
   - `connectionIdleTimeout` must stay **below** each app's keep-alive (Bun 30s, node:http 5s, nginx 75s), or a reused pooled connection 503s mid-request.
   - Vanity certs (`gateway.ts`) must carry the vanity name only. Any SAN overlapping the Gateway's `*.gcp[-dev].frak.id` wildcards (e.g. reusing nginx's `wallet-tls`) drops **every** :443 listener on the Gateway to HTTP/1.1.
-  - Envoy forwards request bodies uncapped (nginx enforced 10m), so the backend caps them itself (`serve.maxRequestBodySize`).
+  - Envoy forwards request bodies uncapped (nginx enforced 10m), so each server caps at 15 MiB itself: backend via `serve.maxRequestBodySize`, shopify via the header guard in `apps/shopify/server.js` (node:http has no limit, and `authenticate.webhook` buffers the body before its HMAC check).
 - **Frontend secrets are BUILD-TIME only** (BuildKit `--mount=type=secret`); runtime pod specs must never expose them.
 - **Backend secrets**: GCP Secret Manager → K8s env vars. AWS dev: `sst secret set Key "value"`.
 - **HPA defaults**: backend min=1, max=2, CPU target 120%. Health probes on `/health`.

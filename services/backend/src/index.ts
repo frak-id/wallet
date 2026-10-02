@@ -39,7 +39,7 @@ const app = new Elysia({
         // The Gateway's upstream idle timeout (infra/gcp/gateway.ts) must stay below this
         idleTimeout: 30,
         // Envoy forwards bodies uncapped: the largest legit one is a 10 MiB media upload
-        maxRequestBodySize: 11 * 1024 * 1024,
+        maxRequestBodySize: 15 * 1024 * 1024,
     },
     // Websocket specific config
     websocket: {

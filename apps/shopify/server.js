@@ -2,8 +2,9 @@
  * Custom production server for the Shopify embedded app.
  *
  * A faithful, minimal reimplementation of `@react-router/serve`'s CLI
- * (node_modules/@react-router/serve/dist/cli.js) with ONE behavioural change:
- * the access logger skips the `/health` probe path.
+ * (node_modules/@react-router/serve/dist/cli.js) with two behavioural changes:
+ * the access logger skips the `/health` probe path, and request bodies are
+ * capped (see `MAX_BODY_BYTES`).
  *
  * Why: `react-router-serve` hardcodes `morgan("tiny")`, which logs every
  * request. The Kubernetes liveness/readiness probes hit `/health` on a short
@@ -64,6 +65,26 @@ app.use(
         skip: (req) => req.url.split("?")[0] === "/health",
     })
 );
+
+// Envoy forwards bodies uncapped and node:http sets no limit, while
+// `authenticate.webhook` buffers the whole body before checking its HMAC.
+// Largest legit body: a 10 MiB image upload relayed to the backend.
+const MAX_BODY_BYTES = 15 * 1024 * 1024;
+
+// Decided on headers alone: the body stream is left untouched for React Router
+app.use((req, res, next) => {
+    const length = req.headers["content-length"];
+    if (length !== undefined && Number(length) > MAX_BODY_BYTES) {
+        res.set("Connection", "close").sendStatus(413);
+        return;
+    }
+    // A chunked body declares no length, so it would dodge the cap above
+    if (length === undefined && req.headers["transfer-encoding"]) {
+        res.set("Connection", "close").sendStatus(411);
+        return;
+    }
+    next();
+});
 
 app.all(
     "*",
