@@ -202,6 +202,14 @@ if (!class_exists('Tools')) {
     {
         public static string $shopDomain = 'shop.example.com';
 
+        /** @var array<string, mixed> */
+        public static array $request = [];
+
+        public static function getValue($key, $default = false)
+        {
+            return self::$request[$key] ?? $default;
+        }
+
         public static function getShopDomain($http = false, $entities = false)
         {
             return self::$shopDomain;
@@ -414,7 +422,8 @@ if (!class_exists('CMS')) {
 if (!class_exists('CmsController')) {
     class CmsController
     {
-        public $cms;
+        /** Protected on PS 9, so production code must not read it. */
+        protected $cms;
 
         /** @var array<int, array{string, string}> */
         public array $stylesheets = [];
@@ -432,6 +441,7 @@ if (!function_exists('frak_test_reset_doubles')) {
         \FrakTestDbRecorder::reset();
         \Configuration::reset();
         \Tools::$shopDomain = 'shop.example.com';
+        \Tools::$request = [];
         \CMS::reset();
         \PrestaShopLogger::reset();
         \Context::reset();

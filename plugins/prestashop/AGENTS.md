@@ -74,6 +74,7 @@ docker exec prestashop sh -c "printf \"\ndefine('FRAK_ENV', 'dev');\ndefine('FRA
 - **Dev switch**: `FRAK_ENV` / `FRAK_MERCHANT_DOMAIN` constants, read by `FrakEnv`. Every origin that differs in dev is private in `FrakUrls` behind a method; only the env-invariant `CDN_BASE` and `WEBHOOK_PATH_SUFFIX` are public constants.
 - **`{frak_*}` in CMS pages**: CMS content is printed without Smarty and the HTML cleaner strips `<frak-*>`, so `FrakCmsMarkers` swaps the text tags in the chained `filterCmsContent` hook (return the whole args array).
 - **Ambassador page lifecycle**: `FRAK_AMBASSADOR_PAGE_ID` survives uninstall on purpose (a reinstall offers Restore); `enable()` / `disable()` overrides hide and republish the created page.
+- **PrestaShop 9 drops what 8.x tolerated**: `AdminController::l()` is gone (use `$this->module->l()`), and `CmsController::$cms` is protected (read `Tools::getValue('id_cms')`). Check admin and front changes on the `prestashop/prestashop:9.1` image too.
 - **`registerHook('header')` throws when already registered** on PS 8.2 (core checks it through its `displayHeader` alias). Upgrade scripts register only new hooks, or catch per hook.
 
 ## Anti-Patterns

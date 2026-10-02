@@ -372,7 +372,7 @@ final class FrakAmbassadorPageTest extends TestCase
     private function mediaFor(int $cmsId): array
     {
         $controller = new CmsController();
-        $controller->cms = (object) ['id' => $cmsId];
+        \Tools::$request = ['id_cms' => (string) $cmsId];
 
         FrakFrontend::setMedia((object) ['controller' => $controller]);
 

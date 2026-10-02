@@ -25,6 +25,7 @@ Release as 1.1.0 or later: `upgrade/install-1.1.0.php` only runs when the new ve
 
 ### Fixed
 
+- **The settings page no longer fails with a 500 on PrestaShop 9.** `AdminController::l()` no longer exists there; the controller translates through its module instead.
 - **`upgrade/install-1.0.8.php` no longer aborts the upgrade of a shop whose hooks are intact.** On PrestaShop 8.2, re-registering `header` throws a duplicate-key error because core checks it through its `displayHeader` alias; each hook is now registered in its own try/catch.
 
 ## [1.0.10] - 2026-09-18

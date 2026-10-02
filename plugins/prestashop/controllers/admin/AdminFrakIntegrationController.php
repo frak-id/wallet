@@ -7,7 +7,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
         $this->bootstrap = true;
         $this->display = 'view';
         parent::__construct();
-        $this->meta_title = $this->l('Frak Integration');
+        $this->meta_title = $this->module->l('Frak Integration');
     }
 
     /**
@@ -135,9 +135,9 @@ class AdminFrakIntegrationController extends ModuleAdminController
     private function buildPlacementGroups(): array
     {
         $component_labels = [
-            FrakPlacementRegistry::COMPONENT_SHARE_BUTTON => $this->l('Share button'),
-            FrakPlacementRegistry::COMPONENT_BANNER => $this->l('Banner'),
-            FrakPlacementRegistry::COMPONENT_POST_PURCHASE => $this->l('Post-purchase card'),
+            FrakPlacementRegistry::COMPONENT_SHARE_BUTTON => $this->module->l('Share button'),
+            FrakPlacementRegistry::COMPONENT_BANNER => $this->module->l('Banner'),
+            FrakPlacementRegistry::COMPONENT_POST_PURCHASE => $this->module->l('Post-purchase card'),
         ];
 
         $groups = [];
@@ -158,8 +158,8 @@ class AdminFrakIntegrationController extends ModuleAdminController
             $groups[$component]['items'][] = [
                 'id' => $id,
                 'config_key' => $placement['config_key'],
-                'label' => $this->l($placement['label']),
-                'description' => $this->l($placement['description']),
+                'label' => $this->module->l($placement['label']),
+                'description' => $this->module->l($placement['description']),
                 'hook' => $placement['hook'],
                 'placement_attr' => $placement['placement_attr'],
                 'enabled' => $entry['enabled'],
@@ -212,8 +212,8 @@ class AdminFrakIntegrationController extends ModuleAdminController
             $entry = [
                 'name' => $config_key . '__option__' . $key,
                 'type' => $type,
-                'label' => $this->l((string) ($meta['label'] ?? $key)),
-                'description' => isset($meta['description']) ? $this->l((string) $meta['description']) : '',
+                'label' => $this->module->l((string) ($meta['label'] ?? $key)),
+                'description' => isset($meta['description']) ? $this->module->l((string) $meta['description']) : '',
                 'value' => $value,
             ];
             if ($type === FrakPlacementRegistry::OPTION_TYPE_SELECT) {
@@ -222,7 +222,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
                 foreach ($choices as $choice_value => $choice_label) {
                     $entry['choices'][] = [
                         'value' => (string) $choice_value,
-                        'label' => $this->l((string) $choice_label),
+                        'label' => $this->module->l((string) $choice_label),
                     ];
                 }
             }
@@ -273,22 +273,22 @@ class AdminFrakIntegrationController extends ModuleAdminController
                 $this->errors[] = $this->mapLogoUploadError($result['error']);
             } elseif (isset($result['url'])) {
                 $logoUrl = $result['url'];
-                $this->confirmations[] = $this->l('Logo uploaded successfully');
+                $this->confirmations[] = $this->module->l('Logo uploaded successfully');
             }
         }
 
         if (!$shopName || !Validate::isGenericName($shopName)) {
-            $this->errors[] = $this->l('Invalid Shop Name');
+            $this->errors[] = $this->module->l('Invalid Shop Name');
             return;
         }
         if (!$logoUrl || (!Validate::isUrl($logoUrl) && !FrakLogoUploader::isLocalUrl($logoUrl, $baseUrl))) {
-            $this->errors[] = $this->l('Invalid Logo URL');
+            $this->errors[] = $this->module->l('Invalid Logo URL');
             return;
         }
 
         FrakConfig::setShopName($shopName);
         FrakConfig::setLogoUrl($logoUrl);
-        $this->confirmations[] = $this->l('Brand settings updated');
+        $this->confirmations[] = $this->module->l('Brand settings updated');
     }
 
     /**
@@ -301,14 +301,14 @@ class AdminFrakIntegrationController extends ModuleAdminController
     {
         switch ($code) {
             case FrakLogoUploader::ERROR_INVALID_FORMAT:
-                return $this->l('Invalid file format. Only JPG, PNG, GIF, SVG files are allowed.');
+                return $this->module->l('Invalid file format. Only JPG, PNG, GIF, SVG files are allowed.');
             case FrakLogoUploader::ERROR_TOO_LARGE:
-                return $this->l('File size exceeds 2MB limit.');
+                return $this->module->l('File size exceeds 2MB limit.');
             case FrakLogoUploader::ERROR_MIME_MISMATCH:
-                return $this->l('Logo file content does not match its declared format.');
+                return $this->module->l('Logo file content does not match its declared format.');
             case FrakLogoUploader::ERROR_MOVE_FAILED:
             default:
-                return $this->l('Failed to upload logo file');
+                return $this->module->l('Failed to upload logo file');
         }
     }
 
@@ -333,7 +333,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
         // immediately if any subsequent action in the same request triggers
         // a webhook (e.g. saving + draining the queue).
         FrakWebhookHelper::resetCache();
-        $this->confirmations[] = $this->l('Webhook secret updated');
+        $this->confirmations[] = $this->module->l('Webhook secret updated');
     }
 
     /**
@@ -410,7 +410,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
             return;
         }
         if (FrakPlacementRegistry::setState($updates)) {
-            $this->confirmations[] = $this->l('Placement settings updated');
+            $this->confirmations[] = $this->module->l('Placement settings updated');
         }
     }
 
@@ -424,16 +424,16 @@ class AdminFrakIntegrationController extends ModuleAdminController
         $result = FrakAmbassadorPage::ensure();
         switch ($result['status']) {
             case 'created':
-                $this->confirmations[] = $this->l('Your ambassador page is live.');
+                $this->confirmations[] = $this->module->l('Your ambassador page is live.');
                 break;
             case 'restored':
-                $this->confirmations[] = $this->l('Your ambassador page is live again.');
+                $this->confirmations[] = $this->module->l('Your ambassador page is live again.');
                 break;
             case 'exists':
-                $this->confirmations[] = $this->l('An ambassador page already exists.');
+                $this->confirmations[] = $this->module->l('An ambassador page already exists.');
                 break;
             default:
-                $this->errors[] = $this->l('The ambassador page could not be published.')
+                $this->errors[] = $this->module->l('The ambassador page could not be published.')
                     . ' ' . htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8');
         }
     }
@@ -452,10 +452,10 @@ class AdminFrakIntegrationController extends ModuleAdminController
         FrakWebhookHelper::resetCache();
         $merchant = FrakMerchantResolver::getRecord();
         if ($merchant !== null) {
-            $this->confirmations[] = $this->l('Merchant resolved') . ': ' . $merchant['id'];
+            $this->confirmations[] = $this->module->l('Merchant resolved') . ': ' . $merchant['id'];
             return;
         }
-        $this->errors[] = $this->l('Merchant not resolved for the current domain. Register the shop in the Frak dashboard.');
+        $this->errors[] = $this->module->l('Merchant not resolved for the current domain. Register the shop in the Frak dashboard.');
     }
 
     /**
@@ -468,11 +468,11 @@ class AdminFrakIntegrationController extends ModuleAdminController
     {
         $stats = FrakWebhookCron::run();
         if (!empty($stats['skipped'])) {
-            $this->errors[] = $this->l('Webhook queue drainer is already running. Try again in a few minutes.');
+            $this->errors[] = $this->module->l('Webhook queue drainer is already running. Try again in a few minutes.');
             return;
         }
         $this->confirmations[] = sprintf(
-            $this->l('Webhook queue drained: %1$d processed (%2$d success, %3$d failure)'),
+            $this->module->l('Webhook queue drained: %1$d processed (%2$d success, %3$d failure)'),
             (int) $stats['processed'],
             (int) $stats['success'],
             (int) $stats['failure']

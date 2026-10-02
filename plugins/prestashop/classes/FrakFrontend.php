@@ -94,7 +94,8 @@ class FrakFrontend
     {
         $controller = $context->controller ?? null;
         $pageId = FrakConfig::getAmbassadorPageId();
-        if ($pageId > 0 && $controller instanceof CmsController && (int) ($controller->cms->id ?? 0) === $pageId) {
+        // CmsController::$cms is protected on PS 9; read the id the way its init() does.
+        if ($pageId > 0 && $controller instanceof CmsController && (int) Tools::getValue('id_cms') === $pageId) {
             $controller->registerStylesheet(
                 'module-frakintegration-ambassador',
                 'modules/frakintegration/views/css/ambassador-page.css'
