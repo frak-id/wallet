@@ -10,6 +10,8 @@ use FrakWebhookHelper;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
 require_once __DIR__ . '/doubles.php';
 require_once __DIR__ . '/../../classes/FrakEnv.php';
@@ -56,6 +58,32 @@ final class FrakWebhookHelperTest extends TestCase
             'https://backend.gcp-dev.frak.id/ext/merchant/m-2/webhook/custom',
             FrakWebhookHelper::getWebhookUrl()
         );
+    }
+
+    public function testBatchRecordsEveryRowWhenTheBackendAnswersWithAnErrorStatus(): void
+    {
+        $client = new MockHttpClient([
+            new MockResponse('boom', ['http_code' => 500]),
+            new MockResponse('nope', ['http_code' => 401]),
+            new MockResponse('{"ok":true}', ['http_code' => 200]),
+            new MockResponse('', ['error' => 'connection reset']),
+        ]);
+        $responses = [];
+        $responseToId = [];
+        foreach ([11, 12, 13, 14] as $rowId) {
+            $response = $client->request('POST', 'https://backend.example/webhook');
+            $responses[] = $response;
+            $responseToId[spl_object_id($response)] = $rowId;
+        }
+
+        $results = FrakWebhookHelper::collectResponses($client, $responses, $responseToId);
+
+        ksort($results);
+        $this->assertSame([11, 12, 13, 14], array_keys($results));
+        $this->assertSame(['success' => false, 'http_code' => 500, 'error' => 'HTTP 500: boom'], $results[11]);
+        $this->assertSame(401, $results[12]['http_code']);
+        $this->assertTrue($results[13]['success']);
+        $this->assertStringStartsWith('Transport error:', $results[14]['error']);
     }
 
     public function testSignBodyMatchesBackendBase64Contract(): void

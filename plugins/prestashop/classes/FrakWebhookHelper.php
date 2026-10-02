@@ -196,13 +196,26 @@ class FrakWebhookHelper
             $results[$row_id] = ['success' => false, 'error' => $error];
         }
 
-        // `stream()` iterates response chunks concurrently; we only care
-        // about the `isLast()` chunk (final / failed) per response, since
-        // the request bodies we send are small and the backend's response
-        // bodies fit in a single chunk in practice. Errors during transfer
-        // raise `TransportExceptionInterface` which we catch per-response.
+        return $results + self::collectResponses($client, $responses, $response_to_id);
+    }
+
+    /**
+     * Route each finished response back to its queue row. Reading the status on
+     * the first chunk stops `stream()` from throwing on a 4xx/5xx mid-loop.
+     *
+     * @param array<int, \Symfony\Contracts\HttpClient\ResponseInterface> $responses
+     * @param array<int, int> $response_to_id spl_object_id(response) => queue row id
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function collectResponses(\Symfony\Contracts\HttpClient\HttpClientInterface $client, array $responses, array $response_to_id): array
+    {
+        $results = [];
         foreach ($client->stream($responses) as $response => $chunk) {
             try {
+                if ($chunk->isFirst()) {
+                    $response->getStatusCode();
+                }
                 if (!$chunk->isLast()) {
                     continue;
                 }
