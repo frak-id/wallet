@@ -31,6 +31,7 @@ The Frak Integration page is reachable from **Modules → Module Manager → Fra
 - **Webhook Secret**: the HMAC signing key copied from the Frak business dashboard. Outbound order webhooks are rejected by the backend without a matching secret.
 - **Component Placements**: one checkbox per registered placement (share button on product / cart, banner at top / homepage, post-purchase on order confirmation / order detail). Lets merchants opt placements in or out without editing code or theme files.
 - **Merchant**: read-only display of the resolved Frak merchant UUID + the shop's normalized domain.
+- **Ambassador page**: *Create my ambassador page* publishes a CMS page holding `{frak_ambassador}`, titled "Become an ambassador" ("Devenir ambassadeur" in French), with the theme's page heading hidden because the component has its own. The panel links to the live page, or offers *Restore* when the created page is inactive. A CMS page you build with `{frak_ambassador}` counts as live too and keeps its theme heading. Disabling the module sets the created page inactive and enabling republishes it; uninstalling leaves it inactive under Design → Pages.
 - **Maintenance → Refresh Merchant**: invalidates the cached resolver record and forces a fresh `GET /user/merchant/resolve` round-trip — use after a domain rename or after registering the shop on the dashboard for the first time.
 - **Maintenance → Webhook queue**: pending / delivered / parked counts pulled from `FrakWebhookQueue::stats()`, the next-attempt timestamp for the oldest pending row, and the most recent error message. The companion **Drain queue now** button calls `FrakWebhookCron::run()` synchronously — useful before the cron URL is wired up, or to flush a backlog after fixing a backend outage.
 
@@ -38,7 +39,7 @@ The SDK pulls everything else (i18n strings, modal language, share-button copy) 
 
 ## Components
 
-Three Frak web components are available: `<frak-button-share>`, `<frak-banner>`, and `<frak-post-purchase>`. Each one can be auto-rendered on a configurable set of PrestaShop hooks (the **Component Placements** section in the admin), or dropped into any `.tpl` file / CMS page via Smarty function plugins.
+Four Frak web components are available: `<frak-button-share>`, `<frak-banner>`, `<frak-post-purchase>` and `<frak-ambassador>`. The first three can be auto-rendered on a configurable set of PrestaShop hooks (the **Component Placements** section in the admin). All four can be dropped into any `.tpl` file through Smarty function plugins, or typed into a CMS page as the same tags.
 
 ### Auto-render placements
 
@@ -64,15 +65,27 @@ Submitted values are validated by `FrakPlacementRegistry::setState()` (select ch
 
 ### Smarty function plugins
 
-Theme files and CMS pages can drop Frak components anywhere via three Smarty function plugins registered by the module:
+Theme files can drop Frak components anywhere via four Smarty function plugins registered by the module:
 
 ```smarty
+{frak_ambassador}
 {frak_banner placement="hero" referral_title="Welcome back!"}
 {frak_share_button text="Share & earn up to {REWARD}" no_reward_text="Share & earn" placement="sidebar"}
 {frak_post_purchase variant="referrer" cta_text="Earn rewards"}
 ```
 
 Snake_case attribute keys are normalised to camelCase at the boundary so templates read naturally. The post-purchase variant emits the bare `<frak-post-purchase>` markup — order context (`customer-id` / `order-id` / `token`) is only auto-injected when the auto-render hooks (`displayOrderConfirmation`, `displayOrderDetail`) fire; pass the triple explicitly (`customer_id`, `order_id`, `token`) when calling the Smarty function on a non-order endpoint.
+
+### Tags in CMS pages
+
+The same four tags work when typed into a CMS page's content (Design → Pages), with attribute values in quotes:
+
+```text
+{frak_ambassador}
+{frak_share_button text="Share & earn"}
+```
+
+CMS content is printed without Smarty, and PrestaShop's HTML cleaner strips raw `<frak-*>` elements on save, so the module swaps the text tags for their component at display time through the `filterCmsContent` hook. A tag alone in a paragraph replaces that paragraph. A tag that does not parse, or an unknown `{frak_…}` name, is left as typed. While the module is disabled the tags show as text.
 
 ### Post-purchase order-context resolution
 
@@ -118,7 +131,7 @@ composer run test                            # Unit tests (phpunit)
 
 PHPStan runs against a real PrestaShop checkout. The `composer analyse` script clones `PrestaShop/PrestaShop@8.2.6` into `.cache/prestashop-core/` on first invocation (and runs `composer install --no-dev` inside that clone) so the analyser sees the actual `Module` / `Configuration` / `Tools` / `Db` / `Order` / … API surface via `prestashop/php-dev-tools`. Subsequent runs are fast — the cache is reused. To roll forward, bump the tag in `composer.json#ps-core:fetch` and run `composer ps-core:update`.
 
-The `test/docker-compose.yaml` file spins a local PrestaShop instance (PrestaShop + MySQL on `localhost:8080`) for manual smoke testing — see the demo credentials in the file.
+The `test/docker-compose.yaml` file runs a local PrestaShop 8.2 shop on `localhost:8080` with this directory mounted as the module. `AGENTS.md` ("Local Test Site") has the procedure, the `FRAK_ENV` / `FRAK_MERCHANT_DOMAIN` dev switch that points the module at the Frak dev stack, and the smoke checklist.
 
 ## Release
 

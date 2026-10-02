@@ -1,21 +1,25 @@
 services:
   mysql:
     container_name: some-mysql
-    image: mysql:5.7
-    platform: linux/amd64 # Force x86_64 architecture for ARM Macs (enables QEMU emulation)
+    image: mariadb:10.11 # Native arm64 + amd64; mysql:5.7 has no arm64 image
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: admin
       MYSQL_DATABASE: prestashop
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
     networks:
       - prestashop_network
   prestashop:
     container_name: prestashop
-    image: prestashop/prestashop:latest # Latest stable version of the PrestaShop, to see all available images go to ...
-    platform: linux/amd64 # Force x86_64 architecture for ARM Macs (enables QEMU emulation)
+    image: prestashop/prestashop:8.2-apache # Matches the 8.2.x core phpstan analyses against
     restart: unless-stopped
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     ports:
       - 8080:80
     environment:
@@ -29,6 +33,11 @@ services:
       PS_FOLDER_INSTALL: install4577
       # demo@prestashop.com
       # password: prestashop_demo
+    volumes:
+      # The module from this repo; run `composer install` in plugins/prestashop first.
+      - ..:/var/www/html/modules/frakintegration
+      # The back office rewrites config.xml when it lists modules; keep the tracked file intact.
+      - ../config.xml:/var/www/html/modules/frakintegration/config.xml:ro
     networks:
       - prestashop_network
 networks:

@@ -33,6 +33,12 @@ class FrakConfig
     /** 64-char hex token gating `controllers/front/cron.php` via `hash_equals`. */
     public const CRON_TOKEN = 'FRAK_CRON_TOKEN';
 
+    /** Id of the CMS page the module created for the ambassador component; kept on uninstall. */
+    public const AMBASSADOR_PAGE_ID = 'FRAK_AMBASSADOR_PAGE_ID';
+
+    /** Set while the created page is inactive because the module was disabled. */
+    public const AMBASSADOR_HIDDEN_BY_DISABLE = 'FRAK_AMBASSADOR_HIDDEN_BY_DISABLE';
+
     /**
      * Brand bundle: shop name (with `PS_SHOP_NAME` fallback) + logo URL.
      * Single batched lookup so the front-office head + the admin renderer
@@ -99,6 +105,36 @@ class FrakConfig
     public static function getCronToken(): string
     {
         return (string) Configuration::get(self::CRON_TOKEN);
+    }
+
+    public static function getAmbassadorPageId(): int
+    {
+        return (int) Configuration::get(self::AMBASSADOR_PAGE_ID);
+    }
+
+    public static function setAmbassadorPageId(int $id): void
+    {
+        Configuration::updateValue(self::AMBASSADOR_PAGE_ID, $id);
+    }
+
+    public static function clearAmbassadorPageId(): void
+    {
+        Configuration::deleteByName(self::AMBASSADOR_PAGE_ID);
+    }
+
+    public static function isAmbassadorHiddenByDisable(): bool
+    {
+        return (bool) Configuration::get(self::AMBASSADOR_HIDDEN_BY_DISABLE);
+    }
+
+    public static function setAmbassadorHiddenByDisable(): void
+    {
+        Configuration::updateValue(self::AMBASSADOR_HIDDEN_BY_DISABLE, 1);
+    }
+
+    public static function clearAmbassadorHiddenByDisable(): void
+    {
+        Configuration::deleteByName(self::AMBASSADOR_HIDDEN_BY_DISABLE);
     }
 
     public static function setShopName(string $value): void

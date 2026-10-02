@@ -41,6 +41,10 @@ class FrakIntegrationCronModuleFrontController extends ModuleFrontController
         // only need the module loaded. Calling `Controller::init()` directly
         // is the documented escape hatch for cron-style endpoints.
         Controller::init();
+        // FrontController::init() is what sets the currency; order payloads round prices through it.
+        if (!Validate::isLoadedObject($this->context->currency)) {
+            $this->context->currency = Currency::getDefaultCurrency();
+        }
     }
 
     public function postProcess()

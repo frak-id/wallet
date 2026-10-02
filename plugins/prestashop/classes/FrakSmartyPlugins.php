@@ -4,7 +4,7 @@
  * Smarty function plugin registration + handlers for the Frak module.
  *
  * Lets theme files and CMS pages drop `<frak-X>` components anywhere via
- * `{frak_banner}`, `{frak_share_button}`, `{frak_post_purchase}`. snake_case
+ * `{frak_ambassador}`, `{frak_banner}`, `{frak_share_button}`, `{frak_post_purchase}`. snake_case
  * attribute keys are normalised to camelCase at the boundary so templates
  * read naturally (`{frak_banner referral_title="..."}`).
  *
@@ -25,7 +25,7 @@ class FrakSmartyPlugins
     private static bool $registered = false;
 
     /**
-     * Register the three Smarty function plugins so theme files and CMS
+     * Register the four Smarty function plugins so theme files and CMS
      * pages can drop `<frak-X>` components anywhere.
      *
      * The Smarty instance can be unavailable in CLI / install contexts —
@@ -53,6 +53,7 @@ class FrakSmartyPlugins
         // module instantiation in the request stays robust against any
         // earlier registration (e.g. another plugin claiming the same name).
         $callbacks = [
+            'frak_ambassador' => [self::class, 'ambassador'],
             'frak_banner' => [self::class, 'banner'],
             'frak_share_button' => [self::class, 'shareButton'],
             'frak_post_purchase' => [self::class, 'postPurchase'],
@@ -64,6 +65,20 @@ class FrakSmartyPlugins
             $smarty->registerPlugin('function', $name, $callback);
         }
         self::$registered = true;
+    }
+
+    /**
+     * `{frak_ambassador classname="..."}` Smarty handler.
+     *
+     * @param array<string, mixed> $params Smarty-supplied attribute pairs.
+     * @param mixed                $smarty Smarty instance (unused).
+     */
+    public static function ambassador(array $params, $smarty): string
+    {
+        unset($smarty);
+        return FrakComponentRenderer::ambassador(
+            FrakComponentRenderer::snakeKeysToCamel($params)
+        );
     }
 
     /**

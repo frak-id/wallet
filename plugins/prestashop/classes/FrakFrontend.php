@@ -5,7 +5,7 @@
  *
  * `header` renders resource hints, `window.FrakSetup` config, and the SDK
  * `<script>` itself (see {@see self::sdkScriptTag()} for why it lives here).
- * `actionFrontControllerSetMedia` is currently a no-op, see {@see self::setMedia()}.
+ * `actionFrontControllerSetMedia` only loads the ambassador-page stylesheet, see {@see self::setMedia()}.
  */
 class FrakFrontend
 {
@@ -40,15 +40,31 @@ class FrakFrontend
         // The pointer's script fetch is no-cors, so its preconnect must NOT
         // carry `crossorigin`; the shim's `import()` from jsDelivr is a
         // CORS-mode module fetch, so that preconnect must.
-        return '<link rel="dns-prefetch" href="' . FrakUrls::SDK_POINTER_HOST . '">'
-            . '<link rel="preconnect" href="' . FrakUrls::SDK_POINTER_HOST . '">'
+        return '<link rel="dns-prefetch" href="' . FrakUrls::sdkPointerHost() . '">'
+            . '<link rel="preconnect" href="' . FrakUrls::sdkPointerHost() . '">'
             . '<link rel="dns-prefetch" href="' . FrakUrls::CDN_BASE . '">'
             . '<link rel="preconnect" href="' . FrakUrls::CDN_BASE . '" crossorigin>'
             . '<script>window.FrakSetup=Object.assign(window.FrakSetup||{},{config:{metadata:{'
             . 'name:' . $shop_name_js . ','
             . 'logoUrl:' . $logo_url_js
-            . '}}});</script>'
+            . '}' . self::configOverrides() . '}});</script>'
             . self::sdkScriptTag();
+    }
+
+    /**
+     * `,env:"dev"` and `,domain:"…"` for the config object, only while the
+     * matching constant asks for them. The domain is the normalised override;
+     * `JSON_HEX_TAG` keeps a `</script>` in it from ending the inline script.
+     */
+    private static function configOverrides(): string
+    {
+        $extra = FrakEnv::isDev() ? ',env:"dev"' : '';
+        $domain = FrakUtils::merchantDomainOverride();
+        if ($domain === '') {
+            return $extra;
+        }
+        $domain_js = json_encode($domain, FrakComponentRenderer::JSON_FLAGS | JSON_HEX_TAG);
+        return $extra . ',domain:' . ($domain_js === false ? '""' : $domain_js);
     }
 
     /**
@@ -60,25 +76,30 @@ class FrakFrontend
     private static function sdkScriptTag(): string
     {
         $fallback = "var s=document.createElement('script');"
-            . "s.src='" . FrakUrls::SDK_FALLBACK_SCRIPT . "';"
+            . "s.src='" . FrakUrls::sdkFallbackScript() . "';"
             . 's.defer=true;document.head.appendChild(s)';
 
-        return '<script src="' . FrakUrls::SDK_POINTER_SCRIPT . '" defer'
+        return '<script src="' . FrakUrls::sdkPointerScript() . '" defer'
             . ' onerror="' . $fallback . '"></script>';
     }
 
     /**
-     * Intentionally inert: the SDK script is raw markup in {@see self::head()}
-     * (see {@see self::sdkScriptTag()}). Kept as the registered
-     * `actionFrontControllerSetMedia` target so no hook migration is needed.
+     * Loads the stylesheet that hides the theme's page title, only on the CMS
+     * page the module created. The SDK script is raw markup in {@see self::head()}.
      *
      * @param Context $context Forwarded from the Module instance so the helper
      *                         stays a stateless static call.
      */
     public static function setMedia($context): void
     {
-        if (!isset($context->controller)) {
-            return;
+        $controller = $context->controller ?? null;
+        $pageId = FrakConfig::getAmbassadorPageId();
+        // CmsController::$cms is protected on PS 9; read the id the way its init() does.
+        if ($pageId > 0 && $controller instanceof CmsController && (int) Tools::getValue('id_cms') === $pageId) {
+            $controller->registerStylesheet(
+                'module-frakintegration-ambassador',
+                'modules/frakintegration/views/css/ambassador-page.css'
+            );
         }
     }
 }

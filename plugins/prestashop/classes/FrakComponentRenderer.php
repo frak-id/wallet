@@ -14,6 +14,15 @@
 class FrakComponentRenderer
 {
     /**
+     * Ambassador: only `classname`, the page's content comes from the merchant dashboard.
+     *
+     * @var array<string, string>
+     */
+    private const AMBASSADOR_ATTRS = [
+        'classname' => 'classname',
+    ];
+
+    /**
      * Banner: camelCase attr key => kebab-case HTML attribute name.
      *
      * @var array<string, string>
@@ -95,6 +104,16 @@ class FrakComponentRenderer
         'products' => 'products',
         'imageUrl' => 'image-url',
     ];
+
+    /**
+     * Render `<frak-ambassador>`; it takes no content attributes.
+     *
+     * @param array<string, mixed> $attrs Map of camelCase attribute keys.
+     */
+    public static function ambassador(array $attrs = []): string
+    {
+        return self::render('frak-ambassador', self::AMBASSADOR_ATTRS, $attrs);
+    }
 
     /**
      * Render `<frak-banner>` with the supplied attributes.

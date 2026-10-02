@@ -11,6 +11,25 @@ version on dispatch.
 
 ## [Unreleased]
 
+Release as 1.1.0 or later: `upgrade/install-1.1.0.php` only runs when the new version is above the installed one, and without it upgraded shops print the CMS tags as text. Wait for a components release that serves `<frak-ambassador>` from `sdk.frak.id` before releasing.
+
+### Added
+
+- **Ambassador page.** Settings → *Create my ambassador page* publishes a CMS page holding `{frak_ambassador}` in every active language ("Devenir ambassadeur" in French, "Become an ambassador" otherwise), and hides the theme's page heading on it with `views/css/ambassador-page.css`. The panel shows the live page (the created one, or a page the merchant built with the tag), offers *Restore* when the created page is inactive, and reads every write back so a failure leaves no page behind (`FrakAmbassadorPage`). Disabling the module sets the created page inactive, enabling republishes it only when the disable step hid it, and uninstalling leaves it inactive with its id kept in `FRAK_AMBASSADOR_PAGE_ID` so a reinstall offers Restore.
+- **`{frak_ambassador}`, `{frak_banner}`, `{frak_share_button}` and `{frak_post_purchase}` typed into a CMS page now render their component**, as the README already claimed. `FrakCmsMarkers` swaps them in the `filterCmsContent` hook, reading values as the CMS editor stores them (`&amp;`, `&quot;`, `&nbsp;`). `{frak_ambassador}` is also a Smarty tag. `upgrade/install-1.1.0.php` registers the hook on existing installs.
+- **Dev switch for local testing.** `FRAK_ENV` set to `dev` in `config/defines_custom.inc.php` points the SDK, the merchant lookup, the order webhook and the dashboard links at the Frak dev stack, and `FRAK_MERCHANT_DOMAIN` makes the shop act as that merchant domain (`FrakEnv`, `FrakUrls` methods). Settings warns while either is set. With neither set, output is unchanged.
+
+### Changed
+
+- **`FrakUrls` keeps only `CDN_BASE` and `WEBHOOK_PATH_SUFFIX` as public constants.** The origins that differ in dev are private behind methods (`backendBase()`, `merchantResolveUrl()`, `webhookMerchantPrefix()`, `sdkPointerHost()`, `sdkPointerScript()`, `sdkFallbackScript()`, `dashboardOrigin()`). `MERCHANT_RESOLVE`, `WEBHOOK_MERCHANT_PREFIX`, `SDK_POINTER_SCRIPT` and `SDK_FALLBACK_SCRIPT` are gone; custom code reading them must call the methods.
+
+### Fixed
+
+- **Draining the webhook queue no longer crashes when the backend answers 4xx/5xx.** Symfony's `stream()` threw on the first error status, so *Drain queue now* showed an exception page and the cron URL stopped mid-batch. Each row now records the HTTP error and stays queued for retry.
+- **The cron URL no longer fails on every order.** It skipped the front controller's setup, so the shop currency was missing and building an order payload threw (`ComputingPrecision::getPrecision()` given null); it now loads the default currency.
+- **The settings page no longer fails with a 500 on PrestaShop 9.** `AdminController::l()` no longer exists there; the controller translates through its module instead.
+- **`upgrade/install-1.0.8.php` no longer aborts the upgrade of a shop whose hooks are intact.** On PrestaShop 8.2, re-registering `header` throws a duplicate-key error because core checks it through its `displayHeader` alias; each hook is now registered in its own try/catch.
+
 ## [1.0.10] - 2026-09-18
 
 ### Changed
