@@ -53,15 +53,18 @@ class AdminFrakIntegrationController extends ModuleAdminController
             'webhook_secret_configured' => !empty($webhook_secret),
             'cron_url' => $this->buildCronUrl(),
             'ps_cronjobs_enabled' => $this->isPsCronjobsEnabled(),
-            'frak_dashboard_url' => 'https://business.frak.id/',
+            'frak_dashboard_url' => FrakUrls::dashboardOrigin() . '/',
             'frak_docs_url' => 'https://docs.frak.id/components/frak-setup',
+            'frak_env_dev' => FrakEnv::isDev(),
+            'frak_env_ignored' => FrakEnv::ignoredValue(),
+            'frak_env_domain' => FrakUtils::merchantDomainOverride(),
             'domain' => FrakUtils::currentHost(),
             'merchant_id' => $merchant['id'] ?? '',
             'merchant_name' => $merchant['name'] ?? '',
             'merchant_resolved' => $merchant !== null,
             'merchant_dashboard_url' => $merchant !== null
-                ? 'https://business.frak.id/merchant/' . $merchant['id']
-                : 'https://business.frak.id/',
+                ? FrakUrls::dashboardOrigin() . '/merchant/' . $merchant['id']
+                : FrakUrls::dashboardOrigin() . '/',
             'placement_groups' => $this->buildPlacementGroups(),
             'queue_stats' => FrakWebhookQueue::stats(),
         ]);

@@ -43,7 +43,7 @@ class FrakWebhookHelper
             self::$urlCache = '';
             return null;
         }
-        $url = FrakUrls::WEBHOOK_MERCHANT_PREFIX . rawurlencode($merchant_id) . FrakUrls::WEBHOOK_PATH_SUFFIX;
+        $url = FrakUrls::webhookMerchantPrefix() . rawurlencode($merchant_id) . FrakUrls::WEBHOOK_PATH_SUFFIX;
         self::$urlCache = $url;
         return $url;
     }

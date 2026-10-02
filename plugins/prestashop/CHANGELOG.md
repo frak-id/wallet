@@ -11,6 +11,14 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Added
+
+- **Dev switch for local testing.** `FRAK_ENV` set to `dev` in `config/defines_custom.inc.php` points the SDK, the merchant lookup, the order webhook and the dashboard links at the Frak dev stack, and `FRAK_MERCHANT_DOMAIN` makes the shop act as that merchant domain (`FrakEnv`, `FrakUrls` methods). Settings warns while either is set. With neither set, output is unchanged.
+
+### Changed
+
+- **`FrakUrls` keeps only `CDN_BASE` and `WEBHOOK_PATH_SUFFIX` as public constants.** The origins that differ in dev are private behind methods (`backendBase()`, `merchantResolveUrl()`, `webhookMerchantPrefix()`, `sdkPointerHost()`, `sdkPointerScript()`, `sdkFallbackScript()`, `dashboardOrigin()`). `MERCHANT_RESOLVE`, `WEBHOOK_MERCHANT_PREFIX`, `SDK_POINTER_SCRIPT` and `SDK_FALLBACK_SCRIPT` are gone; custom code reading them must call the methods.
+
 ## [1.0.10] - 2026-09-18
 
 ### Changed

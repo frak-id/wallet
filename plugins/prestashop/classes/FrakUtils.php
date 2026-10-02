@@ -19,6 +19,8 @@ class FrakUtils
      * stripped so comparisons align with the backend's normalization (see
      * `MerchantRepository::getNormalizedDomain`).
      *
+     * `FRAK_MERCHANT_DOMAIN`, when set, replaces the shop host.
+     *
      * @return string Empty string when the host cannot be determined.
      */
     public static function currentHost(): string
@@ -27,7 +29,22 @@ class FrakUtils
             return self::$cachedHost;
         }
 
-        $domain = strtolower((string) Tools::getShopDomain(false, true));
+        $override = self::merchantDomainOverride();
+        self::$cachedHost = $override !== ''
+            ? $override
+            : self::normalizeHost((string) Tools::getShopDomain(false, true));
+        return self::$cachedHost;
+    }
+
+    /** The normalised `FRAK_MERCHANT_DOMAIN`, or an empty string when unset. */
+    public static function merchantDomainOverride(): string
+    {
+        return self::normalizeHost(trim(FrakEnv::merchantDomain()));
+    }
+
+    private static function normalizeHost(string $domain): string
+    {
+        $domain = strtolower($domain);
 
         // `Tools::getShopDomain($http=false)` should never include the scheme,
         // but a custom override can leak one in.
@@ -40,8 +57,7 @@ class FrakUtils
             $domain = substr($domain, 4);
         }
 
-        self::$cachedHost = rtrim($domain, '/');
-        return self::$cachedHost;
+        return rtrim($domain, '/');
     }
 
     /**

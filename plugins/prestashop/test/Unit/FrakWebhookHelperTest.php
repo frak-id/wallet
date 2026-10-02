@@ -4,9 +4,20 @@ declare(strict_types=1);
 
 namespace FrakLabs\PrestaShop\Test\Unit;
 
+use FrakInfra;
+use FrakTestDbRecorder;
 use FrakWebhookHelper;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
+require_once __DIR__ . '/doubles.php';
+require_once __DIR__ . '/../../classes/FrakEnv.php';
+require_once __DIR__ . '/../../classes/FrakUrls.php';
+require_once __DIR__ . '/../../classes/FrakUtils.php';
+require_once __DIR__ . '/../../classes/FrakCache.php';
+require_once __DIR__ . '/../../classes/FrakHttpClient.php';
+require_once __DIR__ . '/../../classes/FrakMerchantResolver.php';
 require_once __DIR__ . '/../../classes/FrakWebhookHelper.php';
 
 /**
@@ -18,6 +29,35 @@ require_once __DIR__ . '/../../classes/FrakWebhookHelper.php';
  */
 final class FrakWebhookHelperTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        frak_test_reset_doubles();
+        FrakInfra::resetAll();
+    }
+
+    public function testWebhookUrlIsProductionWhenNoConstantIsSet(): void
+    {
+        FrakTestDbRecorder::$cacheRows['merchant.shop_example_com'] = '{"id":"m-1","domain":"shop.example.com"}';
+
+        $this->assertSame(
+            'https://backend.frak.id/ext/merchant/m-1/webhook/custom',
+            FrakWebhookHelper::getWebhookUrl()
+        );
+    }
+
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testWebhookUrlFollowsTheDevBackend(): void
+    {
+        define('FRAK_ENV', 'dev');
+        FrakTestDbRecorder::$cacheRows['dev_merchant.shop_example_com'] = '{"id":"m-2","domain":"shop.example.com"}';
+
+        $this->assertSame(
+            'https://backend.gcp-dev.frak.id/ext/merchant/m-2/webhook/custom',
+            FrakWebhookHelper::getWebhookUrl()
+        );
+    }
+
     public function testSignBodyMatchesBackendBase64Contract(): void
     {
         $body = '{"id":"42","customerId":"7","status":"confirmed","token":"abc_42"}';

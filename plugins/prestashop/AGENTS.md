@@ -14,13 +14,13 @@ vendor/bin/phpcs --standard=phpcs.xml.dist   # Style (PSR-12 baseline)
 ## Key Files
 - `frakintegration.php` — module bootstrap; thin router. Every `hookXxx()` is a one-line delegator (PrestaShop discovers hooks via reflection, so they MUST live on the Module class).
 - `config.xml` / `composer.json` — manifest + canonical version source (`composer.json#version`); `build.sh` propagates into `config.xml` + `frakintegration.php` inside the staged zip only.
-- `classes/` — per-surface helpers: `FrakInstaller`, `FrakFrontend`, `FrakOrderWebhook`, `FrakOrderRender`, `FrakDisplayDispatcher`, `FrakSmartyPlugins`, `FrakWebhookHelper`, `FrakWebhookQueue`, `FrakWebhookCron`, `FrakConfig`, `FrakInfra`, `FrakHttpClient`, `FrakPlacementRegistry`, `FrakComponentRenderer`, `FrakMerchantResolver`, `FrakOrderResolver`, `FrakUrls`, `FrakUtils`.
+- `classes/` — per-surface helpers: `FrakInstaller`, `FrakFrontend`, `FrakEnv`, `FrakOrderWebhook`, `FrakOrderRender`, `FrakDisplayDispatcher`, `FrakSmartyPlugins`, `FrakWebhookHelper`, `FrakWebhookQueue`, `FrakWebhookCron`, `FrakConfig`, `FrakInfra`, `FrakHttpClient`, `FrakPlacementRegistry`, `FrakComponentRenderer`, `FrakMerchantResolver`, `FrakOrderResolver`, `FrakUrls`, `FrakUtils`.
 - `controllers/admin/AdminFrakIntegrationController.php` — settings form (brand + secret + placement toggles + maintenance buttons).
 - `controllers/front/cron.php` — token-guarded cron front controller (peer of the `actionCronJob` hook).
 - `sql/install.php` / `sql/uninstall.php` — schema lifecycle for `frak_webhook_queue`.
 - `upgrade/install-X.Y.Z.php` — PrestaShop-native upgrade scripts (auto-discovered; `ps_module.version` is the migration state).
 - `override/` — empty stub (PrestaShop expects the directory on every module).
-- `views/` — Smarty templates · `test/Unit/` — PHPUnit · `test/docker-compose.yaml` — manual integration env.
+- `views/` — Smarty templates · `test/Unit/` — PHPUnit (global PrestaShop doubles live in `test/Unit/doubles.php`; never declare one in a test file) · `test/docker-compose.yaml` — manual integration env.
 
 ## Non-Obvious Patterns
 - **Reflection-based hooks**: `hookXxx()` methods MUST stay on the Module class; bodies delegate to `classes/` helpers. Never grow the bootstrap beyond a router.
@@ -35,10 +35,11 @@ vendor/bin/phpcs --standard=phpcs.xml.dist   # Style (PSR-12 baseline)
 - **PHPStan against real PS sources**: `composer analyse` clones `PrestaShop/PrestaShop@8.2.6` into `.cache/prestashop-core/`. Bump in `composer.json#ps-core:fetch` + workflow cache key to roll forward.
 - **Vendor ships in the zip**: `build.sh` runs `composer install --no-dev`; `.distignore` excludes `composer.json`/`composer.lock` so merchants can't re-run composer.
 - **All `FRAK_*` Configuration access via `FrakConfig`** — typed accessor, no magic strings.
-- **Backend-driven SDK config**: only `metadata.{name,logoUrl}` is injected on `window.FrakSetup`; everything else (i18n, modal, share copy) lives on `business.frak.id`.
+- **Backend-driven SDK config**: only `metadata.{name,logoUrl}` is injected on `window.FrakSetup` (plus `env` / `domain` while a dev constant asks for them); everything else (i18n, modal, share copy) lives on `business.frak.id`.
+- **Dev switch**: `FRAK_ENV` / `FRAK_MERCHANT_DOMAIN` constants, read by `FrakEnv`. Every origin that differs in dev is private in `FrakUrls` behind a method; only the env-invariant `CDN_BASE` and `WEBHOOK_PATH_SUFFIX` are public constants.
 
 ## Anti-Patterns
-Hand-editing `config.xml` / `frakintegration.php` versions (let `build.sh` propagate) · committing `vendor/` (gitignored) · fire-and-forget webhook HTTP without queue fallback · `actionOrderStatusUpdate` instead of `actionOrderStatusPostUpdate` · hex HMAC signature · hard-coding placement hooks outside `FrakPlacementRegistry` · omitting `__present` markers · putting maintenance buttons inside the main settings form · fresh HttpClient instances bypassing `FrakHttpClient` · hard-coding `backend.frak.id` / `cdn.jsdelivr.net` outside `FrakUrls` · raw `Configuration::get/updateValue('FRAK_*')` outside `FrakConfig` · reintroducing per-merchant SDK config (lives on dashboard).
+Hand-editing `config.xml` / `frakintegration.php` versions (let `build.sh` propagate) · committing `vendor/` (gitignored) · fire-and-forget webhook HTTP without queue fallback · `actionOrderStatusUpdate` instead of `actionOrderStatusPostUpdate` · hex HMAC signature · hard-coding placement hooks outside `FrakPlacementRegistry` · omitting `__present` markers · putting maintenance buttons inside the main settings form · fresh HttpClient instances bypassing `FrakHttpClient` · hard-coding `backend.frak.id` / `cdn.jsdelivr.net` outside `FrakUrls` · adding a public `FrakUrls` constant for an origin that differs in dev · declaring PrestaShop doubles outside `test/Unit/doubles.php` · raw `Configuration::get/updateValue('FRAK_*')` outside `FrakConfig` · reintroducing per-merchant SDK config (lives on dashboard).
 
 ## Release Flow
 - CI: `.github/workflows/php-plugins.yaml` runs `cs` + `analyse` + `test` on every push.

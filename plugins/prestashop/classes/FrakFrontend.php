@@ -40,15 +40,31 @@ class FrakFrontend
         // The pointer's script fetch is no-cors, so its preconnect must NOT
         // carry `crossorigin`; the shim's `import()` from jsDelivr is a
         // CORS-mode module fetch, so that preconnect must.
-        return '<link rel="dns-prefetch" href="' . FrakUrls::SDK_POINTER_HOST . '">'
-            . '<link rel="preconnect" href="' . FrakUrls::SDK_POINTER_HOST . '">'
+        return '<link rel="dns-prefetch" href="' . FrakUrls::sdkPointerHost() . '">'
+            . '<link rel="preconnect" href="' . FrakUrls::sdkPointerHost() . '">'
             . '<link rel="dns-prefetch" href="' . FrakUrls::CDN_BASE . '">'
             . '<link rel="preconnect" href="' . FrakUrls::CDN_BASE . '" crossorigin>'
             . '<script>window.FrakSetup=Object.assign(window.FrakSetup||{},{config:{metadata:{'
             . 'name:' . $shop_name_js . ','
             . 'logoUrl:' . $logo_url_js
-            . '}}});</script>'
+            . '}' . self::configOverrides() . '}});</script>'
             . self::sdkScriptTag();
+    }
+
+    /**
+     * `,env:"dev"` and `,domain:"…"` for the config object, only while the
+     * matching constant asks for them. The domain is the normalised override;
+     * `JSON_HEX_TAG` keeps a `</script>` in it from ending the inline script.
+     */
+    private static function configOverrides(): string
+    {
+        $extra = FrakEnv::isDev() ? ',env:"dev"' : '';
+        $domain = FrakUtils::merchantDomainOverride();
+        if ($domain === '') {
+            return $extra;
+        }
+        $domain_js = json_encode($domain, FrakComponentRenderer::JSON_FLAGS | JSON_HEX_TAG);
+        return $extra . ',domain:' . ($domain_js === false ? '""' : $domain_js);
     }
 
     /**
@@ -60,10 +76,10 @@ class FrakFrontend
     private static function sdkScriptTag(): string
     {
         $fallback = "var s=document.createElement('script');"
-            . "s.src='" . FrakUrls::SDK_FALLBACK_SCRIPT . "';"
+            . "s.src='" . FrakUrls::sdkFallbackScript() . "';"
             . 's.defer=true;document.head.appendChild(s)';
 
-        return '<script src="' . FrakUrls::SDK_POINTER_SCRIPT . '" defer'
+        return '<script src="' . FrakUrls::sdkPointerScript() . '" defer'
             . ' onerror="' . $fallback . '"></script>';
     }
 

@@ -13,6 +13,24 @@
    stateful actions, not config writes.
 *}
 
+{if $frak_env_dev || $frak_env_ignored !== null || $frak_env_domain !== ''}
+<div class="alert alert-warning" id="frak_env_notice">
+    <p><strong>{l s='Frak development switch is on.' mod='frakintegration'}</strong>
+        {l s='Remove the constants from config/defines_custom.inc.php to return to production.' mod='frakintegration'}</p>
+    <ul>
+        {if $frak_env_dev}
+            <li><code>FRAK_ENV</code> = <code>dev</code>: {l s='the SDK, the merchant lookup, the order webhook and the dashboard links use the Frak dev stack.' mod='frakintegration'}</li>
+        {/if}
+        {if $frak_env_ignored !== null}
+            <li><code>FRAK_ENV</code> = <code>{$frak_env_ignored|escape:'html':'UTF-8'}</code>: {l s='only "dev" is recognised, so this value is ignored.' mod='frakintegration'}</li>
+        {/if}
+        {if $frak_env_domain !== ''}
+            <li><code>FRAK_MERCHANT_DOMAIN</code> = <code>{$frak_env_domain|escape:'html':'UTF-8'}</code>: {l s='this shop acts as that merchant. Rewards and order webhooks are attributed to that merchant, not to this shop.' mod='frakintegration'}</li>
+        {/if}
+    </ul>
+</div>
+{/if}
+
 <div class="frak-links" style="margin-bottom: 16px;">
     <a href="{$frak_docs_url}" target="_blank" rel="noopener">📚 {l s='Documentation' mod='frakintegration'}</a>
     &nbsp;|&nbsp;
