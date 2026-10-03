@@ -18,13 +18,13 @@ bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here
 - `infra/gcp/gateway.ts` — Envoy Gateway wiring: hostnames per app, the backend's upstream contract, and the (gated) vanity-host ListenerSet + certificates
 - `infra/components/KubernetesJob.ts` — one-shot K8s Job (e.g., bootstrap migrations + bucket provisioning)
 - `infra/utils.ts` — stage helpers: `isProd`, `normalizedStageName`
-- `infra/sdk-pointer.ts` — S3 + CloudFront pointer at `sdk[-dev].frak.id/components.js`; its content is generated from `sdk/components/package.json`, so `sst deploy --stage sdk-pointer[-dev]` *is* the flip. `SDK_POINTER_VERSION=x.y.z` pins one by hand. `infra/config.ts` `componentsUrl` (Shopify's `FRAK_COMPONENTS_URL`) points here, with jsDelivr's floating tag kept only as each integration's `onerror` fallback
+- `infra/sdk-pointer.ts` — S3 + CloudFront pointer at `sdk[-dev].frak.id/components.js`; its content is generated from `sdk/components/package.json`, so `sst deploy --stage sdk-pointer[-dev]` *is* the flip. `SDK_POINTER_VERSION=x.y.z` pins one by hand. `infra/config.ts` `componentsUrl` (Shopify's `FRAK_COMPONENTS_URL`) points here, with jsDelivr's floating tag kept only as each integration's `onerror` fallback. The same stack serves the Shopify ambassador proxy page at `sdk.frak.id/shopify/ambassador` (object built from `apps/shopify/proxy/ambassador.liquid`, `Content-Type: application/liquid`, every `/shopify/ambassador*` URI rewritten to it at the edge with the query string dropped) — deploy it before `shopify app deploy`
 - `apps/*/Dockerfile` — self-contained multi-stage (each builds the SDK in its own `sdk-builder` stage) → `nginx:<pinned>-alpine` with pre-compressed gzip
 - `services/backend/Dockerfile` — backend runtime image
 - `services/bootstrap/Dockerfile` — one-shot bootstrap image (Drizzle migrations + RustFS bucket provisioning)
 
 ## Stages
-`$dev` (local) · `dev` / `prod` (AWS) · `gcp-staging` / `gcp-production` (GCP) · `sdk-pointer` / `sdk-pointer-dev` (AWS, release workflows only — deploying them from a branch points merchants at that branch's `package.json` version).
+`$dev` (local) · `dev` / `prod` (AWS) · `gcp-staging` / `gcp-production` (GCP) · `sdk-pointer` / `sdk-pointer-dev` (AWS, release workflows only — deploying them from a branch points merchants at that branch's `package.json` version, and every Shopify storefront at that branch's ambassador page).
 
 ## Non-Obvious Patterns
 - **Bootstrap Job gate**: `KubernetesJob` (`services/bootstrap`) runs Drizzle migrations (Postgres + libSQL), the back-fills AND RustFS bucket provisioning. MUST finish before backend `KubernetesService` — enforced by Pulumi `dependsOn`. Skipping = broken pods.
@@ -45,7 +45,7 @@ bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here
 
 ## CI/CD (.github/workflows)
 - `deploy.yml` — path-based triggers; `main` → prod, `dev` → staging
-- `release.yml` — Changesets → npm publish → wait for jsDelivr → `sst deploy --stage sdk-pointer` → jsDelivr cache purge
+- `release.yml` — Changesets → npm publish → wait for jsDelivr → `sst deploy --stage sdk-pointer` → jsDelivr cache purge; on runs that publish nothing, its `ambassador-page` job redeploys `sdk-pointer` for the Shopify page with `SDK_POINTER_VERSION` pinned to the version already served
 - `beta-release.yml` — SDK changes on `dev` → beta publish tagged with content hash → wait for jsDelivr → `sst deploy --stage sdk-pointer-dev`
 - `tauri-mobile-release.yml` — manual → iOS TestFlight + Android Play Store
 
