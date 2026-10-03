@@ -156,7 +156,11 @@ Android, keeps the web components. The web app stays in charge: the hooks and
 components in `app/module/native-glass/` push each surface's state to native, and
 native sends user actions back as plugin events. A native view always draws above the
 webview, so every surface hides itself while a web overlay sits on top of it
-(`modalStore`, or `body[data-scroll-locked]` for Radix/vaul).
+(`modalStore`, or `body[data-scroll-locked]` for Radix/vaul). Web surfaces that show
+without either call `useCoverNativeChrome`: `"full"` for a full-screen gate
+(`FullScreenGate`), `"bottom"` for a prompt pinned to the bottom edge
+(`SoftUpdatePrompt`). Top chrome also steps aside for the `BannerStack` banners. A new
+blocking screen that skips this stays under a tappable native button.
 
 | Surface | Native control | Web twin |
 |---|---|---|

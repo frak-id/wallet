@@ -139,6 +139,22 @@ describe("GlassDetailActions", () => {
         expect(lastToolbar()?.visible).toBe(false);
     });
 
+    it("ignores native taps while hidden", async () => {
+        const onClose = vi.fn();
+        render(<GlassDetailActions id="sheet" onClose={onClose} />);
+        await flushBridge();
+
+        document.body.setAttribute("data-scroll-locked", "1");
+        await flushBridge();
+        act(() => emit({ toolbarId: "sheet", itemId: "close" }));
+        expect(onClose).not.toHaveBeenCalled();
+
+        document.body.removeAttribute("data-scroll-locked");
+        await flushBridge();
+        act(() => emit({ toolbarId: "sheet", itemId: "close" }));
+        expect(onClose).toHaveBeenCalledOnce();
+    });
+
     it("hides as soon as the sheet starts closing", async () => {
         render(
             <DetailOverlay

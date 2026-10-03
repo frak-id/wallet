@@ -11,10 +11,7 @@ import {
 } from "@/module/explorer/stores/explorerSortStore";
 import { hasNativeGlass } from "@/module/native-glass/bridge";
 import { useNativeToolbar } from "@/module/native-glass/hook/useNativeToolbar";
-import {
-    useOverlayOpen,
-    useTopBannerShown,
-} from "@/module/native-glass/hook/useOverlayOpen";
+import { useOverlayOpen } from "@/module/native-glass/hook/useOverlayOpen";
 import { nativeColors } from "@/module/native-glass/tokens.css";
 import * as styles from "./index.css";
 
@@ -71,8 +68,7 @@ function NativeSortButton() {
     const { t } = useTranslation();
     const { sort, isCustom, label } = useSortState();
     const setSort = useStore(explorerSortStore, (s) => s.setSort);
-    const overlayOpen = useOverlayOpen();
-    const bannerShown = useTopBannerShown();
+    const overlayOpen = useOverlayOpen("top");
 
     useNativeToolbar("explorer", {
         // The sticky header row starts one content gap below the safe area.
@@ -94,7 +90,7 @@ function NativeSortButton() {
                 },
             },
         ],
-        visible: !overlayOpen && !bannerShown,
+        visible: !overlayOpen,
         onAction: (_itemId, value) => {
             const option = EXPLORER_SORT_OPTIONS.find((o) => o.value === value);
             if (option) setSort(option.value);

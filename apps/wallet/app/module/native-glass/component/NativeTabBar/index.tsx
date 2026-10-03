@@ -45,7 +45,7 @@ export function NativeTabBar({
     onReselect,
 }: NativeTabBarProps) {
     const router = useRouter();
-    const overlayOpen = useOverlayOpen();
+    const overlayOpen = useOverlayOpen("bottom");
 
     const items = useMemo(
         () =>
@@ -78,6 +78,8 @@ export function NativeTabBar({
     }, [router, tabs]);
 
     useNativeEvent<{ key: string }>("tabSelected", ({ key }) => {
+        // A tap can land in the round trip before native hears of a hide.
+        if (overlayOpen) return;
         if (key === activeKey) {
             onReselect?.();
             return;

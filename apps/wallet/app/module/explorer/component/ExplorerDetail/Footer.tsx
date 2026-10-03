@@ -88,7 +88,7 @@ function NativeFooter({
     onShare,
 }: ExplorerDetailFooterProps) {
     const { t } = useTranslation();
-    const visible = useDetailSheetChromeVisible();
+    const visible = useDetailSheetChromeVisible("bottom");
 
     useNativeBottomAction({
         title: t(primaryLabelKey(needsLink, creating)),
