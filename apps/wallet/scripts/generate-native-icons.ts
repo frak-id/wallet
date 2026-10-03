@@ -12,6 +12,8 @@ const ICONS: Record<string, { component: string; size: number }> = {
     "tab-wallet": { component: "WalletIcon", size: 24 },
     "tab-explorer": { component: "ExplorerIcon", size: 24 },
     "tab-profile": { component: "ProfileIcon", size: 24 },
+    "glass-close": { component: "CloseIcon", size: 22 },
+    "glass-share": { component: "ShareIcon", size: 20 },
 };
 
 const SOURCE_DIR = join(

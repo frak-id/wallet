@@ -9,7 +9,6 @@ import {
     DetailSheetFooter,
     DetailSheetHero,
 } from "@frak-labs/design-system/components/DetailSheet";
-import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
 import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
@@ -19,7 +18,6 @@ import {
     CopyIcon,
     ExternalLinkIcon,
     ImageIcon,
-    ShareIcon,
 } from "@frak-labs/design-system/icons";
 import {
     buildSharingLink,
@@ -37,8 +35,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useStore } from "zustand";
-import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
+import { GlassDetailActions } from "@/module/native-glass/component/GlassDetailActions";
 import { useCampaignView } from "../../campaignView";
 import { useAffiliateShareLink } from "../../hook/useAffiliateShareLink";
 import { useToolbarTitleReveal } from "../../hook/useToolbarTitleReveal";
@@ -243,19 +241,18 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
 
                 <DetailSheetActions ref={toolbarRef}>
                     <ToolbarBlur visible={blurred} />
-                    <GlassCloseButton
-                        onClick={onClose}
-                        label={t("explorer.detail.close")}
-                    />
                     <ToolbarTitle name={merchant.name} visible={showToolbar} />
-                    {canShare && !affiliateNeedsLink && (
-                        <GlassButton
-                            as="button"
-                            icon={<ShareIcon width={20} height={20} />}
-                            onClick={handleShare}
-                            aria-label={t("explorer.detail.share")}
-                        />
-                    )}
+                    <GlassDetailActions
+                        id="explorerDetail"
+                        onClose={onClose}
+                        closeLabel={t("explorer.detail.close")}
+                        onShare={
+                            canShare && !affiliateNeedsLink
+                                ? handleShare
+                                : undefined
+                        }
+                        shareLabel={t("explorer.detail.share")}
+                    />
                 </DetailSheetActions>
 
                 {view &&
