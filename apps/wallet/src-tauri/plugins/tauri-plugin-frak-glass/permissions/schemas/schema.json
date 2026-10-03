@@ -331,6 +331,18 @@
           "markdownDescription": "Denies the remove_listener command without any pre-configured scope."
         },
         {
+          "description": "Enables the set_bottom_action command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-set-bottom-action",
+          "markdownDescription": "Enables the set_bottom_action command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_bottom_action command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-set-bottom-action",
+          "markdownDescription": "Denies the set_bottom_action command without any pre-configured scope."
+        },
+        {
           "description": "Enables the set_tab_bar command without any pre-configured scope.",
           "type": "string",
           "const": "allow-set-tab-bar",
@@ -355,10 +367,10 @@
           "markdownDescription": "Denies the set_toolbar command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the frak-glass plugin\n#### This default permission set includes:\n\n- `allow-is-supported`\n- `allow-set-tab-bar`\n- `allow-set-toolbar`\n- `allow-register-listener`\n- `allow-remove-listener`",
+          "description": "Default permissions for the frak-glass plugin\n#### This default permission set includes:\n\n- `allow-is-supported`\n- `allow-set-tab-bar`\n- `allow-set-toolbar`\n- `allow-set-bottom-action`\n- `allow-register-listener`\n- `allow-remove-listener`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the frak-glass plugin\n#### This default permission set includes:\n\n- `allow-is-supported`\n- `allow-set-tab-bar`\n- `allow-set-toolbar`\n- `allow-register-listener`\n- `allow-remove-listener`"
+          "markdownDescription": "Default permissions for the frak-glass plugin\n#### This default permission set includes:\n\n- `allow-is-supported`\n- `allow-set-tab-bar`\n- `allow-set-toolbar`\n- `allow-set-bottom-action`\n- `allow-register-listener`\n- `allow-remove-listener`"
         }
       ]
     }

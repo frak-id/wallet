@@ -1,5 +1,6 @@
 import { BANNER_STACK_ATTRIBUTE } from "@frak-labs/design-system/components/BannerStack";
 import { useSyncExternalStore } from "react";
+import { useDetailOverlayClosing } from "@/module/common/component/DetailOverlay";
 import { modalStore } from "@/module/stores/modalStore";
 
 // Set on <body> by react-remove-scroll, which every Radix modal and vaul drawer mounts.
@@ -32,6 +33,16 @@ export function useOverlayOpen(): boolean {
     const hasModal = modalStore((s) => s.modal !== null);
     const scrollLocked = useScrollLocked();
     return hasModal || scrollLocked;
+}
+
+/**
+ * Whether native chrome owned by a detail sheet should show: hidden as soon as
+ * the sheet starts its fade-out, and while a Radix or vaul overlay sits on top.
+ */
+export function useDetailSheetChromeVisible(): boolean {
+    const closing = useDetailOverlayClosing();
+    const scrollLocked = useScrollLocked();
+    return !closing && !scrollLocked;
 }
 
 const BANNER_STACK_SELECTOR = `[${BANNER_STACK_ATTRIBUTE}]`;

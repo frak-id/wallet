@@ -1,11 +1,13 @@
 import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
 import { ShareIcon } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
-import { useDetailOverlayClosing } from "@/module/common/component/DetailOverlay";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { useNativeDetailChrome } from "../../hook/useNativeDetailChrome";
 import { useNativeToolbar } from "../../hook/useNativeToolbar";
-import { useScrollLocked, useTopBannerShown } from "../../hook/useOverlayOpen";
+import {
+    useDetailSheetChromeVisible,
+    useTopBannerShown,
+} from "../../hook/useOverlayOpen";
 
 type GlassDetailActionsProps = {
     /** Native toolbar id; one per sheet. */
@@ -60,8 +62,7 @@ function NativeDetailActions({
     shareLabel,
 }: GlassDetailActionsProps) {
     const { t } = useTranslation();
-    const closing = useDetailOverlayClosing();
-    const scrollLocked = useScrollLocked();
+    const chromeVisible = useDetailSheetChromeVisible();
     const bannerShown = useTopBannerShown();
 
     useNativeToolbar(id, {
@@ -81,9 +82,8 @@ function NativeDetailActions({
                   },
               ]
             : [],
-        // Leaves with the sheet's fade-out instead of after it; a top banner
-        // covers the web buttons, so the native ones step aside for it.
-        visible: !closing && !scrollLocked && !bannerShown,
+        // A top banner covers the web buttons, so the native ones step aside for it.
+        visible: chromeVisible && !bannerShown,
         onAction: (itemId) => {
             if (itemId === "close") onClose();
             if (itemId === "share") onShare?.();
