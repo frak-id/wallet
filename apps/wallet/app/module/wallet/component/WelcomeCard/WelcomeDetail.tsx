@@ -5,16 +5,14 @@ import {
     DetailSheetFooter,
     DetailSheetHero,
 } from "@frak-labs/design-system/components/DetailSheet";
-import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { ShareIcon } from "@frak-labs/design-system/icons";
 import { ExternalLink, useShareLink } from "@frak-labs/wallet-shared";
 import { useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { ButtonLink } from "@/module/common/component/ButtonLink";
-import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InstructionList } from "@/module/common/component/InstructionList";
 import { Title } from "@/module/common/component/Title";
+import { GlassDetailActions } from "@/module/native-glass/component/GlassDetailActions";
 import welcomeLogos from "./welcome_logos_detail.webp";
 import * as styles from "./welcomeDetail.css";
 
@@ -53,15 +51,11 @@ export function WelcomeDetail({ onClose }: WelcomeDetailProps) {
             <DetailSheetHero height={280}>
                 <img src={welcomeLogos} alt="" className={styles.heroImage} />
                 <DetailSheetActions>
-                    <GlassCloseButton onClick={onClose} />
-                    {canShare && (
-                        <GlassButton
-                            as="button"
-                            icon={<ShareIcon width={20} height={20} />}
-                            onClick={handleShare}
-                            aria-label={t("common.share")}
-                        />
-                    )}
+                    <GlassDetailActions
+                        id="welcomeDetail"
+                        onClose={onClose}
+                        onShare={canShare ? handleShare : undefined}
+                    />
                 </DetailSheetActions>
             </DetailSheetHero>
 

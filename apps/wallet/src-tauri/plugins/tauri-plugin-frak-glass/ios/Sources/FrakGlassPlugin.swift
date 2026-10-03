@@ -11,6 +11,8 @@ class FrakGlassPlugin: Plugin {
     private lazy var tabBar = TabBarSurface { [weak self] key in
         self?.trigger("tabSelected", data: ["key": key] as JSObject)
     }
+    // Never removed, only hidden: ids are a fixed set of screens.
+    private var toolbars: [String: ToolbarSurface] = [:]
 
     @objc public override func load(webview: WKWebView) {
         self.webview = webview
@@ -26,6 +28,23 @@ class FrakGlassPlugin: Plugin {
             let height = self.tabBar.update(args, in: host)
             invoke.resolve(["height": Double(height)] as JsonObject)
         }
+    }
+
+    @objc public func setToolbar(_ invoke: Invoke) throws {
+        let args = try invoke.parseArgs(ToolbarArgs.self)
+        onHost(invoke) { host in
+            let toolbar = self.toolbars[args.id] ?? self.makeToolbar(id: args.id, in: host)
+            toolbar.update(args, in: host)
+            invoke.resolve()
+        }
+    }
+
+    private func makeToolbar(id: String, in host: UIView) -> ToolbarSurface {
+        let toolbar = ToolbarSurface(in: host) { [weak self] itemId in
+            self?.trigger("toolbarAction", data: ["toolbarId": id, "itemId": itemId] as JSObject)
+        }
+        toolbars[id] = toolbar
+        return toolbar
     }
 
     /// Runs `body` on the main queue with the view hosting the webview, or rejects.

@@ -14,6 +14,13 @@ enum Glass {
     static func icon(named name: String) -> UIImage? {
         (UIImage(named: name) ?? UIImage(systemName: name))?.withRenderingMode(.alwaysTemplate)
     }
+
+    static func buttonConfiguration(prominent: Bool = false) -> UIButton.Configuration {
+        #if compiler(>=6.2)
+            if #available(iOS 26.0, *) { return prominent ? .prominentGlass() : .glass() }
+        #endif
+        return prominent ? .filled() : .gray()
+    }
 }
 
 extension UIColor {

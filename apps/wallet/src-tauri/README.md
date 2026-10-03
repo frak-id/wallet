@@ -161,6 +161,7 @@ webview, so every surface hides itself while a web overlay sits on top of it
 | Surface | Native control | Web twin |
 |---|---|---|
 | Bottom navigation | system `UITabBar` | `BottomTabBar` |
+| Detail sheet close / share | `UIButton` `.glass()` toolbar | `GlassCloseButton` / `GlassButton` |
 
 Icons are template SVGs in `gen/apple/Assets.xcassets`, generated from the
 design-system icons by `bun run tauri:native-icons` (`scripts/generate-native-icons.ts`).

@@ -2,6 +2,9 @@ import type { ReactNode } from "react";
 import * as styles from "../../styles/bannerStack.css";
 import { Box } from "../Box";
 
+/** Marks the stack so native chrome (iOS glass toolbars) can step aside while a banner shows. */
+export const BANNER_STACK_ATTRIBUTE = "data-banner-stack";
+
 type BannerStackProps = {
     children?: ReactNode;
 };
@@ -15,6 +18,7 @@ export function BannerStack({ children }: BannerStackProps) {
     return (
         <Box
             className={styles.stack}
+            {...{ [BANNER_STACK_ATTRIBUTE]: "" }}
             // Keep a banner click from reaching the modal's outside-dismiss
             // listener (the stack renders outside modal content). Click still fires.
             onPointerDown={(event) => event.nativeEvent.stopPropagation()}

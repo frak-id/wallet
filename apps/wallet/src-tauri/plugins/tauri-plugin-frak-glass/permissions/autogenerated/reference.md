@@ -6,6 +6,7 @@ Default permissions for the frak-glass plugin
 
 - `allow-is-supported`
 - `allow-set-tab-bar`
+- `allow-set-toolbar`
 - `allow-register-listener`
 - `allow-remove-listener`
 
@@ -118,6 +119,32 @@ Enables the set_tab_bar command without any pre-configured scope.
 <td>
 
 Denies the set_tab_bar command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-glass:allow-set-toolbar`
+
+</td>
+<td>
+
+Enables the set_toolbar command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-glass:deny-set-toolbar`
+
+</td>
+<td>
+
+Denies the set_toolbar command without any pre-configured scope.
 
 </td>
 </tr>
