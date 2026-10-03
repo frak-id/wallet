@@ -90,6 +90,10 @@ final class ToolbarSurface {
         setVisible(args.visible)
     }
 
+    func hide() {
+        setVisible(false)
+    }
+
     private func sync(
         _ row: UIStackView, from current: [ToolbarItemArgs], to next: [ToolbarItemArgs]
     ) -> [ToolbarItemArgs] {

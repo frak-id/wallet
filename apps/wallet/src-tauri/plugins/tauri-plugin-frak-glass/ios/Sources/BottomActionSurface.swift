@@ -71,6 +71,10 @@ final class BottomActionSurface {
         return occludedHeight(in: host)
     }
 
+    func hide() {
+        if let host = button.superview { setVisible(false, in: host) }
+    }
+
     // From the resting top edge: `center` and `bounds` ignore the slide transform.
     private func occludedHeight(in host: UIView) -> CGFloat {
         host.bounds.height - (button.center.y - button.bounds.height / 2)

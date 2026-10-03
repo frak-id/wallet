@@ -19,8 +19,12 @@ class FrakGlassPlugin: Plugin {
         self.webview = webview
     }
 
+    // Probed once per page load: whatever still shows belongs to the page before a reload.
     @objc public func isSupported(_ invoke: Invoke) {
-        invoke.resolve(["supported": Glass.isAvailable] as JsonObject)
+        DispatchQueue.main.async { [weak self] in
+            self?.hideAll()
+            invoke.resolve(["supported": Glass.isAvailable] as JsonObject)
+        }
     }
 
     @objc public func setTabBar(_ invoke: Invoke) throws {
@@ -52,6 +56,12 @@ class FrakGlassPlugin: Plugin {
             let height = action.update(args, in: host)
             invoke.resolve(["height": Double(height)] as JsonObject)
         }
+    }
+
+    private func hideAll() {
+        tabBar.hide()
+        toolbars.values.forEach { $0.hide() }
+        bottomAction?.hide()
     }
 
     private func makeToolbar(id: String, in host: UIView) -> ToolbarSurface {
