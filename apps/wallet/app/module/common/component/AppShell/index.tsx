@@ -12,13 +12,17 @@ import {
 } from "@frak-labs/wallet-shared";
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import {
     BottomTabBar,
     type TabItem,
 } from "@/module/common/component/BottomTabBar";
 import { ErrorBoundary } from "@/module/common/component/ErrorBoundary";
 import { ModalErrorToast } from "@/module/common/component/ModalErrorToast";
+import {
+    hasNativeTabBar,
+    NativeTabBar,
+} from "@/module/common/component/NativeTabBar";
 import { SessionExpiringBanner } from "@/module/common/component/SessionExpiringBanner";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { EnsureConflictToast } from "@/module/pending-actions/component/EnsureConflictToast";
@@ -39,9 +43,24 @@ import { AppShellScrollContext } from "./scrollContext";
 export { useAppShellScroll } from "./scrollContext";
 
 const tabs: TabItem[] = [
-    { key: "/wallet", label: "Porte-monnaie", icon: <WalletIcon /> },
-    { key: "/explorer", label: "Explorer", icon: <ExplorerIcon /> },
-    { key: "/profile", label: "Profil", icon: <ProfileIcon /> },
+    {
+        key: "/wallet",
+        label: "Porte-monnaie",
+        icon: <WalletIcon />,
+        nativeIcon: "tab-wallet",
+    },
+    {
+        key: "/explorer",
+        label: "Explorer",
+        icon: <ExplorerIcon />,
+        nativeIcon: "tab-explorer",
+    },
+    {
+        key: "/profile",
+        label: "Profil",
+        icon: <ProfileIcon />,
+        nativeIcon: "tab-profile",
+    },
 ];
 
 // Home tab key. The bottom tab bar uses this to keep the back-stack bounded:
@@ -98,6 +117,10 @@ export function AppShell({
     // render (e.g. on every pathname change). The ref identity is stable.
     const scrollValue = useMemo(() => ({ scrollContainerRef: mainRef }), []);
 
+    const scrollToTop = useCallback(() => {
+        mainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }, []);
+
     return (
         <AppShellScrollContext.Provider value={scrollValue}>
             <Box className={auth ? shellContainerAuth : shellContainer}>
@@ -123,7 +146,15 @@ export function AppShell({
                 >
                     <ErrorBoundary>{children ?? <Outlet />}</ErrorBoundary>
                 </Box>
-                {navigation && (
+                {navigation && hasNativeTabBar() && (
+                    <NativeTabBar
+                        tabs={tabs}
+                        activeKey={activeKey}
+                        homeKey={TAB_HOME_KEY}
+                        onReselect={scrollToTop}
+                    />
+                )}
+                {navigation && !hasNativeTabBar() && (
                     <Box className={bottomBar}>
                         <BottomTabBar
                             tabs={tabs}

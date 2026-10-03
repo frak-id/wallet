@@ -1,0 +1,8 @@
+[default]
+description = "Default permissions for the frak-tab-bar plugin"
+permissions = [
+    "allow-is-supported",
+    "allow-update",
+    "allow-register-listener",
+    "allow-remove-listener",
+]

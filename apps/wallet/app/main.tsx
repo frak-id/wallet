@@ -21,6 +21,7 @@ import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
 import { StrictMode, startTransition } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
+import { initNativeTabBar } from "@/module/common/component/NativeTabBar/bridge";
 import { queryClient } from "@/module/common/provider/queryClient";
 import { installViewTransitionOptOut } from "./utils/bottomBarRoutes";
 import { initDeepLinks } from "./utils/deepLink";
@@ -129,7 +130,7 @@ declare module "@tanstack/react-router" {
 async function main() {
     // Initialize Tauri-specific features for mobile devices
     if (IS_TAURI) {
-        await initSafeAreaInsets();
+        await Promise.all([initSafeAreaInsets(), initNativeTabBar()]);
         initKeyboardInset();
         await initDeepLinks((options) => {
             return router.navigate(

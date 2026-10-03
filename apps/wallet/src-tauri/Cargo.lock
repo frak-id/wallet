@@ -80,6 +80,7 @@ dependencies = [
  "tauri-plugin-deep-link",
  "tauri-plugin-frak-firebase",
  "tauri-plugin-frak-share",
+ "tauri-plugin-frak-tab-bar",
  "tauri-plugin-frak-updater",
  "tauri-plugin-frak-webauthn",
  "tauri-plugin-fs",
@@ -3770,6 +3771,14 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "tauri",
+ "tauri-plugin",
+]
+
+[[package]]
+name = "tauri-plugin-frak-tab-bar"
+version = "0.1.0"
+dependencies = [
  "tauri",
  "tauri-plugin",
 ]

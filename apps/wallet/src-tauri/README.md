@@ -29,7 +29,7 @@ The Frak Wallet mobile app is built using [Tauri 2.x](https://tauri.app/), which
   "requires iOS 16.0 or later" is the correct unsupported-device screen, and the
   floor is what produces it. This also clears ITMS-90068, which only mandates
   15.0 from Spring 2027. Declared in `gen/apple/project.yml` and mirrored into
-  eleven other sites, all gated as a set by `bun run check:ios-floor`
+  twelve other sites, all gated as a set by `bun run check:ios-floor`
   (`scripts/check-ios-floor.ts`), which runs inside `bun run lint` and in the
   release workflow's validate job. Bump `project.yml` and let the gate name the
   rest; it also fails a `.vN` a manifest's `swift-tools-version` cannot express.
@@ -146,6 +146,18 @@ and `id.frak.wallet.dev`):
 1. Enable the **iCloud** capability.
 2. Enable **Key-value storage** (no container needed — uses the App ID).
 3. Regenerate and re-download the provisioning profile.
+
+#### Native tab bar (iOS 26+)
+
+`tauri-plugin-frak-tab-bar` floats a system `UITabBar` over the webview, so the bottom
+navigation renders as real Liquid Glass. It is only used when the app is built with the
+iOS 26 SDK *and* runs on iOS 26. Anything older, and Android, keeps the web
+`BottomTabBar`. The web router stays in charge: `NativeTabBar`
+(`app/module/common/component/NativeTabBar/`) pushes the tabs, the selection and the
+visibility to native, and native sends taps back as `tabSelected` events. A native view
+always draws above the webview, so the bar hides itself whenever a web overlay is open
+(`modalStore`, or `body[data-scroll-locked]` for Radix/vaul). Tab icons are template
+SVGs in `gen/apple/Assets.xcassets/tab-*.imageset`.
 
 #### Code Signing
 
