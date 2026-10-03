@@ -1,14 +1,30 @@
 import { useRouter } from "@tanstack/react-router";
-import { useEffect, useEffectEvent, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
     shouldReplaceTab,
     type TabItem,
 } from "@/module/common/component/BottomTabBar";
-import { onNativeTabSelected, syncNativeTabBar } from "./bridge";
-import { nativeTabTint } from "./nativeTabBar.css";
-import { useOverlayOpen } from "./useOverlayOpen";
+import { createNativeSync } from "../../bridge";
+import { NATIVE_TAB_BAR_HEIGHT_VAR } from "../../constants";
+import { useNativeEvent } from "../../hook/useNativeEvent";
+import { useOverlayOpen } from "../../hook/useOverlayOpen";
+import { nativeColors } from "../../tokens.css";
 
-export { hasNativeTabBar, initNativeTabBar } from "./bridge";
+const syncTabBar = createNativeSync(
+    "set_tab_bar",
+    {
+        items: [] as { key: string; title: string; icon: string }[],
+        selectedKey: null as string | null,
+        visible: false,
+        tint: nativeColors.action,
+    },
+    ({ height }: { height: number }) => {
+        document.documentElement.style.setProperty(
+            NATIVE_TAB_BAR_HEIGHT_VAR,
+            `${height}px`
+        );
+    }
+);
 
 type NativeTabBarProps = {
     tabs: TabItem[];
@@ -19,8 +35,8 @@ type NativeTabBarProps = {
 };
 
 /**
- * Drives the iOS Liquid Glass `UITabBar` (`tauri-plugin-frak-tab-bar`). Renders
- * nothing: the bar is a native view over the webview, shown while mounted.
+ * Drives the native Liquid Glass `UITabBar`, the iOS 26 twin of `BottomTabBar`.
+ * Renders nothing: the bar is a native view over the webview, shown while mounted.
  */
 export function NativeTabBar({
     tabs,
@@ -42,16 +58,16 @@ export function NativeTabBar({
     );
 
     useEffect(() => {
-        syncNativeTabBar({ items, tint: nativeTabTint });
+        syncTabBar({ items });
     }, [items]);
 
     useEffect(() => {
-        syncNativeTabBar({ selectedKey: activeKey });
+        syncTabBar({ selectedKey: activeKey });
     }, [activeKey]);
 
     useEffect(() => {
-        syncNativeTabBar({ visible: !overlayOpen });
-        return () => syncNativeTabBar({ visible: false });
+        syncTabBar({ visible: !overlayOpen });
+        return () => syncTabBar({ visible: false });
     }, [overlayOpen]);
 
     // `<Link>`s preload on render; nothing renders here, so preload by hand.
@@ -61,7 +77,7 @@ export function NativeTabBar({
         }
     }, [router, tabs]);
 
-    const onSelect = useEffectEvent(({ key }: { key: string }) => {
+    useNativeEvent<{ key: string }>("tabSelected", ({ key }) => {
         if (key === activeKey) {
             onReselect?.();
             return;
@@ -71,13 +87,6 @@ export function NativeTabBar({
             replace: shouldReplaceTab(key, activeKey, homeKey),
         });
     });
-
-    useEffect(() => {
-        const listener = onNativeTabSelected((event) => onSelect(event));
-        return () => {
-            listener.then((l) => l.unregister()).catch(() => {});
-        };
-    }, []);
 
     return null;
 }

@@ -24,7 +24,7 @@ export type AppErrorSource =
     | "sso"
     | "notifications"
     | "safe_area"
-    | "native_tab_bar"
+    | "native_glass"
     | "pending_actions"
     | "manual";
 

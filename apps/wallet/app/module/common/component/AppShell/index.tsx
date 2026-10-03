@@ -19,11 +19,9 @@ import {
 } from "@/module/common/component/BottomTabBar";
 import { ErrorBoundary } from "@/module/common/component/ErrorBoundary";
 import { ModalErrorToast } from "@/module/common/component/ModalErrorToast";
-import {
-    hasNativeTabBar,
-    NativeTabBar,
-} from "@/module/common/component/NativeTabBar";
 import { SessionExpiringBanner } from "@/module/common/component/SessionExpiringBanner";
+import { hasNativeGlass } from "@/module/native-glass/bridge";
+import { NativeTabBar } from "@/module/native-glass/component/NativeTabBar";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { EnsureConflictToast } from "@/module/pending-actions/component/EnsureConflictToast";
 import {
@@ -146,7 +144,7 @@ export function AppShell({
                 >
                     <ErrorBoundary>{children ?? <Outlet />}</ErrorBoundary>
                 </Box>
-                {navigation && hasNativeTabBar() && (
+                {navigation && hasNativeGlass() && (
                     <NativeTabBar
                         tabs={tabs}
                         activeKey={activeKey}
@@ -154,7 +152,7 @@ export function AppShell({
                         onReselect={scrollToTop}
                     />
                 )}
-                {navigation && !hasNativeTabBar() && (
+                {navigation && !hasNativeGlass() && (
                     <Box className={bottomBar}>
                         <BottomTabBar
                             tabs={tabs}

@@ -53,6 +53,7 @@
     "tauri:android:build:dev": "./scripts/build-android-dev.sh",
     "tauri:version": "./scripts/sync-version.sh",
     "tauri:icons": "./src-tauri/icons/sources/regenerate.sh",
+    "tauri:native-icons": "bun scripts/generate-native-icons.ts",
     "generate:routes": "bun run scripts/generate-routes.ts"
   },
   "dependencies": {

@@ -44,7 +44,7 @@ let emitTabSelected: (event: { key: string }) => void = () => {};
 
 function updates() {
     return invokeMock.mock.calls
-        .filter(([command]) => command === "plugin:frak-tab-bar|update")
+        .filter(([command]) => command === "plugin:frak-glass|set_tab_bar")
         .map(([, args]) => args);
 }
 

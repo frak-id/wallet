@@ -1,7 +1,4 @@
-import SwiftRs
-import Tauri
 import UIKit
-import WebKit
 
 struct TabItemArgs: Decodable, Equatable {
     let key: String
@@ -10,7 +7,7 @@ struct TabItemArgs: Decodable, Equatable {
     let icon: String
 }
 
-struct UpdateArgs: Decodable {
+struct TabBarArgs: Decodable {
     let items: [TabItemArgs]
     let selectedKey: String?
     let visible: Bool
@@ -18,63 +15,34 @@ struct UpdateArgs: Decodable {
     let tint: String?
 }
 
-/// A system `UITabBar` floated over the webview: built against the iOS 26 SDK
-/// it renders as Liquid Glass and samples the web content scrolling under it.
-/// The web router stays the source of truth — `update` mirrors its state in,
-/// taps go back out as `tabSelected` events.
-class FrakTabBarPlugin: Plugin, UITabBarDelegate {
-    private weak var webview: WKWebView?
-    private var tabBar: UITabBar?
+/// A system `UITabBar` pinned to the bottom of the host view: built against the
+/// iOS 26 SDK it renders as Liquid Glass and samples the web content under it.
+final class TabBarSurface: NSObject, UITabBarDelegate {
+    private let onSelect: (String) -> Void
+    private var bar: UITabBar?
     private var items: [TabItemArgs] = []
     private var tint: String?
     private var visible = false
+    private var transition = 0
 
-    // Glass needs the iOS 26 SDK at build time AND iOS 26 at run time; anything
-    // less gets the opaque pre-26 bar, which is worse than the web one.
-    private static var isGlassAvailable: Bool {
-        #if compiler(>=6.2)
-            if #available(iOS 26.0, *) { return true }
-        #endif
-        return false
+    init(onSelect: @escaping (String) -> Void) {
+        self.onSelect = onSelect
     }
 
-    @objc public override func load(webview: WKWebView) {
-        self.webview = webview
+    /// Returns the height the bar occludes at the bottom of the screen.
+    func update(_ args: TabBarArgs, in host: UIView) -> CGFloat {
+        let bar = self.bar ?? mount(in: host)
+        apply(args, to: bar)
+        host.layoutIfNeeded()
+        setVisible(args.visible, bar: bar)
+        return bar.bounds.height
     }
-
-    @objc public func isSupported(_ invoke: Invoke) {
-        invoke.resolve(["supported": Self.isGlassAvailable] as JsonObject)
-    }
-
-    @objc public func update(_ invoke: Invoke) throws {
-        let args = try invoke.parseArgs(UpdateArgs.self)
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            guard Self.isGlassAvailable else {
-                invoke.reject("Liquid Glass tab bar requires iOS 26")
-                return
-            }
-            guard let host = self.webview?.superview ?? self.manager.viewController?.view else {
-                invoke.reject("No host view for the tab bar")
-                return
-            }
-            let bar = self.tabBar ?? self.mount(in: host)
-            self.apply(args, to: bar)
-            host.layoutIfNeeded()
-            self.setVisible(args.visible, bar: bar)
-            invoke.resolve(["height": Double(bar.bounds.height)] as JsonObject)
-        }
-    }
-
-    // MARK: - UITabBarDelegate
 
     // Fires on re-taps too; the web side tells a re-tap from a switch.
     func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
         guard items.indices.contains(item.tag) else { return }
-        trigger("tabSelected", data: ["key": items[item.tag].key] as JSObject)
+        onSelect(items[item.tag].key)
     }
-
-    // MARK: - Internals
 
     private func mount(in host: UIView) -> UITabBar {
         let bar = UITabBar()
@@ -89,15 +57,15 @@ class FrakTabBarPlugin: Plugin, UITabBarDelegate {
             bar.trailingAnchor.constraint(equalTo: host.trailingAnchor),
             bar.bottomAnchor.constraint(equalTo: host.bottomAnchor),
         ])
-        tabBar = bar
+        self.bar = bar
         return bar
     }
 
-    private func apply(_ args: UpdateArgs, to bar: UITabBar) {
+    private func apply(_ args: TabBarArgs, to bar: UITabBar) {
         if args.items != items {
             items = args.items
             let barItems = items.enumerated().map { index, item in
-                UITabBarItem(title: item.title, image: Self.icon(named: item.icon), tag: index)
+                UITabBarItem(title: item.title, image: Glass.icon(named: item.icon), tag: index)
             }
             bar.setItems(barItems, animated: false)
         }
@@ -139,6 +107,8 @@ class FrakTabBarPlugin: Plugin, UITabBarDelegate {
             bar.transform = offscreen
             bar.isHidden = false
         }
+        transition += 1
+        let current = transition
         UIView.animate(
             withDuration: 0.35,
             delay: 0,
@@ -148,29 +118,9 @@ class FrakTabBarPlugin: Plugin, UITabBarDelegate {
         ) {
             bar.transform = visible ? .identity : offscreen
         } completion: { [weak self] _ in
-            if self?.visible == false { bar.isHidden = true }
+            // An interrupted animation completes too: only the latest one may hide.
+            guard let self, current == self.transition, !self.visible else { return }
+            bar.isHidden = true
         }
     }
-
-    private static func icon(named name: String) -> UIImage? {
-        (UIImage(named: name) ?? UIImage(systemName: name))?.withRenderingMode(.alwaysTemplate)
-    }
-}
-
-extension UIColor {
-    fileprivate convenience init?(hex: String) {
-        let digits = hex.hasPrefix("#") ? String(hex.dropFirst()) : hex
-        guard digits.count == 6, let value = UInt32(digits, radix: 16) else { return nil }
-        self.init(
-            red: CGFloat((value >> 16) & 0xFF) / 255,
-            green: CGFloat((value >> 8) & 0xFF) / 255,
-            blue: CGFloat(value & 0xFF) / 255,
-            alpha: 1
-        )
-    }
-}
-
-@_cdecl("init_plugin_frak_tab_bar")
-func initPlugin() -> Plugin {
-    return FrakTabBarPlugin()
 }

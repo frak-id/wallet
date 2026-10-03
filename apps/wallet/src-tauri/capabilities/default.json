@@ -18,6 +18,6 @@
         "clipboard-manager:allow-read-text",
         "recovery-hint:default",
         "frak-updater:default",
-        "frak-tab-bar:default"
+        "frak-glass:default"
     ]
 }

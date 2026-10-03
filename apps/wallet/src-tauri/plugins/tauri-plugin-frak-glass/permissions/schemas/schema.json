@@ -331,22 +331,22 @@
           "markdownDescription": "Denies the remove_listener command without any pre-configured scope."
         },
         {
-          "description": "Enables the update command without any pre-configured scope.",
+          "description": "Enables the set_tab_bar command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-update",
-          "markdownDescription": "Enables the update command without any pre-configured scope."
+          "const": "allow-set-tab-bar",
+          "markdownDescription": "Enables the set_tab_bar command without any pre-configured scope."
         },
         {
-          "description": "Denies the update command without any pre-configured scope.",
+          "description": "Denies the set_tab_bar command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-update",
-          "markdownDescription": "Denies the update command without any pre-configured scope."
+          "const": "deny-set-tab-bar",
+          "markdownDescription": "Denies the set_tab_bar command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the frak-tab-bar plugin\n#### This default permission set includes:\n\n- `allow-is-supported`\n- `allow-update`\n- `allow-register-listener`\n- `allow-remove-listener`",
+          "description": "Default permissions for the frak-glass plugin\n#### This default permission set includes:\n\n- `allow-is-supported`\n- `allow-set-tab-bar`\n- `allow-register-listener`\n- `allow-remove-listener`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the frak-tab-bar plugin\n#### This default permission set includes:\n\n- `allow-is-supported`\n- `allow-update`\n- `allow-register-listener`\n- `allow-remove-listener`"
+          "markdownDescription": "Default permissions for the frak-glass plugin\n#### This default permission set includes:\n\n- `allow-is-supported`\n- `allow-set-tab-bar`\n- `allow-register-listener`\n- `allow-remove-listener`"
         }
       ]
     }
