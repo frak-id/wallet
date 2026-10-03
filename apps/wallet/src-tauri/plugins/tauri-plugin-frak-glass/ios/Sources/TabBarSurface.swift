@@ -38,6 +38,10 @@ final class TabBarSurface: NSObject, UITabBarDelegate {
         return bar.bounds.height
     }
 
+    func hide() {
+        if let bar { setVisible(false, bar: bar) }
+    }
+
     // Fires on re-taps too; the web side tells a re-tap from a switch.
     func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
         guard items.indices.contains(item.tag) else { return }
