@@ -19,6 +19,7 @@
     "navigation": {
         "campaigns": "Campaigns",
         "appearance": "Appearance",
+        "ambassador": "Ambassador page",
         "funding": "Funding",
         "settings": {
             "title": "Settings",
@@ -79,113 +80,105 @@
             "cta": "Open the theme editor"
         },
         "ambassador": {
-            "title": "Publish your ambassador page",
-            "description": "A full page that explains your referral programme and invites customers to become ambassadors. It shows your campaign's rewards and follows your store's language.",
-            "createCta": "Create my ambassador page",
-            "createDescription": "We publish a page in your shop, with your theme's standard page layout. You can rename it afterwards.",
-            "guideIntro": "Prefer a full-width page? Follow our guide.",
-            "guideCta": "Open the guide",
-            "upgradeDescription": "Your ambassador page uses your theme's standard page layout.",
-            "duplicateDescription": "Your ambassador page shows the Frak Ambassador twice: once from its template and once from its content. Apply removes the copy in the content.",
-            "fullWidthCta": "Make it full-width",
-            "applyCta": "Apply \"{{template}}\" to my page",
-            "keepStandardCta": "Keep the standard layout",
-            "blankDescription": "Your ambassador page no longer shows the Frak Ambassador.",
-            "restoreDescription": "Restoring puts the ambassador back on the page and switches it to your theme's Default page template.",
-            "restoreCta": "Restore the ambassador on this page",
-            "linkCta": "Link my ambassador page",
-            "createInstead": "No page uses that template yet? Create one in a click, built on that template.",
-            "linkDescription": "The Frak Ambassador block is already in a page template of your theme. We find the published page that uses this template and connect it to Frak.",
-            "noPublishedPage": "No published page uses the Frak Ambassador template yet. Create your ambassador page: it uses the template right away.",
-            "created": "Your ambassador page is live.",
-            "applied": "Your ambassador page is now full-width.",
-            "restored": "Your ambassador page shows the Frak Ambassador again.",
-            "viewPage": "View page",
-            "declined": "Page access was not granted, so nothing was changed.",
-            "createFailed": "We could not create your ambassador page. Please try again.",
-            "linkFailed": "We could not link your ambassador page. Please try again.",
-            "applyFailed": "We could not apply the template to your page. Please try again.",
-            "templateMissing": "That template is no longer in your theme. Refresh and try again.",
-            "restoreFailed": "We could not restore your ambassador page. Please try again.",
-            "keepFailed": "We could not save your choice. Please try again."
+            "title": "Ambassador page",
+            "description": "A page on your store where customers sign up as ambassadors. Ready in seconds, with nothing to change in your theme.",
+            "cta": "Set up my page",
+            "oldPageDescription": "Your ambassador page can now use the full width of your store.",
+            "oldPageCta": "See what changes"
         }
     },
-    "ambassadorGuide": {
-        "title": "Make your ambassador page full-width",
-        "intro": "Your theme's standard page layout adds a page title and a narrow column. A page template of its own removes both. Follow these steps in the theme editor, then come back here. Depending on your theme, the editor may look a little different from the screenshots.",
-        "settingsHeading": "Ambassador page",
-        "settingsDescription": "Make your ambassador page full-width with a dedicated page template. The guide walks you through the theme editor step by step.",
-        "steps": {
-            "open": {
-                "title": "Open the theme editor on a page",
-                "description": "Open the theme editor on your pages.",
-                "cta": "Open the theme editor",
-                "alt": "The theme editor with the template menu open on Pages and the Create template option."
+    "ambassadorPage": {
+        "title": "Ambassador page",
+        "publish": {
+            "heading": "Turn your customers into ambassadors",
+            "hidden": "Your page is hidden: visitors see a “Page not found” message.",
+            "pitch": "Publish a page on your store where customers join your ambassador program and see what they earn for every friend they refer.",
+            "bulletLook": "It uses your store’s header, menu, fonts and colors.",
+            "bulletWidth": "It takes the full width of your store, with nothing to set up in your theme.",
+            "bulletEdit": "You can change its text and photo at any time from your Frak dashboard.",
+            "address": "Page address: {{address}}",
+            "addToMenu": "Add a “{{title}}” link to my store’s main menu",
+            "permissionWithMenu": "Shopify will then ask you to let Frak show this page and add the link to your menu.",
+            "permission": "Shopify will then ask you to let Frak show this page on your store.",
+            "action": "Publish my page",
+            "actionAgain": "Publish again"
+        },
+        "live": {
+            "heading": "Your ambassador page",
+            "badge": "Published",
+            "see": "See my page",
+            "copy": "Copy address",
+            "copied": "Address copied",
+            "copyFailed": "We couldn’t copy the address. Select it above to copy it."
+        },
+        "menu": {
+            "added": "Your page is in your store’s main menu.",
+            "missing": "The link to your page was removed from your main menu.",
+            "addBack": "Add the link back",
+            "none": "Add a link to your main menu so customers can find your page.",
+            "add": "Add to my menu",
+            "permission": "Shopify will then ask you to let Frak edit your menu."
+        },
+        "customize": {
+            "heading": "Text and photo",
+            "body": "Change the headline, the photo, how rewards are worded and the questions and answers from your Frak dashboard.",
+            "action": "Edit in my Frak dashboard"
+        },
+        "hide": {
+            "heading": "Hide the page",
+            "intro": "Take the page offline. You can publish it again at any time.",
+            "body": "Visitors will see a “Page not found” message and the menu links to your page will be removed. You can publish it again at any time.",
+            "action": "Hide my page",
+            "confirmHeading": "Hide your page?",
+            "cancel": "Cancel"
+        },
+        "switch": {
+            "heading": "Your ambassador page can now use the full width of your store",
+            "body": "The new page takes the full width, with no page title above it. We’ll hide your current page and send its visitors and menu links to the new one. Your current page is kept, hidden, in Online Store > Pages.",
+            "permission": "Shopify will then ask you to let Frak show the page and update your menu and pages.",
+            "action": "Switch to the full-width page",
+            "seeCurrent": "See my current page"
+        },
+        "health": {
+            "embedOff": {
+                "heading": "Frak is switched off in your theme",
+                "body": "Your page can’t show its content until Frak is switched back on.",
+                "action": "Switch Frak on"
             },
-            "create": {
-                "title": "Create a template named ambassador",
-                "description": "Open the template menu at the top (it shows Default page), choose Pages, then Create template. Name it ambassador, keep Default page under Based on, then click Create template.",
-                "alt": "The Create a template dialog, with the name ambassador and Default page as the base."
+            "noCampaign": {
+                "heading": "You have no active campaign",
+                "body": "Your page won’t show a reward until a campaign is running.",
+                "action": "Go to campaigns"
             },
-            "addBlock": {
-                "title": "Add the Frak Ambassador block",
-                "ready": "Open the ambassador template: the Frak Ambassador block is added for you. Check that it appears in the template.",
-                "cta": "Add the block",
-                "done": "The Frak Ambassador block is in your page template. Go to the next step.",
-                "manual": "In your new template, click Add section and choose Frak Ambassador from the apps. If you named it ambassador, a button here adds the block for you once you are back on this page.",
-                "alt": "The ambassador template with the Frak Ambassador block full-width, in an Apps section below the Page section."
+            "missing": {
+                "heading": "Your page doesn’t open at its address",
+                "body": "If you changed the page address in Settings > Apps and sales channels > Frak, set it back to {{path}}."
             },
-            "hideSection": {
-                "title": "Hide the Page section",
-                "description": "In the same ambassador template, hover the Page section in the left list and click the eye icon to hide it. Depending on the theme, Hide or Remove section is also in the section's ⋯ menu. This drops the page title and the narrow column. Never add the block to the default page template.",
-                "alt": "The Page section hovered in the ambassador template, with the eye icon that hides it."
-            },
-            "save": {
-                "title": "Save and come back here",
-                "description": "Click Save in the theme editor, then return to this tab. This page updates by itself."
+            "locked": {
+                "heading": "Your store is password protected",
+                "body": "Visitors need your store password to see the page. Remove the password in Online Store > Preferences to open it to everyone."
             }
         },
-        "final": {
-            "title": "Apply it to your page",
-            "upgrade": "Your ambassador page uses your theme's standard page layout. Apply the template to make it full-width.",
-            "linked": "Your ambassador page is already full-width.",
-            "noPage": "Your shop has no ambassador page yet. Create it here: if your template already holds the Frak Ambassador block, the page uses it right away.",
-            "waiting": "Once your template is saved with the Frak Ambassador block, you can apply it to your page here."
+        "warnings": {
+            "menuRemoveFailed": "We couldn’t remove the links to your page from your menu. You can remove them in Online Store > Navigation.",
+            "repointFailed": "Some menu links still lead to your old page. You can change them in Online Store > Navigation.",
+            "oldPageHideFailed": "Your old page is still visible. You can hide it in Online Store > Pages.",
+            "redirectFailed": "Visitors who open your old page’s address aren’t sent to the new page. You can add a redirect in Online Store > Navigation > URL Redirects.",
+            "recordFailed": "Your new page is live, but part of the change wasn’t saved. If something looks wrong, contact us."
         },
-        "vintage": {
-            "title": "Set up your ambassador page",
-            "settingsDescription": "Add the Frak Ambassador to a page of your shop. The guide walks you through it in three steps.",
-            "intro": "Your theme is a vintage theme: its theme editor cannot create page templates. Set up your ambassador page in three steps in your Shopify admin. It uses your theme's standard page layout.",
-            "create": {
-                "title": "Create a page",
-                "description": "Give it a title, for example \"Become an ambassador\".",
-                "cta": "Add a page"
-            },
-            "paste": {
-                "title": "Paste the Frak Ambassador",
-                "description": "In the content editor, click Show HTML (the <> button), then paste this tag:"
-            },
-            "save": {
-                "title": "Save and share it",
-                "description": "Check that the page is Visible, then click Save. Add the page to one of your menus so your customers find it."
-            },
-            "fullWidth": {
-                "title": "Optional: make the page full-width",
-                "intro": "The standard page layout adds a page title and a narrow column. A page template of its own removes both, but it means adding a file to your theme's code. Only create this new file: do not change the others.",
-                "open": {
-                    "title": "Open your theme code",
-                    "description": "In the code editor, select the templates folder, then click the New File icon at the top of the file list.",
-                    "cta": "Open the code editor"
-                },
-                "file": {
-                    "title": "Create the ambassador template",
-                    "description": "Name the file page.ambassador.liquid, paste this code into it, then click Save."
-                },
-                "assign": {
-                    "title": "Assign it to your page",
-                    "description": "Open your ambassador page, choose ambassador under Template, then click Save."
-                }
-            }
+        "toast": {
+            "published": "Your page is live",
+            "switched": "Your new page is live",
+            "hidden": "Your page is hidden",
+            "menuAdded": "Link added to your main menu",
+            "menuFailed": "Your page is live, but we couldn’t add the link to your menu.",
+            "permissionNeeded": "Nothing was changed. Accept Shopify’s request to continue.",
+            "failed": "Something went wrong. Please try again."
+        },
+        "loadError": {
+            "heading": "We couldn’t load your ambassador page",
+            "body": "Please try again in a few seconds.",
+            "retry": "Try again"
         }
     },
     "pixel": {

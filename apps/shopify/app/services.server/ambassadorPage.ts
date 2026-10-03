@@ -1,618 +1,671 @@
+import { LRUCache } from "lru-cache";
 import type { AuthenticatedContext } from "../types/context";
+import {
+    type AmbassadorMenuState,
+    type AmbassadorPageActionResult,
+    type AmbassadorPageLanguage,
+    type AmbassadorPageOverview,
+    type AmbassadorPageStatus,
+    type AmbassadorPageWarning,
+    type AmbassadorProbe,
+    ambassadorMenuTitle,
+    ambassadorProxyPath,
+} from "../utils/ambassadorPage";
+import { runAdminGraphql } from "./adminGraphql";
 import { log } from "./logger";
 import {
-    type AmbassadorPageRecord,
+    type AmbassadorPageRecordV2,
     getAmbassadorPageMetafield,
     writeAmbassadorPageMetafield,
 } from "./metafields";
-import { arePageScopesGranted } from "./pageScopes";
+import {
+    addMenuLink,
+    type MenuLink,
+    presentMenuLinks,
+    removeMenuLinks,
+    repointPageLinks,
+} from "./navigation";
+import {
+    type GrantedOptionalScopes,
+    grantedOptionalScopes,
+} from "./optionalScopes";
 import { shopInfo } from "./shop";
-import { getThemeBlockPresence, pickAmbassadorTemplate } from "./theme";
 
-export type AmbassadorPageLanguage = "en" | "fr";
+type Legacy = NonNullable<AmbassadorPageRecordV2["legacy"]>;
 
-/** `fr` for any French locale tag, `en` otherwise. */
-export function normalizeAmbassadorPageLanguage(
-    language: FormDataEntryValue | null
-): AmbassadorPageLanguage {
-    return typeof language === "string" &&
-        language.toLowerCase().startsWith("fr")
-        ? "fr"
-        : "en";
-}
-
-export type AmbassadorPageRef = {
-    id: string;
-    handle: string;
+const NO_SCOPES: GrantedOptionalScopes = {
+    proxy: false,
+    menu: false,
+    pages: false,
 };
 
-const AMBASSADOR_PAGE_BODY = "<frak-ambassador></frak-ambassador>";
-const AMBASSADOR_TAG_OPENING = "<frak-ambassador";
-const MAX_HANDLE_ATTEMPTS = 5;
-const PAGES_LISTING_SIZE = 250;
-/** Paired, self-closing, unclosed or stray closing: every form the `<frak-ambassador` test counts. */
-const AMBASSADOR_TAG =
-    /<frak-ambassador\b[^>]*>(?:\s*<\/frak-ambassador\s*>)?|<\/frak-ambassador\s*>/g;
+/** The marker `proxy/ambassador.liquid` renders only on the live page. */
+const LIVE_PAGE_MARKER = "data-frak-amb-page";
+const PROBE_TIMEOUT_MS = 4000;
 
-const PAGE_COPY: Record<
-    AmbassadorPageLanguage,
-    { title: string; handle: string }
-> = {
-    en: { title: "Become an ambassador", handle: "become-an-ambassador" },
-    fr: { title: "Devenir ambassadeur", handle: "devenir-ambassadeur" },
-};
+export type ParsedAmbassadorRecord =
+    | { kind: "none" }
+    | { kind: "oldPage"; pageId: string; url: string | null }
+    | { kind: "proxy"; record: AmbassadorPageRecordV2 };
 
-/** Every handle `createAmbassadorPage` can produce, in any language and retry. */
-const CREATED_HANDLES = new Set(
-    Object.values(PAGE_COPY).flatMap(({ handle }) => [
-        handle,
-        ...Array.from(
-            { length: MAX_HANDLE_ATTEMPTS - 1 },
-            (_, index) => `${handle}-${index + 2}`
-        ),
-    ])
-);
-
-type PageCreateUserError = { code?: string; message: string };
-
-type PageCreateData = {
-    pageCreate?: {
-        page?: AmbassadorPageRef | null;
-        userErrors?: PageCreateUserError[];
-    } | null;
-};
-
-/**
- * Create the published ambassador page, on `template` with an empty body or,
- * without one, on the default template holding the component. A handle that
- * is `TAKEN` is retried with `-2` to `-5`; `null` on any other failure.
- */
-export async function createAmbassadorPage(
-    context: AuthenticatedContext,
-    language: AmbassadorPageLanguage,
-    template: string | null = null
-): Promise<AmbassadorPageRef | null> {
-    const { title, handle } = PAGE_COPY[language];
-
-    try {
-        for (let attempt = 1; attempt <= MAX_HANDLE_ATTEMPTS; attempt += 1) {
-            const response = await context.admin.graphql(
-                `#graphql
-mutation pageCreate($page: PageCreateInput!) {
-  pageCreate(page: $page) {
-    page {
-      id
-      handle
-    }
-    userErrors {
-      code
-      field
-      message
-    }
-  }
-}`,
-                {
-                    variables: {
-                        page: {
-                            title,
-                            handle:
-                                attempt === 1 ? handle : `${handle}-${attempt}`,
-                            ...(template
-                                ? { body: "", templateSuffix: template }
-                                : { body: AMBASSADOR_PAGE_BODY }),
-                            isPublished: true,
-                        },
-                    },
-                }
-            );
-            const { data } = (await response.json()) as {
-                data?: PageCreateData;
-            };
-            const result = data?.pageCreate;
-            if (result?.page) {
-                return result.page;
-            }
-
-            const userErrors = result?.userErrors ?? [];
-            const isTaken = userErrors.some((error) => error.code === "TAKEN");
-            if (!isTaken) {
-                log.error({ userErrors }, "ambassador page create rejected");
-                return null;
-            }
-        }
-        log.warn("ambassador page handles all taken");
-        return null;
-    } catch (error) {
-        log.error({ err: error }, "ambassador page create error");
-        return null;
-    }
+function isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
 }
 
-/**
- * Storefront URL of a page: the shop's primary domain plus the page handle.
- */
-export async function buildAmbassadorPageUrl(
-    context: AuthenticatedContext,
-    handle: string
-): Promise<string> {
-    const { primaryDomain } = await shopInfo(context);
-    return `${primaryDomain.url}/pages/${handle}`;
+function asMenuLinks(value: unknown): MenuLink[] {
+    if (!Array.isArray(value)) return [];
+    return value.flatMap((link) =>
+        isObject(link) &&
+        typeof link.menuId === "string" &&
+        typeof link.itemId === "string"
+            ? [{ menuId: link.menuId, itemId: link.itemId }]
+            : []
+    );
 }
 
-/** `url` is null when the page is missing or unpublished; `ok: false` means it could not be read. */
-export type AmbassadorPageUrlResult =
-    | {
-          ok: true;
-          url: string;
-          templateSuffix: string | null;
-          body: string;
-      }
-    | { ok: true; url: null }
-    | { ok: false };
+function asLegacy(value: unknown): Legacy | undefined {
+    if (
+        !(
+            isObject(value) &&
+            typeof value.pageId === "string" &&
+            typeof value.switchedAt === "string"
+        )
+    ) {
+        return undefined;
+    }
+    return {
+        pageId: value.pageId,
+        switchedAt: value.switchedAt,
+        ...(typeof value.handle === "string" ? { handle: value.handle } : {}),
+        ...(typeof value.redirectId === "string"
+            ? { redirectId: value.redirectId }
+            : {}),
+    };
+}
 
-/**
- * Current storefront URL, template suffix and body of a recorded page. A read
- * failure is reported apart from a missing page, so callers never clear a
- * live URL on a blip.
- */
-export async function resolveAmbassadorPageUrl(
-    context: AuthenticatedContext,
-    pageId: string
-): Promise<AmbassadorPageUrlResult> {
-    try {
-        const response = await context.admin.graphql(
-            `#graphql
-query getAmbassadorPage($id: ID!) {
-  page(id: $id) {
-    handle
-    isPublished
-    templateSuffix
-    body
-  }
-}`,
-            { variables: { id: pageId } }
-        );
-        const { data } = (await response.json()) as {
-            data?: {
-                page?: {
-                    handle: string;
-                    isPublished: boolean;
-                    templateSuffix: string | null;
-                    body: string;
-                } | null;
-            };
-        };
-        if (data === undefined) {
-            return { ok: false };
-        }
-        const page = data.page;
-        if (!page?.isPublished) {
-            return { ok: true, url: null };
-        }
+/** Shape-check the stored JSON: `v: 2` is the proxy page, a `pageId` an old `/pages/` page. */
+export function parseAmbassadorRecord(raw: unknown): ParsedAmbassadorRecord {
+    if (!isObject(raw)) return { kind: "none" };
+    if (raw.v === 2) {
+        const menuLinks = asMenuLinks(raw.menuLinks);
+        const legacy = asLegacy(raw.legacy);
         return {
-            ok: true,
-            url: await buildAmbassadorPageUrl(context, page.handle),
-            templateSuffix: page.templateSuffix,
-            body: page.body,
+            kind: "proxy",
+            record: {
+                v: 2,
+                published: raw.published === true,
+                ...(typeof raw.publishedAt === "string"
+                    ? { publishedAt: raw.publishedAt }
+                    : {}),
+                ...(menuLinks.length ? { menuLinks } : {}),
+                ...(legacy ? { legacy } : {}),
+            },
         };
-    } catch (error) {
-        log.error({ err: error, pageId }, "ambassador page read error");
-        return { ok: false };
     }
+    if (typeof raw.pageId === "string") {
+        return {
+            kind: "oldPage",
+            pageId: raw.pageId,
+            url: typeof raw.url === "string" ? raw.url : null,
+        };
+    }
+    return { kind: "none" };
 }
 
-type ListedPage = AmbassadorPageRef & {
-    isPublished: boolean;
-    templateSuffix: string | null;
-    body: string;
-};
-
-/**
- * The most recently updated published page among the latest 250 that
- * `matches`, or `null`: the `pages` query has no filter to match server-side.
- */
-async function findPublishedPage(
-    context: AuthenticatedContext,
-    matches: (page: ListedPage) => boolean
-): Promise<AmbassadorPageRef | null> {
+/** `null` when the metafield could not be read, so a blip never reads as "no page". */
+async function readRecord(
+    context: AuthenticatedContext
+): Promise<ParsedAmbassadorRecord | null> {
     try {
-        const response = await context.admin.graphql(
-            `#graphql
-query listPages($first: Int!) {
-  pages(first: $first, sortKey: UPDATED_AT, reverse: true) {
-    nodes {
-      id
-      handle
-      isPublished
-      templateSuffix
-      body
-    }
-  }
-}`,
-            { variables: { first: PAGES_LISTING_SIZE } }
-        );
-        const { data } = (await response.json()) as {
-            data?: {
-                pages?: { nodes: ListedPage[] } | null;
-            };
-        };
-        const match = data?.pages?.nodes.find(
-            (page) => page.isPublished && matches(page)
-        );
-        return match ? { id: match.id, handle: match.handle } : null;
-    } catch (error) {
-        log.error({ err: error }, "ambassador page listing error");
+        return parseAmbassadorRecord(await getAmbassadorPageMetafield(context));
+    } catch (err) {
+        log.error({ err }, "ambassador record read failed");
         return null;
     }
 }
 
-/** The most recently updated published page whose template suffix is in `suffixes`, or `null`. */
-export async function findPublishedPageByTemplateSuffixes(
+async function writeRecord(
     context: AuthenticatedContext,
-    suffixes: string[]
-): Promise<AmbassadorPageRef | null> {
-    return findPublishedPage(
-        context,
-        (page) =>
-            page.templateSuffix !== null &&
-            suffixes.includes(page.templateSuffix)
-    );
-}
-
-export type AmbassadorCardState =
-    | { state: "linked"; url: string }
-    | { state: "blockUnlinked" }
-    | { state: "none" }
-    | {
-          state: "upgrade";
-          url: string;
-          template: string | null;
-          standardLayoutKept: boolean;
-          /** On its own ambassador template, so the tag renders it twice. */
-          onTemplate: boolean;
-      }
-    | { state: "blank"; url: string; template: string | null };
-
-/**
- * Offer to link only when a published page uses a block template. Without
- * the page scopes the pages cannot be listed, so the offer stays.
- */
-async function unlinkedState(
-    context: AuthenticatedContext,
-    templateSuffixes: string[],
-    granted: boolean
-): Promise<AmbassadorCardState> {
-    if (templateSuffixes.length === 0) {
-        return { state: "none" };
-    }
-    if (!granted) {
-        return { state: "blockUnlinked" };
-    }
-    const page = await findPublishedPageByTemplateSuffixes(
-        context,
-        templateSuffixes
-    );
-    return page ? { state: "blockUnlinked" } : { state: "none" };
-}
-
-/**
- * Card state for the shop's ambassador page. With the page scopes granted, a
- * changed storefront URL is written back to the record, and the page's
- * template and body decide whether it is done, upgradable or blank.
- */
-export async function reconcileAmbassadorPage(
-    context: AuthenticatedContext,
-    templateSuffixes: string[]
-): Promise<AmbassadorCardState> {
-    const unlinked: AmbassadorCardState =
-        templateSuffixes.length > 0
-            ? { state: "blockUnlinked" }
-            : { state: "none" };
-
+    record: AmbassadorPageRecordV2
+): Promise<boolean> {
     try {
-        const [record, granted] = await Promise.all([
-            getAmbassadorPageMetafield(context),
-            arePageScopesGranted(context),
-        ]);
-        if (!record) {
-            return unlinkedState(context, templateSuffixes, granted);
-        }
-
-        const recordedState: AmbassadorCardState = record.url
-            ? { state: "linked", url: record.url }
-            : unlinked;
-        if (!granted) {
-            return recordedState;
-        }
-
-        const resolved = await resolveAmbassadorPageUrl(context, record.pageId);
-        if (!resolved.ok) {
-            return recordedState;
-        }
-
-        if (resolved.url !== record.url) {
-            await writeAmbassadorPageMetafield(context, {
-                ...record,
-                url: resolved.url,
-            });
-        }
-        if (!resolved.url) {
-            return unlinkedState(context, templateSuffixes, true);
-        }
-
-        const hasComponent = resolved.body.includes(AMBASSADOR_TAG_OPENING);
-        const ownTemplate =
-            resolved.templateSuffix !== null &&
-            templateSuffixes.includes(resolved.templateSuffix)
-                ? resolved.templateSuffix
-                : null;
-        if (ownTemplate && !hasComponent) {
-            return { state: "linked", url: resolved.url };
-        }
-        const template =
-            ownTemplate ?? pickAmbassadorTemplate(templateSuffixes);
-        return hasComponent
-            ? {
-                  state: "upgrade",
-                  url: resolved.url,
-                  template,
-                  // A dismissal never hides a double render.
-                  standardLayoutKept:
-                      !ownTemplate && record.standardLayoutKept === true,
-                  onTemplate: ownTemplate !== null,
-              }
-            : { state: "blank", url: resolved.url, template };
-    } catch (error) {
-        log.error({ err: error }, "ambassador page reconcile error");
-        return unlinked;
-    }
-}
-
-export type AmbassadorPageActionResult =
-    | { ok: true; url: string }
-    | {
-          ok: false;
-          reason:
-              | "createFailed"
-              | "linkFailed"
-              | "noPublishedPage"
-              | "applyFailed"
-              | "templateMissing"
-              | "restoreFailed"
-              | "keepFailed";
-      };
-
-/**
- * Write the page and its storefront URL, keeping `previous` (the record the
- * caller read) only for the same page: a dismissal belongs to one page. A
- * failed write is logged, not thrown: the URL is still returned.
- */
-async function recordPage(
-    context: AuthenticatedContext,
-    page: AmbassadorPageRef,
-    previous: AmbassadorPageRecord | null
-): Promise<string> {
-    const url = await buildAmbassadorPageUrl(context, page.handle);
-    try {
-        const result = await writeAmbassadorPageMetafield(context, {
-            ...(previous?.pageId === page.id ? previous : {}),
-            pageId: page.id,
-            url,
-        });
+        const result = await writeAmbassadorPageMetafield(context, record);
         if (!result.success) {
             log.error(
-                { userErrors: result.userErrors, pageId: page.id },
-                "ambassador page record rejected"
+                { userErrors: result.userErrors },
+                "ambassador record write rejected"
             );
         }
-    } catch (error) {
-        log.error(
-            { err: error, pageId: page.id },
-            "ambassador page record write error"
-        );
+        return result.success;
+    } catch (err) {
+        log.error({ err }, "ambassador record write failed");
+        return false;
     }
-    return url;
+}
+
+/** Storefront URL of the proxy page, `undefined` when the shop cannot be read. */
+async function proxyPageUrl(
+    context: AuthenticatedContext
+): Promise<string | undefined> {
+    try {
+        const { primaryDomain } = await shopInfo(context);
+        return `${primaryDomain.url}${ambassadorProxyPath()}`;
+    } catch (err) {
+        log.error({ err }, "ambassador page url failed");
+        return undefined;
+    }
+}
+
+function statusOf(parsed: ParsedAmbassadorRecord): AmbassadorPageStatus {
+    switch (parsed.kind) {
+        case "none":
+            return "draft";
+        case "oldPage":
+            return "oldPage";
+        case "proxy":
+            if (parsed.record.published) return "live";
+            return parsed.record.publishedAt ? "hidden" : "draft";
+    }
+}
+
+/** Status from one metafield read; `undefined` when it cannot be read. */
+export async function getAmbassadorPageStatus(
+    context: AuthenticatedContext
+): Promise<AmbassadorPageStatus | undefined> {
+    const parsed = await readRecord(context);
+    return parsed ? statusOf(parsed) : undefined;
+}
+
+/** `none` without recorded links or the menu scope, and when a menu cannot be read. */
+async function menuStateOf(
+    context: AuthenticatedContext,
+    parsed: ParsedAmbassadorRecord,
+    scopes: GrantedOptionalScopes
+): Promise<AmbassadorMenuState> {
+    const links =
+        parsed.kind === "proxy" ? (parsed.record.menuLinks ?? []) : [];
+    if (links.length === 0 || !scopes.menu) return "none";
+    const present = await presentMenuLinks(context, links);
+    if (present === null) return "none";
+    return present.length > 0 ? "added" : "missing";
+}
+
+/** Everything the ambassador screen shows; `null` when the record or the shop cannot be read. */
+export async function getAmbassadorPageOverview(
+    context: AuthenticatedContext
+): Promise<AmbassadorPageOverview | null> {
+    const [parsed, url, granted] = await Promise.all([
+        readRecord(context),
+        proxyPageUrl(context),
+        grantedOptionalScopes(context),
+    ]);
+    if (!(parsed && url)) return null;
+
+    const scopes = granted ?? NO_SCOPES;
+    return {
+        status: statusOf(parsed),
+        url,
+        path: ambassadorProxyPath(),
+        oldPageUrl: parsed.kind === "oldPage" ? parsed.url : null,
+        menu: { state: await menuStateOf(context, parsed, scopes) },
+        scopes,
+    };
+}
+
+/** `present` while a recorded link is still in a menu, else the link just added; `null` when none could be added. */
+async function ensureMenuLink(
+    context: AuthenticatedContext,
+    record: AmbassadorPageRecordV2,
+    language: AmbassadorPageLanguage
+): Promise<"present" | MenuLink | null> {
+    const recorded = record.menuLinks ?? [];
+    if (recorded.length > 0) {
+        const present = await presentMenuLinks(context, recorded);
+        // An unreadable menu may still hold a link: never risk a duplicate.
+        if (present === null) return null;
+        if (present.length > 0) return "present";
+    }
+    return addMenuLink(context, {
+        title: ambassadorMenuTitle(language),
+        url: ambassadorProxyPath(),
+    });
+}
+
+/** Make sure a menu links to the page; a link that cannot be recorded is removed again, never orphaned. */
+async function linkFromMenu(
+    context: AuthenticatedContext,
+    record: AmbassadorPageRecordV2,
+    language: AmbassadorPageLanguage
+): Promise<boolean> {
+    const link = await ensureMenuLink(context, record, language);
+    if (link === "present") return true;
+    if (!link) return false;
+    if (await writeRecord(context, { ...record, menuLinks: [link] })) {
+        return true;
+    }
+    await removeMenuLinks(context, [link]);
+    return false;
 }
 
 /**
- * Create the ambassador page unless the record already names a live one. A
- * published page whose body is exactly the component tag, or with one of the
- * app's handles on an ambassador template, is adopted instead, so a lost
- * record write never leads to a duplicate page.
+ * Publish the proxy page, keeping the first `publishedAt`. The record is
+ * written before the menu is touched: a menu failure never fails the publish.
  */
-export async function createAndRecordAmbassadorPage(
+export async function publishAmbassadorPage(
     context: AuthenticatedContext,
-    language: AmbassadorPageLanguage
+    {
+        addToMenu,
+        language,
+    }: { addToMenu: boolean; language: AmbassadorPageLanguage }
 ): Promise<AmbassadorPageActionResult> {
-    try {
-        const record = await getAmbassadorPageMetafield(context);
-        if (record) {
-            const resolved = await resolveAmbassadorPageUrl(
-                context,
-                record.pageId
-            );
-            if (!resolved.ok) {
-                return { ok: false, reason: "createFailed" };
-            }
-            if (resolved.url) {
-                return { ok: true, url: resolved.url };
-            }
-        }
-
-        const { ambassador } = await getThemeBlockPresence(context);
-        const existing = await findPublishedPage(
-            context,
-            (listed) =>
-                listed.body.trim() === AMBASSADOR_PAGE_BODY ||
-                (CREATED_HANDLES.has(listed.handle) &&
-                    listed.templateSuffix !== null &&
-                    ambassador.includes(listed.templateSuffix))
-        );
-        if (existing) {
-            return {
-                ok: true,
-                url: await recordPage(context, existing, record),
-            };
-        }
-
-        const page = await createAmbassadorPage(
-            context,
-            language,
-            pickAmbassadorTemplate(ambassador)
-        );
-        if (!page) {
-            return { ok: false, reason: "createFailed" };
-        }
-        return { ok: true, url: await recordPage(context, page, record) };
-    } catch (error) {
-        log.error({ err: error }, "ambassador page create action error");
-        return { ok: false, reason: "createFailed" };
+    const intent = "publish";
+    const [parsed, scopes] = await Promise.all([
+        readRecord(context),
+        grantedOptionalScopes(context),
+    ]);
+    if (!(parsed && scopes)) return { ok: false, intent, error: "failed" };
+    if (!scopes.proxy) return { ok: false, intent, error: "scopeMissing" };
+    // An old page moves over through the switch, which also redirects it.
+    if (parsed.kind === "oldPage") {
+        return { ok: false, intent, error: "invalid" };
     }
+
+    const previous: AmbassadorPageRecordV2 =
+        parsed.kind === "proxy" ? parsed.record : { v: 2, published: false };
+    const record: AmbassadorPageRecordV2 = {
+        ...previous,
+        v: 2,
+        published: true,
+        publishedAt: previous.publishedAt ?? new Date().toISOString(),
+    };
+    if (!(await writeRecord(context, record))) {
+        return { ok: false, intent, error: "failed" };
+    }
+
+    const url = await proxyPageUrl(context);
+    if (!addToMenu) return { ok: true, intent, url };
+    if (!scopes.menu) return { ok: true, intent, url, menu: "skipped" };
+    const linked = await linkFromMenu(context, record, language);
+    return { ok: true, intent, url, menu: linked ? "added" : "failed" };
 }
 
-/** Adopt the published page that uses a block template. */
-export async function linkAmbassadorPage(
+/** Unpublish the page and remove every recorded menu link to it. */
+export async function hideAmbassadorPage(
     context: AuthenticatedContext
 ): Promise<AmbassadorPageActionResult> {
-    try {
-        const [record, { ambassador }] = await Promise.all([
-            getAmbassadorPageMetafield(context),
-            getThemeBlockPresence(context),
-        ]);
-        const page = await findPublishedPageByTemplateSuffixes(
-            context,
-            ambassador
-        );
-        if (!page) {
-            return { ok: false, reason: "noPublishedPage" };
-        }
-        return { ok: true, url: await recordPage(context, page, record) };
-    } catch (error) {
-        log.error({ err: error }, "ambassador page link action error");
-        return { ok: false, reason: "linkFailed" };
+    const intent = "hide";
+    const [parsed, scopes] = await Promise.all([
+        readRecord(context),
+        grantedOptionalScopes(context),
+    ]);
+    if (!(parsed && scopes)) return { ok: false, intent, error: "failed" };
+    if (parsed.kind !== "proxy") return { ok: false, intent, error: "invalid" };
+
+    const { menuLinks = [], ...rest } = parsed.record;
+    let kept = menuLinks;
+    if (menuLinks.length > 0 && scopes.menu) {
+        kept = await removeMenuLinks(context, menuLinks);
     }
+    const record: AmbassadorPageRecordV2 = {
+        ...rest,
+        published: false,
+        ...(kept.length > 0 ? { menuLinks: kept } : {}),
+    };
+    if (!(await writeRecord(context, record))) {
+        return { ok: false, intent, error: "failed" };
+    }
+    return kept.length > 0
+        ? { ok: true, intent, warnings: ["menuRemoveFailed"] }
+        : { ok: true, intent };
 }
 
-type PageUpdateData = {
-    pageUpdate?: {
-        page?: { id: string } | null;
-        userErrors?: PageCreateUserError[];
-    } | null;
-};
-
-/**
- * Send one `pageUpdate` on the recorded page with the fields `edit` derives
- * from its current body, and return the page URL. `null` when nothing is
- * recorded, the page is gone or unpublished, or the update is rejected.
- */
-async function updateRecordedPage(
+/** Add the main-menu link to an existing proxy page, unless a recorded one is still there. */
+export async function addAmbassadorMenuLink(
     context: AuthenticatedContext,
-    edit: (body: string) => { templateSuffix: string; body: string }
-): Promise<string | null> {
-    const record = await getAmbassadorPageMetafield(context);
-    if (!record) {
-        return null;
-    }
-    const resolved = await resolveAmbassadorPageUrl(context, record.pageId);
-    if (!(resolved.ok && resolved.url)) {
-        return null;
-    }
+    { language }: { language: AmbassadorPageLanguage }
+): Promise<AmbassadorPageActionResult> {
+    const intent = "addToMenu";
+    const [parsed, scopes] = await Promise.all([
+        readRecord(context),
+        grantedOptionalScopes(context),
+    ]);
+    if (!(parsed && scopes)) return { ok: false, intent, error: "failed" };
+    if (!scopes.menu) return { ok: false, intent, error: "scopeMissing" };
+    if (parsed.kind !== "proxy") return { ok: false, intent, error: "invalid" };
 
-    const response = await context.admin.graphql(
+    if (!(await linkFromMenu(context, parsed.record, language))) {
+        return { ok: false, intent, error: "failed" };
+    }
+    return { ok: true, intent, menu: "added" };
+}
+
+type PageRef = { id: string; handle: string };
+
+async function readPage(
+    context: AuthenticatedContext,
+    pageId: string
+): Promise<PageRef | null> {
+    const data = await runAdminGraphql<{ page?: PageRef | null }>(
+        context,
+        "ambassador old page",
         `#graphql
-mutation pageUpdate($id: ID!, $page: PageUpdateInput!) {
+query frakAmbassadorOldPage($id: ID!) {
+  page(id: $id) {
+    id
+    handle
+  }
+}`,
+        { id: pageId }
+    );
+    return data?.page ?? null;
+}
+
+/** Rename and unpublish the v1 page, never delete it; the id suffix keeps the new handle free. */
+async function retireOldPage(
+    context: AuthenticatedContext,
+    page: PageRef
+): Promise<boolean> {
+    const numericId = page.id.split("/").pop();
+    const data = await runAdminGraphql<{
+        pageUpdate?: {
+            page?: { id: string } | null;
+            userErrors?: Array<{ code?: string; message: string }>;
+        } | null;
+    }>(
+        context,
+        "ambassador old page retire",
+        `#graphql
+mutation frakAmbassadorRetirePage($id: ID!, $page: PageUpdateInput!) {
   pageUpdate(id: $id, page: $page) {
     page {
       id
     }
     userErrors {
       code
-      field
       message
     }
   }
 }`,
-        { variables: { id: record.pageId, page: edit(resolved.body) } }
+        {
+            id: page.id,
+            page: {
+                isPublished: false,
+                handle: `${page.handle}-previous-${numericId}`,
+                redirectNewHandle: false,
+            },
+        }
     );
-    const { data } = (await response.json()) as { data?: PageUpdateData };
     if (!data?.pageUpdate?.page) {
         log.error(
-            { userErrors: data?.pageUpdate?.userErrors, pageId: record.pageId },
-            "ambassador page update rejected"
+            { pageId: page.id, userErrors: data?.pageUpdate?.userErrors },
+            "ambassador old page retire rejected"
         );
-        return null;
+        return false;
     }
-    return resolved.url;
+    return true;
 }
 
-/**
- * Move the recorded page onto `template` and remove the component from its
- * body, in one update. Refused unless `template` still holds the block.
- */
-export async function applyAmbassadorTemplate(
+type UrlRedirectNode = { id: string; path: string; target: string };
+
+/** The redirect already set on `path`, `null` when there is none or the lookup fails. */
+async function findRedirect(
     context: AuthenticatedContext,
-    template: string
-): Promise<AmbassadorPageActionResult> {
-    try {
-        const { ambassador } = await getThemeBlockPresence(context);
-        if (!ambassador.includes(template)) {
-            return { ok: false, reason: "templateMissing" };
-        }
-        const url = await updateRecordedPage(context, (body) => ({
-            templateSuffix: template,
-            body: body.replace(AMBASSADOR_TAG, ""),
-        }));
-        return url ? { ok: true, url } : { ok: false, reason: "applyFailed" };
-    } catch (error) {
-        log.error({ err: error }, "ambassador template apply error");
-        return { ok: false, reason: "applyFailed" };
+    path: string
+): Promise<UrlRedirectNode | null> {
+    const data = await runAdminGraphql<{
+        urlRedirects?: { nodes: UrlRedirectNode[] };
+    }>(
+        context,
+        "ambassador redirect lookup",
+        `#graphql
+query frakAmbassadorRedirectLookup($query: String!) {
+  urlRedirects(first: 10, query: $query) {
+    nodes {
+      id
+      path
+      target
     }
+  }
+}`,
+        { query: `path:${JSON.stringify(path)}` }
+    );
+    const wanted = path.toLowerCase();
+    return (
+        data?.urlRedirects?.nodes.find(
+            (node) => node.path.toLowerCase() === wanted
+        ) ?? null
+    );
+}
+
+/** Whether a redirect target, relative or absolute, is the proxy page. */
+function isProxyTarget(target: string): boolean {
+    const base = "https://shop.invalid";
+    if (!URL.canParse(target, base)) return false;
+    const { pathname } = new URL(target, base);
+    return pathname.replace(/\/$/, "") === ambassadorProxyPath();
+}
+
+/** Redirect the v1 page path; a path already redirected to the proxy page counts as done, with no id to record. */
+async function redirectOldPath(
+    context: AuthenticatedContext,
+    path: string
+): Promise<{ ok: boolean; redirectId?: string }> {
+    const data = await runAdminGraphql<{
+        urlRedirectCreate?: {
+            urlRedirect?: { id: string } | null;
+            userErrors?: Array<{ code?: string; message: string }>;
+        } | null;
+    }>(
+        context,
+        "ambassador old page redirect",
+        `#graphql
+mutation frakAmbassadorRedirect($urlRedirect: UrlRedirectInput!) {
+  urlRedirectCreate(urlRedirect: $urlRedirect) {
+    urlRedirect {
+      id
+    }
+    userErrors {
+      code
+      message
+    }
+  }
+}`,
+        { urlRedirect: { path, target: ambassadorProxyPath() } }
+    );
+    const result = data?.urlRedirectCreate;
+    if (result?.urlRedirect) {
+        return { ok: true, redirectId: result.urlRedirect.id };
+    }
+    const userErrors = result?.userErrors ?? [];
+    if (
+        userErrors.some((error) =>
+            /taken|already exists|duplicate/i.test(error.message)
+        )
+    ) {
+        const existing = await findRedirect(context, path);
+        if (existing && isProxyTarget(existing.target)) return { ok: true };
+        log.warn(
+            { path, target: existing?.target },
+            "ambassador redirect path taken"
+        );
+        return { ok: false };
+    }
+    log.error({ path, userErrors }, "ambassador redirect rejected");
+    return { ok: false };
+}
+
+/** The handle in the `/pages/<handle>` URL a v1 record stores. */
+function handleFromUrl(url: string | null): string | undefined {
+    return url ? /\/pages\/([^/?#]+)/.exec(url)?.[1] : undefined;
+}
+
+/** Steps 2-4 of the switch: repoint menu links, retire the v1 page, redirect its path. */
+async function moveOldPage(
+    context: AuthenticatedContext,
+    legacy: Legacy
+): Promise<{
+    legacy: Legacy;
+    repointed: MenuLink[];
+    warnings: AmbassadorPageWarning[];
+}> {
+    const warnings: AmbassadorPageWarning[] = [];
+    const repoint = await repointPageLinks(context, {
+        pageId: legacy.pageId,
+        url: ambassadorProxyPath(),
+    });
+    if (repoint.failed) warnings.push("repointFailed");
+
+    const page = await readPage(context, legacy.pageId);
+    if (page && !(await retireOldPage(context, page))) {
+        warnings.push("oldPageHideFailed");
+    }
+    const handle = page?.handle ?? legacy.handle;
+    const redirect = handle
+        ? await redirectOldPath(context, `/pages/${handle}`)
+        : { ok: false };
+    if (!redirect.ok) warnings.push("redirectFailed");
+
+    return {
+        legacy: {
+            ...legacy,
+            ...(handle ? { handle } : {}),
+            ...(redirect.redirectId ? { redirectId: redirect.redirectId } : {}),
+        },
+        repointed: repoint.changed,
+        warnings,
+    };
+}
+
+/** Repointed links already lead to the new page, so no link is added. */
+function switchMenuResult(
+    repointed: boolean,
+    added: boolean
+): "added" | "failed" | "skipped" {
+    if (repointed) return "skipped";
+    return added ? "added" : "failed";
+}
+
+/** The switch's first write: the page published, and the v1 page it replaces. */
+function switchStartRecord(oldPage: {
+    pageId: string;
+    url: string | null;
+}): AmbassadorPageRecordV2 & { legacy: Legacy } {
+    const switchedAt = new Date().toISOString();
+    const handle = handleFromUrl(oldPage.url);
+    return {
+        v: 2,
+        published: true,
+        publishedAt: switchedAt,
+        legacy: {
+            pageId: oldPage.pageId,
+            switchedAt,
+            ...(handle ? { handle } : {}),
+        },
+    };
 }
 
 /**
- * Put the component back in the recorded page's body, after any text, and
- * reset it to the default template.
+ * Move a v1 `/pages/` page to the proxy page. The first write publishes and
+ * records the legacy page, so a switch cut short still knows what it moved;
+ * the later steps only refine it. Only that first write can fail the switch.
  */
-export async function restoreAmbassadorComponent(
-    context: AuthenticatedContext
+export async function switchToFullWidthPage(
+    context: AuthenticatedContext,
+    {
+        addToMenu,
+        language,
+    }: { addToMenu: boolean; language: AmbassadorPageLanguage }
 ): Promise<AmbassadorPageActionResult> {
+    const intent = "switch";
+    const [parsed, scopes] = await Promise.all([
+        readRecord(context),
+        grantedOptionalScopes(context),
+    ]);
+    if (!(parsed && scopes)) return { ok: false, intent, error: "failed" };
+    if (!(scopes.proxy && scopes.menu && scopes.pages)) {
+        return { ok: false, intent, error: "scopeMissing" };
+    }
+    if (parsed.kind !== "oldPage") {
+        return { ok: false, intent, error: "invalid" };
+    }
+
+    const started = switchStartRecord(parsed);
+    if (!(await writeRecord(context, started))) {
+        return { ok: false, intent, error: "failed" };
+    }
+
+    const { legacy, repointed, warnings } = await moveOldPage(
+        context,
+        started.legacy
+    );
+    const added =
+        addToMenu && repointed.length === 0
+            ? await addMenuLink(context, {
+                  title: ambassadorMenuTitle(language),
+                  url: ambassadorProxyPath(),
+              })
+            : null;
+    const menuLinks = added ? [...repointed, added] : repointed;
+
+    const recorded = await writeRecord(context, {
+        ...started,
+        legacy,
+        ...(menuLinks.length > 0 ? { menuLinks } : {}),
+    });
+    if (!recorded) {
+        warnings.push("recordFailed");
+        if (added) await removeMenuLinks(context, [added]);
+    }
+
+    return {
+        ok: true,
+        intent,
+        url: await proxyPageUrl(context),
+        ...(addToMenu
+            ? {
+                  menu: switchMenuResult(
+                      repointed.length > 0,
+                      added !== null && recorded
+                  ),
+              }
+            : {}),
+        ...(warnings.length ? { warnings } : {}),
+    };
+}
+
+const probeCache = new LRUCache<string, AmbassadorProbe>({
+    max: 512,
+    ttl: 60_000,
+});
+
+async function fetchProbe(url: string): Promise<AmbassadorProbe> {
     try {
-        const url = await updateRecordedPage(context, (body) => ({
-            templateSuffix: "",
-            body: body.includes(AMBASSADOR_TAG_OPENING)
-                ? body
-                : `${body}${AMBASSADOR_PAGE_BODY}`,
-        }));
-        return url ? { ok: true, url } : { ok: false, reason: "restoreFailed" };
-    } catch (error) {
-        log.error({ err: error }, "ambassador component restore error");
-        return { ok: false, reason: "restoreFailed" };
+        const response = await fetch(url, {
+            redirect: "manual",
+            signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+        });
+        if (response.status === 401) return "locked";
+        if (response.status >= 300 && response.status < 400) {
+            const location = response.headers.get("location") ?? "";
+            return location.includes("/password") ? "locked" : "unknown";
+        }
+        if (response.status === 404) return "missing";
+        if (response.status !== 200) return "unknown";
+        const body = await response.text();
+        return body.includes(LIVE_PAGE_MARKER) ? "live" : "missing";
+    } catch (err) {
+        log.warn({ err, url }, "ambassador page probe failed");
+        return "unknown";
     }
 }
 
-/** Store the merchant's choice to keep the standard layout, leaving the rest of the record. */
-export async function keepStandardLayout(
-    context: AuthenticatedContext
-): Promise<AmbassadorPageActionResult> {
-    try {
-        const record = await getAmbassadorPageMetafield(context);
-        if (!record?.url) {
-            return { ok: false, reason: "keepFailed" };
-        }
-        const result = await writeAmbassadorPageMetafield(context, {
-            ...record,
-            standardLayoutKept: true,
-        });
-        if (!result.success) {
-            log.error(
-                { userErrors: result.userErrors, pageId: record.pageId },
-                "ambassador standard layout choice rejected"
-            );
-            return { ok: false, reason: "keepFailed" };
-        }
-        return { ok: true, url: record.url };
-    } catch (error) {
-        log.error({ err: error }, "ambassador standard layout keep error");
-        return { ok: false, reason: "keepFailed" };
-    }
+/** What a visitor gets at `url`; only `live` is cached (60s), so a fixed problem clears on the next visit. */
+export async function probeAmbassadorPage(
+    url: string
+): Promise<AmbassadorProbe> {
+    const cached = probeCache.get(url);
+    if (cached) return cached;
+    const probe = await fetchProbe(url);
+    if (probe === "live") probeCache.set(url, probe);
+    return probe;
 }

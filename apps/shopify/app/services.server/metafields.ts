@@ -12,10 +12,27 @@ const SHARE_BUTTON_HTML_KEY = "share_button_html";
 const LEGACY_INSTALL_DISMISSED_KEY = "legacy_install_dismissed";
 const AMBASSADOR_PAGE_KEY = "ambassador_page";
 
-export type AmbassadorPageRecord = {
+/** The app proxy page; `proxy/ambassador.liquid` renders it only when `v == 2 and published`. */
+export type AmbassadorPageRecordV2 = {
+    v: 2;
+    published: boolean;
+    /** First publish, ISO. */
+    publishedAt?: string;
+    /** Every menu item pointing at the page, added or repointed by the app; removed on hide. */
+    menuLinks?: Array<{ menuId: string; itemId: string }>;
+    /** The `/pages/` page a switch from v1 renamed and hid; `handle` is unknown when it could not be read. */
+    legacy?: {
+        pageId: string;
+        handle?: string;
+        redirectId?: string;
+        switchedAt: string;
+    };
+};
+
+/** An old `/pages/` ambassador page, live until the merchant switches. */
+export type AmbassadorPageRecordV1 = {
     pageId: string;
     url: string | null;
-    /** The merchant chose to keep the standard page layout. */
     standardLayoutKept?: boolean;
 };
 
@@ -515,20 +532,22 @@ export async function writeMerchantIdMetafield(
     return writeMetafield(context, MERCHANT_ID_KEY, merchantId);
 }
 
-/**
- * Read the ambassador page the app created or adopted, with its last known
- * storefront URL (`null` once the page is gone).
- */
+/** Raw `frak.ambassador_page` JSON: shape-check it with `parseAmbassadorRecord` before use. */
 export async function getAmbassadorPageMetafield({
     admin: { graphql },
-}: AuthenticatedContext): Promise<AmbassadorPageRecord | null> {
-    return readMetafield<AmbassadorPageRecord>(graphql, AMBASSADOR_PAGE_KEY);
+}: AuthenticatedContext): Promise<
+    AmbassadorPageRecordV1 | AmbassadorPageRecordV2 | null
+> {
+    return readMetafield<AmbassadorPageRecordV1 | AmbassadorPageRecordV2>(
+        graphql,
+        AMBASSADOR_PAGE_KEY
+    );
 }
 
 /** Replace the whole ambassador page record: spread the existing one to keep fields you do not change. */
 export async function writeAmbassadorPageMetafield(
     context: AuthenticatedContext,
-    record: AmbassadorPageRecord
+    record: AmbassadorPageRecordV2
 ): Promise<{
     success: boolean;
     userErrors: Array<{ field: string; message: string }>;

@@ -1,6 +1,6 @@
 # routes/ — React Router v7 Flat Routes
 
-Three categories: `app.*` (authenticated admin), `api.*` (JSON endpoints), `auth.*` (OAuth), plus standalone `webhooks.tsx`, `purchase.tsx`, `health.tsx` and `robots[.]txt.tsx`.
+Four categories: `app.*` (authenticated admin), `api.*` (JSON endpoints), `auth.*` (OAuth), `proxy.*` (Shopify app proxy, signed storefront requests), plus standalone `webhooks.tsx`, `purchase.tsx`, `health.tsx` and `robots[.]txt.tsx`.
 
 ## ROUTE HIERARCHY
 
@@ -8,7 +8,7 @@ Three categories: `app.*` (authenticated admin), `api.*` (JSON endpoints), `auth
 /                          → _index.tsx (redirect → /app)
 /app                       → app.tsx (layout: auth + shop data + onboarding)
   /                        → app._index.tsx (dashboard, uses parent data)
-  /ambassador-guide        → app.ambassador-guide.tsx (full-width ambassador page steps + Apply)
+  /ambassador              → app.ambassador.tsx (ambassador page: publish/hide/menu/switch)
   /appearance              → app.appearance.tsx (i18n + appearance settings)
   /campaigns               → app.campaigns.tsx (campaign status)
   /funding                 → app.funding.tsx (bank + purchase status)
@@ -17,6 +17,7 @@ Three categories: `app.*` (authenticated admin), `api.*` (JSON endpoints), `auth
     /pixel                 → app.settings.pixel.tsx (action only: web pixel create/delete)
     /webhook               → app.settings.webhook.tsx (action only: webhook create/delete)
 /auth/*                    → auth.$.tsx (catch-all auth)
+/proxy/ambassador[/*]      → proxy.ambassador.tsx + proxy.ambassador.$.tsx (app proxy Liquid)
 /auth/login                → auth.login/route.tsx + error.server.tsx
 /api/purchase              → api.purchase.tsx (JSON)
 /api/register              → api.register.tsx (JSON, inline embedded merchant registration)
@@ -59,6 +60,7 @@ export async function action({ request }: Route.ActionArgs) {
 | `app.*`      | `authenticate.admin(request)`   | `AuthenticatedContext`     |
 | `api.*`      | `authenticate.admin(request)`   | `AuthenticatedContext`     |
 | `auth.*`     | `login(request)`                | Login flow                 |
+| `proxy.*`    | `authenticate.public.appProxy`  | `{ liquid, session? }`     |
 | `webhooks`   | `authenticate.webhook(request)` | `{ shop, topic, payload }` |
 | `purchase`   | None                            | Standalone page            |
 

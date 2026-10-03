@@ -1,0 +1,77 @@
+{%- comment -%}
+  The ambassador page, served through the app proxy at /apps/ambassador.
+  Production fetches this file from sdk.frak.id, every other stage from the
+  app's /proxy/ambassador route. It is identical for every shop: all shop
+  state is read here, by Shopify, from the frak.ambassador_page metafield.
+{%- endcomment -%}
+{%- assign frak_amb = shop.metafields.frak.ambassador_page.value -%}
+{%- assign frak_amb_lang = request.locale.iso_code | slice: 0, 2 | downcase -%}
+<style>
+  .frak-amb-page {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--page-width, 1440px);
+    margin-inline: auto;
+    padding-block: clamp(24px, 2.8vw, 40px) clamp(40px, 5vw, 72px);
+    padding-inline: clamp(16px, 3.5vw, 50px);
+  }
+  .frak-amb-page--live { min-height: 60vh; }
+  .frak-amb-page frak-ambassador { display: block; }
+  .frak-amb-page--missing { text-align: center; padding-block: clamp(48px, 8vw, 120px); }
+  body:has(.frak-amb-page--live) main [class*="breadcrumb" i]:not(.frak-amb-page--live *) { display: none !important; }
+</style>
+{%- if frak_amb.v == 2 and frak_amb.published -%}
+  {%- if frak_amb_lang == 'fr' -%}
+    {%- assign page_title = 'Devenir ambassadeur' -%}
+    {%- assign frak_amb_heading = 'Devenir ambassadeur' -%}
+    {%- assign page_description = 'Rejoignez le programme ambassadeur de ' | append: shop.name | append: ' : partagez la boutique avec vos proches et gagnez des récompenses.' -%}
+    {%- assign frak_amb_fallback = 'Cette page ne peut pas s’afficher pour le moment.' -%}
+    {%- assign frak_amb_home = 'Retour à la boutique' -%}
+  {%- else -%}
+    {%- assign page_title = 'Become an ambassador' -%}
+    {%- assign frak_amb_heading = 'Become an ambassador' -%}
+    {%- assign page_description = 'Join the ' | append: shop.name | append: ' ambassador program: share the shop with your friends and earn rewards.' -%}
+    {%- assign frak_amb_fallback = 'This page can’t be shown right now.' -%}
+    {%- assign frak_amb_home = 'Back to the shop' -%}
+  {%- endif -%}
+  <div class="frak-amb-page frak-amb-page--live" data-frak-amb-page="{{ shop.permanent_domain }}">
+    {%- comment -%} Unrendered theme headings, sampled by the component for the theme's heading style. {%- endcomment -%}
+    <div hidden data-frak-amb-ref>
+      <h1 class="h1 heading page-title">{{ frak_amb_heading }}</h1>
+      <h2 class="h2 heading">{{ frak_amb_heading }}</h2>
+    </div>
+    <frak-ambassador></frak-ambassador>
+    <p class="frak-amb-page__fallback" data-frak-amb-fallback hidden>
+      {{ frak_amb_fallback }} <a href="{{ routes.root_url }}">{{ frak_amb_home }}</a>
+    </p>
+  </div>
+  <script>
+    (function () {
+      var registry = window.customElements;
+      var fallback = document.querySelector("[data-frak-amb-fallback]");
+      if (!registry || !fallback) return;
+      var timer = setTimeout(function () {
+        if (!registry.get("frak-ambassador")) fallback.hidden = false;
+      }, 8000);
+      registry.whenDefined("frak-ambassador").then(function () {
+        clearTimeout(timer);
+        fallback.hidden = true;
+      });
+    })();
+  </script>
+{%- else -%}
+  {%- if frak_amb_lang == 'fr' -%}
+    {%- assign page_title = 'Page introuvable' -%}
+    {%- assign frak_amb_missing = 'Cette page n’est pas disponible.' -%}
+    {%- assign frak_amb_home = 'Retour à la boutique' -%}
+  {%- else -%}
+    {%- assign page_title = 'Page not found' -%}
+    {%- assign frak_amb_missing = 'This page isn’t available.' -%}
+    {%- assign frak_amb_home = 'Back to the shop' -%}
+  {%- endif -%}
+  <div class="frak-amb-page frak-amb-page--missing" data-frak-amb-missing>
+    <h1 class="h1">{{ page_title }}</h1>
+    <p>{{ frak_amb_missing }}</p>
+    <p><a href="{{ routes.root_url }}">{{ frak_amb_home }}</a></p>
+  </div>
+{%- endif -%}
