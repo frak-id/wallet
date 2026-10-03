@@ -51,7 +51,7 @@ pub fn run() {
             .plugin(tauri_plugin_clipboard_manager::init())
             .plugin(tauri_plugin_recovery_hint::init())
             .plugin(tauri_plugin_frak_updater::init())
-            .plugin(tauri_plugin_frak_tab_bar::init());
+            .plugin(tauri_plugin_frak_glass::init());
     }
 
     #[cfg(target_os = "android")]

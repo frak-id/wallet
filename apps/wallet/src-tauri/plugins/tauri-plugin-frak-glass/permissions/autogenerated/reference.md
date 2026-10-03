@@ -1,11 +1,11 @@
 ## Default Permission
 
-Default permissions for the frak-tab-bar plugin
+Default permissions for the frak-glass plugin
 
 #### This default permission set includes the following:
 
 - `allow-is-supported`
-- `allow-update`
+- `allow-set-tab-bar`
 - `allow-register-listener`
 - `allow-remove-listener`
 
@@ -21,7 +21,7 @@ Default permissions for the frak-tab-bar plugin
 <tr>
 <td>
 
-`frak-tab-bar:allow-is-supported`
+`frak-glass:allow-is-supported`
 
 </td>
 <td>
@@ -34,7 +34,7 @@ Enables the is_supported command without any pre-configured scope.
 <tr>
 <td>
 
-`frak-tab-bar:deny-is-supported`
+`frak-glass:deny-is-supported`
 
 </td>
 <td>
@@ -47,7 +47,7 @@ Denies the is_supported command without any pre-configured scope.
 <tr>
 <td>
 
-`frak-tab-bar:allow-register-listener`
+`frak-glass:allow-register-listener`
 
 </td>
 <td>
@@ -60,7 +60,7 @@ Enables the register_listener command without any pre-configured scope.
 <tr>
 <td>
 
-`frak-tab-bar:deny-register-listener`
+`frak-glass:deny-register-listener`
 
 </td>
 <td>
@@ -73,7 +73,7 @@ Denies the register_listener command without any pre-configured scope.
 <tr>
 <td>
 
-`frak-tab-bar:allow-remove-listener`
+`frak-glass:allow-remove-listener`
 
 </td>
 <td>
@@ -86,7 +86,7 @@ Enables the remove_listener command without any pre-configured scope.
 <tr>
 <td>
 
-`frak-tab-bar:deny-remove-listener`
+`frak-glass:deny-remove-listener`
 
 </td>
 <td>
@@ -99,12 +99,12 @@ Denies the remove_listener command without any pre-configured scope.
 <tr>
 <td>
 
-`frak-tab-bar:allow-update`
+`frak-glass:allow-set-tab-bar`
 
 </td>
 <td>
 
-Enables the update command without any pre-configured scope.
+Enables the set_tab_bar command without any pre-configured scope.
 
 </td>
 </tr>
@@ -112,12 +112,12 @@ Enables the update command without any pre-configured scope.
 <tr>
 <td>
 
-`frak-tab-bar:deny-update`
+`frak-glass:deny-set-tab-bar`
 
 </td>
 <td>
 
-Denies the update command without any pre-configured scope.
+Denies the set_tab_bar command without any pre-configured scope.
 
 </td>
 </tr>

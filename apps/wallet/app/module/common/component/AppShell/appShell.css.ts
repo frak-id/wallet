@@ -3,7 +3,7 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias, safeArea } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 import { bottomBarHeight } from "@/module/common/component/BottomTabBar/bottomTabBar.css";
-import { NATIVE_TAB_BAR_HEIGHT_VAR } from "@/module/common/component/NativeTabBar/constants";
+import { NATIVE_TAB_BAR_HEIGHT_VAR } from "@/module/native-glass/constants";
 
 /**
  * Outer shell — fills the viewport, flex column so main + bottom bar stack.

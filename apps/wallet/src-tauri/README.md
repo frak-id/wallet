@@ -147,17 +147,23 @@ and `id.frak.wallet.dev`):
 2. Enable **Key-value storage** (no container needed — uses the App ID).
 3. Regenerate and re-download the provisioning profile.
 
-#### Native tab bar (iOS 26+)
+#### Native Liquid Glass chrome (iOS 26+)
 
-`tauri-plugin-frak-tab-bar` floats a system `UITabBar` over the webview, so the bottom
-navigation renders as real Liquid Glass. It is only used when the app is built with the
-iOS 26 SDK *and* runs on iOS 26. Anything older, and Android, keeps the web
-`BottomTabBar`. The web router stays in charge: `NativeTabBar`
-(`app/module/common/component/NativeTabBar/`) pushes the tabs, the selection and the
-visibility to native, and native sends taps back as `tabSelected` events. A native view
-always draws above the webview, so the bar hides itself whenever a web overlay is open
-(`modalStore`, or `body[data-scroll-locked]` for Radix/vaul). Tab icons are template
-SVGs in `gen/apple/Assets.xcassets/tab-*.imageset`.
+`tauri-plugin-frak-glass` floats native UIKit controls over the webview so they render
+as real Liquid Glass. It is only used when the app is built with the iOS 26 SDK *and*
+runs on iOS 26 (`hasNativeGlass()`, probed once at bootstrap). Anything older, and
+Android, keeps the web components. The web app stays in charge: the hooks and
+components in `app/module/native-glass/` push each surface's state to native, and
+native sends user actions back as plugin events. A native view always draws above the
+webview, so every surface hides itself while a web overlay sits on top of it
+(`modalStore`, or `body[data-scroll-locked]` for Radix/vaul).
+
+| Surface | Native control | Web twin |
+|---|---|---|
+| Bottom navigation | system `UITabBar` | `BottomTabBar` |
+
+Icons are template SVGs in `gen/apple/Assets.xcassets`, generated from the
+design-system icons by `bun run tauri:native-icons` (`scripts/generate-native-icons.ts`).
 
 #### Code Signing
 

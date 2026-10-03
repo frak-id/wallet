@@ -19,7 +19,7 @@ function isScrollLocked() {
 
 /**
  * Whether any web overlay is open. A native view always paints above the
- * webview, so the native bar must step aside for them; `modalStore` covers the
+ * webview, so native chrome must step aside for them; `modalStore` covers the
  * `DetailSheet` modals, which lock nothing.
  */
 export function useOverlayOpen(): boolean {

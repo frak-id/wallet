@@ -1,8 +1,8 @@
 [default]
-description = "Default permissions for the frak-tab-bar plugin"
+description = "Default permissions for the frak-glass plugin"
 permissions = [
     "allow-is-supported",
-    "allow-update",
+    "allow-set-tab-bar",
     "allow-register-listener",
     "allow-remove-listener",
 ]
