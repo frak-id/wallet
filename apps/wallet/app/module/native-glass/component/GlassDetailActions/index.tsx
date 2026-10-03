@@ -4,10 +4,7 @@ import { useTranslation } from "react-i18next";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { useNativeDetailChrome } from "../../hook/useNativeDetailChrome";
 import { useNativeToolbar } from "../../hook/useNativeToolbar";
-import {
-    useDetailSheetChromeVisible,
-    useTopBannerShown,
-} from "../../hook/useOverlayOpen";
+import { useDetailSheetChromeVisible } from "../../hook/useOverlayOpen";
 
 type GlassDetailActionsProps = {
     /** Native toolbar id; one per sheet. */
@@ -62,8 +59,7 @@ function NativeDetailActions({
     shareLabel,
 }: GlassDetailActionsProps) {
     const { t } = useTranslation();
-    const chromeVisible = useDetailSheetChromeVisible();
-    const bannerShown = useTopBannerShown();
+    const visible = useDetailSheetChromeVisible("top");
 
     useNativeToolbar(id, {
         leading: [
@@ -82,8 +78,7 @@ function NativeDetailActions({
                   },
               ]
             : [],
-        // A top banner covers the web buttons, so the native ones step aside for it.
-        visible: chromeVisible && !bannerShown,
+        visible,
         onAction: (itemId) => {
             if (itemId === "close") onClose();
             if (itemId === "share") onShare?.();

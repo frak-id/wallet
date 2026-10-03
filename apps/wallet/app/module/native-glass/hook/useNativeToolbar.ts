@@ -99,7 +99,8 @@ export function useNativeToolbar(
     useNativeEvent<{ toolbarId: string; itemId: string; value?: string }>(
         "toolbarAction",
         ({ toolbarId, itemId, value }) => {
-            if (toolbarId === id) onAction(itemId, value);
+            // A tap can land in the round trip before native hears of a hide.
+            if (toolbarId === id && visible) onAction(itemId, value);
         }
     );
 }

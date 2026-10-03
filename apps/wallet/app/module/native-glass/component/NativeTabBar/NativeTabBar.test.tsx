@@ -161,6 +161,21 @@ describe("NativeTabBar", () => {
         expect(navigateMock).not.toHaveBeenCalled();
     });
 
+    it("ignores a tab tap while an overlay hides the bar", async () => {
+        render(<NativeTabBar tabs={tabs} activeKey="/wallet" />);
+        await flushBridge();
+
+        act(() => modalStore.getState().openModal({ id: "transfer" }));
+        await flushBridge();
+        act(() => emitTabSelected({ key: "/explorer" }));
+        expect(navigateMock).not.toHaveBeenCalled();
+
+        act(() => modalStore.getState().closeModal());
+        await flushBridge();
+        act(() => emitTabSelected({ key: "/explorer" }));
+        expect(navigateMock).toHaveBeenCalledOnce();
+    });
+
     it("preloads every tab route", async () => {
         render(<NativeTabBar tabs={tabs} activeKey="/wallet" />);
         await flushBridge();

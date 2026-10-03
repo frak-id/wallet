@@ -8,6 +8,7 @@ import type { DefaultTranslate } from "@frak-labs/wallet-shared/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useCoverNativeChrome } from "@/module/native-glass/hook/useOverlayOpen";
 import { versionKey } from "../../queryKeys/version";
 import {
     completeNativeSoftUpdate,
@@ -45,6 +46,8 @@ type SoftUpdatePromptProps =
  */
 export function SoftUpdatePrompt(props: SoftUpdatePromptProps) {
     const { t } = useTranslation();
+    // Pinned where the native tab bar and bottom actions sit.
+    useCoverNativeChrome("bottom");
 
     if (props.mode === "available") {
         return <AvailableBanner onDismiss={props.onDismiss} t={t} />;
