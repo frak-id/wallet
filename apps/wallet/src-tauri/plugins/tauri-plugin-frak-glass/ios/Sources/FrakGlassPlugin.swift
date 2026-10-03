@@ -40,8 +40,10 @@ class FrakGlassPlugin: Plugin {
     }
 
     private func makeToolbar(id: String, in host: UIView) -> ToolbarSurface {
-        let toolbar = ToolbarSurface(in: host) { [weak self] itemId in
-            self?.trigger("toolbarAction", data: ["toolbarId": id, "itemId": itemId] as JSObject)
+        let toolbar = ToolbarSurface(in: host) { [weak self] itemId, value in
+            var data: JSObject = ["toolbarId": id, "itemId": itemId]
+            data["value"] = value
+            self?.trigger("toolbarAction", data: data)
         }
         toolbars[id] = toolbar
         return toolbar

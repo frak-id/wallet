@@ -162,6 +162,7 @@ webview, so every surface hides itself while a web overlay sits on top of it
 |---|---|---|
 | Bottom navigation | system `UITabBar` | `BottomTabBar` |
 | Detail sheet close / share | `UIButton` `.glass()` toolbar | `GlassCloseButton` / `GlassButton` |
+| Explorer sort | `.glass()` button + single-choice `UIMenu` | `GlassButton` + `ExplorerSortSheet` |
 
 Icons are template SVGs in `gen/apple/Assets.xcassets`, generated from the
 design-system icons by `bun run tauri:native-icons` (`scripts/generate-native-icons.ts`).
