@@ -119,10 +119,10 @@ export function BlobStep({
                             length="big"
                             type="email"
                             inputMode="email"
+                            name="email"
                             autoComplete="email"
                             autoCapitalize="none"
-                            autoCorrect="off"
-                            spellCheck={false}
+                            // No spellCheck={false}: on iOS it hides the QuickType bar that carries the email suggestions.
                             enterKeyHint="send"
                             aria-label={t("wallet.recoveryUsage.email.label")}
                             placeholder={t(
