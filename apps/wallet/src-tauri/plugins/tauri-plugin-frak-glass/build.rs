@@ -4,6 +4,7 @@ const COMMANDS: &[&str] = &[
     "is_supported",
     "set_tab_bar",
     "set_toolbar",
+    "set_bottom_action",
     "register_listener",
     "remove_listener",
 ];

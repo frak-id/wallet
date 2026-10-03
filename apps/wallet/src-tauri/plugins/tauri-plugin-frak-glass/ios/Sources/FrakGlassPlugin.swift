@@ -13,6 +13,7 @@ class FrakGlassPlugin: Plugin {
     }
     // Never removed, only hidden: ids are a fixed set of screens.
     private var toolbars: [String: ToolbarSurface] = [:]
+    private var bottomAction: BottomActionSurface?
 
     @objc public override func load(webview: WKWebView) {
         self.webview = webview
@@ -36,6 +37,20 @@ class FrakGlassPlugin: Plugin {
             let toolbar = self.toolbars[args.id] ?? self.makeToolbar(id: args.id, in: host)
             toolbar.update(args, in: host)
             invoke.resolve()
+        }
+    }
+
+    @objc public func setBottomAction(_ invoke: Invoke) throws {
+        let args = try invoke.parseArgs(BottomActionArgs.self)
+        onHost(invoke) { host in
+            let action =
+                self.bottomAction
+                ?? BottomActionSurface(in: host) { [weak self] in
+                    self?.trigger("bottomAction", data: [:] as JSObject)
+                }
+            self.bottomAction = action
+            let height = action.update(args, in: host)
+            invoke.resolve(["height": Double(height)] as JsonObject)
         }
     }
 
