@@ -8,6 +8,16 @@ export type NativeToolbarItem = {
     icon: string;
     /** VoiceOver label; the native button shows no text. */
     label: string;
+    /** `#rrggbb` icon colour; the system label colour when absent. */
+    color?: string;
+    /** `#rrggbb` dot on the top-trailing corner; no dot when absent. */
+    badge?: string;
+    /** Single-choice menu the button opens instead of firing a tap. */
+    menu?: {
+        title?: string;
+        options: { value: string; title: string }[];
+        selected?: string;
+    };
 };
 
 type NativeToolbarOptions = {
@@ -16,7 +26,8 @@ type NativeToolbarOptions = {
     leading?: NativeToolbarItem[];
     trailing?: NativeToolbarItem[];
     visible: boolean;
-    onAction: (itemId: string) => void;
+    /** `value` is the picked option for a menu item. */
+    onAction: (itemId: string, value?: string) => void;
 };
 
 type ToolbarState = {
@@ -85,10 +96,10 @@ export function useNativeToolbar(
         return () => sync({ visible: false });
     }, [sync, visible]);
 
-    useNativeEvent<{ toolbarId: string; itemId: string }>(
+    useNativeEvent<{ toolbarId: string; itemId: string; value?: string }>(
         "toolbarAction",
-        ({ toolbarId, itemId }) => {
-            if (toolbarId === id) onAction(itemId);
+        ({ toolbarId, itemId, value }) => {
+            if (toolbarId === id) onAction(itemId, value);
         }
     );
 }

@@ -38,3 +38,10 @@ export const dotCore = style({
     borderRadius: alias.cornerRadius.full,
     backgroundColor: vars.icon.error,
 });
+
+/** Empty 44×44 slot under the native glass button (iOS 26). */
+export const nativeSlot = style({
+    display: "inline-flex",
+    width: 44,
+    height: 44,
+});
