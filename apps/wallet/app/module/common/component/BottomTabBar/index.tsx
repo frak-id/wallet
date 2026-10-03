@@ -8,7 +8,21 @@ export type TabItem = {
     key: string;
     label: string;
     icon: ReactNode;
+    /** Image the native iOS bar shows instead of `icon` (asset or SF Symbol name). */
+    nativeIcon: string;
 };
+
+/**
+ * Home tab always replaces. Non-home tabs only push when leaving home, so the
+ * back-stack never stacks a chain of sibling tabs.
+ */
+export function shouldReplaceTab(
+    tabKey: string,
+    activeKey: string,
+    homeKey?: string
+): boolean {
+    return homeKey ? tabKey === homeKey || activeKey !== homeKey : false;
+}
 
 export type BottomTabBarProps = {
     tabs: TabItem[];
@@ -47,17 +61,15 @@ export function BottomTabBar({ tabs, activeKey, homeKey }: BottomTabBarProps) {
             >
                 {tabs.map((tab) => {
                     const isActive = tab.key === activeKey;
-                    // Home tab always replaces. Non-home tabs only push when
-                    // leaving home, otherwise replace so we don't stack a
-                    // chain of sibling tabs in the back-stack.
-                    const replace = homeKey
-                        ? tab.key === homeKey || activeKey !== homeKey
-                        : false;
                     return (
                         <Link
                             key={tab.key}
                             to={tab.key}
-                            replace={replace}
+                            replace={shouldReplaceTab(
+                                tab.key,
+                                activeKey,
+                                homeKey
+                            )}
                             className={
                                 isActive
                                     ? bottomTabBarStyles.tabActive

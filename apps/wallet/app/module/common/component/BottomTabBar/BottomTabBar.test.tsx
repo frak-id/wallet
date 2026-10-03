@@ -28,9 +28,9 @@ vi.mock("@tanstack/react-router", async () => {
 });
 
 const mockTabs = [
-    { key: "a", label: "Tab A", icon: <span>A</span> },
-    { key: "b", label: "Tab B", icon: <span>B</span> },
-    { key: "c", label: "Tab C", icon: <span>C</span> },
+    { key: "a", label: "Tab A", icon: <span>A</span>, nativeIcon: "a" },
+    { key: "b", label: "Tab B", icon: <span>B</span>, nativeIcon: "b" },
+    { key: "c", label: "Tab C", icon: <span>C</span>, nativeIcon: "c" },
 ];
 
 describe("BottomTabBar", () => {

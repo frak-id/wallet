@@ -3,6 +3,7 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias, safeArea } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 import { bottomBarHeight } from "@/module/common/component/BottomTabBar/bottomTabBar.css";
+import { NATIVE_TAB_BAR_HEIGHT_VAR } from "@/module/common/component/NativeTabBar/constants";
 
 /**
  * Outer shell — fills the viewport, flex column so main + bottom bar stack.
@@ -63,8 +64,8 @@ export const mainContentWithNav = style([
     mainContentBase,
     {
         // Bar overlays content on all breakpoints. Derived from the bar's own
-        // metrics; a literal drifts and strands dead space beneath it.
-        paddingBottom: `calc(${bottomBarHeight} + ${safeArea.bottom})`,
+        // metrics (reported by UIKit for the native one); a literal drifts.
+        paddingBottom: `var(${NATIVE_TAB_BAR_HEIGHT_VAR}, calc(${bottomBarHeight} + ${safeArea.bottom}))`,
     },
 ]);
 

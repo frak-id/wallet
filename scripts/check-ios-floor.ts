@@ -62,6 +62,7 @@ const SITES: Site[] = [
         "app-settings",
         "frak-firebase",
         "frak-share",
+        "frak-tab-bar",
         "frak-updater",
         "frak-webauthn",
         "install-referrer",
