@@ -8,6 +8,7 @@ import { ArrowDownIcon } from "@frak-labs/design-system/icons";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { focusWithoutScroll } from "@/module/common/utils/focusWithoutScroll";
 import { MAX_REDEEM_AMOUNT_EUR } from "@/module/monerium/hooks/useMoneriumOfframp";
 import {
     ibanStore,
@@ -155,7 +156,7 @@ export function MoneriumTransferAmountScreen({
                 <Inline space="xs" alignY="center" wrap={false}>
                     <Box
                         as="input"
-                        autoFocus
+                        ref={focusWithoutScroll}
                         type="text"
                         inputMode="decimal"
                         placeholder="0"

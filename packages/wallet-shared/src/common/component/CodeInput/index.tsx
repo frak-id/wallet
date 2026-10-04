@@ -123,7 +123,8 @@ export function CodeInput({
     // first paint.
     useEffect(() => {
         if (!autoFocus) return;
-        inputRef.current?.focus();
+        // `preventScroll`: iOS otherwise pans the page to reveal the field.
+        inputRef.current?.focus({ preventScroll: true });
     }, [autoFocus]);
 
     const handleChange = useCallback(
