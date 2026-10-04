@@ -61,13 +61,17 @@ export const shellContainerPage = style([
 ]);
 
 /**
- * The shell's only scroller. It spans the shell from the screen top and pads
- * below the status bar, so content rests under it and scrolls beneath it;
- * the variants reserve the bottom inset.
+ * The shell's only scroller. It spans the shell from the screen top and starts
+ * its content at `shellContentTop`, so content rests clear of the status bar
+ * and scrolls beneath it; the variants reserve the bottom inset.
  */
 const mainContentBase = style({
-    paddingTop: shellContentTop,
-    paddingInline: alias.spacing.m,
+    padding: alias.spacing.m,
+    selectors: {
+        // The inset is a spacer, not padding: WebKit offsets the caret of a field
+        // autofocused during a view transition by the scroller's top padding.
+        "&::before": { content: '""', display: "block", height: safeArea.top },
+    },
     // Focus-scrolled fields land below the status bar, not under it.
     scrollPaddingTop: shellContentTop,
     flex: "1 1 0",
