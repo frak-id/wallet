@@ -23,8 +23,4 @@ function blurLayer(maskStop: string, radius: number) {
     });
 }
 
-export const blurLayers = [
-    blurLayer("60%", 4),
-    blurLayer("35%", 12),
-    blurLayer("18%", 24),
-];
+export const blurLayers = [blurLayer("66%", 8), blurLayer("24%", 25)];

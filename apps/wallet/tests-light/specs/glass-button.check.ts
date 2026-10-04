@@ -1,8 +1,8 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "../fixtures";
 
-/** Class names are hashed in the build; the circle is the container's parent. */
-const GLASS = ":has(> .liquid-glass-container)";
+/** Class names are hashed in the build; the circle is the Back link's first span. */
+const GLASS = 'a[aria-label="Back"] > span:first-child';
 const TRANSPARENT = "rgba(0, 0, 0, 0)";
 
 async function outlineOf(page: Page) {
@@ -72,7 +72,7 @@ test.describe("GlassButton focus ring", () => {
         await page.goto("/explorer");
         await page.waitForLoadState("networkidle");
 
-        const sort = page.locator(`button${GLASS}`).first();
+        const sort = page.getByRole("button", { name: "Sort", exact: true });
         await expect(sort).toBeVisible();
         await sort.focus();
         await page.keyboard.press("Shift");

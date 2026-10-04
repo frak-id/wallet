@@ -15,7 +15,6 @@ export const panel = recipe({
         variant: {
             primary: {
                 backgroundColor: vars.surface.elevated,
-                backdropFilter: "blur(40px)",
             },
             invisible: {
                 background: "transparent",
