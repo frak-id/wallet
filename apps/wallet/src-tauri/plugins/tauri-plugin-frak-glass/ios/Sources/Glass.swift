@@ -21,6 +21,41 @@ enum Glass {
         #endif
         return prominent ? .filled() : .gray()
     }
+
+    /// An interactive glass capsule hosting `content`, for a `container` to adapt as one.
+    static func capsule(around content: UIView) -> UIView {
+        #if compiler(>=6.2)
+            if #available(iOS 26.0, *) {
+                let effect = UIGlassEffect(style: .regular)
+                effect.isInteractive = true
+                let capsule = UIVisualEffectView(effect: effect)
+                capsule.cornerConfiguration = .capsule()
+                capsule.contentView.addSubview(content)
+                content.translatesAutoresizingMaskIntoConstraints = false
+                NSLayoutConstraint.activate([
+                    content.topAnchor.constraint(equalTo: capsule.contentView.topAnchor),
+                    content.bottomAnchor.constraint(equalTo: capsule.contentView.bottomAnchor),
+                    content.leadingAnchor.constraint(equalTo: capsule.contentView.leadingAnchor),
+                    content.trailingAnchor.constraint(equalTo: capsule.contentView.trailingAnchor),
+                ])
+                return capsule
+            }
+        #endif
+        return content
+    }
+
+    /// Renders the glass views nested in its `contentView` together: one light/dark
+    /// adaptation for all, merging only those closer than `spacing`.
+    static func container(spacing: CGFloat) -> UIVisualEffect? {
+        #if compiler(>=6.2)
+            if #available(iOS 26.0, *) {
+                let effect = UIGlassContainerEffect()
+                effect.spacing = spacing
+                return effect
+            }
+        #endif
+        return nil
+    }
 }
 
 extension UIColor {

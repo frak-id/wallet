@@ -168,6 +168,7 @@ blocking screen that skips this stays under a tappable native button.
 | Detail sheet close / share | `UIButton` `.glass()` toolbar | `GlassCloseButton` / `GlassButton` |
 | Explorer sort | `.glass()` button + single-choice `UIMenu` | `GlassButton` + `ExplorerSortSheet` |
 | Explorer detail "share and earn" CTA | `UIButton` `.prominentGlass()` | frosted `floatingFooter` |
+| Welcome detail "Discover offers" CTA | `UIButton` `.prominentGlass()` | `DetailSheetFooter` `ButtonLink` |
 
 Icons are template SVGs in `gen/apple/Assets.xcassets`, generated from the
 design-system icons by `bun run tauri:native-icons` (`scripts/generate-native-icons.ts`).

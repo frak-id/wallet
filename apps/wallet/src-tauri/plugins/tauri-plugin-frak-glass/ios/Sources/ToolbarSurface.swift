@@ -38,50 +38,48 @@ struct ToolbarArgs: Decodable {
     let visible: Bool
 }
 
-/// A row of 44pt Liquid Glass buttons pinned under the status bar, standing in
+/// Rows of 44pt Liquid Glass buttons pinned under the status bar, standing in
 /// for a fixed web toolbar such as `DetailSheetActions`.
 final class ToolbarSurface {
     private static let buttonSize: CGFloat = 44
     private static let edgeMargin: CGFloat = 16
+    private static let itemSpacing: CGFloat = 8
 
     /// Item id, and the picked option's value for a menu item.
     private let onAction: (String, String?) -> Void
-    private let leadingRow = PassthroughStackView()
-    private let trailingRow = PassthroughStackView()
+    private let container = PassthroughEffectView(effect: nil)
+    private let leading = ToolbarEdge(isLeading: true)
+    private let trailing = ToolbarEdge(isLeading: false)
     private var topConstraints: [NSLayoutConstraint] = []
-    private var leading: [ToolbarItemArgs] = []
-    private var trailing: [ToolbarItemArgs] = []
-    private var buttons: [String: ToolbarButton] = [:]
     private var visible = false
     private var transition = 0
 
     init(in host: UIView, onAction: @escaping (String, String?) -> Void) {
         self.onAction = onAction
-        for row in [leadingRow, trailingRow] {
-            row.axis = .horizontal
-            row.spacing = 8
-            // The web theme is light-only: dark glass over light pages reads as a bug.
-            row.overrideUserInterfaceStyle = .light
-            row.isHidden = true
-            row.translatesAutoresizingMaskIntoConstraints = false
-            host.addSubview(row)
-        }
+        // The web theme is light-only: dark glass over light pages reads as a bug.
+        container.overrideUserInterfaceStyle = .light
+        container.isHidden = true
+        container.translatesAutoresizingMaskIntoConstraints = false
+        host.addSubview(container)
         NSLayoutConstraint.activate([
-            leadingRow.leadingAnchor.constraint(
-                equalTo: host.leadingAnchor, constant: Self.edgeMargin),
-            trailingRow.trailingAnchor.constraint(
-                equalTo: host.trailingAnchor, constant: -Self.edgeMargin),
-            trailingRow.topAnchor.constraint(equalTo: leadingRow.topAnchor),
-            leadingRow.topAnchor.constraint(
+            container.leadingAnchor.constraint(equalTo: host.leadingAnchor),
+            container.trailingAnchor.constraint(equalTo: host.trailingAnchor),
+            container.heightAnchor.constraint(equalToConstant: Self.buttonSize),
+            container.topAnchor.constraint(
                 greaterThanOrEqualTo: host.topAnchor, constant: Self.edgeMargin),
         ])
     }
 
     func update(_ args: ToolbarArgs, in host: UIView) {
-        leading = sync(leadingRow, from: leading, to: args.leading)
-        trailing = sync(trailingRow, from: trailing, to: args.trailing)
+        sync(leading, to: args.leading)
+        sync(trailing, to: args.trailing)
+        // A menu would lose its morph inside a container, so menu bars keep separate glass.
+        let hasMenu = (args.leading + args.trailing).contains { $0.menu != nil }
+        if hasMenu != (container.effect == nil) {
+            container.effect = hasMenu ? nil : Glass.container(spacing: Self.itemSpacing / 2)
+        }
         NSLayoutConstraint.deactivate(topConstraints)
-        let top = leadingRow.topAnchor.constraint(
+        let top = container.topAnchor.constraint(
             equalTo: host.safeAreaLayoutGuide.topAnchor, constant: args.offsetTop)
         top.priority = .defaultHigh
         topConstraints = [top]
@@ -94,30 +92,54 @@ final class ToolbarSurface {
         setVisible(false)
     }
 
-    private func sync(
-        _ row: UIStackView, from current: [ToolbarItemArgs], to next: [ToolbarItemArgs]
-    ) -> [ToolbarItemArgs] {
-        if current.map(\.shape) == next.map(\.shape) {
-            for item in next { buttons[item.id]?.apply(item) }
-            return next
+    private var elements: [UIView] { leading.views + trailing.views }
+
+    private func sync(_ edge: ToolbarEdge, to next: [ToolbarItemArgs]) {
+        defer { edge.items = next }
+        if edge.items.map(\.shape) == next.map(\.shape) {
+            for item in next { edge.buttons[item.id]?.apply(item) }
+            return
         }
-        // Both rows share `buttons`: an id that just moved rows belongs to the other one now.
-        for item in current where buttons[item.id]?.superview === row { buttons[item.id] = nil }
-        for button in row.arrangedSubviews {
-            button.removeFromSuperview()
-        }
-        for item in next {
+        edge.views.forEach { $0.removeFromSuperview() }
+        edge.buttons = [:]
+        edge.views = next.map { item in
             let button = ToolbarButton(item: item) { [weak self] value in
                 self?.onAction(item.id, value)
             }
-            buttons[item.id] = button
-            row.addArrangedSubview(button)
-            NSLayoutConstraint.activate([
-                button.widthAnchor.constraint(equalToConstant: Self.buttonSize),
-                button.heightAnchor.constraint(equalToConstant: Self.buttonSize),
-            ])
+            edge.buttons[item.id] = button
+            // Tap buttons join the container's shared glass; a menu button keeps its own.
+            let view = item.menu == nil ? Glass.capsule(around: button) : button
+            view.isHidden = !visible
+            view.translatesAutoresizingMaskIntoConstraints = false
+            container.contentView.addSubview(view)
+            return view
         }
-        return next
+        layout(edge)
+    }
+
+    // Leading items flow from the leading margin, trailing ones from the trailing margin.
+    private func layout(_ edge: ToolbarEdge) {
+        let content = container.contentView
+        let ordered = edge.isLeading ? edge.views : edge.views.reversed()
+        var previous: UIView?
+        for view in ordered {
+            var constraints = [
+                view.widthAnchor.constraint(equalToConstant: Self.buttonSize),
+                view.heightAnchor.constraint(equalToConstant: Self.buttonSize),
+                view.centerYAnchor.constraint(equalTo: content.centerYAnchor),
+            ]
+            if edge.isLeading {
+                constraints.append(
+                    previous.map { view.leadingAnchor.constraint(equalTo: $0.trailingAnchor, constant: Self.itemSpacing) }
+                        ?? view.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: Self.edgeMargin))
+            } else {
+                constraints.append(
+                    previous.map { view.trailingAnchor.constraint(equalTo: $0.leadingAnchor, constant: -Self.itemSpacing) }
+                        ?? view.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -Self.edgeMargin))
+            }
+            NSLayoutConstraint.activate(constraints)
+            previous = view
+        }
     }
 
     // Scales rather than fades: animating the alpha of a glass view breaks its effect.
@@ -126,14 +148,17 @@ final class ToolbarSurface {
         self.visible = visible
         if !visible {
             // An open menu would otherwise float on over whatever hid the toolbar.
-            for button in buttons.values { button.contextMenuInteraction?.dismissMenu() }
+            for button in [leading, trailing].flatMap({ $0.buttons.values }) {
+                button.contextMenuInteraction?.dismissMenu()
+            }
         }
-        let rows = [leadingRow, trailingRow]
+        let views = elements
         let collapsed = CGAffineTransform(scaleX: 0.01, y: 0.01)
         if visible {
-            for row in rows where row.isHidden {
-                row.transform = collapsed
-                row.isHidden = false
+            container.isHidden = false
+            for view in views where view.isHidden {
+                view.transform = collapsed
+                view.isHidden = false
             }
         }
         transition += 1
@@ -145,14 +170,27 @@ final class ToolbarSurface {
             initialSpringVelocity: 0,
             options: [.beginFromCurrentState, .allowUserInteraction]
         ) {
-            for row in rows {
-                row.transform = visible ? .identity : collapsed
+            for view in views {
+                view.transform = visible ? .identity : collapsed
             }
         } completion: { [weak self] _ in
             // An interrupted animation completes too: only the latest one may hide.
             guard let self, current == self.transition, !self.visible else { return }
-            rows.forEach { $0.isHidden = true }
+            views.forEach { $0.isHidden = true }
+            self.container.isHidden = true
         }
+    }
+}
+
+/// One side of the toolbar: its items, their views, and their buttons by id.
+private final class ToolbarEdge {
+    let isLeading: Bool
+    var items: [ToolbarItemArgs] = []
+    var views: [UIView] = []
+    var buttons: [String: ToolbarButton] = [:]
+
+    init(isLeading: Bool) {
+        self.isLeading = isLeading
     }
 }
 
@@ -166,7 +204,8 @@ final class ToolbarButton: UIButton {
     init(item: ToolbarItemArgs, onAction: @escaping (String?) -> Void) {
         self.onAction = onAction
         super.init(frame: .zero)
-        var configuration = Glass.buttonConfiguration()
+        // A tap button's glass comes from the capsule around it.
+        var configuration = item.menu == nil ? UIButton.Configuration.plain() : Glass.buttonConfiguration()
         configuration.cornerStyle = .capsule
         configuration.contentInsets = .zero
         self.configuration = configuration
@@ -228,9 +267,11 @@ final class ToolbarButton: UIButton {
 }
 
 /// Lets touches between and around the buttons fall through to the webview.
-final class PassthroughStackView: UIStackView {
+final class PassthroughEffectView: UIVisualEffectView {
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        let hit = super.hitTest(point, with: event)
-        return hit === self ? nil : hit
+        guard let hit = super.hitTest(point, with: event), hit !== contentView,
+            hit.isDescendant(of: contentView)
+        else { return nil }
+        return hit
     }
 }
