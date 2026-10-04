@@ -1,5 +1,8 @@
 import { style } from "@vanilla-extract/css";
 
+/** Marks a page that draws its own scroll edge, so AppShell skips its scrim. */
+export const scrollEdgeBlur = style({});
+
 // Progressive blur: shorter masks at bigger radii concentrate the blur at the
 // top edge. Static px radii compile fine through Lightning CSS (only
 // `blur(var(--…))` gets mangled), and build-time CSS is required anyway: the
