@@ -2,17 +2,16 @@ import {
     DetailSheet,
     DetailSheetActions,
     DetailSheetBody,
-    DetailSheetFooter,
     DetailSheetHero,
 } from "@frak-labs/design-system/components/DetailSheet";
-import { Text } from "@frak-labs/design-system/components/Text";
-import { ExternalLink, useShareLink } from "@frak-labs/wallet-shared";
+import { useShareLink } from "@frak-labs/wallet-shared";
 import { useCallback } from "react";
-import { Trans, useTranslation } from "react-i18next";
-import { ButtonLink } from "@/module/common/component/ButtonLink";
+import { useTranslation } from "react-i18next";
 import { InstructionList } from "@/module/common/component/InstructionList";
 import { Title } from "@/module/common/component/Title";
 import { GlassDetailActions } from "@/module/native-glass/component/GlassDetailActions";
+import { useNativeDetailChrome } from "@/module/native-glass/hook/useNativeDetailChrome";
+import { WelcomeDetailFooter, WelcomeDetailLegal } from "./WelcomeDetailFooter";
 import welcomeLogos from "./welcome_logos_detail.webp";
 import * as styles from "./welcomeDetail.css";
 
@@ -28,6 +27,7 @@ type WelcomeDetailProps = {
 
 export function WelcomeDetail({ onClose }: WelcomeDetailProps) {
     const { t } = useTranslation();
+    const nativeChrome = useNativeDetailChrome();
 
     // Use the shared hook so Tauri (iOS / Android) goes through the native
     // share plugin and web uses the Web Share API — keeps analytics consistent
@@ -59,7 +59,13 @@ export function WelcomeDetail({ onClose }: WelcomeDetailProps) {
                 </DetailSheetActions>
             </DetailSheetHero>
 
-            <DetailSheetBody className={styles.sectionContent}>
+            <DetailSheetBody
+                className={
+                    nativeChrome
+                        ? styles.sectionContentNativeFooter
+                        : styles.sectionContent
+                }
+            >
                 <Title size="page">{t("wallet.welcome.title")}</Title>
 
                 <InstructionList
@@ -69,32 +75,10 @@ export function WelcomeDetail({ onClose }: WelcomeDetailProps) {
                         description: t(`wallet.welcome.detail.${step.descKey}`),
                     }))}
                 />
+                {nativeChrome && <WelcomeDetailLegal />}
             </DetailSheetBody>
 
-            <DetailSheetFooter>
-                <Text variant="caption" align="center">
-                    <Trans
-                        i18nKey="wallet.welcome.detail.legal"
-                        components={{
-                            termsLink: (
-                                <ExternalLink href="https://frak.id/terms">
-                                    {" "}
-                                </ExternalLink>
-                            ),
-                        }}
-                    />
-                </Text>
-                <ButtonLink
-                    to="/explorer"
-                    onClick={onClose}
-                    variant="primary"
-                    width="full"
-                    size="large"
-                    fontSize="s"
-                >
-                    {t("wallet.welcome.detail.discoverOffers")}
-                </ButtonLink>
-            </DetailSheetFooter>
+            <WelcomeDetailFooter onClose={onClose} />
         </DetailSheet>
     );
 }
