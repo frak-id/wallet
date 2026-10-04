@@ -18,6 +18,7 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
+import { shellToastTop } from "@/module/common/component/AppShell/appShell.css";
 import { parseReferralCode } from "@/module/common/utils/parseReferralCode";
 import { EmailAlreadyUsedStep } from "@/module/onboarding/component/EmailAlreadyUsedStep";
 import {
@@ -36,7 +37,7 @@ import { useSkipLatch } from "@/module/onboarding/hook/useSkipLatch";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import { modalStore } from "@/module/stores/modalStore";
-import * as styles from "./register.css";
+import "./register.css";
 
 type RegisterSearch = {
     /** Bypasses the "already has passkeys → /login" redirect guard when the
@@ -523,7 +524,7 @@ function RegisterPage() {
              * `position: absolute`, so render order does not affect layout.
              */}
             {referralToast !== "idle" ? (
-                <ToastSurface className={styles.toastOffset}>
+                <ToastSurface className={shellToastTop}>
                     <ConfirmationTooltip
                         isLeaving={referralToast === "leaving"}
                     >

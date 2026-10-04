@@ -3,7 +3,16 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias, safeArea } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 import { bottomBarHeight } from "@/module/common/component/BottomTabBar/bottomTabBar.css";
+import { container as pageLayoutContainer } from "@/module/common/component/PageLayout/index.css";
+import { scrollEdgeBlur } from "@/module/common/component/ScrollEdgeBlur/index.css";
 import { NATIVE_TAB_BAR_HEIGHT_VAR } from "@/module/native-glass/constants";
+
+/** Where page content starts at rest: below the status bar plus the page gap. */
+export const shellContentTop = `calc(${safeArea.top} + ${alias.spacing.m})`;
+
+// Reserve the bottom inset once (nav bar / home indicator); `max` keeps a 16px
+// breather on web without double-counting the inset on Android.
+const shellContentBottom = `max(${alias.spacing.m}, ${safeArea.bottom})`;
 
 /**
  * Outer shell — fills the viewport, flex column so main + bottom bar stack.
@@ -21,17 +30,21 @@ export const shellContainer = style({
     // opens (WKWebView and edge-to-edge Android WebView do not honor `dvh` or
     // `adjustResize`). Falls back to `100dvh` everywhere else.
     height: "var(--viewport-height, 100dvh)",
-    paddingTop: safeArea.top,
     overflow: "hidden",
     width: "100%",
+    // The page canvas, which both edge scrims inherit.
+    background: vars.surface.background2,
     "@media": {
         [`(min-width: ${tablet}px)`]: {
             width: "393px",
-            minHeight: "unset",
             height: "min(var(--viewport-height, 100dvh), 852px)",
         },
     },
     selectors: {
+        // A white page renders `PageLayout`; the scrims follow it.
+        [`&:has(${pageLayoutContainer})`]: {
+            background: vars.surface.background,
+        },
         // Native app: opt out of the tablet phone-frame and fill the whole device.
         ':root[data-platform="tauri"] &': {
             width: "100%",
@@ -41,17 +54,25 @@ export const shellContainer = style({
     },
 });
 
-export const shellContainerAuth = style([
+/** A layout whose pages are all white stays white before a page mounts. */
+export const shellContainerPage = style([
     shellContainer,
     { background: vars.surface.background },
 ]);
 
+/**
+ * The shell's only scroller. It spans the shell from the screen top and pads
+ * below the status bar, so content rests under it and scrolls beneath it;
+ * the variants reserve the bottom inset.
+ */
 const mainContentBase = style({
-    padding: alias.spacing.m,
+    paddingTop: shellContentTop,
+    paddingInline: alias.spacing.m,
+    // Focus-scrolled fields land below the status bar, not under it.
+    scrollPaddingTop: shellContentTop,
     flex: "1 1 0",
     minHeight: 0,
     overflowY: "auto",
-    WebkitOverflowScrolling: "touch",
     // Suppress iOS rubber-band and Android native PTR so PullToRefresh's preventDefault works.
     overscrollBehaviorY: "contain",
 });
@@ -69,40 +90,10 @@ export const mainContentWithNav = style([
     },
 ]);
 
-/**
- * Variant of `mainContentWithNav` that lets content scroll up *behind* the
- * status bar — used by Explorer, whose frosted toolbar blurs content there.
- * The negative top margin pulls the scroller to the screen top (the shell's
- * `safeArea.top` padding still protects banners above it); the matching top
- * padding keeps content starting below the notch at rest, so the resting
- * layout is unchanged and only over-scroll reveals content behind the bar.
- */
-export const mainContentWithNavBehindStatusBar = style([
-    mainContentWithNav,
-    {
-        marginTop: `calc(-1 * ${safeArea.top})`,
-        paddingTop: `calc(${safeArea.top} + ${alias.spacing.m})`,
-    },
-]);
-
-/**
- * Main content without nav clearance.
- * Used on auth/onboarding screens where the bottom bar is hidden.
- */
+/** Main content without the tab bar (auth, SSO and full-screen pages). */
 export const mainContentNoNav = style([
     mainContentBase,
-    {
-        // Reserve the bottom inset once (nav bar / home indicator); `max` keeps
-        // a 16px breather on web without double-counting the inset on Android.
-        paddingBottom: `max(${alias.spacing.m}, ${safeArea.bottom})`,
-        selectors: {
-            // Native app: drop the desktop-only height cap so content can use the
-            // full device viewport on iPad.
-            ':root[data-platform="tauri"] &': {
-                maxHeight: "none",
-            },
-        },
-    },
+    { paddingBottom: shellContentBottom },
 ]);
 
 /**
@@ -119,34 +110,42 @@ export const bottomBar = style({
     zIndex: 20,
 });
 
-/**
- * Edge-to-edge draws content under the system bars (Android nav bar, iOS home
- * indicator), so scrolling content shows through in the bottom inset. Paint a
- * solid strip over it. Height matches `mainContentNoNav`'s reserved padding
- * (`max(spacing.m, safeArea.bottom)`) so it covers exactly the region content
- * scrolls behind: Android nav bar (~48px) / gesture (~16-24px), iOS notch
- * (~34px), iPhone SE / web (16px floor). Sits above scrolling content, below
- * the tab bar.
- */
-export const navBarScrim = style({
+/** Toasts anchored to the shell (not `main`) clear the status bar. */
+export const shellToastTop = style({
+    top: shellContentTop,
+});
+
+// Above scrolling content, below the tab bar and sticky page headers.
+const edgeScrim = style({
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 0,
-    height: `max(${alias.spacing.m}, ${safeArea.bottom})`,
-    // Match the page canvas (grey) so the strip is seamless. On full-screen
-    // pages there's no tab bar covering it, so a mismatched fill reads as a
-    // stray border.
-    background: vars.surface.background2,
     zIndex: 5,
     pointerEvents: "none",
+    background: "inherit",
 });
 
 /**
- * Auth/onboarding shells use a white container (`shellContainerAuth`), so the
- * scrim matches white there instead of the grey canvas.
+ * Covers the status bar in the page colour: solid behind the clock, fading out
+ * down to resting content, so scrolled content dissolves under the bar. A page
+ * drawing its own `ScrollEdgeBlur` replaces it.
  */
-export const navBarScrimAuth = style([
-    navBarScrim,
-    { background: vars.surface.background },
+export const statusBarScrim = style([
+    edgeScrim,
+    {
+        top: 0,
+        height: shellContentTop,
+        maskImage: "linear-gradient(to bottom, #000 50%, transparent)",
+        selectors: {
+            [`${shellContainer}:has(${scrollEdgeBlur}) &`]: {
+                display: "none",
+            },
+        },
+    },
+]);
+
+/** Covers the home indicator / Android nav bar in the page colour. */
+export const navBarScrim = style([
+    edgeScrim,
+    { bottom: 0, height: shellContentBottom },
 ]);

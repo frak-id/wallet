@@ -19,7 +19,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useLastAuthenticatorHint } from "@/module/authentication/hook/useLastAuthenticatorHint";
-import * as styles from "./AuthActions.css";
+import { shellToastTop } from "@/module/common/component/AppShell/appShell.css";
 
 // Beat before the auto-reconnect login fires, so the "Reconnecting…" toast is
 // readable before the OS biometric sheet appears instead of it popping
@@ -191,7 +191,7 @@ export function AuthActions({
     return (
         <>
             {showReconnectToast && (
-                <ToastSurface className={styles.reconnectToastOffset}>
+                <ToastSurface className={shellToastTop}>
                     <ConfirmationTooltip
                         icon={<FaceIdIcon width={20} height={20} />}
                     >
