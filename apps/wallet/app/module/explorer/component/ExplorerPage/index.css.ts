@@ -3,7 +3,6 @@ import {
     alias,
     brand,
     fontSize,
-    safeArea,
     zIndex,
 } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
@@ -13,8 +12,7 @@ import { shellContentTop } from "@/module/common/component/AppShell/appShell.css
 // to the cards; the button re-enables its own.
 export const stickyHeader = style({
     position: "sticky",
-    // Measured inside the scroller's padding, so it pins at the content top.
-    top: safeArea.top,
+    top: 0,
     zIndex: zIndex.sticky,
     pointerEvents: "none",
 });
