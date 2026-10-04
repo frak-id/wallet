@@ -1,21 +1,5 @@
-import { LiquidGlassBase } from "@tinymomentum/liquid-glass-react";
-import "@tinymomentum/liquid-glass-react/dist/components/LiquidGlassBase.css";
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
 import * as styles from "./index.css";
-
-const glassConfig = {
-    width: 44,
-    height: 44,
-    borderRadius: 50,
-    innerShadowColor: "#ffffff",
-    innerShadowBlur: 15,
-    innerShadowSpread: -5,
-    glassTintColor: "#f7f7f7",
-    glassTintOpacity: 80,
-    frostBlurRadius: 3,
-    noiseFrequency: 0.008,
-    noiseStrength: 1,
-} as const;
 
 type GlassButtonBaseProps = {
     icon: ReactNode;
@@ -35,7 +19,7 @@ type GlassButtonAsSpan = GlassButtonBaseProps &
 export type GlassButtonProps = GlassButtonAsButton | GlassButtonAsSpan;
 
 /**
- * Frosted-glass circular icon — iOS 26 liquid glass via @tinymomentum/liquid-glass-react.
+ * Frosted-glass circular icon.
  *
  * - `as="button"` (standalone): renders `<button>` — use for close, share, etc.
  * - `as="span"` (default): renders `<span>` — use inside `<Back>` / `<Link>` to avoid nested buttons.
@@ -56,9 +40,9 @@ export function GlassButton({
         .join(" ");
 
     const glassContent = (
-        <LiquidGlassBase {...glassConfig}>
+        <span className={styles.glass}>
             <span className={styles.glassIcon}>{icon}</span>
-        </LiquidGlassBase>
+        </span>
     );
 
     if (as === "button") {
