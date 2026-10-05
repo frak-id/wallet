@@ -100,7 +100,7 @@
     "@playwright/test": "^1.63.0",
     "@preact/preset-vite": "catalog:",
     "@tanstack/react-router-devtools": "catalog:",
-    "@tauri-apps/cli": "^2.11.4",
+    "@tauri-apps/cli": "^2.12.1",
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/react": "catalog:",
     "@types/jsdom": "catalog:",
