@@ -1,15 +1,14 @@
 use objc2::{msg_send, runtime::AnyObject};
 use tauri::WebviewWindow;
 
-/// Enables the WKWebView edge-swipe back/forward gesture.
+/// Turns the WKWebView edge-swipe back/forward gesture on or off.
 ///
 /// wry defaults `back_forward_navigation_gestures` to false and Tauri exposes
-/// no config passthrough, so the gesture only exists if set here. TanStack
-/// pushState entries land in the back-forward list, so same-document routes
-/// respond to it.
-pub fn enable_swipe_back(window: &WebviewWindow) {
-    let _ = window.with_webview(|webview| unsafe {
+/// no config passthrough. The setter also stops WebKit recording navigation
+/// snapshots while the gesture is off.
+pub fn set_swipe_back(window: &WebviewWindow, enabled: bool) -> tauri::Result<()> {
+    window.with_webview(move |webview| unsafe {
         let webview: *mut AnyObject = webview.inner().cast();
-        let _: () = msg_send![&*webview, setAllowsBackForwardNavigationGestures: true];
-    });
+        let _: () = msg_send![&*webview, setAllowsBackForwardNavigationGestures: enabled];
+    })
 }

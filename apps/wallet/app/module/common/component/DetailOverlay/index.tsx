@@ -1,8 +1,10 @@
+import { IS_IOS } from "@frak-labs/app-essentials/utils/platform";
 import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
 import { type ReactNode, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useAnimatedClose } from "@/module/common/hook/useAnimatedClose";
+import { useEdgeSwipeToClose } from "@/module/common/hook/useEdgeSwipeToClose";
 import * as styles from "@/module/common/styles/detailOverlay.css";
 
 type DetailOverlayVariant = "fullScreen" | "bottomSheet";
@@ -31,6 +33,12 @@ type DetailOverlayProps = {
      * `ModalOutlet` does not need a translation hook.
      */
     labelKey: DefaultTranslationKey;
+    /**
+     * Opt-in: on iOS Tauri, a left-edge drag slides the overlay off over the
+     * live page and closes it. Elements marked `data-owns-horizontal-drag`
+     * and interactive controls never start the swipe.
+     */
+    swipeToClose?: boolean;
 };
 
 /**
@@ -48,9 +56,17 @@ export function DetailOverlay({
     children,
     variant = "fullScreen",
     labelKey,
+    swipeToClose = false,
 }: DetailOverlayProps) {
     const { t } = useTranslation();
-    const { isClosing, overlayRef, handleClose } = useAnimatedClose(onClose);
+    const { isClosing, overlayRef, handleClose, slideOut } =
+        useAnimatedClose(onClose);
+    const swipeEnabled = swipeToClose && IS_IOS;
+    useEdgeSwipeToClose({
+        ref: overlayRef,
+        enabled: swipeEnabled,
+        onCommit: slideOut,
+    });
     const closeRef = useRef(handleClose);
     closeRef.current = handleClose;
 
@@ -95,7 +111,9 @@ export function DetailOverlay({
     return createPortal(
         <div
             ref={overlayRef}
-            className={className}
+            className={
+                swipeEnabled ? `${className} ${styles.swipeable}` : className
+            }
             role="dialog"
             aria-modal="true"
             aria-label={t(labelKey)}
