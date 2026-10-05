@@ -137,7 +137,7 @@
     "apps/wallet/app/module/common/component/BottomTabBar/bottomTabBar.css.ts": 2,
     "apps/wallet/app/module/common/component/BottomTabBar/index.tsx": 1,
     "apps/wallet/app/module/common/component/ButtonLink/index.tsx": 2,
-    "apps/wallet/app/module/common/component/DetailOverlay/index.tsx": 3,
+    "apps/wallet/app/module/common/component/DetailOverlay/index.tsx": 2,
     "apps/wallet/app/module/common/component/EmailFlowResultScreen/index.tsx": 1,
     "apps/wallet/app/module/common/component/EmailFormScreen/index.tsx": 1,
     "apps/wallet/app/module/common/component/Field/index.tsx": 1,

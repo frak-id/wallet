@@ -15,6 +15,8 @@ const overlayBase = style({
     backgroundColor: vars.surface.background,
     overflowY: "auto",
     WebkitOverflowScrolling: "touch",
+    // Focused on open so focus starts inside the dialog; it is not a control.
+    outline: "none",
     "@media": {
         "screen and (min-width: 1024px)": {
             backgroundColor: overlayToken.scrim60,
@@ -48,6 +50,9 @@ export const overlay = style([
     { animation: `${fadeIn} 0.25s ease-out both` },
 ]);
 
+// Keeps vertical scroll native while the edge swipe owns horizontal drags.
+export const swipeable = style({ touchAction: "pan-y" });
+
 export const overlayClosing = style([
     overlayBase,
     { animation: `${fadeOut} 0.2s ease-in both` },
@@ -62,6 +67,7 @@ const bottomSheetBase = style({
     inset: 0,
     zIndex: zIndex.modal,
     backgroundColor: overlayToken.scrim50,
+    outline: "none",
     display: "flex",
     flexDirection: "column",
     justifyContent: "flex-end",
