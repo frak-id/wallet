@@ -1,6 +1,5 @@
 import { viemClient } from "@backend-infrastructure";
 import { KernelWallet, kernelAddresses } from "@frak-labs/app-essentials";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/server";
 import { type Signature, WebAuthnP256 } from "ox";
 import type { SignMetadata } from "ox/WebAuthnP256";
 import { getSenderAddress } from "permissionless/actions";
@@ -108,7 +107,7 @@ export class WebAuthNService {
         | {
               authenticatorId: string;
               publicKey: { x: Hex; y: Hex };
-              transports?: AuthenticatorTransportFuture[];
+              transports?: string[];
           }
     > {
         const result =

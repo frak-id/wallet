@@ -1,7 +1,4 @@
-import type {
-    AuthenticatorTransportFuture,
-    CredentialDeviceType,
-} from "@simplewebauthn/server";
+import type { CredentialDeviceType } from "@simplewebauthn/server";
 import type { Address, Hex } from "viem";
 
 export type AuthenticatorDocument = Readonly<{
@@ -19,5 +16,5 @@ export type AuthenticatorDocument = Readonly<{
     counter: number;
     credentialDeviceType: CredentialDeviceType;
     credentialBackedUp: boolean;
-    transports?: AuthenticatorTransportFuture[];
+    transports?: string[];
 }>;

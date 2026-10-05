@@ -1,5 +1,4 @@
 import { JwtContext } from "@backend-infrastructure";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/server";
 import type { Address, Hex } from "viem";
 import type { WalletSdkSessionService } from "./WalletSdkSessionService";
 
@@ -14,7 +13,7 @@ type MintForCredentialArgs = {
      */
     walletAddress: Address;
     publicKey: { x: Hex; y: Hex };
-    transports?: AuthenticatorTransportFuture[];
+    transports?: string[];
 };
 
 export type MintForCredentialResult = {
@@ -24,7 +23,7 @@ export type MintForCredentialResult = {
     address: Address;
     authenticatorId: string;
     publicKey: { x: Hex; y: Hex };
-    transports?: AuthenticatorTransportFuture[];
+    transports?: string[];
 };
 
 /**
