@@ -14,9 +14,11 @@ class FrakGlassPlugin: Plugin {
     // Never removed, only hidden: ids are a fixed set of screens.
     private var toolbars: [String: ToolbarSurface] = [:]
     private var bottomAction: BottomActionSurface?
+    private var scrollLock: WebViewScrollLock?
 
     @objc public override func load(webview: WKWebView) {
         self.webview = webview
+        scrollLock = WebViewScrollLock(webview)
     }
 
     // Probed once per page load: whatever still shows belongs to the page before a reload.
