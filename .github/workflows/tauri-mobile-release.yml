@@ -81,7 +81,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: "🦀 Setup Rust"
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
 
@@ -251,7 +251,7 @@ jobs:
           name: sdk-dist
 
       - name: "🦀 Setup Rust"
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           targets: aarch64-apple-ios
@@ -537,7 +537,7 @@ jobs:
           restore-keys: ${{ runner.os }}-gradle-wrapper-
 
       - name: "🦀 Setup Rust"
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
