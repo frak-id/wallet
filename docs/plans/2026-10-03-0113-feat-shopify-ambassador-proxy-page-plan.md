@@ -146,6 +146,13 @@ French merchants (no English Shopify labels). All strings in `app/i18n/locales/{
 `useHostTheme` prefers the hidden `[data-frak-amb-ref]` headings the Liquid file renders: a
 proxy page has no theme heading of its own to sample (31/32 themes in the lab).
 
+FRA-330: `setupClient` loads the per-store config cache (`frak-config-cache:<domain>:<lang>`)
+before it builds the wallet iframe, not after the iframe loads. On a return visit the page
+opens with the merchant's dashboard text and photo instead of swapping them in, and the
+banner and buttons appear without waiting for the iframe; they stay disabled until the
+client connects, as they already did when rendered early. First visits are unchanged:
+there is no cache, and `/resolve` still waits for the iframe.
+
 ## Out of scope (follow-ups)
 
 - Sending the page URL to the backend for the frak.id brand CTA (open item from FRA-329).
@@ -163,3 +170,5 @@ proxy page has no theme heading of its own to sample (31/32 themes in the lab).
 4. Menu edit keeps translations; HTTP menu item with a relative `/apps/...` URL.
 5. Switch: redirect fires for the renamed old handle; menu links re-pointed.
 6. CDN path, by pointing the dev app's proxy URL at `sdk-dev.frak.id` once.
+7. FRA-330: reload the ambassador page; the dashboard headline and photo are there on first
+   paint, with no swap from the built-in text.

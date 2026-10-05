@@ -266,6 +266,63 @@ describe("setupClient", () => {
         });
     });
 
+    describe("cached merchant config", () => {
+        const cachedConfig = {
+            isResolved: true,
+            merchantId: "merchant-cached",
+            domain: "shop.example.com",
+            components: { ambassador: { heroHeading: { en: "Cached" } } },
+        };
+        const config = {
+            domain: "shop.example.com",
+            metadata: { name: "Test App", lang: "en" as const },
+        };
+
+        beforeEach(async () => {
+            const { sdkConfigStore } = await import("../config/sdkConfigStore");
+            sdkConfigStore.clearCache();
+            localStorage.clear();
+            window.__frakSdkConfig = undefined;
+        });
+
+        test("publishes an expired per-store cache before the iframe is created", async () => {
+            const { setupClient } = await import("./setupClient");
+            const { createIframe } = await import("../utils");
+            const { sdkConfigStore } = await import("../config/sdkConfigStore");
+            localStorage.setItem(
+                "frak-config-cache:shop.example.com:en",
+                JSON.stringify({ config: cachedConfig, timestamp: 0 })
+            );
+            const onConfig = vi.fn();
+            window.addEventListener("frak:config", onConfig);
+
+            let configAtIframeCreation: unknown;
+            vi.mocked(createIframe).mockImplementation(async () => {
+                configAtIframeCreation = sdkConfigStore.getConfig();
+                return undefined;
+            });
+
+            await setupClient({ config });
+            window.removeEventListener("frak:config", onConfig);
+
+            expect(configAtIframeCreation).toEqual(cachedConfig);
+            expect(onConfig).toHaveBeenCalledWith(
+                expect.objectContaining({ detail: cachedConfig })
+            );
+        });
+
+        test("leaves the config unresolved when the store has no cache", async () => {
+            const { setupClient } = await import("./setupClient");
+            const { createIframe } = await import("../utils");
+            const { sdkConfigStore } = await import("../config/sdkConfigStore");
+            vi.mocked(createIframe).mockResolvedValue(undefined);
+
+            await setupClient({ config });
+
+            expect(sdkConfigStore.getConfig().isResolved).toBe(false);
+        });
+    });
+
     describe("config preparation", () => {
         test("should use default currency when none provided", async () => {
             const { setupClient } = await import("./setupClient");
