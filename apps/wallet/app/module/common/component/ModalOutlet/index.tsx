@@ -3,6 +3,7 @@ import { CatchBoundary } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { DetailOverlay } from "@/module/common/component/DetailOverlay";
 import { useNativeSwipeBackGate } from "@/module/common/hook/useNativeSwipeBackGate";
+import { isSwipeToCloseModal } from "@/module/common/utils/swipeToCloseModal";
 import { RewardCodeSuccessModal } from "@/module/reward-code/component/RewardCodeSuccessModal";
 import { modalErrorStore } from "@/module/stores/modalErrorStore";
 import { modalStore, selectModal } from "@/module/stores/modalStore";
@@ -117,6 +118,7 @@ function renderModal(
     modal: NonNullable<ReturnType<typeof selectModal>>,
     closeModal: () => void
 ) {
+    const swipeToClose = isSwipeToCloseModal(modal.id);
     switch (modal.id) {
         case "emptyTransfer":
             return <EmptyTransferModal onClose={closeModal} />;
@@ -148,6 +150,7 @@ function renderModal(
             return (
                 <DetailOverlay
                     onClose={closeModal}
+                    swipeToClose={swipeToClose}
                     labelKey="wallet.modal.explorerDetail.ariaLabel"
                 >
                     {({ handleClose }) => (
@@ -162,6 +165,7 @@ function renderModal(
             return (
                 <DetailOverlay
                     onClose={closeModal}
+                    swipeToClose={swipeToClose}
                     labelKey="wallet.modal.welcomeDetail.ariaLabel"
                 >
                     {({ handleClose }) => (
@@ -173,6 +177,7 @@ function renderModal(
             return (
                 <DetailOverlay
                     onClose={closeModal}
+                    swipeToClose={swipeToClose}
                     labelKey="wallet.modal.moneriumBankFlow.ariaLabel"
                 >
                     {({ handleClose }) => (
@@ -184,6 +189,7 @@ function renderModal(
             return (
                 <DetailOverlay
                     onClose={closeModal}
+                    swipeToClose={swipeToClose}
                     labelKey="wallet.modal.rewardDetail.ariaLabel"
                 >
                     {({ handleClose }) => (
@@ -198,6 +204,7 @@ function renderModal(
             return (
                 <DetailOverlay
                     onClose={closeModal}
+                    swipeToClose={swipeToClose}
                     labelKey="wallet.modal.moneriumOrderDetail.ariaLabel"
                 >
                     {({ handleClose }) => (
@@ -212,6 +219,7 @@ function renderModal(
             return (
                 <DetailOverlay
                     onClose={closeModal}
+                    swipeToClose={swipeToClose}
                     variant="bottomSheet"
                     labelKey="wallet.modal.editReferralCode.ariaLabel"
                 >

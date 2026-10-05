@@ -218,7 +218,11 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                 height={232}
                 className={styles.heroImageSheet}
             >
-                <div ref={scrollContainerRef} className={styles.heroSlider}>
+                <div
+                    ref={scrollContainerRef}
+                    className={styles.heroSlider}
+                    data-owns-horizontal-drag
+                >
                     {images.map((url, index) => (
                         <div
                             key={index}

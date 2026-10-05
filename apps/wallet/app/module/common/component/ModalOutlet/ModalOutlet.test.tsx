@@ -1,15 +1,42 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import * as overlayStyles from "@/module/common/styles/detailOverlay.css";
 import { modalErrorStore } from "@/module/stores/modalErrorStore";
 import { modalStore } from "@/module/stores/modalStore";
 import { ModalOutlet } from "./index";
 
 const { recordErrorMock } = vi.hoisted(() => ({ recordErrorMock: vi.fn() }));
 
+vi.mock("@frak-labs/app-essentials/utils/platform", async () => ({
+    ...(await vi.importActual("@frak-labs/app-essentials/utils/platform")),
+    IS_TAURI: true,
+    IS_IOS: true,
+}));
+
 vi.mock("@frak-labs/wallet-shared", async () => {
     const actual = await vi.importActual("@frak-labs/wallet-shared");
-    return { ...actual, recordError: recordErrorMock };
+    return {
+        ...actual,
+        recordError: recordErrorMock,
+        getInvoke: async () => async () => undefined,
+    };
 });
+
+vi.mock("@/module/history/component/RewardDetailModal", () => ({
+    RewardDetailModal: () => <div>reward-detail</div>,
+}));
+
+vi.mock("@/module/history/component/MoneriumOrderDetailModal", () => ({
+    MoneriumOrderDetailModal: () => <div>monerium-order</div>,
+}));
+
+vi.mock("@/module/monerium/component/MoneriumBankFlow", () => ({
+    MoneriumBankFlow: () => <div>monerium-bank-flow</div>,
+}));
+
+vi.mock("@/module/referral/component/EditReferralCodeSheet", () => ({
+    EditReferralCodeSheet: () => <div>edit-referral-code</div>,
+}));
 
 // Stands in for a modal whose chunk 404s after a deploy: the failure the
 // boundary exists to contain.
@@ -108,5 +135,27 @@ describe("ModalOutlet", () => {
 
         closeDialog(await screen.findByText("close-welcome"));
         expect(modalStore.getState().modal).toBeNull();
+    });
+
+    it.each([
+        ["explorerDetail", "close-explorer", true],
+        ["welcomeDetail", "close-welcome", true],
+        ["rewardDetail", "reward-detail", true],
+        ["moneriumOrderDetail", "monerium-order", true],
+        ["moneriumBankFlow", "monerium-bank-flow", false],
+        ["editReferralCode", "edit-referral-code", false],
+    ])("%s overlay has swipe-to-close: %s", async (id, text, swipeable) => {
+        const merchant = { id: "merchant-1" };
+        modalStore
+            .getState()
+            .openModal({ id, merchant, item: { merchant } } as never);
+        render(<ModalOutlet />);
+        await screen.findByText(text);
+
+        expect(
+            screen
+                .getByRole("dialog")
+                .classList.contains(overlayStyles.swipeable)
+        ).toBe(swipeable);
     });
 });
