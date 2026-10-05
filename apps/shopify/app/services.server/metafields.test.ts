@@ -244,7 +244,7 @@ describe("registerFrakI18nFrTranslations", () => {
 });
 
 describe("ambassador page metafield", () => {
-    it("writes the page GID and a null url as JSON under frak.ambassador_page", async () => {
+    it("writes the v2 record as JSON under frak.ambassador_page", async () => {
         const graphql = vi.fn().mockResolvedValue({
             json: async () => ({
                 data: { metafieldsSet: { userErrors: [] } },
@@ -253,8 +253,9 @@ describe("ambassador page metafield", () => {
         const ctx = { admin: { graphql } } as unknown as AuthenticatedContext;
 
         const result = await writeAmbassadorPageMetafield(ctx, {
-            pageId: "gid://shopify/Page/1",
-            url: null,
+            v: 2,
+            published: true,
+            publishedAt: "2026-10-03T00:00:00.000Z",
         });
 
         expect(result.success).toBe(true);
@@ -265,7 +266,7 @@ describe("ambassador page metafield", () => {
                         namespace: "frak",
                         key: "ambassador_page",
                         type: "json",
-                        value: '{"pageId":"gid://shopify/Page/1","url":null}',
+                        value: '{"v":2,"published":true,"publishedAt":"2026-10-03T00:00:00.000Z"}',
                         ownerId: "gid://shopify/Shop/1",
                     },
                 ],
@@ -273,7 +274,7 @@ describe("ambassador page metafield", () => {
         });
     });
 
-    it("reads the stored record back", async () => {
+    it("reads a v1 record back as stored", async () => {
         const graphql = vi.fn().mockResolvedValue({
             json: async () => ({
                 data: {
@@ -293,6 +294,33 @@ describe("ambassador page metafield", () => {
         });
         expect(graphql.mock.calls[0][1]).toEqual({
             variables: { namespace: "frak", key: "ambassador_page" },
+        });
+    });
+
+    it("reads a v2 record back as stored", async () => {
+        const graphql = vi.fn().mockResolvedValue({
+            json: async () => ({
+                data: {
+                    shop: {
+                        metafield: {
+                            value: '{"v":2,"published":false,"publishedAt":"2026-10-01T00:00:00.000Z","menuLinks":[{"menuId":"gid://shopify/Menu/1","itemId":"gid://shopify/MenuItem/9"}]}',
+                        },
+                    },
+                },
+            }),
+        });
+        const ctx = { admin: { graphql } } as unknown as AuthenticatedContext;
+
+        await expect(getAmbassadorPageMetafield(ctx)).resolves.toEqual({
+            v: 2,
+            published: false,
+            publishedAt: "2026-10-01T00:00:00.000Z",
+            menuLinks: [
+                {
+                    menuId: "gid://shopify/Menu/1",
+                    itemId: "gid://shopify/MenuItem/9",
+                },
+            ],
         });
     });
 });

@@ -136,11 +136,12 @@ describe("validateCompleteOnboarding", () => {
         expect(result.hasMissedCriticalSteps).toBe(false);
     });
 
-    it("ignores the ambassador block: it is a setup card, not a step", () => {
+    it("ignores the ambassador page: it is a setup card, not a step", () => {
         for (const ambassadorPage of [
-            { state: "linked", url: "https://shop.com/pages/a" },
-            { state: "blockUnlinked" },
-            { state: "none" },
+            "draft",
+            "hidden",
+            "live",
+            "oldPage",
             undefined,
         ] as const) {
             const result = validateCompleteOnboarding({

@@ -347,6 +347,48 @@ describe("sdkConfigStore", () => {
         });
     });
 
+    describe("sdkConfigStore.setCacheScope", () => {
+        const entry = (merchantId: string) =>
+            JSON.stringify({
+                config: { isResolved: true, merchantId },
+                timestamp: Date.now(),
+            });
+
+        it("re-publishes the same object when the scope is unchanged", () => {
+            localStorage.setItem(
+                "frak-config-cache:shop.example.com:en",
+                entry("merchant-en")
+            );
+            sdkConfigStore.setCacheScope("shop.example.com", "en");
+            sdkConfigStore.reset();
+            const first = sdkConfigStore.getConfig();
+
+            sdkConfigStore.setCacheScope("shop.example.com", "en");
+            sdkConfigStore.reset();
+
+            expect(first.merchantId).toBe("merchant-en");
+            expect(sdkConfigStore.getConfig()).toBe(first);
+        });
+
+        it("reads the new entry when the scope changes", () => {
+            localStorage.setItem(
+                "frak-config-cache:shop.example.com:en",
+                entry("merchant-en")
+            );
+            localStorage.setItem(
+                "frak-config-cache:shop.example.com:fr",
+                entry("merchant-fr")
+            );
+            sdkConfigStore.setCacheScope("shop.example.com", "en");
+            sdkConfigStore.reset();
+
+            sdkConfigStore.setCacheScope("shop.example.com", "fr");
+            sdkConfigStore.reset();
+
+            expect(sdkConfigStore.getConfig().merchantId).toBe("merchant-fr");
+        });
+    });
+
     describe("sdkConfigStore.clearCache", () => {
         it("should clear all caches and allow re-fetching", async () => {
             const mockResponse = {

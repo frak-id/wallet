@@ -75,6 +75,21 @@ async function settle(): Promise<void> {
     for (let i = 0; i < 6; i += 1) await frame();
 }
 
+function makeHeading(tag: "h1" | "h2", css: string, visible: boolean) {
+    const heading = document.createElement(tag);
+    heading.style.cssText = css;
+    if (visible) stubSize(heading, 600, 50);
+    return heading;
+}
+
+function makeReference(...headings: HTMLElement[]): HTMLElement {
+    const reference = document.createElement("div");
+    reference.hidden = true;
+    reference.setAttribute("data-frak-amb-ref", "");
+    reference.append(...headings);
+    return reference;
+}
+
 afterEach(() => {
     cleanup();
     document.body.replaceChildren();
@@ -402,5 +417,179 @@ describe("useHostTheme", () => {
 
         expect(knob(root, "h1-size")).toBe("min(90px, 3.2em)");
         expect(knob(root, "h2-size")).toBe("min(80px, 2em)");
+    });
+
+    it("samples the hidden reference headings over a visible content heading elsewhere", async () => {
+        const root = makeRoot();
+        const footer = makeHeading("h2", "font-size: 14px", true);
+        const reference = makeReference(
+            makeHeading("h1", "font-size: 44px; font-weight: 600", false),
+            makeHeading("h2", "font-size: 30px; letter-spacing: 1px", false)
+        );
+        document.body.prepend(footer);
+        document.body.append(reference);
+
+        mount({ current: root });
+        await settle();
+
+        expect(knob(root, "h1-size")).toBe("min(44px, 3.2em)");
+        expect(knob(root, "h1-weight")).toBe("600");
+        expect(knob(root, "h2-size")).toBe("min(30px, 2em)");
+        expect(knob(root, "h2-spacing")).toBe("1px");
+    });
+
+    it("ignores a reference block inside its own subtree", async () => {
+        const root = makeRoot();
+        root.append(makeReference(makeHeading("h1", "font-size: 44px", false)));
+        document.body.append(makeHeading("h1", "font-size: 36px", true));
+
+        mount({ current: root });
+        await settle();
+
+        expect(knob(root, "h1-size")).toBe("min(36px, 3.2em)");
+    });
+
+    it("falls back to the text colour when a sampled accent vanishes into the backdrop", async () => {
+        const root = makeRoot(false);
+        root.style.color = "rgb(35, 35, 35)";
+        const btn = makeHostButton(document.body, {
+            left: 10,
+            top: 10,
+            width: 200,
+            height: 50,
+        });
+        // Distinct from its own dark strip, invisible on our white page.
+        const strip = document.createElement("div");
+        strip.style.backgroundColor = "rgb(40, 40, 40)";
+        document.body.append(strip);
+        strip.append(btn);
+        btn.style.cssText +=
+            "; background-color: rgb(255, 255, 255); color: rgb(35, 35, 35)";
+
+        mount({ current: root });
+        await settle();
+
+        expect(knob(root, "accent")).toBe("rgb(35, 35, 35)");
+        expect(knob(root, "accent-ink")).toBe("rgb(255, 255, 255)");
+        expect(knob(root, "accent-text")).toBe("");
+    });
+
+    it("replaces the default dark accent and white tag on a dark page", async () => {
+        document.body.style.backgroundColor = "rgb(32, 34, 25)";
+        document.body.style.color = "rgb(246, 237, 221)";
+        const root = makeRoot(false);
+
+        mount({ current: root });
+        await settle();
+
+        expect(knob(root, "accent")).toBe("rgb(246, 237, 221)");
+        expect(knob(root, "accent-ink")).toBe("rgb(32, 34, 25)");
+        expect(knob(root, "tag-bg")).toMatch(
+            /^rgb\(49\.\d+, 50\.\d+, 40\.\d+\)$/
+        );
+    });
+
+    it("leaves the accent and tag to the stylesheet on a light page", async () => {
+        document.body.style.color = "rgb(18, 18, 18)";
+        const root = makeRoot(false);
+        document.body.append(makeHeading("h1", "font-size: 40px", true));
+
+        mount({ current: root });
+        await settle();
+
+        expect(knob(root, "h1-size")).not.toBe("");
+        expect(knob(root, "accent")).toBe("");
+        expect(knob(root, "tag-bg")).toBe("");
+    });
+
+    it("ignores the storefront's country picker as a brand button", async () => {
+        const root = makeRoot();
+        const form = document.createElement("form");
+        form.setAttribute("action", "/localization");
+        document.body.append(form);
+        makeHostButton(form, { left: 10, top: 10, width: 200, height: 50 });
+
+        mount({ current: root });
+        await settle();
+
+        expect(knob(root, "accent")).toBe("");
+    });
+
+    it("samples the heading family and case and marks them on the root", async () => {
+        const root = makeRoot();
+        document.body.append(
+            makeReference(
+                makeHeading(
+                    "h1",
+                    "font-size: 44px; font-family: Tomorrow, serif; text-transform: uppercase",
+                    false
+                ),
+                makeHeading("h2", "font-size: 30px; font-family: Rubik", false)
+            )
+        );
+
+        mount({ current: root });
+        await settle();
+
+        expect(knob(root, "h1-family")).toBe("Tomorrow, serif");
+        expect(knob(root, "h1-transform")).toBe("uppercase");
+        expect(knob(root, "h2-family")).toBe("Rubik");
+        expect(root.getAttribute("data-frak-amb-font")).toContain("h1-family");
+        expect(root.getAttribute("data-frak-amb-font")).toContain("h2-family");
+    });
+
+    it("keeps a merchant's heading family and still marks it", async () => {
+        document.body.style.setProperty("--frak-amb-h1-family", "Brand");
+        const root = makeRoot();
+        document.body.append(
+            makeHeading("h1", "font-size: 44px; font-family: Theme", true)
+        );
+
+        mount({ current: root });
+        await settle();
+
+        expect(knob(root, "h1-family")).toBe("");
+        expect(root.getAttribute("data-frak-amb-font")).toContain("h1-family");
+    });
+
+    it("leaves the root unmarked when no heading is sampled", async () => {
+        const root = makeRoot();
+
+        mount({ current: root });
+        await settle();
+
+        expect(root.hasAttribute("data-frak-amb-font")).toBe(false);
+    });
+
+    it("skips the size of a host h1 no bigger than body text but keeps its face", async () => {
+        const root = makeRoot();
+        root.style.fontSize = "16px";
+        document.body.append(
+            makeReference(
+                makeHeading(
+                    "h1",
+                    "font-size: 16px; font-weight: 300; font-family: Outfit",
+                    false
+                )
+            )
+        );
+
+        mount({ current: root });
+        await settle();
+
+        expect(knob(root, "h1-size")).toBe("");
+        expect(knob(root, "h1-weight")).toBe("300");
+        expect(knob(root, "h1-family")).toBe("Outfit");
+    });
+
+    it("prefers a visible heading over a hidden one when the page has no reference block", async () => {
+        const root = makeRoot();
+        document.body.prepend(makeHeading("h1", "font-size: 20px", false));
+        document.body.append(makeHeading("h1", "font-size: 36px", true));
+
+        mount({ current: root });
+        await settle();
+
+        expect(knob(root, "h1-size")).toBe("min(36px, 3.2em)");
     });
 });

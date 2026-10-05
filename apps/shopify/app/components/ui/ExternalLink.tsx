@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback } from "react";
+import { type ComponentProps, type ReactNode, useCallback } from "react";
 
 /**
  * Opens URL in a new tab via synchronous `window.open()`.
@@ -27,12 +27,16 @@ export function ExternalButton({
     variant,
     loading,
     disabled,
+    icon,
+    slot,
     children,
 }: {
     href: string;
     variant?: "auto" | "primary" | "secondary" | "tertiary";
     loading?: boolean;
     disabled?: boolean;
+    icon?: ComponentProps<"s-button">["icon"];
+    slot?: Lowercase<string>;
     children: ReactNode;
 }) {
     const handleClick = useCallback(() => {
@@ -44,6 +48,8 @@ export function ExternalButton({
             variant={variant}
             loading={loading}
             disabled={disabled}
+            icon={icon}
+            slot={slot}
             onClick={handleClick}
         >
             {children}

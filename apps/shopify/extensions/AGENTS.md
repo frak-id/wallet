@@ -11,7 +11,7 @@ extensions/
 │   │   ├── listener.liquid     # HEAD block: loads Frak SDK, sets global config
 │   │   ├── referral_button.liquid  # Share button web component
 │   │   ├── banner.liquid       # Referral banner web component
-│   │   └── ambassador.liquid   # Ambassador page web component (page templates only)
+│   │   └── ambassador.liquid   # Ambassador component for v1 `/pages/` pages (the current page is `proxy/ambassador.liquid`)
 │   ├── locales/                # en.default.json, fr.json
 │   ├── assets/customizations.css
 │   └── shopify.extension.toml
@@ -53,7 +53,7 @@ checkout-post-purchase
 
 ## THEME-COMPONENTS
 
-**Block types**: listener (HEAD), referral_button (product section), banner (any section), ambassador (page templates, via `enabled_on`).
+**Block types**: listener (HEAD), referral_button (product section), banner (any section), ambassador (page templates, via `enabled_on`; kept for v1 `/pages/` ambassador pages until the merchant switches to the app proxy page).
 
 **listener.liquid** is the critical block — without it, no Frak SDK loads. Config comes from:
 
@@ -82,7 +82,7 @@ Extensions are validated during the onboarding wizard:
 - **Step 6**: referral button must be in the product template (`theme.ts` → `doesThemeHasFrakButton()`)
 - **Step 7**: banner block must be enabled somewhere (`theme.ts` → `doesThemeHasFrakBanner()`)
 
-Theme detection works by parsing theme JSON templates and matching block type substrings like `/blocks/referral_button/`, `/blocks/banner/` and `/blocks/ambassador/`. The ambassador block is not an onboarding step: its presence only drives the "finish your setup" card.
+Theme detection works by parsing theme JSON templates and matching block type substrings like `/blocks/referral_button/` and `/blocks/banner/`. The ambassador page is not detected in the theme: it is an app proxy page (`apps/shopify/proxy/ambassador.liquid`) whose state lives in the `frak.ambassador_page` metafield.
 
 ## CONVENTIONS
 

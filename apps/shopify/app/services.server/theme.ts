@@ -391,7 +391,6 @@ export function detectFrakButton(
 }
 
 const FRAK_BANNER_BLOCK_PATTERN = "/blocks/banner/";
-const FRAK_AMBASSADOR_BLOCK_PATTERN = "/blocks/ambassador/";
 
 /**
  * Detect an enabled Frak block of the given type (e.g. `/blocks/banner/`) in
@@ -491,71 +490,6 @@ export async function doesThemeHasFrakButton(context: AuthenticatedContext) {
     return detectFrakButton(productFile?.body?.sections);
 }
 
-/**
- * Which in-page Frak blocks are enabled in the published theme, from one scan
- * of every section group (`sections/*.json`), every template
- * (`templates/*.json`) and `config/settings_data.json`. `pageTemplates` lists
- * the suffix of every custom page template, `ambassador` those that hold the
- * ambassador block.
- */
-export async function getThemeBlockPresence(
-    context: AuthenticatedContext
-): Promise<{ banner: boolean; ambassador: string[]; pageTemplates: string[] }> {
-    const mainThemeId = await getMainThemeId(context);
-
-    const files = await getTemplateFilesMatching(
-        context.admin.graphql,
-        mainThemeId.gid,
-        ["sections/*.json", "templates/*.json", "config/settings_data.json"]
-    );
-
-    const sectionMaps = files.map((file) => ({
-        filename: file.filename,
-        sections: sectionsOf(file),
-    }));
-
-    // The default page template renders on every page, so it never counts.
-    const pageTemplates = sectionMaps.flatMap(({ filename, sections }) => {
-        const suffix = CUSTOM_PAGE_TEMPLATE.exec(filename)?.[1];
-        return suffix
-            ? [
-                  {
-                      suffix,
-                      hasAmbassador: detectFrakBlockInSections(
-                          sections,
-                          FRAK_AMBASSADOR_BLOCK_PATTERN
-                      ),
-                  },
-              ]
-            : [];
-    });
-
-    return {
-        banner: sectionMaps.some(({ sections }) =>
-            detectFrakBlockInSections(sections, FRAK_BANNER_BLOCK_PATTERN)
-        ),
-        ambassador: pageTemplates
-            .filter((template) => template.hasAmbassador)
-            .map((template) => template.suffix),
-        pageTemplates: pageTemplates.map((template) => template.suffix),
-    };
-}
-
-const PREFERRED_AMBASSADOR_TEMPLATE = "ambassador";
-
-/**
- * The ambassador template to name and apply: `ambassador` when present,
- * otherwise the first by name, so the same one wins on every scan.
- */
-export function pickAmbassadorTemplate(suffixes: string[]): string | null {
-    if (suffixes.includes(PREFERRED_AMBASSADOR_TEMPLATE)) {
-        return PREFERRED_AMBASSADOR_TEMPLATE;
-    }
-    return [...suffixes].sort()[0] ?? null;
-}
-
-const CUSTOM_PAGE_TEMPLATE = /^templates\/page\.([^/]+)\.json$/;
-
 function sectionsOf(file: { filename: string; body: unknown }) {
     const body = file.body as
         | {
@@ -572,6 +506,23 @@ function sectionsOf(file: { filename: string; body: unknown }) {
     return sections as Parameters<typeof detectFrakBlockInSections>[0];
 }
 
-export async function doesThemeHasFrakBanner(context: AuthenticatedContext) {
-    return (await getThemeBlockPresence(context)).banner;
+/**
+ * Whether the published theme enables the banner block anywhere: every
+ * section group (`sections/*.json`), template (`templates/*.json`) and
+ * `config/settings_data.json` is scanned.
+ */
+export async function doesThemeHasFrakBanner(
+    context: AuthenticatedContext
+): Promise<boolean> {
+    const mainThemeId = await getMainThemeId(context);
+
+    const files = await getTemplateFilesMatching(
+        context.admin.graphql,
+        mainThemeId.gid,
+        ["sections/*.json", "templates/*.json", "config/settings_data.json"]
+    );
+
+    return files.some((file) =>
+        detectFrakBlockInSections(sectionsOf(file), FRAK_BANNER_BLOCK_PATTERN)
+    );
 }

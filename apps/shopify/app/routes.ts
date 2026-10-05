@@ -1,5 +1,5 @@
 import { flatRoutes } from "@react-router/fs-routes";
 
 export default flatRoutes({
-    ignoredRouteFiles: ["**/*.md"],
+    ignoredRouteFiles: ["**/*.md", "**/*.test.ts"],
 });

@@ -8,6 +8,9 @@ export type HostThemeTarget = { current: HTMLElement | null };
 type ThemeSource = {
     /** Where our headings actually render; the page behind the host's may differ. */
     backdrop: string;
+    /** Our inherited text colour, flattened onto the backdrop. */
+    text: string;
+    bodySize: string;
     buttonBg: string;
     h1?: HTMLElement;
     h2?: HTMLElement;
@@ -18,11 +21,25 @@ type ThemeSource = {
 const QUIET_BORDER_DISTANCE = 120;
 const FLAT_FILL_DISTANCE = 30;
 const READABLE_CONTRAST = 3;
+// Below both, an accent fill does not separate from the backdrop at all; a
+// light brand hue (yellow on white) fails the contrast but not the distance.
+const VISIBLE_CONTRAST = 1.5;
+const VISIBLE_DISTANCE = 60;
+// The stylesheet's own defaults for the accent and the reward tag.
+const DEFAULT_ACCENT = "rgb(17, 17, 17)";
+const DEFAULT_TAG_BG = "rgb(255, 255, 255)";
+const TAG_TINT = 0.08;
+// A host h1 no bigger than this many body sizes is an unstyled reset, not a title style.
+const RESET_HEADING_RATIO = 1.25;
 const WIDGET_WORDS =
     /cookie|consent|newsletter|popup|modal|sr-only|visually-hidden|skip-to/i;
 const CHROME = "header,nav,[role=banner]";
 const LOGO_HINT = /logo|brand|site-title|wordmark/i;
 const CLIPPING_OVERFLOW = new Set(["hidden", "clip", "auto", "scroll"]);
+const FONT_ATTRIBUTE = "data-frak-amb-font";
+const FONT_KNOBS = ["h1-family", "h1-transform", "h2-family", "h2-transform"];
+// Unrendered theme headings a host page (the Shopify proxy page) renders for us to sample.
+const REFERENCE_HEADINGS = "[data-frak-amb-ref]";
 
 function alphaOf(value: string): number {
     const slash = /\/\s*([\d.]+)(%?)\s*\)/.exec(value);
@@ -118,6 +135,8 @@ function isOverlayBox(el: Element): boolean {
 
 function insideWidget(el: HTMLElement): boolean {
     if (inSignupForm(el)) return true;
+    // Shopify's country/currency picker: a filled control, never the brand's button.
+    if (el.closest('form[action*="/localization"]')) return true;
     const cart = inCartForm(el);
     let node: Element | null = el;
     while (node && node !== document.body) {
@@ -257,6 +276,8 @@ function hostElement(
     const theirs = Array.from(
         document.querySelectorAll<HTMLElement>(selector)
     ).filter((el) => !page.contains(el));
+    const reference = theirs.find((el) => el.closest(REFERENCE_HEADINGS));
+    if (reference) return reference;
     const visible = theirs.filter((el) => el.offsetHeight > 0);
     return visible.find(isContentHeading) ?? theirs.find(isContentHeading);
 }
@@ -286,11 +307,34 @@ function typographyOf(
     return knobs;
 }
 
+function headingKnobs(
+    el: HTMLElement | undefined,
+    role: "h1" | "h2",
+    source: ThemeSource
+): Knob[] {
+    if (!el) return [];
+    const s = getComputedStyle(el);
+    const knobs: Knob[] = [
+        ...typographyOf(el, role, source.backdrop, true),
+        [`${role}-family`, s.fontFamily],
+        [`${role}-transform`, s.textTransform],
+    ];
+    const bodySize = Number.parseFloat(source.bodySize);
+    const isReset =
+        role === "h1" &&
+        Number.parseFloat(s.fontSize) <= RESET_HEADING_RATIO * bodySize;
+    return isReset ? knobs.filter(([name]) => name !== "h1-size") : knobs;
+}
+
 function sampleTheme(page: HTMLElement): ThemeSource {
     const pageBg = pageBackground();
     const button = findPrimaryButton(page);
+    const backdrop = backdropOf(page);
+    const ours = getComputedStyle(page);
     return {
-        backdrop: backdropOf(page),
+        backdrop,
+        text: composite(ours.color, backdrop),
+        bodySize: ours.fontSize,
         buttonBg: button ? getComputedStyle(button).backgroundColor : pageBg,
         h1: hostElement(page, "h1"),
         h2: hostElement(page, "h2"),
@@ -299,30 +343,61 @@ function sampleTheme(page: HTMLElement): ThemeSource {
     };
 }
 
+function accentKnobs(source: ThemeSource): Knob[] {
+    const from = source.button ? getComputedStyle(source.button) : undefined;
+    const fill = composite(
+        from?.backgroundColor ?? DEFAULT_ACCENT,
+        source.backdrop
+    );
+    const contrast = contrastRatio(fill, source.backdrop);
+    // An unmeasurable colour reads NaN, fails this test and keeps the sample.
+    const vanishes =
+        contrast < VISIBLE_CONTRAST &&
+        colourDistance(fill, source.backdrop) <= VISIBLE_DISTANCE;
+    if (vanishes) {
+        return [
+            ["accent", source.text],
+            ["accent-ink", source.backdrop],
+        ];
+    }
+    if (!from) return [];
+    const knobs: Knob[] = [
+        ["accent", from.backgroundColor],
+        ["accent-ink", from.color],
+    ];
+    // A light brand colour still fills buttons, but as the figures' text it would not read.
+    if (!(contrast >= READABLE_CONTRAST)) {
+        knobs.push(["accent-text", "currentColor"]);
+    }
+    return knobs;
+}
+
+/** The tag keeps our inherited text colour, so light text needs a dark tag. */
+function tagKnobs(source: ThemeSource): Knob[] {
+    if (!(contrastRatio(source.text, DEFAULT_TAG_BG) < READABLE_CONTRAST)) {
+        return [];
+    }
+    const [r, g, b] = rgbOf(source.text);
+    const tint = `rgba(${r}, ${g}, ${b}, ${TAG_TINT})`;
+    return [["tag-bg", composite(tint, source.backdrop)]];
+}
+
 function knobsFrom(source: ThemeSource): Knob[] {
     const knobs: Knob[] = [
-        ...typographyOf(source.h1, "h1", source.backdrop, true),
-        ...typographyOf(source.h2, "h2", source.backdrop, true),
+        ...headingKnobs(source.h1, "h1", source),
+        ...headingKnobs(source.h2, "h2", source),
         // The CTA reads --frak-amb-accent-ink, so a sampled cta colour would
         // write into a knob no stylesheet consumes.
         ...typographyOf(source.button, "cta", source.buttonBg, false),
     ];
     if (source.radius) knobs.push(["radius", source.radius]);
+    knobs.push(...accentKnobs(source), ...tagKnobs(source));
     if (source.button) {
         const from = getComputedStyle(source.button);
         knobs.push(
-            ["accent", from.backgroundColor],
-            ["accent-ink", from.color],
             ["cta-radius", from.borderRadius.split(" ")[0]],
             ["cta-transform", from.textTransform]
         );
-        // A light brand colour still fills buttons, but as the figures' text it would not read.
-        const readable =
-            contrastRatio(
-                composite(from.backgroundColor, source.backdrop),
-                source.backdrop
-            ) >= READABLE_CONTRAST;
-        if (!readable) knobs.push(["accent-text", "currentColor"]);
     }
     return knobs;
 }
@@ -355,6 +430,20 @@ function writeKnobs(anchor: HTMLElement, knobs: Knob[]): void {
         if (name === "accent-text" && merchantSet.has("accent")) continue;
         anchor.style.setProperty(`--frak-amb-${name}`, value);
     }
+    markFontKnobs(anchor);
+}
+
+/**
+ * Heading font rules apply only behind this attribute: an unset `var()` in
+ * `font-family` computes to `inherit` and would beat the theme's `h1 {}` rule.
+ */
+function markFontKnobs(anchor: HTMLElement): void {
+    const resolved = getComputedStyle(anchor);
+    const present = FONT_KNOBS.filter((name) =>
+        resolved.getPropertyValue(`--frak-amb-${name}`).trim()
+    );
+    if (present.length) anchor.setAttribute(FONT_ATTRIBUTE, present.join(" "));
+    else anchor.removeAttribute(FONT_ATTRIBUTE);
 }
 
 function nextFrame(): Promise<void> {

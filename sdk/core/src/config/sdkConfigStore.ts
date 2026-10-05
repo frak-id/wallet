@@ -156,8 +156,11 @@ export const sdkConfigStore = {
     },
 
     setCacheScope(domain: string, lang?: string): void {
-        const suffix = `${domain}:${lang ?? ""}`;
-        cacheState.key = `${DEFAULT_CACHE_KEY}:${suffix}`;
+        const key = `${DEFAULT_CACHE_KEY}:${domain}:${lang ?? ""}`;
+        // Keeping the parsed entry makes a repeat `reset()` publish the same
+        // object, so subscribers skip the render.
+        if (key === cacheState.key) return;
+        cacheState.key = key;
         memoryEntry = null;
     },
 
