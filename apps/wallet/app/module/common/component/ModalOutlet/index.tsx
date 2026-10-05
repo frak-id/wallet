@@ -2,6 +2,7 @@ import { recordError } from "@frak-labs/wallet-shared";
 import { CatchBoundary } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { DetailOverlay } from "@/module/common/component/DetailOverlay";
+import { useNativeSwipeBackGate } from "@/module/common/hook/useNativeSwipeBackGate";
 import { RewardCodeSuccessModal } from "@/module/reward-code/component/RewardCodeSuccessModal";
 import { modalErrorStore } from "@/module/stores/modalErrorStore";
 import { modalStore, selectModal } from "@/module/stores/modalStore";
@@ -82,6 +83,7 @@ const renderNothing = () => null;
 export function ModalOutlet() {
     const modal = modalStore(selectModal);
     const closeModal = modalStore((s) => s.closeModal);
+    useNativeSwipeBackGate();
 
     if (!modal) return null;
 
