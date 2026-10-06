@@ -17,6 +17,7 @@ export function initKeyboardInset(): () => void {
     let rafId: number | null = null;
     // Max height seen = "no keyboard" baseline (robust under edge-to-edge).
     let baseline = vv.height;
+    let keyboardOpen = false;
     // Smaller shrinkage is toolbar jitter, not the IME (keyboard ~250-350px).
     const KEYBOARD_THRESHOLD_PX = 120;
 
@@ -27,14 +28,52 @@ export function initKeyboardInset(): () => void {
             window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     };
 
+    // The webview itself never pans to a field (iOS locks it natively), so lift
+    // one the keyboard or a PageLayout sticky footer (`--footer-height`) covers.
+    const revealFocusedField = () => {
+        const field = document.activeElement;
+        if (
+            !(
+                field instanceof HTMLInputElement ||
+                field instanceof HTMLTextAreaElement
+            )
+        )
+            return;
+        const scroller = field.closest("main");
+        if (!scroller) return;
+        const padding = getComputedStyle(scroller);
+        const box = scroller.getBoundingClientRect();
+        const footer =
+            Number.parseFloat(
+                getComputedStyle(field).getPropertyValue("--footer-height")
+            ) || 0;
+        const top = box.top + Number.parseFloat(padding.paddingTop);
+        const bottom =
+            Math.min(box.bottom, vv.height) -
+            Number.parseFloat(padding.paddingBottom) -
+            footer;
+        const rect = field.getBoundingClientRect();
+        if (rect.top >= top && rect.bottom <= bottom) return;
+        scroller.scrollBy({
+            top: rect.top + rect.height / 2 - (top + bottom) / 2,
+            behavior: "smooth",
+        });
+    };
+
     const write = () => {
         rafId = null;
         baseline = Math.max(baseline, vv.height);
-        const keyboardOpen = baseline - vv.height > KEYBOARD_THRESHOLD_PX;
+        keyboardOpen = baseline - vv.height > KEYBOARD_THRESHOLD_PX;
         const root = document.documentElement.style;
         root.setProperty("--viewport-height", `${vv.height}px`);
         root.setProperty("--keyboard-open", keyboardOpen ? "1" : "0");
         pinScroll();
+        if (keyboardOpen) revealFocusedField();
+    };
+
+    // Moving to another field while the keyboard stays up fires no resize.
+    const onFocusIn = () => {
+        if (keyboardOpen) window.requestAnimationFrame(revealFocusedField);
     };
 
     const schedule = () => {
@@ -48,6 +87,7 @@ export function initKeyboardInset(): () => void {
     vv.addEventListener("resize", schedule);
     vv.addEventListener("scroll", schedule);
     window.addEventListener("scroll", pinScroll, { passive: true });
+    document.addEventListener("focusin", onFocusIn);
 
     return () => {
         if (rafId !== null) {
@@ -57,6 +97,7 @@ export function initKeyboardInset(): () => void {
         vv.removeEventListener("resize", schedule);
         vv.removeEventListener("scroll", schedule);
         window.removeEventListener("scroll", pinScroll);
+        document.removeEventListener("focusin", onFocusIn);
         document.documentElement.style.removeProperty("--viewport-height");
         document.documentElement.style.removeProperty("--keyboard-open");
     };

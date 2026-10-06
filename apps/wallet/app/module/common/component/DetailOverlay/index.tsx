@@ -1,6 +1,12 @@
 import { IS_IOS } from "@frak-labs/app-essentials/utils/platform";
 import type { DefaultTranslationKey } from "@frak-labs/wallet-shared/types";
-import { type ReactNode, useEffect, useRef } from "react";
+import {
+    createContext,
+    type ReactNode,
+    useContext,
+    useEffect,
+    useRef,
+} from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useAnimatedClose } from "@/module/common/hook/useAnimatedClose";
@@ -8,6 +14,13 @@ import { useEdgeSwipeToClose } from "@/module/common/hook/useEdgeSwipeToClose";
 import * as styles from "@/module/common/styles/detailOverlay.css";
 
 type DetailOverlayVariant = "fullScreen" | "bottomSheet";
+
+const ClosingContext = createContext(false);
+
+/** True once the enclosing `DetailOverlay` has started its close animation. */
+export function useDetailOverlayClosing(): boolean {
+    return useContext(ClosingContext);
+}
 
 type DetailOverlayProps = {
     onClose: () => void;
@@ -119,7 +132,9 @@ export function DetailOverlay({
             aria-label={t(labelKey)}
             tabIndex={-1}
         >
-            {children({ handleClose })}
+            <ClosingContext.Provider value={isClosing}>
+                {children({ handleClose })}
+            </ClosingContext.Provider>
         </div>,
         document.body
     );

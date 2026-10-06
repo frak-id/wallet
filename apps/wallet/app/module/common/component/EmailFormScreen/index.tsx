@@ -15,6 +15,7 @@ import {
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
+import { focusWithoutScroll } from "@/module/common/utils/focusWithoutScroll";
 import * as styles from "./index.css";
 
 export type EmailFormScreenProps = {
@@ -157,7 +158,7 @@ export function EmailFormScreen({
                             autoCorrect="off"
                             spellCheck={false}
                             enterKeyHint="go"
-                            autoFocus
+                            ref={focusWithoutScroll}
                             aria-label={label}
                             placeholder={placeholder}
                             value={email}

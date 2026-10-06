@@ -1,9 +1,9 @@
-import { blurLayers } from "./index.css";
+import { blurLayers, scrollEdgeBlur } from "./index.css";
 
 type ScrollEdgeBlurProps = {
     /** Positions and sizes the band; must set `position` (its own layers pin to
      * it). */
-    className?: string;
+    className: string;
 };
 
 /**
@@ -13,7 +13,7 @@ type ScrollEdgeBlurProps = {
  */
 export function ScrollEdgeBlur({ className }: ScrollEdgeBlurProps) {
     return (
-        <div className={className} aria-hidden="true">
+        <div className={`${scrollEdgeBlur} ${className}`} aria-hidden="true">
             {blurLayers.map((layer) => (
                 <div key={layer} className={layer} />
             ))}

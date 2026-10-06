@@ -13,7 +13,8 @@ type StepLayoutProps = {
 };
 
 /**
- * Full-page layout with safe-area insets, centered content, and bottom-pinned footer.
+ * Full-page layout with centered content and a bottom-pinned footer; the
+ * hosting AppShell owns the safe-area insets.
  *
  * Uses ContentBlock for the icon + title + description pattern.
  */

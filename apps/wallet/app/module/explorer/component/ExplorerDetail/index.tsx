@@ -1,25 +1,18 @@
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { Box } from "@frak-labs/design-system/components/Box";
-import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import {
     DetailSheet,
     DetailSheetActions,
     DetailSheetBody,
-    DetailSheetFooter,
     DetailSheetHero,
 } from "@frak-labs/design-system/components/DetailSheet";
-import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
 import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
-    CheckIcon,
     ClockIcon,
-    CoinsIcon,
-    CopyIcon,
     ExternalLinkIcon,
     ImageIcon,
-    ShareIcon,
 } from "@frak-labs/design-system/icons";
 import {
     buildSharingLink,
@@ -28,7 +21,6 @@ import {
     mergeTokenQueryOptions,
     sessionStore,
     trackEvent,
-    ua,
     useCopyToClipboardWithState,
     useShareLink,
 } from "@frak-labs/wallet-shared";
@@ -37,15 +29,16 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useStore } from "zustand";
-import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
+import { GlassDetailActions } from "@/module/native-glass/component/GlassDetailActions";
+import { useNativeDetailChrome } from "@/module/native-glass/hook/useNativeDetailChrome";
 import { useCampaignView } from "../../campaignView";
 import { useAffiliateShareLink } from "../../hook/useAffiliateShareLink";
 import { useToolbarTitleReveal } from "../../hook/useToolbarTitleReveal";
 import { useRewardOffer } from "../../rewardOffer";
 import { RewardOfferLines } from "../RewardOfferLines";
-import { AffiliateLinkCreateError } from "./AffiliateLinkCreateError";
 import { CampaignInfoSection } from "./CampaignInfoSection";
+import { ExplorerDetailFooter } from "./Footer";
 import * as styles from "./index.css";
 import {
     isCreateStepDisabled,
@@ -65,6 +58,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const [needsReadMore, setNeedsReadMore] = useState(false);
     const descriptionRef = useRef<HTMLElement>(null);
     const { t } = useTranslation();
+    const nativeChrome = useNativeDetailChrome();
 
     // Mirror the merchant name into the fixed toolbar once the large in-body
     // name scrolls up behind the close / share buttons.
@@ -247,19 +241,18 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
 
                 <DetailSheetActions ref={toolbarRef}>
                     <ToolbarBlur visible={blurred} />
-                    <GlassCloseButton
-                        onClick={onClose}
-                        label={t("explorer.detail.close")}
-                    />
                     <ToolbarTitle name={merchant.name} visible={showToolbar} />
-                    {canShare && !affiliateNeedsLink && (
-                        <GlassButton
-                            as="button"
-                            icon={<ShareIcon width={20} height={20} />}
-                            onClick={handleShare}
-                            aria-label={t("explorer.detail.share")}
-                        />
-                    )}
+                    <GlassDetailActions
+                        id="explorerDetail"
+                        onClose={onClose}
+                        closeLabel={t("explorer.detail.close")}
+                        onShare={
+                            canShare && !affiliateNeedsLink
+                                ? handleShare
+                                : undefined
+                        }
+                        shareLabel={t("explorer.detail.share")}
+                    />
                 </DetailSheetActions>
 
                 {view &&
@@ -286,7 +279,13 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                 )}
             </DetailSheetHero>
 
-            <DetailSheetBody className={styles.bodyContent}>
+            <DetailSheetBody
+                className={
+                    nativeChrome
+                        ? styles.bodyContentNativeFooter
+                        : styles.bodyContent
+                }
+            >
                 <Spread align="top" space="m">
                     <div className={styles.brandInfo}>
                         <Text as="h1" variant="heading1" ref={brandTitleRef}>
@@ -362,62 +361,16 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                 </Box>
             </DetailSheetBody>
 
-            <DetailSheetFooter className={styles.floatingFooter}>
-                {affiliateNeedsLink ? (
-                    // Step 1: mint the per-user tracking link on explicit action.
-                    <Button
-                        variant="primary"
-                        width="full"
-                        onClick={() => createAffiliateLink()}
-                        disabled={isCreateButtonDisabled}
-                        size="large"
-                        fontSize="s"
-                    >
-                        {t(
-                            isCreatingAffiliateLink
-                                ? "explorer.detail.creatingShareLink"
-                                : "explorer.detail.createShareLink"
-                        )}
-                        <CoinsIcon width={16} height={16} />
-                    </Button>
-                ) : (
-                    // Step 2: share / copy the ready link.
-                    <Button
-                        variant="primary"
-                        width="full"
-                        onClick={handlePrimaryAction}
-                        size="large"
-                        fontSize="s"
-                    >
-                        {t("explorer.detail.shareAndEarn")}
-                        <CoinsIcon width={16} height={16} />
-                    </Button>
-                )}
-                <AffiliateLinkCreateError
-                    show={isAffiliateLinkCreateError}
-                    message={t("explorer.detail.createShareLinkError")}
-                />
-                {!ua.isMobile && !affiliateNeedsLink && (
-                    <Button
-                        variant="ghost"
-                        width="full"
-                        onClick={handleCopy}
-                        size="large"
-                        fontSize="s"
-                    >
-                        {copied ? (
-                            <CheckIcon width={16} height={16} />
-                        ) : (
-                            <CopyIcon width={16} height={16} />
-                        )}
-                        {t(
-                            copied
-                                ? "sharing.btn.copySuccess"
-                                : "sharing.btn.copy"
-                        )}
-                    </Button>
-                )}
-            </DetailSheetFooter>
+            <ExplorerDetailFooter
+                needsLink={affiliateNeedsLink}
+                creating={isCreatingAffiliateLink}
+                createDisabled={isCreateButtonDisabled}
+                createError={isAffiliateLinkCreateError}
+                onCreate={() => createAffiliateLink()}
+                onShare={handlePrimaryAction}
+                copied={copied}
+                onCopy={handleCopy}
+            />
         </DetailSheet>
     );
 }
