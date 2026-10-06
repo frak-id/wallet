@@ -136,6 +136,7 @@
     "@vitest/coverage-v8": "catalog:",
     "@vitest/ui": "catalog:",
     "jsdom": "catalog:",
+    "lightningcss": "catalog:",
     "rolldown": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",

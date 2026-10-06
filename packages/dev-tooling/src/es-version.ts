@@ -27,6 +27,19 @@ import * as path from "node:path";
 export const BROWSER_TARGET_SAFARI = "safari15.4";
 
 /**
+ * `BROWSER_TARGET` (vite.ts) in Lightning CSS's packed-integer encoding,
+ * `(major << 16) | (minor << 8) | patch`. A bare `safari: 15.4` is silently
+ * wrong here — the value must be packed. Lives here so tsdown configs, which
+ * load through Node and cannot import vite.ts, share it.
+ */
+export const LIGHTNINGCSS_TARGETS = {
+    chrome: 111 << 16,
+    edge: 111 << 16,
+    firefox: 114 << 16,
+    safari: (15 << 16) | (4 << 8),
+};
+
+/**
  * The ECMAScript floor matching the browser target, for the emitted-output
  * gate. Every ES2022 stdlib API is available at Safari 15.4; ES2023 methods
  * (`toSorted`, `toReversed`, `with`) are Safari 16 and stay out.

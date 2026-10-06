@@ -10,6 +10,7 @@ import {
     assertEsVersion,
     BROWSER_TARGET_ECMA,
     BROWSER_TARGET_SAFARI,
+    LIGHTNINGCSS_TARGETS,
 } from "./es-version";
 
 export function onwarn(
@@ -54,18 +55,6 @@ export const BROWSER_TARGET: string[] = [
     "edge111",
     "firefox114",
 ];
-
-/**
- * {@link BROWSER_TARGET} in Lightning CSS's packed-integer encoding,
- * `(major << 16) | (minor << 8) | patch`. A bare `safari: 15.4` is silently
- * wrong here — the value must be packed.
- */
-const LIGHTNINGCSS_TARGETS = {
-    chrome: 111 << 16,
-    edge: 111 << 16,
-    firefox: 114 << 16,
-    safari: (15 << 16) | (4 << 8),
-};
 
 /** Shared Lightning CSS config for every Vite app in the monorepo. */
 export const lightningCssConfig = {
