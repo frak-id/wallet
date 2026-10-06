@@ -3,6 +3,7 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -355,13 +356,28 @@ function InstallCodeHero({
     t,
     installed,
     codeless,
+    rewardLoading,
     merchantName,
 }: {
     t: Translate;
     installed: boolean;
     codeless: boolean;
+    rewardLoading: boolean;
     merchantName?: string;
 }) {
+    // Waits out the fetch so the headline never flips from neutral to rewarded.
+    const headlineSkeleton = rewardLoading ? (
+        <Text variant="heading2" className={styles.title}>
+            <Skeleton width={240} height={22} />
+            {!codeless && (
+                <>
+                    {"\n"}
+                    <Skeleton width={200} height={22} />
+                </>
+            )}
+        </Text>
+    ) : null;
+
     if (installed) {
         return (
             <>
@@ -372,9 +388,11 @@ function InstallCodeHero({
                 >
                     <CircleCheckIcon width={28} height={28} />
                 </IconCircle>
-                <Text as="h1" variant="heading2" className={styles.title}>
-                    {t("installCode.installedHeadline")}
-                </Text>
+                {headlineSkeleton ?? (
+                    <Text as="h1" variant="heading2" className={styles.title}>
+                        {t("installCode.installedHeadline")}
+                    </Text>
+                )}
                 {merchantName && (
                     <Text variant="bodySmall" color="secondary">
                         {t("installCode.installedMerchant", { merchantName })}
@@ -386,11 +404,15 @@ function InstallCodeHero({
 
     return (
         <>
-            <Text as="h1" variant="heading2" className={styles.title}>
-                {t(
-                    codeless ? "installCode.codelessTitle" : "installCode.title"
-                )}
-            </Text>
+            {headlineSkeleton ?? (
+                <Text as="h1" variant="heading2" className={styles.title}>
+                    {t(
+                        codeless
+                            ? "installCode.codelessTitle"
+                            : "installCode.title"
+                    )}
+                </Text>
+            )}
             <Text variant="bodySmall" color="secondary">
                 {t(
                     codeless
@@ -450,14 +472,19 @@ function InstallCodeView({
         merchantInfoQueryOptions(merchantId)
     );
 
-    const { data: reward } = useFormattedEstimatedReward({
-        merchantId,
-    });
+    // `isLoading` is pending *and* fetching: no merchant or a failed fetch is
+    // settled, so the headline never waits on a request that will not come.
+    const { data: reward, isLoading: isRewardLoading } =
+        useFormattedEstimatedReward({ merchantId });
     const estimatedReward = reward?.formatted;
 
     const t = useCallback<Translate>(
         (key, options) =>
-            rawT(key, { ...options, estimatedReward: estimatedReward ?? "" }),
+            rawT(key, {
+                context: estimatedReward ? undefined : "noReward",
+                ...options,
+                estimatedReward: estimatedReward ?? "",
+            }),
         [rawT, estimatedReward]
     );
 
@@ -603,6 +630,7 @@ function InstallCodeView({
                     t={t}
                     installed={installed}
                     codeless={codeless}
+                    rewardLoading={isRewardLoading}
                     merchantName={merchantInfo?.name}
                 />
             }
