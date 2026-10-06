@@ -469,6 +469,10 @@ jobs:
       # own `globalSetup`.
       - name: "🌐 Install Chromium"
         run: bun run --cwd apps/wallet test:light:install
+      # Specs import `@frak-labs/core-sdk/identity`, and Playwright resolves it
+      # through the `import` condition to `dist/`, not source.
+      - name: "🔨 Build the core SDK"
+        run: bun run --cwd sdk/core build
       # `--project standalone` skips `pages.check.ts`, which needs a running SPA
       # (dev server plus SST) that this job deliberately does not start.
       # `STANDALONE_HOST` widens the server's loopback-only default: the runner
