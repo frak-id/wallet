@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-06
+
 Release as 1.1.0 or later: `upgrade/install-1.1.0.php` only runs when the new version is above the installed one, and without it upgraded shops print the CMS tags as text. Wait for a components release that serves `<frak-ambassador>` from `sdk.frak.id` before releasing.
 
 ### Added
@@ -256,7 +258,9 @@ Release as 1.1.0 or later: `upgrade/install-1.1.0.php` only runs when the new ve
 - New `views/templates/hook/post-purchase.tpl` Smarty partial: theme-overridable wrapper for the post-purchase markup. Override path: `themes/<theme>/modules/frakintegration/views/templates/hook/post-purchase.tpl`.
 - New `FrakOrderResolver` class: single-pass extraction of customer/order/token context plus product line items from a resolved `Order`, fail-soft on missing images / deleted products. Sibling of the WordPress `Frak_WooCommerce::get_post_purchase_data()` helper.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.10...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.1.0...HEAD
+
+[1.1.0]: https://github.com/frak-id/wallet/compare/prestashop-1.0.10...prestashop-1.1.0
 
 [1.0.10]: https://github.com/frak-id/wallet/compare/prestashop-1.0.9...prestashop-1.0.10
 
