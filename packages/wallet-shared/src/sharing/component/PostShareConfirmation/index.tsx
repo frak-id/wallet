@@ -39,9 +39,21 @@ export type PostShareConfirmationProps = {
 
 const benefits = [
     { key: "wallet", icon: <ShieldIcon width={20} height={20} /> },
-    { key: "notify", icon: <BellIcon width={20} height={20} /> },
-    { key: "cashout", icon: <WalletIcon width={20} height={20} /> },
-] as const;
+    {
+        key: "notify",
+        icon: <BellIcon width={20} height={20} />,
+        rewardOnly: true,
+    },
+    {
+        key: "cashout",
+        icon: <WalletIcon width={20} height={20} />,
+        rewardOnly: true,
+    },
+] as const satisfies readonly {
+    key: string;
+    icon: ReactNode;
+    rewardOnly?: true;
+}[];
 
 export function PostShareConfirmation({
     installUrl,
@@ -64,6 +76,10 @@ export function PostShareConfirmation({
 
     const hasReward = reward.status === "ready";
     const rewardContext = hasReward ? undefined : noRewardContext;
+    const isEmpty = reward.status === "empty";
+    const visibleBenefits = benefits.filter(
+        (benefit) => !(isEmpty && "rewardOnly" in benefit)
+    );
 
     return (
         // biome-ignore lint/a11y/useKeyWithClickEvents: dismissal has a keyboard equivalent in `useOverlayBehaviour`'s document-level Escape listener, not a per-element handler — the backdrop is never focusable.
@@ -147,12 +163,15 @@ export function PostShareConfirmation({
                             )}
                         </Text>
                         <Text variant="bodySmall">
-                            {t("sdk.sharingPage.confirmation.subtitle")}
+                            {t(
+                                "sdk.sharingPage.confirmation.subtitle",
+                                rewardContext
+                            )}
                         </Text>
                     </section>
 
                     <Stack space="l">
-                        {benefits.map(({ key, icon }) => (
+                        {visibleBenefits.map(({ key, icon }) => (
                             <BenefitItem
                                 key={key}
                                 icon={icon}
