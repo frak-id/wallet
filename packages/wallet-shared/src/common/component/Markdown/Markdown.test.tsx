@@ -75,7 +75,11 @@ describe("Markdown", () => {
 
     it("should not render links with javascript: or data: URLs", () => {
         const { container } = render(
-            <Markdown md="[bad](javascript:alert(1)) [worse](data:text/html,hi)" />
+            <Markdown
+                md={
+                    "[bad](javascript:alert(1)) [worse](data:text/html,hi) [ref][r]\n\n[r]: javascript:alert(1)"
+                }
+            />
         );
 
         expect(container.querySelector("a")).toBeNull();
