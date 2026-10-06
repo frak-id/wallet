@@ -1,5 +1,15 @@
 # @frak-labs/core-sdk
 
+## 1.5.1
+
+### Patch Changes
+
+- [#329](https://github.com/frak-id/wallet/pull/329) [`b270162`](https://github.com/frak-id/wallet/commit/b2701622966a3e76540b37c87da70a208cfed23a) Thanks [@KONFeature](https://github.com/KONFeature)! - `setupClient` reads the visitor's cached merchant config before it creates the wallet iframe, instead of once the iframe has loaded. On a return visit, `<frak-ambassador>` paints the merchant's dashboard text and photo straight away rather than swapping them in over the built-in copy, and the banner and buttons no longer wait for the iframe before they appear (they stay disabled until the client connects).
+
+- [#329](https://github.com/frak-id/wallet/pull/329) [`ce9ef54`](https://github.com/frak-id/wallet/commit/ce9ef54b6629f14d2c8a72afc97225b600f68d00) Thanks [@KONFeature](https://github.com/KONFeature)! - `getInstallUrl` returns a shorter link: the `/i` path, 22-character ids instead of 36-character UUIDs, and no `a=` when a proof is attached, since the wallet reads the anonymous id from the proof. A typical credentialed link drops from about 295 to 236 characters, which makes for a sparser QR code. Treat the returned URL as opaque.
+  
+  `@frak-labs/core-sdk/identity` also exports the codec behind those ids: `compactUuid` turns a UUID into its 22-character form, and `expandCompactUuid` turns it back.
+
 ## 1.5.0
 
 ### Minor Changes
