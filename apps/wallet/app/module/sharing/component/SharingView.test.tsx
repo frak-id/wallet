@@ -84,7 +84,24 @@ beforeAll(async () => {
         // isolated when the namespace already holds something.
         resources: {
             en: {
-                customized: { sharing: { title: "Bundled title" } },
+                customized: {
+                    sharing: { title: "Bundled title" },
+                    sdk: {
+                        sharingPage: {
+                            confirmation: {
+                                cta: "Collect my {{ estimatedReward }}",
+                                cta_noReward: "Install the app",
+                            },
+                            steps: {
+                                2: {
+                                    title: "Earn on every purchase.",
+                                    title_min_product:
+                                        "Earn on selected products.",
+                                },
+                            },
+                        },
+                    },
+                },
                 common: { sharing: { title: "Bundled title" } },
             },
         },
@@ -177,6 +194,69 @@ describe("SharingView merchant translations", () => {
         renderView().unmount();
 
         expect(i18next.getFixedT("en", null)("sharing.title")).toBe(before);
+    });
+
+    it("prefers a merchant's context override", () => {
+        resolvedConfig.mockReturnValue({
+            sdkConfig: {
+                translations: {
+                    "sdk.sharingPage.confirmation.cta_noReward":
+                        "Join {{productName}}",
+                },
+            },
+        });
+        renderView();
+
+        expect(
+            lastT?.("sdk.sharingPage.confirmation.cta", {
+                context: "noReward",
+                productName: "Acme",
+            })
+        ).toBe("Join Acme");
+    });
+
+    it("prefers the bundled context variant over a merchant's base override", () => {
+        resolvedConfig.mockReturnValue({
+            sdkConfig: {
+                translations: {
+                    "sdk.sharingPage.confirmation.cta":
+                        "Grab my {{estimatedReward}}",
+                    "sdk.sharingPage.steps.2.title": "Merchant step",
+                },
+            },
+        });
+        renderView();
+
+        expect(
+            lastT?.("sdk.sharingPage.confirmation.cta", {
+                context: "noReward",
+                estimatedReward: "",
+            })
+        ).toBe("Install the app");
+        expect(
+            lastT?.("sdk.sharingPage.steps.2.title", {
+                context: "min_product",
+            })
+        ).toBe("Earn on selected products.");
+    });
+
+    it("keeps a merchant's base override when no context variant exists", () => {
+        resolvedConfig.mockReturnValue({
+            sdkConfig: {
+                translations: {
+                    "sdk.sharingPage.confirmation.cta":
+                        "Grab my {{estimatedReward}}",
+                },
+            },
+        });
+        renderView();
+
+        expect(
+            lastT?.("sdk.sharingPage.confirmation.cta", {
+                context: "tiered",
+                estimatedReward: "5 €",
+            })
+        ).toBe("Grab my 5 €");
     });
 
     it("resolves the merchant config in the page's language", () => {
