@@ -36,6 +36,21 @@ export type SharingNavigation = {
     toWallet: () => void;
 };
 
+/** A bundled `key_ctx` outranks a merchant's base `key`, which may assume a reward. */
+function pickOverride(
+    translations: Record<string, string>,
+    key: string,
+    context: unknown,
+    bundled: (key: string) => boolean
+): string | undefined {
+    if (typeof context !== "string") return translations[key];
+    const contextKey = `${key}_${context}`;
+    return (
+        translations[contextKey] ??
+        (bundled(contextKey) ? undefined : translations[key])
+    );
+}
+
 /**
  * The sharing page, minus its param source and its router.
  *
@@ -108,15 +123,20 @@ export function SharingView({
     //
     // Only the overridden key skips i18next; everything else goes through `liveT`, keeping the
     // `customized` -> `common` chain and the re-render on a lazily fetched locale. An override
-    // is interpolated but not resolved, so a `$t(...)` inside one now renders literally —
-    // plurals and context were never expressible, since both need key suffixes.
+    // is interpolated but not resolved, so a `$t(...)` inside one renders literally.
+    // Context follows the listener's order: merchant `key_ctx`, bundled `key_ctx`, merchant `key`.
     const t = useMemo<SharingT>(() => {
         const translations = config?.sdkConfig?.translations;
         if (!translations || Object.keys(translations).length === 0) {
             return liveT;
         }
         const overridden: SharingT = (key, options) => {
-            const override = translations[key];
+            const override = pickOverride(
+                translations,
+                key,
+                options?.context,
+                (k) => i18n.exists(k)
+            );
             if (typeof override !== "string") return liveT(key, options);
             return i18n.services.interpolator.interpolate(
                 override,
