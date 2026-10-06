@@ -6,6 +6,7 @@ import {
     useContext,
     useEffect,
     useRef,
+    useState,
 } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -15,11 +16,14 @@ import * as styles from "@/module/common/styles/detailOverlay.css";
 
 type DetailOverlayVariant = "fullScreen" | "bottomSheet";
 
-const ClosingContext = createContext(false);
+const LeavingContext = createContext(false);
 
-/** True once the enclosing `DetailOverlay` has started its close animation. */
-export function useDetailOverlayClosing(): boolean {
-    return useContext(ClosingContext);
+/**
+ * True while the enclosing `DetailOverlay` closes, or while a swipe drags it
+ * away — which may still settle back.
+ */
+export function useDetailOverlayLeaving(): boolean {
+    return useContext(LeavingContext);
 }
 
 type DetailOverlayProps = {
@@ -75,10 +79,12 @@ export function DetailOverlay({
     const { isClosing, overlayRef, handleClose, slideOut } =
         useAnimatedClose(onClose);
     const swipeEnabled = swipeToClose && IS_IOS;
+    const [swiping, setSwiping] = useState(false);
     useEdgeSwipeToClose({
         ref: overlayRef,
         enabled: swipeEnabled,
         onCommit: slideOut,
+        onDragChange: setSwiping,
     });
     const closeRef = useRef(handleClose);
     closeRef.current = handleClose;
@@ -132,9 +138,9 @@ export function DetailOverlay({
             aria-label={t(labelKey)}
             tabIndex={-1}
         >
-            <ClosingContext.Provider value={isClosing}>
+            <LeavingContext.Provider value={isClosing || swiping}>
                 {children({ handleClose })}
-            </ClosingContext.Provider>
+            </LeavingContext.Provider>
         </div>,
         document.body
     );

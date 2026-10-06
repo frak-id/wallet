@@ -1,7 +1,7 @@
-import { fireEvent, render } from "@testing-library/react";
+import { act, fireEvent, render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as styles from "@/module/common/styles/detailOverlay.css";
-import { DetailOverlay } from "./index";
+import { DetailOverlay, useDetailOverlayLeaving } from "./index";
 
 const platform = vi.hoisted(() => ({ isIos: true }));
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
@@ -80,6 +80,10 @@ describe("DetailOverlay", () => {
     });
 });
 
+function LeavingProbe() {
+    return <p data-testid="leaving">{String(useDetailOverlayLeaving())}</p>;
+}
+
 describe("DetailOverlay swipe to close", () => {
     const WIDTH = 400;
 
@@ -100,7 +104,12 @@ describe("DetailOverlay swipe to close", () => {
         type: "pointerdown" | "pointermove" | "pointerup" | "pointercancel",
         x: number,
         at: number
-    ) => target.dispatchEvent(new StubPointerEvent(type, { clientX: x, at }));
+    ) =>
+        act(() => {
+            target.dispatchEvent(
+                new StubPointerEvent(type, { clientX: x, at })
+            );
+        });
 
     const slideDone = (overlay: Element) =>
         overlay.dispatchEvent(
@@ -127,6 +136,7 @@ describe("DetailOverlay swipe to close", () => {
                     <p data-testid="carousel">carousel</p>
                 </div>
                 <p data-testid="plain">plain</p>
+                <LeavingProbe />
             </div>,
             swipeToClose
         );
@@ -221,7 +231,9 @@ describe("DetailOverlay swipe to close", () => {
         const { overlay, getByTestId } = renderSwipeable();
         drag(getByTestId("plain"), 10, 150, 100);
         vi.spyOn(document, "hidden", "get").mockReturnValueOnce(true);
-        document.dispatchEvent(new Event("visibilitychange"));
+        act(() => {
+            document.dispatchEvent(new Event("visibilitychange"));
+        });
         slideDone(overlay);
         expect(overlay.style.transform).toBe("");
     });
@@ -248,6 +260,26 @@ describe("DetailOverlay swipe to close", () => {
         const { overlay, getByTestId } = renderSwipeable(false);
         drag(getByTestId("plain"), 10, 170, 400)();
         expect(overlay.style.transform).toBe("");
+    });
+
+    it("reports leaving once the drag moves, and not after it settles back", () => {
+        const { getByTestId } = renderSwipeable();
+        const plain = getByTestId("plain");
+        pointer(plain, "pointerdown", 10, 0);
+        pointer(plain, "pointermove", 14, 10);
+        expect(getByTestId("leaving").textContent).toBe("false");
+
+        pointer(plain, "pointermove", 70, 100);
+        expect(getByTestId("leaving").textContent).toBe("true");
+
+        pointer(plain, "pointerup", 70, 600);
+        expect(getByTestId("leaving").textContent).toBe("false");
+    });
+
+    it("keeps reporting leaving through a committed slide-out", () => {
+        const { getByTestId } = renderSwipeable();
+        drag(getByTestId("plain"), 10, 170, 400)();
+        expect(getByTestId("leaving").textContent).toBe("true");
     });
 
     it("does nothing when not on iOS", () => {

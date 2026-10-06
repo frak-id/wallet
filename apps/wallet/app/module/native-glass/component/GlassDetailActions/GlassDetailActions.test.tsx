@@ -174,6 +174,41 @@ describe("GlassDetailActions", () => {
         expect(lastToolbar()?.visible).toBe(false);
     });
 
+    it("steps aside while the sheet is swiped, and returns when the swipe is cancelled", async () => {
+        render(
+            <DetailOverlay
+                onClose={vi.fn()}
+                swipeToClose
+                labelKey="wallet.modal.explorerDetail.ariaLabel"
+            >
+                {({ handleClose }) => (
+                    <div data-testid="sheet">
+                        <GlassDetailActions id="sheet" onClose={handleClose} />
+                    </div>
+                )}
+            </DetailOverlay>
+        );
+        await flushBridge();
+        const sheet = screen.getByTestId("sheet");
+        const pointer = (type: string, clientX: number) =>
+            sheet.dispatchEvent(
+                new MouseEvent(type, { bubbles: true, clientX })
+            );
+
+        act(() => {
+            pointer("pointerdown", 10);
+            pointer("pointermove", 60);
+        });
+        await flushBridge();
+        expect(lastToolbar()?.visible).toBe(false);
+
+        act(() => {
+            pointer("pointercancel", 60);
+        });
+        await flushBridge();
+        expect(lastToolbar()?.visible).toBe(true);
+    });
+
     it("reaches native once for a StrictMode mount", async () => {
         render(
             <StrictMode>

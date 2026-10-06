@@ -5,6 +5,8 @@ const EDGE_STRIP_PX = 24;
 const COMMIT_WIDTH_RATIO = 1 / 3;
 const FLICK_MIN_DISTANCE_PX = 40;
 const FLICK_MIN_VELOCITY_PX_PER_MS = 0.5;
+// An edge tap or a jitter must not report a drag.
+const DRAG_SLOP_PX = 8;
 
 const NOT_A_SWIPE_TARGET =
     'button, a, input, textarea, select, [role="button"], [data-owns-horizontal-drag]';
@@ -36,18 +38,24 @@ type Phase = "idle" | "dragging" | "settling" | "committed";
 /**
  * Drags the element right from the left edge; `onCommit` runs when the
  * release should close it, otherwise the element settles back to 0.
+ * `onDragChange(true)` fires once the drag moves; `false` when it settles back,
+ * never after a commit.
  */
 export function useEdgeSwipeToClose({
     ref,
     enabled,
     onCommit,
+    onDragChange,
 }: {
     ref: RefObject<HTMLElement | null>;
     enabled: boolean;
     onCommit: () => void;
+    onDragChange?: (dragging: boolean) => void;
 }) {
     const commitRef = useRef(onCommit);
     commitRef.current = onCommit;
+    const dragChangeRef = useRef(onDragChange);
+    dragChangeRef.current = onDragChange;
 
     useEffect(() => {
         const el = ref.current;
@@ -59,6 +67,13 @@ export function useEdgeSwipeToClose({
         let startTime = 0;
         let width = 0;
         let offset = 0;
+        let moved = false;
+
+        const setMoved = (next: boolean) => {
+            if (moved === next) return;
+            moved = next;
+            dragChangeRef.current?.(next);
+        };
 
         const reset = () => {
             el.style.transition = "";
@@ -68,6 +83,7 @@ export function useEdgeSwipeToClose({
         };
 
         const settle = () => {
+            setMoved(false);
             if (offset === 0) return reset();
             phase = "settling";
             // A newer drag may have taken over before this settle finished.
@@ -93,6 +109,7 @@ export function useEdgeSwipeToClose({
         const onMove = (e: PointerEvent) => {
             if (!isActive(e)) return;
             offset = Math.max(0, e.clientX - startX);
+            if (offset > DRAG_SLOP_PX) setMoved(true);
             el.style.transform = `translateX(${offset}px)`;
         };
 
@@ -126,6 +143,7 @@ export function useEdgeSwipeToClose({
             el.removeEventListener("pointercancel", onCancel);
             document.removeEventListener("visibilitychange", onVisibility);
             reset();
+            setMoved(false);
         };
     }, [ref, enabled]);
 }

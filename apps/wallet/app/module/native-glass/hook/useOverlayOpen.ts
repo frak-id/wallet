@@ -1,7 +1,7 @@
 import { BANNER_STACK_ATTRIBUTE } from "@frak-labs/design-system/components/BannerStack";
 import { useEffect, useSyncExternalStore } from "react";
 import { create } from "zustand";
-import { useDetailOverlayClosing } from "@/module/common/component/DetailOverlay";
+import { useDetailOverlayLeaving } from "@/module/common/component/DetailOverlay";
 import { modalStore } from "@/module/stores/modalStore";
 
 // Set on <body> by react-remove-scroll, which every Radix modal and vaul drawer mounts.
@@ -71,13 +71,14 @@ export function useOverlayOpen(edge: NativeEdge): boolean {
 
 /**
  * Whether native chrome owned by a detail sheet should show: hidden as soon as
- * the sheet starts its fade-out, and while an overlay covers its edge.
+ * the sheet starts leaving, and while an overlay covers its edge. Native views
+ * cannot follow a sheet's swipe, so they step aside for it.
  */
 export function useDetailSheetChromeVisible(edge: NativeEdge): boolean {
-    const closing = useDetailOverlayClosing();
+    const leaving = useDetailOverlayLeaving();
     const scrollLocked = useScrollLocked();
     const covered = useEdgeCovered(edge);
-    return !closing && !scrollLocked && !covered;
+    return !leaving && !scrollLocked && !covered;
 }
 
 const BANNER_STACK_SELECTOR = `[${BANNER_STACK_ATTRIBUTE}]`;
