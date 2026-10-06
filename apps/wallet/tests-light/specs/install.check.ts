@@ -353,3 +353,68 @@ test.describe("Install page — short link", () => {
         });
     });
 });
+
+test.describe("Install page — no advertisable reward", () => {
+    /** No campaign to select, so the query settles with nothing to show. */
+    async function mockNoReward(page: Page) {
+        await page.route("**/*/user/merchant/estimated-rewards*", (route) =>
+            route.fulfill({
+                status: 200,
+                contentType: "application/json",
+                body: JSON.stringify({ rewards: [] }),
+            })
+        );
+    }
+
+    const COPY = {
+        en: {
+            title: "One last step!",
+            installed: "You're all set. Open the app to continue.",
+            openWallet: "Open Frak",
+        },
+        fr: {
+            title: "Plus qu'une étape !",
+            installed: "C'est prêt. Ouvre l'app pour continuer.",
+            openWallet: "Ouvrir Frak",
+        },
+    } as const;
+
+    // The reported defect: the amount interpolated as "", leaving its
+    // surrounding words stranded.
+    const STRANDED = /lose your\s*!|perds pas tes\s+!|claim\s*$|récupère\s*$/;
+
+    for (const lng of ["en", "fr"] as const) {
+        test(`names no amount in ${lng}`, async ({ page, injectAuthState }) => {
+            await page.setViewportSize(VIEWPORTS.iphone);
+            await mockInstallCode(page);
+            await mockNoReward(page);
+            await openLoggedOut(page, installUrl({ lng }), injectAuthState);
+            await settle(page);
+
+            const heading = page.getByRole("heading", { level: 1 });
+            await expect(heading).toContainText(COPY[lng].title);
+            await expect(heading).not.toHaveText(STRANDED);
+        });
+
+        test(`offers a plain open button once installed in ${lng}`, async ({
+            page,
+            injectAuthState,
+        }) => {
+            await page.setViewportSize(VIEWPORTS.iphone);
+            await mockInstallCode(page);
+            await mockNoReward(page);
+            await openLoggedOut(
+                page,
+                `${installUrl({ lng })}#probe=ok&installed=1`,
+                injectAuthState
+            );
+
+            await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+                COPY[lng].installed
+            );
+            await expect(page.locator("footer a")).toHaveText(
+                COPY[lng].openWallet
+            );
+        });
+    }
+});
