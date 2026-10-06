@@ -5,7 +5,7 @@ import { InstallQr } from "./InstallQr";
 
 const qrMock = vi.hoisted(() => ({
     factoryRuns: 0,
-    calls: [] as Array<{ text: string; output: string }>,
+    calls: [] as Array<{ text: string; output: string; opts?: QrOpts }>,
     actual: null as typeof import("qr") | null,
     fakeGrid: [
         [true, false, true, false, true],
@@ -20,7 +20,7 @@ vi.mock("qr", () => {
     qrMock.factoryRuns += 1;
     return {
         encodeQR: (text: string, output: string, opts?: QrOpts) => {
-            qrMock.calls.push({ text, output });
+            qrMock.calls.push({ text, output, opts });
             if (qrMock.actual && output === "raw") {
                 return qrMock.actual.encodeQR(text, output, opts);
             }
@@ -197,6 +197,7 @@ describe("InstallQr", () => {
         expect(qrMock.calls).toHaveLength(1);
         expect(qrMock.calls[0].text).toBe(URL_WITH_FRAGMENT);
         expect(qrMock.calls[0].output).toBe("raw");
+        expect(qrMock.calls[0].opts?.ecc).toBe("low");
     });
 
     it("never encodes after unmounting while the encoder loads", async () => {
@@ -239,7 +240,10 @@ describe("InstallQr with the real encoder", () => {
         const real = await vi.importActual<typeof import("qr")>("qr");
         qrMock.actual = real;
 
-        const grid = real.encodeQR(URL_WITH_FRAGMENT, "raw", { border: 4 });
+        const grid = real.encodeQR(URL_WITH_FRAGMENT, "raw", {
+            border: 4,
+            ecc: "low",
+        });
         expect(grid.length).toBe(grid[0].length);
         const edge = grid.length;
         for (let ring = 0; ring < 4; ring++) {
