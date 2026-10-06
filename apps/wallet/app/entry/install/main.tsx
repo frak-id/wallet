@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 import { InstallView } from "@/module/install/component/InstallView";
-import { parseInstallSearch } from "@/module/install/params";
+import {
+    parseInstallSearch,
+    resolveInstallAnonymousId,
+    resolveInstallProof,
+} from "@/module/install/params";
 import {
     bootstrapStandalonePage,
     reportBootstrapFailure,
@@ -46,5 +50,10 @@ bootstrapStandalonePage(
         }}
         processingLayout={ProcessingLayout}
     />,
-    { deviceId: search.a }
+    {
+        deviceId: resolveInstallAnonymousId(
+            search.a,
+            resolveInstallProof(window.location.hash, search.p)
+        ),
+    }
 ).catch(reportBootstrapFailure);

@@ -1,3 +1,7 @@
+import { compactUuid } from "@frak-labs/core-sdk/identity";
+import goldenProofs from "@frak-labs/core-sdk/identity/fixtures" with {
+    type: "json",
+};
 import type { Page } from "@playwright/test";
 import { expect, test } from "../fixtures";
 import { CLIENT_ID, MERCHANT_ID } from "../mocks/api";
@@ -322,5 +326,30 @@ test.describe("Install page — degraded", () => {
         // page must not even ask.
         await expect(page.locator("footer a")).toBeVisible();
         await expect(page.getByText(INSTALL_CODE)).toHaveCount(0);
+    });
+});
+
+test.describe("Install page — short link", () => {
+    test("`/i` with a compact merchant and a proof mints for the derived anonymous id", async ({
+        page,
+        injectAuthState,
+    }) => {
+        const [fixture] = goldenProofs.fixtures;
+        await mockInstallCode(page);
+        const mint = page.waitForRequest((request) =>
+            request.url().endsWith("/user/identity/install-code/generate")
+        );
+        await openLoggedOut(
+            page,
+            `/i?m=${compactUuid(fixture.merchantId)}#p=${fixture.proof}`,
+            injectAuthState
+        );
+        await settle(page);
+
+        expect((await mint).postDataJSON()).toEqual({
+            merchantId: fixture.merchantId,
+            anonymousId: fixture.anonymousId,
+            proof: fixture.proof,
+        });
     });
 });

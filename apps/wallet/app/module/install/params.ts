@@ -1,4 +1,10 @@
 import {
+    decodeProof,
+    deriveClientIdFromHash,
+    expandCompactUuid,
+} from "@frak-labs/core-sdk/identity";
+import { sha256 } from "@noble/hashes/sha2.js";
+import {
     decodeHostEmbed,
     type HostEmbed,
 } from "@/module/common/utils/hostEmbed";
@@ -38,8 +44,8 @@ export function parseInstallSearch(
     search: Record<string, unknown>
 ): InstallSearch {
     return {
-        m: typeof search.m === "string" ? search.m : undefined,
-        a: typeof search.a === "string" ? search.a : undefined,
+        m: parseInstallId(search.m),
+        a: parseInstallId(search.a),
         ref: parseReferralCode(search.ref),
         checkoutToken:
             typeof search.checkoutToken === "string"
@@ -56,6 +62,25 @@ export function parseInstallSearch(
         // the clipboard, which is the safe reading — this page still writes.
         clip: search.clip === "host" ? "host" : undefined,
     };
+}
+
+/** A 22-char compact id becomes its canonical UUID; any other string passes through. */
+function parseInstallId(value: unknown): string | undefined {
+    if (typeof value !== "string") return undefined;
+    return expandCompactUuid(value) ?? value;
+}
+
+/**
+ * The anonymous id this install binds to: an explicit `a` wins, else the one
+ * the proof's public key derives to. Never throws: a malformed proof means none.
+ */
+export function resolveInstallAnonymousId(
+    anonymousId: string | undefined,
+    proof: string | undefined
+): string | undefined {
+    if (anonymousId) return anonymousId;
+    const envelope = proof ? decodeProof(proof) : null;
+    return envelope ? deriveClientIdFromHash(sha256(envelope.pk)) : undefined;
 }
 
 /**

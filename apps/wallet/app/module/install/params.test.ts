@@ -1,11 +1,90 @@
+import { compactUuid } from "@frak-labs/core-sdk/identity";
+import goldenProofs from "@frak-labs/core-sdk/identity/fixtures";
 import { buildInstallUrl } from "@frak-labs/wallet-shared/sharing";
 import { describe, expect, test } from "@/tests/vitest-fixtures";
 import {
     buildInstallProcessingEnsureAction,
     parseInstallProofFragment,
     parseInstallSearch,
+    resolveInstallAnonymousId,
     resolveInstallProof,
 } from "./params";
+
+const MERCHANT_UUID = "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e";
+const ANONYMOUS_UUID = "256b1be3-2745-41d1-89d4-9121cc87bc45";
+
+describe("parseInstallSearch — compact ids", () => {
+    test("expands compact m and a to canonical UUIDs", () => {
+        const search = parseInstallSearch({
+            m: compactUuid(MERCHANT_UUID),
+            a: compactUuid(ANONYMOUS_UUID),
+        });
+
+        expect(search.m).toBe(MERCHANT_UUID);
+        expect(search.a).toBe(ANONYMOUS_UUID);
+    });
+
+    test("passes hyphenated UUIDs through untouched, whatever their case", () => {
+        const upper = MERCHANT_UUID.toUpperCase();
+        const search = parseInstallSearch({ m: upper, a: ANONYMOUS_UUID });
+
+        expect(search.m).toBe(upper);
+        expect(search.a).toBe(ANONYMOUS_UUID);
+    });
+
+    test.each([
+        "merchant-1",
+        "not-a-compact-id-at-all",
+        "AAAAAAAAAAAAAAAAAAAAA",
+        "AAAAAAAAAAAAAAAAAAAAAB",
+    ])("passes a non-compact value through: %s", (value) => {
+        expect(parseInstallSearch({ m: value, a: value })).toMatchObject({
+            m: value,
+            a: value,
+        });
+    });
+
+    test("drops non-string ids", () => {
+        expect(parseInstallSearch({ m: 42, a: null })).toMatchObject({
+            m: undefined,
+            a: undefined,
+        });
+    });
+});
+
+describe("resolveInstallAnonymousId", () => {
+    test.each(
+        goldenProofs.fixtures.map((fixture) => [
+            fixture.description,
+            fixture.proof,
+            fixture.anonymousId,
+        ])
+    )(
+        "derives the fixture's anonymous id from its proof: %s",
+        (_, proof, anonymousId) => {
+            expect(resolveInstallAnonymousId(undefined, proof)).toBe(
+                anonymousId
+            );
+        }
+    );
+
+    test("an explicit anonymous id wins over the proof", () => {
+        const [fixture] = goldenProofs.fixtures;
+        expect(resolveInstallAnonymousId("explicit-id", fixture.proof)).toBe(
+            "explicit-id"
+        );
+    });
+
+    test.each([
+        ["no proof", undefined],
+        ["an empty proof", ""],
+        ["a non-base64url proof", "%%%not-base64%%%"],
+        ["a truncated proof", goldenProofs.fixtures[0].proof.slice(0, 40)],
+    ])("is undefined, never throwing, for %s", (_, proof) => {
+        expect(() => resolveInstallAnonymousId(undefined, proof)).not.toThrow();
+        expect(resolveInstallAnonymousId(undefined, proof)).toBeUndefined();
+    });
+});
 
 describe("parseInstallProofFragment", () => {
     test("returns undefined when there is no fragment", () => {

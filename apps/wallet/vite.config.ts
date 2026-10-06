@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import viteReact from "@vitejs/plugin-react";
-import type { ConfigEnv, UserConfig } from "vite";
+import type { ConfigEnv, Connect, Plugin, UserConfig } from "vite";
 import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import removeConsole from "vite-plugin-remove-console";
@@ -93,6 +93,28 @@ const standalonePageAlias = isTauri
               replacement: standaloneRedirectStub,
           },
       ];
+
+// Vite's html fallback maps `/install` to `install.html` but `/i` to a missing
+// `i.html`, i.e. the SPA. Mirrors nginx's `location = /i` for `dev`/`preview`.
+const rewriteShortInstallPath: Connect.NextHandleFunction = (
+    req,
+    _res,
+    next
+) => {
+    if (req.url === "/i" || req.url?.startsWith("/i?")) {
+        req.url = `/install${req.url.slice(2)}`;
+    }
+    next();
+};
+const shortInstallPathPlugin: Plugin = {
+    name: "frak:short-install-path",
+    configureServer: (server) => {
+        server.middlewares.use(rewriteShortInstallPath);
+    },
+    configurePreviewServer: (server) => {
+        server.middlewares.use(rewriteShortInstallPath);
+    },
+};
 
 // Shared by `server.proxy` and `preview.proxy`.
 const devProxy = {
@@ -365,6 +387,7 @@ export default defineConfig(
                 tanstackRouter(routerGenerationOptions),
                 viteReact(),
                 vanillaExtractPlugin(),
+                shortInstallPathPlugin,
                 // Skip HTTPS for Tauri dev (simulators don't trust self-signed certs) and sandbox (proxy handles TLS)
                 ...(isTauri || isSandbox ? [] : [mkcert()]),
                 ...(isProd ? [removeConsole()] : []),

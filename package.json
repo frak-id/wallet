@@ -149,7 +149,8 @@
     "react-hook-form": "^7.87.0",
     "remix-utils": "^9.3.1",
     "vite-plugin-mkcert": "^2.1.0",
-    "@noble/curves": "^2.4.0"
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0"
   },
   "dependencies": {
     "caniuse-lite": "^1.0.30001814",

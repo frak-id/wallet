@@ -62,6 +62,7 @@
     "@frak-labs/design-system": "workspace:*",
     "@frak-labs/frame-connector": "workspace:*",
     "@frak-labs/wallet-shared": "workspace:*",
+    "@noble/hashes": "catalog:",
     "@tanstack/query-async-storage-persister": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-devtools": "catalog:",

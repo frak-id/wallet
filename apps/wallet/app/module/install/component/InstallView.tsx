@@ -28,6 +28,7 @@ import { isHostEmbedded } from "@/module/common/utils/hostEmbed";
 import type { InstallSearch } from "@/module/install/params";
 import {
     buildInstallProcessingEnsureAction,
+    resolveInstallAnonymousId,
     resolveInstallProof,
 } from "@/module/install/params";
 import { useInstallActivation } from "@/module/install/params/fragment";
@@ -78,22 +79,28 @@ export function InstallView({
         () => resolveInstallProof(window.location.hash, p),
         [p]
     );
+    // A `/i` link drops `a` whenever it carries a proof, which derives it.
+    const anonymousId = useMemo(
+        () => resolveInstallAnonymousId(a, proof),
+        [a, proof]
+    );
 
     const shouldShowCodeView = !IS_TAURI && !getSafeSession()?.token;
 
     useEffect(() => {
         trackEvent("install_page_viewed", {
             merchant_id: m,
-            has_anonymous_id: Boolean(a),
+            has_anonymous_id: Boolean(anonymousId),
             has_checkout_token: Boolean(checkoutToken),
             has_install_proof: Boolean(proof),
             view: shouldShowCodeView ? "code" : "processing",
         });
-    }, [m, a, checkoutToken, proof, shouldShowCodeView]);
+    }, [m, anonymousId, checkoutToken, proof, shouldShowCodeView]);
 
     if (shouldShowCodeView) {
         // A bare `/install?ref=` (no merchant/anonymous credential) skips
         // install-code minting entirely and shows the referral code itself.
+        // Raw `a`: a proof with no merchant has nothing to mint against.
         if (ref && !(m || a)) {
             return (
                 <InstallReferralCodeView
@@ -108,7 +115,7 @@ export function InstallView({
         return (
             <InstallCodeView
                 m={m}
-                a={a}
+                a={anonymousId}
                 referralCode={ref}
                 checkoutToken={checkoutToken}
                 proof={proof}
@@ -124,7 +131,7 @@ export function InstallView({
     return (
         <InstallProcessing
             m={m}
-            a={a}
+            a={anonymousId}
             checkoutToken={checkoutToken}
             proof={proof}
             navigation={navigation}
