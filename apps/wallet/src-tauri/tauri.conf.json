@@ -1,7 +1,7 @@
 {
     "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
     "productName": "Frak Wallet",
-    "version": "1.0.104",
+    "version": "1.0.105",
     "identifier": "id.frak.wallet",
     "build": {
         "frontendDist": "../dist",
