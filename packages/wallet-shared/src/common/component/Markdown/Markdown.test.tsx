@@ -20,8 +20,7 @@ describe("Markdown", () => {
 
     it("should render empty string", () => {
         const { container } = render(<Markdown md="" />);
-        // Empty string is passed to micromark, which renders empty content
-        // Note: Component uses `md ?? "No description"`, so empty string is used as-is
+        // `md ?? "No description"` keeps an empty string, which renders nothing
         expect(container.textContent).toBe("");
     });
 
@@ -70,6 +69,31 @@ describe("Markdown", () => {
         const links = screen.getAllByRole("link");
         links.forEach((link) => {
             expect(link).toHaveAttribute("target", "_blank");
+            expect(link).toHaveAttribute("rel", "noopener noreferrer");
         });
+    });
+
+    it("should not render links with javascript: or data: URLs", () => {
+        const { container } = render(
+            <Markdown md="[bad](javascript:alert(1)) [worse](data:text/html,hi)" />
+        );
+
+        expect(container.querySelector("a")).toBeNull();
+        expect(container.textContent).toContain("bad");
+    });
+
+    it("should escape raw HTML", () => {
+        const { container } = render(
+            <Markdown md="Hi <img src=x onerror=alert(1)>" />
+        );
+
+        expect(container.querySelector("img")).toBeNull();
+        expect(container.textContent).toContain("<img src=x onerror=alert(1)>");
+    });
+
+    it("should render lists", () => {
+        render(<Markdown md={"- a\n- b"} />);
+
+        expect(screen.getAllByRole("listitem")).toHaveLength(2);
     });
 });
