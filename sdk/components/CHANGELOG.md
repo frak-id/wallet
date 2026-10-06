@@ -1,5 +1,23 @@
 # @frak-labs/components
 
+## 1.3.1
+
+### Patch Changes
+
+- [#329](https://github.com/frak-id/wallet/pull/329) [`52b9922`](https://github.com/frak-id/wallet/commit/52b9922f55e2e00553bea6c85197923cae4a63db) Thanks [@KONFeature](https://github.com/KONFeature)! - `<frak-ambassador>` stays readable on dark and unusual themes: when the sampled (or default) accent would vanish into the page, its buttons and figures take the page's text colour instead, and on a dark page the hero reward card turns dark so its caption shows. It also follows the theme's heading font and letter case, ignores Shopify's country picker when looking for the brand button, and no longer shrinks its title to body size on themes whose bare `h1` is unstyled.
+
+- [#329](https://github.com/frak-id/wallet/pull/329) [`d4ddc80`](https://github.com/frak-id/wallet/commit/d4ddc806f331663c96a5469147225ee0b8f912c9) Thanks [@KONFeature](https://github.com/KONFeature)! - `<frak-ambassador>` draws its install QR code at low error correction. The code is rendered crisp on screen with nothing overlaid, so the default 15% recovery was wasted modules: with the shorter install link, the grid drops from 61×61 to 57×57 (69×69 before both changes), which is easier to scan at the same 200px.
+
+- [#329](https://github.com/frak-id/wallet/pull/329) [`52b9922`](https://github.com/frak-id/wallet/commit/52b9922f55e2e00553bea6c85197923cae4a63db) Thanks [@KONFeature](https://github.com/KONFeature)! - `<frak-ambassador>` takes its heading style from hidden reference headings when the host page provides them (`<div hidden data-frak-amb-ref>`), ahead of any other heading on the page. A page with no theme heading of its own, such as the Shopify ambassador page, now matches the shop's title style instead of borrowing a footer or newsletter heading.
+
+- [#329](https://github.com/frak-id/wallet/pull/329) [`b8a8802`](https://github.com/frak-id/wallet/commit/b8a8802c7b15dd0e8d8598c306022a746e607a03) Thanks [@KONFeature](https://github.com/KONFeature)! - `<frak-ambassador>` aligns its text to the start instead of inheriting the host page's alignment. Placed in a CMS page whose body is justified (PrestaShop's Classic theme), its headings and cards rendered with stretched word gaps.
+
+- [#329](https://github.com/frak-id/wallet/pull/329) [`b270162`](https://github.com/frak-id/wallet/commit/b2701622966a3e76540b37c87da70a208cfed23a) Thanks [@KONFeature](https://github.com/KONFeature)! - `setupClient` reads the visitor's cached merchant config before it creates the wallet iframe, instead of once the iframe has loaded. On a return visit, `<frak-ambassador>` paints the merchant's dashboard text and photo straight away rather than swapping them in over the built-in copy, and the banner and buttons no longer wait for the iframe before they appear (they stay disabled until the client connects).
+
+- [#329](https://github.com/frak-id/wallet/pull/329) [`72085d4`](https://github.com/frak-id/wallet/commit/72085d402b0079412318de8a2fe8357aae717822) Thanks [@KONFeature](https://github.com/KONFeature)! - Component styles are now vendor-prefixed for the SDK's browser floor (Safari 15.4). `<frak-banner>` in in-app browser mode keeps its backdrop blur on iOS 15.4–17, where only `-webkit-backdrop-filter` is supported.
+- Updated dependencies [[`b270162`](https://github.com/frak-id/wallet/commit/b2701622966a3e76540b37c87da70a208cfed23a), [`ce9ef54`](https://github.com/frak-id/wallet/commit/ce9ef54b6629f14d2c8a72afc97225b600f68d00)]:
+  - @frak-labs/core-sdk@1.5.1
+
 ## 1.3.0
 
 ### Minor Changes
