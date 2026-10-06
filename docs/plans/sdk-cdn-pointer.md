@@ -124,8 +124,7 @@ integration's `onerror` fallback covers the pointer being unreachable at all
 
 ## Shopify ambassador page (`/shopify/ambassador`)
 
-The same stack is the production origin of the Shopify app proxy page
-(`docs/plans/2026-10-03-0113-feat-shopify-ambassador-proxy-page-plan.md`).
+The same stack is the production origin of the Shopify app proxy page.
 `infra/sdk-pointer.ts` uploads `apps/shopify/proxy/ambassador.liquid` as the
 object `shopify/ambassador`, with `Content-Type: application/liquid`
 (exactly what the app server's `liquid()` helper sends; the type that makes Shopify render the body inside the
