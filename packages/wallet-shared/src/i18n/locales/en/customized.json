@@ -37,19 +37,20 @@
             "dismiss": "Later",
             "reward": {
                 "title": "Share with your friends",
-                "tagline": "You earn a reward every time a friend makes a purchase through your link."
+                "tagline": "You earn a reward every time a friend makes a purchase through your link.",
+                "tagline_noReward": "There's no reward for you on this brand right now, but your friends can still discover it through your link."
             },
             "card": {
                 "amount": "{{ estimatedReward }}",
-                "amount_noReward": "Earn rewards on every purchase",
+                "amount_noReward": "Share what you love",
                 "label": "Credited to your account",
                 "upTo": "Up to",
                 "tagline1": "Earn {{ estimatedReward }},",
                 "tagline1_tiered": "Earn up to {{ estimatedReward }},",
-                "tagline1_noReward": "A friend buys through your link,",
+                "tagline1_noReward": "One personal link,",
                 "tagline2": "on every purchase!",
                 "tagline2_product": "on selected products!",
-                "tagline2_noReward": "you get rewarded."
+                "tagline2_noReward": "shared in one click."
             },
             "products": {
                 "label": "Choose one product to share"
@@ -87,8 +88,9 @@
                 "q5": "Why do brands use Frak?",
                 "a5": "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way.",
                 "q6": "How is my reward calculated?",
+                "q6_noReward": "Why is no amount shown?",
                 "a6": "The amount shown is the maximum reward you can earn. Depending on the brand, your reward may be a fixed amount, a percentage of the purchase, or vary by tier based on the order amount.",
-                "a6_noReward": "It depends on the brand's reward program: a fixed amount, a percentage of the purchase, or an amount that varies by tier. This brand has no active reward right now, so no amount is shown.",
+                "a6_noReward": "This brand isn't offering you a reward right now, so there's no amount to show. When a brand does, it can be a fixed amount, a percentage of the purchase, or an amount that varies by tier.",
                 "reward": {
                     "referrerLabel": "Reward as an ambassador",
                     "refereeLabel": "Reward for your referee",
@@ -105,8 +107,9 @@
             },
             "confirmation": {
                 "title": "Thank you for sharing!\nDon't miss out on your {{ estimatedReward }}.",
-                "title_noReward": "Thank you for sharing!\nTrack what you earn.",
+                "title_noReward": "Thank you for sharing!",
                 "subtitle": "Install the Frak app, official partner of {{ productName }}, and track your earnings in real time.",
+                "subtitle_noReward": "Install the Frak app, official partner of {{ productName }}.",
                 "cardPopupTitle": "You just won {{ estimatedReward }}! 🎉",
                 "cardPopupTitle_noReward": "A friend just bought! 🎉",
                 "cardPopupDescription": "A purchase was made through your link. {{ estimatedReward }} has been transferred to your wallet.",

@@ -19,10 +19,13 @@ const REQUIRED_KEYS = [
     "sdk.sharingPage.card.amount_noReward",
     "sdk.sharingPage.card.tagline1_noReward",
     "sdk.sharingPage.card.tagline2_noReward",
+    "sdk.sharingPage.reward.tagline_noReward",
     "sdk.sharingPage.confirmation.title_noReward",
+    "sdk.sharingPage.confirmation.subtitle_noReward",
     "sdk.sharingPage.confirmation.cardPopupTitle_noReward",
     "sdk.sharingPage.confirmation.cardPopupDescription_noReward",
     "sdk.sharingPage.confirmation.cta_noReward",
+    "sdk.sharingPage.faq.q6_noReward",
     "sdk.sharingPage.faq.a6_noReward",
 ] as const satisfies readonly DefaultTranslationKey[];
 
