@@ -5,6 +5,7 @@ import {
     MERCHANT_ID,
     merchantResolveFixture,
     mockDefaultApiRoutes,
+    mockNoReward,
     REFERRER_REWARD_EUR,
 } from "../mocks/api";
 import { RETURN_SCHEME, recordHostResults } from "../mocks/nativeHost";
@@ -405,25 +406,13 @@ test.describe("Sharing page — locale", () => {
 });
 
 test.describe("Sharing page — no advertisable reward", () => {
-    /** No campaign to select, so the query settles with nothing to show. */
-    async function mockNoReward(page: Page) {
-        await page.route("**/*/user/merchant/estimated-rewards*", (route) =>
-            route.fulfill({
-                status: 200,
-                contentType: "application/json",
-                body: JSON.stringify({ rewards: [] }),
-            })
-        );
-    }
-
     const HEADLINE = {
         en: "Earn rewards on every purchase",
         fr: "Des récompenses à chaque achat",
     } as const;
 
     // `tagline1` is `"Earn {{ estimatedReward }},"`, so a variant that fails to
-    // resolve renders the reported defect rather than degrading to something
-    // harmless. Asserting its absence is what pins the fix.
+    // resolve strands the comma instead of degrading to something harmless.
     const STRANDED_SEPARATOR = /(Earn|Gagnez)\s+,/;
     const INTERPOLATED_AMOUNT = /(Earn|Gagnez)\s+\d/;
 

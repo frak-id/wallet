@@ -12,6 +12,10 @@ import { defaultNS, fallbackLng, supportedLngs } from "../config";
 const REQUIRED_KEYS = [
     "installCode.title",
     "installCode.dismiss",
+    "installCode.title_noReward",
+    "installCode.codelessTitle_noReward",
+    "installCode.openWallet_noReward",
+    "installCode.installedHeadline_noReward",
     "sdk.sharingPage.card.amount_noReward",
     "sdk.sharingPage.card.tagline1_noReward",
     "sdk.sharingPage.card.tagline2_noReward",

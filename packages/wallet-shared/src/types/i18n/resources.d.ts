@@ -512,6 +512,7 @@ export default interface Resources {
       "codeCopied": "Reward code copied!",
       "codelessDescription": "Download the app and log in to claim your rewards.",
       "codelessTitle": "Don't lose your {{estimatedReward}}!",
+      "codelessTitle_noReward": "One last step!",
       "copyCode": "Copy the code",
       "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
       "dismiss": "Close",
@@ -520,10 +521,12 @@ export default interface Resources {
       "infoTitle": "Code valid for 3 days",
       "installedCodeToggle": "Or enter this code manually",
       "installedHeadline": "You're all set. Open the app to claim {{estimatedReward}}.",
+      "installedHeadline_noReward": "You're all set. Open the app to continue.",
       "installedMerchant": "Connected to {{merchantName}}",
       "loading": "Generating your reward code...",
       "openWallet": "Open Frak & claim {{estimatedReward}}",
       "openWalletCta": "Open my wallet",
+      "openWallet_noReward": "Open Frak",
       "processing": "Setting up your wallet...",
       "processingDone": "Your wallet is ready",
       "referral": {
@@ -532,7 +535,8 @@ export default interface Resources {
         "manualEntry": "Referral code to enter at sign-up",
         "title": "Your referral code"
       },
-      "title": "Don't lose your {{estimatedReward}}!\nCopy your reward code"
+      "title": "Don't lose your {{estimatedReward}}!\nCopy your reward code",
+      "title_noReward": "One last step!\nCopy your reward code"
     },
     "monerium": {
       "account": "Monerium Account",

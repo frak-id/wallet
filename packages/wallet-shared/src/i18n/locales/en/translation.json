@@ -835,8 +835,10 @@
     },
     "installCode": {
         "title": "Don't lose your {{ estimatedReward }}!\nCopy your reward code",
+        "title_noReward": "One last step!\nCopy your reward code",
         "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
         "codelessTitle": "Don't lose your {{ estimatedReward }}!",
+        "codelessTitle_noReward": "One last step!",
         "codelessDescription": "Download the app and log in to claim your rewards.",
         "copyCode": "Copy the code",
         "codeCopied": "Reward code copied!",
@@ -850,7 +852,9 @@
         "installedMerchant": "Connected to {{ merchantName }}",
         "installedCodeToggle": "Or enter this code manually",
         "openWallet": "Open Frak & claim {{ estimatedReward }}",
+        "openWallet_noReward": "Open Frak",
         "installedHeadline": "You're all set. Open the app to claim {{ estimatedReward }}.",
+        "installedHeadline_noReward": "You're all set. Open the app to continue.",
         "dismiss": "Close",
         "referral": {
             "title": "Your referral code",
