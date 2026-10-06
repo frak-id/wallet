@@ -1,19 +1,22 @@
-import { micromark } from "micromark";
-import { useMemo } from "react";
-import { jsx } from "react/jsx-runtime";
+import { Markdown as TanstackMarkdown } from "@tanstack/markdown/react";
+import type { ComponentProps } from "react";
+
+const components = {
+    a: (props: ComponentProps<"a">) => (
+        <a {...props} target="_blank" rel="noopener noreferrer" />
+    ),
+};
 
 export function Markdown({ md }: { md?: string }) {
-    return useMemo(() => {
-        // Convert to markdown
-        let html = micromark(md ?? "No description", {
-            allowDangerousHtml: false,
-        });
-        // Post-processing, add target=_blank + rel to every link in the markdown
-        html = html.replace(
-            /<a /g,
-            '<a target="_blank" rel="noopener noreferrer" '
-        );
-        // Convert to component
-        return jsx("div", { dangerouslySetInnerHTML: { __html: html } });
-    }, [md]);
+    return (
+        <div>
+            <TanstackMarkdown
+                frontmatter={false}
+                headingIds={false}
+                components={components}
+            >
+                {md ?? "No description"}
+            </TanstackMarkdown>
+        </div>
+    );
 }

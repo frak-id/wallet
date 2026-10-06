@@ -177,8 +177,8 @@ function buildChunkGroups() {
         // the package first. Its `OrderedDict extends Map` declares a
         // `toSorted` method that es-check reads as `Array.prototype.toSorted`;
         // isolating it keeps the exemption off the rest of Radix, vaul,
-        // sonner, lucide-react and micromark, where a genuine above-floor
-        // call would otherwise be masked.
+        // sonner and lucide-react, where a genuine above-floor call would
+        // otherwise be masked.
         {
             name: "radix-collection",
             test: /[\\/]node_modules[\\/]@radix-ui[\\/]react-collection[\\/]/,
@@ -187,7 +187,7 @@ function buildChunkGroups() {
         },
         {
             name: "ui-vendor",
-            test: /[\\/]node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|react-dropzone)[\\/]/,
+            test: /[\\/]node_modules[\\/](@radix-ui|vaul|sonner|lucide-react|class-variance-authority|react-dropzone)[\\/]/,
             priority: 30,
             minShareCount: 1,
         },

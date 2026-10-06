@@ -94,6 +94,7 @@
     "@tanstack/query-core": "5.104.1",
     "@tanstack/query-persist-client-core": "5.104.1",
     "@tanstack/query-sync-storage-persister": "5.104.1",
+    "@tanstack/markdown": "1.0.0",
     "vite": "^8.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "tsdown": "^0.23.0",

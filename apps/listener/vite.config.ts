@@ -479,8 +479,8 @@ export default defineConfig(async () => {
                             //   permissionless + BaseProvider + provider glue.
                             //   Modal only.
                             // • `ui-vendor` → heavy lazy UI libs (@radix-ui,
-                            //   qr, micromark). radix + alert-dialog are
-                            //   Modal-only; qr + micromark land here through
+                            //   qr, @tanstack/markdown). radix + alert-dialog are
+                            //   Modal-only; qr + markdown land here through
                             //   wallet-shared pairing/Markdown, reachable from
                             //   the Modal. SharingPage pulls @radix-ui/react-accordion
                             //   via design-system Accordion (FAQ section).
@@ -498,7 +498,7 @@ export default defineConfig(async () => {
                             // also hosts Modal-only code (SsoButton,
                             // ToastLoading, Markdown, the pairing UI). So a
                             // first sharing-page display currently costs
-                            // ~226 KB gz, not the ~76 KB this grouping
+                            // ~204 KB gz, not the ~56 KB this grouping
                             // implies. Narrowing the `lazy-shared` regex to
                             // the genuinely sharing-reachable set is the open
                             // win here; measure with
@@ -517,7 +517,7 @@ export default defineConfig(async () => {
                             // `OrderedDict extends Map` declares a `toSorted`
                             // method es-check reads as
                             // `Array.prototype.toSorted`; isolating it keeps
-                            // the exemption off micromark and qr, where a
+                            // the exemption off markdown and qr, where a
                             // genuine above-floor call would be masked.
                             {
                                 name: "radix-collection",
@@ -526,7 +526,7 @@ export default defineConfig(async () => {
                             },
                             {
                                 name: "ui-vendor",
-                                test: /node_modules[\\/](?:@radix-ui|micromark|qr)[\\/]/,
+                                test: /node_modules[\\/](?:@radix-ui|@tanstack[\\/]markdown|qr)[\\/]/,
                                 priority: 30,
                                 // No explicit minShareCount: `@radix-ui` is
                                 // reached from BOTH boundaries (Modal via
@@ -534,7 +534,7 @@ export default defineConfig(async () => {
                                 // Accordion in the FAQ), so the group
                                 // materialises on the default. Leave it that
                                 // way — forcing 1 additionally hoists
-                                // micromark/qr (single-consumer, Modal-only)
+                                // markdown/qr (single-consumer, Modal-only)
                                 // out of `lazy-shared` into this chunk, and
                                 // since `lazy-shared` statically imports
                                 // `ui-vendor` anyway that moves ~8 KB gz ONTO
