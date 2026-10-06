@@ -100,6 +100,17 @@ const estimatedRewardsFixture = {
     ],
 } as const;
 
+/** No campaign to select, so the reward query settles with nothing to show. */
+export async function mockNoReward(page: Page) {
+    await page.route("**/*/user/merchant/estimated-rewards*", (route) =>
+        route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ rewards: [] }),
+        })
+    );
+}
+
 async function mockBackendMerchant(page: Page) {
     await page.route("**/*/user/merchant/resolve*", (route) =>
         route.fulfill({
