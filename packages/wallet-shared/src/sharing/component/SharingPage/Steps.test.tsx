@@ -119,6 +119,14 @@ describe("Steps", () => {
         ).toBeInTheDocument();
     });
 
+    it("renders no step when the reward is empty", () => {
+        const { container } = render(
+            <Steps reward={{ status: "empty" }} t={t} />
+        );
+
+        expect(container).toBeEmptyDOMElement();
+    });
+
     it("omits the lockup note when there is no lockup", () => {
         render(<Steps reward={ready({})} t={t} />);
 

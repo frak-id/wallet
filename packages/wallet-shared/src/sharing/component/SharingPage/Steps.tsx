@@ -24,6 +24,8 @@ export function getStep2Context(
  * that actually differ are translated.
  */
 export function Steps({ reward, t }: { reward: SharingReward; t: SharingT }) {
+    if (reward.status === "empty") return null;
+
     const ready = reward.status === "ready" ? reward : undefined;
     const minPurchaseAmount = ready?.minPurchaseAmount;
     const step2Context = getStep2Context(
