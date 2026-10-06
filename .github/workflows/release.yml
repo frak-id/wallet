@@ -20,6 +20,8 @@ jobs:
   release:
     name: "🚀 Release SDK"
     runs-on: ubuntu-latest
+    outputs:
+      will_publish: ${{ steps.mode.outputs.will_publish }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -155,3 +157,62 @@ jobs:
             https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/components.js
             https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/loader.js
             https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/loader.css
+
+  # sdk.frak.id also serves the Shopify ambassador proxy page. Redeploys the
+  # stack for it without moving the SDK pointer, after the release job so the
+  # two deploys never race, and only when that job did not deploy it already.
+  # No path filter: a run cancelled by a newer push would lose the change.
+  ambassador-page:
+    name: "🛍️ Deploy Shopify ambassador page"
+    needs: release
+    if: github.ref == 'refs/heads/main' && needs.release.outputs.will_publish != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+
+      # The query string skips the edge cache; S3 ignores it.
+      - name: "🔎 Read the SDK version sdk.frak.id serves"
+        id: served
+        run: |
+          shim=$(curl -fsS --retry 3 "https://sdk.frak.id/components.js?ts=$(date +%s)")
+          version=$(printf '%s\n' "$shim" | sed -nE 's#^import\("https://cdn\.jsdelivr\.net/npm/@frak-labs/components@([^"/]+)/cdn/loader\.js"\);$#\1#p')
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Cannot read the served version from sdk.frak.id/components.js: $shim"
+            exit 1
+          fi
+          echo "Served SDK version: $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Setup SST Cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .sst/platform/
+            .sst/provider-lock.json
+            .sst/esbuild.json
+          key: ${{ runner.os }}-sst-v2-${{ hashFiles('./sst.config.ts') }}
+          restore-keys: ${{ runner.os }}-sst-v2-
+
+      - name: "👥 Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
+          aws-region: eu-west-1
+          retry-max-attempts: 5
+
+      - name: "🛍️ Deploy SDK pointer stack at the served version"
+        run: bun sst deploy --stage sdk-pointer
+        env:
+          SDK_POINTER_VERSION: ${{ steps.served.outputs.version }}

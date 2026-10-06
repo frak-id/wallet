@@ -13,7 +13,9 @@ import { modalStore } from "@/module/stores/modalStore";
  * The iOS swipe is a continuous gesture WKWebView commits before `popstate`
  * fires, so the blocker can only reverse it: the route slides away and snaps
  * back as the modal closes. Making modals real history entries is what removes
- * that, and is the same fix as the TODO below.
+ * that, and is the same fix as the TODO below. While a swipe-to-close overlay
+ * is open, `useNativeSwipeBackGate` turns that swipe off, so it never reaches
+ * the blocker.
  *
  * On Tauri, the listener is only registered while a modal is open.
  * When unregistered, AppPlugin falls back to its native default

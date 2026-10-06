@@ -629,6 +629,63 @@ describe("install deep link — ref", () => {
     });
 });
 
+describe("short install deep link — /i", () => {
+    const compactMerchant = "nIs-Kh1PSmuOLX86G1ydDg";
+
+    beforeEach(async () => {
+        vi.clearAllMocks();
+        pendingActionsStore.getState().clearAll();
+        openUrlHandler = null;
+        platformMocks.isTauri.mockReturnValue(true);
+    });
+
+    async function open(url: string) {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+        await initDeepLinks(navigate);
+        if (!openUrlHandler)
+            throw new Error("Expected openUrlHandler to be set");
+        openUrlHandler([url]);
+        return navigate;
+    }
+
+    test.each([
+        `https://wallet.frak.id/i?m=${compactMerchant}#p=proof-abc`,
+        `frakwallet://i?m=${compactMerchant}#p=proof-abc`,
+        `frakwallet://i?m=${compactMerchant}&p=proof-abc`,
+    ])("logged out: %s routes to /install with m and p, no a", async (url) => {
+        getSafeSessionMock.mockReturnValue(null);
+        const navigate = await open(url);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/install",
+            search: { m: compactMerchant, p: "proof-abc" },
+            replace: true,
+        });
+        const { search } = navigate.mock.calls[0][0] as {
+            search: Record<string, string>;
+        };
+        expect(Object.keys(search)).toEqual(["m", "p"]);
+    });
+
+    test("forwards an explicit a and a ref like /install does", async () => {
+        getSafeSessionMock.mockReturnValue({ token: "valid-token" });
+        const navigate = await open(
+            `https://wallet.frak.id/i?m=${compactMerchant}&a=JWsb4ydFQdGJ1JEhzIe8RQ&ref=FRAKPA`
+        );
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/install",
+            search: {
+                m: compactMerchant,
+                a: "JWsb4ydFQdGJ1JEhzIe8RQ",
+                ref: "FRAKPA",
+            },
+            replace: true,
+        });
+    });
+});
+
 describe("short referral deep link — /r/<code>", () => {
     beforeEach(async () => {
         vi.clearAllMocks();

@@ -7,9 +7,8 @@ describe("GlassCloseButton", () => {
         vi.clearAllMocks();
     });
 
-    // Query inside the freshly rendered container — concurrent test DOMs
-    // and `LiquidGlassBase`'s own internal markup can otherwise leak
-    // matching elements into a screen-wide query.
+    // Query inside the freshly rendered container — concurrent test DOMs can
+    // otherwise leak matches into a screen-wide query.
     const renderGlassCloseButton = (
         props: Parameters<typeof GlassCloseButton>[0]
     ) => {

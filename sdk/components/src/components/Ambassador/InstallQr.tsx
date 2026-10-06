@@ -4,7 +4,9 @@ import { useEffect, useState } from "preact/hooks";
 const WIDE_QUERY = "(min-width: 768px)";
 // Scanners need 4 white modules around the symbol (ISO/IEC 18004); qr's default border is only 2.
 const QUIET_ZONE = 4;
-// 200px clears the ~180px scan floor for a realistic ~330-char install URL.
+// Crisp on-screen render with no logo overlay: 7% recovery suffices and saves one QR version (57 vs 61 modules).
+const ECC = "low";
+// 200px clears the ~180px scan floor for a realistic ~240-char install URL.
 const QR_SIZE = 200;
 
 type InstallQrProps = {
@@ -39,7 +41,7 @@ export function InstallQr({
         import("qr")
             .then(({ encodeQR }) => {
                 if (cancelled) return;
-                setGrid(encodeQR(url, "raw", { border: QUIET_ZONE }));
+                setGrid(encodeQR(url, "raw", { border: QUIET_ZONE, ecc: ECC }));
             })
             .catch(() => {
                 // Non-critical UI: a failed encoder load or encode just leaves the QR absent.

@@ -189,6 +189,7 @@ const publicActions = new Set([
     "login",
     "recovery",
     "install",
+    "i",
     "r",
 ]);
 
@@ -270,6 +271,24 @@ function resolveReferralCodeRoute(code: string): Route {
 }
 
 /**
+ * Resolve an install link, under `install` and its short `i` alias (the
+ * ambassador QR). `p` is forwarded as a search param, not a fragment: a fragment
+ * cannot survive this in-app hop, so `window.location.hash` is empty by the
+ * time `/install` renders. Compact ids pass through; `/install` expands them.
+ */
+function resolveInstallRoute(params: DeepLinkParams): Route {
+    if (params.ref && !params.m && !params.a) {
+        return resolveReferralCodeRoute(params.ref);
+    }
+    const search: Record<string, string> = {};
+    if (params.m) search.m = params.m;
+    if (params.a) search.a = params.a;
+    if (params.p) search.p = params.p;
+    if (params.ref) search.ref = params.ref;
+    return { to: "/install", search };
+}
+
+/**
  * Action → route resolver map.
  *
  * Each entry maps a deep link action name to a function that builds
@@ -280,19 +299,8 @@ const routeResolvers: Record<string, (params: DeepLinkParams) => Route> = {
     p: resolvePairRoute,
     pair: resolvePairRoute,
     pairing: resolvePairRoute,
-    // `p` is forwarded as a search param, not a fragment: a fragment cannot survive this
-    // in-app hop, so `window.location.hash` is empty by the time `/install` renders.
-    install: (params) => {
-        if (params.ref && !params.m && !params.a) {
-            return resolveReferralCodeRoute(params.ref);
-        }
-        const search: Record<string, string> = {};
-        if (params.m) search.m = params.m;
-        if (params.a) search.a = params.a;
-        if (params.p) search.p = params.p;
-        if (params.ref) search.ref = params.ref;
-        return { to: "/install", search };
-    },
+    install: resolveInstallRoute,
+    i: resolveInstallRoute,
     r: (params) => {
         const code = parseReferralCode(params.id);
         return code ? resolveReferralCodeRoute(code) : { to: "/wallet" };

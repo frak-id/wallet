@@ -46,6 +46,8 @@ const panel = style({
 });
 
 export const root = style({
+    // CMS bodies often justify (PrestaShop Classic); centred sections set their own.
+    textAlign: "start",
     display: "flex",
     flexDirection: "column",
     gap: "clamp(3em, 7vw, 5.5em)",
@@ -108,6 +110,19 @@ const centeredRegion = style([
 
 const H2_SIZE = "var(--frak-amb-h2-size, clamp(1.4em, 2.6vw, 2em))";
 
+/**
+ * Face and case only once `useHostTheme` marks the knob resolved: unset, the
+ * `var()` computes to `inherit` and would beat the theme's own `h1 {}` rule.
+ */
+const headingFace = (role: "h1" | "h2") => ({
+    [`[data-frak-amb-font~="${role}-family"] &`]: {
+        fontFamily: `var(--frak-amb-${role}-family)`,
+    },
+    [`[data-frak-amb-font~="${role}-transform"] &`]: {
+        textTransform: `var(--frak-amb-${role}-transform)`,
+    },
+});
+
 const regionTitle = style({
     margin: 0,
     fontSize: H2_SIZE,
@@ -115,6 +130,7 @@ const regionTitle = style({
     fontWeight: "var(--frak-amb-h2-weight, inherit)",
     letterSpacing: "var(--frak-amb-h2-spacing, normal)",
     color: "var(--frak-amb-h2-color, inherit)",
+    selectors: headingFace("h2"),
 });
 
 const lede = style({
@@ -194,6 +210,7 @@ export const heroTitle = style({
     fontWeight: "var(--frak-amb-h1-weight, inherit)",
     letterSpacing: "var(--frak-amb-h1-spacing, normal)",
     color: "var(--frak-amb-h1-color, inherit)",
+    selectors: headingFace("h1"),
 });
 
 export const heroLede = lede;

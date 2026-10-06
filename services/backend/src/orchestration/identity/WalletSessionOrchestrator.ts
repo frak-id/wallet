@@ -1,7 +1,6 @@
 import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { currentChainId } from "@frak-labs/app-essentials/blockchain";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/server";
 import type { Address, Hex } from "viem";
 import type { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
 import type {
@@ -47,7 +46,7 @@ export class WalletSessionOrchestrator {
     async sessionForVerifiedCredential(params: {
         credentialId: string;
         publicKey: Pubkey;
-        transports?: AuthenticatorTransportFuture[];
+        transports?: string[];
         fallbackWallet?: Address;
     }): Promise<MintForCredentialResult> {
         const walletAddress = await this.resolveWalletForVerifiedCredential({

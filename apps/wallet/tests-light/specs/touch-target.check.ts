@@ -31,7 +31,9 @@ test.describe("44px touch target", () => {
         await page.goto("/wallet");
         await page.waitForLoadState("networkidle");
 
-        const dismiss = page.getByRole("button", { name: "Close" }).first();
+        const dismiss = page
+            .getByRole("button", { name: "Close", exact: true })
+            .first();
         await expect(dismiss).toBeVisible();
 
         const { hits, afterWidth } = await hitTest(dismiss, INWARD);
@@ -45,11 +47,14 @@ test.describe("44px touch target", () => {
         await page.goto("/wallet");
         await page.waitForLoadState("networkidle");
 
-        const dismiss = page.getByRole("button", { name: "Close" }).first();
+        const dismiss = page
+            .getByRole("button", { name: "Close", exact: true })
+            .first();
         await expect(dismiss).toBeVisible();
 
         const inset = await dismiss.evaluate((btn) => {
-            const card = btn.closest('[class*="cardContainer"]');
+            // By role: production builds hash the `cardContainer` class name.
+            const card = btn.parentElement?.closest('[role="button"]');
             if (!card) return null;
             const b = btn.getBoundingClientRect();
             const c = card.getBoundingClientRect();

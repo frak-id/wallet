@@ -1,6 +1,24 @@
 #[cfg(target_os = "ios")]
 mod ios;
 
+/// No-op off iOS, where WKWebView's back gesture does not exist.
+#[tauri::command]
+fn set_swipe_back_enabled(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    #[cfg(target_os = "ios")]
+    {
+        use tauri::Manager;
+        let window = app
+            .get_webview_window("main")
+            .ok_or("main webview window not found")?;
+        ios::set_swipe_back(&window, enabled).map_err(|e| e.to_string())
+    }
+    #[cfg(not(target_os = "ios"))]
+    {
+        let _ = (app, enabled);
+        Ok(())
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default();
@@ -32,7 +50,8 @@ pub fn run() {
             .plugin(tauri_plugin_frak_share::init())
             .plugin(tauri_plugin_clipboard_manager::init())
             .plugin(tauri_plugin_recovery_hint::init())
-            .plugin(tauri_plugin_frak_updater::init());
+            .plugin(tauri_plugin_frak_updater::init())
+            .plugin(tauri_plugin_frak_glass::init());
     }
 
     #[cfg(target_os = "android")]
@@ -56,12 +75,13 @@ pub fn run() {
             {
                 use tauri::Manager;
                 if let Some(window) = app.get_webview_window("main") {
-                    ios::enable_swipe_back(&window);
+                    let _ = ios::set_swipe_back(&window, true);
                 }
             }
 
             Ok(())
         })
+        .invoke_handler(tauri::generate_handler![set_swipe_back_enabled])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

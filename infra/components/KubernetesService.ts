@@ -4,6 +4,7 @@ import {
     ComponentResource,
     type ComponentResourceOptions,
     type Input,
+    output,
 } from "@pulumi/pulumi";
 import type {
     DevCommand,
@@ -20,6 +21,76 @@ const Command: typeof DevCommand = await import(
         console.debug("SST Command not found, using a placeholder constructor");
         return sst.x.DevCommand;
     });
+
+/**
+ * Envoy Gateway upstream tuning for a route (or one of its rules), rendered
+ * as a BackendTrafficPolicy. Durations are Gateway API strings ("5s").
+ */
+export type EdgeTraffic = {
+    connectTimeout?: string;
+    requestTimeout?: string; // "0s" = no total cap, only the idle one
+    streamIdleTimeout?: string; // No byte either way for this long
+    connectionIdleTimeout?: string; // Must stay below the app's keep-alive
+    compression?: boolean; // Brotli/Gzip what the app sends uncompressed
+};
+
+type HttpRouteParentRef = {
+    group?: Input<string>;
+    kind?: Input<string>;
+    name: Input<string>;
+    namespace?: Input<string>;
+    sectionName?: Input<string>;
+};
+
+type HttpRouteRule = {
+    name: string; // Section name, targeted by rule-level policies
+    path: string;
+    pathType?: "PathPrefix" | "Exact"; // Default to "PathPrefix"
+    backend?: { name: Input<string>; port: Input<number> }; // Default to this service
+    traffic?: EdgeTraffic; // Merged over the route's `traffic`
+};
+
+/**
+ * What ingress-nginx does for us today: 5s connect, no total cap, 60s without
+ * a byte. Upstream idle stays below nginx's 75s keep-alive in the SPA pods.
+ */
+const edgeTrafficDefaults: Required<EdgeTraffic> = {
+    connectTimeout: "5s",
+    requestTimeout: "0s",
+    streamIdleTimeout: "60s",
+    connectionIdleTimeout: "60s",
+    compression: false,
+};
+
+// Only replays requests the app never received, so POSTs are safe too
+const edgeRetry = {
+    numRetries: 2,
+    retryOn: {
+        triggers: ["connect-failure", "refused-stream", "reset-before-request"],
+    },
+};
+
+function trafficPolicySpec(traffic: Required<EdgeTraffic>) {
+    // An entry without its (empty) settings object is silently dropped
+    const compressor = [
+        { type: "Brotli", brotli: {}, minContentLength: "1Ki" },
+        { type: "Gzip", gzip: {}, minContentLength: "1Ki" },
+    ];
+    return {
+        // Without it, a route policy replaces the Gateway-level one wholesale
+        mergeType: "StrategicMerge",
+        timeout: {
+            tcp: { connectTimeout: traffic.connectTimeout },
+            http: {
+                requestTimeout: traffic.requestTimeout,
+                streamIdleTimeout: traffic.streamIdleTimeout,
+                connectionIdleTimeout: traffic.connectionIdleTimeout,
+            },
+        },
+        retry: edgeRetry,
+        ...(traffic.compression ? { compressor } : {}),
+    };
+}
 
 /**
  * Arguments used to create a Kubernetes service
@@ -77,6 +148,14 @@ type KubernetesServiceArgs = {
         customAnnotations?: Record<string, Input<string>>;
     };
 
+    // Gateway API route, published next to `ingress` during the migration
+    httpRoute?: {
+        hostnames: Input<string>[];
+        parentRefs: Input<HttpRouteParentRef>[];
+        rules?: HttpRouteRule[]; // Matched ahead of the catch-all `/` to this service
+        traffic?: EdgeTraffic;
+    };
+
     // Info for the service monitor
     serviceMonitor?: {
         port: Input<string>; // Matching a port defined in the `service.ports[number].name`
@@ -95,6 +174,7 @@ export class KubernetesService extends ComponentResource {
     public readonly hpa: k8s.autoscaling.v1.HorizontalPodAutoscaler | null =
         null;
     public readonly ingress: k8s.networking.v1.Ingress | null = null;
+    public readonly httpRoute: k8s.apiextensions.CustomResource | null = null;
     public readonly serviceMonitor: k8s.apiextensions.CustomResource | null =
         null;
     public readonly devCommand: DevCommand | null = null;
@@ -135,6 +215,10 @@ export class KubernetesService extends ComponentResource {
         // Create the ingress if defined
         if (this.args.ingress && this.service) {
             this.ingress = this.createIngress();
+        }
+
+        if (this.args.httpRoute && this.service) {
+            this.httpRoute = this.createHttpRoute();
         }
 
         // Create the service monitor if defined
@@ -352,6 +436,112 @@ export class KubernetesService extends ComponentResource {
                 },
             },
             { ...this.opts, parent: this, dependsOn: this.service }
+        );
+    }
+
+    private createHttpRoute(): k8s.apiextensions.CustomResource {
+        if (!this.args.httpRoute || !this.service) {
+            throw new Error(
+                "HTTPRoute configuration and Service are required to create an HTTPRoute"
+            );
+        }
+
+        const route = this.args.httpRoute;
+        const routeName =
+            `${this.name}-${normalizedStageName}-route`.toLocaleLowerCase();
+        const servicePort = output(this.args.service?.ports ?? []).apply(
+            (ports) => ports[0]?.port ?? 80
+        );
+        const serviceBackend = {
+            name: this.service.metadata.name,
+            port: servicePort,
+        };
+        const rules: HttpRouteRule[] = [
+            ...(route.rules ?? []),
+            { name: "app", path: "/" },
+        ];
+
+        const routeTraffic = { ...edgeTrafficDefaults, ...route.traffic };
+        const policies = [
+            this.createTrafficPolicy(routeName, undefined, routeTraffic),
+            // A rule policy replaces the route one for that rule, so it carries both
+            ...rules.flatMap((rule) =>
+                rule.traffic
+                    ? [
+                          this.createTrafficPolicy(routeName, rule.name, {
+                              ...routeTraffic,
+                              ...rule.traffic,
+                          }),
+                      ]
+                    : []
+            ),
+        ];
+
+        return new k8s.apiextensions.CustomResource(
+            `${this.name}HttpRoute`,
+            {
+                apiVersion: "gateway.networking.k8s.io/v1",
+                kind: "HTTPRoute",
+                metadata: {
+                    name: routeName,
+                    namespace: this.args.namespace,
+                    labels: this.labels,
+                },
+                spec: {
+                    parentRefs: route.parentRefs,
+                    hostnames: route.hostnames,
+                    rules: rules.map((rule) => ({
+                        name: rule.name,
+                        matches: [
+                            {
+                                path: {
+                                    type: rule.pathType ?? "PathPrefix",
+                                    value: rule.path,
+                                },
+                            },
+                        ],
+                        backendRefs: [rule.backend ?? serviceBackend],
+                    })),
+                },
+            },
+            // Policies first: the route never serves on Envoy's 15s default timeout
+            {
+                ...this.opts,
+                parent: this,
+                dependsOn: [this.service, ...policies],
+            }
+        );
+    }
+
+    private createTrafficPolicy(
+        routeName: string,
+        ruleName: string | undefined,
+        traffic: Required<EdgeTraffic>
+    ): k8s.apiextensions.CustomResource {
+        const suffix = ruleName ? `-${ruleName}` : "";
+        return new k8s.apiextensions.CustomResource(
+            `${this.name}TrafficPolicy${suffix}`,
+            {
+                apiVersion: "gateway.envoyproxy.io/v1alpha1",
+                kind: "BackendTrafficPolicy",
+                metadata: {
+                    name: `${routeName}${suffix}`,
+                    namespace: this.args.namespace,
+                    labels: this.labels,
+                },
+                spec: {
+                    targetRefs: [
+                        {
+                            group: "gateway.networking.k8s.io",
+                            kind: "HTTPRoute",
+                            name: routeName,
+                            ...(ruleName ? { sectionName: ruleName } : {}),
+                        },
+                    ],
+                    ...trafficPolicySpec(traffic),
+                },
+            },
+            { ...this.opts, parent: this }
         );
     }
 

@@ -37,13 +37,17 @@ export async function doSomething(
 | **backendMerchant.ts**  | Campaigns, bank + Frak webhook status from the backend     | LRU 5s   | backend API                        |
 | **frakEnv.ts**          | Frak wallet/backend URLs per stage                         | None     | Pure                               |
 | **logger.ts**           | pino logger + `levelForStatus`                             | None     | Pure                               |
+| **ambassadorPage.ts**   | Ambassador proxy page record, publish/hide/switch, probe   | LRU 60s (live probes only) | Shopify GraphQL + storefront fetch |
+| **navigation.ts**       | Menu read-modify-write (`menuUpdate` replaces the tree)    | None     | Shopify GraphQL                    |
+| **optionalScopes.ts**   | Which optional scope groups the shop granted (`null` on failure) | None | Shopify scopes API          |
+| **adminGraphql.ts**     | One Admin GraphQL call, `null` on throw or top-level errors | None    | Shopify GraphQL                    |
 | **requestId.ts**        | Ingress correlation id extraction + request context        | None     | Pure                               |
 
 ## CONVENTIONS
 
 - **GraphQL inline**: queries as template literals in service functions. No separate `.graphql` files. Use `#graphql` pragma for IDE hints.
 - **LRU caching**: `lru-cache` with TTL. Cache key = `session.shop` or `normalizedDomain`. `max: 512` entries.
-- **Metafield namespace**: `"frak"`. Keys: `modal_i18n`, `appearance`, `merchant_id`. Values: JSON-stringified.
+- **Metafield namespace**: `"frak"`. Keys: `modal_i18n`, `appearance`, `merchant_id`, `ambassador_page` (read by `proxy/ambassador.liquid`). Values: JSON-stringified.
 - **Generic helpers**: `metafields.ts` has `readMetafield<T>()` / `writeMetafield<T>()` — reuse for new metafields.
 - **Error handling**: try-catch, return `null`/`undefined` on failure. Never throw from services.
 - **Logging**: use the structured pino logger (`import { log } from "./logger"`), never `console.*` (on GKE `console.warn` is misclassified as ERROR severity). Pattern: `log.error({ err, merchantId }, "short message")`. Per-request `reqId`/`shop`/`merchantId`/`route` are attached automatically via the request context (root `middleware` + `setRequestContext`). For backend/HTTP errors branch severity with `levelForStatus(status)` (404 → info, other 4xx → warn, 5xx → error).

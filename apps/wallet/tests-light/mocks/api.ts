@@ -62,7 +62,7 @@ for (const [name, id] of [
 }
 
 /** Merchant identity the sharing page renders when no `appName` overrides it. */
-const merchantResolveFixture = {
+export const merchantResolveFixture = {
     merchantId: MERCHANT_ID,
     productId: "0xabcd",
     name: "Acme Store",

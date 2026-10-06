@@ -9,6 +9,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { OpenPanel } from "@openpanel/web";
 import { getClientIdAsync } from "../config/clientId";
 import { setEnvironment } from "../config/environment";
+import { loadCachedConfig } from "../config/loadCachedConfig";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { BACKUP_KEY } from "../constants";
 import { signProof } from "../identity/sign";
@@ -18,7 +19,6 @@ import type { FrakWalletSdkConfig } from "../types/config";
 import type { SdkResolvedConfig } from "../types/resolvedConfig";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { clearAllCache } from "../utils/cache";
-import { detectPageLanguage } from "../utils/i18n/detectPageLanguage";
 import { setupSsoUrlListener } from "./ssoUrlListener";
 import {
     createIFrameLifecycleManager,
@@ -56,15 +56,9 @@ export async function createIFrameFrakClient({
     // directly (React provider, tests) with an iframe it didn't build.
     const frakWalletUrl = setEnvironment(config.env).wallet;
 
-    // Precedence: explicit `metadata.lang` → page `<html lang>` → browser
-    // language. Lets a page authored in a given language drive SDK copy even
-    // when the visitor's browser is set to another language.
-    const detectedLang = config.metadata.lang ?? detectPageLanguage();
-    const targetDomain =
-        config.domain ??
-        (typeof window !== "undefined" ? window.location.hostname : "");
-    sdkConfigStore.setCacheScope(targetDomain, detectedLang);
-    sdkConfigStore.reset();
+    // `setupClient` already did this before building the iframe; the repeat covers
+    // callers that bring their own (React provider) and re-publishes the same object.
+    const detectedLang = loadCachedConfig(config);
 
     // Skip fetch entirely if cache is fresh, otherwise fetch (SWR)
     const configPromise = sdkConfigStore.isCacheFresh

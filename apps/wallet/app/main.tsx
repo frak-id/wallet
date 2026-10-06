@@ -22,6 +22,7 @@ import { StrictMode, startTransition } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { queryClient } from "@/module/common/provider/queryClient";
+import { initNativeGlass } from "@/module/native-glass/bridge";
 import { installViewTransitionOptOut } from "./utils/bottomBarRoutes";
 import { initDeepLinks } from "./utils/deepLink";
 import { initKeyboardInset } from "./utils/keyboardInset";
@@ -129,7 +130,7 @@ declare module "@tanstack/react-router" {
 async function main() {
     // Initialize Tauri-specific features for mobile devices
     if (IS_TAURI) {
-        await initSafeAreaInsets();
+        await Promise.all([initSafeAreaInsets(), initNativeGlass()]);
         initKeyboardInset();
         await initDeepLinks((options) => {
             return router.navigate(

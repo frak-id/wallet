@@ -13,4 +13,5 @@ export {
     decodeProof,
     deriveClientIdFromHash,
 } from "./canonical";
+export { compactUuid, expandCompactUuid } from "./compactId";
 export type { ProofOp, ProofVerification } from "./types";

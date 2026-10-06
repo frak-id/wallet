@@ -11,11 +11,14 @@ vi.mock("../config/sdkConfigStore", () => ({
 }));
 
 import { setEnvironment } from "../config/environment";
+import { compactUuid } from "../identity/compactId";
 import { getInstallUrl } from "./getInstallUrl";
 
 const MERCHANT_ID = "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e";
-const ANONYMOUS_ID = "anon-id-123";
+const ANONYMOUS_ID = "3f2a7c1e-5b4d-4e8a-9c6f-0d1e2f3a4b5c";
 const PROOF = "proof-token";
+const COMPACT_MERCHANT = compactUuid(MERCHANT_ID) as string;
+const COMPACT_ANONYMOUS = compactUuid(ANONYMOUS_ID) as string;
 
 describe("getInstallUrl", () => {
     beforeEach(() => {
@@ -29,12 +32,30 @@ describe("getInstallUrl", () => {
         vi.restoreAllMocks();
     });
 
-    it("builds the credentialed URL with a= and #p= when both are available", async () => {
+    it("builds the credentialed URL with a compact m= and #p=, without a=", async () => {
         const url = await getInstallUrl({ merchantId: MERCHANT_ID });
 
         expect(url).toBe(
-            `https://wallet.frak.id/install?m=${encodeURIComponent(MERCHANT_ID)}&a=${encodeURIComponent(ANONYMOUS_ID)}#p=${encodeURIComponent(PROOF)}`
+            `https://wallet.frak.id/i?m=${COMPACT_MERCHANT}#p=${encodeURIComponent(PROOF)}`
         );
+    });
+
+    it("signs the canonical hyphenated ids, not the compact URL form", async () => {
+        await getInstallUrl({ merchantId: MERCHANT_ID });
+
+        expect(signProof).toHaveBeenCalledWith({
+            op: "frak-install-v1",
+            merchantId: MERCHANT_ID,
+            anonymousId: ANONYMOUS_ID,
+        });
+    });
+
+    it("leaves the anonymous id out of a credentialed URL in any form", async () => {
+        const url = await getInstallUrl({ merchantId: MERCHANT_ID });
+
+        expect(url).not.toContain(ANONYMOUS_ID);
+        expect(url).not.toContain(COMPACT_ANONYMOUS);
+        expect(url).not.toContain("a=");
     });
 
     it("falls back to the bare ?m= URL when no anonymousId resolves", async () => {
@@ -42,9 +63,7 @@ describe("getInstallUrl", () => {
 
         const url = await getInstallUrl({ merchantId: MERCHANT_ID });
 
-        expect(url).toBe(
-            `https://wallet.frak.id/install?m=${encodeURIComponent(MERCHANT_ID)}`
-        );
+        expect(url).toBe(`https://wallet.frak.id/i?m=${COMPACT_MERCHANT}`);
     });
 
     it("carries checkoutToken in the query, before the fragment", async () => {
@@ -54,7 +73,7 @@ describe("getInstallUrl", () => {
         });
 
         expect(url).toBe(
-            `https://wallet.frak.id/install?m=${encodeURIComponent(MERCHANT_ID)}&a=${encodeURIComponent(ANONYMOUS_ID)}&checkoutToken=tok%2F1#p=${encodeURIComponent(PROOF)}`
+            `https://wallet.frak.id/i?m=${COMPACT_MERCHANT}&checkoutToken=tok%2F1#p=${encodeURIComponent(PROOF)}`
         );
     });
 
@@ -67,17 +86,20 @@ describe("getInstallUrl", () => {
         });
 
         expect(url).toBe(
-            `https://wallet.frak.id/install?m=${encodeURIComponent(MERCHANT_ID)}&checkoutToken=tok`
+            `https://wallet.frak.id/i?m=${COMPACT_MERCHANT}&checkoutToken=tok`
         );
     });
 
-    it("keeps a= without a fragment when signProof returns null", async () => {
+    it("keeps a compact a= without a fragment when signProof returns null", async () => {
         signProof.mockResolvedValue(null);
 
-        const url = await getInstallUrl({ merchantId: MERCHANT_ID });
+        const url = await getInstallUrl({
+            merchantId: MERCHANT_ID,
+            checkoutToken: "tok",
+        });
 
         expect(url).toBe(
-            `https://wallet.frak.id/install?m=${encodeURIComponent(MERCHANT_ID)}&a=${encodeURIComponent(ANONYMOUS_ID)}`
+            `https://wallet.frak.id/i?m=${COMPACT_MERCHANT}&a=${COMPACT_ANONYMOUS}&checkoutToken=tok`
         );
     });
 
@@ -103,7 +125,7 @@ describe("getInstallUrl", () => {
 
         const url = await getInstallUrl();
 
-        expect(url).toContain(`?m=${encodeURIComponent(MERCHANT_ID)}&a=`);
+        expect(url).toContain(`/i?m=${COMPACT_MERCHANT}#p=`);
     });
 
     it("prefers an explicit merchantId over the resolved one", async () => {
@@ -111,7 +133,7 @@ describe("getInstallUrl", () => {
 
         const url = await getInstallUrl({ merchantId: MERCHANT_ID });
 
-        expect(url).toContain(`?m=${encodeURIComponent(MERCHANT_ID)}&a=`);
+        expect(url).toContain(`/i?m=${COMPACT_MERCHANT}#p=`);
         expect(resolveMerchantId).not.toHaveBeenCalled();
     });
 
@@ -132,7 +154,7 @@ describe("getInstallUrl", () => {
         const url = await getInstallUrl({ merchantId: MERCHANT_ID });
 
         expect(url).toBe(
-            `https://wallet.custom.test/install?m=${encodeURIComponent(MERCHANT_ID)}&a=${encodeURIComponent(ANONYMOUS_ID)}#p=${encodeURIComponent(PROOF)}`
+            `https://wallet.custom.test/i?m=${COMPACT_MERCHANT}#p=${encodeURIComponent(PROOF)}`
         );
     });
 });
@@ -164,7 +186,29 @@ describe("getInstallUrl — cold path against real crypto", () => {
         const url = await realGetInstallUrl({ merchantId: MERCHANT_ID });
 
         expect(url).toMatch(
-            /^https:\/\/wallet\.frak\.id\/install\?m=[^&]+&a=[^&#]+#p=.+$/
+            /^https:\/\/wallet\.frak\.id\/i\?m=[A-Za-z0-9_-]{22}#p=[^&#]+$/
+        );
+    });
+
+    it("drops an anonymous id the wallet can recover by hashing the proof's public key", async () => {
+        const { getInstallUrl: realGetInstallUrl } = await import(
+            "./getInstallUrl"
+        );
+        const { getClientIdAsync: realGetClientIdAsync } = await import(
+            "../config/clientId"
+        );
+        const { decodeProof } = await import("../identity/canonical");
+        const { deriveClientId } = await import("../identity/derive");
+
+        const url = (await realGetInstallUrl({
+            merchantId: MERCHANT_ID,
+        })) as string;
+        const wire = decodeURIComponent(url.split("#p=")[1] ?? "");
+        const proof = decodeProof(wire);
+
+        expect(proof).not.toBeNull();
+        expect(await deriveClientId(proof?.pk ?? new Uint8Array())).toBe(
+            await realGetClientIdAsync()
         );
     });
 
@@ -178,8 +222,6 @@ describe("getInstallUrl — cold path against real crypto", () => {
 
         const url = await realGetInstallUrl({ merchantId: MERCHANT_ID });
 
-        expect(url).toBe(
-            `https://wallet.frak.id/install?m=${encodeURIComponent(MERCHANT_ID)}`
-        );
+        expect(url).toBe(`https://wallet.frak.id/i?m=${COMPACT_MERCHANT}`);
     });
 });

@@ -1,4 +1,5 @@
 import { createIFrameFrakClient } from "../clients";
+import { loadCachedConfig } from "../config/loadCachedConfig";
 import type { FrakClient, FrakWalletSdkConfig } from "../types";
 import { createIframe, getSupportedCurrency } from "../utils";
 
@@ -23,6 +24,9 @@ export async function setupClient({
     config: FrakWalletSdkConfig;
 }): Promise<FrakClient | undefined> {
     const preparedConfig = prepareConfig(config);
+
+    // Return visits paint the merchant's cached settings now, not after the iframe loads.
+    loadCachedConfig(preparedConfig);
 
     const iframe = await createIframe({
         config: preparedConfig,

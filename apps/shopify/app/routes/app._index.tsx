@@ -201,23 +201,22 @@ function OnBoardingComplete({
     campaigns,
     bankStatus,
     onboardingData,
-    isThemeSupported = true,
+    isThemeSupported,
 }: {
     campaigns: CampaignListResponse;
     bankStatus: BankStatus;
     onboardingData: OnboardingStepData;
-    isThemeSupported?: boolean;
+    isThemeSupported: boolean;
 }) {
     return (
         <s-stack gap="large">
             <NewsletterShareLink />
             <CampaignStatus campaigns={campaigns} />
             <BankingStatus bankStatus={bankStatus} />
-            {/* OptionalSetup prompts for OS-2.0 share-button/banner app blocks,
-                which legacy themes can't host — omit it for them. */}
-            {isThemeSupported && (
-                <OptionalSetup onboardingData={onboardingData} />
-            )}
+            <OptionalSetup
+                onboardingData={onboardingData}
+                isThemeSupported={isThemeSupported}
+            />
         </s-stack>
     );
 }

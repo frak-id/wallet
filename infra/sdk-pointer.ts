@@ -1,9 +1,11 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
 /**
  * `sdk[-dev].frak.id/components.js`: a 5-minute-TTL pointer at the exact
  * jsDelivr release, deployed by the release workflows right after `npm publish`.
+ * Also the production origin of the Shopify ambassador app proxy page.
  */
 
 const POINTER_STAGES = {
@@ -29,6 +31,7 @@ if (!isSdkPointerStage(stage)) {
 // deferred) so every browser is on the new version by the next page load.
 const CACHE_CONTROL = "public, max-age=300, stale-if-error=604800";
 const SHIM_KEY = "components.js";
+const AMBASSADOR_KEY = "shopify/ambassador";
 
 // `SDK_POINTER_VERSION` pins any published version by hand (rollback, hotfix);
 // otherwise the pointer follows the version the release just published.
@@ -59,11 +62,35 @@ const shimObject = new aws.s3.BucketObjectv2("SdkPointerShim", {
     cacheControl: CACHE_CONTROL,
 });
 
+const ambassadorPage = readFileSync(
+    path.join($cli.paths.root, "apps/shopify/proxy/ambassador.liquid"),
+    "utf8"
+);
+
+// Shopify renders the body inside the shop's theme only for this content type.
+const ambassadorObject = new aws.s3.BucketObjectv2("SdkPointerAmbassador", {
+    bucket: bucket.name,
+    key: AMBASSADOR_KEY,
+    content: ambassadorPage,
+    contentType: "application/liquid",
+    cacheControl: CACHE_CONTROL,
+});
+
 const router = new sst.aws.Router("SdkPointerRouter", {
     domain: POINTER_STAGES[stage].domain,
     // Bucket routes take no per-route `edge`; the Router-level function runs on
     // the default behavior, which is the only one this Router has.
     edge: {
+        // Runs before route matching. Shopify forwards child paths and appends a
+        // per-request timestamp + signature, which would make every request a miss.
+        viewerRequest: {
+            injection: `
+if (event.request.uri.startsWith("/${AMBASSADOR_KEY}")) {
+    event.request.uri = "/${AMBASSADOR_KEY}";
+    event.request.querystring = {};
+}
+`,
+        },
         viewerResponse: {
             // The bucket route never forwards Origin, so S3 CORS cannot answer;
             // `<script type="module">` integrations need these from the edge.
@@ -88,6 +115,15 @@ new command.local.Command(
         triggers: [version],
     },
     { dependsOn: [shimObject] }
+);
+
+new command.local.Command(
+    "SdkPointerAmbassadorInvalidation",
+    {
+        create: $interpolate`id=$(aws cloudfront create-invalidation --distribution-id ${router.distributionID} --paths "/${AMBASSADOR_KEY}*" --query Invalidation.Id --output text) && aws cloudfront wait invalidation-completed --distribution-id ${router.distributionID} --id "$id"`,
+        triggers: [createHash("sha256").update(ambassadorPage).digest("hex")],
+    },
+    { dependsOn: [ambassadorObject] }
 );
 
 export const sdkPointerUrl = $interpolate`${router.url}/${SHIM_KEY}`;

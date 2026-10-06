@@ -1271,6 +1271,19 @@ describe("Ambassador", () => {
         expect(computed(badge, "background-color")).toBe("rgb(0, 0, 0)");
     });
 
+    it("aligns its text to the start under a justified CMS page body, as on PrestaShop Classic", async () => {
+        injectCss(await compileAmbassadorCss());
+        injectCss(".page-cms { text-align: justify; }");
+        const { container } = render(
+            <div class="page-cms">
+                <Ambassador />
+            </div>
+        );
+
+        const root = container.querySelector(".frak-ambassador");
+        expect(computed(root, "text-align")).toBe("start");
+    });
+
     it("keeps the hero photo and badge sizes under a rich-text rule on images, as when placed in a Shopify page body", async () => {
         injectCss(await compileAmbassadorCss());
         injectCss(
@@ -1433,6 +1446,26 @@ describe("Ambassador", () => {
         );
         expect(computed(amount, "color")).toContain("--frak-amb-accent-text");
         expect(computed(amount, "color")).toContain("--frak-amb-accent,");
+    });
+
+    it("leaves the theme's heading face alone until the root marks a sampled one", async () => {
+        injectCss(await compileAmbassadorCss());
+        injectCss("h1 { font-family: ThemeSerif; text-transform: none; }");
+        const { container } = render(<Ambassador />);
+        const root = container.querySelector<HTMLElement>(".frak-ambassador");
+        const title = container.querySelector(".frak-ambassador__hero-title");
+        root?.style.setProperty("--frak-amb-h1-family", "Tomorrow");
+        root?.style.setProperty("--frak-amb-h1-transform", "uppercase");
+
+        expect(computed(title, "font-family")).toBe("ThemeSerif");
+
+        root?.setAttribute("data-frak-amb-font", "h1-family h1-transform");
+        expect(computed(title, "font-family")).toContain(
+            "--frak-amb-h1-family"
+        );
+        expect(computed(title, "text-transform")).toContain(
+            "--frak-amb-h1-transform"
+        );
     });
 
     it("2026-09-15 R16. a typography knob reaches its consumer and falls back when unset", async () => {

@@ -15,9 +15,9 @@
 class Frak_Utils {
 
 	/**
-	 * Return the current `home_url()` host, lower-cased and with a leading
-	 * `www.` stripped so comparisons align with the backend's normalization
-	 * (see `MerchantRepository::getNormalizedDomain`).
+	 * Return the domain the site acts as: the `FRAK_MERCHANT_DOMAIN` override
+	 * when set (see {@see Frak_Env::merchant_domain()}), else the real
+	 * {@see site_host()}.
 	 *
 	 * Shared by {@see Frak_Merchant} (cache key) and
 	 * {@see Frak_WC_Webhook_Registrar} (domain-drift detection).
@@ -25,11 +25,29 @@ class Frak_Utils {
 	 * @return string Empty string when the host cannot be determined.
 	 */
 	public static function current_host(): string {
+		$override = Frak_Env::merchant_domain();
+		return '' !== $override ? $override : self::site_host();
+	}
+
+	/**
+	 * Return the `home_url()` host, normalised by {@see normalize_host()}.
+	 *
+	 * @return string Empty string when the host cannot be determined.
+	 */
+	public static function site_host(): string {
 		$host = wp_parse_url( home_url(), PHP_URL_HOST );
-		if ( ! is_string( $host ) || '' === $host ) {
-			return '';
-		}
-		$host = strtolower( $host );
+		return is_string( $host ) ? self::normalize_host( $host ) : '';
+	}
+
+	/**
+	 * Lower-case a host and strip a leading `www.` so comparisons align with
+	 * the backend's normalization (see `MerchantRepository::getNormalizedDomain`).
+	 *
+	 * @param string $host Raw host.
+	 * @return string
+	 */
+	public static function normalize_host( string $host ): string {
+		$host = strtolower( trim( $host ) );
 		if ( 0 === strpos( $host, 'www.' ) ) {
 			$host = substr( $host, 4 );
 		}

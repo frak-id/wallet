@@ -134,6 +134,9 @@ with open(sys.argv[1]) as f:
     devices = json.load(f)["result"]["devices"]
 for d in devices:
     conn = d.get("connectionProperties", {})
+    # Xcode 27 lists simulators here too.
+    if d.get("hardwareProperties", {}).get("reality") == "simulated":
+        continue
     if conn.get("pairingState") != "paired":
         continue
     if conn.get("tunnelState") == "unavailable" and not conn.get("transportType"):

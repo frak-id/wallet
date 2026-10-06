@@ -45,7 +45,12 @@ for arch in ${ARCHS}; do
   # (resource_bundle_accessor.m.o, dummy.m.o) — neither is needed for
   # crash-handler registration. Everything left is unique → no duplicate
   # symbols when force-loaded.
-  members="$(ar t "${lib}" | grep -E '\.(m|mm|c)\.o$' | sort | uniq -u)"
+  # `|| true`: no match is the Xcode 27 case, and grep's exit 1 would abort under pipefail.
+  members="$(ar t "${lib}" | { grep -E '\.(m|mm|c)\.o$' || true; } | sort | uniq -u)"
+  # Xcode 27's SwiftPM prelinks one object per module instead (FirebaseCrashlytics.o, GoogleUtilities-Logger.o).
+  if [ -z "${members}" ]; then
+    members="$(ar t "${lib}" | { grep -E '^(Firebase|Google|FBLPromises|nanopb|third-party-)[^.]*\.o$' || true; } | sort | uniq -u)"
+  fi
   if [ -z "${members}" ]; then
     echo "error: no unique Obj-C/C members found in ${lib}" >&2
     exit 1

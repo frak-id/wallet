@@ -72,6 +72,7 @@
     "@frak-labs/core-sdk": "workspace:*",
     "@frak-labs/design-system": "workspace:*",
     "@openpanel/web": "catalog:",
+    "@tanstack/markdown": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tauri-apps/api": "catalog:",
     "@tauri-apps/plugin-clipboard-manager": "catalog:",
@@ -80,7 +81,6 @@
     "i18next": "catalog:",
     "idb-keyval": "catalog:",
     "lucide-react": "catalog:",
-    "micromark": "^4.0.2",
     "nanoid": "catalog:",
     "ox": "catalog:",
     "permissionless": "catalog:",
@@ -109,7 +109,7 @@
     "bun-types": "latest",
     "i18next-resources-for-ts": "catalog:",
     "jsdom": "catalog:",
-    "msw": "^2.15.0",
+    "msw": "^3.0.2",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

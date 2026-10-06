@@ -11,17 +11,37 @@
  */
 class Frak_Sdk_Urls {
 
-	/** First-party pointer, ~5 min TTL, re-flipped on every SDK release. */
-	public const POINTER_HOST = 'https://sdk.frak.id';
-
-	/** The one-line shim served at {@see POINTER_HOST}. */
-	public const POINTER_SCRIPT = self::POINTER_HOST . '/components.js';
-
 	/** JsDelivr host, used by the fallback and its own preconnect. */
 	public const JSDELIVR_HOST = 'https://cdn.jsdelivr.net';
 
-	/** Fallback shim loaded only if {@see POINTER_SCRIPT} fails. */
-	public const FALLBACK_SCRIPT = self::JSDELIVR_HOST . '/npm/@frak-labs/components@latest/cdn/components.js';
+	/**
+	 * First-party pointer host, ~5 min TTL, re-flipped on every SDK release.
+	 * Follows {@see Frak_Env}.
+	 *
+	 * @return string
+	 */
+	public static function pointer_host(): string {
+		return Frak_Env::sdk_host();
+	}
+
+	/**
+	 * The one-line shim served at {@see pointer_host()}.
+	 *
+	 * @return string
+	 */
+	public static function pointer_script(): string {
+		return self::pointer_host() . '/components.js';
+	}
+
+	/**
+	 * Fallback shim loaded only if {@see pointer_script()} fails: `@latest` in
+	 * production, `@beta` on the dev stack.
+	 *
+	 * @return string
+	 */
+	public static function fallback_script(): string {
+		return self::JSDELIVR_HOST . '/npm/@frak-labs/components@' . Frak_Env::jsdelivr_tag() . '/cdn/components.js';
+	}
 
 	/**
 	 * `onerror` body for the pointer `<script>`: the pointer file is a single
@@ -31,7 +51,7 @@ class Frak_Sdk_Urls {
 	 * @return string
 	 */
 	public static function fallback_onerror_js(): string {
-		return "var s=document.createElement('script');s.src='" . self::FALLBACK_SCRIPT . "';s.defer=true;document.head.appendChild(s)";
+		return "var s=document.createElement('script');s.src='" . self::fallback_script() . "';s.defer=true;document.head.appendChild(s)";
 	}
 
 	/**
@@ -61,8 +81,8 @@ class Frak_Sdk_Urls {
 	public static function injector_urls_script(): string {
 		return 'window.__frakSdkUrls=' . wp_json_encode(
 			array(
-				'pointer'  => self::POINTER_SCRIPT,
-				'fallback' => self::FALLBACK_SCRIPT,
+				'pointer'  => self::pointer_script(),
+				'fallback' => self::fallback_script(),
 			)
 		) . ';';
 	}

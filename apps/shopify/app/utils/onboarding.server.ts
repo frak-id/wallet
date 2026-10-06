@@ -1,12 +1,12 @@
-import { reconcileAmbassadorPage } from "app/services.server/ambassadorPage";
+import { getAmbassadorPageStatus } from "app/services.server/ambassadorPage";
 import { getFrakWebhookStatus } from "app/services.server/backendMerchant";
 import { log } from "app/services.server/logger";
 import { firstProductPublished } from "app/services.server/shop";
 import {
     doesThemeHasFrakActivated,
+    doesThemeHasFrakBanner,
     doesThemeHasFrakButton,
     getMainThemeId,
-    getThemeBlockPresence,
 } from "app/services.server/theme";
 import { getWebhooks } from "app/services.server/webhook";
 import { getWebPixel } from "app/services.server/webPixel";
@@ -99,26 +99,24 @@ const stepDataFetchers = {
         }
     },
 
+    // The banner scan and the ambassador status fail independently.
     7: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
-        try {
-            const presence = await getThemeBlockPresence(context);
-            const ambassadorPage = await reconcileAmbassadorPage(
-                context,
-                presence.ambassador
-            );
-            return {
-                isThemeHasFrakBanner: presence.banner,
-                ambassadorPage,
-                pageTemplates: presence.pageTemplates,
-                ambassadorTemplates: presence.ambassador,
-            };
-        } catch (error) {
-            log.error(
-                { err: error },
-                "onboarding: error fetching theme block data"
-            );
-            return {};
-        }
+        const [isThemeHasFrakBanner, ambassadorPage] = await Promise.all([
+            doesThemeHasFrakBanner(context).catch((error) => {
+                log.error(
+                    { err: error },
+                    "onboarding: error fetching theme block data"
+                );
+                return undefined;
+            }),
+            getAmbassadorPageStatus(context),
+        ]);
+        return {
+            ...(isThemeHasFrakBanner === undefined
+                ? {}
+                : { isThemeHasFrakBanner }),
+            ...(ambassadorPage ? { ambassadorPage } : {}),
+        };
     },
 };
 

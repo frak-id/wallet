@@ -29,7 +29,7 @@ The Frak Wallet mobile app is built using [Tauri 2.x](https://tauri.app/), which
   "requires iOS 16.0 or later" is the correct unsupported-device screen, and the
   floor is what produces it. This also clears ITMS-90068, which only mandates
   15.0 from Spring 2027. Declared in `gen/apple/project.yml` and mirrored into
-  eleven other sites, all gated as a set by `bun run check:ios-floor`
+  twelve other sites, all gated as a set by `bun run check:ios-floor`
   (`scripts/check-ios-floor.ts`), which runs inside `bun run lint` and in the
   release workflow's validate job. Bump `project.yml` and let the gate name the
   rest; it also fails a `.vN` a manifest's `swift-tools-version` cannot express.
@@ -146,6 +146,32 @@ and `id.frak.wallet.dev`):
 1. Enable the **iCloud** capability.
 2. Enable **Key-value storage** (no container needed — uses the App ID).
 3. Regenerate and re-download the provisioning profile.
+
+#### Native Liquid Glass chrome (iOS 26+)
+
+`tauri-plugin-frak-glass` floats native UIKit controls over the webview so they render
+as real Liquid Glass. It is only used when the app is built with the iOS 26 SDK *and*
+runs on iOS 26 (`hasNativeGlass()`, probed once at bootstrap). Anything older, and
+Android, keeps the web components. The web app stays in charge: the hooks and
+components in `app/module/native-glass/` push each surface's state to native, and
+native sends user actions back as plugin events. A native view always draws above the
+webview, so every surface hides itself while a web overlay sits on top of it
+(`modalStore`, or `body[data-scroll-locked]` for Radix/vaul). Web surfaces that show
+without either call `useCoverNativeChrome`: `"full"` for a full-screen gate
+(`FullScreenGate`), `"bottom"` for a prompt pinned to the bottom edge
+(`SoftUpdatePrompt`). Top chrome also steps aside for the `BannerStack` banners. A new
+blocking screen that skips this stays under a tappable native button.
+
+| Surface | Native control | Web twin |
+|---|---|---|
+| Bottom navigation | system `UITabBar` | `BottomTabBar` |
+| Detail sheet close / share | `UIButton` `.glass()` toolbar | `GlassCloseButton` / `GlassButton` |
+| Explorer sort | `.glass()` button + single-choice `UIMenu` | `GlassButton` + `ExplorerSortSheet` |
+| Explorer detail "share and earn" CTA | `UIButton` `.prominentGlass()` | frosted `floatingFooter` |
+| Welcome detail "Discover offers" CTA | `UIButton` `.prominentGlass()` | `DetailSheetFooter` `ButtonLink` |
+
+Icons are template SVGs in `gen/apple/Assets.xcassets`, generated from the
+design-system icons by `bun run tauri:native-icons` (`scripts/generate-native-icons.ts`).
 
 #### Code Signing
 

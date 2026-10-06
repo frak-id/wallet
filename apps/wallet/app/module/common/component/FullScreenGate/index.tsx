@@ -1,6 +1,7 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { ReactNode } from "react";
+import { useCoverNativeChrome } from "@/module/native-glass/hook/useOverlayOpen";
 import * as styles from "./index.css";
 
 type FullScreenGateProps = {
@@ -22,6 +23,8 @@ export function FullScreenGate({
     description,
     action,
 }: FullScreenGateProps) {
+    // Native glass chrome would otherwise stay tappable above the gate.
+    useCoverNativeChrome("full");
     return (
         <Box className={styles.gate}>
             <Box className={styles.content}>

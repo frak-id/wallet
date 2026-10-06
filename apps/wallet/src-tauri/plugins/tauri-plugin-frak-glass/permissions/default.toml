@@ -1,0 +1,10 @@
+[default]
+description = "Default permissions for the frak-glass plugin"
+permissions = [
+    "allow-is-supported",
+    "allow-set-tab-bar",
+    "allow-set-toolbar",
+    "allow-set-bottom-action",
+    "allow-register-listener",
+    "allow-remove-listener",
+]

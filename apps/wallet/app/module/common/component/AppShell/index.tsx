@@ -12,7 +12,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import {
     BottomTabBar,
     type TabItem,
@@ -20,17 +20,18 @@ import {
 import { ErrorBoundary } from "@/module/common/component/ErrorBoundary";
 import { ModalErrorToast } from "@/module/common/component/ModalErrorToast";
 import { SessionExpiringBanner } from "@/module/common/component/SessionExpiringBanner";
+import { hasNativeGlass } from "@/module/native-glass/bridge";
+import { NativeTabBar } from "@/module/native-glass/component/NativeTabBar";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { EnsureConflictToast } from "@/module/pending-actions/component/EnsureConflictToast";
 import {
     bottomBar,
     mainContentNoNav,
     mainContentWithNav,
-    mainContentWithNavBehindStatusBar,
     navBarScrim,
-    navBarScrimAuth,
     shellContainer,
-    shellContainerAuth,
+    shellContainerPage,
+    statusBarScrim,
 } from "./appShell.css";
 import { AppShellScrollContext } from "./scrollContext";
 
@@ -39,9 +40,24 @@ import { AppShellScrollContext } from "./scrollContext";
 export { useAppShellScroll } from "./scrollContext";
 
 const tabs: TabItem[] = [
-    { key: "/wallet", label: "Porte-monnaie", icon: <WalletIcon /> },
-    { key: "/explorer", label: "Explorer", icon: <ExplorerIcon /> },
-    { key: "/profile", label: "Profil", icon: <ProfileIcon /> },
+    {
+        key: "/wallet",
+        label: "Porte-monnaie",
+        icon: <WalletIcon />,
+        nativeIcon: "tab-wallet",
+    },
+    {
+        key: "/explorer",
+        label: "Explorer",
+        icon: <ExplorerIcon />,
+        nativeIcon: "tab-explorer",
+    },
+    {
+        key: "/profile",
+        label: "Profil",
+        icon: <ProfileIcon />,
+        nativeIcon: "tab-profile",
+    },
 ];
 
 // Home tab key. The bottom tab bar uses this to keep the back-stack bounded:
@@ -61,8 +77,8 @@ function resolveActiveTab(pathname: string): string {
 type AppShellProps = Readonly<{
     /** Show the bottom tab bar navigation. Defaults to false. */
     navigation?: boolean;
-    /** Auth/onboarding screen — white background behind notch. */
-    auth?: boolean;
+    /** Every page of the layout is white: paint it before one mounts. */
+    pageSurface?: boolean;
     /** Content to render. If omitted, renders a Router Outlet. */
     children?: ReactNode;
 }>;
@@ -72,7 +88,7 @@ type AppShellProps = Readonly<{
  */
 export function AppShell({
     navigation = false,
-    auth = false,
+    pageSurface = false,
     children,
 }: AppShellProps) {
     // Navigation is handled by `<Link>`s inside BottomTabBar — no imperative
@@ -85,22 +101,17 @@ export function AppShell({
 
     const activeKey = useMemo(() => resolveActiveTab(pathname), [pathname]);
 
-    // Explorer's frosted toolbar blurs content behind the status bar, so its
-    // scroller extends up into the safe area instead of stopping below it.
-    // Route-matched here (rather than a prop) on purpose: the shared
-    // `_protected` layout renders one AppShell for every page, so a per-page
-    // prop would need route context or a store. Promote to a prop the moment a
-    // second page needs this.
-    const scrollBehindStatusBar =
-        pathname === "/explorer" || pathname.startsWith("/explorer/");
-
     // Memoize provider value so consumers don't re-render on every AppShell
     // render (e.g. on every pathname change). The ref identity is stable.
     const scrollValue = useMemo(() => ({ scrollContainerRef: mainRef }), []);
 
+    const scrollToTop = useCallback(() => {
+        mainRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }, []);
+
     return (
         <AppShellScrollContext.Provider value={scrollValue}>
-            <Box className={auth ? shellContainerAuth : shellContainer}>
+            <Box className={pageSurface ? shellContainerPage : shellContainer}>
                 <InAppBrowserToast />
                 <BannerStack>
                     <OfflineBanner />
@@ -114,16 +125,20 @@ export function AppShell({
                     as="main"
                     ref={mainRef}
                     className={
-                        navigation
-                            ? scrollBehindStatusBar
-                                ? mainContentWithNavBehindStatusBar
-                                : mainContentWithNav
-                            : mainContentNoNav
+                        navigation ? mainContentWithNav : mainContentNoNav
                     }
                 >
                     <ErrorBoundary>{children ?? <Outlet />}</ErrorBoundary>
                 </Box>
-                {navigation && (
+                {navigation && hasNativeGlass() && (
+                    <NativeTabBar
+                        tabs={tabs}
+                        activeKey={activeKey}
+                        homeKey={TAB_HOME_KEY}
+                        onReselect={scrollToTop}
+                    />
+                )}
+                {navigation && !hasNativeGlass() && (
                     <Box className={bottomBar}>
                         <BottomTabBar
                             tabs={tabs}
@@ -132,10 +147,8 @@ export function AppShell({
                         />
                     </Box>
                 )}
-                <Box
-                    className={auth ? navBarScrimAuth : navBarScrim}
-                    aria-hidden="true"
-                />
+                <Box className={statusBarScrim} aria-hidden="true" />
+                <Box className={navBarScrim} aria-hidden="true" />
             </Box>
         </AppShellScrollContext.Provider>
     );

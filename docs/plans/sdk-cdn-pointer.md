@@ -121,3 +121,42 @@ integration's `onerror` fallback covers the pointer being unreachable at all
   DNS, non-2xx on the script fetch); it cannot catch the pointer serving a
   200 with broken content, which is why `release.yml` verifies the exact
   jsDelivr URL before flipping rather than trusting the fallback for that case.
+
+## Shopify ambassador page (`/shopify/ambassador`)
+
+The same stack is the production origin of the Shopify app proxy page.
+`infra/sdk-pointer.ts` uploads `apps/shopify/proxy/ambassador.liquid` as the
+object `shopify/ambassador`, with `Content-Type: application/liquid`
+(exactly what the app server's `liquid()` helper sends; the type that makes Shopify render the body inside the
+shop's theme) and the same `Cache-Control` as the shim. One Liquid file
+serves every shop: all shop state is read by Shopify from the shop
+metafield, so nothing per shop lives on the CDN.
+
+- **Rewrite**: a Router-level `viewerRequest` injection, which runs before
+  SST's route matching, rewrites every URI starting with
+  `/shopify/ambassador` to exactly `/shopify/ambassador` (Shopify forwards
+  child paths and trailing slashes) and clears the query string. Shopify
+  appends a unique `timestamp`/`signature` to every proxied request and the
+  router's cache policy keys on all query strings, so without this every
+  request would be a cache miss. Every other path, `components.js`
+  included, is untouched.
+- **Purge**: a second `command.local.Command` invalidates
+  `/shopify/ambassador*`, keyed on a SHA-256 of the file, so a page change
+  purges only the page and a version flip purges only `/components.js`.
+- **CI**: `release.yml` deploys the stack on every publish run, which picks
+  up the current file. On every other run on `main`, the `ambassador-page`
+  job runs after the release job and deploys `sdk-pointer` with
+  `SDK_POINTER_VERSION` set to the version `sdk.frak.id/components.js`
+  serves at that moment (parsed from the shim; the job fails if it cannot
+  be parsed), so the SDK pointer never moves. It keys on the repo state,
+  not on a per-push diff, so a run cancelled by a newer push cannot lose a
+  page change; an unchanged file is a no-op deploy and its purge is keyed
+  on the file hash.
+- **Deploy order**: the stack first (`curl -I
+  https://sdk.frak.id/shopify/ambassador` must return `200` and
+  `content-type: application/liquid`), then
+  `shopify app deploy` for the production app, whose `[app_proxy] url`
+  points at it. The reverse order publishes a proxy URL that 403s.
+- **Dev**: `sdk-dev.frak.id/shopify/ambassador` exists too, as a side effect
+  of the shared code, but the dev Shopify app does not use it: its proxy
+  points at the app server's `/proxy/ambassador` route (see the plan).

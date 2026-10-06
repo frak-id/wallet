@@ -69,9 +69,8 @@ class FrakMerchantResolver
         if ($host === '') {
             return;
         }
-        $key = self::sanitizeKey($host);
-        FrakCache::delete(self::CACHE_KEY_PREFIX . $key);
-        FrakCache::delete(self::NEGATIVE_CACHE_PREFIX . $key);
+        FrakCache::delete(self::recordKey($host));
+        FrakCache::delete(self::unresolvedKey($host));
     }
 
     public static function currentHost(): string
@@ -82,7 +81,7 @@ class FrakMerchantResolver
     /** @return array{id:string,name:string,domain:string,resolved_at:int}|null */
     private static function resolve(string $host): ?array
     {
-        $url = FrakUrls::MERCHANT_RESOLVE . '?domain=' . rawurlencode($host);
+        $url = FrakUrls::merchantResolveUrl() . '?domain=' . rawurlencode($host);
 
         try {
             $response = FrakHttpClient::getInstance()->request('GET', $url, [
@@ -113,19 +112,18 @@ class FrakMerchantResolver
             'resolved_at' => time(),
         ];
 
-        $key = self::sanitizeKey($host);
         // No TTL — merchant UUIDs are immutable per domain; the resolver
         // self-invalidates via the host check in `getRecord()` and the
         // explicit "Refresh Merchant" admin button.
-        FrakCache::set(self::CACHE_KEY_PREFIX . $key, $record);
-        FrakCache::delete(self::NEGATIVE_CACHE_PREFIX . $key);
+        FrakCache::set(self::recordKey($host), $record);
+        FrakCache::delete(self::unresolvedKey($host));
 
         return $record;
     }
 
     private static function readCachedRecord(string $host): ?array
     {
-        $value = FrakCache::get(self::CACHE_KEY_PREFIX . self::sanitizeKey($host));
+        $value = FrakCache::get(self::recordKey($host));
         if (!is_array($value) || empty($value['id'])) {
             return null;
         }
@@ -134,16 +132,32 @@ class FrakMerchantResolver
 
     private static function isNegativeCacheActive(string $host): bool
     {
-        return FrakCache::has(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
+        return FrakCache::has(self::unresolvedKey($host));
     }
 
     private static function markUnresolved(string $host): void
     {
         FrakCache::set(
-            self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host),
+            self::unresolvedKey($host),
             true,
             self::NEGATIVE_CACHE_TTL
         );
+    }
+
+    /** Dev keys carry a `dev_` prefix so a record from the other environment is never read. */
+    private static function recordKey(string $host): string
+    {
+        return self::envPrefix() . self::CACHE_KEY_PREFIX . self::sanitizeKey($host);
+    }
+
+    private static function unresolvedKey(string $host): string
+    {
+        return self::envPrefix() . self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host);
+    }
+
+    private static function envPrefix(): string
+    {
+        return FrakEnv::isDev() ? 'dev_' : '';
     }
 
     /**

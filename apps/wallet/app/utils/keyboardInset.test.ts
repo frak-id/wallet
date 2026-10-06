@@ -57,6 +57,7 @@ describe("initKeyboardInset", () => {
     let rafSpy: ReturnType<typeof vi.spyOn>;
     let cancelRafSpy: ReturnType<typeof vi.spyOn>;
     let cleanup: () => void = () => {};
+    let mounted: HTMLElement[] = [];
 
     beforeEach(() => {
         isTauriMock.mockReset().mockReturnValue(true);
@@ -86,6 +87,8 @@ describe("initKeyboardInset", () => {
             configurable: true,
             value: originalVisualViewport,
         });
+        for (const node of mounted) node.remove();
+        mounted = [];
         rafSpy.mockRestore();
         cancelRafSpy.mockRestore();
         document.documentElement.style.removeProperty("--viewport-height");
@@ -205,6 +208,98 @@ describe("initKeyboardInset", () => {
         expect(
             document.documentElement.style.getPropertyValue("--viewport-height")
         ).toBe("600px");
+    });
+
+    // iPhone SE with the keyboard up: main spans 0-407 with 36/16px padding and
+    // an 88px sticky footer, so fields must sit between y=36 and y=303.
+    function mountField(top: number) {
+        const main = document.createElement("main");
+        main.style.paddingTop = "36px";
+        main.style.paddingBottom = "16px";
+        const page = document.createElement("div");
+        page.style.setProperty("--footer-height", "88px");
+        const field = document.createElement("input");
+        page.append(field);
+        main.append(page);
+        document.body.append(main);
+        mounted.push(main);
+        main.getBoundingClientRect = () => ({ top: 0, bottom: 407 }) as DOMRect;
+        field.getBoundingClientRect = () =>
+            ({ top, bottom: top + 26, height: 26 }) as DOMRect;
+        const scrollBy = vi.fn();
+        main.scrollBy = scrollBy as typeof main.scrollBy;
+        return { main, field, scrollBy };
+    }
+
+    test("centres a focused field the sticky footer covers once the keyboard opens", () => {
+        const vv = installViewport(667);
+        cleanup = initKeyboardInset();
+        const { field, scrollBy } = mountField(293);
+        field.focus();
+
+        vv.height = 407;
+        vv.dispatch("resize");
+        flushRaf();
+
+        expect(scrollBy).toHaveBeenCalledWith({
+            top: 306 - (36 + 303) / 2,
+            behavior: "smooth",
+        });
+    });
+
+    test("leaves an uncovered field in place", () => {
+        const vv = installViewport(667);
+        cleanup = initKeyboardInset();
+        const { field, scrollBy } = mountField(200);
+        field.focus();
+
+        vv.height = 407;
+        vv.dispatch("resize");
+        flushRaf();
+
+        expect(scrollBy).not.toHaveBeenCalled();
+    });
+
+    test("leaves fields outside the page scroller to their drawer or dialog", () => {
+        const vv = installViewport(667);
+        cleanup = initKeyboardInset();
+        const { scrollBy } = mountField(200);
+        const drawerField = document.createElement("input");
+        document.body.append(drawerField);
+        mounted.push(drawerField);
+        drawerField.focus();
+
+        vv.height = 407;
+        vv.dispatch("resize");
+        flushRaf();
+
+        expect(scrollBy).not.toHaveBeenCalled();
+    });
+
+    test("reveals a field focused while the keyboard is already open", () => {
+        const vv = installViewport(667);
+        cleanup = initKeyboardInset();
+        const { field, scrollBy } = mountField(293);
+        vv.height = 407;
+        vv.dispatch("resize");
+        flushRaf();
+        expect(scrollBy).not.toHaveBeenCalled();
+
+        field.focus();
+        flushRaf();
+
+        expect(scrollBy).toHaveBeenCalledTimes(1);
+    });
+
+    test("ignores focus while the keyboard is closed", () => {
+        installViewport(667);
+        cleanup = initKeyboardInset();
+        const { field, scrollBy } = mountField(600);
+
+        field.focus();
+        flushRaf();
+
+        expect(scrollBy).not.toHaveBeenCalled();
     });
 
     test("cleanup removes listeners and the CSS variable", () => {

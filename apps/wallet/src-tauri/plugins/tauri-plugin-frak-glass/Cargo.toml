@@ -1,0 +1,12 @@
+[package]
+name = "tauri-plugin-frak-glass"
+version = "0.1.0"
+edition = "2021"
+links = "tauri-plugin-frak-glass"
+description = "Native Liquid Glass chrome (tab bar, toolbar buttons) floated over the iOS webview, driven by the web app."
+
+[dependencies]
+tauri = "2"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }

@@ -12,8 +12,8 @@
     },
     "dependencies": {
         "@libsql/client": "^0.18.0",
-        "drizzle-orm": "^0.45.2",
-        "mongodb": "^6.20.0"
+        "drizzle-orm": "^0.45.3",
+        "mongodb": "^7.7.0"
     },
     "devDependencies": {
         "bun-types": "latest",

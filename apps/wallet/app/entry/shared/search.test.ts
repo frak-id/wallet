@@ -107,6 +107,19 @@ describe("standalone /install search", () => {
         });
     });
 
+    test("decodes the short `/i` link to canonical ids", () => {
+        expect(
+            parseInstallSearch(
+                searchParamsFromLocation(
+                    "?m=nIs-Kh1PSmuOLX86G1ydDg&a=JWsb4ydFQdGJ1JEhzIe8RQ"
+                )
+            )
+        ).toMatchObject({
+            m: "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
+            a: "256b1be3-2745-41d1-89d4-9121cc87bc45",
+        });
+    });
+
     test("decodes a native web-view launch", () => {
         expect(
             parseInstallSearch(

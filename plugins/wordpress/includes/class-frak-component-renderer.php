@@ -45,6 +45,16 @@ class Frak_Component_Renderer {
 	);
 
 	/**
+	 * Ambassador: camelCase block-attr key => kebab-case HTML attribute name.
+	 * Only `classname`: the page's content comes from the merchant dashboard.
+	 *
+	 * @var array<string, string>
+	 */
+	private const AMBASSADOR_ATTRS = array(
+		'classname' => 'classname',
+	);
+
+	/**
 	 * Share-button: camelCase block-attr key => kebab-case HTML attribute name.
 	 *
 	 * @var array<string, string>
@@ -148,6 +158,18 @@ class Frak_Component_Renderer {
 	 */
 	public static function banner( array $attrs, string $wrapper = '', bool $preview = false, array $preview_overrides = array() ): string {
 		return self::render( 'frak-banner', self::BANNER_ATTRS, self::merge_classnames( $attrs ), $wrapper, $preview, $preview_overrides );
+	}
+
+	/**
+	 * Render `<frak-ambassador>`. Takes no preview flag: the component paints
+	 * its static sections without waiting for the merchant config.
+	 *
+	 * @param array<string, mixed> $attrs   Map of camelCase attribute keys.
+	 * @param string               $wrapper Pre-escaped wrapper attributes; empty emits the component bare.
+	 * @return string
+	 */
+	public static function ambassador( array $attrs, string $wrapper = '' ): string {
+		return self::render( 'frak-ambassador', self::AMBASSADOR_ATTRS, self::merge_classnames( $attrs ), $wrapper );
 	}
 
 	/**

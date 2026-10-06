@@ -64,6 +64,15 @@ final class FrakComponentRendererTest extends TestCase
         $this->assertStringContainsString('referral-title="Welcome back"', $html);
     }
 
+    public function testAmbassadorEmitsOnlyClassname(): void
+    {
+        $this->assertSame('<frak-ambassador></frak-ambassador>', FrakComponentRenderer::ambassador());
+        $this->assertSame(
+            '<frak-ambassador classname="wide"></frak-ambassador>',
+            FrakComponentRenderer::ambassador(['classname' => 'wide', 'placement' => 'home'])
+        );
+    }
+
     public function testShareButtonAppliesDefaultBootstrapStyle(): void
     {
         // Default preset is `secondary` so the rendered button picks up

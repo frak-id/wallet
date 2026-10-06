@@ -15,6 +15,7 @@ import {
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
+import { focusWithoutScroll } from "@/module/common/utils/focusWithoutScroll";
 import * as styles from "./index.css";
 
 export type EmailFormScreenProps = {
@@ -152,12 +153,12 @@ export function EmailFormScreen({
                             length="big"
                             type="email"
                             inputMode="email"
+                            name="email"
                             autoComplete="email"
                             autoCapitalize="none"
-                            autoCorrect="off"
-                            spellCheck={false}
+                            // No spellCheck={false}: on iOS it hides the QuickType bar that carries the email suggestions.
                             enterKeyHint="go"
-                            autoFocus
+                            ref={focusWithoutScroll}
                             aria-label={label}
                             placeholder={placeholder}
                             value={email}

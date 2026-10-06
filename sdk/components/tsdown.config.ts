@@ -9,8 +9,10 @@ import {
     processVanillaFile,
     virtualCssFileFilter,
 } from "@vanilla-extract/integration";
+import { transform as transformCss } from "lightningcss";
 import type { Plugin } from "rolldown";
 import { defineConfig } from "tsdown";
+import { LIGHTNINGCSS_TARGETS } from "../../packages/dev-tooling/src/es-version.ts";
 import {
     extractExpectedTags,
     findMissingRegistrations,
@@ -21,7 +23,8 @@ import {
  *
  * Compiles .css.ts files and resolves .vanilla.css virtual imports
  * as JS modules exporting the CSS as a `cssSource` string.
- * Components inject this string at runtime via styleManager.
+ * Components inject this string at runtime via styleManager. The string skips
+ * Vite's CSS pipeline, so it is prefixed here for the shared browser floor.
  */
 function vanillaExtractInlinePlugin(): Plugin {
     const cwd = process.cwd();
@@ -116,7 +119,13 @@ function vanillaExtractInlinePlugin(): Plugin {
                 return null;
             }
 
-            const escaped = css
+            const prefixed = transformCss({
+                filename: id,
+                code: Buffer.from(css),
+                targets: LIGHTNINGCSS_TARGETS,
+            }).code.toString();
+
+            const escaped = prefixed
                 .replace(/\\/g, "\\\\")
                 .replace(/`/g, "\\`")
                 .replace(/\$/g, "\\$");

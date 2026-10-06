@@ -1,4 +1,4 @@
-import { globalStyle, style } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
 
 export const glassCircle = style({
@@ -33,15 +33,39 @@ export const glassCircleDisabled = style({
     pointerEvents: "none",
 });
 
+// Frosted disc: a tinted face with an inner glow over a 3px backdrop blur. The
+// blur sits on `::after` at z-index -1, which `isolation` keeps inside the disc.
+export const glass = style({
+    position: "relative",
+    isolation: "isolate",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    boxShadow: "0 6px 24px rgba(0, 0, 0, 0.2)",
+    "::before": {
+        content: '""',
+        position: "absolute",
+        inset: 0,
+        zIndex: 0,
+        borderRadius: "inherit",
+        boxShadow: "inset 0 0 15px -5px #ffffff",
+        backgroundColor: "rgba(247, 247, 247, 0.8)",
+    },
+    "::after": {
+        content: '""',
+        position: "absolute",
+        inset: 0,
+        zIndex: -1,
+        borderRadius: "inherit",
+        backdropFilter: "blur(3px)",
+    },
+});
+
 export const glassIcon = style({
     position: "relative",
     zIndex: 1,
     display: "flex",
-});
-
-// Lightning CSS strips the vendor `blur(var(--frost-blur-radius))`, so the
-// constant (3) is restated in build-time CSS (a runtime <style> hits the Tauri
-// CSP). Unprefixed only: adding `-webkit-` collapses to it, and Chrome ignores it.
-globalStyle(`${glassCircle} .liquid-glass::after`, {
-    backdropFilter: "blur(3px)",
 });

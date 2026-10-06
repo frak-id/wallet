@@ -3,6 +3,7 @@ import { expect, test } from "../fixtures";
 import {
     CLIENT_ID,
     MERCHANT_ID,
+    merchantResolveFixture,
     mockDefaultApiRoutes,
     REFERRER_REWARD_EUR,
 } from "../mocks/api";
@@ -460,5 +461,36 @@ test.describe("Sharing page — no advertisable reward", () => {
         await expect(page.getByText(INTERPOLATED_AMOUNT)).toHaveCount(0);
 
         await shoot(page, "sharing-no-reward-confirmation.png");
+    });
+
+    test("prefers the bundled variant over a merchant's base override", async ({
+        page,
+    }) => {
+        await page.setViewportSize(VIEWPORTS.iphone);
+        await mockNoReward(page);
+        await page.route("**/*/user/merchant/resolve*", (route) =>
+            route.fulfill({
+                status: 200,
+                contentType: "application/json",
+                body: JSON.stringify({
+                    ...merchantResolveFixture,
+                    sdkConfig: {
+                        ...merchantResolveFixture.sdkConfig,
+                        translations: {
+                            "sdk.sharingPage.card.tagline1":
+                                "Merchant: earn {{ estimatedReward }},",
+                        },
+                    },
+                }),
+            })
+        );
+        await open(page, sharingUrl({ lng: "en" }));
+        await page.getByRole("dialog").waitFor({ state: "visible" });
+        await expect(page.getByText(HEADLINE.en)).toBeVisible();
+
+        await expect(
+            page.getByText("A friend buys through your link,")
+        ).toBeVisible();
+        await expect(page.getByText(/Merchant:/)).toHaveCount(0);
     });
 });

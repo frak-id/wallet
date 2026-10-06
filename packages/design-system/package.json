@@ -34,7 +34,6 @@
     "@radix-ui/react-tabs": "^1.1.21",
     "@radix-ui/react-tooltip": "^1.2.16",
     "@tanstack/react-table": "catalog:",
-    "@tinymomentum/liquid-glass-react": "^1.0.6",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/recipes": "catalog:",
     "@vanilla-extract/sprinkles": "catalog:",
@@ -49,7 +48,7 @@
     "d3-array": "^3.2.4",
     "d3-shape": "^3.2.0",
     "lucide-react": "catalog:",
-    "motion": "^13.2.0",
+    "motion": "^14.0.0",
     "vaul": "^1.1.2"
   },
   "devDependencies": {

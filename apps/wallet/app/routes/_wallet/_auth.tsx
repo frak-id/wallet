@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_wallet/_auth")({
 
 function AuthenticationLayout() {
     return (
-        <AppShell auth>
+        <AppShell pageSurface>
             <Outlet />
         </AppShell>
     );

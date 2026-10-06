@@ -11,7 +11,6 @@ export const header = style({
     gap: alias.spacing.m,
     paddingBottom: alias.spacing.xs,
     backdropFilter: "blur(5px)",
-    WebkitBackdropFilter: "blur(5px)",
 });
 
 export const title = style({

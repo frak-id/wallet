@@ -35,6 +35,12 @@ const GRACE_PERIOD_MS = 10 * 60_000;
 
 const app = new Elysia({
     aot: true,
+    serve: {
+        // The Gateway's upstream idle timeout (infra/gcp/gateway.ts) must stay below this
+        idleTimeout: 30,
+        // Envoy forwards bodies uncapped: the largest legit one is a 10 MiB media upload
+        maxRequestBodySize: 15 * 1024 * 1024,
+    },
     // Websocket specific config
     websocket: {
         // Idle timeout of 5min in seconds, could take a long time for a pairing to be resolved

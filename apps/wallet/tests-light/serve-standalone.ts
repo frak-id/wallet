@@ -12,11 +12,12 @@ const PORT = Number(process.env.STANDALONE_PORT ?? 3100);
 // a disposable container and sets `STANDALONE_HOST`.
 const HOST = process.env.STANDALONE_HOST ?? "127.0.0.1";
 
-// The only nginx behaviour worth reproducing: these two paths are their own
+// The only nginx behaviour worth reproducing: these paths are their own
 // documents, not SPA routes.
 const ENTRYPOINTS: Record<string, string> = {
     "/sharing": "sharing.html",
     "/install": "install.html",
+    "/i": "install.html",
 };
 
 // Built here rather than in `globalSetup`, which Playwright runs *after* the

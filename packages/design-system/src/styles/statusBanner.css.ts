@@ -15,7 +15,6 @@ export const container = style({
     borderRadius: alias.cornerRadius.m,
     backgroundColor: overlay.scrim,
     backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
     color: vars.text.onAction,
     animation: `${fadeInDown} 300ms ease-out`,
     // Re-enable pointer events on the card so screen readers / hover work,

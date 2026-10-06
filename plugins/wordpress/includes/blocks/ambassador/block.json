@@ -1,0 +1,17 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "frak/ambassador",
+	"title": "Frak Ambassador",
+	"description": "The full ambassador page: how it works, rewards and sharing. Its text and images come from your Frak dashboard.",
+	"category": "widgets",
+	"icon": "groups",
+	"keywords": ["frak", "ambassador", "reward", "referral"],
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"]
+	},
+	"textdomain": "frak",
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php"
+}

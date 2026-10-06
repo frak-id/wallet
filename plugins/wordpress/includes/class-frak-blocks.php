@@ -26,6 +26,7 @@ class Frak_Blocks {
 		'banner',
 		'post-purchase',
 		'share-button',
+		'ambassador',
 	);
 
 	/**
@@ -85,7 +86,7 @@ class Frak_Blocks {
 
 		wp_register_script(
 			'frak-sdk',
-			Frak_Sdk_Urls::POINTER_SCRIPT,
+			Frak_Sdk_Urls::pointer_script(),
 			array(),
 			null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters -- pointer serves whatever version was released; avoid ?ver= query param.
 			true
@@ -120,11 +121,14 @@ class Frak_Blocks {
 		$app_name_raw = Frak_Settings::get( 'app_name' );
 		$app_name     = '' !== $app_name_raw ? $app_name_raw : get_bloginfo( 'name' );
 		$logo_url     = Frak_Settings::get( 'logo_url' );
+		// The canvas iframe has no <html lang>, so the SDK would fall back to the browser language.
+		$lang = strtolower( substr( get_locale(), 0, 2 ) );
 
 		$metadata = array_filter(
 			array(
 				'name'    => $app_name,
 				'logoUrl' => '' !== $logo_url ? $logo_url : null,
+				'lang'    => in_array( $lang, array( 'en', 'fr' ), true ) ? $lang : null,
 			),
 			static function ( $value ) {
 				return null !== $value && '' !== $value;
@@ -136,7 +140,14 @@ class Frak_Blocks {
 			'metadata'             => $metadata,
 		);
 
-		$config_json = wp_json_encode( $config, JSON_UNESCAPED_SLASHES );
+		// The canvas iframe is a blob: URL with an empty hostname, so the SDK cannot resolve the merchant from it.
+		$host = Frak_Utils::current_host();
+		if ( '' !== $host ) {
+			$config['domain'] = $host;
+		}
+
+		$config      = array_merge( $config, Frak_Env::config_overrides() );
+		$config_json = wp_json_encode( $config, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG );
 
 		return sprintf(
 			'window.FrakSetup=Object.assign(window.FrakSetup||{},{config:%s});',

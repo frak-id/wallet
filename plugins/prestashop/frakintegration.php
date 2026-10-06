@@ -20,7 +20,8 @@ require_once __DIR__ . '/vendor/autoload.php';
  *   - {@see FrakOrderWebhook}     : `actionOrderStatusPostUpdate` (server-side webhook + retry queue).
  *   - {@see FrakOrderRender}      : tracker `<script>` + post-purchase Smarty wrapper for order pages.
  *   - {@see FrakDisplayDispatcher}: placement-driven `display*` hooks.
- *   - {@see FrakSmartyPlugins}    : `{frak_banner|share_button|post_purchase}`.
+ *   - {@see FrakSmartyPlugins}    : `{frak_ambassador|banner|share_button|post_purchase}`.
+ *   - {@see FrakCmsMarkers}       : the same four tags typed as text in CMS pages (`filterCmsContent`).
  */
 class FrakIntegration extends Module
 {
@@ -66,8 +67,8 @@ class FrakIntegration extends Module
 
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
 
-        // Smarty function plugins ({frak_banner}, {frak_share_button},
-        // {frak_post_purchase}) are scoped to the front-office Smarty
+        // Smarty function plugins ({frak_ambassador}, {frak_banner},
+        // {frak_share_button}, {frak_post_purchase}) are scoped to the front-office Smarty
         // instance only — admin renders own a separate Smarty and never
         // emit a Frak component through these handlers.
         if (!defined('_PS_ADMIN_DIR_')) {
@@ -140,6 +141,32 @@ class FrakIntegration extends Module
             }
         }
         return $ok;
+    }
+
+    /** The page step never changes the result: a failure there must not block enabling the module. */
+    public function enable($force_all = false)
+    {
+        $result = parent::enable($force_all);
+        $this->runPageStep(static fn() => FrakAmbassadorPage::onEnable());
+
+        return $result;
+    }
+
+    public function disable($force_all = false)
+    {
+        $result = parent::disable($force_all);
+        $this->runPageStep(static fn() => FrakAmbassadorPage::onDisable());
+
+        return $result;
+    }
+
+    private function runPageStep(callable $step): void
+    {
+        try {
+            $step();
+        } catch (\Throwable $e) {
+            PrestaShopLogger::addLog('[FrakSDK] ambassador page lifecycle step failed: ' . $e->getMessage(), 3);
+        }
     }
 
     public function getContent()
@@ -223,6 +250,15 @@ class FrakIntegration extends Module
     public function hookDisplayNavFullWidth($params = [])
     {
         return FrakDisplayDispatcher::dispatch($this, 'displayNavFullWidth', $params);
+    }
+
+    /**
+     * CMS page content — swaps `{frak_*}` markers for their component. Chained
+     * hook: must return the whole args array, never a string.
+     */
+    public function hookFilterCmsContent($params)
+    {
+        return FrakCmsMarkers::filterArgs($params);
     }
 
     /**

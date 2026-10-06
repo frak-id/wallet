@@ -26,6 +26,7 @@ bun run test             # Vitest
 - `app/components/` — feature-organized Polaris UI
 - `app/utils/` — onboarding wizard state, URL helpers, ky backend client, viem wiring
 - `db/schema/{sessionTable, purchaseTable}.ts` · `db/adapter/sessionAdapter.ts` (custom Shopify SessionStorage)
+- `proxy/ambassador.liquid` — the app proxy ambassador page (see Non-Obvious Patterns)
 - Infra lives at repo-root `infra/` (not here) · `shopify.app.{development,production}.toml`
 - `drizzle/{dev,prod}/` — separate migration histories per stage
 
@@ -43,6 +44,7 @@ bun run test             # Vitest
 - **LRU cache tiers**: shop 1min · theme 30s · merchant 5min · onchain/campaigns 5s. React Query: stale 1min, gc infinity, localStorage persist.
 - **Onboarding is a wizard driven by `utils/onboarding.ts`**: merchant, pixel, Shopify webhooks, Frak webhook, theme activation, share button, banner. Use `stepValidations` + `stepDataFetchers`; `MAX_STEP` derives from `stepValidations`, so never hardcode a step count anywhere.
 - **No Biome divergence**: there is no `apps/shopify/biome.json` and no root override — shopify inherits root's settings, cognitive complexity 16 included.
+- **The ambassador page is an app proxy, not a `/pages/` page**: Shopify renders `proxy/ambassador.liquid` inside the theme layout at `/apps/ambassador` (`/apps/ambassador-dev` for the dev app). Production fetches the file from `sdk.frak.id/shopify/ambassador` (`infra/sdk-pointer.ts`), every other stage from the `proxy.ambassador` route, which inlines it with `?raw`. Shop state comes only from the `frak.ambassador_page` metafield, read by the Liquid. Deploy the `sdk-pointer` stack before `shopify app deploy`, or the proxy points at a missing file.
 - **Web Components**: `frak-button-wallet` (shadow DOM; legacy name, opens the sharing page), `frak-button-share` / `frak-open-in-app` (light DOM — inherit theme CSS).
 
 ## Anti-Patterns

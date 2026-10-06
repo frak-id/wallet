@@ -1,6 +1,12 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, glass, safeArea } from "@frak-labs/design-system/tokens";
+import {
+    alias,
+    glass,
+    safeArea,
+    shadow,
+} from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
+import { NATIVE_BOTTOM_ACTION_HEIGHT_VAR } from "@/module/native-glass/constants";
 
 const heroOverlap = 25;
 const heroBadgeBottom = `calc(${alias.spacing.m} + ${heroOverlap}px)`;
@@ -204,6 +210,27 @@ export const bodyContent = style({
     paddingBottom: `calc(96px + ${safeArea.bottom})`,
 });
 
+/** Clears the native prominent glass CTA (iOS 26), whose height UIKit reports. */
+export const bodyContentNativeFooter = style([
+    bodyContent,
+    {
+        paddingBottom: `calc(var(${NATIVE_BOTTOM_ACTION_HEIGHT_VAR}, 72px) + ${alias.spacing.m})`,
+    },
+]);
+
+/** The affiliate-link error, floated just above the native CTA. */
+export const nativeFooterError = style({
+    position: "fixed",
+    left: alias.spacing.m,
+    right: alias.spacing.m,
+    bottom: `calc(var(${NATIVE_BOTTOM_ACTION_HEIGHT_VAR}, 72px) + ${alias.spacing.s})`,
+    padding: `${alias.spacing.xs} ${alias.spacing.m}`,
+    borderRadius: alias.cornerRadius.m,
+    backgroundColor: vars.surface.elevated,
+    boxShadow: shadow.elevated,
+    zIndex: 3,
+});
+
 /**
  * Floating footer variant — overrides the sticky DetailSheetFooter so the
  * primary CTA hovers above content with a frosted-glass backdrop, mirroring
@@ -216,7 +243,6 @@ export const floatingFooter = style({
     bottom: 0,
     backgroundColor: glass.fill,
     backdropFilter: "blur(18px) saturate(140%)",
-    WebkitBackdropFilter: "blur(18px) saturate(140%)",
     borderTop: "1px solid rgba(0, 0, 0, 0.04)",
     zIndex: 3,
     "@media": {

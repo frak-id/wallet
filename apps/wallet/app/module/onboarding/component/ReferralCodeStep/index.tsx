@@ -12,6 +12,7 @@ import {
 import { type ReactNode, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
+import { focusWithoutScroll } from "@/module/common/utils/focusWithoutScroll";
 import * as styles from "./index.css";
 
 type ReferralCodeStepProps = {
@@ -108,7 +109,7 @@ export function ReferralCodeStep({
                         length="big"
                         aria-label={t("onboarding.referral.label")}
                         placeholder={t("onboarding.referral.placeholder")}
-                        autoFocus
+                        ref={focusWithoutScroll}
                         autoCapitalize="characters"
                         autoComplete="off"
                         autoCorrect="off"

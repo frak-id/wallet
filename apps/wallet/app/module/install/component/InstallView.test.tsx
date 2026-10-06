@@ -1,4 +1,5 @@
 /** @jsxImportSource react */
+import goldenProofs from "@frak-labs/core-sdk/identity/fixtures";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { onlineManager } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -168,6 +169,29 @@ describe("InstallView — processing branch", () => {
         });
 
         window.location.hash = "";
+    });
+
+    test("a proof without `a` ensures with the anonymous id the proof derives", async ({
+        queryWrapper,
+    }) => {
+        const [fixture] = goldenProofs.fixtures;
+
+        render(
+            <InstallView
+                search={{ m: fixture.merchantId, p: fixture.proof }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() => {
+            expect(mockEnsurePost).toHaveBeenCalledWith({
+                merchantId: fixture.merchantId,
+                anonymousId: fixture.anonymousId,
+                proof: fixture.proof,
+            });
+        });
     });
 
     test("queues the ensure for later and sends a logged-out visitor to register", async ({
@@ -769,6 +793,71 @@ describe("InstallView — install-code branch, post-install detection", () => {
             screen.queryByText("installCode.infoTitle")
         ).not.toBeInTheDocument();
         expect(mockGenerateCode).not.toHaveBeenCalled();
+    });
+
+    test("a proof without `a` mints with the anonymous id the proof derives", async ({
+        queryWrapper,
+    }) => {
+        const [fixture] = goldenProofs.fixtures;
+        window.location.hash = `#p=${fixture.proof}`;
+
+        render(
+            <InstallView
+                search={{ m: fixture.merchantId }}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper: queryWrapper.wrapper }
+        );
+
+        await waitFor(() =>
+            expect(mockGenerateCode).toHaveBeenCalledWith({
+                merchantId: fixture.merchantId,
+                anonymousId: fixture.anonymousId,
+                proof: fixture.proof,
+            })
+        );
+        expect(mockTrackEvent).toHaveBeenCalledWith(
+            "install_page_viewed",
+            expect.objectContaining({ has_anonymous_id: true })
+        );
+    });
+
+    test("a proof without `a` puts the derived anonymous id in the Play Store referrer", async ({
+        queryWrapper,
+    }) => {
+        const [fixture] = goldenProofs.fixtures;
+        window.location.hash = `#p=${fixture.proof}`;
+        const originalUserAgent = navigator.userAgent;
+        Object.defineProperty(navigator, "userAgent", {
+            value: "Mozilla/5.0 (Linux; Android 14)",
+            configurable: true,
+        });
+
+        try {
+            render(
+                <InstallView
+                    search={{ m: fixture.merchantId }}
+                    navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                    processingLayout={Layout}
+                />,
+                { wrapper: queryWrapper.wrapper }
+            );
+
+            const link = await screen.findByText("installCode.download");
+            const href = link.closest("a")?.getAttribute("href") ?? "";
+            const referrer = new URLSearchParams(
+                new URL(href).searchParams.get("referrer") ?? ""
+            );
+            expect(referrer.get("merchantId")).toBe(fixture.merchantId);
+            expect(referrer.get("anonymousId")).toBe(fixture.anonymousId);
+            expect(referrer.get("proof")).toBe(fixture.proof);
+        } finally {
+            Object.defineProperty(navigator, "userAgent", {
+                value: originalUserAgent,
+                configurable: true,
+            });
+        }
     });
 
     test("an offline-paused mint renders the codeless hero, not a code hero with no code", async ({
