@@ -6,7 +6,6 @@ export const toolbar = style({
     top: 0,
     zIndex: 1,
     backdropFilter: "blur(5px)",
-    WebkitBackdropFilter: "blur(5px)",
 });
 
 export const titleBlock = style({

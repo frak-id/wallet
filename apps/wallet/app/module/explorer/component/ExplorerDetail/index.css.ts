@@ -243,7 +243,6 @@ export const floatingFooter = style({
     bottom: 0,
     backgroundColor: glass.fill,
     backdropFilter: "blur(18px) saturate(140%)",
-    WebkitBackdropFilter: "blur(18px) saturate(140%)",
     borderTop: "1px solid rgba(0, 0, 0, 0.04)",
     zIndex: 3,
     "@media": {

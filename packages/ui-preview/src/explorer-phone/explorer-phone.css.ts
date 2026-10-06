@@ -167,7 +167,6 @@ export const glassButton = style({
     borderRadius: alias.cornerRadius.full,
     backgroundColor: "rgba(247, 247, 247, 0.9)",
     backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
     color: vars.icon.secondary,
 });
 
