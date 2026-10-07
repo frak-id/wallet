@@ -8,12 +8,7 @@ import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 declare const __OTA_CHANNEL__: string | null;
 
 /**
- * Outcome of a single OTA pass.
- *
- * `staged` means the new web assets were verified, written to the app cache
- * and swapped into the running asset resolver. The webview keeps serving the
- * bundle it already parsed, so the change only becomes visible after a reload
- * or the next cold start.
+ * `staged`: assets verified and cached; visible after the next cold start.
  */
 export type OtaUpdateResult =
     | { status: "unsupported" }
