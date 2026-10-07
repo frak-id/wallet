@@ -6,10 +6,14 @@ import { Elysia } from "elysia";
  * Captured at module load, so bumping the env var needs a pod restart;
  * `0.0.0` means no hard update is enforced.
  */
-const minVersions = {
-    ios: process.env.MIN_VERSION_IOS ?? "0.0.0",
-    android: process.env.MIN_VERSION_ANDROID ?? "0.0.0",
-} as const;
+export function resolveMinVersions(env: Record<string, string | undefined>) {
+    return {
+        ios: env.MIN_VERSION_IOS ?? "0.0.0",
+        android: env.MIN_VERSION_ANDROID ?? "0.0.0",
+    } as const;
+}
+
+const minVersions = resolveMinVersions(process.env);
 
 const versionResponseSchema = t.Object({
     minVersion: t.Object({
