@@ -4,15 +4,10 @@ import { versionKey } from "../queryKeys/version";
 import { type OtaUpdateResult, stageOtaUpdate } from "../utils/otaUpdater";
 
 /**
- * Runs one CrabNebula OTA pass per app session.
- *
- * A pending update is a full bundle download, so this never refetches on
- * focus or interval — the Rust plugin already probes the CDN on every cold
- * start, which is the cadence that matters.
- *
- * Returns `true` once new assets are staged. They are persisted, so the next
- * cold start picks them up; nothing here reloads the webview, which would
- * drop an in-flight signing or recovery flow.
+ * One OTA pass per session: the only check on the real channel, since the Rust
+ * boot probe only sees `unset`. An update is a full bundle download, so no refetch.
+ * `true` once assets are staged for the next cold start; never reloads the
+ * webview, which would drop an in-flight signing or recovery flow.
  */
 export function useOtaUpdate(): boolean {
     const { data } = useQuery<OtaUpdateResult>({
