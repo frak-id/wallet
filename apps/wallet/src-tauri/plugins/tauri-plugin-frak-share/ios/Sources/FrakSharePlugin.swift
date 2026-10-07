@@ -21,6 +21,8 @@ import UIKit
  * so users always see the rich preview when an `imageUrl` is supplied.
  */
 class FrakSharePlugin: Plugin {
+    private var shareWindow: UIWindow?
+
     @objc public func shareText(_ invoke: Invoke) {
         guard let args = try? invoke.getArgs() else {
             invoke.reject("Missing share payload")
@@ -115,24 +117,27 @@ class FrakSharePlugin: Plugin {
             // so walk connectedScenes instead. Matches the WebAuthn plugin's
             // presentationAnchor pattern — keeps the share sheet reachable on
             // every supported iOS version.
-            let rootViewController = UIApplication.shared.connectedScenes
+            let appWindow = UIApplication.shared.connectedScenes
                 .compactMap { $0 as? UIWindowScene }
                 .flatMap { $0.windows }
-                .first { $0.isKeyWindow }?
-                .rootViewController
-            guard let rootViewController = rootViewController else {
-                invoke.reject("No root view controller available")
+                .first { $0.isKeyWindow }
+            guard let appWindow = appWindow, let scene = appWindow.windowScene else {
+                invoke.reject("No key window available")
+                return
+            }
+            guard self.shareWindow == nil else {
+                invoke.reject("A share sheet is already open")
                 return
             }
 
-            // Walk the presentation chain so we present on the topmost VC.
-            // Calling `present(_:animated:)` on a VC that already has a
-            // `presentedViewController` raises an uncatchable NSException
-            // ("Attempt to present X on Y which is already presenting Z").
-            var presenter: UIViewController = rootViewController
-            while let presented = presenter.presentedViewController {
-                presenter = presented
-            }
+            // Never present from tao's window: it reports an unknown interface orientation,
+            // and iOS 26 then sizes the share sheet for landscape and clips it on iPhone.
+            let presenter = UIViewController()
+            let shareWindow = UIWindow(windowScene: scene)
+            shareWindow.rootViewController = presenter
+            shareWindow.windowLevel = appWindow.windowLevel + 1
+            shareWindow.makeKeyAndVisible()
+            self.shareWindow = shareWindow
 
             let activityController = UIActivityViewController(
                 activityItems: items,
@@ -151,7 +156,10 @@ class FrakSharePlugin: Plugin {
                 popover.permittedArrowDirections = []
             }
 
-            activityController.completionWithItemsHandler = { _, completed, _, error in
+            activityController.completionWithItemsHandler = { [weak self] _, completed, _, error in
+                self?.shareWindow?.isHidden = true
+                self?.shareWindow = nil
+                appWindow.makeKey()
                 if let error = error {
                     invoke.reject(error.localizedDescription)
                     return
