@@ -1,8 +1,8 @@
 import type { EstimatedReward } from "@frak-labs/core-sdk";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Faq } from "./Faq";
-import type { SharingReward } from "./types";
+import { noRewardContext, type SharingReward } from "./types";
 
 const t = (key: string, opts?: Record<string, unknown>): string =>
     key === "sdk.sharingPage.faq.reward.referrerLabel"
@@ -61,5 +61,61 @@ describe("Faq", () => {
         expect(
             screen.queryByText("Reward as ambassador")
         ).not.toBeInTheDocument();
+    });
+
+    it("drops the earning and payout questions when the reward is empty", () => {
+        render(<Faq reward={{ status: "empty" }} t={t} />);
+
+        for (const id of ["1", "4", "5", "6"]) {
+            expect(
+                screen.getByText(`sdk.sharingPage.faq.q${id}`)
+            ).toBeInTheDocument();
+        }
+        for (const id of ["2", "3"]) {
+            expect(
+                screen.queryByText(`sdk.sharingPage.faq.q${id}`)
+            ).not.toBeInTheDocument();
+        }
+    });
+
+    it("renders every question for a ready reward", () => {
+        render(<Faq reward={{ status: "ready" }} t={t} />);
+
+        for (const id of ["1", "2", "3", "4", "5", "6"]) {
+            expect(
+                screen.getByText(`sdk.sharingPage.faq.q${id}`)
+            ).toBeInTheDocument();
+        }
+    });
+
+    it("asks the reward-free calculation question when the reward is empty", () => {
+        const spy = vi.fn(t);
+        render(<Faq reward={{ status: "empty" }} t={spy} />);
+
+        expect(spy).toHaveBeenCalledWith(
+            "sdk.sharingPage.faq.q6",
+            noRewardContext
+        );
+    });
+
+    it("asks the base calculation question when the reward is ready", () => {
+        const spy = vi.fn(t);
+        render(<Faq reward={{ status: "ready" }} t={spy} />);
+
+        const q6 = spy.mock.calls.find(
+            ([key]) => key === "sdk.sharingPage.faq.q6"
+        );
+        expect(q6?.[1]).toBeUndefined();
+    });
+
+    it("asks the base calculation question while the reward is loading", () => {
+        const spy = vi.fn(t);
+        render(<Faq reward={{ status: "loading" }} t={spy} />);
+
+        const q6 = spy.mock.calls.find(
+            ([key]) => key === "sdk.sharingPage.faq.q6"
+        );
+        expect(q6).toBeDefined();
+        expect(q6?.[1]).toBeUndefined();
     });
 });
