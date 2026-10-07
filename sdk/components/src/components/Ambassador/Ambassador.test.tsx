@@ -1367,6 +1367,36 @@ describe("Ambassador", () => {
         expect(computed(root, "text-align")).toBe("start");
     });
 
+    it("keeps its heading sizes under a theme's scoped heading rule, as Elementor's `.elementor-kit-51 h1`", async () => {
+        injectCss(await compileAmbassadorCss());
+        injectCss(
+            ".elementor-kit-51 h1, .elementor-kit-51 h2, .elementor-kit-51 h3 { font-size: 120px; line-height: 3; margin: 40px; letter-spacing: 9px; }"
+        );
+        const { container } = render(
+            <div class="elementor-kit-51">
+                <Ambassador />
+            </div>
+        );
+
+        const title = container.querySelector(".frak-ambassador__hero-title");
+        const titleSize = Number.parseFloat(computed(title, "font-size"));
+        expect(titleSize).not.toBe(120);
+        expect(
+            Number.parseFloat(computed(title, "line-height")) / titleSize
+        ).toBeCloseTo(1.1);
+        expect(computed(title, "margin-top")).toBe("0px");
+        expect(computed(title, "letter-spacing")).not.toBe("9px");
+        const steps = container.querySelector(".frak-ambassador__steps-title");
+        expect(computed(steps, "font-size")).not.toBe("120px");
+        const reward = container.querySelector(
+            ".frak-ambassador__reward-heading"
+        );
+        expect(computed(reward, "font-size")).toBe("16px");
+        const step = container.querySelector(".frak-ambassador__step-title");
+        expect(computed(step, "font-size")).toBe("16.8px");
+        expect(computed(step, "margin-top")).toBe("0px");
+    });
+
     it("keeps the hero photo and badge sizes under a rich-text rule on images, as when placed in a Shopify page body", async () => {
         injectCss(await compileAmbassadorCss());
         injectCss(
