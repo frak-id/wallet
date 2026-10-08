@@ -94,19 +94,25 @@ class FrakUpdaterPlugin: Plugin {
 
     // MARK: - Internals
 
-    private func openAppStorePage(completion: @escaping (Bool) -> Void) {
-        // `itms-apps://` opens the native App Store app directly; the
-        // `https://apps.apple.com/...` fallback is only triggered on
-        // simulators or unusual configurations where the scheme isn't
-        // registered. Both rely on the bundle id resolution Apple performs
-        // server-side, so no app id needs to be hard-coded.
-        guard let bundleId = Bundle.main.bundleIdentifier else {
-            completion(false)
-            return
-        }
+    /// App Store ids by bundle id, hard-coded so the button works when Apple's lookup is down.
+    /// `/app/bundleId/<id>` URLs open a blank App Store page; only the numeric id resolves.
+    private static let appStoreIds = ["id.frak.wallet": "6759159306"]
 
-        let primary = URL(string: "itms-apps://itunes.apple.com/app/bundleId/\(bundleId)")
-        let fallback = URL(string: "https://apps.apple.com/app/bundleId/\(bundleId)")
+    private func openAppStorePage(completion: @escaping (Bool) -> Void) {
+        let primary: URL?
+        let fallback: URL?
+        if let bundleId = Bundle.main.bundleIdentifier,
+            let appStoreId = Self.appStoreIds[bundleId]
+        {
+            primary = URL(string: "itms-apps://apps.apple.com/app/id\(appStoreId)")
+            // No storefront means US, where the app is not listed.
+            fallback = URL(string: "https://apps.apple.com/fr/app/id\(appStoreId)")
+        } else {
+            // TestFlight-only variants (`id.frak.wallet.dev`) have no App Store listing.
+            // Not in LSApplicationQueriesSchemes, so it skips the canOpenURL probe.
+            primary = nil
+            fallback = URL(string: "itms-beta://")
+        }
 
         DispatchQueue.main.async {
             if let primary = primary, UIApplication.shared.canOpenURL(primary) {
