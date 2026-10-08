@@ -4,7 +4,12 @@ import goldenProofs from "@frak-labs/core-sdk/identity/fixtures" with {
 };
 import type { Page } from "@playwright/test";
 import { expect, test } from "../fixtures";
-import { CLIENT_ID, MERCHANT_ID } from "../mocks/api";
+import {
+    CLIENT_ID,
+    MERCHANT_ID,
+    mockNoReward,
+    REFERRER_REWARD_EUR,
+} from "../mocks/api";
 import { RETURN_SCHEME, recordHostResults } from "../mocks/nativeHost";
 
 /**
@@ -352,4 +357,98 @@ test.describe("Install page — short link", () => {
             proof: fixture.proof,
         });
     });
+});
+
+test.describe("Install page — advertised reward", () => {
+    const TITLE = {
+        en: new RegExp(`^Don't lose your ${REFERRER_REWARD_EUR}\\s?€`),
+        fr: new RegExp(`^Ne perds pas tes ${REFERRER_REWARD_EUR}\\s?€`),
+    } as const;
+
+    for (const lng of ["en", "fr"] as const) {
+        test(`names the amount in ${lng}`, async ({
+            page,
+            injectAuthState,
+        }) => {
+            await page.setViewportSize(VIEWPORTS.iphone);
+            await mockInstallCode(page);
+            await openLoggedOut(page, installUrl({ lng }), injectAuthState);
+            await settle(page);
+
+            await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+                TITLE[lng]
+            );
+        });
+    }
+});
+
+test.describe("Install page — no advertisable reward", () => {
+    const COPY = {
+        en: {
+            title: "One last step!",
+            installed: "You're all set. Open the app to continue.",
+            openWallet: "Open Frak",
+        },
+        fr: {
+            title: "Plus qu'une étape !",
+            installed: "C'est prêt. Ouvre l'app pour continuer.",
+            openWallet: "Ouvrir Frak",
+        },
+    } as const;
+
+    // An amount interpolated as "" strands the words that surround it.
+    const STRANDED = /lose your\s*!|perds pas tes\s+!|claim\s*$|récupère\s*$/;
+
+    for (const lng of ["en", "fr"] as const) {
+        test(`names no amount in ${lng}`, async ({ page, injectAuthState }) => {
+            await page.setViewportSize(VIEWPORTS.iphone);
+            await mockInstallCode(page);
+            await mockNoReward(page);
+            await openLoggedOut(page, installUrl({ lng }), injectAuthState);
+            await settle(page);
+
+            const heading = page.getByRole("heading", { level: 1 });
+            await expect(heading).toContainText(COPY[lng].title);
+            await expect(heading).not.toHaveText(STRANDED);
+        });
+
+        test(`names no amount without a code in ${lng}`, async ({
+            page,
+            injectAuthState,
+        }) => {
+            await page.setViewportSize(VIEWPORTS.iphone);
+            await mockInstallCode(page);
+            await mockNoReward(page);
+            await openLoggedOut(
+                page,
+                installUrl({ lng, a: undefined }),
+                injectAuthState
+            );
+
+            await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+                COPY[lng].title
+            );
+        });
+
+        test(`offers a plain open button once installed in ${lng}`, async ({
+            page,
+            injectAuthState,
+        }) => {
+            await page.setViewportSize(VIEWPORTS.iphone);
+            await mockInstallCode(page);
+            await mockNoReward(page);
+            await openLoggedOut(
+                page,
+                `${installUrl({ lng })}#probe=ok&installed=1`,
+                injectAuthState
+            );
+
+            await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+                COPY[lng].installed
+            );
+            await expect(page.locator("footer a")).toHaveText(
+                COPY[lng].openWallet
+            );
+        });
+    }
 });

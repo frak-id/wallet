@@ -29,6 +29,10 @@ const t = (key: string, opts?: Record<string, unknown>): string => {
             return opts?.context === "noReward"
                 ? "This brand has no active reward, so no amount is shown."
                 : "The amount shown is the maximum reward you can earn.";
+        case "sdk.sharingPage.reward.tagline":
+            return opts?.context === "noReward"
+                ? "Tagline-noReward"
+                : "Tagline-base";
         case "sdk.sharingPage.products.label":
             return "Choose one product to share";
         default:
@@ -319,10 +323,29 @@ describe("SharingPage — reward-free hero", () => {
         ).toBeInTheDocument();
     });
 
+    it("selects the reward-free tagline and renders no step list", () => {
+        render(<SharingPage {...baseProps} reward={emptyReward} />);
+        expect(screen.getByText("Tagline-noReward")).toBeInTheDocument();
+        expect(screen.queryByText("Tagline-base")).not.toBeInTheDocument();
+        expect(
+            screen.queryByText("sdk.sharingPage.steps.1.title")
+        ).not.toBeInTheDocument();
+    });
+
+    it("keeps the base tagline and the step list for a real reward", () => {
+        render(<SharingPage {...baseProps} />);
+        expect(screen.getByText("Tagline-base")).toBeInTheDocument();
+        expect(
+            screen.getByText("sdk.sharingPage.steps.1.title")
+        ).toBeInTheDocument();
+    });
+
     it("renders the skeleton, not the reward-free copy, while still resolving", () => {
         render(<SharingPage {...baseProps} reward={{ status: "loading" }} />);
         expect(
             screen.queryByText("Earn rewards on every purchase")
         ).not.toBeInTheDocument();
+        expect(screen.getByText("Tagline-base")).toBeInTheDocument();
+        expect(screen.queryByText("Tagline-noReward")).not.toBeInTheDocument();
     });
 });

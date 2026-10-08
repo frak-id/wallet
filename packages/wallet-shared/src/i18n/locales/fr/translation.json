@@ -835,8 +835,10 @@
     },
     "installCode": {
         "title": "Ne perds pas tes {{ estimatedReward }} !\nCopie ton code de récompense",
+        "title_noReward": "Plus qu'une étape !\nCopie ton code de récompense",
         "description": "Colle-le à l'ouverture de l'app. Il te permettra de récupérer tes gains une fois connecté·e.",
         "codelessTitle": "Ne perds pas tes {{ estimatedReward }} !",
+        "codelessTitle_noReward": "Plus qu'une étape !",
         "codelessDescription": "Télécharge l'app et connecte-toi pour récupérer tes gains.",
         "copyCode": "Copier le code",
         "codeCopied": "Code de récompense copié !",
@@ -850,7 +852,9 @@
         "installedMerchant": "Connecté à {{ merchantName }}",
         "installedCodeToggle": "Ou saisis ce code manuellement",
         "openWallet": "Ouvre Frak et récupère {{ estimatedReward }}",
+        "openWallet_noReward": "Ouvrir Frak",
         "installedHeadline": "C'est prêt. Ouvre l'app pour récupérer {{ estimatedReward }}.",
+        "installedHeadline_noReward": "C'est prêt. Ouvre l'app pour continuer.",
         "dismiss": "Fermer",
         "referral": {
             "title": "Ton code de parrainage",

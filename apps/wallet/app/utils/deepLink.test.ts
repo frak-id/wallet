@@ -7,6 +7,7 @@ import {
     expect,
     test,
 } from "@/tests/vitest-fixtures";
+import { initDeepLinks } from "./deepLink";
 
 type OpenUrlHandler = (urls: string[]) => void;
 
@@ -26,7 +27,9 @@ const getSafeSessionMock = vi.fn<() => { token: string } | null | undefined>(
     () => null
 );
 
-const mockEnsurePost = vi.fn(() => Promise.resolve({ error: null }));
+const mockEnsurePost = vi.hoisted(() =>
+    vi.fn(() => Promise.resolve({ error: null }))
+);
 
 const platformMocks = vi.hoisted(() => ({
     isAndroid: vi.fn(() => false),
@@ -85,7 +88,6 @@ describe("initDeepLinks", () => {
     test("should skip initialization when not running in Tauri", async () => {
         platformMocks.isTauri.mockReturnValue(false);
 
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -99,7 +101,6 @@ describe("initDeepLinks", () => {
         vi.useFakeTimers();
         getCurrentMock.mockResolvedValue(["frakwallet://pair?id=pair-123"]);
 
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -113,7 +114,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should handle warm-start send deep link", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -132,7 +132,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should route wallet deep link to /wallet", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -152,7 +151,6 @@ describe("initDeepLinks", () => {
             "https://wallet-dev.frak.id/pair?id=pair-456",
         ]);
 
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -166,7 +164,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should handle warm-start HTTPS App Link", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -185,7 +182,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should handle HTTPS App Link with /pairing path (QR code format)", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -208,7 +204,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should handle frakwallet://pairing custom scheme", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -227,7 +222,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should handle frakwallet-dev:// custom scheme (dev variant)", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -246,7 +240,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should handle compact /p/<id> HTTPS App Link", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -268,7 +261,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should handle compact frakwallet://p/<id> custom scheme", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -287,7 +279,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should handle /explorer/<merchantId> HTTPS App Link", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -307,7 +298,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should handle frakwallet://explorer/<merchantId> custom scheme", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -325,7 +315,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should fall back to /explorer when no merchantId in path", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -343,7 +332,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should ignore unknown HTTPS hosts", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -358,7 +346,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should navigate to /install for install deep link when authenticated", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -379,7 +366,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should forward the install proof so a fragment is not needed", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -411,7 +397,6 @@ describe("initDeepLinks", () => {
     // here instead of to a browser. Reading search params alone drops the proof on
     // exactly the flow the sharing page exists to serve.
     test("should recover the proof from a #p= fragment on an https app link", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -436,7 +421,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should recover the proof from a #p= fragment on a custom scheme link", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -463,7 +447,6 @@ describe("initDeepLinks", () => {
     // Proofs are base64url and can carry `=` padding, so the fragment has to be
     // parsed as a query string rather than split on `=`.
     test("should round-trip a percent-encoded proof out of the fragment", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
         const proof = "a+b/c=d";
 
@@ -484,7 +467,6 @@ describe("initDeepLinks", () => {
     });
 
     test("should prefer the search param when a link carries both carriers", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -504,7 +486,6 @@ describe("initDeepLinks", () => {
     });
 
     test("omits the proof entirely when the link carries none", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -535,7 +516,6 @@ describe("initDeepLinks", () => {
     });
 
     test("carries the proof over an https app link too", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -574,7 +554,6 @@ describe("install deep link — ref", () => {
 
     test("logged out: routes to /register with the code, not /install", async () => {
         getSafeSessionMock.mockReturnValue(null);
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -592,7 +571,6 @@ describe("install deep link — ref", () => {
 
     test("logged in: routes to the redeem page with the code", async () => {
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -610,7 +588,6 @@ describe("install deep link — ref", () => {
 
     test("with a merchant pair: keeps /install and forwards the code", async () => {
         getSafeSessionMock.mockReturnValue(null);
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -640,7 +617,6 @@ describe("short install deep link — /i", () => {
     });
 
     async function open(url: string) {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
         await initDeepLinks(navigate);
         if (!openUrlHandler)
@@ -695,7 +671,6 @@ describe("short referral deep link — /r/<code>", () => {
     });
 
     async function open(url: string) {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
         await initDeepLinks(navigate);
         if (!openUrlHandler)
@@ -764,7 +739,6 @@ describe("deep link auth gate", () => {
     });
 
     test("should redirect to /register when unauthenticated", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -785,7 +759,6 @@ describe("deep link auth gate", () => {
     });
 
     test("should store pending navigation action when unauthenticated", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -805,7 +778,6 @@ describe("deep link auth gate", () => {
     });
 
     test("should store pending navigation action for pairing when unauthenticated", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -834,7 +806,6 @@ describe("deep link auth gate", () => {
     test("should store pending navigation action for explorer when unauthenticated", async () => {
         getSafeSessionMock.mockReturnValue(null);
 
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -857,7 +828,6 @@ describe("deep link auth gate", () => {
     });
 
     test("should navigate to /install for install deep link when unauthenticated (public action)", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -880,7 +850,6 @@ describe("deep link auth gate", () => {
     });
 
     test("should allow recovery deep link without auth", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -912,7 +881,6 @@ describe("monerium OAuth callback", () => {
     });
 
     test("should handle HTTPS App Link for monerium callback with code and state", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -933,7 +901,6 @@ describe("monerium OAuth callback", () => {
     });
 
     test("should handle custom scheme monerium-callback with code and state", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -954,7 +921,6 @@ describe("monerium OAuth callback", () => {
     });
 
     test("should handle monerium callback with only code parameter", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -973,7 +939,6 @@ describe("monerium OAuth callback", () => {
     });
 
     test("should handle monerium callback with only state parameter", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -992,7 +957,6 @@ describe("monerium OAuth callback", () => {
     });
 
     test("should handle monerium callback with no parameters", async () => {
-        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);

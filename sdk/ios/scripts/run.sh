@@ -39,7 +39,7 @@ set_ios_flags() {
 		die "Could not locate the iphonesimulator SDK. Is Xcode installed and selected?"
 	IOS_FLAGS=(
 		--sdk "$sdk_path"
-		-Xswiftc -target -Xswiftc arm64-apple-ios15.0-simulator
+		--triple arm64-apple-ios15.0-simulator
 	)
 }
 

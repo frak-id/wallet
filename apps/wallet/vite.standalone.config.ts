@@ -14,8 +14,8 @@ import {
     lightningCssConfig,
     onwarn,
     preconnectOrigins,
-} from "../../packages/dev-tooling";
-import { getDefineProps, readDefine } from "./vite.defines";
+} from "../../packages/dev-tooling/index.ts";
+import { getDefineProps, readDefine } from "./vite.defines.ts";
 
 /**
  * Standalone build for `/sharing` and `/install` — the same `SharingView` /

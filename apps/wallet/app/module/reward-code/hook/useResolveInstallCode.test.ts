@@ -9,8 +9,9 @@ import {
     expect,
     test,
 } from "@/tests/vitest-fixtures";
+import { useResolveInstallCode } from "./useResolveInstallCode";
 
-const mockResolvePost = vi.fn();
+const mockResolvePost = vi.hoisted(() => vi.fn());
 
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const actual =
@@ -58,9 +59,6 @@ describe("useResolveInstallCode", () => {
             error: null,
         });
 
-        const { useResolveInstallCode } = await import(
-            "./useResolveInstallCode"
-        );
         const { result } = renderHook(() => useResolveInstallCode(), {
             wrapper: queryWrapper.wrapper,
         });
@@ -88,9 +86,6 @@ describe("useResolveInstallCode", () => {
             error: null,
         });
 
-        const { useResolveInstallCode } = await import(
-            "./useResolveInstallCode"
-        );
         const { result } = renderHook(() => useResolveInstallCode(), {
             wrapper: queryWrapper.wrapper,
         });
@@ -118,9 +113,6 @@ describe("useResolveInstallCode", () => {
             error: null,
         });
 
-        const { useResolveInstallCode } = await import(
-            "./useResolveInstallCode"
-        );
         const { result } = renderHook(() => useResolveInstallCode(), {
             wrapper: queryWrapper.wrapper,
         });

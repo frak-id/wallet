@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import type { ComponentType } from "react";
 import { vi } from "vitest";
 import type {
     NotificationPermissionStatus,
@@ -12,6 +11,7 @@ import {
     test,
     type WalletTestFixtures,
 } from "@/tests/vitest-fixtures";
+import { ProfilePreferencesCard } from "./index";
 
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({
@@ -106,10 +106,6 @@ vi.mock("@/module/biometrics/utils/biometrics", () => ({
     authenticateWithBiometrics: vi.fn(),
 }));
 
-const ProfilePreferencesCardPromise = import("./index").then(
-    (m) => m.ProfilePreferencesCard
-);
-
 describe("ProfilePreferencesCard › Tauri NotificationRow", () => {
     beforeEach(({ queryWrapper }: WalletTestFixtures) => {
         queryWrapper.client.clear();
@@ -128,8 +124,6 @@ describe("ProfilePreferencesCard › Tauri NotificationRow", () => {
             hasBackendToken: true,
         });
 
-        const ProfilePreferencesCard =
-            (await ProfilePreferencesCardPromise) as ComponentType;
         render(<ProfilePreferencesCard />, {
             wrapper: queryWrapper.wrapper,
         });
@@ -156,8 +150,6 @@ describe("ProfilePreferencesCard › Tauri NotificationRow", () => {
             hasBackendToken: false,
         });
 
-        const ProfilePreferencesCard =
-            (await ProfilePreferencesCardPromise) as ComponentType;
         render(<ProfilePreferencesCard />, {
             wrapper: queryWrapper.wrapper,
         });
@@ -184,8 +176,6 @@ describe("ProfilePreferencesCard › Tauri NotificationRow", () => {
             hasBackendToken: false,
         });
 
-        const ProfilePreferencesCard =
-            (await ProfilePreferencesCardPromise) as ComponentType;
         render(<ProfilePreferencesCard />, {
             wrapper: queryWrapper.wrapper,
         });

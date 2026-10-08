@@ -55,6 +55,9 @@ const contextT = (key: string, opts?: Record<string, unknown>) =>
 const TITLE_KEY = "sdk.sharingPage.confirmation.title";
 const POPUP_TITLE_KEY = "sdk.sharingPage.confirmation.cardPopupTitle";
 const POPUP_DESC_KEY = "sdk.sharingPage.confirmation.cardPopupDescription";
+const SUBTITLE_KEY = "sdk.sharingPage.confirmation.subtitle";
+const benefitTitle = (key: string) =>
+    `sdk.sharingPage.confirmation.benefits.${key}.title`;
 const noReward = (key: string) => `${key}_noReward`;
 
 function renderWithReward(reward: SharingReward) {
@@ -74,6 +77,7 @@ function renderWithReward(reward: SharingReward) {
 
 function expectRewardFree() {
     expect(screen.getByText(noReward(TITLE_KEY))).toBeInTheDocument();
+    expect(screen.getByText(noReward(SUBTITLE_KEY))).toBeInTheDocument();
     expect(screen.getByText(noReward(POPUP_TITLE_KEY))).toBeInTheDocument();
     expect(screen.getByText(noReward(POPUP_DESC_KEY))).toBeInTheDocument();
     expect(
@@ -83,6 +87,7 @@ function expectRewardFree() {
 
 function expectRewarded() {
     expect(screen.getByText(TITLE_KEY)).toBeInTheDocument();
+    expect(screen.getByText(SUBTITLE_KEY)).toBeInTheDocument();
     expect(screen.getByText(POPUP_TITLE_KEY)).toBeInTheDocument();
     expect(screen.getByText(POPUP_DESC_KEY)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: CTA_KEY })).toBeInTheDocument();
@@ -103,4 +108,25 @@ describe("PostShareConfirmation reward-free wording", () => {
         renderWithReward({ status: "ready" });
         expectRewarded();
     });
+});
+
+describe("PostShareConfirmation benefits", () => {
+    it("keeps only the secure-wallet benefit once the reward settled empty", () => {
+        renderWithReward({ status: "empty" });
+
+        expect(screen.getByText(benefitTitle("wallet"))).toBeInTheDocument();
+        expect(screen.queryByText(benefitTitle("notify"))).toBeNull();
+        expect(screen.queryByText(benefitTitle("cashout"))).toBeNull();
+    });
+
+    it.each<SharingReward>([{ status: "loading" }, { status: "ready" }])(
+        "shows all three benefits while the reward is $status",
+        (reward) => {
+            renderWithReward(reward);
+
+            for (const key of ["wallet", "notify", "cashout"]) {
+                expect(screen.getByText(benefitTitle(key))).toBeInTheDocument();
+            }
+        }
+    );
 });

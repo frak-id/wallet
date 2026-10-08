@@ -14,22 +14,29 @@ import { noRewardContext, type SharingReward, type SharingT } from "./types";
 /**
  * The FAQ entries, in display order. `id` is the i18n key suffix (`faq.q1`), not
  * the array index — these keys are a merchant-override surface and must stay
- * stable across reordering. `slot` names extra content rendered under the answer.
+ * stable across reordering. `slot` names extra content rendered under the answer;
+ * `rewardOnly` entries are dropped when the merchant has no reward to describe.
  */
 const FAQ_ITEMS = [
     { id: "1" },
-    { id: "2" },
-    { id: "3" },
+    { id: "2", rewardOnly: true },
+    { id: "3", rewardOnly: true },
     { id: "4" },
     { id: "5" },
     { id: "6", slot: "rewardBreakdown" },
 ] as const satisfies readonly {
     id: string;
     slot?: "rewardBreakdown";
+    rewardOnly?: true;
 }[];
 
 export function Faq({ reward, t }: { reward: SharingReward; t: SharingT }) {
     const breakdown = reward.status === "ready" ? reward.breakdown : undefined;
+    const isEmpty = reward.status === "empty";
+    const emptyContext = isEmpty ? noRewardContext : undefined;
+    const items = FAQ_ITEMS.filter(
+        (item) => !(isEmpty && "rewardOnly" in item)
+    );
 
     return (
         <Stack as="section" space="m" className={styles.faqWrapper}>
@@ -37,14 +44,14 @@ export function Faq({ reward, t }: { reward: SharingReward; t: SharingT }) {
                 {t("sdk.sharingPage.faq.title")}
             </Text>
             <Accordion type="single" collapsible className={styles.faqList}>
-                {FAQ_ITEMS.map((item) => (
+                {items.map((item) => (
                     <AccordionItem
                         key={item.id}
                         value={`faq-${item.id}`}
                         className={styles.faqItem}
                     >
                         <AccordionTrigger className={styles.faqTrigger}>
-                            {t(`sdk.sharingPage.faq.q${item.id}`)}
+                            {t(`sdk.sharingPage.faq.q${item.id}`, emptyContext)}
                             <Plus
                                 size={20}
                                 className={`${styles.faqIcon} ${styles.faqIconPlus}`}
@@ -58,9 +65,7 @@ export function Faq({ reward, t }: { reward: SharingReward; t: SharingT }) {
                             <div className={styles.faqContent}>
                                 {t(
                                     `sdk.sharingPage.faq.a${item.id}`,
-                                    reward.status === "empty"
-                                        ? noRewardContext
-                                        : undefined
+                                    emptyContext
                                 )}
                                 {"slot" in item &&
                                     item.slot === "rewardBreakdown" &&

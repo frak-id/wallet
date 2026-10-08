@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { useWalletSessionGuard } from "@/module/common/hook/useWalletSessionGuard";
 
 const mocks = vi.hoisted(() => {
     // Mutable auth-expired callback so individual tests can trigger it.
@@ -115,7 +116,8 @@ vi.mock("zustand", async (importOriginal) => {
     };
 });
 
-vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+vi.mock("@frak-labs/app-essentials/utils/platform", async (importOriginal) => ({
+    ...(await importOriginal<object>()),
     get IS_TAURI() {
         return mocks.IS_TAURI;
     },
@@ -143,7 +145,6 @@ beforeEach(() => {
     mocks.modalRef.current = null;
     mocks.lastRemoteAuthenticator = null;
     vi.useFakeTimers();
-    vi.resetModules();
 });
 
 afterEach(() => {
@@ -152,10 +153,6 @@ afterEach(() => {
 
 describe("useWalletSessionGuard", () => {
     test("does nothing when session is healthy", async () => {
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
-
         renderHook(() => useWalletSessionGuard());
 
         expect(mocks.openModal).not.toHaveBeenCalled();
@@ -166,10 +163,6 @@ describe("useWalletSessionGuard", () => {
         mocks.expiresWithinMs.mockReturnValue(true); // within 7-day window
         // isExpired stays false (still valid)
 
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
-
         renderHook(() => useWalletSessionGuard());
 
         expect(mocks.bannerShow).toHaveBeenCalledTimes(1);
@@ -178,10 +171,6 @@ describe("useWalletSessionGuard", () => {
 
     test("opens blocking modal when token is expired", async () => {
         mocks.isExpired.mockReturnValue(true);
-
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
 
         renderHook(() => useWalletSessionGuard());
 
@@ -195,10 +184,6 @@ describe("useWalletSessionGuard", () => {
         // Token is healthy locally — only the server 401 triggers the modal.
         mocks.isExpired.mockReturnValue(false);
         mocks.expiresWithinMs.mockReturnValue(false);
-
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
 
         renderHook(() => useWalletSessionGuard());
 
@@ -220,10 +205,6 @@ describe("useWalletSessionGuard", () => {
             type: "distant-webauthn",
         });
 
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
-
         renderHook(() => useWalletSessionGuard());
 
         // A paired session can't satisfy a local biometric prompt, so neither
@@ -240,10 +221,6 @@ describe("useWalletSessionGuard", () => {
             type: "distant-webauthn",
             authenticatorId: "cred-abc",
         });
-
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
 
         renderHook(() => useWalletSessionGuard());
 
@@ -269,10 +246,6 @@ describe("useWalletSessionGuard", () => {
         });
         mocks.lastRemoteAuthenticator = { authenticatorId: "cred-fallback" };
 
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
-
         renderHook(() => useWalletSessionGuard());
 
         act(() => {
@@ -295,10 +268,6 @@ describe("useWalletSessionGuard", () => {
             authenticatorId: "ecdsa-demo",
         });
 
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
-
         renderHook(() => useWalletSessionGuard());
 
         act(() => {
@@ -320,10 +289,6 @@ describe("useWalletSessionGuard", () => {
         });
         mocks.lastRemoteAuthenticator = null;
 
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
-
         renderHook(() => useWalletSessionGuard());
 
         act(() => {
@@ -339,10 +304,6 @@ describe("useWalletSessionGuard", () => {
         mocks.isLocked = true;
         mocks.isExpired.mockReturnValue(true); // Would normally open modal
 
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
-
         renderHook(() => useWalletSessionGuard());
 
         expect(mocks.openModal).not.toHaveBeenCalled();
@@ -353,10 +314,6 @@ describe("useWalletSessionGuard", () => {
         mocks.getSafeSession.mockReturnValue(null);
         mocks.isExpired.mockReturnValue(true);
 
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
-
         renderHook(() => useWalletSessionGuard());
 
         expect(mocks.openModal).not.toHaveBeenCalled();
@@ -365,10 +322,6 @@ describe("useWalletSessionGuard", () => {
     test("re-evaluates on visibilitychange and opens modal when expired", async () => {
         // Start healthy
         mocks.isExpired.mockReturnValue(false);
-
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
 
         renderHook(() => useWalletSessionGuard());
 
@@ -392,10 +345,6 @@ describe("useWalletSessionGuard", () => {
     test("suppresses a second prompt while a reauth modal is open", async () => {
         mocks.isExpired.mockReturnValue(true);
 
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
-
         renderHook(() => useWalletSessionGuard());
 
         // First evaluation opens the modal (modalRef now holds "reauth").
@@ -412,10 +361,6 @@ describe("useWalletSessionGuard", () => {
 
     test("prompts again after the modal closes (any dismiss path)", async () => {
         mocks.isExpired.mockReturnValue(true);
-
-        const { useWalletSessionGuard } = await import(
-            "@/module/common/hook/useWalletSessionGuard"
-        );
 
         renderHook(() => useWalletSessionGuard());
 

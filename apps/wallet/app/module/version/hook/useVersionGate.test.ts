@@ -1,6 +1,8 @@
+import type { QueryClient } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import { vi } from "vitest";
+import { afterEach, vi } from "vitest";
 import { useVersionGate } from "@/module/version/hook/useVersionGate";
+import { versionKey } from "@/module/version/queryKeys/version";
 import type { NativeUpdateStatus } from "@/module/version/utils/nativeUpdater";
 import {
     beforeEach,
@@ -61,6 +63,166 @@ const idleNativeStatus: NativeUpdateStatus = {
     status: "up_to_date",
     currentVersion: "1.2.3",
 };
+
+async function waitForBothQueries(client: QueryClient) {
+    await waitFor(() => {
+        expect(client.getQueryData(versionKey.minSupported)).toBeDefined();
+        expect(client.getQueryData(versionKey.nativeStatus)).toBeDefined();
+    });
+}
+
+function setAndroidFloor(floor: string) {
+    backendVersionGetMock.mockResolvedValue({
+        data: { minVersion: { ios: "0.0.0", android: floor } },
+    });
+}
+
+describe("useVersionGate hard floor", () => {
+    beforeEach(({ queryWrapper }: WalletTestFixtures) => {
+        queryWrapper.client.clear();
+        checkNativeUpdateMock.mockReset().mockResolvedValue(idleNativeStatus);
+        listenToNativeUpdateStatusMock.mockReset().mockResolvedValue(null);
+        isAndroidMock.mockReset().mockReturnValue(true);
+        isIosMock.mockReset().mockReturnValue(false);
+        isTauriMock.mockReset().mockReturnValue(true);
+        backendVersionGetMock.mockReset();
+        vi.stubEnv("APP_VERSION", "1.0.98");
+    });
+
+    afterEach(() => {
+        vi.unstubAllEnvs();
+    });
+
+    test("gates on the build version when the native lookup returns no version", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        setAndroidFloor("1.0.99");
+        checkNativeUpdateMock.mockResolvedValue({
+            status: "up_to_date",
+            currentVersion: "",
+        });
+
+        const { result } = renderHook(() => useVersionGate(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(result.current).toEqual({
+                kind: "hard_update",
+                currentVersion: "1.0.98",
+                minVersion: "1.0.99",
+            });
+        });
+    });
+
+    test("gates on the build version when the native lookup rejects", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        setAndroidFloor("1.0.99");
+        checkNativeUpdateMock.mockRejectedValue(new Error("offline"));
+
+        const { result } = renderHook(() => useVersionGate(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(result.current.kind).toBe("hard_update");
+        });
+    });
+
+    test("prefers the build version over the native one", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        setAndroidFloor("1.0.99");
+        checkNativeUpdateMock.mockResolvedValue({
+            status: "up_to_date",
+            currentVersion: "2.0.0",
+        });
+
+        const { result } = renderHook(() => useVersionGate(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(result.current).toMatchObject({
+                kind: "hard_update",
+                currentVersion: "1.0.98",
+            });
+        });
+    });
+
+    test("does not gate a build at or above the floor", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        setAndroidFloor("1.0.98");
+        checkNativeUpdateMock.mockRejectedValue(new Error("offline"));
+
+        const { result } = renderHook(() => useVersionGate(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(
+                queryWrapper.client.getQueryData(versionKey.minSupported)
+            ).toBeDefined();
+        });
+        expect(result.current.kind).toBe("idle");
+    });
+
+    test("never gates on a 0.0.0 floor", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        setAndroidFloor("0.0.0");
+        vi.stubEnv("APP_VERSION", "0.0.0");
+
+        const { result } = renderHook(() => useVersionGate(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitForBothQueries(queryWrapper.client);
+        expect(result.current.kind).toBe("idle");
+    });
+
+    test("falls back to the native version when APP_VERSION is a commit hash", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        setAndroidFloor("1.0.99");
+        vi.stubEnv("APP_VERSION", "a7117ad");
+        checkNativeUpdateMock.mockResolvedValue({
+            status: "up_to_date",
+            currentVersion: "1.1.0",
+        });
+
+        const { result } = renderHook(() => useVersionGate(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitForBothQueries(queryWrapper.client);
+        expect(result.current.kind).toBe("idle");
+    });
+
+    test("still offers the soft update from native data above the floor", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        setAndroidFloor("1.0.90");
+        checkNativeUpdateMock.mockResolvedValue({
+            status: "available",
+            currentVersion: "1.0.98",
+            storeVersion: "1.0.99",
+        });
+
+        const { result } = renderHook(() => useVersionGate(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(result.current).toEqual({
+                kind: "soft_update",
+                storeVersion: "1.0.99",
+            });
+        });
+    });
+});
 
 describe("useVersionGate", () => {
     beforeEach(({ queryWrapper }: WalletTestFixtures) => {

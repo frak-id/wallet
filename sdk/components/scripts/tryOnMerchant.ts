@@ -7,7 +7,7 @@ import { chromium, type Route } from "@playwright/test";
 const USAGE =
     "Usage: bun run try:merchant <store-page-url> [--image <url>|none] [--with-content] [--shot] [--password <storefront password>]\n" +
     "Opens the store with the local cdn/ build in place of the published SDK and shows <frak-ambassador> in place of the page content.\n" +
-    "The hero photo defaults to the page's og:image; `--image none` shows the collapsed frame.\n" +
+    "The hero photo defaults to the merchant's dashboard photo, or the page's og:image on a store without Frak; `--image none` shows the collapsed frame there.\n" +
     "The theme is sampled from the bare page, as on a real dedicated page; `--with-content` samples it with the store's content still there.";
 
 const { values, positionals } = parseArgs({
@@ -63,6 +63,10 @@ const context = await browser.newContext({
     // Stores negotiate their language, and our merchants are French.
     locale: "fr-FR",
     viewport: shot ? { width: 1280, height: 900 } : null,
+    // Some stores serve broken assets to a "HeadlessChrome" user agent.
+    userAgent: shot
+        ? `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${browser.version()} Safari/537.36`
+        : undefined,
 });
 await context.route("https://sdk.frak.id/components.js*", serveLocal);
 await context.route(
@@ -98,6 +102,10 @@ if (new URL(page.url()).pathname === "/password") {
         });
     await page.goto(url, { waitUntil: "load", timeout: 60_000 });
 }
+// Optimisation plugins hold CSS and scripts (Frak's included) until the first interaction.
+await page.mouse.move(10, 10);
+await page.mouse.wheel(0, 1);
+await page.waitForTimeout(2000);
 const hasFrak = await page.evaluate(() => "FrakSetup" in window);
 if (!hasFrak) {
     // A store without Frak: load the SDK ourselves so the layout and theme still show.
@@ -128,7 +136,7 @@ const placed = await page.evaluate(
 // region gives way to a centred column, site header and footer stay.
 if (!placed)
     await page.evaluate(
-        ([image, keepContent]) => {
+        ([image, keepContent, useOgImage]) => {
             const chromeSelector =
                 "header, footer, [role=banner], [role=contentinfo], .skip-link";
             const host =
@@ -177,11 +185,14 @@ if (!placed)
             column.style.cssText =
                 "max-width:1100px;margin:60px auto;padding:0 20px";
             const ambassador = document.createElement("frak-ambassador");
+            // A Frak store's dashboard photo applies unless --image overrides it.
             const heroImage =
                 image ??
-                document
-                    .querySelector('meta[property="og:image"]')
-                    ?.getAttribute("content");
+                (useOgImage
+                    ? document
+                          .querySelector('meta[property="og:image"]')
+                          ?.getAttribute("content")
+                    : null);
             if (heroImage && heroImage !== "none") {
                 ambassador.setAttribute("hero-image-url", heroImage);
             }
@@ -189,7 +200,7 @@ if (!placed)
             if (anchor) anchor.before(column);
             else host.append(column);
         },
-        [values.image ?? null, withContent] as const
+        [values.image ?? null, withContent, !hasFrak] as const
     );
 const root = page.locator(".frak-ambassador");
 await root.waitFor({ timeout: 20_000 });
@@ -225,12 +236,26 @@ await page.waitForTimeout(8000);
 const hideOverlays = () =>
     page.evaluate(() => {
         const ours = document.querySelector(".frak-ambassador");
+        // The site header stays in the shot; popups and cookie bars go.
+        const siteHeader = document.querySelector("header, [role=banner]");
+        const keep = (el: Element) =>
+            el.contains(ours) ||
+            !!ours?.contains(el) ||
+            (!!siteHeader &&
+                (el.contains(siteHeader) || siteHeader.contains(el)));
+        // At the top of the page a sticky element sits in the flow: only fixed ones float.
+        const floats = (root: ParentNode): boolean =>
+            Array.from(root.querySelectorAll("*")).some(
+                (el) =>
+                    getComputedStyle(el).position === "fixed" ||
+                    (!!el.shadowRoot && floats(el.shadowRoot))
+            );
         for (const el of document.querySelectorAll<HTMLElement>("body *")) {
-            const position = getComputedStyle(el).position;
+            const isFixed = getComputedStyle(el).position === "fixed";
+            // Form apps draw their popup inside a shadow root.
             if (
-                (position === "fixed" || position === "sticky") &&
-                !el.contains(ours) &&
-                !ours?.contains(el)
+                (isFixed || (el.shadowRoot && floats(el.shadowRoot))) &&
+                !keep(el)
             ) {
                 el.style.display = "none";
             }
@@ -239,10 +264,20 @@ const hideOverlays = () =>
 const host = page.url().split("/")[2] ?? "store";
 for (const width of [1280, 390]) {
     await page.setViewportSize({ width, height: 900 });
+    // Back at the top so a hide-on-scroll header and its lazy logo come back.
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(1500);
     await hideOverlays();
     const path = join(tmpdir(), `frak-ambassador-${host}-${width}.png`);
-    await root.screenshot({ path });
+    const bottom = await root.evaluate(
+        (el) => el.getBoundingClientRect().bottom + window.scrollY
+    );
+    // From the site header down to the end of the page, as a visitor scrolls it.
+    await page.screenshot({
+        path,
+        fullPage: true,
+        clip: { x: 0, y: 0, width, height: Math.ceil(bottom) + 40 },
+    });
     // Only our own overflow counts: plenty of stores already scroll sideways.
     const overflow = await page.evaluate(() =>
         Array.from(document.querySelectorAll(".frak-ambassador *")).some(

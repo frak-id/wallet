@@ -232,13 +232,13 @@ export default interface Resources {
       "sharingPage": {
         "card": {
           "amount": "{{estimatedReward}}",
-          "amount_noReward": "Earn rewards on every purchase",
+          "amount_noReward": "Share what you love",
           "label": "Credited to your account",
           "tagline1": "Earn {{estimatedReward}},",
-          "tagline1_noReward": "A friend buys through your link,",
+          "tagline1_noReward": "One personal link,",
           "tagline1_tiered": "Earn up to {{estimatedReward}},",
           "tagline2": "on every purchase!",
-          "tagline2_noReward": "you get rewarded.",
+          "tagline2_noReward": "shared in one click.",
           "tagline2_product": "on selected products!",
           "upTo": "Up to"
         },
@@ -265,8 +265,9 @@ export default interface Resources {
           "cta_noReward": "Install the app",
           "shareAgain": "Share again",
           "subtitle": "Install the Frak app, official partner of {{productName}}, and track your earnings in real time.",
+          "subtitle_noReward": "Install the Frak app, official partner of {{productName}}.",
           "title": "Thank you for sharing!\nDon't miss out on your {{estimatedReward}}.",
-          "title_noReward": "Thank you for sharing!\nTrack what you earn."
+          "title_noReward": "Thank you for sharing!"
         },
         "dismiss": "Later",
         "faq": {
@@ -276,13 +277,14 @@ export default interface Resources {
           "a4": "Yes, everyone can create their own sharing link and become an ambassador too.",
           "a5": "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way.",
           "a6": "The amount shown is the maximum reward you can earn. Depending on the brand, your reward may be a fixed amount, a percentage of the purchase, or vary by tier based on the order amount.",
-          "a6_noReward": "It depends on the brand's reward program: a fixed amount, a percentage of the purchase, or an amount that varies by tier. This brand has no active reward right now, so no amount is shown.",
+          "a6_noReward": "This brand isn't offering you a reward right now, so there's no amount to show. When a brand does, it can be a fixed amount, a percentage of the purchase, or an amount that varies by tier.",
           "q1": "Who can become an \"ambassador\"?",
           "q2": "How much can I earn?",
           "q3": "When do I get paid?",
           "q4": "Can my friends also become \"ambassadors\"?",
           "q5": "Why do brands use Frak?",
           "q6": "How is my reward calculated?",
+          "q6_noReward": "Why is no amount shown?",
           "reward": {
             "percentExample": "e.g. {{reward}} for a {{basket}} order",
             "percentOfBasket": "{{percent}}% of basket",
@@ -303,6 +305,7 @@ export default interface Resources {
         },
         "reward": {
           "tagline": "You earn a reward every time a friend makes a purchase through your link.",
+          "tagline_noReward": "There's no reward for you on this brand right now, but your friends can still discover it through your link.",
           "title": "Share with your friends"
         },
         "steps": {
@@ -512,6 +515,7 @@ export default interface Resources {
       "codeCopied": "Reward code copied!",
       "codelessDescription": "Download the app and log in to claim your rewards.",
       "codelessTitle": "Don't lose your {{estimatedReward}}!",
+      "codelessTitle_noReward": "One last step!",
       "copyCode": "Copy the code",
       "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
       "dismiss": "Close",
@@ -520,10 +524,12 @@ export default interface Resources {
       "infoTitle": "Code valid for 3 days",
       "installedCodeToggle": "Or enter this code manually",
       "installedHeadline": "You're all set. Open the app to claim {{estimatedReward}}.",
+      "installedHeadline_noReward": "You're all set. Open the app to continue.",
       "installedMerchant": "Connected to {{merchantName}}",
       "loading": "Generating your reward code...",
       "openWallet": "Open Frak & claim {{estimatedReward}}",
       "openWalletCta": "Open my wallet",
+      "openWallet_noReward": "Open Frak",
       "processing": "Setting up your wallet...",
       "processingDone": "Your wallet is ready",
       "referral": {
@@ -532,7 +538,8 @@ export default interface Resources {
         "manualEntry": "Referral code to enter at sign-up",
         "title": "Your referral code"
       },
-      "title": "Don't lose your {{estimatedReward}}!\nCopy your reward code"
+      "title": "Don't lose your {{estimatedReward}}!\nCopy your reward code",
+      "title_noReward": "One last step!\nCopy your reward code"
     },
     "monerium": {
       "account": "Monerium Account",

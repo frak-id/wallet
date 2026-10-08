@@ -18,6 +18,7 @@ Centralised Vitest 4 config + shared mocks + fixtures. Consumed by every Vitest 
 
 ## Non-Obvious Patterns
 - **Hoisting-safe mocks**: use getter properties for lazy evaluation — otherwise `vi.mock` + ESM imports order-trap.
+- **Import the module under test statically, at the top of the file**: an `await import()` inside a test bills the cold load of its whole module graph to the first test's `testTimeout` — ~1 s idle, past 10 s under load (FRA-305). `vi.mock` is hoisted above static imports, so mocks still apply; any mock variable a factory reads eagerly must come from `vi.hoisted`. Keep the in-test import only where the test needs `vi.resetModules`.
 - **Import `vi` from `vitest`, not from a fixture barrel**, in any file calling `vi.mock`: only the direct import is hoisted with the `vi.mock` call.
 - **Fixture chain** via `test.extend()` — `BaseTestFixtures` (wallet-shared) → `ReactSdkTestFixtures` (react-sdk). Use fixtures for auto-reset; factories (`createMock*`) for variants.
 - **One router mock for everyone**: `tanstack-router-mock.ts` mocks `@tanstack/react-router` as a top-level side effect, and `wallet-mocks.ts` imports it — so wallet, wallet-shared and business all share it. Import it for the side effect only; never inside a `describe`.

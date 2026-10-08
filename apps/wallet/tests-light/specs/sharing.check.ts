@@ -5,6 +5,7 @@ import {
     MERCHANT_ID,
     merchantResolveFixture,
     mockDefaultApiRoutes,
+    mockNoReward,
     REFERRER_REWARD_EUR,
 } from "../mocks/api";
 import { RETURN_SCHEME, recordHostResults } from "../mocks/nativeHost";
@@ -405,27 +406,66 @@ test.describe("Sharing page — locale", () => {
 });
 
 test.describe("Sharing page — no advertisable reward", () => {
-    /** No campaign to select, so the query settles with nothing to show. */
-    async function mockNoReward(page: Page) {
-        await page.route("**/*/user/merchant/estimated-rewards*", (route) =>
-            route.fulfill({
-                status: 200,
-                contentType: "application/json",
-                body: JSON.stringify({ rewards: [] }),
-            })
-        );
-    }
-
     const HEADLINE = {
-        en: "Earn rewards on every purchase",
-        fr: "Des récompenses à chaque achat",
+        en: "Share what you love",
+        fr: "Partagez vos coups de cœur",
     } as const;
 
     // `tagline1` is `"Earn {{ estimatedReward }},"`, so a variant that fails to
-    // resolve renders the reported defect rather than degrading to something
-    // harmless. Asserting its absence is what pins the fix.
+    // resolve strands the comma instead of degrading to something harmless.
     const STRANDED_SEPARATOR = /(Earn|Gagnez)\s+,/;
     const INTERPOLATED_AMOUNT = /(Earn|Gagnez)\s+\d/;
+
+    const COPY = {
+        en: {
+            tagline:
+                "There's no reward for you on this brand right now, but your friends can still discover it through your link.",
+            faqShown: [
+                'Who can become an "ambassador"?',
+                'Can my friends also become "ambassadors"?',
+                "Why do brands use Frak?",
+                "Why is no amount shown?",
+            ],
+            earningCopy: [
+                "Earn on every purchase.",
+                "Collect your earnings in the app.",
+                "How much can I earn?",
+                "When do I get paid?",
+                "You earn a reward every time a friend makes a purchase through your link.",
+            ],
+            confirmationTitle: "Thank you for sharing!",
+            walletBenefit: "Your wallet secured in 10 seconds",
+            earningBenefits: [
+                "Get notified as soon as you earn",
+                "Cash out whenever you want",
+            ],
+            earningSubtitleClause: /track your earnings/,
+        },
+        fr: {
+            tagline:
+                "Pas de récompense pour vous chez cette marque pour le moment, mais vos proches peuvent la découvrir grâce à votre lien.",
+            faqShown: [
+                'Qui peut devenir "ambassadeur" ?',
+                'Est-ce que mes proches peuvent eux aussi devenir "ambassadeur" ?',
+                "Pourquoi les marques utilisent-elles Frak ?",
+                "Pourquoi aucun montant n'est affiché ?",
+            ],
+            earningCopy: [
+                "Gagnez à chaque achat.",
+                "Encaissez vos gains dans l'app.",
+                "Combien puis-je gagner ?",
+                "Quand suis-je payé·e ?",
+                "Vous recevez une récompense à chaque fois qu'un proche achète via votre lien.",
+            ],
+            confirmationTitle: "Merci pour votre partage !",
+            walletBenefit: "Votre porte-monnaie sécurisé en 10 secondes",
+            earningBenefits: [
+                "Soyez alerté dès que vous gagnez",
+                "Encaissez quand vous le souhaitez",
+            ],
+            earningSubtitleClause: /suivez vos gains/,
+        },
+    } as const;
 
     for (const lng of ["en", "fr"] as const) {
         test(`names no amount on the hero in ${lng}`, async ({ page }) => {
@@ -445,6 +485,53 @@ test.describe("Sharing page — no advertisable reward", () => {
 
             await shoot(page, `sharing-no-reward-${lng}.png`);
         });
+
+        test(`claims no earnings on the share view in ${lng}`, async ({
+            page,
+        }) => {
+            await page.setViewportSize(VIEWPORTS.iphone);
+            await mockNoReward(page);
+            await open(page, sharingUrl({ lng }));
+            await page.getByRole("dialog").waitFor({ state: "visible" });
+            await expect(
+                page.getByText(COPY[lng].tagline, { exact: true })
+            ).toBeVisible();
+
+            for (const question of COPY[lng].faqShown) {
+                await expect(
+                    page.getByText(question, { exact: true })
+                ).toBeVisible();
+            }
+            for (const text of COPY[lng].earningCopy) {
+                await expect(page.getByText(text, { exact: true })).toHaveCount(
+                    0
+                );
+            }
+        });
+
+        test(`keeps only the wallet benefit on the confirmation in ${lng}`, async ({
+            page,
+        }) => {
+            await page.setViewportSize(VIEWPORTS.iphone);
+            await mockNoReward(page);
+            await open(page, sharingUrl({ view: "confirmation", lng }));
+            await page.getByRole("dialog").waitFor({ state: "visible" });
+            await expect(
+                page.getByText(COPY[lng].confirmationTitle, { exact: true })
+            ).toBeVisible();
+            await expect(
+                page.getByText(COPY[lng].walletBenefit, { exact: true })
+            ).toBeVisible();
+
+            for (const title of COPY[lng].earningBenefits) {
+                await expect(
+                    page.getByText(title, { exact: true })
+                ).toHaveCount(0);
+            }
+            await expect(
+                page.getByText(COPY[lng].earningSubtitleClause)
+            ).toHaveCount(0);
+        });
     }
 
     test("keeps the confirmation clear of an amount it does not have", async ({
@@ -454,7 +541,9 @@ test.describe("Sharing page — no advertisable reward", () => {
         await mockNoReward(page);
         await open(page, sharingUrl({ view: "confirmation", lng: "en" }));
         await page.getByRole("dialog").waitFor({ state: "visible" });
-        await expect(page.getByText("Track what you earn.")).toBeVisible();
+        await expect(
+            page.getByText(COPY.en.confirmationTitle, { exact: true })
+        ).toBeVisible();
         await page.evaluate(() => document.fonts.ready);
 
         await expect(page.getByText(STRANDED_SEPARATOR)).toHaveCount(0);
@@ -488,9 +577,7 @@ test.describe("Sharing page — no advertisable reward", () => {
         await page.getByRole("dialog").waitFor({ state: "visible" });
         await expect(page.getByText(HEADLINE.en)).toBeVisible();
 
-        await expect(
-            page.getByText("A friend buys through your link,")
-        ).toBeVisible();
+        await expect(page.getByText("One personal link,")).toBeVisible();
         await expect(page.getByText(/Merchant:/)).toHaveCount(0);
     });
 });

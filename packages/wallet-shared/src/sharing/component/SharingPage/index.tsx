@@ -14,6 +14,7 @@ import { Steps } from "./Steps";
 import * as styles from "./sharingPage.css";
 import {
     isChromeless,
+    noRewardContext,
     renderableProducts,
     type SharingPageProps,
 } from "./types";
@@ -108,7 +109,12 @@ export function SharingPage({
                             {t("sdk.sharingPage.reward.title")}
                         </Text>
                         <Text variant="bodySmall" color="secondary">
-                            {t("sdk.sharingPage.reward.tagline")}
+                            {t(
+                                "sdk.sharingPage.reward.tagline",
+                                reward.status === "empty"
+                                    ? noRewardContext
+                                    : undefined
+                            )}
                         </Text>
                     </section>
 

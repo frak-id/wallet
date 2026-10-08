@@ -26,12 +26,14 @@ const {
     mockTrackEvent,
     mockIsTauri,
     mockResolveMerchant,
+    mockEstimatedRewards,
 } = vi.hoisted(() => ({
     mockEnsurePost: vi.fn(),
     mockGenerateCode: vi.fn(),
     mockTrackEvent: vi.fn(),
     mockIsTauri: vi.fn(() => false),
     mockResolveMerchant: vi.fn(),
+    mockEstimatedRewards: vi.fn(),
 }));
 
 // `IS_TAURI` is a build-time literal in the app and a runtime probe under
@@ -59,9 +61,7 @@ vi.mock("@frak-labs/wallet-shared/common/api/backendClient", () => ({
             },
             merchant: {
                 resolve: { get: mockResolveMerchant },
-                "estimated-rewards": {
-                    get: vi.fn().mockResolvedValue({ data: { rewards: [] } }),
-                },
+                "estimated-rewards": { get: mockEstimatedRewards },
             },
         },
     },
@@ -74,6 +74,8 @@ vi.mock("@frak-labs/wallet-shared/common/analytics", async (importOriginal) => {
         >();
     return { ...actual, trackEvent: mockTrackEvent, recordError: vi.fn() };
 });
+
+mockEstimatedRewards.mockResolvedValue({ data: { rewards: [] } });
 
 /**
  * Every assertion in this file matches raw i18n keys: the setup chain loads no
@@ -1067,5 +1069,79 @@ describe("InstallView — ref-only referral code branch", () => {
             value: originalUserAgent,
             configurable: true,
         });
+    });
+});
+
+describe("InstallView — install-code branch, reward headline", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockResolveMerchant.mockResolvedValue({ data: null });
+        mockGenerateCode.mockResolvedValue({
+            data: {
+                code: "ABCD1234",
+                expiresAt: new Date(Date.now() + 60_000).toISOString(),
+            },
+            error: null,
+        });
+        sessionStore.getState().clearSession();
+        window.location.hash = "";
+    });
+
+    function renderInstall(
+        search: { m?: string; a?: string },
+        wrapper: React.JSXElementConstructor<{ children: React.ReactNode }>
+    ) {
+        render(
+            <InstallView
+                search={search}
+                navigation={{ toWallet: vi.fn(), toRegister: vi.fn() }}
+                processingLayout={Layout}
+            />,
+            { wrapper }
+        );
+    }
+
+    test("holds the headline while the reward is loading, but not the store link", async ({
+        queryWrapper,
+    }) => {
+        mockEstimatedRewards.mockReturnValueOnce(new Promise(() => {}));
+        renderInstall({ m: "merchant-1", a: "anon-1" }, queryWrapper.wrapper);
+
+        await screen.findByText("installCode.infoTitle");
+        expect(screen.getByText("installCode.download")).toBeInTheDocument();
+        expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+    });
+
+    test("shows the headline once the reward settles empty", async ({
+        queryWrapper,
+    }) => {
+        renderInstall({ m: "merchant-1", a: "anon-1" }, queryWrapper.wrapper);
+
+        expect(
+            await screen.findByRole("heading", { level: 1 })
+        ).toHaveTextContent("installCode.title");
+    });
+
+    test("shows the headline straight away without a merchant", ({
+        queryWrapper,
+    }) => {
+        renderInstall({ a: "anon-1" }, queryWrapper.wrapper);
+
+        expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
+        expect(mockEstimatedRewards).not.toHaveBeenCalled();
+    });
+
+    test("shows the headline when the reward request fails", async ({
+        queryWrapper,
+    }) => {
+        mockEstimatedRewards.mockResolvedValueOnce({
+            data: null,
+            error: { status: 500 },
+        });
+        renderInstall({ m: "merchant-1", a: "anon-1" }, queryWrapper.wrapper);
+
+        expect(
+            await screen.findByRole("heading", { level: 1 })
+        ).toBeInTheDocument();
     });
 });

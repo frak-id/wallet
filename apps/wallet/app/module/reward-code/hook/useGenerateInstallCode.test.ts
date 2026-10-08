@@ -1,9 +1,11 @@
 /** @jsxImportSource react */
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
+import { installCodeKey } from "@/module/reward-code/queryKeys/install-code";
 import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
+import { useGenerateInstallCode } from "./useGenerateInstallCode";
 
-const mockGeneratePost = vi.fn();
+const mockGeneratePost = vi.hoisted(() => vi.fn());
 
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const actual =
@@ -24,10 +26,6 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     };
 });
 
-/**
- * Every test imports the hook dynamically: a static import would bind the
- * module before `vi.mock` above has replaced `authenticatedBackendApi`.
- */
 describe("useGenerateInstallCode", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -38,9 +36,6 @@ describe("useGenerateInstallCode", () => {
     });
 
     test("forwards the proof when present", async ({ queryWrapper }) => {
-        const { useGenerateInstallCode } = await import(
-            "./useGenerateInstallCode"
-        );
         renderHook(
             () =>
                 useGenerateInstallCode({
@@ -63,9 +58,6 @@ describe("useGenerateInstallCode", () => {
     test("fires on a token-only call, where there is no anonymousId at all", async ({
         queryWrapper,
     }) => {
-        const { useGenerateInstallCode } = await import(
-            "./useGenerateInstallCode"
-        );
         renderHook(
             () =>
                 useGenerateInstallCode({
@@ -86,9 +78,6 @@ describe("useGenerateInstallCode", () => {
     test("prefers the order-derived token over the buyer-writable id", async ({
         queryWrapper,
     }) => {
-        const { useGenerateInstallCode } = await import(
-            "./useGenerateInstallCode"
-        );
         renderHook(
             () =>
                 useGenerateInstallCode({
@@ -115,9 +104,6 @@ describe("useGenerateInstallCode", () => {
             data: null,
             error: { status: 404, value: { code: "MERCHANT_NOT_CONFIGURED" } },
         });
-        const { useGenerateInstallCode } = await import(
-            "./useGenerateInstallCode"
-        );
         const { result } = renderHook(
             () =>
                 useGenerateInstallCode({
@@ -141,9 +127,6 @@ describe("useGenerateInstallCode", () => {
             data: null,
             error: { status: 500, value: null },
         });
-        const { useGenerateInstallCode } = await import(
-            "./useGenerateInstallCode"
-        );
         const { result } = renderHook(
             () =>
                 useGenerateInstallCode({
@@ -169,9 +152,6 @@ describe("useGenerateInstallCode", () => {
                 data: { code: "RETRY123", expiresAt: "2026-01-01T00:00:00Z" },
                 error: null,
             });
-        const { useGenerateInstallCode } = await import(
-            "./useGenerateInstallCode"
-        );
         const { result } = renderHook(
             () =>
                 useGenerateInstallCode({
@@ -196,9 +176,6 @@ describe("useGenerateInstallCode", () => {
             data: null,
             error: { status: 404, value: { code: "MERCHANT_NOT_CONFIGURED" } },
         });
-        const { useGenerateInstallCode } = await import(
-            "./useGenerateInstallCode"
-        );
         const { result } = renderHook(
             () =>
                 useGenerateInstallCode({
@@ -214,9 +191,6 @@ describe("useGenerateInstallCode", () => {
     });
 
     test("stays disabled with neither credential", async ({ queryWrapper }) => {
-        const { useGenerateInstallCode } = await import(
-            "./useGenerateInstallCode"
-        );
         renderHook(() => useGenerateInstallCode({ merchantId: "merchant-5" }), {
             wrapper: queryWrapper.wrapper,
         });
@@ -226,9 +200,6 @@ describe("useGenerateInstallCode", () => {
     });
 
     test("keys a token-only call apart from an id-only one", async () => {
-        const { installCodeKey } = await import(
-            "@/module/reward-code/queryKeys/install-code"
-        );
         expect(
             installCodeKey.generate("merchant-1", undefined, "tok-1")
         ).not.toEqual(installCodeKey.generate("merchant-1", "anon-1"));
@@ -237,9 +208,6 @@ describe("useGenerateInstallCode", () => {
     test("degrades to no proof when the fragment was absent", async ({
         queryWrapper,
     }) => {
-        const { useGenerateInstallCode } = await import(
-            "./useGenerateInstallCode"
-        );
         renderHook(
             () =>
                 useGenerateInstallCode({

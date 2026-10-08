@@ -47,6 +47,17 @@ const minVersionQueryOptions = {
     refetchOnWindowFocus: true,
 } as const;
 
+const RELEASE_VERSION = /^\d+\.\d+\.\d+$/;
+
+/**
+ * The build's own version, so the hard floor holds when the store lookup fails.
+ * A commit hash (web deploys) would compare as `0` and gate everyone.
+ */
+function getBuildVersion(): string | undefined {
+    const version = process.env.APP_VERSION;
+    return version && RELEASE_VERSION.test(version) ? version : undefined;
+}
+
 const nativeUpdateQueryOptions = {
     queryKey: versionKey.nativeStatus,
     queryFn: async (): Promise<NativeUpdateStatus> => checkNativeUpdate(),
@@ -129,7 +140,8 @@ export function useVersionGate(): VersionGateState {
           : null;
     if (!platformKey) return { kind: "idle" };
 
-    const currentVersion = native.data?.currentVersion ?? "";
+    const currentVersion =
+        getBuildVersion() ?? native.data?.currentVersion ?? "";
     const minRequired = minVersion.data?.[platformKey];
 
     if (

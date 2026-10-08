@@ -33,6 +33,8 @@ jobs:
     # infra-core (`infra/hetzner/arc.ts`). ARC autoscales pods on demand
     # (min=0, max=3), so the first run has a 30-60s cold start.
     runs-on: 'frak-hetzner-wallet'
+    # Scopes vars.MIN_VERSION_* per stage, so a staging floor never arms production.
+    environment: ${{ github.ref == 'refs/heads/main' && 'gcp-production' || 'gcp-staging' }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -175,7 +177,7 @@ jobs:
           fi
         env:
           STAGE: ${{ env.STAGE }}
-          # Repository variables with their safe state as the fallback, so
+          # Environment variables (gcp-staging / gcp-production) with their safe state as the fallback, so
           # changing and reverting one are a settings change plus a workflow
           # re-run — never a PR. `kubectl set env` is NOT a substitute: the
           # next deploy reverts it.
