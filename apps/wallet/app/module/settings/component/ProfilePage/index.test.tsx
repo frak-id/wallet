@@ -2,6 +2,7 @@ import { render, within } from "@testing-library/react";
 import type * as React from "react";
 import { vi } from "vitest";
 import { describe, expect, test } from "@/tests/vitest-fixtures";
+import { ProfilePage } from "./index";
 
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({
@@ -81,12 +82,9 @@ describe("ProfilePage", () => {
         freshAuthenticationStore,
     }) => {
         vi.stubEnv("APP_VERSION", "1.0.1");
-        vi.resetModules();
         freshAuthenticationStore
             .getState()
             .setLastAuthenticationAt(new Date("2026-03-19T15:23:00").getTime());
-
-        const { ProfilePage } = await import("./index");
 
         const view = within(render(<ProfilePage />).container);
 
@@ -120,12 +118,9 @@ describe("ProfilePage", () => {
         freshAuthenticationStore,
     }) => {
         vi.stubEnv("APP_VERSION", "UNKNOWN");
-        vi.resetModules();
         freshAuthenticationStore
             .getState()
             .setLastAuthenticationAt(new Date("2026-03-19T15:23:00").getTime());
-
-        const { ProfilePage } = await import("./index");
 
         const view = within(render(<ProfilePage />).container);
 

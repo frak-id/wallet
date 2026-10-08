@@ -9,6 +9,7 @@ import {
     expect,
     test,
 } from "@/tests/vitest-fixtures";
+import { useInstallReferrer } from "./useInstallReferrer";
 
 const platformMocks = vi.hoisted(() => ({
     isAndroid: vi.fn(() => true),
@@ -97,7 +98,6 @@ describe("useInstallReferrer", () => {
             installTimestamp: 0,
         });
 
-        const { useInstallReferrer } = await import("./useInstallReferrer");
         const { result } = renderHook(() => useInstallReferrer(), {
             wrapper: queryWrapper.wrapper,
         });
@@ -134,7 +134,6 @@ describe("useInstallReferrer", () => {
             installTimestamp: 0,
         });
 
-        const { useInstallReferrer } = await import("./useInstallReferrer");
         const { result } = renderHook(() => useInstallReferrer(), {
             wrapper: queryWrapper.wrapper,
         });
@@ -163,7 +162,6 @@ describe("useInstallReferrer", () => {
             installTimestamp: 0,
         });
 
-        const { useInstallReferrer } = await import("./useInstallReferrer");
         const { result } = renderHook(() => useInstallReferrer(), {
             wrapper: queryWrapper.wrapper,
         });
@@ -185,7 +183,6 @@ describe("useInstallReferrer", () => {
             installTimestamp: 0,
         });
 
-        const { useInstallReferrer } = await import("./useInstallReferrer");
         const { result } = renderHook(() => useInstallReferrer(), {
             wrapper: queryWrapper.wrapper,
         });

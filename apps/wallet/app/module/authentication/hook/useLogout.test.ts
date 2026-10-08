@@ -10,11 +10,12 @@ import {
     expect,
     test,
 } from "@/tests/vitest-fixtures";
+import { useLogout } from "./useLogout";
 
-const mockNavigate = vi.fn();
-const mockUnsubscribe = vi.fn().mockResolvedValue(undefined);
-const mockClearSession = vi.fn();
-const mockTrackEvent = vi.fn();
+const mockNavigate = vi.hoisted(() => vi.fn());
+const mockUnsubscribe = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const mockClearSession = vi.hoisted(() => vi.fn());
+const mockTrackEvent = vi.hoisted(() => vi.fn());
 
 // The shared router mock in test-foundation is not applied to wallet unit
 // tests, so `useNavigate` is the real export here and has to be mocked
@@ -60,7 +61,6 @@ describe("useLogout", () => {
             children: React.ReactNode;
         }>
     ) {
-        const { useLogout } = await import("./useLogout");
         const { result } = renderHook(() => useLogout(), { wrapper });
         await act(async () => {
             await result.current.logout();

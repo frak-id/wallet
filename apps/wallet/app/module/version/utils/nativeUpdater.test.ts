@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { listenToNativeUpdateStatus } from "./nativeUpdater";
 
 const { addPluginListenerMock, isAndroidMock, isTauriMock } = vi.hoisted(
     () => ({
@@ -36,7 +37,6 @@ describe("listenToNativeUpdateStatus", () => {
         isAndroidMock.mockReturnValue(false);
         isTauriMock.mockReturnValue(true);
 
-        const { listenToNativeUpdateStatus } = await import("./nativeUpdater");
         const result = await listenToNativeUpdateStatus(() => {});
 
         expect(result).toBeNull();
@@ -50,7 +50,6 @@ describe("listenToNativeUpdateStatus", () => {
         addPluginListenerMock.mockResolvedValue(fakeListener);
         const handler = vi.fn();
 
-        const { listenToNativeUpdateStatus } = await import("./nativeUpdater");
         const result = await listenToNativeUpdateStatus(handler);
 
         expect(addPluginListenerMock).toHaveBeenCalledTimes(1);
