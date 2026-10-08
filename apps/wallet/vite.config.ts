@@ -16,9 +16,9 @@ import {
     onwarn,
     preconnectOrigins,
     stripAbiInternalType,
-} from "../../packages/dev-tooling";
-import { routerGenerationOptions } from "./router.options";
-import { getDefineProps, readDefine } from "./vite.defines";
+} from "../../packages/dev-tooling/index.ts";
+import { routerGenerationOptions } from "./router.options.ts";
+import { getDefineProps, readDefine } from "./vite.defines.ts";
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isTauri = !!process.env.TAURI_CLI_RUNNING;
