@@ -12,7 +12,7 @@ import {
     inlineFontFaces,
     lightningCssConfig,
     onwarn,
-} from "../../packages/dev-tooling";
+} from "../../packages/dev-tooling/index.ts";
 
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 const isProd = process.env.NODE_ENV === "production";

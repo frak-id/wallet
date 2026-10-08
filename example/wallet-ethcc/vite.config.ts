@@ -3,7 +3,7 @@ import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import viteReact from "@vitejs/plugin-react";
 import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
-import { onwarn } from "../../packages/dev-tooling";
+import { onwarn } from "../../packages/dev-tooling/index.ts";
 
 const DEBUG = process.env.DEBUG === "true";
 const isProd = process.env.STAGE?.includes("prod") ?? false;

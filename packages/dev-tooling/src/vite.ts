@@ -5,13 +5,13 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { gzipSync } from "node:zlib";
 import type { HtmlTagDescriptor, Plugin, Rollup } from "vite";
-import type { AssertEsVersionOptions } from "./es-version";
+import type { AssertEsVersionOptions } from "./es-version.ts";
 import {
     assertEsVersion,
     BROWSER_TARGET_ECMA,
     BROWSER_TARGET_SAFARI,
     LIGHTNINGCSS_TARGETS,
-} from "./es-version";
+} from "./es-version.ts";
 
 export function onwarn(
     warning: Rollup.RollupLog,

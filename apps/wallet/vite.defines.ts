@@ -1,6 +1,9 @@
 import * as process from "node:process";
-import { getSandboxEnv, getSstResource } from "../../packages/dev-tooling";
-import walletPackage from "./package.json";
+import {
+    getSandboxEnv,
+    getSstResource,
+} from "../../packages/dev-tooling/index.ts";
+import walletPackage from "./package.json" with { type: "json" };
 
 /**
  * Build-time `define` map, shared by the SPA build (`vite.config.ts`) and the

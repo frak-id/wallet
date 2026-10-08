@@ -16,7 +16,7 @@ import {
     inlineFontFaces,
     lightningCssConfig,
     onwarn,
-} from "../../packages/dev-tooling";
+} from "../../packages/dev-tooling/index.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
