@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-06
+
 ### Added
 
 - **Ambassador page.** A *Frak Ambassador* block and a `[frak_ambassador]` shortcode render `<frak-ambassador>`, the full-page referral landing, with no content settings: its text and images come from the Frak business dashboard. Settings → Frak gains an *Ambassador page* row that creates and publishes the page in one click (titled "Become an ambassador", or "Devenir ambassadeur" on a French site), wide on block themes and on a full-width template where a classic theme has one. The row recognises a page you built yourself with the block, the shortcode, the element or an Elementor widget, and brings the created page back if it was unpublished or trashed instead of creating a second one. Requires a `@frak-labs/components` release that includes the ambassador page.
@@ -223,7 +225,9 @@ version on dispatch.
 
 - Initial release of the Frak WordPress plugin.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.11...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.2.0...HEAD
+
+[1.2.0]: https://github.com/frak-id/wallet/compare/wordpress-1.1.11...wordpress-1.2.0
 
 [1.1.11]: https://github.com/frak-id/wallet/compare/wordpress-1.1.10...wordpress-1.1.11
 
