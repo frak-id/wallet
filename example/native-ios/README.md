@@ -152,7 +152,7 @@ Signing is automatic: `-allowProvisioningUpdates` plus the API key lets xcodebui
 
 ```bash
 swift build --sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
-  -Xswiftc -target -Xswiftc arm64-apple-ios15.0-simulator
+  --triple arm64-apple-ios15.0-simulator
 ```
 
 Add `-Xswiftc -swift-version -Xswiftc 6` to also verify Swift 6 strict concurrency.

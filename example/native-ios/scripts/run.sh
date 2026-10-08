@@ -109,7 +109,7 @@ do_build_only() {
 	log "Type-checking against the iOS simulator SDK (Swift 6 strict concurrency)..."
 	swift build \
 		--sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
-		-Xswiftc -target -Xswiftc arm64-apple-ios15.0-simulator \
+		--triple arm64-apple-ios15.0-simulator \
 		-Xswiftc -swift-version -Xswiftc 6
 }
 
