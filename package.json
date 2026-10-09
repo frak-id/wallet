@@ -29,7 +29,7 @@
     "build:infra": "sst build --stage dev",
     "build:sdk": "dirs=(core legacy react components) && bun run --cwd packages/rpc build && for d in ${dirs[@]}; do bun run --cwd sdk/${d} build || exit 1; done",
     "changeset": "changeset",
-    "changeset:release": "dirs=(core legacy react components) && bun run build:sdk && bun run check:es-output && bun run --cwd packages/rpc publish && bun publish --tolerate-republish --cwd packages/rpc && for d in ${dirs[@]}; do bun run --cwd sdk/${d} publish || exit 1; bun publish --tolerate-republish --cwd sdk/${d} || exit 1; done",
+    "changeset:release": "bun run build:sdk && bun run check:es-output && bun scripts/publish-sdk.ts",
     "changeset:version": "changeset version && bun install --lockfile-only",
     "check:android-manifest": "bun scripts/check-android-manifest.ts",
     "check:bun-version": "bun scripts/check-bun-version.ts",
