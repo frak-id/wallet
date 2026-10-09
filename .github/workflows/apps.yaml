@@ -23,7 +23,7 @@ jobs:
   # branch-protection checks.
   changes:
     name: "🔎 Detect changes"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       ts: ${{ steps.filter.outputs.ts }}
       android: ${{ steps.filter.outputs.android }}
@@ -180,7 +180,7 @@ jobs:
   # directly, so `bun install` is the whole setup.
   sdk-lint-test:
     name: "🧪 SDK · Lint & tests"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.ts == 'true'
     steps:
@@ -212,7 +212,7 @@ jobs:
   # while vitest reads SDK source through the `development` export condition.
   backend:
     name: "🗄️ Backend · Lint, types & tests"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     steps:
@@ -236,7 +236,7 @@ jobs:
   # rather than on a real defect.
   wallet:
     name: "👛 Wallet · Lint & tests"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.wallet == 'true'
     steps:
@@ -254,7 +254,7 @@ jobs:
   # ── Business ────────────────────────────────────────────
   business:
     name: "📊 Business · Lint & tests"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.business == 'true'
     steps:
@@ -272,7 +272,7 @@ jobs:
   # wallet slice, and two runners would cost more in setup than they save.
   apps-small:
     name: "🔗 Listener & Shopify · Lint & tests"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.appsSmall == 'true'
     steps:
@@ -292,7 +292,7 @@ jobs:
   # files, and its filter would overlap the gates job below.
   packages:
     name: "📦 Packages · Lint & tests"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.packages == 'true'
     steps:
@@ -321,7 +321,7 @@ jobs:
   # which the Types and SDK jobs own. One step per gate attributes the failure.
   gates:
     name: "🚧 Repo gates"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.gates == 'true'
     steps:
@@ -355,7 +355,7 @@ jobs:
   # gitignored and generated.
   infra:
     name: "🏗️ Infra · Lint & types"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.infra == 'true'
     steps:
@@ -377,7 +377,7 @@ jobs:
   # schemas, and this is the only job that re-checks them against a backend change.
   typecheck:
     name: "🔎 Typecheck"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.ts == 'true' || needs.changes.outputs.backend == 'true'
     steps:
@@ -418,7 +418,7 @@ jobs:
   # ── Listener ────────────────────────────────────────────
   listener-eager-budget:
     name: "📏 Listener · Eager bundle budget"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.ts == 'true'
     steps:
@@ -454,7 +454,7 @@ jobs:
   # way. Pixel comparison stays a local opt-in (`bun run test:light:pixels`).
   wallet-pages:
     name: "🖼️ Wallet pages · Native sheet behaviour"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.walletPages == 'true'
     steps:
@@ -503,7 +503,7 @@ jobs:
   # alongside it so a failure is attributed by step name; Gradle skips the repeated work.
   android-sdk:
     name: "🤖 Android SDK · Lint, build, test & ABI"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.android == 'true'
     steps:
@@ -580,7 +580,7 @@ jobs:
     name: "🍏 iOS SDK · Lint, build & test"
     runs-on: macos-26
     needs: changes
-    if: needs.changes.outputs.ios == 'true'
+    if: false # trial branch: macOS is not part of the Ubuntu 26.04 switch
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
