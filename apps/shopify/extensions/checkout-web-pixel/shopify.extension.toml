@@ -1,4 +1,4 @@
-api_version = "2026-04"
+api_version = "2026-07"
 
 name = "checkout-web-pixel"
 handle = "checkout-web-pixel"
