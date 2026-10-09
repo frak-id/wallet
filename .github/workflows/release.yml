@@ -74,10 +74,8 @@ jobs:
           # v2 pushes its own @scope/name@version tags unless both are off.
           create-github-releases: false
           push-git-tags: false
+        # npm authenticates through OIDC trusted publishing, no token.
         env:
-          # npm tries OIDC first; the token is the fallback until the npm-side
-          # trusted publishers exist.
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
           STAGE: production
 

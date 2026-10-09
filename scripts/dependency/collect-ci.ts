@@ -14,7 +14,7 @@ import {
     resolveTagSha,
     trackedFiles,
 } from "./registry";
-import { PUBLISH_SECRET } from "./traps";
+import { PUBLISHES_ARTIFACTS } from "./traps";
 import {
     type Flag,
     type InventoryItem,
@@ -157,7 +157,7 @@ export function scanUses(files: Array<{ file: string; source: string }>): {
     let localRefs = 0;
 
     for (const { file, source } of files) {
-        const publishes = PUBLISH_SECRET.test(source);
+        const publishes = PUBLISHES_ARTIFACTS.test(source);
         source.split("\n").forEach((line, index) => {
             const found = usesTarget(line);
             if (!found) return;

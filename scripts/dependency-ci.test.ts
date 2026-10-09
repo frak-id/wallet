@@ -79,6 +79,29 @@ describe("scanUses", () => {
         ]);
         expect(pins[0]?.publishingWorkflows).toEqual([]);
     });
+
+    it("treats an npm trusted-publishing workflow as publishing without any secret", () => {
+        const { pins } = scanUses([
+            {
+                file: ".github/workflows/beta-release.yml",
+                source: [
+                    "      - uses: actions/setup-node@v6",
+                    "      - run: bun scripts/publish-sdk.ts --tag beta",
+                ].join("\n"),
+            },
+            {
+                file: ".github/workflows/release.yml",
+                source: [
+                    "      - uses: changesets/action@v2",
+                    "          publish-script: bun changeset:release",
+                ].join("\n"),
+            },
+        ]);
+        expect(pins.map((pin) => pin.publishingWorkflows)).toEqual([
+            [".github/workflows/beta-release.yml"],
+            [".github/workflows/release.yml"],
+        ]);
+    });
 });
 
 describe("parseProviders", () => {
