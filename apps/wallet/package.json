@@ -99,7 +99,7 @@
     "@frak-labs/backend-elysia": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
     "@noble/curves": "catalog:",
-    "@playwright/test": "^1.63.0",
+    "@playwright/test": "^1.64.0",
     "@preact/preset-vite": "catalog:",
     "@tanstack/react-router-devtools": "catalog:",
     "@tauri-apps/cli": "^2.12.1",
