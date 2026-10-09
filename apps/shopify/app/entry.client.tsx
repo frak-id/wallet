@@ -1,6 +1,5 @@
 import i18next from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
-import Backend from "i18next-http-backend";
 import { StrictMode, startTransition } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
@@ -19,7 +18,6 @@ async function hydrate() {
     await i18next
         .use(initReactI18next)
         .use(LanguageDetector)
-        .use(Backend)
         .init({
             supportedLngs,
             fallbackLng,
@@ -28,9 +26,6 @@ async function hydrate() {
             interpolation,
 
             ns: getInitialNamespaces(),
-            backend: {
-                loadPath: "/i18n/locales/{{lng}}/{{ns}}.json",
-            },
             detection: {
                 order: ["htmlTag"],
                 caches: [],
