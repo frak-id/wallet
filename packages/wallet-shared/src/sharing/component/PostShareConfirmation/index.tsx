@@ -120,37 +120,42 @@ export function PostShareConfirmation({
                 )}
 
                 <main className={styles.main}>
-                    <section className={styles.phoneVisual}>
-                        <div className={styles.phoneFrame}>
-                            <img
-                                src={iphoneBgUrl}
-                                alt="iPhone"
-                                className={styles.phoneImage}
-                            />
-                            <div className={styles.phonePopupContent}>
-                                <Text
-                                    variant="heading6"
-                                    className={styles.phonePopupTitle}
-                                >
-                                    {t(
-                                        "sdk.sharingPage.confirmation.cardPopupTitle",
-                                        rewardContext
-                                    )}
-                                </Text>
-                                <Text className={styles.phonePopupDesc}>
-                                    {t(
-                                        "sdk.sharingPage.confirmation.cardPopupDescription",
-                                        rewardContext
-                                    )}
-                                </Text>
-                                <MerchantLogo
-                                    src={merchant.logoUrl}
-                                    alt={merchant.name}
-                                    className={styles.phonePopupMerchantLogo}
+                    {/* Nothing is sent to the sharer without a reward, so the mock purchase notification would be untrue. */}
+                    {!isEmpty && (
+                        <section className={styles.phoneVisual}>
+                            <div className={styles.phoneFrame}>
+                                <img
+                                    src={iphoneBgUrl}
+                                    alt="iPhone"
+                                    className={styles.phoneImage}
                                 />
+                                <div className={styles.phonePopupContent}>
+                                    <Text
+                                        variant="heading6"
+                                        className={styles.phonePopupTitle}
+                                    >
+                                        {t(
+                                            "sdk.sharingPage.confirmation.cardPopupTitle",
+                                            rewardContext
+                                        )}
+                                    </Text>
+                                    <Text className={styles.phonePopupDesc}>
+                                        {t(
+                                            "sdk.sharingPage.confirmation.cardPopupDescription",
+                                            rewardContext
+                                        )}
+                                    </Text>
+                                    <MerchantLogo
+                                        src={merchant.logoUrl}
+                                        alt={merchant.name}
+                                        className={
+                                            styles.phonePopupMerchantLogo
+                                        }
+                                    />
+                                </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
+                    )}
                     <section className={styles.heroSection}>
                         <Text
                             as="h1"

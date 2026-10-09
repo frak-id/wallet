@@ -440,6 +440,7 @@ test.describe("Sharing page — no advertisable reward", () => {
                 "Cash out whenever you want",
             ],
             earningSubtitleClause: /track your earnings/,
+            purchaseNotification: "A friend just bought! 🎉",
         },
         fr: {
             tagline:
@@ -464,6 +465,7 @@ test.describe("Sharing page — no advertisable reward", () => {
                 "Encaissez quand vous le souhaitez",
             ],
             earningSubtitleClause: /suivez vos gains/,
+            purchaseNotification: "Un ami vient d'acheter ! 🎉",
         },
     } as const;
 
@@ -530,6 +532,12 @@ test.describe("Sharing page — no advertisable reward", () => {
             }
             await expect(
                 page.getByText(COPY[lng].earningSubtitleClause)
+            ).toHaveCount(0);
+            await expect(page.getByRole("img", { name: "iPhone" })).toHaveCount(
+                0
+            );
+            await expect(
+                page.getByText(COPY[lng].purchaseNotification, { exact: true })
             ).toHaveCount(0);
         });
     }

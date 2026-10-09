@@ -129,9 +129,7 @@
     "fixtures:generate:context": "bun scripts/generate-golden-context.ts",
     "fixtures:generate:rewards": "bun scripts/generate-golden-rewards.ts",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
-    "prepublish": "bun run lint && bun run build",
-    "publish": "echo 'Publishing core...'"
+    "test:coverage": "vitest --coverage"
   },
   "peerDependencies": {
     "viem": "^2.x"

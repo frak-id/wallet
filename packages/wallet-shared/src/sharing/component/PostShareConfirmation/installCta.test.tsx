@@ -78,8 +78,6 @@ function renderWithReward(reward: SharingReward) {
 function expectRewardFree() {
     expect(screen.getByText(noReward(TITLE_KEY))).toBeInTheDocument();
     expect(screen.getByText(noReward(SUBTITLE_KEY))).toBeInTheDocument();
-    expect(screen.getByText(noReward(POPUP_TITLE_KEY))).toBeInTheDocument();
-    expect(screen.getByText(noReward(POPUP_DESC_KEY))).toBeInTheDocument();
     expect(
         screen.getByRole("button", { name: noReward(CTA_KEY) })
     ).toBeInTheDocument();
@@ -97,6 +95,8 @@ describe("PostShareConfirmation reward-free wording", () => {
     it("renders reward-free wording on the headline, the mock purchase notification and the install CTA while still resolving", () => {
         renderWithReward({ status: "loading" });
         expectRewardFree();
+        expect(screen.getByText(noReward(POPUP_TITLE_KEY))).toBeInTheDocument();
+        expect(screen.getByText(noReward(POPUP_DESC_KEY))).toBeInTheDocument();
     });
 
     it("renders reward-free wording — not an empty amount — entered after a share that settled with nothing to advertise", () => {
@@ -108,6 +108,27 @@ describe("PostShareConfirmation reward-free wording", () => {
         renderWithReward({ status: "ready" });
         expectRewarded();
     });
+});
+
+describe("PostShareConfirmation mock purchase notification", () => {
+    it("drops the phone and its purchase notification once the reward settled empty", () => {
+        renderWithReward({ status: "empty" });
+
+        expect(screen.queryByRole("img", { name: "iPhone" })).toBeNull();
+        expect(screen.queryByText(noReward(POPUP_TITLE_KEY))).toBeNull();
+        expect(screen.queryByText(noReward(POPUP_DESC_KEY))).toBeNull();
+    });
+
+    it.each<SharingReward>([{ status: "loading" }, { status: "ready" }])(
+        "keeps the phone while the reward is $status",
+        (reward) => {
+            renderWithReward(reward);
+
+            expect(
+                screen.getByRole("img", { name: "iPhone" })
+            ).toBeInTheDocument();
+        }
+    );
 });
 
 describe("PostShareConfirmation benefits", () => {

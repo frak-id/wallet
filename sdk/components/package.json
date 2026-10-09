@@ -105,9 +105,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "try:merchant": "bun scripts/tryOnMerchant.ts",
-    "prepublish": "bun run lint && bun run build",
-    "publish": "echo 'Publishing components...'"
+    "try:merchant": "bun scripts/tryOnMerchant.ts"
   },
   "dependencies": {
     "@frak-labs/core-sdk": "workspace:*",

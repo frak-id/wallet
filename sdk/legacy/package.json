@@ -44,9 +44,7 @@
     "format": "biome check --write .",
     "clean": "rimraf dist",
     "build": "tsdown",
-    "build:watch": "tsdown --watch",
-    "prepublish": "bun run lint && bun run build",
-    "publish": "echo 'Publishing legacy...'"
+    "build:watch": "tsdown --watch"
   },
   "devDependencies": {
     "@frak-labs/dev-tooling": "workspace:*",
