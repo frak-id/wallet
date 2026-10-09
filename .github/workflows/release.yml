@@ -9,7 +9,8 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
-# id-token: write for the AWS OIDC role assumption (sdk pointer flip).
+# id-token: write for the AWS OIDC role assumption (sdk pointer flip) and for
+# npm trusted publishing.
 # contents: write + pull-requests: write for changesets/action's Version PR.
 permissions:
   id-token: write
@@ -32,6 +33,11 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          registry-url: "https://registry.npmjs.org"
+
+      # Trusted publishing needs npm >= 11.5.1.
+      - name: "📦 Update npm"
+        run: npm install -g npm@12.2.0
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -39,7 +45,7 @@ jobs:
       - name: "🔨 Install dependencies"
         run: bun install --frozen-lockfile
 
-      # Changesets strips devDependencies and rewrites `workspace:*` to the
+      # `bun pm pack` (scripts/publish-sdk.ts) rewrites `workspace:*` to the
       # sibling's version, so a private sibling under `dependencies` publishes
       # as a registry lookup that 404s on every install. Fail here, not there.
       - name: "🔎 Public packages depend only on published ones"
@@ -69,7 +75,10 @@ jobs:
           create-github-releases: false
           push-git-tags: false
         env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # npm tries OIDC first; the token is the fallback until the npm-side
+          # trusted publishers exist.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
           STAGE: production
 
       - name: "🏷️ Create per-package sdk-{id}-{version} tags"

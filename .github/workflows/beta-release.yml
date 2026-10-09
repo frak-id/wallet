@@ -14,7 +14,8 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
-# id-token: write for the AWS OIDC role assumption (sdk pointer flip).
+# id-token: write for the AWS OIDC role assumption (sdk pointer flip) and for
+# npm trusted publishing.
 permissions:
   id-token: write
   contents: read
@@ -33,6 +34,11 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          registry-url: "https://registry.npmjs.org"
+
+      # Trusted publishing needs npm >= 11.5.1.
+      - name: "📦 Update npm"
+        run: npm install -g npm@12.2.0
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -76,7 +82,7 @@ jobs:
             }
 
             // Pass 2: Rewrite workspace:* deps to exact beta versions
-            // Without this, bun publish resolves workspace:* to the stable version,
+            // Without this, bun pm pack resolves workspace:* to the stable version,
             // causing consumers to pull mismatched stable deps instead of beta ones
             for (const pkgPath of pkgPaths) {
               if (!fs.existsSync(pkgPath)) continue;
@@ -107,36 +113,10 @@ jobs:
         run: bun run check:es-output
 
       - name: "🚀 Publish beta packages to npm"
-        run: |
-          # Configure npm token
-          echo "//registry.npmjs.org/:_authToken=${NPM_CONFIG_TOKEN}" > ~/.npmrc
-
-          # Publish RPC package
-          RPC_PKG_PATH="packages/rpc"
-          if [ -d "$RPC_PKG_PATH" ]; then
-            cd "$RPC_PKG_PATH"
-            bun publish --tag beta --access public
-            echo "✅ Published rpc as beta"
-            cd ../..
-          fi
-
-          # Publish SDK packages
-          SDK_DIRS=(core legacy react components)
-
-          for dir in "${SDK_DIRS[@]}"; do
-            PKG_PATH="sdk/${dir}"
-            if [ -d "$PKG_PATH" ]; then
-              cd "$PKG_PATH"
-
-              # Publish with beta tag
-              bun publish --tag beta --access public
-
-              echo "✅ Published ${dir} as beta"
-              cd ../..
-            fi
-          done
+        run: bun scripts/publish-sdk.ts --tag beta
+        # OIDC only, no token fallback: a green run proves trusted publishing.
         env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
 
       # The pointer must never name a version jsDelivr cannot serve yet.
       - name: "⏳ Wait for jsDelivr to serve the published version"

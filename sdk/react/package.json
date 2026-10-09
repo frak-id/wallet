@@ -62,9 +62,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
-    "prepublish": "bun run lint && bun run build",
-    "publish": "echo 'Publishing react...'"
+    "test:coverage": "vitest --coverage"
   },
   "dependencies": {
     "@frak-labs/core-sdk": "workspace:*",

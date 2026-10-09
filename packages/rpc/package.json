@@ -61,9 +61,7 @@
         "build:watch": "tsdown --watch",
         "check-exports": "attw --pack .",
         "typecheck": "tsc --noEmit",
-        "test": "vitest run",
-        "prepublish": "bun run lint && bun run build",
-        "publish": "echo 'Publishing rpc...'"
+        "test": "vitest run"
     },
     "peerDependencies": {
         "viem": "^2.x"
