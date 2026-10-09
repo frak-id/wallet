@@ -1,5 +1,14 @@
 # @frak-labs/components
 
+## 1.3.2
+
+### Patch Changes
+
+- [#336](https://github.com/frak-id/wallet/pull/336) [`4724991`](https://github.com/frak-id/wallet/commit/472499121b34a5e5717c344305dfddefa13664ce) Thanks [@srod](https://github.com/srod)! - Published through npm trusted publishing, with a provenance attestation.
+- Updated dependencies [[`4724991`](https://github.com/frak-id/wallet/commit/472499121b34a5e5717c344305dfddefa13664ce)]:
+  - @frak-labs/frame-connector@1.5.2
+  - @frak-labs/core-sdk@1.5.2
+
 ## 1.3.1
 
 ### Patch Changes
