@@ -5,6 +5,7 @@ import {
     setEnvironment,
 } from "../../config/environment";
 import type { FrakWalletSdkConfig, ListenerPreloadOption } from "../../types";
+import { observeIframeBoot } from "./iframeBoot";
 
 /**
  * Base props for the iframe
@@ -77,6 +78,7 @@ export async function createIframe({
     preconnect(walletUrl);
     preconnect(getBackendUrl());
 
+    observeIframeBoot(iframe, walletUrl);
     iframe.src = buildListenerUrl({
         walletUrl,
         clientId,

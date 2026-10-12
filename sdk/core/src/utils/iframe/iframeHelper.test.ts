@@ -14,6 +14,7 @@ import {
 } from "../../../tests/vitest-fixtures";
 import { setEnvironment } from "../../config/environment";
 import type { FrakWalletSdkConfig } from "../../types";
+import { getIframeBootObservation } from "./iframeBoot";
 import {
     changeIframeVisibility,
     createIframe,
@@ -116,6 +117,15 @@ describe("iframeHelper", () => {
             expect(mockIframe.src).toBe(
                 "https://custom-wallet.com/listener?clientId=mock-client-id-for-test"
             );
+        });
+
+        it("should watch the listener boot before loading it", async () => {
+            await createIframe({});
+
+            expect(getIframeBootObservation(mockIframe)).toMatchObject({
+                listenerSeen: false,
+                loadedAt: expect.any(Number),
+            });
         });
 
         it("should remove existing iframe before creating new one", async () => {
