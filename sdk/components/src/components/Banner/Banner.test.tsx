@@ -1,6 +1,6 @@
 import { REFERRAL_SUCCESS_EVENT } from "@frak-labs/core-sdk/actions";
-import { cleanup, fireEvent, render, waitFor } from "@testing-library/preact";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, waitFor } from "@testing-library/preact";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Banner } from "./Banner";
 
 // Hoisted mocks for per-test control
@@ -50,7 +50,6 @@ import * as useRewardHook from "@/hooks/useReward";
 // execution.
 describe("Banner", () => {
     beforeEach(() => {
-        cleanup();
         vi.clearAllMocks();
         coreSdkMock.isInAppBrowser = false;
         coreSdkMock.redirectToExternalBrowser = vi.fn();
@@ -65,10 +64,6 @@ describe("Banner", () => {
             reward: undefined,
             hasReward: false,
         });
-    });
-
-    afterEach(() => {
-        cleanup();
     });
 
     it("should not render when shouldRender is false", () => {

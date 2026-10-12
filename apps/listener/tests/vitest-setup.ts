@@ -13,7 +13,8 @@
  */
 
 import { setupListenerDomMocks } from "@frak-labs/test-foundation";
-import { vi } from "vitest";
+import { act, cleanup } from "@testing-library/react";
+import { afterEach, vi } from "vitest";
 
 // Stub OpenPanel so the analytics singleton never issues real network requests
 // (its batched flushes retry on a timer and outlive the test lifecycle).
@@ -35,6 +36,13 @@ import "@frak-labs/test-foundation/react-testing-library-setup";
 
 // Import shared React setup (BigInt serialization)
 import "@frak-labs/test-foundation/react-setup";
+
+// Preact 11 defers unmount effect cleanups past paint; outside act they leak into the next test.
+afterEach(() => {
+    act(() => {
+        cleanup();
+    });
+});
 
 // Setup DOM mocks for iframe communication testing
 setupListenerDomMocks();

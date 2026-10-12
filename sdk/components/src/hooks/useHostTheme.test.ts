@@ -1,4 +1,4 @@
-import { cleanup, renderHook } from "@testing-library/preact";
+import { act, cleanup, renderHook } from "@testing-library/preact";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type HostThemeTarget, useHostTheme } from "./useHostTheme";
 
@@ -91,7 +91,7 @@ function makeReference(...headings: HTMLElement[]): HTMLElement {
 }
 
 afterEach(() => {
-    cleanup();
+    act(() => cleanup());
     document.body.replaceChildren();
     document.body.removeAttribute("style");
 });

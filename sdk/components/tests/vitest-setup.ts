@@ -14,7 +14,7 @@
 
 import { afterEach, beforeEach, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
-import { cleanup, configure } from "@testing-library/preact";
+import { act, cleanup, configure } from "@testing-library/preact";
 
 // RTL's `waitFor` keeps its own 1s budget, independent of `testTimeout`. Ten
 // projects sharing `cpus-1` workers put a cold transform inside that window,
@@ -58,9 +58,11 @@ beforeEach(() => {
     };
 });
 
-// Cleanup Preact Testing Library after each test
+// Preact 11 defers unmount effect cleanups past paint; outside act they fire after jsdom teardown.
 afterEach(() => {
-    cleanup();
+    act(() => {
+        cleanup();
+    });
     vi.clearAllMocks();
 });
 
