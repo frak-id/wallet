@@ -5,6 +5,7 @@ import type {
     RpcRequestContext,
 } from "@frak-labs/frame-connector";
 import {
+    setHostAnonymousId,
     trackEvent,
     updateGlobalProperties,
 } from "@frak-labs/wallet-shared/common/analytics";
@@ -391,14 +392,12 @@ async function handleResolvedConfig(
     });
 
     // Stitch SDK ↔ listener funnels: the anonymous id both identifies the SDK
-    // events (`sdk_anonymous_id`) and keys the OpenPanel device (`__deviceId`),
+    // events (`sdk_anonymous_id`) and keys the OpenPanel profile and device,
     // so the two sides land on one profile. Normally already set from the
     // iframe's `clientId` param; this covers a launch that carried none.
     if (data.sdkAnonymousId) {
-        updateGlobalProperties({
-            sdk_anonymous_id: data.sdkAnonymousId,
-            __deviceId: data.sdkAnonymousId,
-        });
+        updateGlobalProperties({ sdk_anonymous_id: data.sdkAnonymousId });
+        setHostAnonymousId(data.sdkAnonymousId);
     }
 
     store.setBackendConfig(data.merchantId, data.sdkConfig);

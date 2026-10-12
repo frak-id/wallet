@@ -9,6 +9,7 @@ const mockSetBackendConfig = vi.fn();
 vi.mock("@frak-labs/wallet-shared/common/analytics", () => ({
     trackEvent: (...args: unknown[]) => mockTrackEvent(...args),
     updateGlobalProperties: vi.fn(),
+    setHostAnonymousId: vi.fn(),
 }));
 
 vi.mock("@frak-labs/wallet-shared/common/api/backendClient", () => ({
