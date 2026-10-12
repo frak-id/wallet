@@ -15,7 +15,7 @@ export type AnalyticsSurface = "wallet" | "wallet_standalone" | "listener";
  * live on the OpenPanel **profile** (via `identify`) — see `globalProps.ts`.
  */
 export type AnalyticsGlobalProperties = {
-    // Identity
+    // Identity: `profile_id` is the anonymous id, the wallet is only a property
     wallet?: Address;
     // Environment (compile-time / once-per-session)
     surface: AnalyticsSurface;
