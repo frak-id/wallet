@@ -175,12 +175,4 @@ export class BackendApi {
     async interceptBalanceRoute(handler: (route: Route) => void) {
         await this.page.route("**/*/wallet/balance", handler);
     }
-
-    async interceptClaimableBalanceRoute(handler: (route: Route) => void) {
-        await this.page.route("**/*/wallet/balance/claimable", handler);
-    }
-
-    async interceptPendingBalanceRoute(handler: (route: Route) => void) {
-        await this.page.route("**/*/wallet/balance/pending", handler);
-    }
 }
