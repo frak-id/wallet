@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { useSessionFlag } from "./useSessionFlag";
 
 describe("useSessionFlag", () => {
@@ -258,5 +258,22 @@ describe("useSessionFlag", () => {
         });
 
         expect(result.current[0]).toBe(false);
+    });
+
+    test("should keep the flag in memory when storage is denied", () => {
+        const spy = vi
+            .spyOn(window, "sessionStorage", "get")
+            .mockImplementation(() => {
+                throw new DOMException("Access is denied", "SecurityError");
+            });
+
+        const { result } = renderHook(() => useSessionFlag("denied-key"));
+        expect(result.current[0]).toBe(false);
+
+        act(() => {
+            result.current[1](true);
+        });
+        expect(result.current[0]).toBe(true);
+        spy.mockRestore();
     });
 });
