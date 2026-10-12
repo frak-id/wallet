@@ -109,7 +109,7 @@
     "bun-types": "latest",
     "i18next-resources-for-ts": "catalog:",
     "jsdom": "catalog:",
-    "msw": "^3.0.2",
+    "msw": "^3.0.3",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

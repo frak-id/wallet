@@ -45,7 +45,7 @@
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-persist-client": "catalog:",
     "compression": "^1.8.2",
-    "drizzle-orm": "^0.45.3",
+    "drizzle-orm": "^0.45.4",
     "express": "^4.22.3",
     "i18next": "catalog:",
     "i18next-browser-languagedetector": "catalog:",

@@ -136,7 +136,9 @@ export function PredicateField({
                     render={({ field: formField }) => (
                         <Select
                             value={formField.value}
-                            onValueChange={(next: ProductScopeField) => {
+                            onValueChange={(value) => {
+                                // Items below are PRODUCT_SCOPE_FIELDS only.
+                                const next = value as ProductScopeField;
                                 formField.onChange(next);
                                 if (
                                     isNumericField(next) !==
