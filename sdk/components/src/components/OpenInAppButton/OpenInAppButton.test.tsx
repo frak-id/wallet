@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render } from "@testing-library/preact";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render } from "@testing-library/preact";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as openInAppUtil from "@/actions/openInApp";
 import * as useClientReadyHook from "@/hooks/useClientReady";
 import * as useIsMobileHook from "@/hooks/useIsMobile";
@@ -23,7 +23,6 @@ vi.mock("@/actions/openInApp", () => ({
 
 describe("OpenInAppButton", () => {
     beforeEach(() => {
-        cleanup();
         vi.clearAllMocks();
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
             shouldRender: true,
@@ -33,10 +32,6 @@ describe("OpenInAppButton", () => {
         vi.mocked(useIsMobileHook.useIsMobile).mockReturnValue({
             isMobile: true,
         });
-    });
-
-    afterEach(() => {
-        cleanup();
     });
 
     it("should render with default props on mobile", () => {

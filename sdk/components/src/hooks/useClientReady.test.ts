@@ -188,7 +188,9 @@ describe("useClientReady", () => {
             window.FrakSetup.client = undefined;
             const { unmount } = renderHook(() => useClientReady());
 
-            unmount();
+            act(() => {
+                unmount();
+            });
 
             expect(clientReadyUtils.onClientReady).toHaveBeenCalledWith(
                 "remove",
