@@ -19,7 +19,8 @@ const iframeClientId = iframeParams?.get("clientId") ?? undefined;
 // overwriting the fresh URL param (race: sync setClientId vs async rehydration).
 if (iframeClientId) {
     clientIdStore.getState().setClientId(iframeClientId);
-    clientIdStore.persist.onFinishHydration(() => {
+    // `persist` is absent when third-party storage is blocked (Chrome Incognito).
+    clientIdStore.persist?.onFinishHydration(() => {
         clientIdStore.getState().setClientId(iframeClientId);
     });
 }
