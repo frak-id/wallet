@@ -45,11 +45,10 @@ export class HomePage {
         await this.page.waitForURL("/wallet");
     }
 
-    // Wallet tab. "Porte-monnaie" is a hardcoded FR label in AppShell (not i18n).
     async clickWalletButton() {
-        const walletLinkLocator = this.page.getByRole("link", {
-            name: "Porte-monnaie",
-        });
+        const walletLinkLocator = this.page
+            .getByRole("navigation", { name: "Tab navigation" })
+            .getByRole("link", { name: "Wallet", exact: true });
         await expect(walletLinkLocator).toBeVisible();
         await walletLinkLocator.click();
         await this.page.waitForURL("/wallet");

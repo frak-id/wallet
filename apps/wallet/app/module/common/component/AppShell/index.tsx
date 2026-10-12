@@ -13,10 +13,8 @@ import {
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useCallback, useMemo, useRef } from "react";
-import {
-    BottomTabBar,
-    type TabItem,
-} from "@/module/common/component/BottomTabBar";
+import { useTranslation } from "react-i18next";
+import { BottomTabBar } from "@/module/common/component/BottomTabBar";
 import { ErrorBoundary } from "@/module/common/component/ErrorBoundary";
 import { ModalErrorToast } from "@/module/common/component/ModalErrorToast";
 import { SessionExpiringBanner } from "@/module/common/component/SessionExpiringBanner";
@@ -39,26 +37,26 @@ import { AppShellScrollContext } from "./scrollContext";
 // and treat scrollContext.tsx as an internal detail.
 export { useAppShellScroll } from "./scrollContext";
 
-const tabs: TabItem[] = [
+const tabs = [
     {
         key: "/wallet",
-        label: "Porte-monnaie",
+        labelKey: "wallet.tabBar.wallet",
         icon: <WalletIcon />,
         nativeIcon: "tab-wallet",
     },
     {
         key: "/explorer",
-        label: "Explorer",
+        labelKey: "wallet.tabBar.explorer",
         icon: <ExplorerIcon />,
         nativeIcon: "tab-explorer",
     },
     {
         key: "/profile",
-        label: "Profil",
+        labelKey: "wallet.tabBar.profile",
         icon: <ProfileIcon />,
         nativeIcon: "tab-profile",
     },
-];
+] as const;
 
 // Home tab key. The bottom tab bar uses this to keep the back-stack bounded:
 // pressing back from /explorer or /profile returns to /wallet in a single jump,
@@ -95,6 +93,12 @@ export function AppShell({
     // `useNavigate` needed here, which also unlocks the router's render-time
     // preload of the destination routes.
     const mainRef = useRef<HTMLElement>(null);
+    const { t } = useTranslation();
+    // `t` changes with the language, which also re-syncs the native tab bar's titles.
+    const tabItems = useMemo(
+        () => tabs.map((tab) => ({ ...tab, label: t(tab.labelKey) })),
+        [t]
+    );
     const pathname = useRouterState({
         select: (state) => state.location.pathname,
     });
@@ -132,7 +136,7 @@ export function AppShell({
                 </Box>
                 {navigation && hasNativeGlass() && (
                     <NativeTabBar
-                        tabs={tabs}
+                        tabs={tabItems}
                         activeKey={activeKey}
                         homeKey={TAB_HOME_KEY}
                         onReselect={scrollToTop}
@@ -141,7 +145,7 @@ export function AppShell({
                 {navigation && !hasNativeGlass() && (
                     <Box className={bottomBar}>
                         <BottomTabBar
-                            tabs={tabs}
+                            tabs={tabItems}
                             activeKey={activeKey}
                             homeKey={TAB_HOME_KEY}
                         />

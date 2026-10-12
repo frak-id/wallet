@@ -11,11 +11,10 @@ export class SettingsPage {
         await this.page.waitForURL("/profile");
     }
 
-    // Profil tab. "Profil" is a hardcoded FR label in AppShell (not i18n).
     async clickSettingsButton() {
-        const settingsLinkLocator = this.page.getByRole("link", {
-            name: "Profil",
-        });
+        const settingsLinkLocator = this.page
+            .getByRole("navigation", { name: "Tab navigation" })
+            .getByRole("link", { name: "Profile", exact: true });
         await expect(settingsLinkLocator).toBeVisible();
         await settingsLinkLocator.click();
         await this.page.waitForURL("/profile");

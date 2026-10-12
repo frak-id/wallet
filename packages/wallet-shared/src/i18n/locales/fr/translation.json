@@ -76,6 +76,11 @@
     },
     "wallet": {
         "pageTitle": "Porte-monnaie",
+        "tabBar": {
+            "wallet": "Porte-monnaie",
+            "explorer": "Explorer",
+            "profile": "Profil"
+        },
         "profile": {
             "pageTitle": "Profil",
             "notificationSettings": "Notifications",
