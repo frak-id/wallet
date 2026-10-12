@@ -1129,7 +1129,7 @@ export default interface Resources {
         "managePairings": "Manage paired devices",
         "notificationDeniedHelp": "Notifications blocked by browser. Enable them in browser settings.",
         "notificationSettings": "Notifications",
-        "pageTitle": "Profil",
+        "pageTitle": "Profile",
         "privacyPolicy": "Privacy Policy",
         "rateApp": "Rate the app",
         "recoveryOptions": "Recovery options",
