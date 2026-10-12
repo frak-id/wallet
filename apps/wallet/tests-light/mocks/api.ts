@@ -1,4 +1,5 @@
 import type { Page, Route } from "@playwright/test";
+import { mockAddress } from "./sessions";
 
 export async function mockDefaultApiRoutes(page: Page, baseURL?: string) {
     await Promise.all([
@@ -159,24 +160,14 @@ async function mockBackendBalance(page: Page) {
             status: 200,
             contentType: "application/json",
             body: JSON.stringify({
-                totalBalance: "1500000000000000000",
+                total: {
+                    amount: 12.5,
+                    eurAmount: 12.5,
+                    usdAmount: 13.6,
+                    gbpAmount: 10.9,
+                },
+                balances: [],
             }),
-        })
-    );
-
-    await page.route("**/*/wallet/balance/claimable", (route) =>
-        route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({ claimableBalance: "0" }),
-        })
-    );
-
-    await page.route("**/*/wallet/balance/pending", (route) =>
-        route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({ pendingBalance: "0" }),
         })
     );
 }
@@ -215,18 +206,30 @@ async function mockBackendSession(page: Page) {
     );
 }
 
+// Without SST secrets the app has no eRPC or dRPC key and falls back to the chain's public RPC.
+const RPC_URL =
+    /^https:\/\/(erpc\.gcp[^/]*\.frak\.id\/nexus-rpc\/evm\/|lb\.drpc\.org\/|[^/]+\.arbitrum\.io\/rpc)/;
+
+// The smart account resolves its address with a `to`-less eth_call (permissionless `getSenderAddress`); until it answers, wagmi never connects and every address-keyed query stays disabled.
+const SENDER_ADDRESS_RESULT = `0x${mockAddress.slice(2).padStart(64, "0")}`;
+
 async function mockRpc(page: Page) {
     await page.route(
-        "https://erpc.gcp*.frak.id/nexus-rpc/evm/**/*",
+        (url) => RPC_URL.test(url.href),
         (route) => {
             const request = route.request();
             if (request.method() !== "POST") {
                 return route.continue();
             }
 
+            type RpcRequest = {
+                id?: number;
+                method?: string;
+                params?: [{ to?: string }?, ...unknown[]];
+            };
             const body = request.postDataJSON() as
-                | { id?: number; method?: string }
-                | { id?: number; method?: string }[]
+                | RpcRequest
+                | RpcRequest[]
                 | null;
 
             if (!body) return route.continue();
@@ -235,7 +238,10 @@ async function mockRpc(page: Page) {
             const responses = requests.map((req) => ({
                 jsonrpc: "2.0" as const,
                 id: req.id,
-                result: "0x0",
+                result:
+                    req.method === "eth_call" && !req.params?.[0]?.to
+                        ? SENDER_ADDRESS_RESULT
+                        : "0x0",
             }));
 
             return route.fulfill({
