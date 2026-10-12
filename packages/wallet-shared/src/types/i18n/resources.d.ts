@@ -1479,6 +1479,11 @@ export default interface Resources {
         "lifetime": "Lifetime",
         "pending": "Pending"
       },
+      "tabBar": {
+        "explorer": "Explorer",
+        "profile": "Profile",
+        "wallet": "Wallet"
+      },
       "tokens": {
         "amountLessThanBalance": "Amount must be less than balance",
         "amountPositive": "Amount must be positive",
