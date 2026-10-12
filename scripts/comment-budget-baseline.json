@@ -184,7 +184,6 @@
     "apps/wallet/app/module/recovery/utils/abi.ts": 2,
     "apps/wallet/app/module/referral/component/ReferralCodeForm/index.tsx": 1,
     "apps/wallet/app/module/referral/component/ShareReferralCodePage/index.tsx": 1,
-    "apps/wallet/app/module/reward-code/hook/useGenerateInstallCode.test.ts": 1,
     "apps/wallet/app/module/settings/component/AddEmail/ConflictStep.tsx": 1,
     "apps/wallet/app/module/settings/component/AddEmail/index.tsx": 1,
     "apps/wallet/app/module/sharing/component/SharingView.tsx": 1,
