@@ -1,4 +1,4 @@
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { vi } from "vitest";
 import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { useDeepLinkFallback } from "./useDeepLinkFallback";
@@ -141,7 +141,9 @@ describe("useDeepLinkFallback", () => {
 
         const { unmount } = renderHook(() => useDeepLinkFallback());
 
-        unmount();
+        act(() => {
+            unmount();
+        });
 
         expect(removeEventListenerSpy).toHaveBeenCalledWith(
             "message",
