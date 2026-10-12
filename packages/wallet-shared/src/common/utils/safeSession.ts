@@ -5,7 +5,13 @@ export function getFromLocalStorage<T>(key: string) {
     if (typeof window === "undefined") {
         return undefined;
     }
-    const itemFromLocalStorage = localStorage.getItem(key);
+    let itemFromLocalStorage: string | null;
+    try {
+        itemFromLocalStorage = localStorage.getItem(key);
+    } catch {
+        // Denied storage (e.g. a third-party iframe in Chrome Incognito) holds no session.
+        return undefined;
+    }
     if (!itemFromLocalStorage) {
         return;
     }

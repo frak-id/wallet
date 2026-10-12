@@ -31,8 +31,17 @@ export const queryClient = new QueryClient({
     },
 });
 
+// Reading `sessionStorage` throws when third-party storage is blocked; no storage means no persistence.
+function sessionStorageIfAllowed(): Storage | undefined {
+    try {
+        return globalThis.sessionStorage;
+    } catch {
+        return undefined;
+    }
+}
+
 const persister = createAsyncStoragePersister({
-    storage: globalThis.sessionStorage,
+    storage: sessionStorageIfAllowed(),
     throttleTime: 50,
 });
 
