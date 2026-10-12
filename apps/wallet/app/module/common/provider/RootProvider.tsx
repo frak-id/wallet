@@ -1,5 +1,6 @@
 import {
-    setProfileId,
+    sessionStore,
+    setWallet,
     usePersistentPairingClient,
     WagmiProviderWithDynamicConfig,
 } from "@frak-labs/wallet-shared";
@@ -10,7 +11,7 @@ import {
     removeOldestQuery,
 } from "@tanstack/react-query-persist-client";
 import { lazy, type PropsWithChildren, Suspense, useEffect } from "react";
-import { useConnection } from "wagmi";
+import { useStore } from "zustand";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { useWalletSessionGuard } from "@/module/common/hook/useWalletSessionGuard";
 import { queryClient } from "@/module/common/provider/queryClient";
@@ -80,11 +81,11 @@ function SessionStateManager() {
     usePersistentPairingClient();
     useWalletSessionGuard();
 
-    // Set the open panel profile id with the wagmi address
-    const { address } = useConnection();
+    // Keep the analytics `wallet` property in step with the session.
+    const wallet = useStore(sessionStore, (s) => s.session?.address);
     useEffect(() => {
-        setProfileId(address);
-    }, [address]);
+        setWallet(wallet);
+    }, [wallet]);
 
     return null;
 }

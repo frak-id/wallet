@@ -49,11 +49,15 @@ export {
     getOrCreateSessionId,
     identifyAuthenticatedUser,
     initAnalytics,
-    setAnalyticsDeviceId,
     setInstallSource,
-    setProfileId,
     updateGlobalProperties,
 } from "./globalProps";
+export {
+    applyIdentity,
+    getInstallId,
+    setHostAnonymousId,
+    setWallet,
+} from "./identity";
 export { getPlatformInfo, openPanel } from "./openpanel";
 export type { RecordErrorOptions } from "./recordError";
 export { recordError } from "./recordError";

@@ -1,5 +1,7 @@
 import type { Session } from "../../types/Session";
+import { rememberHostAnonymousId } from "./anonymousId";
 import { crashlytics } from "./crashlytics";
+import { applyIdentity, setWallet } from "./identity";
 import {
     getInitProperties,
     getPlatformInfo,
@@ -18,14 +20,6 @@ const SESSION_ID_STORAGE_KEY = "frak_analytics_session_id";
  */
 const pendingProfileProps: Record<string, unknown> = {};
 
-export function setProfileId(profileId?: string) {
-    // Crashlytics: mirror profile changes so logout (`undefined`) clears
-    // the identifier and the next session starts anonymous.
-    void crashlytics?.setUserId(profileId ?? "");
-    if (!openPanel) return;
-    openPanel.profileId = profileId;
-}
-
 export function updateGlobalProperties(
     properties: Partial<AnalyticsGlobalProperties>
 ) {
@@ -35,18 +29,6 @@ export function updateGlobalProperties(
         ...current,
         ...properties,
     });
-}
-
-/**
- * Pin the OpenPanel device to the SDK's anonymous id, so cross-surface funnels
- * stitch on a stable value instead of a daily-rotated IP + user-agent hash.
- * No-op without an id: the derived device stays in place for organic traffic.
- *
- * Call before the surface's first event — a later change re-keys the session.
- */
-export function setAnalyticsDeviceId(deviceId?: string | null) {
-    if (!deviceId) return;
-    updateGlobalProperties({ __deviceId: deviceId });
 }
 
 /**
@@ -108,6 +90,14 @@ export function initAnalytics(surface: AnalyticsSurface) {
         session_id: getOrCreateSessionId(),
         app_version: process.env.APP_VERSION,
     });
+    // The listener iframe is handed its id by the SDK through the URL.
+    if (surface === "listener") {
+        rememberHostAnonymousId(
+            new URLSearchParams(window.location.search).get("clientId")
+        );
+    }
+    // Before the first event: a later change of the device id re-keys the session.
+    applyIdentity();
 }
 
 /**
@@ -123,36 +113,26 @@ export function setInstallSource(source: string) {
 }
 
 /**
- * Flag the current OpenPanel session as belonging to an authenticated user.
- * Updates wallet/session_id global props, identifies the profile with
- * platform metadata + any buffered profile props, and emits `user_logged_in`.
+ * Attach the authenticated wallet to the stable anonymous profile and emit
+ * `user_logged_in`. The wallet is a property, never the profile id.
  *
  * Does NOT emit the domain `${event}_completed` event — callers emit that
  * via `trackEvent("register_completed", { flow_id })` so the flow_id is
  * attached explicitly.
  */
 export function identifyAuthenticatedUser(session: Omit<Session, "token">) {
-    // Crashlytics first — wallet address is the canonical user id and
-    // session metadata helps narrow crash reports per auth flow. Runs
-    // independently of openPanel availability.
-    void crashlytics?.setUserId(session.address);
     void crashlytics?.setKey("session_type", session.type ?? "webauthn");
     void crashlytics?.setKey("session_src", "pairing");
 
+    updateGlobalProperties({ session_id: getOrCreateSessionId() });
+    setWallet(session.address, {
+        session_type: session.type ?? "webauthn",
+        session_src: "pairing",
+        ...getPlatformInfo(),
+        ...pendingProfileProps,
+    });
+
     if (!openPanel) return;
-    updateGlobalProperties({
-        wallet: session.address,
-        session_id: getOrCreateSessionId(),
-    });
-    openPanel.identify({
-        profileId: session.address,
-        properties: {
-            session_type: session.type ?? "webauthn",
-            session_src: "pairing",
-            ...getPlatformInfo(),
-            ...pendingProfileProps,
-        },
-    });
     // Clear buffered props now that they're on the profile
     for (const key of Object.keys(pendingProfileProps)) {
         delete pendingProfileProps[key];
