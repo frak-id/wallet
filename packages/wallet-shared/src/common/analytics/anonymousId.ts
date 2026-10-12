@@ -1,6 +1,6 @@
 import { clientIdStore } from "../../stores/clientIdStore";
 
-export const INSTALL_ID_STORAGE_KEY = "frak_analytics_install_id";
+const INSTALL_ID_STORAGE_KEY = "frak_analytics_install_id";
 
 let cachedInstallId: string | undefined;
 let hostAnonymousId: string | undefined;
