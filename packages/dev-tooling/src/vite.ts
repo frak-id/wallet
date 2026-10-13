@@ -48,6 +48,22 @@ export function onwarn(
 // Re-exported so every existing import site keeps resolving from this module.
 export { BROWSER_TARGET_ECMA, BROWSER_TARGET_SAFARI };
 
+// Vendor chunk groups shared by the wallet and business builds. `priority`
+// stays with each app: it only means something against that app's own groups.
+export const reactVendorChunkGroup = {
+    name: "react-vendor",
+    // Trailing `[\\/]` is load-bearing: without it `react` also matches
+    // `react-hook-form` / `react-i18next` and sweeps them into this eager chunk.
+    test: /node_modules[\\/](react|react-dom|scheduler|react[\\/]jsx-runtime)[\\/]/,
+    minShareCount: 1,
+};
+
+export const blockchainVendorChunkGroup = {
+    name: "blockchain-vendor",
+    test: /[\\/]node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox)[\\/]/,
+    minShareCount: 1,
+};
+
 // Mutable by design: vite's `build.target` type rejects a readonly array.
 export const BROWSER_TARGET: string[] = [
     BROWSER_TARGET_SAFARI,

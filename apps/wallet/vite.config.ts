@@ -11,10 +11,12 @@ import removeConsole from "vite-plugin-remove-console";
 import {
     assertBundleEsVersion,
     BROWSER_TARGET,
+    blockchainVendorChunkGroup,
     inlineFontFaces,
     lightningCssConfig,
     onwarn,
     preconnectOrigins,
+    reactVendorChunkGroup,
     stripAbiInternalType,
 } from "../../packages/dev-tooling/index.ts";
 import { routerGenerationOptions } from "./router.options.ts";
@@ -156,12 +158,7 @@ const devProxy = {
 function buildChunkGroups() {
     return [
         // Vendor split — stable libraries first for long-term browser cache.
-        {
-            name: "react-vendor",
-            test: /node_modules[\\/](react|react-dom|scheduler|react[\\/]jsx-runtime)[\\/]/,
-            priority: 40,
-            minShareCount: 1,
-        },
+        { ...reactVendorChunkGroup, priority: 40 },
         // Tanstack-vendor BEFORE blockchain-vendor: when wagmi pulls @tanstack/
         // query-core and zustand transitively, bun's content-addressed layout
         // produces paths like `node_modules/.bun/wagmi@x/node_modules/@tanstack/
@@ -176,12 +173,7 @@ function buildChunkGroups() {
             priority: 36,
             minShareCount: 1,
         },
-        {
-            name: "blockchain-vendor",
-            test: /[\\/]node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox)[\\/]/,
-            priority: 35,
-            minShareCount: 1,
-        },
+        { ...blockchainVendorChunkGroup, priority: 35 },
         // Forms vendor — react-hook-form + the underlying `qr` package
         // (used by `wallet-shared/pairing/component/PairingQrCode`). Both are
         // reached only via lazy code paths (recovery routes, tokens.send
