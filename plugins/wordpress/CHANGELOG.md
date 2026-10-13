@@ -11,6 +11,10 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Changed
+
+- **The SDK loader now downloads while the page is still parsing.** The `frak-sdk` script tag is preceded by `<link rel="modulepreload" href="https://sdk.frak.id/loader.js">`, a redirect to the exact loader the pointer shim imports. Before, the loader request only started once the deferred shim ran after the page finished parsing. On a throttled Slow 4G profile the listener iframe on a live WordPress store started 180 to 640 ms earlier, with first paint unchanged. Release only once `sdk.frak.id/loader.js` answers a `302`; until then the preload is a wasted 404. `Frak_Sdk_Urls::add_onerror_attribute()` is renamed `filter_sdk_tag()`.
+
 ## [1.2.0] - 2026-10-06
 
 ### Added

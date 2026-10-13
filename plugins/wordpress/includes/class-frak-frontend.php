@@ -31,7 +31,7 @@ class Frak_Frontend {
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ), 20 );
 		add_filter( 'wp_resource_hints', array( __CLASS__, 'add_resource_hints' ), 10, 2 );
-		add_filter( 'script_loader_tag', array( 'Frak_Sdk_Urls', 'add_onerror_attribute' ), 10, 2 );
+		add_filter( 'script_loader_tag', array( 'Frak_Sdk_Urls', 'filter_sdk_tag' ), 10, 2 );
 
 		// Opt-in: inject <frak-banner> at the top of every page (right after
 		// <body> via wp_body_open) when the merchant enables "Auto-render

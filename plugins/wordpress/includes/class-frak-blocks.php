@@ -82,7 +82,7 @@ class Frak_Blocks {
 	 * into the iframe's document from inside each block's `useEffect`.
 	 */
 	public static function enqueue_editor_assets() {
-		add_filter( 'script_loader_tag', array( 'Frak_Sdk_Urls', 'add_onerror_attribute' ), 10, 2 );
+		add_filter( 'script_loader_tag', array( 'Frak_Sdk_Urls', 'filter_sdk_tag' ), 10, 2 );
 
 		wp_register_script(
 			'frak-sdk',
