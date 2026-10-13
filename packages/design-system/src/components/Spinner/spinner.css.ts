@@ -1,6 +1,13 @@
-import { keyframes, style, styleVariants } from "@vanilla-extract/css";
+import {
+    createVar,
+    keyframes,
+    style,
+    styleVariants,
+} from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
+
+const spinDuration = createVar();
 
 const spin = keyframes({
     from: {
@@ -35,7 +42,14 @@ export const leafStyles = style({
     left: "calc(50% - 12.5% / 2)",
     width: "12.5%",
     height: "100%",
-    animation: `${spin} 800ms linear infinite`,
+    vars: { [spinDuration]: "800ms" },
+    animation: `${spin} ${spinDuration} linear infinite`,
+    "@media": {
+        // Opacity only, no movement: slowed rather than stopped so it still reads as loading.
+        "(prefers-reduced-motion: reduce)": {
+            vars: { [spinDuration]: "2400ms" },
+        },
+    },
     "::before": {
         content: '""',
         display: "block",
@@ -52,34 +66,34 @@ export const leafStyles = style({
 export const leafRotations = styleVariants({
     leaf0: {
         transform: "rotate(0deg)",
-        animationDelay: "calc(-8 / 8 * 800ms)",
+        animationDelay: `calc(-8 / 8 * ${spinDuration})`,
     },
     leaf1: {
         transform: "rotate(45deg)",
-        animationDelay: "calc(-7 / 8 * 800ms)",
+        animationDelay: `calc(-7 / 8 * ${spinDuration})`,
     },
     leaf2: {
         transform: "rotate(90deg)",
-        animationDelay: "calc(-6 / 8 * 800ms)",
+        animationDelay: `calc(-6 / 8 * ${spinDuration})`,
     },
     leaf3: {
         transform: "rotate(135deg)",
-        animationDelay: "calc(-5 / 8 * 800ms)",
+        animationDelay: `calc(-5 / 8 * ${spinDuration})`,
     },
     leaf4: {
         transform: "rotate(180deg)",
-        animationDelay: "calc(-4 / 8 * 800ms)",
+        animationDelay: `calc(-4 / 8 * ${spinDuration})`,
     },
     leaf5: {
         transform: "rotate(225deg)",
-        animationDelay: "calc(-3 / 8 * 800ms)",
+        animationDelay: `calc(-3 / 8 * ${spinDuration})`,
     },
     leaf6: {
         transform: "rotate(270deg)",
-        animationDelay: "calc(-2 / 8 * 800ms)",
+        animationDelay: `calc(-2 / 8 * ${spinDuration})`,
     },
     leaf7: {
         transform: "rotate(315deg)",
-        animationDelay: "calc(-1 / 8 * 800ms)",
+        animationDelay: `calc(-1 / 8 * ${spinDuration})`,
     },
 });
