@@ -11,7 +11,6 @@ import { Calendar } from "@/module/common/component/Calendar";
 import {
     clearButton,
     panel,
-    popoverContent,
     presetButton,
     presetButtonActive,
     presetColumn,
@@ -32,8 +31,6 @@ type DateRangePopoverProps = {
     trigger: ReactNode;
     align?: "start" | "center" | "end";
     numberOfMonths?: number;
-    /** Raise z-index above a fixed header overlapping the popover. */
-    liftAboveHeader?: boolean;
 };
 
 /**
@@ -48,7 +45,6 @@ export function DateRangePopover({
     trigger,
     align = "start",
     numberOfMonths = 2,
-    liftAboveHeader = false,
 }: DateRangePopoverProps) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
@@ -97,10 +93,7 @@ export function DateRangePopover({
             }}
         >
             <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-            <PopoverContent
-                align={align}
-                className={liftAboveHeader ? popoverContent : undefined}
-            >
+            <PopoverContent align={align}>
                 <div className={panel}>
                     <div className={presetColumn}>
                         {DATE_RANGE_PRESETS.map((preset) => (
