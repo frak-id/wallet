@@ -21,7 +21,9 @@
 {% comment %}
   The pointer file is a single import() statement, so a failed load ran
   nothing — the jsDelivr shim can replace it without double-evaluating.
+  loader.js redirects to the exact loader that import() requests.
 {% endcomment %}
+<link rel="modulepreload" href="{{ frak_sdk_origin }}/loader.js">
 <script
   src="{{ frak_sdk_origin }}/components.js"
   defer="defer"
