@@ -160,3 +160,38 @@ metafield, so nothing per shop lives on the CDN.
 - **Dev**: `sdk-dev.frak.id/shopify/ambassador` exists too, as a side effect
   of the shared code, but the dev Shopify app does not use it: its proxy
   points at the app server's `/proxy/ambassador` route (see the plan).
+
+## Loader preload (`/loader.js`, FRA-345)
+
+The shim is a deferred classic script, so its `import()` of `loader.js` only
+starts once the page has finished parsing: the loader download sat after
+`DOMContentLoaded` on every merchant page. Integrations cannot preload the
+jsDelivr URL themselves because only the pointer knows the version.
+
+`sdk[-dev].frak.id/loader.js` is a `302` to the exact jsDelivr loader the
+shim imports, answered by the Router's viewer-request function with the same
+`Cache-Control` and edge headers as the shim. Each integration emits
+`<link rel="modulepreload" href="https://sdk.frak.id/loader.js">` next to its
+script tag. The module map is keyed by the requested URL, so the shim's own
+`import()` does not reuse the preloaded module; it reads the response the
+preload left in the HTTP cache, and the loader's relative chunks resolve on
+jsDelivr because a module's base URL is its final URL. The shim is unchanged,
+so already-released integrations keep exactly their current behaviour.
+
+Measured in Chromium against live merchant HTML replayed locally with the
+pointer emulated (40 ms), 9 runs, medians, Slow 4G (150 ms RTT, 1.6 Mbps):
+
+| Store | Placement | Listener iframe start | FCP | LCP |
+|---|---|---|---|---|
+| jecosmetique.fr (WordPress) | footer, next to the script | 9670 → 9027 ms | 3204 → 3196 | 8840 → 9004 |
+| accalmie-lab.fr (WordPress) | footer, next to the script | 3209 → 3029 ms | 1268 → 1260 | 1292 → 1284 |
+| harmo-skincare.fr (Shopify) | `<head>` (app embed) | 8127 → 7703 ms | 1788 → 1924 | 5620 → 5836 |
+
+Unthrottled the gain is 10 to 20 ms. Where the tag lands in `<head>`
+(Shopify, PrestaShop) the 35 KB loader competes with the theme's own head
+resources on a slow link, costing about 140 ms of FCP. `fetchpriority="low"`
+made no difference. Firefox honours the preload but downloads the loader twice
+if the shim runs while the preload is still in flight; WebKit ignores it.
+
+Within 5 minutes of a release a browser can hold the old `302` and the new
+shim (or the reverse); the preload is then wasted for that one page load.
