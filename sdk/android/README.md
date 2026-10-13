@@ -19,7 +19,7 @@ dependencies {
 }
 ```
 
-Consumer floors: `minSdk 24`, JVM target 17, Kotlin metadata at language level 2.2 (so a Kotlin 2.2+ compiler), AGP 8.2+. `:frak-sdk-ui`'s `@Composable build()` overload needs you to declare Compose yourself — it is an `implementation` dependency here, not `api`.
+Consumer floors: `minSdk 24`, JVM target 17, Kotlin metadata at language level 2.2 (so a Kotlin 2.2+ compiler), AGP 8.2+. `:frak-sdk-ui` exposes the Compose runtime (and its BOM) as `api`, so the `@Composable build()` overload compiles without declaring Compose yourself; calling it from a composable still needs the Compose compiler plugin in your module.
 
 ```kotlin
 // Application.onCreate
@@ -215,7 +215,7 @@ The MVP surface above is implemented and covered by JVM unit tests (count them o
 
 Android has been driven on a device (SM-G998B/Android 15 through development, RMX3511/Android 16 for the 2026-08-13 pass) — `initialize`, the wallet-installed probe, `config.resolve`, `rewards.best`, and since 2026-08-13 **the sharing sheet and the `ComponentDialog` host, in a minified R8 build** (`isMinifyEnabled = true` on the harness release variant): no `ClassNotFoundException`/`NoSuchMethodError`/`VerifyError` across 16 500 logcat lines, 254 SDK classes reaching R8 and 23 shaken out. Still not run on a device: the install handoff, inbound deep links (cold *or* warm), a rotation pass, a leak check, and anything only a multi-destination `NavHost` triggers. The run is also single-screen, so it cannot see anything the harness itself gets wrong. `.github/workflows/apps.yaml` lints, builds and unit-tests this SDK on every push and PR touching `sdk/android/**`, but it does **not** build `example/native-android`: nothing in CI compiles the harness, so a broken harness call site does not go red. The binary-compatibility gate is wired and **ratified**: both `api/*.api` dumps are committed, `apiCheck` runs in CI, and `check` is green — see "Binary compatibility" below.
 
-**`1.0.0-beta.1` and `1.0.0-beta.2` are on Maven Central**, so the publish path has run end to end. Nothing consumes a published artifact yet — `example/native-android` resolves the composite build, not the coordinate — so the ABI was nominally frozen and practically still free. That ends at `1.0.0`: from it the public surface follows semantic versioning, and the first merchant integration spends whatever budget is left.
+**`1.0.0` is on Maven Central** (tag `android-v1.0.0`), and the public surface follows semantic versioning from it: a signature change costs a major. Nothing in this repo consumes the published artifact — `example/native-android` resolves the composite build, not the coordinate.
 
 `example/native-android` builds against the real artifacts via a Gradle composite build (`includeBuild("../../sdk/android")` with an explicit `dependencySubstitution`, since Gradle's automatic substitution derives coordinates from `project.group` plus the Gradle module name and so looks for `id.frak.sdk:frak-sdk`, not the published `id.frak.sdk:core`). It exercises `Frak.initialize`, `.appLink`, `.config.resolve`, `.tracking.purchase` and `.rewards.best` through the SDK's public API — a source checkout, not a published artifact.
 

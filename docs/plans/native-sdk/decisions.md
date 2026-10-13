@@ -83,7 +83,7 @@ classes.
 ### 2.2 `*Async` twins for Java
 
 Every `suspend fun` on `FrakClient` and the five `*Api` namespaces has a `CompletableFuture` twin
-named `*Async`; 18 in total. `kotlinx-coroutines-jdk8` merged into `-core` in 1.7.0 and minSdk 24
+named `*Async`; 17 in total. `kotlinx-coroutines-jdk8` merged into `-core` in 1.7.0 and minSdk 24
 clears the `CompletableFuture` floor, so this cost no new dependency.
 
 All twins funnel through `DefaultFrakClient.asFuture` — body on the IO dispatcher, completion
@@ -91,7 +91,7 @@ signalled on main via a hand-rolled `MainThreadDispatcher` (`Dispatchers.Main` n
 `kotlinx-coroutines-android`, which is not a dependency). `Frak.shutdownAsync` gets its own
 never-cancelled scope, since routing through the scope it cancels would self-cancel the future.
 
-**Trap:** never `get()`/`join()` a twin on the main thread — deterministic deadlock.
+**Trap:** never `get()`/`join()` a twin on the main thread: completion runs on main, so `MainSafeFuture` fails the call with `IllegalStateException` instead of deadlocking.
 **Why not `@JvmSynthetic`:** hiding the twin drops it from the ABI dump too.
 **Why `FrakResult<T>` and not `kotlin.Result`:** the latter is a value class that erases to `Object`
 from Java and cannot carry the typed `FrakError` arm across the boundary.
@@ -473,8 +473,9 @@ because anything enforces it — and that is the point, since either platform mu
 hotfix alone.
 
 What Changesets does buy, and what replaces it. Changesets owns three things for the JS packages:
-the version bump, the CHANGELOG, and the publish. Here the bump is by hand — one commit, all sites,
-gated — and the publish is the tag workflow. The CHANGELOG is `sdk/{android,ios}/CHANGELOG.md` in
+the version bump, the CHANGELOG, and the publish. Here the bump is one commit across all sites, made by
+`bun scripts/native-version.ts bump <android|ios> <version>` and gated — and the publish is the tag
+workflow. The CHANGELOG is `sdk/{android,ios}/CHANGELOG.md` in
 Keep a Changelog format, written by hand under `[Unreleased]` and promoted by the release commit.
 It is not decoration: `scripts/native-version.ts` fails the release if the version being cut has no
 section, and both workflows publish that section as the GitHub release body. The iOS one also ships

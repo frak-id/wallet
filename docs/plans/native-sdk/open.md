@@ -4,8 +4,10 @@ Only open and partial items. Closed findings are not listed; git history has the
 the original audits (`A*`/`S*`/`T*`/`D*` round 1, `2.x`–`8.x` round 2, `9.x` round 3, `§n` from the
 2026-08-13 alpha audit) so older commit messages still resolve.
 
-**State as of 2026-08-14.** Any count or severity below without a date and a verification method is
-suspect — that was the failure mode of the register this replaces.
+**State as of 2026-10-13** (HEAD `5638ed04f`) for §0, §1, §3 (S11, §3.7, the install rungs), §4
+(§2.3, §2.4, §3.6), §5, §8 (FRA-307, the harness gaps, 9.13) and the `1.0.0` facts, each read against
+the tree. Every other row keeps its 2026-08-14 read. Any count or severity below without a date and
+a verification method is suspect — that was the failure mode of the register this replaces.
 
 Verification vocabulary, used in the tables: **read** (inspection only), **executed** (a test or
 command proves it), **device** (driven on real hardware).
@@ -17,41 +19,46 @@ symptom. This file and [`next.md`](./next.md) own **engineering** items — ABI 
 test structure, and the unpinned surfaces in §9. Neither list is a subset of the other, and most of
 this file is in neither a sprint queue nor anyone's inbox.
 
-The split is recorded because it was previously undeclared, and that cost a duplicate: FRA-307 is
+The split is recorded because it was previously undeclared, and that cost a duplicate: FRA-307 was
 §8's `overallDeadlineSpansRetryBackoff` row, filed from a CI failure by someone who had no reason to
 read this file. Search here before filing a native issue; when one is filed anyway, put its id on the
 row so the duplicate is visible from both directions.
 
-Open Linear issues at 2026-08-28 (`linear_list_issues`, all non-closed FRA), and where each lands:
+Native-SDK issues in Linear on 2026-10-13 (`linear_get_issue`), and where each lands:
 
-| Issue | Row |
-|---|---|
-| FRA-307 — flaky iOS deadline test | §8, `overallDeadlineSpansRetryBackoff` — **duplicate** |
-| FRA-295 — better sharing preview | §5, the bare-URL share payload. The `apps/business` editor half is product work and has no row |
-| FRA-291 — resolve identity + balance | none — a new surface, not a gap in what ships |
-| FRA-292 — prebuilt native components | [`next.md`](./next.md) §8. Its stated gate ("first usage") is looser than the real one — §6 here, a WebView sharing-performance measurement nobody has taken |
+| Issue | State | Row |
+|---|---|---|
+| FRA-312 — iOS share preview image loses the tap-path race | Backlog | none. The byte-by-byte read is fixed (`session.data(for:)`, `SharingImagePreview.swift:34`). The warm-up half stands: `SharingPresentation.swift:208-210` prefetches the logo, never `shareImageURL` |
+| FRA-313 — Android settles its budget on the engine, not the page | Backlog | §4, §2.4 (Android). Not reproduced on Android; the gap is structural (`SharingSheetState.kt:253-256`) |
+| FRA-314 — run the UIKit suites on a simulator | Backlog | §2, T3 and 8.2; audit NSD-12 |
+| FRA-315 — `copyInstallCode` ignores its expiry | Backlog | none. The parameter is gone from the internal `NativeShare.copyInstallCode` (`0fb7ea262`); the asymmetry stands: iOS expires the clipboard entry, Android cannot, and `decisions.md` does not record it |
+| FRA-291 — resolve identity + balance | Backlog | none — a new surface, not a gap in what ships |
+| FRA-292 — prebuilt native components | Canceled 2026-10-05 | [`next.md`](./next.md) §8. The real gate stands — §6 here, a WebView sharing-performance measurement nobody has taken |
+| FRA-295 — better sharing preview | Done 2026-09-01 | shipped in `1.0.0-beta.3`; the `apps/business` editor half is product work and has no row |
+| FRA-307 — flaky iOS deadline test | Done 2026-08-31 | §8 row removed; fixed by `ad083292c` (`HTTPClientTests.swift:236-270` sets a 0.5 s deadline against a 5 s backoff) |
 
-Nothing else here has a Linear issue. That is deliberate rather than backlog: an item gated on a
+Rows not listed have no Linear issue. That is deliberate rather than backlog: an item gated on a
 device tier or an owner decision is not actionable in a sprint queue. The ones that *are* actionable
-are ordered in [`next.md`](./next.md) — §1 most of all, whose cost rises the moment a merchant
-integrates `1.0.0-beta.1`.
+are ordered in [`next.md`](./next.md) — §1 most of all, whose items are now majors.
 
-## 1. ABI — the window has changed
+## 1. ABI — frozen at 1.0.0
 
-`1.0.0-beta.1` is published on Maven Central and the SwiftPM mirror. These items were tracked as
-"free before the first artifact exists"; that is no longer true. Each is now a break against a
-published coordinate, and the budget for taking one is the remaining `beta` line. **Decide these
-before `1.0.0` final.**
+`1.0.0` is published on Maven Central and the SwiftPM mirror (2026-09-08), and the public surface
+follows semantic versioning from it: a breaking change takes a new major. **None of the items below
+was decided before the cut.** The Android dumps (`frak-sdk/api/frak-sdk.api`,
+`frak-sdk-ui/api/frak-sdk-ui.api`) are identical at `android-v1.0.0` and HEAD, and the iOS sources
+still have the shapes described. 1.0.0 is the frozen baseline. Each item is now a major, an additive
+change that avoids the break, or a cost to accept in writing in [`decisions.md`](./decisions.md).
 
-Nothing has consumed a published artifact yet, so the practical cost today is still near zero — but
-it stops being near zero the moment a merchant integrates.
+Nothing in this repo consumes a published artifact (see the README's "Consumers"). Whether a
+merchant app does is unknown outside this repo.
 
 | Id | Item | Platform | Why it still matters |
 |---|---|---|---|
 | §4.6 | **`FrakContext` and `SharingResult` have no unknown arm.** The highest-value item here. A `Kind` discriminator does not fix it and cannot: `SharingResult` gained a 6th arm (`WalletOpened`) five days after being "narrowed" by `Kind`. A Kotlin `when` without `else` throws `NoWhenBranchMatchedException` at runtime on an already-installed binary; a Swift non-frozen public enum is a hard source break | both | unowned |
 | §4.5 | **`tracking.purchase(String, String, String)`** — three unlabelled strings on the money path, trivially mis-ordered and permanently so | Android | unowned |
 | §4.4 | **`FrakError` has no retryable/fatal axis**, and iOS's `LocalizedError` conformance exposes raw diagnostics as user-facing strings merchants will show to users | both | unowned |
-| §4.9 / 9.9 | **Equality split across 8 types.** Android input types are 3-have / 4-haven't; `FrakConfig`/`FrakMetadata` are reference-identity on Android and hand-written `Hashable` on iOS. Adding equality later is a behaviour change with an unchanged descriptor — invisible to the ABI gate | both | unowned |
+| §4.9 / 9.9 | **Equality split across 8 types.** Android input types are 3-have / 4-haven't (read 2026-10-13: `AttributionParams`, `ProductDetails`, `RewardRequest` have it; `FrakConfig`, `FrakMetadata`, `SharingProduct`, `SharingRequest` do not); `FrakConfig`/`FrakMetadata` are reference-identity on Android and hand-written `Hashable` on iOS. Adding equality later is a behaviour change with an unchanged descriptor — invisible to the ABI gate | both | unowned |
 | §4.10 | **The on-disk queue row format carries no reliability tier.** If purchases ever need their own failure budget or drain tier, the format must carry it before merchants have rows on disk. A queue file cannot be migrated | both | unowned |
 | A2 | **`FrakEnvironment` and `RewardTier` still fully open.** `RewardTier` gained an `Unknown` arm in `a9637386b`; `FrakEnvironment` is untouched, and is the weaker case — it is a merchant input nobody writes a `when` over | both | partially closed |
 | A3 / D7 | iOS input types still use memberwise `init` where Android uses Builders. Source-compatible only while iOS ships source — this changes the day `do_xcframework()` produces a precompiled binary | iOS | tied to XCFramework |
@@ -63,35 +70,36 @@ Open, tracked, knowingly not being worked.
 
 | Id | Item | Gate |
 |---|---|---|
-| T3 | No automated device or simulator coverage. CI compiles iOS tests at the simulator triple and runs them on the macOS host, so every UIKit-gated suite executes nowhere. No Android `androidTest` source set | needs a device tier |
+| T3 | No automated device or simulator coverage. CI compiles iOS tests at the simulator triple (`--triple arm64-apple-ios15.0-simulator`) and runs them on the macOS host, so every UIKit-gated suite executes nowhere (Linear FRA-314). No Android `androidTest` source set | needs a device tier |
 | 8.2 | ~2,000 lines of iOS sharing-sheet code with zero executed coverage, for the same structural reason. Android's `SharingHost` — lifecycle attach/detach, `ViewModelStore` retention, buffered-result replay — has no test constructing one either; no JVM harness supplies a real `ComponentActivity` + `ViewModelStore` + `ComponentDialog` | same |
 | 4.2 | iOS `EventQueue` actor does synchronous file I/O on the cooperative pool. Making it `async` reopens an interleaving window that was closed deliberately; `SerialExecutor` needs a deprecated iOS-15-floor API. Bounded and short (≤1100 rows) | accepted with rationale |
 | 9.5 | Android pauses the warm `SharingWebViewHandle` because it composites while warm; iOS has no analogue (the pooled `WKWebView` is never in a hierarchy until presented). Argued moot, unconfirmed | needs a simulator pass |
 | REL-017 | Tier-3 share copy reads `products.first()` where the page reads the carousel selection, so a multi-product share that falls to tier 3 after a swipe announces product 1. Fixing it means the page streaming selection changes to the host — a wire-contract addition for a copy-only corner. Both `tier3ShareCopy`/`tier3ShareData` now document the rung as deliberate | wants the next ABI window, if product cares |
-| — | `do_xcframework()` still `die`s "not implemented". Source distribution covers beta | needs a decision on binary distribution |
+| — | `do_xcframework()` still `die`s "not implemented" (`sdk/ios/scripts/run.sh:131`). Source distribution is the only distribution | needs a decision on binary distribution |
 
 ## 3. Security and privacy
 
 | Id | Item | Platform | Verified |
 |---|---|---|---|
-| §3.7 | **Clock skew, half-fixed.** A device 61 s fast fails every proof, non-retryably. Android got `ServerClock` (stamps from the backend `Date` header) and the backend widened the merge window 2→10 min on the past side; `MAX_FUTURE_SKEW_SECONDS=60` is untouched. **iOS still stamps from the device clock — `ServerClock` was never ported.** `ServerClock` itself is unbounded: a proxy sending `Date: 2100` skews every proof, and it is not persisted, so a cold start runs on the device clock until the first response | iOS open | read |
+| §3.7 | **Clock skew, half-fixed.** A device 61 s fast fails every proof, non-retryably. Android got `ServerClock` (stamps from the backend `Date` header) and the backend widened the merge window 2→10 min on the past side; `MAX_FUTURE_SKEW_SECONDS=60` is untouched. **iOS still stamps from the device clock — `ServerClock` was never ported** (`AnonymousIdStore.swift:71` reads `Date()`). Android's `ServerClock` adopts only a `Date` between 2025-01-01 and 2100-01-01 (`net/ServerClock.kt`); it is not persisted, so a cold start runs on the device clock until the first response | iOS open | read 2026-10-13 |
 | S4 | iOS keeps the resolve cache in Preferences, not Caches, with no backup exclusion. A per-read xattr mitigation was tried and reverted — `cfprefsd` reallocates the inode on every flush. Now a decision, not a design problem: the config cache is the SDK's own copy of someone else's data, so leaving it backed up is defensible. **Decide and record, or move it** | iOS | read |
 | S5 / 3.7 | Unbounded peak memory reading a response body. Android streams in 8 KiB chunks and aborts past 1 MiB; iOS stays on a pre-check plus post-buffer cap, so a chunked or lying response is unbounded during the read. A streaming rewrite was tried and reverted (`session.bytes(for:)` is ~100k suspensions per response) | iOS | read |
-| S11 | The sharing WebView URL puts `clientId` in a query string, and nothing in `frak-sdk-ui`/`FrakSDKUI` reads `TrackingConsent` — zero references in either module. It fails closed only incidentally, because `anonymousId()` returns null once consent is withdrawn and `build()` treats a null `clientId` as `MerchantResolutionFailed`. One point of failure, no second guard | both | read |
+| S11 | The sharing WebView URL puts `clientId` in a query string, and nothing in `frak-sdk-ui`/`FrakSDKUI` reads `TrackingConsent` — zero references in either module. It fails closed by design in the core: `buildSharingLink` checks consent first (`DefaultFrakClient.kt:213`, `DefaultFrakClient.swift:259`) and the failure reaches `SharingResult.Failed`. One guard, in the core; none in the UI modules | both | read 2026-10-13 |
 | §2.2 | Inbound `?fmt=` merge auto-executes with no origin check. **Reclassified from P0 to medium**: the fix cannot be built for the actual flow (target id B does not exist at mint time), and `WALLET_CONFLICT` bounds the damage to wallet-less victims, making it attribution theft rather than identity takeover. Non-urgent backend follow-ups: make the token single-use, cut the 60 min TTL to 2–5 min | backend | read |
 | §3.3 | `initiateMerge`'s pre-existing auto-create arm for `sourceAnonymousId` has no proof guard — a second door, always open. Out of scope when found; still needs its own decision | backend | read |
 | — | Design changes confirmed real and deliberately deferred: move `clientId` out of the query string; clear web-view data on consent withdrawal; defer the eager resolve; StrongBox plus key-invalidation recovery | both | read |
 | — | `frak-sdk-ui` logs outside the merchant's configured `FrakLogger`. Closing it needs a new `@InternalFrakApi` accessor, so it is an ABI change | Android | read |
-| — | iOS still needs the Universal Link move: a custom scheme cannot be bundle-id targeted, so the Android `setPackage` fix has no iOS twin | iOS | read |
+| — | iOS still needs the Universal Link move: a custom scheme cannot be bundle-id targeted, so the Android `setPackage` pin on the wallet deep link has no iOS twin. Recorded as an accepted risk (audit NSD-1b) | iOS | read |
+| — | The Android store rung is unpinned: `openFrakApp` opens `playStore(...)` with no package (`DefaultFrakClient.kt:353-354`), and its referrer carries merchant id, anonymous id and the install proof. One-line fix, `setPackage("com.android.vending")` (audit NSD-1a) | Android | read 2026-10-13 |
 
 ## 4. Correctness
 
 | Id | Item | Platform | Verified |
 |---|---|---|---|
-| §2.4 | **A wallet page that returns 200 OK but whose JS never boots leaves the sheet blank forever** — no timeout, no error, no host notification, and it bypasses the native-share fallback. **Fixed on iOS**, and the device answered the open question differently than it was posed: the blank sheet was not a page that failed to boot but a content process WebKit had reclaimed off-screen without calling `webViewWebContentProcessDidTerminate`, leaving a view that still reported `didFinish` over nothing. `didFinish` now settles no budget — only the page's own `action=ready` does — and recovery replaces the engine, since a reload cannot revive a reclaimed process. `postVisualStateCallback` was never needed. **Android is untouched and the symptom is reachable there**: `SharingSheetState` settles its deadline on the same engine-level signal | both | iOS fixed and device-verified; Android open |
-| §2.3 | `DeepLinkHandling.Automatic` and warm starts. Fixed for the documented `Application.onCreate` path via `OnNewIntentProvider`. **Still open:** the listener subscribes only from `onActivityCreated`, so initialising from an Activity reproduces the original bug silently; and `Frak.shutdown()` leaves stale listeners, so re-initialising double-tracks | Android | partial |
+| §2.4 | **A wallet page that returns 200 OK but whose JS never boots leaves the sheet blank forever** — no timeout, no error, no host notification, and it bypasses the native-share fallback. **Fixed on iOS**, and the device answered the open question differently than it was posed: the blank sheet was not a page that failed to boot but a content process WebKit had reclaimed off-screen without calling `webViewWebContentProcessDidTerminate`, leaving a view that still reported `didFinish` over nothing. `didFinish` now settles no budget — only the page's own `action=ready` does — and recovery replaces the engine, since a reload cannot revive a reclaimed process. `postVisualStateCallback` was never needed. **Android is untouched and the symptom is reachable there**: `SharingSheetState` settles its deadline on the same engine-level signal (`onPageReady`, `SharingSheetState.kt:253-256`). Never reproduced on Android; Linear FRA-313 | both | iOS fixed and device-verified; Android open, read 2026-10-13 |
+| §2.3 | `DeepLinkHandling.Automatic` and warm starts. Fixed for the documented `Application.onCreate` path via `OnNewIntentProvider`. **Still open:** the listener subscribes only from `onActivityCreated` (`DeepLinkObserver.kt:24-30`), so initialising from an Activity reproduces the original bug silently (audit NSD-14). `Frak.shutdown()` now unregisters the lifecycle callbacks (`Frak.kt:144-146`) but not the per-Activity `OnNewIntentListener`s, which stay on live Activities until `onActivityDestroyed`; after a re-initialize they reach the new session through `session?.core` (`Frak.kt:206`), so one link can be seen by two observers. Whether `IdentityMerge.arrivals` absorbs the second is not traced. The harness applies its environment switch on next launch for this reason (`2e7a1b0f0`) | Android | partial, read 2026-10-13 |
 | §3.2c | **Android never re-drives the outbox** — no timer, no foreground hook, no connectivity callback, where iOS has `willEnterForegroundNotification`. A purchase tracked in a tunnel sits until process restart or the 14-day drop. Needs `ProcessLifecycleOwner`, a new dependency on `:frak-sdk` (currently coroutines-only), so it is a decision rather than code | Android | executed (absent from tree) |
-| §3.6 | The Compose build site has an empty `onDispose`. Navigating away with Compose Navigation orphans a live sheet on the new destination and fires `onResult` into a dead composition. Confirmed by reading and deliberately not fixed — the naive fix reintroduces the opposite bug (a torn-down sheet that never reports). **Needs a two-destination `NavHost` in the harness first**; the harness is single-screen and cannot reproduce it | Android | read |
+| §3.6 | The Compose build site has an empty `onDispose`. Navigating away with Compose Navigation orphans a live sheet on the new destination and fires `onResult` into a dead composition. Confirmed by reading and deliberately not fixed — the naive fix reintroduces the opposite bug (a torn-down sheet that never reports). **Needs a two-destination `NavHost` in the harness first**; the harness has three tabs and no `NavHost` and cannot reproduce it (`FrakSharing.kt:115-118`; audit NSD-15) | Android | read 2026-10-13 |
 | N4 / 5.7 | Three timeout mechanisms still exist on iOS, though they no longer compete for a budget (`Deadline.run` at 20 s with a 60 s backstop). Android is fixed (3 s/5 s inside a 20 s deadline) | iOS | read |
 | 3.2 | A V1 `fCtx` carries no `merchantId`, so a V1 link from any merchant tracks as this merchant's arrival. Structural, unfixable the same way on either platform — the drain-time check cannot help | both | read |
 | — | `NativeShare.share()` can hang if a presentation is accepted and then torn down. The refused-presentation half is fixed | both | read |
@@ -105,7 +113,6 @@ Open, tracked, knowingly not being worked.
 | D5 | A typo in `targetInteraction` fails silently — free `String`, no constants, no validation. Android moved it onto `RewardRequest`; iOS is unchanged | iOS |
 | D3 / D4 | Transport-injection points are `internal` by design, so a merchant cannot substitute a fake transport. `FrakEnvironment.Custom` against a stub server is the only seam. Listed so it is not rediscovered as a bug | both |
 | — | `FrakError.AlreadyPresenting` is unreachable on iOS (the `Binding` makes it structurally impossible) and real on Android | iOS |
-| — | `FrakSdkVersion.kt`'s KDoc points at a `version` in `build.gradle.kts` that does not exist | Android |
 | — | Merchant-facing gaps deferred with a README note: no test seam, no theming story, no install-handoff documentation | both |
 | — | Dark mode: does the sheet follow the system setting? A product decision, not a defect | both |
 | A3 | No merchant UI for `sharing.title` / `sharing.text`. They are API-settable only until someone builds the editor in `apps/business`, at which point the typed `components.shareSheet` question reopens — see `decisions.md` §4.9 | both |
@@ -130,7 +137,7 @@ Open, tracked, knowingly not being worked.
 
 | Id | Item | Platform |
 |---|---|---|
-| 9.13 | **Three places the harness is structurally blind.** (a) Robolectric ships no WebView provider implementing `DOCUMENT_START_SCRIPT`, so `SharingHostStyle.install()` has no executed coverage. (b) `SharingSheetStateTest` injects `EmptyCoroutineContext` for `workContext`, collapsing `Dispatchers.Default` and `Main.immediate` onto one virtual scheduler — one scheduler cannot exhibit a two-dispatcher race, so the thread-confinement design has no regression test and cannot get one. (c) **No test in the repo reads emitted CSS**, which is why a tablet-cascade bug survived a test named for exactly the behaviour it broke: a class-presence assertion passes whether the rule wins or loses the cascade. (a) and (b) need the device tier; **(c) is tractable now** — Vanilla Extract emits static CSS at build time and `@vanilla-extract/vite-plugin` is already a dependency | both |
+| 9.13 | **Two places the harness is structurally blind.** (a) Robolectric ships no WebView provider implementing `DOCUMENT_START_SCRIPT`, so `SharingHostStyle.install()` has no executed coverage. (b) `SharingSheetStateTest` injects `EmptyCoroutineContext` for `workContext`, collapsing `Dispatchers.Default` and `Main.immediate` onto one virtual scheduler — one scheduler cannot exhibit a two-dispatcher race, so the thread-confinement design has no regression test and cannot get one. Both need the device tier. A third, "no test reads emitted CSS", is closed: `apps/wallet/tests-light/specs/sharing.check.ts` asserts the computed radius and shadow of the tablet cascade in a real browser on every PR (`wallet-pages` job in `apps.yaml`, `180a11fbf`), `assert-real-assertions.ts` fails a spec whose only assertion is a screenshot, and `Ambassador.test.tsx` compiles the real `.css.ts` (`2020de05c`) | both |
 | T2 / 8.8 | Android's `Frak` facade is untested and structurally untestable: a Kotlin `object` with `@Volatile` state and no reset seam, so a second test in the same process observes the first's leftovers. iOS has `resetForTesting()`. Two-step fix — add the seam, then the tests | Android |
 | T7 | iOS `Backoff` accepts an injectable clock and neither production call site passes one, so iOS's config/backoff tests need real sleeps where Android's use a virtual clock. This is the root cause of half of T6 | iOS |
 | T6 / 8.4 | 20 real `Task.sleep` calls sequence the iOS concurrency tests; `HttpClientTest.kt:165` parks an IO thread for 10 s, measured at 10.03 s of a 15.4 s two-module Android suite | both |
@@ -140,8 +147,7 @@ Open, tracked, knowingly not being worked.
 | 9.3t | Android's `ResolvedConfigDecoderTest` never supplies a good and a bad placement together — the test that would catch the bug this row exists for is unwritten. iOS closed it | Android |
 | 8.3, 8.6, 8.9 | A guard that cannot fail (`FrakContextCodecTest.kt:38-42` compares a count against the same filtered list that produced it); no iOS redirect/cache/`Accept-Encoding` assertions where Android has both; no concurrent-queue-writer test on either platform | both |
 | — | `SharingSheetStateTest` initialises the real SDK against the production backend and makes a live HTTPS GET every CI run, with no shutdown or reset. **Accepted by decision** — "the backend absorbs the load" | Android |
-| FRA-307 | `overallDeadlineSpansRetryBackoff` flaked once in six runs when written; CI then failed it on `dev @ a530c5f` with `attempts.value == 0`, so the cause is now known — 50 ms expires before `StubURLProtocol` is entered. Fix in the issue | iOS |
-| — | Harness gaps with zero call sites in `example/` source (`.kt`/`.swift`, verified 2026-08-28): `setTrackingEnabled`, `resetAnonymousId`, `Frak.shutdown`, `heightFraction`, and the `@Composable build()` overload. `example/native-android` also has no `NavHost`, which is why §4's Compose `onDispose` row cannot be reproduced | both |
+| — | Harness gaps with zero call sites in `example/` source (`.kt`/`.swift`, verified 2026-10-13, after the harnesses were split into tabs): `setTrackingEnabled`, `resetAnonymousId`, `Frak.shutdown`, `heightFraction`, and the `@Composable build()` overload. `example/native-android` also has no `NavHost`, which is why §4's Compose `onDispose` row cannot be reproduced | both |
 
 ## 9. The unpinned surfaces
 

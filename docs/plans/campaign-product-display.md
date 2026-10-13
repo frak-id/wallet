@@ -1,54 +1,37 @@
 # Product display for product-scoped campaigns
 
-Status: **planned, not implemented**. Shippable independently at any time —
-see "Sequencing / shippability".
+Status: **planned, not implemented** (re-checked against `dev` 2026-10-13: `productDisplay` and
+`describeProductScope` exist nowhere in source). Every piece is additive and can land on its own;
+see "Sequencing". Scope background: `services/backend/docs/product-scoped-campaigns.md`. Open
+findings this work would close: PSC-4, 10, 11, 21, 24, 26 in
+`docs/audits/2026-08-15-product-scoped-campaigns.md`.
 
 ## Problem
 
-A campaign can be scoped to products (`rule.productScope`, see
-`services/backend/docs/product-scoped-campaigns.md`). Today every surface
-renders that fact as one static string:
+A campaign can be scoped to products (`rule.productScope`), and business authors that scope in the
+wizard's Products step (`Creation/ProductsCampaign/`). But every shopper-facing surface renders the
+scope as one static string: `explorer.detail.productScopeNote` ("On selected products only",
+`CampaignInfoSection.tsx`) and `sdk.sharingPage.card.tagline2_product`. Which products? At what
+reward? The predicate (`{sku in ["A-S","A-M"]}`) carries no name, image or link.
 
-- `explorer.detail.productScopeNote` → *"On selected products only"*
-  (`CampaignInfoSection.tsx:141-147`)
-- `sdk.sharingPage.card.tagline2_product` → *"on selected products!"*
-
-A user cannot act on that. Which products? At what reward? The scope predicate
-itself (`{sku in ["A-S","A-M"]}`) is machine-readable but not human-readable,
-and carries no name, image or link.
-
-Motivating merchant case: *"buy product X → 50 €, buy product Y → 25 €"*. That
-is two campaigns (a campaign has one `productScope` and no per-product reward
-variance), and today both would render as the same vague sentence.
+Motivating case: "buy X → 50 €, buy Y → 25 €". That is two campaigns (one `productScope` each, no
+per-product reward), and today both render as the same vague sentence.
 
 ## Decisions
 
 ### Storage: `metadata.productDisplay`, not `rule`
 
-`rule` is immutable after publish (`RULE_LOCKED`,
-`CampaignManagementService.update`). A cosmetic typo, a dead PDP link or a
-broken image must be fixable on a live campaign without archive/republish
-(which resets budget accounting). So the descriptor must be economically inert
-and separately editable.
-
-Also structurally forced: `rule.productScope` is
-`RuleConditions = RuleCondition[] | ConditionGroup` — you cannot hang a
-sub-object on the array branch.
-
-Precedent: campaign `name` is **already** freely editable on live campaigns
-(`CampaignManagementService.ts:318`, outside the `isDraft` guard). Merchant
-display prose on a published campaign is an existing, accepted mutability.
+`rule` is locked after publish (`RULE_LOCKED`, `CampaignManagementService.update`). A typo, a dead
+product link or a broken image must be fixable on a live campaign without archive and republish,
+which resets budget accounting. So the descriptor is economically inert and separately editable.
+`rule.productScope` is `RuleCondition[] | ConditionGroup`, so there is nowhere to hang it there
+anyway. Precedent: the campaign `name` is already editable on live campaigns.
 
 ### Shape
 
 ```ts
 type ProductDisplayItem = {
-    /**
-     * Optional. Identifies which productScope leaf this describes, matched
-     * against the condition's `value` on the same field.
-     *  - present ("keyed")   → resolves into the clause containing that value
-     *  - absent  ("unkeyed") → describes the campaign as a whole
-     */
+    /** Present: renders inside the scope clause holding that value. Absent: campaign-level block. */
     match?: { productId?: string; sku?: string };
     name: string;      // maxLength 120
     url?: string;      // https:// only, maxLength 2048
@@ -56,270 +39,123 @@ type ProductDisplayItem = {
 };
 ```
 
-`maxItems: 20`. Realistic scopes are `{sku in [...]}` over many SKUs; a low cap
-would leave most of a scope undescribed.
-
-**Keyed vs unkeyed answer different questions**, which is why there is no
-"pick one" ambiguity:
-
-| | Question | Renders |
-|---|---|---|
-| Keyed | *which product is this SKU?* | inside its clause |
-| Unkeyed | *what is this campaign about?* | campaign-level block |
-
-A non-enumerable scope (`between`, `starts_with`) has no values to key on, so
-it uses unkeyed entries and the clause renders as generic polarity copy. This
-is the case that motivated making `match` optional.
-
-Rejected: attributing unkeyed entries to the clause when there is exactly one
-clause. With a single clause, campaign-level and clause-level render
-identically (the block sits directly above it), so the special case buys
-nothing and adds a branch. Always campaign-level.
+`maxItems: 20`: real scopes are `{sku in [...]}` over many SKUs. Keyed entries answer "which
+product is this SKU?"; unkeyed ones answer "what is this campaign about?". A non-enumerable scope
+(`between`, `starts_with`) has no values to key on, so it uses unkeyed entries only. Unkeyed entries
+always render at campaign level, even with a single clause.
 
 ### It is display-only, and it can lie
 
-Nothing links `match` to the scope predicate's truth. A merchant can name
-"Blue Widget" on a campaign scoped to `sku = WIDGET-RED`. Same trust level as
-the campaign `name` today — accepted, not validated. But it is a display that
-can lie about money, so the failure modes below are deliberate:
+Nothing ties `match` to the predicate: a merchant can name "Blue Widget" on `sku = WIDGET-RED`, at
+the same trust level as the campaign `name`. Because it describes money, the failure modes are
+deliberate:
 
-- **Stale keyed entry** (SKU dropped from scope, entry left behind) → matches
-  no clause → **rendered nowhere**. It must *not* fall back to campaign level;
-  that would advertise a product the campaign no longer covers. The business
-  app should warn on save, since the merchant otherwise gets no feedback.
-- **Keyed entry matching two clauses** (same SKU in an include and an exclude)
-  → renders in both. It genuinely is in both.
-- **Mixed keyed + unkeyed** → both render, campaign block first, no dedupe.
+- **Stale keyed entry** (its value left the scope) → rendered **nowhere**, never at campaign level,
+  which would advertise a product the campaign no longer covers. Business warns on save.
+- **Keyed entry in two clauses** (same SKU in an include and an exclude) → renders in both.
+- **Keyed and unkeyed together** → both render, campaign block first.
 
-## Steps
+## Backend
 
-### 1. Backend schema
+1. **Schema.** Add `ProductDisplayItemSchema` and `productDisplay: t.Optional(t.Array(…, { maxItems:
+   20 }))` to `CampaignMetadataSchema` (`domain/campaign/schemas/index.ts`); it propagates to the
+   create, update and response schemas. Add the same field to `EstimatedRewardItemSchema`. URLs use
+   the existing `HttpsUrlSchema` pattern from `domain/merchant/schemas/index.ts`, never
+   `format: "uri"`, which accepts `javascript:` and `data:`.
+2. **Post-publish carve-out.** `CampaignManagementService.update` only applies `metadata` when
+   `isDraft`. Add a non-draft branch that merges **only** `productDisplay` onto the stored metadata,
+   and reject a request carrying any other metadata key (as `rule` throws `RULE_LOCKED`). Clearing
+   is an explicit `[]`; an omitted key means unchanged. Concurrent edits are last-write-wins on the
+   array (the `fromStatuses` guard checks status only); bounded and cosmetic, so document it.
+   While there, add `"metadata"` to the `Pick<>` in `CampaignRuleRepository.update` and drop the
+   `as Parameters<…>[1]` cast it forces in `CampaignManagementService` (PSC-21).
+3. **Public contract.** `EstimatedRewardService.buildCampaignRewardItem` passes
+   `campaign.metadata?.productDisplay` through, and nothing else from `metadata`. Add the field to
+   `MerchantReward` (`sdk/core/src/types/rpc/merchantInformation.ts`); `merchantRewardParity.ts`
+   fails the build if the two sides drift. Cache staleness after an edit is up to the
+   `activeRulesCache` TTL, fine for cosmetic data.
 
-`services/backend/src/domain/campaign/schemas/index.ts`
+## SDK: `describeProductScope`
 
-Add `ProductDisplayItemSchema` and
-`productDisplay: t.Optional(t.Array(..., { maxItems: 20 }))` to
-`CampaignMetadataSchema`. That auto-propagates to `CampaignCreateBodySchema`,
-`CampaignUpdateBodySchema` and `CampaignResponseSchema`, which all reuse it.
-
-Add the same field to `EstimatedRewardItemSchema`. It does **not** go in the
-`Omit<>` list — that exists only for the recursive `RuleConditions` types.
-
-**URL validation must be `t.String({ pattern: "^https://", maxLength: 2048 })`,
-not `format: "uri"`.** Verified empirically by compiling the real schema:
-
-```
-true  javascript:alert(document.cookie)
-true  data:text/html;base64,PHNjcmlwdD4=
-true  vbscript:msgbox(1)
-false not a url
-```
-
-`format` validation *is* registered and enforced here, which makes it worse —
-it gives false confidence. The existing `ExplorerConfigSchema` fields
-(`heroImageUrl`, `logoUrl`) use this insufficient pattern today, and
-`merchantMetadata.homepageLink` (`domain/merchant/schemas/index.ts:209`) is a
-bare `t.String()` with no format at all, rendered straight into an `href` at
-`SsoSubtitle.tsx:22`. **That is a pre-existing live XSS sink, independent of
-this feature** — worth fixing separately.
-
-### 2. Post-publish carve-out
-
-`CampaignManagementService.update`. Today `allowedUpdates.metadata` sits inside
-`if (isDraft)`. Add a non-draft branch merging **only** `productDisplay`:
-
-```ts
-if (!isDraft && input.metadata?.productDisplay !== undefined) {
-    // Reject rather than silently drop: `rule` throws RULE_LOCKED, so a client
-    // resending a full cached metadata object should learn about it too.
-    assertOnlyProductDisplay(input.metadata);
-    allowedUpdates.metadata = {
-        ...campaign.metadata,
-        productDisplay: input.metadata.productDisplay,
-    };
-}
-```
-
-`goal` / `specialCategories` / `territories` stay draft-locked.
-
-Two documented trade-offs:
-
-- **Lost update.** Read-modify-write on a jsonb column. The repository's
-  `fromStatuses` guard re-checks *status* only, not concurrent metadata writes
-  (`CampaignRuleRepository.ts:216-241`), so two concurrent edits are
-  last-write-wins. Bounded (only `productDisplay` is mutable post-publish) and
-  cosmetic. Add a one-line comment, matching how this repo documents the cache
-  race.
-- **Clearing** = explicit `productDisplay: []`. Omitting the key means
-  "unchanged" (`cleanUpdates` filters `undefined`).
-
-**Cheap fix while in here:** add `"metadata"` to the `Pick<>` at
-`CampaignRuleRepository.ts:217-224`. It is absent today, yet
-`CampaignManagementService.ts:343` already forces metadata writes through with
-`as Parameters<...>[1]`, suppressing a real type error. This step adds a second
-call site depending on that lie.
-
-### 3. Wire to the public contract
-
-`EstimatedRewardService.buildCampaignRewardItem` — add
-`productDisplay: campaign.metadata?.productDisplay`. The column is nullable, so
-`?.` is required. Expose **only** this field; `goal`/`territories` stay
-internal (today `buildCampaignRewardItem` reads nothing from `metadata` at all,
-so this is the first and only leak, deliberately).
-
-`MerchantReward` (`sdk/core/src/types/rpc/merchantInformation.ts`, after
-`productScope`) — same field. `merchantRewardParity.ts` does an
-optionality-insensitive key-set diff and hard-fails the build if the two sides
-drift, so this is enforced rather than remembered.
-
-Cache staleness after an edit is ≤30s cross-replica
-(`activeRulesCache` TTL; `invalidateMerchantCache` evicts the local replica
-only). Acceptable for cosmetic data.
-
-### 4. `describeProductScope` — the generic piece
-
-New in `sdk/core/src/rewards/`, alongside `matchesProductScope`.
-Framework-agnostic, fail-open, display-only — the backend evaluator remains the
-sole authority on eligibility.
-
-Returns a **structured description, not a string**, so the wallet applies its
-own i18n and the business app can reuse it:
+New in `sdk/core/src/rewards/`, next to `matchesProductScope`. Display-only and fail-open; the
+backend evaluator stays the only authority on eligibility. It returns structure, not a string, so
+each app applies its own i18n:
 
 ```ts
 type ScopeDescription = {
-    /** From unkeyed entries — describes the campaign, not any one clause. */
-    products: ProductDisplayItem[];
+    products: ProductDisplayItem[]; // unkeyed entries
     logic: "all" | "any" | "none";
-    clauses: ScopeClause[];
-};
-
-type ScopeClause = {
-    polarity: "include" | "exclude";
-    operator: ConditionOperator;
-    field: string;
-    /** Keyed entries whose `match` hit a value in this clause. */
-    products: ProductDisplayItem[];
-    /** Values with no keyed entry — rendered raw. */
-    rawValues: (string | number | boolean)[];
+    clauses: {
+        polarity: "include" | "exclude";
+        operator: ConditionOperator;
+        field: string;
+        products: ProductDisplayItem[];             // keyed entries that hit this clause
+        rawValues: (string | number | boolean)[];   // values with no entry, rendered raw
+    }[];
 };
 ```
 
-Polarity derives from the existing `NEGATIVE_OPERATORS` set
-(`sdk/core/src/rewards/operators.ts:57`) combined with `logic: "none"` — the
-same classification already shared by the backend evaluator and publish-time
-validation. That yields the *"si la commande contient / ne contient pas"*
-wording.
+Polarity comes from `NEGATIVE_OPERATORS` (`sdk/core/src/rewards/operators.ts`) combined with
+`logic: "none"`, the classification the backend evaluator already uses. Business has a second
+humanizer today (`humanizeField`, `ConditionChip`, `ConditionGroupDisplay` in
+`CampaignDetailsSheet/ConfigTab.tsx`); it can move onto this one.
 
-This is not speculative generality: a **duplicate** humanizer already exists in
-the business app (`ConditionChip` / `ConditionGroupDisplay` / `humanizeField`,
-`CampaignDetailsSheet/ConfigTab.tsx:472-530`) rendering raw
-`purchase › items › sku not in [...]` chips. This is the shared home for that
-logic, and `ConfigTab` can migrate onto it later.
+## Wallet: explorer detail
 
-### 5. Explorer detail card
+Replace the `productScopeNote` row in `CampaignInfoSection.tsx` with a block per clause ("Only if
+the order contains" / "…does not contain"), then product rows: thumbnail via `mediaSrcSet`, name,
+optional link. Add to `CampaignView` only; `ExplorerCard` shares `useCampaignView` and has no room
+for it. Fallbacks, all required: a clause with no products shows raw values; no `productDisplay`
+keeps today's `productScopeNote`; a non-enumerable scope shows generic polarity copy plus the
+campaign block. Check every URL with `isHttpUrl` (`sdk/core/src/utils/product/sanitizeProducts.ts`)
+at render, as a second layer behind the schema. `CampaignInfoSection` has no test file today.
 
-`CampaignInfoSection.tsx:141-147` — replace the bare `productScopeNote` row
-with a clause-grouped block: a heading per clause (*"Only if the order
-contains"* / *"…does not contain"*), then product rows (thumbnail via
-`mediaSrcSet`, name, optional link).
+Copy under `explorer.detail.productScope.*`, en + fr.
 
-Additive to `CampaignView` only. `useCampaignView` is shared with
-`ExplorerCard`, a one-line list item with no room for this — do not touch the
-existing singular fields.
+## Business: authoring
 
-Three fallbacks, all required:
+- **In the Products step.** Rows of name (required), product URL, image; cap 20. For an enumerable
+  scope (`eq`, `in`, `not_in` on `productId`/`sku`), render one row per scope value with `match`
+  filled in and shown read-only. For an advanced scope (what `isAdvancedScope` already detects),
+  free-form rows without `match`. A scope can need both. The merchant never types a SKU into a
+  matcher.
+- **Warn on stale entries** at save: "2 products no longer match this campaign's scope and won't be
+  shown." Add an inline hint that the rows are what shoppers see, not a rule.
+- **After publish**, a published campaign shows a read-only rule summary plus an editable product
+  section that sends `metadata: { productDisplay: [...] }` and nothing else. Never round-trip the
+  cached metadata. Disable save while a request is in flight.
+- **Images** go through `POST /business/:merchantId/media/upload` with `type: "icon"`, so they land
+  on `cdn.gcp.frak.id` and get `mediaSrcSet` variants; a free-text URL still validates but loads
+  full size on mobile.
+- **URL check** in the form mirrors the backend: check the scheme explicitly, not `type="url"`.
 
-1. clause with no resolved products → raw values (current behaviour)
-2. no `productDisplay` at all → existing `productScopeNote` string
-3. non-enumerable scope → generic polarity copy + campaign-level block
+## Tests
 
-**Guard every URL with `isHttpUrl`** (`sdk/core/src/utils/product/sanitizeProducts.ts`)
-at render. `ExternalLink` (`packages/wallet-shared/src/common/component/ExternalLink/index.tsx:27`)
-binds `href` raw with no scheme check, despite a doc comment claiming
-https/http/mailto/tel. Defence in depth alongside the schema pattern; reuse
-that helper rather than writing a second one.
-
-### 6. i18n, tests, changeset
-
-Operator/polarity copy under `explorer.detail.productScope.*`, en + fr.
-
-Tests:
-- schema, including `javascript:`/`data:` rejection
-- carve-out matrix: draft vs published, clearing with `[]`, foreign-field
-  rejection
-- `EstimatedRewardService` passthrough
-- `describeProductScope`: nested groups, negation, keyed/unkeyed split, stale
-  keyed entry renders nowhere
-- `CampaignInfoSection` — **no test file exists today**
-
-Changeset: `@frak-labs/core-sdk` minor.
+Schema (including `javascript:` and `data:` rejection); the carve-out matrix (draft vs published,
+clearing with `[]`, a foreign metadata key rejected); `EstimatedRewardService` passthrough;
+`describeProductScope` (nested groups, negation, keyed/unkeyed split, a stale entry renders nowhere);
+`CampaignInfoSection`; business: publish-then-edit sends only `productDisplay`, the 20-row cap,
+enumerable scopes fill `match`, the stale warning fires. Changeset: `@frak-labs/core-sdk` minor.
 
 ## Out of scope
 
-**Sharing page — untouched** (explicit decision). Later this goes into the
-"How is my reward calculated?" FAQ answer. One trap to remember then:
-`RewardBreakdown` returns `null` for fixed-only rewards
-(`RewardBreakdown.tsx:35,61-65`), and the motivating 50 €/25 € case *is* fixed
-— so the product block must sit **outside** that gate, as a sibling in
-`SharingPage/index.tsx`, or it will vanish for exactly the merchant this
-feature exists for. `describeProductScope` will already be available.
+- **Sharing page.** Later, in the "How is my reward calculated?" answer, as a sibling of
+  `RewardBreakdown` rather than inside it, since that component returns `null` in some reward states.
+  `selectFormattedReward` already takes `products`, and `DisplayCampaign.matchedProducts` exists but
+  no UI reads it yet.
+- **Several campaigns at once.** `selectDisplayCampaign` / `selectBestReward` pick one campaign, so
+  the explorer shows the 50 € one and hides the 25 € one. `productDisplay` is the prerequisite for
+  listing both meaningfully. When that lands: all live campaigns ranked by `campaignRank`, no dedupe
+  (rewards are additive), headline "up to X" (`explorer.detail.step2Title` needs an `_upTo`
+  variant). Keep `productDisplay` an array iterated at render; never add a singular product field
+  to `BestReward` or `CampaignView`.
+- **Campaign list cell.** A product thumbnail and name in `TableCampaigns` would need `metadata` on
+  the list response first.
 
-**Plural campaign selector.** `selectDisplayCampaign` / `selectBestReward` are
-singular, so the explorer shows one campaign — the 50 € one — and hides the
-25 € one. Fixing that is a follow-up, and `productDisplay` is its
-**prerequisite**: a list rendered today would read "Campaign A — 50 €" /
-"Campaign B — 25 €" off merchant-authored campaign names, which is ambiguous
-noise rather than a product row.
+## Sequencing
 
-When it lands: return all live campaigns ranked by existing `campaignRank`, no
-dedupe (campaigns are additive at reward time, `RuleEngineService.ts:127`);
-keep the upcoming-fallback singular; headline becomes "up to X". Note
-`explorer.detail.step2Title` (*"Earn {{amount}} for every purchase…"*) is
-already wrong for multi-campaign and needs an `_upTo` variant.
-
-**Forward-compat rule:** `productDisplay` is an array on the *campaign*,
-rendered by iterating — never `[0]`. Do **not** add a singular product field to
-`BestReward` or `CampaignView`; `BestReward` already models "one winning
-campaign", and entrenching that is precisely what the plural change must undo.
-
-**Business dashboard** — see
-`docs/plans/campaign-product-display-business-app.md`.
-
-## Sequencing / shippability
-
-Nothing here is breaking, and it can land in pieces at any time:
-
-- **Backend** — optional field on an existing nullable `jsonb` column. No
-  migration, no backfill. Existing campaigns read `undefined` and behave as
-  today.
-- **Business app** — purely additive; it never sends the field and the backend
-  never requires it.
-- **Wallet** — needs a fallback regardless (campaigns without `productDisplay`
-  will always exist), so "not shipped" and "campaign has none" are the same
-  code path.
-- **SDK** — optional field; the parity assertion only fires on drift.
-
-One ordering constraint: **backend must land before the business-app authoring
-UI**, which cannot send a field the API rejects. Wallet rendering can land any
-time after the backend, or never.
-
-Within this plan: steps 1–3 are backend and independently shippable. Step 4 is
-pure logic, unit-testable with no UI. Step 5 depends on 4.
-
-## Note on branch state
-
-At planning time the working tree carried **uncommitted** SDK WIP that this
-plan assumes: `useProductScopeTarget` and `sharingPageProducts.ts` deleted and
-replaced by a plural products API — `ProductDetails`
-(`sdk/core/src/types/product.ts`), `SharingPageProduct = ProductDetails & {...}`,
-`SelectDisplayCampaignOptions.products?`, and
-`DisplayCampaign.matchedProducts` / `BestReward.matchedProducts`
-(`select.ts:33,58,248`).
-
-`matchedProducts` is currently consumed by **zero** UI surfaces. Also note
-`selectFormattedReward` (`useEstimatedReward.ts:48`) takes no `products`
-parameter, so `sharing.tsx` cannot thread the page's product array into reward
-selection — a one-parameter gap, relevant only when the sharing page is picked
-up.
-
-Confirm that WIP is intended to land before starting.
+Nothing is breaking. The backend is an optional field on an existing nullable `jsonb` column: no
+migration, no backfill. The wallet needs the fallback anyway, so "not shipped" and "campaign has no
+`productDisplay`" are the same path. The only ordering constraint: the backend before the business
+authoring UI, which cannot send a field the API rejects. The SDK helper is pure logic and testable
+alone; the explorer block depends on it.

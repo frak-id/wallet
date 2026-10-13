@@ -46,7 +46,7 @@ bun run test --project core-sdk-unit
 bun run test --project react-sdk-unit
 ```
 
-## Native SDKs (`android/`, `ios/`) — pre-release
+## Native SDKs (`android/`, `ios/`) — released at 1.0.0
 
 Apache-2.0, not the monorepo's GPL-3.0 (`sdk/{android,ios}/LICENSE`): merchants statically link these
 into closed-source store binaries, and the patent grant covers the identity proof-of-possession scheme.

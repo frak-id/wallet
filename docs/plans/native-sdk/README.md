@@ -37,16 +37,25 @@ of browser origin isolation. A native app is already a trust boundary, so that l
 | `apps/listener` sharing UI | native shell hosting the existing `/sharing` route |
 | `apps/listener` wallet / passkey / SSO / pairing | out of MVP |
 
-## Status — 2026-08-14
+## Status — 2026-10-13
 
-**Published.** `id.frak.sdk:core` and `id.frak.sdk:ui` at `1.0.0-beta.1` are on Maven Central;
-`frak-id/frak-ios-sdk` carries tag `1.0.0-beta.1`. Both release workflows ran green on 2026-08-13
-from tag `0a5b873a4`. Nothing has consumed a published artifact yet — the harnesses still use a
-Gradle composite build and a SwiftPM path dependency.
+**Published at 1.0.0.** `id.frak.sdk:core` and `id.frak.sdk:ui` at `1.0.0` are on Maven Central;
+`frak-id/frak-ios-sdk` carries tag `1.0.0`. Release commit `949a5eaf6`; tags `android-v1.0.0` and
+`ios-v1.0.0` sit on merge commit `35995d05c`, 2026-09-08. The Maven metadata and the mirror's tag
+list were fetched on 2026-10-13.
 
-This closes the window the planning docs were written against. Anything ABI-irreversible is no
-longer "free now, expensive later" — it is a break against a published coordinate, and the
-remaining budget for taking one is the rest of the `beta` line. See [`open.md`](./open.md) §1.
+**The ABI is frozen at 1.0.0.** The public surface of both SDKs follows semantic versioning from it:
+a breaking change takes a new major (`sdk/{android,ios}/CHANGELOG.md`). The committed Android dumps
+at HEAD are identical to the ones at `android-v1.0.0`. None of the ABI decisions in
+[`open.md`](./open.md) §1 was taken before the cut, so each is now a major or an accepted cost.
+
+**Consumers.** Nothing in this repo resolves a published artifact.
+`example/native-android/app/build.gradle.kts:90-91` names `id.frak.sdk:core:1.0.0` and `:ui:1.0.0`,
+but `settings.gradle.kts` substitutes the local build for both. `example/native-ios` is a SwiftPM
+path dependency. No app, plugin or package references either coordinate. The one thing that
+resolves the published form is the iOS `verify-published` job in `release-ios-sdk.yml`, which builds
+a scratch package pinned `exact:` to the new tag on every release. Android has no equivalent.
+Whether a merchant app consumes 1.0.0 is unknown outside this repo.
 
 Both platforms implement the MVP surface: identity, the FrakContext v2 codec and local link
 building, tracking over a durable queue, inbound `fCtx` with the self-referral guard, the install
@@ -57,8 +66,8 @@ handoff, and the sharing sheet. `FrakClient` is a sealed concrete class with fiv
 |---|---|
 | CI | `apps.yaml` lints, builds and unit-tests both SDKs per push/PR. Android runs the full `check` including the ABI gate |
 | ABI gate | Wired and enforced. `frak-sdk/api/frak-sdk.api` + `frak-sdk-ui/api/frak-sdk-ui.api` committed, `apiCheck` green |
-| Device | Android on a minified R8 build, iOS sheet on an iPhone 15, both 2026-08-13. Manual, harness-driven, single-screen |
-| Automated device/simulator | None. CI compiles iOS tests at the simulator triple and runs them on the macOS host, so every UIKit-gated suite is type-checked and executed nowhere |
+| Device | Android on a minified R8 build, iOS sheet on an iPhone 15, both 2026-08-13. Manual, harness-driven. No later pass is recorded here. `release-native-examples.yml` ships both harnesses to testers (TestFlight, Play internal), built from source |
+| Automated device/simulator | None. CI compiles iOS tests at the simulator triple and runs them on the macOS host, so every UIKit-gated suite is type-checked and executed nowhere (Linear FRA-314). The hosted `/sharing` and `/install` pages do run in CI, in a browser: the `wallet-pages` job in `apps.yaml` |
 | XCFramework | `do_xcframework()` still `die`s "not implemented". Source distribution only |
 
 Three places where iOS could not mirror Android, each forced rather than chosen:
@@ -73,9 +82,10 @@ Three places where iOS could not mirror Android, each forced rather than chosen:
 
 A security review found a live reward-theft vulnerability in production, independent of native:
 identity-merge endpoints had no authentication. It was fixed before native work started — see
-[`../identity-proof-of-possession/`](../identity-proof-of-possession/). Enforcement (the
-wallet-facing arms going from permissive to mandatory) is still open, gated on a store binary being
-live, tracked as `ROLLOUT-STEP-3`.
+[`../identity-proof-of-possession/`](../identity-proof-of-possession/). Enforcement is complete:
+every route that could act on an `anonymousId` the caller holds no key for now refuses
+unconditionally, with `/merge/execute` the one deliberate exception. `ROLLOUT-STEP-3`, the last
+transitional marker, closed in `d6dffc705` (2026-09-18, FRA-294).
 
 ## History
 
