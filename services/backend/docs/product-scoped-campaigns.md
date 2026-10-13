@@ -129,12 +129,10 @@ field-agnostic protection for every caller of the schema.
 ## SKU plumbing
 
 `purchase_items.sku` and `purchase_items.total_price` (both nullable) are
-declared in the Drizzle schema. The `local` and `dev` migrations ship with
-it; **`prod` does not** — the DB team owns that step, and the rollout is
-staged in
-[`docs/plans/purchase-items-line-key-migration.md`](../../../docs/plans/purchase-items-line-key-migration.md).
+declared in the Drizzle schema, and every stage has the migration
+(`prod`: `services/bootstrap/drizzle/prod/0021_aspiring_shiva.sql`).
 
-The backend **cannot be deployed to a stage whose database has not taken the
+The backend **cannot run against a database that has not taken the
 change**. Inserts reference `total_price` and bind their conflict target to
 the line constraint below, so both must exist first or every purchase webhook
 fails on write.

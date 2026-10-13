@@ -34,6 +34,7 @@ Preact-based Web Components (Custom Elements). Hybrid Light DOM / Shadow DOM. CD
 - **CDN uses hashed chunks** — cache-bust is automatic; don't pin chunk names.
 - **The shim imports its own exact version** (`process.env.SDK_VERSION`, this package's `package.json` version, injected in `tsdown.config.ts`) from jsDelivr, not `@latest`: a browser-cached shim must always resolve a `loader.js` and chunk set that shipped together.
 - **`<frak-post-purchase token>` is load-bearing twice**: it feeds `trackPurchaseStatus` AND rides `displaySharingPage` as `checkoutToken`, which is how a buyer with no `frak-client-id` still gets an install link. Dropping it from a plugin's render path silently costs attribution on exactly the ad-blocked buyer the fallback exists for.
+- **`<frak-ambassador>` is a conversion terminus, not an SEO surface**: traffic flows `frak.id/brands/[slug]` → merchant page, never back; no FAQPage schema, no `noindex`. The copy rules live in `Ambassador.test.tsx` / `defaults.test.ts`.
 
 ## Usage
 Merchant defaults still load the jsDelivr `@latest` shim; `https://sdk[-dev].frak.id/components.js` is the first-party pointer they move to next (`docs/plans/sdk-cdn-pointer.md`).

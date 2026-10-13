@@ -98,7 +98,7 @@ type ComponentCopy = {
         faq5Question: string;
         /** The two frak.id anchors are markup inside plain copy: each is split into
          * before/link-text/after keys so the component can render a real `<a>` around
-         * the link text without flattening it to a string (content-spec Rule 5). */
+         * the link text without flattening it to a string. */
         faq5AnswerBeforeLink: string;
         faq5AnswerLinkText: string;
         faq5AnswerAfterLink: string;
