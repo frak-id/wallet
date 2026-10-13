@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { gzipSync } from "node:zlib";
-import type { HtmlTagDescriptor, Plugin, Rollup } from "vite";
+import type { HtmlTagDescriptor, Plugin, Rolldown, Rollup } from "vite";
 import type { AssertEsVersionOptions } from "./es-version.ts";
 import {
     assertEsVersion,
@@ -56,13 +56,13 @@ export const reactVendorChunkGroup = {
     // `react-hook-form` / `react-i18next` and sweeps them into this eager chunk.
     test: /node_modules[\\/](react|react-dom|scheduler|react[\\/]jsx-runtime)[\\/]/,
     minShareCount: 1,
-};
+} satisfies Rolldown.CodeSplittingGroup;
 
 export const blockchainVendorChunkGroup = {
     name: "blockchain-vendor",
     test: /[\\/]node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox)[\\/]/,
     minShareCount: 1,
-};
+} satisfies Rolldown.CodeSplittingGroup;
 
 // Mutable by design: vite's `build.target` type rejects a readonly array.
 export const BROWSER_TARGET: string[] = [

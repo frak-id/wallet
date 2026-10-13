@@ -6,8 +6,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     assertBundleEsVersion,
     assertEagerBundleBudget,
+    blockchainVendorChunkGroup,
     collectEagerClosure,
     preconnectOrigins,
+    reactVendorChunkGroup,
 } from "./vite";
 
 type WriteBundlePlugin = {
@@ -18,6 +20,46 @@ type WriteBundlePlugin = {
 type AsyncWriteBundlePlugin = {
     writeBundle: (options: { dir?: string }) => Promise<void>;
 };
+
+describe("vendor chunk groups", () => {
+    it.each([
+        "/repo/node_modules/react/index.js",
+        "/repo/node_modules/react/jsx-runtime.js",
+        "/repo/node_modules/react-dom/client.js",
+        "/repo/node_modules/scheduler/index.js",
+        "/repo/node_modules/.bun/react-dom@19.2.0/node_modules/react-dom/client.js",
+    ])("react-vendor claims %s", (id) => {
+        expect(reactVendorChunkGroup.test.test(id)).toBe(true);
+    });
+
+    it.each([
+        "/repo/node_modules/react-hook-form/dist/index.esm.mjs",
+        "/repo/node_modules/react-i18next/dist/es/index.js",
+        "/repo/node_modules/react-refresh/runtime.js",
+    ])("react-vendor leaves %s alone", (id) => {
+        expect(reactVendorChunkGroup.test.test(id)).toBe(false);
+    });
+
+    it.each([
+        "/repo/node_modules/viem/_esm/index.js",
+        "/repo/node_modules/ox/_esm/core/Json.js",
+        "/repo/node_modules/@noble/hashes/esm/sha3.js",
+        "/repo/node_modules/@scure/bip32/lib/esm/index.js",
+        "/repo/node_modules/wagmi/dist/esm/exports/index.js",
+        "/repo/node_modules/@wagmi/core/dist/esm/exports/index.js",
+        "/repo/node_modules/permissionless/_esm/index.js",
+    ])("blockchain-vendor claims %s", (id) => {
+        expect(blockchainVendorChunkGroup.test.test(id)).toBe(true);
+    });
+
+    it.each([
+        "/repo/node_modules/oxc-resolver/index.js",
+        "/repo/node_modules/viem-extra/index.js",
+        "/repo/node_modules/.bun/wagmi@2.0.0/node_modules/@tanstack/query-core/build/modern/index.js",
+    ])("blockchain-vendor leaves %s alone", (id) => {
+        expect(blockchainVendorChunkGroup.test.test(id)).toBe(false);
+    });
+});
 
 describe("collectEagerClosure", () => {
     let dir: string;
