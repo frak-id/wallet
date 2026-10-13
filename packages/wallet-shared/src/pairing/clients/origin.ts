@@ -8,6 +8,7 @@ import {
 } from "zustand/middleware";
 import { createStore, type StoreApi } from "zustand/vanilla";
 import { identifyAuthenticatedUser, trackEvent } from "../../common/analytics";
+import { sessionStorageIfAllowed } from "../../common/utils/browserStorage";
 import { getSafeSession } from "../../common/utils/safeSession";
 import { recordDistantAuthenticator } from "../../stores/authenticationStore";
 import { detachedPairingSessionStore } from "../../stores/detachedPairingSessionStore";
@@ -83,17 +84,6 @@ const PAIRING_STORAGE_KEY = "frak_pairing_in_flight";
  * server has already GC'd.
  */
 const PAIRING_PERSIST_TTL_MS = 10 * 60 * 1_000;
-
-// Reading `sessionStorage` throws when third-party storage is blocked; no storage means no persistence.
-function sessionStorageIfAllowed(): Storage | undefined {
-    try {
-        return typeof window === "undefined"
-            ? undefined
-            : window.sessionStorage;
-    } catch {
-        return undefined;
-    }
-}
 
 /**
  * sessionStorage adapter that wraps every value with a timestamp and drops

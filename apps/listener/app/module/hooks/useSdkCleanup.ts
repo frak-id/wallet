@@ -1,4 +1,5 @@
 import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
+import { localStorageIfAllowed } from "@frak-labs/wallet-shared/common/utils/browserStorage";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,10 +26,7 @@ export function useSdkCleanup() {
         sessionStore.getState().setSession(null);
         sessionStore.getState().setSdkSession(null);
 
-        // Throws when third-party storage is blocked, and then there is nothing to clear.
-        try {
-            localStorage.clear();
-        } catch {}
+        localStorageIfAllowed()?.clear();
         queryClient.clear();
 
         // Read the store directly so the callback identity stays stable.
