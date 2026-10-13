@@ -1,3 +1,4 @@
+import type Decimal from "decimal.js";
 import { type PDFFont, type PDFPage, type RGB, rgb } from "pdf-lib";
 
 export { FR_VAT_RATE as VAT_RATE, FRAK_FEE_RATE } from "../../rates";
@@ -30,6 +31,10 @@ export const MARGIN = 50;
 export const DARK = rgb(0.13, 0.13, 0.13);
 export const GRAY = rgb(0.45, 0.45, 0.45);
 export const WHITE = rgb(1, 1, 1);
+/** Light tint of the brand blue, behind the highlighted "final amount" band. */
+export const BRAND_TINT = rgb(0.92, 0.95, 1);
+/** Hairline colour for card borders and dividers. */
+export const BORDER = rgb(0.84, 0.86, 0.9);
 /** Frak brand blue (#0043EF) — the badge background. */
 export const BRAND_BLUE = rgb(0x00 / 255, 0x43 / 255, 0xef / 255);
 /** Rendered size (points) of the square brand badge in the document header. */
@@ -127,6 +132,20 @@ export function formatMoney(value: string, currency: string): string {
     return `${normalized} ${fiat.symbol}`;
 }
 
+/** `formatMoney` with an explicit leading sign ("- 200,00 €" / "+ 50,00 €"). */
+export function formatSigned(
+    sign: "+" | "-",
+    value: string,
+    currency: string
+): string {
+    return `${sign} ${formatMoney(value, currency)}`;
+}
+
+/** A decimal rate as a French percent label: 0.2 -> "20 %". */
+export function ratePercent(rate: Decimal): string {
+    return `${rate.mul(100).toString()} %`;
+}
+
 export function isVatApplicable(vatAmount: string | undefined): boolean {
     if (!vatAmount) return false;
     const n = Number.parseFloat(vatAmount);
@@ -218,11 +237,12 @@ export class PageCursor {
             color = DARK,
             lineHeight = size + 3,
         } = options;
-        const maxWidth = options.maxWidth ?? PAGE_WIDTH - MARGIN - x;
-        const words = sanitizeForWinAnsi(text).split(/\s+/).filter(Boolean);
-        let line = "";
-        const flush = () => {
-            if (!line) return;
+        const lines = this.wrap(text, {
+            size,
+            useFont,
+            maxWidth: options.maxWidth ?? PAGE_WIDTH - MARGIN - x,
+        });
+        for (const line of lines) {
             this.page.drawText(line, {
                 x,
                 y: this.y,
@@ -231,18 +251,76 @@ export class PageCursor {
                 color,
             });
             this.y -= lineHeight;
-            line = "";
-        };
+        }
+    }
+
+    /** Greedy word-wrap of `text` (sanitized) into lines that fit `maxWidth`. */
+    wrap(
+        text: string,
+        {
+            size = 10,
+            useFont = this.font,
+            maxWidth,
+        }: { size?: number; useFont?: PDFFont; maxWidth: number }
+    ): string[] {
+        const words = sanitizeForWinAnsi(text).split(/\s+/).filter(Boolean);
+        const lines: string[] = [];
+        let line = "";
         for (const word of words) {
             const candidate = line ? `${line} ${word}` : word;
             if (line && useFont.widthOfTextAtSize(candidate, size) > maxWidth) {
-                flush();
+                lines.push(line);
                 line = word;
             } else {
                 line = candidate;
             }
         }
-        flush();
+        if (line) lines.push(line);
+        return lines;
+    }
+
+    /** Draws `text` flush to `rightX` (default: the right page margin). */
+    textRight(
+        text: string,
+        options: Omit<DrawOptions, "x"> & { rightX?: number } = {}
+    ): void {
+        const { rightX = PAGE_WIDTH - MARGIN, size = 10 } = options;
+        const useFont = options.useFont ?? this.font;
+        const safe = sanitizeForWinAnsi(text);
+        this.text(safe, {
+            ...options,
+            x: rightX - useFont.widthOfTextAtSize(safe, size),
+        });
+    }
+
+    /** Filled and/or stroked rectangle; `y` is its BOTTOM edge. */
+    rect(opts: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        fill?: RGB;
+        border?: RGB;
+    }): void {
+        this.page.drawRectangle({
+            x: opts.x,
+            y: opts.y,
+            width: opts.width,
+            height: opts.height,
+            color: opts.fill,
+            borderColor: opts.border,
+            borderWidth: opts.border ? 0.75 : undefined,
+        });
+    }
+
+    /** Horizontal hairline at height `y`. */
+    rule(y: number, x1: number, x2: number, color: RGB = BORDER): void {
+        this.page.drawLine({
+            start: { x: x1, y },
+            end: { x: x2, y },
+            thickness: 0.75,
+            color,
+        });
     }
 
     /**

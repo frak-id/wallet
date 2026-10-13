@@ -9,7 +9,6 @@ import {
 import {
     BRAND_BLUE,
     fiatFor,
-    formatMoney,
     GRAY,
     LOGO_SIZE,
     MARGIN,
@@ -154,20 +153,6 @@ export function drawPartyBlocks(
     // Continue below whichever column is taller (lower on the page), so a
     // taller seller block can't be overwritten by the next section.
     cursor.y = Math.min(leftEndY, rightEndY) - 20;
-}
-
-export function drawAmounts(
-    cursor: PageCursor,
-    dto: BillingPdfDocumentDto,
-    bold: PDFFont
-): void {
-    cursor.text("Montants", { size: 13, useFont: bold });
-    cursor.newLine(20);
-
-    cursor.text(`Montant brut : ${formatMoney(dto.grossAmount, dto.currency)}`);
-    cursor.newLine(15);
-    cursor.text(`Montant net : ${formatMoney(dto.netAmount, dto.currency)}`);
-    cursor.newLine(20);
 }
 
 /**
