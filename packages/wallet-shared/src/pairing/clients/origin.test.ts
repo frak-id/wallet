@@ -664,3 +664,46 @@ describe("OriginPairingClient", () => {
         expect(client.state.status).toBe("idle");
     });
 });
+
+describe("OriginPairingClient with sessionStorage blocked", () => {
+    const descriptor = Object.getOwnPropertyDescriptor(
+        window,
+        "sessionStorage"
+    );
+
+    beforeEach(() => {
+        fakeWsRegistry.length = 0;
+        Object.defineProperty(window, "sessionStorage", {
+            configurable: true,
+            get() {
+                throw new DOMException("Access is denied", "SecurityError");
+            },
+        });
+    });
+
+    afterEach(() => {
+        if (descriptor) {
+            Object.defineProperty(window, "sessionStorage", descriptor);
+        }
+    });
+
+    test("starts a pairing and holds it in memory", async () => {
+        const client = new OriginPairingClient();
+
+        client.softReset();
+        await client.initiatePairing();
+        getLastWs().fire("open");
+        getLastWs().fire("message", {
+            data: {
+                type: "pairing-initiated",
+                payload: {
+                    pairingId: "pairing-1",
+                    pairingCode: "123456",
+                    originResumeToken: "resume-token-xyz",
+                },
+            },
+        });
+
+        expect(client.state.pairing?.id).toBe("pairing-1");
+    });
+});

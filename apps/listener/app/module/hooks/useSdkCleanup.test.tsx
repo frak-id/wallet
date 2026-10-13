@@ -103,6 +103,37 @@ describe("useSdkCleanup", () => {
         expect(window.localStorage.clear).toHaveBeenCalled();
     });
 
+    test("still clears the cache and the modal step when localStorage is blocked", ({
+        queryWrapper,
+    }) => {
+        Object.defineProperty(window, "localStorage", {
+            configurable: true,
+            get() {
+                throw new DOMException("Access is denied", "SecurityError");
+            },
+        });
+        modalStore.setState({
+            currentStep: 1,
+            steps: [
+                { key: "login", params: {}, onResponse: () => {} },
+                {
+                    key: "final",
+                    params: { action: { key: "reward" } },
+                    onResponse: () => {},
+                },
+            ],
+        });
+        const clearSpy = vi.spyOn(queryWrapper.client, "clear");
+
+        const { result } = renderHook(() => useSdkCleanup(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        expect(() => result.current()).not.toThrow();
+        expect(clearSpy).toHaveBeenCalled();
+        expect(modalStore.getState().currentStep).toBe(0);
+    });
+
     test("should clear queryClient cache", ({ queryWrapper }) => {
         const clearSpy = vi.spyOn(queryWrapper.client, "clear");
 
