@@ -31,11 +31,11 @@ export function ListenerUiRenderer() {
     // The iframe is already shown when the UI renders: a crash left unsettled
     // is an invisible overlay over the merchant page and a hanging SDK promise.
     useErrorBoundary((error) => {
-        if (!currentRequest) return;
         recordError(error, {
             source: "error_boundary",
-            context: { surface: currentRequest.type },
+            context: { surface: currentRequest?.type },
         });
+        if (!currentRequest) return;
         void currentRequest.emitter({
             error: {
                 code: RpcErrorCodes.serverError,
