@@ -48,7 +48,7 @@ follows semantic versioning from it: a breaking change takes a new major. **None
 was decided before the cut.** The Android dumps (`frak-sdk/api/frak-sdk.api`,
 `frak-sdk-ui/api/frak-sdk-ui.api`) are identical at `android-v1.0.0` and HEAD, and the iOS sources
 still have the shapes described. 1.0.0 is the frozen baseline. Each item is now a major, an additive
-change that avoids the break, or a cost to accept in writing in [`decisions.md`](./decisions.md).
+change that avoids the break, or a cost to accept in writing in [`decisions.md`](../../native-sdk/decisions.md).
 
 Nothing in this repo consumes a published artifact (see the README's "Consumers"). Whether a
 merchant app does is unknown outside this repo.
@@ -103,7 +103,7 @@ Open, tracked, knowingly not being worked.
 | N4 / 5.7 | Three timeout mechanisms still exist on iOS, though they no longer compete for a budget (`Deadline.run` at 20 s with a 60 s backstop). Android is fixed (3 s/5 s inside a 20 s deadline) | iOS | read |
 | 3.2 | A V1 `fCtx` carries no `merchantId`, so a V1 link from any merchant tracks as this merchant's arrival. Structural, unfixable the same way on either platform — the drain-time check cannot help | both | read |
 | — | `NativeShare.share()` can hang if a presentation is accepted and then torn down. The refused-presentation half is fixed | both | read |
-| — | Android's `NativeShare.share` reports whether the chooser *launched*, not whether the share completed — see [`decisions.md`](./decisions.md) §4.8 | Android | read |
+| — | Android's `NativeShare.share` reports whether the chooser *launched*, not whether the share completed — see [`decisions.md`](../../native-sdk/decisions.md) §4.8 | Android | read |
 
 ## 5. Public API / DX
 

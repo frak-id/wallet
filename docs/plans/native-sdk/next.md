@@ -22,7 +22,7 @@ threshold; it is the first evidence that the published form works.
 **Precondition:** none. All five were open at the cut: the Android dumps at HEAD equal the ones at
 `android-v1.0.0`, `purchase` is still `(String, String, String)`, `FrakContext`, `SharingResult` and
 `FrakEnvironment` are still closed hierarchies, and `FrakError` has no retryable axis. Take each in
-the next major, make it additively, or record in `decisions.md` that it is accepted as is.
+the next major, make it additively, or record in `docs/native-sdk/decisions.md` that it is accepted as is.
 
 Five items, unowned, in [`open.md`](./open.md) §1:
 

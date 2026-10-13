@@ -5,8 +5,8 @@ sharing surface of `apps/listener`.
 
 | Doc | Content |
 |---|---|
-| [`decisions.md`](./decisions.md) | Every decision that is expensive to revisit, and why |
-| [`contract.md`](./contract.md) | The wire contract: `/sharing` params, the return channel, backend endpoints, golden fixtures |
+| [`decisions.md`](../../native-sdk/decisions.md) | Every decision that is expensive to revisit, and why |
+| [`contract.md`](../../native-sdk/contract.md) | The wire contract: `/sharing` params, the return channel, backend endpoints, golden fixtures |
 | [`open.md`](./open.md) | What is still open, ranked |
 | [`next.md`](./next.md) | What comes next, ordered, with preconditions |
 
