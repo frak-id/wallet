@@ -51,6 +51,7 @@ export function buildFrakSnippet({
 }): string {
     return `<!-- Frak SDK -->
 ${preconnectLinks(new URL(componentsUrl).origin)}
+<link rel="modulepreload" href="${new URL("/loader.js", componentsUrl)}">
 <script src="${componentsUrl}" defer="defer" onerror="${onErrorFallback(componentsUrl)}"></script>
 <script type="text/javascript">
   window.FrakSetup = {
