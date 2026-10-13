@@ -68,7 +68,8 @@ class FrakFrontend
     }
 
     /**
-     * The SDK `<script>` tag with an `onerror` fallback to jsDelivr. Raw
+     * The SDK `<script>` tag with an `onerror` fallback to jsDelivr, after a
+     * modulepreload of the loader the shim would only request once it runs. Raw
      * markup because `registerJavascript()`'s `attribute` is whitelisted to
      * `async`/`defer` (`JavascriptManagerCore::$valid_attribute`). The pointer
      * file is a single `import()`, so a failed fetch ran nothing to double-run.
@@ -79,7 +80,8 @@ class FrakFrontend
             . "s.src='" . FrakUrls::sdkFallbackScript() . "';"
             . 's.defer=true;document.head.appendChild(s)';
 
-        return '<script src="' . FrakUrls::sdkPointerScript() . '" defer'
+        return '<link rel="modulepreload" href="' . FrakUrls::sdkPointerLoader() . '">'
+            . '<script src="' . FrakUrls::sdkPointerScript() . '" defer'
             . ' onerror="' . $fallback . '"></script>';
     }
 

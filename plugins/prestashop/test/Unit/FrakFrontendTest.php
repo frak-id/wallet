@@ -22,13 +22,14 @@ require_once __DIR__ . '/../../classes/FrakFrontend.php';
 
 final class FrakFrontendTest extends TestCase
 {
-    /** `head()` as released before the dev switch, captured with the brand below. */
+    /** `head()` in production, captured with the brand below. */
     private const PRODUCTION_HEAD = '<link rel="dns-prefetch" href="https://sdk.frak.id">'
         . '<link rel="preconnect" href="https://sdk.frak.id">'
         . '<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">'
         . '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>'
         . '<script>window.FrakSetup=Object.assign(window.FrakSetup||{},{config:{metadata:{'
         . 'name:"Acme Shop",logoUrl:"https://shop.example/logo.png"}}});</script>'
+        . '<link rel="modulepreload" href="https://sdk.frak.id/loader.js">'
         . '<script src="https://sdk.frak.id/components.js" defer onerror="var s=document.createElement(\'script\');'
         . 's.src=\'https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/components.js\';'
         . 's.defer=true;document.head.appendChild(s)"></script>';
@@ -56,6 +57,7 @@ final class FrakFrontendTest extends TestCase
 
         $this->assertStringContainsString('<script src="https://sdk-dev.frak.id/components.js" defer', $head);
         $this->assertStringContainsString('<link rel="preconnect" href="https://sdk-dev.frak.id">', $head);
+        $this->assertStringContainsString('<link rel="modulepreload" href="https://sdk-dev.frak.id/loader.js">', $head);
         $this->assertStringContainsString('@frak-labs/components@beta/cdn/components.js', $head);
         $this->assertStringNotContainsString('sdk.frak.id', $head);
         $this->assertStringContainsString('logoUrl:"https://shop.example/logo.png"},env:"dev"}});', $head);

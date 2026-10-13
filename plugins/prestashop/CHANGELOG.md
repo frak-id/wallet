@@ -11,6 +11,10 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Changed
+
+- **The SDK loader now downloads while the page is still parsing.** The SDK `<script>` is preceded by `<link rel="modulepreload" href="https://sdk.frak.id/loader.js">` (`FrakUrls::sdkPointerLoader()`), a redirect to the exact loader the pointer shim imports. Before, the loader request only started once the deferred shim ran after the page finished parsing. The tag sits in `<head>`, so on a slow link its 35 KB share bandwidth with the theme's own head resources. Release only once `sdk.frak.id/loader.js` answers a `302`; until then the preload is a wasted 404.
+
 ## [1.1.0] - 2026-10-06
 
 Release as 1.1.0 or later: `upgrade/install-1.1.0.php` only runs when the new version is above the installed one, and without it upgraded shops print the CMS tags as text. Wait for a components release that serves `<frak-ambassador>` from `sdk.frak.id` before releasing.

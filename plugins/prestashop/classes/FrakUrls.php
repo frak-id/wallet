@@ -60,6 +60,12 @@ class FrakUrls
         return self::sdkPointerHost() . '/components.js';
     }
 
+    /** Redirect to the exact loader the pointer's shim `import()`s, for a modulepreload. */
+    public static function sdkPointerLoader(): string
+    {
+        return self::sdkPointerHost() . '/loader.js';
+    }
+
     /** jsDelivr fallback for {@see sdkPointerScript()}: `@beta` in dev, `@latest` otherwise. */
     public static function sdkFallbackScript(): string
     {
