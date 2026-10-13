@@ -1,13 +1,24 @@
 import { RpcErrorCodes } from "@frak-labs/frame-connector";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import {
+    act,
+    fireEvent,
+    render,
+    screen,
+    waitFor,
+} from "@testing-library/react";
 import i18next from "i18next";
+import { useEffect } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { ListenerUiProvider, type UIRequest } from "@/ui/ListenerUiProvider";
+import {
+    ListenerUiProvider,
+    type UIRequest,
+    useListenerUI,
+} from "@/ui/ListenerUiProvider";
 import { ListenerUiRenderer } from "@/ui/ListenerUiRenderer";
 import { uiBus } from "@/uiBus";
 
-const crash = vi.hoisted(() => ({ next: false }));
+const crash = vi.hoisted(() => ({ next: false, onUnmount: false }));
 const recordError = vi.hoisted(() => vi.fn());
 const i18n = vi.hoisted(() => ({ instance: undefined as unknown }));
 
@@ -17,8 +28,19 @@ vi.mock("react-i18next", () => ({
 
 vi.mock("@/module/modal/component/Modal", () => ({
     ListenerModal: () => {
+        const { clearRequest } = useListenerUI();
+        useEffect(
+            () => () => {
+                if (crash.onUnmount) throw new Error("modal unmount crash");
+            },
+            []
+        );
         if (crash.next) throw new Error("modal render crash");
-        return <p>modal content</p>;
+        return (
+            <button type="button" onClick={clearRequest}>
+                modal content
+            </button>
+        );
     },
 }));
 
@@ -51,16 +73,20 @@ function modalRequest(emitter: () => Promise<void>): UIRequest {
     };
 }
 
+function renderListener() {
+    render(
+        <QueryClientProvider client={new QueryClient()}>
+            <ListenerUiProvider>
+                <ListenerUiRenderer />
+            </ListenerUiProvider>
+        </QueryClientProvider>
+    );
+}
+
 describe("ListenerUiRenderer", () => {
     it("settles a request whose UI crashes, hides the iframe, then renders the next request", async () => {
         const postMessage = vi.spyOn(window.parent, "postMessage");
-        render(
-            <QueryClientProvider client={new QueryClient()}>
-                <ListenerUiProvider>
-                    <ListenerUiRenderer />
-                </ListenerUiProvider>
-            </QueryClientProvider>
-        );
+        renderListener();
 
         crash.next = true;
         const crashedEmitter = vi.fn(async () => {});
@@ -88,5 +114,24 @@ describe("ListenerUiRenderer", () => {
 
         expect(await screen.findByText("modal content")).toBeInTheDocument();
         expect(nextEmitter).not.toHaveBeenCalled();
+    });
+
+    it("records a crash that happens after its request was cleared", async () => {
+        recordError.mockClear();
+        renderListener();
+        crash.onUnmount = true;
+        const emitter = vi.fn(async () => {});
+        act(() => uiBus.request(modalRequest(emitter)));
+
+        fireEvent.click(await screen.findByText("modal content"));
+
+        await waitFor(() =>
+            expect(recordError).toHaveBeenCalledWith(
+                expect.objectContaining({ message: "modal unmount crash" }),
+                expect.objectContaining({ source: "error_boundary" })
+            )
+        );
+        expect(emitter).not.toHaveBeenCalled();
+        crash.onUnmount = false;
     });
 });
