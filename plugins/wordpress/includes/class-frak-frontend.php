@@ -31,6 +31,7 @@ class Frak_Frontend {
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ), 20 );
 		add_filter( 'wp_resource_hints', array( __CLASS__, 'add_resource_hints' ), 10, 2 );
+		add_action( 'wp_head', array( __CLASS__, 'print_loader_preconnect' ), 2 );
 		add_filter( 'script_loader_tag', array( 'Frak_Sdk_Urls', 'filter_sdk_tag' ), 10, 2 );
 
 		// Opt-in: inject <frak-banner> at the top of every page (right after
@@ -142,6 +143,14 @@ class Frak_Frontend {
 			);
 		}
 		return $hints;
+	}
+
+	/**
+	 * CORS-mode preconnect to the pointer for the footer `loader.js`
+	 * modulepreload. Printed by hand: `wp_resource_hints()` keeps one hint per host.
+	 */
+	public static function print_loader_preconnect() {
+		echo '<link rel="preconnect" href="' . esc_url( Frak_Sdk_Urls::pointer_host() ) . '" crossorigin="anonymous" />' . "\n";
 	}
 
 	/**
