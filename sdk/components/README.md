@@ -17,13 +17,16 @@ Add the following to your HTML file's `<head>`. `sdk.frak.id` is a first-party
 pointer with a 5-minute cache, so a release reaches you within minutes; if it
 is ever unreachable, `onerror` falls back to jsDelivr's `@latest` tag (a
 7-day browser cache, but still your SDK). The pointer's own fetch is
-no-cors, so only jsDelivr's preconnect carries `crossorigin`:
+no-cors, so only jsDelivr's preconnect carries `crossorigin`. `loader.js`
+redirects to the exact loader the pointer imports, so the preload lets it
+download while the page is still parsing:
 
 ```html
 <link rel="dns-prefetch" href="https://sdk.frak.id">
 <link rel="preconnect" href="https://sdk.frak.id">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="modulepreload" href="https://sdk.frak.id/loader.js">
 <script
     src="https://sdk.frak.id/components.js"
     defer="defer"
