@@ -31,8 +31,6 @@ export const MARGIN = 50;
 export const DARK = rgb(0.13, 0.13, 0.13);
 export const GRAY = rgb(0.45, 0.45, 0.45);
 export const WHITE = rgb(1, 1, 1);
-/** Light tint of the brand blue, behind the highlighted "final amount" band. */
-export const BRAND_TINT = rgb(0.92, 0.95, 1);
 /** Hairline colour for card borders and dividers. */
 export const BORDER = rgb(0.84, 0.86, 0.9);
 /** Frak brand blue (#0043EF) — the badge background. */
@@ -290,26 +288,6 @@ export class PageCursor {
         this.text(safe, {
             ...options,
             x: rightX - useFont.widthOfTextAtSize(safe, size),
-        });
-    }
-
-    /** Filled and/or stroked rectangle; `y` is its BOTTOM edge. */
-    rect(opts: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-        fill?: RGB;
-        border?: RGB;
-    }): void {
-        this.page.drawRectangle({
-            x: opts.x,
-            y: opts.y,
-            width: opts.width,
-            height: opts.height,
-            color: opts.fill,
-            borderColor: opts.border,
-            borderWidth: opts.border ? 0.75 : undefined,
         });
     }
 
