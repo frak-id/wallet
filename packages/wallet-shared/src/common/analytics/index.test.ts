@@ -13,8 +13,8 @@ import {
     extractAuthError,
     getPlatformInfo,
     identifyAuthenticatedUser,
+    initAnalytics,
     openPanel,
-    setProfileId,
     updateGlobalProperties,
 } from "./index";
 
@@ -86,18 +86,6 @@ describe("Analytics", () => {
         vi.clearAllMocks();
     });
 
-    describe("setProfileId", () => {
-        it("sets the profile id on the openpanel instance", () => {
-            setProfileId("test-profile-id");
-            expect(openPanel?.profileId).toBe("test-profile-id");
-        });
-
-        it("accepts undefined", () => {
-            setProfileId(undefined);
-            expect(openPanel?.profileId).toBeUndefined();
-        });
-    });
-
     describe("getPlatformInfo", () => {
         beforeEach(() => {
             platformMocks.isTauri.mockReturnValue(false);
@@ -140,10 +128,33 @@ describe("Analytics", () => {
     });
 
     describe("updateGlobalProperties", () => {
-        it("merges onto existing global props", () => {
+        it("forwards to setGlobalProperties, which merges", () => {
             updateGlobalProperties({ wallet: "0x1234" as Address });
             expect(mockSetGlobalProperties).toHaveBeenCalledWith(
                 expect.objectContaining({ wallet: "0x1234" })
+            );
+        });
+    });
+
+    describe("initAnalytics", () => {
+        it("keys the wallet profile on the install id before any event", () => {
+            initAnalytics("wallet");
+            expect(openPanel?.profileId).toBe(
+                window.localStorage.getItem("frak_analytics_install_id")
+            );
+            expect(mockSetGlobalProperties).toHaveBeenCalledWith(
+                expect.objectContaining({ __deviceId: expect.any(String) })
+            );
+        });
+
+        it("adopts the host id on a hosted surface, in the init props too", () => {
+            initAnalytics("listener", { hostAnonymousId: "sdk-anon" });
+            expect(openPanel?.profileId).toBe("sdk-anon");
+            expect(mockSetGlobalProperties).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    surface: "listener",
+                    __deviceId: "sdk-anon",
+                })
             );
         });
     });
@@ -156,25 +167,27 @@ describe("Analytics", () => {
             authenticatorId: "auth-id",
         };
 
-        it("updates wallet + session_id + identifies the profile + emits user_logged_in", () => {
+        it("sets the wallet property, identifies the anonymous profile and emits user_logged_in", () => {
             identifyAuthenticatedUser(baseSession);
             expect(mockSetGlobalProperties).toHaveBeenCalledWith(
                 expect.objectContaining({ wallet: baseSession.address })
             );
             expect(mockIdentify).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    profileId: baseSession.address,
+                    profileId: openPanel?.profileId,
                     properties: expect.objectContaining({
                         session_type: "webauthn",
                     }),
                 })
             );
+            expect(openPanel?.profileId).not.toBe(baseSession.address);
             expect(mockTrack).toHaveBeenCalledWith("user_logged_in");
         });
 
         it("defaults session_type to webauthn when absent", () => {
             const session = {
                 ...baseSession,
+                address: "0x2222222222222222222222222222222222222222",
                 type: undefined,
             } as WebAuthNWallet;
             identifyAuthenticatedUser(session);

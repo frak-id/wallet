@@ -6,6 +6,7 @@ import {
 } from "@frak-labs/app-essentials/utils/platform";
 import { OpenPanel } from "@openpanel/web";
 import { isInIframe } from "../lib/inApp";
+import { resolveAnonymousId } from "./anonymousId";
 import type { AnalyticsSurface } from "./types";
 
 let currentSurface: AnalyticsSurface | undefined;
@@ -89,6 +90,7 @@ export function getInitProperties() {
     const referrer =
         isInIframe && document.referrer !== "" ? document.referrer : undefined;
     return {
+        __deviceId: resolveAnonymousId(),
         isIframe: isInIframe,
         isPwa: isStandalonePwa(),
         iframeReferrer: referrer,

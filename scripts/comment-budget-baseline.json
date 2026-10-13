@@ -309,7 +309,6 @@
     "packages/wallet-shared/src/common/analytics/events/sharing.ts": 1,
     "packages/wallet-shared/src/common/analytics/events/tokens.ts": 2,
     "packages/wallet-shared/src/common/analytics/events/transaction.ts": 2,
-    "packages/wallet-shared/src/common/analytics/globalProps.ts": 2,
     "packages/wallet-shared/src/common/analytics/openpanel.ts": 1,
     "packages/wallet-shared/src/common/analytics/recordError.ts": 1,
     "packages/wallet-shared/src/common/analytics/startFlow.ts": 2,
