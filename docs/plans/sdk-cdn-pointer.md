@@ -187,7 +187,11 @@ pointer emulated (40 ms), 9 runs, medians, Slow 4G (150 ms RTT, 1.6 Mbps):
 | accalmie-lab.fr (WordPress) | footer, next to the script | 3209 → 3029 ms | 1268 → 1260 | 1292 → 1284 |
 | harmo-skincare.fr (Shopify) | `<head>` (app embed) | 8127 → 7703 ms | 1788 → 1924 | 5620 → 5836 |
 
-Unthrottled the gain is 10 to 20 ms. Where the tag lands in `<head>`
+Unthrottled the gain is 10 to 20 ms. The LCP column is the real cost: the
+loader's 35 KB now share the link with whatever the page is still fetching.
+WordPress prints a second, `crossorigin` preconnect to the pointer because
+the preload is CORS-mode and sits in the footer, far from the head hints
+(not measured: the harness emulates latency per request, not per socket). Where the tag lands in `<head>`
 (Shopify, PrestaShop) the 35 KB loader competes with the theme's own head
 resources on a slow link, costing about 140 ms of FCP. `fetchpriority="low"`
 made no difference. Firefox honours the preload but downloads the loader twice
