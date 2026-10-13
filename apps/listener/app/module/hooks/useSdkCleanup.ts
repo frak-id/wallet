@@ -25,7 +25,10 @@ export function useSdkCleanup() {
         sessionStore.getState().setSession(null);
         sessionStore.getState().setSdkSession(null);
 
-        localStorage.clear();
+        // Throws when third-party storage is blocked, and then there is nothing to clear.
+        try {
+            localStorage.clear();
+        } catch {}
         queryClient.clear();
 
         // Read the store directly so the callback identity stays stable.
