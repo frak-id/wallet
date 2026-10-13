@@ -34,7 +34,8 @@ import type {
     DetailedAssetLog,
 } from "../types";
 
-const DEFAULT_EXPIRATION_DAYS = 60;
+const DEFAULT_EXPIRATION_DAYS = 90;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /**
  * Hard cap on the per-row annex fetch (`findByMerchantAndDateRange`) — the
@@ -58,9 +59,20 @@ export type AnnexAssetLogRow = {
 };
 
 export class AssetLogRepository {
-    private calculateExpiresAt(expirationDays?: number): Date {
-        const days = expirationDays ?? DEFAULT_EXPIRATION_DAYS;
-        return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    /**
+     * The claim window opens when the lockup ends: counted from creation, a
+     * lockup as long as the window expires the reward before it can settle.
+     */
+    private calculateExpiresAt(
+        availableAt: Date | null,
+        expirationDays?: number
+    ): Date {
+        const days =
+            expirationDays && expirationDays > 0
+                ? expirationDays
+                : DEFAULT_EXPIRATION_DAYS;
+        const opensAt = availableAt?.getTime() ?? Date.now();
+        return new Date(opensAt + days * MS_PER_DAY);
     }
 
     /**
@@ -79,23 +91,29 @@ export class AssetLogRepository {
      * derivation rules — expirations, lockup `available_at`.
      */
     buildInserts(params: CreateAssetLogParams[]): AssetLogInsert[] {
-        return params.map((p) => ({
-            identityGroupId: p.identityGroupId,
-            merchantId: p.merchantId,
-            campaignRuleId: p.campaignRuleId,
-            assetType: p.assetType,
-            amount: p.amount.toString(),
-            tokenAddress: p.tokenAddress,
-            recipientType: p.recipientType,
-            recipientWallet: p.recipientWallet,
-            chainDepth: p.chainDepth,
-            referralLinkId: p.referralLinkId,
-            interactionLogId: p.interactionLogId,
-            status: "pending" as const,
-            statusChangedAt: new Date(),
-            expiresAt: this.calculateExpiresAt(p.expirationDays),
-            availableAt: this.calculateAvailableAt(p.lockupSeconds),
-        }));
+        return params.map((p) => {
+            const availableAt = this.calculateAvailableAt(p.lockupSeconds);
+            return {
+                identityGroupId: p.identityGroupId,
+                merchantId: p.merchantId,
+                campaignRuleId: p.campaignRuleId,
+                assetType: p.assetType,
+                amount: p.amount.toString(),
+                tokenAddress: p.tokenAddress,
+                recipientType: p.recipientType,
+                recipientWallet: p.recipientWallet,
+                chainDepth: p.chainDepth,
+                referralLinkId: p.referralLinkId,
+                interactionLogId: p.interactionLogId,
+                status: "pending" as const,
+                statusChangedAt: new Date(),
+                expiresAt: this.calculateExpiresAt(
+                    availableAt,
+                    p.expirationDays
+                ),
+                availableAt,
+            };
+        });
     }
 
     /**

@@ -135,6 +135,7 @@ export type CreateAssetLogParams = {
     referralLinkId?: string;
     interactionLogId: string;
     chainDepth?: number;
+    /** Claim window in days, counted from the end of the lockup. */
     expirationDays?: number;
     /**
      * Number of seconds the reward stays locked before it becomes claimable.
