@@ -53,7 +53,7 @@ export default defineConfig(({ mode }) => {
         // `import()` from jsDelivr is CORS-mode, so that one needs it.
         sdkPreconnect: useLocal
             ? ""
-            : `<link rel="preconnect" href="${POINTER_ORIGIN}">\n<link rel="preconnect" href="${JSDELIVR_ORIGIN}" crossorigin>`,
+            : `<link rel="preconnect" href="${POINTER_ORIGIN}">\n<link rel="preconnect" href="${JSDELIVR_ORIGIN}" crossorigin>\n<link rel="modulepreload" href="${POINTER_ORIGIN}/loader.js">`,
         injectReactScan: DEBUG
             ? `<script src="//unpkg.com/react-scan/dist/auto.global.js"></script>`
             : "",
