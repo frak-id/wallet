@@ -15,6 +15,17 @@ import type {
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { resolveAndVerifyWebhook } from "./resolveAndVerifyWebhook";
 
+// Oldest payload verified against; later versions keep every order field read here.
+const MIN_SHOPIFY_API_VERSION = "2024-10";
+
+export function isSupportedShopifyApiVersion(version?: string): boolean {
+    return (
+        version !== undefined &&
+        /^\d{4}-\d{2}$/.test(version) &&
+        version >= MIN_SHOPIFY_API_VERSION
+    );
+}
+
 export const shopifyWebhook = new Elysia()
     .guard({
         headers: t.Partial(
@@ -38,11 +49,7 @@ export const shopifyWebhook = new Elysia()
                 "Shopify test aren't accepted in production"
             );
         }
-        if (
-            headers["x-shopify-api-version"] !== "2024-10" &&
-            headers["x-shopify-api-version"] !== "2025-01" &&
-            headers["x-shopify-api-version"] !== "2025-04"
-        ) {
+        if (!isSupportedShopifyApiVersion(headers["x-shopify-api-version"])) {
             log.warn(
                 {
                     shopifyApiVersion: headers["x-shopify-api-version"],
