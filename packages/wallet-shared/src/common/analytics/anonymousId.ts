@@ -9,7 +9,7 @@ let hostAnonymousId: string | undefined;
  * Per-install anonymous id, persisted in `localStorage`. Falls back to an
  * in-memory id for the page lifetime when storage is blocked or throws.
  */
-function getInstallId(): string {
+export function getInstallId(): string {
     if (cachedInstallId) return cachedInstallId;
     try {
         cachedInstallId =

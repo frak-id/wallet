@@ -69,7 +69,6 @@ export {
     openPanel,
     recordError,
     setInstallSource,
-    setWallet,
     startFlow,
     trackEvent,
     updateGlobalProperties,

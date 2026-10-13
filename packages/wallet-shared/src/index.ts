@@ -126,7 +126,6 @@ export {
     sdkKey,
     selectFormattedReward,
     setInstallSource,
-    setWallet,
     startFlow,
     subscribeToWalletAuthExpired,
     type TokensEventMap,

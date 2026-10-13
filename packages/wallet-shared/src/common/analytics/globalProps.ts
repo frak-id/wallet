@@ -1,7 +1,7 @@
 import type { Session } from "../../types/Session";
 import { rememberHostAnonymousId } from "./anonymousId";
 import { crashlytics } from "./crashlytics";
-import { applyIdentity, setWallet } from "./identity";
+import { setProfileProperties, startIdentity, syncWallet } from "./identity";
 import {
     getInitProperties,
     getPlatformInfo,
@@ -12,38 +12,10 @@ import type { AnalyticsGlobalProperties, AnalyticsSurface } from "./types";
 
 const SESSION_ID_STORAGE_KEY = "frak_analytics_session_id";
 
-/**
- * Profile properties buffered before the user is identified. Flushed into
- * the `openPanel.identify` call when `identifyAuthenticatedUser` runs so
- * attributes like `install_source` (set pre-auth) still make it onto the
- * profile after login.
- */
-const pendingProfileProps: Record<string, unknown> = {};
-
 export function updateGlobalProperties(
     properties: Partial<AnalyticsGlobalProperties>
 ) {
-    if (!openPanel) return;
-    const current = openPanel.global ?? {};
-    openPanel.setGlobalProperties({
-        ...current,
-        ...properties,
-    });
-}
-
-/**
- * Set a profile-level property. If the user is already identified it's
- * pushed to OpenPanel immediately; otherwise buffered and flushed on the
- * next `identifyAuthenticatedUser` call.
- */
-function setProfileProperty(key: string, value: unknown) {
-    pendingProfileProps[key] = value;
-    if (openPanel?.profileId) {
-        openPanel.identify({
-            profileId: openPanel.profileId,
-            properties: { [key]: value },
-        });
-    }
+    openPanel?.setGlobalProperties(properties);
 }
 
 /**
@@ -67,14 +39,19 @@ export function getOrCreateSessionId(): string {
 /**
  * Initialise OpenPanel and merge the baseline global properties
  * (surface + platform + iframe flags + session / build).
+ * `hostAnonymousId` is the id of the host that opened this surface, if any.
  */
-export function initAnalytics(surface: AnalyticsSurface) {
+export function initAnalytics(
+    surface: AnalyticsSurface,
+    { hostAnonymousId }: { hostAnonymousId?: string | null } = {}
+) {
     // Crashlytics keys mirror the most useful OpenPanel globals so crash
     // reports can be filtered by platform / version / runtime context
     // without round-tripping the OpenPanel dashboard. Run regardless of
     // openPanel availability — listener may ship without an OpenPanel
     // client id but we still want crash context.
     setAnalyticsSurface(surface);
+    rememberHostAnonymousId(hostAnonymousId);
     const initProps = getInitProperties();
     const platformInfo = getPlatformInfo();
     void crashlytics?.setKey("platform", platformInfo.platform);
@@ -82,34 +59,26 @@ export function initAnalytics(surface: AnalyticsSurface) {
     if (process.env.APP_VERSION && crashlytics)
         void crashlytics.setKey("app_version", process.env.APP_VERSION);
 
-    if (!openPanel) return;
-    openPanel.init();
+    openPanel?.init();
     updateGlobalProperties({
         ...initProps,
         surface,
         session_id: getOrCreateSessionId(),
         app_version: process.env.APP_VERSION,
     });
-    // The listener iframe is handed its id by the SDK through the URL.
-    if (surface === "listener") {
-        rememberHostAnonymousId(
-            new URLSearchParams(window.location.search).get("clientId")
-        );
-    }
-    // Before the first event: a later change of the device id re-keys the session.
-    applyIdentity();
+    startIdentity(surface);
 }
 
 /**
  * Attach the install attribution source to the user's profile. Called
  * pre-auth from `useInstallReferrer` / `useResolveInstallCode`; the value
- * is buffered until the user identifies on login/register.
+ * lands on the anonymous profile, so it is there before login.
  */
 export function setInstallSource(source: string) {
     // Surface install attribution as a crash-report key so we can split
     // crash rates per acquisition channel.
     void crashlytics?.setKey("install_source", source);
-    setProfileProperty("install_source", source);
+    setProfileProperties({ install_source: source });
 }
 
 /**
@@ -121,21 +90,8 @@ export function setInstallSource(source: string) {
  * attached explicitly.
  */
 export function identifyAuthenticatedUser(session: Omit<Session, "token">) {
-    void crashlytics?.setKey("session_type", session.type ?? "webauthn");
-    void crashlytics?.setKey("session_src", "pairing");
-
+    // No-op when `sessionStore` already carries this wallet, which is the usual case.
+    syncWallet(session);
     updateGlobalProperties({ session_id: getOrCreateSessionId() });
-    setWallet(session.address, {
-        session_type: session.type ?? "webauthn",
-        session_src: "pairing",
-        ...getPlatformInfo(),
-        ...pendingProfileProps,
-    });
-
-    if (!openPanel) return;
-    // Clear buffered props now that they're on the profile
-    for (const key of Object.keys(pendingProfileProps)) {
-        delete pendingProfileProps[key];
-    }
-    openPanel.track("user_logged_in");
+    openPanel?.track("user_logged_in");
 }

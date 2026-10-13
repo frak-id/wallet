@@ -52,7 +52,7 @@ export {
     setInstallSource,
     updateGlobalProperties,
 } from "./globalProps";
-export { setHostAnonymousId, setWallet } from "./identity";
+export { setHostAnonymousId } from "./identity";
 export { getPlatformInfo, openPanel } from "./openpanel";
 export type { RecordErrorOptions } from "./recordError";
 export { recordError } from "./recordError";

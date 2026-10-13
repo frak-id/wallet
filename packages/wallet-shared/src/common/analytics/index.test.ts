@@ -128,7 +128,7 @@ describe("Analytics", () => {
     });
 
     describe("updateGlobalProperties", () => {
-        it("merges onto existing global props", () => {
+        it("forwards to setGlobalProperties, which merges", () => {
             updateGlobalProperties({ wallet: "0x1234" as Address });
             expect(mockSetGlobalProperties).toHaveBeenCalledWith(
                 expect.objectContaining({ wallet: "0x1234" })
@@ -137,24 +137,25 @@ describe("Analytics", () => {
     });
 
     describe("initAnalytics", () => {
-        afterEach(() => {
-            window.history.replaceState(null, "", "/");
-        });
-
-        it("pins profile and device to the same anonymous id before any event", () => {
+        it("keys the wallet profile on the install id before any event", () => {
             initAnalytics("wallet");
-            expect(openPanel?.profileId).toMatch(/.+/);
+            expect(openPanel?.profileId).toBe(
+                window.localStorage.getItem("frak_analytics_install_id")
+            );
             expect(mockSetGlobalProperties).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    __deviceId: openPanel?.profileId,
-                })
+                expect.objectContaining({ __deviceId: expect.any(String) })
             );
         });
 
-        it("adopts the ?clientId= param on the listener surface", () => {
-            window.history.replaceState(null, "", "/?clientId=sdk-anon");
-            initAnalytics("listener");
+        it("adopts the host id on a hosted surface, in the init props too", () => {
+            initAnalytics("listener", { hostAnonymousId: "sdk-anon" });
             expect(openPanel?.profileId).toBe("sdk-anon");
+            expect(mockSetGlobalProperties).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    surface: "listener",
+                    __deviceId: "sdk-anon",
+                })
+            );
         });
     });
 
@@ -186,6 +187,7 @@ describe("Analytics", () => {
         it("defaults session_type to webauthn when absent", () => {
             const session = {
                 ...baseSession,
+                address: "0x2222222222222222222222222222222222222222",
                 type: undefined,
             } as WebAuthNWallet;
             identifyAuthenticatedUser(session);

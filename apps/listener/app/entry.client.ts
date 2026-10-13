@@ -7,10 +7,11 @@
 import { initAnalytics } from "@frak-labs/wallet-shared/common/analytics";
 import { setupBigIntSerialization } from "@frak-labs/wallet-shared/polyfills/bigint-serialization";
 import { bootstrap } from "@/bootstrap";
+import { iframeClientId } from "@/module/stores/resolvingContextStore";
 
 // Required by zustand persist.
 setupBigIntSerialization();
 
-initAnalytics("listener");
+initAnalytics("listener", { hostAnonymousId: iframeClientId });
 
 bootstrap();
