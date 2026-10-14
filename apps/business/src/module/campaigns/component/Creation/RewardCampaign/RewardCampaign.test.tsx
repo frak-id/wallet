@@ -1,22 +1,57 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
+import { Profiler } from "react";
 import { useForm } from "react-hook-form";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
+import { campaignStore } from "@/stores/campaignStore";
 
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key }),
+    Trans: ({ i18nKey }: { i18nKey: string }) => i18nKey,
+}));
+vi.mock("@tanstack/react-router", () => ({
+    useNavigate: () => vi.fn(),
+    useParams: () => ({}),
+}));
+vi.mock("@/module/campaigns/hook/useSaveCampaign", () => ({
+    useSaveCampaign: () => ({ isPending: false, isError: false }),
+}));
+vi.mock("@/module/campaigns/hook/useCampaignCurrencyGlyph", () => ({
+    useCampaignCurrencyGlyph: () => "€",
+}));
+vi.mock("@/module/common/hook/useActiveMerchantId", () => ({
+    useActiveMerchantId: () => "m1",
 }));
 
 import * as rows from "../wizardRows.css";
-import {
-    CpaReveal,
-    EligibilityField,
-    LockupField,
-    RecipientBox,
-    RewardBasisField,
-    TierField,
-} from "./index";
+import { CpaReveal, RecipientBox } from "./CpaReveal";
+import { EligibilityField } from "./EligibilityField";
+import { RewardCampaign } from "./index";
+import { LockupField } from "./LockupField";
+import { RewardBasisField } from "./RewardBasisField";
 import * as styles from "./reward.css";
+import { TierField } from "./TierCard";
 import { DEFAULT_REWARD_FORM, type RewardFormValues } from "./utils";
+
+describe("RewardCampaign store subscription", () => {
+    it("does not re-render when a draft field outside the rule changes", () => {
+        onTestFinished(() => campaignStore.getState().reset());
+        const onRender = vi.fn();
+        render(
+            <Profiler id="reward" onRender={onRender}>
+                <RewardCampaign />
+            </Profiler>
+        );
+        const renders = onRender.mock.calls.length;
+
+        act(() =>
+            campaignStore
+                .getState()
+                .updateDraft((d) => ({ ...d, name: `${d.name}!` }))
+        );
+
+        expect(onRender).toHaveBeenCalledTimes(renders);
+    });
+});
 
 function Harness() {
     const form = useForm<RewardFormValues>({
