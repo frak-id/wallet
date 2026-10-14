@@ -7,15 +7,12 @@ vi.mock("react-i18next", () => ({
 }));
 
 import * as rows from "../wizardRows.css";
-import {
-    CpaReveal,
-    EligibilityField,
-    LockupField,
-    RecipientBox,
-    RewardBasisField,
-    TierField,
-} from "./index";
+import { CpaReveal, RecipientBox } from "./CpaReveal";
+import { EligibilityField } from "./EligibilityField";
+import { LockupField } from "./LockupField";
+import { RewardBasisField } from "./RewardBasisField";
 import * as styles from "./reward.css";
+import { TierField } from "./TierCard";
 import { DEFAULT_REWARD_FORM, type RewardFormValues } from "./utils";
 
 function Harness() {

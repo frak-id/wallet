@@ -17,7 +17,6 @@
     "apps/business/src/module/campaigns/component/Creation/NewCampaign/index.tsx": 2,
     "apps/business/src/module/campaigns/component/Creation/ProductsCampaign/utils.test.ts": 1,
     "apps/business/src/module/campaigns/component/Creation/ReferralChainCampaign/utils.ts": 1,
-    "apps/business/src/module/campaigns/component/Creation/RewardCampaign/index.tsx": 1,
     "apps/business/src/module/campaigns/component/Creation/RewardCampaign/utils.test.ts": 3,
     "apps/business/src/module/campaigns/component/Creation/RewardCampaign/utils.ts": 8,
     "apps/business/src/module/campaigns/component/Creation/TerritoryCampaign/CountrySelect.test.tsx": 1,
