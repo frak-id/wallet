@@ -53,6 +53,7 @@
   },
   "devDependencies": {
     "@frak-labs/test-foundation": "workspace:*",
+    "@playwright/test": "^1.64.0",
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/react": "catalog:",
     "@testing-library/user-event": "catalog:",
@@ -69,6 +70,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "typescript": "catalog:",
+    "vite": "catalog:",
     "vitest": "catalog:"
   },
   "peerDependencies": {
@@ -80,6 +82,11 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "gallery": "vite --config gallery/vite.config.ts",
+    "test:gallery": "playwright test",
+    "test:gallery:pixels": "GALLERY_SNAPSHOTS=1 playwright test",
+    "test:gallery:update": "GALLERY_SNAPSHOTS=1 playwright test --update-snapshots",
+    "test:gallery:install": "playwright install --with-deps chromium"
   }
 }
