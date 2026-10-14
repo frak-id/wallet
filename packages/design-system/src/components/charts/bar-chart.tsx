@@ -16,6 +16,7 @@ import {
 import { ANIMATION_DURATION_MS } from "./animation";
 import { Bar, type BarProps } from "./bar";
 import { ChartProvider, type LineConfig, type Margin } from "./chart-context";
+import * as styles from "./charts.css";
 import { useScheduledTooltip } from "./use-scheduled-tooltip";
 
 export interface BarChartProps {
@@ -291,7 +292,7 @@ export function BarChart({
 
     return (
         <div
-            className={clsx("frak-chart", "relative w-full", className)}
+            className={clsx(styles.chartRoot, className)}
             ref={containerRef}
             style={{ aspectRatio: "2 / 1" }}
         >

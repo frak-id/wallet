@@ -1,3 +1,4 @@
+import { vars } from "../../theme.css";
 import { useChartStable } from "./chart-context";
 
 export interface ReferenceLineProps {
@@ -19,7 +20,7 @@ export function ReferenceLine({ y, label }: ReferenceLineProps) {
     return (
         <g>
             <line
-                stroke="var(--chart-line-primary)"
+                stroke={vars.icon.action}
                 strokeDasharray="4 4"
                 strokeWidth={1}
                 x1={0}
@@ -29,7 +30,7 @@ export function ReferenceLine({ y, label }: ReferenceLineProps) {
             />
             {lines.length > 0 ? (
                 <text
-                    fill="var(--chart-line-primary)"
+                    fill={vars.icon.action}
                     fontSize={11}
                     fontWeight={500}
                     x={innerWidth + 4}

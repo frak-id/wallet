@@ -1,8 +1,10 @@
 import { motion, useSpring } from "motion/react";
 import { memo, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { vars } from "../../../theme.css";
 import { useChart, useChartStable } from "../chart-context";
 import { getWeekdayDateFmt } from "../chart-formatters";
+import * as styles from "../charts.css";
 import { DateTicker } from "./date-ticker";
 import { TooltipBox } from "./tooltip-box";
 import { TooltipContent, type TooltipRow } from "./tooltip-content";
@@ -67,7 +69,7 @@ const ChartTooltipInner = memo(function ChartTooltipInner({
             {/* Crosshair indicator - rendered as SVG overlay */}
             <svg
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0"
+                className={styles.overlay}
                 height="100%"
                 width="100%"
             >
@@ -85,7 +87,7 @@ const ChartTooltipInner = memo(function ChartTooltipInner({
             {visible && (
                 <svg
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-0"
+                    className={styles.overlay}
                     height="100%"
                     width="100%"
                 >
@@ -196,35 +198,35 @@ function TooltipIndicatorInner({
                     <stop
                         offset="0%"
                         style={{
-                            stopColor: "var(--chart-crosshair)",
+                            stopColor: vars.border.default,
                             stopOpacity: 0,
                         }}
                     />
                     <stop
                         offset="10%"
                         style={{
-                            stopColor: "var(--chart-crosshair)",
+                            stopColor: vars.border.default,
                             stopOpacity: 1,
                         }}
                     />
                     <stop
                         offset="50%"
                         style={{
-                            stopColor: "var(--chart-crosshair)",
+                            stopColor: vars.border.default,
                             stopOpacity: 1,
                         }}
                     />
                     <stop
                         offset="90%"
                         style={{
-                            stopColor: "var(--chart-crosshair)",
+                            stopColor: vars.border.default,
                             stopOpacity: 1,
                         }}
                     />
                     <stop
                         offset="100%"
                         style={{
-                            stopColor: "var(--chart-crosshair)",
+                            stopColor: vars.border.default,
                             stopOpacity: 0,
                         }}
                     />
@@ -270,7 +272,7 @@ function TooltipDot({ x, y, color }: TooltipDotProps) {
             cy={animatedY}
             fill={color}
             r={5}
-            stroke="var(--chart-background)"
+            stroke={vars.surface.background}
             strokeWidth={2}
         />
     );
@@ -314,7 +316,7 @@ function DatePillTrackerInner({
 
     return (
         <motion.div
-            className="pointer-events-none absolute z-50"
+            className={styles.floating}
             style={{
                 left: discreteInteraction ? xWithMargin : animatedX,
                 transform: "translateX(-50%)",

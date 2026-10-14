@@ -1,6 +1,3 @@
-import "./chartsTheme.css";
-import "./charts-utilities.css";
-
 export { Area } from "./area";
 export { AreaChart } from "./area-chart";
 export { Bar } from "./bar";

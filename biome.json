@@ -145,16 +145,6 @@
             }
         },
         {
-            "includes": ["packages/design-system/src/components/charts/**"],
-            "linter": {
-                "rules": {
-                    "complexity": {
-                        "noExcessiveCognitiveComplexity": "off"
-                    }
-                }
-            }
-        },
-        {
             "includes": [
                 "**",
                 "!apps/wallet/**",

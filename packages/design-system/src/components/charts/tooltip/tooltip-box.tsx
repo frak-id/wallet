@@ -2,6 +2,7 @@ import { motion, useSpring } from "motion/react";
 import type { RefObject } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import * as styles from "../charts.css";
 
 const BOX_SPRING = { stiffness: 100, damping: 20 };
 const OFFSET = 16;
@@ -88,7 +89,7 @@ function TooltipBoxInner({
     return createPortal(
         <motion.div
             animate={{ opacity: 1 }}
-            className="pointer-events-none absolute z-50"
+            className={styles.floating}
             exit={{ opacity: 0 }}
             initial={{ opacity: 0 }}
             ref={tooltipRef}
@@ -97,7 +98,7 @@ function TooltipBoxInner({
         >
             <motion.div
                 animate={{ scale: 1, opacity: 1, x: 0 }}
-                className="min-w-[140px] overflow-hidden rounded-lg bg-chart-tooltip-background text-chart-tooltip-foreground shadow-lg backdrop-blur-md"
+                className={styles.tooltipBox}
                 initial={{
                     scale: 0.85,
                     opacity: 0,

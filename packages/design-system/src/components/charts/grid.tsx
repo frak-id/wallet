@@ -1,5 +1,6 @@
 import { GridRows } from "@visx/grid";
 import { useId } from "react";
+import { vars } from "../../theme.css";
 import { useChartStable } from "./chart-context";
 
 /** Horizontal grid lines, faded at the left and right edges. */
@@ -12,7 +13,7 @@ export function Grid() {
     const gradientId = `${maskId}-gradient`;
 
     return (
-        <g className="chart-grid">
+        <g>
             <defs>
                 <linearGradient
                     id={gradientId}
@@ -53,7 +54,7 @@ export function Grid() {
                 <GridRows
                     numTicks={5}
                     scale={yScale}
-                    stroke="var(--chart-grid)"
+                    stroke={vars.border.subtle}
                     strokeDasharray="4,4"
                     strokeOpacity={1}
                     strokeWidth={1}

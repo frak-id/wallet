@@ -17,6 +17,7 @@ import { ANIMATION_DURATION_MS } from "./animation";
 import { Area, type AreaProps } from "./area";
 import { ChartProvider, type LineConfig, type Margin } from "./chart-context";
 import { getShortDateFmt } from "./chart-formatters";
+import * as styles from "./charts.css";
 import {
     decimateTimeSeries,
     maxRenderPointsForWidth,
@@ -296,7 +297,7 @@ export function AreaChart({
 
     return (
         <div
-            className={clsx("frak-chart", "relative w-full", className)}
+            className={clsx(styles.chartRoot, className)}
             ref={containerRef}
             style={{ aspectRatio: "2 / 1", touchAction: "none" }}
         >

@@ -1,4 +1,5 @@
 import { getIntFmt } from "../chart-formatters";
+import * as styles from "../charts.css";
 
 export interface TooltipRow {
     color: string;
@@ -16,29 +17,25 @@ interface TooltipContentProps {
 export function TooltipContent({ title, rows, locale }: TooltipContentProps) {
     const intFmt = getIntFmt(locale);
     return (
-        <div className="overflow-hidden">
-            <div className="px-3 py-2.5">
-                {title && (
-                    <div className="mb-2 font-medium text-chart-tooltip-foreground text-xs">
-                        {title}
-                    </div>
-                )}
-                <div className="space-y-1.5">
+        <div className={styles.tooltipClip}>
+            <div className={styles.tooltipBody}>
+                {title && <div className={styles.tooltipTitle}>{title}</div>}
+                <div>
                     {rows.map((row) => (
                         <div
-                            className="flex items-center justify-between gap-4"
+                            className={styles.tooltipRow}
                             key={`${row.label}-${row.color}`}
                         >
-                            <div className="flex items-center gap-2">
+                            <div className={styles.tooltipKey}>
                                 <span
-                                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                    className={styles.tooltipSwatch}
                                     style={{ backgroundColor: row.color }}
                                 />
-                                <span className="text-chart-tooltip-muted text-sm">
+                                <span className={styles.tooltipLabel}>
                                     {row.label}
                                 </span>
                             </div>
-                            <span className="font-medium text-chart-tooltip-foreground text-sm tabular-nums">
+                            <span className={styles.tooltipValue}>
                                 {intFmt.format(row.value)}
                             </span>
                         </div>

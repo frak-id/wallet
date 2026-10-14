@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useChartStable } from "./chart-context";
+import * as styles from "./charts.css";
 
 export interface NumericYAxisProps {
     /** Explicit tick values. Falls back to the scale's own ticks. */
@@ -34,7 +35,7 @@ export function NumericYAxis({
 
     return createPortal(
         <div
-            className="pointer-events-none absolute"
+            className={styles.yAxis}
             style={{
                 top: 0,
                 bottom: 0,
@@ -44,7 +45,7 @@ export function NumericYAxis({
         >
             {tickValues.map((value) => (
                 <span
-                    className="absolute text-chart-label text-xs"
+                    className={styles.yTickLabel}
                     key={value}
                     style={{
                         top: margin.top + yScale(value),

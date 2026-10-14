@@ -1,6 +1,7 @@
 import { Group } from "@visx/group";
 import { pie as d3Pie } from "d3-shape";
 import { type ReactNode, useMemo } from "react";
+import * as styles from "./charts.css";
 import {
     PIE_CENTER,
     PIE_PAD_ANGLE,
@@ -54,7 +55,7 @@ export function PieChart({
 
     return (
         <div
-            className="frak-chart relative flex items-center justify-center"
+            className={styles.pieRoot}
             style={{ width: PIE_SIZE, height: PIE_SIZE }}
         >
             <PieProvider
@@ -67,7 +68,7 @@ export function PieChart({
             >
                 {/* CSS Grid stacking avoids Safari's foreignObject rendering bugs */}
                 <div
-                    className="grid"
+                    className={styles.pieStack}
                     style={{
                         gridTemplateColumns: "1fr",
                         gridTemplateRows: "1fr",

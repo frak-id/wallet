@@ -260,7 +260,6 @@
     "packages/design-system/src/components/Input/Input.test.tsx": 2,
     "packages/design-system/src/components/ResponsiveModal/index.tsx": 2,
     "packages/design-system/src/components/TextArea/TextArea.test.tsx": 2,
-    "packages/design-system/src/components/charts/charts-utilities.css.ts": 1,
     "packages/design-system/src/hooks/useResponsiveValue.ts": 1,
     "packages/design-system/src/hostSheet.test.ts": 1,
     "packages/design-system/src/icons/LogoFrakBadge.tsx": 1,

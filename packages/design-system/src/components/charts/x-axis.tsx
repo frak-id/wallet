@@ -2,6 +2,7 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useChart, useChartStable } from "./chart-context";
 import { getShortDateFmt } from "./chart-formatters";
+import * as styles from "./charts.css";
 
 const TICKER_HALF_WIDTH = 50;
 
@@ -28,7 +29,7 @@ function XAxisLabel({ label, x, crosshairX, isHovering }: XAxisLabelProps) {
 
     return (
         <div
-            className="absolute"
+            className={styles.xTick}
             style={{
                 left: x,
                 bottom: 12,
@@ -38,7 +39,7 @@ function XAxisLabel({ label, x, crosshairX, isHovering }: XAxisLabelProps) {
             }}
         >
             <span
-                className="whitespace-nowrap text-chart-label text-xs"
+                className={styles.xTickLabel}
                 style={{
                     opacity,
                     transition: "opacity 0.4s ease-in-out",
@@ -90,7 +91,7 @@ const XAxisInner = memo(function XAxisInner({
     const crosshairX = tooltipData ? tooltipData.x + margin.left : null;
 
     return createPortal(
-        <div className="pointer-events-none absolute inset-0">
+        <div className={styles.overlay}>
             {labelsToShow.map((item) => (
                 <XAxisLabel
                     crosshairX={crosshairX}

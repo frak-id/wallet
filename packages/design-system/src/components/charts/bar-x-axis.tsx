@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useChartStable } from "./chart-context";
+import * as styles from "./charts.css";
 
 const MAX_LABELS = 12;
 
@@ -55,10 +56,10 @@ const BarXAxisInner = memo(function BarXAxisInner({
     }, [barScale, bandWidth, barXAccessor, data, margin.left]);
 
     return createPortal(
-        <div className="pointer-events-none absolute inset-0">
+        <div className={styles.overlay}>
             {labelsToShow.map((item) => (
                 <div
-                    className="absolute"
+                    className={styles.xTick}
                     key={`${item.label}-${item.x}`}
                     style={{
                         left: item.x,
@@ -68,12 +69,7 @@ const BarXAxisInner = memo(function BarXAxisInner({
                         justifyContent: "center",
                     }}
                 >
-                    <span
-                        className="whitespace-nowrap text-chart-label text-xs"
-                        style={{ opacity: 1 }}
-                    >
-                        {item.label}
-                    </span>
+                    <span className={styles.xTickLabel}>{item.label}</span>
                 </div>
             ))}
         </div>,

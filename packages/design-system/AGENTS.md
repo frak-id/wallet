@@ -9,7 +9,7 @@ Vanilla Extract design system. Sprinkles-based responsive; light theme only — 
 - `src/sprinkles.css.ts` — responsive conditions (mobile/tablet/desktop) + color-mode
 - `src/breakpoints.ts` · `src/reset.css.ts` · `src/reset-globals.css.ts` · `src/defaults.css.ts`
 - `src/components/Box/` — polymorphic layout primitive (sprinkles-powered)
-- `src/components/` — one directory per component; `charts/` is vendored visx (bklit), `FunnelChart` is ours
+- `src/components/` — one directory per component; `charts/` is vendored visx (bklit), trimmed to the bar, area and donut charts business renders; `FunnelChart` is ours
 
 ## Usage
 

@@ -1,5 +1,6 @@
 import { motion, useSpring } from "motion/react";
 import { memo, useMemo, useRef } from "react";
+import * as styles from "../charts.css";
 
 const TICKER_ITEM_HEIGHT = 24;
 /** Full scroll stacks are skipped above this count — single label + instant updates. */
@@ -17,11 +18,9 @@ const DateTickerCompact = memo(function DateTickerCompact({
     const label = labels[currentIndex] ?? labels[0] ?? "";
 
     return (
-        <div className="overflow-hidden rounded-full bg-zinc-900 px-4 py-1 text-white shadow-lg">
-            <div className="flex h-6 items-center justify-center">
-                <span className="whitespace-nowrap font-medium text-sm">
-                    {label}
-                </span>
+        <div className={styles.datePill}>
+            <div className={styles.tickerItem}>
+                <span className={styles.tickerText}>{label}</span>
             </div>
         </div>
     );
@@ -102,14 +101,11 @@ const DateTickerInner = memo(function DateTickerInner({
     }
 
     const monthStack = (
-        <div className="relative h-6 overflow-hidden" key="month">
-            <motion.div className="flex flex-col" style={{ y: monthY }}>
+        <div className={styles.tickerWindow} key="month">
+            <motion.div className={styles.tickerColumn} style={{ y: monthY }}>
                 {monthSegments.map((segment) => (
-                    <div
-                        className="flex h-6 shrink-0 items-center justify-center"
-                        key={segment.key}
-                    >
-                        <span className="whitespace-nowrap font-medium text-sm">
+                    <div className={styles.tickerItem} key={segment.key}>
+                        <span className={styles.tickerText}>
                             {segment.month}
                         </span>
                     </div>
@@ -119,16 +115,11 @@ const DateTickerInner = memo(function DateTickerInner({
     );
 
     const dayStack = (
-        <div className="relative h-6 overflow-hidden" key="day">
-            <motion.div className="flex flex-col" style={{ y: dayY }}>
+        <div className={styles.tickerWindow} key="day">
+            <motion.div className={styles.tickerColumn} style={{ y: dayY }}>
                 {parsedLabels.map((label) => (
-                    <div
-                        className="flex h-6 shrink-0 items-center justify-center"
-                        key={label.key}
-                    >
-                        <span className="whitespace-nowrap font-medium text-sm">
-                            {label.day}
-                        </span>
+                    <div className={styles.tickerItem} key={label.key}>
+                        <span className={styles.tickerText}>{label.day}</span>
                     </div>
                 ))}
             </motion.div>
@@ -136,9 +127,9 @@ const DateTickerInner = memo(function DateTickerInner({
     );
 
     return (
-        <div className="overflow-hidden rounded-full bg-zinc-900 px-4 py-1 text-white shadow-lg">
-            <div className="relative h-6 overflow-hidden">
-                <div className="flex items-center justify-center gap-1">
+        <div className={styles.datePill}>
+            <div className={styles.tickerWindow}>
+                <div className={styles.tickerStacks}>
                     {dayFirst ? [dayStack, monthStack] : [monthStack, dayStack]}
                 </div>
             </div>

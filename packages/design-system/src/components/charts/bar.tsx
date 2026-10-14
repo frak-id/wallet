@@ -1,6 +1,6 @@
 import type { scaleBand } from "@visx/scale";
 import { motion } from "motion/react";
-import { memo, useId, useMemo } from "react";
+import { memo, useMemo } from "react";
 import {
     ANIMATION_DURATION_MS,
     DEFAULT_CHART_ENTER_TRANSITION,
@@ -93,7 +93,6 @@ const BarInner = memo(function BarInner({
     const staggerSpread = ANIMATION_DURATION_MS * 0.4;
     const staggerDelay =
         data.length > 1 ? staggerSpread / 1000 / data.length : 0;
-    const uniqueId = useId();
 
     // Find the index of this bar series among all bar series
     const seriesIndex = useMemo(() => {
@@ -113,7 +112,7 @@ const BarInner = memo(function BarInner({
     }, [bandWidth, seriesCount, groupGap]);
 
     return (
-        <g className={`bar-series-${uniqueId}`}>
+        <g>
             {data.map((d, i) => {
                 const value = d[dataKey];
                 if (typeof value !== "number") {
