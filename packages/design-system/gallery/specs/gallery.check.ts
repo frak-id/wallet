@@ -40,6 +40,18 @@ async function openSection(page: Page, id: string, { fakeClock = false } = {}) {
             })
             .toBeGreaterThan(0);
     else await expect(firstCase).toBeVisible();
+    // Overflow and focus geometry depend on Inter's metrics, so wait for it.
+    await page.evaluate(() => document.fonts.ready);
+    expect(
+        await page.evaluate(() =>
+            [...document.fonts].some(
+                (face) =>
+                    face.family.replaceAll('"', "") === "Inter" &&
+                    face.status === "loaded"
+            )
+        ),
+        "Inter did not load"
+    ).toBe(true);
     // Transitions would leave a focus ring mid-fade when it is read.
     await page.addStyleTag({
         content:
@@ -319,7 +331,10 @@ for (const { id, title } of sections) {
             const section = await openSection(page, id);
             await expect(section).toBeVisible();
             const box = await section.boundingBox();
-            expect(box?.width, `"${title}" has no width`).toBeGreaterThan(0);
+            expect(
+                box?.width,
+                `"${title}" is squeezed below the desktop page width`
+            ).toBeGreaterThan(600);
             expect(box?.height, `"${title}" has no height`).toBeGreaterThan(0);
             expect(errors).toEqual([]);
         });

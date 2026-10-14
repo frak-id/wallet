@@ -84,7 +84,7 @@ function SharingPie({
 
 export function SharingPieSection() {
     return (
-        <Cases>
+        <Cases title="Pie">
             <Case name="platform" fill>
                 <SharingPie buckets={platform} />
             </Case>
@@ -168,7 +168,7 @@ function ProjectedRevenue({ data }: { data: readonly AreaPoint[] }) {
 
 export function ProjectedAreaSection() {
     return (
-        <Cases>
+        <Cases title="Area">
             <Case name="actual and forecast" fill>
                 <ProjectedRevenue data={chartFixtures.revenue} />
             </Case>
@@ -230,7 +230,7 @@ function Purchases({
 
 export function PurchasesBarSection() {
     return (
-        <Cases>
+        <Cases title="Bar">
             <Case name="with reference line" fill>
                 <Purchases data={chartFixtures.purchases} average={3500} />
             </Case>
@@ -277,7 +277,7 @@ function DailySeries({
 
 export function AffiliateBarSection() {
     return (
-        <Cases>
+        <Cases title="Bar">
             <Case name="clicks" fill>
                 <DailySeries
                     data={chartFixtures.daily}
@@ -308,59 +308,70 @@ const huge: readonly BarPoint[] = [
 
 export function ChartWorstCaseSection() {
     return (
-        <Cases>
-            <Case name="bar single data point" fill>
-                <DailySeries data={single} color={vars.icon.action} />
-            </Case>
-            <Case name="bar all zeros" fill>
-                <DailySeries data={zeros} color={vars.icon.action} />
-            </Case>
-            <Case name="bar very large value" fill>
-                <DailySeries data={huge} color={vars.icon.action} />
-            </Case>
-            <Case name="area single data point" fill>
-                <ProjectedRevenue
-                    data={[
-                        {
-                            date: new Date("2026-01-01T00:00:00Z"),
-                            actual: 1200,
-                        },
-                    ]}
-                />
-            </Case>
-            <Case name="area all zeros" fill>
-                <ProjectedRevenue
-                    data={chartFixtures.revenue.map((p) => ({
-                        date: p.date,
-                        actual: 0,
-                    }))}
-                />
-            </Case>
-            <Case name="area very large value" fill>
-                <ProjectedRevenue
-                    data={[
-                        {
-                            date: new Date("2026-01-01T00:00:00Z"),
-                            actual: 9_000_000_000_000,
-                        },
-                        {
-                            date: new Date("2026-02-01T00:00:00Z"),
-                            actual: 4_500_000_000_000,
-                        },
-                    ]}
-                />
-            </Case>
-            <Case name="pie single slice" fill>
-                <SharingPie buckets={[{ label: "Wallet app", value: 100 }]} />
-            </Case>
-            <Case name="pie very large value" fill>
-                <SharingPie
-                    buckets={[
-                        { label: "Merchant site", value: 9_000_000_000_000 },
-                        { label: "Wallet app", value: 1 },
-                    ]}
-                />
-            </Case>
-        </Cases>
+        <>
+            <Cases title="Worst Case: Bar">
+                <Case name="bar single data point" fill>
+                    <DailySeries data={single} color={vars.icon.action} />
+                </Case>
+                <Case name="bar all zeros" fill>
+                    <DailySeries data={zeros} color={vars.icon.action} />
+                </Case>
+                <Case name="bar very large value" fill>
+                    <DailySeries data={huge} color={vars.icon.action} />
+                </Case>
+            </Cases>
+            <Cases title="Worst Case: Area">
+                <Case name="area single data point" fill>
+                    <ProjectedRevenue
+                        data={[
+                            {
+                                date: new Date("2026-01-01T00:00:00Z"),
+                                actual: 1200,
+                            },
+                        ]}
+                    />
+                </Case>
+                <Case name="area all zeros" fill>
+                    <ProjectedRevenue
+                        data={chartFixtures.revenue.map((p) => ({
+                            date: p.date,
+                            actual: 0,
+                        }))}
+                    />
+                </Case>
+                <Case name="area very large value" fill>
+                    <ProjectedRevenue
+                        data={[
+                            {
+                                date: new Date("2026-01-01T00:00:00Z"),
+                                actual: 9_000_000_000_000,
+                            },
+                            {
+                                date: new Date("2026-02-01T00:00:00Z"),
+                                actual: 4_500_000_000_000,
+                            },
+                        ]}
+                    />
+                </Case>
+            </Cases>
+            <Cases title="Worst Case: Pie">
+                <Case name="pie single slice" fill>
+                    <SharingPie
+                        buckets={[{ label: "Wallet app", value: 100 }]}
+                    />
+                </Case>
+                <Case name="pie very large value" fill>
+                    <SharingPie
+                        buckets={[
+                            {
+                                label: "Merchant site",
+                                value: 9_000_000_000_000,
+                            },
+                            { label: "Wallet app", value: 1 },
+                        ]}
+                    />
+                </Case>
+            </Cases>
+        </>
     );
 }

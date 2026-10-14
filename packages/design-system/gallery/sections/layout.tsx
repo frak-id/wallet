@@ -33,184 +33,215 @@ function Swatch({ children }: { children?: ReactNode }) {
 
 export function StackSection() {
     return (
-        <Cases>
-            {(["xxs", "s", "xl"] as Space[]).map((space) => (
-                <Case key={String(space)} name={`space ${String(space)}`}>
-                    <Stack space={space}>
-                        <Swatch>1</Swatch>
-                        <Swatch>2</Swatch>
-                        <Swatch>3</Swatch>
+        <>
+            <Cases title="Spacing">
+                {(["xxs", "s", "xl"] as Space[]).map((space) => (
+                    <Case key={String(space)} name={`space ${String(space)}`}>
+                        <Stack space={space}>
+                            <Swatch>1</Swatch>
+                            <Swatch>2</Swatch>
+                            <Swatch>3</Swatch>
+                        </Stack>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Alignment">
+                {(["left", "center", "right"] as const).map((align) => (
+                    <Case key={align} name={`align ${align}`}>
+                        <div style={{ width: 160 }}>
+                            <Stack space="xs" align={align}>
+                                <Swatch>short</Swatch>
+                                <Swatch>a longer item</Swatch>
+                            </Stack>
+                        </div>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <Stack space="xs">
+                        <Text>{fixtures.unbreakableEmail}</Text>
+                        <Text>{fixtures.singleChar}</Text>
                     </Stack>
                 </Case>
-            ))}
-            {(["left", "center", "right"] as const).map((align) => (
-                <Case key={align} name={`align ${align}`}>
-                    <div style={{ width: 160 }}>
-                        <Stack space="xs" align={align}>
-                            <Swatch>short</Swatch>
-                            <Swatch>a longer item</Swatch>
-                        </Stack>
-                    </div>
+                <Case name="worst: empty">
+                    <Stack space="m" />
                 </Case>
-            ))}
-            <Case name="worst: unbreakable email">
-                <Stack space="xs">
-                    <Text>{fixtures.unbreakableEmail}</Text>
-                    <Text>{fixtures.singleChar}</Text>
-                </Stack>
-            </Case>
-            <Case name="worst: empty">
-                <Stack space="m" />
-            </Case>
-        </Cases>
+            </Cases>
+        </>
     );
 }
 
 export function BoxSection() {
     return (
-        <Cases>
-            {(
-                [
-                    "primary",
-                    "secondary",
-                    "elevated",
-                    "muted",
-                    "tertiary",
-                    "disabled",
-                    "error",
-                    "success",
-                    "warning",
-                ] as const
-            ).map((backgroundColor) => (
-                <Case key={backgroundColor} name={`bg ${backgroundColor}`}>
+        <>
+            <Cases title="Backgrounds">
+                {(
+                    [
+                        "primary",
+                        "secondary",
+                        "elevated",
+                        "muted",
+                        "tertiary",
+                        "disabled",
+                        "error",
+                        "success",
+                        "warning",
+                    ] as const
+                ).map((backgroundColor) => (
+                    <Case key={backgroundColor} name={`bg ${backgroundColor}`}>
+                        <Box
+                            backgroundColor={backgroundColor}
+                            borderRadius="m"
+                            padding="m"
+                        >
+                            <Text as="span" variant="caption">
+                                {backgroundColor}
+                            </Text>
+                        </Box>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Radii">
+                {(["none", "xs", "m", "xl", "full"] as const).map((radius) => (
+                    <Case key={radius} name={`radius ${radius}`}>
+                        <Box
+                            backgroundColor="secondary"
+                            borderRadius={radius}
+                            padding="m"
+                        >
+                            <Text as="span" variant="caption">
+                                {radius}
+                            </Text>
+                        </Box>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Responsive">
+                <Case name="responsive padding">
                     <Box
-                        backgroundColor={backgroundColor}
-                        borderRadius="m"
-                        padding="m"
+                        backgroundColor="muted"
+                        padding={{ mobile: "xs", tablet: "m", desktop: "xl" }}
                     >
-                        <Text as="span" variant="caption">
-                            {backgroundColor}
-                        </Text>
+                        <Text as="span">mobile / tablet / desktop</Text>
                     </Box>
                 </Case>
-            ))}
-            {(["none", "xs", "m", "xl", "full"] as const).map((radius) => (
-                <Case key={radius} name={`radius ${radius}`}>
-                    <Box
-                        backgroundColor="secondary"
-                        borderRadius={radius}
-                        padding="m"
-                    >
-                        <Text as="span" variant="caption">
-                            {radius}
-                        </Text>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <Box backgroundColor="muted" padding="s">
+                        <Text as="span">{fixtures.unbreakableEmail}</Text>
                     </Box>
                 </Case>
-            ))}
-            <Case name="responsive padding">
-                <Box
-                    backgroundColor="muted"
-                    padding={{ mobile: "xs", tablet: "m", desktop: "xl" }}
-                >
-                    <Text as="span">mobile / tablet / desktop</Text>
-                </Box>
-            </Case>
-            <Case name="worst: unbreakable email">
-                <Box backgroundColor="muted" padding="s">
-                    <Text as="span">{fixtures.unbreakableEmail}</Text>
-                </Box>
-            </Case>
-            <Case name="worst: empty">
-                <Box backgroundColor="muted" padding="none" />
-            </Case>
-        </Cases>
+                <Case name="worst: empty">
+                    <Box backgroundColor="muted" padding="none" />
+                </Case>
+            </Cases>
+        </>
     );
 }
 
 export function InlineSection() {
     const chips = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta"];
     return (
-        <Cases>
-            {(["left", "center", "right", "space-between"] as const).map(
-                (align) => (
-                    <Case key={align} name={`align ${align}`}>
-                        <div style={{ width: 240 }}>
-                            <Inline space="xs" align={align}>
-                                <Swatch>a</Swatch>
-                                <Swatch>b</Swatch>
-                            </Inline>
-                        </div>
-                    </Case>
-                )
-            )}
-            <Case name="wraps">
-                <div style={{ width: 160 }}>
+        <>
+            <Cases title="Alignment">
+                {(["left", "center", "right", "space-between"] as const).map(
+                    (align) => (
+                        <Case key={align} name={`align ${align}`}>
+                            <div style={{ width: 240 }}>
+                                <Inline space="xs" align={align}>
+                                    <Swatch>a</Swatch>
+                                    <Swatch>b</Swatch>
+                                </Inline>
+                            </div>
+                        </Case>
+                    )
+                )}
+            </Cases>
+            <Cases title="Wrapping and Fill">
+                <Case name="wraps">
+                    <div style={{ width: 160 }}>
+                        <Inline space="xs">
+                            {chips.map((chip) => (
+                                <Swatch key={chip}>{chip}</Swatch>
+                            ))}
+                        </Inline>
+                    </div>
+                </Case>
+                <Case name="fill">
+                    <div style={{ width: 240 }}>
+                        <Inline space="xs" fill>
+                            <Swatch>a</Swatch>
+                            <Swatch>b</Swatch>
+                        </Inline>
+                    </div>
+                </Case>
+            </Cases>
+            <Cases title="Vertical Alignment">
+                <Case name="alignY baseline">
+                    <Inline space="s" alignY="baseline">
+                        <Text variant="display">Big</Text>
+                        <Text variant="tiny">tiny</Text>
+                    </Inline>
+                </Case>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
                     <Inline space="xs">
-                        {chips.map((chip) => (
-                            <Swatch key={chip}>{chip}</Swatch>
-                        ))}
+                        <Swatch>{fixtures.unbreakableEmail}</Swatch>
+                        <Swatch>{fixtures.singleChar}</Swatch>
                     </Inline>
-                </div>
-            </Case>
-            <Case name="fill">
-                <div style={{ width: 240 }}>
-                    <Inline space="xs" fill>
-                        <Swatch>a</Swatch>
-                        <Swatch>b</Swatch>
-                    </Inline>
-                </div>
-            </Case>
-            <Case name="alignY baseline">
-                <Inline space="s" alignY="baseline">
-                    <Text variant="display">Big</Text>
-                    <Text variant="tiny">tiny</Text>
-                </Inline>
-            </Case>
-            <Case name="worst: unbreakable email">
-                <Inline space="xs">
-                    <Swatch>{fixtures.unbreakableEmail}</Swatch>
-                    <Swatch>{fixtures.singleChar}</Swatch>
-                </Inline>
-            </Case>
-            <Case name="worst: empty">
-                <Inline space="xs" />
-            </Case>
-        </Cases>
+                </Case>
+                <Case name="worst: empty">
+                    <Inline space="xs" />
+                </Case>
+            </Cases>
+        </>
     );
 }
 
 export function TilesSection() {
     return (
-        <Cases>
-            {[1, 2, 3, 4].map((columns) => (
-                <Case key={columns} name={`${columns} columns`}>
-                    <div style={{ width: 240 }}>
-                        <Tiles columns={columns} space="xs">
-                            {spaces.slice(0, 4).map((space) => (
-                                <Swatch key={space}>{space}</Swatch>
-                            ))}
-                        </Tiles>
-                    </div>
+        <>
+            <Cases title="Columns">
+                {[1, 2, 3, 4].map((columns) => (
+                    <Case key={columns} name={`${columns} columns`}>
+                        <div style={{ width: 240 }}>
+                            <Tiles columns={columns} space="xs">
+                                {spaces.slice(0, 4).map((space) => (
+                                    <Swatch key={space}>{space}</Swatch>
+                                ))}
+                            </Tiles>
+                        </div>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Responsive">
+                <Case name="responsive columns">
+                    <Tiles
+                        columns={{ mobile: 1, tablet: 2, desktop: 4 }}
+                        space="s"
+                    >
+                        <Swatch>1</Swatch>
+                        <Swatch>2</Swatch>
+                        <Swatch>3</Swatch>
+                        <Swatch>4</Swatch>
+                    </Tiles>
                 </Case>
-            ))}
-            <Case name="responsive columns">
-                <Tiles columns={{ mobile: 1, tablet: 2, desktop: 4 }} space="s">
-                    <Swatch>1</Swatch>
-                    <Swatch>2</Swatch>
-                    <Swatch>3</Swatch>
-                    <Swatch>4</Swatch>
-                </Tiles>
-            </Case>
-            <Case name="worst: unbreakable email in 2 columns">
-                <Tiles columns={2} space="xs">
-                    <Swatch>{fixtures.unbreakableEmail}</Swatch>
-                    <Swatch>{fixtures.singleChar}</Swatch>
-                </Tiles>
-            </Case>
-            <Case name="worst: empty">
-                <Tiles columns={3} />
-            </Case>
-        </Cases>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email in 2 columns">
+                    <Tiles columns={2} space="xs">
+                        <Swatch>{fixtures.unbreakableEmail}</Swatch>
+                        <Swatch>{fixtures.singleChar}</Swatch>
+                    </Tiles>
+                </Case>
+                <Case name="worst: empty">
+                    <Tiles columns={3} />
+                </Case>
+            </Cases>
+        </>
     );
 }
 
@@ -228,50 +259,60 @@ const paddings: NonNullable<CardProps["padding"]>[] = [
 
 export function CardSection() {
     return (
-        <Cases>
-            {cardVariants.map((variant) => (
-                <Case key={variant} name={`variant ${variant}`}>
-                    <Card variant={variant}>
-                        <Text as="span">{variant}</Text>
+        <>
+            <Cases title="Variants">
+                {cardVariants.map((variant) => (
+                    <Case key={variant} name={`variant ${variant}`}>
+                        <Card variant={variant}>
+                            <Text as="span">{variant}</Text>
+                        </Card>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Radii">
+                {radii.map((radius) => (
+                    <Case key={radius} name={`radius ${radius}`}>
+                        <Card radius={radius}>
+                            <Text as="span">{radius}</Text>
+                        </Card>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Padding">
+                {paddings.map((padding) => (
+                    <Case key={padding} name={`padding ${padding}`}>
+                        <Card padding={padding} variant="muted">
+                            <Text as="span">{padding}</Text>
+                        </Card>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Composition">
+                <Case name="header title description">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Title</CardTitle>
+                            <CardDescription>Description</CardDescription>
+                        </CardHeader>
+                        <Text>Body</Text>
                     </Card>
                 </Case>
-            ))}
-            {radii.map((radius) => (
-                <Case key={radius} name={`radius ${radius}`}>
-                    <Card radius={radius}>
-                        <Text as="span">{radius}</Text>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <Card>
+                        <Text>{fixtures.unbreakableEmail}</Text>
                     </Card>
                 </Case>
-            ))}
-            {paddings.map((padding) => (
-                <Case key={padding} name={`padding ${padding}`}>
-                    <Card padding={padding} variant="muted">
-                        <Text as="span">{padding}</Text>
+                <Case name="worst: non-Latin and emoji">
+                    <Card>
+                        <Text>{fixtures.nonLatin}</Text>
                     </Card>
                 </Case>
-            ))}
-            <Case name="header title description">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Title</CardTitle>
-                        <CardDescription>Description</CardDescription>
-                    </CardHeader>
-                    <Text>Body</Text>
-                </Card>
-            </Case>
-            <Case name="worst: unbreakable email">
-                <Card>
-                    <Text>{fixtures.unbreakableEmail}</Text>
-                </Card>
-            </Case>
-            <Case name="worst: non-Latin and emoji">
-                <Card>
-                    <Text>{fixtures.nonLatin}</Text>
-                </Card>
-            </Case>
-            <Case name="worst: empty">
-                <Card />
-            </Case>
-        </Cases>
+                <Case name="worst: empty">
+                    <Card />
+                </Case>
+            </Cases>
+        </>
     );
 }

@@ -19,6 +19,7 @@ export const knownFindings: Record<string, string> = {
     "overflow:inline:worst: unbreakable email": `Inline children keep their min-content: ${NO_WRAP}`,
     "overflow:tiles:worst: unbreakable email in 2 columns": `Tiles only stops the track blowing out (minWidth 0): ${NO_WRAP}`,
     "overflow:button:worst: unbreakable email": `Button label: ${NO_WRAP}`,
+    "overflow:button:worst: huge number": `Button label: ${NO_WRAP}`,
     "overflow:input:length medium":
         'length="medium" is a fixed 320px, wider than the 288px a 320px viewport leaves after page padding',
     "overflow:input:worst: one-character label, unbreakable hint": `FieldLabel hint: ${NO_WRAP}`,

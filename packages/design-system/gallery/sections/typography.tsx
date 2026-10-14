@@ -37,40 +37,48 @@ const colors: Color[] = [
 
 export function TextSection() {
     return (
-        <Cases>
-            {variants.map((variant) => (
-                <Case key={variant} name={`variant ${variant}`}>
-                    <Text variant={variant}>Frak {variant}</Text>
+        <>
+            <Cases title="Variants">
+                {variants.map((variant) => (
+                    <Case key={variant} name={`variant ${variant}`}>
+                        <Text variant={variant}>Frak {variant}</Text>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Colors">
+                {colors.map((color) => (
+                    <Case key={color} name={`color ${color}`}>
+                        <Text color={color}>Frak {color}</Text>
+                    </Case>
+                ))}
+            </Cases>
+            <Cases title="Alignment">
+                <Case name="align center in 200px">
+                    <div style={{ width: 200 }}>
+                        <Text align="center">Centered</Text>
+                    </div>
                 </Case>
-            ))}
-            {colors.map((color) => (
-                <Case key={color} name={`color ${color}`}>
-                    <Text color={color}>Frak {color}</Text>
+            </Cases>
+            <Cases title="Worst Case" layout="stack">
+                <Case name="worst: unbreakable email">
+                    <Text>{fixtures.unbreakableEmail}</Text>
                 </Case>
-            ))}
-            <Case name="align center in 200px">
-                <div style={{ width: 200 }}>
-                    <Text align="center">Centered</Text>
-                </div>
-            </Case>
-            <Case name="worst: unbreakable email">
-                <Text>{fixtures.unbreakableEmail}</Text>
-            </Case>
-            <Case name="worst: long sentence">
-                <Text>{fixtures.longSentence}</Text>
-            </Case>
-            <Case name="worst: one character">
-                <Text variant="display1">{fixtures.singleChar}</Text>
-            </Case>
-            <Case name="worst: empty">
-                <Text>{fixtures.empty}</Text>
-            </Case>
-            <Case name="worst: huge number">
-                <Text variant="heading1">{fixtures.hugeNumber}</Text>
-            </Case>
-            <Case name="worst: non-Latin and emoji">
-                <Text>{fixtures.nonLatin}</Text>
-            </Case>
-        </Cases>
+                <Case name="worst: long sentence">
+                    <Text>{fixtures.longSentence}</Text>
+                </Case>
+                <Case name="worst: one character">
+                    <Text variant="display1">{fixtures.singleChar}</Text>
+                </Case>
+                <Case name="worst: empty">
+                    <Text>{fixtures.empty}</Text>
+                </Case>
+                <Case name="worst: huge number">
+                    <Text variant="heading1">{fixtures.hugeNumber}</Text>
+                </Case>
+                <Case name="worst: non-Latin and emoji">
+                    <Text>{fixtures.nonLatin}</Text>
+                </Case>
+            </Cases>
+        </>
     );
 }

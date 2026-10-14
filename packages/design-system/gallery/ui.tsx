@@ -1,6 +1,9 @@
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import type { ReactNode } from "react";
+import { type ReactNode, useContext } from "react";
+import { marker } from "./gallery.css";
+import { FindingMarkers } from "./markers";
 
 /**
  * Labelled cell. `name` is what a spec prints and keys known findings on;
@@ -17,6 +20,12 @@ export function Case({
     fill?: boolean;
     children: ReactNode;
 }) {
+    const kinds = useContext(FindingMarkers)?.get(name);
+    const label = (
+        <Text as="span" variant="caption" color="secondary">
+            {name}
+        </Text>
+    );
     return (
         <Box
             data-gallery-case={name}
@@ -29,18 +38,50 @@ export function Case({
                 ...(fill && { width: 480 }),
             }}
         >
-            <Text as="span" variant="tiny" color="tertiary">
-                {name}
-            </Text>
+            {kinds ? (
+                <Box display="flex" gap="xs" alignItems="center">
+                    {label}
+                    <span
+                        className={marker}
+                        role="img"
+                        aria-label={`known ${kinds.join(" and ")} finding`}
+                    >
+                        {kinds.join(" · ")}
+                    </span>
+                </Box>
+            ) : (
+                label
+            )}
             <Box display={fill ? "block" : "flex"}>{children}</Box>
         </Box>
     );
 }
 
-export function Cases({ children }: { children: ReactNode }) {
+/** `stack` gives each case its own full-width row, for content that may be long. */
+export function Cases({
+    title,
+    layout = "wrap",
+    children,
+}: {
+    title: string;
+    layout?: "wrap" | "stack";
+    children: ReactNode;
+}) {
     return (
-        <Box display="flex" flexWrap="wrap" gap="m">
-            {children}
-        </Box>
+        <Stack space="s">
+            <Box as="h3">
+                <Text as="span" variant="heading5">
+                    {title}
+                </Text>
+            </Box>
+            <Box
+                display="flex"
+                flexDirection={layout === "stack" ? "column" : "row"}
+                flexWrap={layout === "stack" ? "nowrap" : "wrap"}
+                gap="l"
+            >
+                {children}
+            </Box>
+        </Stack>
     );
 }
